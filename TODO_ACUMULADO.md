@@ -37,11 +37,22 @@
 - [x] Notinha impressão formato Venda 15625 com atendente KAUAN, código cliente, auditoria (implementado imprimirNotinha)
 - [ ] Aguardando feedback se vendas está OK ou precisa mais ajustes
 
+## 5b. Vendas e Orçamentos - Loom 2 (https://www.loom.com/share/eeffaff8a19f4920a7c2d205ff5b392b) - 3min - SÓ ANOTADO, NÃO PROGRAMADO
+- [ ] Lista vendas: código da venda, data, cliente, valor + detalhes: tipo pagamento, serviço ou venda, usuário (quem criou), situação (aberta, estornada, aprovado e baixa)
+- [ ] Botão criar nova venda com busca automática de clientes NÃO finalizados e NÃO com caixa fechada (caixa aberta) - reforça requisito já implementado em v3.1 mas validar
+- [ ] Inclusão itens: opções como recarga de tons e vendas de serviços, com divisão entre serviços pendentes e realizados
+- [ ] Possibilidade de definir prazo e vencimento (já implementado A prazo com data, mas validar se precisa em serviços também)
+- [ ] ORÇAMENTOS: fluxo semelhante a vendas, mas voltado à criação de PDF para envio ao cliente e autorização
+  - Orçamento gera PDF para enviar ao cliente
+  - Cliente autoriza orçamento -> vira venda?
+  - Situações: aberta, aprovado, baixa?
+
 ## 6. Próximos Loom/videos que usuário vai mandar
 - [ ] Módulo Contratos
 - [ ] Módulo Leituras
 - [ ] Módulo Manutenção/OS
 - [ ] Módulo Financeiro
+- [ ] Módulo Outsource/Locação (já tem mas aguardando Loom)
 - [ ] Etc.
 
 ## 7. Dúvidas / Itens para confirmar
