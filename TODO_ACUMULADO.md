@@ -47,13 +47,21 @@
   - Cliente autoriza orçamento -> vira venda?
   - Situações: aberta, aprovado, baixa?
 
+## 5c. Chamados, Contratos e Filtros - Loom 3 FINAL (https://www.loom.com/share/89701555215948df8337d03d92ca9ad1) - 4min - SÓ ANOTADO, NÃO PROGRAMADO - ÚLTIMO
+- [ ] **Chamados (menu):** exibir todos chamados já abertos, ficando em **branco quando ainda não resolvidos e em verde quando resolvidos**
+- [ ] Botão criar chamado com seleção de: cliente, atribuído (técnico), motivo e equipamento (já buscando as impressoras cadastradas no cliente)
+- [ ] Busca chamados com filtros por: nome do cliente (nome e nome fantasia), celular, cidade, endereço e código do cliente, com ordenação por ordem de criação (código)
+- [ ] **Contratos e Leituras no Outsourcing:** criação e gestão de leituras por franquia (exemplo 3.000 cópias a R$120,00 e valor adicional por cópia) OU mensal por quantidade
+  - Exemplo citado: franquia 3000 cópias a R$120,00 e valor adicional por cópia excedente
+  - Ou mensal por quantidade (sem franquia, só valor fixo?)
+- [ ] Locação: opções de parcelas para baixa e novas notas de locação mensal
+- [ ] Financeiro e Conta: simplificados ao dashboard (usuário disse financeiro e conta são simplificados ao dashboard - não precisa tela complexa?)
+
 ## 6. Próximos Loom/videos que usuário vai mandar
-- [ ] Módulo Contratos
-- [ ] Módulo Leituras
-- [ ] Módulo Manutenção/OS
-- [ ] Módulo Financeiro
-- [ ] Módulo Outsource/Locação (já tem mas aguardando Loom)
-- [ ] Etc.
+- [x] Loom 1 - Clientes e Produtos (2min) - ANOTADO
+- [x] Loom 2 - Vendas e Orçamentos PDF (3min) - ANOTADO
+- [x] Loom 3 FINAL - Chamados, contratos e filtros (4min) - ANOTADO - ÚLTIMO SEGUNDO USUÁRIO
+- [ ] Nenhum mais - usuário disse que esse seria o último
 
 ## 7. Dúvidas / Itens para confirmar
 - [ ] Confirmar se "Empresas" para PDF notinha é cadastro separado ou usar dados da empresa logada (CNPJ logado)?
