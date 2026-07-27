@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banco de Dados - DIGICOPY ERP</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+  body{font-family:Inter,sans-serif;background:#f4f5f9;color:#1e293b;}
+  .card{background:white;border-radius:20px;border:1px solid #e2e8f0;box-shadow:0 4px 20px rgba(0,0,0,0.03);padding:28px;}
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-2xl w-full space-y-6">
+    <a href="index.html" class="inline-flex items-center gap-2 text-[#0a1e8a] font-semibold text-[13px] hover:underline"><i class="ph-fill ph-arrow-left"></i> Voltar ao ERP</a>
+    <div class="card">
+      <h1 class="text-[22px] font-extrabold tracking-tight text-[#0a1e8a]">Banco de Dados Detectado</h1>
+      <p class="text-[13px] text-slate-500 mt-1">Arquivo .rar encontrado no repositório do sistema.</p>
+      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph-fill ph-file-rar text-[20px]"></i></div>
+            <div>
+              <p class="font-mono text-[11px] text-slate-500">ARQUIVO .RAR</p>
+              <p class="font-bold text-[15px]">BANCO.rar</p>
+            </div>
+          </div>
+          <p class="text-[12px] text-slate-600">Tamanho: <b>7.776.303 bytes</b> (~7,4 MB)</p>
+          <p class="text-[12px] text-slate-600">Local: <code class="text-[#0a1e8a] font-mono">/home/user/teste/BANCO.rar</code></p>
+        </div>
+        <div class="rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-[#166534] text-white grid place-items-center"><i class="ph-fill ph-database text-[20px]"></i></div>
+            <div>
+              <p class="font-mono text-[11px] text-slate-500">CONTEÚDO IDENTIFICADO</p>
+              <p class="font-bold text-[15px]">BANCO.FDB</p>
+            </div>
+          </div>
+          <p class="text-[12px] text-slate-600">Formato: <b>Firebird 3.0.7</b></p>
+          <p class="text-[12px] text-slate-600">Tamanho extraído: <b>63.901.696 bytes</b> (~60,9 MB)</p>
+          <p class="text-[12px] text-slate-600 mt-2">Análise detalhada disponível em <a href="DATABASE_ANALYSIS.md" class="text-[#0a1e8a] underline">DATABASE_ANALYSIS.md</a></p>
+        </div>
+      </div>
+      <div class="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-[12.5px] text-amber-900 leading-relaxed">
+        <p><b>Nota técnica:</b> O arquivo <b>BANCO.rar</b> contém o banco <b>BANCO.FDB</b> (Firebird). Para integrá-lo ao ERP como fonte final de dados, é necessário extrair o .rar (usando <code>unrar</code> ou biblioteca de extração) e, se desejar, exportar as tabelas principais (CLIENTES, PRODUTOS, VENDAS, etc.) para CSV para importação automática no sistema.</p>
+        <p class="mt-2">Se quiser que eu crie o importador automático que lê o .rar diretamente no navegador (usando <code>libunrar-js</code>), ou que substitua os dados de demo (<code>defaultData</code>) por uma cópia do banco, me avise.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

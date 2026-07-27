@@ -779,3 +779,1064 @@ window.openModal = function(type,id=null){
   if(type==='usuario') return renderModalUsuario(id);
   if(_origOpenModal) return _origOpenModal(type,id);
 };
+// DIGICOPY ERP v3.1 - PATCH vendas aprimoradas + cliente codigo + login primeira vez + logo original handling
+(function(){
+  // Garantir codigos de clientes existentes
+  function ensureClienteCodigos(){
+    const sess = typeof getSession==='function' ? getSession() : null;
+    if(!sess) return;
+    let maxCode = 0;
+    db.clientes.forEach(c=>{ if(c.empresaId===sess.empresaId && c.codigo && c.codigo>maxCode) maxCode=c.codigo; });
+    db.clientes.forEach(c=>{
+      if(c.empresaId===sess.empresaId && !c.codigo){
+        maxCode++;
+        c.codigo = maxCode;
+      }
+    });
+    saveDB();
+  }
+
+  // Sobrescrever seedData para incluir codigo se precisar
+  const originalSeed = window.seedData;
+  window.seedData = function(force=false){
+    if(originalSeed) originalSeed(force);
+    // adicionar codigos
+    const sess = getSession();
+    if(sess){
+      let code=1;
+      db.clientes.filter(c=>c.empresaId===sess.empresaId).forEach(c=>{ if(!c.codigo) c.codigo=code++; });
+      // garantir produtos tem categoria Recarga
+      if(!db.produtos.find(p=>p.categoria==='Recarga')){
+        db.produtos.push({id:uid('prd'),empresaId:sess.empresaId,sku:'REC-TONER',nome:'Recarga de Toner HP 12A',categoria:'Recarga',fabricante:'DIGICOPY',estoque:999,estoqueMin:0,custo:25,preco:60,local:'-',status:'ativo',criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()});
+      }
+      saveDB();
+    }
+  };
+
+  // LOGIN - primeira vez só CNPJ
+  // Modifica showLogin para tentar auto-preencher CNPJ se já existe empresa padrão
+  const originalShowLogin = window.showLogin;
+  window.showLogin = function(){
+    const lastCnpj = localStorage.getItem('digicopy_last_cnpj');
+    if(lastCnpj){
+      // tenta setar pending como última empresa conhecida
+      const emp = db.empresas.find(e=>onlyDigits(e.cnpj)===onlyDigits(lastCnpj));
+      if(emp){
+        setPendingEmpresa(emp);
+      }
+    }
+    if(originalShowLogin) originalShowLogin();
+    // se tem pending, já mostra step usuario (CNPJ só primeira vez implicitamente lembrado)
+    const pending = getPendingEmpresa();
+    if(pending){
+      // se usuário já tem sessão? não, mas se tem pending e tem lastCnpj, mostra dica que CNPJ lembrado
+      const dica = document.getElementById('login-step-user');
+      if(dica){
+        // adiciona badge "CNPJ lembrado"
+      }
+    }
+  };
+  const originalDoLoginCNPJ = window.doLoginCNPJ;
+  window.doLoginCNPJ = function(){
+    const cnpjInput = document.getElementById('login-cnpj').value.trim();
+    if(cnpjInput){
+      localStorage.setItem('digicopy_last_cnpj', cnpjInput);
+    }
+    if(originalDoLoginCNPJ) originalDoLoginCNPJ();
+  };
+
+  // NOVA VENDA - redesign completo
+  window.novaVenda = function(){
+    const sess = getSession(); if(!sess) return;
+    ensureClienteCodigos();
+    // garante codigo
+    let maxCode=0;
+    db.clientes.filter(c=>c.empresaId===sess.empresaId).forEach(c=>{ if(c.codigo>maxCode) maxCode=c.codigo; });
+    // se algum sem codigo, atribui
+    db.clientes.filter(c=>c.empresaId===sess.empresaId && !c.codigo).forEach(c=>{ maxCode++; c.codigo=maxCode; });
+    saveDB();
+
+    document.getElementById('modal-title').innerText='Nova venda / Notinha - Busca aberta';
+    const modalBody = `
+    <div class="space-y-5">
+      <!-- CLIENTE - CAIXA ABERTA -->
+      <div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-4">
+        <label class="text-[11px] font-bold tracking-wide uppercase text-[#0a1e8a]">Cliente - Caixa aberta para pesquisar (código, nome, CPF/CNPJ, endereço, telefone)</label>
+        <div class="mt-2 relative">
+          <div class="relative">
+            <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#0a1e8a] text-[18px]"></i>
+            <input id="nv-cliente-search" oninput="searchClientesVenda(this.value)" placeholder="Digite código, nome, CPF/CNPJ, endereço, telefone... Ex: 1844, JOAO LUCAS, 45.123.678/0001-12, Rua Albino..." class="w-full h-[48px] pl-11 pr-4 rounded-xl border-2 border-[#0a1e8a]/20 bg-white focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13.5px] font-medium">
+            <button onclick="openModalClienteFromVenda()" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold flex items-center gap-1"><i class="ph ph-plus"></i> Novo cliente</button>
+          </div>
+          <div id="nv-cliente-results" class="mt-2 max-h-[260px] overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg hidden"></div>
+          <div id="nv-cliente-selecionado" class="mt-3 hidden rounded-xl bg-white border border-[#0a1e8a]/20 p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[12px]" id="nv-cli-avatar">JL</div>
+              <div>
+                <p class="font-bold text-[13px]" id="nv-cli-nome">Cliente</p>
+                <p class="text-[11px] text-slate-500" id="nv-cli-detalhes">Código • CPF • Endereço</p>
+              </div>
+            </div>
+            <button onclick="clearClienteVenda()" class="w-8 h-8 grid place-items-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"><i class="ph ph-x"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUTO - CAIXA FECHADA AUXILIAR + CAIXA ABERTA -->
+      <div class="rounded-[14px] border border-slate-200 p-4 bg-white">
+        <div class="flex items-center justify-between mb-3">
+          <label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">Adicionar produto - Selecione tipo (caixa fechada) + busque (caixa aberta)</label>
+          <span class="text-[10px] px-2 py-1 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold">2 caixas: fechada aux + aberta busca</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-1">
+            <label class="text-[11px] font-bold uppercase text-slate-500">Tipo (caixa fechada)</label>
+            <select id="nv-tipo-item" onchange="onTipoItemChange()" class="mt-1 w-full h-[44px] px-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-[13px] font-semibold">
+              <option value="produtos">Produtos / Itens</option>
+              <option value="recarga">Recarga</option>
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="text-[11px] font-bold uppercase text-slate-500">Buscar produto (caixa aberta)</label>
+            <div class="relative mt-1">
+              <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input id="nv-prod-search" oninput="searchProdutosVenda(this.value)" placeholder="Digite nome, código, ref... ex: TONER, CARTUCHO, RESET..." class="w-full h-[44px] pl-11 pr-[90px] rounded-xl border border-slate-200 bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13px]">
+              <button onclick="openModalProdutoFromVenda()" class="absolute right-1 top-1/2 -translate-y-1/2 h-[36px] px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">+ Novo</button>
+            </div>
+          </div>
+        </div>
+        <div id="nv-prod-results" class="mt-3 rounded-xl border border-slate-200 bg-white shadow-sm max-h-[280px] overflow-auto hidden"></div>
+        <div id="nv-itens" class="mt-4 space-y-2 max-h-[220px] overflow-auto border-t border-slate-100 pt-3"></div>
+        <div class="mt-3 flex justify-between items-center">
+          <span class="text-[12px] text-slate-500">Itens: <b id="nv-itens-count">0</b></span>
+          <div class="text-right"><p class="text-[11px] uppercase font-bold text-slate-500">Total notinha</p><b id="nv-total" class="text-[20px] text-[#0a1e8a]">R$ 0,00</b></div>
+        </div>
+      </div>
+
+      <!-- PAGAMENTO - só aparece quando for faturar -->
+      <div id="nv-pagamento-section" class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-4 hidden">
+        <div class="flex items-center justify-between">
+          <label class="text-[11px] font-bold tracking-wide uppercase text-[#0a1e8a]">Formas de pagamento (só aparece ao faturar)</label>
+          <span class="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-800 font-bold">Aparece só ao faturar</span>
+        </div>
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] font-bold uppercase text-slate-500">Forma de pagamento *</label>
+            <select id="nv-pag" onchange="onPagamentoChange()" class="mt-1 w-full h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px] font-medium">
+              <option value="">Selecione...</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="PIX">PIX à vista</option>
+              <option value="Cartão de crédito">Cartão de crédito</option>
+              <option value="Cartão de débito">Cartão de débito</option>
+              <option value="Boleto">Boleto</option>
+              <option value="A prazo">A prazo</option>
+              <option value="Conta">Conta (Transferência por conta)</option>
+            </select>
+          </div>
+          <div id="nv-vencimento-wrapper" class="hidden">
+            <label class="text-[11px] font-bold uppercase text-slate-500">Vencimento (A prazo) - escolha data</label>
+            <input id="nv-vencimento" type="date" class="mt-1 w-full h-[44px] px-3 rounded-xl border-2 border-amber-300 bg-amber-50 text-[13px]">
+            <p class="text-[11px] text-amber-700 mt-1">Ao selecionar "A prazo", escolha a data de vencimento aqui.</p>
+          </div>
+        </div>
+        <div id="nv-pag-detalhes" class="mt-3 text-[12px] text-slate-600"></div>
+      </div>
+
+      <!-- STATUS E DESCONTO -->
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="text-[11px] font-bold uppercase text-slate-500">Desconto R$</label><input id="nv-desc" type="number" step="0.01" value="0" oninput="updateVendaTotal()" class="mt-1 w-full h-[44px] px-3 rounded-xl border text-[13px]"></div>
+        <div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="nv-status" onchange="onStatusVendaChange()" class="mt-1 w-full h-[44px] px-3 rounded-xl border text-[13px] font-medium"><option value="orcamento">Orçamento</option><option value="aprovado">Aprovado</option><option value="faturado">Faturado</option><option value="aguardar">Aguardar</option></select></div>
+        <div class="flex items-end"><div class="w-full rounded-xl bg-[#0a1e8a] text-white p-3 text-center"><p class="text-[10px] uppercase font-bold tracking-wide opacity-70">Atendente</p><p class="font-bold text-[13px] mt-1" id="nv-atendente">KAUAN</p><p class="text-[10px] opacity-60 mt-1" id="nv-hora">00:00:00</p></div></div>
+      </div>
+
+      <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-3 text-[11px] text-[#0a1e8a] flex gap-2"><i class="ph ph-info text-[16px] mt-0.5"></i><div><b>Auditoria:</b> Venda será registrada como criada por <b id="nv-audit-user">-</b> com CNPJ <span id="nv-audit-cnpj">-</span>. Caixa aberta cliente busca por código, nome, CPF/CNPJ, endereço, telefone.</div></div>
+    </div>
+    `;
+    document.getElementById('modal-body').innerHTML = modalBody;
+    document.getElementById('modal-footer').innerHTML = `<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveVendaNova()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar notinha</button>`;
+
+    // sess already declared - reuse
+    document.getElementById('nv-atendente').innerText = (sess.usuarioNome||'').split(' ')[0].toUpperCase() || 'KAUAN';
+    document.getElementById('nv-hora').innerText = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('nv-audit-user').innerText = sess.usuarioNome;
+    document.getElementById('nv-audit-cnpj').innerText = sess.cnpj;
+    window.itensTemp = [];
+    window.clienteSelecionadoVenda = null;
+    window.searchClientesVenda = function(q){
+      const sess = getSession(); const resultsEl = document.getElementById('nv-cliente-results');
+      if(!q || q.length<1){ resultsEl.classList.add('hidden'); resultsEl.innerHTML=''; return; }
+      const low = q.toLowerCase();
+      const filtrados = db.clientes.filter(c=>c.empresaId===sess.empresaId && (
+        (c.codigo && String(c.codigo).includes(low)) ||
+        (c.nome && c.nome.toLowerCase().includes(low)) ||
+        (c.documento && c.documento.toLowerCase().includes(low)) ||
+        (c.endereco && c.endereco.toLowerCase().includes(low)) ||
+        (c.cidade && c.cidade.toLowerCase().includes(low)) ||
+        (c.telefone && c.telefone.toLowerCase().includes(low)) ||
+        (c.email && c.email.toLowerCase().includes(low))
+      )).slice(0,12);
+      if(!filtrados.length){ resultsEl.innerHTML = `<div class="p-4 text-center text-[12px] text-slate-500">Nenhum cliente encontrado para "${q}" <br><button onclick="openModalClienteFromVenda()" class="mt-2 h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">+ Novo cliente</button></div>`; resultsEl.classList.remove('hidden'); return; }
+      resultsEl.innerHTML = filtrados.map(c=>`
+        <div onclick="selectClienteVenda('${c.id}')" class="p-3 hover:bg-[#f8f9ff] cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${c.codigo||'--'}</div>
+            <div>
+              <p class="font-bold text-[13px] leading-tight group-hover:text-[#0a1e8a]">${c.nome}</p>
+              <p class="text-[11px] text-slate-500">${c.codigo ? 'Cód: '+c.codigo+' • ':''}${c.documento||''} • ${c.endereco||''} • ${c.telefone||''} • ${c.cidade||''}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-[11px] font-mono text-slate-400">${c.codigo||''}</p>
+            <i class="ph ph-arrow-right text-slate-300 group-hover:text-[#0a1e8a]"></i>
+          </div>
+        </div>
+      `).join('');
+      resultsEl.classList.remove('hidden');
+    };
+    window.selectClienteVenda = function(id){
+      const c = db.clientes.find(x=>x.id===id);
+      if(!c) return;
+      window.clienteSelecionadoVenda = c;
+      document.getElementById('nv-cliente-search').value = `${c.codigo||''} - ${c.nome}`;
+      document.getElementById('nv-cliente-results').classList.add('hidden');
+      document.getElementById('nv-cliente-selecionado').classList.remove('hidden');
+      document.getElementById('nv-cli-avatar').innerText = initials(c.nome);
+      document.getElementById('nv-cli-nome').innerText = c.nome;
+      document.getElementById('nv-cli-detalhes').innerText = `Cód: ${c.codigo||'-'} • ${c.documento||''} • ${c.endereco||''} • ${c.telefone||''} • ${c.cidade||''}/${c.estado||''}`;
+    };
+    window.clearClienteVenda = function(){
+      window.clienteSelecionadoVenda = null;
+      document.getElementById('nv-cliente-search').value='';
+      document.getElementById('nv-cliente-selecionado').classList.add('hidden');
+      document.getElementById('nv-cliente-results').classList.add('hidden');
+    };
+    window.openModalClienteFromVenda = function(){
+      // abre modal cliente mas mantém referência para voltar
+      const nomeDigitado = document.getElementById('nv-cliente-search').value;
+      openModal('cliente');
+      setTimeout(()=>{
+        const el = document.getElementById('f-cli-nome');
+        if(el && nomeDigitado) el.value = nomeDigitado;
+      },200);
+    };
+    window.onTipoItemChange = function(){
+      const tipo = document.getElementById('nv-tipo-item').value;
+      const searchEl = document.getElementById('nv-prod-search');
+      if(tipo==='recarga'){ searchEl.placeholder='Buscar recarga... ex: RECARGA HP, RECARGA 12A...'; }
+      else{ searchEl.placeholder='Buscar produto/itens... ex: TONER, CARTUCHO, RESET...'; }
+      // re-filtra
+      searchProdutosVenda(searchEl.value);
+    };
+    window.searchProdutosVenda = function(q){
+      const sess=getSession(); const tipo=document.getElementById('nv-tipo-item').value; const resultsEl=document.getElementById('nv-prod-results');
+      const low=(q||'').toLowerCase();
+      let lista = db.produtos.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo');
+      if(tipo==='recarga'){
+        lista = lista.filter(p=>p.categoria==='Recarga' || p.nome.toLowerCase().includes('recarga'));
+      }else{
+        // produtos/itens = tudo exceto recarga? ou todos? Vamos incluir todos exceto recarga para diferenciar, mas se busca contém recarga ainda mostra?
+        lista = lista.filter(p=>p.categoria!=='Recarga');
+      }
+      if(low){
+        lista = lista.filter(p=> 
+          (p.nome && p.nome.toLowerCase().includes(low)) ||
+          (p.sku && p.sku.toLowerCase().includes(low)) ||
+          (p.categoria && p.categoria.toLowerCase().includes(low)) ||
+          (p.fabricante && p.fabricante.toLowerCase().includes(low))
+        );
+      }
+      lista = lista.slice(0,15);
+      if(!lista.length){
+        resultsEl.innerHTML = `<div class="p-3 text-center text-[12px] text-slate-500">Nenhum produto em <b>${tipo}</b> para "${q||''}"<br><button onclick="openModalProdutoFromVenda()" class="mt-2 h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">+ Criar novo produto</button></div>`;
+        resultsEl.classList.remove('hidden');
+        return;
+      }
+      resultsEl.innerHTML = `
+        <div class="p-2 border-b bg-slate-50 flex items-center justify-between text-[11px] font-bold uppercase text-slate-500"><span>Pesquisar produto / serviço</span><span>${lista.length} resultados</span></div>
+        ${lista.map(p=>`
+          <div class="p-3 hover:bg-[#f8f9ff] cursor-pointer border-b border-slate-50 last:border-0 flex items-center justify-between group" onclick="selectProdutoVenda('${p.id}')">
+            <div class="flex-1">
+              <p class="font-bold text-[13px] leading-tight group-hover:text-[#0a1e8a]">${p.nome}</p>
+              <p class="text-[11px] text-slate-500">SKU: ${p.sku} • ${p.categoria} • ${p.fabricante} • Est: ${p.estoque}</p>
+              <p class="text-[11px] font-bold text-[#0a1e8a]">R$ ${p.preco.toFixed(2).replace('.',',')} • Criado por ${p.criadoPorNome||'-'}</p>
+            </div>
+            <div class="text-right ml-3">
+              <p class="text-[12px] font-bold">${fmtMoney(p.preco)}</p>
+              <p class="text-[11px] text-slate-400 font-mono">${p.estoque} un</p>
+              <button class="mt-1 w-7 h-7 grid place-items-center rounded-lg bg-[#0a1e8a] text-white"><i class="ph ph-plus"></i></button>
+            </div>
+          </div>
+        `).join('')}
+        <div class="p-2 flex gap-2"><button onclick="openModalProdutoFromVenda()" class="flex-1 h-9 rounded-xl bg-white border border-[#0a1e8a]/20 text-[#0a1e8a] text-[11px] font-bold">+ Novo produto (foco notinha)</button><button onclick="document.getElementById('nv-prod-results').classList.add('hidden')" class="h-9 px-4 rounded-xl bg-slate-900 text-white text-[11px] font-bold">Ok</button></div>
+      `;
+      resultsEl.classList.remove('hidden');
+    };
+    window.openModalProdutoFromVenda = function(){
+      const termo = document.getElementById('nv-prod-search').value;
+      const tipo = document.getElementById('nv-tipo-item').value;
+      // abre modal produto com foco em adicionar na notinha
+      openModal('produto');
+      setTimeout(()=>{
+        const nomeEl = document.getElementById('f-prd-nome');
+        const catEl = document.getElementById('f-prd-cat');
+        if(nomeEl && termo) nomeEl.value = termo.toUpperCase();
+        if(catEl){
+          if(tipo==='recarga') catEl.value='Recarga';
+          else catEl.value='Suprimento';
+        }
+      },200);
+    };
+    window.selectProdutoVenda = function(id){
+      const p = db.produtos.find(x=>x.id===id); if(!p) return;
+      // verificar se já existe nos itensTemp
+      let existing = window.itensTemp.find(i=>i.produtoId===id);
+      if(existing){ existing.qtd++; existing.subtotal = existing.qtd*existing.preco; }
+      else{ window.itensTemp.push({produtoId:id, qtd:1, preco:p.preco, subtotal:p.preco}); }
+      renderItensVenda();
+      updateVendaTotal();
+      // não esconde resultados para continuar adicionando
+    };
+    window.renderItensVenda = function(){
+      const container = document.getElementById('nv-itens');
+      if(!window.itensTemp.length){ container.innerHTML = '<p class="text-[12px] text-slate-400 text-center py-4">Nenhum item adicionado. Use a caixa aberta acima para buscar.</p>'; document.getElementById('nv-itens-count').innerText='0'; return; }
+      container.innerHTML = window.itensTemp.map((it,idx)=>{
+        const p=db.produtos.find(x=>x.id===it.produtoId);
+        return `<div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0a1e8a]/30 transition">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${it.qtd}</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-[12.5px] truncate">${p?.nome||'Produto'}</p>
+              <p class="text-[11px] text-slate-500">${p?.sku||''} • ${fmtMoney(it.preco)} un • Criado por ${p?.criadoPorNome||'-'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1">
+              <button onclick="alterarQtdItem(${idx},-1)" class="w-7 h-7 grid place-items-center rounded-lg bg-slate-100 hover:bg-slate-200"><i class="ph ph-minus"></i></button>
+              <span class="w-8 text-center font-bold text-[12px]">${it.qtd}</span>
+              <button onclick="alterarQtdItem(${idx},1)" class="w-7 h-7 grid place-items-center rounded-lg bg-slate-100 hover:bg-slate-200"><i class="ph ph-plus"></i></button>
+            </div>
+            <b class="text-[12px] min-w-[70px] text-right">${fmtMoney(it.subtotal)}</b>
+            <button onclick="removerItemVenda(${idx})" class="w-7 h-7 grid place-items-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"><i class="ph ph-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('nv-itens-count').innerText = window.itensTemp.length;
+    };
+    window.alterarQtdItem = function(idx,delta){
+      const it = window.itensTemp[idx]; if(!it) return;
+      it.qtd += delta;
+      if(it.qtd<=0){ window.itensTemp.splice(idx,1); }
+      else{ it.subtotal = it.qtd*it.preco; }
+      renderItensVenda(); updateVendaTotal();
+    };
+    window.removerItemVenda = function(idx){ window.itensTemp.splice(idx,1); renderItensVenda(); updateVendaTotal(); };
+    window.updateVendaTotal = function(){
+      const sub = window.itensTemp.reduce((s,i)=>s+i.subtotal,0);
+      const desc = parseFloat(document.getElementById('nv-desc').value)||0;
+      const total = sub - desc;
+      document.getElementById('nv-total').innerText = fmtMoney(total);
+    };
+    window.onStatusVendaChange = function(){
+      const status = document.getElementById('nv-status').value;
+      const pagSection = document.getElementById('nv-pagamento-section');
+      if(status==='faturado'){
+        pagSection.classList.remove('hidden');
+      }else{
+        pagSection.classList.add('hidden');
+      }
+    };
+    window.onPagamentoChange = function(){
+      const pag = document.getElementById('nv-pag').value;
+      const vencWrapper = document.getElementById('nv-vencimento-wrapper');
+      const detalhes = document.getElementById('nv-pag-detalhes');
+      if(pag==='A prazo'){
+        vencWrapper.classList.remove('hidden');
+        detalhes.innerHTML = '<p>Selecione a data de vencimento para pagamento a prazo.</p>';
+      }else{
+        vencWrapper.classList.add('hidden');
+        if(pag==='Conta (Transferência por conta)'){
+          detalhes.innerHTML = '<p>Transferência bancária - informe conta na descrição da venda se necessário.</p>';
+        }else if(pag){
+          detalhes.innerHTML = `<p>Forma selecionada: <b>${pag}</b></p>`;
+        }else{
+          detalhes.innerHTML = '';
+        }
+      }
+    };
+    window.saveVendaNova = function(){
+      const sess=getSession();
+      if(!window.clienteSelecionadoVenda) return toast('Selecione o cliente pela caixa aberta','error');
+      if(!window.itensTemp.length) return toast('Adicione pelo menos um produto pela caixa aberta','error');
+      const status = document.getElementById('nv-status').value;
+      let pagamento = document.getElementById('nv-pag').value;
+      let vencimento = null;
+      if(status==='faturado'){
+        if(!pagamento) return toast('Selecione forma de pagamento (aparece ao faturar)','error');
+        if(pagamento==='A prazo'){
+          vencimento = document.getElementById('nv-vencimento').value;
+          if(!vencimento) return toast('Selecione a data de vencimento para A prazo','error');
+        }
+      }
+      const desc = parseFloat(document.getElementById('nv-desc').value)||0;
+      const total = window.itensTemp.reduce((s,i)=>s+i.subtotal,0) - desc;
+      const venda = {
+        id:uid('vda'), empresaId:sess.empresaId,
+        numero:'VD-'+new Date().getFullYear()+'-'+String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1).padStart(4,'0'),
+        clienteId: window.clienteSelecionadoVenda.id,
+        data:new Date().toISOString(),
+        itens:[...window.itensTemp],
+        desconto:desc,
+        total,
+        formaPagamento: pagamento || 'Não faturado',
+        vencimento: vencimento || null,
+        status,
+        criadoPor:sess.usuarioId,
+        criadoPorNome:sess.usuarioNome,
+        criadoEm:new Date().toISOString()
+      };
+      // baixa estoque
+      venda.itens.forEach(it=>{
+        const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId);
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga') p.estoque -= it.qtd;
+      });
+      db.vendas.push(venda);
+      logAction('venda','criar',venda.id,`Venda ${venda.numero} cliente ${window.clienteSelecionadoVenda.nome} total ${fmtMoney(total)} por ${sess.usuarioNome} - Código cliente ${window.clienteSelecionadoVenda.codigo} - Pagamento ${pagamento||'N/A'}`);
+      if(status==='faturado'){
+        db.contasReceber.push({
+          id:uid('cr'), empresaId:sess.empresaId, origem:'venda', clienteId:venda.clienteId,
+          descricao:`Venda ${venda.numero} - ${window.clienteSelecionadoVenda.nome} - ${pagamento}${vencimento?' - Venc '+fmtDate(vencimento):''}`,
+          valor:total, vencimento: vencimento ? new Date(vencimento).toISOString() : new Date(Date.now()+1000*60*60*24*14).toISOString(),
+          pagamentoData:null, status:'aberto', contratoId:null, leituraId:null, vendaId:venda.id,
+          criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome, formaPagamento:pagamento
+        });
+      }
+      saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast(`Notinha ${venda.numero} salva por ${sess.usuarioNome} - Cliente ${window.clienteSelecionadoVenda.codigo}`,'success');
+      // abrir impressão notinha no formato da imagem anexada
+      setTimeout(()=>{imprimirNotinha(venda.id);},500);
+    };
+    // inicia com clientes e produtos vazios mas com focus
+    setTimeout(()=>{const el=document.getElementById('nv-cliente-search'); if(el) el.focus();},200);
+    document.getElementById('modal-root').classList.remove('hidden');
+    window.modalContext={type:'venda'};
+  };
+
+  // Sobrescrever showVenda e imprimir para formato notinha da imagem
+  const originalShowVenda = window.showVenda;
+  window.showVenda = function(id){
+    if(originalShowVenda) originalShowVenda(id);
+    // adiciona botão imprimir notinha no detalhe
+    setTimeout(()=>{
+      const detail = document.getElementById('venda-detail');
+      if(detail && !detail.innerHTML.includes('Imprimir notinha')){
+        const btn = document.createElement('button');
+        btn.className='mt-3 w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]';
+        btn.innerHTML='<i class="ph ph-printer mr-1"></i> Imprimir notinha (formato imagem anexada)';
+        btn.onclick=()=>imprimirNotinha(id);
+        detail.appendChild(btn);
+      }
+    },300);
+  };
+
+  window.imprimirNotinha = function(vendaId){
+    const sess=getSession(); const v=db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId); if(!v) return;
+    const cli=db.clientes.find(c=>c.id===v.clienteId);
+    const empresa=db.empresas.find(e=>e.id===sess.empresaId);
+    const config=db.config.empresa;
+    const win = window.open('', '_blank');
+    const html = `
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Notinha Venda ${v.numero}</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#222; margin:0; padding:20px;}
+  .header{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #222; padding-bottom:10px;}
+  .logo{width:80px; height:80px; background:#eee; display:grid; place-items:center; font-weight:bold; border:1px solid #ccc;}
+  .center{text-align:center; flex:1;}
+  .center h1{margin:0; font-size:20px;}
+  .center h2{margin:2px 0; font-size:12px; font-weight:normal;}
+  .right{text-align:right; font-size:11px; line-height:1.3;}
+  table{width:100%; border-collapse:collapse; margin-top:8px; font-size:11px;}
+  th{background:#c0c0c0; text-align:left; padding:4px; font-size:11px;}
+  td{padding:4px; border-bottom:1px solid #ddd;}
+  .green-bar{background:#2e8b57; color:white; text-align:center; padding:8px; font-size:18px; font-weight:bold; margin-top:12px;}
+  .totais{display:flex; gap:10px; margin-top:10px;}
+  .box{border:1px solid #aaa; padding:8px; flex:1; text-align:center;}
+  .box b{font-size:16px; display:block;}
+  .footer{margin-top:60px; display:flex; justify-content:space-between; font-size:11px;}
+  .footer .line{border-top:1px solid #222; width:300px; text-align:center; padding-top:4px;}
+  .small{font-size:10px; color:#555;}
+  @media print{body{padding:0} button{display:none}}
+</style></head><body>
+<div class="header">
+  <div class="logo"><img src="./logo.png" style="max-width:70px; max-height:70px; object-fit:contain"><br>Logo</div>
+  <div class="center">
+    <h1>DIGICOPY</h1>
+    <h2>${empresa?.nome||config.nome||'DENIVALDO COM. DE ELET. LOCACOES E MANU LTDA'}</h2>
+    <div class="small">${empresa?.cnpj||sess.cnpj} - ${sess.empresaNome}</div>
+    <div class="small">Atendente: ${v.criadoPorNome||sess.usuarioNome} - ${fmtDateTime(v.data)}</div>
+  </div>
+  <div class="right">
+    ${empresa?.cnpj||sess.cnpj}<br>
+    ${config.fone||''}<br>
+    Avenida Pedro Alves da Silva 97<br>
+    Padre Eustáquio<br>
+    JANAUBA - MG
+  </div>
+</div>
+
+<table>
+  <tr><th>Codigo</th><th>Nome</th><th>Nome Fantasia</th><th>Fone</th><th>Fone 2</th></tr>
+  <tr><td>${cli?.codigo||''}</td><td>${cli?.nome||''}</td><td>${cli?.nome||''}</td><td>${cli?.telefone||''}</td><td></td></tr>
+</table>
+<table>
+  <tr><th>Endereço</th><th>Nº</th><th>Complemento</th><th>Bairro</th><th>CPF/CNPJ</th><th>RG/Inc. Est</th></tr>
+  <tr><td>${cli?.endereco||''}</td><td>NUMERO</td><td></td><td>${cli?.cidade||''} - Veredas</td><td>${cli?.documento||''}</td><td></td></tr>
+</table>
+<table>
+  <tr><th>Contato</th><th>Cidade</th><th>UF</th><th>CEP</th><th>Email</th></tr>
+  <tr><td>${cli?.nome||''}</td><td>${cli?.cidade||'JANAUBA'}</td><td>${cli?.estado||'MG'}</td><td>${cli?.cep||'39440-001'}</td><td>${cli?.email||''}</td></tr>
+</table>
+
+<div class="green-bar">Venda ${v.numero.replace('VD-','')}</div>
+
+<table>
+  <tr><th>PARCELA</th><th>CÓD.</th><th>VALOR</th><th>VENCIMENTO</th><th>PAGAMENTO</th><th>DESCRIÇÃO</th><th>DOCUMENTO</th></tr>
+  <tr><td>1/1</td><td>${v.id.slice(-5)}</td><td>${fmtMoney(v.total)}</td><td>${v.vencimento?fmtDate(v.vencimento):fmtDate(new Date(Date.now()+1000*60*60*24*14))}</td><td>${v.formaPagamento||''}</td><td>${v.formaPagamento||''}</td><td></td></tr>
+</table>
+
+<table>
+  <tr><th>CÓD.</th><th>DESCRIÇÃO</th><th>UNITÁRIO</th><th>QTD.</th><th>TOTAL</th><th>SITUAÇÃO</th><th>OBS.</th></tr>
+  ${v.itens.map(it=>{
+    const p=db.produtos.find(pr=>pr.id===it.produtoId);
+    return `<tr><td>${p?.codigo||p?.sku||it.produtoId.slice(-4)}</td><td>${p?.nome||'Produto'} - criado por ${p?.criadoPorNome||'-'}</td><td>${fmtMoney(it.preco)}</td><td>${it.qtd}</td><td>${fmtMoney(it.subtotal)}</td><td>PRODUTO</td><td>NENHUMA</td></tr>`;
+  }).join('')}
+</table>
+
+<div class="totais">
+  <div class="box"><b>${v.numero.replace('VD-','')}</b><br><span class="small">AGUARDAR</span></div>
+  <div class="box"><b>${fmtDate(v.data)}</b><br><span class="small">${new Date(v.data).toLocaleTimeString('pt-BR')}</span></div>
+  <div class="box" style="text-align:left; font-size:11px;">Acré. R$ 0,00 Frete R$ 0,00<br>Desc. R$ ${v.desconto||0} Atendente ${v.criadoPorNome||sess.usuarioNome}<br>Desc. 0% Entregar até</div>
+  <div class="box"><b>${fmtMoney(v.total)}</b><br><span class="small">${v.formaPagamento||''}</span></div>
+</div>
+
+<div class="footer">
+  <div>Recebi: ___/___/______ às ___:___ <br><br><div class="line">NOME POR EXTENSO</div></div>
+  <div style="text-align:center;"><br><br><div class="small">Criado por ${v.criadoPorNome||sess.usuarioNome} • CNPJ ${sess.cnpj} • Código cliente ${cli?.codigo||''}</div></div>
+</div>
+
+<div class="small" style="margin-top:20px; border-top:1px dashed #aaa; padding-top:8px;">
+  <b>Auditoria:</b> Venda criada por ${v.criadoPorNome} (${v.criadoPor}) em ${fmtDateTime(v.criadoEm||v.data)} - Empresa ${sess.empresaNome} CNPJ ${sess.cnpj} - Atendente ${v.criadoPorNome} - Forma pagamento ${v.formaPagamento} - Cliente código ${cli?.codigo}
+</div>
+
+<button onclick="window.print()" style="margin-top:20px; padding:10px 20px; background:#0a1e8a; color:white; border:0; border-radius:8px; cursor:pointer;">Imprimir</button>
+<button onclick="window.close()" style="margin-top:20px; margin-left:10px; padding:10px 20px; background:white; border:1px solid #ccc; border-radius:8px; cursor:pointer;">Fechar</button>
+</body></html>
+    `;
+    win.document.write(html);
+    win.document.close();
+    logAction('venda','imprimir_notinha',vendaId,`Impressão notinha ${v.numero} por ${sess.usuarioNome}`);
+    saveDB();
+  };
+
+  // Garantir que ao criar cliente, gera codigo sequencial
+  const originalSaveCliente = window.saveCliente;
+  window.saveCliente = function(){
+    const sess=getSession();
+    const isNew = !window.modalContext?.id;
+    if(isNew){
+      const maxCode = Math.max(0, ...db.clientes.filter(c=>c.empresaId===sess.empresaId).map(c=>c.codigo||0));
+      // temporariamente armazena para uso no payload
+      window._nextCodigoCliente = maxCode+1;
+    }
+    // Chama original
+    if(originalSaveCliente) {
+      // interceptar dentro da original: vamos fazer override completo aqui para garantir codigo
+      const id=window.modalContext?.id;
+      const payload={
+        empresaId:sess.empresaId,
+        codigo: isNew ? window._nextCodigoCliente : undefined,
+        nome:document.getElementById('f-cli-nome').value.trim(),
+        documento:document.getElementById('f-cli-doc').value.trim(),
+        tipo:document.getElementById('f-cli-tipo').value,
+        email:document.getElementById('f-cli-email').value.trim(),
+        telefone:document.getElementById('f-cli-tel').value.trim(),
+        endereco:document.getElementById('f-cli-end').value.trim(),
+        cidade:document.getElementById('f-cli-cidade').value.trim(),
+        estado:document.getElementById('f-cli-estado').value.trim(),
+        cep:document.getElementById('f-cli-cep').value.trim(),
+        status:document.getElementById('f-cli-status').value
+      };
+      if(!payload.nome) return toast('Informe nome','error');
+      if(id){
+        const existing=db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
+        // manter codigo existente
+        payload.codigo = existing.codigo;
+        Object.assign(existing,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
+        logAction('cliente','editar',id,`Editado cliente ${payload.nome} código ${payload.codigo}`);
+      }else{
+        const novo={id:uid('cli'),...payload,mensalidade:0,criadoEm:new Date().toISOString(),criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome};
+        db.clientes.push(novo);
+        logAction('cliente','criar',novo.id,`Criado cliente ${novo.nome} código ${novo.codigo} por ${sess.usuarioNome}`);
+      }
+      saveDB(); renderClientes(); closeModal(); toast(`Cliente salvo código ${payload.codigo||''} por ${sess.usuarioNome}`,'success'); buildNav(); renderDashboard(); renderAuditoria();
+      // Se foi chamado de venda, selecionar automaticamente
+      if(window.clienteSelecionadoVenda===null || window.novaVenda){
+        // se modal cliente foi aberto a partir da venda, tenta auto selecionar
+        const novoOuEdit = db.clientes.find(c=>c.empresaId===sess.empresaId && c.nome===payload.nome);
+        if(novoOuEdit && window.selectClienteVenda){
+          setTimeout(()=>selectClienteVenda(novoOuEdit.id),300);
+        }
+      }
+      return;
+    }
+  };
+
+  // Patch para remover area "remover.png" - se for alguma div com texto remover, esconde
+  // O usuário disse "isso da imagem anexada escrita remover pode remover essa area"
+  // Vamos ocultar qualquer elemento com texto "RECURSOS" ou "FAQ, Suporte, Email Marketing, Mapa, Agenda" que são do exemplo SisPrinter que não queremos
+  // Nosso sistema já não tem essas áreas, mas garantimos que view-config não mostra nada com "remover"
+  // Se houver elemento com id "remover", esconder
+  setTimeout(()=>{
+    document.querySelectorAll('*').forEach(el=>{
+      if(el.textContent && el.textContent.trim().toLowerCase()==='remover'){
+        const parent = el.closest('div');
+        if(parent) parent.style.display='none';
+      }
+    });
+  },1000);
+
+  console.log('PATCH vendas v3.1 carregado - cliente codigo, busca aberta, pagamento só ao faturar, tipo produto/recarga');
+})();
+// EVOLUÇÃO PATCH v3.2 - Implementa itens acumulados TODO
+// 1. CNPJ busca automática cliente
+// 2. Empresas para PDF notinha (cadastro separado)
+// 3. Chamados branco/verde + filtros avançados
+// 4. Vendas lista detalhada + Orçamentos PDF
+// 5. Contratos franquia exemplo 3000 copias R$120
+
+// Helper CNPJ busca
+async function buscarCNPJAutomatico(cnpjRaw){
+  const cnpj = onlyDigits(cnpjRaw);
+  if(cnpj.length!==14){ toast('CNPJ deve ter 14 dígitos','error'); return; }
+  const btn = document.getElementById('btn-buscar-cnpj');
+  if(btn){ btn.innerHTML='<i class="ph ph-spinner animate-spin"></i> Buscando...'; btn.disabled=true; }
+  try{
+    const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+    if(!resp.ok) throw new Error('CNPJ não encontrado na BrasilAPI');
+    const data = await resp.json();
+    // Preenche campos do modal cliente
+    const setVal = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+    setVal('f-cli-nome', data.razao_social || data.nome_fantasia || '');
+    setVal('f-cli-end', (data.logradouro||'') + (data.numero?' , '+data.numero:'') + (data.complemento?' - '+data.complemento:''));
+    // tentar separar cidade, estado, cep, bairro
+    document.getElementById('f-cli-cidade').value = data.municipio || '';
+    document.getElementById('f-cli-estado').value = data.uf || '';
+    document.getElementById('f-cli-cep').value = data.cep || '';
+    // telefone
+    if(data.ddd_telefone_1) setVal('f-cli-tel', `(${data.ddd_telefone_1.slice(0,2)}) ${data.ddd_telefone_1.slice(2)}`);
+    if(data.email) setVal('f-cli-email', data.email);
+    // Salva dados extras em campos ocultos ou no próprio objeto
+    window._ultimoCNPJData = data;
+    toast(`CNPJ encontrado: ${data.razao_social} - ${data.municipio}/${data.uf}`,'success');
+    logAction('cliente','buscar_cnpj',cnpj,`Busca CNPJ ${cnpj} retornou ${data.razao_social}`);
+  }catch(e){
+    console.error(e);
+    toast('Erro ao buscar CNPJ: '+e.message+'. Preencha manual.','error');
+  }finally{
+    if(btn){ btn.innerHTML='<i class="ph ph-magnifying-glass"></i> Buscar CNPJ'; btn.disabled=false; }
+  }
+}
+
+// Sobrescreve renderModalCliente para incluir busca CNPJ e código
+(function(){
+  const origRenderModalCliente = window.renderModalCliente;
+  window.renderModalCliente = function(id){
+    const sess=getSession(); const isEdit=!!id;
+    const c=isEdit?db.clientes.find(x=>x.id===id && x.empresaId===sess.empresaId):{nome:'',documento:'',tipo:'PJ',email:'',telefone:'',endereco:'',cidade:'',estado:'SP',cep:'',status:'ativo',codigo:''};
+    const nextCodigo = Math.max(0,...db.clientes.filter(x=>x.empresaId===sess.empresaId).map(x=>x.codigo||0))+1;
+    document.getElementById('modal-title').innerText=isEdit?`Editar cliente #${c.codigo||''}`:`Novo cliente #${nextCodigo}`;
+    document.getElementById('modal-body').innerHTML=`
+      <div class="space-y-4">
+        <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-3 flex gap-3">
+          <div class="flex-1">
+            <label class="text-[11px] font-bold uppercase text-[#0a1e8a]">CNPJ para busca automática *</label>
+            <div class="mt-1 flex gap-2">
+              <input id="f-cli-doc" value="${c.documento||''}" placeholder="00.000.000/0000-00" class="flex-1 h-11 px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white font-mono text-[13px]">
+              <button id="btn-buscar-cnpj" onclick="buscarCNPJAutomatico(document.getElementById('f-cli-doc').value)" class="h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px] flex items-center gap-1.5"><i class="ph ph-magnifying-glass"></i> Buscar CNPJ</button>
+            </div>
+            <p class="text-[11px] text-[#0a1e8a]/70 mt-1">Digite CNPJ e clique em Buscar CNPJ para preencher automaticamente razão social, endereço, cidade, UF, CEP, telefone e email via BrasilAPI.</p>
+          </div>
+          <div class="w-[90px] shrink-0">
+            <label class="text-[11px] font-bold uppercase text-slate-500">Código</label>
+            <input value="${c.codigo||nextCodigo}" disabled class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-100 font-mono font-bold text-[14px] text-center">
+            <p class="text-[10px] text-slate-400 mt-1 text-center">Sequencial</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Razão social / Nome *</label><input id="f-cli-nome" value="${c.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Tipo</label><select id="f-cli-tipo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${c.tipo==='PJ'?'selected':''}>PJ</option><option ${c.tipo==='PF'?'selected':''}>PF</option></select></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Nome Fantasia</label><input id="f-cli-fantasia" value="${c.fantasia||''}" placeholder="Fantasia" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">E-mail</label><input id="f-cli-email" value="${c.email||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Telefone / Celular</label><input id="f-cli-tel" value="${c.telefone||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div class="md:col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">Endereço completo</label><input id="f-cli-end" value="${c.endereco||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Cidade</label><input id="f-cli-cidade" value="${c.cidade||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+          <div class="grid grid-cols-3 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Estado</label><input id="f-cli-estado" value="${c.estado||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="col-span-2"><label class="text-[11px] font-bold uppercase text-slate-500">CEP</label><input id="f-cli-cep" value="${c.cep||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="f-cli-status" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="ativo" ${c.status==='ativo'?'selected':''}>Ativo</option><option value="inativo" ${c.status==='inativo'?'selected':''}>Inativo</option><option value="inadimplente" ${c.status==='inadimplente'?'selected':''}>Inadimplente</option></select></div>
+          <div><label class="text-[11px] font-bold uppercase text-slate-500">Contato</label><input id="f-cli-contato" value="${c.contato||''}" placeholder="Pessoa contato" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+        </div>
+        <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-3 text-[11px] text-[#0a1e8a]"><i class="ph ph-info"></i> Código sequencial será <b>#${c.codigo||nextCodigo}</b>. Criado por <b>${sess.usuarioNome}</b> será auditado. Busca CNPJ usa BrasilAPI.</div>
+      </div>`;
+    document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveCliente()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar cliente'}</button>`;
+  };
+})();
+
+// Empresas para PDF notinha - CRUD separado, usado no cabeçalho da notinha
+function renderEmpresas(){
+  const sess=getSession(); if(!sess) return;
+  const tbody=document.getElementById('tbody-empresas');
+  if(!tbody) return;
+  const list=db.empresas.filter(e=>e.id===sess.empresaId || true); // mostra todas empresas do CNPJ logado + outras? Mostrar todas para demo
+  tbody.innerHTML=list.map(emp=>`
+    <tr class="hover:bg-slate-50">
+      <td class="px-5 py-3"><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${emp.cnpj}</p><p class="font-semibold text-[13px]">${emp.nome}</p><p class="text-[11px] text-slate-500">${emp.fantasia||''}</p></td>
+      <td class="px-5 py-3"><p class="text-[12px]">${emp.logradouro||''} ${emp.numero||''} ${emp.bairro||''}</p><p class="text-[11px] text-slate-500">${emp.municipio||''}/${emp.uf||''} - ${emp.cep||''}</p></td>
+      <td class="px-5 py-3"><p class="text-[12px]">${emp.telefone||''}</p><p class="text-[11px] text-slate-500">${emp.email||''}</p></td>
+      <td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-[#e8eaf8] text-[#0a1e8a] text-[11px] font-bold">${emp.id===sess.empresaId?'Empresa Logada':''}</span></td>
+      <td class="px-5 py-3"><div class="flex gap-1"><button onclick="editarEmpresa('${emp.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="usarEmpresaNotinha('${emp.id}')" class="h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">Usar na Notinha</button></div></td>
+    </tr>
+  `).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhuma empresa</td></tr>';
+}
+function editarEmpresa(id){
+  const emp=db.empresas.find(e=>e.id===id);
+  if(!emp) return;
+  document.getElementById('modal-root').classList.remove('hidden');
+  document.getElementById('modal-title').innerText='Editar empresa para PDF notinha';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">CNPJ</label><input id="emp-cnpj" value="${emp.cnpj||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha CNPJ</label><input id="emp-senha" type="password" value="${emp.senha||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Razão social</label><input id="emp-nome" value="${emp.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Fantasia</label><input id="emp-fantasia" value="${emp.fantasia||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Logradouro</label><input id="emp-log" value="${emp.logradouro||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Número</label><input id="emp-num" value="${emp.numero||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
+      <div class="grid grid-cols-3 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Bairro</label><input id="emp-bairro" value="${emp.bairro||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Município</label><input id="emp-mun" value="${emp.municipio||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">UF</label><input id="emp-uf" value="${emp.uf||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">CEP</label><input id="emp-cep" value="${emp.cep||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Telefone</label><input id="emp-tel" value="${emp.telefone||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveEmpresaEdit('${emp.id}')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button>`;
+  window.modalContext={type:'empresa',id};
+}
+function saveEmpresaEdit(id){
+  const emp=db.empresas.find(e=>e.id===id);
+  if(!emp) return;
+  emp.cnpj=document.getElementById('emp-cnpj').value.trim();
+  emp.cnpjDigits=onlyDigits(emp.cnpj);
+  emp.senha=document.getElementById('emp-senha').value.trim();
+  emp.nome=document.getElementById('emp-nome').value.trim();
+  emp.fantasia=document.getElementById('emp-fantasia').value.trim();
+  emp.logradouro=document.getElementById('emp-log').value.trim();
+  emp.numero=document.getElementById('emp-num').value.trim();
+  emp.bairro=document.getElementById('emp-bairro').value.trim();
+  emp.municipio=document.getElementById('emp-mun').value.trim();
+  emp.uf=document.getElementById('emp-uf').value.trim();
+  emp.cep=document.getElementById('emp-cep').value.trim();
+  emp.telefone=document.getElementById('emp-tel').value.trim();
+  saveDB(); renderEmpresas(); closeModal(); toast('Empresa atualizada para notinha','success');
+}
+function usarEmpresaNotinha(id){
+  const emp=db.empresas.find(e=>e.id===id);
+  if(!emp) return;
+  localStorage.setItem('digicopy_empresa_notinha', JSON.stringify(emp));
+  toast(`Empresa ${emp.fantasia||emp.nome} selecionada para PDF notinha`,'success');
+}
+
+// Patch para impressão notinha usar empresa selecionada da tela Empresas
+(function(){
+  const origImprimir = window.imprimirNotinha;
+  window.imprimirNotinha = function(vendaId){
+    // se tem empresa notinha selecionada, usa ela no cabeçalho
+    const empNotinhaRaw = localStorage.getItem('digicopy_empresa_notinha');
+    if(empNotinhaRaw){
+      try{
+        const empSel = JSON.parse(empNotinhaRaw);
+        // injeta temporariamente no db.config para PDF usar?
+        const prevConfig = JSON.parse(JSON.stringify(db.config.empresa));
+        // sobrescreve temporariamente
+        db.config.empresa.nome = empSel.nome;
+        db.config.empresa.cnpj = empSel.cnpj;
+        db.config.empresa.fone = empSel.telefone||prevConfig.fone;
+        // guarda prev para restaurar depois
+        window._prevConfigEmpresa = prevConfig;
+      }catch{}
+    }
+    if(origImprimir) origImprimir(vendaId);
+    // restaura após 2s
+    setTimeout(()=>{
+      if(window._prevConfigEmpresa){
+        db.config.empresa = window._prevConfigEmpresa;
+        window._prevConfigEmpresa=null;
+      }
+    },2000);
+  };
+})();
+
+// CHAMADOS - branco não resolvido verde resolvido + filtros avançados
+(function(){
+  const origRenderOs = window.renderOs;
+  window.renderOs = function(){
+    // chama original que já faz kanban, mas vamos sobrescrever lista para branco/verde
+    if(origRenderOs) origRenderOs();
+    // após original, pinta linhas conforme status
+    const sess=getSession(); if(!sess) return;
+    const tbody=document.getElementById('tbody-os');
+    if(!tbody) return;
+    const rows=tbody.querySelectorAll('tr');
+    rows.forEach(row=>{
+      const statusCell=row.querySelector('td:nth-child(5) span');
+      if(!statusCell) return;
+      const txt=statusCell.textContent.toLowerCase();
+      if(txt.includes('aberto')||txt.includes('em atendimento')||txt.includes('aguardando')){
+        row.classList.add('bg-white');
+        row.classList.remove('bg-emerald-50');
+      }else if(txt.includes('concluido')){
+        row.classList.add('bg-emerald-50');
+        row.classList.add('border-l-4');
+        row.classList.add('border-l-emerald-500');
+      }
+    });
+  };
+  // Busca avançada chamados: nome fantasia, celular, cidade, endereço, código cliente
+  const origHandleSearch = window.handleGlobalSearch;
+  // vamos sobrescrever renderOs para filtrar mais campos
+  const origRenderOs2 = window.renderOs;
+  // Já temos renderOs acima, mas vamos adicionar filtro extra na busca
+  window.searchChamadosAvancada = function(q){
+    const sess=getSession(); if(!sess) return;
+    const low=q.toLowerCase();
+    return db.os.filter(o=>{
+      if(o.empresaId!==sess.empresaId) return false;
+      const cli=db.clientes.find(c=>c.id===o.clienteId);
+      if(!cli) return false;
+      return (
+        (cli.nome&&cli.nome.toLowerCase().includes(low)) ||
+        (cli.fantasia&&cli.fantasia.toLowerCase().includes(low)) ||
+        (cli.telefone&&cli.telefone.toLowerCase().includes(low)) ||
+        (cli.cidade&&cli.cidade.toLowerCase().includes(low)) ||
+        (cli.endereco&&cli.endereco.toLowerCase().includes(low)) ||
+        (cli.codigo&&String(cli.codigo).includes(low)) ||
+        (cli.documento&&cli.documento.toLowerCase().includes(low)) ||
+        (o.numero&&o.numero.toLowerCase().includes(low)) ||
+        (o.descricao&&o.descricao.toLowerCase().includes(low))
+      );
+    });
+  };
+  // Override renderOs to use busca avançada quando digitado em search-os
+  window.renderOs = function(){
+    const sess=getSession(); if(!sess) return;
+    const searchInput=document.getElementById('search-os');
+    const search=searchInput?searchInput.value.toLowerCase():'';
+    const status=document.getElementById('filter-os-status')?.value||'';
+    let list;
+    if(search && search.length>=2){
+      list=window.searchChamadosAvancada(search);
+    }else{
+      list=db.os.filter(o=>o.empresaId===sess.empresaId);
+    }
+    list=list.filter(o=>!status||o.status===status).sort((a,b)=>new Date(b.dataAbertura)-new Date(a.dataAbertura));
+    // renderiza igual original mas com cores
+    const osKanbanEl=document.getElementById('os-kanban');
+    const osListEl=document.getElementById('os-list');
+    const btn=document.getElementById('btn-os-kanban');
+    if(osKanbanEl) osKanbanEl.classList.toggle('hidden', window.osViewMode!=='kanban');
+    if(osListEl) osListEl.classList.toggle('hidden', window.osViewMode!=='list');
+    if(btn) btn.innerText=window.osViewMode==='kanban'?'Lista':'Kanban';
+
+    if(window.osViewMode==='kanban'){
+      const cols=[{id:'aberto',label:'Aberto (Branco)',color:'border-slate-200 bg-white'},{id:'em_atendimento',label:'Em atendimento (Branco)',color:'border-blue-200 bg-white'},{id:'aguardando_peca',label:'Aguardando peça (Branco)',color:'border-amber-200 bg-white'},{id:'concluido',label:'Concluído (Verde)',color:'border-emerald-300 bg-emerald-50'}];
+      document.getElementById('os-kanban').innerHTML=cols.map(col=>{const items=list.filter(o=>o.status===col.id); return `<div class="rounded-[16px] border ${col.color} p-3 flex flex-col"><div class="flex items-center justify-between mb-3"><h4 class="font-bold text-[12px] uppercase">${col.label}</h4><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white border">${items.length}</span></div><div class="space-y-3 flex-1 overflow-auto" style="min-height:400px">${items.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const eq=db.equipamentos.find(e=>e.id===o.equipamentoId); return `<div class="rounded-xl ${col.id==='concluido'?'bg-emerald-100 border-emerald-300':'bg-white border-slate-200'} border p-3 shadow-sm hover:shadow-md cursor-pointer" onclick="openModal('os','${o.id}')"><div class="flex justify-between"><span class="font-mono text-[11px] font-bold text-slate-500">${o.numero}</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold uppercase">${o.prioridade}</span></div><p class="font-semibold text-[13px] mt-2">${cli?.nome||''} ${cli?.fantasia?`(${cli.fantasia})`:''}</p><p class="text-[11px] text-slate-600">Cód: ${cli?.codigo||'-'} • ${cli?.telefone||''} • ${cli?.cidade||''}</p><p class="text-[11px] text-slate-600 mt-1">${eq?.modelo||'Sem equipamento'} • ${o.descricao.slice(0,60)}</p><p class="text-[11px] text-slate-400 mt-2">por ${o.criadoPorNome||'-'} • ${fmtDate(o.dataAbertura)}</p></div>`;}).join('')||'<p class="text-[12px] text-slate-400 p-4 text-center">Vazio</p>'}</div></div>`;}).join('');
+    }else{
+      document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const isConcluido=o.status==='concluido'; return `<tr class="${isConcluido?'bg-emerald-50/70 border-l-4 border-l-emerald-500':'bg-white'} hover:bg-slate-50"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome||''}</p><p class="text-[11px] text-slate-500">Fantasia: ${cli?.fantasia||'-'} • Cód: ${cli?.codigo||'-'} • por ${o.criadoPorNome||'-'}</p><p class="text-[11px] text-slate-500">${cli?.telefone||''} • ${cli?.cidade||''} • ${cli?.endereco||''}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60))}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${isConcluido?'bg-emerald-600 text-white':'bg-slate-900 text-white'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+    }
+  };
+})();
+
+// VENDAS LISTA DETALHADA - código venda, data, cliente, valor, tipo pagamento, serviço ou venda, usuário, situação
+(function(){
+  const origRenderVendas = window.renderVendas;
+  window.renderVendas = function(){
+    const sess=getSession(); if(!sess) return;
+    const search=(document.getElementById('search-vendas')?.value||'').toLowerCase();
+    let list=db.vendas.filter(v=>v.empresaId===sess.empresaId && (!search||v.numero.toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.nome||'').toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.codigo&&String(db.clientes.find(c=>c.id===v.clienteId).codigo).includes(search)))).sort((a,b)=>new Date(b.data)-new Date(a.data));
+    document.getElementById('tbody-vendas').innerHTML=list.map(v=>{
+      const cli=db.clientes.find(c=>c.id===v.clienteId);
+      const isServico = v.itens.some(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return p&&p.categoria==='Serviço';});
+      const tipo = isServico ? 'Serviço' : 'Venda';
+      return `<tr class="hover:bg-slate-50 cursor-pointer ${v.status==='estornada'?'bg-red-50':''}" onclick="showVenda('${v.id}')">
+        <td class="px-5 py-3">
+          <p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero} • Cód: ${cli?.codigo||'-'}</p>
+          <p class="font-semibold text-[12.5px]">${cli?.nome||''} ${cli?.fantasia?`(${cli.fantasia})`:''}</p>
+          <p class="text-[11px] text-slate-500">${fmtDate(v.data)} • ${fmtDateTime(v.data).split(',')[1]||''} • por <b>${v.criadoPorNome||'-'}</b></p>
+        </td>
+        <td class="px-5 py-3">
+          <p class="text-[12px]">${v.itens.length} itens • ${tipo}</p>
+          <p class="font-bold text-[13px]">${fmtMoney(v.total)}</p>
+          <p class="text-[11px] text-slate-500">${v.formaPagamento||'Não faturado'}</p>
+        </td>
+        <td class="px-5 py-3">
+          <p class="text-[11px] px-2 py-1 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold inline-block">${tipo}</p>
+          <p class="text-[11px] mt-1">${v.formaPagamento||'-'}</p>
+        </td>
+        <td class="px-5 py-3">
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${v.status==='faturado'?'bg-emerald-50 text-emerald-700 border':v.status==='aberta'?'bg-blue-50 text-blue-700 border':v.status==='estornada'?'bg-red-50 text-red-700 border':v.status==='aprovado'?'bg-violet-50 text-violet-700 border':'bg-amber-50 text-amber-700 border'}">${v.status||'aberta'}</span>
+          <p class="text-[11px] text-slate-500 mt-1">por ${v.criadoPorNome||'-'}</p>
+        </td>
+        <td class="px-5 py-3"><button onclick="event.stopPropagation(); deleteVenda('${v.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td>
+      </tr>`;
+    }).join('');
+  };
+})();
+
+// CONTRATOS - franquia exemplo 3000 copias R$120 + excedente
+// Adiciona helper visual no modal contrato
+(function(){
+  const origRenderModalContrato = window.renderModalContrato;
+  window.renderModalContrato = function(id){
+    if(origRenderModalContrato) origRenderModalContrato(id);
+    // adiciona exemplo após render
+    setTimeout(()=>{
+      const body=document.getElementById('modal-body');
+      if(!body) return;
+      if(!document.getElementById('exemplo-franquia')){
+        const exemplo=document.createElement('div');
+        exemplo.id='exemplo-franquia';
+        exemplo.className='mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900';
+        exemplo.innerHTML='<b>Exemplo citado no Loom:</b> Franquia 3.000 cópias a R$120,00 e valor adicional R$0,04 por cópia excedente. Ou mensal por quantidade (sem franquia). Configure abaixo franquia PB e valor mensal fixo.';
+        body.appendChild(exemplo);
+      }
+    },100);
+  };
+})();
+
+// ORÇAMENTOS - PDF fluxo semelhante vendas
+function renderOrcamentos(){
+  const sess=getSession(); if(!sess) return;
+  const orcamentos=db.vendas.filter(v=>v.empresaId===sess.empresaId && (v.status==='orcamento' || v.status==='aprovado'));
+  // se não existe view-orcamentos, cria dinamicamente?
+  const view=document.getElementById('view-vendas');
+  // adiciona aba orçamentos dentro de vendas
+  if(!document.getElementById('aba-orcamentos')){
+    const header=view.querySelector('.flex.gap-2');
+    if(header){
+      const btn=document.createElement('button');
+      btn.id='aba-orcamentos';
+      btn.className='h-11 px-4 rounded-xl bg-white border text-[13px] font-medium';
+      btn.innerText='Orçamentos PDF';
+      btn.onclick=()=>{navigateTo('vendas'); setTimeout(()=>{const tb=document.getElementById('tbody-vendas'); if(tb){ tb.innerHTML=db.vendas.filter(v=>v.empresaId===sess.empresaId && v.status==='orcamento').map(v=>{const cli=db.clientes.find(c=>c.id===v.clienteId); return `<tr><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${v.numero}</p><p class="font-semibold text-[12px]">${cli?.nome}</p><p class="text-[11px]">por ${v.criadoPorNome}</p></td><td class="px-5 py-3">${fmtMoney(v.total)}</td><td class="px-5 py-3">${v.status}</td><td class="px-5 py-3"><button onclick="gerarOrcamentoPDF('${v.id}')" class="h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">Gerar PDF</button></td></tr>`}).join('');}},100);};
+      header.appendChild(btn);
+    }
+  }
+}
+function gerarOrcamentoPDF(vendaId){
+  const sess=getSession(); const v=db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId); if(!v) return;
+  const cli=db.clientes.find(c=>c.id===v.clienteId);
+  const empRaw=localStorage.getItem('digicopy_empresa_notinha'); let emp=null; try{emp=JSON.parse(empRaw);}catch{}
+  const empresa=emp||db.empresas.find(e=>e.id===sess.empresaId)||db.config.empresa;
+  const win=window.open('','_blank');
+  const html=`
+  <html><head><meta charset="UTF-8"><title>Orçamento ${v.numero}</title><style>body{font-family:Arial; font-size:12px; margin:20px;} .header{display:flex; justify-content:space-between; border-bottom:2px solid #0a1e8a; padding-bottom:10px;} .logo{width:80px; height:80px; background:#0a1e8a; color:white; display:grid; place-items:center; font-weight:bold;} table{width:100%; border-collapse:collapse; margin-top:10px;} th{background:#0a1e8a; color:white; padding:6px; text-align:left;} td{padding:6px; border-bottom:1px solid #ddd;} .total{text-align:right; font-size:18px; font-weight:bold; margin-top:20px;} .footer{margin-top:40px; font-size:11px; color:#555; border-top:1px dashed #aaa; padding-top:10px;}</style></head><body>
+  <div class="header"><div class="logo">DIGICOPY</div><div><h2>ORÇAMENTO ${v.numero}</h2><p>Empresa: ${empresa.fantasia||empresa.nome} - ${empresa.cnpj||sess.cnpj}</p><p>Cliente: ${cli?.nome} - Cód: ${cli?.codigo} - ${cli?.documento}</p><p>Data: ${fmtDateTime(v.data)} - Por: ${v.criadoPorNome}</p></div><div style="text-align:right;"><p>Status: ${v.status.toUpperCase()}</p><p>Validade: 7 dias</p></div></div>
+  <table><tr><th>Item</th><th>Descrição</th><th>Qtd</th><th>Unit</th><th>Total</th></tr>${v.itens.map((it,idx)=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<tr><td>${idx+1}</td><td>${p?.nome||'Produto'}</td><td>${it.qtd}</td><td>${fmtMoney(it.preco)}</td><td>${fmtMoney(it.subtotal)}</td></tr>`}).join('')}</table>
+  <div class="total">Total: ${fmtMoney(v.total)} ${v.desconto?`(Desc: ${fmtMoney(v.desconto)})`:''}</div>
+  <div class="footer"><p>Orçamento gerado por ${v.criadoPorNome} em ${fmtDateTime(v.criadoEm||v.data)} - Empresa ${sess.empresaNome} CNPJ ${sess.cnpj}</p><p>Este orçamento é válido para aprovação pelo cliente. Ao aprovar, vira venda automaticamente.</p><p><button onclick="window.print()" style="padding:10px 20px; background:#0a1e8a; color:white; border:0; border-radius:8px;">Imprimir PDF</button> <button onclick="if(confirm('Aprovar orçamento e transformar em venda?')){window.opener.postMessage({type:'aprovarOrcamento',id:'${v.id}'},'*'); window.close();}" style="padding:10px 20px; background:green; color:white; border:0; border-radius:8px;">Aprovar Orçamento</button></p></div>
+  </body></html>`;
+  win.document.write(html); win.document.close();
+  logAction('venda','gerar_pdf_orcamento',vendaId,`Gerado PDF orçamento ${v.numero} por ${sess.usuarioNome}`);
+  saveDB();
+}
+window.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='aprovarOrcamento'){
+    const sess=getSession(); const v=db.vendas.find(x=>x.id===e.data.id && x.empresaId===sess.empresaId);
+    if(v){ v.status='aprovado'; logAction('venda','aprovar_orcamento',v.id,`Orçamento ${v.numero} aprovado por ${sess.usuarioNome}`); saveDB(); renderVendas(); toast(`Orçamento ${v.numero} aprovado!`,'success'); }
+  }
+});
+
+// Garantir Empresas view existe
+function ensureEmpresasView(){
+  if(!document.getElementById('view-empresas')){
+    const main=document.querySelector('.flex-1.p-4');
+    if(main){
+      const sec=document.createElement('section');
+      sec.id='view-empresas';
+      sec.className='view hidden space-y-4';
+      sec.innerHTML=`
+        <div class="flex justify-between gap-3 flex-wrap"><div><h3 class="font-bold text-[18px]">Empresas para PDF Notinha</h3><p class="text-[13px] text-slate-500 mt-1">Dados da empresa emitente que vão no cabeçalho da notinha de vendas/serviços. Seção "Outros" citada no Loom.</p></div><button onclick="openModalEmpresa()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova empresa</button></div>
+        <div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">CNPJ / Razão / Fantasia</th><th class="px-5 py-3">Endereço</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Uso</th><th></th></tr></thead><tbody id="tbody-empresas" class="divide-y"></tbody></table></div>
+        <div class="rounded-xl bg-amber-50 border border-amber-200 p-4 text-[12px] text-amber-900"><b>Dica:</b> Selecione uma empresa como padrão para PDF notinha clicando em "Usar na Notinha". Essa empresa será usada no cabeçalho da impressão da venda/orçamento.</div>
+      `;
+      main.appendChild(sec);
+      // adiciona nav
+      const navGest=document.getElementById('nav-gest');
+      if(navGest && !document.querySelector('[data-nav="empresas"]')){
+        const btn=document.createElement('button');
+        btn.setAttribute('data-nav','empresas');
+        btn.setAttribute('onclick',"navigateTo('empresas')");
+        btn.className="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white";
+        btn.innerHTML='<i class="ph ph-buildings text-[19px]"></i><span>Empresas (PDF)</span>';
+        navGest.appendChild(btn);
+      }
+    }
+  }
+}
+ensureEmpresasView();
+
+// Sobrescreve buildNav para incluir empresas
+const origBuildNav = window.buildNav;
+window.buildNav = function(){
+  if(origBuildNav) origBuildNav();
+  ensureEmpresasView();
+  const navGest=document.getElementById('nav-gest');
+  if(navGest && !document.querySelector('[data-nav="empresas"]')){
+    const btn=document.createElement('button');
+    btn.setAttribute('data-nav','empresas');
+    btn.setAttribute('onclick',"navigateTo('empresas')");
+    btn.className="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white";
+    btn.innerHTML='<i class="ph ph-buildings text-[19px]"></i><span>Empresas (PDF)</span>';
+    navGest.appendChild(btn);
+  }
+};
+
+// Atualiza navigateTo para incluir empresas
+const origNavigateTo = window.navigateTo;
+window.navigateTo = function(view){
+  if(view==='empresas'){ document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden')); document.getElementById('view-empresas').classList.remove('hidden'); document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')}); const act=document.querySelector('[data-nav="empresas"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')} document.getElementById('page-title').innerText='Empresas (PDF Notinha)'; document.getElementById('page-subtitle').innerText='Cadastro de empresas emitentes para cabeçalho da notinha'; renderEmpresas(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return; }
+  if(origNavigateTo) origNavigateTo(view);
+};
+
+console.log('PATCH evolucao v3.2 - empresas PDF, CNPJ busca, chamados branco/verde filtros avançados, vendas detalhada, orçamentos PDF');
+// NOTINHA PATCH v4.1 - Layout redesenhado inspirado mas não cópia, mantendo hub antigo (sidebar)
+(function(){
+window.imprimirNotinha = function(vendaId){
+  const sess=getSession(); const v=db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); const empRaw=localStorage.getItem('digicopy_empresa_notinha'); let empSel=null; try{empSel=JSON.parse(empRaw);}catch{} const empresa=empSel||db.empresas.find(e=>e.id===sess.empresaId)||{nome:'DIGICOPY'}; const win=window.open('','_blank');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Notinha ${v.numero}</title><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'); body{font-family:'Inter',Arial,sans-serif; font-size:12px; color:#1a1a1a; margin:0; padding:0; background:#f5f5f7;} .page{max-width:800px; margin:20px auto; background:white; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);} .top-bar{height:6px; background:#0a1e8a;} .header{padding:22px 28px; display:flex; justify-content:space-between; gap:20px; border-bottom:1px solid #eef0f5;} .brand{display:flex; gap:14px; align-items:center;} .brand-logo{width:54px; height:54px; background:#0a1e8a; border-radius:12px; display:grid; place-items:center; color:white; font-weight:800; font-size:20px;} .brand-text h1{margin:0; font-size:18px; font-weight:800;} .brand-text p{margin:2px 0 0; font-size:11px; color:#64748b;} .meta{text-align:right; font-size:11px; color:#475569;} .client-section{padding:18px 28px; background:#f8f9ff; border-bottom:1px solid #eef0f5; display:grid; grid-template-columns:1fr 1fr; gap:16px;} .client-card{background:white; border:1px solid #e2e8f0; border-radius:12px; padding:14px;} .client-card h4{margin:0 0 8px; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#94a3b8;} .sale-bar{margin:20px 28px 0; background:#0a1e8a; color:white; border-radius:12px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center;} .items{padding:0 28px; margin-top:16px;} table{width:100%; border-collapse:separate; border-spacing:0; font-size:12px;} th{text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; color:#64748b; padding:10px 8px; border-bottom:2px solid #e2e8f0;} td{padding:10px 8px; border-bottom:1px solid #f1f5f9;} .totals{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; padding:20px 28px; background:#f8f9ff; border-top:1px solid #eef0f5; border-bottom:1px solid #eef0f5; margin-top:16px;} .tot-box{background:white; border:1px solid #e2e8f0; border-radius:12px; padding:14px; text-align:center;} .tot-box b{font-size:20px; display:block; margin-top:4px; color:#0a1e8a;} .tot-box.highlight{background:#0a1e8a; color:white;} .tot-box.highlight b{color:white} .footer{padding:20px 28px; display:flex; justify-content:space-between; gap:20px; font-size:11px; color:#64748b;} .sig{border-top:1px solid #1a1a1a; width:220px; text-align:center; padding-top:6px; margin-top:40px;} .audit{margin:0 28px 20px; padding:12px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; font-size:11px; color:#92400e;} @media print{body{background:white} .page{box-shadow:none; margin:0} button{display:none}}</style></head><body><div class="page"><div class="top-bar"></div><div class="header"><div class="brand"><div class="brand-logo"><img src="./logo.png" style="width:36px; height:36px; object-fit:contain"></div><div class="brand-text"><h1>${empresa.fantasia||empresa.nome||'DIGICOPY'}</h1><p>${empresa.nome||''}<br>${empresa.cnpj||sess.cnpj} • ${empresa.telefone||''}<br>${empresa.logradouro||''} ${empresa.numero||''} - ${empresa.bairro||''} - ${empresa.municipio||''}/${empresa.uf||''}</p></div></div><div class="meta"><p><b>NOTINHA</b><br>${v.numero}<br>${fmtDate(v.data)} ${new Date(v.data).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p><p style="margin-top:8px;">Atendente: <b>${v.criadoPorNome||sess.usuarioNome}</b><br>Forma: <b>${v.formaPagamento||''}</b>${v.vencimento?`<br>Venc: ${fmtDate(v.vencimento)}`:''}</p></div></div><div class="client-section"><div class="client-card"><h4>Cliente</h4><span style="font-family:monospace; font-size:11px; background:#0a1e8a; color:white; padding:2px 6px; border-radius:6px; display:inline-block; margin-bottom:6px;">#${cli?.codigo||'---'}</span><p><b>${cli?.nome||''}</b>${cli?.fantasia?` • ${cli.fantasia}`:''}</p><p>${cli?.documento||''} • ${cli?.telefone||''}</p><p style="font-size:11px; color:#64748b; margin-top:4px;">${cli?.endereco||''} • ${cli?.cidade||''}/${cli?.estado||''} • ${cli?.cep||''}</p></div><div class="client-card"><h4>Entrega / Observações</h4><p>Entregar até: ___/___/___</p><p style="margin-top:6px; color:#64748b;">Contato: ${cli?.contato||cli?.nome||''} • ${cli?.telefone||''}</p><p style="margin-top:8px;"><span style="background:#0a1e8a; color:white; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:700;">CÓD CLIENTE: ${cli?.codigo||'-'}</span></p></div></div><div class="sale-bar"><h2>${v.status==='orcamento'?'ORÇAMENTO':'VENDA'} ${v.numero.replace('VD-','')}</h2><span>${v.status.toUpperCase()} • ${v.itens.length} ITENS</span></div><div class="items"><table><tr><th>#</th><th>Descrição</th><th>SKU</th><th>Qtd</th><th>Unit</th><th>Total</th></tr>${v.itens.map((it,idx)=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<tr><td>${idx+1}</td><td><b>${p?.nome||'Produto'}</b><br><span style="font-size:10px; color:#64748b;">${p?.sku||''} • ${p?.categoria||''}</span></td><td style="font-family:monospace; font-size:11px;">${p?.sku||''}</td><td>${it.qtd}</td><td>${fmtMoney(it.preco)}</td><td><b>${fmtMoney(it.subtotal)}</b></td></tr>`;}).join('')}</table></div><div class="totals"><div class="tot-box"><small>Código Venda</small><b>${v.numero.replace('VD-','')}</b><span style="font-size:10px; color:#64748b;">${v.status}</span></div><div class="tot-box"><small>Desconto / Atendente</small><b style="font-size:14px;">Desc: ${fmtMoney(v.desconto||0)}<br></b><span style="font-size:10px; color:#64748b;">Atendente: ${v.criadoPorNome}</span></div><div class="tot-box highlight"><small>Total</small><b>${fmtMoney(v.total)}</b><span style="font-size:11px;">${v.formaPagamento||''}</span></div></div><div class="footer"><div><div class="sig">Assinatura Cliente<br><span style="font-size:10px; color:#94a3b8;">Recebi em ___/___/____ às ___:___</span></div></div><div style="text-align:right;"><p><b>Auditoria:</b> Criado por ${v.criadoPorNome||sess.usuarioNome}<br>CNPJ: ${sess.cnpj} • Código cliente: ${cli?.codigo||'-'}</p></div></div><div class="audit"><b>Layout novo:</b> Notinha redesenhada com header em cards, barra azul escura arredondada, totais em 3 boxes. Inspirada mas não cópia da Venda 15625 original.</div></div><div style="text-align:center; margin:20px;"><button onclick="window.print()" style="padding:12px 24px; background:#0a1e8a; color:white; border:0; border-radius:12px; font-weight:700;">Imprimir Notinha</button> <button onclick="window.close()" style="padding:12px 24px; background:white; border:1px solid #cbd5e1; border-radius:12px;">Fechar</button></div></body></html>`;
+  win.document.write(html); win.document.close();
+  logAction('venda','imprimir_notinha_v4',vendaId,`Impressão notinha redesenhada ${v.numero} por ${sess.usuarioNome}`);
+  saveDB();
+};
+window.gerarOrcamentoPDF = function(vendaId){
+  const sess=getSession(); const v=db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); const empRaw=localStorage.getItem('digicopy_empresa_notinha'); let empSel=null; try{empSel=JSON.parse(empRaw);}catch{} const empresa=empSel||db.empresas.find(e=>e.id===sess.empresaId)||{nome:'DIGICOPY'}; const win=window.open('','_blank');
+  const html=`<html><head><meta charset="UTF-8"><title>Orçamento ${v.numero}</title><style>body{font-family:Inter,Arial; margin:0; padding:0; background:#f6f7fb;} .page{max-width:800px; margin:20px auto; background:white; border-radius:16px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.08);} .header{background:#0a1e8a; color:white; padding:24px 28px; display:flex; justify-content:space-between;} .content{padding:24px 28px;} table{width:100%; border-collapse:collapse; font-size:12px;} th{background:#f1f5f9; text-align:left; padding:10px; font-size:10px; text-transform:uppercase; color:#64748b;} td{padding:10px; border-bottom:1px solid #f1f5f9;} .total{text-align:right; font-size:20px; font-weight:800; color:#0a1e8a; margin-top:20px;}</style></head><body><div class="page"><div class="header"><div><h1>ORÇAMENTO ${v.numero}</h1><p>${empresa.fantasia||empresa.nome} • ${empresa.cnpj||sess.cnpj}</p><p>Cliente: ${cli?.nome} • Cód: ${cli?.codigo}</p></div><div style="text-align:right;"><p style="background:rgba(255,255,255,0.15); padding:6px 12px; border-radius:20px; font-weight:700;">${v.status.toUpperCase()}</p></div></div><div class="content"><table><tr><th>#</th><th>Descrição</th><th>Qtd</th><th>Unit</th><th>Total</th></tr>${v.itens.map((it,idx)=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<tr><td>${idx+1}</td><td>${p?.nome||'Produto'}</td><td>${it.qtd}</td><td>${fmtMoney(it.preco)}</td><td><b>${fmtMoney(it.subtotal)}</b></td></tr>`}).join('')}</table><div class="total">Total: ${fmtMoney(v.total)}</div></div></div><div style="text-align:center; margin:20px;"><button onclick="window.print()" style="padding:12px 24px; background:#0a1e8a; color:white; border:0; border-radius:12px; font-weight:700;">Imprimir PDF Orçamento</button></div></body></html>`;
+  win.document.write(html); win.document.close();
+  logAction('venda','gerar_pdf_orcamento_v4',vendaId,`PDF orçamento ${v.numero}`);
+  saveDB();
+};
+// Orçamentos view separada já existe no app.js? Vamos garantir renderOrcamentosView
+window.renderOrcamentosView = window.renderOrcamentosView || function(){
+  const sess=getSession(); if(!sess) return; const view=document.getElementById('view-orcamentos'); if(!view){ // se não existe view-orcamentos (no hub antigo), usa view-vendas filtrada
+    // fallback: navega para vendas e filtra
+    return;
+  }
+  const orcs=db.vendas.filter(v=>v.empresaId===sess.empresaId && (v.status==='orcamento' || v.status==='aprovado' || v.status==='aguardar')).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  // Se view-orcamentos não existe no hub antigo, não faz nada, pois orcamentos já está em vendas
+  if(view){
+    view.innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[16px]">Orçamentos</h3><p class="text-[13px] text-slate-500 mt-1">Separado de Vendas conforme pedido.</p></div><button onclick="novaVenda(); setTimeout(()=>{document.getElementById('nv-status').value='orcamento'; onStatusVendaChange();},300)" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px] shadow">+ Novo orçamento</button></div>
+    <div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Orçamento / Cliente</th><th class="px-5 py-3">Total</th><th class="px-5 py-3">Situação</th><th class="px-5 py-3">Ações</th></tr></thead><tbody class="divide-y">${orcs.map(v=>{const cli=db.clientes.find(c=>c.id===v.clienteId); return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><p class="font-semibold text-[13px]">${cli?.nome||''}</p></td><td class="px-5 py-3"><p class="font-bold">${fmtMoney(v.total)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-amber-50 text-amber-700 border">${v.status}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="gerarOrcamentoPDF('${v.id}')" class="h-8 px-3 rounded-xl bg-[#0a1e8a] text-white text-[11px] font-bold">PDF</button></div></td></tr>`}).join('')||'<tr><td colspan="4" class="p-12 text-center text-slate-500">Nenhum orçamento</td></tr>'}</tbody></table></div>`;
+  }
+};
+console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos separado, mantendo hub antigo sidebar');
+})();
