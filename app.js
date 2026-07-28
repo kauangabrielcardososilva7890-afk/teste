@@ -266,7 +266,7 @@ function navigateTo(view){
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
     document.getElementById('page-title').innerText='Banco antigo Firebird';
-    document.getElementById('page-subtitle').innerText='Mapeamento do BANCO.FDB e plano de migração para nuvem';
+    document.getElementById('page-subtitle').innerText='Plano de migração do .RAR atualizado para nuvem';
     renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
@@ -856,7 +856,7 @@ function renderBanco(){
           <div>
             <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Migração do sistema antigo</p>
             <h2 class="text-[24px] font-extrabold tracking-tight mt-2">RAR atualizado → ERP novo em nuvem</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O BANCO.FDB do repositório pode estar desatualizado. O pacote correto deve ficar em armazenamento externo seguro; no navegador/Githack ele não é importado diretamente. A extração real será feita em backend/API antes do executável multiusuário.</p>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O pacote correto do sistema antigo deve ficar em armazenamento externo seguro. No navegador/Githack ele não é importado diretamente. A extração real será feita em backend/API antes do executável multiusuário.</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
@@ -871,12 +871,9 @@ function renderBanco(){
 
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div class="xl:col-span-2 rounded-[18px] bg-white border shadow-sm p-6">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h3 class="font-bold text-[16px]">Mapa inicial das tabelas encontradas</h3>
-              <p class="text-[13px] text-slate-500 mt-1">Baseado na leitura preliminar do arquivo Firebird anexado.</p>
-            </div>
-            <a href="DATABASE_ANALYSIS.md" target="_blank" class="h-9 px-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[12px] font-bold flex items-center gap-1.5"><i class="ph ph-file-text"></i> Análise</a>
+          <div>
+            <h3 class="font-bold text-[16px]">Mapa inicial das tabelas do sistema antigo</h3>
+            <p class="text-[13px] text-slate-500 mt-1">Base para organizar a migração do pacote atualizado.</p>
           </div>
           <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px]">
             <div class="rounded-xl border bg-slate-50 p-4"><b>Comercial</b><p class="text-slate-600 mt-1">CLIENTES, PRODUTOS, CARTUCHOS, VENDAS, ITENS_VENDA, ORCAMENTO, ITENS_ORCAMENTO.</p></div>
@@ -911,7 +908,7 @@ function renderBanco(){
         <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
           ${[
             ['1','Limpar e estabilizar','Remover duplicados, manter app web funcional no Githack e Electron.'],
-            ['2','Extrator Firebird','Ler BANCO.FDB em ambiente servidor e gerar JSON/SQL normalizado.'],
+            ['2','Extrator Firebird','Extrair o pacote atualizado em servidor e gerar JSON/SQL normalizado.'],
             ['3','API em nuvem','Subir PostgreSQL/Supabase/VPS com autenticação por empresa/CNPJ.'],
             ['4','Build .EXE','Empacotar Electron apontando para a API em nuvem, com atualizações controladas.']
           ].map(step=>`<div class="rounded-xl border p-4"><span class="w-7 h-7 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold">${step[0]}</span><p class="font-bold mt-3">${step[1]}</p><p class="text-slate-500 mt-1 leading-snug">${step[2]}</p></div>`).join('')}
@@ -953,8 +950,8 @@ window.handleDatabaseUpload = function(file){
   toast('Arquivo Firebird recebido para validação visual','info');
 };
 window.handleRarUpload = window.handleDatabaseUpload;
-// IMPORTAÇÃO MANUAL DOS DADOS DO BANCO.FDB (baseado em DATABASE_ANALYSIS.md)
-// Essa função substitui db com uma versão simplificada dos dados principais
+// IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
+// Essa função adiciona dados fictícios para testar as telas
 function loadManualDB(){
   const sess = getSession();
   if(!sess) { toast('Faça login para importar dados manuais','info'); return; }
@@ -983,7 +980,7 @@ function loadManualDB(){
   db.vendas = db.vendas.filter(v => !vendasManuais.find(m => m.id === v.id));
   db.vendas.push(...vendasManuais);
   saveDB();
-  toast('Dados manuais importados do BANCO.FDB! Clientes: '+clientesManuais.length+', Produtos: '+produtosManuais.length+', Vendas: '+vendasManuais.length, 'success');
+  toast('Dados de teste importados! Clientes: '+clientesManuais.length+', Produtos: '+produtosManuais.length+', Vendas: '+vendasManuais.length, 'success');
   renderClientes(); renderProdutos(); renderVendas(); renderDashboard();
   console.log('Dados manuais carregados:', {clientes: clientesManuais.length, produtos: produtosManuais.length, vendas: vendasManuais.length});
 }

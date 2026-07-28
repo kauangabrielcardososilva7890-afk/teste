@@ -27,7 +27,7 @@ Thumbs.db
 .env
 .env.*
 
-# Bancos locais novos usados em testes (BANCO.FDB legado permanece rastreado)
+# Bancos locais novos usados em testes
 *.sqlite
 *.sqlite3
 *.db

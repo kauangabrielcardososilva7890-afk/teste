@@ -21,9 +21,7 @@
       "notinha_patch.js",
       "main.js",
       "preload.js",
-      "logo.png",
-      "README.md",
-      "DATABASE_ANALYSIS.md"
+      "logo.png"
     ],
     "win": {
       "target": "nsis"
