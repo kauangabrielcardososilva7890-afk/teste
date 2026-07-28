@@ -611,7 +611,7 @@
 
   // Patch para remover area "remover.png" - se for alguma div com texto remover, esconde
   // O usuário disse "isso da imagem anexada escrita remover pode remover essa area"
-  // Vamos ocultar qualquer elemento com texto "RECURSOS" ou "FAQ, Suporte, Email Marketing, Mapa, Agenda" que são do exemplo SisPrinter que não queremos
+  // Vamos ocultar qualquer elemento com texto "RECURSOS" ou "FAQ, Suporte, Email Marketing, Mapa, Agenda" que são do sistema antigo que não queremos
   // Nosso sistema já não tem essas áreas, mas garantimos que view-config não mostra nada com "remover"
   // Se houver elemento com id "remover", esconder
   setTimeout(()=>{

@@ -1,5 +1,5 @@
-// DIGICOPY ERP v3.7 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.7.0';
+// DIGICOPY ERP v3.8 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+const APP_VERSION='3.8.0';
 const DB_KEY='digicopy_erp_v30';
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
@@ -312,8 +312,16 @@ function buildNav(){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
-  <div class="desktop-home">
-    <div class="desktop-logo"><img src="./logo.png" alt="DIGICOPY"><span>DIGICOPY ERP</span></div>
+  <div class="clean-home">
+    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY Gestão</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
+    <div class="clean-shortcuts">
+      <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')">Nova venda</button>
+      <button onclick="navigateTo('vendas')">Consultar notinhas</button>
+      <button onclick="navigateTo('clientes')">Clientes</button>
+      <button onclick="navigateTo('contratos')">Locação</button>
+      <button onclick="openQuickOS()">Chamado</button>
+      <button onclick="navigateTo('financeiro')">Financeiro</button>
+    </div>
   </div>
   <div class="statusbar"><span>Banco Servidor Nuvem</span><span>Usuário&nbsp;&nbsp;<b id="status-user-home">-</b></span><span>Código Sistema: 1421</span><span>DIGICOPY | Sistema em desenvolvimento</span></div>
   <div class="hidden">
