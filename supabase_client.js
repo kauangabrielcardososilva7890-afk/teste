@@ -4,6 +4,290 @@
   const SUPABASE_REST_URL = `${SUPABASE_PROJECT_URL}/rest/v1`;
   const SUPABASE_KEY = 'sb_publishable_O91tDfAY_vrtp8feezXXkA_aNhpCjJH';
 
+
+  const DIGICOPY_SCHEMA_SQL = `
+create extension if not exists pgcrypto;
+
+create table if not exists empresas (
+  id uuid primary key default gen_random_uuid(),
+  cnpj text unique,
+  razao_social text not null,
+  nome_fantasia text,
+  telefone text,
+  email text,
+  ativo boolean default true,
+  criado_em timestamptz default now()
+);
+
+create table if not exists usuarios (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  nome text not null,
+  login text not null,
+  senha_hash text,
+  perfil text default 'Comercial',
+  ativo boolean default true,
+  criado_em timestamptz default now(),
+  unique (empresa_id, login)
+);
+
+create table if not exists clientes (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  codigo_interno integer,
+  nome text not null,
+  fantasia text,
+  documento text,
+  tipo text default 'PJ',
+  telefone text,
+  celular text,
+  email text,
+  endereco text,
+  numero text,
+  bairro text,
+  cidade text,
+  estado text,
+  cep text,
+  status text default 'ativo',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now(),
+  atualizado_em timestamptz
+);
+
+create table if not exists fornecedores (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  nome text not null,
+  documento text,
+  telefone text,
+  email text,
+  endereco text,
+  cidade text,
+  estado text,
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists produtos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  sku text,
+  nome text not null,
+  categoria text,
+  fabricante text,
+  unidade text,
+  estoque numeric default 0,
+  estoque_min numeric default 0,
+  custo numeric default 0,
+  preco numeric default 0,
+  localizacao text,
+  status text default 'ativo',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists equipamentos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  patrimonio text,
+  modelo text not null,
+  fabricante text,
+  tipo text,
+  serie text,
+  contador_pb numeric default 0,
+  contador_cor numeric default 0,
+  status text default 'disponivel',
+  valor_compra numeric default 0,
+  data_aquisicao date,
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists contratos (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  numero text,
+  cliente_id uuid references clientes(id),
+  data_inicio date,
+  data_fim date,
+  dia_vencimento integer default 10,
+  valor_mensal numeric default 0,
+  franquia_pb numeric default 0,
+  franquia_cor numeric default 0,
+  valor_excedente_pb numeric default 0,
+  valor_excedente_cor numeric default 0,
+  status text default 'ativo',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists parque_instalado (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  contrato_id uuid references contratos(id),
+  cliente_id uuid references clientes(id),
+  equipamento_id uuid references equipamentos(id),
+  setor text,
+  endereco_instalacao text,
+  data_instalacao date,
+  status text default 'ativo',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists leituras (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  parque_id uuid references parque_instalado(id),
+  contrato_id uuid references contratos(id),
+  cliente_id uuid references clientes(id),
+  equipamento_id uuid references equipamentos(id),
+  data_leitura date,
+  contador_pb numeric default 0,
+  contador_cor numeric default 0,
+  contador_pb_anterior numeric default 0,
+  contador_cor_anterior numeric default 0,
+  consumo_pb numeric default 0,
+  consumo_cor numeric default 0,
+  valor_excedente numeric default 0,
+  status text default 'pendente',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists vendas (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  numero text,
+  cliente_id uuid references clientes(id),
+  data_venda timestamptz default now(),
+  desconto numeric default 0,
+  total numeric default 0,
+  forma_pagamento text,
+  vencimento date,
+  status text default 'aguardar',
+  usuario_id uuid references usuarios(id),
+  usuario_nome text,
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists venda_itens (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  venda_id uuid references vendas(id) on delete cascade,
+  produto_id uuid references produtos(id),
+  codigo_antigo text,
+  descricao text,
+  quantidade numeric default 1,
+  valor_unitario numeric default 0,
+  desconto numeric default 0,
+  subtotal numeric default 0,
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists chamados (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  numero text,
+  cliente_id uuid references clientes(id),
+  equipamento_id uuid references equipamentos(id),
+  contrato_id uuid references contratos(id),
+  venda_id uuid references vendas(id),
+  problema text,
+  descricao text,
+  prioridade text default 'normal',
+  tecnico text,
+  status text default 'aberto',
+  data_abertura timestamptz default now(),
+  data_fechamento timestamptz,
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists contas_receber (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  cliente_id uuid references clientes(id),
+  venda_id uuid references vendas(id),
+  contrato_id uuid references contratos(id),
+  leitura_id uuid references leituras(id),
+  descricao text,
+  valor numeric default 0,
+  vencimento date,
+  pagamento_data date,
+  forma_pagamento text,
+  status text default 'aberto',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists contas_pagar (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  codigo_antigo text,
+  fornecedor_id uuid references fornecedores(id),
+  fornecedor_nome text,
+  descricao text,
+  categoria text,
+  valor numeric default 0,
+  vencimento date,
+  pagamento_data date,
+  status text default 'aberto',
+  dados_legado jsonb default '{}'::jsonb,
+  criado_em timestamptz default now()
+);
+
+create table if not exists auditoria (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  usuario_id uuid references usuarios(id),
+  usuario_nome text,
+  modulo text,
+  acao text,
+  registro_id text,
+  detalhes text,
+  criado_em timestamptz default now()
+);
+
+create table if not exists legado_import_raw (
+  id uuid primary key default gen_random_uuid(),
+  empresa_id uuid references empresas(id) on delete cascade,
+  tabela_origem text not null,
+  codigo_origem text,
+  dados jsonb not null,
+  importado boolean default false,
+  criado_em timestamptz default now()
+);
+
+insert into empresas (cnpj, razao_social, nome_fantasia, telefone, email)
+values ('08.385.589/0001-03', 'DIGICOPY', 'DIGICOPY', null, null)
+on conflict (cnpj) do nothing;
+
+-- Políticas abertas temporárias para DESENVOLVIMENTO.
+-- Antes de produção, trocaremos por políticas por empresa/usuário.
+do $$
+declare t text;
+begin
+  foreach t in array array['empresas','usuarios','clientes','fornecedores','produtos','equipamentos','contratos','parque_instalado','leituras','vendas','venda_itens','chamados','contas_receber','contas_pagar','auditoria','legado_import_raw'] loop
+    execute format('alter table %I enable row level security', t);
+    execute format('drop policy if exists dev_all_%I on %I', t, t);
+    execute format('create policy dev_all_%I on %I for all using (true) with check (true)', t, t);
+  end loop;
+end $$;
+`;
+
   window.DIGICOPY_SUPABASE = {
     projectUrl: SUPABASE_PROJECT_URL,
     restUrl: SUPABASE_REST_URL,
@@ -65,6 +349,18 @@
     alert(msg);
   };
 
+
+  window.copySupabaseSchemaSQL = async function(){
+    try{
+      await navigator.clipboard.writeText(DIGICOPY_SCHEMA_SQL.trim());
+      if(typeof toast==='function') toast('SQL copiado. Cole no SQL Editor do Supabase e clique em Run.', 'success');
+    }catch{
+      const box=document.getElementById('supabase-schema-sql-box');
+      if(box){ box.classList.remove('hidden'); box.value=DIGICOPY_SCHEMA_SQL.trim(); box.select(); }
+      if(typeof toast==='function') toast('Não consegui copiar automaticamente. O SQL apareceu na caixa para copiar manualmente.', 'info');
+    }
+  };
+
   function cloudMigrationHtml(){
     return `
       <div class="neo-shell">
@@ -76,6 +372,7 @@
             </div>
             <div class="neo-actions">
               <button onclick="testarSupabase()" class="neo-btn primary"><i class="ph ph-plugs-connected"></i>Testar conexão</button>
+              <button onclick="copySupabaseSchemaSQL()" class="neo-btn"><i class="ph ph-copy"></i>Copiar SQL tabelas</button>
               <button onclick="supabaseInfo()" class="neo-btn"><i class="ph ph-info"></i>Dados</button>
             </div>
           </div>
@@ -85,11 +382,12 @@
             <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Ele será usado para extrair o Firebird e importar as tabelas.</p></div>
           </div>
           <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div class="neo-card"><b>1. Tabelas</b><p class="text-[12px] text-slate-500 mt-1">Criar schema inicial no SQL Editor.</p></div>
+            <div class="neo-card"><b>1. Tabelas</b><p class="text-[12px] text-slate-500 mt-1">Clique em Copiar SQL tabelas, cole no SQL Editor e clique Run.</p></div>
             <div class="neo-card"><b>2. Importação</b><p class="text-[12px] text-slate-500 mt-1">Extrair o FDB e mapear tabelas antigas.</p></div>
             <div class="neo-card"><b>3. Sistema online</b><p class="text-[12px] text-slate-500 mt-1">Trocar localStorage pelo Supabase.</p></div>
             <div class="neo-card"><b>4. Tempo real</b><p class="text-[12px] text-slate-500 mt-1">Atualizar telas entre computadores.</p></div>
           </div>
+          <div class="p-4 pt-0"><textarea id="supabase-schema-sql-box" class="neo-input hidden w-full !h-[180px] font-mono text-[11px] py-2"></textarea></div>
         </div>
       </div>`;
   }
