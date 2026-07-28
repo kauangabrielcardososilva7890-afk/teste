@@ -1000,8 +1000,9 @@ function renderBanco(){
   if (!el) {
     el = ensureView('banco');
   }
-  // Força limpeza total do conteúdo anterior (resolve cache do Githack)
   el.innerHTML = '';
+  el.style.display = 'block';
+  el.style.visibility = 'visible';
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
   el.innerHTML=`
