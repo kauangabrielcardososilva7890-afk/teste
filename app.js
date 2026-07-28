@@ -1130,14 +1130,6 @@ function renderBanco(){
             <div class="rounded-xl border bg-slate-50 p-4"><b>Cadastros auxiliares</b><p class="text-slate-600 mt-1">EMPRESA, CONFIGURACAO, FORNECEDORES, FUNCIONARIOS, CATEGORIA, FABRICANTE, UNIDADE_MEDIDA.</p></div>
           </div>
         </div>
-
-        <div class="rounded-[18px] bg-white border shadow-sm p-6">
-          <h3 class="font-bold text-[16px]">Upload para validação</h3>
-          <p class="text-[12.5px] text-slate-500 mt-1">Importe um backup .JSON para testar ou valide um .FDB recebido.</p>
-          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .FDB ou backup .JSON</label>
-          <input type="file" id="upload-db" accept=".rar,.RAR,.fdb,.FDB,.json,application/json" class="mt-2 w-full text-[13px]" onchange="handleDatabaseUpload(this.files[0])">
-          <div id="upload-status" class="mt-3 text-[12px] text-slate-500 rounded-xl bg-slate-50 border p-3">Nenhum arquivo selecionado.</div>
-        </div>
       </div>
 
       <!-- PASSOS DE USO -->
@@ -1189,6 +1181,32 @@ function renderBanco(){
         </div>
       </div>
 
+      <!-- UPLOAD JSON DO DBEAVER -->
+      <div class="rounded-[18px] bg-white border shadow-sm p-6">
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Importar dados do DBeaver (JSON)</h3>
+        <p class="text-[13px] text-slate-500 mb-4">Exporte as tabelas do Firebird pelo DBeaver em formato JSON e importe aqui.</p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivo .JSON</label>
+            <input type="file" id="upload-db" accept=".json,application/json" class="w-full text-[13px] mb-3" onchange="handleDatabaseUpload(this.files[0])">
+            <div id="upload-status" class="text-[12px]"></div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <h4 class="font-bold text-[13px] text-blue-900 mb-2"><i class="ph ph-info"></i> Como exportar pelo DBeaver</h4>
+            <ol class="text-[11px] text-blue-800 space-y-1.5 list-decimal list-inside">
+              <li>Abra o DBeaver e conecte ao Firebird</li>
+              <li>Clique com botão direito na tabela (ex: CLIENTES)</li>
+              <li>Escolha <b>Exportar dados</b></li>
+              <li>Selecione formato <b>JSON</b></li>
+              <li>Salve o arquivo (ex: clientes.json)</li>
+              <li>Repita para outras tabelas importantes</li>
+              <li>Faça upload aqui de cada arquivo</li>
+            </ol>
+            <p class="text-[10px] text-blue-600 mt-2"><b>Tabelas recomendadas:</b> CLIENTES, PRODUTOS, VENDAS, ITENS_VENDA, EQUIPAMENTOS, CONTAS_RECEBER, CONTAS_PAGAR</p>
+          </div>
+        </div>
+      </div>
+
       <textarea id="supabase-schema-sql-box" class="hidden w-full h-[180px] p-3 border rounded-xl font-mono text-[11px]"></textarea>
     </div>`;
 }
@@ -1197,34 +1215,113 @@ window.handleDatabaseUpload = function(file){
   if(!file || !status) return;
   const name=escapeHtml(file.name);
   const size=(file.size/1024/1024).toFixed(2);
+  
   if(file.name.toLowerCase().endsWith('.json')){
+    status.innerHTML = `<span class="text-blue-600"><i class="ph ph-spinner animate-spin"></i> Lendo ${name}...</span>`;
     const reader=new FileReader();
     reader.onload=()=>{
       try{
         const imported=JSON.parse(reader.result);
-        const keys=['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'];
-        const valid=keys.some(k=>Array.isArray(imported[k]));
-        if(!valid) throw new Error('JSON não parece ser backup do DIGICOPY ERP');
-        if(confirm('Substituir os dados locais do navegador por este backup JSON?')){
-          db={...structuredClone(defaultData),...imported};
-          saveDB();
-          status.innerHTML=`Backup <b>${name}</b> importado com sucesso. Recarregue a tela para validar todos os módulos.`;
-          toast('Backup JSON importado com sucesso','success');
-          setTimeout(()=>location.reload(),800);
-        }else{
-          status.innerHTML=`Backup <b>${name}</b> validado, mas importação cancelada.`;
+        
+        // Detectar formato do JSON
+        let formato = 'desconhecido';
+        let dados = {};
+        
+        // Formato 1: Backup do DIGICOPY (objeto com arrays)
+        if(imported.clientes || imported.produtos || imported.vendas){
+          formato = 'digicopy_backup';
+          dados = imported;
         }
+        // Formato 2: DBeaver export (array de objetos)
+        else if(Array.isArray(imported)){
+          formato = 'dbeaver_array';
+          // Tentar detectar qual tabela é pelo primeiro objeto
+          if(imported.length > 0){
+            const primeiro = imported[0];
+            const cols = Object.keys(primeiro).map(c => c.toUpperCase());
+            if(cols.some(c => c.includes('NOME') || c.includes('CLIENTE') || c.includes('CNPJ'))) dados.CLIENTES = imported;
+            else if(cols.some(c => c.includes('PRODUTO') || c.includes('SKU') || c.includes('ESTOQUE'))) dados.PRODUTOS = imported;
+            else if(cols.some(c => c.includes('VENDA') || c.includes('TOTAL'))) dados.VENDAS = imported;
+            else dados.TABELA_IMPORTADA = imported;
+          }
+        }
+        // Formato 3: Objeto com nome da tabela como chave
+        else if(typeof imported === 'object' && !Array.isArray(imported)){
+          formato = 'tabelas_nomeadas';
+          for(const [key, value] of Object.entries(imported)){
+            if(Array.isArray(value)){
+              dados[key.toUpperCase()] = value;
+            }
+          }
+        }
+        
+        if(formato === 'desconhecido'){
+          throw new Error('Formato JSON não reconhecido. Use exportação do DBeaver ou backup do DIGICOPY.');
+        }
+        
+        // Contar registros
+        let totalRegistros = 0;
+        const resumo = [];
+        for(const [tabela, registros] of Object.entries(dados)){
+          if(Array.isArray(registros)){
+            totalRegistros += registros.length;
+            resumo.push(`${tabela}: ${registros.length}`);
+          }
+        }
+        
+        status.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+            <p class="font-bold text-emerald-800 mb-2">✅ ${name} carregado com sucesso!</p>
+            <p class="text-[12px] text-emerald-700 mb-2">Formato detectado: <b>${formato}</b></p>
+            <p class="text-[12px] text-emerald-700 mb-2">Total: <b>${totalRegistros} registros</b></p>
+            <div class="text-[11px] text-emerald-600 mb-3">${resumo.join(' • ')}</div>
+            <button onclick="importarJsonDBeaver(${JSON.stringify(dados).replace(/"/g, '&quot;')})" 
+                    class="w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
+              <i class="ph ph-download-simple"></i> Importar para o ERP
+            </button>
+          </div>
+        `;
+        
+        // Armazenar temporariamente para importação
+        window._jsonParaImportar = dados;
+        
       }catch(e){
-        status.innerHTML=`<span class="text-red-700 font-semibold">Erro ao ler ${name}:</span> ${escapeHtml(e.message)}`;
-        toast('JSON inválido para importação','error');
+        status.innerHTML=`<div class="bg-red-50 border border-red-200 rounded-lg p-3"><p class="font-bold text-red-800">❌ Erro ao ler ${name}</p><p class="text-[12px] text-red-700 mt-1">${escapeHtml(e.message)}</p></div>`;
+        toast('JSON inválido','error');
       }
     };
     reader.readAsText(file);
     return;
   }
-  status.innerHTML=`Arquivo <b>${name}</b> selecionado (${size} MB). O navegador não extrai RAR/Firebird diretamente; ele será usado na etapa de extrator/backend para migrar CLIENTES, PRODUTOS, VENDAS, LOCAÇÃO, LEITURAS e FINANCEIRO.`;
-  toast('Arquivo Firebird recebido para validação visual','info');
+  
+  status.innerHTML=`<div class="bg-blue-50 border border-blue-200 rounded-lg p-3"><p class="font-bold text-blue-800">Arquivo ${name} selecionado (${size} MB)</p><p class="text-[12px] text-blue-700 mt-1">Arquivos .FDB precisam ser importados via Electron (npm start). Para importar no navegador, exporte para JSON pelo DBeaver primeiro.</p></div>`;
+  toast('Use JSON para importar no navegador','info');
 };
+
+window.importarJsonDBeaver = function(dados){
+  const sess = getSession();
+  if(!sess) { toast('Faça login primeiro','error'); return; }
+  
+  const dadosImportar = dados || window._jsonParaImportar;
+  if(!dadosImportar){
+    toast('Nenhum dado para importar','error');
+    return;
+  }
+  
+  if(!confirm(`Importar ${Object.keys(dadosImportar).length} tabelas para o ERP?\n\nIsso vai adicionar os dados aos módulos existentes ou criar novos módulos.`)){
+    return;
+  }
+  
+  // Usar a mesma lógica do fbImportToErp
+  const rawData = {};
+  for(const [tabela, registros] of Object.entries(dadosImportar)){
+    rawData[tabela] = { data: registros, error: null };
+  }
+  
+  fbImportToErp(rawData);
+  toast('Importação concluída!','success');
+};
+
 window.handleRarUpload = window.handleDatabaseUpload;
 // IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
 // Essa função adiciona dados fictícios para testar as telas
