@@ -939,7 +939,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.9.6 (layout PR#3 + sync em partes + menu Migrados)');
+  console.log('DIGICOPY ERP — build 3.9.7 (sync verificado + recuperação sem meta + aviso de endereço)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -2115,3 +2115,33 @@ async function fbExportExtracted(){
   }
 }
 
+
+// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
+// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
+window.addEventListener('DOMContentLoaded',function(){
+  try{
+    if(location.hostname!=='raw.githack.com') return;
+    if(document.getElementById('rawgh-banner')) return;
+    const bar=document.createElement('div');
+    bar.id='rawgh-banner';
+    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
+    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
+    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
+      +'<div style="font-size:22px;line-height:1">⚠️</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
+      +'<div style="color:#78350f;font-size:12.5px;margin-top:3px;line-height:1.45">Tudo salvo neste endereço <b>não aparece</b> no link oficial (raw<b>cdn</b>.githack). Para migrar estes dados: <b>1)</b> clique em <b>Enviar para nuvem</b> aqui (menu Migração) e aguarde "PUBLICADO E VERIFICADO"; <b>2)</b> abra o link oficial; <b>3)</b> clique em <b>Carregar da nuvem</b> lá. Depois use só o link oficial.</div>'
+      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
+      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
+      +'</div></div></div>';
+    document.body.appendChild(bar);
+    const btnCopy=document.getElementById('rawgh-copy');
+    if(btnCopy) btnCopy.onclick=function(){
+      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
+      catch(e){ prompt('Copie o link oficial:', urlOficial); }
+    };
+    const btnClose=document.getElementById('rawgh-close');
+    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
+  }catch(e){ /* silencioso */ }
+});

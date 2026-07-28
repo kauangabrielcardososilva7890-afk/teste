@@ -31,7 +31,7 @@
 <div class="wrap">
   <div class="head">
     <img src="./logo.png" alt="DIGICOPY">
-    <div><h1>Diagnóstico — Sincronização DIGICOPY</h1><p>build diag 1.0 • envie um print desta tela inteira</p></div>
+    <div><h1>Diagnóstico — Sincronização DIGICOPY</h1><p>build diag 1.2 • envie um print desta tela inteira</p></div>
   </div>
 
   <div class="card">
@@ -103,7 +103,7 @@ async function supa(path){
   }
 
   // ── NUVEM ──
-  let cloudOk=false, cloudMeta=null, cloudPartes=0, cloudModulosTotal=0, cloudLegacy=false, cloudErr='';
+  let cloudOk=false, cloudMeta=null, cloudPartes=0, cloudModulosTotal=0, cloudLegacy=false, cloudErr='', cloudLacunas=[];
   try{
     const metaRows = await supa('app_state?select=data,updated_at&key=eq.digicopy_erp_v2_meta&limit=1');
     const partes = await supa('app_state?select=key&key=like.digicopy_erp_v2__*&limit=1000');
@@ -116,12 +116,28 @@ async function supa(path){
       const md = (cloudMeta.entidades||{}).modulosDinamicos;
       cloudModulosTotal = md ? (md.total||0) : 0;
     }
+    // Analisa lacunas nas partes (ex.: p0..p27 faltando p7, p20)
+    const grupos={};
+    (partes||[]).forEach(r=>{
+      const mm=(r.key||'').replace('digicopy_erp_v2__','').match(/^(.*)__p(\d+)$/);
+      if(!mm) return;
+      const c=mm[1], i=+mm[2];
+      if(!grupos[c]) grupos[c]={max:-1, tem:{}};
+      grupos[c].max=Math.max(grupos[c].max,i); grupos[c].tem[i]=1;
+    });
+    const lacunas=[];
+    Object.entries(grupos).forEach(([c,g])=>{ const falta=[]; for(let i=0;i<=g.max;i++) if(!g.tem[i]) falta.push('p'+i); if(falta.length) lacunas.push(`<b>${esc(c)}</b>: faltam ${falta.join(', ')}`); });
+    cloudLacunas = lacunas;
+    const lacunasHtml = lacunas.length
+      ? `<p class="warn b-warn" style="margin-top:6px">⚠️ Envio anterior ficou INCOMPLETO — ${lacunas.join(' • ')}.<br><span class="dim">O ERP (build 3.9.7+) recupera o que existe no "Carregar da nuvem", e o "Enviar para nuvem" refeito no PC da importação completa 100%.</span></p>`
+      : (cloudPartes ? '<p class="ok" style="margin-top:6px">Nenhuma lacuna nas partes gravadas.</p>' : '');
     const ent = cloudMeta ? Object.entries(cloudMeta.entidades||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v.partes}</td><td>${(v.total||0).toLocaleString('pt-BR')}</td></tr>`).join('') : '';
     $('cloud').innerHTML = (cloudOk
       ? `<p class="ok big b-ok">✅ Nuvem PUBLICADA em ${new Date(cloudMeta.atualizadoEm||Date.now()).toLocaleString('pt-BR')} • total ${((cloudMeta.totalRegistros)||0).toLocaleString('pt-BR')} registros • ${cloudPartes} partes gravadas</p>
          <table><tr><th>entidade</th><th>partes</th><th>registros</th></tr>${ent}</table>
          <p class="${cloudModulosTotal?'ok':'warn'}" style="margin-top:6px">Tabelas sem mapeamento (vão p/ menu Migrados): <b>${cloudModulosTotal}</b> módulo(s)</p>`
-      : `<p class="warn big b-warn">⚠️ Meta v2 NÃO encontrada. Partes v2: ${cloudPartes}. Blob legado: ${cloudLegacy?'existe':'não existe'}.</p>`)
+      : `<p class="warn big b-warn">⚠️ Publicação NÃO confirmada (sem meta v2). Partes v2 soltas: ${cloudPartes}. Blob legado: ${cloudLegacy?'existe (backup antigo, incompleto)':'não existe'}.</p>`)
+      + lacunasHtml
       + `<p class="dim" style="margin-top:4px">(Se acima mostrar erro de permissão/RLS, avise-nos.)</p>`;
   }catch(e){
     cloudErr = e.message||String(e);
@@ -130,7 +146,8 @@ async function supa(path){
 
   // ── VEREDITO ──
   let v = [];
-  if(!cloudOk) v.push('<span class="bad big b-bad">A nuvem NÃO está acessível/publicada neste momento. Sem ela, nenhum PC novo recebe dados.</span>');
+  if(!cloudOk && cloudPartes>0) v.push('<span class="warn big b-warn">A nuvem tem um envio INCOMPLETO (a confirmação de publicação nunca foi gravada — provavelmente o último envio rodou uma versão antiga em cache).</span><div style="margin-top:6px">📋 <b>O que fazer:</b> 1) Abra o ERP pelo MESMO endereço/link que você usou na importação, aperte <b>Ctrl+Shift+R</b> e clique em <b>Gestão → Migração → Enviar para nuvem</b>; aguarde a mensagem <b>"PUBLICADO E VERIFICADO"</b>. 2) Depois abra o ERP pelo link oficial e clique em <b>Carregar da nuvem</b> — a build 3.9.7 recupera tudo, mesmo se algo faltar.</div>');
+  if(!cloudOk && cloudPartes===0) v.push('<span class="bad big b-bad">A nuvem NÃO está acessível/publicada neste momento. Sem ela, nenhum PC novo recebe dados.</span>');
   if(cloudOk && localVazio) v.push('<span class="warn big b-warn">Solução: no ERP deste navegador, vá em <b>Gestão → Migração/nuvem → "Carregar da nuvem"</b>. Depois disso o menu 🧩 Migrados aparece (build ≥3.9.5).</span>');
   if(cloudOk && !localVazio && localModulos===0 && cloudModulosTotal>0) v.push('<span class="warn big b-warn">A nuvem TEM módulos migrados mas este navegador NÃO. Faça "Carregar da nuvem" de novo neste navegador (ou Ctrl+Shift+R e repita).</span>');
   if(cloudOk && localModulos>0) v.push('<span class="ok big b-ok">Tudo certo nos dados! Se o menu Migrados não aparece no ERP, o problema é a VERSÃO em cache. Abra o ERP pelo link com hash de commit e confira no F12 se a primeira linha do console diz "build 3.9.6".</span>');

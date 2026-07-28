@@ -424,9 +424,31 @@ end $$;
     }
     return out;
   }
-  // JSON.stringify já higienizado para o Postgres
+  // Sanitiza o TEXTO JSON final — cobre valores E nomes de chaves
+  // (JSON.stringify não deixa o replacer alterar nomes de chaves, então
+  //  limpamos o texto pronto: surrogados soltos → U+FFFD e literal   → espaço).
+  function sanitizeJsonTexto(txt){
+    txt = txt.split(String.fromCharCode(92,117,48,48,48,48)).join(' '); // remove o escape literal do nulo (jsonb rejeita)
+    // pares de surrogados ESCAPADOS validos (\uD83D\uDE42) viram caracteres reais (emoji)
+    txt = txt.replace(/\\u([dD][89aAbB][0-9a-fA-F]{2})\\u([dD][cCdDeEfF][0-9a-fA-F]{2})/g, function(_m,a,b){ return String.fromCharCode(parseInt(a,16))+String.fromCharCode(parseInt(b,16)); });
+    // qualquer escape de surrogado que SOBROU eh solto (\ud800 sozinho) -> U+FFFD
+    txt = txt.replace(/\\u[dD][89a-fA-F][0-9a-fA-F]{2}/gi, '\uFFFD');
+    let out='';
+    for(let i=0;i<txt.length;i++){
+      const code=txt.charCodeAt(i);
+      if(code>=0xD800 && code<=0xDBFF){
+        const next=(i+1<txt.length)?txt.charCodeAt(i+1):0;
+        if(next>=0xDC00 && next<=0xDFFF){ out+=txt[i]+txt[i+1]; i++; } // par válido (emoji) — mantém
+        else out+='\uFFFD';
+      } else if(code>=0xDC00 && code<=0xDFFF){ out+='\uFFFD'; }
+      else if(code===0){ out+=' '; } // NUL cru (paranoia)
+      else out+=txt[i];
+    }
+    return out;
+  }
+  // JSON.stringify já higienizado para o Postgres (valores E chaves)
   function stringifyNuvem(valor){
-    return JSON.stringify(valor, function(_k, v){ return typeof v === 'string' ? sanitizeTextoNuvem(v) : v; });
+    return sanitizeJsonTexto(JSON.stringify(valor, function(_k, v){ return typeof v === 'string' ? sanitizeTextoNuvem(v) : v; }));
   }
 
   // Objeto (modulosDinamicos/config) → lista de [chave,valor]; módulos gigantes são fatiados
@@ -535,14 +557,31 @@ end $$;
         return {ok:false, enviadas, erros};
       }
       const atualizadoEm = new Date().toISOString();
-      await supabaseRequest('app_state?on_conflict=key', {
-        method:'POST',
-        headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-        body:stringifyNuvem({key:CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
-      });
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Enviado! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes. Outros PCs podem clicar em "Carregar da nuvem".</span>`);
-      if(typeof toast==='function') toast('Dados enviados para a nuvem com sucesso','success');
-      return {ok:true, partes:partes.length, totalRegistros:totalReg};
+      try{
+        await supabaseRequest('app_state?on_conflict=key', {
+          method:'POST',
+          headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+          body:stringifyNuvem({key:CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
+        });
+      }catch(errMeta){
+        const mm=errMeta?.message||String(errMeta);
+        setCloudSyncStatus(`<span class="text-red-700 font-bold">As partes subiram, mas a confirmação (meta) falhou: ${escapeHtml(mm)}</span><div class="text-[12px] text-red-600 mt-1">Nada foi publicado ainda — clique em "Enviar para nuvem" novamente.</div>`);
+        if(typeof toast==='function') toast('Falha ao confirmar publicação. Tente novamente.','error');
+        return {ok:false, enviadas, erros:['meta: '+mm]};
+      }
+      // Prova real: relê a publicação da nuvem antes de comemorar
+      try{
+        const confere = await supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
+        if(!confere || !confere.length || !(confere[0].data||{}).entidades) throw new Error('a publicação não apareceu na releitura');
+      }catch(errConf){
+        const mc=errConf?.message||String(errConf);
+        setCloudSyncStatus(`<span class="text-red-700 font-bold">Não consegui CONFIRMAR a publicação na nuvem (${escapeHtml(mc)}). Clique em "Enviar para nuvem" novamente.</span>`);
+        if(typeof toast==='function') toast('Publicação não confirmada. Tente novamente.','error');
+        return {ok:false, enviadas, erros:['verificacao: '+mc]};
+      }
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ PUBLICADO E VERIFICADO na nuvem! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes, às ${new Date().toLocaleString('pt-BR')}.</span><div class="text-[12px] text-emerald-700 mt-1">Agora, nos outros PCs, clique em "Carregar da nuvem".</div>`);
+      if(typeof toast==='function') toast('Dados enviados e verificados na nuvem ✅','success');
+      return {ok:true, partes:partes.length, totalRegistros:totalReg, verificado:true};
     }catch(err){
       const msg=err?.message||String(err);
       setCloudSyncStatus(`<span class="text-red-700 font-bold">Erro ao enviar: ${escapeHtml(msg)}</span>`);
@@ -560,7 +599,49 @@ end $$;
       const metaRows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
 
       if(!metaRows || !metaRows.length){
-        // Fallback: blob único legado
+        // Sem a "etiqueta" de publicação (meta): tenta RECUPERAR pelas partes soltas
+        // (cobre o caso de um envio antigo que falhou no meio — melhor 95% dos dados do que nada)
+        setCloudSyncStatus('<span class="text-slate-500">Publicação não confirmada na nuvem — tentando recuperar pelas partes...</span>');
+        const partRows = await supabaseRequest(`app_state?select=key,data&key=like.${encodeURIComponent(CLOUD_PART_PREFIX)}*&limit=1000`, {method:'GET'});
+        if(partRows && partRows.length){
+          const entidades={}; const mapaRec={};
+          partRows.forEach(r=>{
+            mapaRec[r.key]=r.data;
+            const mm=r.key.slice(CLOUD_PART_PREFIX.length).match(/^(.*)__p(\d+)$/);
+            if(!mm) return;
+            const campo=mm[1]; const idx=+mm[2];
+            if(!entidades[campo]) entidades[campo]={max:-1, presente:{}};
+            entidades[campo].max=Math.max(entidades[campo].max, idx);
+            entidades[campo].presente[idx]=true;
+          });
+          const tipoDe=campo=>{ const e=SYNC_ENTIDADES.find(x=>x.campo===campo); return e?e.tipo:'array'; };
+          const novoDbRec = structuredClone(defaultData);
+          const faltandoRec=[];
+          Object.entries(entidades).forEach(([campo,info])=>{
+            const itens=[]; let faltou=false;
+            for(let i=0;i<=info.max;i++){
+              const parte=mapaRec[`${CLOUD_PART_PREFIX}${campo}__p${i}`];
+              if(!parte){ faltou=true; continue; }
+              if(tipoDe(campo)==='objeto') itens.push(...(parte.itens||[])); else itens.push(...(parte.lista||[]));
+            }
+            if(faltou) faltandoRec.push(campo);
+            novoDbRec[campo] = tipoDe(campo)==='objeto' ? itensParaObjeto(itens) : itens;
+          });
+          novoDbRec.meta = Object.assign({}, novoDbRec.meta||{}, {sincronizadoEm:new Date().toISOString(), recuperadoSemMeta:true});
+          db = novoDbRec;
+          saveDB();
+          const avisoFalta = faltandoRec.length
+            ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ O último envio ficou incompleto: faltaram pedaços em <b>${faltandoRec.map(escapeHtml).join(', ')}</b>.<br>Carreguei tudo o que existia. Para completar 100%: no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> novamente.</div>`
+            : '';
+          setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Base recuperada da nuvem (modo recuperação). Recarregando...</span>${avisoFalta}`);
+          if(typeof toast==='function') toast('Base recuperada da nuvem','success');
+          setTimeout(()=>{
+            if(faltandoRec.length){ try{ alert('Base recuperada!\n\nATENÇÃO: o último envio ficou incompleto — faltaram pedaços de: '+faltandoRec.join(', ')+'.\n\nPara completar 100%: abra o ERP no computador onde a importação foi feita e clique em "Enviar para nuvem" novamente.'); }catch(e){} }
+            location.reload();
+          }, faltandoRec.length ? 2600 : 1200);
+          return {ok:true, recuperacao:true, faltando:faltandoRec};
+        }
+        // Fallback final: blob único legado
         const rows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
         if(!rows || !rows.length){
           setCloudSyncStatus('<span class="text-amber-700 font-bold">Ainda não há dados na nuvem. Em outro PC, use "Enviar para nuvem" primeiro.</span>');
@@ -569,8 +650,8 @@ end $$;
         }
         db = rows[0].data;
         saveDB();
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
-        if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Este é um backup ANTIGO e pode estar incompleto. No computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> para publicar a base completa.</div>`);
+        if(typeof toast==='function') toast('Dados carregados da nuvem (formato antigo)','success');
         setTimeout(()=>location.reload(),900);
         return {ok:true, legado:true};
       }
@@ -583,11 +664,12 @@ end $$;
       (rows||[]).forEach(r=>{ mapa[r.key]=r.data; });
 
       const novoDb = structuredClone(defaultData);
+      const faltando=[];
       Object.entries(meta.entidades||{}).forEach(([campo,info])=>{
         const itens=[];
         for(let i=0;i<(info.partes||0);i++){
           const parte = mapa[`${CLOUD_PART_PREFIX}${campo}__p${i}`];
-          if(!parte) throw new Error(`Parte ${campo}__p${i} não encontrada na nuvem`);
+          if(!parte){ faltando.push(`${campo} p${i}`); continue; } // tolerante: carrega o que existe
           if(info.tipo==='objeto') itens.push(...(parte.itens||[]));
           else itens.push(...(parte.lista||[]));
         }
@@ -596,7 +678,10 @@ end $$;
       novoDb.meta = Object.assign({}, novoDb.meta||{}, {sincronizadoEm:new Date().toISOString(), origemNuvemAtualizadoEm:meta.atualizadoEm||metaRows[0].updated_at});
       db = novoDb;
       saveDB();
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}). Recarregando...</span>`);
+      const avisoParcial = faltando.length
+        ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Algumas partes não foram encontradas (${faltando.length} — ex.: ${faltando.slice(0,4).map(escapeHtml).join(', ')}). Os dados afetados podem vir incompletos. Refaça o "Enviar para nuvem" no PC de origem.</div>`
+        : '';
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}). Recarregando...</span>${avisoParcial}`);
       if(typeof toast==='function') toast('Dados carregados da nuvem','success');
       setTimeout(()=>location.reload(),900);
       return {ok:true};
@@ -617,12 +702,18 @@ end $$;
       const metaRows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
       if(metaRows && metaRows.length){
         const meta=metaRows[0].data;
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Nuvem com dados publicados: ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros. Última atualização: ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Nuvem PUBLICADA: ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros. Última atualização: ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-emerald-700 mt-1">Tudo certo — outros PCs podem clicar em "Carregar da nuvem".</div>`);
         return;
       }
+      // Sem meta: mostra o retrato completo (partes soltas? blob antigo?)
+      const partes = await supabaseRequest(`app_state?select=key&key=like.${encodeURIComponent(CLOUD_PART_PREFIX)}*&limit=1000`, {method:'GET'});
       const rows = await supabaseRequest(`app_state?select=updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
-      if(rows && rows.length){
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Existe base na nuvem (formato antigo). Última atualização: ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><p class="text-[11px] text-amber-700 mt-1">Dica: envie novamente por este PC para migrar ao formato em partes (mais rápido e sem timeout).</p>`);
+      const nPartes=(partes||[]).length;
+      const temBlob=!!(rows && rows.length);
+      if(nPartes){
+        setCloudSyncStatus(`<span class="text-amber-700 font-bold">⚠️ Nuvem com envio INCOMPLETO: ${nPartes} partes soltas, sem a confirmação de publicação. Base antiga (backup): ${temBlob?'existe de '+new Date(rows[0].updated_at).toLocaleString('pt-BR'):'não existe'}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-1">Nenhum PC novo consegue carregar 100% ainda. <b>Solução:</b> no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> e aguarde a mensagem "PUBLICADO E VERIFICADO".</div>`);
+      }else if(temBlob){
+        setCloudSyncStatus(`<span class="text-amber-700 font-bold">⚠️ Existe apenas um backup ANTIGO na nuvem (de ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}) — ele NÃO tem a base completa.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-1">Para publicar a base completa: no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b>.</div>`);
       }else{
         setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há dados enviados para a nuvem.</span>');
       }
