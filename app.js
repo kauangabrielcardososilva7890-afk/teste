@@ -1146,6 +1146,7 @@ function renderBanco(){
       </div>
 
       <!-- NUVEM / SUPABASE -->
+      ${typeof cloudMigrationHtml === "function" ? cloudMigrationHtml() : ""}
       <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 shadow-xl overflow-hidden relative">
         <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
