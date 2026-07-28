@@ -8,6 +8,7 @@ const defaultData={
   empresas:[],
   usuarios:[],
   clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
+  modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras LTDA',cnpj:'12.345.678/0001-90',fone:'(11) 3333-4444',email:'contato@digicopy.com.br'}}
 };
@@ -21,6 +22,7 @@ function loadDB(){
     ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
       if(!Array.isArray(parsed[k])) parsed[k]=[];
     });
+    if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
     if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
     if(!parsed.config) parsed.config=structuredClone(defaultData.config);
     if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
@@ -290,6 +292,11 @@ function navigateTo(view){
   if(view==='config') renderConfig();
   if(view==='usuarios') renderUsuarios();
   if(view==='auditoria') renderAuditoria();
+  // Módulos dinâmicos (tabelas migradas sem mapeamento direto)
+  if(view.startsWith('mod_')){
+    const nomeTabela = view.substring(4).toUpperCase();
+    renderModuloDinamico(nomeTabela);
+  }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<1024) toggleSidebar(true);
 }
@@ -304,11 +311,196 @@ function buildNav(){
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
   const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
   const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'relatorios',icon:'ph-chart-line',label:'Relatórios'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
+  
+  // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)
+  const dinamicos = [];
+  if(db.modulosDinamicos && typeof db.modulosDinamicos === 'object'){
+    Object.keys(db.modulosDinamicos).forEach(nome => {
+      const modulo = db.modulosDinamicos[nome];
+      if(modulo && Array.isArray(modulo.dados) && modulo.dados.length > 0){
+        dinamicos.push({
+          id: 'mod_'+nome.toLowerCase().replace(/[^a-z0-9]/g,'_'),
+          icon: modulo.icone || 'ph-table',
+          label: modulo.label || formatarNomeTabela(nome),
+          count: modulo.dados.length
+        });
+      }
+    });
+  }
+  
   function rg(list,target){
     const cont=document.getElementById(target);
     cont.innerHTML=list.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white ${item.id==='dashboard'?'bg-white/[0.12] text-white border border-white/10':''}"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span>${item.id==='manutencao'?`<span class="ml-auto text-[11px] bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">${(db.os.filter(o=>o.empresaId===(sess?.empresaId) && o.status!=='concluido').length)}</span>`:''}${item.id==='leituras'?`<span class="ml-auto text-[11px] bg-white text-[#0a1e8a] font-bold px-2 py-0.5 rounded-full">${(db.leituras.filter(l=>l.empresaId===(sess?.empresaId) && l.status==='pendente').length)}</span>`:''}</button>`).join('');
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
+  
+  // Renderizar seção de módulos dinâmicos se houver
+  let navDinamico = document.getElementById('nav-dinamico');
+  let navDinamicoLabel = document.getElementById('nav-dinamico-label');
+  if(dinamicos.length > 0){
+    if(!navDinamicoLabel){
+      navDinamicoLabel = document.createElement('p');
+      navDinamicoLabel.id = 'nav-dinamico-label';
+      navDinamicoLabel.className = 'px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase';
+      navDinamicoLabel.textContent = 'Módulos migrados';
+      const navContainer = document.querySelector('nav');
+      const adminDiv = navContainer.querySelector('div:last-of-type');
+      navContainer.insertBefore(navDinamicoLabel, adminDiv);
+    }
+    if(!navDinamico){
+      navDinamico = document.createElement('div');
+      navDinamico.id = 'nav-dinamico';
+      navDinamico.className = 'space-y-1';
+      navDinamicoLabel.insertAdjacentElement('afterend', navDinamico);
+    }
+    navDinamico.innerHTML = dinamicos.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${item.count}</span></button>`).join('');
+  } else if(navDinamico){
+    navDinamico.remove();
+    if(navDinamicoLabel) navDinamicoLabel.remove();
+  }
+}
+
+function formatarNomeTabela(nome){
+  // Converte NOME_TABELA para "Nome Tabela"
+  return nome.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ═══════════════════════════════════════════════════════
+// MÓDULOS DINÂMICOS — Telas geradas automaticamente para tabelas migradas
+// ═══════════════════════════════════════════════════════
+function renderModuloDinamico(nomeTabela){
+  const modulo = db.modulosDinamicos[nomeTabela];
+  if(!modulo){
+    toast('Módulo não encontrado','error');
+    return;
+  }
+  
+  const el = ensureView('mod_'+nomeTabela.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+  const dados = modulo.dados || [];
+  const colunas = modulo.colunas || (dados.length > 0 ? Object.keys(dados[0]) : []);
+  const label = modulo.label || formatarNomeTabela(nomeTabela);
+  const maxColunas = Math.min(colunas.length, 8);
+  const colunasVisiveis = colunas.slice(0, maxColunas);
+  
+  el.innerHTML = `
+    <div class="space-y-4">
+      <div class="rounded-[22px] bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Módulo migrado</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">${escapeHtml(label)}</h2>
+            <p class="text-white/80 text-[13.5px] mt-2">Dados importados da tabela <code class="bg-white/20 px-2 py-0.5 rounded">${escapeHtml(nomeTabela)}</code> do sistema antigo.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="exportarModuloDinamico('${nomeTabela}')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-export"></i> Exportar</button>
+            <button onclick="confirmarExcluirModulo('${nomeTabela}')" class="h-10 px-4 rounded-xl bg-red-500/20 border border-red-400/30 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-trash"></i> Excluir módulo</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Total de registros</p><p class="text-[24px] font-extrabold text-purple-600 mt-1">${dados.length}</p></div>
+        <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Campos</p><p class="text-[24px] font-extrabold text-blue-600 mt-1">${colunas.length}</p></div>
+        <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Origem</p><p class="text-[14px] font-bold text-slate-700 mt-2">${escapeHtml(modulo.origem || 'Firebird')}</p></div>
+        <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Importado em</p><p class="text-[14px] font-bold text-slate-700 mt-2">${modulo.importadoEm ? fmtDateTime(modulo.importadoEm) : '-'}</p></div>
+      </div>
+      <div class="rounded-[18px] bg-white border shadow-sm p-4">
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="flex-1 min-w-[250px]"><input id="search-mod-${nomeTabela}" type="text" placeholder="Buscar em todos os campos..." class="w-full h-10 px-4 rounded-xl border border-slate-300 text-[13px]" oninput="filtrarModuloDinamico('${nomeTabela}')"></div>
+          <select id="coluna-mod-${nomeTabela}" class="h-10 px-3 rounded-xl border border-slate-300 text-[13px]" onchange="filtrarModuloDinamico('${nomeTabela}')"><option value="">Todas as colunas</option>${colunas.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="rounded-[18px] bg-white border shadow-sm overflow-hidden">
+        <div class="p-4 border-b bg-slate-50 flex items-center justify-between"><h3 class="font-bold text-[15px]">Registros</h3><p class="text-[12px] text-slate-500" id="mod-count-${nomeTabela}">${dados.length} registros</p></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px]">
+            <thead class="bg-slate-100 border-b"><tr><th class="px-4 py-3 text-left font-bold text-slate-700">#</th>${colunasVisiveis.map(c=>`<th class="px-4 py-3 text-left font-bold text-slate-700">${escapeHtml(c)}</th>`).join('')}${colunas.length > maxColunas ? `<th class="px-4 py-3 text-left font-bold text-slate-400">+${colunas.length-maxColunas}</th>` : ''}<th class="px-4 py-3 text-center font-bold text-slate-700">Ações</th></tr></thead>
+            <tbody id="mod-tbody-${nomeTabela}" class="divide-y divide-slate-100">
+              ${dados.slice(0,50).map((row,idx)=>`<tr class="hover:bg-slate-50 transition"><td class="px-4 py-3 text-slate-500">${idx+1}</td>${colunasVisiveis.map(c=>`<td class="px-4 py-3 text-slate-700">${escapeHtml(String(row[c]||'').substring(0,50))}</td>`).join('')}${colunas.length > maxColunas ? '<td class="px-4 py-3 text-slate-400">...</td>' : ''}<td class="px-4 py-3 text-center"><button onclick="visualizarRegistroDinamico('${nomeTabela}',${idx})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100" title="Visualizar"><i class="ph ph-eye"></i></button></td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${dados.length > 50 ? `<div class="p-4 border-t bg-slate-50 text-center text-[12px] text-slate-500">Mostrando 50 de ${dados.length} registros.</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function filtrarModuloDinamico(nomeTabela){
+  const modulo = db.modulosDinamicos[nomeTabela];
+  if(!modulo) return;
+  const busca = (document.getElementById('search-mod-'+nomeTabela)?.value || '').toLowerCase();
+  const coluna = document.getElementById('coluna-mod-'+nomeTabela)?.value || '';
+  const dados = modulo.dados || [];
+  const colunas = modulo.colunas || (dados.length > 0 ? Object.keys(dados[0]) : []);
+  const maxColunas = Math.min(colunas.length, 8);
+  const colunasVisiveis = colunas.slice(0, maxColunas);
+  const filtrados = dados.filter(row => {
+    if(!busca) return true;
+    if(coluna) return String(row[coluna] || '').toLowerCase().includes(busca);
+    return colunas.some(c => String(row[c] || '').toLowerCase().includes(busca));
+  });
+  document.getElementById('mod-tbody-'+nomeTabela).innerHTML = filtrados.slice(0,50).map((row,idx)=>`<tr class="hover:bg-slate-50 transition"><td class="px-4 py-3 text-slate-500">${idx+1}</td>${colunasVisiveis.map(c=>`<td class="px-4 py-3 text-slate-700">${escapeHtml(String(row[c]||'').substring(0,50))}</td>`).join('')}${colunas.length > maxColunas ? '<td class="px-4 py-3 text-slate-400">...</td>' : ''}<td class="px-4 py-3 text-center"><button onclick="visualizarRegistroDinamico('${nomeTabela}',${dados.indexOf(row)})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100"><i class="ph ph-eye"></i></button></td></tr>`).join('');
+  document.getElementById('mod-count-'+nomeTabela).textContent = filtrados.length + ' registros';
+}
+
+function visualizarRegistroDinamico(nomeTabela, idx){
+  const modulo = db.modulosDinamicos[nomeTabela];
+  if(!modulo || !modulo.dados[idx]) return;
+  const row = modulo.dados[idx];
+  const label = modulo.label || formatarNomeTabela(nomeTabela);
+  const modal = document.getElementById('modal-root');
+  modal.innerHTML = `<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeModal()"><div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"><div class="p-6 border-b bg-gradient-to-r from-purple-600 to-purple-800 text-white"><h3 class="text-[18px] font-bold">${escapeHtml(label)} - Registro #${idx+1}</h3><p class="text-[12px] text-white/70 mt-1">Tabela: ${escapeHtml(nomeTabela)}</p></div><div class="flex-1 overflow-y-auto p-6"><div class="space-y-3">${Object.entries(row).map(([key,value])=>`<div class="border-b pb-3"><p class="text-[11px] font-bold text-slate-500 uppercase mb-1">${escapeHtml(key)}</p><p class="text-[14px] text-slate-800">${value ? escapeHtml(String(value)) : '<span class="text-slate-400 italic">vazio</span>'}</p></div>`).join('')}</div></div><div class="p-4 border-t bg-slate-50 flex justify-end gap-2"><button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-slate-200 text-slate-700 font-semibold text-[13px]">Fechar</button></div></div></div>`;
+  modal.classList.remove('hidden');
+}
+
+function exportarModuloDinamico(nomeTabela){
+  const modulo = db.modulosDinamicos[nomeTabela];
+  if(!modulo) return;
+  const dataStr = JSON.stringify({tabela:nomeTabela, exportadoEm:new Date().toISOString(), totalRegistros:modulo.dados.length, dados:modulo.dados}, null, 2);
+  const blob = new Blob([dataStr], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeTabela+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Módulo exportado com sucesso','success');
+}
+
+function confirmarExcluirModulo(nomeTabela){
+  const modulo = db.modulosDinamicos[nomeTabela];
+  if(!modulo) return;
+  const label = modulo.label || formatarNomeTabela(nomeTabela);
+  if(confirm('Tem certeza que deseja excluir o módulo "'+label+'"?\\n\\nIsso removerá '+modulo.dados.length+' registros permanentemente.')){
+    delete db.modulosDinamicos[nomeTabela];
+    saveDB();
+    buildNav();
+    navigateTo('dashboard');
+    toast('Módulo excluído com sucesso','success');
+  }
+}
+
+function sugerirIcone(nomeTabela){
+  const n = nomeTabela.toUpperCase();
+  if(n.includes('FORNECEDOR')) return 'ph-truck';
+  if(n.includes('FUNCIONAR') || n.includes('EMPREGADO')) return 'ph-identification-badge';
+  if(n.includes('ORCAMENTO') || n.includes('ORÇAMENTO')) return 'ph-file-text';
+  if(n.includes('RECIBO')) return 'ph-receipt';
+  if(n.includes('CATEGORIA')) return 'ph-tag';
+  if(n.includes('FABRICANTE') || n.includes('MARCA')) return 'ph-factory';
+  if(n.includes('UNIDADE') || n.includes('MEDIDA')) return 'ph-ruler';
+  if(n.includes('CONFIGURACAO') || n.includes('CONFIG')) return 'ph-gear';
+  if(n.includes('EMPRESA')) return 'ph-buildings';
+  if(n.includes('LOCACAO') || n.includes('LOCAÇÃO') || n.includes('CONTRATO')) return 'ph-file-text';
+  if(n.includes('LEITURA')) return 'ph-speedometer';
+  if(n.includes('ITEM')) return 'ph-list-bullets';
+  if(n.includes('HISTORICO') || n.includes('LOG')) return 'ph-clock-counter-clockwise';
+  if(n.includes('ORDEM') || n.includes('SERVICO') || n.includes('SERVIÇO')) return 'ph-wrench';
+  if(n.includes('NOTA') || n.includes('FISCAL')) return 'ph-file-text';
+  if(n.includes('CAIXA') || n.includes('BANCO')) return 'ph-bank';
+  if(n.includes('AGENDA') || n.includes('CALEND')) return 'ph-calendar';
+  if(n.includes('MENSAG') || n.includes('EMAIL')) return 'ph-envelope';
+  if(n.includes('RELATORIO') || n.includes('RELATÓRIO')) return 'ph-chart-line';
+  return 'ph-table';
 }
 
 function initTemplates(){
@@ -1406,10 +1598,10 @@ function fbImportToErp(rawData){
     });
   }
 
-  saveDB();
-  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro`);
+  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Navegue pelos módulos para conferir.`,'success');
+  toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
 
-  // Mostrar resultado
+  // Mostrar resultado dos módulos mapeados
   const panel = document.getElementById('fb-import-panel');
   panel.classList.remove('hidden');
   document.getElementById('fb-import-result').innerHTML = [
@@ -1429,10 +1621,50 @@ function fbImportToErp(rawData){
     </div>
   `).join('');
 
-  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Navegue pelos módulos para conferir.`,'success');
-  toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
+  // ── MÓDULOS DINÂMICOS — tabelas sem mapeamento direto ──
+  const tabelasMapeadas = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO'];
+  const resultDinamico = {};
+  for(const [nome, info] of Object.entries(rawData)){
+    if(!info.data || !info.data.length) continue;
+    const jaMapeada = tabelasMapeadas.some(m => nome.toUpperCase().includes(m));
+    if(jaMapeada) continue;
+    // Criar módulo dinâmico
+    const icone = sugerirIcone(nome);
+    db.modulosDinamicos[nome] = {
+      label: formatarNomeTabela(nome),
+      icone: icone,
+      origem: 'Firebird',
+      importadoEm: new Date().toISOString(),
+      colunas: Object.keys(info.data[0]),
+      dados: info.data
+    };
+    resultDinamico[nome] = info.data.length;
+  }
 
-  // Atualizar telas
+  // Se criou módulos dinâmicos, mostrar no resultado
+  const dinKeys = Object.keys(resultDinamico);
+  if(dinKeys.length > 0){
+    const dinTotal = Object.values(resultDinamico).reduce((s,v)=>s+v,0);
+    const panel = document.getElementById('fb-import-panel');
+    panel.classList.remove('hidden');
+    const existResult = document.getElementById('fb-import-result');
+    existResult.innerHTML += `
+      <div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-purple-50 border-purple-200 p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-purple-100 grid place-items-center"><i class="ph ph-puzzle-piece text-[16px] text-purple-600"></i></div>
+          <p class="text-[13px] font-bold text-purple-800">Módulos novos criados automaticamente (${dinKeys.length} tabelas → ${dinTotal} registros)</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${dinKeys.map(k=>`<span class="px-3 py-1.5 rounded-lg bg-purple-100 border border-purple-200 text-[12px] font-bold text-purple-700">${formatarNomeTabela(k)} (${resultDinamico[k]})</span>`).join('')}
+        </div>
+        <p class="text-[11px] text-purple-600 mt-3">Esses módulos aparecem no menu lateral com badge roxo. Você pode visualizar, buscar e exportar os dados.</p>
+      </div>
+    `;
+  }
+
+  saveDB();
+  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
+  buildNav(); // Atualizar menu para mostrar módulos dinâmicos
   renderDashboard();
 }
 
