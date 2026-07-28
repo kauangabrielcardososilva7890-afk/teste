@@ -269,7 +269,7 @@ function navigateTo(view){
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
     document.getElementById('page-title').innerText='Banco antigo Firebird';
     document.getElementById('page-subtitle').innerText='Plano de migração do .RAR atualizado para nuvem';
-    renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
+    renderBanco(); setTimeout(function(){ const el = document.getElementById("view-banco"); if(el){ el.style.display="block"; el.style.visibility="visible"; } }, 50); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   const target=document.getElementById('view-'+view);
