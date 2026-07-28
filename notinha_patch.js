@@ -352,3 +352,72 @@ console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos 
     document.getElementById('view-banco').innerHTML=neoPage('Migração e nuvem', 'Preparação para Supabase e importação do pacote atualizado', '', `<div class="neo-card w-full"><p class="neo-label">Próxima etapa</p><p class="text-[13px] text-slate-600">Criar o projeto no Supabase, montar as tabelas e trocar o localStorage por banco em nuvem. Arquivos grandes ficam no Storage, não no banco.</p></div>`, `<div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-3"><div class="neo-card"><b>1. Supabase</b><p class="text-[12px] text-slate-500 mt-1">Banco Postgres fácil para iniciar.</p></div><div class="neo-card"><b>2. API/Realtime</b><p class="text-[12px] text-slate-500 mt-1">Atualização entre computadores.</p></div><div class="neo-card"><b>3. Executável</b><p class="text-[12px] text-slate-500 mt-1">Electron conectado à nuvem.</p></div></div>`);
   };
 })();
+
+// PATCH v4.1 - OS junto com notinha sem obrigar caixa fechada
+(function(){
+  const baseNovaVendaNeo = window.novaVenda;
+  window.novaVenda = function(){
+    if(typeof baseNovaVendaNeo === 'function') baseNovaVendaNeo();
+    setTimeout(()=>{
+      const actionCard = document.querySelector('#modal-body .neo-grid > div:last-child .neo-card:last-child');
+      if(!actionCard || document.getElementById('neo-os-venda-card')) return;
+      const osCard = document.createElement('div');
+      osCard.id = 'neo-os-venda-card';
+      osCard.className = 'neo-card neo-float-in';
+      osCard.innerHTML = `
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="neo-label mb-1">Ordem de serviço</p>
+            <p class="text-[12px] text-slate-500">Opcional: gerar OS junto com esta notinha</p>
+          </div>
+          <button type="button" id="neo-os-toggle-btn" onclick="neoToggleOSVenda()" class="neo-btn"><i class="ph ph-wrench"></i>Adicionar OS</button>
+        </div>
+        <div id="neo-os-fields" class="hidden mt-3 space-y-2">
+          <input id="neo-os-problema" class="neo-input w-full" placeholder="Problema/serviço solicitado. Ex: manutenção, instalação, retirada...">
+          <textarea id="neo-os-desc" class="neo-input w-full !h-[76px] py-2" placeholder="Observações para o técnico"></textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="neo-os-tecnico" class="neo-input" placeholder="Técnico/responsável">
+            <button type="button" onclick="navigateTo('config'); closeModal();" class="neo-btn justify-center"><i class="ph ph-user-plus"></i>Cadastrar técnico</button>
+          </div>
+        </div>`;
+      actionCard.parentNode.insertBefore(osCard, actionCard);
+    }, 80);
+  };
+  window.neoToggleOSVenda = function(){
+    window.neoGerarOSVenda = !window.neoGerarOSVenda;
+    const fields = document.getElementById('neo-os-fields');
+    const btn = document.getElementById('neo-os-toggle-btn');
+    if(fields) fields.classList.toggle('hidden', !window.neoGerarOSVenda);
+    if(btn){
+      btn.classList.toggle('primary', !!window.neoGerarOSVenda);
+      btn.innerHTML = window.neoGerarOSVenda ? '<i class="ph ph-check-circle"></i>OS será gerada' : '<i class="ph ph-wrench"></i>Adicionar OS';
+    }
+  };
+  const baseSalvarVendaNeo = window.neoSalvarVenda;
+  window.neoSalvarVenda = function(){
+    const beforeIds = new Set((db.vendas||[]).map(v=>v.id));
+    const gerarOS = !!window.neoGerarOSVenda;
+    const problema = (document.getElementById('neo-os-problema')?.value || '').trim();
+    const descricao = (document.getElementById('neo-os-desc')?.value || '').trim();
+    const tecnico = (document.getElementById('neo-os-tecnico')?.value || '').trim();
+    if(gerarOS && !problema) return toast('Informe o problema/serviço da OS', 'error');
+    if(typeof baseSalvarVendaNeo === 'function') baseSalvarVendaNeo();
+    const sess = getSession();
+    const venda = (db.vendas||[]).find(v=>!beforeIds.has(v.id) && v.empresaId===sess?.empresaId);
+    if(gerarOS && venda){
+      const numero = 'OS-' + new Date().getFullYear() + '-' + String((db.os||[]).filter(o=>o.empresaId===sess.empresaId).length+1).padStart(4,'0');
+      db.os.push({
+        id: uid('os'), empresaId: sess.empresaId, numero,
+        clienteId: venda.clienteId, equipamentoId: null, contratoId: null,
+        vendaId: venda.id, problema, descricao,
+        prioridade: 'normal', tecnicoNome: tecnico, tecnico,
+        status: 'aberto', abertura: new Date().toISOString(), criadoEm: new Date().toISOString(),
+        criadoPor: sess.usuarioId, criadoPorNome: sess.usuarioNome
+      });
+      logAction('os','criar_via_venda',venda.id,`OS ${numero} criada junto com ${venda.numero}`);
+      saveDB();
+      toast(`OS ${numero} criada junto com a notinha`, 'success');
+    }
+    window.neoGerarOSVenda = false;
+  };
+})();

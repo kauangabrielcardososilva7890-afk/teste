@@ -65,31 +65,49 @@
     alert(msg);
   };
 
-  const previousRenderBanco = window.renderBanco;
-  window.renderBanco = function(){
-    if(typeof previousRenderBanco === 'function') previousRenderBanco();
-    const view = document.getElementById('view-banco') || (typeof ensureView==='function' ? ensureView('banco') : null);
-    if(!view) return;
-    const card = document.createElement('div');
-    card.className = 'neo-shell pt-0';
-    card.innerHTML = `
-      <div class="neo-panel neo-float-in">
-        <div class="neo-head">
-          <div>
-            <h3>Conexão Supabase</h3>
-            <p>Projeto configurado para banco em nuvem e importação futura dos dados antigos</p>
+  function cloudMigrationHtml(){
+    return `
+      <div class="neo-shell">
+        <div class="neo-panel neo-float-in">
+          <div class="neo-head">
+            <div>
+              <h3>Migração e nuvem</h3>
+              <p>Supabase configurado para receber os dados do sistema antigo e sincronizar computadores</p>
+            </div>
+            <div class="neo-actions">
+              <button onclick="testarSupabase()" class="neo-btn primary"><i class="ph ph-plugs-connected"></i>Testar conexão</button>
+              <button onclick="supabaseInfo()" class="neo-btn"><i class="ph ph-info"></i>Dados</button>
+            </div>
           </div>
-          <div class="neo-actions">
-            <button onclick="testarSupabase()" class="neo-btn primary"><i class="ph ph-plugs-connected"></i>Testar conexão</button>
-            <button onclick="supabaseInfo()" class="neo-btn"><i class="ph ph-info"></i>Dados da conexão</button>
+          <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="neo-card"><p class="neo-label">Projeto</p><b class="text-[#0a1e8a] break-all">${SUPABASE_PROJECT_URL}</b></div>
+            <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em testar conexão.</div></div>
+            <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Ele será usado para extrair o Firebird e importar as tabelas.</p></div>
           </div>
-        </div>
-        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="neo-card"><p class="neo-label">Projeto</p><b class="text-[#0a1e8a] break-all">${SUPABASE_PROJECT_URL}</b></div>
-          <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Ainda não testado nesta sessão.</div></div>
-          <div class="neo-card"><p class="neo-label">Próximo passo</p><p class="text-[13px] text-slate-600">Criar as tabelas no SQL Editor e depois trocar o localStorage pela nuvem.</p></div>
+          <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="neo-card"><b>1. Tabelas</b><p class="text-[12px] text-slate-500 mt-1">Criar schema inicial no SQL Editor.</p></div>
+            <div class="neo-card"><b>2. Importação</b><p class="text-[12px] text-slate-500 mt-1">Extrair o FDB e mapear tabelas antigas.</p></div>
+            <div class="neo-card"><b>3. Sistema online</b><p class="text-[12px] text-slate-500 mt-1">Trocar localStorage pelo Supabase.</p></div>
+            <div class="neo-card"><b>4. Tempo real</b><p class="text-[12px] text-slate-500 mt-1">Atualizar telas entre computadores.</p></div>
+          </div>
         </div>
       </div>`;
-    view.appendChild(card);
+  }
+
+  window.renderBanco = function(){
+    const view = document.getElementById('view-banco') || (typeof ensureView==='function' ? ensureView('banco') : null);
+    if(!view) return;
+    view.innerHTML = cloudMigrationHtml();
+  };
+
+  window.openCloudMigration = function(){
+    const view = document.getElementById('view-banco') || (typeof ensureView==='function' ? ensureView('banco') : null);
+    if(!view) return;
+    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+    view.classList.remove('hidden');
+    const title=document.getElementById('page-title'); if(title) title.innerText='Migração e nuvem';
+    const subtitle=document.getElementById('page-subtitle'); if(subtitle) subtitle.innerText='Supabase, importação e sincronização';
+    window.renderBanco();
+    window.scrollTo({top:0,behavior:'smooth'});
   };
 })();
