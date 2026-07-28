@@ -285,7 +285,8 @@ function navigateTo(view){
   if(view==='leituras') renderLeituras();
   if(view==='manutencao') renderOs();
   if(view==='vendas') renderVendas();
-  if(view==='financeiro'){renderFinanceiro(); renderFluxoChart();}
+  if(view==='financeiro'){renderFinanceiro(); if(document.getElementById('fluxoChart')) renderFluxoChart();}
+  if(view==='relatorios') renderRelatorios();
   if(view==='config') renderConfig();
   if(view==='usuarios') renderUsuarios();
   if(view==='auditoria') renderAuditoria();
