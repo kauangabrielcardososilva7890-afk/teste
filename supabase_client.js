@@ -400,6 +400,35 @@ end $$;
     if(el) el.innerHTML = html;
   }
 
+  // O Postgres/jsonb REJEITA textos com escapes Unicode inválidos (surrogados soltos
+  // U+D800–U+DFFF, byte nulo \u0000 e controles exóticos) — comum em dados legados do
+  // Firebird exportados pelo DBeaver (ex.: "C:\UTIL", acentos corrompidos latin1).
+  // Limpamos APENAS a cópia que vai para a nuvem (dados locais ficam intactos).
+  function sanitizeTextoNuvem(str){
+    let out = '';
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      if (code >= 0xD800 && code <= 0xDBFF){
+        const next = (i + 1 < str.length) ? str.charCodeAt(i + 1) : 0;
+        if (next >= 0xDC00 && next <= 0xDFFF){ out += str[i] + str[i + 1]; i++; } // par válido (emoji) — mantém
+        else { out += '\uFFFD'; } // surrogado solto → �
+      } else if (code >= 0xDC00 && code <= 0xDFFF){
+        out += '\uFFFD';
+      } else if (code === 0){
+        out += ' '; // jsonb não aceita \u0000 em text
+      } else if (code < 0x20 && code !== 9 && code !== 10 && code !== 13){
+        out += ' '; // outros controles problemáticos
+      } else {
+        out += str[i];
+      }
+    }
+    return out;
+  }
+  // JSON.stringify já higienizado para o Postgres
+  function stringifyNuvem(valor){
+    return JSON.stringify(valor, function(_k, v){ return typeof v === 'string' ? sanitizeTextoNuvem(v) : v; });
+  }
+
   // Objeto (modulosDinamicos/config) → lista de [chave,valor]; módulos gigantes são fatiados
   function objetoParaItens(obj){
     const itens=[];
@@ -491,7 +520,7 @@ end $$;
           await supabaseRequest('app_state?on_conflict=key', {
             method:'POST',
             headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-            body:JSON.stringify({key:p.key, data:p.data, updated_at:new Date().toISOString()})
+            body:stringifyNuvem({key:p.key, data:p.data, updated_at:new Date().toISOString()})
           });
           enviadas++;
         }catch(err){
@@ -509,7 +538,7 @@ end $$;
       await supabaseRequest('app_state?on_conflict=key', {
         method:'POST',
         headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-        body:JSON.stringify({key:CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
+        body:stringifyNuvem({key:CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
       });
       setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Enviado! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes. Outros PCs podem clicar em "Carregar da nuvem".</span>`);
       if(typeof toast==='function') toast('Dados enviados para a nuvem com sucesso','success');
