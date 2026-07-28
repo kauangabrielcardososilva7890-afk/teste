@@ -1,5 +1,5 @@
-// DIGICOPY ERP v3.4 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.4.0';
+// DIGICOPY ERP v3.5 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+const APP_VERSION='3.5.0';
 const DB_KEY='digicopy_erp_v30';
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
@@ -312,58 +312,47 @@ function buildNav(){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
-  <div class="rounded-[24px] bg-[#0a1e8a] text-white p-6 lg:p-8 shadow-xl relative overflow-hidden">
-    <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-white/10 blur-3xl"></div>
-    <div class="relative z-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+  <div class="rounded-[18px] bg-[#0a1e8a] text-white px-6 py-5 shadow-sm relative overflow-hidden">
+    <div class="absolute -right-16 -top-20 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
-        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[12px] font-bold"><i class="ph ph-hand-waving"></i> Modo fácil para atendimento</span>
-        <h2 class="mt-4 text-[28px] lg:text-[34px] font-extrabold tracking-tight">O que você quer fazer agora?</h2>
-        <p class="mt-2 text-white/75 text-[14px] max-w-[760px]">Tela inicial simplificada para funcionário não se perder. As ações principais ficam em botões grandes e com nomes diretos.</p>
+        <p class="text-[11px] uppercase tracking-[0.18em] text-white/60 font-bold">Menu parecido com sistema desktop</p>
+        <h2 class="text-[24px] lg:text-[28px] font-extrabold tracking-tight mt-1">Atalhos principais</h2>
+        <p class="mt-1 text-white/75 text-[13px] max-w-[760px]">Sem caixas fechadas: use a faixa de menu acima ou os atalhos em linha abaixo. Depois eu ajusto para ficar mais parecido com os prints das telas do sistema antigo.</p>
       </div>
-      <div class="rounded-2xl bg-white/10 border border-white/15 p-4 min-w-[230px]">
-        <p class="text-[11px] uppercase tracking-widest text-white/50 font-bold">Ajuda rápida</p>
-        <p class="mt-2 text-[13px] leading-snug text-white/80">1. Escolha uma ação.<br>2. Preencha só o necessário.<br>3. Clique em salvar/imprimir.</p>
-      </div>
+      <div class="text-[12px] text-white/75 leading-relaxed lg:text-right">Dica: deixe o funcionário usar só esta tela.<br>Administração fica no menu lateral.</div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 easy-actions">
-    <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-emerald-600 text-white grid place-items-center text-[28px]"><i class="ph ph-shopping-cart-simple"></i></span><span><b class="block text-[18px]">Nova venda</b><small class="text-slate-500">Vender produto e imprimir notinha</small></span>
-    </button>
-    <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('nv-status'); if(s){s.value='orcamento'; if(typeof onStatusVendaChange==='function') onStatusVendaChange();}},300)} else navigateTo('vendas')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-[#0a1e8a] text-white grid place-items-center text-[28px]"><i class="ph ph-clipboard-text"></i></span><span><b class="block text-[18px]">Novo orçamento</b><small class="text-slate-500">Montar orçamento para cliente</small></span>
-    </button>
-    <button onclick="openModal('cliente')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-violet-600 text-white grid place-items-center text-[28px]"><i class="ph ph-user-plus"></i></span><span><b class="block text-[18px]">Cadastrar cliente</b><small class="text-slate-500">Nome, CNPJ/CPF e contato</small></span>
-    </button>
-    <button onclick="openQuickOS()" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-amber-500 text-white grid place-items-center text-[28px]"><i class="ph ph-wrench"></i></span><span><b class="block text-[18px]">Abrir chamado</b><small class="text-slate-500">Cliente precisa de técnico</small></span>
-    </button>
-    <button onclick="openQuickReading()" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-sky-600 text-white grid place-items-center text-[28px]"><i class="ph ph-speedometer"></i></span><span><b class="block text-[18px]">Lançar leitura</b><small class="text-slate-500">Informar contador da impressora</small></span>
-    </button>
-    <button onclick="navigateTo('financeiro')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
-      <span class="w-14 h-14 rounded-2xl bg-slate-900 text-white grid place-items-center text-[28px]"><i class="ph ph-money"></i></span><span><b class="block text-[18px]">Ver financeiro</b><small class="text-slate-500">Receber, pagar e conferir caixa</small></span>
-    </button>
+  <div class="ribbon-actions">
+    <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i><span>Venda</span><small>notinha</small></button>
+    <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('nv-status'); if(s){s.value='orcamento'; if(typeof onStatusVendaChange==='function') onStatusVendaChange();}},300)} else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i><span>Orçamento</span><small>cliente</small></button>
+    <button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i><span>Novo cliente</span><small>cadastro</small></button>
+    <button onclick="navigateTo('produtos')"><i class="ph ph-package"></i><span>Estoque</span><small>produtos</small></button>
+    <button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i><span>Impressoras</span><small>patrimônio</small></button>
+    <button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i><span>Locação</span><small>contratos</small></button>
+    <button onclick="openQuickReading()"><i class="ph ph-speedometer"></i><span>Leitura</span><small>contador</small></button>
+    <button onclick="openQuickOS()"><i class="ph ph-wrench"></i><span>Chamado</span><small>técnico</small></button>
+    <button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i><span>Financeiro</span><small>caixa</small></button>
+    <button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line"></i><span>Relatórios</span><small>resumo</small></button>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Contratos ativos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-contratos">0</p><i class="ph ph-file-text text-[#0a1e8a] text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Clientes com locação em andamento</p></div>
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Máquinas instaladas</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-parque">0</p><i class="ph ph-printer text-violet-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-disponiveis" class="font-bold text-slate-900">0</span> disponíveis para locar</p></div>
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Chamados abertos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-os">0</p><i class="ph ph-warning-circle text-amber-500 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-auditoria" class="font-bold">0 hoje</span> ações registradas</p></div>
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Previsto no mês</p><div class="mt-3 flex items-end justify-between"><p class="text-[28px] font-extrabold text-[#0a1e8a]" id="kpi-faturamento">R$ 0,00</p><i class="ph ph-currency-dollar text-emerald-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Vendas + contratos + leituras</p></div>
+    <div class="rounded-[16px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Contratos ativos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-contratos">0</p><i class="ph ph-file-text text-[#0a1e8a] text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Clientes com locação em andamento</p></div>
+    <div class="rounded-[16px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Máquinas instaladas</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-parque">0</p><i class="ph ph-printer text-violet-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-disponiveis" class="font-bold text-slate-900">0</span> disponíveis para locar</p></div>
+    <div class="rounded-[16px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Chamados abertos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-os">0</p><i class="ph ph-warning-circle text-amber-500 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-auditoria" class="font-bold">0 hoje</span> ações registradas</p></div>
+    <div class="rounded-[16px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Previsto no mês</p><div class="mt-3 flex items-end justify-between"><p class="text-[28px] font-extrabold text-[#0a1e8a]" id="kpi-faturamento">R$ 0,00</p><i class="ph ph-currency-dollar text-emerald-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Vendas + contratos + leituras</p></div>
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-    <div class="xl:col-span-2 rounded-[20px] bg-white border p-6 shadow-sm"><div class="flex items-center justify-between mb-5"><div><h3 class="font-bold text-[16px]">Resumo financeiro</h3><p class="text-[12.5px] text-slate-500">Gráfico para o dono/gerente conferir</p></div><button onclick="navigateTo('relatorios')" class="h-9 px-3 rounded-xl bg-slate-100 text-[12px] font-bold">Ver relatórios</button></div><div class="h-[250px]"><canvas id="chartFinance"></canvas></div></div>
-    <div class="rounded-[20px] bg-white border p-6 shadow-sm flex flex-col"><h3 class="font-bold text-[16px]">Status das impressoras</h3><p class="text-[12.5px] text-slate-500 mt-1">Locadas, disponíveis e manutenção</p><div class="mt-6 flex-1 grid place-items-center"><div class="w-[190px] h-[190px]"><canvas id="chartParque"></canvas></div></div><div class="mt-5 grid grid-cols-2 gap-3 text-[12px]" id="parque-legend"></div></div>
+    <div class="xl:col-span-2 rounded-[16px] bg-white border p-6 shadow-sm"><div class="flex items-center justify-between mb-5"><div><h3 class="font-bold text-[16px]">Resumo financeiro</h3><p class="text-[12.5px] text-slate-500">Gráfico para o dono/gerente conferir</p></div><button onclick="navigateTo('relatorios')" class="h-9 px-3 rounded-xl bg-slate-100 text-[12px] font-bold">Ver relatórios</button></div><div class="h-[250px]"><canvas id="chartFinance"></canvas></div></div>
+    <div class="rounded-[16px] bg-white border p-6 shadow-sm flex flex-col"><h3 class="font-bold text-[16px]">Status das impressoras</h3><p class="text-[12.5px] text-slate-500 mt-1">Locadas, disponíveis e manutenção</p><div class="mt-6 flex-1 grid place-items-center"><div class="w-[190px] h-[190px]"><canvas id="chartParque"></canvas></div></div><div class="mt-5 grid grid-cols-2 gap-3 text-[12px]" id="parque-legend"></div></div>
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Leituras para lançar</h3><button onclick="navigateTo('leituras')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-leituras-pendentes"></div></div>
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Chamados recentes</h3><button onclick="navigateTo('manutencao')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-chamados-recentes"></div></div>
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Últimas ações</h3><button onclick="navigateTo('auditoria')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="p-3 space-y-2" id="list-alertas"></div></div>
+    <div class="rounded-[16px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Leituras para lançar</h3><button onclick="navigateTo('leituras')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-leituras-pendentes"></div></div>
+    <div class="rounded-[16px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Chamados recentes</h3><button onclick="navigateTo('manutencao')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-chamados-recentes"></div></div>
+    <div class="rounded-[16px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Últimas ações</h3><button onclick="navigateTo('auditoria')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="p-3 space-y-2" id="list-alertas"></div></div>
   </div>`;
 
   document.getElementById('view-clientes').innerHTML=`<div class="flex flex-wrap items-center gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('cliente')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1.5"></i>Novo cliente</button><button onclick="exportClientes()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Exportar</button></div><div class="flex gap-2"><select id="filter-clientes-status" onchange="renderClientes()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="inadimplente">Inadimplente</option></select><div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="search-clientes" oninput="renderClientes()" placeholder="Buscar..." class="h-10 pl-9 pr-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] tracking-widest uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Cliente / Quem criou</th><th class="px-5 py-3">Documento</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Contratos</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody></table></div><div id="pagination-clientes" class="p-3 border-t flex items-center justify-between text-[12px] text-slate-500"></div></div>`;

@@ -27,10 +27,17 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
 .login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
 
-.easy-card{min-height:104px}.easy-card b{letter-spacing:-.01em}
-@media (min-width:1024px){#sidebar{width:280px}.easy-actions{align-items:stretch}}
-button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
 
+
+.classic-toolbar{background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.classic-toolbar-scroll{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:0 18px}
+.classic-menu-btn{min-width:94px;height:64px;padding:7px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid #eef2f7;color:#334155;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+.classic-menu-btn:first-child{border-left:1px solid #eef2f7}.classic-menu-btn i{font-size:22px;color:#0a1e8a}.classic-menu-btn:hover{background:#f8fafc;color:#0a1e8a}
+.ribbon-actions{display:flex;align-items:stretch;overflow-x:auto;background:white;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.ribbon-actions button{min-width:118px;padding:12px 14px;border-right:1px solid #eef2f7;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;font-weight:800;color:#334155;background:white}
+.ribbon-actions button:hover{background:#f8fafc;color:#0a1e8a}.ribbon-actions i{font-size:26px;color:#0a1e8a}.ribbon-actions small{font-weight:600;color:#64748b;font-size:10.5px;line-height:1.1}
+
+button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -141,6 +148,21 @@ button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;backgro
         <button onclick="navigateTo('relatorios')" class="w-10 h-10 grid place-items-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="ph ph-bell text-[20px]"></i></button>
       </div>
     </header>
+    <div class="classic-toolbar">
+      <div class="classic-toolbar-scroll">
+        <button onclick="navigateTo('dashboard')" class="classic-menu-btn"><i class="ph ph-house"></i><span>Início</span></button>
+        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-shopping-cart-simple"></i><span>Venda</span></button>
+        <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('nv-status'); if(s){s.value='orcamento'; if(typeof onStatusVendaChange==='function') onStatusVendaChange();}},300)} else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-clipboard-text"></i><span>Orçamento</span></button>
+        <button onclick="navigateTo('clientes')" class="classic-menu-btn"><i class="ph ph-users"></i><span>Clientes</span></button>
+        <button onclick="navigateTo('produtos')" class="classic-menu-btn"><i class="ph ph-package"></i><span>Estoque</span></button>
+        <button onclick="navigateTo('impressoras')" class="classic-menu-btn"><i class="ph ph-printer"></i><span>Impressoras</span></button>
+        <button onclick="navigateTo('contratos')" class="classic-menu-btn"><i class="ph ph-file-text"></i><span>Locação</span></button>
+        <button onclick="navigateTo('leituras')" class="classic-menu-btn"><i class="ph ph-speedometer"></i><span>Leituras</span></button>
+        <button onclick="navigateTo('manutencao')" class="classic-menu-btn"><i class="ph ph-wrench"></i><span>Chamados</span></button>
+        <button onclick="navigateTo('financeiro')" class="classic-menu-btn"><i class="ph ph-bank"></i><span>Financeiro</span></button>
+        <button onclick="navigateTo('relatorios')" class="classic-menu-btn"><i class="ph ph-chart-line"></i><span>Relatórios</span></button>
+      </div>
+    </div>
     <div class="flex-1 p-4 lg:p-8">
       <section id="view-dashboard" class="view space-y-6"></section>
       <section id="view-clientes" class="view hidden space-y-4"></section>
@@ -158,7 +180,7 @@ button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;backgro
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.4 • Modo fácil • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.5 • Menu clássico simples • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
