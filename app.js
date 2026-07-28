@@ -1181,28 +1181,70 @@ function renderBanco(){
         </div>
       </div>
 
-      <!-- UPLOAD JSON DO DBEAVER -->
+      <!-- IMPORTAR TODOS OS DADOS -->
+      <div class="rounded-[22px] bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10">
+          <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Importação completa</p>
+          <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Trazer TODOS os dados do sistema antigo</h2>
+          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para o Supabase. Depois, qualquer PC pode acessar os mesmos dados.</p>
+        </div>
+      </div>
+
+      <!-- FLUXO COMPLETO -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Importar dados do DBeaver (JSON)</h3>
-        <p class="text-[13px] text-slate-500 mb-4">Exporte as tabelas do Firebird pelo DBeaver em formato JSON e importe aqui.</p>
+        <h3 class="font-bold text-[16px] mb-4">Fluxo completo — importar e distribuir para todos os PCs</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
+          <div class="rounded-xl border-2 border-orange-300 p-4 bg-orange-50">
+            <span class="w-8 h-8 rounded-lg bg-orange-600 text-white grid place-items-center font-bold text-[14px]">1</span>
+            <p class="font-bold mt-3">Exportar do DBeaver</p>
+            <p class="text-slate-600 mt-1">Abra o SQL Editor no DBeaver e rode o SQL abaixo. Ele gera um JSON com TODAS as tabelas.</p>
+            <button onclick="copiarSqlExportarTudo()" class="mt-3 w-full h-9 rounded-lg bg-orange-600 text-white font-bold text-[11.5px] flex items-center justify-center gap-1.5 hover:bg-orange-700"><i class="ph ph-copy"></i> Copiar SQL</button>
+          </div>
+          <div class="rounded-xl border-2 border-blue-300 p-4 bg-blue-50">
+            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center font-bold text-[14px]">2</span>
+            <p class="font-bold mt-3">Importar aqui</p>
+            <p class="text-slate-600 mt-1">Salve o resultado do SQL como .json e faça upload abaixo. Pode ser 1 arquivo com tudo ou vários separados.</p>
+          </div>
+          <div class="rounded-xl border-2 border-emerald-300 p-4 bg-emerald-50">
+            <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white grid place-items-center font-bold text-[14px]">3</span>
+            <p class="font-bold mt-3">Enviar para Supabase</p>
+            <p class="text-slate-600 mt-1">Depois de importar, clique em "Enviar para nuvem". Os dados ficam disponíveis para todos os PCs.</p>
+          </div>
+          <div class="rounded-xl border-2 border-purple-300 p-4 bg-purple-50">
+            <span class="w-8 h-8 rounded-lg bg-purple-600 text-white grid place-items-center font-bold text-[14px]">4</span>
+            <p class="font-bold mt-3">Outros PCs</p>
+            <p class="text-slate-600 mt-1">Nos outros computadores, abra o ERP e clique em "Carregar da nuvem". Tudo aparece.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD DE ARQUIVOS -->
+      <div class="rounded-[18px] bg-white border shadow-sm p-6">
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados</h3>
+        <p class="text-[13px] text-slate-500 mb-4">Selecione um ou mais arquivos JSON exportados do DBeaver.</p>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivo .JSON</label>
-            <input type="file" id="upload-db" accept=".json,application/json" class="w-full text-[13px] mb-3" onchange="handleDatabaseUpload(this.files[0])">
+            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários)</label>
+            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onchange="handleMultipleUpload(this.files)">
             <div id="upload-status" class="text-[12px]"></div>
+            <div id="upload-progress" class="hidden mt-3">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden"><div id="upload-progress-bar" class="h-full bg-emerald-600 transition-all" style="width:0%"></div></div>
+                <span id="upload-progress-text" class="text-[11px] font-bold text-slate-600">0%</span>
+              </div>
+              <div id="upload-log" class="text-[11px] text-slate-500 max-h-[120px] overflow-y-auto border rounded-lg p-2 bg-slate-50"></div>
+            </div>
           </div>
-          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <h4 class="font-bold text-[13px] text-blue-900 mb-2"><i class="ph ph-info"></i> Como exportar pelo DBeaver</h4>
-            <ol class="text-[11px] text-blue-800 space-y-1.5 list-decimal list-inside">
-              <li>Abra o DBeaver e conecte ao Firebird</li>
-              <li>Clique com botão direito na tabela (ex: CLIENTES)</li>
-              <li>Escolha <b>Exportar dados</b></li>
-              <li>Selecione formato <b>JSON</b></li>
-              <li>Salve o arquivo (ex: clientes.json)</li>
-              <li>Repita para outras tabelas importantes</li>
-              <li>Faça upload aqui de cada arquivo</li>
-            </ol>
-            <p class="text-[10px] text-blue-600 mt-2"><b>Tabelas recomendadas:</b> CLIENTES, PRODUTOS, VENDAS, ITENS_VENDA, EQUIPAMENTOS, CONTAS_RECEBER, CONTAS_PAGAR</p>
+          <div class="bg-slate-50 border rounded-xl p-4">
+            <h4 class="font-bold text-[13px] text-slate-800 mb-2"><i class="ph ph-lightbulb text-amber-500"></i> Dicas</h4>
+            <ul class="text-[11px] text-slate-600 space-y-1.5">
+              <li>• Se exportou tudo com o SQL, selecione o arquivo único</li>
+              <li>• Se exportou tabela por tabela, selecione todos os .json de uma vez</li>
+              <li>• O sistema detecta automaticamente qual tabela é cada arquivo</li>
+              <li>• Tabelas sem correspondência viram menus novos no sidebar</li>
+              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Supabase abaixo</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1323,6 +1365,122 @@ window.importarJsonDBeaver = function(dados){
 };
 
 window.handleRarUpload = window.handleDatabaseUpload;
+
+// Upload de múltiplos arquivos JSON de uma vez
+window.handleMultipleUpload = async function(files){
+  const status = document.getElementById('upload-status');
+  const progress = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('upload-progress-bar');
+  const progressText = document.getElementById('upload-progress-text');
+  const log = document.getElementById('upload-log');
+  
+  if(!files || files.length === 0) return;
+  
+  progress.classList.remove('hidden');
+  log.innerHTML = '';
+  
+  const sess = getSession();
+  if(!sess) { status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
+  
+  const total = files.length;
+  let processados = 0;
+  let totalRegistros = 0;
+  const tabelasImportadas = {};
+  const rawData = {};
+  
+  status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Processando '+total+' arquivo(s)...</p>';
+  
+  for(const file of files){
+    try {
+      const text = await file.text();
+      const imported = JSON.parse(text);
+      
+      if(Array.isArray(imported)){
+        const nomeArquivo = file.name.replace('.json','').toUpperCase();
+        let nomeTabela = nomeArquivo;
+        
+        if(imported.length > 0){
+          const cols = Object.keys(imported[0]).map(c => c.toUpperCase());
+          if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO'))) || nomeArquivo.includes('CLIENTE')) nomeTabela = 'CLIENTES';
+          else if(cols.some(c => c.includes('PRODUTO') || c.includes('DESCRICAO')) || nomeArquivo.includes('PRODUTO') || nomeArquivo.includes('CARTUCHO')) nomeTabela = nomeArquivo.includes('CARTUCHO') ? 'CARTUCHOS' : 'PRODUTOS';
+          else if(cols.some(c => c.includes('VENDA')) || nomeArquivo.includes('VENDA')) nomeTabela = nomeArquivo.includes('ITEM') ? 'ITENS_VENDA' : 'VENDAS';
+          else if(cols.some(c => c.includes('EQUIP')) || nomeArquivo.includes('EQUIP')) nomeTabela = 'EQUIPAMENTOS';
+          else if(nomeArquivo.includes('RECEB')) nomeTabela = 'CONTAS_RECEBER';
+          else if(nomeArquivo.includes('PAGAR') || nomeArquivo.includes('PAG_')) nomeTabela = 'CONTAS_PAGAR';
+        }
+        
+        rawData[nomeTabela] = { data: imported, error: null };
+        tabelasImportadas[nomeTabela] = imported.length;
+        totalRegistros += imported.length;
+        log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
+        
+      } else if(typeof imported === 'object'){
+        const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
+        for(const [key, value] of Object.entries(dadosObj)){
+          if(Array.isArray(value) && value.length > 0){
+            rawData[key.toUpperCase()] = { data: value, error: null };
+            tabelasImportadas[key.toUpperCase()] = value.length;
+            totalRegistros += value.length;
+            log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+          }
+        }
+      }
+    } catch(e){
+      log.innerHTML += '<div class="text-red-600">❌ '+file.name+': '+e.message+'</div>';
+    }
+    
+    processados++;
+    const pct = Math.round((processados/total)*100);
+    progressBar.style.width = pct+'%';
+    progressText.textContent = pct+'%';
+  }
+  
+  const tabelasCount = Object.keys(tabelasImportadas).length;
+  status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
+  
+  window._rawDataParaImportar = rawData;
+};
+
+window.importarTudoDeUmaVez = function(){
+  const rawData = window._rawDataParaImportar;
+  if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
+  const tabelas = Object.keys(rawData);
+  const totalReg = tabelas.reduce(function(s,t){return s+(rawData[t].data?.length||0)},0);
+  if(!confirm('Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.')) return;
+  fbImportToErp(rawData);
+};
+
+window.enviarDiretoParaSupabase = async function(){
+  const rawData = window._rawDataParaImportar;
+  if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
+  fbImportToErp(rawData);
+  setTimeout(async function(){
+    if(typeof window.enviarDadosLocaisParaNuvem === 'function'){
+      // Chamada automática sem o confirm
+      try {
+        const payload = { key:'digicopy_erp_state_v1', data:db, updated_at:new Date().toISOString() };
+        await window.supabaseRequest('app_state?on_conflict=key', { method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=representation'}, body:JSON.stringify(payload) });
+        toast('✅ Dados enviados para Supabase! Todos os PCs podem acessar.','success');
+      } catch(err) {
+        toast('Erro ao enviar: '+(err.message||err),'error');
+      }
+    } else {
+      toast('Supabase não disponível. Envie manualmente na seção abaixo.','info');
+    }
+  }, 2000);
+};
+
+window.copiarSqlExportarTudo = function(){
+  const sql = '-- SQL PARA EXPORTAR TODAS AS TABELAS DO FIREBIRD\n-- Cole no SQL Editor do DBeaver e clique em Executar\n\n-- PASSO 1: Ver todas as tabelas\nSELECT RDB$RELATION_NAME AS TABELA\nFROM RDB$RELATIONS\nWHERE RDB$VIEW_BLR IS NULL\n  AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0)\nORDER BY RDB$RELATION_NAME;\n\n-- PASSO 2: Para cada tabela, execute SELECT * e exporte como JSON\n-- Exemplo:\nSELECT * FROM CLIENTES;\nSELECT * FROM PRODUTOS;\nSELECT * FROM CARTUCHOS;\nSELECT * FROM VENDAS;\nSELECT * FROM ITENS_VENDA;\nSELECT * FROM EQUIPAMENTOS;\nSELECT * FROM LOCACAO;\nSELECT * FROM ITENS_LOCACAO;\nSELECT * FROM LEITURAS;\nSELECT * FROM CONTAS_RECEBER;\nSELECT * FROM CONTAS_PAGAR;\nSELECT * FROM RECIBOS_EMITIDOS;\nSELECT * FROM FORMA_PAGAMENTO;\nSELECT * FROM EMPRESA;\nSELECT * FROM CONFIGURACAO;\nSELECT * FROM FORNECEDORES;\nSELECT * FROM FUNCIONARIOS;\nSELECT * FROM CATEGORIA;\nSELECT * FROM FABRICANTE;\nSELECT * FROM UNIDADE_MEDIDA;\n\n-- PASSO 3: No DBeaver, clique com botão direito no resultado\n-- > Exportar Dados > JSON > Salvar\n-- Depois faça upload dos arquivos .json aqui no ERP';
+  
+  navigator.clipboard.writeText(sql).then(function(){
+    toast('SQL copiado! Cole no SQL Editor do DBeaver','success');
+  }).catch(function(){
+    const box = document.getElementById('supabase-schema-sql-box');
+    if(box){ box.classList.remove('hidden'); box.value = sql; box.select(); }
+    toast('SQL apareceu na caixa para copiar','info');
+  });
+};
 // IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
 // Essa função adiciona dados fictícios para testar as telas
 function loadManualDB(){
