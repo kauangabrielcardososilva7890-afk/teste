@@ -939,7 +939,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.9.7 (sync verificado + recuperação sem meta + aviso de endereço)');
+  console.log('DIGICOPY ERP — build 3.9.8 (travas anti-demonstração no envio e na carga)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -2067,6 +2067,7 @@ function fbImportToErp(rawData){
     `;
   }
 
+  db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
   saveDB();
   logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
   buildNav(); // Atualizar menu para mostrar módulos dinâmicos

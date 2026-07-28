@@ -534,6 +534,27 @@ end $$;
       });
       const totalReg = Object.values(metaEntidades).reduce((s,e)=>s+e.total,0);
 
+      // 1b) PROTEÇÃO anti-acidente: base pequena/demonstração NÃO sobrescreve uma base maior
+      if(!opts.forcar){
+        try{
+          const metaAtualRows = await supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
+          if(metaAtualRows && metaAtualRows.length){
+            const ant = metaAtualRows[0].data||{};
+            const antTotal = ant.totalRegistros||0;
+            const antMod = ((ant.entidades||{}).modulosDinamicos||{}).total||0;
+            const localMod = (metaEntidades.modulosDinamicos||{}).total||0;
+            if(antTotal>0 && (totalReg < antTotal*0.5 || (antMod>0 && localMod===0))){
+              const certeza = confirm('⚠️ ATENÇÃO — POSSÍVEL ENGANO!\n\nA nuvem tem publicada uma base com ' + antTotal.toLocaleString('pt-BR') + ' registros, incluindo ' + antMod + ' tabelas migradas (menu Migrados).\n\nOs dados DESTE computador têm só ' + totalReg.toLocaleString('pt-BR') + ' registros e ' + localMod + ' tabelas migradas — parecem ser os dados de DEMONSTRAÇÃO (ex.: 6 clientes de mentira).\n\nEnviar agora SUBSTITUI a base completa da nuvem por estes dados menores.\n\n👉 Se este NÃO é o computador onde você importou os JSONs do sistema antigo, clique em CANCELAR.\n\nEnviar mesmo assim?');
+              if(!certeza){
+                setCloudSyncStatus('<span class="text-amber-700 font-bold">Envio CANCELADO pela proteção: os dados deste PC pareciam ser de demonstração e iam substituir uma base maior da nuvem.</span>');
+                if(typeof toast==='function') toast('Envio cancelado — proteção anti-demonstração','info');
+                return {ok:false, cancelado:true, protecao:true};
+              }
+            }
+          }
+        }catch(eProt){ /* sem meta antiga legível → segue o envio normal */ }
+      }
+
       // 2) Envia parte por parte (cada POST é pequeno → sem timeout)
       let enviadas=0; const erros=[];
       for(const p of partes){
@@ -590,6 +611,26 @@ end $$;
     }
   };
 
+  // Conta registros aproximados de um estado (para as proteções)
+  function contarTotalDb(d){
+    let t=0;
+    SYNC_ENTIDADES.forEach(e=>{
+      const v=(d||{})[e.campo];
+      if(Array.isArray(v)) t+=v.length;
+      else if(v && typeof v==='object') t+=Object.keys(v).length;
+    });
+    return t;
+  }
+  // PROTEÇÃO: carregar da nuvem NÃO pode substituir uma base local maior por uma menor
+  function protecaoCargaMenor(incTotal, incMod){
+    const locTotal=contarTotalDb(db);
+    const locMod=Object.keys((db||{}).modulosDinamicos||{}).length;
+    if((incMod===0 && locMod>0) || (locTotal>50 && incTotal < locTotal*0.5)){
+      return confirm('⚠️ ATENÇÃO — A NUVEM PARECE TER DADOS MENORES!\n\nA nuvem tem ~' + (incTotal||0).toLocaleString('pt-BR') + ' registros e ' + (incMod||0) + ' tabelas migradas.\nESTE computador tem ~' + locTotal.toLocaleString('pt-BR') + ' registros e ' + locMod + ' tabelas migradas.\n\nCarregar agora SUBSTITUI os dados deste PC por uma base menor (possivelmente de demonstração).\n\n👉 Se ESTE é o computador que tem seus dados completos, clique em CANCELAR.\n\nCarregar mesmo assim?');
+    }
+    return true;
+  }
+
   // Carrega o estado publicado (v2 em partes, com fallback para blob legado v1)
   window.syncCarregarDaNuvem = async function(opts={}){
     const confirmar = opts.confirmar !== false;
@@ -628,6 +669,10 @@ end $$;
             novoDbRec[campo] = tipoDe(campo)==='objeto' ? itensParaObjeto(itens) : itens;
           });
           novoDbRec.meta = Object.assign({}, novoDbRec.meta||{}, {sincronizadoEm:new Date().toISOString(), recuperadoSemMeta:true});
+          if(!protecaoCargaMenor(contarTotalDb(novoDbRec), Object.keys(novoDbRec.modulosDinamicos||{}).length)){
+            setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: a nuvem parecia ter dados menores do que este PC.</span>');
+            return {ok:false, cancelado:true, protecao:true};
+          }
           db = novoDbRec;
           saveDB();
           const avisoFalta = faltandoRec.length
@@ -648,6 +693,10 @@ end $$;
           if(typeof toast==='function') toast('Nenhum dado encontrado na nuvem','info');
           return {ok:false, vazio:true};
         }
+        if(!protecaoCargaMenor(contarTotalDb(rows[0].data), Object.keys((rows[0].data||{}).modulosDinamicos||{}).length)){
+          setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: o backup antigo parecia menor do que os dados deste PC.</span>');
+          return {ok:false, cancelado:true, protecao:true};
+        }
         db = rows[0].data;
         saveDB();
         setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Este é um backup ANTIGO e pode estar incompleto. No computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> para publicar a base completa.</div>`);
@@ -658,6 +707,10 @@ end $$;
 
       const meta = metaRows[0].data;
       const totalPartes = Object.values(meta.entidades||{}).reduce((s,e)=>s+(e.partes||0),0);
+      if(!protecaoCargaMenor(meta.totalRegistros||0, ((meta.entidades||{}).modulosDinamicos||{}).total||0)){
+        setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: a nuvem parecia ter dados menores do que este PC.</span>');
+        return {ok:false, cancelado:true, protecao:true};
+      }
       setCloudSyncStatus(`<span class="text-slate-500">Baixando ${totalPartes} partes (${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros)...</span>`);
       const rows = await supabaseRequest(`app_state?select=key,data&key=like.${encodeURIComponent(CLOUD_PART_PREFIX)}*&limit=1000`, {method:'GET'});
       const mapa={};
