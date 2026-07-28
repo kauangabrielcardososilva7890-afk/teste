@@ -467,20 +467,9 @@ end $$;
       </div>`;
   }
 
-  window.renderBanco = function(){
-    const view = document.getElementById('view-banco') || (typeof ensureView==='function' ? ensureView('banco') : null);
-    if(!view) return;
-    view.innerHTML = cloudMigrationHtml();
-  };
-
+  // renderBanco agora está no app.js com integração Firebird + Supabase
+  // Mantendo apenas openCloudMigration para compatibilidade
   window.openCloudMigration = function(){
-    const view = document.getElementById('view-banco') || (typeof ensureView==='function' ? ensureView('banco') : null);
-    if(!view) return;
-    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-    view.classList.remove('hidden');
-    const title=document.getElementById('page-title'); if(title) title.innerText='Migração e nuvem';
-    const subtitle=document.getElementById('page-subtitle'); if(subtitle) subtitle.innerText='Supabase, importação e sincronização';
-    window.renderBanco();
-    window.scrollTo({top:0,behavior:'smooth'});
+    if(typeof navigateTo === 'function') navigateTo('banco');
   };
 })();

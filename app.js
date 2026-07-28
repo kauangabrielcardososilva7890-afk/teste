@@ -1152,6 +1152,44 @@ function renderBanco(){
           ].map(step=>`<div class="rounded-xl border p-4"><span class="w-7 h-7 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold">${step[0]}</span><p class="font-bold mt-3">${step[1]}</p><p class="text-slate-500 mt-1 leading-snug">${step[2]}</p></div>`).join('')}
         </div>
       </div>
+
+      <!-- NUVEM / SUPABASE -->
+      <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sincronização em nuvem</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Supabase — Multi-computador</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados migrados para a nuvem e acesse de qualquer computador.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="testarSupabase()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
+            <button onclick="copySupabaseSchemaSQL()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar SQL tabelas</button>
+            <button onclick="supabaseInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="rounded-[18px] bg-white border shadow-sm p-6">
+          <h3 class="font-bold text-[15px] mb-3">Status da conexão</h3>
+          <div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em "Testar conexão" para verificar.</div>
+        </div>
+        <div class="rounded-[18px] bg-white border shadow-sm p-6">
+          <h3 class="font-bold text-[15px] mb-3">Sincronização</h3>
+          <div id="cloud-sync-status" class="text-[13px] text-slate-600">Envie ou carregue dados da nuvem.</div>
+        </div>
+        <div class="rounded-[18px] bg-white border shadow-sm p-6">
+          <h3 class="font-bold text-[15px] mb-3">Ações</h3>
+          <div class="flex flex-col gap-2">
+            <button onclick="enviarDadosLocaisParaNuvem()" class="h-10 px-4 rounded-xl bg-emerald-600 text-white font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-cloud-arrow-up"></i> Enviar para nuvem</button>
+            <button onclick="carregarDadosDaNuvem()" class="h-10 px-4 rounded-xl bg-blue-600 text-white font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-cloud-arrow-down"></i> Carregar da nuvem</button>
+            <button onclick="verificarBaseNaNuvem()" class="h-10 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-database"></i> Ver base na nuvem</button>
+          </div>
+        </div>
+      </div>
+
+      <textarea id="supabase-schema-sql-box" class="hidden w-full h-[180px] p-3 border rounded-xl font-mono text-[11px]"></textarea>
     </div>`;
 }
 window.handleDatabaseUpload = function(file){
