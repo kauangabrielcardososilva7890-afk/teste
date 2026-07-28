@@ -376,7 +376,7 @@ end $$;
   }
 
   window.enviarDadosLocaisParaNuvem = async function(){
-    if(!confirm('Enviar os dados locais deste navegador para a nuvem? Isso vai virar a base compartilhada inicial.')) return;
+    if(!confirm('Enviar os dados locais/de teste deste navegador para a nuvem? Isso NÃO importa o banco antigo; serve só para testar sincronização.')) return;
     setCloudSyncStatus('<span class="text-slate-500">Enviando dados locais para o Supabase...</span>');
     try{
       const payload = { key:CLOUD_STATE_KEY, data:db, updated_at:new Date().toISOString() };
@@ -385,8 +385,8 @@ end $$;
         headers:{Prefer:'resolution=merge-duplicates,return=representation'},
         body:JSON.stringify(payload)
       });
-      setCloudSyncStatus('<span class="text-emerald-700 font-bold">Dados locais enviados para a nuvem.</span>');
-      if(typeof toast==='function') toast('Dados enviados para a nuvem', 'success');
+      setCloudSyncStatus('<span class="text-emerald-700 font-bold">Base de testes enviada para a nuvem.</span>');
+      if(typeof toast==='function') toast('Base de testes enviada para a nuvem', 'success');
     }catch(err){
       const msg=err?.message||String(err);
       setCloudSyncStatus(`<span class="text-red-700 font-bold">Erro ao enviar: ${escapeHtml(msg)}</span>`);
@@ -395,19 +395,19 @@ end $$;
   };
 
   window.carregarDadosDaNuvem = async function(){
-    if(!confirm('Carregar dados da nuvem neste navegador? Os dados locais atuais serão substituídos.')) return;
-    setCloudSyncStatus('<span class="text-slate-500">Carregando dados da nuvem...</span>');
+    if(!confirm('Carregar a base de testes da nuvem neste navegador? Os dados locais atuais serão substituídos. Isso ainda não é a importação do banco antigo.')) return;
+    setCloudSyncStatus('<span class="text-slate-500">Carregando base de testes da nuvem...</span>');
     try{
       const rows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
       if(!rows || !rows.length){
-        setCloudSyncStatus('<span class="text-amber-700 font-bold">Ainda não existe base enviada para a nuvem.</span>');
-        if(typeof toast==='function') toast('Nenhuma base encontrada na nuvem', 'info');
+        setCloudSyncStatus('<span class="text-amber-700 font-bold">Ainda não existe base de testes enviada para a nuvem.</span>');
+        if(typeof toast==='function') toast('Nenhuma base de testes encontrada na nuvem', 'info');
         return;
       }
       db = rows[0].data;
       saveDB();
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Dados carregados da nuvem. Atualizado em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
-      if(typeof toast==='function') toast('Dados carregados da nuvem', 'success');
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base de testes carregada da nuvem. Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+      if(typeof toast==='function') toast('Base de testes carregada da nuvem', 'success');
       setTimeout(()=>location.reload(),800);
     }catch(err){
       const msg=err?.message||String(err);
@@ -417,13 +417,13 @@ end $$;
   };
 
   window.verificarBaseNaNuvem = async function(){
-    setCloudSyncStatus('<span class="text-slate-500">Verificando base compartilhada...</span>');
+    setCloudSyncStatus('<span class="text-slate-500">Verificando base de testes compartilhada...</span>');
     try{
       const rows = await supabaseRequest(`app_state?select=updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
       if(rows && rows.length){
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Existe base na nuvem. Última atualização: ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Existe base de testes na nuvem. Última atualização: ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
       }else{
-        setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há base de dados do ERP enviada.</span>');
+        setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há base de testes enviada.</span>');
       }
     }catch(err){
       const msg=err?.message||String(err);
@@ -444,17 +444,17 @@ end $$;
               <button onclick="testarSupabase()" class="neo-btn primary"><i class="ph ph-plugs-connected"></i>Testar conexão</button>
               <button onclick="copySupabaseSchemaSQL()" class="neo-btn"><i class="ph ph-copy"></i>Copiar SQL tabelas</button>
               <button onclick="supabaseInfo()" class="neo-btn"><i class="ph ph-info"></i>Dados</button>
-              <button onclick="verificarBaseNaNuvem()" class="neo-btn"><i class="ph ph-database"></i>Ver base</button>
+              <button onclick="verificarBaseNaNuvem()" class="neo-btn"><i class="ph ph-database"></i>Ver base teste</button>
             </div>
           </div>
           <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="neo-card"><p class="neo-label">Projeto</p><b class="text-[#0a1e8a] break-all">${SUPABASE_PROJECT_URL}</b></div>
             <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em testar conexão.</div></div>
-            <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Ele será usado para extrair o Firebird e importar as tabelas.</p></div>
+            <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Este é o arquivo da base antiga; ele ainda precisa ser extraído/importado.</p></div>
           </div>
           <div class="px-4 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div class="neo-card lg:col-span-2"><p class="neo-label">Sincronização inicial</p><div id="cloud-sync-status" class="text-[13px] text-slate-600">Use depois que o SQL for executado. Primeiro envie a base local para a nuvem; nos outros computadores, carregue da nuvem.</div></div>
-            <div class="neo-card flex flex-col gap-2"><button onclick="enviarDadosLocaisParaNuvem()" class="neo-btn primary justify-center"><i class="ph ph-cloud-arrow-up"></i>Enviar dados locais</button><button onclick="carregarDadosDaNuvem()" class="neo-btn justify-center"><i class="ph ph-cloud-arrow-down"></i>Carregar da nuvem</button></div>
+            <div class="neo-card lg:col-span-2"><p class="neo-label">Sincronização de teste</p><div id="cloud-sync-status" class="text-[13px] text-slate-600">Área temporária para testar sincronização. A importação real do BANCO.rar será feita em outro processo.</div></div>
+            <div class="neo-card flex flex-col gap-2"><button onclick="enviarDadosLocaisParaNuvem()" class="neo-btn primary justify-center"><i class="ph ph-cloud-arrow-up"></i>Enviar base de teste</button><button onclick="carregarDadosDaNuvem()" class="neo-btn justify-center"><i class="ph ph-cloud-arrow-down"></i>Carregar base teste</button></div>
           </div>
           <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-4 gap-3">
             <div class="neo-card"><b>1. Tabelas</b><p class="text-[12px] text-slate-500 mt-1">Clique em Copiar SQL tabelas, cole no SQL Editor e clique Run.</p></div>
