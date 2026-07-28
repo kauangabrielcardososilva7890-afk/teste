@@ -996,7 +996,12 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
-  const el=ensureView('banco');
+  let el = document.getElementById('view-banco');
+  if (!el) {
+    el = ensureView('banco');
+  }
+  // Força limpeza total do conteúdo anterior (resolve cache do Githack)
+  el.innerHTML = '';
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
   el.innerHTML=`
