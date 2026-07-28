@@ -26,6 +26,11 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 .animate-fadeIn{animation:fadeIn .3s ease-out}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
 .login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
+
+.easy-card{min-height:104px}.easy-card b{letter-spacing:-.01em}
+@media (min-width:1024px){#sidebar{width:280px}.easy-actions{align-items:stretch}}
+button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -41,12 +46,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
     <div class="relative z-10">
       <img src="./logo.png" alt="DIGICOPY" class="h-14 w-auto object-contain">
       <div class="mt-12 max-w-[460px]">
-        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Gestão completa<br> de outsourcing<br> de impressão</h1>
-        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema DIGICOPY ERP - controle de contratos, parque instalado, leituras, excedentes, manutenção e financeiro. Sem loja virtual. Auditoria completa por usuário.</p>
+        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">ERP simples para<br> vendas e locação<br> de impressoras</h1>
+        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema em modo fácil: botões grandes, fluxo guiado e nomes diretos para vender, orçar, locar impressoras, abrir chamados e controlar financeiro.</p>
       </div>
     </div>
     <div class="relative z-10 flex items-center justify-between text-[11px] text-white/50">
-      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.3 • ERP Seguro</span>
+      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.4 • Modo Fácil</span>
     </div>
   </div>
   <!-- RIGHT PANEL - FORMS -->
@@ -110,12 +115,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Principal</p><div id="nav-main" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Operacional</p><div id="nav-op" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Base de Dados</p>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Comece aqui</p><div id="nav-main" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Migração</p>
     <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Banco antigo (.FDB)</span></button>
   </div>
-  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Gestão & Auditoria</p><div id="nav-gest" class="space-y-1"></div></div>
+  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
     </nav>
     <div class="p-4 border-t border-white/5">
       <div class="rounded-xl bg-[#0a1e8a] border border-white/10 p-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-28 h-28 bg-white/10 rounded-full blur-xl"></div><p class="text-[12px] font-semibold relative z-10">Contratos a vencer</p><p class="text-[11px] text-white/70 mt-1 relative z-10"><span id="alert-vencendo">0</span> nos próximos 30 dias</p><button onclick="navigateTo('contratos')" class="mt-3 w-full h-8 rounded-lg bg-white text-[#0a1e8a] text-[12px] font-bold hover:bg-white/90 relative z-10">Ver contratos</button></div>
@@ -127,12 +132,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
     <header class="h-[76px] sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/70 px-4 lg:px-8 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-list text-[22px]"></i></button>
-        <div><h2 id="page-title" class="text-[20px] font-bold tracking-tight">Dashboard</h2><div class="flex items-center gap-2 text-[12.5px] text-slate-500 mt-[2px]"><span id="page-subtitle">Visão geral da operação</span><span class="hidden sm:inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span id="current-date"></span></span></div></div>
+        <div><h2 id="page-title" class="text-[20px] font-bold tracking-tight">Início</h2><div class="flex items-center gap-2 text-[12.5px] text-slate-500 mt-[2px]"><span id="page-subtitle">Escolha uma ação rápida</span><span class="hidden sm:inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span id="current-date"></span></span></div></div>
       </div>
       <div class="flex items-center gap-2">
-        <div class="hidden md:flex items-center gap-2 mr-2"><div class="relative"><i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Buscar cliente, contrato, série, OS..." class="h-10 w-[320px] pl-10 pr-4 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-[#0a1e8a]/30 focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13.5px]"></div></div>
-        <button onclick="openQuickReading()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px] font-semibold flex items-center gap-2"><i class="ph ph-speedometer"></i><span class="hidden sm:inline">Nova leitura</span></button>
-        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold flex items-center gap-2 shadow-md shadow-[#0a1e8a]/20"><i class="ph ph-wrench"></i><span class="hidden sm:inline">Novo chamado</span></button>
+        <div class="hidden md:flex items-center gap-2 mr-2"><div class="relative"><i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Buscar cliente, venda ou impressora..." class="h-10 w-[320px] pl-10 pr-4 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-[#0a1e8a]/30 focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13.5px]"></div></div>
+        <button onclick="openQuickReading()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px] font-semibold flex items-center gap-2"><i class="ph ph-speedometer"></i><span class="hidden sm:inline">Lançar leitura</span></button>
+        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold flex items-center gap-2 shadow-md shadow-[#0a1e8a]/20"><i class="ph ph-wrench"></i><span class="hidden sm:inline">Abrir chamado</span></button>
         <button onclick="navigateTo('relatorios')" class="w-10 h-10 grid place-items-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="ph ph-bell text-[20px]"></i></button>
       </div>
     </header>
@@ -153,7 +158,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.3 • Auditoria por usuário • Sem Loja Virtual • Azul escuro #0a1e8a</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.4 • Modo fácil • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>

@@ -1,5 +1,5 @@
-// DIGICOPY ERP v3.3 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.3.0';
+// DIGICOPY ERP v3.4 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+const APP_VERSION='3.4.0';
 const DB_KEY='digicopy_erp_v30';
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
@@ -274,7 +274,7 @@ function navigateTo(view){
   if(target) target.classList.remove('hidden');
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-  const titles={dashboard:['Dashboard','Visão geral da operação'],clientes:['Clientes','Base de clientes'],produtos:['Produtos & Suprimentos','Controle de estoque'],impressoras:['Impressoras & Patrimônio','Gestão de equipamentos'],contratos:['Contratos de Locação','Franquias e vigências'],parque:['Parque Instalado','Equipamentos alocados'],leituras:['Leituras & Faturamento','Coleta contadores'],manutencao:['Manutenção & Chamados','OS, técnicos, SLA'],vendas:['Vendas & Faturamento','Vendas avulsas'],financeiro:['Financeiro','Receber, pagar, fluxo'],relatorios:['Relatórios','Análises gerenciais'],config:['Configurações','Empresa, técnicos'],usuarios:['Usuários & Acessos','Login CNPJ > Usuário • Auditoria'],auditoria:['Auditoria','Quem fez o quê, quando']};
+  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito']};
   const t=titles[view]||[view,'']; document.getElementById('page-title').innerText=t[0]; document.getElementById('page-subtitle').innerText=t[1];
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
@@ -300,9 +300,9 @@ function toggleSidebar(forceClose=false){
 }
 function buildNav(){
   const sess=getSession();
-  const main=[{id:'dashboard',icon:'ph-squares-four',label:'Dashboard'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Produtos'},{id:'impressoras',icon:'ph-printer',label:'Impressoras'}];
-  const op=[{id:'contratos',icon:'ph-file-text',label:'Contratos'},{id:'parque',icon:'ph-map-pin',label:'Parque Instalado'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Manutenção / OS'}];
-  const gest=[{id:'vendas',icon:'ph-shopping-cart',label:'Vendas'},{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'relatorios',icon:'ph-chart-line',label:'Relatórios'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
+  const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
+  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
+  const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'relatorios',icon:'ph-chart-line',label:'Relatórios'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   function rg(list,target){
     const cont=document.getElementById(target);
     cont.innerHTML=list.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white ${item.id==='dashboard'?'bg-white/[0.12] text-white border border-white/10':''}"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span>${item.id==='manutencao'?`<span class="ml-auto text-[11px] bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">${(db.os.filter(o=>o.empresaId===(sess?.empresaId) && o.status!=='concluido').length)}</span>`:''}${item.id==='leituras'?`<span class="ml-auto text-[11px] bg-white text-[#0a1e8a] font-bold px-2 py-0.5 rounded-full">${(db.leituras.filter(l=>l.empresaId===(sess?.empresaId) && l.status==='pendente').length)}</span>`:''}</button>`).join('');
@@ -312,20 +312,58 @@ function buildNav(){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
+  <div class="rounded-[24px] bg-[#0a1e8a] text-white p-6 lg:p-8 shadow-xl relative overflow-hidden">
+    <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-white/10 blur-3xl"></div>
+    <div class="relative z-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+      <div>
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[12px] font-bold"><i class="ph ph-hand-waving"></i> Modo fácil para atendimento</span>
+        <h2 class="mt-4 text-[28px] lg:text-[34px] font-extrabold tracking-tight">O que você quer fazer agora?</h2>
+        <p class="mt-2 text-white/75 text-[14px] max-w-[760px]">Tela inicial simplificada para funcionário não se perder. As ações principais ficam em botões grandes e com nomes diretos.</p>
+      </div>
+      <div class="rounded-2xl bg-white/10 border border-white/15 p-4 min-w-[230px]">
+        <p class="text-[11px] uppercase tracking-widest text-white/50 font-bold">Ajuda rápida</p>
+        <p class="mt-2 text-[13px] leading-snug text-white/80">1. Escolha uma ação.<br>2. Preencha só o necessário.<br>3. Clique em salvar/imprimir.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 easy-actions">
+    <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-emerald-600 text-white grid place-items-center text-[28px]"><i class="ph ph-shopping-cart-simple"></i></span><span><b class="block text-[18px]">Nova venda</b><small class="text-slate-500">Vender produto e imprimir notinha</small></span>
+    </button>
+    <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('nv-status'); if(s){s.value='orcamento'; if(typeof onStatusVendaChange==='function') onStatusVendaChange();}},300)} else navigateTo('vendas')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-[#0a1e8a] text-white grid place-items-center text-[28px]"><i class="ph ph-clipboard-text"></i></span><span><b class="block text-[18px]">Novo orçamento</b><small class="text-slate-500">Montar orçamento para cliente</small></span>
+    </button>
+    <button onclick="openModal('cliente')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-violet-600 text-white grid place-items-center text-[28px]"><i class="ph ph-user-plus"></i></span><span><b class="block text-[18px]">Cadastrar cliente</b><small class="text-slate-500">Nome, CNPJ/CPF e contato</small></span>
+    </button>
+    <button onclick="openQuickOS()" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-amber-500 text-white grid place-items-center text-[28px]"><i class="ph ph-wrench"></i></span><span><b class="block text-[18px]">Abrir chamado</b><small class="text-slate-500">Cliente precisa de técnico</small></span>
+    </button>
+    <button onclick="openQuickReading()" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-sky-600 text-white grid place-items-center text-[28px]"><i class="ph ph-speedometer"></i></span><span><b class="block text-[18px]">Lançar leitura</b><small class="text-slate-500">Informar contador da impressora</small></span>
+    </button>
+    <button onclick="navigateTo('financeiro')" class="easy-card bg-white border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition text-left rounded-[22px] p-5 flex items-center gap-4">
+      <span class="w-14 h-14 rounded-2xl bg-slate-900 text-white grid place-items-center text-[28px]"><i class="ph ph-money"></i></span><span><b class="block text-[18px]">Ver financeiro</b><small class="text-slate-500">Receber, pagar e conferir caixa</small></span>
+    </button>
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><div class="flex justify-between"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-file-text text-[20px]"></i></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border">+2 mês</span></div><p class="mt-4 text-[12.5px] font-semibold text-slate-500 uppercase">Contratos Ativos</p><p class="text-[28px] font-bold mt-1" id="kpi-contratos">0</p><div class="mt-3 flex items-center gap-2 text-[12px]"><div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-[#0a1e8a] w-[72%]"></div></div><span>72% meta</span></div></div>
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><div class="flex justify-between"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-printer text-[20px]"></i></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-900 text-white">Parque</span></div><p class="mt-4 text-[12.5px] font-semibold text-slate-500 uppercase">Impressoras Locadas</p><p class="text-[28px] font-bold mt-1" id="kpi-parque">0</p><p class="mt-2 text-[12.5px] text-slate-500"><span id="kpi-disponiveis" class="font-semibold text-slate-800">0</span> disponíveis</p></div>
-    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><div class="flex justify-between"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-warning-circle text-[20px]"></i></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border">Atenção</span></div><p class="mt-4 text-[12.5px] font-semibold text-slate-500 uppercase">Chamados Abertos</p><p class="text-[28px] font-bold mt-1" id="kpi-os">0</p><p class="mt-2 text-[11px] text-slate-500"><span id="kpi-auditoria" class="font-semibold">- </span>ações auditadas hoje</p></div>
-    <div class="rounded-[20px] bg-[#0a1e8a] text-white p-5 shadow-lg relative overflow-hidden"><div class="absolute right-0 top-0 w-56 h-56 bg-white/10 blur-3xl rounded-full"></div><div class="flex justify-between relative z-10"><div class="w-10 h-10 rounded-xl bg-white/15 grid place-items-center"><i class="ph ph-currency-dollar text-[20px]"></i></div><span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/15 border border-white/10">Este mês</span></div><p class="mt-4 text-[12.5px] font-semibold text-white/60 uppercase relative z-10">Faturamento Previsto</p><p class="text-[28px] font-bold mt-1 relative z-10" id="kpi-faturamento">R$ 0,00</p><div class="mt-3 flex items-center gap-1.5 text-[12px] text-emerald-200 relative z-10"><i class="ph ph-trend-up"></i><span class="font-semibold">Auditado por usuário</span></div></div>
+    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Contratos ativos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-contratos">0</p><i class="ph ph-file-text text-[#0a1e8a] text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Clientes com locação em andamento</p></div>
+    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Máquinas instaladas</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-parque">0</p><i class="ph ph-printer text-violet-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-disponiveis" class="font-bold text-slate-900">0</span> disponíveis para locar</p></div>
+    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Chamados abertos</p><div class="mt-3 flex items-end justify-between"><p class="text-[34px] font-extrabold" id="kpi-os">0</p><i class="ph ph-warning-circle text-amber-500 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500"><span id="kpi-auditoria" class="font-bold">0 hoje</span> ações registradas</p></div>
+    <div class="rounded-[20px] bg-white border p-5 shadow-sm"><p class="text-[12px] font-bold text-slate-500 uppercase">Previsto no mês</p><div class="mt-3 flex items-end justify-between"><p class="text-[28px] font-extrabold text-[#0a1e8a]" id="kpi-faturamento">R$ 0,00</p><i class="ph ph-currency-dollar text-emerald-600 text-[30px]"></i></div><p class="mt-2 text-[12px] text-slate-500">Vendas + contratos + leituras</p></div>
   </div>
+
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-    <div class="xl:col-span-2 rounded-[20px] bg-white border p-6 shadow-sm"><div class="flex items-center justify-between mb-6"><div><h3 class="font-bold text-[15px]">Faturamento x Custos - 6 meses</h3><p class="text-[12.5px] text-slate-500">Locação + Vendas + Excedentes</p></div></div><div class="h-[260px]"><canvas id="chartFinance"></canvas></div></div>
-    <div class="rounded-[20px] bg-white border p-6 shadow-sm flex flex-col"><h3 class="font-bold text-[15px]">Status do parque</h3><div class="mt-6 flex-1 grid place-items-center"><div class="w-[200px] h-[200px]"><canvas id="chartParque"></canvas></div></div><div class="mt-6 grid grid-cols-2 gap-3 text-[12px]" id="parque-legend"></div></div>
+    <div class="xl:col-span-2 rounded-[20px] bg-white border p-6 shadow-sm"><div class="flex items-center justify-between mb-5"><div><h3 class="font-bold text-[16px]">Resumo financeiro</h3><p class="text-[12.5px] text-slate-500">Gráfico para o dono/gerente conferir</p></div><button onclick="navigateTo('relatorios')" class="h-9 px-3 rounded-xl bg-slate-100 text-[12px] font-bold">Ver relatórios</button></div><div class="h-[250px]"><canvas id="chartFinance"></canvas></div></div>
+    <div class="rounded-[20px] bg-white border p-6 shadow-sm flex flex-col"><h3 class="font-bold text-[16px]">Status das impressoras</h3><p class="text-[12.5px] text-slate-500 mt-1">Locadas, disponíveis e manutenção</p><div class="mt-6 flex-1 grid place-items-center"><div class="w-[190px] h-[190px]"><canvas id="chartParque"></canvas></div></div><div class="mt-5 grid grid-cols-2 gap-3 text-[12px]" id="parque-legend"></div></div>
   </div>
+
   <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[14px]">Leituras pendentes</h3><button onclick="navigateTo('leituras')" class="text-[12px] font-semibold text-[#0a1e8a]">Ver tudo</button></div><div class="divide-y divide-slate-50" id="list-leituras-pendentes"></div></div>
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[14px]">Últimos chamados</h3><button onclick="navigateTo('manutencao')" class="text-[12px] font-semibold text-[#0a1e8a]">Ver tudo</button></div><div class="divide-y divide-slate-50" id="list-chamados-recentes"></div></div>
-    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[14px]">Auditoria recente</h3><button onclick="navigateTo('auditoria')" class="text-[12px] font-semibold text-[#0a1e8a]">Ver tudo</button></div><div class="p-3 space-y-2" id="list-alertas"></div></div>
+    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Leituras para lançar</h3><button onclick="navigateTo('leituras')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-leituras-pendentes"></div></div>
+    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Chamados recentes</h3><button onclick="navigateTo('manutencao')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="divide-y divide-slate-50" id="list-chamados-recentes"></div></div>
+    <div class="rounded-[20px] bg-white border shadow-sm"><div class="p-5 border-b flex items-center justify-between"><h3 class="font-bold text-[15px]">Últimas ações</h3><button onclick="navigateTo('auditoria')" class="text-[12px] font-semibold text-[#0a1e8a]">Abrir</button></div><div class="p-3 space-y-2" id="list-alertas"></div></div>
   </div>`;
 
   document.getElementById('view-clientes').innerHTML=`<div class="flex flex-wrap items-center gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('cliente')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1.5"></i>Novo cliente</button><button onclick="exportClientes()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Exportar</button></div><div class="flex gap-2"><select id="filter-clientes-status" onchange="renderClientes()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="inadimplente">Inadimplente</option></select><div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="search-clientes" oninput="renderClientes()" placeholder="Buscar..." class="h-10 pl-9 pr-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] tracking-widest uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Cliente / Quem criou</th><th class="px-5 py-3">Documento</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Contratos</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody></table></div><div id="pagination-clientes" class="p-3 border-t flex items-center justify-between text-[12px] text-slate-500"></div></div>`;
@@ -805,7 +843,7 @@ function renderBanco(){
   const el=ensureView('banco');
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const stats=[
-    {label:'Arquivo mantido',value:'BANCO.FDB',hint:'18 MB • Firebird legado'},
+    {label:'Arquivo correto',value:'.RAR atualizado',hint:'Deixar fora do GitHub'},
     {label:'Tabelas mapeadas',value:'22+',hint:'Clientes, produtos, vendas, locação'},
     {label:'Modo atual',value:'Local demo',hint:'localStorage no navegador'},
     {label:'Próxima etapa',value:'API nuvem',hint:'PostgreSQL/Supabase ou VPS'}
@@ -817,8 +855,8 @@ function renderBanco(){
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
             <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Migração do sistema antigo</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">BANCO.FDB → ERP novo em nuvem</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O arquivo Firebird do sistema antigo foi preservado no projeto para análise. No navegador/Githack ele não é importado diretamente por segurança; a extração real será feita em uma etapa de backend/API antes do executável multiusuário.</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">RAR atualizado → ERP novo em nuvem</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O BANCO.FDB do repositório pode estar desatualizado. O pacote correto deve ficar em armazenamento externo seguro; no navegador/Githack ele não é importado diretamente. A extração real será feita em backend/API antes do executável multiusuário.</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
@@ -851,10 +889,20 @@ function renderBanco(){
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[16px]">Upload para validação</h3>
           <p class="text-[12.5px] text-slate-500 mt-1">Use para testar fluxo. Importação automática de .FDB será feita no backend.</p>
-          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .FDB ou backup .JSON</label>
-          <input type="file" id="upload-db" accept=".fdb,.FDB,.json,application/json" class="mt-2 w-full text-[13px]" onchange="handleDatabaseUpload(this.files[0])">
+          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .RAR, .FDB ou backup .JSON</label>
+          <input type="file" id="upload-db" accept=".rar,.RAR,.fdb,.FDB,.json,application/json" class="mt-2 w-full text-[13px]" onchange="handleDatabaseUpload(this.files[0])">
           <div id="upload-status" class="mt-3 text-[12px] text-slate-500 rounded-xl bg-slate-50 border p-3">Nenhum arquivo selecionado.</div>
           <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900 leading-relaxed"><b>Importante:</b> Githack é apenas visualização estática. Multiusuário real precisa de banco central em nuvem e API com login seguro.</div>
+        </div>
+      </div>
+
+      <div class="rounded-[18px] bg-white border shadow-sm p-6">
+        <h3 class="font-bold text-[16px]">Onde colocar o .RAR atualizado</h3>
+        <p class="text-[13px] text-slate-500 mt-1">Não recomendo colocar o banco real dentro do GitHub público nem dentro do executável.</p>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-[12.5px]">
+          <div class="rounded-xl border p-4 bg-emerald-50/60 border-emerald-200"><b>Mais simples agora</b><p class="text-slate-600 mt-1">Google Drive/OneDrive com link restrito. Você me manda o link de download para análise.</p></div>
+          <div class="rounded-xl border p-4 bg-[#e8eaf8]"><b>Mais profissional</b><p class="text-slate-600 mt-1">Supabase Storage, Cloudflare R2 ou S3. Bom para armazenar backups do ERP.</p></div>
+          <div class="rounded-xl border p-4 bg-amber-50 border-amber-200"><b>Evitar</b><p class="text-slate-600 mt-1">GitHub público com banco real, porque pode expor clientes, vendas e financeiro.</p></div>
         </div>
       </div>
 
@@ -901,7 +949,7 @@ window.handleDatabaseUpload = function(file){
     reader.readAsText(file);
     return;
   }
-  status.innerHTML=`Arquivo <b>${name}</b> selecionado (${size} MB). O navegador não abre Firebird diretamente; ele será usado na etapa de extrator/backend para migrar CLIENTES, PRODUTOS, VENDAS, LOCAÇÃO, LEITURAS e FINANCEIRO.`;
+  status.innerHTML=`Arquivo <b>${name}</b> selecionado (${size} MB). O navegador não extrai RAR/Firebird diretamente; ele será usado na etapa de extrator/backend para migrar CLIENTES, PRODUTOS, VENDAS, LOCAÇÃO, LEITURAS e FINANCEIRO.`;
   toast('Arquivo Firebird recebido para validação visual','info');
 };
 window.handleRarUpload = window.handleDatabaseUpload;

@@ -12,7 +12,7 @@ function createWindow () {
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'DIGICOPY ERP v3.3'
+    title: 'DIGICOPY ERP v3.4'
   });
 
   win.loadFile('index.html');

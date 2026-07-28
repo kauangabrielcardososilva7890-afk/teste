@@ -34,15 +34,15 @@ npm run build:win
 - Login em 2 etapas: CNPJ da empresa + usuário.
 - Módulos demo: clientes, produtos, impressoras, contratos, parque instalado, leituras, manutenção/OS, vendas e financeiro.
 - Página **Banco antigo (.FDB)** para organizar a migração do Firebird antigo.
-- `BANCO.FDB` preservado no repositório como referência do banco antigo.
+- `BANCO.FDB` antigo pode estar desatualizado; o `.RAR` atualizado deve ficar em armazenamento externo seguro. Veja `ALOCACAO_ARQUIVOS_GRANDES.md`.
 - Uso atual de `localStorage` para testes rápidos no navegador.
 
 ## Próximo objetivo técnico
 
 Para rodar em múltiplos computadores, o app não deve depender de `localStorage`. A próxima fase será:
 
-1. Extrair dados do `BANCO.FDB` em backend/servidor.
-2. Normalizar para o novo modelo do ERP.
+1. Receber o `.RAR` atualizado em armazenamento externo seguro.
+2. Extrair dados do Firebird em backend/servidor e normalizar para o novo modelo do ERP.
 3. Subir banco central em nuvem (PostgreSQL/Supabase/VPS ou similar).
 4. Criar API segura por empresa/CNPJ.
 5. Empacotar Electron como `.exe` apontando para a API em nuvem.

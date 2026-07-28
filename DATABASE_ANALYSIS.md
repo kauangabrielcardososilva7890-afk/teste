@@ -1,8 +1,8 @@
 # Análise preliminar do BANCO.FDB
 
-Arquivo analisado: `BANCO.FDB`  
+Arquivo analisado anteriormente: `BANCO.FDB`  
 Tamanho no repositório: aproximadamente **18 MB**  
-Origem: sistema antigo usado como inspiração/migração para o novo ERP.
+Origem: sistema antigo usado como inspiração/migração para o novo ERP. O usuário informou que este `BANCO.FDB` pode estar desatualizado; a fonte correta será um `.RAR` atualizado armazenado externamente.
 
 > Observação: o navegador/Githack não consegue abrir um banco Firebird diretamente. A extração real precisa rodar em backend/servidor com driver Firebird. Esta análise é preliminar, feita por inspeção dos metadados/textos presentes no arquivo.
 
@@ -73,7 +73,7 @@ Origem: sistema antigo usado como inspiração/migração para o novo ERP.
 ## Próximo passo de migração
 
 1. Subir um ambiente com Firebird client/driver.
-2. Conectar no `BANCO.FDB` em modo leitura.
+2. Baixar o `.RAR` atualizado, extrair em ambiente seguro e conectar no Firebird em modo leitura.
 3. Exportar tabelas principais para JSON/CSV.
 4. Validar dados com o usuário no Githack usando importação JSON.
 5. Criar scripts de carga para o banco em nuvem.
