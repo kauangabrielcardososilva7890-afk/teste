@@ -260,6 +260,12 @@ function listUsuariosDemo(){
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
 
+// Escreve título/subtítulo com segurança (o layout do menu superior não tem #page-subtitle)
+function setPageHeader(title, subtitle){
+  const t=document.getElementById('page-title'); if(t) t.innerText=title||'';
+  const s=document.getElementById('page-subtitle'); if(s) s.innerText=subtitle||'';
+}
+
 function navigateTo(view){
   if(view==='banco'){
     const bancoView=ensureView('banco');
@@ -267,8 +273,7 @@ function navigateTo(view){
     bancoView.classList.remove('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    document.getElementById('page-title').innerText='Banco antigo Firebird';
-    document.getElementById('page-subtitle').innerText='Migração do sistema antigo e sincronização em nuvem';
+    setPageHeader('Banco antigo Firebird','Migração do sistema antigo e sincronização em nuvem');
     renderBanco();
     // Garante que a view fique visível mesmo se outro código esconder depois
     setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
@@ -280,7 +285,7 @@ function navigateTo(view){
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
   const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito']};
-  const t=titles[view]||[view,'']; document.getElementById('page-title').innerText=t[0]; document.getElementById('page-subtitle').innerText=t[1];
+  const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
   if(view==='produtos') renderProdutos();
@@ -303,8 +308,7 @@ function navigateTo(view){
     const modView=document.getElementById('view-'+view);
     if(modView){ modView.classList.remove('hidden'); modView.style.display='block'; modView.style.visibility='visible'; }
     const modulo=(db.modulosDinamicos||{})[nomeTabela];
-    document.getElementById('page-title').innerText=modulo?modulo.label:formatarNomeTabela(nomeTabela);
-    document.getElementById('page-subtitle').innerText='Módulo migrado do sistema antigo • '+(modulo?(modulo.dados||[]).length:0)+' registros';
+    setPageHeader(modulo?modulo.label:formatarNomeTabela(nomeTabela), 'Módulo migrado do sistema antigo • '+(modulo?(modulo.dados||[]).length:0)+' registros');
     const actMod=document.querySelector(`[data-nav="${view}"]`); if(actMod){actMod.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); actMod.classList.remove('text-white/60')}
   }
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1550,20 +1554,15 @@ window.enviarDiretoParaSupabase = async function(){
   const rawData = window._rawDataParaImportar;
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   fbImportToErp(rawData);
-  setTimeout(async function(){
-    if(typeof window.enviarDadosLocaisParaNuvem === 'function'){
-      // Chamada automática sem o confirm
-      try {
-        const payload = { key:'digicopy_erp_state_v1', data:db, updated_at:new Date().toISOString() };
-        await window.supabaseRequest('app_state?on_conflict=key', { method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=representation'}, body:JSON.stringify(payload) });
-        toast('✅ Dados enviados para Supabase! Todos os PCs podem acessar.','success');
-      } catch(err) {
-        toast('Erro ao enviar: '+(err.message||err),'error');
-      }
-    } else {
-      toast('Supabase não disponível. Envie manualmente na seção abaixo.','info');
+  toast('Dados importados! Enviando para a nuvem em partes (sem timeout)...','info');
+  if(typeof window.syncEnviarParaNuvem === 'function'){
+    const r = await window.syncEnviarParaNuvem({confirmar:false});
+    if(r && r.ok){
+      toast('✅ Dados no Supabase! Nos outros PCs, clique em "Carregar da nuvem".','success');
     }
-  }, 2000);
+  } else {
+    toast('Supabase não disponível nesta página. Recarregue e tente pela seção Supabase abaixo.','info');
+  }
 };
 
 window.copiarSqlExportarTudo = function(){

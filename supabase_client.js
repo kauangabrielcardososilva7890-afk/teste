@@ -368,62 +368,234 @@ end $$;
   };
 
 
-  const CLOUD_STATE_KEY = 'digicopy_erp_state_v1';
+  const CLOUD_STATE_KEY = 'digicopy_erp_state_v1'; // legado (blob único) — só leitura de compatibilidade
+  const CLOUD_META_KEY = 'digicopy_erp_v2_meta';
+  const CLOUD_PART_PREFIX = 'digicopy_erp_v2__';
+  const SYNC_MAX_ITENS_PARTE = 400;      // máx. registros por parte
+  const SYNC_MAX_BYTES_PARTE = 1500000;  // máx. ~1,5 MB por parte (evita statement timeout)
+  const SYNC_MAX_BYTES_ITEM  = 1200000;  // item único maior que isso é fatiado
+
+  // Entidades sincronizadas entre PCs
+  const SYNC_ENTIDADES = [
+    {campo:'empresas', tipo:'array'},
+    {campo:'usuarios', tipo:'array'},
+    {campo:'clientes', tipo:'array'},
+    {campo:'produtos', tipo:'array'},
+    {campo:'equipamentos', tipo:'array'},
+    {campo:'contratos', tipo:'array'},
+    {campo:'parque', tipo:'array'},
+    {campo:'leituras', tipo:'array'},
+    {campo:'os', tipo:'array'},
+    {campo:'vendas', tipo:'array'},
+    {campo:'contasReceber', tipo:'array'},
+    {campo:'contasPagar', tipo:'array'},
+    {campo:'logs', tipo:'array', limite:1500},
+    {campo:'modulosDinamicos', tipo:'objeto'},
+    {campo:'tecnicos', tipo:'array'},
+    {campo:'config', tipo:'objeto'},
+  ];
 
   function setCloudSyncStatus(html){
     const el=document.getElementById('cloud-sync-status');
     if(el) el.innerHTML = html;
   }
 
-  window.enviarDadosLocaisParaNuvem = async function(){
-    if(!confirm('Enviar os dados locais/de teste deste navegador para a nuvem? Isso NÃO importa o banco antigo; serve só para testar sincronização.')) return;
-    setCloudSyncStatus('<span class="text-slate-500">Enviando dados locais para o Supabase...</span>');
+  // Objeto (modulosDinamicos/config) → lista de [chave,valor]; módulos gigantes são fatiados
+  function objetoParaItens(obj){
+    const itens=[];
+    Object.entries(obj||{}).forEach(([k,v])=>{
+      if(JSON.stringify([k,v]).length <= SYNC_MAX_BYTES_ITEM){ itens.push([k,v]); return; }
+      if(v && Array.isArray(v.dados)){
+        const fatias=[]; let cur=[]; let bytes=50;
+        v.dados.forEach(r=>{
+          const rb=JSON.stringify(r).length+1;
+          if(bytes+rb > SYNC_MAX_BYTES_ITEM && cur.length){ fatias.push(cur); cur=[]; bytes=50; }
+          cur.push(r); bytes+=rb;
+        });
+        fatias.push(cur);
+        const total=fatias.length;
+        fatias.forEach((f,i)=>itens.push([k, Object.assign({}, v, {dados:f, __parte:i, __partes:total})]));
+      } else {
+        itens.push([k,v]);
+      }
+    });
+    return itens;
+  }
+
+  // Remonta o objeto a partir dos itens (agrupa fatias __parte/__partes)
+  function itensParaObjeto(itens){
+    const grupos={};
+    itens.forEach(([k,v])=>{
+      if(v && typeof v==='object' && v.__partes){
+        if(!grupos[k]) grupos[k]={base:Object.assign({}, v, {dados:[]}), fatias:[]};
+        grupos[k].fatias[v.__parte]=v.dados||[];
+      } else {
+        grupos[k]={simples:true, valor:v};
+      }
+    });
+    const out={};
+    Object.entries(grupos).forEach(([k,g])=>{
+      if(g.simples){ out[k]=g.valor; return; }
+      const dados=[];
+      for(let i=0;i<(g.base.__partes||0);i++) dados.push(...(g.fatias[i]||[]));
+      const rest=Object.assign({}, g.base); delete rest.__parte; delete rest.__partes;
+      out[k]=Object.assign({}, rest, {dados});
+    });
+    return out;
+  }
+
+  // Empacota itens em partes (por quantidade E por tamanho)
+  function empacotarPartes(itens){
+    const partes=[]; let atual=[]; let bytes=2;
+    itens.forEach(item=>{
+      const b=JSON.stringify(item).length+1;
+      if((atual.length >= SYNC_MAX_ITENS_PARTE || bytes+b > SYNC_MAX_BYTES_PARTE) && atual.length){ partes.push(atual); atual=[]; bytes=2; }
+      atual.push(item); bytes+=b;
+    });
+    partes.push(atual);
+    return partes;
+  }
+
+  // Envia TODOS os dados locais para a nuvem EM PARTES (evita statement timeout)
+  window.syncEnviarParaNuvem = async function(opts={}){
+    const confirmar = opts.confirmar !== false;
+    if(confirmar && !confirm('Enviar TODOS os dados deste PC para a nuvem (Supabase)?\n\nOs outros computadores poderão carregar estes dados em "Carregar da nuvem".')) return {ok:false, cancelado:true};
     try{
-      const payload = { key:CLOUD_STATE_KEY, data:db, updated_at:new Date().toISOString() };
+      // 1) Monta as partes
+      const partes=[]; const metaEntidades={};
+      SYNC_ENTIDADES.forEach(ent=>{
+        let itens;
+        if(ent.tipo==='objeto'){
+          itens = objetoParaItens(db[ent.campo]||{});
+        } else {
+          let lista = Array.isArray(db[ent.campo]) ? db[ent.campo] : [];
+          if(ent.limite) lista = lista.slice(0, ent.limite);
+          itens = lista;
+        }
+        const packs = empacotarPartes(itens);
+        metaEntidades[ent.campo]={tipo:ent.tipo, partes:packs.length, total:itens.length};
+        packs.forEach((pack,i)=>{
+          partes.push({
+            key:`${CLOUD_PART_PREFIX}${ent.campo}__p${i}`,
+            data: ent.tipo==='objeto' ? {itens: pack} : {lista: pack}
+          });
+        });
+      });
+      const totalReg = Object.values(metaEntidades).reduce((s,e)=>s+e.total,0);
+
+      // 2) Envia parte por parte (cada POST é pequeno → sem timeout)
+      let enviadas=0; const erros=[];
+      for(const p of partes){
+        setCloudSyncStatus(`<span class="text-slate-500">Enviando parte ${enviadas+1} de ${partes.length}... <b>${escapeHtml(p.key.replace(CLOUD_PART_PREFIX,''))}</b></span>`);
+        try{
+          await supabaseRequest('app_state?on_conflict=key', {
+            method:'POST',
+            headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+            body:JSON.stringify({key:p.key, data:p.data, updated_at:new Date().toISOString()})
+          });
+          enviadas++;
+        }catch(err){
+          erros.push(p.key+': '+(err?.message||err));
+        }
+      }
+
+      // 3) Meta SÓ vai se tudo subiu (outros PCs nunca leem estado parcial)
+      if(erros.length){
+        setCloudSyncStatus(`<span class="text-red-700 font-bold">Falha em ${erros.length} de ${partes.length} partes. Nada foi publicado. Tente novamente.</span><div class="text-[11px] text-red-600 mt-1">${escapeHtml(erros[0])}</div>`);
+        if(typeof toast==='function') toast('Falha ao enviar algumas partes. Tente novamente.','error');
+        return {ok:false, enviadas, erros};
+      }
+      const atualizadoEm = new Date().toISOString();
       await supabaseRequest('app_state?on_conflict=key', {
         method:'POST',
-        headers:{Prefer:'resolution=merge-duplicates,return=representation'},
-        body:JSON.stringify(payload)
+        headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify({key:CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
       });
-      setCloudSyncStatus('<span class="text-emerald-700 font-bold">Base de testes enviada para a nuvem.</span>');
-      if(typeof toast==='function') toast('Base de testes enviada para a nuvem', 'success');
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Enviado! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes. Outros PCs podem clicar em "Carregar da nuvem".</span>`);
+      if(typeof toast==='function') toast('Dados enviados para a nuvem com sucesso','success');
+      return {ok:true, partes:partes.length, totalRegistros:totalReg};
     }catch(err){
       const msg=err?.message||String(err);
       setCloudSyncStatus(`<span class="text-red-700 font-bold">Erro ao enviar: ${escapeHtml(msg)}</span>`);
       if(typeof toast==='function') toast('Erro ao enviar para nuvem: '+msg, 'error');
+      return {ok:false, erros:[msg]};
     }
   };
 
-  window.carregarDadosDaNuvem = async function(){
-    if(!confirm('Carregar a base de testes da nuvem neste navegador? Os dados locais atuais serão substituídos. Isso ainda não é a importação do banco antigo.')) return;
-    setCloudSyncStatus('<span class="text-slate-500">Carregando base de testes da nuvem...</span>');
+  // Carrega o estado publicado (v2 em partes, com fallback para blob legado v1)
+  window.syncCarregarDaNuvem = async function(opts={}){
+    const confirmar = opts.confirmar !== false;
+    if(confirmar && !confirm('Carregar os dados da nuvem neste PC?\n\n⚠️ OS DADOS LOCAIS ATUAIS SERÃO SUBSTITUÍDOS pelos dados da nuvem.')) return {ok:false, cancelado:true};
     try{
-      const rows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
-      if(!rows || !rows.length){
-        setCloudSyncStatus('<span class="text-amber-700 font-bold">Ainda não existe base de testes enviada para a nuvem.</span>');
-        if(typeof toast==='function') toast('Nenhuma base de testes encontrada na nuvem', 'info');
-        return;
+      setCloudSyncStatus('<span class="text-slate-500">Buscando dados na nuvem...</span>');
+      const metaRows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
+
+      if(!metaRows || !metaRows.length){
+        // Fallback: blob único legado
+        const rows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
+        if(!rows || !rows.length){
+          setCloudSyncStatus('<span class="text-amber-700 font-bold">Ainda não há dados na nuvem. Em outro PC, use "Enviar para nuvem" primeiro.</span>');
+          if(typeof toast==='function') toast('Nenhum dado encontrado na nuvem','info');
+          return {ok:false, vazio:true};
+        }
+        db = rows[0].data;
+        saveDB();
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+        if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+        setTimeout(()=>location.reload(),900);
+        return {ok:true, legado:true};
       }
-      db = rows[0].data;
+
+      const meta = metaRows[0].data;
+      const totalPartes = Object.values(meta.entidades||{}).reduce((s,e)=>s+(e.partes||0),0);
+      setCloudSyncStatus(`<span class="text-slate-500">Baixando ${totalPartes} partes (${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros)...</span>`);
+      const rows = await supabaseRequest(`app_state?select=key,data&key=like.${encodeURIComponent(CLOUD_PART_PREFIX)}*&limit=1000`, {method:'GET'});
+      const mapa={};
+      (rows||[]).forEach(r=>{ mapa[r.key]=r.data; });
+
+      const novoDb = structuredClone(defaultData);
+      Object.entries(meta.entidades||{}).forEach(([campo,info])=>{
+        const itens=[];
+        for(let i=0;i<(info.partes||0);i++){
+          const parte = mapa[`${CLOUD_PART_PREFIX}${campo}__p${i}`];
+          if(!parte) throw new Error(`Parte ${campo}__p${i} não encontrada na nuvem`);
+          if(info.tipo==='objeto') itens.push(...(parte.itens||[]));
+          else itens.push(...(parte.lista||[]));
+        }
+        novoDb[campo] = info.tipo==='objeto' ? itensParaObjeto(itens) : itens;
+      });
+      novoDb.meta = Object.assign({}, novoDb.meta||{}, {sincronizadoEm:new Date().toISOString(), origemNuvemAtualizadoEm:meta.atualizadoEm||metaRows[0].updated_at});
+      db = novoDb;
       saveDB();
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base de testes carregada da nuvem. Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
-      if(typeof toast==='function') toast('Base de testes carregada da nuvem', 'success');
-      setTimeout(()=>location.reload(),800);
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}). Recarregando...</span>`);
+      if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+      setTimeout(()=>location.reload(),900);
+      return {ok:true};
     }catch(err){
       const msg=err?.message||String(err);
       setCloudSyncStatus(`<span class="text-red-700 font-bold">Erro ao carregar: ${escapeHtml(msg)}</span>`);
       if(typeof toast==='function') toast('Erro ao carregar da nuvem: '+msg, 'error');
+      return {ok:false, erros:[msg]};
     }
   };
 
+  window.enviarDadosLocaisParaNuvem = function(){ return window.syncEnviarParaNuvem({confirmar:true}); };
+  window.carregarDadosDaNuvem = function(){ return window.syncCarregarDaNuvem({confirmar:true}); };
+
   window.verificarBaseNaNuvem = async function(){
-    setCloudSyncStatus('<span class="text-slate-500">Verificando base de testes compartilhada...</span>');
+    setCloudSyncStatus('<span class="text-slate-500">Verificando dados compartilhados na nuvem...</span>');
     try{
+      const metaRows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
+      if(metaRows && metaRows.length){
+        const meta=metaRows[0].data;
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Nuvem com dados publicados: ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros. Última atualização: ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+        return;
+      }
       const rows = await supabaseRequest(`app_state?select=updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
       if(rows && rows.length){
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Existe base de testes na nuvem. Última atualização: ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span>`);
+        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Existe base na nuvem (formato antigo). Última atualização: ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><p class="text-[11px] text-amber-700 mt-1">Dica: envie novamente por este PC para migrar ao formato em partes (mais rápido e sem timeout).</p>`);
       }else{
-        setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há base de testes enviada.</span>');
+        setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há dados enviados para a nuvem.</span>');
       }
     }catch(err){
       const msg=err?.message||String(err);

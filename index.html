@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGICOPY ERP - Gestão Outsourcing</title>
+<title>DIGICOPY ERP - Vendas e Locação de Impressoras</title>
 <link rel="icon" href="./logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -27,8 +27,8 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
 .login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
 
-/* ══ Componentes das telas (migração, PDV, neo-pages) — NÃO alteram o layout clássico ══ */
-/* classic-* : formulários e grades usados dentro das views */
+
+
 .classic-toolbar{background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .classic-toolbar-scroll{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:0 18px}
 .classic-menu-btn{min-width:94px;height:64px;padding:7px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid #eef2f7;color:#334155;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
@@ -36,16 +36,29 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 .ribbon-actions{display:flex;align-items:stretch;overflow-x:auto;background:white;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .ribbon-actions button{min-width:118px;padding:12px 14px;border-right:1px solid #eef2f7;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;font-weight:800;color:#334155;background:white}
 .ribbon-actions button:hover{background:#f8fafc;color:#0a1e8a}.ribbon-actions i{font-size:26px;color:#0a1e8a}.ribbon-actions small{font-weight:600;color:#64748b;font-size:10.5px;line-height:1.1}
-.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
+button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
+#sidebar,#overlay{display:none!important}
+body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.shadow-lg{box-shadow:0 1px 3px rgba(15,23,42,.10)!important}
+header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
 .classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
 
-/* clean-* : tela inicial (dashboard) renderizada pelo app.js */
-.clean-home{min-height:calc(100vh - 190px);background:radial-gradient(circle at 52% 48%,#eef5ff 0,#fff 32%,#fff 100%);position:relative;overflow:hidden;display:grid;place-items:center;border-radius:16px}.clean-home:before,.clean-home:after{content:"";position:absolute;border-radius:999px;border:1px solid rgba(10,30,138,.08);animation:floatSoft 7s ease-in-out infinite}.clean-home:before{width:360px;height:360px}.clean-home:after{width:520px;height:520px;animation-delay:-2s}@keyframes floatSoft{0%,100%{transform:translateY(0) scale(1);opacity:.55}50%{transform:translateY(-12px) scale(1.025);opacity:.9}}
-.clean-logo{position:relative;z-index:1;text-align:center;color:#1f2937}.clean-logo img{height:68px;margin:auto;filter:drop-shadow(0 10px 18px rgba(10,30,138,.12))}.clean-logo h1{font-size:32px;font-weight:800;margin-top:12px;letter-spacing:-.03em}.clean-logo p{font-size:13px;color:#64748b;margin-top:6px}.clean-shortcuts{position:absolute;bottom:42px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 16px}.clean-shortcuts button{height:34px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:rgba(255,255,255,.85);font-size:12px;font-weight:700;color:#334155;backdrop-filter:blur(8px);transition:.16s}.clean-shortcuts button:hover{background:#0a1e8a;color:white;transform:translateY(-2px)}
-.statusbar{display:none}/* barra de status do modo "menu superior": oculta no layout clássico (rodapé já existe) */
 
-/* neo-* : painéis das telas de venda/PDV e páginas modernas */
-.neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:60vh;animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
+.app-titlebar{box-shadow:none}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{height:calc(100vh - 190px);display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}
+
+
+.modern-topnav{position:sticky;top:26px;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
+.module-row{height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:linear-gradient(180deg,#ffffff,#f8fbff)}
+.module{position:relative}.module>button{height:34px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:7px;transition:.18s;background:transparent}.module>button i{font-size:17px;color:#0a1e8a}.module>button:hover{background:#eaf2ff;color:#0a1e8a;transform:translateY(-1px)}
+.module-menu{position:absolute;top:39px;left:0;min-width:230px;background:white;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s;z-index:80}.module:hover .module-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.module-menu button{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;transition:.14s}.module-menu button:hover{background:#f1f6ff;color:#0a1e8a;padding-left:14px}.module-menu i{font-size:18px;color:#0a1e8a}.module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
+.command-row{height:42px;display:flex;align-items:center;gap:8px;padding:4px 12px;background:white;border-top:1px solid #eef2f7}.command-row .quick{height:28px;padding:0 10px;border:1px solid #dbe3ef;border-radius:8px;background:#fff;font-size:11.5px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;transition:.15s}.command-row .quick:hover{border-color:#0a1e8a;color:#0a1e8a;box-shadow:0 4px 14px rgba(10,30,138,.10);transform:translateY(-1px)}.command-row .quick.primary{background:#0a1e8a;color:white;border-color:#0a1e8a}.command-search{height:28px;width:250px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12px}.pulse-dot{width:7px;height:7px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulseRing 1.7s infinite}@keyframes pulseRing{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.clean-home{height:calc(100vh - 160px);background:radial-gradient(circle at 52% 48%,#eef5ff 0,#fff 32%,#fff 100%);position:relative;overflow:hidden;display:grid;place-items:center}.clean-home:before,.clean-home:after{content:"";position:absolute;border-radius:999px;border:1px solid rgba(10,30,138,.08);animation:floatSoft 7s ease-in-out infinite}.clean-home:before{width:360px;height:360px}.clean-home:after{width:520px;height:520px;animation-delay:-2s}@keyframes floatSoft{0%,100%{transform:translateY(0) scale(1);opacity:.55}50%{transform:translateY(-12px) scale(1.025);opacity:.9}}
+.clean-logo{position:relative;z-index:1;text-align:center;color:#1f2937}.clean-logo img{height:68px;margin:auto;filter:drop-shadow(0 10px 18px rgba(10,30,138,.12))}.clean-logo h1{font-size:32px;font-weight:800;margin-top:12px;letter-spacing:-.03em}.clean-logo p{font-size:13px;color:#64748b;margin-top:6px}.clean-shortcuts{position:absolute;bottom:42px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 16px}.clean-shortcuts button{height:34px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:rgba(255,255,255,.85);font-size:12px;font-weight:700;color:#334155;backdrop-filter:blur(8px);transition:.16s}.clean-shortcuts button:hover{background:#0a1e8a;color:white;transform:translateY(-2px)}
+
+.neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:calc(100vh - 170px);animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
+
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -61,12 +74,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
     <div class="relative z-10">
       <img src="./logo.png" alt="DIGICOPY" class="h-14 w-auto object-contain">
       <div class="mt-12 max-w-[460px]">
-        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Gestão completa<br> de outsourcing<br> de impressão</h1>
-        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema DIGICOPY ERP - controle de contratos, parque instalado, leituras, excedentes, manutenção e financeiro. Sem loja virtual. Auditoria completa por usuário.</p>
+        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">ERP simples para<br> vendas e locação<br> de impressoras</h1>
+        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema em modo fácil: botões grandes, fluxo guiado e nomes diretos para vender, orçar, locar impressoras, abrir chamados e controlar financeiro.</p>
       </div>
     </div>
     <div class="relative z-10 flex items-center justify-between text-[11px] text-white/50">
-      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.0 • ERP Seguro</span>
+      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.4 • Modo Fácil</span>
     </div>
   </div>
   <!-- RIGHT PANEL - FORMS -->
@@ -130,12 +143,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Principal</p><div id="nav-main" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Operacional</p><div id="nav-op" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Base de Dados</p>
-    <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Banco antigo / Nuvem</span></button>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Comece aqui</p><div id="nav-main" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Migração</p>
+    <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Banco antigo (.FDB)</span></button>
   </div>
-  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Gestão & Auditoria</p><div id="nav-gest" class="space-y-1"></div></div>
+  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
     </nav>
     <div class="p-4 border-t border-white/5">
       <div class="rounded-xl bg-[#0a1e8a] border border-white/10 p-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-28 h-28 bg-white/10 rounded-full blur-xl"></div><p class="text-[12px] font-semibold relative z-10">Contratos a vencer</p><p class="text-[11px] text-white/70 mt-1 relative z-10"><span id="alert-vencendo">0</span> nos próximos 30 dias</p><button onclick="navigateTo('contratos')" class="mt-3 w-full h-8 rounded-lg bg-white text-[#0a1e8a] text-[12px] font-bold hover:bg-white/90 relative z-10">Ver contratos</button></div>
@@ -144,18 +157,33 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
   </aside>
 
   <main class="flex-1 min-w-0 flex flex-col">
-    <header class="h-[76px] sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/70 px-4 lg:px-8 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-list text-[22px]"></i></button>
-        <div><h2 id="page-title" class="text-[20px] font-bold tracking-tight">Dashboard</h2><div class="flex items-center gap-2 text-[12.5px] text-slate-500 mt-[2px]"><span id="page-subtitle">Visão geral da operação</span><span class="hidden sm:inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span id="current-date"></span></span></div></div>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="hidden md:flex items-center gap-2 mr-2"><div class="relative"><i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Buscar cliente, contrato, série, OS..." class="h-10 w-[320px] pl-10 pr-4 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-[#0a1e8a]/30 focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13.5px]"></div></div>
-        <button onclick="openQuickReading()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px] font-semibold flex items-center gap-2"><i class="ph ph-speedometer"></i><span class="hidden sm:inline">Nova leitura</span></button>
-        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold flex items-center gap-2 shadow-md shadow-[#0a1e8a]/20"><i class="ph ph-wrench"></i><span class="hidden sm:inline">Novo chamado</span></button>
-        <button onclick="navigateTo('relatorios')" class="w-10 h-10 grid place-items-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="ph ph-bell text-[20px]"></i></button>
+    <header class="app-titlebar sticky top-0 z-30">
+      <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
+        <div class="absolute left-2 flex items-center gap-2"><img src="./logo.png" class="h-4 w-4 object-contain"><span class="text-[11px]">DIGICOPY ERP</span></div>
+        <span id="page-title" class="font-medium">DIGICOPY Gestão 3.8</span>
+        <div class="absolute right-2 text-[11px] opacity-80" id="current-date"></div>
       </div>
     </header>
+    <div class="modern-topnav">
+      <div class="module-row">
+        <div class="module"><button><i class="ph ph-house"></i>Início</button><div class="module-menu"><button onclick="navigateTo('dashboard')"><i class="ph ph-monitor"></i>Área inicial<small>Home</small></button><button onclick="handleGlobalSearch(document.getElementById('top-command-search')?.value||'')"><i class="ph ph-magnifying-glass"></i>Pesquisa rápida</button></div></div>
+        <div class="module"><button><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda<small>F2</small></button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento<small>F3</small></button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button><i class="ph ph-printer"></i>Locação</button><div class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
+        <div class="module"><button><i class="ph ph-package"></i>Estoque</button><div class="module-menu"><button onclick="navigateTo('produtos')"><i class="ph ph-package"></i>Produtos e suprimentos<small>F4</small></button><button onclick="openModal('entradaEstoque')"><i class="ph ph-arrow-fat-line-up"></i>Entrada de estoque</button><button onclick="navigateTo('produtos')"><i class="ph ph-warning"></i>Estoque baixo</button></div></div>
+        <div class="module"><button><i class="ph ph-users"></i>Cadastros</button><div class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button></div></div>
+        <div class="module"><button><i class="ph ph-bank"></i>Financeiro</button><div class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
+        <div class="module"><button><i class="ph ph-chart-line"></i>Gestão</button><div class="module-menu"><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><button onclick="openCloudMigration()"><i class="ph ph-cloud-arrow-up"></i>Migração/nuvem</button></div></div>
+        <div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span>online local</span></div>
+      </div>
+      <div class="command-row">
+        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="quick primary"><i class="ph ph-plus"></i>Venda</button>
+        <button onclick="navigateTo('vendas')" class="quick"><i class="ph ph-receipt"></i>Notinhas</button>
+        <button onclick="navigateTo('clientes')" class="quick"><i class="ph ph-users"></i>Clientes</button>
+        <button onclick="navigateTo('contratos')" class="quick"><i class="ph ph-printer"></i>Locação</button>
+        <button onclick="navigateTo('financeiro')" class="quick"><i class="ph ph-currency-dollar"></i>Financeiro</button>
+        <span class="ml-auto text-[11px] text-slate-500">Buscar</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search" placeholder="cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick"><i class="ph ph-magnifying-glass"></i></button>
+      </div>
+    </div>
     <div class="flex-1 p-4 lg:p-8">
       <section id="view-dashboard" class="view space-y-6"></section>
       <section id="view-clientes" class="view hidden space-y-4"></section>
@@ -173,7 +201,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.0 • Auditoria por usuário • Sem Loja Virtual • Azul escuro #0a1e8a</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Banco Servidor Nuvem  |  DIGICOPY Gestão v3.8</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
@@ -184,10 +212,10 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./app.js?v=3.9.2"></script>
-<script src="./vendas_patch.js?v=3.9.2"></script>
-<script src="./evolucao_patch.js?v=3.9.2"></script>
-<script src="./notinha_patch.js?v=3.9.2"></script>
-<script src="./supabase_client.js?v=3.9.2"></script>
+<script src="./app.js?v=3.9.3"></script>
+<script src="./vendas_patch.js?v=3.9.3"></script>
+<script src="./evolucao_patch.js?v=3.9.3"></script>
+<script src="./notinha_patch.js?v=3.9.3"></script>
+<script src="./supabase_client.js?v=3.9.3"></script>
 </body>
 </html>
