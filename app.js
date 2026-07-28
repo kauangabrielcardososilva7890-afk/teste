@@ -1193,28 +1193,92 @@ function renderBanco(){
 
       <!-- FLUXO COMPLETO -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-4">Fluxo completo — importar e distribuir para todos os PCs</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
-          <div class="rounded-xl border-2 border-orange-300 p-4 bg-orange-50">
-            <span class="w-8 h-8 rounded-lg bg-orange-600 text-white grid place-items-center font-bold text-[14px]">1</span>
-            <p class="font-bold mt-3">Exportar do DBeaver</p>
-            <p class="text-slate-600 mt-1">Abra o SQL Editor no DBeaver e rode o SQL abaixo. Ele gera um JSON com TODAS as tabelas.</p>
-            <button onclick="copiarSqlExportarTudo()" class="mt-3 w-full h-9 rounded-lg bg-orange-600 text-white font-bold text-[11.5px] flex items-center justify-center gap-1.5 hover:bg-orange-700"><i class="ph ph-copy"></i> Copiar SQL</button>
+        <h3 class="font-bold text-[16px] mb-4">Como exportar os dados do DBeaver (SEM SQL)</h3>
+        
+        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-5 mb-4">
+          <h4 class="font-bold text-[15px] text-emerald-900 mb-3"><i class="ph ph-number-circle-one text-[22px]"></i> Passo 1 — Abra a lista de tabelas</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
+            <div class="bg-white rounded-lg p-3 border border-emerald-200">
+              <p class="font-bold text-emerald-800 mb-1">No DBeaver, lado esquerdo:</p>
+              <p class="text-slate-700">Expanda a conexão Firebird clicando nos triângulos:</p>
+              <div class="mt-2 bg-slate-900 text-emerald-400 rounded p-2 font-mono text-[11px] leading-relaxed">
+                ▼ Database<br>
+                &nbsp;&nbsp;▼ Schemas<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;▼ MAIN<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📁 <b class="text-yellow-300">Tables</b> ← aqui
+              </div>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-emerald-200">
+              <p class="font-bold text-emerald-800 mb-1">Clique em "Tables"</p>
+              <p class="text-slate-700">Vai aparecer a lista de todas as tabelas:</p>
+              <div class="mt-2 bg-slate-900 text-emerald-400 rounded p-2 font-mono text-[11px] leading-relaxed">
+                📋 CLIENTES<br>
+                📋 PRODUTOS<br>
+                📋 VENDAS<br>
+                📋 ITENS_VENDA<br>
+                📋 EQUIPAMENTOS<br>
+                📋 ...
+              </div>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-emerald-200">
+              <p class="font-bold text-emerald-800 mb-1">Selecione TODAS</p>
+              <p class="text-slate-700">Segure <b>Ctrl+A</b> para selecionar todas as tabelas de uma vez.</p>
+              <div class="mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-[11px] text-amber-800">
+                <b>Exporte todas!</b> O sistema cria menus novos automaticamente para tabelas sem correspondência.
+              </div>
+            </div>
           </div>
-          <div class="rounded-xl border-2 border-blue-300 p-4 bg-blue-50">
-            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white grid place-items-center font-bold text-[14px]">2</span>
-            <p class="font-bold mt-3">Importar aqui</p>
-            <p class="text-slate-600 mt-1">Salve o resultado do SQL como .json e faça upload abaixo. Pode ser 1 arquivo com tudo ou vários separados.</p>
+        </div>
+
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-xl p-5 mb-4">
+          <h4 class="font-bold text-[15px] text-blue-900 mb-3"><i class="ph ph-number-circle-two text-[22px]"></i> Passo 2 — Exportar como JSON</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
+            <div class="bg-white rounded-lg p-3 border border-blue-200">
+              <p class="font-bold text-blue-800 mb-1">Com tabelas selecionadas:</p>
+              <p class="text-slate-700"><b>Botão direito</b> → escolha:</p>
+              <div class="mt-2 bg-slate-50 border rounded p-2 text-[11px]">
+                <div class="py-0.5">Abrir dados...</div>
+                <div class="py-0.5 border-t mt-1 pt-1">Editar</div>
+                <div class="py-0.5 bg-blue-100 font-bold px-1 rounded">📤 Exportar Dados ← ESTE</div>
+                <div class="py-0.5">Importar Dados</div>
+              </div>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-blue-200">
+              <p class="font-bold text-blue-800 mb-1">Na janela de exportação:</p>
+              <div class="mt-2 bg-slate-50 border rounded p-2 text-[11px]">
+                <div class="py-0.5">○ CSV</div>
+                <div class="py-0.5 bg-blue-100 font-bold px-1 rounded">● JSON ← ESTE</div>
+                <div class="py-0.5">○ HTML / XML / SQL</div>
+              </div>
+              <p class="text-slate-700 mt-2">Clique <b>Next → Next → Start</b></p>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-blue-200">
+              <p class="font-bold text-blue-800 mb-1">Salve em uma pasta fácil:</p>
+              <div class="mt-2 bg-slate-50 border rounded p-2 font-mono text-[11px]">
+                C:\\Temp\\export\\<br>
+                ├── clientes.json<br>
+                ├── produtos.json<br>
+                ├── vendas.json<br>
+                └── ... todas as tabelas
+              </div>
+            </div>
           </div>
-          <div class="rounded-xl border-2 border-emerald-300 p-4 bg-emerald-50">
-            <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white grid place-items-center font-bold text-[14px]">3</span>
-            <p class="font-bold mt-3">Enviar para Supabase</p>
-            <p class="text-slate-600 mt-1">Depois de importar, clique em "Enviar para nuvem". Os dados ficam disponíveis para todos os PCs.</p>
-          </div>
-          <div class="rounded-xl border-2 border-purple-300 p-4 bg-purple-50">
-            <span class="w-8 h-8 rounded-lg bg-purple-600 text-white grid place-items-center font-bold text-[14px]">4</span>
-            <p class="font-bold mt-3">Outros PCs</p>
-            <p class="text-slate-600 mt-1">Nos outros computadores, abra o ERP e clique em "Carregar da nuvem". Tudo aparece.</p>
+        </div>
+
+        <div class="bg-purple-50 border-2 border-purple-300 rounded-xl p-5">
+          <h4 class="font-bold text-[15px] text-purple-900 mb-3"><i class="ph ph-number-circle-three text-[22px]"></i> Passo 3 — Importar aqui no ERP</h4>
+          <div class="text-[13px] text-purple-800">
+            <ol class="list-decimal list-inside space-y-1">
+              <li>Role para baixo até <b>"Upload dos dados"</b></li>
+              <li>Clique em <b>"Selecionar arquivos"</b></li>
+              <li>Selecione <b>TODOS os .json</b> da pasta (Ctrl+A)</li>
+              <li>Clique em <b>"Importar + Supabase"</b></li>
+              <li>Pronto! Dados no ERP + nuvem</li>
+            </ol>
+            <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
+              <p class="font-bold text-purple-800"><i class="ph ph-devices text-[16px]"></i> Nos outros PCs:</p>
+              <p class="text-[12px] text-purple-700 mt-1">ERP → "Banco antigo" → <b>"Carregar da nuvem"</b>. Todos os dados aparecem.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1471,14 +1535,17 @@ window.enviarDiretoParaSupabase = async function(){
 };
 
 window.copiarSqlExportarTudo = function(){
-  const sql = '-- SQL PARA EXPORTAR TODAS AS TABELAS DO FIREBIRD\n-- Cole no SQL Editor do DBeaver e clique em Executar\n\n-- PASSO 1: Ver todas as tabelas\nSELECT RDB$RELATION_NAME AS TABELA\nFROM RDB$RELATIONS\nWHERE RDB$VIEW_BLR IS NULL\n  AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0)\nORDER BY RDB$RELATION_NAME;\n\n-- PASSO 2: Para cada tabela, execute SELECT * e exporte como JSON\n-- Exemplo:\nSELECT * FROM CLIENTES;\nSELECT * FROM PRODUTOS;\nSELECT * FROM CARTUCHOS;\nSELECT * FROM VENDAS;\nSELECT * FROM ITENS_VENDA;\nSELECT * FROM EQUIPAMENTOS;\nSELECT * FROM LOCACAO;\nSELECT * FROM ITENS_LOCACAO;\nSELECT * FROM LEITURAS;\nSELECT * FROM CONTAS_RECEBER;\nSELECT * FROM CONTAS_PAGAR;\nSELECT * FROM RECIBOS_EMITIDOS;\nSELECT * FROM FORMA_PAGAMENTO;\nSELECT * FROM EMPRESA;\nSELECT * FROM CONFIGURACAO;\nSELECT * FROM FORNECEDORES;\nSELECT * FROM FUNCIONARIOS;\nSELECT * FROM CATEGORIA;\nSELECT * FROM FABRICANTE;\nSELECT * FROM UNIDADE_MEDIDA;\n\n-- PASSO 3: No DBeaver, clique com botão direito no resultado\n-- > Exportar Dados > JSON > Salvar\n-- Depois faça upload dos arquivos .json aqui no ERP';
+  const sql = 'SELECT RDB$RELATION_NAME AS TABELA FROM RDB$RELATIONS WHERE RDB$VIEW_BLR IS NULL AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0) ORDER BY RDB$RELATION_NAME';
   
   navigator.clipboard.writeText(sql).then(function(){
-    toast('SQL copiado! Cole no SQL Editor do DBeaver','success');
+    toast('SQL copiado! Cole no DBeaver, execute, e exporte cada tabela clicando com botão direito','success');
+    setTimeout(function(){
+      alert('INSTRUÇÕES:\n\n1. Cole o SQL no DBeaver e execute\n2. Vai aparecer a lista de tabelas\n3. Para cada tabela importante:\n   - Clique com botão direito na tabela (na árvore à esquerda)\n   - Escolha "Exportar Dados"\n   - Selecione "JSON"\n   - Salve o arquivo\n\nTabelas importantes:\n• CLIENTES\n• PRODUTOS\n• VENDAS\n• ITENS_VENDA\n• EQUIPAMENTOS\n• CONTAS_RECEBER\n• CONTAS_PAGAR\n\nDepois selecione todos os .json aqui no ERP.');
+    }, 500);
   }).catch(function(){
     const box = document.getElementById('supabase-schema-sql-box');
     if(box){ box.classList.remove('hidden'); box.value = sql; box.select(); }
-    toast('SQL apareceu na caixa para copiar','info');
+    toast('SQL apareceu na caixa','info');
   });
 };
 // IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
