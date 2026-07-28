@@ -348,6 +348,19 @@ function buildNav(){
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
+  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar)
+  const topMod = document.getElementById('topmod-migrados');
+  const menuMig = document.getElementById('menu-migrados');
+  if(topMod && menuMig){
+    if(dinamicos.length){
+      topMod.style.display='';
+      menuMig.innerHTML = dinamicos.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('');
+    } else {
+      topMod.style.display='none';
+      menuMig.innerHTML='';
+    }
+  }
+  
   // Renderizar seção de módulos dinâmicos se houver
   let navDinamico = document.getElementById('nav-dinamico');
   let navDinamicoLabel = document.getElementById('nav-dinamico-label');
