@@ -472,4 +472,7 @@ end $$;
   window.openCloudMigration = function(){
     if(typeof navigateTo === 'function') navigateTo('banco');
   };
+
+  // EXPOR GLOBALMENTE a função de HTML do Supabase
+  window.cloudMigrationHtml = cloudMigrationHtml;
 })();
