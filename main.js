@@ -1,5 +1,10 @@
-const { app, BrowserWindow } = require('electron');
+// DIGICOPY ERP v3.8 - Main process (Electron)
+// Responsável por: janela principal, IPC com Firebird e sistema de arquivos
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+let mainWindow = null;
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -17,15 +22,253 @@ function createWindow () {
 
   win.loadFile('index.html');
   win.once('ready-to-show', () => win.show());
+  return win;
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  mainWindow = createWindow();
+  registerFirebirdIPC();
+  registerFileIPC();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+// ──────────────────────────────────────────────
+// FIREBIRD IPC — conexão direta ao banco .FDB
+// ──────────────────────────────────────────────
+function registerFirebirdIPC(){
+  // Lazy-load para não quebrar se node-firebird não estiver instalado
+  let Firebird = null;
+  function getFirebird(){
+    if(!Firebird){
+      try { Firebird = require('node-firebird'); }
+      catch(e){
+        console.error('node-firebird não instalado:', e.message);
+        return null;
+      }
+    }
+    return Firebird;
+  }
+
+  // Testar conexão
+  ipcMain.handle('firebird:test', async (_evt, config) => {
+    const fb = getFirebird();
+    if(!fb) return { ok:false, error:'node-firebird não instalado. Rode: npm install node-firebird' };
+    const opts = {
+      host: config.host || 'localhost',
+      port: config.port || 3050,
+      database: config.database || '',
+      user: config.user || 'SYSDBA',
+      password: config.password || 'masterkey',
+      lowercase_keys: true,
+      role: undefined,
+      blobAsText: true
+    };
+    return new Promise((resolve) => {
+      fb.attach(opts, (err, db) => {
+        if(err) return resolve({ ok:false, error: err.message || String(err) });
+        // Testar query simples
+        db.query('SELECT 1 as teste FROM RDB$DATABASE', (qErr, result) => {
+          db.detach();
+          if(qErr) return resolve({ ok:false, error: qErr.message });
+          resolve({ ok:true, message:'Conexão OK com Firebird' });
+        });
+      });
+    });
+  });
+
+  // Listar tabelas do banco
+  ipcMain.handle('firebird:tables', async (_evt, config) => {
+    const fb = getFirebird();
+    if(!fb) return { ok:false, error:'node-firebird não instalado' };
+    const opts = buildFbOpts(config);
+    return new Promise((resolve) => {
+      fb.attach(opts, (err, db) => {
+        if(err) return resolve({ ok:false, error: err.message });
+        const sql = `SELECT RDB$RELATION_NAME as nome, RDB$SYSTEM_FLAG as sistema
+                     FROM RDB$RELATIONS
+                     WHERE RDB$VIEW_BLR IS NULL
+                       AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0)
+                     ORDER BY RDB$RELATION_NAME`;
+        db.query(sql, (qErr, rows) => {
+          if(qErr){ db.detach(); return resolve({ ok:false, error: qErr.message }); }
+          const tables = (rows||[]).map(r => {
+            const nome = (r.nome||'').trim();
+            return nome;
+          }).filter(Boolean);
+          // Para cada tabela, contar registros
+          let pendentes = tables.length;
+          const resultado = {};
+          if(pendentes === 0){ db.detach(); return resolve({ ok:true, tables:[] }); }
+          tables.forEach(t => {
+            db.query(`SELECT COUNT(*) as total FROM "${t}"`, (cErr, cRows) => {
+              resultado[t] = { nome: t, total: cErr ? -1 : (cRows && cRows[0] ? Number(cRows[0].total) : 0) };
+              pendentes--;
+              if(pendentes <= 0){
+                db.detach();
+                const lista = Object.values(resultado).sort((a,b)=>a.nome.localeCompare(b.nome));
+                resolve({ ok:true, tables: lista });
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+
+  // Extrair colunas de uma tabela
+  ipcMain.handle('firebird:columns', async (_evt, config, tableName) => {
+    const fb = getFirebird();
+    if(!fb) return { ok:false, error:'node-firebird não instalado' };
+    const opts = buildFbOpts(config);
+    return new Promise((resolve) => {
+      fb.attach(opts, (err, db) => {
+        if(err) return resolve({ ok:false, error: err.message });
+        const sql = `SELECT r.RDB$FIELD_NAME as campo, f.RDB$FIELD_TYPE as tipo, f.RDB$FIELD_LENGTH as tamanho
+                     FROM RDB$RELATION_FIELDS r
+                     LEFT JOIN RDB$FIELDS f ON r.RDB$FIELD_SOURCE = f.RDB$FIELD_NAME
+                     WHERE r.RDB$RELATION_NAME = ?
+                     ORDER BY r.RDB$FIELD_POSITION`;
+        db.query(sql, [tableName], (qErr, rows) => {
+          db.detach();
+          if(qErr) return resolve({ ok:false, error: qErr.message });
+          const cols = (rows||[]).map(r => ({
+            campo: (r.campo||'').trim(),
+            tipo: mapFbType(r.tipo),
+            tamanho: r.tamanho || null
+          }));
+          resolve({ ok:true, columns: cols });
+        });
+      });
+    });
+  });
+
+  // Extrair dados de uma tabela (com limite)
+  ipcMain.handle('firebird:extract', async (_evt, config, tableName, limit) => {
+    const fb = getFirebird();
+    if(!fb) return { ok:false, error:'node-firebird não instalado' };
+    const opts = buildFbOpts(config);
+    const lim = Math.min(limit || 50000, 200000);
+    return new Promise((resolve) => {
+      fb.attach(opts, (err, db) => {
+        if(err) return resolve({ ok:false, error: err.message });
+        const sql = `SELECT FIRST ${lim} * FROM "${tableName}"`;
+        db.query(sql, (qErr, rows) => {
+          db.detach();
+          if(qErr) return resolve({ ok:false, error: qErr.message });
+          // Normalizar chaves e valores
+          const data = (rows||[]).map(row => {
+            const obj = {};
+            for(const [k,v] of Object.entries(row)){
+              const key = k.trim();
+              if(v instanceof Date) obj[key] = v.toISOString();
+              else if(Buffer.isBuffer(v)) obj[key] = v.toString('utf8');
+              else obj[key] = v;
+            }
+            return obj;
+          });
+          resolve({ ok:true, total: data.length, data });
+        });
+      });
+    });
+  });
+
+  // Extrair múltiplas tabelas de uma vez (para migração completa)
+  ipcMain.handle('firebird:extract-all', async (_evt, config, tableList) => {
+    const fb = getFirebird();
+    if(!fb) return { ok:false, error:'node-firebird não instalado' };
+    const opts = buildFbOpts(config);
+    const tables = tableList || ['CLIENTES','PRODUTOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','CONTAS_RECEBER','CONTAS_PAGAR'];
+    return new Promise((resolve) => {
+      fb.attach(opts, (err, db) => {
+        if(err) return resolve({ ok:false, error: err.message });
+        const resultado = {};
+        let pendentes = tables.length;
+        if(pendentes === 0){ db.detach(); return resolve({ ok:true, data:{} }); }
+        tables.forEach(t => {
+          const sql = `SELECT FIRST 100000 * FROM "${t}"`;
+          db.query(sql, (qErr, rows) => {
+            if(qErr){
+              resultado[t] = { error: qErr.message, data: [] };
+            } else {
+              const data = (rows||[]).map(row => {
+                const obj = {};
+                for(const [k,v] of Object.entries(row)){
+                  const key = k.trim();
+                  if(v instanceof Date) obj[key] = v.toISOString();
+                  else if(Buffer.isBuffer(v)) obj[key] = v.toString('utf8');
+                  else obj[key] = v;
+                }
+                return obj;
+              });
+              resultado[t] = { error: null, data };
+            }
+            pendentes--;
+            if(pendentes <= 0){
+              db.detach();
+              resolve({ ok:true, data: resultado });
+            }
+          });
+        });
+      });
+    });
+  });
+}
+
+function buildFbOpts(config){
+  return {
+    host: config.host || 'localhost',
+    port: config.port || 3050,
+    database: config.database || '',
+    user: config.user || 'SYSDBA',
+    password: config.password || 'masterkey',
+    lowercase_keys: true,
+    blobAsText: true
+  };
+}
+
+function mapFbType(typeNum){
+  // Firebird field types
+  const map = {
+    7:'SMALLINT', 8:'INTEGER', 9:'QUAD', 10:'FLOAT',
+    12:'DATE', 13:'TIME', 14:'CHAR', 16:'BIGINT',
+    23:'BOOLEAN', 27:'DOUBLE', 35:'TIMESTAMP',
+    37:'VARCHAR', 40:'CSTRING', 45:'BLOB_ID',
+    261:'BLOB'
+  };
+  return map[typeNum] || `TYPE_${typeNum}`;
+}
+
+// ──────────────────────────────────────────────
+// FILE IPC — seleção de arquivos e exportação
+// ──────────────────────────────────────────────
+function registerFileIPC(){
+  ipcMain.handle('file:select-fdb', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Selecionar banco Firebird (.FDB)',
+      filters: [
+        { name: 'Firebird Database', extensions: ['fdb','FDB'] },
+        { name: 'Todos os arquivos', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+    if(result.canceled || !result.filePaths.length) return { ok:false };
+    return { ok:true, path: result.filePaths[0] };
+  });
+
+  ipcMain.handle('file:save-json', async (_evt, data, defaultName) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Exportar dados extraídos',
+      defaultPath: defaultName || 'migração_digicopy.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    });
+    if(result.canceled || !result.filePath) return { ok:false };
+    fs.writeFileSync(result.filePath, JSON.stringify(data, null, 2), 'utf8');
+    return { ok:true, path: result.filePath };
+  });
+}

@@ -31,6 +31,9 @@
       "output": "dist"
     }
   },
+  "dependencies": {
+    "node-firebird": "^1.1.9"
+  },
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.0"

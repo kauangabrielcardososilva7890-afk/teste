@@ -806,12 +806,7 @@ function renderBanco(){
   const sess=getSession();
   const el=ensureView('banco');
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
-  const stats=[
-    {label:'Arquivo correto',value:'.RAR atualizado',hint:'Deixar fora do GitHub'},
-    {label:'Tabelas mapeadas',value:'22+',hint:'Clientes, produtos, vendas, locação'},
-    {label:'Modo atual',value:'Local demo',hint:'localStorage no navegador'},
-    {label:'Próxima etapa',value:'API nuvem',hint:'PostgreSQL/Supabase ou VPS'}
-  ];
+  const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
   el.innerHTML=`
     <div class="space-y-4">
       <div class="rounded-[22px] bg-[#0a1e8a] text-white p-6 shadow-xl overflow-hidden relative">
@@ -819,8 +814,8 @@ function renderBanco(){
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
             <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Migração do sistema antigo</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">RAR atualizado → ERP novo em nuvem</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O pacote correto do sistema antigo deve ficar em armazenamento externo seguro. No navegador/Githack ele não é importado diretamente. A extração real será feita em backend/API antes do executável multiusuário.</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Firebird (.FDB) → ERP DIGICOPY</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Conecte diretamente ao banco Firebird do sistema antigo, visualize as tabelas e importe os dados para o ERP novo. Os dados são mapeados automaticamente para clientes, produtos, vendas, locação e financeiro.</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
@@ -829,15 +824,112 @@ function renderBanco(){
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        ${stats.map(s=>`<div class="rounded-[16px] bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">${s.label}</p><p class="text-[20px] font-extrabold text-[#0a1e8a] mt-1">${s.value}</p><p class="text-[11.5px] text-slate-500 mt-1">${s.hint}</p></div>`).join('')}
+      <!-- CONEXÃO FIREBIRD -->
+      <div class="rounded-[18px] bg-white border shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-database text-[20px]"></i></div>
+          <div>
+            <h3 class="font-bold text-[16px]">Conexão com Firebird</h3>
+            <p class="text-[12px] text-slate-500">Preencha os dados do banco .FDB do sistema antigo</p>
+          </div>
+          <div class="ml-auto">
+            ${isElectron
+              ? '<span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200"><i class="ph ph-check-circle"></i> Electron ativo</span>'
+              : '<span class="text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200"><i class="ph ph-warning"></i> Modo navegador (sem Firebird direto)</span>'}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+          <div class="xl:col-span-1">
+            <label class="classic-label font-bold">Host</label>
+            <input id="fb-host" class="classic-input w-full" value="localhost" placeholder="localhost">
+          </div>
+          <div class="xl:col-span-1">
+            <label class="classic-label font-bold">Porta</label>
+            <input id="fb-port" class="classic-input w-full" value="3050" placeholder="3050">
+          </div>
+          <div class="xl:col-span-2">
+            <label class="classic-label font-bold">Caminho do banco (.FDB)</label>
+            <div class="flex gap-1">
+              <input id="fb-database" class="classic-input flex-1" placeholder="C:\\Temp\\BANCO.FDB">
+              ${isElectron ? '<button onclick="browseFdb()" class="classic-input w-10 text-center" title="Procurar arquivo"><i class="ph ph-folder-open"></i></button>' : ''}
+            </div>
+          </div>
+          <div class="xl:col-span-1">
+            <label class="classic-label font-bold">Usuário</label>
+            <input id="fb-user" class="classic-input w-full" value="SYSDBA" placeholder="SYSDBA">
+          </div>
+          <div class="xl:col-span-1">
+            <label class="classic-label font-bold">Senha</label>
+            <input id="fb-password" class="classic-input w-full" type="password" value="masterkey" placeholder="masterkey">
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-5">
+          <button onclick="fbTestConnection()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-[#08176e] transition">
+            <i class="ph ph-plugs-connected text-[16px]"></i> Testar conexão
+          </button>
+          <button onclick="fbListTables()" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-emerald-700 transition">
+            <i class="ph ph-table text-[16px]"></i> Listar tabelas
+          </button>
+          <button onclick="fbExtractAll()" id="btn-extract-all" class="h-10 px-5 rounded-xl bg-amber-600 text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-amber-700 transition" disabled>
+            <i class="ph ph-download-simple text-[16px]"></i> Extrair tudo e importar
+          </button>
+          <button onclick="fbExportExtracted()" id="btn-export-extracted" class="h-10 px-5 rounded-xl border border-slate-300 text-slate-700 font-bold text-[12.5px] flex items-center gap-2 hover:bg-slate-50 transition" disabled>
+            <i class="ph ph-export text-[16px]"></i> Exportar JSON
+          </button>
+        </div>
+
+        <div id="fb-status" class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3 text-[12.5px] text-slate-600">
+          <i class="ph ph-info text-[14px]"></i> Preencha os dados acima e clique em "Testar conexão". O Firebird precisa estar rodando (StartFirebird.bat como administrador).
+        </div>
       </div>
 
+      <!-- TABELAS ENCONTRADAS -->
+      <div id="fb-tables-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-list-check text-[20px]"></i></div>
+          <div>
+            <h3 class="font-bold text-[16px]">Tabelas encontradas</h3>
+            <p class="text-[12px] text-slate-500" id="fb-tables-count">-</p>
+          </div>
+          <div class="ml-auto flex gap-2">
+            <button onclick="fbSelectMigrationTables()" class="h-9 px-4 rounded-lg bg-[#0a1e8a] text-white font-bold text-[11.5px] flex items-center gap-1.5"><i class="ph ph-check-square"></i> Selecionar tabelas de migração</button>
+          </div>
+        </div>
+        <div id="fb-tables-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto"></div>
+      </div>
+
+      <!-- PREVIEW DE DADOS -->
+      <div id="fb-preview-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center"><i class="ph ph-eye text-[20px]"></i></div>
+          <div>
+            <h3 class="font-bold text-[16px]">Preview de dados</h3>
+            <p class="text-[12px] text-slate-500" id="fb-preview-info">-</p>
+          </div>
+        </div>
+        <div id="fb-preview-content" class="overflow-x-auto border rounded-xl"></div>
+      </div>
+
+      <!-- RESULTADO DA IMPORTAÇÃO -->
+      <div id="fb-import-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-check-circle text-[20px]"></i></div>
+          <div>
+            <h3 class="font-bold text-[16px]">Resultado da migração</h3>
+            <p class="text-[12px] text-slate-500">Dados importados do Firebird para o ERP</p>
+          </div>
+        </div>
+        <div id="fb-import-result" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
+      </div>
+
+      <!-- MAPA DAS TABELAS -->
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div class="xl:col-span-2 rounded-[18px] bg-white border shadow-sm p-6">
           <div>
-            <h3 class="font-bold text-[16px]">Mapa inicial das tabelas do sistema antigo</h3>
-            <p class="text-[13px] text-slate-500 mt-1">Base para organizar a migração do pacote atualizado.</p>
+            <h3 class="font-bold text-[16px]">Mapa das tabelas do sistema antigo</h3>
+            <p class="text-[13px] text-slate-500 mt-1">Tabelas que serão extraídas e mapeadas para o ERP novo.</p>
           </div>
           <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px]">
             <div class="rounded-xl border bg-slate-50 p-4"><b>Comercial</b><p class="text-slate-600 mt-1">CLIENTES, PRODUTOS, CARTUCHOS, VENDAS, ITENS_VENDA, ORCAMENTO, ITENS_ORCAMENTO.</p></div>
@@ -849,32 +941,22 @@ function renderBanco(){
 
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[16px]">Upload para validação</h3>
-          <p class="text-[12.5px] text-slate-500 mt-1">Use para testar fluxo. Importação automática de .FDB será feita no backend.</p>
-          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .RAR, .FDB ou backup .JSON</label>
+          <p class="text-[12.5px] text-slate-500 mt-1">Importe um backup .JSON para testar ou valide um .FDB recebido.</p>
+          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .FDB ou backup .JSON</label>
           <input type="file" id="upload-db" accept=".rar,.RAR,.fdb,.FDB,.json,application/json" class="mt-2 w-full text-[13px]" onchange="handleDatabaseUpload(this.files[0])">
           <div id="upload-status" class="mt-3 text-[12px] text-slate-500 rounded-xl bg-slate-50 border p-3">Nenhum arquivo selecionado.</div>
-          <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900 leading-relaxed"><b>Importante:</b> Githack é apenas visualização estática. Multiusuário real precisa de banco central em nuvem e API com login seguro.</div>
         </div>
       </div>
 
+      <!-- PASSOS DE USO -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px]">Onde colocar o .RAR atualizado</h3>
-        <p class="text-[13px] text-slate-500 mt-1">Não recomendo colocar o banco real dentro do GitHub público nem dentro do executável.</p>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-[12.5px]">
-          <div class="rounded-xl border p-4 bg-emerald-50/60 border-emerald-200"><b>Mais simples agora</b><p class="text-slate-600 mt-1">Google Drive/OneDrive com link restrito. Você me manda o link de download para análise.</p></div>
-          <div class="rounded-xl border p-4 bg-[#e8eaf8]"><b>Mais profissional</b><p class="text-slate-600 mt-1">Supabase Storage, Cloudflare R2 ou S3. Bom para armazenar backups do ERP.</p></div>
-          <div class="rounded-xl border p-4 bg-amber-50 border-amber-200"><b>Evitar</b><p class="text-slate-600 mt-1">GitHub público com banco real, porque pode expor clientes, vendas e financeiro.</p></div>
-        </div>
-      </div>
-
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px]">Plano para virar executável e multi-computadores</h3>
+        <h3 class="font-bold text-[16px]">Passo a passo para migrar</h3>
         <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
           ${[
-            ['1','Limpar e estabilizar','Remover duplicados, manter app web funcional no Githack e Electron.'],
-            ['2','Extrator Firebird','Extrair o pacote atualizado em servidor e gerar JSON/SQL normalizado.'],
-            ['3','API em nuvem','Subir PostgreSQL/Supabase/VPS com autenticação por empresa/CNPJ.'],
-            ['4','Build .EXE','Empacotar Electron apontando para a API em nuvem, com atualizações controladas.']
+            ['1','Iniciar Firebird','Execute o StartFirebird.bat como administrador no PC onde está o banco.'],
+            ['2','Conectar','Preencha host, porta e caminho do .FDB acima, clique em Testar conexão.'],
+            ['3','Listar e revisar','Clique em Listar tabelas, veja os dados de cada uma no preview.'],
+            ['4','Importar','Selecione as tabelas desejadas e clique em Extrair tudo e importar.']
           ].map(step=>`<div class="rounded-xl border p-4"><span class="w-7 h-7 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold">${step[0]}</span><p class="font-bold mt-3">${step[1]}</p><p class="text-slate-500 mt-1 leading-snug">${step[2]}</p></div>`).join('')}
         </div>
       </div>
@@ -948,3 +1030,451 @@ function loadManualDB(){
   renderClientes(); renderProdutos(); renderVendas(); renderDashboard();
   console.log('Dados manuais carregados:', {clientes: clientesManuais.length, produtos: produtosManuais.length, vendas: vendasManuais.length});
 }
+
+// ═══════════════════════════════════════════════════════
+// MÓDULO FIREBIRD — Conexão real ao banco .FDB do sistema antigo
+// ═══════════════════════════════════════════════════════
+let fbConnected = false;
+let fbTablesCache = [];
+let fbExtractedData = {};
+
+function getFbConfig(){
+  return {
+    host: document.getElementById('fb-host')?.value?.trim() || 'localhost',
+    port: parseInt(document.getElementById('fb-port')?.value?.trim()) || 3050,
+    database: document.getElementById('fb-database')?.value?.trim() || '',
+    user: document.getElementById('fb-user')?.value?.trim() || 'SYSDBA',
+    password: document.getElementById('fb-password')?.value || 'masterkey'
+  };
+}
+
+function fbSetStatus(msg, type='info'){
+  const el = document.getElementById('fb-status');
+  if(!el) return;
+  const icons = {success:'ph-check-circle text-emerald-600', error:'ph-warning-circle text-red-600', info:'ph-info text-blue-600', loading:'ph-spinner text-[#0a1e8a] animate-spin'};
+  const bg = {success:'bg-emerald-50 border-emerald-200 text-emerald-800', error:'bg-red-50 border-red-200 text-red-800', info:'bg-slate-50 border-slate-200 text-slate-600', loading:'bg-blue-50 border-blue-200 text-blue-800'};
+  el.className = `mt-4 rounded-xl border p-3 text-[12.5px] ${bg[type]||bg.info}`;
+  el.innerHTML = `<i class="ph ${icons[type]||icons.info} text-[14px]"></i> ${msg}`;
+}
+
+async function browseFdb(){
+  if(!window.fileAPI) return toast('Disponível apenas no Electron','info');
+  const r = await window.fileAPI.selectFdb();
+  if(r.ok && r.path){
+    document.getElementById('fb-database').value = r.path;
+  }
+}
+
+async function fbTestConnection(){
+  const config = getFbConfig();
+  if(!config.database) return fbSetStatus('Informe o caminho do banco .FDB','error');
+  if(!window.firebirdAPI) return fbSetStatus('Conexão Firebird disponível apenas no app Electron. Rode: <code>npm start</code>','error');
+
+  fbSetStatus('Testando conexão com Firebird...','loading');
+  try {
+    const r = await window.firebirdAPI.test(config);
+    if(r.ok){
+      fbConnected = true;
+      fbSetStatus(`✅ Conectado ao Firebird! Host: ${config.host}:${config.port} — Banco: ${config.database}`,'success');
+      document.getElementById('btn-extract-all').disabled = false;
+      toast('Conexão Firebird OK','success');
+    } else {
+      fbConnected = false;
+      fbSetStatus(`❌ Erro: ${r.error}<br><br><b>Dicas:</b><br>• Execute o <code>StartFirebird.bat</code> como administrador<br>• Verifique se o caminho do .FDB está correto<br>• Tente copiar o banco para <code>C:\\Temp\\BANCO.FDB</code>`,'error');
+      toast('Falha na conexão','error');
+    }
+  } catch(e){
+    fbSetStatus(`Erro inesperado: ${e.message}`,'error');
+  }
+}
+
+async function fbListTables(){
+  const config = getFbConfig();
+  if(!config.database) return fbSetStatus('Informe o caminho do banco .FDB','error');
+  if(!window.firebirdAPI) return fbSetStatus('Disponível apenas no Electron','error');
+
+  fbSetStatus('Listando tabelas do banco...','loading');
+  try {
+    const r = await window.firebirdAPI.tables(config);
+    if(!r.ok){
+      fbSetStatus(`❌ Erro ao listar tabelas: ${r.error}`,'error');
+      return;
+    }
+    fbTablesCache = r.tables;
+    fbConnected = true;
+    document.getElementById('btn-extract-all').disabled = false;
+
+    const panel = document.getElementById('fb-tables-panel');
+    panel.classList.remove('hidden');
+
+    const totalRegs = r.tables.reduce((s,t)=>s+(t.total>0?t.total:0),0);
+    document.getElementById('fb-tables-count').textContent = `${r.tables.length} tabelas encontradas • ${totalRegs.toLocaleString('pt-BR')} registros no total`;
+
+    // Tabelas importantes para migração
+    const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
+      'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+      'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
+
+    const grid = document.getElementById('fb-tables-grid');
+    grid.innerHTML = r.tables.map(t => {
+      const isMigration = migrationTables.some(m => t.nome.toUpperCase().includes(m));
+      return `
+        <div class="flex items-center gap-2 rounded-lg border p-2.5 ${isMigration?'bg-blue-50 border-blue-200':'bg-white border-slate-200'} hover:shadow-sm transition cursor-pointer" onclick="fbPreviewTable('${t.nome}')">
+          <input type="checkbox" class="fb-table-check w-4 h-4" value="${t.nome}" data-total="${t.total}" ${isMigration?'checked':''}>
+          <div class="flex-1 min-w-0">
+            <p class="text-[12px] font-bold truncate">${t.nome}</p>
+            <p class="text-[10.5px] text-slate-500">${t.total>=0?t.total.toLocaleString('pt-BR')+' registros':'erro contagem'}</p>
+          </div>
+          <button onclick="event.stopPropagation(); fbPreviewTable('${t.nome}')" class="w-7 h-7 rounded-lg bg-white border grid place-items-center text-[#0a1e8a] hover:bg-slate-50" title="Preview">
+            <i class="ph ph-eye text-[14px]"></i>
+          </button>
+        </div>`;
+    }).join('');
+
+    fbSetStatus(`✅ ${r.tables.length} tabelas encontradas com ${totalRegs.toLocaleString('pt-BR')} registros. Clique em uma tabela para ver o preview.`,'success');
+  } catch(e){
+    fbSetStatus(`Erro: ${e.message}`,'error');
+  }
+}
+
+async function fbPreviewTable(tableName){
+  const config = getFbConfig();
+  if(!window.firebirdAPI) return toast('Disponível apenas no Electron','info');
+
+  const panel = document.getElementById('fb-preview-panel');
+  const content = document.getElementById('fb-preview-content');
+  panel.classList.remove('hidden');
+  document.getElementById('fb-preview-info').textContent = `Carregando ${tableName}...`;
+  content.innerHTML = '<div class="p-8 text-center text-slate-400 text-[13px]"><i class="ph ph-spinner animate-spin text-[24px]"></i><p class="mt-2">Buscando dados...</p></div>';
+
+  try {
+    const r = await window.firebirdAPI.extract(config, tableName, 50);
+    if(!r.ok){
+      content.innerHTML = `<div class="p-4 text-red-600 text-[13px]">Erro: ${r.error}</div>`;
+      return;
+    }
+    document.getElementById('fb-preview-info').textContent = `${tableName} — ${r.total} registros (mostrando até 50)`;
+
+    if(!r.data.length){
+      content.innerHTML = '<div class="p-8 text-center text-slate-400 text-[13px]">Tabela vazia</div>';
+      return;
+    }
+
+    const cols = Object.keys(r.data[0]);
+    const maxCols = Math.min(cols.length, 12); // limitar colunas no preview
+    let html = '<table class="classic-grid-table"><thead><tr>';
+    html += cols.slice(0, maxCols).map(c=>`<th>${escapeHtml(c)}</th>`).join('');
+    if(cols.length > maxCols) html += `<th class="text-slate-400">+${cols.length-maxCols}</th>`;
+    html += '</tr></thead><tbody>';
+    r.data.slice(0, 25).forEach(row => {
+      html += '<tr>';
+      cols.slice(0, maxCols).forEach(c => {
+        let v = row[c];
+        if(v === null || v === undefined) v = '<span class="text-slate-300">null</span>';
+        else v = escapeHtml(String(v).substring(0, 60));
+        html += `<td>${v}</td>`;
+      });
+      if(cols.length > maxCols) html += '<td class="text-slate-400">...</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    if(r.data.length > 25) html += `<div class="p-2 text-center text-[11px] text-slate-400 border-t">Mostrando 25 de ${r.data.length} linhas</div>`;
+    content.innerHTML = html;
+  } catch(e){
+    content.innerHTML = `<div class="p-4 text-red-600 text-[13px]">Erro: ${e.message}</div>`;
+  }
+}
+
+function fbSelectMigrationTables(){
+  // Marcar apenas tabelas de migração
+  const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
+    'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
+    'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
+  document.querySelectorAll('.fb-table-check').forEach(cb => {
+    cb.checked = migrationTables.some(m => cb.value.toUpperCase().includes(m));
+  });
+  toast('Tabelas de migração selecionadas','info');
+}
+
+async function fbExtractAll(){
+  const config = getFbConfig();
+  if(!config.database) return fbSetStatus('Informe o caminho do banco .FDB','error');
+  if(!window.firebirdAPI) return fbSetStatus('Disponível apenas no Electron','error');
+
+  // Coletar tabelas selecionadas
+  const checks = document.querySelectorAll('.fb-table-check:checked');
+  let tables;
+  if(checks.length > 0){
+    tables = Array.from(checks).map(cb => cb.value);
+  } else {
+    // Se não listou tabelas ainda, usar padrões
+    tables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','FORMA_PAGAMENTO','EMPRESA','FORNECEDORES','FUNCIONARIOS'];
+  }
+
+  if(!confirm(`Extrair dados de ${tables.length} tabelas e importar para o ERP?\n\nTabelas: ${tables.join(', ')}`)) return;
+
+  fbSetStatus(`Extraindo ${tables.length} tabelas... Isso pode demorar.`,'loading');
+
+  try {
+    const r = await window.firebirdAPI.extractAll(config, tables);
+    if(!r.ok){
+      fbSetStatus(`❌ Erro na extração: ${r.error}`,'error');
+      return;
+    }
+
+    fbExtractedData = r.data;
+    document.getElementById('btn-export-extracted').disabled = false;
+
+    // Mostrar resumo da extração
+    let totalExtraido = 0;
+    const resumo = [];
+    for(const [t, info] of Object.entries(r.data)){
+      const count = info.data ? info.data.length : 0;
+      totalExtraido += count;
+      resumo.push({ tabela: t, total: count, erro: info.error });
+    }
+
+    fbSetStatus(`✅ Extração concluída! ${totalExtraido.toLocaleString('pt-BR')} registros extraídos de ${tables.length} tabelas. Processando importação...`,'success');
+
+    // Importar para o ERP
+    fbImportToErp(r.data);
+
+  } catch(e){
+    fbSetStatus(`Erro na extração: ${e.message}`,'error');
+  }
+}
+
+function fbImportToErp(rawData){
+  const sess = getSession();
+  if(!sess) { toast('Faça login primeiro','error'); return; }
+  const empId = sess.empresaId;
+  const userName = sess.usuarioNome || 'Migração Firebird';
+
+  const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
+
+  // ── CLIENTES ──
+  const rawClientes = findTable(rawData, ['CLIENTES']);
+  if(rawClientes && rawClientes.length){
+    rawClientes.forEach(row => {
+      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || '';
+      if(!nome.trim()) return;
+      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || '';
+      // Verificar duplicado por documento
+      const existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc) && doc);
+      if(existing) return;
+      const id = uid('cli');
+      db.clientes.push({
+        id, empresaId: empId,
+        codigoAntigo: row.CODIGO || row.ID || row.COD_CLIENTE || '',
+        nome: nome.trim(),
+        fantasia: row.FANTASIA || row.NOME_FANTASIA || '',
+        documento: doc,
+        tipo: (row.TIPO || (doc.length > 11 ? 'PJ' : 'PF')),
+        email: row.EMAIL || row.EMAIL_CONTATO || '',
+        telefone: row.FONE || row.TELEFONE || row.CELULAR || '',
+        endereco: row.ENDERECO || row.ENDERECO_COMPLETO || '',
+        cidade: row.CIDADE || '',
+        estado: row.ESTADO || row.UF || '',
+        cep: row.CEP || '',
+        status: 'ativo',
+        mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
+        criadoEm: new Date().toISOString(),
+        criadoPor: 'migracao',
+        criadoPorNome: userName
+      });
+      result.clientes++;
+    });
+  }
+
+  // ── PRODUTOS ──
+  const rawProdutos = findTable(rawData, ['PRODUTOS','CARTUCHOS']);
+  if(rawProdutos && rawProdutos.length){
+    rawProdutos.forEach(row => {
+      const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
+      if(!nome.trim()) return;
+      const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || uid('prd');
+      const existing = db.produtos.find(p => p.empresaId === empId && p.sku === sku);
+      if(existing) return;
+      db.produtos.push({
+        id: uid('prd'), empresaId: empId,
+        sku: String(sku),
+        nome: nome.trim(),
+        categoria: row.CATEGORIA || row.TIPO || 'Geral',
+        fabricante: row.FABRICANTE || row.MARCA || '',
+        estoque: parseInt(row.ESTOQUE || row.QTD || row.QUANTIDADE || 0) || 0,
+        estoqueMin: parseInt(row.ESTOQUE_MINIMO || row.ESTOQUE_MIN || 0) || 0,
+        custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || 0) || 0,
+        preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || 0) || 0,
+        local: row.LOCALIZACAO || row.LOCAL || '',
+        status: 'ativo',
+        criadoPor: 'migracao',
+        criadoPorNome: userName,
+        criadoEm: new Date().toISOString()
+      });
+      result.produtos++;
+    });
+  }
+
+  // ── EQUIPAMENTOS ──
+  const rawEquip = findTable(rawData, ['EQUIPAMENTOS']);
+  if(rawEquip && rawEquip.length){
+    rawEquip.forEach(row => {
+      const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
+      if(!modelo.trim()) return;
+      const serie = row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || uid('eq');
+      const existing = db.equipamentos.find(e => e.empresaId === empId && e.serie === serie);
+      if(existing) return;
+      db.equipamentos.push({
+        id: uid('eq'), empresaId: empId,
+        modelo: modelo.trim(),
+        tipo: row.TIPO || 'Laser',
+        serie: String(serie),
+        patrimonio: row.PATRIMONIO || String(serie),
+        contadorPB: parseInt(row.CONTADOR_PB || row.CONTADOR || 0) || 0,
+        contadorCor: parseInt(row.CONTADOR_COR || 0) || 0,
+        status: row.STATUS || 'disponivel',
+        criadoPor: 'migracao',
+        criadoPorNome: userName,
+        criadoEm: new Date().toISOString()
+      });
+      result.equipamentos++;
+    });
+  }
+
+  // ── VENDAS ──
+  const rawVendas = findTable(rawData, ['VENDAS']);
+  if(rawVendas && rawVendas.length){
+    rawVendas.forEach(row => {
+      const numero = row.NUMERO || row.CODIGO || row.ID || uid('vda');
+      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === String(numero));
+      if(existing) return;
+      db.vendas.push({
+        id: uid('vda'), empresaId: empId,
+        numero: String(numero),
+        clienteId: null, // precisa mapear depois
+        clienteNomeAntigo: row.CLIENTE || row.NOME_CLIENTE || '',
+        data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
+        itens: [],
+        desconto: parseFloat(row.DESCONTO || 0) || 0,
+        total: parseFloat(row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0,
+        formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
+        status: row.STATUS || 'faturado',
+        criadoPor: 'migracao',
+        criadoPorNome: userName,
+        criadoEm: new Date().toISOString()
+      });
+      result.vendas++;
+    });
+  }
+
+  // ── FINANCEIRO (CONTAS_RECEBER + CONTAS_PAGAR) ──
+  const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
+  if(rawCR && rawCR.length){
+    rawCR.forEach(row => {
+      db.contasReceber.push({
+        id: uid('cr'), empresaId: empId,
+        origem: 'migracao',
+        clienteId: null,
+        descricao: row.DESCRICAO || row.HISTORICO || `Título migrado ${row.CODIGO || row.ID || ''}`,
+        valor: parseFloat(row.VALOR || 0) || 0,
+        vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
+        pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
+        status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
+        contratoId: null, leituraId: null, vendaId: null,
+        criadoPor: 'migracao',
+        criadoPorNome: userName
+      });
+      result.financeiro++;
+    });
+  }
+
+  const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
+  if(rawCP && rawCP.length){
+    rawCP.forEach(row => {
+      db.contasPagar.push({
+        id: uid('cp'), empresaId: empId,
+        descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
+        valor: parseFloat(row.VALOR || 0) || 0,
+        vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
+        pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
+        status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
+        categoria: row.CATEGORIA || row.TIPO || 'Geral',
+        criadoPor: 'migracao',
+        criadoPorNome: userName
+      });
+      result.financeiro++;
+    });
+  }
+
+  saveDB();
+  logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro`);
+
+  // Mostrar resultado
+  const panel = document.getElementById('fb-import-panel');
+  panel.classList.remove('hidden');
+  document.getElementById('fb-import-result').innerHTML = [
+    {label:'Clientes', value:result.clientes, icon:'ph-users', color:'emerald'},
+    {label:'Produtos', value:result.produtos, icon:'ph-package', color:'blue'},
+    {label:'Equipamentos', value:result.equipamentos, icon:'ph-printer', color:'purple'},
+    {label:'Vendas', value:result.vendas, icon:'ph-shopping-cart', color:'amber'},
+    {label:'Financeiro', value:result.financeiro, icon:'ph-bank', color:'teal'},
+  ].map(r => `
+    <div class="rounded-xl border bg-${r.color}-50 border-${r.color}-200 p-4">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-${r.color}-100 grid place-items-center"><i class="ph ${r.icon} text-[16px] text-${r.color}-600"></i></div>
+        <p class="text-[12px] font-bold text-${r.color}-800">${r.label}</p>
+      </div>
+      <p class="text-[24px] font-extrabold text-${r.color}-700 mt-2">${r.value}</p>
+      <p class="text-[11px] text-${r.color}-600 mt-1">registros importados</p>
+    </div>
+  `).join('');
+
+  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Navegue pelos módulos para conferir.`,'success');
+  toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
+
+  // Atualizar telas
+  renderDashboard();
+}
+
+// Utilitário: encontrar tabela no raw data (case insensitive)
+function findTable(rawData, possibleNames){
+  for(const name of possibleNames){
+    for(const key of Object.keys(rawData)){
+      if(key.toUpperCase() === name.toUpperCase() && rawData[key].data){
+        return rawData[key].data;
+      }
+    }
+  }
+  // Busca parcial
+  for(const name of possibleNames){
+    for(const key of Object.keys(rawData)){
+      if(key.toUpperCase().includes(name.toUpperCase()) && rawData[key].data){
+        return rawData[key].data;
+      }
+    }
+  }
+  return null;
+}
+
+async function fbExportExtracted(){
+  if(!Object.keys(fbExtractedData).length) return toast('Nenhum dado extraído','info');
+
+  if(window.fileAPI){
+    const r = await window.fileAPI.saveJson({ extraidoEm: new Date().toISOString(), tabelas: fbExtractedData }, `migricao_digicopy_${new Date().toISOString().slice(0,10)}.json`);
+    if(r.ok){
+      toast(`Exportado para: ${r.path}`,'success');
+      fbSetStatus(`✅ Dados exportados para: ${r.path}`,'success');
+    }
+  } else {
+    // Fallback: download via blob
+    const dataStr = JSON.stringify({ extraidoEm: new Date().toISOString(), tabelas: fbExtractedData }, null, 2);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `migracao_digicopy_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    toast('Arquivo JSON baixado','success');
+  }
+}
+
