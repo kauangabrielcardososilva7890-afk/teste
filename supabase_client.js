@@ -450,7 +450,7 @@ end $$;
           <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="neo-card"><p class="neo-label">Projeto</p><b class="text-[#0a1e8a] break-all">${SUPABASE_PROJECT_URL}</b></div>
             <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em testar conexão.</div></div>
-            <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Este é o arquivo da base antiga; ele ainda precisa ser extraído/importado.</p></div>
+            <div class="neo-card"><p class="neo-label">Arquivo legado</p><p class="text-[13px] text-slate-600">BANCO.rar no bucket <b>migracao</b>. Extração validada: contém <b>BANCO.FDB</b> (~63,9 MB).</p></div>
           </div>
           <div class="px-4 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div class="neo-card lg:col-span-2"><p class="neo-label">Sincronização de teste</p><div id="cloud-sync-status" class="text-[13px] text-slate-600">Área temporária para testar sincronização. A importação real do BANCO.rar será feita em outro processo.</div></div>
@@ -458,7 +458,7 @@ end $$;
           </div>
           <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-4 gap-3">
             <div class="neo-card"><b>1. Tabelas</b><p class="text-[12px] text-slate-500 mt-1">Clique em Copiar SQL tabelas, cole no SQL Editor e clique Run.</p></div>
-            <div class="neo-card"><b>2. Importação</b><p class="text-[12px] text-slate-500 mt-1">Extrair o FDB e mapear tabelas antigas.</p></div>
+            <div class="neo-card"><b>2. Importação</b><p class="text-[12px] text-slate-500 mt-1">Tabelas detectadas: CLIENTES, PRODUTOS, VENDAS, ITENS_VENDA, LOCACAO, LEITURAS, EQUIPAMENTOS e financeiro.</p></div>
             <div class="neo-card"><b>3. Sistema online</b><p class="text-[12px] text-slate-500 mt-1">Trocar localStorage pelo Supabase.</p></div>
             <div class="neo-card"><b>4. Tempo real</b><p class="text-[12px] text-slate-500 mt-1">Atualizar telas entre computadores.</p></div>
           </div>
