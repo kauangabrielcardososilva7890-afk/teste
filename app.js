@@ -268,8 +268,11 @@ function navigateTo(view){
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
     document.getElementById('page-title').innerText='Banco antigo Firebird';
-    document.getElementById('page-subtitle').innerText='Plano de migração do .RAR atualizado para nuvem';
-    renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
+    document.getElementById('page-subtitle').innerText='Migração do sistema antigo e sincronização em nuvem';
+    renderBanco();
+    // Garante que a view fique visível mesmo se outro código esconder depois
+    setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
+    window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   const target=document.getElementById('view-'+view);
@@ -296,6 +299,13 @@ function navigateTo(view){
   if(view.startsWith('mod_')){
     const nomeTabela = view.substring(4).toUpperCase();
     renderModuloDinamico(nomeTabela);
+    // Garante visibilidade na primeira navegação (a view é criada dinamicamente)
+    const modView=document.getElementById('view-'+view);
+    if(modView){ modView.classList.remove('hidden'); modView.style.display='block'; modView.style.visibility='visible'; }
+    const modulo=(db.modulosDinamicos||{})[nomeTabela];
+    document.getElementById('page-title').innerText=modulo?modulo.label:formatarNomeTabela(nomeTabela);
+    document.getElementById('page-subtitle').innerText='Módulo migrado do sistema antigo • '+(modulo?(modulo.dados||[]).length:0)+' registros';
+    const actMod=document.querySelector(`[data-nav="${view}"]`); if(actMod){actMod.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); actMod.classList.remove('text-white/60')}
   }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<1024) toggleSidebar(true);
@@ -362,7 +372,7 @@ function buildNav(){
 
 function formatarNomeTabela(nome){
   // Converte NOME_TABELA para "Nome Tabela"
-  return nome.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  return String(nome).replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
 // ═══════════════════════════════════════════════════════
@@ -996,7 +1006,12 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
-  const el=ensureView('banco');
+  let el=document.getElementById('view-banco');
+  if(!el){ el=ensureView('banco'); }
+  el.innerHTML='';
+  el.classList.remove('hidden');
+  el.style.display='block';
+  el.style.visibility='visible';
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
   el.innerHTML=`
@@ -1460,21 +1475,38 @@ window.handleMultipleUpload = async function(files){
       const imported = JSON.parse(text);
       
       if(Array.isArray(imported)){
-        const nomeArquivo = file.name.replace('.json','').toUpperCase();
+        const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
         let nomeTabela = nomeArquivo;
         
-        if(imported.length > 0){
+        // 1) PRIORIDADE ao nome do arquivo (DBeaver exporta com o nome da tabela)
+        if(/CLIENTE/.test(nomeArquivo)) nomeTabela = 'CLIENTES';
+        else if(/CARTUCHO/.test(nomeArquivo)) nomeTabela = 'CARTUCHOS';
+        else if(/PRODUTO/.test(nomeArquivo)) nomeTabela = 'PRODUTOS';
+        else if(/ITEM.*VENDA|VENDA.*ITEM/.test(nomeArquivo)) nomeTabela = 'ITENS_VENDA';
+        else if(/VENDA|NOTINHA|CUPOM/.test(nomeArquivo)) nomeTabela = 'VENDAS';
+        else if(/EQUIP|IMPRESSORA|MAQUINA/.test(nomeArquivo)) nomeTabela = 'EQUIPAMENTOS';
+        else if(/RECEB/.test(nomeArquivo)) nomeTabela = 'CONTAS_RECEBER';
+        else if(/PAGAR|PAG_|DESPESA/.test(nomeArquivo)) nomeTabela = 'CONTAS_PAGAR';
+        else if(/LOCACAO|CONTRATO/.test(nomeArquivo)) nomeTabela = 'LOCACAO';
+        else if(/LEITURA|CONTADOR|MEDICAO/.test(nomeArquivo)) nomeTabela = 'LEITURAS';
+        // 2) fallback: analisar colunas (para arquivos com nomes genéricos)
+        else if(imported.length > 0){
           const cols = Object.keys(imported[0]).map(c => c.toUpperCase());
-          if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO'))) || nomeArquivo.includes('CLIENTE')) nomeTabela = 'CLIENTES';
-          else if(cols.some(c => c.includes('PRODUTO') || c.includes('DESCRICAO')) || nomeArquivo.includes('PRODUTO') || nomeArquivo.includes('CARTUCHO')) nomeTabela = nomeArquivo.includes('CARTUCHO') ? 'CARTUCHOS' : 'PRODUTOS';
-          else if(cols.some(c => c.includes('VENDA')) || nomeArquivo.includes('VENDA')) nomeTabela = nomeArquivo.includes('ITEM') ? 'ITENS_VENDA' : 'VENDAS';
-          else if(cols.some(c => c.includes('EQUIP')) || nomeArquivo.includes('EQUIP')) nomeTabela = 'EQUIPAMENTOS';
-          else if(nomeArquivo.includes('RECEB')) nomeTabela = 'CONTAS_RECEBER';
-          else if(nomeArquivo.includes('PAGAR') || nomeArquivo.includes('PAG_')) nomeTabela = 'CONTAS_PAGAR';
+          if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO')))) nomeTabela = 'CLIENTES';
+          else if(cols.some(c => c.includes('PRODUTO') || c.includes('SKU'))) nomeTabela = 'PRODUTOS';
+          else if(cols.some(c => c.includes('LEITURA') || c.includes('CONTADOR'))) nomeTabela = 'LEITURAS';
+          else if(cols.some(c => c.includes('PATRIMONIO') || c.includes('NUMERO_SERIE'))) nomeTabela = 'EQUIPAMENTOS';
+          else if(cols.some(c => c.includes('VENCIMENTO') && c.includes('CLIENTE'))) nomeTabela = 'CONTAS_RECEBER';
+          else if(cols.some(c => c.includes('VENDA'))) nomeTabela = 'VENDAS';
         }
         
-        rawData[nomeTabela] = { data: imported, error: null };
-        tabelasImportadas[nomeTabela] = imported.length;
+        // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
+        if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
+          rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
+        } else {
+          rawData[nomeTabela] = { data: imported, error: null };
+        }
+        tabelasImportadas[nomeTabela] = rawData[nomeTabela].data.length;
         totalRegistros += imported.length;
         log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
         

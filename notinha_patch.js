@@ -348,9 +348,8 @@ console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos 
     document.getElementById('view-config').innerHTML=neoPage('Configurações', 'Empresa, técnicos e preferências do sistema', `<button onclick="saveConfig()" class="neo-btn primary"><i class="ph ph-floppy-disk"></i>Salvar</button>`, `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full"><div class="neo-card"><label class="neo-label">Técnico</label><div class="flex gap-2"><input id="new-tecnico-nome" class="neo-input flex-1" placeholder="Nome do técnico"><button onclick="addTecnico()" class="neo-btn primary"><i class="ph ph-plus"></i>Cadastrar</button></div></div><div class="neo-card"><p class="neo-label">Ações</p><button onclick="exportBackup()" class="neo-btn"><i class="ph ph-download"></i>Exportar backup local</button></div></div>`, `<div id="list-tecnicos" class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">${(db.tecnicos||[]).map(t=>`<div class="neo-card"><b>${escapeHtml(t.nome)}</b><p class="text-[12px] text-slate-500">${escapeHtml(t.especialidade||'Geral')}</p></div>`).join('')}</div>`);
   };
 
-  window.renderBanco=function(){
-    document.getElementById('view-banco').innerHTML=neoPage('Migração e nuvem', 'Preparação para Supabase e importação do pacote atualizado', '', `<div class="neo-card w-full"><p class="neo-label">Próxima etapa</p><p class="text-[13px] text-slate-600">Criar o projeto no Supabase, montar as tabelas e trocar o localStorage por banco em nuvem. Arquivos grandes ficam no Storage, não no banco.</p></div>`, `<div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-3"><div class="neo-card"><b>1. Supabase</b><p class="text-[12px] text-slate-500 mt-1">Banco Postgres fácil para iniciar.</p></div><div class="neo-card"><b>2. API/Realtime</b><p class="text-[12px] text-slate-500 mt-1">Atualização entre computadores.</p></div><div class="neo-card"><b>3. Executável</b><p class="text-[12px] text-slate-500 mt-1">Electron conectado à nuvem.</p></div></div>`);
-  };
+  // IMPORTANTE: renderBanco NÃO é sobrescrito aqui.
+  // A tela completa de migração (Firebird + upload JSON + Supabase) está no app.js.
 })();
 
 // PATCH v4.1 - OS junto com notinha sem obrigar caixa fechada
