@@ -1,4 +1,5 @@
-// DIGICOPY ERP v3.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+// DIGICOPY ERP v3.3 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+const APP_VERSION='3.3.0';
 const DB_KEY='digicopy_erp_v30';
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
@@ -14,11 +15,20 @@ const defaultData={
 function loadDB(){
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
-  try{const parsed=JSON.parse(raw); // migração se faltar campos
-    if(!parsed.empresas) parsed.empresas=[]; if(!parsed.usuarios) parsed.usuarios=[];
-    if(!parsed.logs) parsed.logs=[]; if(!parsed.tecnicos) parsed.tecnicos=defaultData.tecnicos;
+  try{
+    const parsed=JSON.parse(raw);
+    // Migração defensiva para versões antigas salvas no navegador.
+    ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+      if(!Array.isArray(parsed[k])) parsed[k]=[];
+    });
+    if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+    if(!parsed.config) parsed.config=structuredClone(defaultData.config);
+    if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
+    parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
     return parsed;
-  }catch{return structuredClone(defaultData)}
+  }catch{
+    return structuredClone(defaultData);
+  }
 }
 function saveDB(){localStorage.setItem(DB_KEY, JSON.stringify(db));}
 let db=loadDB();
@@ -29,6 +39,8 @@ function fmtDate(s){if(!s) return '-'; const d=new Date(s); if(isNaN(d)) return 
 function fmtDateTime(s){if(!s) return '-'; return new Date(s).toLocaleString('pt-BR')}
 function onlyDigits(s){return (s||'').replace(/\D/g,'')}
 function initials(name){return (name||'').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('')||'??'}
+function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+function ensureView(id){let el=document.getElementById('view-'+id); if(!el){const wrap=document.querySelector('main .flex-1.p-4, main .flex-1'); el=document.createElement('section'); el.id='view-'+id; el.className='view hidden space-y-4'; if(wrap) wrap.appendChild(el);} return el;}
 
 function toast(msg,type='info'){
   const c=document.getElementById('toast-container');
@@ -247,7 +259,16 @@ function closeModal(){document.getElementById('modal-root').classList.add('hidde
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
 
 function navigateTo(view){
-  if(view==='banco'){ document.getElementById('view-banco').classList.remove('hidden'); document.querySelectorAll('.view:not(#view-banco)').forEach(v=>v.classList.add('hidden')); document.getElementById('page-title').innerText='Base de Dados'; document.getElementById('page-subtitle').innerText='Importar banco .rar / Visualizar dados'; renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(view==='banco'){
+    const bancoView=ensureView('banco');
+    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+    bancoView.classList.remove('hidden');
+    document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
+    const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
+    document.getElementById('page-title').innerText='Banco antigo Firebird';
+    document.getElementById('page-subtitle').innerText='Mapeamento do BANCO.FDB e plano de migração para nuvem';
+    renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
+  }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
@@ -781,46 +802,109 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
-  const el=document.getElementById('view-banco');
-  if(el) el.innerHTML=`
+  const el=ensureView('banco');
+  const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
+  const stats=[
+    {label:'Arquivo mantido',value:'BANCO.FDB',hint:'18 MB • Firebird legado'},
+    {label:'Tabelas mapeadas',value:'22+',hint:'Clientes, produtos, vendas, locação'},
+    {label:'Modo atual',value:'Local demo',hint:'localStorage no navegador'},
+    {label:'Próxima etapa',value:'API nuvem',hint:'PostgreSQL/Supabase ou VPS'}
+  ];
+  el.innerHTML=`
     <div class="space-y-4">
-      <div class="rounded-[20px] bg-[#0a1e8a] text-white p-6 shadow-xl">
-        <h2 class="text-[22px] font-extrabold tracking-tight">Importar Dados do Banco (.rar)</h2>
-        <p class="text-white/80 text-[13.5px] mt-2">Arquivo detectado: <b>BANCO.rar</b> (7.776.303 bytes, ~7.4 MB) contendo <b>BANCO.FDB</b> (Firebird 3.0.7, 63.901.696 bytes, ~60.9 MB). Análise completa: <a href="DATABASE_ANALYSIS.md" class="underline">DATABASE_ANALYSIS.md</a>.</p>
-      </div>
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <label class="text-[11px] font-bold uppercase text-slate-500">Fazer upload do arquivo .rar (opcional)</label>
-        <input type="file" id="upload-rar" accept=".rar" class="mt-2 w-full text-[13px]" onchange="handleRarUpload(this.files[0])">
-        <div id="upload-status" class="mt-3 text-[12px] text-slate-500"></div>
-      </div>
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[15px] mb-3">Dados confirmados no banco</h3>
-        <p class="text-[13px] text-slate-600">Tabelas principais: CLIENTES, PRODUTOS, CARTUCHOS, VENDAS, ITENS_VENDA, ORCAMENTO, ITENS_ORCAMENTO, FORNECEDORES, EMPRESA, CONFIGURACAO, CONTAS_PAGAR, CONTAS_RECEBER, RECIBOS_EMITIDOS, UNIDADE_MEDIDA, CATEGORIA, FABRICANTE, FORMA_PAGAMENTO, FUNCIONARIOS, EQUIPAMENTOS, LOCACAO, ITENS_LOCACAO, LEITURAS.</p>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-4"><p class="text-[11px] font-bold text-[#0a1e8a]">Clientes</p><p class="text-[20px] font-extrabold text-[#0a1e8a]">Cód: 1844, 2589...</p></div>
-          <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-4"><p class="text-[11px] font-bold text-[#0a1e8a]">Produtos / Serviços</p><p class="text-[20px] font-extrabold text-[#0a1e8a]">Suprimento, Peça, Impressora, Serviço</p></div>
-          <div class="rounded-xl bg-[#e8eaf8] border border-[#c9ceef] p-4"><p class="text-[11px] font-bold text-[#0a1e8a]">Vendas / Orçamentos</p><p class="text-[20px] font-extrabold text-[#0a1e8a]">Notinha formato Venda 15625</p></div>
+      <div class="rounded-[22px] bg-[#0a1e8a] text-white p-6 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Migração do sistema antigo</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">BANCO.FDB → ERP novo em nuvem</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">O arquivo Firebird do sistema antigo foi preservado no projeto para análise. No navegador/Githack ele não é importado diretamente por segurança; a extração real será feita em uma etapa de backend/API antes do executável multiusuário.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
+            <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
+          </div>
         </div>
       </div>
-      <div class="rounded-[18px] bg-amber-50 border border-amber-200 p-4 text-[12px] text-amber-900 leading-relaxed">
-        <b>Atenção:</b> O arquivo <b>BANCO.rar</b> ainda está compactado. Se quiser importar automaticamente os dados no sistema, é necessário extrair o arquivo primeiro (usando <code>unrar</code> ou uma biblioteca de extração). Se preferir, posso criar uma versão manual dos dados baseada na análise existente (<a href="DATABASE_ANALYSIS.md" class="underline">DATABASE_ANALYSIS.md</a>) para popular o sistema imediatamente.
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        ${stats.map(s=>`<div class="rounded-[16px] bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">${s.label}</p><p class="text-[20px] font-extrabold text-[#0a1e8a] mt-1">${s.value}</p><p class="text-[11.5px] text-slate-500 mt-1">${s.hint}</p></div>`).join('')}
       </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="xl:col-span-2 rounded-[18px] bg-white border shadow-sm p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="font-bold text-[16px]">Mapa inicial das tabelas encontradas</h3>
+              <p class="text-[13px] text-slate-500 mt-1">Baseado na leitura preliminar do arquivo Firebird anexado.</p>
+            </div>
+            <a href="DATABASE_ANALYSIS.md" target="_blank" class="h-9 px-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[12px] font-bold flex items-center gap-1.5"><i class="ph ph-file-text"></i> Análise</a>
+          </div>
+          <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px]">
+            <div class="rounded-xl border bg-slate-50 p-4"><b>Comercial</b><p class="text-slate-600 mt-1">CLIENTES, PRODUTOS, CARTUCHOS, VENDAS, ITENS_VENDA, ORCAMENTO, ITENS_ORCAMENTO.</p></div>
+            <div class="rounded-xl border bg-slate-50 p-4"><b>Locação / outsourcing</b><p class="text-slate-600 mt-1">EQUIPAMENTOS, LOCACAO, ITENS_LOCACAO, LEITURAS e despesas vinculadas.</p></div>
+            <div class="rounded-xl border bg-slate-50 p-4"><b>Financeiro</b><p class="text-slate-600 mt-1">CONTAS_PAGAR, CONTAS_RECEBER, RECIBOS_EMITIDOS, FORMA_PAGAMENTO.</p></div>
+            <div class="rounded-xl border bg-slate-50 p-4"><b>Cadastros auxiliares</b><p class="text-slate-600 mt-1">EMPRESA, CONFIGURACAO, FORNECEDORES, FUNCIONARIOS, CATEGORIA, FABRICANTE, UNIDADE_MEDIDA.</p></div>
+          </div>
+        </div>
+
+        <div class="rounded-[18px] bg-white border shadow-sm p-6">
+          <h3 class="font-bold text-[16px]">Upload para validação</h3>
+          <p class="text-[12.5px] text-slate-500 mt-1">Use para testar fluxo. Importação automática de .FDB será feita no backend.</p>
+          <label class="mt-4 block text-[11px] font-bold uppercase text-slate-500">Selecionar .FDB ou backup .JSON</label>
+          <input type="file" id="upload-db" accept=".fdb,.FDB,.json,application/json" class="mt-2 w-full text-[13px]" onchange="handleDatabaseUpload(this.files[0])">
+          <div id="upload-status" class="mt-3 text-[12px] text-slate-500 rounded-xl bg-slate-50 border p-3">Nenhum arquivo selecionado.</div>
+          <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900 leading-relaxed"><b>Importante:</b> Githack é apenas visualização estática. Multiusuário real precisa de banco central em nuvem e API com login seguro.</div>
+        </div>
+      </div>
+
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[15px] mb-3">Layout atualizado (sem quebrar)</h3>
-        <p class="text-[13px] text-slate-600">O layout do sistema foi mantido com a paleta azul escuro <b>#0a1e8a</b>, sem foto de perfil, com auditoria completa. Nenhum elemento original foi removido — apenas adicionada a aba <b>Importar Banco (.rar)</b> no menu, uma página de informações e uma interface de upload opcional.</p>
-        <div class="mt-4 flex gap-2">
-          <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold">Ver Clientes (Demo)</button>
-          <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px] font-semibold">Ver Vendas (Demo)</button>
+        <h3 class="font-bold text-[16px]">Plano para virar executável e multi-computadores</h3>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
+          ${[
+            ['1','Limpar e estabilizar','Remover duplicados, manter app web funcional no Githack e Electron.'],
+            ['2','Extrator Firebird','Ler BANCO.FDB em ambiente servidor e gerar JSON/SQL normalizado.'],
+            ['3','API em nuvem','Subir PostgreSQL/Supabase/VPS com autenticação por empresa/CNPJ.'],
+            ['4','Build .EXE','Empacotar Electron apontando para a API em nuvem, com atualizações controladas.']
+          ].map(step=>`<div class="rounded-xl border p-4"><span class="w-7 h-7 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold">${step[0]}</span><p class="font-bold mt-3">${step[1]}</p><p class="text-slate-500 mt-1 leading-snug">${step[2]}</p></div>`).join('')}
         </div>
       </div>
     </div>`;
 }
-window.handleRarUpload = function(file){
-  if(!file) return;
+window.handleDatabaseUpload = function(file){
   const status = document.getElementById('upload-status');
-  status.innerHTML = `<span class="font-semibold text-amber-700">Arquivo selecionado: ${file.name}</span> (${(file.size/1024/1024).toFixed(2)} MB). A extração automática ainda requer o binário <code>unrar</code> no ambiente.`;
-  toast('Upload recebido: '+file.name,'info');
+  if(!file || !status) return;
+  const name=escapeHtml(file.name);
+  const size=(file.size/1024/1024).toFixed(2);
+  if(file.name.toLowerCase().endsWith('.json')){
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const imported=JSON.parse(reader.result);
+        const keys=['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'];
+        const valid=keys.some(k=>Array.isArray(imported[k]));
+        if(!valid) throw new Error('JSON não parece ser backup do DIGICOPY ERP');
+        if(confirm('Substituir os dados locais do navegador por este backup JSON?')){
+          db={...structuredClone(defaultData),...imported};
+          saveDB();
+          status.innerHTML=`Backup <b>${name}</b> importado com sucesso. Recarregue a tela para validar todos os módulos.`;
+          toast('Backup JSON importado com sucesso','success');
+          setTimeout(()=>location.reload(),800);
+        }else{
+          status.innerHTML=`Backup <b>${name}</b> validado, mas importação cancelada.`;
+        }
+      }catch(e){
+        status.innerHTML=`<span class="text-red-700 font-semibold">Erro ao ler ${name}:</span> ${escapeHtml(e.message)}`;
+        toast('JSON inválido para importação','error');
+      }
+    };
+    reader.readAsText(file);
+    return;
+  }
+  status.innerHTML=`Arquivo <b>${name}</b> selecionado (${size} MB). O navegador não abre Firebird diretamente; ele será usado na etapa de extrator/backend para migrar CLIENTES, PRODUTOS, VENDAS, LOCAÇÃO, LEITURAS e FINANCEIRO.`;
+  toast('Arquivo Firebird recebido para validação visual','info');
 };
+window.handleRarUpload = window.handleDatabaseUpload;
 // IMPORTAÇÃO MANUAL DOS DADOS DO BANCO.FDB (baseado em DATABASE_ANALYSIS.md)
 // Essa função substitui db com uma versão simplificada dos dados principais
 function loadManualDB(){

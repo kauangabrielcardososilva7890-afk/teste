@@ -1,11 +1,36 @@
 {
   "name": "digicopy-erp",
-  "version": "3.0.0",
-  "description": "DIGICOPY ERP - Executável local",
+  "version": "3.3.0",
+  "description": "DIGICOPY ERP - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64"
+    "dev": "electron .",
+    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check main.js && node --check preload.js",
+    "build": "npm run build:win",
+    "build:win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "br.com.digicopy.erp",
+    "productName": "DIGICOPY ERP",
+    "files": [
+      "index.html",
+      "app.js",
+      "vendas_patch.js",
+      "evolucao_patch.js",
+      "notinha_patch.js",
+      "main.js",
+      "preload.js",
+      "logo.png",
+      "README.md",
+      "DATABASE_ANALYSIS.md"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "dist"
+    }
   },
   "devDependencies": {
     "electron": "^28.0.0",

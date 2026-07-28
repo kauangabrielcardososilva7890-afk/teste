@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGICOPY ERP - Gestão Outsourcing</title>
+<title>DIGICOPY ERP - Vendas e Locação de Impressoras</title>
 <link rel="icon" href="./logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -46,7 +46,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       </div>
     </div>
     <div class="relative z-10 flex items-center justify-between text-[11px] text-white/50">
-      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.0 • ERP Seguro</span>
+      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.3 • ERP Seguro</span>
     </div>
   </div>
   <!-- RIGHT PANEL - FORMS -->
@@ -113,7 +113,7 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Principal</p><div id="nav-main" class="space-y-1"></div></div>
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Operacional</p><div id="nav-op" class="space-y-1"></div></div>
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Base de Dados</p>
-    <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Importar Banco (.rar)</span></button>
+    <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Banco antigo (.FDB)</span></button>
   </div>
   <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Gestão & Auditoria</p><div id="nav-gest" class="space-y-1"></div></div>
     </nav>
@@ -151,8 +151,9 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
       <section id="view-config" class="view hidden space-y-4"></section>
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
+      <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.0 • Auditoria por usuário • Sem Loja Virtual • Azul escuro #0a1e8a</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.3 • Auditoria por usuário • Sem Loja Virtual • Azul escuro #0a1e8a</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
