@@ -1,5 +1,5 @@
-// DIGICOPY ERP v3.5 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.5.0';
+// DIGICOPY ERP v3.6 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+const APP_VERSION='3.6.0';
 const DB_KEY='digicopy_erp_v30';
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';

@@ -29,3 +29,143 @@ window.renderOrcamentosView = window.renderOrcamentosView || function(){
 };
 console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos separado, mantendo hub antigo sidebar');
 })();
+
+// PATCH v3.6 - Vendas estilo desktop minimalista (inspirado, não cópia)
+(function(){
+  function vendaTipo(v){
+    return (v.itens||[]).some(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return p && p.categoria==='Serviço';}) ? 'S' : 'V';
+  }
+  function vendaSituacao(v){
+    const st=(v.status||'aberta').toLowerCase();
+    if(st==='faturado' || st==='finalizada') return 'FINALIZADA';
+    if(st==='orcamento') return 'ORÇAMENTO';
+    if(st==='aprovado') return 'APROVADA';
+    if(st==='aguardar') return 'ABERTA';
+    return st.toUpperCase();
+  }
+  function ensureVendaView(){
+    let view=document.getElementById('view-vendas');
+    if(!view) view=ensureView('vendas');
+    return view;
+  }
+  window.renderVendas = function(){
+    const sess=getSession(); if(!sess) return;
+    const view=ensureVendaView();
+    const search=escapeHtml(document.getElementById('classic-search-vendas')?.value||'');
+    const rawSearch=(document.getElementById('classic-search-vendas')?.value||'').toLowerCase();
+    const filtro=document.getElementById('classic-filter-vendas')?.value||'hoje';
+    const shouldRefocusVendaSearch=document.activeElement?.id==='classic-search-vendas';
+    const vendaSearchCaret=document.getElementById('classic-search-vendas')?.selectionStart||0;
+    const hoje=new Date().toISOString().slice(0,10);
+    let list=db.vendas.filter(v=>v.empresaId===sess.empresaId);
+    if(filtro==='hoje') list=list.filter(v=>(v.data||'').slice(0,10)===hoje);
+    if(filtro==='abertas') list=list.filter(v=>!['faturado','finalizada'].includes((v.status||'').toLowerCase()));
+    if(rawSearch){
+      list=list.filter(v=>{
+        const cli=db.clientes.find(c=>c.id===v.clienteId)||{};
+        return (v.numero||'').toLowerCase().includes(rawSearch) || (cli.nome||'').toLowerCase().includes(rawSearch) || String(cli.codigo||'').includes(rawSearch) || (v.criadoPorNome||'').toLowerCase().includes(rawSearch);
+      });
+    }
+    list=list.sort((a,b)=>new Date(b.data)-new Date(a.data));
+    if(!window.vendaSelecionadaId && list[0]) window.vendaSelecionadaId=list[0].id;
+    view.innerHTML=`
+      <div class="classic-window overflow-hidden">
+        <div class="classic-title">Vendas / Ordem de Serviços</div>
+        <div class="bg-white border-b border-slate-300 flex items-center flex-wrap">
+          <button onclick="novaVenda()" class="classic-toolbar-btn"><i class="ph ph-file-plus"></i>Novo</button>
+          <button onclick="alterarVendaSelecionada()" class="classic-toolbar-btn"><i class="ph ph-pencil-simple"></i>Alterar</button>
+          <button onclick="excluirVendaSelecionada()" class="classic-toolbar-btn"><i class="ph ph-x-circle text-red-600"></i>Excluir</button>
+          <button onclick="if(window.vendaSelecionadaId) imprimirNotinha(window.vendaSelecionadaId)" class="classic-toolbar-btn"><i class="ph ph-printer"></i>Imprimir</button>
+          <button onclick="renderVendas()" class="classic-toolbar-btn"><i class="ph ph-arrows-clockwise"></i>Atualizar</button>
+          <div class="ml-2 flex items-center gap-2 py-2">
+            <select id="classic-filter-vendas" onchange="renderVendas()" class="classic-select w-[210px]"><option value="hoje" ${filtro==='hoje'?'selected':''}>Hoje</option><option value="todas" ${filtro==='todas'?'selected':''}>Todas</option><option value="abertas" ${filtro==='abertas'?'selected':''}>Abertas</option></select>
+            <input id="classic-search-vendas" value="${search}" oninput="renderVendas()" placeholder="Pesquisar código, cliente, usuário..." class="classic-input h-[28px] w-[260px]">
+            <i class="ph ph-magnifying-glass text-[#0a1e8a]"></i>
+            <label class="text-[11px] flex items-center gap-1"><input type="checkbox"> Buscar/Entregar</label>
+          </div>
+        </div>
+        <div class="overflow-auto min-h-[360px] bg-white">
+          <table class="classic-grid-table">
+            <thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Nfe</th><th>NFS</th><th>Imp</th><th>Dt. Entrega/Retirar</th><th>Destino</th><th>Recebimento</th></tr></thead>
+            <tbody>
+              ${list.map(v=>{const cli=db.clientes.find(c=>c.id===v.clienteId)||{}; const selected=window.vendaSelecionadaId===v.id; return `<tr onclick="selecionarVendaClassic('${v.id}')" ondblclick="if(typeof showVenda==='function') showVenda('${v.id}')" class="cursor-pointer ${selected?'classic-row-selected':''}"><td>${escapeHtml((v.numero||'').replace('VD-',''))}</td><td>${fmtDate(v.data)}</td><td>${escapeHtml(cli.nome||'')}</td><td class="text-right">${fmtMoney(v.total||0)}</td><td>${vendaSituacao(v)}</td><td>${vendaTipo(v)}</td><td>${escapeHtml((v.criadoPorNome||'').split(' ')[0]||'-')}</td><td></td><td></td><td><span class="inline-block w-3 h-3 rounded-full ${v.status==='faturado'?'bg-emerald-500':'bg-red-500'}"></span></td><td>${v.vencimento?fmtDate(v.vencimento):''}</td><td>AGUARDAR</td><td>${v.formaPagamento&&v.formaPagamento!=='Não faturado'?escapeHtml(v.formaPagamento):'Prazo'}</td></tr>`}).join('') || '<tr><td colspan="13" class="text-center text-slate-500 py-10">Nenhuma venda encontrada</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        <div class="h-7 bg-slate-100 border-t flex items-center px-2 text-[11px] text-slate-600">ESC - Fechar &nbsp; | &nbsp; Registros: ${list.length}</div>
+      </div>`;
+    if(shouldRefocusVendaSearch){ const input=document.getElementById('classic-search-vendas'); if(input){ input.focus(); input.setSelectionRange(vendaSearchCaret,vendaSearchCaret); } }
+  };
+  window.selecionarVendaClassic=function(id){window.vendaSelecionadaId=id; renderVendas();};
+  window.alterarVendaSelecionada=function(){ if(!window.vendaSelecionadaId) return toast('Selecione uma venda','info'); if(typeof showVenda==='function'){ navigateTo('vendas'); setTimeout(()=>showVenda(window.vendaSelecionadaId),80); } };
+  window.excluirVendaSelecionada=function(){ if(!window.vendaSelecionadaId) return toast('Selecione uma venda','info'); deleteVenda(window.vendaSelecionadaId); window.vendaSelecionadaId=null; };
+
+  window.novaVenda = function(){
+    const sess=getSession(); if(!sess) return;
+    const modalBox=document.getElementById('modal-box');
+    if(modalBox){modalBox.className='w-full max-w-[1180px] rounded-[4px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';}
+    document.getElementById('modal-title').innerText='Cadastrar Vendas';
+    const seq=String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1).padStart(6,'0');
+    window.cvItens=[]; window.cvCliente=null; window.cvProduto=null;
+    document.getElementById('modal-body').innerHTML=`
+      <div class="classic-window">
+        <div class="classic-title">Vendas</div>
+        <div class="border-b border-slate-300 bg-[#f7f7f7] p-2 grid grid-cols-12 gap-2 items-center text-[11px]">
+          <label class="col-span-1">Código:<input id="cv-codigo" value="${seq}" class="classic-input w-full mt-1" readonly></label>
+          <label class="col-span-2">Data:<input value="${new Date().toLocaleDateString('pt-BR')}" class="classic-input w-full mt-1" readonly></label>
+          <label class="col-span-1"><span class="block opacity-0">hora</span><input value="${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}" class="classic-input w-full mt-1" readonly></label>
+          <label class="col-span-2">Data Saída:<input id="cv-data-saida" class="classic-input w-full mt-1"></label>
+          <label class="col-span-3 col-start-10">Usuário:<input value="${escapeHtml(sess.usuarioNome)}" class="classic-input w-full mt-1" readonly></label>
+        </div>
+        <div class="p-2 grid grid-cols-12 gap-2">
+          <fieldset class="classic-fieldset col-span-2"><legend>Destino</legend><label class="classic-label">Selecione:</label><select id="cv-destino" class="classic-select w-full"><option>AGUARDAR</option><option>ENTREGAR</option><option>RETIRAR</option></select></fieldset>
+          <fieldset class="classic-fieldset col-span-2"><legend>Entregar Até</legend><button type="button" onclick="document.getElementById('cv-data-saida').focus()" class="text-blue-700 underline text-[11px] mt-6">Informar Prazo</button></fieldset>
+          <fieldset class="classic-fieldset col-span-5"><legend>Dados do Cliente</legend><div class="grid grid-cols-12 gap-2 items-end"><label class="col-span-2 classic-label">Código:<input id="cv-cli-codigo" class="classic-input w-full" readonly></label><label class="col-span-10 classic-label">Nome do Cliente:<div class="flex gap-1"><input id="cv-cliente-search" oninput="cvSearchCliente(this.value)" class="classic-input flex-1" autocomplete="off"><button type="button" onclick="cvSearchCliente(document.getElementById('cv-cliente-search').value||'a')" class="classic-icon-btn !w-7 !h-6"><i class="ph ph-magnifying-glass !text-[16px]"></i></button></div></label></div><div id="cv-cliente-results" class="hidden mt-1 max-h-28 overflow-auto border bg-white"></div></fieldset>
+          <fieldset class="classic-fieldset col-span-3"><legend>Totais</legend><div class="grid grid-cols-2 text-[11px]"><span>Prod/Serv:</span><span class="text-right" id="cv-subtotal">R$ 0,00</span><span>Acrés/Frete/Seg:</span><span class="text-right">R$ 0,00</span><span>Descontos:</span><span class="text-right" id="cv-desconto-label">R$ 0,00</span></div><div id="cv-total" class="classic-total">R$ 0,00</div></fieldset>
+        </div>
+        <div class="px-2"><div class="border border-slate-300 bg-[#f7f7f7]"><div class="flex text-[11px] border-b bg-white"><button class="px-3 py-1 border-r bg-[#f7f7f7]">Itens</button><button class="px-3 py-1 border-r">Ordem de Serviço</button><button class="px-3 py-1">Outros</button></div><div class="p-2 grid grid-cols-12 gap-2 items-end"><label class="col-span-2 classic-label">Tipo:<select id="cv-tipo" class="classic-select w-full"><option>Produto/Serviço</option><option>Recarga</option></select></label><label class="col-span-5 classic-label">Digite a Descrição ou Código de Barras do Produto:<div class="flex gap-1"><input id="cv-prod-search" oninput="cvSearchProduto(this.value)" class="classic-input flex-1"><button type="button" onclick="cvSearchProduto(document.getElementById('cv-prod-search').value||'a')" class="classic-icon-btn !w-7 !h-6"><i class="ph ph-magnifying-glass !text-[16px]"></i></button></div></label><label class="col-span-1 classic-label">Quat:<input id="cv-qtd" type="number" value="1" class="classic-input w-full"></label><label class="col-span-1 classic-label">Valor Unitário:<input id="cv-vunit" type="number" step="0.01" class="classic-input w-full"></label><label class="col-span-1 classic-label">Desconto R$:<input id="cv-desc" type="number" step="0.01" value="0" oninput="cvUpdateTotal()" class="classic-input w-full"></label><label class="col-span-1 classic-label">Valor Total:<input id="cv-item-total" class="classic-input w-full" readonly></label><button type="button" onclick="cvAddItem()" class="classic-icon-btn !h-7"><i class="ph ph-plus-circle text-emerald-600"></i></button></div><div id="cv-prod-results" class="hidden mx-2 mb-2 max-h-28 overflow-auto border bg-white text-[11px]"></div><div class="h-[190px] overflow-auto bg-white"><table class="classic-grid-table"><thead><tr><th>Descrição</th><th>Identificação</th><th>Qtd.</th><th>Valor Unit.</th><th>Desconto</th><th>Valor Total</th><th>Situação</th><th>PE</th><th>PS</th><th>Técnico/Resp.</th><th>Obs</th></tr></thead><tbody id="cv-itens-body"><tr><td colspan="11" class="text-slate-400">Nenhum item lançado</td></tr></tbody></table></div></div></div>
+        <div class="p-2 flex items-center gap-2 bg-[#f7f7f7] border-t mt-2"><button class="classic-bottom-btn" onclick="if(window.cvVendaSalva) imprimirNotinha(window.cvVendaSalva)"><i class="ph ph-printer"></i></button><button class="classic-bottom-btn"><i class="ph ph-briefcase"></i></button><button class="classic-bottom-btn"><i class="ph ph-chat-circle"></i></button><button class="classic-bottom-btn"><i class="ph ph-table"></i></button><textarea class="flex-1 h-[54px] border border-slate-300"></textarea><fieldset class="classic-fieldset w-[220px]"><legend>Situação da Venda/Serviço</legend><select id="cv-status" class="classic-select w-full"><option value="aguardar">AGUARDAR</option><option value="faturado">FINALIZADA</option><option value="orcamento">ORÇAMENTO</option></select></fieldset><button onclick="cvSaveVenda('faturado')" class="h-[54px] px-6 rounded bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-check"></i>Faturar</button><button onclick="closeModal()" class="h-[54px] px-5 rounded bg-white border text-red-600 font-bold flex items-center gap-2"><i class="ph ph-x-circle"></i>Sair</button></div>
+      </div>`;
+    document.getElementById('modal-footer').innerHTML='';
+    document.getElementById('modal-root').classList.remove('hidden');
+    setTimeout(()=>document.getElementById('cv-cliente-search')?.focus(),100);
+  };
+  window.cvSearchCliente=function(q){
+    const sess=getSession(); const el=document.getElementById('cv-cliente-results'); if(!el) return;
+    const low=(q||'').toLowerCase();
+    const list=db.clientes.filter(c=>c.empresaId===sess.empresaId && (!low || (c.nome||'').toLowerCase().includes(low) || (c.documento||'').toLowerCase().includes(low) || String(c.codigo||'').includes(low))).slice(0,12);
+    el.classList.remove('hidden'); el.innerHTML=list.map(c=>`<button type="button" onclick="cvSelectCliente('${c.id}')" class="w-full text-left px-2 py-1 hover:bg-blue-50"><b>#${c.codigo||'-'}</b> ${escapeHtml(c.nome)} <span class="text-slate-500">${escapeHtml(c.documento||'')}</span></button>`).join('')||'<div class="p-2 text-slate-500">Nenhum cliente</div>';
+  };
+  window.cvSelectCliente=function(id){const c=db.clientes.find(x=>x.id===id); window.cvCliente=c; document.getElementById('cv-cli-codigo').value=c?.codigo||''; document.getElementById('cv-cliente-search').value=c?.nome||''; document.getElementById('cv-cliente-results').classList.add('hidden');};
+  window.cvSearchProduto=function(q){
+    const sess=getSession(); const el=document.getElementById('cv-prod-results'); if(!el) return;
+    const low=(q||'').toLowerCase();
+    const list=db.produtos.filter(p=>p.empresaId===sess.empresaId && (!low || (p.nome||'').toLowerCase().includes(low) || (p.sku||'').toLowerCase().includes(low))).slice(0,14);
+    el.classList.remove('hidden'); el.innerHTML=list.map(p=>`<button type="button" onclick="cvSelectProduto('${p.id}')" class="w-full text-left px-2 py-1 hover:bg-blue-50"><b>${escapeHtml(p.sku||'')}</b> ${escapeHtml(p.nome)} <span class="float-right">${fmtMoney(p.preco||0)}</span></button>`).join('')||'<div class="p-2 text-slate-500">Nenhum produto</div>';
+  };
+  window.cvSelectProduto=function(id){const p=db.produtos.find(x=>x.id===id); window.cvProduto=p; document.getElementById('cv-prod-search').value=p?.nome||''; document.getElementById('cv-vunit').value=p?.preco||0; document.getElementById('cv-prod-results').classList.add('hidden'); cvUpdateItemTotal();};
+  window.cvUpdateItemTotal=function(){const qtd=parseFloat(document.getElementById('cv-qtd')?.value)||0; const val=parseFloat(document.getElementById('cv-vunit')?.value)||0; const el=document.getElementById('cv-item-total'); if(el) el.value=(qtd*val).toFixed(2);};
+  window.cvAddItem=function(){if(!window.cvProduto) return toast('Selecione um produto','error'); const qtd=parseFloat(document.getElementById('cv-qtd').value)||1; const preco=parseFloat(document.getElementById('cv-vunit').value)||window.cvProduto.preco||0; window.cvItens.push({produtoId:window.cvProduto.id,qtd,preco,subtotal:qtd*preco}); window.cvProduto=null; document.getElementById('cv-prod-search').value=''; document.getElementById('cv-vunit').value=''; cvRenderItens(); cvUpdateTotal();};
+  window.cvRenderItens=function(){const body=document.getElementById('cv-itens-body'); if(!body) return; body.innerHTML=window.cvItens.map((it,idx)=>{const p=db.produtos.find(x=>x.id===it.produtoId)||{}; return `<tr><td>${escapeHtml(p.nome||'Produto')}</td><td>${escapeHtml(p.sku||'')}</td><td>${it.qtd}</td><td>${fmtMoney(it.preco)}</td><td>R$ 0,00</td><td>${fmtMoney(it.subtotal)}</td><td>OK</td><td></td><td></td><td></td><td><button onclick="cvRemoveItem(${idx})" class="text-red-600">remover</button></td></tr>`}).join('')||'<tr><td colspan="11" class="text-slate-400">Nenhum item lançado</td></tr>';};
+  window.cvRemoveItem=function(idx){window.cvItens.splice(idx,1); cvRenderItens(); cvUpdateTotal();};
+  window.cvUpdateTotal=function(){const sub=(window.cvItens||[]).reduce((s,i)=>s+i.subtotal,0); const desc=parseFloat(document.getElementById('cv-desc')?.value)||0; const total=Math.max(0,sub-desc); const a=document.getElementById('cv-subtotal'); const b=document.getElementById('cv-desconto-label'); const c=document.getElementById('cv-total'); if(a)a.innerText=fmtMoney(sub); if(b)b.innerText=fmtMoney(desc); if(c)c.innerText=fmtMoney(total);};
+  window.cvSaveVenda=function(forceStatus){
+    const sess=getSession(); if(!window.cvCliente) return toast('Selecione o cliente','error'); if(!window.cvItens?.length) return toast('Adicione ao menos um item','error');
+    const desc=parseFloat(document.getElementById('cv-desc')?.value)||0; const total=Math.max(0,window.cvItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=forceStatus||document.getElementById('cv-status')?.value||'aguardar';
+    const venda={id:uid('vda'),empresaId:sess.empresaId,numero:'VD-'+new Date().getFullYear()+'-'+String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1).padStart(4,'0'),clienteId:window.cvCliente.id,data:new Date().toISOString(),itens:[...window.cvItens],desconto:desc,total,formaPagamento:status==='faturado'?'Prazo':'Não faturado',status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()};
+    venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId); if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga') p.estoque-=it.qtd;});
+    db.vendas.push(venda); window.cvVendaSalva=venda.id; logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)} por ${sess.usuarioNome}`);
+    if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:'Prazo'});
+    saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); toast(`Venda ${venda.numero} salva`,'success'); closeModal(); setTimeout(()=>imprimirNotinha(venda.id),300);
+  };
+})();
+
+// Reset tamanho padrão dos modais que não são a janela clássica de venda
+(function(){
+  const originalCloseModalClassic = window.closeModal;
+  window.closeModal = function(){
+    if(originalCloseModalClassic) originalCloseModalClassic();
+    const box=document.getElementById('modal-box');
+    if(box) box.className='w-full max-w-[720px] rounded-[22px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[90vh] flex flex-col';
+  };
+})();

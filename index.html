@@ -38,6 +38,12 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 .ribbon-actions button:hover{background:#f8fafc;color:#0a1e8a}.ribbon-actions i{font-size:26px;color:#0a1e8a}.ribbon-actions small{font-weight:600;color:#64748b;font-size:10.5px;line-height:1.1}
 
 button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
+#sidebar,#overlay{display:none!important}
+body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.shadow-lg{box-shadow:0 1px 3px rgba(15,23,42,.10)!important}
+header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
+.classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
+
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -138,7 +144,7 @@ button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;backgro
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="h-[76px] sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/70 px-4 lg:px-8 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 grid place-items-center rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-list text-[22px]"></i></button>
+        <button onclick="toggleSidebar()" class="hidden w-10 h-10 place-items-center rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-list text-[22px]"></i></button>
         <div><h2 id="page-title" class="text-[20px] font-bold tracking-tight">Início</h2><div class="flex items-center gap-2 text-[12.5px] text-slate-500 mt-[2px]"><span id="page-subtitle">Escolha uma ação rápida</span><span class="hidden sm:inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span id="current-date"></span></span></div></div>
       </div>
       <div class="flex items-center gap-2">
@@ -180,7 +186,7 @@ button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;backgro
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.5 • Menu clássico simples • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.6 • Minimalista • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
