@@ -169,3 +169,43 @@ console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos 
     if(box) box.className='w-full max-w-[720px] rounded-[22px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[90vh] flex flex-col';
   };
 })();
+
+// PATCH v3.7 - Clientes em janela clássica com pesquisa por letras
+(function(){
+  window.renderClientes = function(){
+    const sess=getSession(); if(!sess) return;
+    const view=document.getElementById('view-clientes')||ensureView('clientes');
+    const searchRaw=document.getElementById('classic-search-clientes')?.value||'';
+    const letter=document.getElementById('classic-letter-clientes')?.value||'';
+    const low=searchRaw.toLowerCase();
+    let list=db.clientes.filter(c=>c.empresaId===sess.empresaId && c.status!=='inativo');
+    if(letter) list=list.filter(c=>(c.nome||'').toUpperCase().startsWith(letter));
+    if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low));
+    list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+    view.innerHTML=`
+      <div class="classic-window overflow-hidden max-w-[900px] mx-auto mt-2">
+        <div class="h-6 bg-slate-100 border-b flex items-center justify-between px-2 text-[12px]"><span>Clientes Cadastrados</span><button onclick="navigateTo('dashboard')" class="text-slate-600">×</button></div>
+        <div class="classic-title">Clientes</div>
+        <div class="bg-white border-b border-slate-300 flex items-center flex-wrap">
+          <button onclick="openModal('cliente')" class="classic-toolbar-btn"><i class="ph ph-file-plus"></i>Novo</button>
+          <button onclick="alterarClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-pencil-simple"></i>Alterar</button>
+          <button onclick="excluirClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-x-circle text-red-600"></i>Excluir</button>
+          <select class="classic-select ml-2 w-[150px]"><option>Pesquisar</option><option>Nome</option><option>Código</option><option>CPF/CNPJ</option></select>
+          <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" class="classic-input h-[28px] w-[330px] ml-2">
+          <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
+        </div>
+        <div class="bg-[#f7f7f7] border-b px-2 py-1 text-[11px]"><button class="px-2 py-1 bg-white border">Consultas</button><button class="px-2 py-1 border">Gráficos</button></div>
+        <div class="flex items-center gap-3 px-2 py-1 bg-white border-b text-[12px]">
+          ${'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l=>`<button onclick="document.getElementById('classic-letter-clientes').value='${l}'; renderClientes()" class="hover:text-[#0a1e8a] ${letter===l?'font-bold text-[#0a1e8a]':''}">${l}</button>`).join('')}
+          <input id="classic-letter-clientes" type="hidden" value="${letter}"><button onclick="document.getElementById('classic-letter-clientes').value=''; renderClientes()" class="ml-2 text-red-600">●</button><button class="ml-auto"><i class="ph ph-funnel"></i></button>
+        </div>
+        <div class="h-[310px] overflow-auto bg-white">
+          <table class="classic-grid-table"><thead><tr><th>Sel</th><th>Código</th><th>Nome do Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Nome Fantasia</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.clienteSelecionadoClassic='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.clienteSelecionadoClassic===c.id?'classic-row-selected':''}"><td></td><td>${c.codigo||''}</td><td>${escapeHtml(c.nome||'')}</td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.fantasia||'')}</td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-8">Nenhum cliente</td></tr>'}</tbody></table>
+        </div>
+        <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
+      </div>`;
+    const input=document.getElementById('classic-search-clientes'); if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
+  };
+  window.alterarClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); openModal('cliente',window.clienteSelecionadoClassic); };
+  window.excluirClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); deleteCliente(window.clienteSelecionadoClassic); window.clienteSelecionadoClassic=null; };
+})();

@@ -44,6 +44,10 @@ body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.sh
 header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
 .classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
 
+
+.app-titlebar{box-shadow:none}.classic-tabs{height:22px;background:#0076c8;display:flex;align-items:end;padding-left:56px;gap:0}.classic-tabs button{height:22px;padding:0 9px;color:white;font-size:11px;border:0;background:transparent}.classic-tabs button.active{background:white;color:#0076c8}.ribbon-main{height:76px;padding-left:8px;background:#fff;border-bottom:1px solid #d6dce3}.ribbon-main .classic-menu-btn{height:76px;min-width:86px;border-right:1px solid #d6dce3;font-size:11px;color:#111;gap:5px}.ribbon-main .classic-menu-btn i{font-size:28px}.mini-toolbar{height:34px;background:#fff;border-bottom:1px solid #d6dce3;display:flex;align-items:center;gap:8px;padding:3px 8px}.mini-toolbar button{width:24px;height:24px;display:grid;place-items:center;border:0;background:white}.mini-toolbar button:hover{background:#eef6ff}.mini-toolbar i{font-size:18px;color:#0a1e8a}.mini-toolbar .sep{height:22px;border-left:1px solid #cfd6df;margin:0 3px}
+#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{height:calc(100vh - 190px);display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}
+
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
@@ -142,31 +146,40 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   </aside>
 
   <main class="flex-1 min-w-0 flex flex-col">
-    <header class="h-[76px] sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-200/70 px-4 lg:px-8 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="hidden w-10 h-10 place-items-center rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-list text-[22px]"></i></button>
-        <div><h2 id="page-title" class="text-[20px] font-bold tracking-tight">Início</h2><div class="flex items-center gap-2 text-[12.5px] text-slate-500 mt-[2px]"><span id="page-subtitle">Escolha uma ação rápida</span><span class="hidden sm:inline-flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-slate-300"></span><span id="current-date"></span></span></div></div>
-      </div>
-      <div class="flex items-center gap-2">
-        <div class="hidden md:flex items-center gap-2 mr-2"><div class="relative"><i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="global-search" oninput="handleGlobalSearch(this.value)" placeholder="Buscar cliente, venda ou impressora..." class="h-10 w-[320px] pl-10 pr-4 rounded-xl bg-slate-100 border border-transparent focus:bg-white focus:border-[#0a1e8a]/30 focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[13.5px]"></div></div>
-        <button onclick="openQuickReading()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px] font-semibold flex items-center gap-2"><i class="ph ph-speedometer"></i><span class="hidden sm:inline">Lançar leitura</span></button>
-        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold flex items-center gap-2 shadow-md shadow-[#0a1e8a]/20"><i class="ph ph-wrench"></i><span class="hidden sm:inline">Abrir chamado</span></button>
-        <button onclick="navigateTo('relatorios')" class="w-10 h-10 grid place-items-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="ph ph-bell text-[20px]"></i></button>
+    <header class="app-titlebar sticky top-0 z-30">
+      <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
+        <div class="absolute left-2 flex items-center gap-2"><img src="./logo.png" class="h-4 w-4 object-contain"><span class="text-[11px]">DIGICOPY ERP</span></div>
+        <span id="page-title" class="font-medium">DIGICOPY ERP 3.7</span>
+        <div class="absolute right-2 text-[11px] opacity-80" id="current-date"></div>
       </div>
     </header>
     <div class="classic-toolbar">
-      <div class="classic-toolbar-scroll">
-        <button onclick="navigateTo('dashboard')" class="classic-menu-btn"><i class="ph ph-house"></i><span>Início</span></button>
-        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-shopping-cart-simple"></i><span>Venda</span></button>
-        <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('nv-status'); if(s){s.value='orcamento'; if(typeof onStatusVendaChange==='function') onStatusVendaChange();}},300)} else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-clipboard-text"></i><span>Orçamento</span></button>
-        <button onclick="navigateTo('clientes')" class="classic-menu-btn"><i class="ph ph-users"></i><span>Clientes</span></button>
-        <button onclick="navigateTo('produtos')" class="classic-menu-btn"><i class="ph ph-package"></i><span>Estoque</span></button>
-        <button onclick="navigateTo('impressoras')" class="classic-menu-btn"><i class="ph ph-printer"></i><span>Impressoras</span></button>
-        <button onclick="navigateTo('contratos')" class="classic-menu-btn"><i class="ph ph-file-text"></i><span>Locação</span></button>
-        <button onclick="navigateTo('leituras')" class="classic-menu-btn"><i class="ph ph-speedometer"></i><span>Leituras</span></button>
-        <button onclick="navigateTo('manutencao')" class="classic-menu-btn"><i class="ph ph-wrench"></i><span>Chamados</span></button>
-        <button onclick="navigateTo('financeiro')" class="classic-menu-btn"><i class="ph ph-bank"></i><span>Financeiro</span></button>
-        <button onclick="navigateTo('relatorios')" class="classic-menu-btn"><i class="ph ph-chart-line"></i><span>Relatórios</span></button>
+      <div class="classic-tabs">
+        <button class="active" onclick="navigateTo('dashboard')">Início</button>
+        <button onclick="navigateTo('produtos')">Recarga</button>
+        <button onclick="navigateTo('contratos')">Outsourcing</button>
+        <button onclick="navigateTo('financeiro')">NF-e/NFC-e</button>
+        <button onclick="navigateTo('produtos')">Estoque</button>
+        <button onclick="navigateTo('clientes')">Cadastros</button>
+        <button onclick="navigateTo('financeiro')">Financeiro</button>
+        <button onclick="navigateTo('relatorios')">Agenda</button>
+        <button onclick="navigateTo('config')">Configurações</button>
+        <button onclick="navigateTo('usuarios')">Utilitário</button>
+      </div>
+      <div class="classic-toolbar-scroll ribbon-main">
+        <button onclick="navigateTo('clientes')" class="classic-menu-btn"><i class="ph ph-users-three"></i><span>Clientes [F1]</span></button>
+        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-shopping-cart-simple"></i><span>Vendas/OS [F2]</span></button>
+        <button onclick="if(typeof novaVenda==='function'){novaVenda(); setTimeout(()=>{const s=document.getElementById('cv-status')||document.getElementById('nv-status'); if(s){s.value='orcamento';}},300)} else navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-clipboard-text"></i><span>Orçamentos [F3]</span></button>
+        <button onclick="navigateTo('produtos')" class="classic-menu-btn"><i class="ph ph-books"></i><span>Produtos [F4]</span></button>
+        <button onclick="navigateTo('vendas')" class="classic-menu-btn"><i class="ph ph-shopping-cart"></i><span>PDV</span></button>
+        <button onclick="navigateTo('financeiro')" class="classic-menu-btn"><i class="ph ph-money"></i><span>Abertura<br>Caixa</span></button>
+        <button onclick="navigateTo('usuarios')" class="classic-menu-btn"><i class="ph ph-user-circle"></i><span>Login [F6]</span></button>
+        <button onclick="toast('Ajuda em desenvolvimento','info')" class="classic-menu-btn"><i class="ph ph-question"></i><span>Ajuda</span></button>
+        <button onclick="doLogout()" class="classic-menu-btn"><i class="ph ph-x text-red-600"></i><span>Sair</span></button>
+      </div>
+      <div class="mini-toolbar">
+        <button><i class="ph ph-basket"></i></button><button><i class="ph ph-clock-clockwise"></i></button><button><i class="ph ph-chart-bar"></i></button><button><i class="ph ph-barcode"></i></button><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i></button><button><i class="ph ph-database"></i></button><button><i class="ph ph-printer"></i></button><button><i class="ph ph-palette"></i></button><button><i class="ph ph-recycle"></i></button>
+        <span class="sep"></span><select class="classic-select"><option>Etiq Igual</option><option>Nome Igual</option><option>Código</option></select><input class="classic-input w-[180px]"><button><i class="ph ph-magnifying-glass"></i></button>
       </div>
     </div>
     <div class="flex-1 p-4 lg:p-8">
@@ -186,7 +199,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP v3.6 • Minimalista • Auditoria automática</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Banco Servidor Nuvem  |  DIGICOPY ERP v3.7</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
