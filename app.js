@@ -1399,7 +1399,7 @@ function renderBanco(){
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários)</label>
-            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onclick="this.value=null" onchange="document.getElementById('upload-status').innerHTML='<p class=\"text-blue-600 font-bold\">⏳ Arquivos selecionados. Iniciando leitura...</p>'; handleMultipleUpload(this.files,this)">
+            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onclick="this.value=null" onchange="handleMultipleUpload(this.files,this)">
             <div id="upload-status" class="text-[12px]"></div>
             <div id="upload-progress" class="hidden mt-3">
               <div class="flex items-center gap-2 mb-2">
