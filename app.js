@@ -190,6 +190,15 @@ function seedData(force=false){
 if(db.empresas.length===0) seedData(false);
 
 // LOGIN LOGIC
+function formatarLoginCNPJ(input){
+  if(!input) return;
+  let d=onlyDigits(input.value).slice(0,14);
+  if(d.length<=2) input.value=d;
+  else if(d.length<=5) input.value=d.slice(0,2)+'.'+d.slice(2);
+  else if(d.length<=8) input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5);
+  else if(d.length<=12) input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8);
+  else input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8,12)+'-'+d.slice(12);
+}
 function togglePass(id){
   const el=document.getElementById(id); if(!el) return; el.type=el.type==='password'?'text':'password';
 }
@@ -198,7 +207,15 @@ function doLoginCNPJ(){
   const senha=document.getElementById('login-senha-cnpj').value.trim();
   if(!cnpjInput || !senha){toast('Informe CNPJ e senha CNPJ','error'); return;}
   const digits=onlyDigits(cnpjInput);
-  const emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
+  let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
+  // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
+  if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
+    emp=db.empresas.find(e=>e.id) || {id:gen('emp'), nome:'DENIVALDO COM. DE ELET. LOCAÇÕES E MANU LTDA', fantasia:'DIGICOPY', cnpj:'08.385.589/0001-03'};
+    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
+    if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
+    db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
+    saveDB();
+  }
   if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
   setPendingEmpresa(emp);
   document.getElementById('login-step-cnpj').classList.add('hidden');

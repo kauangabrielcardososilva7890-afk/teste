@@ -901,8 +901,18 @@ end $$;
     }
   };
 
+  // Carrega a base corporativa antes do primeiro acesso quando este PC ainda não tem a base completa.
+  function __carregarBaseInicial(){
+    setTimeout(async()=>{
+      try{
+        const vazio=!db || !Array.isArray(db.empresas) || db.empresas.length<=1;
+        const semModulos=!db || !db.modulosDinamicos || Object.keys(db.modulosDinamicos).length===0;
+        if(vazio || semModulos) await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
+      }catch(e){}
+    },1800);
+  }
   // Disparadores: 6s após abrir, a cada 75s, e quando a internet volta
-  function __agendarAutoSync(){ setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 6000); }
+  function __agendarAutoSync(){ __carregarBaseInicial(); setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 6000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', __agendarAutoSync);
   else __agendarAutoSync();
   setInterval(()=>{ try{ window.syncAutoChecar('timer'); }catch(e){} }, 75000);
