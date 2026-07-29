@@ -13,26 +13,68 @@ const defaultData={
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras LTDA',cnpj:'12.345.678/0001-90',fone:'(11) 3333-4444',email:'contato@digicopy.com.br'}}
 };
 
+// Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
+// vezes mais dados no navegador. Formatos antigos (JSON puro) continuam lendo.
+function storageEncode(obj){
+  const txt=JSON.stringify(obj);
+  try{
+    if(window.LZUTF16 && typeof window.LZUTF16.compress==='function') return 'LZ1:'+window.LZUTF16.compress(txt);
+  }catch(eLz){ /* sem compressão: cai no plano B abaixo */ }
+  return txt;
+}
+function storageDecode(raw){
+  if(raw && raw.startsWith('LZ1:')){
+    if(window.LZUTF16 && typeof window.LZUTF16.decompress==='function'){
+      const txt=window.LZUTF16.decompress(raw.slice(4));
+      if(txt) return txt;
+    }
+    throw new Error('dados comprimidos ilegiveis');
+  }
+  return raw;
+}
+function normalizeDbShape(parsed){
+  // Migração defensiva para versões antigas salvas no navegador.
+  ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+    if(!Array.isArray(parsed[k])) parsed[k]=[];
+  });
+  if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
+  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+  if(!parsed.config) parsed.config=structuredClone(defaultData.config);
+  if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
+  parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
+  return parsed;
+}
 function loadDB(){
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
-    const parsed=JSON.parse(raw);
-    // Migração defensiva para versões antigas salvas no navegador.
-    ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
-      if(!Array.isArray(parsed[k])) parsed[k]=[];
-    });
-    if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
-    if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
-    if(!parsed.config) parsed.config=structuredClone(defaultData.config);
-    if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
-    parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
-    return parsed;
+    return normalizeDbShape(JSON.parse(storageDecode(raw)));
   }catch{
     return structuredClone(defaultData);
   }
 }
-function saveDB(){localStorage.setItem(DB_KEY, JSON.stringify(db));}
+function saveDB(){
+  let dado;
+  try{ dado=storageEncode(db); }catch(eEnc){ dado=JSON.stringify(db); }
+  try{
+    localStorage.setItem(DB_KEY, dado);
+    window.__dbPersistidoOk=true;
+  }catch(eQuota){
+    // Cota do navegador cheia: limpa sobras grandes (backups/chaves antigas) e tenta 1x de novo
+    try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
+    try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
+    try{
+      localStorage.setItem(DB_KEY, dado);
+      window.__dbPersistidoOk=true;
+    }catch(eQuota2){
+      window.__dbPersistidoOk=false;
+      if(!window.__avisouQuota){
+        window.__avisouQuota=true;
+        if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
+      }
+    }
+  }
+}
 let db=loadDB();
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
@@ -260,6 +302,12 @@ function listUsuariosDemo(){
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
 
+// Escreve título/subtítulo com segurança (o layout do menu superior não tem #page-subtitle)
+function setPageHeader(title, subtitle){
+  const t=document.getElementById('page-title'); if(t) t.innerText=title||'';
+  const s=document.getElementById('page-subtitle'); if(s) s.innerText=subtitle||'';
+}
+
 function navigateTo(view){
   if(view==='banco'){
     const bancoView=ensureView('banco');
@@ -267,9 +315,11 @@ function navigateTo(view){
     bancoView.classList.remove('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    document.getElementById('page-title').innerText='Banco antigo Firebird';
-    document.getElementById('page-subtitle').innerText='Plano de migração do .RAR atualizado para nuvem';
-    renderBanco(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
+    setPageHeader('Banco antigo Firebird','Migração do sistema antigo e sincronização em nuvem');
+    renderBanco();
+    // Garante que a view fique visível mesmo se outro código esconder depois
+    setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
+    window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
   const target=document.getElementById('view-'+view);
@@ -277,7 +327,7 @@ function navigateTo(view){
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
   const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito']};
-  const t=titles[view]||[view,'']; document.getElementById('page-title').innerText=t[0]; document.getElementById('page-subtitle').innerText=t[1];
+  const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
   if(view==='produtos') renderProdutos();
@@ -296,6 +346,12 @@ function navigateTo(view){
   if(view.startsWith('mod_')){
     const nomeTabela = view.substring(4).toUpperCase();
     renderModuloDinamico(nomeTabela);
+    // Garante visibilidade na primeira navegação (a view é criada dinamicamente)
+    const modView=document.getElementById('view-'+view);
+    if(modView){ modView.classList.remove('hidden'); modView.style.display='block'; modView.style.visibility='visible'; }
+    const modulo=(db.modulosDinamicos||{})[nomeTabela];
+    setPageHeader(modulo?modulo.label:formatarNomeTabela(nomeTabela), 'Módulo migrado do sistema antigo • '+(modulo?(modulo.dados||[]).length:0)+' registros');
+    const actMod=document.querySelector(`[data-nav="${view}"]`); if(actMod){actMod.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); actMod.classList.remove('text-white/60')}
   }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<1024) toggleSidebar(true);
@@ -322,17 +378,41 @@ function buildNav(){
           id: 'mod_'+nome.toLowerCase().replace(/[^a-z0-9]/g,'_'),
           icon: modulo.icone || 'ph-table',
           label: modulo.label || formatarNomeTabela(nome),
-          count: modulo.dados.length
+          count: modulo.dados.length,
+          nomeTabela: nome,
+          cat: categoriaModulo(nome)
         });
       }
     });
   }
+  // Agrupa módulos migrados por categoria de negócio
+  const catsMap={};
+  dinamicos.forEach(item=>{ (catsMap[item.cat.id]=catsMap[item.cat.id]||{cat:item.cat, itens:[]}).itens.push(item); });
+  const catsOrdem=Object.values(catsMap).sort((a,b)=>a.cat.ordem-b.cat.ordem);
+  catsOrdem.forEach(g=>g.itens.sort((a,b)=>a.label.localeCompare(b.label,'pt-BR',{sensitivity:'base'})));
+  window.__migCategorias = catsOrdem; // usado pela tela "Explorar Migrados"
   
   function rg(list,target){
     const cont=document.getElementById(target);
     cont.innerHTML=list.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white ${item.id==='dashboard'?'bg-white/[0.12] text-white border border-white/10':''}"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span>${item.id==='manutencao'?`<span class="ml-auto text-[11px] bg-amber-400 text-amber-950 font-bold px-2 py-0.5 rounded-full">${(db.os.filter(o=>o.empresaId===(sess?.empresaId) && o.status!=='concluido').length)}</span>`:''}${item.id==='leituras'?`<span class="ml-auto text-[11px] bg-white text-[#0a1e8a] font-bold px-2 py-0.5 rounded-full">${(db.leituras.filter(l=>l.empresaId===(sess?.empresaId) && l.status==='pendente').length)}</span>`:''}</button>`).join('');
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
+  
+  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar) — agrupados por categoria
+  const topMod = document.getElementById('topmod-migrados');
+  const menuMig = document.getElementById('menu-migrados');
+  if(topMod && menuMig){
+    if(dinamicos.length){
+      topMod.style.display='';
+      const totalMods=dinamicos.reduce((s,i)=>s+i.count,0);
+      menuMig.innerHTML = `<button onclick="navigateTo('migrados')" style="font-weight:700"><i class="ph ph-puzzle-piece"></i><span>Ver tudo por categoria</span><small>${dinamicos.length} tabelas</small></button>`
+        + catsOrdem.map(g=>`<div style="padding:6px 10px 2px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;display:flex;gap:5px;align-items:center"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</div>`
+          + g.itens.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('')).join('');
+    } else {
+      topMod.style.display='none';
+      menuMig.innerHTML='';
+    }
+  }
   
   // Renderizar seção de módulos dinâmicos se houver
   let navDinamico = document.getElementById('nav-dinamico');
@@ -353,7 +433,7 @@ function buildNav(){
       navDinamico.className = 'space-y-1';
       navDinamicoLabel.insertAdjacentElement('afterend', navDinamico);
     }
-    navDinamico.innerHTML = dinamicos.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${item.count}</span></button>`).join('');
+    navDinamico.innerHTML = catsOrdem.map(g=>`<p class="px-3 pt-3 mb-1 text-[10px] font-bold tracking-widest text-purple-300/70 uppercase flex items-center gap-1.5"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</p>` + g.itens.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${item.count}</span></button>`).join('')).join('');
   } else if(navDinamico){
     navDinamico.remove();
     if(navDinamicoLabel) navDinamicoLabel.remove();
@@ -362,7 +442,23 @@ function buildNav(){
 
 function formatarNomeTabela(nome){
   // Converte NOME_TABELA para "Nome Tabela"
-  return nome.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  return String(nome).replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Categoria de negócio de cada tabela migrada (agrupa o menu "Migrados")
+function categoriaModulo(nome){
+  const n=String(nome||'').toUpperCase();
+  const regras=[
+    {id:'locacao', rx:/VISITA|CHECKLIST|ROTA|VEICULO|MOTIVO|GARANTIA|ACOMPANH|REAGENDA/, rotulo:'Locação e atendimento', icone:'ph-wrench', ordem:1},
+    {id:'movimentacao', rx:/PEDIDO|ORCAMENT|ORDEM|SERVICO|RECIBO|CUPOM|BALCAO|CARGA|ROMANEIO|ENTREGA|DEVOLUC|DAV|SAIDA/, rotulo:'Movimentação', icone:'ph-shopping-cart', ordem:2},
+    {id:'financeiro', rx:/BANCO|CHEQUE|CARTAO|BOLETO|FLUXO|COMISS|DUPLIC|COBRAN|BAIXA|PRAZO|TABELA_PRECO|DESPESA|RECEITA|CARTEIR|TITULO/, rotulo:'Financeiro', icone:'ph-bank', ordem:3},
+    {id:'produtos', rx:/GRUPO|SUBGRUPO|MARCA|UNIDADE|FORNECED|GRADE|ESTOQUE|MOVIMENTO_PROD|KIT|TAMANHO/, rotulo:'Produtos e estoque', icone:'ph-package', ordem:4},
+    {id:'cadastros', rx:/BAIRRO|CIDADE|CEP|DEPARTAMENT|SETOR|TRANSPORT|CONTATO|EMAIL|ASSUNTO|SMS|PESSOA|PROFISS|SEGMENT|RAMO|REGIAO|VENDEDOR|FUNCIONAR|TECNIC|USUAR|CLIENTE_|FERIADO|CALEND|PAIS|ENDERECO/, rotulo:'Cadastros gerais', icone:'ph-address-book', ordem:5},
+    {id:'fiscal', rx:/NCM|CFOP|CEST|CST|ICMS|PIS|COFINS|IPI|IBPT|TRIB|NOTA|NFE|NF_|FISCAL|APURA|SPED/, rotulo:'Fiscal e notas', icone:'ph-scales', ordem:6},
+    {id:'sistema', rx:/ATUALIZACAO|EMPRESA|PARAM|CONFIG|PERMISS|ACESSO|VERSAO|LICENC|BACKUP|SISTEMA|SENHA|MENU|MODULO|TEXTO|MENSAGEM|MODELO_DOC|LAYOUT|LOG/, rotulo:'Sistema e configurações', icone:'ph-gear', ordem:7}
+  ];
+  for(const r of regras){ if(r.rx.test(n)) return r; }
+  return {id:'outros', rotulo:'Outros módulos', icone:'ph-table', ordem:9};
 }
 
 // ═══════════════════════════════════════════════════════
@@ -832,10 +928,10 @@ function saveOS(){
 
 function renderVendas(){
   const sess=getSession(); if(!sess) return;
-  const search=(document.getElementById('search-vendas')?.value||'').toLowerCase(); let list=db.vendas.filter(v=>v.empresaId===sess.empresaId && (!search||v.numero.toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.nome||'').toLowerCase().includes(search))).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  const search=(document.getElementById('search-vendas')?.value||'').toLowerCase(); let list=db.vendas.filter(v=>v.empresaId===sess.empresaId && (!search||v.numero.toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.nome||'').toLowerCase().includes(search))).sort((a,b)=>(new Date(b.data)-new Date(a.data))||((parseInt(a.numero)||0)-(parseInt(b.numero)||0)));
   document.getElementById('tbody-vendas').innerHTML=list.map(v=>{const cli=db.clientes.find(c=>c.id===v.clienteId); return `<tr class="hover:bg-slate-50 cursor-pointer" onclick="showVenda('${v.id}')"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por <b>${v.criadoPorNome||'-'}</b> • ${fmtDate(v.data)}</p></td><td class="px-5 py-3"><p class="text-[12px]">${v.itens.length} itens</p><p class="font-bold text-[13px]">${fmtMoney(v.total)}</p></td><td class="px-5 py-3"><p class="text-[12px]">${v.formaPagamento}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${v.status==='faturado'?'bg-emerald-50 text-emerald-700 border':'bg-amber-50 text-amber-700 border'}">${v.status}</span></td><td class="px-5 py-3"><button onclick="event.stopPropagation(); deleteVenda('${v.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td></tr>`;}).join('');
 }
-function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} • ${fmtDateTime(v.data)} • ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div><div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2"><button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button></div>`;}
+function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} • ${fmtDateTime(v.data)} • ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div><div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||it.descricao||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2"><button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button></div>`;}
 function novaVenda(){
   const sess=getSession(); const cliOpts=db.clientes.filter(c=>c.empresaId===sess.empresaId).map(c=>`<option value="${c.id}">${c.nome}</option>`).join(''); const prodOpts=db.produtos.filter(p=>p.empresaId===sess.empresaId).map(p=>`<option value="${p.id}">${p.sku} - ${p.nome} • ${fmtMoney(p.preco)} • est ${p.estoque}</option>`).join('');
   document.getElementById('modal-title').innerText='Nova venda / Orçamento';
@@ -912,6 +1008,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
+  console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -996,7 +1093,12 @@ window.openModal = function(type,id=null){
 };
 function renderBanco(){
   const sess=getSession();
-  const el=ensureView('banco');
+  let el=document.getElementById('view-banco');
+  if(!el){ el=ensureView('banco'); }
+  el.innerHTML='';
+  el.classList.remove('hidden');
+  el.style.display='block';
+  el.style.visibility='visible';
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
   const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
   el.innerHTML=`
@@ -1170,6 +1272,8 @@ function renderBanco(){
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[15px] mb-3">Sincronização</h3>
           <div id="cloud-sync-status" class="text-[13px] text-slate-600">Envie ou carregue dados da nuvem.</div>
+          <label class="flex items-center gap-2 mt-3 text-[13px] text-slate-700 cursor-pointer select-none"><input type="checkbox" onchange="if(typeof syncAutoDefinir==='function') syncAutoDefinir(this.checked)" ${(typeof syncAutoLigado==='function'&&syncAutoLigado())?'checked':''}> Sincronização automática neste PC</label>
+          <p class="text-[11px] text-slate-400 mt-1 leading-snug">Ligada, o ERP busca e envia as alterações sozinho a cada minuto — sem você apertar nada. Só age quando você não está no meio de um cadastro.</p>
         </div>
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[15px] mb-3">Ações</h3>
@@ -1285,12 +1389,12 @@ function renderBanco(){
 
       <!-- UPLOAD DE ARQUIVOS -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados</h3>
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados <span class="ml-2 text-[10px] font-bold text-slate-400">build 3.11.2</span></h3>
         <p class="text-[13px] text-slate-500 mb-4">Selecione um ou mais arquivos JSON exportados do DBeaver.</p>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários)</label>
-            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onchange="handleMultipleUpload(this.files)">
+            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onclick="this.value=null" onchange="handleMultipleUpload(this.files,this)">
             <div id="upload-status" class="text-[12px]"></div>
             <div id="upload-progress" class="hidden mt-3">
               <div class="flex items-center gap-2 mb-2">
@@ -1430,79 +1534,127 @@ window.importarJsonDBeaver = function(dados){
 
 window.handleRarUpload = window.handleDatabaseUpload;
 
+// Mapeia o nome do arquivo para o nome da tabela.
+// REGRA DE OURO: se o nome já é um nome de tabela válido do banco (ex.: ITENS_LOCACAO,
+// CONTADOR_PAGINAS, DESPESAS_LOCACAO), mantém EXATAMENTE como está — jamais dobrar
+// tabelas "ITENS_*"/"DESPESAS_*" dentro de tabelas-pai (bug 3.11.0: misturava parque
+// dentro de LOCACAO e contadores dentro de LEITURAS). Heurísticas só valem para
+// arquivos com nomes soltos (com espaços/parênteses), ex.: "clientes (2).json".
+window.fbMapNomeTabela = function(nomeArquivo, primeiraLinha){
+  nomeArquivo = String(nomeArquivo||'').toUpperCase().trim();
+  if(/^[A-Z][A-Z0-9_]{1,40}$/.test(nomeArquivo)) return nomeArquivo;
+  if(/CLIENTE/.test(nomeArquivo)) return 'CLIENTES';
+  if(/CARTUCHO/.test(nomeArquivo)) return 'CARTUCHOS';
+  if(/PRODUTO/.test(nomeArquivo)) return 'PRODUTOS';
+  if(/ITEM.*VENDA|VENDA.*ITEM/.test(nomeArquivo)) return 'ITENS_VENDA';
+  if(/VENDA|NOTINHA|CUPOM/.test(nomeArquivo)) return 'VENDAS';
+  if(/EQUIP|IMPRESSORA|MAQUINA/.test(nomeArquivo)) return 'EQUIPAMENTOS';
+  if(/RECEB/.test(nomeArquivo)) return 'CONTAS_RECEBER';
+  if(/PAGAR|PAG_|DESPESA/.test(nomeArquivo)) return 'CONTAS_PAGAR';
+  if(/LOCACAO|CONTRATO/.test(nomeArquivo)) return 'LOCACAO';
+  if(/LEITURA|CONTADOR|MEDICAO/.test(nomeArquivo)) return 'LEITURAS';
+  if(primeiraLinha && typeof primeiraLinha === 'object'){
+    const cols = Object.keys(primeiraLinha).map(c => c.toUpperCase());
+    if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO')))) return 'CLIENTES';
+    if(cols.some(c => c.includes('PRODUTO') || c.includes('SKU'))) return 'PRODUTOS';
+    if(cols.some(c => c.includes('LEITURA') || c.includes('CONTADOR'))) return 'LEITURAS';
+    if(cols.some(c => c.includes('PATRIMONIO') || c.includes('NUMERO_SERIE'))) return 'EQUIPAMENTOS';
+    if(cols.some(c => c.includes('VENCIMENTO') && c.includes('CLIENTE'))) return 'CONTAS_RECEBER';
+    if(cols.some(c => c.includes('VENDA'))) return 'VENDAS';
+  }
+  return nomeArquivo;
+};
+
 // Upload de múltiplos arquivos JSON de uma vez
-window.handleMultipleUpload = async function(files){
-  const status = document.getElementById('upload-status');
-  const progress = document.getElementById('upload-progress');
-  const progressBar = document.getElementById('upload-progress-bar');
-  const progressText = document.getElementById('upload-progress-text');
-  const log = document.getElementById('upload-log');
-  
+window.handleMultipleUpload = async function(files, inputEl){
+  // Localiza os elementos do painel subindo a partir do próprio input clicado.
+  // Motivo: se a tela for re-renderizada e houver 2 painéis na página, getElementById
+  // poderia pegar o painel VELHO (invisível) e parecer que "nada acontece" (bug 3.11.1).
+  let panel = null;
+  if(inputEl){
+    let n = inputEl;
+    for(let i=0;i<10 && n;i++){
+      n = n.parentElement;
+      if(n && n.querySelector && n.querySelector('#upload-status')){ panel = n; break; }
+    }
+  }
+  const qs = function(sel){ return (panel && panel.querySelector(sel)) || document.getElementById(sel.slice(1)); };
+  const status = qs('#upload-status');
+  const progress = qs('#upload-progress');
+  const progressBar = qs('#upload-progress-bar');
+  const progressText = qs('#upload-progress-text');
+  const log = qs('#upload-log');
+
   if(!files || files.length === 0) return;
-  
-  progress.classList.remove('hidden');
-  log.innerHTML = '';
-  
-  const sess = getSession();
-  if(!sess) { status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
-  
-  const total = files.length;
-  let processados = 0;
-  let totalRegistros = 0;
-  const tabelasImportadas = {};
-  const rawData = {};
-  
-  status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Processando '+total+' arquivo(s)...</p>';
-  
-  for(const file of files){
-    try {
-      const text = await file.text();
-      const imported = JSON.parse(text);
-      
-      if(Array.isArray(imported)){
-        const nomeArquivo = file.name.replace('.json','').toUpperCase();
-        let nomeTabela = nomeArquivo;
-        
-        if(imported.length > 0){
-          const cols = Object.keys(imported[0]).map(c => c.toUpperCase());
-          if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO'))) || nomeArquivo.includes('CLIENTE')) nomeTabela = 'CLIENTES';
-          else if(cols.some(c => c.includes('PRODUTO') || c.includes('DESCRICAO')) || nomeArquivo.includes('PRODUTO') || nomeArquivo.includes('CARTUCHO')) nomeTabela = nomeArquivo.includes('CARTUCHO') ? 'CARTUCHOS' : 'PRODUTOS';
-          else if(cols.some(c => c.includes('VENDA')) || nomeArquivo.includes('VENDA')) nomeTabela = nomeArquivo.includes('ITEM') ? 'ITENS_VENDA' : 'VENDAS';
-          else if(cols.some(c => c.includes('EQUIP')) || nomeArquivo.includes('EQUIP')) nomeTabela = 'EQUIPAMENTOS';
-          else if(nomeArquivo.includes('RECEB')) nomeTabela = 'CONTAS_RECEBER';
-          else if(nomeArquivo.includes('PAGAR') || nomeArquivo.includes('PAG_')) nomeTabela = 'CONTAS_PAGAR';
-        }
-        
-        rawData[nomeTabela] = { data: imported, error: null };
-        tabelasImportadas[nomeTabela] = imported.length;
-        totalRegistros += imported.length;
-        log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
-        
-      } else if(typeof imported === 'object'){
-        const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
-        for(const [key, value] of Object.entries(dadosObj)){
-          if(Array.isArray(value) && value.length > 0){
-            rawData[key.toUpperCase()] = { data: value, error: null };
-            tabelasImportadas[key.toUpperCase()] = value.length;
-            totalRegistros += value.length;
-            log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+  console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
+
+  try {
+    if(progress) progress.classList.remove('hidden');
+    if(log) log.innerHTML = '';
+    if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
+
+    const sess = getSession();
+    if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
+
+    const total = files.length;
+    let processados = 0;
+    let totalRegistros = 0;
+    const tabelasImportadas = {};
+    const rawData = {};
+
+    for(const file of files){
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+
+        if(Array.isArray(imported)){
+          const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
+          const nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
+
+          // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
+          if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
+            rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
+          } else {
+            rawData[nomeTabela] = { data: imported, error: null };
+          }
+          tabelasImportadas[nomeTabela] = rawData[nomeTabela].data.length;
+          totalRegistros += imported.length;
+          if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
+
+        } else if(typeof imported === 'object' && imported !== null){
+          const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
+          for(const [key, value] of Object.entries(dadosObj)){
+            if(Array.isArray(value) && value.length > 0){
+              rawData[key.toUpperCase()] = { data: value, error: null };
+              tabelasImportadas[key.toUpperCase()] = value.length;
+              totalRegistros += value.length;
+              if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+            }
           }
         }
+      } catch(e){
+        if(log) log.innerHTML += '<div class="text-red-600">❌ '+file.name+': '+e.message+'</div>';
+        console.warn('[UPLOAD] erro no arquivo '+file.name, e);
       }
-    } catch(e){
-      log.innerHTML += '<div class="text-red-600">❌ '+file.name+': '+e.message+'</div>';
+
+      processados++;
+      const pct = Math.round((processados/total)*100);
+      if(progressBar) progressBar.style.width = pct+'%';
+      if(progressText) progressText.textContent = pct+'% ('+processados+'/'+total+')';
+      // cede o fio para o navegador PINTAR o progresso entre arquivos
+      await new Promise(r=>setTimeout(r,0));
+      if(log) log.scrollTop = log.scrollHeight;
     }
-    
-    processados++;
-    const pct = Math.round((processados/total)*100);
-    progressBar.style.width = pct+'%';
-    progressText.textContent = pct+'%';
+
+    const tabelasCount = Object.keys(tabelasImportadas).length;
+    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
+
+    window._rawDataParaImportar = rawData;
+    console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
+  } catch(e){
+    console.error('[UPLOAD] falha geral', e);
+    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
   }
-  
-  const tabelasCount = Object.keys(tabelasImportadas).length;
-  status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
-  
-  window._rawDataParaImportar = rawData;
 };
 
 window.importarTudoDeUmaVez = function(){
@@ -1518,20 +1670,15 @@ window.enviarDiretoParaSupabase = async function(){
   const rawData = window._rawDataParaImportar;
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   fbImportToErp(rawData);
-  setTimeout(async function(){
-    if(typeof window.enviarDadosLocaisParaNuvem === 'function'){
-      // Chamada automática sem o confirm
-      try {
-        const payload = { key:'digicopy_erp_state_v1', data:db, updated_at:new Date().toISOString() };
-        await window.supabaseRequest('app_state?on_conflict=key', { method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=representation'}, body:JSON.stringify(payload) });
-        toast('✅ Dados enviados para Supabase! Todos os PCs podem acessar.','success');
-      } catch(err) {
-        toast('Erro ao enviar: '+(err.message||err),'error');
-      }
-    } else {
-      toast('Supabase não disponível. Envie manualmente na seção abaixo.','info');
+  toast('Dados importados! Enviando para a nuvem em partes (sem timeout)...','info');
+  if(typeof window.syncEnviarParaNuvem === 'function'){
+    const r = await window.syncEnviarParaNuvem({confirmar:false});
+    if(r && r.ok){
+      toast('✅ Dados no Supabase! Nos outros PCs, clique em "Carregar da nuvem".','success');
     }
-  }, 2000);
+  } else {
+    toast('Supabase não disponível nesta página. Recarregue e tente pela seção Supabase abaixo.','info');
+  }
 };
 
 window.copiarSqlExportarTudo = function(){
@@ -1804,6 +1951,60 @@ function fbImportToErp(rawData){
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 
+  // ── ÍNDICES DE VÍNCULO (sistema antigo → ERP novo) ──
+  // Reimportação = modo "upsert/cura": registros migrados existentes são ATUALIZADOS,
+  // nunca duplicados. Manuais (criadoPor!=='migracao') nunca são tocados.
+  const ehMigracao = r => r && (r.criadoPor==='migracao' || r.origem==='migracao');
+  const sStr = v => (v===undefined||v===null) ? '' : String(v).trim();
+  const rawCliAll = findTable(rawData, ['CLIENTES']) || [];
+  const idxRawCliPorCodigo = {};
+  rawCliAll.forEach(r=>{ const k=sStr(r.CODIGO||r.ID||r.COD_CLIENTE); if(k) idxRawCliPorCodigo[k]=r; });
+  // Vendedores/atendentes: varre TODAS as tabelas de pessoas do sistema antigo
+  // (FUNCIONARIOS, VENDEDORES, USUARIOS, ENTREGADORES...) — antes só a primeira
+  // tabela encontrada era usada e vários códigos ficavam sem nome.
+  const idxFuncPorCodigo = {};
+  const padraoPessoas = /VENDEDOR|ENTREG|FUNCION|USUARIO|ATENDENT|OPERADOR|TECNIC|REPRESENT|CAIXA/i;
+  Object.keys(rawData||{}).forEach(key=>{
+    if(!padraoPessoas.test(key)) return;
+    const rows=(rawData[key]&&rawData[key].data)||[];
+    rows.forEach(r=>{
+      const k=sStr(r.CODIGO||r.COD_VENDEDOR||r.COD_FUNCIONARIO||r.COD_USUARIO||r.COD_ATENDENTE||r.COD_ENTREGADOR||r.ID);
+      const n=sStr(r.NOME||r.NOME_VENDEDOR||r.VENDEDOR||r.NOME_FUNCIONARIO||r.FUNCIONARIO||r.NOME_USUARIO||r.USUARIO||r.LOGIN||r.OPERADOR);
+      if(k&&n&&!idxFuncPorCodigo[k]) idxFuncPorCodigo[k]=n;
+    });
+  });
+  // garante que vendedores do sistema antigo existam como técnicos
+  Object.values(idxFuncPorCodigo).forEach(nome=>{
+    if(!db.tecnicos.find(t=>(t.nome||'').toLowerCase()===nome.toLowerCase())) db.tecnicos.push({id:uid('tec'),nome,especialidade:'Migrado',osConcluidas:0});
+  });
+  const nomeClientePorCodigo = cod => {
+    const k=sStr(cod); if(!k) return '';
+    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); if(vinc) return vinc.nome;
+    const raw=idxRawCliPorCodigo[k]; if(raw) return sStr(raw.NOME||raw.RAZAO_SOCIAL||raw.NOME_FANTASIA||raw.FANTASIA);
+    return '';
+  };
+  const idClientePorCodigo = cod => {
+    const k=sStr(cod); if(!k) return null;
+    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); return vinc?vinc.id:null;
+  };
+  const nomeVendedor = row => {
+    const cod=sStr(row.COD_ENTREGADOR||row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
+    return sStr(idxFuncPorCodigo[cod]||row.ENTREGADOR_NOME||row.NOME_ENTREGADOR||row.VENDEDOR_NOME||row.NOME_VENDEDOR||row.USUARIO_NOME||row.NOME_USUARIO||row.ATENDENTE||row.FUNCIONARIO||'') || userName;
+  };
+  const rawItensAll = findTable(rawData, ['ITENS_VENDA','VENDA_ITENS','ITENS_VENDAS','VENDAS_ITENS']) || [];
+  const rawProdAll = findTable(rawData, ['PRODUTOS','CARTUCHOS']) || [];
+  const idxRawProdPorCodigo = {};
+  rawProdAll.forEach(r=>{ const k=sStr(r.CODIGO||r.COD_PRODUTO||r.ID||r.SKU); if(k) idxRawProdPorCodigo[k]=r; });
+  const normStatusVenda = st => {
+    const s=sStr(st).toUpperCase();
+    if(!s) return 'faturado';
+    if(['F','FINALIZADA','FINALIZADO','FATURADA','FATURADO','CONCLUIDA','CONCLUIDO'].includes(s)) return 'faturado';
+    if(['O','ORCAMENTO','ORÇAMENTO'].includes(s)) return 'orcamento';
+    if(['A','AGUARDAR','ABERTA','ABERTO','PENDENTE'].includes(s)) return 'aguardar';
+    if(['C','CANCELADA','CANCELADO'].includes(s)) return 'cancelada';
+    return s.toLowerCase();
+  };
+
   // ── CLIENTES ──
   const rawClientes = findTable(rawData, ['CLIENTES']);
   if(rawClientes && rawClientes.length){
@@ -1811,13 +2012,12 @@ function fbImportToErp(rawData){
       const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || '';
       if(!nome.trim()) return;
       const doc = row.CNPJ || row.CPF || row.DOCUMENTO || '';
-      // Verificar duplicado por documento
-      const existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc) && doc);
-      if(existing) return;
-      const id = uid('cli');
-      db.clientes.push({
-        id, empresaId: empId,
-        codigoAntigo: row.CODIGO || row.ID || row.COD_CLIENTE || '',
+      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || '');
+      // Upsert: por código antigo, senão por documento — nunca duplica migrado
+      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && sStr(c.codigoAntigo) === codAntigo) : null;
+      if(!existing && doc) existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc));
+      const dados = {
+        codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
         nome: nome.trim(),
         fantasia: row.FANTASIA || row.NOME_FANTASIA || '',
         documento: doc,
@@ -1830,10 +2030,11 @@ function fbImportToErp(rawData){
         cep: row.CEP || '',
         status: 'ativo',
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
-        criadoEm: new Date().toISOString(),
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+      };
+      if(existing){ Object.assign(existing, dados); result.clientes++; return; }
+      if(codAntigo && db.clientes.find(c => c.empresaId === empId && sStr(c.codigoAntigo) === codAntigo)) return; // manual com mesmo código: não duplica
+      const id = uid('cli');
+      db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
       result.clientes++;
     });
   }
@@ -1845,10 +2046,8 @@ function fbImportToErp(rawData){
       const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
       if(!nome.trim()) return;
       const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || uid('prd');
-      const existing = db.produtos.find(p => p.empresaId === empId && p.sku === sku);
-      if(existing) return;
-      db.produtos.push({
-        id: uid('prd'), empresaId: empId,
+      const existing = db.produtos.find(p => p.empresaId === empId && String(p.sku) === String(sku));
+      const dadosProd = {
         sku: String(sku),
         nome: nome.trim(),
         categoria: row.CATEGORIA || row.TIPO || 'Geral',
@@ -1858,11 +2057,11 @@ function fbImportToErp(rawData){
         custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || 0) || 0,
         preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || 0) || 0,
         local: row.LOCALIZACAO || row.LOCAL || '',
-        status: 'ativo',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: 'ativo'
+      };
+      if(existing && ehMigracao(existing)){ Object.assign(existing, dadosProd); result.produtos++; return; }
+      if(existing) return; // produto manual: não mexe
+      db.produtos.push(Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd));
       result.produtos++;
     });
   }
@@ -1874,47 +2073,71 @@ function fbImportToErp(rawData){
       const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
       if(!modelo.trim()) return;
       const serie = row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || uid('eq');
-      const existing = db.equipamentos.find(e => e.empresaId === empId && e.serie === serie);
-      if(existing) return;
-      db.equipamentos.push({
-        id: uid('eq'), empresaId: empId,
+      const existing = db.equipamentos.find(e => e.empresaId === empId && String(e.serie) === String(serie));
+      const dadosEq = {
         modelo: modelo.trim(),
         tipo: row.TIPO || 'Laser',
         serie: String(serie),
         patrimonio: row.PATRIMONIO || String(serie),
         contadorPB: parseInt(row.CONTADOR_PB || row.CONTADOR || 0) || 0,
         contadorCor: parseInt(row.CONTADOR_COR || 0) || 0,
-        status: row.STATUS || 'disponivel',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: row.STATUS || 'disponivel'
+      };
+      if(existing && ehMigracao(existing)){ Object.assign(existing, dadosEq); result.equipamentos++; return; }
+      if(existing) return;
+      db.equipamentos.push(Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq));
       result.equipamentos++;
     });
   }
 
-  // ── VENDAS ──
+  // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
   const rawVendas = findTable(rawData, ['VENDAS']);
+  // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
+  const itensPorVenda = {};
+  rawItensAll.forEach(ir => {
+    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA);
+    if(!codV) return;
+    const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
+    const rawProd = idxRawProdPorCodigo[codProd];
+    const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
+    const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
+    const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
+    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || 0) || (qtd*unit);
+    (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
+      _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
+      produtoId: prodVinc ? prodVinc.id : null,
+      descricao: sStr(ir.DESCRICAO || (rawProd && (rawProd.DESCRICAO || rawProd.NOME || rawProd.PRODUTO)) || (prodVinc && prodVinc.nome) || ''),
+      qtd, preco: unit, subtotal: sub
+    });
+  });
+  Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
-      const numero = row.NUMERO || row.CODIGO || row.ID || uid('vda');
-      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === String(numero));
-      if(existing) return;
-      db.vendas.push({
-        id: uid('vda'), empresaId: empId,
-        numero: String(numero),
-        clienteId: null, // precisa mapear depois
-        clienteNomeAntigo: row.CLIENTE || row.NOME_CLIENTE || '',
+      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || '');
+      if(!numero) return;
+      const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
+      const vendedor = nomeVendedor(row);
+      const dadosV = {
+        numero,
+        clienteId: idClientePorCodigo(codCli),
+        clienteNomeAntigo: nomeClientePorCodigo(codCli) || sStr(row.CLIENTE || row.NOME_CLIENTE),
+        codClienteAntigo: codCli,
+        codVendedorAntigo: sStr(row.COD_VENDEDOR || row.COD_FUNCIONARIO || row.COD_USUARIO || ''),
+        atendenteNome: vendedor,
+        abertoPorNome: sStr(row.USUARIO_NOME || row.NOME_USUARIO || row.ABERTO_POR || row.OPERADOR_NOME || row.OPERADOR || ''),
         data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
-        itens: [],
+        itens: (itensPorVenda[numero]||[]).map(it=>({produtoId: it.produtoId, descricao: it.descricao, qtd: it.qtd, preco: it.preco, subtotal: it.subtotal})),
         desconto: parseFloat(row.DESCONTO || 0) || 0,
         total: parseFloat(row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
-        status: row.STATUS || 'faturado',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: normStatusVenda(row.STATUS || row.SITUACAO),
+        vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
+        criadoPorNome: vendedor
+      };
+      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
+      if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
+      if(existing){ Object.assign(existing, dadosV); result.vendas++; return; }
+      db.vendas.push(Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV));
       result.vendas++;
     });
   }
@@ -1923,19 +2146,25 @@ function fbImportToErp(rawData){
   const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
   if(rawCR && rawCR.length){
     rawCR.forEach(row => {
-      db.contasReceber.push({
-        id: uid('cr'), empresaId: empId,
-        origem: 'migracao',
-        clienteId: null,
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || '');
+      const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA);
+      const dadosCR = {
+        legadoCodigo,
+        clienteId: idClientePorCodigo(codCli),
+        clienteNomeAntigo: nomeClientePorCodigo(codCli),
         descricao: row.DESCRICAO || row.HISTORICO || `Título migrado ${row.CODIGO || row.ID || ''}`,
         valor: parseFloat(row.VALOR || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        contratoId: null, leituraId: null, vendaId: null,
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+      };
+      // Match por código legado; rows antigas (import sem código) caem pela chave natural
+      let existing = (legadoCodigo && db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
+        || db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
+            && c.descricao === dadosCR.descricao && Math.abs((c.valor||0)-dadosCR.valor) < 0.005
+            && String(c.vencimento||'').slice(0,10) === String(dadosCR.vencimento||'').slice(0,10));
+      if(existing){ Object.assign(existing, dadosCR); result.financeiro++; return; }
+      db.contasReceber.push(Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR));
       result.financeiro++;
     });
   }
@@ -1943,22 +2172,27 @@ function fbImportToErp(rawData){
   const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
   if(rawCP && rawCP.length){
     rawCP.forEach(row => {
-      db.contasPagar.push({
-        id: uid('cp'), empresaId: empId,
+      const legadoCodigo = sStr(row.CODIGO || row.ID || '');
+      const dadosCP = {
+        legadoCodigo,
         descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
         valor: parseFloat(row.VALOR || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        categoria: row.CATEGORIA || row.TIPO || 'Geral',
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+        categoria: row.CATEGORIA || row.TIPO || 'Geral'
+      };
+      const existing = (legadoCodigo && db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
+        || db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
+            && c.descricao === dadosCP.descricao && Math.abs((c.valor||0)-dadosCP.valor) < 0.005
+            && String(c.vencimento||'').slice(0,10) === String(dadosCP.vencimento||'').slice(0,10));
+      if(existing){ Object.assign(existing, dadosCP); result.financeiro++; return; }
+      db.contasPagar.push(Object.assign({id: uid('cp'), empresaId: empId, origem: 'migracao', criadoPor: 'migracao', criadoPorNome: userName}, dadosCP));
       result.financeiro++;
     });
   }
 
-  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Navegue pelos módulos para conferir.`,'success');
+  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Reimportar os mesmos JSONs só ATUALIZA os dados (nunca duplica). Navegue pelos módulos para conferir.`,'success');
   toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
 
   // Mostrar resultado dos módulos mapeados
@@ -2022,6 +2256,7 @@ function fbImportToErp(rawData){
     `;
   }
 
+  db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
   saveDB();
   logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
   buildNav(); // Atualizar menu para mostrar módulos dinâmicos
@@ -2070,3 +2305,33 @@ async function fbExportExtracted(){
   }
 }
 
+
+// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
+// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
+window.addEventListener('DOMContentLoaded',function(){
+  try{
+    if(location.hostname!=='raw.githack.com') return;
+    if(document.getElementById('rawgh-banner')) return;
+    const bar=document.createElement('div');
+    bar.id='rawgh-banner';
+    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
+    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
+    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
+      +'<div style="font-size:22px;line-height:1">⚠️</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
+      +'<div style="color:#78350f;font-size:12.5px;margin-top:3px;line-height:1.45">Tudo salvo neste endereço <b>não aparece</b> no link oficial (raw<b>cdn</b>.githack). Para migrar estes dados: <b>1)</b> clique em <b>Enviar para nuvem</b> aqui (menu Migração) e aguarde "PUBLICADO E VERIFICADO"; <b>2)</b> abra o link oficial; <b>3)</b> clique em <b>Carregar da nuvem</b> lá. Depois use só o link oficial.</div>'
+      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
+      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
+      +'</div></div></div>';
+    document.body.appendChild(bar);
+    const btnCopy=document.getElementById('rawgh-copy');
+    if(btnCopy) btnCopy.onclick=function(){
+      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
+      catch(e){ prompt('Copie o link oficial:', urlOficial); }
+    };
+    const btnClose=document.getElementById('rawgh-close');
+    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
+  }catch(e){ /* silencioso */ }
+});
