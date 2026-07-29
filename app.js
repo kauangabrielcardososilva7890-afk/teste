@@ -859,10 +859,10 @@ function saveOS(){
 
 function renderVendas(){
   const sess=getSession(); if(!sess) return;
-  const search=(document.getElementById('search-vendas')?.value||'').toLowerCase(); let list=db.vendas.filter(v=>v.empresaId===sess.empresaId && (!search||v.numero.toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.nome||'').toLowerCase().includes(search))).sort((a,b)=>new Date(b.data)-new Date(a.data));
+  const search=(document.getElementById('search-vendas')?.value||'').toLowerCase(); let list=db.vendas.filter(v=>v.empresaId===sess.empresaId && (!search||v.numero.toLowerCase().includes(search)||(db.clientes.find(c=>c.id===v.clienteId)?.nome||'').toLowerCase().includes(search))).sort((a,b)=>(new Date(b.data)-new Date(a.data))||((parseInt(a.numero)||0)-(parseInt(b.numero)||0)));
   document.getElementById('tbody-vendas').innerHTML=list.map(v=>{const cli=db.clientes.find(c=>c.id===v.clienteId); return `<tr class="hover:bg-slate-50 cursor-pointer" onclick="showVenda('${v.id}')"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por <b>${v.criadoPorNome||'-'}</b> • ${fmtDate(v.data)}</p></td><td class="px-5 py-3"><p class="text-[12px]">${v.itens.length} itens</p><p class="font-bold text-[13px]">${fmtMoney(v.total)}</p></td><td class="px-5 py-3"><p class="text-[12px]">${v.formaPagamento}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${v.status==='faturado'?'bg-emerald-50 text-emerald-700 border':'bg-amber-50 text-amber-700 border'}">${v.status}</span></td><td class="px-5 py-3"><button onclick="event.stopPropagation(); deleteVenda('${v.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></td></tr>`;}).join('');
 }
-function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} • ${fmtDateTime(v.data)} • ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div><div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2"><button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button></div>`;}
+function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} • ${fmtDateTime(v.data)} • ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div><div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||it.descricao||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2"><button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button></div>`;}
 function novaVenda(){
   const sess=getSession(); const cliOpts=db.clientes.filter(c=>c.empresaId===sess.empresaId).map(c=>`<option value="${c.id}">${c.nome}</option>`).join(''); const prodOpts=db.produtos.filter(p=>p.empresaId===sess.empresaId).map(p=>`<option value="${p.id}">${p.sku} - ${p.nome} • ${fmtMoney(p.preco)} • est ${p.estoque}</option>`).join('');
   document.getElementById('modal-title').innerText='Nova venda / Orçamento';
@@ -939,7 +939,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.9.8 (travas anti-demonstração no envio e na carga)');
+  console.log('DIGICOPY ERP — build 3.9.9 (importacao com vinculo cliente/vendedor/itens + upsert anti-duplicata)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -1849,6 +1849,49 @@ function fbImportToErp(rawData){
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 
+  // ── ÍNDICES DE VÍNCULO (sistema antigo → ERP novo) ──
+  // Reimportação = modo "upsert/cura": registros migrados existentes são ATUALIZADOS,
+  // nunca duplicados. Manuais (criadoPor!=='migracao') nunca são tocados.
+  const ehMigracao = r => r && (r.criadoPor==='migracao' || r.origem==='migracao');
+  const sStr = v => (v===undefined||v===null) ? '' : String(v).trim();
+  const rawCliAll = findTable(rawData, ['CLIENTES']) || [];
+  const idxRawCliPorCodigo = {};
+  rawCliAll.forEach(r=>{ const k=sStr(r.CODIGO||r.ID||r.COD_CLIENTE); if(k) idxRawCliPorCodigo[k]=r; });
+  const rawFuncAll = findTable(rawData, ['FUNCIONARIOS','FUNCIONARIO','VENDEDORES','VENDEDOR','ATENDENTES','USUARIOS']) || [];
+  const idxFuncPorCodigo = {};
+  rawFuncAll.forEach(r=>{ const k=sStr(r.CODIGO||r.COD_FUNCIONARIO||r.ID); const n=sStr(r.NOME||r.NOME_FUNCIONARIO||r.FUNCIONARIO||r.LOGIN); if(k&&n) idxFuncPorCodigo[k]=n; });
+  // garante que vendedores do sistema antigo existam como técnicos
+  Object.values(idxFuncPorCodigo).forEach(nome=>{
+    if(!db.tecnicos.find(t=>(t.nome||'').toLowerCase()===nome.toLowerCase())) db.tecnicos.push({id:uid('tec'),nome,especialidade:'Migrado',osConcluidas:0});
+  });
+  const nomeClientePorCodigo = cod => {
+    const k=sStr(cod); if(!k) return '';
+    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); if(vinc) return vinc.nome;
+    const raw=idxRawCliPorCodigo[k]; if(raw) return sStr(raw.NOME||raw.RAZAO_SOCIAL||raw.NOME_FANTASIA||raw.FANTASIA);
+    return '';
+  };
+  const idClientePorCodigo = cod => {
+    const k=sStr(cod); if(!k) return null;
+    const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); return vinc?vinc.id:null;
+  };
+  const nomeVendedor = row => {
+    const cod=sStr(row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
+    return sStr(idxFuncPorCodigo[cod]||row.VENDEDOR_NOME||row.NOME_VENDEDOR||row.USUARIO_NOME||row.ATENDENTE||row.FUNCIONARIO||'') || userName;
+  };
+  const rawItensAll = findTable(rawData, ['ITENS_VENDA','VENDA_ITENS','ITENS_VENDAS','VENDAS_ITENS']) || [];
+  const rawProdAll = findTable(rawData, ['PRODUTOS','CARTUCHOS']) || [];
+  const idxRawProdPorCodigo = {};
+  rawProdAll.forEach(r=>{ const k=sStr(r.CODIGO||r.COD_PRODUTO||r.ID||r.SKU); if(k) idxRawProdPorCodigo[k]=r; });
+  const normStatusVenda = st => {
+    const s=sStr(st).toUpperCase();
+    if(!s) return 'faturado';
+    if(['F','FINALIZADA','FINALIZADO','FATURADA','FATURADO','CONCLUIDA','CONCLUIDO'].includes(s)) return 'faturado';
+    if(['O','ORCAMENTO','ORÇAMENTO'].includes(s)) return 'orcamento';
+    if(['A','AGUARDAR','ABERTA','ABERTO','PENDENTE'].includes(s)) return 'aguardar';
+    if(['C','CANCELADA','CANCELADO'].includes(s)) return 'cancelada';
+    return s.toLowerCase();
+  };
+
   // ── CLIENTES ──
   const rawClientes = findTable(rawData, ['CLIENTES']);
   if(rawClientes && rawClientes.length){
@@ -1856,13 +1899,12 @@ function fbImportToErp(rawData){
       const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || '';
       if(!nome.trim()) return;
       const doc = row.CNPJ || row.CPF || row.DOCUMENTO || '';
-      // Verificar duplicado por documento
-      const existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc) && doc);
-      if(existing) return;
-      const id = uid('cli');
-      db.clientes.push({
-        id, empresaId: empId,
-        codigoAntigo: row.CODIGO || row.ID || row.COD_CLIENTE || '',
+      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || '');
+      // Upsert: por código antigo, senão por documento — nunca duplica migrado
+      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && sStr(c.codigoAntigo) === codAntigo) : null;
+      if(!existing && doc) existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc));
+      const dados = {
+        codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
         nome: nome.trim(),
         fantasia: row.FANTASIA || row.NOME_FANTASIA || '',
         documento: doc,
@@ -1875,10 +1917,11 @@ function fbImportToErp(rawData){
         cep: row.CEP || '',
         status: 'ativo',
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
-        criadoEm: new Date().toISOString(),
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+      };
+      if(existing){ Object.assign(existing, dados); result.clientes++; return; }
+      if(codAntigo && db.clientes.find(c => c.empresaId === empId && sStr(c.codigoAntigo) === codAntigo)) return; // manual com mesmo código: não duplica
+      const id = uid('cli');
+      db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
       result.clientes++;
     });
   }
@@ -1890,10 +1933,8 @@ function fbImportToErp(rawData){
       const nome = row.DESCRICAO || row.NOME || row.PRODUTO || '';
       if(!nome.trim()) return;
       const sku = row.CODIGO || row.SKU || row.COD_PRODUTO || uid('prd');
-      const existing = db.produtos.find(p => p.empresaId === empId && p.sku === sku);
-      if(existing) return;
-      db.produtos.push({
-        id: uid('prd'), empresaId: empId,
+      const existing = db.produtos.find(p => p.empresaId === empId && String(p.sku) === String(sku));
+      const dadosProd = {
         sku: String(sku),
         nome: nome.trim(),
         categoria: row.CATEGORIA || row.TIPO || 'Geral',
@@ -1903,11 +1944,11 @@ function fbImportToErp(rawData){
         custo: parseFloat(row.CUSTO || row.PRECO_CUSTO || 0) || 0,
         preco: parseFloat(row.PRECO || row.VALOR || row.PRECO_VENDA || 0) || 0,
         local: row.LOCALIZACAO || row.LOCAL || '',
-        status: 'ativo',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: 'ativo'
+      };
+      if(existing && ehMigracao(existing)){ Object.assign(existing, dadosProd); result.produtos++; return; }
+      if(existing) return; // produto manual: não mexe
+      db.produtos.push(Object.assign({id: uid('prd'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosProd));
       result.produtos++;
     });
   }
@@ -1919,47 +1960,70 @@ function fbImportToErp(rawData){
       const modelo = row.MODELO || row.DESCRICAO || row.EQUIPAMENTO || '';
       if(!modelo.trim()) return;
       const serie = row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || uid('eq');
-      const existing = db.equipamentos.find(e => e.empresaId === empId && e.serie === serie);
-      if(existing) return;
-      db.equipamentos.push({
-        id: uid('eq'), empresaId: empId,
+      const existing = db.equipamentos.find(e => e.empresaId === empId && String(e.serie) === String(serie));
+      const dadosEq = {
         modelo: modelo.trim(),
         tipo: row.TIPO || 'Laser',
         serie: String(serie),
         patrimonio: row.PATRIMONIO || String(serie),
         contadorPB: parseInt(row.CONTADOR_PB || row.CONTADOR || 0) || 0,
         contadorCor: parseInt(row.CONTADOR_COR || 0) || 0,
-        status: row.STATUS || 'disponivel',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: row.STATUS || 'disponivel'
+      };
+      if(existing && ehMigracao(existing)){ Object.assign(existing, dadosEq); result.equipamentos++; return; }
+      if(existing) return;
+      db.equipamentos.push(Object.assign({id: uid('eq'), empresaId: empId, criadoPor: 'migracao', criadoPorNome: userName, criadoEm: new Date().toISOString()}, dadosEq));
       result.equipamentos++;
     });
   }
 
-  // ── VENDAS ──
+  // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
   const rawVendas = findTable(rawData, ['VENDAS']);
+  // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
+  const itensPorVenda = {};
+  rawItensAll.forEach(ir => {
+    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA);
+    if(!codV) return;
+    const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
+    const rawProd = idxRawProdPorCodigo[codProd];
+    const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
+    const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
+    const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
+    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || 0) || (qtd*unit);
+    (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
+      _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
+      produtoId: prodVinc ? prodVinc.id : null,
+      descricao: sStr(ir.DESCRICAO || (rawProd && (rawProd.DESCRICAO || rawProd.NOME || rawProd.PRODUTO)) || (prodVinc && prodVinc.nome) || ''),
+      qtd, preco: unit, subtotal: sub
+    });
+  });
+  Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
-      const numero = row.NUMERO || row.CODIGO || row.ID || uid('vda');
-      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === String(numero));
-      if(existing) return;
-      db.vendas.push({
-        id: uid('vda'), empresaId: empId,
-        numero: String(numero),
-        clienteId: null, // precisa mapear depois
-        clienteNomeAntigo: row.CLIENTE || row.NOME_CLIENTE || '',
+      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || '');
+      if(!numero) return;
+      const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
+      const vendedor = nomeVendedor(row);
+      const dadosV = {
+        numero,
+        clienteId: idClientePorCodigo(codCli),
+        clienteNomeAntigo: nomeClientePorCodigo(codCli) || sStr(row.CLIENTE || row.NOME_CLIENTE),
+        codClienteAntigo: codCli,
+        codVendedorAntigo: sStr(row.COD_VENDEDOR || row.COD_FUNCIONARIO || row.COD_USUARIO || ''),
+        atendenteNome: vendedor,
         data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
-        itens: [],
+        itens: (itensPorVenda[numero]||[]).map(it=>({produtoId: it.produtoId, descricao: it.descricao, qtd: it.qtd, preco: it.preco, subtotal: it.subtotal})),
         desconto: parseFloat(row.DESCONTO || 0) || 0,
         total: parseFloat(row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
-        status: row.STATUS || 'faturado',
-        criadoPor: 'migracao',
-        criadoPorNome: userName,
-        criadoEm: new Date().toISOString()
-      });
+        status: normStatusVenda(row.STATUS || row.SITUACAO),
+        vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
+        criadoPorNome: vendedor
+      };
+      const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
+      if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
+      if(existing){ Object.assign(existing, dadosV); result.vendas++; return; }
+      db.vendas.push(Object.assign({id: uid('vda'), empresaId: empId, criadoPor: 'migracao', criadoEm: new Date().toISOString()}, dadosV));
       result.vendas++;
     });
   }
@@ -1968,19 +2032,25 @@ function fbImportToErp(rawData){
   const rawCR = findTable(rawData, ['CONTAS_RECEBER']);
   if(rawCR && rawCR.length){
     rawCR.forEach(row => {
-      db.contasReceber.push({
-        id: uid('cr'), empresaId: empId,
-        origem: 'migracao',
-        clienteId: null,
+      const legadoCodigo = sStr(row.CODIGO || row.ID || row.COD_TITULO || '');
+      const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA);
+      const dadosCR = {
+        legadoCodigo,
+        clienteId: idClientePorCodigo(codCli),
+        clienteNomeAntigo: nomeClientePorCodigo(codCli),
         descricao: row.DESCRICAO || row.HISTORICO || `Título migrado ${row.CODIGO || row.ID || ''}`,
         valor: parseFloat(row.VALOR || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        contratoId: null, leituraId: null, vendaId: null,
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+      };
+      // Match por código legado; rows antigas (import sem código) caem pela chave natural
+      let existing = (legadoCodigo && db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
+        || db.contasReceber.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
+            && c.descricao === dadosCR.descricao && Math.abs((c.valor||0)-dadosCR.valor) < 0.005
+            && String(c.vencimento||'').slice(0,10) === String(dadosCR.vencimento||'').slice(0,10));
+      if(existing){ Object.assign(existing, dadosCR); result.financeiro++; return; }
+      db.contasReceber.push(Object.assign({id: uid('cr'), empresaId: empId, origem: 'migracao', contratoId: null, leituraId: null, vendaId: null, criadoPor: 'migracao', criadoPorNome: userName}, dadosCR));
       result.financeiro++;
     });
   }
@@ -1988,22 +2058,27 @@ function fbImportToErp(rawData){
   const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
   if(rawCP && rawCP.length){
     rawCP.forEach(row => {
-      db.contasPagar.push({
-        id: uid('cp'), empresaId: empId,
+      const legadoCodigo = sStr(row.CODIGO || row.ID || '');
+      const dadosCP = {
+        legadoCodigo,
         descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
         valor: parseFloat(row.VALOR || 0) || 0,
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
         pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
         status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        categoria: row.CATEGORIA || row.TIPO || 'Geral',
-        criadoPor: 'migracao',
-        criadoPorNome: userName
-      });
+        categoria: row.CATEGORIA || row.TIPO || 'Geral'
+      };
+      const existing = (legadoCodigo && db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
+        || db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
+            && c.descricao === dadosCP.descricao && Math.abs((c.valor||0)-dadosCP.valor) < 0.005
+            && String(c.vencimento||'').slice(0,10) === String(dadosCP.vencimento||'').slice(0,10));
+      if(existing){ Object.assign(existing, dadosCP); result.financeiro++; return; }
+      db.contasPagar.push(Object.assign({id: uid('cp'), empresaId: empId, origem: 'migracao', criadoPor: 'migracao', criadoPorNome: userName}, dadosCP));
       result.financeiro++;
     });
   }
 
-  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Navegue pelos módulos para conferir.`,'success');
+  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Reimportar os mesmos JSONs só ATUALIZA os dados (nunca duplica). Navegue pelos módulos para conferir.`,'success');
   toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
 
   // Mostrar resultado dos módulos mapeados
