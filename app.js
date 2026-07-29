@@ -13,26 +13,68 @@ const defaultData={
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras LTDA',cnpj:'12.345.678/0001-90',fone:'(11) 3333-4444',email:'contato@digicopy.com.br'}}
 };
 
+// Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
+// vezes mais dados no navegador. Formatos antigos (JSON puro) continuam lendo.
+function storageEncode(obj){
+  const txt=JSON.stringify(obj);
+  try{
+    if(window.LZUTF16 && typeof window.LZUTF16.compress==='function') return 'LZ1:'+window.LZUTF16.compress(txt);
+  }catch(eLz){ /* sem compressão: cai no plano B abaixo */ }
+  return txt;
+}
+function storageDecode(raw){
+  if(raw && raw.startsWith('LZ1:')){
+    if(window.LZUTF16 && typeof window.LZUTF16.decompress==='function'){
+      const txt=window.LZUTF16.decompress(raw.slice(4));
+      if(txt) return txt;
+    }
+    throw new Error('dados comprimidos ilegiveis');
+  }
+  return raw;
+}
+function normalizeDbShape(parsed){
+  // Migração defensiva para versões antigas salvas no navegador.
+  ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+    if(!Array.isArray(parsed[k])) parsed[k]=[];
+  });
+  if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
+  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+  if(!parsed.config) parsed.config=structuredClone(defaultData.config);
+  if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
+  parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
+  return parsed;
+}
 function loadDB(){
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
-    const parsed=JSON.parse(raw);
-    // Migração defensiva para versões antigas salvas no navegador.
-    ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
-      if(!Array.isArray(parsed[k])) parsed[k]=[];
-    });
-    if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
-    if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
-    if(!parsed.config) parsed.config=structuredClone(defaultData.config);
-    if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
-    parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
-    return parsed;
+    return normalizeDbShape(JSON.parse(storageDecode(raw)));
   }catch{
     return structuredClone(defaultData);
   }
 }
-function saveDB(){localStorage.setItem(DB_KEY, JSON.stringify(db));}
+function saveDB(){
+  let dado;
+  try{ dado=storageEncode(db); }catch(eEnc){ dado=JSON.stringify(db); }
+  try{
+    localStorage.setItem(DB_KEY, dado);
+    window.__dbPersistidoOk=true;
+  }catch(eQuota){
+    // Cota do navegador cheia: limpa sobras grandes (backups/chaves antigas) e tenta 1x de novo
+    try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
+    try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
+    try{
+      localStorage.setItem(DB_KEY, dado);
+      window.__dbPersistidoOk=true;
+    }catch(eQuota2){
+      window.__dbPersistidoOk=false;
+      if(!window.__avisouQuota){
+        window.__avisouQuota=true;
+        if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
+      }
+    }
+  }
+}
 let db=loadDB();
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
@@ -939,7 +981,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.10.0 (vendas com filtro/ordem/historico + nomes migrados em tudo + sincronizacao automatica)');
+  console.log('DIGICOPY ERP — build 3.10.1 (localStorage comprimido p/ base grande + menu Locacao clicavel + sync automatica)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();

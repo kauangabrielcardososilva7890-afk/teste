@@ -60,6 +60,7 @@
   </div>
 </div>
 
+<script src="./lz.js"></script>
 <script>
 const SUPA_URL = 'https://abfzubhivcarwiynuvhz.supabase.co/rest/v1';
 const SUPA_KEY = 'sb_publishable_O91tDfAY_vrtp8feezXXkA_aNhpCjJH';
@@ -77,7 +78,7 @@ async function supa(path){
 (async function(){
   const out = { origem: location.origin, navegador: navigator.userAgent.split(') ')[0]+')', versaoPagina: 'diag 1.0' };
   $('env').innerHTML = `<table><tr><th>Origem desta página</th><th>Navegador</th></tr><tr><td class="mono">${esc(out.origem)}</td><td class="mono">${esc(out.navegador)}</td></tr></table>
-    <p class="dim" style="margin-top:6px">Dica: o ERP precisa estar na build <b>3.10.0</b> (aparece no console F12 ao abrir o index.html).</p>`;
+    <p class="dim" style="margin-top:6px">Dica: o ERP precisa estar na build <b>3.10.1</b> (aparece no console F12 ao abrir o index.html).</p>`;
 
   // ── LOCAL ──
   let localModulos = 0, localModulosDetalhe = [], localVazio = true, localResumo = '';
@@ -87,7 +88,7 @@ async function supa(path){
       $('local').innerHTML = '<span class="bad big b-bad">NENHUM dado local neste domínio (localStorage vazio). Este navegador ainda não importou nem carregou da nuvem.</span>';
     } else {
       localVazio = false;
-      const db = JSON.parse(raw);
+      const db = JSON.parse((raw.startsWith('LZ1:') && window.LZUTF16) ? (window.LZUTF16.decompress(raw.slice(4))||'{}') : raw);
       const cont = k => Array.isArray(db[k]) ? db[k].length : (db[k] && typeof db[k]==='object' ? Object.keys(db[k]).length : 0);
       const mods = db.modulosDinamicos || {};
       localModulosDetalhe = Object.entries(mods).map(([k,v]) => k + ' (' + ((v&&v.dados&&v.dados.length)||0) + ')');

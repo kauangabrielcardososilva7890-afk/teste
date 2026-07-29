@@ -881,7 +881,7 @@ end $$;
           }
           return {ok:false, conflito:true};
         }
-        if(nuncaSincronizei){ try{ localStorage.setItem('digicopy_erp_backup_pre_sync', JSON.stringify(db)); }catch(eB){} }
+        if(nuncaSincronizei){ try{ const bk={quando:new Date().toISOString(), vendas:(db.vendas||[]).filter(v=>v.criadoPor!=='migracao').slice(-300), logs:(db.logs||[]).slice(0,200)}; const t=JSON.stringify(bk); localStorage.setItem('digicopy_erp_backup_pre_sync', (window.LZUTF16?('LZ1:'+window.LZUTF16.compress(t)):t)); }catch(eB){} }
         setCloudSyncStatus('<span class="text-slate-500">☁️ Sincronização automática: chegaram dados novos da nuvem, atualizando este PC...</span>');
         if(typeof toast==='function') toast('☁️ Chegaram dados novos da nuvem — atualizando este PC','info');
         return await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
