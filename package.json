@@ -1,12 +1,13 @@
 {
   "name": "digicopy-erp",
-  "version": "3.8.0",
+  "version": "4.2.0",
   "description": "DIGICOPY ERP - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check supabase_client.js && node --check main.js && node --check preload.js",
+    "test": "node test_vos.js",
+    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check supabase_client.js && node --check vendas_os_patch.js && node --check main.js && node --check preload.js",
     "build": "npm run build:win",
     "build:win": "electron-builder --win --x64"
   },
@@ -16,9 +17,12 @@
     "files": [
       "index.html",
       "app.js",
+      "lz.js",
       "vendas_patch.js",
       "evolucao_patch.js",
       "notinha_patch.js",
+      "locacao_patch.js",
+      "vendas_os_patch.js",
       "supabase_client.js",
       "main.js",
       "preload.js",
