@@ -250,8 +250,13 @@ function showApp(){
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
   if(typeof renderDashboard==='function') renderDashboard();
-  // load others
-  setTimeout(()=>{renderClientes(); renderProdutos(); renderEquipamentos(); renderContratos(); renderParque(); renderLeituras(); renderOs(); renderVendas(); renderFinanceiro(); renderConfig(); if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof renderAuditoria==='function') renderAuditoria();},100);
+  // Não renderizar todos os módulos no login. Bases legadas grandes podem ter
+  // centenas de milhares de registros e gerar HTML de todos os grids de uma vez,
+  // congelando o navegador. Cada módulo é renderizado somente ao ser aberto.
+  setTimeout(()=>{
+    const active=document.querySelector('.view:not(.hidden)');
+    if(active && active.id==='view-dashboard') renderDashboard();
+  },100);
 }
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');
