@@ -91,10 +91,10 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div id="login-step-cnpj">
           <div class="mb-8"><h2 class="text-[22px] font-bold tracking-tight">Acesso da empresa</h2><p class="text-[13.5px] text-slate-500 mt-2 leading-snug">Informe o CNPJ e a senha CNPJ cadastrados. Esta é a primeira camada de segurança da sua empresa.</p></div>
           <div class="space-y-4">
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">CNPJ da empresa</label><input id="login-cnpj" placeholder="12.345.678/0001-90" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px] font-medium"><p class="text-[11px] text-slate-400 mt-1.5">Dica demo: 12.345.678/0001-90</p></div>
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">Senha CNPJ</label><div class="relative"><input id="login-senha-cnpj" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-cnpj')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div><p class="text-[11px] text-slate-400 mt-1.5">Demo: 123456</p></div>
+            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">CNPJ da empresa</label><input id="login-cnpj" oninput="formatarLoginCNPJ(this)" placeholder="12.345.678/0001-90" maxlength="18" autocomplete="username" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px] font-medium"></div>
+            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">Senha CNPJ</label><div class="relative"><input id="login-senha-cnpj" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-cnpj')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
             <button onclick="doLoginCNPJ()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20 flex items-center justify-center gap-2"><span>Validar empresa</span><i class="ph ph-arrow-right"></i></button>
-            <div class="pt-4 border-t border-slate-100 text-center"><p class="text-[12.5px] text-slate-500">Primeiro acesso? <button onclick="openModalEmpresa()" class="font-semibold text-[#0a1e8a] hover:underline">Cadastrar nova empresa (CNPJ)</button></p></div>
+            
           </div>
         </div>
         <!-- STEP 2 USUARIO -->
@@ -103,20 +103,13 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
           <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef]"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[14px]" id="login-empresa-iniciais">DG</div><div><p class="font-bold text-[13px] leading-tight" id="login-empresa-nome">DIGICOPY</p><p class="text-[11px] text-slate-600 font-mono" id="login-empresa-cnpj">12.345.678/0001-90</p></div><span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span></div>
           <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Agora informe seu usuário e senha pessoais vinculados a este CNPJ.</p></div>
           <div class="space-y-4">
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" placeholder="ex: admin, carlos" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><p class="text-[11px] text-slate-400 mt-1">Demo: admin / carlos / ana</p></div>
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div><p class="text-[11px] text-slate-400 mt-1">Demo: admin123 / 123456</p></div>
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" placeholder="ex: admin, carlos" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
             <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no ERP</button>
-            <div class="grid grid-cols-2 gap-2 pt-2"><button onclick="openModalCriarUsuarioPublic()" class="h-10 rounded-xl bg-white border border-slate-200 text-[12.5px] font-medium hover:bg-slate-50">Criar usuário</button><button onclick="listUsuariosDemo()" class="h-10 rounded-xl bg-slate-900 text-white text-[12.5px] font-medium">Ver usuários demo</button></div>
+            
           </div>
         </div>
-        <!-- DEMO CREDENTIALS -->
-        <div class="mt-10 rounded-xl bg-amber-50 border border-amber-200 p-4">
-          <p class="text-[11px] font-bold tracking-wide uppercase text-amber-900">Credenciais demo</p>
-          <div class="mt-2 text-[12px] leading-relaxed text-amber-900/80">
-            <p><b>CNPJ:</b> 12.345.678/0001-90 <b>Senha CNPJ:</b> 123456</p>
-            <p class="mt-1"><b>Usuários:</b> admin/admin123 (Admin) • carlos/123456 (Técnico) • ana/123456 (Comercial) • financeiro/123456 (Financeiro)</p>
-          </div>
-        </div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Acesso corporativo protegido</div>
       </div>
     </div>
     <div class="h-10 px-6 flex items-center justify-between text-[10.5px] text-slate-400 border-t border-slate-100"><span>Ambiente seguro • Auditoria por usuário</span><span>Suporte: contato@digicopy.com.br</span></div>
@@ -143,11 +136,8 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Comece aqui</p><div id="nav-main" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
-      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Migração</p>
-    <button data-nav="banco" onclick="navigateTo('banco')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ph-database text-[19px]"></i><span>Banco antigo (.FDB)</span></button>
-  </div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Outsourcing</p><div id="nav-op" class="space-y-1"></div></div>
   <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
     </nav>
     <div class="p-4 border-t border-white/5">
@@ -168,12 +158,11 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <div class="module-row">
         <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button><div class="module-menu"><button onclick="navigateTo('dashboard')"><i class="ph ph-monitor"></i>Área inicial<small>Home</small></button><button onclick="handleGlobalSearch(document.getElementById('top-command-search')?.value||'')"><i class="ph ph-magnifying-glass"></i>Pesquisa rápida</button></div></div>
         <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda<small>F2</small></button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento<small>F3</small></button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
-        <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
-        <div class="module"><button onclick="navigateTo('produtos')"><i class="ph ph-package"></i>Estoque</button><div class="module-menu"><button onclick="navigateTo('produtos')"><i class="ph ph-package"></i>Produtos e suprimentos<small>F4</small></button><button onclick="openModal('entradaEstoque')"><i class="ph ph-arrow-fat-line-up"></i>Entrada de estoque</button><button onclick="navigateTo('produtos')"><i class="ph ph-warning"></i>Estoque baixo</button></div></div>
-        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button></div></div>
-        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
-        <div class="module"><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line"></i>Gestão</button><div class="module-menu"><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><button onclick="openCloudMigration()"><i class="ph ph-cloud-arrow-up"></i>Migração/nuvem</button></div></div>
-        <div class="module" id="topmod-migrados" style="display:none"><button onclick="navigateTo('migrados')"><i class="ph ph-puzzle-piece"></i>Migrados</button><div class="module-menu" id="menu-migrados"></div></div>
+        <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Outsourcing</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
+        <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
+        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
+        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="if(typeof carregarDadosDaNuvem==='function') carregarDadosDaNuvem(); else toast('Sincronização indisponível','error')"><i class="ph ph-cloud-arrow-down"></i>Atualizar dados</button></div></div>
         <div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span>online local</span></div>
       </div>
       <div class="command-row">
@@ -181,7 +170,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <button onclick="navigateTo('vendas')" class="quick"><i class="ph ph-receipt"></i>Notinhas</button>
         <button onclick="navigateTo('clientes')" class="quick"><i class="ph ph-users"></i>Clientes</button>
         <button onclick="navigateTo('contratos')" class="quick"><i class="ph ph-printer"></i>Locação</button>
-        <button onclick="navigateTo('financeiro')" class="quick"><i class="ph ph-currency-dollar"></i>Financeiro</button>
+        <button onclick="navigateTo('financeiro')" class="quick"><i class="ph ph-currency-dollar"></i>Financeiro</button><button onclick="doLogout()" class="quick" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button>
         <span class="ml-auto text-[11px] text-slate-500">Buscar</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search" placeholder="cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick"><i class="ph ph-magnifying-glass"></i></button>
       </div>
     </div>
@@ -213,12 +202,12 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=3.11.2"></script>
-<script src="./app.js?v=3.11.2"></script>
-<script src="./vendas_patch.js?v=3.11.2"></script>
-<script src="./evolucao_patch.js?v=3.11.2"></script>
-<script src="./notinha_patch.js?v=3.11.2"></script>
-<script src="./locacao_patch.js?v=3.11.2"></script>
-<script src="./supabase_client.js?v=3.11.2"></script>
+<script src="./lz.js?v=4.0.0"></script>
+<script src="./app.js?v=4.0.0"></script>
+<script src="./vendas_patch.js?v=4.0.0"></script>
+<script src="./evolucao_patch.js?v=4.0.0"></script>
+<script src="./notinha_patch.js?v=4.0.0"></script>
+<script src="./locacao_patch.js?v=4.0.0"></script>
+<script src="./supabase_client.js?v=4.0.0"></script>
 </body>
 </html>

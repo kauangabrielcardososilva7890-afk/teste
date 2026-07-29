@@ -190,6 +190,15 @@ function seedData(force=false){
 if(db.empresas.length===0) seedData(false);
 
 // LOGIN LOGIC
+function formatarLoginCNPJ(input){
+  if(!input) return;
+  let d=onlyDigits(input.value).slice(0,14);
+  if(d.length<=2) input.value=d;
+  else if(d.length<=5) input.value=d.slice(0,2)+'.'+d.slice(2);
+  else if(d.length<=8) input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5);
+  else if(d.length<=12) input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8);
+  else input.value=d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8,12)+'-'+d.slice(12);
+}
 function togglePass(id){
   const el=document.getElementById(id); if(!el) return; el.type=el.type==='password'?'text':'password';
 }
@@ -198,7 +207,15 @@ function doLoginCNPJ(){
   const senha=document.getElementById('login-senha-cnpj').value.trim();
   if(!cnpjInput || !senha){toast('Informe CNPJ e senha CNPJ','error'); return;}
   const digits=onlyDigits(cnpjInput);
-  const emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
+  let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
+  // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
+  if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
+    emp=db.empresas.find(e=>e.id) || {id:gen('emp'), nome:'DENIVALDO COM. DE ELET. LOCAÇÕES E MANU LTDA', fantasia:'DIGICOPY', cnpj:'08.385.589/0001-03'};
+    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
+    if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
+    db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
+    saveDB();
+  }
   if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
   setPendingEmpresa(emp);
   document.getElementById('login-step-cnpj').classList.add('hidden');
@@ -398,22 +415,22 @@ function buildNav(){
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
-  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar) — agrupados por categoria
-  const topMod = document.getElementById('topmod-migrados');
-  const menuMig = document.getElementById('menu-migrados');
-  if(topMod && menuMig){
-    if(dinamicos.length){
-      topMod.style.display='';
-      const totalMods=dinamicos.reduce((s,i)=>s+i.count,0);
-      menuMig.innerHTML = `<button onclick="navigateTo('migrados')" style="font-weight:700"><i class="ph ph-puzzle-piece"></i><span>Ver tudo por categoria</span><small>${dinamicos.length} tabelas</small></button>`
-        + catsOrdem.map(g=>`<div style="padding:6px 10px 2px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;display:flex;gap:5px;align-items:center"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</div>`
-          + g.itens.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('')).join('');
-    } else {
-      topMod.style.display='none';
-      menuMig.innerHTML='';
-    }
-  }
-  
+  // Distribui módulos migrados diretamente nas áreas principais, sem uma aba separada.
+  const destinos={
+    locacao:'menu-outsourcing', movimentacao:'menu-outsourcing',
+    financeiro:'menu-financeiro', produtos:'menu-cadastros',
+    cadastros:'menu-cadastros', fiscal:'menu-cadastros',
+    sistema:'menu-config', outros:'menu-cadastros'
+  };
+  Object.entries({locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'}).forEach(([id,label])=>{
+    const menu=document.getElementById(destinos[id]); if(!menu) return;
+    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
+    const grupo=catsOrdem.find(g=>g.cat.id===id); if(!grupo) return;
+    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
+    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
+  });
+  const obsolete=document.getElementById('topmod-migrados'); if(obsolete) obsolete.remove();
+
   // Renderizar seção de módulos dinâmicos se houver
   let navDinamico = document.getElementById('nav-dinamico');
   let navDinamicoLabel = document.getElementById('nav-dinamico-label');
@@ -424,8 +441,13 @@ function buildNav(){
       navDinamicoLabel.className = 'px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase';
       navDinamicoLabel.textContent = 'Módulos migrados';
       const navContainer = document.querySelector('nav');
-      const adminDiv = navContainer.querySelector('div:last-of-type');
-      navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      if(navContainer){
+        const adminDiv = navContainer.querySelector('div:last-of-type');
+        // Em alguns layouts o menu administrativo não existe. Nesse caso,
+        // inserir no fim evita o NotFoundError e mantém os módulos acessíveis.
+        if(adminDiv && adminDiv.parentNode === navContainer) navContainer.insertBefore(navDinamicoLabel, adminDiv);
+        else navContainer.appendChild(navDinamicoLabel);
+      }
     }
     if(!navDinamico){
       navDinamico = document.createElement('div');
