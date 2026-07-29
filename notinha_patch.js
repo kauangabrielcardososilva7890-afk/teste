@@ -454,7 +454,16 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const fVend=document.getElementById('neo-vendas-vend')?.value||'todos';
     const ordem=document.getElementById('neo-vendas-ordem')?.value||localStorage.getItem('digicopy_ordem_vendas')||'data-desc';
     const low=qRaw.toLowerCase(); const hoje=new Date().toISOString().slice(0,10);
-    const base=db.vendas.filter(v=>v.empresaId===sess.empresaId);
+    const nativos=db.vendas.filter(v=>v.empresaId===sess.empresaId);
+    const legados=[];
+    Object.entries(db.modulosDinamicos||{}).forEach(([nome,mod])=>{
+      if(!/VENDA|ORCAMENT|PEDIDO|NOTINHA|CUPOM|COMANDA/i.test(nome)) return;
+      (mod.dados||[]).forEach((r,i)=>{
+        const numero=r.NUMERO||r.CODIGO||r.COD_VENDA||r.ID||`${nome}-${i+1}`;
+        legados.push({id:`legado_venda_${nome}_${i}`,empresaId:sess.empresaId,numero:String(numero),data:r.DATA||r.DATA_VENDA||r.EMISSAO||r.DT_VENDA||r.CRIADO_EM,total:Number(r.TOTAL||r.VALOR||r.VALOR_TOTAL||0)||0,status:String(r.SITUACAO||r.STATUS||'finalizada').toLowerCase(),formaPagamento:r.PAGAMENTO||r.FORMA_PAGAMENTO||r.RECEBIMENTO||'Prazo',clienteNomeAntigo:r.CLIENTE||r.NOME_CLIENTE||r.RAZAO_SOCIAL||r.NOME||'',codClienteAntigo:r.COD_CLIENTE||r.CODIGO_CLIENTE||'',criadoPorNome:r.VENDEDOR||r.USUARIO||r.ATENDENTE||'Importado',itens:[],origemMigracao:true,tabelaOrigem:nome});
+      });
+    });
+    const base=[...nativos,...legados];
     let list=base;
     if(tab==='hoje') list=list.filter(v=>(v.data||'').slice(0,10)===hoje);
     if(tab==='abertas') list=list.filter(v=>!['faturado','finalizada'].includes((v.status||'').toLowerCase()));
