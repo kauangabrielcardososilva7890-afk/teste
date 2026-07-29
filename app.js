@@ -90,7 +90,9 @@ function toast(msg,type='info'){
   const c=document.getElementById('toast-container');
   const el=document.createElement('div');
   el.className=`pointer-events-auto min-w-[320px] max-w-[420px] rounded-[14px] shadow-xl border px-4 py-3 flex items-start gap-3 text-[13px] font-medium animate-slideIn ${type==='success'?'bg-[#0a1e8a] text-white border-[#08176e]':type==='error'?'bg-red-600 text-white border-red-700':'bg-white text-slate-800 border-slate-200'}`;
-  el.innerHTML=`<i class="ph ${type==='success'?'ph-check-circle':type==='error'?'ph-warning-circle':'ph-info'} text-[18px] mt-0.5"></i><div class="flex-1 leading-snug">${msg}</div><button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100"><i class="ph ph-x"></i></button>`;
+  // Mensagens podem vir de dados legados; nunca as interprete como HTML.
+  el.innerHTML=`<i class="ph ${type==='success'?'ph-check-circle':type==='error'?'ph-warning-circle':'ph-info'} text-[18px] mt-0.5"></i><div class="flex-1 leading-snug"></div><button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100"><i class="ph ph-x"></i></button>`;
+  el.querySelector('.leading-snug').textContent=String(msg??'');
   c.appendChild(el); setTimeout(()=>{el.style.opacity='0'; el.style.transform='translateX(12px)'; setTimeout(()=>el.remove(),250)},4000);
 }
 
@@ -1485,7 +1487,7 @@ window.handleDatabaseUpload = function(file){
             <p class="text-[12px] text-emerald-700 mb-2">Formato detectado: <b>${formato}</b></p>
             <p class="text-[12px] text-emerald-700 mb-2">Total: <b>${totalRegistros} registros</b></p>
             <div class="text-[11px] text-emerald-600 mb-3">${resumo.join(' • ')}</div>
-            <button onclick="importarJsonDBeaver(${JSON.stringify(dados).replace(/"/g, '&quot;')})" 
+            <button onclick="importarJsonDBeaver()" 
                     class="w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
               <i class="ph ph-download-simple"></i> Importar para o ERP
             </button>
@@ -1653,7 +1655,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
   } catch(e){
     console.error('[UPLOAD] falha geral', e);
-    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
+    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+escapeHtml(e.message||'erro desconhecido')+'</p>';
   }
 };
 
