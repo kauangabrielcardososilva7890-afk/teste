@@ -1588,23 +1588,29 @@ window.handleMultipleUpload = async function(files, inputEl){
   const log = qs('#upload-log');
 
   if(!files || files.length === 0) return;
-  console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
+  // Atualiza a tela imediatamente, antes de qualquer leitura assíncrona.
+  // Isso é importante no GitHack, onde o navegador pode levar alguns segundos
+  // para começar a ler arquivos grandes.
+  const listaArquivos = Array.from(files);
+  console.log('[UPLOAD] inicio: '+listaArquivos.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
 
   try {
     if(progress) progress.classList.remove('hidden');
+    if(progressBar) progressBar.style.width = '0%';
+    if(progressText) progressText.textContent = '0% (preparando)';
     if(log) log.innerHTML = '';
     if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
 
     const sess = getSession();
     if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
 
-    const total = files.length;
+    const total = listaArquivos.length;
     let processados = 0;
     let totalRegistros = 0;
     const tabelasImportadas = {};
     const rawData = {};
 
-    for(const file of files){
+    for(const file of listaArquivos){
       try {
         const text = await file.text();
         const imported = JSON.parse(text);
