@@ -544,7 +544,7 @@ end $$;
             const antMod = ((ant.entidades||{}).modulosDinamicos||{}).total||0;
             const localMod = (metaEntidades.modulosDinamicos||{}).total||0;
             if(antTotal>0 && (totalReg < antTotal*0.5 || (antMod>0 && localMod===0))){
-              const certeza = confirm('⚠️ ATENÇÃO — POSSÍVEL ENGANO!\n\nA nuvem tem publicada uma base com ' + antTotal.toLocaleString('pt-BR') + ' registros, incluindo ' + antMod + ' tabelas migradas (menu Migrados).\n\nOs dados DESTE computador têm só ' + totalReg.toLocaleString('pt-BR') + ' registros e ' + localMod + ' tabelas migradas — parecem ser os dados de DEMONSTRAÇÃO (ex.: 6 clientes de mentira).\n\nEnviar agora SUBSTITUI a base completa da nuvem por estes dados menores.\n\n👉 Se este NÃO é o computador onde você importou os JSONs do sistema antigo, clique em CANCELAR.\n\nEnviar mesmo assim?');
+              const certeza = (opts.automatico===true) ? false : confirm('⚠️ ATENÇÃO — POSSÍVEL ENGANO!\n\nA nuvem tem publicada uma base com ' + antTotal.toLocaleString('pt-BR') + ' registros, incluindo ' + antMod + ' tabelas migradas (menu Migrados).\n\nOs dados DESTE computador têm só ' + totalReg.toLocaleString('pt-BR') + ' registros e ' + localMod + ' tabelas migradas — parecem ser os dados de DEMONSTRAÇÃO (ex.: 6 clientes de mentira).\n\nEnviar agora SUBSTITUI a base completa da nuvem por estes dados menores.\n\n👉 Se este NÃO é o computador onde você importou os JSONs do sistema antigo, clique em CANCELAR.\n\nEnviar mesmo assim?');
               if(!certeza){
                 setCloudSyncStatus('<span class="text-amber-700 font-bold">Envio CANCELADO pela proteção: os dados deste PC pareciam ser de demonstração e iam substituir uma base maior da nuvem.</span>');
                 if(typeof toast==='function') toast('Envio cancelado — proteção anti-demonstração','info');
@@ -600,7 +600,10 @@ end $$;
         if(typeof toast==='function') toast('Publicação não confirmada. Tente novamente.','error');
         return {ok:false, enviadas, erros:['verificacao: '+mc]};
       }
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ PUBLICADO E VERIFICADO na nuvem! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes, às ${new Date().toLocaleString('pt-BR')}.</span><div class="text-[12px] text-emerald-700 mt-1">Agora, nos outros PCs, clique em "Carregar da nuvem".</div>`);
+      // Marca local: este PC está em dia com a nuvem (sem contar como "alteração suja")
+      window.__syncAplicando=true; try{ db.meta=Object.assign({}, db.meta||{}, {origemNuvemAtualizadoEm:atualizadoEm, ultimoEnvioEm:atualizadoEm}); saveDB(); } finally{ window.__syncAplicando=false; }
+      window.__ultimaMudancaLocal=0; try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(eRM2){}
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ PUBLICADO E VERIFICADO na nuvem! ${totalReg.toLocaleString('pt-BR')} registros em ${partes.length} partes, às ${new Date().toLocaleString('pt-BR')}.</span><div class="text-[12px] text-emerald-700 mt-1">Os outros PCs com sincronização automática recebem sozinhos em até ~1 minuto (ou clique neles em "Carregar da nuvem").</div>`);
       if(typeof toast==='function') toast('Dados enviados e verificados na nuvem ✅','success');
       return {ok:true, partes:partes.length, totalRegistros:totalReg, verificado:true};
     }catch(err){
@@ -622,10 +625,11 @@ end $$;
     return t;
   }
   // PROTEÇÃO: carregar da nuvem NÃO pode substituir uma base local maior por uma menor
-  function protecaoCargaMenor(incTotal, incMod){
+  function protecaoCargaMenor(incTotal, incMod, automatico){
     const locTotal=contarTotalDb(db);
     const locMod=Object.keys((db||{}).modulosDinamicos||{}).length;
     if((incMod===0 && locMod>0) || (locTotal>50 && incTotal < locTotal*0.5)){
+      if(automatico){ setCloudSyncStatus('<span class="text-amber-700 font-bold">☁️ Auto-sync pausada por segurança: a nuvem parecia ter dados menores que este PC.</span>'); return false; }
       return confirm('⚠️ ATENÇÃO — A NUVEM PARECE TER DADOS MENORES!\n\nA nuvem tem ~' + (incTotal||0).toLocaleString('pt-BR') + ' registros e ' + (incMod||0) + ' tabelas migradas.\nESTE computador tem ~' + locTotal.toLocaleString('pt-BR') + ' registros e ' + locMod + ' tabelas migradas.\n\nCarregar agora SUBSTITUI os dados deste PC por uma base menor (possivelmente de demonstração).\n\n👉 Se ESTE é o computador que tem seus dados completos, clique em CANCELAR.\n\nCarregar mesmo assim?');
     }
     return true;
@@ -669,12 +673,12 @@ end $$;
             novoDbRec[campo] = tipoDe(campo)==='objeto' ? itensParaObjeto(itens) : itens;
           });
           novoDbRec.meta = Object.assign({}, novoDbRec.meta||{}, {sincronizadoEm:new Date().toISOString(), recuperadoSemMeta:true});
-          if(!protecaoCargaMenor(contarTotalDb(novoDbRec), Object.keys(novoDbRec.modulosDinamicos||{}).length)){
+          if(!protecaoCargaMenor(contarTotalDb(novoDbRec), Object.keys(novoDbRec.modulosDinamicos||{}).length, opts.automatico===true)){
             setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: a nuvem parecia ter dados menores do que este PC.</span>');
             return {ok:false, cancelado:true, protecao:true};
           }
-          db = novoDbRec;
-          saveDB();
+          window.__syncAplicando=true; try{ db = novoDbRec; saveDB(); } finally{ window.__syncAplicando=false; }
+          window.__ultimaMudancaLocal=0; try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(eRM){}
           const avisoFalta = faltandoRec.length
             ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ O último envio ficou incompleto: faltaram pedaços em <b>${faltandoRec.map(escapeHtml).join(', ')}</b>.<br>Carreguei tudo o que existia. Para completar 100%: no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> novamente.</div>`
             : '';
@@ -693,12 +697,12 @@ end $$;
           if(typeof toast==='function') toast('Nenhum dado encontrado na nuvem','info');
           return {ok:false, vazio:true};
         }
-        if(!protecaoCargaMenor(contarTotalDb(rows[0].data), Object.keys((rows[0].data||{}).modulosDinamicos||{}).length)){
+        if(!protecaoCargaMenor(contarTotalDb(rows[0].data), Object.keys((rows[0].data||{}).modulosDinamicos||{}).length, opts.automatico===true)){
           setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: o backup antigo parecia menor do que os dados deste PC.</span>');
           return {ok:false, cancelado:true, protecao:true};
         }
-        db = rows[0].data;
-        saveDB();
+        window.__syncAplicando=true; try{ db = rows[0].data; saveDB(); } finally{ window.__syncAplicando=false; }
+        window.__ultimaMudancaLocal=0; try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(eRM){}
         setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Este é um backup ANTIGO e pode estar incompleto. No computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> para publicar a base completa.</div>`);
         if(typeof toast==='function') toast('Dados carregados da nuvem (formato antigo)','success');
         setTimeout(()=>location.reload(),900);
@@ -707,7 +711,7 @@ end $$;
 
       const meta = metaRows[0].data;
       const totalPartes = Object.values(meta.entidades||{}).reduce((s,e)=>s+(e.partes||0),0);
-      if(!protecaoCargaMenor(meta.totalRegistros||0, ((meta.entidades||{}).modulosDinamicos||{}).total||0)){
+      if(!protecaoCargaMenor(meta.totalRegistros||0, ((meta.entidades||{}).modulosDinamicos||{}).total||0, opts.automatico===true)){
         setCloudSyncStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: a nuvem parecia ter dados menores do que este PC.</span>');
         return {ok:false, cancelado:true, protecao:true};
       }
@@ -729,8 +733,8 @@ end $$;
         novoDb[campo] = info.tipo==='objeto' ? itensParaObjeto(itens) : itens;
       });
       novoDb.meta = Object.assign({}, novoDb.meta||{}, {sincronizadoEm:new Date().toISOString(), origemNuvemAtualizadoEm:meta.atualizadoEm||metaRows[0].updated_at});
-      db = novoDb;
-      saveDB();
+      window.__syncAplicando=true; try{ db = novoDb; saveDB(); } finally{ window.__syncAplicando=false; }
+      window.__ultimaMudancaLocal=0; try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(eRM){}
       const avisoParcial = faltando.length
         ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Algumas partes não foram encontradas (${faltando.length} — ex.: ${faltando.slice(0,4).map(escapeHtml).join(', ')}). Os dados afetados podem vir incompletos. Refaça o "Enviar para nuvem" no PC de origem.</div>`
         : '';
@@ -817,4 +821,90 @@ end $$;
   window.openCloudMigration = function(){
     if(typeof navigateTo === 'function') navigateTo('banco');
   };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SINCRONIZAÇÃO AUTOMÁTICA (build 3.10) — busca e envia sem apertar botão
+  // ═══════════════════════════════════════════════════════════════════
+  const SYNC_AUTO_LS='digicopy_erp_autosync';
+  window.__syncAplicando = false;
+  window.__ultimaMudancaLocal = 0;
+  window.syncAutoLigado = function(){ try{ return localStorage.getItem(SYNC_AUTO_LS)!=='0'; }catch(e){ return true; } };
+  window.syncAutoDefinir = function(on){
+    try{ localStorage.setItem(SYNC_AUTO_LS, on?'1':'0'); }catch(e){}
+    if(typeof toast==='function') toast(on?'☁️ Sincronização automática LIGADA neste PC':'Sincronização automática desligada neste PC','info');
+    if(on) setTimeout(()=>{ try{ window.syncAutoChecar('ligar'); }catch(e){} }, 1500);
+  };
+  // Rastreia alterações locais embrulhando o saveDB global (as operações de sync
+  // usam a trava __syncAplicando para não se marcarem como "alteração do usuário")
+  try{
+    const _saveSemRastreio = window.saveDB;
+    if(typeof _saveSemRastreio==='function' && !window.__saveDBRastreado){
+      window.saveDB = function(){
+        _saveSemRastreio.apply(this, arguments);
+        if(!window.__syncAplicando){
+          window.__ultimaMudancaLocal = Date.now();
+          try{ localStorage.setItem('digicopy_erp_dirty_local', new Date().toISOString()); }catch(e){}
+        }
+      };
+      window.__saveDBRastreado = true;
+    }
+  }catch(eWrap){}
+
+  let __autoBusy=false, __autoAvisos=0;
+  window.syncAutoChecar = async function(motivo){
+    if(!window.syncAutoLigado()) return {ok:false, desligado:true};
+    if(__autoBusy) return {ok:false, ocupado:true};
+    if(typeof db==='undefined' || !db) return {ok:false};
+    // Nunca atrapalha quem está usando: nem com janela aberta nem logo após uma ação
+    const mr=document.getElementById('modal-root');
+    if(mr && !mr.classList.contains('hidden')) return {ok:false, modalAberto:true};
+    const agora=Date.now();
+    if(window.__ultimaMudancaLocal && (agora-window.__ultimaMudancaLocal)<45000) return {ok:false, emUso:true};
+    __autoBusy=true;
+    try{
+      const metaRows=await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
+      if(!metaRows || !metaRows.length) return {ok:false, vazio:true};
+      const meta=metaRows[0].data||{};
+      const cloudMs=Date.parse(meta.atualizadoEm || metaRows[0].updated_at || 0) || 0;
+      if(!cloudMs) return {ok:false};
+      const haveMs=Date.parse((db.meta && db.meta.origemNuvemAtualizadoEm) || 0) || 0;
+      const envioMs=Date.parse((db.meta && db.meta.ultimoEnvioEm) || 0) || 0;
+      const sujo=window.__ultimaMudancaLocal>0;
+      if(cloudMs > haveMs+1000){
+        // Nuvem mais nova. PC que NUNCA sincronizou: traz direto (com backup local).
+        // PC já sincronizado com alterações locais pendentes: não sobrescreve — avisa.
+        const nuncaSincronizei = (haveMs===0 && envioMs===0);
+        if(sujo && !nuncaSincronizei){
+          if(__autoAvisos<2){
+            __autoAvisos++;
+            setCloudSyncStatus('<span class="text-amber-700 font-bold">☁️ A nuvem tem uma versão mais nova, mas ESTE PC tem alterações que ainda não foram enviadas. Resolva aqui em Configurações → Sincronização (Enviar ou Carregar).</span>');
+          }
+          return {ok:false, conflito:true};
+        }
+        if(nuncaSincronizei){ try{ localStorage.setItem('digicopy_erp_backup_pre_sync', JSON.stringify(db)); }catch(eB){} }
+        setCloudSyncStatus('<span class="text-slate-500">☁️ Sincronização automática: chegaram dados novos da nuvem, atualizando este PC...</span>');
+        if(typeof toast==='function') toast('☁️ Chegaram dados novos da nuvem — atualizando este PC','info');
+        return await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
+      }
+      // Nuvem em dia: se mexi aqui depois do último envio e estou parado há 60s, envia sozinho
+      if(sujo && window.__ultimaMudancaLocal > envioMs+2000 && (agora-window.__ultimaMudancaLocal)>60000){
+        setCloudSyncStatus('<span class="text-slate-500">☁️ Sincronização automática: enviando suas alterações para a nuvem...</span>');
+        const r=await window.syncEnviarParaNuvem({confirmar:false, automatico:true});
+        if(r && r.ok && typeof toast==='function') toast('☁️ Alterações enviadas automaticamente','success');
+        return r;
+      }
+      return {ok:true, semMudanca:true, motivo};
+    }catch(err){
+      return {ok:false, erros:[(err&&err.message)||String(err)]};
+    }finally{
+      __autoBusy=false;
+    }
+  };
+
+  // Disparadores: 6s após abrir, a cada 75s, e quando a internet volta
+  function __agendarAutoSync(){ setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 6000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', __agendarAutoSync);
+  else __agendarAutoSync();
+  setInterval(()=>{ try{ window.syncAutoChecar('timer'); }catch(e){} }, 75000);
+  if(typeof window.addEventListener==='function') window.addEventListener('online', ()=>{ try{ window.syncAutoChecar('online'); }catch(e){} });
 })();

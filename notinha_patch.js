@@ -420,3 +420,267 @@ console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos 
     window.neoGerarOSVenda = false;
   };
 })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v4.2 — Filtros, ordenação e HISTÓRICO nas vendas e em TUDO que veio
+// do sistema antigo + nomes de cliente/usuário mesmo sem vínculo de cadastro
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  // Helpers de status/tipo (repetidos aqui porque os originais vivem em outro escopo)
+  function statusVendaClass(v){const st=(v.status||'').toLowerCase(); if(st==='faturado'||st==='finalizada') return 'ok'; if(st==='orcamento'||st==='aprovado') return 'info'; return 'wait';}
+  function statusVendaLabel(v){const st=(v.status||'aguardar').toLowerCase(); if(st==='faturado') return 'Finalizada'; if(st==='orcamento') return 'Orçamento'; if(st==='aprovado') return 'Aprovada'; if(st==='aguardar') return 'Aguardando'; return st;}
+  function vendaTipoNeo(v){return (v.itens||[]).some(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return p&&p.categoria==='Serviço';})?'Serviço':'Venda';}
+  // Cliente da venda mesmo quando o cadastro não existe mais (dado do sistema antigo)
+  window.clienteDaVenda = function(v){
+    const c = db.clientes.find(x=>x.id===v.clienteId);
+    if(c) return c;
+    if(v && v.clienteNomeAntigo) return {nome:v.clienteNomeAntigo, codigo:v.codClienteAntigo||'-', documento:'(cadastro do sistema antigo)', endereco:'', cidade:'', estado:'', telefone:'', semVinculo:true};
+    return null;
+  };
+  // Usuário exibido = quem ATENDEU/ENTREGOU (migrado), não quem abriu a tela
+  window.usuarioDaVenda = function(v){ return (v && (v.atendenteNome || v.criadoPorNome)) || '-'; };
+  // Número da notinha como inteiro (pega o ÚLTIMO bloco de dígitos: "VD-2026-0081" → 81, "349" → 349)
+  window.numeroVendaInt = function(num){ const m=String(num||'').match(/(\d+)(?!.*\d)/); return m?parseInt(m[1],10):0; };
+
+  // ── VENDAS / NOTINHAS com filtros, ordenação e histórico ──
+  window.renderVendas = function(){
+    const sess=getSession(); if(!sess) return;
+    const view=document.getElementById('view-vendas')||ensureView('vendas');
+    const qRaw=document.getElementById('neo-search-vendas')?.value||'';
+    const tab=document.getElementById('neo-tab-vendas')?.value||'todas';
+    const fDe=document.getElementById('neo-vendas-de')?.value||'';
+    const fAte=document.getElementById('neo-vendas-ate')?.value||'';
+    const fSit=document.getElementById('neo-vendas-sit')?.value||'todas';
+    const fVend=document.getElementById('neo-vendas-vend')?.value||'todos';
+    const ordem=document.getElementById('neo-vendas-ordem')?.value||localStorage.getItem('digicopy_ordem_vendas')||'data-desc';
+    const low=qRaw.toLowerCase(); const hoje=new Date().toISOString().slice(0,10);
+    const base=db.vendas.filter(v=>v.empresaId===sess.empresaId);
+    let list=base;
+    if(tab==='hoje') list=list.filter(v=>(v.data||'').slice(0,10)===hoje);
+    if(tab==='abertas') list=list.filter(v=>!['faturado','finalizada'].includes((v.status||'').toLowerCase()));
+    if(tab==='orcamentos') list=list.filter(v=>(v.status||'').toLowerCase()==='orcamento');
+    if(fDe) list=list.filter(v=>(v.data||'').slice(0,10)>=fDe);
+    if(fAte) list=list.filter(v=>(v.data||'').slice(0,10)<=fAte);
+    if(fSit!=='todas') list=list.filter(v=>(v.status||'aguardar')===fSit);
+    if(fVend!=='todos') list=list.filter(v=>usuarioDaVenda(v)===fVend);
+    if(low){ list=list.filter(v=>{ const c=clienteDaVenda(v)||{};
+      return (v.numero||'').toLowerCase().includes(low)
+        ||(c.nome||'').toLowerCase().includes(low)
+        ||String(c.codigo||'').includes(low)
+        ||String(v.codClienteAntigo||'').includes(low)
+        ||(v.clienteNomeAntigo||'').toLowerCase().includes(low)
+        ||usuarioDaVenda(v).toLowerCase().includes(low)
+        ||(v.formaPagamento||'').toLowerCase().includes(low); }); }
+    const cmpData=(a,b)=>new Date(a.data||0)-new Date(b.data||0);
+    const cmpCod=(a,b)=>numeroVendaInt(a.numero)-numeroVendaInt(b.numero);
+    const cmpCli=(a,b)=>(((clienteDaVenda(a)||{}).nome)||'').localeCompare(((clienteDaVenda(b)||{}).nome)||'','pt-BR',{sensitivity:'base'});
+    const cmpVal=(a,b)=>(a.total||0)-(b.total||0);
+    const ordFns={'data-desc':(a,b)=>cmpData(b,a)||cmpCod(b,a),'data-asc':(a,b)=>cmpData(a,b)||cmpCod(a,b),'cod-desc':(a,b)=>cmpCod(b,a)||cmpData(b,a),'cod-asc':(a,b)=>cmpCod(a,b)||cmpData(a,b),'cliente':(a,b)=>cmpCli(a,b)||cmpData(b,a),'valor-desc':(a,b)=>cmpVal(b,a),'valor-asc':(a,b)=>cmpVal(a,b)};
+    list=list.sort(ordFns[ordem]||ordFns['data-desc']);
+    const total=list.reduce((s,v)=>s+(v.total||0),0);
+    const vendedores=[...new Set(base.map(usuarioDaVenda).filter(x=>x&&x!=='-'))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+    const situacoes=[...new Set(base.map(v=>v.status||'aguardar'))].sort();
+    view.innerHTML=`<div class="neo-shell">
+      <div class="neo-panel neo-float-in">
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="p-4 border-b bg-white space-y-2">
+          <input type="hidden" id="neo-tab-vendas" value="${tab}">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div>
+            <input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[260px] flex-1" placeholder="Pesquisar por código, cliente, usuário, pagamento...">
+            <div class="text-right text-[12px] text-slate-500 min-w-[130px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-vendas-de" type="date" value="${fDe}" onchange="renderVendas()" class="neo-input !w-[150px] !h-9">
+            <label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-vendas-ate" type="date" value="${fAte}" onchange="renderVendas()" class="neo-input !w-[150px] !h-9">
+            <select id="neo-vendas-sit" onchange="renderVendas()" class="neo-select !h-9"><option value="todas">Situação: todas</option>${situacoes.map(s=>`<option value="${s}" ${fSit===s?'selected':''}>${s}</option>`).join('')}</select>
+            <select id="neo-vendas-vend" onchange="renderVendas()" class="neo-select !h-9"><option value="todos">Usuário: todos</option>${vendedores.map(n=>`<option ${fVend===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}</select>
+            <select id="neo-vendas-ordem" onchange="localStorage.setItem('digicopy_ordem_vendas',this.value); renderVendas()" class="neo-select !h-9 font-bold text-[#0a1e8a]">
+              <option value="data-desc" ${ordem==='data-desc'?'selected':''}>⇩ Data (recentes 1º)</option>
+              <option value="data-asc" ${ordem==='data-asc'?'selected':''}>⇧ Data (antigas 1º)</option>
+              <option value="cod-desc" ${ordem==='cod-desc'?'selected':''}>⇩ Código (maior 1º)</option>
+              <option value="cod-asc" ${ordem==='cod-asc'?'selected':''}>⇧ Código (menor 1º)</option>
+              <option value="cliente" ${ordem==='cliente'?'selected':''}>Cliente A → Z</option>
+              <option value="valor-desc" ${ordem==='valor-desc'?'selected':''}>⇩ Valor (maior 1º)</option>
+              <option value="valor-asc" ${ordem==='valor-asc'?'selected':''}>⇧ Valor (menor 1º)</option>
+            </select>
+            <button onclick="document.getElementById('neo-vendas-de').value='';document.getElementById('neo-vendas-ate').value='';document.getElementById('neo-vendas-sit').value='todas';document.getElementById('neo-vendas-vend').value='todos';document.getElementById('neo-search-vendas').value='';renderVendas()" class="neo-btn !h-9"><i class="ph ph-funnel-x"></i>Limpar filtros</button>
+          </div>
+        </div>
+        <div class="overflow-auto max-h-[calc(100vh-330px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th><th></th></tr></thead><tbody>${list.map(v=>{const c=clienteDaVenda(v); return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="historicoVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(c?c.nome:'(sem cliente)')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c?(c.codigo||'-'):'-'}${c&&c.semVinculo?' • sistema antigo':''}${c&&c.documento?' • '+escapeHtml(c.documento):''}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml(usuarioDaVenda(v).split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td><td><button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td></tr>`}).join('')||'<tr><td colspan="9" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
+      </div>
+    </div>`;
+    const input=document.getElementById('neo-search-vendas'); if(input && document.activeElement?.id==='neo-search-vendas'){ input.focus(); input.setSelectionRange(input.value.length,input.value.length); }
+  };
+
+  // ── HISTÓRICO COMPLETO DA NOTINHA (modal) ──
+  window.historicoVenda = function(id){
+    const v=db.vendas.find(x=>x.id===id); if(!v){ if(typeof toast==='function') toast('Notinha não encontrada','error'); return; }
+    const cli=clienteDaVenda(v);
+    const logs=(db.logs||[]).filter(l=>l.entidadeId===v.id || (l.entidade==='venda'&&(l.entidadeId===v.id)) || ((l.detalhes||'').includes(v.numero) && (l.detalhes||'').length<200)).slice(0,30);
+    const fins=(db.contasReceber||[]).filter(c=>c.vendaId===v.id || ((c.descricao||'').includes(v.numero)));
+    const box=document.getElementById('modal-box'); if(box) box.className='w-full max-w-[880px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+    document.getElementById('modal-title').innerText='Histórico da notinha '+(v.numero||'');
+    document.getElementById('modal-body').innerHTML=`<div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="neo-card"><p class="neo-label">Cliente</p><b class="text-[15px]">${escapeHtml(cli?cli.nome:'(sem cliente)')}</b><p class="text-[12px] text-slate-500 mt-1">Cód. ${cli?(cli.codigo||'-'):'-'}${cli&&cli.semVinculo?' • vínculo do sistema antigo':''}</p><p class="text-[12px] text-slate-500">${escapeHtml(cli?(cli.documento||''):'')}</p></div>
+        <div class="neo-card"><p class="neo-label">Notinha</p><div class="flex flex-wrap gap-x-4 gap-y-1 text-[13px]"><span>Nº <b class="text-[#0a1e8a]">${escapeHtml(v.numero||'')}</b></span><span>Data: <b>${fmtDate(v.data)}</b></span><span>Situação: <b>${statusVendaLabel(v)}</b></span><span>Tipo: <b>${vendaTipoNeo(v)}</b></span></div><p class="text-[12px] text-slate-500 mt-2">Recebimento: <b>${escapeHtml(v.formaPagamento||'Prazo')}</b>${v.vencimento?' • Vencimento: <b>'+fmtDate(v.vencimento)+'</b>':''}</p></div>
+      </div>
+      <div class="neo-card"><p class="neo-label">Pessoas</p><div class="flex flex-wrap gap-x-6 gap-y-1 text-[13px]"><span>Atendeu / entregou: <b>${escapeHtml(v.atendenteNome||v.criadoPorNome||'-')}</b>${v.codVendedorAntigo?' <span class="text-slate-400">(cód. antigo '+escapeHtml(v.codVendedorAntigo)+')</span>':''}</span><span>Abriu a notinha: <b>${escapeHtml(v.abertoPorNome||v.atendenteNome||v.criadoPorNome||'-')}</b></span>${v.numero?'<span class="text-slate-400 text-[12px]">Origem: '+(v.criadoPor==='migracao'?'sistema antigo':'ERP novo')+'</span>':''}</div></div>
+      <div class="neo-card p-0 overflow-hidden"><div class="px-4 pt-3 pb-2 flex items-center justify-between"><p class="neo-label !mb-0">Itens (${(v.itens||[]).length})</p><b class="text-[#0a1e8a]">${fmtMoney(v.total||0)}</b></div><table class="neo-table"><thead><tr><th>#</th><th>Descrição</th><th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${(v.itens||[]).map((it,idx)=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<tr><td>${idx+1}</td><td><b>${escapeHtml(p?.nome||it.descricao||'Item')}</b>${p?.sku?'<br><span class="text-[11px] text-slate-500">'+escapeHtml(p.sku)+'</span>':''}</td><td>${it.qtd}</td><td>${fmtMoney(it.preco||0)}</td><td><b>${fmtMoney(it.subtotal||0)}</b></td></tr>`;}).join('')||'<tr><td colspan="5" class="text-center text-slate-400 py-6">Sem itens registrados (veio assim do sistema antigo)</td></tr>'}</tbody></table>
+      <div class="px-4 py-3 border-t text-[13px] flex justify-between"><span>Desconto: ${fmtMoney(v.desconto||0)}</span><b>Total: ${fmtMoney(v.total||0)}</b></div></div>
+      ${fins.length?`<div class="neo-card p-0 overflow-hidden"><div class="px-4 pt-3 pb-2"><p class="neo-label !mb-0">Financeiro vinculado (${fins.length})</p></div><table class="neo-table"><thead><tr><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${fins.slice(0,10).map(c=>`<tr class="cursor-pointer hover:bg-slate-50" ondblclick="historicoLancamento('cr','${c.id}')"><td>${escapeHtml(c.descricao||'')}</td><td><b>${fmtMoney(c.valor||0)}</b></td><td>${fmtDate(c.vencimento)}</td><td>${c.status||'aberto'}</td></tr>`).join('')}</tbody></table></div>`:''}
+      <div class="neo-card"><p class="neo-label">Histórico de movimentações (${logs.length})</p>${logs.length?`<div class="space-y-1.5 max-h-[200px] overflow-auto">${logs.map(l=>`<div class="text-[12px] border-l-2 border-[#0a1e8a]/30 pl-2"><b>${escapeHtml(l.acao||'')}</b> — ${escapeHtml(l.detalhes||'')}<br><span class="text-slate-400">${fmtDateTime(l.dataHora||l.criadoEm)} • ${escapeHtml(l.usuarioNome||'-')}</span></div>`).join('')}</div>`:'<p class="text-[12px] text-slate-400">Nenhuma movimentação registrada nesta notinha no ERP novo (ela veio pronta do sistema antigo).</p>'}</div>
+      <div class="flex flex-wrap gap-2 justify-end">
+        ${(v.status||'')!=='faturado'?`<button onclick="closeModal(); faturarVenda('${v.id}')" class="neo-btn primary"><i class="ph ph-check-circle"></i>Faturar</button>`:''}
+        <button onclick="imprimirNotinha('${v.id}')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir notinha</button>
+        <button onclick="closeModal()" class="neo-btn"><i class="ph ph-x"></i>Fechar</button>
+      </div>
+    </div>`;
+    document.getElementById('modal-footer').innerHTML='';
+    document.getElementById('modal-root').classList.remove('hidden');
+  };
+  // showVenda antigo (telas clássicas) agora abre o histórico em janela
+  window.showVenda = function(id){ window.historicoVenda(id); };
+
+  // ── FINANCEIRO com pesquisa, ordenação, filtro e histórico ──
+  window.renderFinanceiro = function(){
+    const sess=getSession(); if(!sess) return;
+    const view=document.getElementById('view-financeiro')||ensureView('financeiro');
+    const q=(document.getElementById('neo-search-fin')?.value||'').toLowerCase();
+    const fStatus=document.getElementById('neo-fin-status')?.value||'todos';
+    const fTipo=document.getElementById('neo-fin-tipo')?.value||'todos';
+    const ordem=document.getElementById('neo-fin-ordem')?.value||'venc-asc';
+    const lim=window.__finLim||150;
+    const nomeCli=c=>{ const cli=db.clientes.find(x=>x.id===c.clienteId); return cli?cli.nome:(c.clienteNomeAntigo||(c.fornecedor||'')); };
+    const receber=db.contasReceber.filter(c=>c.empresaId===sess.empresaId);
+    const pagar=db.contasPagar.filter(c=>c.empresaId===sess.empresaId);
+    const totalRec=receber.reduce((s,c)=>s+(c.valor||0),0), totalPag=pagar.reduce((s,c)=>s+(c.valor||0),0);
+    let all=receber.map(c=>({ref:c,_tipo:'Receber'})).concat(pagar.map(c=>({ref:c,_tipo:'Pagar'})));
+    if(fTipo!=='todos') all=all.filter(x=>x._tipo===fTipo);
+    if(fStatus!=='todos') all=all.filter(x=>(x.ref.status||'aberto')===fStatus);
+    if(q) all=all.filter(x=>{ const c=x.ref; return (c.descricao||'').toLowerCase().includes(q)||nomeCli(c).toLowerCase().includes(q)||String(c.legadoCodigo||'').toLowerCase().includes(q)||String(c.valor||'').includes(q); });
+    const ordFns={'venc-asc':(a,b)=>String(a.ref.vencimento||'').localeCompare(String(b.ref.vencimento||'')),'venc-desc':(a,b)=>String(b.ref.vencimento||'').localeCompare(String(a.ref.vencimento||'')),'valor-desc':(a,b)=>(b.ref.valor||0)-(a.ref.valor||0),'valor-asc':(a,b)=>(a.ref.valor||0)-(b.ref.valor||0),'desc':(a,b)=>(a.ref.descricao||'').localeCompare(b.ref.descricao||'','pt-BR',{sensitivity:'base'})};
+    all.sort(ordFns[ordem]||ordFns['venc-asc']);
+    const mostrar=all.slice(0,lim);
+    view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in">
+      <div class="neo-head"><div><h3>Financeiro</h3><p>Contas a receber, pagar e fluxo simples — <b>duplo clique</b> (ou o olho 👁) abre o histórico do lançamento</p></div><div class="neo-actions"><button onclick="openModal('contaReceber')" class="neo-btn primary"><i class="ph ph-arrow-circle-down"></i>Receber</button><button onclick="openModal('contaPagar')" class="neo-btn"><i class="ph ph-arrow-circle-up"></i>Pagar</button></div></div>
+      <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3"><div class="neo-card"><p class="neo-label">A receber</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec)}</div></div><div class="neo-card"><p class="neo-label">A pagar</p><div class="neo-total !text-[24px] !text-red-600">${fmtMoney(totalPag)}</div></div><div class="neo-card"><p class="neo-label">Saldo previsto</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec-totalPag)}</div></div></div>
+      <div class="px-4 pb-3 flex flex-wrap items-center gap-2 border-b">
+        <input id="neo-search-fin" value="${escapeHtml(document.getElementById('neo-search-fin')?.value||'')}" oninput="window.__finLim=150; renderFinanceiro()" class="neo-input flex-1 min-w-[220px]" placeholder="Pesquisar descrição, cliente, fornecedor, código...">
+        <select id="neo-fin-tipo" onchange="window.__finLim=150; renderFinanceiro()" class="neo-select !h-9"><option value="todos" ${fTipo==='todos'?'selected':''}>Receber + Pagar</option><option value="Receber" ${fTipo==='Receber'?'selected':''}>Só a receber</option><option value="Pagar" ${fTipo==='Pagar'?'selected':''}>Só a pagar</option></select>
+        <select id="neo-fin-status" onchange="window.__finLim=150; renderFinanceiro()" class="neo-select !h-9"><option value="todos" ${fStatus==='todos'?'selected':''}>Status: todos</option><option value="aberto" ${fStatus==='aberto'?'selected':''}>Em aberto</option><option value="pago" ${fStatus==='pago'?'selected':''}>Pagos</option></select>
+        <select id="neo-fin-ordem" onchange="renderFinanceiro()" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc" ${ordem==='venc-asc'?'selected':''}>⇧ Vencimento (perto 1º)</option><option value="venc-desc" ${ordem==='venc-desc'?'selected':''}>⇩ Vencimento (longe 1º)</option><option value="valor-desc" ${ordem==='valor-desc'?'selected':''}>⇩ Valor (maior 1º)</option><option value="valor-asc" ${ordem==='valor-asc'?'selected':''}>⇧ Valor (menor 1º)</option><option value="desc" ${ordem==='desc'?'selected':''}>Descrição A → Z</option></select>
+        <span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">${all.length}</b> lançamentos</span>
+      </div>
+      <div class="overflow-auto max-h-[calc(100vh-380px)]"><table class="neo-table"><thead><tr><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>${mostrar.map(x=>{const c=x.ref; const cli=db.clientes.find(z=>z.id===c.clienteId); const nome=cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||''); return `<tr class="cursor-pointer" ondblclick="historicoLancamento('${x._tipo==='Receber'?'cr':'cp'}','${c.id}')"><td>${x._tipo}</td><td>${escapeHtml(c.descricao||'')} ${c.legadoCodigo?'<span class="text-[10px] text-slate-400">#'+escapeHtml(c.legadoCodigo)+'</span>':''}</td><td>${escapeHtml(nome)}${!cli&&c.clienteNomeAntigo?' <span class="text-[10px] text-slate-400">(sist. antigo)</span>':''}</td><td><b class="${x._tipo==='Pagar'?'text-red-600':''}">${fmtMoney(c.valor||0)}</b></td><td>${fmtDate(c.vencimento)}</td><td>${statusPillFin(c.status)}</td><td><button onclick="historicoLancamento('${x._tipo==='Receber'?'cr':'cp'}','${c.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td></tr>`;}).join('')||'<tr><td colspan="7" class="text-center text-slate-500 py-12">Nenhum lançamento encontrado</td></tr>'}</tbody></table></div>
+      ${all.length>mostrar.length?`<div class="p-3 border-t text-center"><button onclick="window.__finLim=${lim+300}; renderFinanceiro()" class="neo-btn"><i class="ph ph-plus"></i>Mostrar mais ${Math.min(300,all.length-mostrar.length)} de ${all.length-mostrar.length} restantes</button></div>`:''}
+    </div></div>`;
+    const inp=document.getElementById('neo-search-fin'); if(inp && document.activeElement?.id==='neo-search-fin'){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); }
+  };
+  window.statusPillFin = function(st){ const t=(st||'aberto'); return `<span class="neo-status ${t==='pago'?'ok':'wait'}">${escapeHtml(t)}</span>`; };
+
+  // Histórico de um lançamento financeiro (conta a receber/pagar)
+  window.historicoLancamento = function(tipo,id){
+    const arr=tipo==='cp'?db.contasPagar:db.contasReceber;
+    const c=arr.find(x=>x.id===id); if(!c){ toast('Lançamento não encontrado','error'); return; }
+    const cli=db.clientes.find(x=>x.id===c.clienteId);
+    const nome=cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||'-');
+    const logsL=(db.logs||[]).filter(l=>l.entidadeId===c.id).slice(0,30);
+    const box=document.getElementById('modal-box'); if(box) box.className='w-full max-w-[640px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+    document.getElementById('modal-title').innerText='Histórico do lançamento';
+    document.getElementById('modal-body').innerHTML=`<div class="space-y-3">
+      <div class="neo-card"><p class="neo-label">${tipo==='cp'?'Conta a pagar':'Conta a receber'}</p><b class="text-[15px]">${escapeHtml(c.descricao||'')}</b><div class="flex flex-wrap gap-x-5 gap-y-1 mt-2 text-[13px]"><span>Valor: <b>${fmtMoney(c.valor||0)}</b></span><span>Vencimento: <b>${fmtDate(c.vencimento)}</b></span><span>Status: <b>${c.status||'aberto'}</b></span>${c.pagamentoData?'<span>Pago em: <b>'+fmtDate(c.pagamentoData)+'</b></span>':''}</div><p class="text-[12px] text-slate-500 mt-2">${tipo==='cp'?'Fornecedor':'Cliente'}: <b>${escapeHtml(nome)}</b>${!cli&&c.clienteNomeAntigo?' (cadastro do sistema antigo)':''}${c.legadoCodigo?' • cód. antigo '+escapeHtml(c.legadoCodigo):''}</p></div>
+      ${c.vendaId?`<button onclick="historicoVenda('${c.vendaId}')" class="neo-btn"><i class="ph ph-shopping-cart"></i>Abrir a venda de origem</button>`:''}
+      <div class="neo-card"><p class="neo-label">Histórico de movimentações (${logsL.length})</p>${logsL.length?`<div class="space-y-1.5 max-h-[220px] overflow-auto">${logsL.map(l=>`<div class="text-[12px] border-l-2 border-[#0a1e8a]/30 pl-2"><b>${escapeHtml(l.acao||'')}</b> — ${escapeHtml(l.detalhes||'')}<br><span class="text-slate-400">${fmtDateTime(l.dataHora||l.criadoEm)} • ${escapeHtml(l.usuarioNome||'-')}</span></div>`).join('')}</div>`:'<p class="text-[12px] text-slate-400">Nenhuma movimentação registrada (veio pronto do sistema antigo).</p>'}</div>
+      <div class="flex justify-end"><button onclick="closeModal()" class="neo-btn"><i class="ph ph-x"></i>Fechar</button></div>
+    </div>`;
+    document.getElementById('modal-footer').innerHTML='';
+    document.getElementById('modal-root').classList.remove('hidden');
+  };
+
+  // ── MÓDULOS MIGRADOS (menu "Migrados"): ordenar clicando na coluna + histórico no duplo clique ──
+  window.__modUi = window.__modUi || {};
+  window.__modOrdem = window.__modOrdem || {};
+  function cmpValMod(a,b){
+    const sa=String(a==null?'':a).trim(), sb=String(b==null?'':b).trim();
+    const na=parseFloat(sa.replace(',','.')), nb=parseFloat(sb.replace(',','.'));
+    const aNum=sa!==''&&!isNaN(na)&&/^-?[\d.,]+$/.test(sa), bNum=sb!==''&&!isNaN(nb)&&/^-?[\d.,]+$/.test(sb);
+    if(aNum&&bNum) return na-nb;
+    if(/\d{4}-\d{2}-\d{2}/.test(sa)&&/\d{4}-\d{2}-\d{2}/.test(sb)){ const da=Date.parse(sa),dbb=Date.parse(sb); if(!isNaN(da)&&!isNaN(dbb)) return da-dbb; }
+    return sa.localeCompare(sb,'pt-BR',{sensitivity:'base'});
+  }
+  window.ordenarModuloDinamico = function(nomeTabela,col){
+    const s=window.__modOrdem[nomeTabela]||{};
+    if(s.col===col) s.dir=(s.dir==='asc'?'desc':'asc'); else { s.col=col; s.dir='asc'; }
+    window.__modOrdem[nomeTabela]=s;
+    renderModuloDinamico(nomeTabela);
+  };
+  window.renderModuloDinamico = function(nomeTabela){
+    const modulo = db.modulosDinamicos[nomeTabela];
+    if(!modulo){ toast('Módulo não encontrado','error'); return; }
+    const ui=window.__modUi[nomeTabela]||(window.__modUi[nomeTabela]={busca:'',coluna:''});
+    const el = ensureView('mod_'+nomeTabela.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+    const dados = modulo.dados || [];
+    const colunas = modulo.colunas || (dados.length > 0 ? Object.keys(dados[0]) : []);
+    const label = modulo.label || formatarNomeTabela(nomeTabela);
+    const maxColunas = Math.min(colunas.length, 8);
+    const colunasVisiveis = colunas.slice(0, maxColunas);
+    const ord=window.__modOrdem[nomeTabela]||{};
+    const busca=(ui.busca||'').toLowerCase();
+    let filtrados=dados.filter(row=>{
+      if(!busca) return true;
+      if(ui.coluna) return String(row[ui.coluna]||'').toLowerCase().includes(busca);
+      return colunas.some(c=>String(row[c]||'').toLowerCase().includes(busca));
+    });
+    if(ord.col) filtrados=filtrados.slice().sort((a,b)=>(ord.dir==='desc'?-1:1)*cmpValMod(a[ord.col],b[ord.col]));
+    const seta=c=>ord.col===c?(ord.dir==='asc'?' ▲':' ▼'):'';
+    el.innerHTML = `
+      <div class="space-y-4">
+        <div class="rounded-[22px] bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 shadow-xl overflow-hidden relative">
+          <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+          <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div>
+              <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Módulo migrado</p>
+              <h2 class="text-[24px] font-extrabold tracking-tight mt-2">${escapeHtml(label)}</h2>
+              <p class="text-white/80 text-[13.5px] mt-2">Dados da tabela <code class="bg-white/20 px-2 py-0.5 rounded">${escapeHtml(nomeTabela)}</code> do sistema antigo. <b>Clique no título da coluna para ordenar</b> • <b>duplo clique</b> (ou o olho) abre todos os campos.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="exportarModuloDinamico('${nomeTabela}')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-export"></i> Exportar</button>
+              <button onclick="confirmarExcluirModulo('${nomeTabela}')" class="h-10 px-4 rounded-xl bg-red-500/20 border border-red-400/30 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-trash"></i> Excluir módulo</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Total de registros</p><p class="text-[24px] font-extrabold text-purple-600 mt-1">${dados.length}</p></div>
+          <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Campos</p><p class="text-[24px] font-extrabold text-blue-600 mt-1">${colunas.length}</p></div>
+          <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Origem</p><p class="text-[14px] font-bold text-slate-700 mt-2">${escapeHtml(modulo.origem || 'Firebird')}</p></div>
+          <div class="rounded-xl bg-white border shadow-sm p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Importado em</p><p class="text-[14px] font-bold text-slate-700 mt-2">${modulo.importadoEm ? fmtDateTime(modulo.importadoEm) : '-'}</p></div>
+        </div>
+        <div class="rounded-[18px] bg-white border shadow-sm p-4">
+          <div class="flex flex-wrap gap-3 items-center">
+            <div class="flex-1 min-w-[250px]"><input id="search-mod-${nomeTabela}" type="text" value="${escapeHtml(ui.busca||'')}" placeholder="Buscar em todos os campos..." class="w-full h-10 px-4 rounded-xl border border-slate-300 text-[13px]" oninput="window.__modUi['${nomeTabela}'].busca=this.value; filtrarModuloDinamico('${nomeTabela}')"></div>
+            <select id="coluna-mod-${nomeTabela}" class="h-10 px-3 rounded-xl border border-slate-300 text-[13px]" onchange="window.__modUi['${nomeTabela}'].coluna=this.value; filtrarModuloDinamico('${nomeTabela}')"><option value="">Todas as colunas</option>${colunas.map(c=>`<option value="${escapeHtml(c)}" ${ui.coluna===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}</select>
+            <span class="text-[12px] text-slate-500" id="mod-count-${nomeTabela}">${filtrados.length} de ${dados.length} registros</span>
+          </div>
+        </div>
+        <div class="rounded-[18px] bg-white border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto max-h-[calc(100vh-320px)] overflow-y-auto">
+            <table class="w-full text-[12px]">
+              <thead class="bg-slate-100 border-b sticky top-0"><tr><th class="px-4 py-3 text-left font-bold text-slate-700">#</th>${colunasVisiveis.map(c=>`<th onclick="ordenarModuloDinamico('${nomeTabela}','${c.replace(/'/g,"\\'")}')" class="px-4 py-3 text-left font-bold text-slate-700 cursor-pointer select-none hover:text-purple-700" title="Clique para ordenar">${escapeHtml(c)}${seta(c)}</th>`).join('')}${colunas.length > maxColunas ? `<th class="px-4 py-3 text-left font-bold text-slate-400">+${colunas.length-maxColunas}</th>` : ''}<th class="px-4 py-3 text-center font-bold text-slate-700">Ações</th></tr></thead>
+              <tbody id="mod-tbody-${nomeTabela}" class="divide-y divide-slate-100">
+                ${filtrados.slice(0,120).map((row,idx)=>`<tr class="hover:bg-slate-50 transition cursor-pointer" ondblclick="visualizarRegistroDinamico('${nomeTabela}',${dados.indexOf(row)})"><td class="px-4 py-3 text-slate-500">${idx+1}</td>${colunasVisiveis.map(c=>`<td class="px-4 py-3 text-slate-700">${escapeHtml(String(row[c]==null?'':row[c]).substring(0,60))}</td>`).join('')}${colunas.length > maxColunas ? '<td class="px-4 py-3 text-slate-400">...</td>' : ''}<td class="px-4 py-3 text-center"><button onclick="visualizarRegistroDinamico('${nomeTabela}',${dados.indexOf(row)})" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100" title="Ver todos os campos"><i class="ph ph-eye"></i></button></td></tr>`).join('')||'<tr><td colspan="20" class="text-center text-slate-400 py-10">Nada encontrado com este filtro</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+          ${filtrados.length > 120 ? `<div class="p-4 border-t bg-slate-50 text-center text-[12px] text-slate-500">Mostrando 120 de ${filtrados.length} registros — use a busca para achar o que precisa.</div>` : ''}
+        </div>
+      </div>`;
+  };
+  window.filtrarModuloDinamico = function(nomeTabela){
+    const tinhaFoco = document.activeElement && document.activeElement.id==='search-mod-'+nomeTabela;
+    const pos = tinhaFoco ? document.activeElement.selectionStart : 0;
+    renderModuloDinamico(nomeTabela);
+    if(tinhaFoco){ const inp=document.getElementById('search-mod-'+nomeTabela); if(inp){ inp.focus(); try{ inp.setSelectionRange(pos,pos); }catch(e){} } }
+  };
+})();

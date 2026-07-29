@@ -939,7 +939,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.9.9 (importacao com vinculo cliente/vendedor/itens + upsert anti-duplicata)');
+  console.log('DIGICOPY ERP — build 3.10.0 (vendas com filtro/ordem/historico + nomes migrados em tudo + sincronizacao automatica)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -1203,6 +1203,8 @@ function renderBanco(){
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[15px] mb-3">Sincronização</h3>
           <div id="cloud-sync-status" class="text-[13px] text-slate-600">Envie ou carregue dados da nuvem.</div>
+          <label class="flex items-center gap-2 mt-3 text-[13px] text-slate-700 cursor-pointer select-none"><input type="checkbox" onchange="if(typeof syncAutoDefinir==='function') syncAutoDefinir(this.checked)" ${(typeof syncAutoLigado==='function'&&syncAutoLigado())?'checked':''}> Sincronização automática neste PC</label>
+          <p class="text-[11px] text-slate-400 mt-1 leading-snug">Ligada, o ERP busca e envia as alterações sozinho a cada minuto — sem você apertar nada. Só age quando você não está no meio de um cadastro.</p>
         </div>
         <div class="rounded-[18px] bg-white border shadow-sm p-6">
           <h3 class="font-bold text-[15px] mb-3">Ações</h3>
@@ -1857,9 +1859,20 @@ function fbImportToErp(rawData){
   const rawCliAll = findTable(rawData, ['CLIENTES']) || [];
   const idxRawCliPorCodigo = {};
   rawCliAll.forEach(r=>{ const k=sStr(r.CODIGO||r.ID||r.COD_CLIENTE); if(k) idxRawCliPorCodigo[k]=r; });
-  const rawFuncAll = findTable(rawData, ['FUNCIONARIOS','FUNCIONARIO','VENDEDORES','VENDEDOR','ATENDENTES','USUARIOS']) || [];
+  // Vendedores/atendentes: varre TODAS as tabelas de pessoas do sistema antigo
+  // (FUNCIONARIOS, VENDEDORES, USUARIOS, ENTREGADORES...) — antes só a primeira
+  // tabela encontrada era usada e vários códigos ficavam sem nome.
   const idxFuncPorCodigo = {};
-  rawFuncAll.forEach(r=>{ const k=sStr(r.CODIGO||r.COD_FUNCIONARIO||r.ID); const n=sStr(r.NOME||r.NOME_FUNCIONARIO||r.FUNCIONARIO||r.LOGIN); if(k&&n) idxFuncPorCodigo[k]=n; });
+  const padraoPessoas = /VENDEDOR|ENTREG|FUNCION|USUARIO|ATENDENT|OPERADOR|TECNIC|REPRESENT|CAIXA/i;
+  Object.keys(rawData||{}).forEach(key=>{
+    if(!padraoPessoas.test(key)) return;
+    const rows=(rawData[key]&&rawData[key].data)||[];
+    rows.forEach(r=>{
+      const k=sStr(r.CODIGO||r.COD_VENDEDOR||r.COD_FUNCIONARIO||r.COD_USUARIO||r.COD_ATENDENTE||r.COD_ENTREGADOR||r.ID);
+      const n=sStr(r.NOME||r.NOME_VENDEDOR||r.VENDEDOR||r.NOME_FUNCIONARIO||r.FUNCIONARIO||r.NOME_USUARIO||r.USUARIO||r.LOGIN||r.OPERADOR);
+      if(k&&n&&!idxFuncPorCodigo[k]) idxFuncPorCodigo[k]=n;
+    });
+  });
   // garante que vendedores do sistema antigo existam como técnicos
   Object.values(idxFuncPorCodigo).forEach(nome=>{
     if(!db.tecnicos.find(t=>(t.nome||'').toLowerCase()===nome.toLowerCase())) db.tecnicos.push({id:uid('tec'),nome,especialidade:'Migrado',osConcluidas:0});
@@ -1875,8 +1888,8 @@ function fbImportToErp(rawData){
     const vinc=db.clientes.find(c=>c.empresaId===empId && sStr(c.codigoAntigo)===k); return vinc?vinc.id:null;
   };
   const nomeVendedor = row => {
-    const cod=sStr(row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
-    return sStr(idxFuncPorCodigo[cod]||row.VENDEDOR_NOME||row.NOME_VENDEDOR||row.USUARIO_NOME||row.ATENDENTE||row.FUNCIONARIO||'') || userName;
+    const cod=sStr(row.COD_ENTREGADOR||row.COD_VENDEDOR||row.COD_FUNCIONARIO||row.COD_USUARIO||row.COD_ATENDENTE);
+    return sStr(idxFuncPorCodigo[cod]||row.ENTREGADOR_NOME||row.NOME_ENTREGADOR||row.VENDEDOR_NOME||row.NOME_VENDEDOR||row.USUARIO_NOME||row.NOME_USUARIO||row.ATENDENTE||row.FUNCIONARIO||'') || userName;
   };
   const rawItensAll = findTable(rawData, ['ITENS_VENDA','VENDA_ITENS','ITENS_VENDAS','VENDAS_ITENS']) || [];
   const rawProdAll = findTable(rawData, ['PRODUTOS','CARTUCHOS']) || [];
@@ -2011,6 +2024,7 @@ function fbImportToErp(rawData){
         codClienteAntigo: codCli,
         codVendedorAntigo: sStr(row.COD_VENDEDOR || row.COD_FUNCIONARIO || row.COD_USUARIO || ''),
         atendenteNome: vendedor,
+        abertoPorNome: sStr(row.USUARIO_NOME || row.NOME_USUARIO || row.ABERTO_POR || row.OPERADOR_NOME || row.OPERADOR || ''),
         data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
         itens: (itensPorVenda[numero]||[]).map(it=>({produtoId: it.produtoId, descricao: it.descricao, qtd: it.qtd, preco: it.preco, subtotal: it.subtotal})),
         desconto: parseFloat(row.DESCONTO || 0) || 0,
