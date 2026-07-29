@@ -424,8 +424,13 @@ function buildNav(){
       navDinamicoLabel.className = 'px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase';
       navDinamicoLabel.textContent = 'Módulos migrados';
       const navContainer = document.querySelector('nav');
-      const adminDiv = navContainer.querySelector('div:last-of-type');
-      navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      if(navContainer){
+        const adminDiv = navContainer.querySelector('div:last-of-type');
+        // Em alguns layouts o menu administrativo não existe. Nesse caso,
+        // inserir no fim evita o NotFoundError e mantém os módulos acessíveis.
+        if(adminDiv && adminDiv.parentNode === navContainer) navContainer.insertBefore(navDinamicoLabel, adminDiv);
+        else navContainer.appendChild(navDinamicoLabel);
+      }
     }
     if(!navDinamico){
       navDinamico = document.createElement('div');
