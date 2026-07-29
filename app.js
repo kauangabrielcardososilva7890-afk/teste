@@ -1008,7 +1008,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.11.0 (Locação real do SisPrinter: contratos, parque, leituras de contador e chamados importados + limpeza de demos)');
+  console.log('DIGICOPY ERP — build 3.11.1 (corrige nome de tabela na leitura multi-arquivo: ITENS_LOCACAO/CONTADOR_PAGINAS nao se misturam mais + progresso visivel durante a leitura + versao visivel na tela)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -1389,7 +1389,7 @@ function renderBanco(){
 
       <!-- UPLOAD DE ARQUIVOS -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados</h3>
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados <span class="ml-2 text-[10px] font-bold text-slate-400">build 3.11.1</span></h3>
         <p class="text-[13px] text-slate-500 mb-4">Selecione um ou mais arquivos JSON exportados do DBeaver.</p>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
@@ -1534,6 +1534,37 @@ window.importarJsonDBeaver = function(dados){
 
 window.handleRarUpload = window.handleDatabaseUpload;
 
+// Mapeia o nome do arquivo para o nome da tabela.
+// REGRA DE OURO: se o nome já é um nome de tabela válido do banco (ex.: ITENS_LOCACAO,
+// CONTADOR_PAGINAS, DESPESAS_LOCACAO), mantém EXATAMENTE como está — jamais dobrar
+// tabelas "ITENS_*"/"DESPESAS_*" dentro de tabelas-pai (bug 3.11.0: misturava parque
+// dentro de LOCACAO e contadores dentro de LEITURAS). Heurísticas só valem para
+// arquivos com nomes soltos (com espaços/parênteses), ex.: "clientes (2).json".
+window.fbMapNomeTabela = function(nomeArquivo, primeiraLinha){
+  nomeArquivo = String(nomeArquivo||'').toUpperCase().trim();
+  if(/^[A-Z][A-Z0-9_]{1,40}$/.test(nomeArquivo)) return nomeArquivo;
+  if(/CLIENTE/.test(nomeArquivo)) return 'CLIENTES';
+  if(/CARTUCHO/.test(nomeArquivo)) return 'CARTUCHOS';
+  if(/PRODUTO/.test(nomeArquivo)) return 'PRODUTOS';
+  if(/ITEM.*VENDA|VENDA.*ITEM/.test(nomeArquivo)) return 'ITENS_VENDA';
+  if(/VENDA|NOTINHA|CUPOM/.test(nomeArquivo)) return 'VENDAS';
+  if(/EQUIP|IMPRESSORA|MAQUINA/.test(nomeArquivo)) return 'EQUIPAMENTOS';
+  if(/RECEB/.test(nomeArquivo)) return 'CONTAS_RECEBER';
+  if(/PAGAR|PAG_|DESPESA/.test(nomeArquivo)) return 'CONTAS_PAGAR';
+  if(/LOCACAO|CONTRATO/.test(nomeArquivo)) return 'LOCACAO';
+  if(/LEITURA|CONTADOR|MEDICAO/.test(nomeArquivo)) return 'LEITURAS';
+  if(primeiraLinha && typeof primeiraLinha === 'object'){
+    const cols = Object.keys(primeiraLinha).map(c => c.toUpperCase());
+    if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO')))) return 'CLIENTES';
+    if(cols.some(c => c.includes('PRODUTO') || c.includes('SKU'))) return 'PRODUTOS';
+    if(cols.some(c => c.includes('LEITURA') || c.includes('CONTADOR'))) return 'LEITURAS';
+    if(cols.some(c => c.includes('PATRIMONIO') || c.includes('NUMERO_SERIE'))) return 'EQUIPAMENTOS';
+    if(cols.some(c => c.includes('VENCIMENTO') && c.includes('CLIENTE'))) return 'CONTAS_RECEBER';
+    if(cols.some(c => c.includes('VENDA'))) return 'VENDAS';
+  }
+  return nomeArquivo;
+};
+
 // Upload de múltiplos arquivos JSON de uma vez
 window.handleMultipleUpload = async function(files){
   const status = document.getElementById('upload-status');
@@ -1567,27 +1598,7 @@ window.handleMultipleUpload = async function(files){
         const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
         let nomeTabela = nomeArquivo;
         
-        // 1) PRIORIDADE ao nome do arquivo (DBeaver exporta com o nome da tabela)
-        if(/CLIENTE/.test(nomeArquivo)) nomeTabela = 'CLIENTES';
-        else if(/CARTUCHO/.test(nomeArquivo)) nomeTabela = 'CARTUCHOS';
-        else if(/PRODUTO/.test(nomeArquivo)) nomeTabela = 'PRODUTOS';
-        else if(/ITEM.*VENDA|VENDA.*ITEM/.test(nomeArquivo)) nomeTabela = 'ITENS_VENDA';
-        else if(/VENDA|NOTINHA|CUPOM/.test(nomeArquivo)) nomeTabela = 'VENDAS';
-        else if(/EQUIP|IMPRESSORA|MAQUINA/.test(nomeArquivo)) nomeTabela = 'EQUIPAMENTOS';
-        else if(/RECEB/.test(nomeArquivo)) nomeTabela = 'CONTAS_RECEBER';
-        else if(/PAGAR|PAG_|DESPESA/.test(nomeArquivo)) nomeTabela = 'CONTAS_PAGAR';
-        else if(/LOCACAO|CONTRATO/.test(nomeArquivo)) nomeTabela = 'LOCACAO';
-        else if(/LEITURA|CONTADOR|MEDICAO/.test(nomeArquivo)) nomeTabela = 'LEITURAS';
-        // 2) fallback: analisar colunas (para arquivos com nomes genéricos)
-        else if(imported.length > 0){
-          const cols = Object.keys(imported[0]).map(c => c.toUpperCase());
-          if(cols.some(c => c.includes('NOME') && (c.includes('CLIENTE') || c.includes('RAZAO')))) nomeTabela = 'CLIENTES';
-          else if(cols.some(c => c.includes('PRODUTO') || c.includes('SKU'))) nomeTabela = 'PRODUTOS';
-          else if(cols.some(c => c.includes('LEITURA') || c.includes('CONTADOR'))) nomeTabela = 'LEITURAS';
-          else if(cols.some(c => c.includes('PATRIMONIO') || c.includes('NUMERO_SERIE'))) nomeTabela = 'EQUIPAMENTOS';
-          else if(cols.some(c => c.includes('VENCIMENTO') && c.includes('CLIENTE'))) nomeTabela = 'CONTAS_RECEBER';
-          else if(cols.some(c => c.includes('VENDA'))) nomeTabela = 'VENDAS';
-        }
+        nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
         
         // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
         if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
@@ -1617,7 +1628,11 @@ window.handleMultipleUpload = async function(files){
     processados++;
     const pct = Math.round((processados/total)*100);
     progressBar.style.width = pct+'%';
-    progressText.textContent = pct+'%';
+    progressText.textContent = pct+'% ('+processados+'/'+total+')';
+    // cede o fio de execução para o navegador PINTAR o progresso entre arquivos
+    // (sem isso a tela congela durante a leitura de muitos arquivos grandes)
+    await new Promise(r=>setTimeout(r,0));
+    log.scrollTop = log.scrollHeight;
   }
   
   const tabelasCount = Object.keys(tabelasImportadas).length;
