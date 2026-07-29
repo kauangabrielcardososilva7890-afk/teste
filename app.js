@@ -426,8 +426,11 @@ function buildNav(){
       navDinamicoLabel.className = 'px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase';
       navDinamicoLabel.textContent = 'Módulos migrados';
       const navContainer = document.querySelector('nav');
-      const adminDiv = navContainer.querySelector('div:last-of-type');
-      navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      const adminDiv = navContainer && Array.from(navContainer.children).find(el => el.textContent.includes('Administração'));
+      // Alguns layouts têm a administração dentro de wrappers; nesse caso o
+      // elemento encontrado não é filho direto e insertBefore lança NotFoundError.
+      if(navContainer && adminDiv && adminDiv.parentNode === navContainer) navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      else if(navContainer) navContainer.appendChild(navDinamicoLabel);
     }
     if(!navDinamico){
       navDinamico = document.createElement('div');
