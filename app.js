@@ -90,7 +90,9 @@ function toast(msg,type='info'){
   const c=document.getElementById('toast-container');
   const el=document.createElement('div');
   el.className=`pointer-events-auto min-w-[320px] max-w-[420px] rounded-[14px] shadow-xl border px-4 py-3 flex items-start gap-3 text-[13px] font-medium animate-slideIn ${type==='success'?'bg-[#0a1e8a] text-white border-[#08176e]':type==='error'?'bg-red-600 text-white border-red-700':'bg-white text-slate-800 border-slate-200'}`;
-  el.innerHTML=`<i class="ph ${type==='success'?'ph-check-circle':type==='error'?'ph-warning-circle':'ph-info'} text-[18px] mt-0.5"></i><div class="flex-1 leading-snug">${msg}</div><button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100"><i class="ph ph-x"></i></button>`;
+  // Mensagens podem vir de dados legados; nunca as interprete como HTML.
+  el.innerHTML=`<i class="ph ${type==='success'?'ph-check-circle':type==='error'?'ph-warning-circle':'ph-info'} text-[18px] mt-0.5"></i><div class="flex-1 leading-snug"></div><button onclick="this.parentElement.remove()" class="opacity-60 hover:opacity-100"><i class="ph ph-x"></i></button>`;
+  el.querySelector('.leading-snug').textContent=String(msg??'');
   c.appendChild(el); setTimeout(()=>{el.style.opacity='0'; el.style.transform='translateX(12px)'; setTimeout(()=>el.remove(),250)},4000);
 }
 
@@ -248,8 +250,13 @@ function showApp(){
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
   if(typeof renderDashboard==='function') renderDashboard();
-  // load others
-  setTimeout(()=>{renderClientes(); renderProdutos(); renderEquipamentos(); renderContratos(); renderParque(); renderLeituras(); renderOs(); renderVendas(); renderFinanceiro(); renderConfig(); if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof renderAuditoria==='function') renderAuditoria();},100);
+  // Não renderizar todos os módulos no login. Bases legadas grandes podem ter
+  // centenas de milhares de registros e gerar HTML de todos os grids de uma vez,
+  // congelando o navegador. Cada módulo é renderizado somente ao ser aberto.
+  setTimeout(()=>{
+    const active=document.querySelector('.view:not(.hidden)');
+    if(active && active.id==='view-dashboard') renderDashboard();
+  },100);
 }
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');
@@ -424,8 +431,11 @@ function buildNav(){
       navDinamicoLabel.className = 'px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase';
       navDinamicoLabel.textContent = 'Módulos migrados';
       const navContainer = document.querySelector('nav');
-      const adminDiv = navContainer.querySelector('div:last-of-type');
-      navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      const adminDiv = navContainer && Array.from(navContainer.children).find(el => el.textContent.includes('Administração'));
+      // Alguns layouts têm a administração dentro de wrappers; nesse caso o
+      // elemento encontrado não é filho direto e insertBefore lança NotFoundError.
+      if(navContainer && adminDiv && adminDiv.parentNode === navContainer) navContainer.insertBefore(navDinamicoLabel, adminDiv);
+      else if(navContainer) navContainer.appendChild(navDinamicoLabel);
     }
     if(!navDinamico){
       navDinamico = document.createElement('div');
@@ -1485,7 +1495,7 @@ window.handleDatabaseUpload = function(file){
             <p class="text-[12px] text-emerald-700 mb-2">Formato detectado: <b>${formato}</b></p>
             <p class="text-[12px] text-emerald-700 mb-2">Total: <b>${totalRegistros} registros</b></p>
             <div class="text-[11px] text-emerald-600 mb-3">${resumo.join(' • ')}</div>
-            <button onclick="importarJsonDBeaver(${JSON.stringify(dados).replace(/"/g, '&quot;')})" 
+            <button onclick="importarJsonDBeaver()" 
                     class="w-full h-10 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition">
               <i class="ph ph-download-simple"></i> Importar para o ERP
             </button>
@@ -1586,23 +1596,29 @@ window.handleMultipleUpload = async function(files, inputEl){
   const log = qs('#upload-log');
 
   if(!files || files.length === 0) return;
-  console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
+  // Atualiza a tela imediatamente, antes de qualquer leitura assíncrona.
+  // Isso é importante no GitHack, onde o navegador pode levar alguns segundos
+  // para começar a ler arquivos grandes.
+  const listaArquivos = Array.from(files);
+  console.log('[UPLOAD] inicio: '+listaArquivos.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
 
   try {
     if(progress) progress.classList.remove('hidden');
+    if(progressBar) progressBar.style.width = '0%';
+    if(progressText) progressText.textContent = '0% (preparando)';
     if(log) log.innerHTML = '';
     if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
 
     const sess = getSession();
     if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
 
-    const total = files.length;
+    const total = listaArquivos.length;
     let processados = 0;
     let totalRegistros = 0;
     const tabelasImportadas = {};
     const rawData = {};
 
-    for(const file of files){
+    for(const file of listaArquivos){
       try {
         const text = await file.text();
         const imported = JSON.parse(text);
@@ -1653,7 +1669,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
   } catch(e){
     console.error('[UPLOAD] falha geral', e);
-    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
+    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+escapeHtml(e.message||'erro desconhecido')+'</p>';
   }
 };
 
@@ -1943,7 +1959,7 @@ async function fbExtractAll(){
   }
 }
 
-function fbImportToErp(rawData){
+async function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
@@ -2006,6 +2022,8 @@ function fbImportToErp(rawData){
   };
 
   // ── CLIENTES ──
+  // Libera o navegador entre as etapas para evitar a impressão de travamento no GitHack.
+  await new Promise(resolve=>setTimeout(resolve,0));
   const rawClientes = findTable(rawData, ['CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
@@ -2091,6 +2109,7 @@ function fbImportToErp(rawData){
   }
 
   // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
+  await new Promise(resolve=>setTimeout(resolve,0));
   const rawVendas = findTable(rawData, ['VENDAS']);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
@@ -2257,6 +2276,8 @@ function fbImportToErp(rawData){
   }
 
   db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
+  fbSetStatus('⏳ Gravando os dados no navegador. A base possui '+Object.values(rawData||{}).reduce((s,i)=>s+(i.data?.length||0),0).toLocaleString('pt-BR')+' registros; não feche a página...','info');
+  await new Promise(resolve=>setTimeout(resolve,50));
   saveDB();
   logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
   buildNav(); // Atualizar menu para mostrar módulos dinâmicos
