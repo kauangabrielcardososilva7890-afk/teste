@@ -1954,7 +1954,7 @@ async function fbExtractAll(){
   }
 }
 
-function fbImportToErp(rawData){
+async function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
@@ -2017,6 +2017,8 @@ function fbImportToErp(rawData){
   };
 
   // ── CLIENTES ──
+  // Libera o navegador entre as etapas para evitar a impressão de travamento no GitHack.
+  await new Promise(resolve=>setTimeout(resolve,0));
   const rawClientes = findTable(rawData, ['CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
@@ -2102,6 +2104,7 @@ function fbImportToErp(rawData){
   }
 
   // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
+  await new Promise(resolve=>setTimeout(resolve,0));
   const rawVendas = findTable(rawData, ['VENDAS']);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
@@ -2268,6 +2271,8 @@ function fbImportToErp(rawData){
   }
 
   db.meta = Object.assign({}, db.meta||{}, {importadoEm:new Date().toISOString(), importadoTabelas:Object.keys(rawData||{}).length});
+  fbSetStatus('⏳ Gravando os dados no navegador. A base possui '+Object.values(rawData||{}).reduce((s,i)=>s+(i.data?.length||0),0).toLocaleString('pt-BR')+' registros; não feche a página...','info');
+  await new Promise(resolve=>setTimeout(resolve,50));
   saveDB();
   logAction('migracao', 'importar_firebird', '-', `Importação Firebird: ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro, ${dinKeys.length} módulos dinâmicos`);
   buildNav(); // Atualizar menu para mostrar módulos dinâmicos
