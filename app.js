@@ -378,11 +378,19 @@ function buildNav(){
           id: 'mod_'+nome.toLowerCase().replace(/[^a-z0-9]/g,'_'),
           icon: modulo.icone || 'ph-table',
           label: modulo.label || formatarNomeTabela(nome),
-          count: modulo.dados.length
+          count: modulo.dados.length,
+          nomeTabela: nome,
+          cat: categoriaModulo(nome)
         });
       }
     });
   }
+  // Agrupa módulos migrados por categoria de negócio
+  const catsMap={};
+  dinamicos.forEach(item=>{ (catsMap[item.cat.id]=catsMap[item.cat.id]||{cat:item.cat, itens:[]}).itens.push(item); });
+  const catsOrdem=Object.values(catsMap).sort((a,b)=>a.cat.ordem-b.cat.ordem);
+  catsOrdem.forEach(g=>g.itens.sort((a,b)=>a.label.localeCompare(b.label,'pt-BR',{sensitivity:'base'})));
+  window.__migCategorias = catsOrdem; // usado pela tela "Explorar Migrados"
   
   function rg(list,target){
     const cont=document.getElementById(target);
@@ -390,13 +398,16 @@ function buildNav(){
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
-  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar)
+  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar) — agrupados por categoria
   const topMod = document.getElementById('topmod-migrados');
   const menuMig = document.getElementById('menu-migrados');
   if(topMod && menuMig){
     if(dinamicos.length){
       topMod.style.display='';
-      menuMig.innerHTML = dinamicos.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('');
+      const totalMods=dinamicos.reduce((s,i)=>s+i.count,0);
+      menuMig.innerHTML = `<button onclick="navigateTo('migrados')" style="font-weight:700"><i class="ph ph-puzzle-piece"></i><span>Ver tudo por categoria</span><small>${dinamicos.length} tabelas</small></button>`
+        + catsOrdem.map(g=>`<div style="padding:6px 10px 2px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;display:flex;gap:5px;align-items:center"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</div>`
+          + g.itens.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('')).join('');
     } else {
       topMod.style.display='none';
       menuMig.innerHTML='';
@@ -422,7 +433,7 @@ function buildNav(){
       navDinamico.className = 'space-y-1';
       navDinamicoLabel.insertAdjacentElement('afterend', navDinamico);
     }
-    navDinamico.innerHTML = dinamicos.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${item.count}</span></button>`).join('');
+    navDinamico.innerHTML = catsOrdem.map(g=>`<p class="px-3 pt-3 mb-1 text-[10px] font-bold tracking-widest text-purple-300/70 uppercase flex items-center gap-1.5"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</p>` + g.itens.map(item=>`<button data-nav="${item.id}" onclick="navigateTo('${item.id}')" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white"><i class="ph ${item.icon} text-[19px]"></i><span>${item.label}</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${item.count}</span></button>`).join('')).join('');
   } else if(navDinamico){
     navDinamico.remove();
     if(navDinamicoLabel) navDinamicoLabel.remove();
@@ -432,6 +443,22 @@ function buildNav(){
 function formatarNomeTabela(nome){
   // Converte NOME_TABELA para "Nome Tabela"
   return String(nome).replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Categoria de negócio de cada tabela migrada (agrupa o menu "Migrados")
+function categoriaModulo(nome){
+  const n=String(nome||'').toUpperCase();
+  const regras=[
+    {id:'locacao', rx:/VISITA|CHECKLIST|ROTA|VEICULO|MOTIVO|GARANTIA|ACOMPANH|REAGENDA/, rotulo:'Locação e atendimento', icone:'ph-wrench', ordem:1},
+    {id:'movimentacao', rx:/PEDIDO|ORCAMENT|ORDEM|SERVICO|RECIBO|CUPOM|BALCAO|CARGA|ROMANEIO|ENTREGA|DEVOLUC|DAV|SAIDA/, rotulo:'Movimentação', icone:'ph-shopping-cart', ordem:2},
+    {id:'financeiro', rx:/BANCO|CHEQUE|CARTAO|BOLETO|FLUXO|COMISS|DUPLIC|COBRAN|BAIXA|PRAZO|TABELA_PRECO|DESPESA|RECEITA|CARTEIR|TITULO/, rotulo:'Financeiro', icone:'ph-bank', ordem:3},
+    {id:'produtos', rx:/GRUPO|SUBGRUPO|MARCA|UNIDADE|FORNECED|GRADE|ESTOQUE|MOVIMENTO_PROD|KIT|TAMANHO/, rotulo:'Produtos e estoque', icone:'ph-package', ordem:4},
+    {id:'cadastros', rx:/BAIRRO|CIDADE|CEP|DEPARTAMENT|SETOR|TRANSPORT|CONTATO|EMAIL|ASSUNTO|SMS|PESSOA|PROFISS|SEGMENT|RAMO|REGIAO|VENDEDOR|FUNCIONAR|TECNIC|USUAR|CLIENTE_|FERIADO|CALEND|PAIS|ENDERECO/, rotulo:'Cadastros gerais', icone:'ph-address-book', ordem:5},
+    {id:'fiscal', rx:/NCM|CFOP|CEST|CST|ICMS|PIS|COFINS|IPI|IBPT|TRIB|NOTA|NFE|NF_|FISCAL|APURA|SPED/, rotulo:'Fiscal e notas', icone:'ph-scales', ordem:6},
+    {id:'sistema', rx:/ATUALIZACAO|EMPRESA|PARAM|CONFIG|PERMISS|ACESSO|VERSAO|LICENC|BACKUP|SISTEMA|SENHA|MENU|MODULO|TEXTO|MENSAGEM|MODELO_DOC|LAYOUT|LOG/, rotulo:'Sistema e configurações', icone:'ph-gear', ordem:7}
+  ];
+  for(const r of regras){ if(r.rx.test(n)) return r; }
+  return {id:'outros', rotulo:'Outros módulos', icone:'ph-table', ordem:9};
 }
 
 // ═══════════════════════════════════════════════════════
@@ -981,7 +1008,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.10.1 (localStorage comprimido p/ base grande + menu Locacao clicavel + sync automatica)');
+  console.log('DIGICOPY ERP — build 3.10.2 (Explorar Migrados por categoria + storage comprimido + sync automatica)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();

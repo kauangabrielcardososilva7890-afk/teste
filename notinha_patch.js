@@ -697,3 +697,116 @@ console.log('PATCH notinha v4.1 - layout novo inspirado não copia + orcamentos 
     };
   }
 })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v4.3 — "Explorar Migrados": as 81 tabelas do sistema antigo organizadas
+// por categoria de negócio, com busca. Remove a sensação de "tabela solta".
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  function migradosPorCategoria(){
+    const grupos={};
+    Object.entries(db.modulosDinamicos||{}).forEach(([nome,m])=>{
+      if(!m || !Array.isArray(m.dados) || !m.dados.length) return;
+      const cat=categoriaModulo(nome);
+      (grupos[cat.id]=grupos[cat.id]||{cat, itens:[], registros:0});
+      const g=grupos[cat.id];
+      g.itens.push({nome, label:m.label||formatarNomeTabela(nome), count:m.dados.length, modulo:m, cat});
+      g.registros+=m.dados.length;
+    });
+    const ord=Object.values(grupos).sort((a,b)=>a.cat.ordem-b.cat.ordem);
+    ord.forEach(g=>g.itens.sort((a,b)=>a.label.localeCompare(b.label,'pt-BR',{sensitivity:'base'})));
+    return ord;
+  }
+  function viewMigrados(){ const v=document.getElementById('view-migrados')||ensureView('migrados');
+    if(v){ v.classList.remove('hidden'); v.style.display='block'; v.style.visibility='visible'; } return v; }
+
+  window.renderMigrados = function(){
+    const sess=getSession(); if(!sess) return;
+    const v=viewMigrados();
+    const ord=migradosPorCategoria();
+    const totalTabelas=ord.reduce((s,g)=>s+g.itens.length,0);
+    const totalRegistros=ord.reduce((s,g)=>s+g.registros,0);
+    const busca=(document.getElementById('mig-busca')?.value||'').toLowerCase();
+    const catSel=window.__migCat||null;
+
+    // Lista de módulos (categoria escolhida ou resultado da busca geral)
+    function linhaModulo(it){
+      return `<button onclick="navigateTo('mod_${it.nome.toLowerCase().replace(/[^a-z0-9]/g,'_')}')" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 border-b text-left transition"><i class="ph ${it.modulo.icone||'ph-table'} text-[18px] text-purple-600"></i><span class="flex-1"><b class="text-[13px]">${escapeHtml(it.label)}</b><br><span class="text-[11px] text-slate-400">${escapeHtml(it.nome)} • ${(it.modulo.colunas||[]).length} campos • ${it.cat.rotulo}</span></span><span class="text-[11px] bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded-full">${it.count.toLocaleString('pt-BR')}</span></button>`;
+    }
+
+    let corpoLista='';
+    if(busca){
+      const achados=[];
+      ord.forEach(g=>g.itens.forEach(it=>{
+        const cols=(it.modulo.colunas||[]).join(' ').toLowerCase();
+        if(it.nome.toLowerCase().includes(busca)||it.label.toLowerCase().includes(busca)||cols.includes(busca)) achados.push(it);
+      }));
+      corpoLista=`<div class="rounded-[18px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50 flex items-center justify-between"><h3 class="font-bold text-[14px]">Resultados para "${escapeHtml(busca)}"</h3><p class="text-[12px] text-slate-500">${achados.length} tabelas</p></div>${achados.map(linhaModulo).join('')||'<p class="text-center text-slate-400 py-10 text-[13px]">Nenhuma tabela com esse nome ou campo.<br>Tente outra palavra (ex.: visita, ncm, bairro, cheque...)</p>'}</div>`;
+    } else if(catSel){
+      const g=ord.find(x=>x.cat.id===catSel);
+      corpoLista=g?`<div class="rounded-[18px] bg-white border shadow-sm overflow-hidden"><div class="p-4 border-b bg-slate-50 flex items-center gap-3"><button onclick="window.__migCat=null; document.getElementById('mig-busca').value=''; renderMigrados()" class="neo-btn !h-9"><i class="ph ph-arrow-left"></i>Todas as categorias</button><h3 class="font-bold text-[15px] flex items-center gap-2"><i class="ph ${g.cat.icone} text-purple-600"></i>${g.cat.rotulo}</h3><p class="text-[12px] text-slate-500 ml-auto">${g.itens.length} tabelas • ${g.registros.toLocaleString('pt-BR')} registros</p></div>${g.itens.map(linhaModulo).join('')}</div>`:'';
+    } else {
+      corpoLista=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">${ord.map(g=>`
+        <button onclick="window.__migCat='${g.cat.id}'; renderMigrados()" class="rounded-[20px] bg-white border shadow-sm p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition group">
+          <div class="w-11 h-11 rounded-2xl bg-purple-600/10 text-purple-700 grid place-items-center text-[22px]"><i class="ph ${g.cat.icone}"></i></div>
+          <h3 class="font-extrabold text-[15px] mt-3">${g.cat.rotulo}</h3>
+          <p class="text-[12px] text-slate-500 mt-1">${g.itens.length} tabela${g.itens.length>1?'s':''} • ${g.registros.toLocaleString('pt-BR')} registros</p>
+          <p class="text-[11px] text-slate-400 mt-2 leading-snug">${g.itens.slice(0,4).map(i=>i.label).join(', ')}${g.itens.length>4?'…':''}</p>
+          <span class="inline-flex items-center gap-1 text-[12px] font-bold text-purple-700 mt-3 group-hover:gap-2 transition-all">Explorar <i class="ph ph-arrow-right"></i></span>
+        </button>`).join('')}</div>`;
+    }
+
+    v.innerHTML=`<div class="space-y-4">
+      <div class="rounded-[22px] bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 shadow-xl overflow-hidden relative">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sistema antigo (SisPrinter)</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Explorar Migrados</h2>
+            <p class="text-white/80 text-[13.5px] mt-2">${totalTabelas} tabelas com ${totalRegistros.toLocaleString('pt-BR')} registros trazidos do sistema antigo, organizadas por assunto.</p>
+          </div>
+          <div class="relative min-w-[280px]"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-white/70"></i><input id="mig-busca" value="${escapeHtml(document.getElementById('mig-busca')?.value||'')}" oninput="window.__migCat=null; renderMigrados()" placeholder="Procurar tabela ou campo... (ex.: visita, ncm, bairro)" class="w-full h-11 pl-9 pr-3 rounded-xl bg-white/15 border border-white/25 text-white placeholder-white/60 text-[13px] outline-none focus:bg-white/25"></div>
+        </div>
+      </div>
+      ${corpoLista}
+      <p class="text-[11px] text-slate-400 text-center">Dentro de cada tabela: busca em todos os campos, ordenação clicando no título da coluna e histórico completo no duplo clique.</p>
+    </div>`;
+    const inp=document.getElementById('mig-busca');
+    if(inp && document.activeElement===inp){ inp.focus(); try{ inp.setSelectionRange(inp.value.length,inp.value.length); }catch(e){} }
+  };
+
+  // Rota "migrados" no navegador principal
+  const navAnterior43 = window.navigateTo;
+  if(navAnterior43 && !window.__navComMigrados){
+    window.__navComMigrados = true;
+    window.navigateTo = function(view){
+      if(view==='migrados'){
+        try{
+          document.querySelectorAll('.view').forEach(x=>x.classList.add('hidden'));
+          document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
+          window.__migCat=null;
+          viewMigrados();
+          if(typeof setPageHeader==='function') setPageHeader('Explorar Migrados','Tabelas do sistema antigo organizadas por assunto');
+          renderMigrados();
+          window.scrollTo({top:0,behavior:'smooth'});
+        }catch(e){ if(typeof toast==='function') toast('Erro ao abrir Migrados: '+((e&&e.message)||e),'error'); }
+        return;
+      }
+      return navAnterior43(view);
+    };
+  }
+
+  // Chip de categoria dentro da tela de cada módulo migrado
+  const renderModAnterior = window.renderModuloDinamico;
+  window.renderModuloDinamico = function(nomeTabela){
+    renderModAnterior(nomeTabela);
+    try{
+      const cat=categoriaModulo(nomeTabela);
+      const el=document.getElementById('view-mod_'+nomeTabela.toLowerCase().replace(/[^a-z0-9]/g,'_'));
+      const alvo=el && el.querySelector('.text-white\\/80');
+      if(alvo && !el.querySelector('.mig-chip-cat')){
+        alvo.insertAdjacentHTML('beforeend', ` <button class="mig-chip-cat" onclick="window.__migCat='${cat.id}'; navigateTo('migrados'); window.__migCat='${cat.id}'; renderMigrados()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;margin-left:6px"><i class="ph ${cat.icone}"></i> ${cat.rotulo} • ver categoria</button>`);
+      }
+    }catch(e){}
+  };
+})();
