@@ -1008,7 +1008,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.11.1 (corrige nome de tabela na leitura multi-arquivo: ITENS_LOCACAO/CONTADOR_PAGINAS nao se misturam mais + progresso visivel durante a leitura + versao visivel na tela)');
+  console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
@@ -1389,12 +1389,12 @@ function renderBanco(){
 
       <!-- UPLOAD DE ARQUIVOS -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados <span class="ml-2 text-[10px] font-bold text-slate-400">build 3.11.1</span></h3>
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados <span class="ml-2 text-[10px] font-bold text-slate-400">build 3.11.2</span></h3>
         <p class="text-[13px] text-slate-500 mb-4">Selecione um ou mais arquivos JSON exportados do DBeaver.</p>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários)</label>
-            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onchange="handleMultipleUpload(this.files)">
+            <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onclick="this.value=null" onchange="handleMultipleUpload(this.files,this)">
             <div id="upload-status" class="text-[12px]"></div>
             <div id="upload-progress" class="hidden mt-3">
               <div class="flex items-center gap-2 mb-2">
@@ -1566,79 +1566,95 @@ window.fbMapNomeTabela = function(nomeArquivo, primeiraLinha){
 };
 
 // Upload de múltiplos arquivos JSON de uma vez
-window.handleMultipleUpload = async function(files){
-  const status = document.getElementById('upload-status');
-  const progress = document.getElementById('upload-progress');
-  const progressBar = document.getElementById('upload-progress-bar');
-  const progressText = document.getElementById('upload-progress-text');
-  const log = document.getElementById('upload-log');
-  
+window.handleMultipleUpload = async function(files, inputEl){
+  // Localiza os elementos do painel subindo a partir do próprio input clicado.
+  // Motivo: se a tela for re-renderizada e houver 2 painéis na página, getElementById
+  // poderia pegar o painel VELHO (invisível) e parecer que "nada acontece" (bug 3.11.1).
+  let panel = null;
+  if(inputEl){
+    let n = inputEl;
+    for(let i=0;i<10 && n;i++){
+      n = n.parentElement;
+      if(n && n.querySelector && n.querySelector('#upload-status')){ panel = n; break; }
+    }
+  }
+  const qs = function(sel){ return (panel && panel.querySelector(sel)) || document.getElementById(sel.slice(1)); };
+  const status = qs('#upload-status');
+  const progress = qs('#upload-progress');
+  const progressBar = qs('#upload-progress-bar');
+  const progressText = qs('#upload-progress-text');
+  const log = qs('#upload-log');
+
   if(!files || files.length === 0) return;
-  
-  progress.classList.remove('hidden');
-  log.innerHTML = '';
-  
-  const sess = getSession();
-  if(!sess) { status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
-  
-  const total = files.length;
-  let processados = 0;
-  let totalRegistros = 0;
-  const tabelasImportadas = {};
-  const rawData = {};
-  
-  status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Processando '+total+' arquivo(s)...</p>';
-  
-  for(const file of files){
-    try {
-      const text = await file.text();
-      const imported = JSON.parse(text);
-      
-      if(Array.isArray(imported)){
-        const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
-        let nomeTabela = nomeArquivo;
-        
-        nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
-        
-        // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
-        if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
-          rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
-        } else {
-          rawData[nomeTabela] = { data: imported, error: null };
-        }
-        tabelasImportadas[nomeTabela] = rawData[nomeTabela].data.length;
-        totalRegistros += imported.length;
-        log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
-        
-      } else if(typeof imported === 'object'){
-        const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
-        for(const [key, value] of Object.entries(dadosObj)){
-          if(Array.isArray(value) && value.length > 0){
-            rawData[key.toUpperCase()] = { data: value, error: null };
-            tabelasImportadas[key.toUpperCase()] = value.length;
-            totalRegistros += value.length;
-            log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+  console.log('[UPLOAD] inicio: '+files.length+' arquivo(s) | painel '+(panel?'ok':'fallback getElementById'));
+
+  try {
+    if(progress) progress.classList.remove('hidden');
+    if(log) log.innerHTML = '';
+    if(status) status.innerHTML = '<p class="text-blue-600 font-bold"><i class="ph ph-spinner animate-spin"></i> Iniciando leitura de '+files.length+' arquivo(s)...</p>';
+
+    const sess = getSession();
+    if(!sess) { if(status) status.innerHTML = '<p class="text-red-600 font-bold">Faça login primeiro!</p>'; return; }
+
+    const total = files.length;
+    let processados = 0;
+    let totalRegistros = 0;
+    const tabelasImportadas = {};
+    const rawData = {};
+
+    for(const file of files){
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+
+        if(Array.isArray(imported)){
+          const nomeArquivo = file.name.replace(/\.json$/i,'').toUpperCase();
+          const nomeTabela = window.fbMapNomeTabela(nomeArquivo, imported.length > 0 ? imported[0] : null);
+
+          // Se a tabela já foi carregada de outro arquivo, JUNTAR os registros (não sobrescrever)
+          if(rawData[nomeTabela] && Array.isArray(rawData[nomeTabela].data)){
+            rawData[nomeTabela].data = rawData[nomeTabela].data.concat(imported);
+          } else {
+            rawData[nomeTabela] = { data: imported, error: null };
+          }
+          tabelasImportadas[nomeTabela] = rawData[nomeTabela].data.length;
+          totalRegistros += imported.length;
+          if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+nomeTabela+'</b> ('+imported.length+' registros)</div>';
+
+        } else if(typeof imported === 'object' && imported !== null){
+          const dadosObj = imported.tabelas || imported.data || imported.resultado || imported;
+          for(const [key, value] of Object.entries(dadosObj)){
+            if(Array.isArray(value) && value.length > 0){
+              rawData[key.toUpperCase()] = { data: value, error: null };
+              tabelasImportadas[key.toUpperCase()] = value.length;
+              totalRegistros += value.length;
+              if(log) log.innerHTML += '<div class="text-emerald-700">✅ '+file.name+' → <b>'+key+'</b> ('+value.length+' registros)</div>';
+            }
           }
         }
+      } catch(e){
+        if(log) log.innerHTML += '<div class="text-red-600">❌ '+file.name+': '+e.message+'</div>';
+        console.warn('[UPLOAD] erro no arquivo '+file.name, e);
       }
-    } catch(e){
-      log.innerHTML += '<div class="text-red-600">❌ '+file.name+': '+e.message+'</div>';
+
+      processados++;
+      const pct = Math.round((processados/total)*100);
+      if(progressBar) progressBar.style.width = pct+'%';
+      if(progressText) progressText.textContent = pct+'% ('+processados+'/'+total+')';
+      // cede o fio para o navegador PINTAR o progresso entre arquivos
+      await new Promise(r=>setTimeout(r,0));
+      if(log) log.scrollTop = log.scrollHeight;
     }
-    
-    processados++;
-    const pct = Math.round((processados/total)*100);
-    progressBar.style.width = pct+'%';
-    progressText.textContent = pct+'% ('+processados+'/'+total+')';
-    // cede o fio de execução para o navegador PINTAR o progresso entre arquivos
-    // (sem isso a tela congela durante a leitura de muitos arquivos grandes)
-    await new Promise(r=>setTimeout(r,0));
-    log.scrollTop = log.scrollHeight;
+
+    const tabelasCount = Object.keys(tabelasImportadas).length;
+    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
+
+    window._rawDataParaImportar = rawData;
+    console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
+  } catch(e){
+    console.error('[UPLOAD] falha geral', e);
+    if(status) status.innerHTML = '<p class="text-red-600 font-bold">Erro ao ler arquivos: '+e.message+'</p>';
   }
-  
-  const tabelasCount = Object.keys(tabelasImportadas).length;
-  status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
-  
-  window._rawDataParaImportar = rawData;
 };
 
 window.importarTudoDeUmaVez = function(){
