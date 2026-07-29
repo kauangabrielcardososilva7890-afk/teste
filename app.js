@@ -398,22 +398,22 @@ function buildNav(){
   }
   rg(main,'nav-main'); rg(op,'nav-op'); rg(gest,'nav-gest');
   
-  // Módulos migrados TAMBÉM no menu superior (layout do PR #3 esconde a sidebar) — agrupados por categoria
-  const topMod = document.getElementById('topmod-migrados');
-  const menuMig = document.getElementById('menu-migrados');
-  if(topMod && menuMig){
-    if(dinamicos.length){
-      topMod.style.display='';
-      const totalMods=dinamicos.reduce((s,i)=>s+i.count,0);
-      menuMig.innerHTML = `<button onclick="navigateTo('migrados')" style="font-weight:700"><i class="ph ph-puzzle-piece"></i><span>Ver tudo por categoria</span><small>${dinamicos.length} tabelas</small></button>`
-        + catsOrdem.map(g=>`<div style="padding:6px 10px 2px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;display:flex;gap:5px;align-items:center"><i class="ph ${g.cat.icone}"></i>${g.cat.rotulo}</div>`
-          + g.itens.map(item=>`<button onclick="navigateTo('${item.id}')"><i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small></button>`).join('')).join('');
-    } else {
-      topMod.style.display='none';
-      menuMig.innerHTML='';
-    }
-  }
-  
+  // Distribui módulos migrados diretamente nas áreas principais, sem uma aba separada.
+  const destinos={
+    locacao:'menu-outsourcing', movimentacao:'menu-outsourcing',
+    financeiro:'menu-financeiro', produtos:'menu-cadastros',
+    cadastros:'menu-cadastros', fiscal:'menu-cadastros',
+    sistema:'menu-config', outros:'menu-cadastros'
+  };
+  Object.entries({locacao:'Outsourcing',movimentacao:'Movimentação',financeiro:'Financeiro',produtos:'Produtos e estoque',cadastros:'Cadastros migrados',fiscal:'Fiscal e notas',sistema:'Sistema',outros:'Outros cadastros'}).forEach(([id,label])=>{
+    const menu=document.getElementById(destinos[id]); if(!menu) return;
+    menu.querySelectorAll(`[data-dynamic-category="${id}"]`).forEach(e=>e.remove());
+    const grupo=catsOrdem.find(g=>g.cat.id===id); if(!grupo) return;
+    const title=document.createElement('span'); title.dataset.dynamicCategory=id; title.className='dynamic-menu-heading'; title.textContent=label; menu.appendChild(title);
+    grupo.itens.forEach(item=>{ const b=document.createElement('button'); b.dataset.dynamicCategory=id; b.innerHTML=`<i class="ph ${item.icon}"></i><span>${item.label}</span><small>${item.count}</small>`; b.onclick=()=>navigateTo(item.id); menu.appendChild(b); });
+  });
+  const obsolete=document.getElementById('topmod-migrados'); if(obsolete) obsolete.remove();
+
   // Renderizar seção de módulos dinâmicos se houver
   let navDinamico = document.getElementById('nav-dinamico');
   let navDinamicoLabel = document.getElementById('nav-dinamico-label');
