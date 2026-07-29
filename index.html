@@ -170,7 +170,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <button onclick="navigateTo('vendas')" class="quick"><i class="ph ph-receipt"></i>Notinhas</button>
         <button onclick="navigateTo('clientes')" class="quick"><i class="ph ph-users"></i>Clientes</button>
         <button onclick="navigateTo('contratos')" class="quick"><i class="ph ph-printer"></i>Locação</button>
-        <button onclick="navigateTo('financeiro')" class="quick"><i class="ph ph-currency-dollar"></i>Financeiro</button>
+        <button onclick="navigateTo('financeiro')" class="quick"><i class="ph ph-currency-dollar"></i>Financeiro</button><button onclick="doLogout()" class="quick" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button>
         <span class="ml-auto text-[11px] text-slate-500">Buscar</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search" placeholder="cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick"><i class="ph ph-magnifying-glass"></i></button>
       </div>
     </div>
