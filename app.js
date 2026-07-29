@@ -1008,7 +1008,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
 
 // INICIALIZAÇÃO
 (function(){
-  console.log('DIGICOPY ERP — build 3.10.2 (Explorar Migrados por categoria + storage comprimido + sync automatica)');
+  console.log('DIGICOPY ERP — build 3.11.0 (Locação real do SisPrinter: contratos, parque, leituras de contador e chamados importados + limpeza de demos)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
   const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
