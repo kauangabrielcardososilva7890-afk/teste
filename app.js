@@ -1,6 +1,10 @@
-// DIGICOPY ERP v3.8 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.8.0';
+// DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+// v4.4.0: persistência local incremental (uma chave por entidade, só regrava
+// o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
+const APP_VERSION='4.4.0';
 const DB_KEY='digicopy_erp_v30';
+const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
+const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
 
@@ -15,12 +19,18 @@ const defaultData={
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
 // vezes mais dados no navegador. Formatos antigos (JSON puro) continuam lendo.
-function storageEncode(obj){
-  const txt=JSON.stringify(obj);
+function storageEncodeTexto(txt){
   try{
     if(window.LZUTF16 && typeof window.LZUTF16.compress==='function') return 'LZ1:'+window.LZUTF16.compress(txt);
   }catch(eLz){ /* sem compressão: cai no plano B abaixo */ }
   return txt;
+}
+function storageEncode(obj){ return storageEncodeTexto(JSON.stringify(obj)); }
+// Hash FNV-1a rápido para detectar se uma entidade mudou desde a última gravação
+function dbHashTexto(s){
+  let h=0x811c9dc5;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); }
+  return (h>>>0).toString(36);
 }
 function storageDecode(raw){
   if(raw && raw.startsWith('LZ1:')){
@@ -44,7 +54,74 @@ function normalizeDbShape(parsed){
   parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
   return parsed;
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// PERSISTÊNCIA LOCAL INCREMENTAL (v4.4.0) — o fim do "travando"
+// Antes: cada saveDB() comprimia e regravava a base INTEIRA (dezenas de MB)
+// em uma chave única — congelava a tela por segundos a cada ação.
+// Agora: cada entidade (clientes, vendas, modulosDinamicos...) é quebrada em
+// PEDAÇOS pequenos com hash próprio, e só os pedaços alterados são
+// recomprimidos/regravados. Ex.: ao editar 1 venda, só o pedaço dela (~ms)
+// é regravado — não mais a base toda (~segundos).
+// A chave única antiga (DB_KEY) vira apenas um backup de compatibilidade,
+// atualizado fora do uso ativo (aba oculta / a cada 10 min).
+// ═══════════════════════════════════════════════════════════════════════════
+const DB_CHUNK_ITENS=600;           // itens por pedaço de listas grandes
+const DB_CHUNK_OBJ_MIN=8;           // objetos com +8 chaves viram 1 pedaço por chave
+function dbParteKey(campo, sub){ return DB_PART_PREFIX + campo + '__' + encodeURIComponent(sub); }
+// Fatia o valor de uma entidade em pedaços persistíveis:
+//  {tipo:'array',  pedacos:[{sub:'#0', valor:[...]}...]}
+//  {tipo:'objeto', pedacos:[{sub:'@chave', valor}...]}   (objetos grandes)
+//  {tipo:'valor',  pedacos:[{sub:'', valor}]}            (demais casos)
+function dbFatiarEntidade(valor){
+  if(Array.isArray(valor)){
+    const pedacos=[];
+    if(!valor.length){ pedacos.push({sub:'#0', valor:[]}); }
+    for(let i=0;i<valor.length;i+=DB_CHUNK_ITENS) pedacos.push({sub:'#'+(i/DB_CHUNK_ITENS), valor:valor.slice(i,i+DB_CHUNK_ITENS)});
+    return {tipo:'array', pedacos};
+  }
+  if(valor && typeof valor==='object'){
+    const ks=Object.keys(valor);
+    if(ks.length>DB_CHUNK_OBJ_MIN) return {tipo:'objeto', pedacos:ks.map(k=>({sub:'@'+k, valor:(valor[k]===undefined?null:valor[k])}))};
+  }
+  return {tipo:'valor', pedacos:[{sub:'', valor:(valor===undefined?null:valor)}]};
+}
 function loadDB(){
+  // 1) Formato incremental (v4.4.0+): remonta a base pelos pedaços
+  try{
+    const manifestRaw=localStorage.getItem(DB_MANIFEST_KEY);
+    if(manifestRaw){
+      const manifest=JSON.parse(manifestRaw)||{};
+      if(manifest && manifest.v===2 && manifest.partes){
+        const base=structuredClone(defaultData);
+        let lidas=0;
+        Object.keys(manifest.partes).forEach(campo=>{
+          const info=manifest.partes[campo]||{};
+          const ler=(sub)=>{
+            const raw=localStorage.getItem(dbParteKey(campo, sub));
+            if(raw==null) return undefined;
+            try{ return JSON.parse(storageDecode(raw)); }catch(eP){ return undefined; }
+          };
+          try{
+            if(info.tipo==='array'){
+              const arr=[];
+              Object.keys(info.subs||{}).sort((a,b)=>parseInt(a.slice(1),10)-parseInt(b.slice(1),10))
+                .forEach(sub=>{ const v=ler(sub); if(Array.isArray(v)) arr.push.apply(arr,v); });
+              base[campo]=arr; lidas++;
+            }else if(info.tipo==='objeto'){
+              const obj={};
+              Object.keys(info.subs||{}).forEach(sub=>{ const v=ler(sub); if(v!==undefined) obj[sub.slice(1)]=v; });
+              base[campo]=obj; lidas++;
+            }else{
+              const v=ler('');
+              if(v!==undefined){ base[campo]=v; lidas++; }
+            }
+          }catch(eC){ /* entidade ilegível: mantém o padrão dela */ }
+        });
+        if(lidas>0) return normalizeDbShape(base);
+      }
+    }
+  }catch(eInc){ /* manifesto ilegível: cai no formato antigo */ }
+  // 2) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
@@ -54,26 +131,69 @@ function loadDB(){
   }
 }
 function saveDB(){
-  let dado;
-  try{ dado=storageEncode(db); }catch(eEnc){ dado=JSON.stringify(db); }
+  let manifestAnt={v:2, partes:{}};
   try{
-    localStorage.setItem(DB_KEY, dado);
-    window.__dbPersistidoOk=true;
-  }catch(eQuota){
-    // Cota do navegador cheia: limpa sobras grandes (backups/chaves antigas) e tenta 1x de novo
-    try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
-    try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
-    try{
-      localStorage.setItem(DB_KEY, dado);
-      window.__dbPersistidoOk=true;
-    }catch(eQuota2){
-      window.__dbPersistidoOk=false;
-      if(!window.__avisouQuota){
-        window.__avisouQuota=true;
-        if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
-      }
+    const bruto=JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'null');
+    if(bruto && bruto.v===2 && bruto.partes) manifestAnt=bruto;
+  }catch(eRead){ manifestAnt={v:2, partes:{}}; }
+  const antPartes=manifestAnt.partes||{};
+  const partes={};
+  let falhouQuota=false;
+  const gravar=(chave, json)=>{
+    try{ localStorage.setItem(chave, storageEncodeTexto(json)); return true; }
+    catch(eQuota){
+      // Cota cheia: libera sobras grandes (inclusive a chave única antiga) e tenta 1x de novo
+      try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
+      try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
+      try{ localStorage.removeItem(DB_KEY); }catch(_r3){}
+      try{ localStorage.setItem(chave, storageEncodeTexto(json)); return true; }
+      catch(eQuota2){ return false; }
     }
+  };
+  for(const campo of Object.keys(db)){
+    let fatia;
+    try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ continue; }
+    const infoAnt=(antPartes[campo]||{subs:{}});
+    const subs={};
+    for(const p of fatia.pedacos){
+      let json;
+      try{ json=JSON.stringify(p.valor); }catch(eJ){ continue; }
+      const h=dbHashTexto(json);
+      subs[p.sub]=h;
+      if(infoAnt.subs && infoAnt.subs[p.sub]===h) continue; // pedaço intacto: nada a regravar
+      if(!gravar(dbParteKey(campo, p.sub), json)) falhouQuota=true;
+    }
+    // apaga pedaços que deixaram de existir (lista encolheu / mudou de tipo)
+    Object.keys(infoAnt.subs||{}).forEach(sub=>{ if(!(sub in subs)){ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM){} } });
+    partes[campo]={tipo:fatia.tipo, subs};
   }
+  // apaga entidades que saíram do banco
+  Object.keys(antPartes).forEach(campo=>{
+    if(campo in db) return;
+    Object.keys(antPartes[campo].subs||{}).forEach(sub=>{ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM2){} });
+  });
+  try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes})); }catch(eMan){}
+  window.__dbPersistidoOk=!falhouQuota;
+  if(falhouQuota && !window.__avisouQuota){
+    window.__avisouQuota=true;
+    if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
+  }
+  agendarSnapshotLegado();
+}
+// Snapshot da chave única antiga: mantido só como backup de compatibilidade
+// com versões antigas do sistema. É gravado APENAS quando a aba fica oculta
+// (a tela congela com a base grande, então ele nunca roda durante o uso).
+let __snapHash='';
+function gravarSnapshotLegado(force){
+  let h='';
+  try{ h=JSON.stringify((JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'{}')||{}).partes||{}); }catch(eH){ h=''; }
+  if(h && h===__snapHash) return; // nada mudou desde o último snapshot
+  __snapHash=h;
+  try{ localStorage.setItem(DB_KEY, storageEncode(db)); }catch(eQuota){ /* sem espaço: a forma incremental já garante os dados */ }
+}
+function agendarSnapshotLegado(){ /* mantido p/ compatibilidade de chamadas */ }
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
 

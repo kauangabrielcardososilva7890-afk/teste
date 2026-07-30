@@ -95,15 +95,22 @@ window.__perfPure = { perfHashStr, perfDiffPartes, perfEmLotes };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cache local de hashes das partes enviadas (identifica o que mudou)
+// O cache é separado POR BACKEND (supabase/firebase): trocar de nuvem força
+// um primeiro envio completo na nuvem nova, sem misturar os hashes da antiga.
 // ═══════════════════════════════════════════════════════════════════════════
 const PARTCACHE_KEY = 'digicopy_erp_v2_partcache_v1';
+function partCacheKeyAtual(){
+  const I = window.__supabaseSyncInternals;
+  const backend = (I && I.nome) || 'supabase';
+  return PARTCACHE_KEY + '__' + backend;
+}
 function partCacheLer(){
-  try{ return JSON.parse(localStorage.getItem(PARTCACHE_KEY)||'null') || null; }catch(e){ return null; }
+  try{ return JSON.parse(localStorage.getItem(partCacheKeyAtual())||'null') || null; }catch(e){ return null; }
 }
 function partCacheGravar(hashes){
-  try{ localStorage.setItem(PARTCACHE_KEY, JSON.stringify({ts:new Date().toISOString(), hashes})); }catch(e){}
+  try{ localStorage.setItem(partCacheKeyAtual(), JSON.stringify({ts:new Date().toISOString(), hashes})); }catch(e){}
 }
-function partCacheLimpar(){ try{ localStorage.removeItem(PARTCACHE_KEY); }catch(e){} }
+function partCacheLimpar(){ try{ localStorage.removeItem(partCacheKeyAtual()); }catch(e){} }
 // Se a base local veio da nuvem DEPOIS do último envio deste PC, o cache não
 // corresponde mais ao estado atual → zera (o próximo envio republica tudo 1x)
 (function invalidarCacheSeBaseVeioDaNuvem(){
@@ -325,5 +332,5 @@ window.syncCarregarDaNuvem = async function(opts={}){
   }
 };
 
-console.log('PATCH performance v4.3.0 — saveDB write-behind, envio incremental e carregamento paralelo');
+console.log('PATCH performance v4.4.0 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
 })();
