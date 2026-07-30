@@ -28,7 +28,7 @@ function novaInstancia(){
   const toast = ()=>{};
   const document = { addEventListener(){}, visibilityState:'visible' };
   const fn = new Function('localStorage','window','toast','document',
-    trecho + '\nreturn {db, saveDB, loadDB, gravarSnapshotLegado, DB_KEY, DB_MANIFEST_KEY, DB_PART_PREFIX, storageEncode};');
+    trecho + '\nreturn {db, saveDB:()=>{saveDB(); __saveDBDrainSync();}, loadDB, gravarSnapshotLegado, DB_KEY, DB_MANIFEST_KEY, DB_PART_PREFIX, storageEncode};');
   return Object.assign(fn(ls, window, toast, document), {ls, window});
 }
 

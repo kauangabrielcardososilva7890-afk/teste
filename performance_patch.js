@@ -81,8 +81,15 @@ window.__perfPure = { perfHashStr, perfDiffPartes, perfEmLotes };
     setTimeout(flush, FLUSH_MS);
   };
   // Para fluxos que PRECISAM da gravação imediata (antes de reload/impressão)
-  window.saveDBAgora = function(){ pendente = true; flush(); };
-  const urgente = ()=>{ if(pendente){ pendente=false; try{ realSave(); }catch(e){ pendente=true; } } };
+  window.saveDBAgora = function(){
+    pendente = true; flush();
+    // v4.5.0: a persistência real é fatiada no tempo; aqui drena tudo na hora
+    if(typeof window.__saveDBDrainSync==='function'){ try{ window.__saveDBDrainSync(); }catch(e){} }
+  };
+  const urgente = ()=>{
+    if(pendente){ pendente=false; try{ realSave(); }catch(e){ pendente=true; } }
+    if(typeof window.__saveDBDrainSync==='function'){ try{ window.__saveDBDrainSync(); }catch(eD){} }
+  };
   if(typeof window!=='undefined' && typeof window.addEventListener==='function'){
     window.addEventListener('beforeunload', urgente);
     if(typeof document!=='undefined' && document.addEventListener){

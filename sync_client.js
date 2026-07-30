@@ -14,7 +14,7 @@
   async function supabaseRequest(path, options){
     const ativo = window.supabaseRequest;
     if(typeof ativo==='function' && ativo!==supabaseRequest) return ativo(path, options);
-    throw { status:0, data:null, message:'A nuvem antiga foi desativada — o sistema agora usa o Google Firebase. Recarregue a página; se o erro continuar, confira o firebase_config.js (guia no GUIA_FIREBASE.md).' };
+    throw { status:0, data:null, message:'A nuvem antiga foi desativada — o sistema agora usa o Google Firebase. Recarregue a página; se o erro continuar, confira o firebase_config.js.' };
   }
   window.supabaseRequest = supabaseRequest;
 
@@ -30,7 +30,7 @@
 
   window.nuvemInfo = function(){
     const cfg = window.FIREBASE_CONFIG || {};
-    alert('Nuvem do sistema: GOOGLE FIREBASE (Firestore)\n\nProjeto: ' + (cfg.projectId || 'não configurado') + '\nBanco: São Paulo (southamerica-east1)\n\nO envio é automático e incremental — use "Enviar para nuvem" e "Carregar da nuvem" nos menus. Guia completo: GUIA_FIREBASE.md');
+    alert('Nuvem do sistema: GOOGLE FIREBASE (Firestore)\n\nProjeto: ' + (cfg.projectId || 'não configurado') + '\nBanco: São Paulo (southamerica-east1)\n\nO envio é automático e incremental — use "Enviar para nuvem" e "Carregar da nuvem" nos menus.');
   };
 
   // Copia as REGRAS DEFINITIVAS do Firestore (etapa de segurança do guia).
@@ -486,7 +486,7 @@
           <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="neo-card"><p class="neo-label">Projeto (Google Firebase)</p><b class="text-[#0a1e8a] break-all">${projId}</b></div>
             <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em testar conexão.</div></div>
-            <div class="neo-card"><p class="neo-label">Banco</p><p class="text-[13px] text-slate-600">Firestore (Google) em São Paulo. Guia completo: <b>GUIA_FIREBASE.md</b>.</p></div>
+            <div class="neo-card"><p class="neo-label">Banco</p><p class="text-[13px] text-slate-600">Firestore (Google) em São Paulo.</p></div>
           </div>
           <div class="px-4 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div class="neo-card lg:col-span-2"><p class="neo-label">Sincronização de teste</p><div id="cloud-sync-status" class="text-[13px] text-slate-600">Área temporária para testar sincronização.</div></div>

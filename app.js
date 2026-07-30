@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.4.2';
+const APP_VERSION='4.5.0';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -130,19 +130,32 @@ function loadDB(){
     return structuredClone(defaultData);
   }
 }
+// saveDB em FATIAS DE TEMPO (v4.5.0): a fila de entidades é processada em
+// pedaços de ~25ms por ciclo — a tela NUNCA congela, mesmo com base enorme.
+// saveDBAgora() drena tudo de forma síncrona (fechar aba, imprimir, recarregar).
+let __saveQ=null;
 function saveDB(){
-  let manifestAnt={v:2, partes:{}};
-  try{
-    const bruto=JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'null');
-    if(bruto && bruto.v===2 && bruto.partes) manifestAnt=bruto;
-  }catch(eRead){ manifestAnt={v:2, partes:{}}; }
-  const antPartes=manifestAnt.partes||{};
-  const partes={};
-  let falhouQuota=false;
+  const novas = Object.keys(db);
+  if(!__saveQ){
+    let manifestAnt={v:2, partes:{}};
+    try{
+      const bruto=JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'null');
+      if(bruto && bruto.v===2 && bruto.partes) manifestAnt=bruto;
+    }catch(eRead){ manifestAnt={v:2, partes:{}}; }
+    __saveQ={ keys:novas.slice(), manifestAnt, partes:{}, falhouQuota:false, durante:false };
+    setTimeout(__saveTick, 0);
+  }else{
+    __saveQ.durante=true; // mudança no meio do processo: refaz a varredura ao final (hash pula o que não mudou)
+  }
+}
+function __gravarParteCampo(campo, q){
+  const infoAnt=(q.manifestAnt.partes||{})[campo]||{subs:{}};
+  let fatia;
+  try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ q.partes[campo]={tipo:'valor', subs:infoAnt.subs||{}}; return; }
+  const subs={};
   const gravar=(chave, json)=>{
     try{ localStorage.setItem(chave, storageEncodeTexto(json)); return true; }
     catch(eQuota){
-      // Cota cheia: libera sobras grandes (inclusive a chave única antiga) e tenta 1x de novo
       try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
       try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
       try{ localStorage.removeItem(DB_KEY); }catch(_r3){}
@@ -150,36 +163,52 @@ function saveDB(){
       catch(eQuota2){ return false; }
     }
   };
-  for(const campo of Object.keys(db)){
-    let fatia;
-    try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ continue; }
-    const infoAnt=(antPartes[campo]||{subs:{}});
-    const subs={};
-    for(const p of fatia.pedacos){
-      let json;
-      try{ json=JSON.stringify(p.valor); }catch(eJ){ continue; }
-      const h=dbHashTexto(json);
-      subs[p.sub]=h;
-      if(infoAnt.subs && infoAnt.subs[p.sub]===h) continue; // pedaço intacto: nada a regravar
-      if(!gravar(dbParteKey(campo, p.sub), json)) falhouQuota=true;
-    }
-    // apaga pedaços que deixaram de existir (lista encolheu / mudou de tipo)
-    Object.keys(infoAnt.subs||{}).forEach(sub=>{ if(!(sub in subs)){ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM){} } });
-    partes[campo]={tipo:fatia.tipo, subs};
+  for(const p of fatia.pedacos){
+    let json;
+    try{ json=JSON.stringify(p.valor); }catch(eJ){ continue; }
+    const h=dbHashTexto(json);
+    subs[p.sub]=h;
+    if(infoAnt.subs && infoAnt.subs[p.sub]===h) continue; // pedaço intacto
+    if(!gravar(dbParteKey(campo, p.sub), json)) q.falhouQuota=true;
   }
-  // apaga entidades que saíram do banco
-  Object.keys(antPartes).forEach(campo=>{
+  Object.keys(infoAnt.subs||{}).forEach(sub=>{ if(!(sub in subs)){ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM){} } });
+  q.partes[campo]={tipo:fatia.tipo, subs};
+}
+function __finalizarSaveQ(q){
+  // entidades que saíram do banco
+  Object.keys(q.manifestAnt.partes||{}).forEach(campo=>{
     if(campo in db) return;
-    Object.keys(antPartes[campo].subs||{}).forEach(sub=>{ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM2){} });
+    Object.keys((q.manifestAnt.partes[campo]||{}).subs||{}).forEach(sub=>{ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM2){} });
   });
-  try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes})); }catch(eMan){}
-  window.__dbPersistidoOk=!falhouQuota;
-  if(falhouQuota && !window.__avisouQuota){
+  try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
+  window.__dbPersistidoOk=!q.falhouQuota;
+  if(q.falhouQuota && !window.__avisouQuota){
     window.__avisouQuota=true;
     if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
   }
   agendarSnapshotLegado();
 }
+function __saveTick(){
+  const q=__saveQ; if(!q) return;
+  const t0=Date.now();
+  while(q.keys.length && (Date.now()-t0)<25){
+    const campo=q.keys.shift();
+    __gravarParteCampo(campo, q);
+  }
+  if(q.keys.length){ setTimeout(__saveTick, 0); return; }
+  __finalizarSaveQ(q);
+  const repete=q.durante;
+  __saveQ=null;
+  if(repete) saveDB(); // algo mudou no meio do processo: nova varredura (quase tudo em cache)
+}
+// Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
+function __saveDBDrainSync(){
+  if(!__saveQ) return;
+  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); __gravarParteCampo(campo, __saveQ); }
+  __finalizarSaveQ(__saveQ);
+  __saveQ=null;
+}
+window.__saveDBDrainSync = __saveDBDrainSync;
 // Snapshot da chave única antiga: mantido só como backup de compatibilidade
 // com versões antigas do sistema. É gravado APENAS quando a aba fica oculta
 // (a tela congela com a base grande, então ele nunca roda durante o uso).
@@ -1254,7 +1283,6 @@ function renderBanco(){
             <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Conecte diretamente ao banco Firebird do sistema antigo, visualize as tabelas e importe os dados para o ERP novo. Os dados são mapeados automaticamente para clientes, produtos, vendas, locação e financeiro.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
             <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
           </div>
         </div>
@@ -1840,38 +1868,6 @@ window.copiarSqlExportarTudo = function(){
 };
 // IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
 // Essa função adiciona dados fictícios para testar as telas
-function loadManualDB(){
-  const sess = getSession();
-  if(!sess) { toast('Faça login para importar dados manuais','info'); return; }
-  // Criar dados principais baseados na análise do arquivo .FDB
-  const clientesManuais = [
-    {id:'cli_001', empresaId:sess.empresaId, nome:'Construtora Horizonte LTDA', documento:'45.123.678/0001-12', tipo:'PJ', email:'financeiro@horizonte.com.br', telefone:'(11) 99123-4567', endereco:'Av. Paulista, 1000 - Bela Vista', cidade:'São Paulo', estado:'SP', cep:'01310-100', status:'ativo', mensalidade:2490, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_002', empresaId:sess.empresaId, nome:'Escola Saber & Arte', documento:'08.765.432/0001-99', tipo:'PJ', email:'secretaria@saberarte.edu.br', telefone:'(11) 98888-1122', endereco:'R. das Flores, 234 - Jardim', cidade:'Osasco', estado:'SP', cep:'06010-120', status:'ativo', mensalidade:1890, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_003', empresaId:sess.empresaId, nome:'Clínica Vida Mais', documento:'22.111.333/0001-44', tipo:'PJ', email:'adm@vidamaisclinica.com.br', telefone:'(11) 97777-3344', endereco:'R. Domingos, 45 - Centro', cidade:'Barueri', estado:'SP', cep:'06401-000', status:'inadimplente', mensalidade:3200, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_004', empresaId:sess.empresaId, nome:'Advocacia Martins & Associados', documento:'33.222.111/0001-55', tipo:'PJ', email:'contato@martinsadv.com.br', telefone:'(11) 96666-7788', endereco:'Al. Santos, 700 - Jardins', cidade:'São Paulo', estado:'SP', cep:'01419-001', status:'ativo', mensalidade:1650, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_1844', empresaId:sess.empresaId, nome:'Metalúrgica Brasmetal', documento:'18.234.567/0001-33', tipo:'PJ', email:'compras@brasmetal.ind.br', telefone:'(11) 95555-0001', endereco:'Rod. Anhanguera, Km 20', cidade:'Cajamar', estado:'SP', cep:'07750-000', status:'ativo', mensalidade:4750, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-  ];
-  const produtosManuais = [
-    {id:'prd_ton_1230', empresaId:sess.empresaId, sku:'TON-BRO-1230', nome:'Toner Brother TN-3442 Compatível Alto Rendimento', categoria:'Suprimento', fabricante:'Premium', estoque:47, estoqueMin:10, custo:89, preco:149, local:'A1-02', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_cil_hp_19a', empresaId:sess.empresaId, sku:'CIL-HP-19A', nome:'Cilindro HP 19A Original', categoria:'Peça', fabricante:'HP', estoque:8, estoqueMin:5, custo:210, preco:340, local:'B2-04', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_imp_bro_5652', empresaId:sess.empresaId, sku:'IMP-BRO-5652', nome:'Brother DCP-L5652DN Laser Mono', categoria:'Impressora', fabricante:'Brother', estoque:3, estoqueMin:1, custo:1850, preco:2690, local:'C1-01', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_serv_inst', empresaId:sess.empresaId, sku:'SERV-INST', nome:'Serviço Instalação e Configuração', categoria:'Serviço', fabricante:'DIGICOPY', estoque:999, estoqueMin:0, custo:0, preco:180, local:'-', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-  ];
-  const vendasManuais = [
-    {id:'vda_15625', empresaId:sess.empresaId, numero:'VD-15625', clienteId:'cli_004', data:new Date().toISOString(), itens:[{produtoId:'prd_ton_1230', qtd:3, preco:149, subtotal:447}], desconto:0, total:447, formaPagamento:'Boleto 30d', status:'faturado', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-  ];
-  // Substituir dados no db (manter usuários e empresa atual, mas adicionar clientes/produtos/vendas manuais)
-  db.clientes = db.clientes.filter(c => !clientesManuais.find(m => m.id === c.id));
-  db.clientes.push(...clientesManuais);
-  db.produtos = db.produtos.filter(p => !produtosManuais.find(m => m.id === p.id));
-  db.produtos.push(...produtosManuais);
-  db.vendas = db.vendas.filter(v => !vendasManuais.find(m => m.id === v.id));
-  db.vendas.push(...vendasManuais);
-  saveDB();
-  toast('Dados de teste importados! Clientes: '+clientesManuais.length+', Produtos: '+produtosManuais.length+', Vendas: '+vendasManuais.length, 'success');
-  renderClientes(); renderProdutos(); renderVendas(); renderDashboard();
-  console.log('Dados manuais carregados:', {clientes: clientesManuais.length, produtos: produtosManuais.length, vendas: vendasManuais.length});
-}
 
 // ═══════════════════════════════════════════════════════
 // MÓDULO FIREBIRD — Conexão real ao banco .FDB do sistema antigo

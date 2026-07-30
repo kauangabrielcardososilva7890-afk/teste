@@ -94,6 +94,7 @@ function vosNovoForm(){
 // ═══════════════════════════════════════════════════════════════════════════
 window.novaVenda = function(){
   const sess = getSession(); if(!sess) return;
+  __vosCliIdx = null; __vosProdIdx = null; // reconstrói os índices de busca com os dados atuais
   window.__vosForm = vosNovoForm();
   const f = window.__vosForm;
   f.codigo = vosNextNumero('VD', new Date().getFullYear(), db.vendas.filter(v=>v.empresaId===sess.empresaId));
@@ -130,7 +131,7 @@ window.novaVenda = function(){
           <label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — busque por código, nome, CPF/CNPJ, endereço ou telefone</label>
           <div class="relative mt-1">
             <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#0a1e8a]"></i>
-            <input id="vos-cli-search" oninput="vosVendaSearchCliente(this.value)" placeholder="Ex: 1844, JOAO LUCAS, 45.123.678/0001-12, Rua Albino..." class="w-full h-[44px] pl-10 pr-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white focus:border-[#0a1e8a] outline-none text-[13px] font-medium">
+            <input id="vos-cli-search" oninput="vosVendaSearchClienteDeb(this.value)" placeholder="Ex: 1844, JOAO LUCAS, 45.123.678/0001-12, Rua Albino..." class="w-full h-[44px] pl-10 pr-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white focus:border-[#0a1e8a] outline-none text-[13px] font-medium">
           </div>
           <div id="vos-cli-results" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-[240px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>
         </div>
@@ -173,7 +174,7 @@ window.novaVenda = function(){
               <option>Produto</option><option>Serviço</option><option>Recarga de cartucho</option><option>Toner</option><option>Manutenção</option>
             </select></label>
           <label class="col-span-10 md:col-span-5 text-[11px] font-bold uppercase text-slate-500 relative">Descrição ou código do produto/serviço
-            <input id="vos-prod-search" oninput="vosVendaSearchProd(this.value)" placeholder="Digite para buscar ou escreva a descrição manual..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">
+            <input id="vos-prod-search" oninput="vosVendaSearchProdDeb(this.value)" placeholder="Digite para buscar ou escreva a descrição manual..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">
             <div id="vos-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>
           </label>
           <button onclick="openModal('produto')" class="hidden md:flex col-span-1 h-[40px] rounded-xl bg-white border text-[#0a1e8a] items-center justify-center" title="Cadastrar produto"><i class="ph ph-plus-circle text-[18px]"></i></button>
@@ -301,26 +302,50 @@ window.vosSetAba = function(aba){
   });
 };
 
+// ── Índices de busca pré-computados (v4.5.0) ──
+// Antes: cada tecla digitada rodava toLowerCase() + regex em TODOS os
+// clientes/produtos (~2000 itens × 6 campos a cada tecla = travadinhas).
+// Agora: o texto de busca minúsculo é montado 1x por abertura do modal e as
+// buscas rodam com debounce — digitação lisa em qualquer PC.
+let __vosCliIdx = null, __vosProdIdx = null;
+function vosDeb(fn, ms){
+  let t = null;
+  return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), ms); };
+}
+function vosIndiceClientes(){
+  if(!__vosCliIdx){
+    __vosCliIdx = (db.clientes||[]).map(c=>({ c,
+      hay: [c.codigo, c.nome, c.fantasia, c.documento, onlyDigits(c.documento), c.endereco, c.telefone, c.cidade, c.estado]
+        .filter(x=>x!=null && x!=='').join(' ').toLowerCase() }));
+  }
+  return __vosCliIdx;
+}
+function vosIndiceProdutos(){
+  if(!__vosProdIdx){
+    __vosProdIdx = (db.produtos||[]).map(p=>({ p,
+      hay: [p.nome, p.sku, p.categoria].filter(x=>x!=null && x!=='').join(' ').toLowerCase() }));
+  }
+  return __vosProdIdx;
+}
+
 // ── Cliente ──
 window.vosVendaSearchCliente = function(q){
   const sess = getSession(); const el = document.getElementById('vos-cli-results'); if(!el) return;
   const low = (q||'').toLowerCase().trim();
   if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
-  const num = onlyDigits(low);
-  const list = db.clientes.filter(c=>c.empresaId===sess.empresaId).filter(c=>{
-    return String(c.codigo||'').includes(low)
-      || (c.nome||'').toLowerCase().includes(low)
-      || (c.fantasia||'').toLowerCase().includes(low)
-      || (c.documento||'').toLowerCase().includes(low) || (num && onlyDigits(c.documento).includes(num))
-      || (c.endereco||'').toLowerCase().includes(low)
-      || (c.telefone||'').toLowerCase().includes(low);
-  }).slice(0,15);
+  const list = vosIndiceClientes()
+    .filter(x=>x.c.empresaId===sess.empresaId && x.hay.includes(low))
+    .map(x=>x.c).slice(0,15);
   el.innerHTML = list.map(c=>`<button onclick="vosVendaSelectCliente('${c.id}')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">
     <span><b class="text-[#0a1e8a]">#${c.codigo||'-'}</b> <b>${escapeHtml(c.nome||'')}</b><br><span class="text-slate-500 text-[11px]">${escapeHtml(c.documento||'')} • ${escapeHtml(c.telefone||'')} • ${escapeHtml(c.endereco||'')}</span></span>
     <span class="text-[10px] text-slate-400 shrink-0">${escapeHtml(c.cidade||'')}/${escapeHtml(c.estado||'')}</span>
   </button>`).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
   el.classList.remove('hidden');
 };
+// Versões com debounce usadas nos campos de busca (digitação sem travar)
+window.vosVendaSearchClienteDeb = vosDeb(function(q){ window.vosVendaSearchCliente(q); }, 140);
+window.vosVendaSearchProdDeb = vosDeb(function(q){ window.vosVendaSearchProd(q); }, 140);
+
 window.vosVendaSelectCliente = function(id){
   const c = db.clientes.find(x=>x.id===id); if(!c) return;
   window.__vosForm.cliente = c;
@@ -349,7 +374,9 @@ window.vosVendaSearchProd = function(q){
   const sess = getSession(); const el = document.getElementById('vos-prod-results'); if(!el) return;
   const low = (q||'').toLowerCase().trim();
   if(!low){ el.classList.add('hidden'); return; }
-  const list = db.produtos.filter(p=>p.empresaId===sess.empresaId).filter(p=>(p.nome||'').toLowerCase().includes(low)||(p.sku||'').toLowerCase().includes(low)||(p.categoria||'').toLowerCase().includes(low)).slice(0,10);
+  const list = vosIndiceProdutos()
+    .filter(x=>x.p.empresaId===sess.empresaId && x.hay.includes(low))
+    .map(x=>x.p).slice(0,10);
   el.innerHTML = list.map(p=>`<button onclick="vosVendaSelectProd('${p.id}')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">
     <b>${escapeHtml(p.nome||'')}</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">${escapeHtml(p.categoria||'')}</span><br>
     <span class="text-slate-500 text-[11px]">${escapeHtml(p.sku||'')} • estoque ${p.estoque||0} • <b class="text-[#0a1e8a]">${fmtMoney(p.preco||0)}</b></span>

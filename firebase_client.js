@@ -145,7 +145,7 @@ function fireConfigValida(cfg){
 }
 if(typeof window==='undefined') return; // fora do navegador: só os helpers puros
 if(!fireConfigValida(window.FIREBASE_CONFIG)){
-  console.warn('Firebase não configurado — a nuvem está DESATIVADA neste PC (a nuvem antiga foi removida na v4.4.2). Preencha firebase_config.js conforme o GUIA_FIREBASE.md.');
+  console.warn('Firebase não configurado — a nuvem está DESATIVADA neste PC (a nuvem antiga foi removida na v4.4.2). Preencha firebase_config.js com os dados do seu projeto Firebase.');
   return;
 }
 const API_KEY = String(window.FIREBASE_CONFIG.apiKey).trim();
@@ -215,7 +215,7 @@ async function fireFetch(url, opts){
   let data=null; try{ data = text ? JSON.parse(text) : null; }catch(eP){ data=text; }
   if(!resp.ok){
     let msg = (data && data.error && data.error.message) || ('HTTP ' + resp.status);
-    if(resp.status===403) msg = 'Permissão negada pelo Firebase. Ative o Firestore em "modo de teste" ou ative o acesso Anônimo (Authentication) com as regras definitivas — GUIA_FIREBASE.md.';
+    if(resp.status===403) msg = 'Permissão negada pelo Firebase. Ative o Firestore em "modo de teste" ou ative o acesso Anônimo (Authentication) com as regras definitivas.';
     throw {status:resp.status, data, message:msg};
   }
   return data;

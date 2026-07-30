@@ -160,7 +160,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda<small>F2</small></button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento<small>F3</small></button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
         <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Outsourcing</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
-        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button></div></div>
+        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="if(typeof carregarDadosDaNuvem==='function') carregarDadosDaNuvem(); else toast('Sincronização indisponível','error')"><i class="ph ph-cloud-arrow-down"></i>Atualizar dados</button></div></div>
         <div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span>online local</span></div>
@@ -202,16 +202,16 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.4.2"></script>
-<script src="./app.js?v=4.4.2"></script>
-<script src="./vendas_patch.js?v=4.4.2"></script>
-<script src="./evolucao_patch.js?v=4.4.2"></script>
-<script src="./notinha_patch.js?v=4.4.2"></script>
-<script src="./locacao_patch.js?v=4.4.2"></script>
-<script src="./sync_client.js?v=4.4.2"></script>
-<script src="./vendas_os_patch.js?v=4.4.2"></script>
-<script src="./performance_patch.js?v=4.4.2"></script>
-<script src="./firebase_config.js?v=4.4.2"></script>
-<script src="./firebase_client.js?v=4.4.2"></script>
+<script src="./lz.js?v=4.5.0"></script>
+<script src="./app.js?v=4.5.0"></script>
+<script src="./vendas_patch.js?v=4.5.0"></script>
+<script src="./evolucao_patch.js?v=4.5.0"></script>
+<script src="./notinha_patch.js?v=4.5.0"></script>
+<script src="./locacao_patch.js?v=4.5.0"></script>
+<script src="./sync_client.js?v=4.5.0"></script>
+<script src="./vendas_os_patch.js?v=4.5.0"></script>
+<script src="./performance_patch.js?v=4.5.0"></script>
+<script src="./firebase_config.js?v=4.5.0"></script>
+<script src="./firebase_client.js?v=4.5.0"></script>
 </body>
 </html>
