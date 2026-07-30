@@ -528,10 +528,12 @@ window.vosBuscarSerial = function(serial){
   }
   vosOsRuleHint();
 };
-if(typeof document!=='undefined' && document.addEventListener) setInterval(()=>{
-  // mantém o hint da regra atualizado enquanto o modal de venda está aberto
-  if(document.getElementById('vos-aba-os') && !document.getElementById('vos-aba-os').classList.contains('hidden')) vosOsRuleHint();
-}, 900);
+// O hint da regra da OS é atualizado por eventos de digitação (sem setInterval pesado)
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('input', function(ev){
+    if(ev.target && ev.target.id && ev.target.id.startsWith('vos-os-')) vosOsRuleHint();
+  });
+}
 
 // ── Resumo / totais ──
 window.vosResumoVenda = function(){
@@ -904,10 +906,12 @@ function vosDadosEmpresaNotinha(sess){
   try{ empSel = JSON.parse(localStorage.getItem('digicopy_empresa_notinha')||'null'); }catch(e){}
   return empSel || db.empresas.find(e=>e.id===sess.empresaId) || {nome:'DIGICOPY', fantasia:'DIGICOPY'};
 }
-window.imprimirNotinha = function(vendaId){
-  const sess = getSession(); if(!sess || !vendaId) return;
+// Monta o HTML completo da notinha (usado pela impressão E pela exportação em arquivo)
+window.vosGerarHtmlNotinha = function(vendaId, opts){
+  opts = opts||{};
+  const sess = getSession(); if(!sess || !vendaId) return null;
   const v = db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId);
-  if(!v) return toast('Venda não encontrada','error');
+  if(!v) return null;
   const cli = (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
   const empresa = vosDadosEmpresaNotinha(sess);
   const temOS = v.os && vosOsCompleta(v.os);
@@ -1023,8 +1027,6 @@ window.imprimirNotinha = function(vendaId){
   const assinaturaVenda = temOS ? '' : `<div class="ass-unica"><div class="ass">Assinatura do cliente<br><span class="mini">Recebi em ___/___/____ às ___:___</span></div></div>`;
   const audit = `<p class="audit">Emitido por ${escapeHtml(v.atendenteNome||v.criadoPorNome||sess.usuarioNome)} • CNPJ ${escapeHtml(sess.cnpj||'')} • Cód. cliente ${cli.codigo||'-'} • ${new Date().toLocaleString('pt-BR')}</p>`;
 
-  const win = window.open('','_blank');
-  if(!win){ toast('Bloqueador de pop-up impediu a impressão','error'); return; }
   const cssBase = `
     @page{size:A4 portrait; margin:0}
     *{box-sizing:border-box}
@@ -1063,8 +1065,11 @@ window.imprimirNotinha = function(vendaId){
     .no-print button.sec{background:#fff;color:#333;border:1px solid #aaa}
     .corte{margin:0;color:#999;font-size:9px;white-space:nowrap;overflow:hidden;width:210mm;padding:0 12mm}
     @media print{.no-print{display:none!important}.corte{color:#ccc}}`;
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Notinha ${escapeHtml(v.numero)}</title><style>${cssBase}</style></head><body>
-  <div class="no-print"><button onclick="window.print()">🖨 Imprimir</button> <button class="sec" onclick="window.close()">Fechar</button> <span style="margin-left:8px;color:#666;font-size:12px">${temOS?'Venda + OS — folha inteira (A4)':'Venda normal — meia folha (A4)'}</span></div>
+  const botoesHtml = opts.paraArquivo ? '' : `<div class="no-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button> <button class="sec" onclick="window.close()">Fechar</button> <span style="margin-left:8px;color:#666;font-size:12px">${temOS?'Venda + OS — folha inteira (A4)':'Venda normal — meia folha (A4)'} • para PDF, escolha "Salvar como PDF" na janela de impressão</span></div>`;
+  const corteHtml = temOS ? '' : '<div class="corte no-print">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>';
+  const scriptHtml = opts.paraArquivo ? '' : '<' + 'script>window.onload=function(){setTimeout(function(){window.print()},350)};<' + '/script>';
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Notinha ${escapeHtml(v.numero)}</title><style>${cssBase}</style></head><body>
+  ${botoesHtml}
   <div class="pagina ${temOS?'inteira':'meia'}">
     ${cabecalho}
     ${corpoVenda}
@@ -1072,11 +1077,58 @@ window.imprimirNotinha = function(vendaId){
     ${assinaturaVenda}
     ${audit}
   </div>
-  ${temOS?'':'<div class="corte no-print">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>'}
-  <script>window.onload=function(){setTimeout(function(){window.print()},350)};<\/script>
-  </body></html>`);
-  win.document.close();
-  logAction('venda','imprimir_notinha',v.id,`Notinha ${v.numero} impressa (${temOS?'folha inteira com OS '+v.os.numero:'meia folha'})`);
+  ${corteHtml}
+  ${scriptHtml}
+  </body></html>`;
+};
+// Impressão (janela do navegador/Electron → imprimir ou salvar como PDF)
+window.imprimirNotinha = function(vendaId){
+  const html = vosGerarHtmlNotinha(vendaId, {});
+  if(!html){ if(typeof toast==='function') toast('Venda não encontrada','error'); return; }
+  const win = window.open('','_blank');
+  if(!win){ toast('Bloqueador de pop-up impediu a impressão','error'); return; }
+  win.document.write(html); win.document.close();
+  const v = db.vendas.find(x=>x.id===vendaId);
+  if(v) logAction('venda','imprimir_notinha',v.id,`Notinha ${v.numero} impressa (${(v.os&&vosOsCompleta(v.os))?'folha inteira com OS '+v.os.numero:'meia folha'})`);
+  saveDB();
+};
+// Exporta a notinha como arquivo Word (.doc) — cada notinha vira um arquivo separado
+window.vosExportarNotinhaWord = function(vendaId){
+  const html = vosGerarHtmlNotinha(vendaId, {paraArquivo:true});
+  if(!html){ toast('Venda não encontrada','error'); return; }
+  const v = db.vendas.find(x=>x.id===vendaId);
+  const blob = new Blob(['\ufeff'+html], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'notinha_' + String((v&&v.numero)||vendaId).replace(/[^\w-]+/g,'_') + '.doc';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+  toast('Notinha salva em arquivo Word (.doc)','success');
+  if(v) logAction('venda','exportar_notinha_word',v.id,`Notinha ${v.numero} exportada em Word`);
+  saveDB();
+};
+// Exporta a listagem filtrada da consulta como planilha (CSV que o Excel abre)
+window.vosExportarVendasCSV = function(){
+  const sess = getSession(); if(!sess) return;
+  const list = window.__vosUltimaListaVendas || [];
+  if(!list.length) return toast('Nada para exportar — ajuste os filtros','info');
+  const cliDe = v => (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
+  const usrDe = v => (typeof usuarioDaVenda==='function' ? usuarioDaVenda(v) : (v.atendenteNome||v.criadoPorNome||'-'));
+  const esc = x => '"' + String(x==null?'':x).replace(/"/g,'""') + '"';
+  const linhas = [['Código','Data','Cliente','Cód. cliente','Valor','Situação','Tipo','Usuário','Pagamento','Origem'].map(esc).join(';')];
+  list.forEach(v=>{
+    const c = cliDe(v);
+    const tipo = v.os ? 'Venda + OS' : ((v.itens||[]).some(it=>{ const p=it.produtoId&&db.produtos.find(pr=>pr.id===it.produtoId); return (p&&p.categoria==='Serviço')||/Serviço|Recarga|Manutenção/i.test(it.tipo||''); }) ? 'Serviço' : 'Venda');
+    linhas.push([v.numero||'', fmtDate(v.data), c.nome||v.clienteNomeAntigo||'', c.codigo||v.codClienteAntigo||'', (v.total||0).toFixed(2).replace('.',','), v.status||'', tipo, usrDe(v), vosPagamentoStatus(v), v.origemMigracao?'sistema antigo':'novo'].map(esc).join(';'));
+  });
+  const blob = new Blob(['\ufeff'+linhas.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vendas_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1500);
+  toast(list.length + ' notinhas exportadas para Excel/CSV','success');
+  logAction('venda','exportar_csv',null,`Exportação de ${list.length} notinhas para CSV por ${sess.usuarioNome}`);
   saveDB();
 };
 
@@ -1084,6 +1136,10 @@ window.imprimirNotinha = function(vendaId){
 // CONSULTA DE VENDAS — filtros avançados + ordenação clicando no título
 // ═══════════════════════════════════════════════════════════════════════════
 function vosLegadosVendas(sess){
+  // Cache: reconverte os 20k+ registros antigos só quando os módulos mudarem
+  const mod = db.modulosDinamicos||{};
+  const c = window.__vosLegCache;
+  if(c && c.mod===mod && c.emp===sess.empresaId) return c.list;
   const legados = [];
   Object.entries(db.modulosDinamicos||{}).forEach(([nome,mod])=>{
     if(!/VENDA|ORCAMENT|PEDIDO|NOTINHA|CUPOM|COMANDA/i.test(nome)) return;
@@ -1105,6 +1161,7 @@ function vosLegadosVendas(sess){
       });
     });
   });
+  window.__vosLegCache = { mod, emp:sess.empresaId, list:legados };
   return legados;
 }
 function vosPagamentoStatus(v){
@@ -1122,6 +1179,7 @@ window.vosSortVendas = function(col){
   const cur = window.__vosSortV || {col:'data', dir:'desc'};
   window.__vosSortV = { col, dir: (cur.col===col && cur.dir==='desc') ? 'asc' : 'desc' };
   localStorage.setItem('digicopy_sort_vendas', JSON.stringify(window.__vosSortV));
+  window.__vosLimiteVendas = 300;
   renderVendas();
 };
 window.renderVendas = function(){
@@ -1200,30 +1258,33 @@ window.renderVendas = function(){
   const fn = cmp[sort.col] || cmp.data;
   list.sort((a,b)=>{ const r=fn(a,b); if(r!==0) return sort.dir==='asc' ? -r : r; return numInt(b.numero)-numInt(a.numero); });
   const total = list.reduce((s,v)=>s+(v.total||0),0);
+  window.__vosUltimaListaVendas = list; // lista filtrada (usada pelo Excel/CSV)
+  const limite = window.__vosLimiteVendas || 300; // paginação: nunca renderiza milhares de linhas de uma vez
+  const listRender = list.slice(0, limite);
   const vendedores = [...new Set(base.map(usrDe).filter(x=>x && x!=='-'))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
   const situacoes = [...new Set(base.map(v=>v.status||'aguardar'))].sort();
   const seta = col => sort.col===col ? (sort.dir==='asc'?' ▲':' ▼') : '';
   const th = (col,label)=>`<th onclick="vosSortVendas('${col}')" class="cursor-pointer select-none hover:text-[#0a1e8a]" title="Clique para ordenar">${label}${seta(col)}</th>`;
   const lblStatus = v => { const s=(v.status||'aguardar'); return s==='faturado'?'Finalizada':s==='orcamento'?'Orçamento':s==='aprovado'?'Aprovada':s==='finalizada'?'Finalizada':'Aguardando'; };
   const clsStatus = v => { const s=(v.status||''); return (s==='faturado'||s==='finalizada')?'ok':(s==='orcamento'||s==='aprovado')?'info':'wait'; };
-  const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
+  const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">
-          <div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hojeabertas')" class="neo-tab ${tab==='hojeabertas'?'active':''}">Hoje/Abertas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div>
-          <input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[240px] flex-1" placeholder="Busca livre: código, cliente, código cliente, usuário, pagamento...">
-          <div class="text-right text-[12px] text-slate-500 min-w-[120px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div>
+          <div class="neo-tabs"><button onclick="window.__vosLimiteVendas=300; setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="window.__vosLimiteVendas=300; setNeoVendasTab('hojeabertas')" class="neo-tab ${tab==='hojeabertas'?'active':''}">Hoje/Abertas</button><button onclick="window.__vosLimiteVendas=300; setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="window.__vosLimiteVendas=300; setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="window.__vosLimiteVendas=300; setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div>
+          <input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="vosBuscaVendasDeb()" class="neo-input ml-auto min-w-[240px] flex-1" placeholder="Busca livre: código, cliente, código cliente, usuário, pagamento...">
+          <div class="text-right text-[12px] text-slate-500 min-w-[120px]"><b class="text-[#0a1e8a]">${listRender.length}</b> de <b>${list.length}</b> reg.<br>${fmtMoney(total)}</div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-vendas-de" type="date" value="${fDe}" onchange="renderVendas()" class="neo-input !w-[145px] !h-9">
-          <label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-vendas-ate" type="date" value="${fAte}" onchange="renderVendas()" class="neo-input !w-[145px] !h-9">
-          <select id="neo-vendas-sit" onchange="renderVendas()" class="neo-select !h-9"><option value="todas">Situação: todas</option>${situacoes.map(s=>`<option value="${s}" ${fSit===s?'selected':''}>${s}</option>`).join('')}</select>
-          <select id="neo-vendas-vend" onchange="renderVendas()" class="neo-select !h-9"><option value="todos">Vendedor: todos</option>${vendedores.map(n=>`<option ${fVend===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}</select>
+          <label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-vendas-de" type="date" value="${fDe}" onchange="window.__vosLimiteVendas=300; renderVendas()" class="neo-input !w-[145px] !h-9">
+          <label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-vendas-ate" type="date" value="${fAte}" onchange="window.__vosLimiteVendas=300; renderVendas()" class="neo-input !w-[145px] !h-9">
+          <select id="neo-vendas-sit" onchange="window.__vosLimiteVendas=300; renderVendas()" class="neo-select !h-9"><option value="todas">Situação: todas</option>${situacoes.map(s=>`<option value="${s}" ${fSit===s?'selected':''}>${s}</option>`).join('')}</select>
+          <select id="neo-vendas-vend" onchange="window.__vosLimiteVendas=300; renderVendas()" class="neo-select !h-9"><option value="todos">Vendedor: todos</option>${vendedores.map(n=>`<option ${fVend===n?'selected':''}>${escapeHtml(n)}</option>`).join('')}</select>
           <button onclick="window.__vosAdvAberto=!window.__vosAdvAberto; renderVendas()" class="neo-btn !h-9 ${window.__vosAdvAberto?'primary':''}"><i class="ph ph-funnel"></i>Filtros avançados${Object.values(AF).filter(x=>(x||'').trim()).length?` (${Object.values(AF).filter(x=>(x||'').trim()).length})`:''}</button>
-          <button onclick="window.__vosAdvF={}; document.getElementById('neo-vendas-de').value='';document.getElementById('neo-vendas-ate').value='';document.getElementById('neo-vendas-sit').value='todas';document.getElementById('neo-vendas-vend').value='todos';document.getElementById('neo-search-vendas').value='';renderVendas()" class="neo-btn !h-9"><i class="ph ph-funnel-x"></i>Limpar</button>
+          <button onclick="window.__vosAdvF={}; window.__vosLimiteVendas=300; document.getElementById('neo-vendas-de').value='';document.getElementById('neo-vendas-ate').value='';document.getElementById('neo-vendas-sit').value='todas';document.getElementById('neo-vendas-vend').value='todos';document.getElementById('neo-search-vendas').value='';renderVendas()" class="neo-btn !h-9"><i class="ph ph-funnel-x"></i>Limpar</button>
         </div>
         ${adv?`<div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2 pt-2 border-t border-dashed">
           ${advInput('codvenda','Código venda','nº')}
@@ -1241,14 +1302,14 @@ window.renderVendas = function(){
           ${advInput('osEquip','OS — equipamento','modelo')}
           ${advInput('osServ','OS — serviços executados','serviço')}
           <label class="text-[10px] font-bold uppercase text-slate-500">Pagamento
-            <select id="vosf-pag" onchange="window.__vosAdvF['pag']=this.value; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px]">
+            <select id="vosf-pag" onchange="window.__vosAdvF['pag']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px]">
               <option value="">todos</option>
               ${['Aprovado','Aguardando','Estornado','Com problema','Cancelado','Grátis'].map(p=>`<option ${has('pag')===p.toLowerCase()?'selected':''}>${p}</option>`).join('')}
             </select></label>
         </div>`:''}
       </div>
       <div class="overflow-auto max-h-[calc(100vh-360px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('data','Data')}${th('cliente','Cliente')}${th('valor','Valor')}${th('situacao','Situação')}${th('tipo','Tipo')}${th('usuario','Usuário')}${th('pagamento','Pagamento')}<th></th></tr></thead><tbody>
-      ${list.map(v=>{
+      ${listRender.map(v=>{
         const c = cliDe(v);
         return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="if('${v.id}'.startsWith('legado_')){toast('Notinha do sistema antigo — veja em Cadastros/Módulos','info')}else{historicoVenda('${v.id}')}" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}">
         <td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td>
@@ -1261,11 +1322,18 @@ window.renderVendas = function(){
         <td>${escapeHtml(vosPagamentoStatus(v))}</td>
         <td>${v.origemMigracao?`<span class="text-[10px] text-slate-400">antiga</span>`:`<button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button>`}</td>
       </tr>`;}).join('') || '<tr><td colspan="9" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada com estes filtros</td></tr>'}
-      </tbody></table></div>
+      </tbody></table>
+      ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} de ${list.length-listRender.length} restantes</button><p class="text-[11px] text-slate-500 mt-1">Dica: refine os filtros para chegar direto na notinha desejada</p></div>`:''}
+      </div>
     </div>
   </div>`;
   const input = document.getElementById('neo-search-vendas');
   if(input && document.activeElement && document.activeElement.id==='neo-search-vendas'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+};
+// Busca com espera de 180ms — não redesenha a grade a cada tecla (performance)
+window.vosBuscaVendasDeb = function(){
+  clearTimeout(window.__vosBT);
+  window.__vosBT = setTimeout(()=>{ window.__vosLimiteVendas=300; renderVendas(); }, 180);
 };
 // captura valores dos filtros avançados antes do re-render (oninput sem perder foco)
 document.addEventListener('input', function(ev){
@@ -1350,7 +1418,8 @@ window.historicoVenda = function(id){
   document.getElementById('modal-footer').innerHTML = `
     <button onclick="closeModal()" class="h-[44px] px-5 rounded-xl bg-white border font-bold">Fechar</button>
     ${(v.parcelas&&v.parcelas.length>1)||fins.length>1?`<button onclick="vosImprimirCarne('${v.id}')" class="h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2"><i class="ph ph-ticket"></i> Carnê</button>`:''}
-    <button onclick="imprimirNotinha('${v.id}')" class="h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2"><i class="ph ph-printer"></i> Imprimir${temOSDados&&o.completa?' (folha inteira)':''}</button>
+    <button onclick="vosExportarNotinhaWord('${v.id}')" class="h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2" title="Baixa a notinha em arquivo Word (.doc)"><i class="ph ph-file-doc"></i> Word</button>
+    <button onclick="imprimirNotinha('${v.id}')" class="h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2" title="Imprimir ou salvar em PDF"><i class="ph ph-printer"></i> Imprimir/PDF${temOSDados&&o.completa?' (folha inteira)':''}</button>
     ${v.status!=='faturado'?`<button onclick="closeModal(); faturarVenda('${v.id}')" class="h-[44px] px-6 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-check-circle"></i> Faturar</button>`:''}`;
   document.getElementById('modal-root').classList.remove('hidden');
 };

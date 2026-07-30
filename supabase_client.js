@@ -635,6 +635,13 @@ end $$;
     return true;
   }
 
+  // Expõe funções internas para o performance_patch (envio incremental/carregamento paralelo)
+  window.__supabaseSyncInternals = {
+    CLOUD_META_KEY, CLOUD_PART_PREFIX, CLOUD_STATE_KEY, SYNC_ENTIDADES,
+    supabaseRequest, stringifyNuvem, objetoParaItens, empacotarPartes, itensParaObjeto,
+    setCloudSyncStatus, protecaoCargaMenor, contarTotalDb
+  };
+
   // Carrega o estado publicado (v2 em partes, com fallback para blob legado v1)
   window.syncCarregarDaNuvem = async function(opts={}){
     const confirmar = opts.confirmar !== false;
