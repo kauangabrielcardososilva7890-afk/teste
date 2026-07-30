@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.4.1';
+const APP_VERSION='4.4.2';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -1389,19 +1389,19 @@ function renderBanco(){
         </div>
       </div>
 
-      <!-- NUVEM / SUPABASE -->
+      <!-- NUVEM / GOOGLE FIREBASE -->
       <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 shadow-xl overflow-hidden relative">
         <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
             <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sincronização em nuvem</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Supabase — Multi-computador</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados migrados para a nuvem e acesse de qualquer computador.</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Nuvem Google — Multi-computador</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados para a nuvem do Google (Firebase) e acesse de qualquer computador.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="testarSupabase()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
-            <button onclick="copySupabaseSchemaSQL()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar SQL tabelas</button>
-            <button onclick="supabaseInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
+            <button onclick="testarNuvem()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
+            <button onclick="copiarRegrasFirebase()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar regras Firebase</button>
+            <button onclick="nuvemInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
           </div>
         </div>
       </div>
@@ -1433,7 +1433,7 @@ function renderBanco(){
         <div class="relative z-10">
           <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Importação completa</p>
           <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Trazer TODOS os dados do sistema antigo</h2>
-          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para o Supabase. Depois, qualquer PC pode acessar os mesmos dados.</p>
+          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para a nuvem Google. Depois, qualquer PC pode acessar os mesmos dados.</p>
         </div>
       </div>
 
@@ -1518,7 +1518,7 @@ function renderBanco(){
               <li>Role para baixo até <b>"Upload dos dados"</b></li>
               <li>Clique em <b>"Selecionar arquivos"</b></li>
               <li>Selecione <b>TODOS os .json</b> da pasta (Ctrl+A)</li>
-              <li>Clique em <b>"Importar + Supabase"</b></li>
+              <li>Clique em <b>"Importar + Nuvem"</b></li>
               <li>Pronto! Dados no ERP + nuvem</li>
             </ol>
             <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
@@ -1553,7 +1553,7 @@ function renderBanco(){
               <li>• Se exportou tabela por tabela, selecione todos os .json de uma vez</li>
               <li>• O sistema detecta automaticamente qual tabela é cada arquivo</li>
               <li>• Tabelas sem correspondência viram menus novos no sidebar</li>
-              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Supabase abaixo</li>
+              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Nuvem abaixo</li>
             </ul>
           </div>
         </div>
@@ -1789,7 +1789,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     }
 
     const tabelasCount = Object.keys(tabelasImportadas).length;
-    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
+    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaNuvem()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Nuvem</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
 
     window._rawDataParaImportar = rawData;
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
@@ -1808,7 +1808,7 @@ window.importarTudoDeUmaVez = function(){
   fbImportToErp(rawData);
 };
 
-window.enviarDiretoParaSupabase = async function(){
+window.enviarDiretoParaNuvem = async function(){
   const rawData = window._rawDataParaImportar;
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   fbImportToErp(rawData);
@@ -1816,12 +1816,13 @@ window.enviarDiretoParaSupabase = async function(){
   if(typeof window.syncEnviarParaNuvem === 'function'){
     const r = await window.syncEnviarParaNuvem({confirmar:false});
     if(r && r.ok){
-      toast('✅ Dados no Supabase! Nos outros PCs, clique em "Carregar da nuvem".','success');
+      toast('✅ Dados na nuvem! Nos outros PCs, clique em "Carregar da nuvem".','success');
     }
   } else {
-    toast('Supabase não disponível nesta página. Recarregue e tente pela seção Supabase abaixo.','info');
+    toast('Nuvem não disponível nesta página. Recarregue e tente pela seção Nuvem abaixo.','info');
   }
 };
+window.enviarDiretoParaSupabase = window.enviarDiretoParaNuvem; // compatibilidade
 
 window.copiarSqlExportarTudo = function(){
   const sql = 'SELECT RDB$RELATION_NAME AS TABELA FROM RDB$RELATIONS WHERE RDB$VIEW_BLR IS NULL AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0) ORDER BY RDB$RELATION_NAME';

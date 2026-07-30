@@ -1,13 +1,13 @@
 {
   "name": "digicopy-erp",
-  "version": "4.4.1",
+  "version": "4.4.2",
   "description": "DIGICOPY ERP - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
     "test": "node test_vos.js && node test_perf.js && node test_firebase.js && node test_persist.js",
-    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check supabase_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check firebase_config.js && node --check firebase_client.js && node --check main.js && node --check preload.js",
+    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check sync_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check firebase_config.js && node --check firebase_client.js && node --check main.js && node --check preload.js",
     "build": "npm run build:win",
     "build:win": "electron-builder --win --x64"
   },
@@ -24,7 +24,7 @@
       "locacao_patch.js",
       "vendas_os_patch.js",
       "performance_patch.js",
-      "supabase_client.js",
+      "sync_client.js",
       "firebase_config.js",
       "firebase_client.js",
       "main.js",

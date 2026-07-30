@@ -103,9 +103,10 @@ da loja.
 expira em 30 dias. Antes de expirar é só voltar em **Firestore Database ▸
 Regras** e republicar as regras (me chame que eu ajusto para uma regra definitiva).
 
-**E o Supabase?** Continua funcionando! Se o `firebase_config.js` não estiver
-preenchido, o sistema usa o Supabase automaticamente. Dá para mudar de ideia
-quando quiser: configure o Firebase, faça 1 envio completo e pronto.
+**E o sistema de nuvem antigo (Supabase)?** Foi removido na versão 4.4.2 — o
+sistema usa **apenas** o Google Firebase agora. Projeto antigo no Supabase pode
+ser apagado (ou deixado parado) quando você quiser: os dados novos não vão mais
+para lá.
 
 **Meus dados ficam no Google?** Ficam nos servidores do Google em São Paulo,
 na sua conta — ninguém mais tem acesso (a chave apiKey só identifica o projeto,

@@ -332,5 +332,5 @@ window.syncCarregarDaNuvem = async function(opts={}){
   }
 };
 
-console.log('PATCH performance v4.4.0 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
+console.log('PATCH performance v4.4.2 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
 })();

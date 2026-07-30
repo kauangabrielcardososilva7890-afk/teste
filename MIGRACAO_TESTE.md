@@ -9,7 +9,7 @@
 5. Confirmar que as 174 tabelas foram reconhecidas.
 6. Clicar em **Importar TUDO para o ERP**.
 7. Conferir os módulos dinâmicos criados no menu.
-8. Testar a conexão com o Supabase.
+8. Testar a conexão com a nuvem (Google Firebase).
 9. Clicar em **Enviar para nuvem** somente depois da conferência local.
 10. Abrir o ERP em outro computador/janela anônima e clicar em **Carregar da nuvem**.
 

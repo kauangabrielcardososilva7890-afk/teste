@@ -145,7 +145,7 @@ function fireConfigValida(cfg){
 }
 if(typeof window==='undefined') return; // fora do navegador: só os helpers puros
 if(!fireConfigValida(window.FIREBASE_CONFIG)){
-  console.log('Firebase não configurado — a nuvem segue pelo Supabase. (Preencha firebase_config.js; guia no GUIA_FIREBASE.md)');
+  console.warn('Firebase não configurado — a nuvem está DESATIVADA neste PC (a nuvem antiga foi removida na v4.4.2). Preencha firebase_config.js conforme o GUIA_FIREBASE.md.');
   return;
 }
 const API_KEY = String(window.FIREBASE_CONFIG.apiKey).trim();
@@ -334,7 +334,7 @@ window.testarFirebase = async function(showToast){
   }
 };
 // O botão "Testar conexão" das Configurações passa a testar a nuvem ATIVA
-window.testarSupabase = function(showToast){ return window.testarFirebase(showToast); };
+window.testarNuvem = function(showToast){ return window.testarFirebase(showToast); };
 
 console.log('☁️ Nuvem ativa: Google Firebase (Firestore) v4.4.1 — projeto "' + PROJETO + '"');
 })();
