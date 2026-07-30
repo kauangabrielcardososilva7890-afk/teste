@@ -693,7 +693,7 @@ window.vosAbrirRecebimento = function(vendaId){
   const cli = db.clientes.find(c=>c.id===v.clienteId)||{};
   const box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[860px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
-  document.getElementById('modal-title').innerText = 'Faturamento — ' + v.numero;
+  document.getElementById('modal-title').innerText = 'Faturamento — ' + (window.vosNumeroVisivel ? vosNumeroVisivel(v.numero) : v.numero);
   const hoje = new Date().toISOString().slice(0,10);
   const primDef = vosAddDias(new Date(), 30).toISOString().slice(0,10);
   document.getElementById('modal-body').innerHTML = `
@@ -701,7 +701,7 @@ window.vosAbrirRecebimento = function(vendaId){
     <div class="rounded-[14px] bg-[#0a1e8a] text-white p-4 flex items-center justify-between">
       <div>
         <p class="text-[11px] uppercase font-bold text-white/70">Venda</p>
-        <p class="font-bold">${escapeHtml(v.numero)} — ${escapeHtml(cli.nome||'')}</p>
+        <p class="font-bold">${escapeHtml(window.vosNumeroVisivel ? vosNumeroVisivel(v.numero) : v.numero)} — ${escapeHtml(cli.nome||'')}</p>
       </div>
       <div class="text-right">
         <p class="text-[11px] uppercase font-bold text-white/70">Total a faturar</p>
@@ -829,7 +829,7 @@ window.vosConcluirFaturamento = function(vendaId){
     db.contasReceber.push({
       id: uid('cr'), empresaId: sess.empresaId, origem: 'venda', clienteId: v.clienteId,
       descricao: `Venda ${v.numero} • à vista (${forma})`,
-      valor: v.total||0, vencimento: new Date().toISOString(), pagamentoData: new Date().toISOString(), status: 'pago',
+      valor: v.total||0, vencimento: new Date().toISOString(), pagamentoData: new Date().toISOString(), status: 'pago', autoBaixa: true,
       contratoId: null, leituraId: null, vendaId: v.id, parcela: 1, totalParcelas: 1,
       criadoPor: sess.usuarioId, criadoPorNome: sess.usuarioNome
     });
@@ -882,7 +882,7 @@ window.vosImprimirCarne = function(vendaId, parcelasOpt){
   const folhas = parcelas.map(p=>`
   <div class="canhoto">
     <div class="linha top"><div><b class="emp">${escapeHtml(empresa.fantasia||empresa.nome||'DIGICOPY')}</b><br><span>${escapeHtml(empresa.cnpj||sess.cnpj||'')} • ${escapeHtml(empresa.telefone||'')}</span></div>
-    <div class="num">CARNÊ<br>VENDA ${escapeHtml(v.numero)}</div></div>
+    <div class="num">CARNÊ<br>VENDA ${escapeHtml(window.vosNumeroVisivel ? vosNumeroVisivel(v.numero) : v.numero)}</div></div>
     <div class="grid2">
       <div><span>Cliente</span><b>${escapeHtml(cli.nome||'')}</b></div>
       <div><span>Cód. cliente</span><b>${cli.codigo||'-'}</b></div>
@@ -974,7 +974,7 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
   const cabecalho = `
   <div class="cab">
     <div class="cab-esq">
-      <div class="logo">DC</div>
+      <div class="logo" style="${window.DIGICOPY_LOGO?'background:#fff;padding:0;width:16mm;height:16mm;overflow:hidden;border:1px solid #dfe3ee':''}">${window.DIGICOPY_LOGO?`<img src="${window.DIGICOPY_LOGO}" style="width:100%;height:100%;object-fit:contain">`:'DC'}</div>
       <div>
         <p class="emp-nome">${escapeHtml(empresa.fantasia||empresa.nome||'DIGICOPY')}</p>
         <p class="emp-info">${escapeHtml([empresa.nome, empresa.cnpj||sess.cnpj, empresa.telefone].filter(Boolean).join(' • '))}</p>
@@ -1338,7 +1338,7 @@ window.renderVendas = function(){
       <div class="overflow-auto max-h-[calc(100vh-360px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('data','Data')}${th('cliente','Cliente')}${th('valor','Valor')}${th('situacao','Situação')}${th('tipo','Tipo')}${th('usuario','Usuário')}${th('pagamento','Pagamento')}<th></th></tr></thead><tbody>
       ${listRender.map(v=>{
         const c = cliDe(v);
-        return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="if('${v.id}'.startsWith('legado_')){toast('Notinha do sistema antigo — veja em Cadastros/Módulos','info')}else{historicoVenda('${v.id}')}" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}">
+        return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="historicoVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}">
         <td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td>
         <td>${fmtDate(v.data)}</td>
         <td><b>${escapeHtml(c?c.nome:'(sem cliente)')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c?(c.codigo||'-'):'-'}${c&&c.semVinculo?' • sistema antigo':''}</span></td>
@@ -1347,7 +1347,7 @@ window.renderVendas = function(){
         <td>${tipoDe(v)}${v.os?` <span class="text-[10px]" title="OS ${escapeHtml(v.os.numero||'')} ${v.os.completa?'(completa — folha inteira)':'(parcial)'}">🔧</span>`:''}</td>
         <td>${escapeHtml(usrDe(v).split(' ')[0])}</td>
         <td>${escapeHtml(vosPagamentoStatus(v))}</td>
-        <td>${v.origemMigracao?`<span class="text-[10px] text-slate-400">antiga</span>`:`<button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button>`}</td>
+        <td>${v.origemMigracao?`<span class="text-[10px] text-slate-400 mr-1">antiga</span>`:''}<button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td>
       </tr>`;}).join('') || '<tr><td colspan="9" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada com estes filtros</td></tr>'}
       </tbody></table>
       ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} de ${list.length-listRender.length} restantes</button><p class="text-[11px] text-slate-500 mt-1">Dica: refine os filtros para chegar direto na notinha desejada</p></div>`:''}
@@ -1387,7 +1387,7 @@ window.historicoVenda = function(id){
   document.getElementById('modal-body').innerHTML = `
   <div class="space-y-3">
     <div class="rounded-[14px] ${v.status==='faturado'?'bg-emerald-600':'bg-[#0a1e8a]'} text-white p-4 flex justify-between items-center">
-      <div><p class="text-[11px] uppercase font-bold text-white/70">${v.status==='orcamento'?'Orçamento':'Venda'}</p><p class="font-bold text-[18px]">${escapeHtml(v.numero)}</p></div>
+      <div><p class="text-[11px] uppercase font-bold text-white/70">${v.status==='orcamento'?'Orçamento':'Venda'}</p><p class="font-bold text-[18px]">${escapeHtml(window.vosNumeroVisivel ? vosNumeroVisivel(v.numero) : v.numero)}</p></div>
       <div class="text-right text-[12px]"><p>${fmtDateTime(v.data)}</p><p>Atendente: <b>${escapeHtml(v.atendenteNome||v.criadoPorNome||'-')}</b></p><p class="font-bold text-[16px] mt-1">${fmtMoney(v.total||0)} • ${escapeHtml(v.formaPagamento||'—')}</p></div>
     </div>
     <div class="rounded-[14px] border p-3 text-[12.5px]">

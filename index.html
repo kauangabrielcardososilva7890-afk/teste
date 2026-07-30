@@ -151,13 +151,19 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
         <div class="absolute left-2 flex items-center gap-2"><img src="./logo.png" class="h-4 w-4 object-contain"><span class="text-[11px]">DIGICOPY ERP</span></div>
         <span id="page-title" class="font-medium">DIGICOPY Gestão 3.8</span>
-        <div class="absolute right-2 text-[11px] opacity-80" id="current-date"></div>
+        <div class="absolute right-2 flex items-center gap-2">
+          <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
+            <i class="ph ph-bell text-[15px]"></i>
+            <span id="ntf-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9.5px] font-bold grid place-items-center">0</span>
+          </button>
+          <span class="text-[11px] opacity-80" id="current-date"></span>
+        </div>
       </div>
     </header>
     <div class="modern-topnav">
       <div class="module-row">
         <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button><div class="module-menu"><button onclick="navigateTo('dashboard')"><i class="ph ph-monitor"></i>Área inicial<small>Home</small></button><button onclick="handleGlobalSearch(document.getElementById('top-command-search')?.value||'')"><i class="ph ph-magnifying-glass"></i>Pesquisa rápida</button></div></div>
-        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda<small>F2</small></button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento<small>F3</small></button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda<small>F2</small></button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="abrirNotinhasAntigas()"><i class="ph ph-archive"></i>Notinhas antigas<small>sistema anterior</small></button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento<small>F3</small></button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
         <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Outsourcing</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes<small>F1</small></button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
@@ -202,17 +208,21 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.6.0"></script>
-<script src="./app.js?v=4.6.0"></script>
-<script src="./vendas_patch.js?v=4.6.0"></script>
-<script src="./evolucao_patch.js?v=4.6.0"></script>
-<script src="./notinha_patch.js?v=4.6.0"></script>
-<script src="./locacao_patch.js?v=4.6.0"></script>
-<script src="./sync_client.js?v=4.6.0"></script>
-<script src="./vendas_os_patch.js?v=4.6.0"></script>
-<script src="./performance_patch.js?v=4.6.0"></script>
-<script src="./pix_patch.js?v=4.6.0"></script>
-<script src="./firebase_config.js?v=4.6.0"></script>
-<script src="./firebase_client.js?v=4.6.0"></script>
+<script src="./lz.js?v=4.7.0"></script>
+<script src="./logo_data.js?v=4.7.0"></script>
+<script src="./app.js?v=4.7.0"></script>
+<script src="./vendas_patch.js?v=4.7.0"></script>
+<script src="./evolucao_patch.js?v=4.7.0"></script>
+<script src="./notinha_patch.js?v=4.7.0"></script>
+<script src="./locacao_patch.js?v=4.7.0"></script>
+<script src="./sync_client.js?v=4.7.0"></script>
+<script src="./vendas_os_patch.js?v=4.7.0"></script>
+<script src="./performance_patch.js?v=4.7.0"></script>
+<script src="./pix_patch.js?v=4.7.0"></script>
+<script src="./notificacoes_patch.js?v=4.7.0"></script>
+<script src="./vendas_extra_patch.js?v=4.7.0"></script>
+<script src="./migrados_print_patch.js?v=4.7.0"></script>
+<script src="./firebase_config.js?v=4.7.0"></script>
+<script src="./firebase_client.js?v=4.7.0"></script>
 </body>
 </html>

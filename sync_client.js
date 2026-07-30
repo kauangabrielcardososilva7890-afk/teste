@@ -69,6 +69,7 @@
     {campo:'contasReceber', tipo:'array'},
     {campo:'contasPagar', tipo:'array'},
     {campo:'logs', tipo:'array', limite:1500},
+    {campo:'notificacoes', tipo:'array', limite:200},
     {campo:'modulosDinamicos', tipo:'objeto'},
     {campo:'tecnicos', tipo:'array'},
     {campo:'config', tipo:'objeto'},

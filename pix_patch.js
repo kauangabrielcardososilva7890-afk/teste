@@ -181,17 +181,26 @@ window.vosEscolherForma = function(fx){
 // ═══════════════════════════════════════════════════════════════════════════
 // 2) NOTINHA — venda faturada no Pix sai com QR + copia e cola impressos
 // ═══════════════════════════════════════════════════════════════════════════
+// Link da página de pagamento (funciona quando a notinha vira PDF: o cliente
+// toca no link, abre no celular e escaneia o QR ou copia o código)
+window.pixPagamentoUrl = function(payload){
+  let base = 'pix_pagar.html';
+  try{ base = new URL('pix_pagar.html', location.href).href; }catch(e){}
+  return base + '?c=' + encodeURIComponent(payload);
+};
 function pixBlocoNotinha(v){
   if(!v || String(v.formaPagamento||'')!=='Pix' || !pixPronto()) return '';
   const c = pixCfg();
   let payload = '';
   try{ payload = pixPayloadDaVenda(v); }catch(e){ return ''; }
+  const link = pixPagamentoUrl(payload);
   return `
   <div style="margin-top:3mm;border:1px solid #9db3e8;border-radius:2mm;padding:2.5mm 3mm;display:flex;gap:4mm;align-items:center;page-break-inside:avoid">
-    <img src="${PIX_PURE.qrUrl(payload, 200)}" width="82" height="82" style="width:26mm;height:26mm" alt="QR Pix">
+    <a href="${link}" target="_blank" rel="noopener"><img src="${PIX_PURE.qrUrl(payload, 200)}" width="82" height="82" style="width:26mm;height:26mm" alt="QR Pix"></a>
     <div style="flex:1;min-width:0">
       <p style="margin:0;font-size:11.5px;font-weight:800;color:#0a1e8a">PAGUE COM PIX — ${fmtMoney(v.total||0)}</p>
       <p style="margin:1mm 0 0;font-size:9px">Chave: <b>${escapeHtml(c.chave)}</b>${c.nome?(' • '+escapeHtml(c.nome)):''} • Aponte a câmera do celular</p>
+      <p style="margin:1mm 0 0;font-size:8.5px"><b>Recebeu este documento em PDF?</b> <a href="${link}" target="_blank" rel="noopener" style="color:#0a1e8a;text-decoration:underline">Toque aqui para abrir a página de pagamento</a></p>
       <p style="margin:1mm 0 0;font-size:7.5px;color:#555">Pix copia e cola:</p>
       <p style="margin:0;font-size:6.5px;color:#555;word-break:break-all;line-height:1.35">${payload}</p>
     </div>
