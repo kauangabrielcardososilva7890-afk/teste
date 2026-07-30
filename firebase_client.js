@@ -153,14 +153,69 @@ const PROJETO = String(window.FIREBASE_CONFIG.projectId).trim();
 const BASE = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(PROJETO) + '/databases/(default)/documents';
 const COLL = 'app_state';
 
+// ── Autenticação anônima automática (segurança definitiva) ──
+// Se o provedor "Anônimo" estiver ativo no console (Authentication → Método
+// de login), todas as chamadas levam um token de usuário — isso permite usar
+// a regra definitiva "allow read, write: if request.auth != null" que NÃO
+// expira (diferente do modo de teste, que expira em 30 dias). Se o provedor
+// estiver desativado, segue sem token (funciona enquanto o modo teste valer).
+const AUTH_CACHE_KEY = 'digicopy_firebase_auth_v1';
+let __authEmAndamento = null;
+async function lerJsonSeguro(r){
+  try{ return await r.json(); }catch(e){ try{ const t=await r.text(); return t?JSON.parse(t):null; }catch(e2){ return null; } }
+}
+async function authGarantirToken(){
+  try{
+    // 1) token em cache ainda válido?
+    let salvo=null;
+    try{ salvo=JSON.parse(localStorage.getItem(AUTH_CACHE_KEY)||'null'); }catch(eL){ salvo=null; }
+    if(salvo && salvo.idToken && salvo.expira > Date.now()+60000) return salvo.idToken;
+    if(__authEmAndamento) return __authEmAndamento;
+    __authEmAndamento = (async()=>{
+      // 2) renova com o refresh_token, se houver
+      if(salvo && salvo.refreshToken){
+        try{
+          const r = await fetch('https://securetoken.googleapis.com/v1/token?key='+encodeURIComponent(API_KEY), {
+            method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+            body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(salvo.refreshToken) });
+          const j = await lerJsonSeguro(r);
+          if(r.ok && j && j.id_token){
+            const a={idToken:j.id_token, refreshToken:j.refresh_token||salvo.refreshToken, expira:Date.now()+(parseInt(j.expires_in,10)||3600)*1000};
+            try{ localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(a)); }catch(eS){}
+            return a.idToken;
+          }
+        }catch(eR){}
+      }
+      // 3) cria uma sessão anônima nova
+      try{
+        const r2 = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+encodeURIComponent(API_KEY), {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({returnSecureToken:true}) });
+        const j2 = await lerJsonSeguro(r2);
+        if(r2.ok && j2 && j2.idToken){
+          const a={idToken:j2.idToken, refreshToken:j2.refreshToken||'', expira:Date.now()+(parseInt(j2.expiresIn,10)||3600)*1000};
+          try{ localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(a)); }catch(eS2){}
+          return a.idToken;
+        }
+      }catch(eA){}
+      return null; // provedor anônimo desligado: segue sem token (modo de teste)
+    })();
+    try{ return await __authEmAndamento; } finally{ __authEmAndamento=null; }
+  }catch(eG){ return null; }
+}
+
 async function fireFetch(url, opts){
   const sep = url.indexOf('?')<0 ? '?' : '&';
-  const resp = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY), opts || {});
+  let authHeader = null;
+  try{ const tk = await authGarantirToken(); if(tk) authHeader = 'Bearer ' + tk; }catch(eT){}
+  const finalOpts = Object.assign({}, opts || {});
+  if(authHeader) finalOpts.headers = Object.assign({}, finalOpts.headers || {}, {Authorization: authHeader});
+  const resp = await fetch(url + sep + 'key=' + encodeURIComponent(API_KEY), finalOpts);
   const text = await resp.text();
   let data=null; try{ data = text ? JSON.parse(text) : null; }catch(eP){ data=text; }
   if(!resp.ok){
     let msg = (data && data.error && data.error.message) || ('HTTP ' + resp.status);
-    if(resp.status===403) msg = 'Permissão negada pelo Firebase. Ative o Firestore em "modo de teste" (ou ajuste as regras) — passo 3 do GUIA_FIREBASE.md.';
+    if(resp.status===403) msg = 'Permissão negada pelo Firebase. Ative o Firestore em "modo de teste" ou ative o acesso Anônimo (Authentication) com as regras definitivas — GUIA_FIREBASE.md.';
     throw {status:resp.status, data, message:msg};
   }
   return data;
@@ -265,10 +320,12 @@ window.testarFirebase = async function(showToast){
   try{
     const linhas = await fireRequest('app_state?select=key&limit=3000', {method:'GET'});
     const n = (linhas||[]).length;
-    const msg = 'Conectado ao Google Firebase ✔ (' + n.toLocaleString('pt-BR') + ' documento(s) na nuvem)';
+    let authOk = false;
+    try{ authOk = !!(await authGarantirToken()); }catch(eA){}
+    const msg = 'Conectado ao Google Firebase ✔ (' + n.toLocaleString('pt-BR') + ' documento(s) na nuvem' + (authOk ? ' • acesso anônimo ativo 🔒' : ' • modo de teste (sem login)') + ')';
     if(alvo) alvo.innerHTML = '<span class="text-emerald-700 font-bold">' + msg + '</span>';
     if(showToast && typeof toast==='function') toast(msg, 'success');
-    return {ok:true, documentos:n};
+    return {ok:true, documentos:n, autenticado:authOk};
   }catch(err){
     const msg = (err && err.message) || String(err);
     if(alvo) alvo.innerHTML = '<span class="text-red-700 font-bold">Falha na conexão: ' + (typeof escapeHtml==='function'?escapeHtml(msg):msg) + '</span>';
@@ -279,5 +336,5 @@ window.testarFirebase = async function(showToast){
 // O botão "Testar conexão" das Configurações passa a testar a nuvem ATIVA
 window.testarSupabase = function(showToast){ return window.testarFirebase(showToast); };
 
-console.log('☁️ Nuvem ativa: Google Firebase (Firestore) — projeto "' + PROJETO + '"');
+console.log('☁️ Nuvem ativa: Google Firebase (Firestore) v4.4.1 — projeto "' + PROJETO + '"');
 })();

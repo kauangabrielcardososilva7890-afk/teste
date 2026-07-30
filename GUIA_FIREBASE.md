@@ -66,6 +66,30 @@ window.FIREBASE_CONFIG = {
    envia tudo (pode levar alguns minutos); depois disso só sobem as alterações.
 3. Terminou? Aí sim abra nos **outros computadores** e use **Carregar da nuvem**.
 
+## Passo 6 (recomendado) — Segurança definitiva, sem expiração
+
+O "modo de teste" expira em 30 dias. Para nunca precisar se preocupar com isso:
+
+1. No console do Firebase: **Criar ▸ Authentication** → **Começar** → aba
+   **"Método de login"** → **"Anônimo"** → **Ativar** → Salvar.
+   (O sistema passa a fazer login sozinho, você não vê nenhuma tela extra.)
+2. Depois: **Firestore Database ▸ Regras**, apague o que estiver lá e cole:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /app_state/{doc} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+3. Clique em **Publicar**. Pronto: só o seu sistema (com o login automático)
+   consegue ler/gravar a nuvem, e a regra **não expira nunca** — diferente do
+   modo de teste.
+
 ---
 
 ## Perguntas frequentes
