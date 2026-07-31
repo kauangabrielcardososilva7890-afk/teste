@@ -371,6 +371,12 @@
             : '';
           setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Base recuperada da nuvem (modo recuperação). Recarregando...</span>${avisoFalta}`);
           if(typeof toast==='function') toast('Base recuperada da nuvem','success');
+          if(opts.automatico === true){
+            try{
+              if(sessionStorage.getItem('digicopy_auto_reload_rec')) return {ok:true, recuperacao:true, semReload:true};
+              sessionStorage.setItem('digicopy_auto_reload_rec', '1');
+            }catch(e){}
+          }
           setTimeout(()=>{
             if(faltandoRec.length){ try{ alert('Base recuperada!\n\nATENÇÃO: o último envio ficou incompleto — faltaram pedaços de: '+faltandoRec.join(', ')+'.\n\nPara completar 100%: abra o ERP no computador onde a importação foi feita e clique em "Enviar para nuvem" novamente.'); }catch(e){} }
             location.reload();
@@ -392,6 +398,13 @@
         window.__ultimaMudancaLocal=0; try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(eRM){}
         setCloudSyncStatus(`<span class="text-emerald-700 font-bold">Base carregada da nuvem (formato antigo). Atualizada em ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Este é um backup ANTIGO e pode estar incompleto. No computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> para publicar a base completa.</div>`);
         if(typeof toast==='function') toast('Dados carregados da nuvem (formato antigo)','success');
+        if(opts.automatico === true){
+          try{
+            const chLock = 'digicopy_auto_reload_leg_' + (rows[0].updated_at || '1');
+            if(sessionStorage.getItem(chLock)) return {ok:true, legado:true, semReload:true};
+            sessionStorage.setItem(chLock, '1');
+          }catch(e){}
+        }
         setTimeout(()=>location.reload(),900);
         return {ok:true, legado:true};
       }
@@ -427,6 +440,13 @@
         : '';
       setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}). Recarregando...</span>${avisoParcial}`);
       if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+      if(opts.automatico === true){
+        try{
+          const chLock = 'digicopy_auto_reload_' + (meta.atualizadoEm || metaRows[0].updated_at || '1');
+          if(sessionStorage.getItem(chLock)) return {ok:true, semReload:true};
+          sessionStorage.setItem(chLock, '1');
+        }catch(e){}
+      }
       setTimeout(()=>location.reload(),900);
       return {ok:true};
     }catch(err){
@@ -589,18 +609,8 @@
     }
   };
 
-  // Carrega a base corporativa antes do primeiro acesso quando este PC ainda não tem a base completa.
-  function __carregarBaseInicial(){
-    setTimeout(async()=>{
-      try{
-        const vazio=!db || !Array.isArray(db.empresas) || db.empresas.length<=1;
-        const semModulos=!db || !db.modulosDinamicos || Object.keys(db.modulosDinamicos).length===0;
-        if(vazio || semModulos) await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
-      }catch(e){}
-    },1800);
-  }
-  // Disparadores: 6s após abrir, a cada 75s, e quando a internet volta
-  function __agendarAutoSync(){ __carregarBaseInicial(); setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 6000); }
+  // Disparadores: 4s após abrir e a cada 75s (verificação silenciosa pela data/hora)
+  function __agendarAutoSync(){ setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 4000); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', __agendarAutoSync);
   else __agendarAutoSync();
   setInterval(()=>{ try{ window.syncAutoChecar('timer'); }catch(e){} }, 75000);
