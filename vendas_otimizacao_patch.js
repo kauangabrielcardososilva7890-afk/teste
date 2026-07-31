@@ -52,7 +52,7 @@ window.VOTM_PURE = {
 
 if(typeof window === 'undefined') return;
 
-// 1. Aprimorar vosLegadosVendas para usar ehTabelaVendaReal e normalizar os nomes/valores
+// 1. Aprimorar vosLegadosVendas para usar ehTabelaVendaReal, associar itens de tabelas filhas e normalizar valores
 const _baseVosLegados = window.vosLegadosVendas;
 window.vosLegadosVendas = function(sess){
   const mod = db.modulosDinamicos||{};
@@ -60,12 +60,37 @@ window.vosLegadosVendas = function(sess){
   for(const k in mod){ fp += (((mod[k]||{}).dados||[]).length)||0; }
   const c = window.__vosLegCache;
   if(c && c.fp===fp && c.emp===sess.empresaId) return c.list;
+
+  // Indexar itens de todas as tabelas de itens em modulosDinamicos
+  const itensIdx = {};
+  Object.entries(mod).forEach(([n, m])=>{
+    if(/ITENS|ITEM/i.test(n)){
+      (m.dados||[]).forEach(ir => {
+        const codV = String(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA || ir.COD_NOTA || ir.COD_OS || ir.NUMERO_NOTA || '').trim();
+        if(!codV) return;
+        const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
+        const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
+        const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
+        (itensIdx[codV] = itensIdx[codV] || []).push({
+          produtoId: null,
+          descricao: String(ir.DESCRICAO || ir.PRODUTO || ir.NOME || 'Item importado'),
+          qtd, preco: unit, subtotal: sub
+        });
+      });
+    }
+  });
+
   const legados = [];
-  Object.entries(db.modulosDinamicos||{}).forEach(([nome, modulo])=>{
+  Object.entries(mod).forEach(([nome, modulo])=>{
     if(!ehTabelaVendaReal(nome)) return;
     (modulo.dados||[]).forEach((r, i)=>{
       const numero = r.NUMERO||r.CODIGO||r.COD_VENDA||r.ID||`${nome}-${i+1}`;
       if(!ehRegistroVendaValido(numero, r)) return;
+      const itensVinculados = itensIdx[String(numero)] || [];
+      const totalItens = itensVinculados.reduce((acc, x) => acc + (x.subtotal||0), 0);
+      const totalCabecalho = Number(r.VALOR_LIQUIDO||r.TOTAL_LIQUIDO||r.TOTAL_NOTA||r.VALOR_NOTA||r.TOTAL_GERAL||r.TOTAL_OS||r.TOTAL||r.VALOR||r.VALOR_TOTAL||0)||0;
+      const totalFinal = totalCabecalho > 0 ? totalCabecalho : totalItens;
+
       const temDadosOS = !!(r.MODELO || r.EQUIPAMENTO || r.SERIE || r.NUMERO_SERIE || r.PATRIMONIO || r.CONTADOR || r.DEFEITO || r.PROBLEMA || r.SERVICOS || r.SOLUCAO || /OS|ORDEM_SERVICO/i.test(nome));
       const osObj = temDadosOS ? {
         migrado: true,
@@ -82,7 +107,7 @@ window.vosLegadosVendas = function(sess){
       legados.push({
         id:`legado_venda_${nome}_${i}`, empresaId:sess.empresaId, numero:String(numero),
         data:r.DATA||r.DATA_VENDA||r.EMISSAO||r.DT_VENDA||r.CRIADO_EM||new Date().toISOString(),
-        total:Number(r.VALOR_LIQUIDO||r.TOTAL_LIQUIDO||r.TOTAL_NOTA||r.VALOR_NOTA||r.TOTAL_GERAL||r.TOTAL_OS||r.TOTAL||r.VALOR||r.VALOR_TOTAL||0)||0,
+        total:totalFinal,
         status:String(r.SITUACAO||r.STATUS||'finalizada').toLowerCase(),
         formaPagamento:r.PAGAMENTO||r.FORMA_PAGAMENTO||r.RECEBIMENTO||'Prazo',
         clienteNomeAntigo:toTitleCase(r.CLIENTE||r.NOME_CLIENTE||r.RAZAO_SOCIAL||r.NOME||''),
@@ -92,7 +117,8 @@ window.vosLegadosVendas = function(sess){
         criadoPorNome:vendedorNorm,
         atendenteNome:vendedorNorm,
         observacao:r.OBSERVACAO||r.OBS||'',
-        itens:[], origemMigracao:true, tabelaOrigem:nome, os: osObj
+        itens: itensVinculados.length ? itensVinculados : [{descricao: r.DEFEITO || r.OBSERVACAO || 'Item / Serviço migrado', qtd: 1, preco: totalFinal, subtotal: totalFinal}],
+        origemMigracao:true, tabelaOrigem:nome, os: osObj
       });
     });
   });

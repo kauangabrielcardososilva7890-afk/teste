@@ -378,9 +378,8 @@
             }catch(e){}
           }
           setTimeout(()=>{
-            if(faltandoRec.length){ try{ alert('Base recuperada!\n\nATENÇÃO: o último envio ficou incompleto — faltaram pedaços de: '+faltandoRec.join(', ')+'.\n\nPara completar 100%: abra o ERP no computador onde a importação foi feita e clique em "Enviar para nuvem" novamente.'); }catch(e){} }
             location.reload();
-          }, faltandoRec.length ? 2600 : 1200);
+          }, 900);
           return {ok:true, recuperacao:true, faltando:faltandoRec};
         }
         // Fallback final: blob único legado
@@ -438,7 +437,7 @@
       const avisoParcial = faltando.length
         ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Algumas partes não foram encontradas (${faltando.length} — ex.: ${faltando.slice(0,4).map(escapeHtml).join(', ')}). Os dados afetados podem vir incompletos. Refaça o "Enviar para nuvem" no PC de origem.</div>`
         : '';
-      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}). Recarregando...</span>${avisoParcial}`);
+      setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Dados sincronizados! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros na nuvem Google (enviados em ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}).</span>`);
       if(typeof toast==='function') toast('Dados carregados da nuvem','success');
       if(opts.automatico === true){
         try{

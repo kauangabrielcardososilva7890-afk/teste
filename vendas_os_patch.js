@@ -1390,7 +1390,7 @@ window.renderVendas = function(){
         <td>${v.origemMigracao?`<span class="text-[10px] text-slate-400 mr-1">antiga</span>`:''}<button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td>
       </tr>`;}).join('') || '<tr><td colspan="9" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada com estes filtros</td></tr>'}
       </tbody></table>
-      ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} de ${list.length-listRender.length} restantes</button><p class="text-[11px] text-slate-500 mt-1">Dica: refine os filtros para chegar direto na notinha desejada</p></div>`:''}
+      ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0 flex items-center justify-center gap-3"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} notinhas</button><button onclick="window.__vosLimiteVendas=${list.length}; renderVendas()" class="neo-btn"><i class="ph ph-list"></i>Mostrar todas as ${list.length} notinhas</button></div>`:''}
       </div>
     </div>
   </div>`;
