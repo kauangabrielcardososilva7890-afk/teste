@@ -97,7 +97,15 @@ window.novaVenda = function(){
   __vosCliIdx = null; __vosProdIdx = null; // reconstrói os índices de busca com os dados atuais
   window.__vosForm = vosNovoForm();
   const f = window.__vosForm;
-  f.codigo = vosNextNumero('VD', new Date().getFullYear(), db.vendas.filter(v=>v.empresaId===sess.empresaId));
+  {
+    const _listaNum = db.vendas.filter(v=>v.empresaId===sess.empresaId);
+    if(typeof window.seqObter==='function'){
+      const _seq = window.seqObter('venda', _listaNum, sess.empresaId, v=>vosNumeroInt(v && v.numero));
+      f.codigo = 'VD-' + new Date().getFullYear() + '-' + vosPad4(_seq);
+    } else {
+      f.codigo = vosNextNumero('VD', new Date().getFullYear(), _listaNum);
+    }
+  }
   const box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
   document.getElementById('modal-title').innerText = 'Nova venda / Notinha';

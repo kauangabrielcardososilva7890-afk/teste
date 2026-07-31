@@ -152,16 +152,38 @@ window.renderClientes = function(){
   </div></div>`;
 };
 
-// texto do topo acompanha a versão real automaticamente (sem "3.8" travado)
+// barra azul sempre atualizada: à esquerda "DIGICOPY ERP x.y.z" (versão real),
+// no centro o nome da tela (quem cuida é o sistema de navegação)
 (function(){
   function tituloApp(){
     const v = (typeof APP_VERSION!=='undefined') ? APP_VERSION : '';
+    const span = document.getElementById('app-title-version');
+    if(span) span.innerText = 'DIGICOPY ERP' + (v ? (' ' + v) : '');
     const t = document.getElementById('page-title');
-    if(t) t.innerText = 'DIGICOPY ERP' + (v ? (' ' + v) : '');
+    if(t && (!t.innerText.trim() || /DIGICOPY/i.test(t.innerText))) t.innerText = 'Início';
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', tituloApp);
   else tituloApp();
 })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Contador sequencial monotônico: código excluído NUNCA é reutilizado
+// (excluir o cliente 57 não devolve o 57 pra ninguém — nem excluindo o último).
+// Guardado em db.config.seq, que sincroniza pela nuvem → vale em todos os PCs.
+// ═══════════════════════════════════════════════════════════════════════════
+window.seqObter = function(tipo, itens, empresaId, extrator){
+  db.config = db.config || {};
+  db.config.seq = db.config.seq || {};
+  const key = tipo + '_' + empresaId;
+  let maxExistente = 0;
+  (itens||[]).forEach(it=>{
+    const n = Number(extrator ? extrator(it) : it) || 0;
+    if(n > maxExistente) maxExistente = n;
+  });
+  const atual = Math.max(Number(db.config.seq[key])||0, maxExistente);
+  db.config.seq[key] = atual + 1;
+  return atual + 1;
+};
 
 console.log('[DIGICOPY] Interface v4.9.0 — Esc fecha tudo, nuvem quieta, clientes bonito e leve');
 })();

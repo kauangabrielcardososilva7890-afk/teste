@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.0';
+const APP_VERSION='4.9.1';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -773,7 +773,7 @@ function sugerirIcone(nomeTabela){
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
   <div class="clean-home">
-    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY Gestão</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
+    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY ERP</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
     <div class="clean-shortcuts">
       <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')">Nova venda</button>
       <button onclick="navigateTo('vendas')">Consultar notinhas</button>
@@ -783,7 +783,7 @@ function initTemplates(){
       <button onclick="navigateTo('financeiro')">Financeiro</button>
     </div>
   </div>
-  <div class="statusbar"><span>Banco Servidor Nuvem</span><span>Usuário&nbsp;&nbsp;<b id="status-user-home">-</b></span><span>Código Sistema: 1421</span><span>DIGICOPY | Sistema em desenvolvimento</span></div>
+  
   <div class="hidden">
     <span id="kpi-contratos">0</span><span id="kpi-parque">0</span><span id="kpi-os">0</span><span id="kpi-disponiveis">0</span><span id="kpi-faturamento">R$ 0,00</span><span id="alert-vencendo">0</span><span id="kpi-auditoria">0 hoje</span>
     <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div><div id="list-leituras-pendentes"></div><div id="list-chamados-recentes"></div><div id="list-alertas"></div>

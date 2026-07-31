@@ -286,7 +286,9 @@ window.saveCliente = function(){
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);
   } else {
-    payload.codigo = CLI_PURE.proxCodigo(db.clientes, sess.empresaId);
+    payload.codigo = (typeof window.seqObter==='function')
+      ? window.seqObter('cliente', db.clientes.filter(c=>c.empresaId===sess.empresaId), sess.empresaId, c=>c.codigo)
+      : CLI_PURE.proxCodigo(db.clientes, sess.empresaId);
     alvo = Object.assign({id:uid('cli'), mensalidade:0, criadoEm:new Date().toISOString(), criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}, payload);
     db.clientes.push(alvo);
     logAction('cliente','criar',alvo.id,`Criado cliente ${alvo.nome} (#${alvo.codigo}) por ${sess.usuarioNome}`);
