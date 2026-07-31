@@ -1,6 +1,10 @@
-// DIGICOPY ERP v3.8 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
-const APP_VERSION='3.8.0';
+// DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
+// v4.4.0: persistência local incremental (uma chave por entidade, só regrava
+// o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
+const APP_VERSION='4.9.4';
 const DB_KEY='digicopy_erp_v30';
+const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
+const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
 const SESSION_KEY='digicopy_session_v30';
 const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
 
@@ -15,12 +19,18 @@ const defaultData={
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
 // vezes mais dados no navegador. Formatos antigos (JSON puro) continuam lendo.
-function storageEncode(obj){
-  const txt=JSON.stringify(obj);
+function storageEncodeTexto(txt){
   try{
     if(window.LZUTF16 && typeof window.LZUTF16.compress==='function') return 'LZ1:'+window.LZUTF16.compress(txt);
   }catch(eLz){ /* sem compressão: cai no plano B abaixo */ }
   return txt;
+}
+function storageEncode(obj){ return storageEncodeTexto(JSON.stringify(obj)); }
+// Hash FNV-1a rápido para detectar se uma entidade mudou desde a última gravação
+function dbHashTexto(s){
+  let h=0x811c9dc5;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); }
+  return (h>>>0).toString(36);
 }
 function storageDecode(raw){
   if(raw && raw.startsWith('LZ1:')){
@@ -44,7 +54,74 @@ function normalizeDbShape(parsed){
   parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
   return parsed;
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// PERSISTÊNCIA LOCAL INCREMENTAL (v4.4.0) — o fim do "travando"
+// Antes: cada saveDB() comprimia e regravava a base INTEIRA (dezenas de MB)
+// em uma chave única — congelava a tela por segundos a cada ação.
+// Agora: cada entidade (clientes, vendas, modulosDinamicos...) é quebrada em
+// PEDAÇOS pequenos com hash próprio, e só os pedaços alterados são
+// recomprimidos/regravados. Ex.: ao editar 1 venda, só o pedaço dela (~ms)
+// é regravado — não mais a base toda (~segundos).
+// A chave única antiga (DB_KEY) vira apenas um backup de compatibilidade,
+// atualizado fora do uso ativo (aba oculta / a cada 10 min).
+// ═══════════════════════════════════════════════════════════════════════════
+const DB_CHUNK_ITENS=600;           // itens por pedaço de listas grandes
+const DB_CHUNK_OBJ_MIN=8;           // objetos com +8 chaves viram 1 pedaço por chave
+function dbParteKey(campo, sub){ return DB_PART_PREFIX + campo + '__' + encodeURIComponent(sub); }
+// Fatia o valor de uma entidade em pedaços persistíveis:
+//  {tipo:'array',  pedacos:[{sub:'#0', valor:[...]}...]}
+//  {tipo:'objeto', pedacos:[{sub:'@chave', valor}...]}   (objetos grandes)
+//  {tipo:'valor',  pedacos:[{sub:'', valor}]}            (demais casos)
+function dbFatiarEntidade(valor){
+  if(Array.isArray(valor)){
+    const pedacos=[];
+    if(!valor.length){ pedacos.push({sub:'#0', valor:[]}); }
+    for(let i=0;i<valor.length;i+=DB_CHUNK_ITENS) pedacos.push({sub:'#'+(i/DB_CHUNK_ITENS), valor:valor.slice(i,i+DB_CHUNK_ITENS)});
+    return {tipo:'array', pedacos};
+  }
+  if(valor && typeof valor==='object'){
+    const ks=Object.keys(valor);
+    if(ks.length>DB_CHUNK_OBJ_MIN) return {tipo:'objeto', pedacos:ks.map(k=>({sub:'@'+k, valor:(valor[k]===undefined?null:valor[k])}))};
+  }
+  return {tipo:'valor', pedacos:[{sub:'', valor:(valor===undefined?null:valor)}]};
+}
 function loadDB(){
+  // 1) Formato incremental (v4.4.0+): remonta a base pelos pedaços
+  try{
+    const manifestRaw=localStorage.getItem(DB_MANIFEST_KEY);
+    if(manifestRaw){
+      const manifest=JSON.parse(manifestRaw)||{};
+      if(manifest && manifest.v===2 && manifest.partes){
+        const base=structuredClone(defaultData);
+        let lidas=0;
+        Object.keys(manifest.partes).forEach(campo=>{
+          const info=manifest.partes[campo]||{};
+          const ler=(sub)=>{
+            const raw=localStorage.getItem(dbParteKey(campo, sub));
+            if(raw==null) return undefined;
+            try{ return JSON.parse(storageDecode(raw)); }catch(eP){ return undefined; }
+          };
+          try{
+            if(info.tipo==='array'){
+              const arr=[];
+              Object.keys(info.subs||{}).sort((a,b)=>parseInt(a.slice(1),10)-parseInt(b.slice(1),10))
+                .forEach(sub=>{ const v=ler(sub); if(Array.isArray(v)) arr.push.apply(arr,v); });
+              base[campo]=arr; lidas++;
+            }else if(info.tipo==='objeto'){
+              const obj={};
+              Object.keys(info.subs||{}).forEach(sub=>{ const v=ler(sub); if(v!==undefined) obj[sub.slice(1)]=v; });
+              base[campo]=obj; lidas++;
+            }else{
+              const v=ler('');
+              if(v!==undefined){ base[campo]=v; lidas++; }
+            }
+          }catch(eC){ /* entidade ilegível: mantém o padrão dela */ }
+        });
+        if(lidas>0) return normalizeDbShape(base);
+      }
+    }
+  }catch(eInc){ /* manifesto ilegível: cai no formato antigo */ }
+  // 2) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
@@ -53,27 +130,99 @@ function loadDB(){
     return structuredClone(defaultData);
   }
 }
+// saveDB em FATIAS DE TEMPO (v4.5.0): a fila de entidades é processada em
+// pedaços de ~25ms por ciclo — a tela NUNCA congela, mesmo com base enorme.
+// saveDBAgora() drena tudo de forma síncrona (fechar aba, imprimir, recarregar).
+let __saveQ=null;
 function saveDB(){
-  let dado;
-  try{ dado=storageEncode(db); }catch(eEnc){ dado=JSON.stringify(db); }
-  try{
-    localStorage.setItem(DB_KEY, dado);
-    window.__dbPersistidoOk=true;
-  }catch(eQuota){
-    // Cota do navegador cheia: limpa sobras grandes (backups/chaves antigas) e tenta 1x de novo
-    try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
-    try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
+  const novas = Object.keys(db);
+  if(!__saveQ){
+    let manifestAnt={v:2, partes:{}};
     try{
-      localStorage.setItem(DB_KEY, dado);
-      window.__dbPersistidoOk=true;
-    }catch(eQuota2){
-      window.__dbPersistidoOk=false;
-      if(!window.__avisouQuota){
-        window.__avisouQuota=true;
-        if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
-      }
-    }
+      const bruto=JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'null');
+      if(bruto && bruto.v===2 && bruto.partes) manifestAnt=bruto;
+    }catch(eRead){ manifestAnt={v:2, partes:{}}; }
+    __saveQ={ keys:novas.slice(), manifestAnt, partes:{}, falhouQuota:false, durante:false };
+    setTimeout(__saveTick, 0);
+  }else{
+    __saveQ.durante=true; // mudança no meio do processo: refaz a varredura ao final (hash pula o que não mudou)
   }
+}
+function __gravarParteCampo(campo, q){
+  const infoAnt=(q.manifestAnt.partes||{})[campo]||{subs:{}};
+  let fatia;
+  try{ fatia=dbFatiarEntidade(db[campo]); }catch(eF){ q.partes[campo]={tipo:'valor', subs:infoAnt.subs||{}}; return; }
+  const subs={};
+  const gravar=(chave, json)=>{
+    try{ localStorage.setItem(chave, storageEncodeTexto(json)); return true; }
+    catch(eQuota){
+      try{ localStorage.removeItem('digicopy_erp_backup_pre_sync'); }catch(_r){}
+      try{ localStorage.removeItem('digicopy_erp_v20'); localStorage.removeItem('digicopy_erp_v10'); }catch(_r2){}
+      try{ localStorage.removeItem(DB_KEY); }catch(_r3){}
+      try{ localStorage.setItem(chave, storageEncodeTexto(json)); return true; }
+      catch(eQuota2){ return false; }
+    }
+  };
+  for(const p of fatia.pedacos){
+    let json;
+    try{ json=JSON.stringify(p.valor); }catch(eJ){ continue; }
+    const h=dbHashTexto(json);
+    subs[p.sub]=h;
+    if(infoAnt.subs && infoAnt.subs[p.sub]===h) continue; // pedaço intacto
+    if(!gravar(dbParteKey(campo, p.sub), json)) q.falhouQuota=true;
+  }
+  Object.keys(infoAnt.subs||{}).forEach(sub=>{ if(!(sub in subs)){ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM){} } });
+  q.partes[campo]={tipo:fatia.tipo, subs};
+}
+function __finalizarSaveQ(q){
+  // entidades que saíram do banco
+  Object.keys(q.manifestAnt.partes||{}).forEach(campo=>{
+    if(campo in db) return;
+    Object.keys((q.manifestAnt.partes[campo]||{}).subs||{}).forEach(sub=>{ try{ localStorage.removeItem(dbParteKey(campo, sub)); }catch(eRM2){} });
+  });
+  try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
+  window.__dbPersistidoOk=!q.falhouQuota;
+  if(q.falhouQuota && !window.__avisouQuota){
+    window.__avisouQuota=true;
+    if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
+  }
+  agendarSnapshotLegado();
+}
+function __saveTick(){
+  const q=__saveQ; if(!q) return;
+  const t0=Date.now();
+  while(q.keys.length && (Date.now()-t0)<25){
+    const campo=q.keys.shift();
+    __gravarParteCampo(campo, q);
+  }
+  if(q.keys.length){ setTimeout(__saveTick, 0); return; }
+  __finalizarSaveQ(q);
+  const repete=q.durante;
+  __saveQ=null;
+  if(repete) saveDB(); // algo mudou no meio do processo: nova varredura (quase tudo em cache)
+}
+// Drena a fila de forma SÍNCRONA (usado ao fechar a aba, antes de imprimir/recarregar)
+function __saveDBDrainSync(){
+  if(!__saveQ) return;
+  while(__saveQ.keys.length){ const campo=__saveQ.keys.shift(); __gravarParteCampo(campo, __saveQ); }
+  __finalizarSaveQ(__saveQ);
+  __saveQ=null;
+}
+window.__saveDBDrainSync = __saveDBDrainSync;
+// Snapshot da chave única antiga: mantido só como backup de compatibilidade
+// com versões antigas do sistema. É gravado APENAS quando a aba fica oculta
+// (a tela congela com a base grande, então ele nunca roda durante o uso).
+let __snapHash='';
+function gravarSnapshotLegado(force){
+  let h='';
+  try{ h=JSON.stringify((JSON.parse(localStorage.getItem(DB_MANIFEST_KEY)||'{}')||{}).partes||{}); }catch(eH){ h=''; }
+  if(h && h===__snapHash) return; // nada mudou desde o último snapshot
+  __snapHash=h;
+  try{ localStorage.setItem(DB_KEY, storageEncode(db)); }catch(eQuota){ /* sem espaço: a forma incremental já garante os dados */ }
+}
+function agendarSnapshotLegado(){ /* mantido p/ compatibilidade de chamadas */ }
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
 
@@ -624,7 +773,7 @@ function sugerirIcone(nomeTabela){
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
   <div class="clean-home">
-    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY Gestão</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
+    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY ERP</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
     <div class="clean-shortcuts">
       <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')">Nova venda</button>
       <button onclick="navigateTo('vendas')">Consultar notinhas</button>
@@ -634,7 +783,7 @@ function initTemplates(){
       <button onclick="navigateTo('financeiro')">Financeiro</button>
     </div>
   </div>
-  <div class="statusbar"><span>Banco Servidor Nuvem</span><span>Usuário&nbsp;&nbsp;<b id="status-user-home">-</b></span><span>Código Sistema: 1421</span><span>DIGICOPY | Sistema em desenvolvimento</span></div>
+  
   <div class="hidden">
     <span id="kpi-contratos">0</span><span id="kpi-parque">0</span><span id="kpi-os">0</span><span id="kpi-disponiveis">0</span><span id="kpi-faturamento">R$ 0,00</span><span id="alert-vencendo">0</span><span id="kpi-auditoria">0 hoje</span>
     <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div><div id="list-leituras-pendentes"></div><div id="list-chamados-recentes"></div><div id="list-alertas"></div>
@@ -660,7 +809,7 @@ function initTemplates(){
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Ações sistema</h4><div class="mt-4 space-y-2"><button onclick="seedData(true)" class="w-full h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-semibold">Recarregar dados demo</button><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[13px] font-semibold">Exportar backup JSON</button><button onclick="clearAllData()" class="w-full h-11 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold">Limpar dados</button><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema v3.0 com login CNPJ > Usuário, auditoria completa. Azul escuro #0a1e8a da logo DIGICOPY. Sem foto perfil, sem Loja Virtual.</div></div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Ações sistema</h4><div class="mt-4 space-y-2"><button onclick="seedData(true)" class="w-full h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-semibold">Recarregar dados demo</button><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[13px] font-semibold">Exportar backup JSON</button><button onclick="clearAllData()" class="w-full h-11 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold">Limpar dados</button><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">DIGICOPY ERP — login por CNPJ e usuário, auditoria sempre ativa.</div></div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários do CNPJ</h3><p class="text-[13px] text-slate-500 mt-1">Criação de login exige senha CNPJ para autorização. Auditoria rastreia quem criou cada registro.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">1º - CNPJ + Senha CNPJ:</b> valida empresa.</p><p><b class="text-white">2º - Usuário + Senha Usuário:</b> acesso pessoal.</p><p><b class="text-white">Criar usuário:</b> precisa informar senha CNPJ para autorizar.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -755,7 +904,9 @@ function renderProdutos(){
   let list=db.produtos.filter(p=>p.empresaId===sess.empresaId && (!search||p.nome.toLowerCase().includes(search)||p.sku.toLowerCase().includes(search)) && (!cat||p.categoria===cat));
   const baixo=list.filter(p=>p.estoque<=p.estoqueMin).length;
   document.getElementById('cards-estoque').innerHTML=`<div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-package"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Total SKUs</p><p class="text-[18px] font-bold">${db.produtos.filter(p=>p.empresaId===sess.empresaId).length}</p></div></div><div class="rounded-[14px] bg-white border ${baixo?'border-red-300 bg-red-50/50':''} p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl ${baixo?'bg-red-600 text-white':'bg-amber-50 text-amber-600'} grid place-items-center"><i class="ph ph-warning"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Estoque baixo</p><p class="text-[18px] font-bold">${baixo}</p></div></div><div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Valor custo</p><p class="text-[18px] font-bold">${fmtMoney(db.produtos.filter(p=>p.empresaId===sess.empresaId).reduce((s,p)=>s+p.custo*p.estoque,0))}</p></div></div><div class="rounded-[14px] bg-white border p-4 flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-currency-dollar"></i></div><div><p class="text-[11px] uppercase font-bold text-slate-500">Valor venda</p><p class="text-[18px] font-bold">${fmtMoney(db.produtos.filter(p=>p.empresaId===sess.empresaId).reduce((s,p)=>s+p.preco*p.estoque,0))}</p></div></div>`;
-  document.getElementById('tbody-produtos').innerHTML=list.map(p=>{const isLow=p.estoque<=p.estoqueMin; return `<tr class="hover:bg-slate-50 ${isLow?'bg-red-50/40':''}"><td class="px-5 py-3"><div><p class="font-mono text-[11px] text-slate-500">${p.sku}</p><p class="font-semibold text-[13px]">${p.nome}</p><p class="text-[11px] text-slate-500">Criado por <b>${p.criadoPorNome||'-'}</b> • ${fmtDate(p.criadoEm)} • ${p.fabricante}</p></div></td><td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${p.categoria}</span></td><td class="px-5 py-3"><p class="font-bold ${isLow?'text-red-600':''}">${p.estoque} un</p><p class="text-[11px] text-slate-500">mín ${p.estoqueMin}</p></td><td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo)} → <b>${fmtMoney(p.preco)}</b></p></td><td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${p.local||'-'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
+  // Nunca renderiza milhares de linhas: mostra os 300 primeiros
+  const __pTotal=list.length; const __pExced=__pTotal>300; const listVis=__pExced?list.slice(0,300):list;
+  document.getElementById('tbody-produtos').innerHTML=listVis.map(p=>{const isLow=p.estoque<=p.estoqueMin; return `<tr class="hover:bg-slate-50 ${isLow?'bg-red-50/40':''}"><td class="px-5 py-3"><div><p class="font-mono text-[11px] text-slate-500">${p.sku}</p><p class="font-semibold text-[13px]">${p.nome}</p><p class="text-[11px] text-slate-500">Criado por <b>${p.criadoPorNome||'-'}</b> • ${fmtDate(p.criadoEm)} • ${p.fabricante}</p></div></td><td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${p.categoria}</span></td><td class="px-5 py-3"><p class="font-bold ${isLow?'text-red-600':''}">${p.estoque} un</p><p class="text-[11px] text-slate-500">mín ${p.estoqueMin}</p></td><td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo)} → <b>${fmtMoney(p.preco)}</b></p></td><td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${p.local||'-'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('')+(__pExced?`<tr><td colspan="6" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${__pTotal} produtos — use a busca para refinar</td></tr>`:'');
 }
 function deleteProduto(id){const sess=getSession(); if(confirm('Excluir produto?')){db.produtos=db.produtos.filter(p=>!(p.id===id && p.empresaId===sess.empresaId)); logAction('produto','excluir',id,'Excluído produto'); saveDB(); renderProdutos(); renderAuditoria();}}
 
@@ -779,12 +930,12 @@ function renderDashboard(){
   document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
   document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
   const ctx=document.getElementById('chartFinance');
-  if(ctx){
+  if(ctx && ctx.offsetParent!==null){
     if(window.chartFinanceInst) window.chartFinanceInst.destroy();
     window.chartFinanceInst=new Chart(ctx,{type:'line',data:{labels:['Fev','Mar','Abr','Mai','Jun','Jul'],datasets:[{label:'Faturamento',data:[18200,22400,19800,24500,22100,faturamentoMes],borderColor:'#0a1e8a',backgroundColor:'rgba(10,30,138,0.08)',tension:0.4,fill:true,pointRadius:0,borderWidth:2.5},{label:'Custos',data:[9200,11000,9800,11200,10500,11800],borderColor:'#cbd5e1',backgroundColor:'transparent',tension:0.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'},beginAtZero:true}}}});
   }
   const ctx2=document.getElementById('chartParque');
-  if(ctx2){
+  if(ctx2 && ctx2.offsetParent!==null){
     if(window.chartParqueInst) window.chartParqueInst.destroy();
     const sc={disponivel:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length, locado:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='locado').length, manutencao:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='manutencao').length, inativo:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='inativo').length};
     window.chartParqueInst=new Chart(ctx2,{type:'doughnut',data:{labels:['Disponível','Locado','Manutenção','Inativo'],datasets:[{data:[sc.disponivel,sc.locado,sc.manutencao,sc.inativo],backgroundColor:['#10b981','#0a1e8a','#f59e0b','#94a3b8'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
@@ -944,7 +1095,7 @@ function saveOS(){
   const sess=getSession(); const id=window.modalContext?.id; const parqueId=document.getElementById('f-os-parque').value; const parque=parqueId?db.parque.find(p=>p.id===parqueId):null;
   const payload={empresaId:sess.empresaId, clienteId:document.getElementById('f-os-cli').value, parqueId:parqueId||null, equipamentoId:parque?.equipamentoId||null, tipo:document.getElementById('f-os-tipo').value, prioridade:document.getElementById('f-os-prio').value, tecnico:document.getElementById('f-os-tec').value, status:document.getElementById('f-os-status').value, descricao:document.getElementById('f-os-desc').value.trim()};
   if(!payload.clienteId) return toast('Selecione cliente','error'); if(!payload.descricao) return toast('Descreva problema','error');
-  if(id){const os=db.os.find(o=>o.id===id && o.empresaId===sess.empresaId); Object.assign(os,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome}); if(payload.status==='concluido'&&!os.dataFechamento) os.dataFechamento=new Date().toISOString(); logAction('os','editar',id,`Editado OS ${os.numero} para ${payload.status}`);}else{const novo={id:uid('os'),empresaId:sess.empresaId,numero:'OS-'+new Date().getFullYear()+'-'+String(db.os.filter(o=>o.empresaId===sess.empresaId).length+1).padStart(4,'0'),dataAbertura:new Date().toISOString(),dataFechamento:payload.status==='concluido'?new Date().toISOString():null,custoPecas:0,tempoAtendimento:0,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString(),...payload}; db.os.push(novo); logAction('os','criar',novo.id,`Criado OS ${novo.numero} por ${sess.usuarioNome}`);}
+  if(id){const os=db.os.find(o=>o.id===id && o.empresaId===sess.empresaId); Object.assign(os,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome}); if(payload.status==='concluido'&&!os.dataFechamento) os.dataFechamento=new Date().toISOString(); logAction('os','editar',id,`Editado OS ${os.numero} para ${payload.status}`);}else{const novo={id:uid('os'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('os',db.os,sess.empresaId):String(db.os.filter(o=>o.empresaId===sess.empresaId).length+1)),dataAbertura:new Date().toISOString(),dataFechamento:payload.status==='concluido'?new Date().toISOString():null,custoPecas:0,tempoAtendimento:0,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString(),...payload}; db.os.push(novo); logAction('os','criar',novo.id,`Criado OS ${novo.numero} por ${sess.usuarioNome}`);}
   saveDB(); renderOs(); closeModal(); toast('Chamado salvo','success'); buildNav(); renderAuditoria();
 }
 
@@ -963,7 +1114,7 @@ function novaVenda(){
   window.addItemVendaTemp=function(){const prodId=document.getElementById('nv-prod').value; const qtd=parseInt(document.getElementById('nv-qtd').value)||1; if(!prodId) return toast('Selecione produto','error'); const p=db.produtos.find(x=>x.id===prodId); if(p.estoque<qtd && p.categoria!=='Serviço') return toast(`Estoque insuficiente (${p.estoque})`,'error'); const ex=window.itensTemp.find(i=>i.produtoId===prodId); if(ex){ex.qtd+=qtd; ex.subtotal=ex.qtd*ex.preco;}else window.itensTemp.push({produtoId:prodId,qtd,preco:p.preco,subtotal:qtd*p.preco}); renderItensTemp(); updateVendaTotal();};
   window.renderItensTemp=function(){document.getElementById('nv-itens').innerHTML=window.itensTemp.map((it,idx)=>{const p=db.produtos.find(x=>x.id===it.produtoId); return `<div class="flex justify-between items-center p-2 rounded-xl bg-white border text-[12.5px]"><span>${p?.nome} • ${it.qtd}x ${fmtMoney(it.preco)}</span><div class="flex items-center gap-2"><b>${fmtMoney(it.subtotal)}</b><button onclick="window.itensTemp.splice(${idx},1); renderItensTemp(); updateVendaTotal()" class="w-6 h-6 grid place-items-center rounded-lg bg-red-50 text-red-600"><i class="ph ph-x"></i></button></div></div>`}).join('')||'<p class="text-[12px] text-slate-500 text-center py-2">Nenhum item</p>';};
   window.updateVendaTotal=function(){const sub=window.itensTemp.reduce((s,i)=>s+i.subtotal,0); const desc=parseFloat(document.getElementById('nv-desc').value)||0; document.getElementById('nv-total').innerText=fmtMoney(sub-desc);};
-  window.saveVenda=function(){const cliId=document.getElementById('nv-cli').value; if(!cliId) return toast('Selecione cliente','error'); if(!window.itensTemp.length) return toast('Adicione itens','error'); const desc=parseFloat(document.getElementById('nv-desc').value)||0; const total=window.itensTemp.reduce((s,i)=>s+i.subtotal,0)-desc; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:'VD-'+new Date().getFullYear()+'-'+String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1).padStart(4,'0'),clienteId:cliId,data:new Date().toISOString(),itens:[...window.itensTemp],desconto:desc,total,formaPagamento:document.getElementById('nv-pag').value,status:document.getElementById('nv-status').value, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome, criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId); if(p && p.categoria!=='Serviço') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)} por ${sess.usuarioNome}`); if(venda.status==='faturado'){db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:cliId,descricao:`Venda ${venda.numero} • ${venda.itens.length} itens`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome});} saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success');};
+  window.saveVenda=function(){const cliId=document.getElementById('nv-cli').value; if(!cliId) return toast('Selecione cliente','error'); if(!window.itensTemp.length) return toast('Adicione itens','error'); const desc=parseFloat(document.getElementById('nv-desc').value)||0; const total=window.itensTemp.reduce((s,i)=>s+i.subtotal,0)-desc; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:cliId,data:new Date().toISOString(),itens:[...window.itensTemp],desconto:desc,total,formaPagamento:document.getElementById('nv-pag').value,status:document.getElementById('nv-status').value, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome, criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId); if(p && p.categoria!=='Serviço') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)} por ${sess.usuarioNome}`); if(venda.status==='faturado'){db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:cliId,descricao:`Venda ${venda.numero} • ${venda.itens.length} itens`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome});} saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success');};
   document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'venda'};
 }
 function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:v.clienteId,descricao:`Venda ${v.numero}`,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
@@ -975,12 +1126,20 @@ function renderFinanceiro(){
   const totalReceberMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth() && new Date(cr.vencimento).getFullYear()===new Date().getFullYear()).reduce((s,c)=>s+c.valor,0);
   const totalPagarMes=db.contasPagar.filter(cp=>cp.empresaId===sess.empresaId && new Date(cp.vencimento).getMonth()===new Date().getMonth() && new Date(cp.vencimento).getFullYear()===new Date().getFullYear()).reduce((s,c)=>s+c.valor,0);
   document.getElementById('fin-receber-mes').innerText=fmtMoney(totalReceberMes); document.getElementById('fin-pagar-mes').innerText=fmtMoney(totalPagarMes); document.getElementById('fin-saldo').innerText=fmtMoney(totalReceberMes-totalPagarMes);
-  const statusCR=document.getElementById('filter-cr-status')?.value||''; let listCR=db.contasReceber.filter(c=>c.empresaId===sess.empresaId && (!statusCR||c.status===statusCR)).sort((a,b)=>new Date(a.vencimento)-new Date(b.vencimento));
-  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=db.clientes.find(c=>c.id===cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-semibold">${fmtDate(cr.vencimento)} ${isVenc?'⚠️':''}</p><p class="text-[12.5px] font-semibold">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${cr.criadoPorNome||'-'} • ${cr.origem}</p></td><td class="px-5 py-3"><p class="text-[12.5px]">${cr.descricao}</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">${fmtMoney(cr.valor)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase ${sm[status]||''}">${status}</span></td><td class="px-5 py-3"><div class="flex gap-1">${cr.status!=='pago'?`<button onclick="baixarCR('${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg bg-emerald-50 text-emerald-700"><i class="ph ph-check"></i></button>`:''}<button onclick="openModal('contaReceber','${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteCR('${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
-  document.getElementById('tbody-cp').innerHTML=db.contasPagar.filter(cp=>cp.empresaId===sess.empresaId).sort((a,b)=>new Date(a.vencimento)-new Date(b.vencimento)).map(cp=>{return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-semibold">${fmtDate(cp.vencimento)}</p><p class="text-[12.5px] font-semibold">${cp.fornecedor}</p><p class="text-[11px] text-slate-500">por ${cp.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 inline-block font-bold uppercase">${cp.categoria}</p><p class="text-[12.5px] mt-1">${cp.descricao}</p></td><td class="px-5 py-3 font-bold text-[13px]">${fmtMoney(cp.valor)}</td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${cp.status==='pago'?'bg-emerald-50 text-emerald-700 border':'bg-amber-50 text-amber-700 border'}">${cp.status}</span></td><td class="px-5 py-3"><div class="flex gap-1">${cp.status!=='pago'?`<button onclick="baixarCP('${cp.id}')" class="w-8 h-8 grid place-items-center rounded-lg bg-emerald-50 text-emerald-700"><i class="ph ph-check"></i></button>`:''}<button onclick="openModal('contaPagar','${cp.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></div></td></tr>`;}).join('');
+  // Nunca renderiza milhares de linhas (base grande): mostra os 200 primeiros
+  // e só processa de fato se a tela do financeiro estiver visível
+  const statusCR=document.getElementById('filter-cr-status')?.value||''; let listCR=db.contasReceber.filter(c=>c.empresaId===sess.empresaId && (!statusCR||c.status===statusCR));
+  const __crTotal=listCR.length;
+  listCR=listCR.map(c=>({t:Date.parse(c.vencimento)||0,c})).sort((a,b)=>a.t-b.t).map(x=>x.c);
+  const __crExced=__crTotal>200; if(__crExced) listCR=listCR.slice(0,200);
+  const __cliFind=id=>(window.__cliIdxGet?window.__cliIdxGet().get(id):db.clientes.find(c=>c.id===id));
+  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-semibold">${fmtDate(cr.vencimento)} ${isVenc?'⚠️':''}</p><p class="text-[12.5px] font-semibold">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${cr.criadoPorNome||'-'} • ${cr.origem}</p></td><td class="px-5 py-3"><p class="text-[12.5px]">${cr.descricao}</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">${fmtMoney(cr.valor)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase ${sm[status]||''}">${status}</span></td><td class="px-5 py-3"><div class="flex gap-1">${cr.status!=='pago'?`<button onclick="baixarCR('${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg bg-emerald-50 text-emerald-700"><i class="ph ph-check"></i></button>`:''}<button onclick="openModal('contaReceber','${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteCR('${cr.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('')+(__crExced?`<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de ${__crTotal} títulos — use o filtro de status para refinar</td></tr>`:'');
+  const __cpList=db.contasPagar.filter(cp=>cp.empresaId===sess.empresaId).map(c=>({t:Date.parse(c.vencimento)||0,c})).sort((a,b)=>a.t-b.t).map(x=>x.c);
+  const __cpTotal=__cpList.length; const __cpVis=__cpTotal>200?__cpList.slice(0,200):__cpList;
+  document.getElementById('tbody-cp').innerHTML=__cpVis.map(cp=>{return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-semibold">${fmtDate(cp.vencimento)}</p><p class="text-[12.5px] font-semibold">${cp.fornecedor}</p><p class="text-[11px] text-slate-500">por ${cp.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 inline-block font-bold uppercase">${cp.categoria}</p><p class="text-[12.5px] mt-1">${cp.descricao}</p></td><td class="px-5 py-3 font-bold text-[13px]">${fmtMoney(cp.valor)}</td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${cp.status==='pago'?'bg-emerald-50 text-emerald-700 border':'bg-amber-50 text-amber-700 border'}">${cp.status}</span></td><td class="px-5 py-3"><div class="flex gap-1">${cp.status!=='pago'?`<button onclick="baixarCP('${cp.id}')" class="w-8 h-8 grid place-items-center rounded-lg bg-emerald-50 text-emerald-700"><i class="ph ph-check"></i></button>`:''}<button onclick="openModal('contaPagar','${cp.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></div></td></tr>`;}).join('')+(__cpTotal>200?`<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de ${__cpTotal} despesas</td></tr>`:'');
   const inadMap={}; db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && (cr.status==='vencido'|| (new Date(cr.vencimento)<new Date() && cr.status!=='pago'))).forEach(cr=>{inadMap[cr.clienteId]=(inadMap[cr.clienteId]||0)+cr.valor;});
-  document.getElementById('list-inadimplencia').innerHTML=Object.keys(inadMap).length?Object.entries(inadMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([cliId,valor])=>{const cli=db.clientes.find(c=>c.id===cliId); return `<div class="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200"><div><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${db.contasReceber.filter(cr=>cr.clienteId===cliId && cr.empresaId===sess.empresaId && (cr.status==='vencido'||new Date(cr.vencimento)<new Date()&&cr.status!=='pago')).length} títulos</p></div><b class="text-[12.5px] text-red-600">${fmtMoney(valor)}</b></div>`;}).join(''):'<p class="text-[12px] text-slate-500">Sem inadimplência</p>';
-  document.getElementById('list-vencimentos-fin').innerHTML=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && cr.status==='aberto').sort((a,b)=>new Date(a.vencimento)-new Date(b.vencimento)).slice(0,5).map(cr=>{const cli=db.clientes.find(c=>c.id===cr.clienteId); return `<div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 border"><div><p class="font-semibold text-[12px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${fmtDate(cr.vencimento)} • ${cr.descricao.slice(0,30)}</p><p class="text-[10px] text-slate-400">por ${cr.criadoPorNome||'-'}</p></div><b class="text-[12px]">${fmtMoney(cr.valor)}</b></div>`;}).join('')||'<p class="text-[12px] text-slate-500">Sem vencimentos</p>';
+  document.getElementById('list-inadimplencia').innerHTML=Object.keys(inadMap).length?Object.entries(inadMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([cliId,valor])=>{const cli=__cliFind(cliId); return `<div class="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200"><div><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${db.contasReceber.filter(cr=>cr.clienteId===cliId && cr.empresaId===sess.empresaId && (cr.status==='vencido'||new Date(cr.vencimento)<new Date()&&cr.status!=='pago')).length} títulos</p></div><b class="text-[12.5px] text-red-600">${fmtMoney(valor)}</b></div>`;}).join(''):'<p class="text-[12px] text-slate-500">Sem inadimplência</p>';
+  document.getElementById('list-vencimentos-fin').innerHTML=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && cr.status==='aberto').sort((a,b)=>new Date(a.vencimento)-new Date(b.vencimento)).slice(0,5).map(cr=>{const cli=__cliFind(cr.clienteId); return `<div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 border"><div><p class="font-semibold text-[12px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${fmtDate(cr.vencimento)} • ${cr.descricao.slice(0,30)}</p><p class="text-[10px] text-slate-400">por ${cr.criadoPorNome||'-'}</p></div><b class="text-[12px]">${fmtMoney(cr.valor)}</b></div>`;}).join('')||'<p class="text-[12px] text-slate-500">Sem vencimentos</p>';
   const dreRows=[{label:'Receita Bruta - Locações', valor: db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0)*1.1},{label:'Receita - Excedentes', valor: db.leituras.filter(l=>l.empresaId===sess.empresaId).reduce((s,l)=>s+l.valorExcedente,0)},{label:'Receita - Vendas', valor: db.vendas.filter(v=>v.empresaId===sess.empresaId).reduce((s,v)=>s+v.total,0)},{label:'(-) Custos Suprimentos', valor: -db.produtos.filter(p=>p.empresaId===sess.empresaId).reduce((s,p)=>s+p.custo*2,0), isCost:true},{label:'(-) Despesas', valor: -db.contasPagar.filter(cp=>cp.empresaId===sess.empresaId).reduce((s,cp)=>s+cp.valor,0), isCost:true},{label:'(=) Lucro Bruto', valor: 0, isTotal:true},];
   const totalRec=dreRows.slice(0,3).reduce((s,r)=>s+r.valor,0); const totalCust=dreRows.slice(3,5).reduce((s,r)=>s+r.valor,0); dreRows[5].valor=totalRec+totalCust;
   document.getElementById('dre-table').innerHTML=dreRows.map(r=>`<div class="flex justify-between py-2 px-3 rounded-xl ${r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50'} text-[13px]"><span>${r.label}</span><span class="${r.isCost?'text-red-600':''} ${r.isTotal?'text-white':''}">${fmtMoney(r.valor)}</span></div>`).join('');
@@ -1134,7 +1293,6 @@ function renderBanco(){
             <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Conecte diretamente ao banco Firebird do sistema antigo, visualize as tabelas e importe os dados para o ERP novo. Os dados são mapeados automaticamente para clientes, produtos, vendas, locação e financeiro.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="loadManualDB()" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px]">Importar amostra para teste</button>
             <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
           </div>
         </div>
@@ -1269,19 +1427,19 @@ function renderBanco(){
         </div>
       </div>
 
-      <!-- NUVEM / SUPABASE -->
+      <!-- NUVEM / GOOGLE FIREBASE -->
       <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 shadow-xl overflow-hidden relative">
         <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
             <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sincronização em nuvem</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Supabase — Multi-computador</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados migrados para a nuvem e acesse de qualquer computador.</p>
+            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Nuvem Google — Multi-computador</h2>
+            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados para a nuvem do Google (Firebase) e acesse de qualquer computador.</p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="testarSupabase()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
-            <button onclick="copySupabaseSchemaSQL()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar SQL tabelas</button>
-            <button onclick="supabaseInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
+            <button onclick="testarNuvem()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
+            <button onclick="copiarRegrasFirebase()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar regras Firebase</button>
+            <button onclick="nuvemInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
           </div>
         </div>
       </div>
@@ -1313,7 +1471,7 @@ function renderBanco(){
         <div class="relative z-10">
           <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Importação completa</p>
           <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Trazer TODOS os dados do sistema antigo</h2>
-          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para o Supabase. Depois, qualquer PC pode acessar os mesmos dados.</p>
+          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para a nuvem Google. Depois, qualquer PC pode acessar os mesmos dados.</p>
         </div>
       </div>
 
@@ -1398,7 +1556,7 @@ function renderBanco(){
               <li>Role para baixo até <b>"Upload dos dados"</b></li>
               <li>Clique em <b>"Selecionar arquivos"</b></li>
               <li>Selecione <b>TODOS os .json</b> da pasta (Ctrl+A)</li>
-              <li>Clique em <b>"Importar + Supabase"</b></li>
+              <li>Clique em <b>"Importar + Nuvem"</b></li>
               <li>Pronto! Dados no ERP + nuvem</li>
             </ol>
             <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
@@ -1433,7 +1591,7 @@ function renderBanco(){
               <li>• Se exportou tabela por tabela, selecione todos os .json de uma vez</li>
               <li>• O sistema detecta automaticamente qual tabela é cada arquivo</li>
               <li>• Tabelas sem correspondência viram menus novos no sidebar</li>
-              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Supabase abaixo</li>
+              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Nuvem abaixo</li>
             </ul>
           </div>
         </div>
@@ -1669,7 +1827,7 @@ window.handleMultipleUpload = async function(files, inputEl){
     }
 
     const tabelasCount = Object.keys(tabelasImportadas).length;
-    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaSupabase()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Supabase</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
+    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaNuvem()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Nuvem</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
 
     window._rawDataParaImportar = rawData;
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
@@ -1688,7 +1846,7 @@ window.importarTudoDeUmaVez = function(){
   fbImportToErp(rawData);
 };
 
-window.enviarDiretoParaSupabase = async function(){
+window.enviarDiretoParaNuvem = async function(){
   const rawData = window._rawDataParaImportar;
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   fbImportToErp(rawData);
@@ -1696,12 +1854,13 @@ window.enviarDiretoParaSupabase = async function(){
   if(typeof window.syncEnviarParaNuvem === 'function'){
     const r = await window.syncEnviarParaNuvem({confirmar:false});
     if(r && r.ok){
-      toast('✅ Dados no Supabase! Nos outros PCs, clique em "Carregar da nuvem".','success');
+      toast('✅ Dados na nuvem! Nos outros PCs, clique em "Carregar da nuvem".','success');
     }
   } else {
-    toast('Supabase não disponível nesta página. Recarregue e tente pela seção Supabase abaixo.','info');
+    toast('Nuvem não disponível nesta página. Recarregue e tente pela seção Nuvem abaixo.','info');
   }
 };
+window.enviarDiretoParaSupabase = window.enviarDiretoParaNuvem; // compatibilidade
 
 window.copiarSqlExportarTudo = function(){
   const sql = 'SELECT RDB$RELATION_NAME AS TABELA FROM RDB$RELATIONS WHERE RDB$VIEW_BLR IS NULL AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0) ORDER BY RDB$RELATION_NAME';
@@ -1719,38 +1878,6 @@ window.copiarSqlExportarTudo = function(){
 };
 // IMPORTAÇÃO MANUAL DE AMOSTRA PARA TESTE
 // Essa função adiciona dados fictícios para testar as telas
-function loadManualDB(){
-  const sess = getSession();
-  if(!sess) { toast('Faça login para importar dados manuais','info'); return; }
-  // Criar dados principais baseados na análise do arquivo .FDB
-  const clientesManuais = [
-    {id:'cli_001', empresaId:sess.empresaId, nome:'Construtora Horizonte LTDA', documento:'45.123.678/0001-12', tipo:'PJ', email:'financeiro@horizonte.com.br', telefone:'(11) 99123-4567', endereco:'Av. Paulista, 1000 - Bela Vista', cidade:'São Paulo', estado:'SP', cep:'01310-100', status:'ativo', mensalidade:2490, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_002', empresaId:sess.empresaId, nome:'Escola Saber & Arte', documento:'08.765.432/0001-99', tipo:'PJ', email:'secretaria@saberarte.edu.br', telefone:'(11) 98888-1122', endereco:'R. das Flores, 234 - Jardim', cidade:'Osasco', estado:'SP', cep:'06010-120', status:'ativo', mensalidade:1890, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_003', empresaId:sess.empresaId, nome:'Clínica Vida Mais', documento:'22.111.333/0001-44', tipo:'PJ', email:'adm@vidamaisclinica.com.br', telefone:'(11) 97777-3344', endereco:'R. Domingos, 45 - Centro', cidade:'Barueri', estado:'SP', cep:'06401-000', status:'inadimplente', mensalidade:3200, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_004', empresaId:sess.empresaId, nome:'Advocacia Martins & Associados', documento:'33.222.111/0001-55', tipo:'PJ', email:'contato@martinsadv.com.br', telefone:'(11) 96666-7788', endereco:'Al. Santos, 700 - Jardins', cidade:'São Paulo', estado:'SP', cep:'01419-001', status:'ativo', mensalidade:1650, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-    {id:'cli_1844', empresaId:sess.empresaId, nome:'Metalúrgica Brasmetal', documento:'18.234.567/0001-33', tipo:'PJ', email:'compras@brasmetal.ind.br', telefone:'(11) 95555-0001', endereco:'Rod. Anhanguera, Km 20', cidade:'Cajamar', estado:'SP', cep:'07750-000', status:'ativo', mensalidade:4750, criadoEm:new Date().toISOString(), criadoPor:'sistema', criadoPorNome:'Importação Manual'},
-  ];
-  const produtosManuais = [
-    {id:'prd_ton_1230', empresaId:sess.empresaId, sku:'TON-BRO-1230', nome:'Toner Brother TN-3442 Compatível Alto Rendimento', categoria:'Suprimento', fabricante:'Premium', estoque:47, estoqueMin:10, custo:89, preco:149, local:'A1-02', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_cil_hp_19a', empresaId:sess.empresaId, sku:'CIL-HP-19A', nome:'Cilindro HP 19A Original', categoria:'Peça', fabricante:'HP', estoque:8, estoqueMin:5, custo:210, preco:340, local:'B2-04', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_imp_bro_5652', empresaId:sess.empresaId, sku:'IMP-BRO-5652', nome:'Brother DCP-L5652DN Laser Mono', categoria:'Impressora', fabricante:'Brother', estoque:3, estoqueMin:1, custo:1850, preco:2690, local:'C1-01', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-    {id:'prd_serv_inst', empresaId:sess.empresaId, sku:'SERV-INST', nome:'Serviço Instalação e Configuração', categoria:'Serviço', fabricante:'DIGICOPY', estoque:999, estoqueMin:0, custo:0, preco:180, local:'-', status:'ativo', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-  ];
-  const vendasManuais = [
-    {id:'vda_15625', empresaId:sess.empresaId, numero:'VD-15625', clienteId:'cli_004', data:new Date().toISOString(), itens:[{produtoId:'prd_ton_1230', qtd:3, preco:149, subtotal:447}], desconto:0, total:447, formaPagamento:'Boleto 30d', status:'faturado', criadoPor:'sistema', criadoPorNome:'Importação Manual', criadoEm:new Date().toISOString()},
-  ];
-  // Substituir dados no db (manter usuários e empresa atual, mas adicionar clientes/produtos/vendas manuais)
-  db.clientes = db.clientes.filter(c => !clientesManuais.find(m => m.id === c.id));
-  db.clientes.push(...clientesManuais);
-  db.produtos = db.produtos.filter(p => !produtosManuais.find(m => m.id === p.id));
-  db.produtos.push(...produtosManuais);
-  db.vendas = db.vendas.filter(v => !vendasManuais.find(m => m.id === v.id));
-  db.vendas.push(...vendasManuais);
-  saveDB();
-  toast('Dados de teste importados! Clientes: '+clientesManuais.length+', Produtos: '+produtosManuais.length+', Vendas: '+vendasManuais.length, 'success');
-  renderClientes(); renderProdutos(); renderVendas(); renderDashboard();
-  console.log('Dados manuais carregados:', {clientes: clientesManuais.length, produtos: produtosManuais.length, vendas: vendasManuais.length});
-}
 
 // ═══════════════════════════════════════════════════════
 // MÓDULO FIREBIRD — Conexão real ao banco .FDB do sistema antigo

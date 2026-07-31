@@ -400,7 +400,7 @@
       const total = window.itensTemp.reduce((s,i)=>s+i.subtotal,0) - desc;
       const venda = {
         id:uid('vda'), empresaId:sess.empresaId,
-        numero:'VD-'+new Date().getFullYear()+'-'+String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1).padStart(4,'0'),
+        numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),
         clienteId: window.clienteSelecionadoVenda.id,
         data:new Date().toISOString(),
         itens:[...window.itensTemp],
