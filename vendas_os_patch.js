@@ -1174,10 +1174,13 @@ window.vosExportarVendasCSV = function(){
 // CONSULTA DE VENDAS — filtros avançados + ordenação clicando no título
 // ═══════════════════════════════════════════════════════════════════════════
 function vosLegadosVendas(sess){
-  // Cache: reconverte os 20k+ registros antigos só quando os módulos mudarem
+  // Cache por contagem de linhas: a sincronização troca o objeto dos módulos,
+  // o que invalidava o cache antigo e reconVERTIA 20 mil registros a cada render
   const mod = db.modulosDinamicos||{};
+  let fp = 0;
+  for(const k in mod){ fp += (((mod[k]||{}).dados||[]).length)||0; }
   const c = window.__vosLegCache;
-  if(c && c.mod===mod && c.emp===sess.empresaId) return c.list;
+  if(c && c.fp===fp && c.emp===sess.empresaId) return c.list;
   const legados = [];
   Object.entries(db.modulosDinamicos||{}).forEach(([nome,mod])=>{
     if(!/VENDA|ORCAMENT|PEDIDO|NOTINHA|CUPOM|COMANDA/i.test(nome)) return;
@@ -1199,7 +1202,7 @@ function vosLegadosVendas(sess){
       });
     });
   });
-  window.__vosLegCache = { mod, emp:sess.empresaId, list:legados };
+  window.__vosLegCache = { fp, emp:sess.empresaId, list:legados };
   return legados;
 }
 function vosPagamentoStatus(v){
@@ -1283,18 +1286,29 @@ window.renderVendas = function(){
   // ── ordenação pelos títulos ──
   let sort; try{ sort = JSON.parse(localStorage.getItem('digicopy_sort_vendas')||'null') || {col:'data', dir:'desc'}; }catch(e){ sort={col:'data', dir:'desc'}; }
   window.__vosSortV = sort;
-  const cmp = {
-    codigo: (a,b)=>numInt(a.numero)-numInt(b.numero),
-    data: (a,b)=>new Date(a.data||0)-new Date(b.data||0),
-    cliente: (a,b)=>(((cliDe(a)||{}).nome)||'').localeCompare(((cliDe(b)||{}).nome)||'','pt-BR',{sensitivity:'base'}),
-    valor: (a,b)=>(a.total||0)-(b.total||0),
-    situacao: (a,b)=>String(a.status||'').localeCompare(String(b.status||'')),
-    tipo: (a,b)=>tipoDe(a).localeCompare(tipoDe(b)),
-    usuario: (a,b)=>usrDe(a).localeCompare(usrDe(b),'pt-BR',{sensitivity:'base'}),
-    pagamento: (a,b)=>vosPagamentoStatus(a).localeCompare(vosPagamentoStatus(b),'pt-BR',{sensitivity:'base'})
+  // ── ordenação pelos títulos, RÁPIDA com base grande ──
+  // A chave de cada linha é calculada UMA vez só (antes era recalculada em cada
+  // comparação do sort: 16 mil vendas geravam ~500 mil Date/objetos por render).
+  const chaveDe = {
+    codigo:   v=>numInt(v.numero),
+    data:     v=>{ const t=Date.parse(v.data||''); return isNaN(t)?0:t; },
+    cliente:  v=>(((cliDe(v)||{}).nome)||''),
+    valor:    v=>(v.total||0),
+    situacao: v=>String(v.status||''),
+    tipo:     v=>tipoDe(v),
+    usuario:  v=>usrDe(v),
+    pagamento:v=>vosPagamentoStatus(v)
   };
-  const fn = cmp[sort.col] || cmp.data;
-  list.sort((a,b)=>{ const r=fn(a,b); if(r!==0) return sort.dir==='asc' ? -r : r; return numInt(b.numero)-numInt(a.numero); });
+  const keyFn = chaveDe[sort.col] || chaveDe.data;
+  const numerica = (sort.col==='codigo' || sort.col==='valor' || sort.col==='data' || !chaveDe[sort.col]);
+  const memo = new Map();
+  list.forEach(v=>{ memo.set(v, { k:keyFn(v), n:numInt(v.numero) }); });
+  list.sort((a,b)=>{
+    const A=memo.get(a), B=memo.get(b);
+    const r = numerica ? (A.k-B.k) : String(A.k).localeCompare(String(B.k),'pt-BR',{sensitivity:'base'});
+    if(r!==0) return sort.dir==='asc' ? -r : r;
+    return B.n - A.n;
+  });
   const total = list.reduce((s,v)=>s+(v.total||0),0);
   window.__vosUltimaListaVendas = list; // lista filtrada (usada pelo Excel/CSV)
   const limite = window.__vosLimiteVendas || 300; // paginação: nunca renderiza milhares de linhas de uma vez

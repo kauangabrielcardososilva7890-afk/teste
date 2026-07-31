@@ -430,9 +430,20 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   function statusVendaClass(v){const st=(v.status||'').toLowerCase(); if(st==='faturado'||st==='finalizada') return 'ok'; if(st==='orcamento'||st==='aprovado') return 'info'; return 'wait';}
   function statusVendaLabel(v){const st=(v.status||'aguardar').toLowerCase(); if(st==='faturado') return 'Finalizada'; if(st==='orcamento') return 'Orçamento'; if(st==='aprovado') return 'Aprovada'; if(st==='aguardar') return 'Aguardando'; return st;}
   function vendaTipoNeo(v){return (v.itens||[]).some(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return p&&p.categoria==='Serviço';})?'Serviço':'Venda';}
+  // Índice id→cliente com cache: antes era um .find por venda (16k vendas × 2,6k
+  // clientes congelava a listagem na busca/ordenação)
+  window.__cliIdxGet = function(){
+    const c = window.__cliIdxCache;
+    if(c && c.ref===db.clientes && c.len===db.clientes.length) return c.map;
+    const map = new Map();
+    (db.clientes||[]).forEach(x=>{ if(x && x.id && !map.has(x.id)) map.set(x.id, x); });
+    window.__cliIdxCache = { ref:db.clientes, len:db.clientes.length, map };
+    return map;
+  };
   // Cliente da venda mesmo quando o cadastro não existe mais (dado do sistema antigo)
   window.clienteDaVenda = function(v){
-    const c = db.clientes.find(x=>x.id===v.clienteId);
+    if(!v) return null;
+    const c = window.__cliIdxGet().get(v.clienteId);
     if(c) return c;
     if(v && v.clienteNomeAntigo) return {nome:v.clienteNomeAntigo, codigo:v.codClienteAntigo||'-', documento:'(cadastro do sistema antigo)', endereco:'', cidade:'', estado:'', telefone:'', semVinculo:true};
     return null;

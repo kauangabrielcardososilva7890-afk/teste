@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.2';
+const APP_VERSION='4.9.3';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -928,12 +928,12 @@ function renderDashboard(){
   document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
   document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
   const ctx=document.getElementById('chartFinance');
-  if(ctx){
+  if(ctx && ctx.offsetParent!==null){
     if(window.chartFinanceInst) window.chartFinanceInst.destroy();
     window.chartFinanceInst=new Chart(ctx,{type:'line',data:{labels:['Fev','Mar','Abr','Mai','Jun','Jul'],datasets:[{label:'Faturamento',data:[18200,22400,19800,24500,22100,faturamentoMes],borderColor:'#0a1e8a',backgroundColor:'rgba(10,30,138,0.08)',tension:0.4,fill:true,pointRadius:0,borderWidth:2.5},{label:'Custos',data:[9200,11000,9800,11200,10500,11800],borderColor:'#cbd5e1',backgroundColor:'transparent',tension:0.4,fill:false,pointRadius:0,borderWidth:2,borderDash:[6,4]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f1f5f9'},beginAtZero:true}}}});
   }
   const ctx2=document.getElementById('chartParque');
-  if(ctx2){
+  if(ctx2 && ctx2.offsetParent!==null){
     if(window.chartParqueInst) window.chartParqueInst.destroy();
     const sc={disponivel:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length, locado:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='locado').length, manutencao:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='manutencao').length, inativo:db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='inativo').length};
     window.chartParqueInst=new Chart(ctx2,{type:'doughnut',data:{labels:['Disponível','Locado','Manutenção','Inativo'],datasets:[{data:[sc.disponivel,sc.locado,sc.manutencao,sc.inativo],backgroundColor:['#10b981','#0a1e8a','#f59e0b','#94a3b8'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});

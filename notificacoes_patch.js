@@ -63,7 +63,7 @@ window.notificarEvento = function(tipo, texto, acao){
   });
   if(lista.length > 200) lista.length = 200; // guarda só os 200 mais recentes
   if(typeof saveDB==='function') saveDB();
-  ntfAtualizarBadge();
+  ntfAtualizarBadge(true);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -85,11 +85,22 @@ function ntfTotalPendente(){
   const s = ntfEscanear();
   return s.estoque.length + s.vencidas.length + s.aVencer.length + s.eventos.filter(n=>!n.lida).length;
 }
-window.ntfAtualizarBadge = function(){
+let __ntfBadgeCache = { ts:0, n:0 };
+window.ntfAtualizarBadge = function(forcar){
   const badge = document.getElementById('ntf-badge');
   if(!badge) return;
+  const agora = Date.now();
+  // Varredura completa (estoque + financeiro) no MÁXIMO 1x a cada 15s:
+  // antes rodava em todo render e pesava com a base grande
+  if(!forcar && __ntfBadgeCache.ts && (agora-__ntfBadgeCache.ts)<15000){
+    const n0 = __ntfBadgeCache.n;
+    badge.textContent = n0 > 99 ? '99+' : String(n0);
+    badge.classList.toggle('hidden', n0===0);
+    return;
+  }
   let n = 0;
   try{ n = ntfTotalPendente(); }catch(e){}
+  __ntfBadgeCache = { ts:agora, n };
   badge.textContent = n > 99 ? '99+' : String(n);
   badge.classList.toggle('hidden', n===0);
 };
@@ -164,17 +175,17 @@ window.ntfFecharPainel = function(){
 };
 window.ntfMarcarLida = function(id){
   const n = ntfLista().find(x=>x.id===id);
-  if(n){ n.lida = true; saveDB(); window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge(); }
+  if(n){ n.lida = true; saveDB(); window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge(true); }
 };
 window.ntfApagar = function(id){
   const lista = ntfLista();
   const i = lista.findIndex(x=>x.id===id);
-  if(i>=0){ lista.splice(i,1); saveDB(); window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge(); }
+  if(i>=0){ lista.splice(i,1); saveDB(); window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge(true); }
 };
 window.ntfMarcarTodasLidas = function(){
   ntfLista().forEach(n=>n.lida=true);
   if(typeof saveDB==='function') saveDB();
-  window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge();
+  window.ntfFecharPainel(); window.ntfAlternarPainel(); ntfAtualizarBadge(true);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -194,11 +205,11 @@ if(typeof _ntfOrigBaixarCR === 'function'){
 }
 
 // Atualiza o contador do sino: no login, a cada 90s e ao mexer em produtos/financeiro
-setInterval(function(){ try{ if(getSession && getSession()) ntfAtualizarBadge(); }catch(e){} }, 90000);
+setInterval(function(){ try{ if(getSession && getSession()) ntfAtualizarBadge(true); }catch(e){} }, 90000);
 const _ntfOrigDashboard = window.renderDashboard;
 window.renderDashboard = function(){
   if(_ntfOrigDashboard) _ntfOrigDashboard.apply(this, arguments);
-  try{ ntfAtualizarBadge(); }catch(e){}
+  try{ ntfAtualizarBadge(); }catch(e){} // sem forçar: usa o cache de 15s
 };
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(ntfAtualizarBadge, 3000); });
 

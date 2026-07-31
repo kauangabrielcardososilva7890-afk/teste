@@ -185,5 +185,33 @@ window.seqObter = function(tipo, itens, empresaId, extrator){
   return atual + 1;
 };
 
-console.log('[DIGICOPY] Interface v4.9.2 — Esc fecha tudo, nuvem quieta, clientes bonito e leve');
+// ═══════════════════════════════════════════════════════════════════════════
+// Altura da home medida com "régua" de verdade (getBoundingClientRect):
+// o cálculo fixo em pixels (100vh - 124px) nunca fechava exato e sobrava um
+// pedaço vazio pra rolar. Agora a home ocupa EXATAMENTE o espaço livre entre
+// o menu azul e o rodapé, em qualquer tela/zoom → não existe mais scroll pro vazio.
+// ═══════════════════════════════════════════════════════════════════════════
+window.uiAjustarHome = function(){
+  const view = document.getElementById('view-dashboard');
+  if(!view || view.classList.contains('hidden')) return;
+  const home = view.querySelector('.clean-home, .desktop-home');
+  if(!home) return;
+  const footer = document.querySelector('#app-shell main footer');
+  window.scrollTo(0, 0); // se veio de uma tela longa, a régua não pode medir com a página rolada
+  const topo = home.getBoundingClientRect().top;
+  const altFooter = footer ? footer.getBoundingClientRect().height : 0;
+  home.style.height = Math.max(240, window.innerHeight - topo - altFooter) + 'px';
+};
+window.addEventListener('resize', window.uiAjustarHome);
+const _uiNavOriginal = window.navigateTo;
+if(typeof _uiNavOriginal==='function'){
+  window.navigateTo = function(){
+    _uiNavOriginal.apply(this, arguments);
+    setTimeout(window.uiAjustarHome, 60);
+  };
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(window.uiAjustarHome, 400); });
+else setTimeout(window.uiAjustarHome, 400);
+
+console.log('[DIGICOPY] Interface v4.9.3 — Esc fecha tudo, nuvem quieta, home sem scroll vazio');
 })();
