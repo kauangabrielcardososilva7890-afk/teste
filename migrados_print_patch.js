@@ -101,14 +101,16 @@ window.visualizarRegistroDinamico = function(nomeTabela, idx){
   }
 };
 
-// Atalho no topo: "Notinhas do sistema antigo" → filtra as tabelas de nota no Explorar Migrados
+// Atalho no topo: "Notinhas do sistema antigo" → abre direto a consulta de Vendas/OS em ordem do código maior p/ menor
 window.abrirNotinhasAntigas = function(){
-  navigateTo('migrados');
+  window.__vosSortV = { col:'codigo', dir:'desc' };
+  try{ localStorage.setItem('digicopy_sort_vendas', JSON.stringify(window.__vosSortV)); }catch(e){}
+  navigateTo('vendas');
   setTimeout(function(){
-    window.__migCat = null;
-    const b = document.getElementById('mig-busca');
-    if(b) b.value = 'nota';
-    if(typeof renderMigrados==='function') renderMigrados();
+    const s = document.getElementById('neo-search-vendas');
+    if(s) s.value = '';
+    if(typeof renderVendas==='function') renderVendas();
+    if(typeof toast==='function') toast('Exibindo histórico de Vendas/OS (incluindo banco antigo em ordem do código maior p/ menor)','info');
   }, 120);
 };
 

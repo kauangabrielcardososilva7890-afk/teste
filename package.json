@@ -1,13 +1,13 @@
 {
   "name": "digicopy-erp",
-  "version": "4.9.4",
+  "version": "4.9.12",
   "description": "DIGICOPY ERP - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "test": "node test_vos.js && node test_perf.js && node test_firebase.js && node test_persist.js && node test_pix.js && node test_extras.js && node test_clientes.js && node test_interface.js",
-    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check sync_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check pix_patch.js && node --check notificacoes_patch.js && node --check vendas_extra_patch.js && node --check migrados_print_patch.js && node --check clientes_patch.js && node --check interface_patch.js && node --check logo_data.js && node --check firebase_config.js && node --check firebase_client.js && node --check main.js && node --check preload.js",
+    "test": "node test_vos.js && node test_perf.js && node test_firebase.js && node test_persist.js && node test_pix.js && node test_extras.js && node test_clientes.js && node test_interface.js && node test_otim.js && node test_loc.js",
+    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check sync_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check pix_patch.js && node --check notificacoes_patch.js && node --check vendas_extra_patch.js && node --check migrados_print_patch.js && node --check clientes_patch.js && node --check interface_patch.js && node --check logo_data.js && node --check firebase_config.js && node --check firebase_client.js && node --check vendas_otimizacao_patch.js && node --check login_otimizacao_patch.js && node --check render_gate_patch.js && node --check locacao_contratos_patch.js && node --check main.js && node --check preload.js",
     "build": "npm run build:win",
     "build:win": "electron-builder --win --x64"
   },
@@ -35,6 +35,10 @@
       "sync_client.js",
       "firebase_config.js",
       "firebase_client.js",
+      "vendas_otimizacao_patch.js",
+      "login_otimizacao_patch.js",
+      "render_gate_patch.js",
+      "locacao_contratos_patch.js",
       "main.js",
       "preload.js",
       "logo.png"

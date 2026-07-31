@@ -90,13 +90,14 @@ function firestoreSimulado(){
     if(u.endsWith(':commit')){
       const body = JSON.parse(opts.body);
       (body.writes||[]).forEach(w=>{
-        if(w.update) docs.set(w.update.name, JSON.parse(JSON.stringify(w.update)));
-        if(w.delete) docs.delete(w.delete);
+        if(w.update) docs.set(w.update.name.replace(/^https:\/\/firestore\.googleapis\.com\/v1\//, ''), JSON.parse(JSON.stringify(w.update)));
+        if(w.delete) docs.delete(w.delete.replace(/^https:\/\/firestore\.googleapis\.com\/v1\//, ''));
       });
       return {ok:true, status:200, text:async()=>'{}'};
     }
     if((opts.method||'GET')==='GET'){
-      if(docs.has(u)) return {ok:true, status:200, text:async()=>JSON.stringify(docs.get(u))};
+      const key = u.replace(/^https:\/\/firestore\.googleapis\.com\/v1\//, '');
+      if(docs.has(key)) return {ok:true, status:200, text:async()=>JSON.stringify(docs.get(key))};
       return {ok:false, status:404, text:async()=>JSON.stringify({error:{code:404, message:'not found'}})};
     }
     return {ok:false, status:400, text:async()=>JSON.stringify({error:{message:'mock não suporta'}})};

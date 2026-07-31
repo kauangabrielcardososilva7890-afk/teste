@@ -948,16 +948,17 @@ function vosDadosEmpresaNotinha(sess){
 window.vosGerarHtmlNotinha = function(vendaId, opts){
   opts = opts||{};
   const sess = getSession(); if(!sess || !vendaId) return null;
-  const v = db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId);
+  const v = db.vendas.find(x=>x.id===vendaId && x.empresaId===sess.empresaId) || (typeof vosLegadosVendas==='function' ? vosLegadosVendas(sess).find(x=>x.id===vendaId) : null);
   if(!v) return null;
   const cli = (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
   const empresa = vosDadosEmpresaNotinha(sess);
-  const temOS = v.os && vosOsCompleta(v.os);
+  const temOS = v.os && (v.origemMigracao || v.os.migrado || vosOsCompleta(v.os));
   const ora = new Date(v.data||Date.now());
   const hora = isNaN(ora) ? '' : ora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const codNum = (v.numero||'').replace(/^VD-/,'');
 
-  const itensRows = (v.itens||[]).map((it,i)=>{
+  const itensList = (v.itens && v.itens.length) ? v.itens : [{descricao: v.observacao ? ('Item • ' + v.observacao) : 'Item / Serviço (migrado)', qtd: 1, preco: v.total||0, subtotal: v.total||0}];
+  const itensRows = itensList.map((it,i)=>{
     const p = it.produtoId ? db.produtos.find(pr=>pr.id===it.produtoId) : null;
     const desc = (p&&p.nome) || it.descricao || 'Item';
     const ident = [it.identificacao, it.numCartucho ? ('cart. '+it.numCartucho) : ''].filter(Boolean).join(' • ');
@@ -1126,7 +1127,8 @@ window.imprimirNotinha = function(vendaId){
   const win = window.open('','_blank');
   if(!win){ toast('Bloqueador de pop-up impediu a impressão','error'); return; }
   win.document.write(html); win.document.close();
-  const v = db.vendas.find(x=>x.id===vendaId);
+  const sess = getSession();
+  const v = db.vendas.find(x=>x.id===vendaId) || (sess && typeof vosLegadosVendas==='function' ? vosLegadosVendas(sess).find(x=>x.id===vendaId) : null);
   if(v) logAction('venda','imprimir_notinha',v.id,`Notinha ${v.numero} impressa (${(v.os&&vosOsCompleta(v.os))?'folha inteira com OS '+v.os.numero:'meia folha'})`);
   saveDB();
 };
@@ -1134,7 +1136,8 @@ window.imprimirNotinha = function(vendaId){
 window.vosExportarNotinhaWord = function(vendaId){
   const html = vosGerarHtmlNotinha(vendaId, {paraArquivo:true});
   if(!html){ toast('Venda não encontrada','error'); return; }
-  const v = db.vendas.find(x=>x.id===vendaId);
+  const sess = getSession();
+  const v = db.vendas.find(x=>x.id===vendaId) || (sess && typeof vosLegadosVendas==='function' ? vosLegadosVendas(sess).find(x=>x.id===vendaId) : null);
   const blob = new Blob(['\ufeff'+html], {type:'application/msword'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1183,13 +1186,25 @@ function vosLegadosVendas(sess){
   if(c && c.fp===fp && c.emp===sess.empresaId) return c.list;
   const legados = [];
   Object.entries(db.modulosDinamicos||{}).forEach(([nome,mod])=>{
-    if(!/VENDA|ORCAMENT|PEDIDO|NOTINHA|CUPOM|COMANDA/i.test(nome)) return;
+    if(!/VENDA|NOTA|CUPOM|ORCAMENT|PEDIDO|NOTINHA|COMANDA|SAIDA|OS|ORDEM_SERVICO/i.test(nome)) return;
     (mod.dados||[]).forEach((r,i)=>{
       const numero = r.NUMERO||r.CODIGO||r.COD_VENDA||r.ID||`${nome}-${i+1}`;
+      const temDadosOS = !!(r.MODELO || r.EQUIPAMENTO || r.SERIE || r.NUMERO_SERIE || r.PATRIMONIO || r.CONTADOR || r.DEFEITO || r.PROBLEMA || r.SERVICOS || r.SOLUCAO || /OS|ORDEM_SERVICO/i.test(nome));
+      const osObj = temDadosOS ? {
+        migrado: true,
+        modelo: r.MODELO || r.EQUIPAMENTO || r.MAQUINA || r.IMPRESSORA || 'Equipamento',
+        numeroSerie: r.SERIE || r.NUMERO_SERIE || r.N_SERIE || r.SERIAL || '',
+        patrimonio: r.PATRIMONIO || r.PAT || '',
+        contador: r.CONTADOR || r.CONTADOR_PB || r.CONTADOR_ATUAL || '',
+        defeito: r.DEFEITO || r.PROBLEMA || r.DEFEITO_RELATADO || '',
+        servicos: r.SOLUCAO || r.SERVICO || r.SERVICOS || '',
+        tecnico: r.TECNICO || r.RESPONSAVEL || r.VENDEDOR || '',
+        numero: r.NUMERO_OS || r.NUM_OS || String(numero)
+      } : null;
       legados.push({
         id:`legado_venda_${nome}_${i}`, empresaId:sess.empresaId, numero:String(numero),
         data:r.DATA||r.DATA_VENDA||r.EMISSAO||r.DT_VENDA||r.CRIADO_EM,
-        total:Number(r.TOTAL||r.VALOR||r.VALOR_TOTAL||0)||0,
+        total:Number(r.VALOR_LIQUIDO||r.TOTAL_LIQUIDO||r.TOTAL_NOTA||r.VALOR_NOTA||r.TOTAL_GERAL||r.TOTAL_OS||r.TOTAL||r.VALOR||r.VALOR_TOTAL||0)||0,
         status:String(r.SITUACAO||r.STATUS||'finalizada').toLowerCase(),
         formaPagamento:r.PAGAMENTO||r.FORMA_PAGAMENTO||r.RECEBIMENTO||'Prazo',
         clienteNomeAntigo:r.CLIENTE||r.NOME_CLIENTE||r.RAZAO_SOCIAL||r.NOME||'',
@@ -1198,7 +1213,7 @@ function vosLegadosVendas(sess){
         codClienteAntigo:r.COD_CLIENTE||r.CODIGO_CLIENTE||'',
         criadoPorNome:r.VENDEDOR||r.USUARIO||r.ATENDENTE||'Importado',
         observacao:r.OBSERVACAO||r.OBS||'',
-        itens:[], origemMigracao:true, tabelaOrigem:nome
+        itens:[], origemMigracao:true, tabelaOrigem:nome, os: osObj
       });
     });
   });
@@ -1283,8 +1298,8 @@ window.renderVendas = function(){
   if(has('osEquip')) list = list.filter(v=>v.os && (v.os.modelo||'').toLowerCase().includes(has('osEquip')));
   if(has('osServ')) list = list.filter(v=>v.os && (v.os.servicos||'').toLowerCase().includes(has('osServ')));
   if(has('pag')) list = list.filter(v=>vosPagamentoStatus(v).toLowerCase()===has('pag'));
-  // ── ordenação pelos títulos ──
-  let sort; try{ sort = JSON.parse(localStorage.getItem('digicopy_sort_vendas')||'null') || {col:'data', dir:'desc'}; }catch(e){ sort={col:'data', dir:'desc'}; }
+  // ── ordenação pelos títulos (padrão: por código, maior para o menor) ──
+  let sort; try{ sort = JSON.parse(localStorage.getItem('digicopy_sort_vendas')||'null') || {col:'codigo', dir:'desc'}; }catch(e){ sort={col:'codigo', dir:'desc'}; }
   window.__vosSortV = sort;
   // ── ordenação pelos títulos, RÁPIDA com base grande ──
   // A chave de cada linha é calculada UMA vez só (antes era recalculada em cada
@@ -1375,7 +1390,7 @@ window.renderVendas = function(){
         <td>${v.origemMigracao?`<span class="text-[10px] text-slate-400 mr-1">antiga</span>`:''}<button onclick="event.stopPropagation(); historicoVenda('${v.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td>
       </tr>`;}).join('') || '<tr><td colspan="9" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada com estes filtros</td></tr>'}
       </tbody></table>
-      ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} de ${list.length-listRender.length} restantes</button><p class="text-[11px] text-slate-500 mt-1">Dica: refine os filtros para chegar direto na notinha desejada</p></div>`:''}
+      ${list.length>listRender.length?`<div class="p-3 text-center border-t bg-slate-50/70 sticky bottom-0 flex items-center justify-center gap-3"><button onclick="window.__vosLimiteVendas=${limite+300}; renderVendas()" class="neo-btn primary"><i class="ph ph-plus-circle"></i>Mostrar mais ${Math.min(300, list.length-listRender.length)} notinhas</button><button onclick="window.__vosLimiteVendas=${list.length}; renderVendas()" class="neo-btn"><i class="ph ph-list"></i>Mostrar todas as ${list.length} notinhas</button></div>`:''}
       </div>
     </div>
   </div>`;
@@ -1399,7 +1414,8 @@ document.addEventListener('input', function(ev){
 // HISTÓRICO — venda + OS + parcelas + ações
 // ═══════════════════════════════════════════════════════════════════════════
 window.historicoVenda = function(id){
-  const v = db.vendas.find(x=>x.id===id);
+  const sess = getSession(); if(!sess) return;
+  const v = db.vendas.find(x=>x.id===id) || (typeof vosLegadosVendas==='function' ? vosLegadosVendas(sess).find(x=>x.id===id) : null);
   if(!v){ toast('Notinha não encontrada','error'); return; }
   const cli = (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
   const logs = (db.logs||[]).filter(l=>String(l.entidadeId)===v.id || String(l.entidadeId)===v.numero).slice(0,30);
@@ -1423,15 +1439,15 @@ window.historicoVenda = function(id){
     <div class="rounded-[14px] border overflow-hidden">
       <table class="w-full text-left text-[12px]">
         <thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Ident./Cart.</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th class="px-3 py-2">Sit</th><th class="px-3 py-2">PE</th><th class="px-3 py-2">PS</th><th class="px-3 py-2">Téc</th></tr></thead>
-        <tbody class="divide-y">${(v.itens||[]).map(it=>{ const p=it.produtoId?db.produtos.find(pr=>pr.id===it.produtoId):null; return `<tr>
+        <tbody class="divide-y">${((v.itens&&v.itens.length)?v.itens:[{descricao:v.observacao?('Item • '+v.observacao):'Item / Serviço (migrado)',qtd:1,preco:v.total||0,subtotal:v.total||0}]).map(it=>{ const p=it.produtoId?db.produtos.find(pr=>pr.id===it.produtoId):null; return `<tr>
           <td class="px-3 py-2">${escapeHtml(it.tipo||'')}</td><td class="px-3 py-2"><b>${escapeHtml((p&&p.nome)||it.descricao||'')}</b></td>
           <td class="px-3 py-2">${escapeHtml([it.identificacao,it.numCartucho].filter(Boolean).join(' / '))}</td><td class="px-3 py-2">${it.qtd}</td>
           <td class="px-3 py-2">${fmtMoney(it.preco)}</td><td class="px-3 py-2">${fmtMoney(it.desconto||0)}</td><td class="px-3 py-2"><b>${fmtMoney(it.subtotal)}</b></td>
           <td class="px-3 py-2">${escapeHtml(it.situacao||'')}</td><td class="px-3 py-2">${it.pe?'✔':''}</td><td class="px-3 py-2">${it.ps?'✔':''}</td><td class="px-3 py-2">${escapeHtml(it.tecnico||'')}</td></tr>`;}).join('') || '<tr><td colspan="11" class="text-center text-slate-400 py-6">Sem itens</td></tr>'}</tbody>
       </table>
     </div>
-    ${temOSDados?`<div class="rounded-[14px] border-2 ${o.completa?'border-emerald-300 bg-emerald-50/40':'border-amber-300 bg-amber-50/40'} p-3 text-[12.5px]">
-      <p class="font-bold text-[13px] mb-1"><i class="ph ph-wrench"></i> Ordem de Serviço ${escapeHtml(o.numero||'')} ${o.completa?'<span class="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px]">completa — impressa em folha inteira</span>':'<span class="ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px]">parcial — não sai na notinha (faltam modelo/série/patrimônio-contador)</span>'}</p>
+    ${temOSDados?`<div class="rounded-[14px] border-2 ${(o.completa||v.origemMigracao||o.migrado)?'border-emerald-300 bg-emerald-50/40':'border-amber-300 bg-amber-50/40'} p-3 text-[12.5px]">
+      <p class="font-bold text-[13px] mb-1"><i class="ph ph-wrench"></i> Ordem de Serviço ${escapeHtml(o.numero||'')} ${(o.completa||v.origemMigracao||o.migrado)?'<span class="ml-2 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px]">completa — impressa em folha inteira</span>':'<span class="ml-2 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px]">parcial — não sai na notinha (faltam modelo/série/patrimônio-contador)</span>'}</p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
         <span>Modelo: <b>${escapeHtml(o.modelo||'-')}</b></span>
         <span>Série: <b>${escapeHtml(o.numeroSerie||'-')}</b></span>

@@ -150,7 +150,8 @@ if(!fireConfigValida(window.FIREBASE_CONFIG)){
 }
 const API_KEY = String(window.FIREBASE_CONFIG.apiKey).trim();
 const PROJETO = String(window.FIREBASE_CONFIG.projectId).trim();
-const BASE = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(PROJETO) + '/databases/(default)/documents';
+const RES_BASE = 'projects/' + encodeURIComponent(PROJETO) + '/databases/(default)/documents';
+const BASE = 'https://firestore.googleapis.com/v1/' + RES_BASE;
 const COLL = 'app_state';
 
 // ── Autenticação anônima automática (segurança definitiva) ──
@@ -288,14 +289,14 @@ async function fireRequest(path, options){
     let rows=[];
     try{ const b = JSON.parse(options.body || 'null'); rows = Array.isArray(b) ? b : (b ? [b] : []); }catch(ePB){ rows=[]; }
     rows = rows.filter(r=>r && r.key);
-    await fireCommit(fireMontarWrites(BASE, rows));
+    await fireCommit(fireMontarWrites(RES_BASE, rows));
     const prefer = (options.headers && options.headers.Prefer) || '';
     return /return=representation/.test(prefer) ? rows : null;
   }
   if(method==='DELETE'){
     const keys=[];
     q.filtros.forEach(f=>{ if(f.op==='eq') keys.push(f.value); if(f.op==='in') keys.push.apply(keys, f.value); });
-    if(keys.length) await fireCommit(keys.map(k=>({delete: BASE + '/' + COLL + '/' + encodeURIComponent(k)})));
+    if(keys.length) await fireCommit(keys.map(k=>({delete: RES_BASE + '/' + COLL + '/' + encodeURIComponent(k)})));
     return null;
   }
   return null;

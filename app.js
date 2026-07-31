@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.4';
+const APP_VERSION='4.9.12';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -772,21 +772,91 @@ function sugerirIcone(nomeTabela){
 
 function initTemplates(){
   document.getElementById('view-dashboard').innerHTML=`
-  <div class="clean-home">
-    <div class="clean-logo"><img src="./logo.png" alt="DIGICOPY"><h1>DIGICOPY ERP</h1><p>Vendas • locação • leituras • chamados • financeiro</p></div>
-    <div class="clean-shortcuts">
-      <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')">Nova venda</button>
-      <button onclick="navigateTo('vendas')">Consultar notinhas</button>
-      <button onclick="navigateTo('clientes')">Clientes</button>
-      <button onclick="navigateTo('contratos')">Locação</button>
-      <button onclick="openQuickOS()">Chamado</button>
-      <button onclick="navigateTo('financeiro')">Financeiro</button>
+  <div class="space-y-6">
+    <div class="rounded-[20px] bg-gradient-to-r from-[#0a1e8a] to-[#142ecc] text-white p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center p-2"><img src="./logo.png" alt="DIGICOPY" class="w-full h-full object-contain"></div>
+        <div>
+          <h1 class="text-[22px] font-extrabold tracking-tight">DIGICOPY ERP</h1>
+          <p class="text-[13px] text-white/80">Painel Geral • Gestão de Locação, Assistência Técnica e Vendas</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-shopping-cart-simple text-[16px]"></i> Nova venda</button>
+        <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
+        <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
+        <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
+      </div>
     </div>
-  </div>
-  
-  <div class="hidden">
-    <span id="kpi-contratos">0</span><span id="kpi-parque">0</span><span id="kpi-os">0</span><span id="kpi-disponiveis">0</span><span id="kpi-faturamento">R$ 0,00</span><span id="alert-vencendo">0</span><span id="kpi-auditoria">0 hoje</span>
-    <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div><div id="list-leituras-pendentes"></div><div id="list-chamados-recentes"></div><div id="list-alertas"></div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Contratos ativos</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-contratos">0</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('parque')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-map-pin"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Parque instalado</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-parque">0</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('manutencao')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-[22px]"><i class="ph ph-wrench"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">OS em aberto</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-os">0</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('impressoras')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 grid place-items-center text-[22px]"><i class="ph ph-printer"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Máq. disponíveis</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-disponiveis">0</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('financeiro')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[22px]"><i class="ph ph-currency-dollar"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Faturamento Mês</p>
+          <p class="text-[18px] font-extrabold text-emerald-700" id="kpi-faturamento">R$ 0,00</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="rounded-[18px] bg-white border shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-wrench text-[#0a1e8a]"></i> Chamados & OS Recentes</h3>
+          <button onclick="navigateTo('manutencao')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todos →</button>
+        </div>
+        <div id="list-chamados-recentes" class="divide-y border rounded-xl overflow-hidden"></div>
+      </div>
+
+      <div class="rounded-[18px] bg-white border shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-speedometer text-[#0a1e8a]"></i> Leituras Pendentes</h3>
+          <button onclick="navigateTo('leituras')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Ver todas →</button>
+        </div>
+        <div id="list-leituras-pendentes" class="divide-y border rounded-xl overflow-hidden"></div>
+      </div>
+    </div>
+
+    <div class="rounded-[18px] bg-white border shadow-sm p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-clipboard-text text-[#0a1e8a]"></i> Últimas Atividades (Auditoria)</h3>
+        <span class="text-[12px] text-slate-500" id="kpi-auditoria">0 hoje</span>
+      </div>
+      <div id="list-alertas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </div>
+
+    <div class="hidden">
+      <span id="alert-vencendo">0</span>
+      <canvas id="chartFinance"></canvas><canvas id="chartParque"></canvas><div id="parque-legend"></div>
+    </div>
   </div>`;
 
   document.getElementById('view-clientes').innerHTML=`<div class="flex flex-wrap items-center gap-3 justify-between"><div class="flex gap-2"><button onclick="openModal('cliente')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1.5"></i>Novo cliente</button><button onclick="exportClientes()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Exportar</button></div><div class="flex gap-2"><select id="filter-clientes-status" onchange="renderClientes()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="inadimplente">Inadimplente</option></select><div class="relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="search-clientes" oninput="renderClientes()" placeholder="Buscar..." class="h-10 pl-9 pr-4 rounded-xl bg-white border text-[13.5px] w-[260px]"></div></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] tracking-widest uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Cliente / Quem criou</th><th class="px-5 py-3">Documento</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Contratos</th><th class="px-5 py-3">Status</th><th class="px-5 py-3"></th></tr></thead><tbody id="tbody-clientes" class="divide-y divide-slate-50"></tbody></table></div><div id="pagination-clientes" class="p-3 border-t flex items-center justify-between text-[12px] text-slate-500"></div></div>`;
@@ -1281,299 +1351,32 @@ function renderBanco(){
   el.style.display='block';
   el.style.visibility='visible';
   const empresa=sess?db.empresas.find(e=>e.id===sess.empresaId):null;
-  const isElectron = window.firebirdAPI && typeof window.firebirdAPI.test === 'function';
+  const kpiCont = db.contratos.filter(c=>c.empresaId===sess?.empresaId && c.status==='ativo').length;
+  const kpiParq = db.parque.filter(p=>p.empresaId===sess?.empresaId && p.status==='ativo').length;
+  const kpiOS   = db.os.filter(o=>o.empresaId===sess?.empresaId && o.status!=='concluido').length;
+  const kpiEq   = db.equipamentos.filter(e=>e.empresaId===sess?.empresaId && e.status==='disponivel').length;
   el.innerHTML=`
-    <div class="space-y-4">
-      <div class="rounded-[22px] bg-[#0a1e8a] text-white p-6 shadow-xl overflow-hidden relative">
-        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
-        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-          <div>
-            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Migração do sistema antigo</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Firebird (.FDB) → ERP DIGICOPY</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Conecte diretamente ao banco Firebird do sistema antigo, visualize as tabelas e importe os dados para o ERP novo. Os dados são mapeados automaticamente para clientes, produtos, vendas, locação e financeiro.</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
-          </div>
+    <div class="space-y-6">
+      <!-- HEADER MIGRACAO + BOTAO IR PARA DASHBOARD -->
+      <div class="rounded-[20px] bg-gradient-to-r from-[#0a1e8a] to-[#142ecc] text-white p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Importação do Banco Antigo</p>
+          <h2 class="text-[22px] font-extrabold tracking-tight mt-1">Trazer dados (.JSON / DBeaver)</h2>
+          <p class="text-white/80 text-[13px] mt-1">Os dados importados alimentam automaticamente Notinhas, Clientes, Produtos, Equipamentos e Financeiro.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="navigateTo('dashboard')" class="h-10 px-5 rounded-xl bg-white text-[#0a1e8a] font-bold text-[13px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-house text-[18px]"></i> Ver Dashboard (Início)</button>
+          <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
         </div>
       </div>
 
-      <!-- CONEXÃO FIREBIRD -->
+      <!-- UPLOAD DE ARQUIVOS JSON -->
       <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-database text-[20px]"></i></div>
-          <div>
-            <h3 class="font-bold text-[16px]">Conexão com Firebird</h3>
-            <p class="text-[12px] text-slate-500">Preencha os dados do banco .FDB do sistema antigo</p>
-          </div>
-          <div class="ml-auto">
-            ${isElectron
-              ? '<span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200"><i class="ph ph-check-circle"></i> Electron ativo</span>'
-              : '<span class="text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200"><i class="ph ph-warning"></i> Modo navegador (sem Firebird direto)</span>'}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
-          <div class="xl:col-span-1">
-            <label class="classic-label font-bold">Host</label>
-            <input id="fb-host" class="classic-input w-full" value="localhost" placeholder="localhost">
-          </div>
-          <div class="xl:col-span-1">
-            <label class="classic-label font-bold">Porta</label>
-            <input id="fb-port" class="classic-input w-full" value="3050" placeholder="3050">
-          </div>
-          <div class="xl:col-span-2">
-            <label class="classic-label font-bold">Caminho do banco (.FDB)</label>
-            <div class="flex gap-1">
-              <input id="fb-database" class="classic-input flex-1" placeholder="C:\\Temp\\BANCO.FDB">
-              ${isElectron ? '<button onclick="browseFdb()" class="classic-input w-10 text-center" title="Procurar arquivo"><i class="ph ph-folder-open"></i></button>' : ''}
-            </div>
-          </div>
-          <div class="xl:col-span-1">
-            <label class="classic-label font-bold">Usuário</label>
-            <input id="fb-user" class="classic-input w-full" value="SYSDBA" placeholder="SYSDBA">
-          </div>
-          <div class="xl:col-span-1">
-            <label class="classic-label font-bold">Senha</label>
-            <input id="fb-password" class="classic-input w-full" type="password" value="masterkey" placeholder="masterkey">
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-2 mt-5">
-          <button onclick="fbTestConnection()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-[#08176e] transition">
-            <i class="ph ph-plugs-connected text-[16px]"></i> Testar conexão
-          </button>
-          <button onclick="fbListTables()" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-emerald-700 transition">
-            <i class="ph ph-table text-[16px]"></i> Listar tabelas
-          </button>
-          <button onclick="fbExtractAll()" id="btn-extract-all" class="h-10 px-5 rounded-xl bg-amber-600 text-white font-bold text-[12.5px] flex items-center gap-2 hover:bg-amber-700 transition" disabled>
-            <i class="ph ph-download-simple text-[16px]"></i> Extrair tudo e importar
-          </button>
-          <button onclick="fbExportExtracted()" id="btn-export-extracted" class="h-10 px-5 rounded-xl border border-slate-300 text-slate-700 font-bold text-[12.5px] flex items-center gap-2 hover:bg-slate-50 transition" disabled>
-            <i class="ph ph-export text-[16px]"></i> Exportar JSON
-          </button>
-        </div>
-
-        <div id="fb-status" class="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3 text-[12.5px] text-slate-600">
-          <i class="ph ph-info text-[14px]"></i> Preencha os dados acima e clique em "Testar conexão". O Firebird precisa estar rodando (StartFirebird.bat como administrador).
-        </div>
-      </div>
-
-      <!-- TABELAS ENCONTRADAS -->
-      <div id="fb-tables-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-list-check text-[20px]"></i></div>
-          <div>
-            <h3 class="font-bold text-[16px]">Tabelas encontradas</h3>
-            <p class="text-[12px] text-slate-500" id="fb-tables-count">-</p>
-          </div>
-          <div class="ml-auto flex gap-2">
-            <button onclick="fbSelectMigrationTables()" class="h-9 px-4 rounded-lg bg-[#0a1e8a] text-white font-bold text-[11.5px] flex items-center gap-1.5"><i class="ph ph-check-square"></i> Selecionar tabelas de migração</button>
-          </div>
-        </div>
-        <div id="fb-tables-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto"></div>
-      </div>
-
-      <!-- PREVIEW DE DADOS -->
-      <div id="fb-preview-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white grid place-items-center"><i class="ph ph-eye text-[20px]"></i></div>
-          <div>
-            <h3 class="font-bold text-[16px]">Preview de dados</h3>
-            <p class="text-[12px] text-slate-500" id="fb-preview-info">-</p>
-          </div>
-        </div>
-        <div id="fb-preview-content" class="overflow-x-auto border rounded-xl"></div>
-      </div>
-
-      <!-- RESULTADO DA IMPORTAÇÃO -->
-      <div id="fb-import-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-check-circle text-[20px]"></i></div>
-          <div>
-            <h3 class="font-bold text-[16px]">Resultado da migração</h3>
-            <p class="text-[12px] text-slate-500">Dados importados do Firebird para o ERP</p>
-          </div>
-        </div>
-        <div id="fb-import-result" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
-      </div>
-
-      <!-- MAPA DAS TABELAS -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <div class="xl:col-span-2 rounded-[18px] bg-white border shadow-sm p-6">
-          <div>
-            <h3 class="font-bold text-[16px]">Mapa das tabelas do sistema antigo</h3>
-            <p class="text-[13px] text-slate-500 mt-1">Tabelas que serão extraídas e mapeadas para o ERP novo.</p>
-          </div>
-          <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px]">
-            <div class="rounded-xl border bg-slate-50 p-4"><b>Comercial</b><p class="text-slate-600 mt-1">CLIENTES, PRODUTOS, CARTUCHOS, VENDAS, ITENS_VENDA, ORCAMENTO, ITENS_ORCAMENTO.</p></div>
-            <div class="rounded-xl border bg-slate-50 p-4"><b>Locação / outsourcing</b><p class="text-slate-600 mt-1">EQUIPAMENTOS, LOCACAO, ITENS_LOCACAO, LEITURAS e despesas vinculadas.</p></div>
-            <div class="rounded-xl border bg-slate-50 p-4"><b>Financeiro</b><p class="text-slate-600 mt-1">CONTAS_PAGAR, CONTAS_RECEBER, RECIBOS_EMITIDOS, FORMA_PAGAMENTO.</p></div>
-            <div class="rounded-xl border bg-slate-50 p-4"><b>Cadastros auxiliares</b><p class="text-slate-600 mt-1">EMPRESA, CONFIGURACAO, FORNECEDORES, FUNCIONARIOS, CATEGORIA, FABRICANTE, UNIDADE_MEDIDA.</p></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- PASSOS DE USO -->
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px]">Passo a passo para migrar</h3>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-[12.5px]">
-          ${[
-            ['1','Iniciar Firebird','Execute o StartFirebird.bat como administrador no PC onde está o banco.'],
-            ['2','Conectar','Preencha host, porta e caminho do .FDB acima, clique em Testar conexão.'],
-            ['3','Listar e revisar','Clique em Listar tabelas, veja os dados de cada uma no preview.'],
-            ['4','Importar','Selecione as tabelas desejadas e clique em Extrair tudo e importar.']
-          ].map(step=>`<div class="rounded-xl border p-4"><span class="w-7 h-7 rounded-lg bg-[#0a1e8a] text-white grid place-items-center font-bold">${step[0]}</span><p class="font-bold mt-3">${step[1]}</p><p class="text-slate-500 mt-1 leading-snug">${step[2]}</p></div>`).join('')}
-        </div>
-      </div>
-
-      <!-- NUVEM / GOOGLE FIREBASE -->
-      <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 shadow-xl overflow-hidden relative">
-        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
-        <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-          <div>
-            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sincronização em nuvem</p>
-            <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Nuvem Google — Multi-computador</h2>
-            <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Envie os dados para a nuvem do Google (Firebase) e acesse de qualquer computador.</p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="testarNuvem()" class="h-10 px-4 rounded-xl bg-white text-emerald-700 font-bold text-[12.5px] flex items-center gap-2"><i class="ph ph-plugs-connected"></i> Testar conexão</button>
-            <button onclick="copiarRegrasFirebase()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-copy"></i> Copiar regras Firebase</button>
-            <button onclick="nuvemInfo()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px] flex items-center gap-2"><i class="ph ph-info"></i> Info</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="rounded-[18px] bg-white border shadow-sm p-6">
-          <h3 class="font-bold text-[15px] mb-3">Status da conexão</h3>
-          <div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em "Testar conexão" para verificar.</div>
-        </div>
-        <div class="rounded-[18px] bg-white border shadow-sm p-6">
-          <h3 class="font-bold text-[15px] mb-3">Sincronização</h3>
-          <div id="cloud-sync-status" class="text-[13px] text-slate-600">Envie ou carregue dados da nuvem.</div>
-          <label class="flex items-center gap-2 mt-3 text-[13px] text-slate-700 cursor-pointer select-none"><input type="checkbox" onchange="if(typeof syncAutoDefinir==='function') syncAutoDefinir(this.checked)" ${(typeof syncAutoLigado==='function'&&syncAutoLigado())?'checked':''}> Sincronização automática neste PC</label>
-          <p class="text-[11px] text-slate-400 mt-1 leading-snug">Ligada, o ERP busca e envia as alterações sozinho a cada minuto — sem você apertar nada. Só age quando você não está no meio de um cadastro.</p>
-        </div>
-        <div class="rounded-[18px] bg-white border shadow-sm p-6">
-          <h3 class="font-bold text-[15px] mb-3">Ações</h3>
-          <div class="flex flex-col gap-2">
-            <button onclick="enviarDadosLocaisParaNuvem()" class="h-10 px-4 rounded-xl bg-emerald-600 text-white font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-cloud-arrow-up"></i> Enviar para nuvem</button>
-            <button onclick="carregarDadosDaNuvem()" class="h-10 px-4 rounded-xl bg-blue-600 text-white font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-cloud-arrow-down"></i> Carregar da nuvem</button>
-            <button onclick="verificarBaseNaNuvem()" class="h-10 px-4 rounded-xl border border-slate-300 text-slate-700 font-semibold text-[12.5px] flex items-center gap-2 justify-center"><i class="ph ph-database"></i> Ver base na nuvem</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- IMPORTAR TODOS OS DADOS -->
-      <div class="rounded-[22px] bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 shadow-xl overflow-hidden relative">
-        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
-        <div class="relative z-10">
-          <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Importação completa</p>
-          <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Trazer TODOS os dados do sistema antigo</h2>
-          <p class="text-white/80 text-[13.5px] mt-2 max-w-[780px]">Exporte tudo pelo DBeaver de uma vez só, importe aqui e envie para a nuvem Google. Depois, qualquer PC pode acessar os mesmos dados.</p>
-        </div>
-      </div>
-
-      <!-- FLUXO COMPLETO -->
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-4">Como exportar os dados do DBeaver (SEM SQL)</h3>
-        
-        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-xl p-5 mb-4">
-          <h4 class="font-bold text-[15px] text-emerald-900 mb-3"><i class="ph ph-number-circle-one text-[22px]"></i> Passo 1 — Abra a lista de tabelas</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
-            <div class="bg-white rounded-lg p-3 border border-emerald-200">
-              <p class="font-bold text-emerald-800 mb-1">No DBeaver, lado esquerdo:</p>
-              <p class="text-slate-700">Expanda a conexão Firebird clicando nos triângulos:</p>
-              <div class="mt-2 bg-slate-900 text-emerald-400 rounded p-2 font-mono text-[11px] leading-relaxed">
-                ▼ Database<br>
-                &nbsp;&nbsp;▼ Schemas<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;▼ MAIN<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📁 <b class="text-yellow-300">Tables</b> ← aqui
-              </div>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-emerald-200">
-              <p class="font-bold text-emerald-800 mb-1">Clique em "Tables"</p>
-              <p class="text-slate-700">Vai aparecer a lista de todas as tabelas:</p>
-              <div class="mt-2 bg-slate-900 text-emerald-400 rounded p-2 font-mono text-[11px] leading-relaxed">
-                📋 CLIENTES<br>
-                📋 PRODUTOS<br>
-                📋 VENDAS<br>
-                📋 ITENS_VENDA<br>
-                📋 EQUIPAMENTOS<br>
-                📋 ...
-              </div>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-emerald-200">
-              <p class="font-bold text-emerald-800 mb-1">Selecione TODAS</p>
-              <p class="text-slate-700">Segure <b>Ctrl+A</b> para selecionar todas as tabelas de uma vez.</p>
-              <div class="mt-2 bg-amber-50 border border-amber-200 rounded p-2 text-[11px] text-amber-800">
-                <b>Exporte todas!</b> O sistema cria menus novos automaticamente para tabelas sem correspondência.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-blue-50 border-2 border-blue-300 rounded-xl p-5 mb-4">
-          <h4 class="font-bold text-[15px] text-blue-900 mb-3"><i class="ph ph-number-circle-two text-[22px]"></i> Passo 2 — Exportar como JSON</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-[12px]">
-            <div class="bg-white rounded-lg p-3 border border-blue-200">
-              <p class="font-bold text-blue-800 mb-1">Com tabelas selecionadas:</p>
-              <p class="text-slate-700"><b>Botão direito</b> → escolha:</p>
-              <div class="mt-2 bg-slate-50 border rounded p-2 text-[11px]">
-                <div class="py-0.5">Abrir dados...</div>
-                <div class="py-0.5 border-t mt-1 pt-1">Editar</div>
-                <div class="py-0.5 bg-blue-100 font-bold px-1 rounded">📤 Exportar Dados ← ESTE</div>
-                <div class="py-0.5">Importar Dados</div>
-              </div>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-blue-200">
-              <p class="font-bold text-blue-800 mb-1">Na janela de exportação:</p>
-              <div class="mt-2 bg-slate-50 border rounded p-2 text-[11px]">
-                <div class="py-0.5">○ CSV</div>
-                <div class="py-0.5 bg-blue-100 font-bold px-1 rounded">● JSON ← ESTE</div>
-                <div class="py-0.5">○ HTML / XML / SQL</div>
-              </div>
-              <p class="text-slate-700 mt-2">Clique <b>Next → Next → Start</b></p>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-blue-200">
-              <p class="font-bold text-blue-800 mb-1">Salve em uma pasta fácil:</p>
-              <div class="mt-2 bg-slate-50 border rounded p-2 font-mono text-[11px]">
-                C:\\Temp\\export\\<br>
-                ├── clientes.json<br>
-                ├── produtos.json<br>
-                ├── vendas.json<br>
-                └── ... todas as tabelas
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-purple-50 border-2 border-purple-300 rounded-xl p-5">
-          <h4 class="font-bold text-[15px] text-purple-900 mb-3"><i class="ph ph-number-circle-three text-[22px]"></i> Passo 3 — Importar aqui no ERP</h4>
-          <div class="text-[13px] text-purple-800">
-            <ol class="list-decimal list-inside space-y-1">
-              <li>Role para baixo até <b>"Upload dos dados"</b></li>
-              <li>Clique em <b>"Selecionar arquivos"</b></li>
-              <li>Selecione <b>TODOS os .json</b> da pasta (Ctrl+A)</li>
-              <li>Clique em <b>"Importar + Nuvem"</b></li>
-              <li>Pronto! Dados no ERP + nuvem</li>
-            </ol>
-            <div class="mt-3 bg-white border border-purple-200 rounded-lg p-3">
-              <p class="font-bold text-purple-800"><i class="ph ph-devices text-[16px]"></i> Nos outros PCs:</p>
-              <p class="text-[12px] text-purple-700 mt-1">ERP → "Banco antigo" → <b>"Carregar da nuvem"</b>. Todos os dados aparecem.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- UPLOAD DE ARQUIVOS -->
-      <div class="rounded-[18px] bg-white border shadow-sm p-6">
-        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados <span class="ml-2 text-[10px] font-bold text-slate-400">build 3.11.2</span></h3>
-        <p class="text-[13px] text-slate-500 mb-4">Selecione um ou mais arquivos JSON exportados do DBeaver.</p>
+        <h3 class="font-bold text-[16px] mb-1"><i class="ph ph-upload-simple text-[#0a1e8a]"></i> Upload dos dados (arquivos .JSON do DBeaver)</h3>
+        <p class="text-[13px] text-slate-500 mb-4">Selecione todos os arquivos .json exportados do seu banco antigo. Ao reimportar, o sistema limpa registros falsos e atualiza apenas com dados verdadeiros.</p>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários)</label>
+            <label class="block text-[11px] font-bold uppercase text-slate-500 mb-2">Selecionar arquivos .JSON (pode selecionar vários — Ctrl+A)</label>
             <input type="file" id="upload-db" accept=".json,application/json" multiple class="w-full text-[13px] mb-3 p-2 border rounded-xl" onclick="this.value=null" onchange="handleMultipleUpload(this.files,this)">
             <div id="upload-status" class="text-[12px]"></div>
             <div id="upload-progress" class="hidden mt-3">
@@ -1585,16 +1388,65 @@ function renderBanco(){
             </div>
           </div>
           <div class="bg-slate-50 border rounded-xl p-4">
-            <h4 class="font-bold text-[13px] text-slate-800 mb-2"><i class="ph ph-lightbulb text-amber-500"></i> Dicas</h4>
-            <ul class="text-[11px] text-slate-600 space-y-1.5">
-              <li>• Se exportou tudo com o SQL, selecione o arquivo único</li>
-              <li>• Se exportou tabela por tabela, selecione todos os .json de uma vez</li>
-              <li>• O sistema detecta automaticamente qual tabela é cada arquivo</li>
-              <li>• Tabelas sem correspondência viram menus novos no sidebar</li>
-              <li>• Após importar, clique em <b>Enviar para nuvem</b> na seção Nuvem abaixo</li>
+            <h4 class="font-bold text-[13px] text-slate-800 mb-2"><i class="ph ph-check-circle text-emerald-600"></i> O que acontece na importação</h4>
+            <ul class="text-[12px] text-slate-600 space-y-1.5">
+              <li>• <b>Notinhas e Vendas:</b> importa todas as Notinhas reais e associa os produtos das tabelas filhas (ITENS_VENDA) dentro do histórico.</li>
+              <li>• <b>Clientes e Produtos:</b> cadastra com CNPJ/CPF válido e estoques atualizados.</li>
+              <li>• <b>Tabelas auxiliares:</b> o restante das tabelas do banco fica disponível em <b>Explorar Migrados</b>.</li>
+              <li>• <b>Limpeza automática:</b> apaga registros falsos (de itens soltos ou configurações) antes de salvar.</li>
             </ul>
           </div>
         </div>
+      </div>
+
+      <!-- DASHBOARD EMBEDDED NA ABA DE IMPORTACAO -->
+      <div class="rounded-[18px] bg-slate-50/80 border p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-[15px] text-slate-800 flex items-center gap-2"><i class="ph ph-chart-line-up text-[#0a1e8a]"></i> Resumo Geral do Banco de Dados</h3>
+          <button onclick="navigateTo('dashboard')" class="text-[12px] font-bold text-[#0a1e8a] hover:underline">Abrir Início →</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="rounded-[14px] bg-white border p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[20px]"><i class="ph ph-file-text"></i></div>
+            <div>
+              <p class="text-[11px] font-bold uppercase text-slate-500">Contratos</p>
+              <p class="text-[18px] font-extrabold text-slate-800">${kpiCont}</p>
+            </div>
+          </div>
+          <div class="rounded-[14px] bg-white border p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center text-[20px]"><i class="ph ph-map-pin"></i></div>
+            <div>
+              <p class="text-[11px] font-bold uppercase text-slate-500">Parque inst.</p>
+              <p class="text-[18px] font-extrabold text-slate-800">${kpiParq}</p>
+            </div>
+          </div>
+          <div class="rounded-[14px] bg-white border p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-[20px]"><i class="ph ph-wrench"></i></div>
+            <div>
+              <p class="text-[11px] font-bold uppercase text-slate-500">OS abertas</p>
+              <p class="text-[18px] font-extrabold text-slate-800">${kpiOS}</p>
+            </div>
+          </div>
+          <div class="rounded-[14px] bg-white border p-4 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 grid place-items-center text-[20px]"><i class="ph ph-printer"></i></div>
+            <div>
+              <p class="text-[11px] font-bold uppercase text-slate-500">Disponíveis</p>
+              <p class="text-[18px] font-extrabold text-slate-800">${kpiEq}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTADO DA IMPORTAÇÃO -->
+      <div id="fb-import-panel" class="hidden rounded-[18px] bg-white border shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-check-circle text-[20px]"></i></div>
+          <div>
+            <h3 class="font-bold text-[16px]">Resultado da migração</h3>
+            <p class="text-[12px] text-slate-500">Dados importados do banco para o ERP</p>
+          </div>
+        </div>
+        <div id="fb-import-result" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"></div>
       </div>
 
       <textarea id="supabase-schema-sql-box" class="hidden w-full h-[180px] p-3 border rounded-xl font-mono text-[11px]"></textarea>
@@ -2155,16 +2007,19 @@ function fbImportToErp(rawData){
   };
 
   // ── CLIENTES ──
-  const rawClientes = findTable(rawData, ['CLIENTES']);
+  const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS','V_CLIENTES','VW_CLIENTES','VIEW_CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
-      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || '';
+      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
       if(!nome.trim()) return;
-      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || '';
-      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || '');
-      // Upsert: por código antigo, senão por documento — nunca duplica migrado
-      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && sStr(c.codigoAntigo) === codAntigo) : null;
-      if(!existing && doc) existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc));
+      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || row.DOC || '';
+      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || row.CODIGO_CLIENTE || row.COD_CLI || row.NUMERO || '');
+      // Upsert: por código antigo, senão por documento válido (mínimo 8 dígitos para não mesclar "0"/"-"/"S/N")
+      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo)) : null;
+      const digDoc = onlyDigits(doc);
+      if(!existing && digDoc && digDoc.length >= 8){
+        existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === digDoc);
+      }
       const dados = {
         codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
         nome: nome.trim(),
@@ -2181,7 +2036,7 @@ function fbImportToErp(rawData){
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
       };
       if(existing){ Object.assign(existing, dados); result.clientes++; return; }
-      if(codAntigo && db.clientes.find(c => c.empresaId === empId && sStr(c.codigoAntigo) === codAntigo)) return; // manual com mesmo código: não duplica
+      if(codAntigo && db.clientes.find(c => c.empresaId === empId && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo))) return; // manual com mesmo código: não duplica
       const id = uid('cli');
       db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
       result.clientes++;
@@ -2239,19 +2094,21 @@ function fbImportToErp(rawData){
     });
   }
 
-  // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
-  const rawVendas = findTable(rawData, ['VENDAS']);
+  // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
+  const PROIBIDO_VENDAS = /ITENS|ITEM|PARAM|CONFIG|LOG|STATUS|ORDENS|USUARIO|FUNCIONARIO|VENDEDOR|DEPARTAMENTO|CAIXA|PERMISSAO|AUDIT|TEMP|MIGR|PRODUTO|CLIENTE|EQUIPAMENTO|LEITURA|LOCACAO|CONTRATO|PARQUE/i;
+  db.vendas = (db.vendas||[]).filter(v => !(v.empresaId === empId && ehMigracao(v)));
+  const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
   rawItensAll.forEach(ir => {
-    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA);
+    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA || ir.COD_NOTA || ir.COD_OS);
     if(!codV) return;
     const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
     const rawProd = idxRawProdPorCodigo[codProd];
     const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
     const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
     const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
-    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || 0) || (qtd*unit);
+    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
     (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
       _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
       produtoId: prodVinc ? prodVinc.id : null,
@@ -2262,10 +2119,25 @@ function fbImportToErp(rawData){
   Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
-      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || '');
+      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || row.COD_VENDA || row.COD_NOTA || '');
       if(!numero) return;
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
       const vendedor = nomeVendedor(row);
+      const calcTotal = (itensPorVenda[numero]||[]).reduce((s,it)=>s+(it.subtotal||0), 0);
+      const valRow = parseFloat(row.VALOR_LIQUIDO || row.TOTAL_LIQUIDO || row.TOTAL_NOTA || row.VALOR_NOTA || row.TOTAL_GERAL || row.TOTAL_OS || row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0;
+      const totalFinal = valRow > 0 ? valRow : calcTotal;
+      const temDadosOS = !!(row.MODELO || row.EQUIPAMENTO || row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || row.CONTADOR || row.DEFEITO || row.PROBLEMA || row.SERVICOS || row.SOLUCAO);
+      const osObj = temDadosOS ? {
+        migrado: true,
+        modelo: row.MODELO || row.EQUIPAMENTO || row.MAQUINA || row.IMPRESSORA || 'Equipamento',
+        numeroSerie: row.SERIE || row.NUMERO_SERIE || row.N_SERIE || row.SERIAL || '',
+        patrimonio: row.PATRIMONIO || row.PAT || '',
+        contador: row.CONTADOR || row.CONTADOR_PB || row.CONTADOR_ATUAL || '',
+        defeito: row.DEFEITO || row.PROBLEMA || row.DEFEITO_RELATADO || '',
+        servicos: row.SOLUCAO || row.SERVICO || row.SERVICOS || '',
+        tecnico: row.TECNICO || row.RESPONSAVEL || row.VENDEDOR || '',
+        numero: row.NUMERO_OS || row.NUM_OS || String(numero)
+      } : null;
       const dadosV = {
         numero,
         clienteId: idClientePorCodigo(codCli),
@@ -2277,11 +2149,12 @@ function fbImportToErp(rawData){
         data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
         itens: (itensPorVenda[numero]||[]).map(it=>({produtoId: it.produtoId, descricao: it.descricao, qtd: it.qtd, preco: it.preco, subtotal: it.subtotal})),
         desconto: parseFloat(row.DESCONTO || 0) || 0,
-        total: parseFloat(row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0,
+        total: totalFinal,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
         status: normStatusVenda(row.STATUS || row.SITUACAO),
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
-        criadoPorNome: vendedor
+        criadoPorNome: vendedor,
+        os: osObj
       };
       const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
       if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
@@ -2412,24 +2285,27 @@ function fbImportToErp(rawData){
   renderDashboard();
 }
 
-// Utilitário: encontrar tabela no raw data (case insensitive)
+// Utilitário: encontrar tabela no raw data (case insensitive e combinando múltiplas tabelas)
 function findTable(rawData, possibleNames){
+  const res = [];
+  const addRows = arr => { if(Array.isArray(arr)) res.push(...arr); };
   for(const name of possibleNames){
     for(const key of Object.keys(rawData)){
       if(key.toUpperCase() === name.toUpperCase() && rawData[key].data){
-        return rawData[key].data;
+        addRows(rawData[key].data);
       }
     }
   }
+  if(res.length) return res;
   // Busca parcial
   for(const name of possibleNames){
     for(const key of Object.keys(rawData)){
       if(key.toUpperCase().includes(name.toUpperCase()) && rawData[key].data){
-        return rawData[key].data;
+        addRows(rawData[key].data);
       }
     }
   }
-  return null;
+  return res.length ? res : null;
 }
 
 async function fbExportExtracted(){
