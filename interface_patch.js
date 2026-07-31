@@ -185,5 +185,5 @@ window.seqObter = function(tipo, itens, empresaId, extrator){
   return atual + 1;
 };
 
-console.log('[DIGICOPY] Interface v4.9.0 — Esc fecha tudo, nuvem quieta, clientes bonito e leve');
+console.log('[DIGICOPY] Interface v4.9.2 — Esc fecha tudo, nuvem quieta, clientes bonito e leve');
 })();

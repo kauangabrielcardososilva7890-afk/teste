@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // VENDAS_OS_PATCH v4.2.0 — Tela de Vendas + Ordem de Serviço completa
-// - Nova venda: código automático, data/hora, usuário, cliente, destino, prazo
+// - Nova venda: código automático SÓ NÚMERO (sem prefixo/ano), data/hora, usuário
 // - Aba Itens: tipo, produto/serviço/recarga/toner/manutenção, nº cartucho,
 //   identificação, qtd, unitário, desconto, total, situação, PE, PS, técnico
 // - Aba OS: série, modelo, tipo, patrimônio, contador, acessórios, técnico,
@@ -17,9 +17,10 @@
 // ── Helpers puros (sem DOM/banco) — também usados pelo teste automatizado ──
 function vosPad4(n){ return String(Math.max(0,parseInt(n,10)||0)).padStart(4,'0'); }
 function vosNumeroInt(num){ const m=String(num||'').match(/(\d+)(?!.*\d)/); return m?parseInt(m[1],10):0; }
-function vosNextNumero(prefix, ano, lista){
+function vosNextNumero(prefix, ano, lista, somenteNumero){
   let max=0;
   (lista||[]).forEach(x=>{ const n=vosNumeroInt(x && x.numero); if(n>max) max=n; });
+  if(somenteNumero) return String(max+1);
   return prefix + '-' + ano + '-' + vosPad4(max+1);
 }
 // Regra oficial: OS só entra na notinha com Modelo + Nº série + (Patrimônio OU Contador)
@@ -75,6 +76,16 @@ function vosCalcParcelas(valor, opts){
 /* VOS_PURE_END */
 window.__vosPure = { vosOsCompleta, vosCalcParcelas, vosNextNumero, vosNumeroInt };
 
+// Número novo de venda/OS no padrão SÓ NÚMERO (sem prefixo, sem ano — ex.: "16001").
+// Monotônico via seqObter: excluir um registro NUNCA devolve o número dele.
+window.proximoNumeroSimples = function(tipo, lista, empresaId){
+  const listaEmp = (lista||[]).filter(x=>x && (!empresaId || x.empresaId===empresaId));
+  if(typeof window.seqObter==='function'){
+    return String(window.seqObter(tipo, listaEmp, empresaId, it=>vosNumeroInt(it && it.numero)));
+  }
+  return vosNextNumero('', 0, listaEmp, true);
+};
+
 // ── Estado temporário do formulário ──
 function vosNovoForm(){
   const agora = new Date();
@@ -97,15 +108,7 @@ window.novaVenda = function(){
   __vosCliIdx = null; __vosProdIdx = null; // reconstrói os índices de busca com os dados atuais
   window.__vosForm = vosNovoForm();
   const f = window.__vosForm;
-  {
-    const _listaNum = db.vendas.filter(v=>v.empresaId===sess.empresaId);
-    if(typeof window.seqObter==='function'){
-      const _seq = window.seqObter('venda', _listaNum, sess.empresaId, v=>vosNumeroInt(v && v.numero));
-      f.codigo = 'VD-' + new Date().getFullYear() + '-' + vosPad4(_seq);
-    } else {
-      f.codigo = vosNextNumero('VD', new Date().getFullYear(), _listaNum);
-    }
-  }
+  f.codigo = window.proximoNumeroSimples('venda', db.vendas, sess.empresaId);
   const box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
   document.getElementById('modal-title').innerText = 'Nova venda / Notinha';
@@ -629,7 +632,7 @@ function vosGravarVenda(silencioso){
   // OS junto da venda
   if(temOS){
     if(!venda.os) venda.os = {};
-    const numeroOS = venda.os.numero || vosNextNumero('OS', new Date().getFullYear(), db.os);
+    const numeroOS = venda.os.numero || window.proximoNumeroSimples('os', db.os, sess.empresaId);
     Object.assign(venda.os, os, { numero: numeroOS, completa: vosOsCompleta(os) });
     // espelha em db.os (aparece nos Chamados)
     let reg = (db.os||[]).find(o=>o.empresaId===sess.empresaId && o.vendaId===venda.id);

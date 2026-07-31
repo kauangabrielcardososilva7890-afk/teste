@@ -65,6 +65,14 @@ eq('sequência', vosNextNumero('VD', 2026, [{numero:'VD-2026-0001'},{numero:'VD-
 eq('lista vazia', vosNextNumero('OS', 2026, []), 'OS-2026-0001');
 eq('ignora fora de padrão', vosNextNumero('VD', 2026, [{numero:'VENDA ANTIGA'},{numero:'VD-2026-0007'}]), 'VD-2026-0008');
 eq('vosNumeroInt', vosNumeroInt('VD-2026-0081'), 81);
+eq('vosNumeroInt número puro', vosNumeroInt('16001'), 16001);
+
+console.log('== vosNextNumero — modo SÓ NÚMERO (padrão novo: sem VD, sem ano) ==');
+eq('continua do maior, saída sem prefixo', vosNextNumero('VD', 2026, [{numero:'VD-2026-0001'},{numero:'16001'}], true), '16002');
+eq('ignora código antigo com ano no meio', vosNextNumero('VD', 2026, [{numero:'VD-2026-0081'},{numero:'9847'}], true), '9848');
+eq('lista vazia começa do 1', vosNextNumero('VD', 2026, [], true), '1');
+eq('número puro continua sequência', vosNextNumero('OS', 2026, [{numero:'55'}], true), '56');
+eq('OS antiga com prefixo entra na conta', vosNextNumero('OS', 2026, [{numero:'OS-2026-0142'},{numero:'500'}], true), '501');
 
 console.log(`\nRESULTADO: ${pass} passaram, ${fail} falharam`);
 process.exit(fail ? 1 : 0);

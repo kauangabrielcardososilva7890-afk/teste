@@ -99,9 +99,10 @@ function pixCfg(){
 }
 function pixPronto(){ return !!String((pixCfg().chave)||'').trim(); }
 function pixTxidDaVenda(v){
-  // Ex.: venda "VD-000123" → txid "VD000123" (aparece no seu extrato do banco)
+  // Ex.: venda "16001" → txid "VD16001" (aparece no seu extrato do banco)
   const base = String((v && v.numero) || 'VENDA').replace(/[^0-9A-Za-z]/g,'').toUpperCase();
-  return (base || 'VENDA').slice(0,25);
+  const comLetra = /[A-Z]/.test(base) ? base : ('VD'+base);
+  return (comLetra || 'VENDA').slice(0,25);
 }
 function pixPayloadDaVenda(v){
   const c = pixCfg();
