@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.10';
+const APP_VERSION='4.9.12';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -2007,7 +2007,7 @@ function fbImportToErp(rawData){
   };
 
   // ── CLIENTES ──
-  const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS']);
+  const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS','V_CLIENTES','VW_CLIENTES','VIEW_CLIENTES']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
       const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
@@ -2097,7 +2097,7 @@ function fbImportToErp(rawData){
   // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
   const PROIBIDO_VENDAS = /ITENS|ITEM|PARAM|CONFIG|LOG|STATUS|ORDENS|USUARIO|FUNCIONARIO|VENDEDOR|DEPARTAMENTO|CAIXA|PERMISSAO|AUDIT|TEMP|MIGR|PRODUTO|CLIENTE|EQUIPAMENTO|LEITURA|LOCACAO|CONTRATO|PARQUE/i;
   db.vendas = (db.vendas||[]).filter(v => !(v.empresaId === empId && ehMigracao(v)));
-  const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS'], PROIBIDO_VENDAS);
+  const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS','V_VENDAS','VW_VENDAS','VIEW_VENDAS','V_NOTAS','VW_NOTAS'], PROIBIDO_VENDAS);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
   rawItensAll.forEach(ir => {

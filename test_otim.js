@@ -10,13 +10,16 @@ function ok(name, cond){
 
 const codeVendas = fs.readFileSync('vendas_otimizacao_patch.js', 'utf8');
 const codeLogin  = fs.readFileSync('login_otimizacao_patch.js', 'utf8');
+const codeGate   = fs.readFileSync('render_gate_patch.js', 'utf8');
 
 const ctx = { window: {}, db: { modulosDinamicos: {}, vendas: [], usuarios: [] } };
 new Function('window', 'db', codeVendas)(ctx.window, ctx.db);
 new Function('window', 'db', codeLogin)(ctx.window, ctx.db);
+new Function('window', 'db', codeGate)(ctx.window, ctx.db);
 
 const VOTM = ctx.window.VOTM_PURE;
 const LOGO = ctx.window.LOGOPT_PURE;
+const RGATE = ctx.window.RGATE_PURE;
 
 console.log('== VOTM_PURE: ehTabelaVendaReal ==');
 ok('VENDAS é tabela real', VOTM.ehTabelaVendaReal('VENDAS'));
@@ -73,5 +76,11 @@ console.log('== LOGOPT_PURE: normalizarKauanAdmin ==');
   ok('v2 atendenteNome virou Recepção', dbTest.vendas[1].atendenteNome === 'Recepção');
   ok('apenas 1 usuário kauan ficou', dbTest.usuarios.length === 1 && dbTest.usuarios[0].id === 'u2');
 }
+
+console.log('== RGATE_PURE: ehTelaVisivel ==');
+ok('elemento com classe hidden → false', !RGATE.ehTelaVisivel('view-test', { classList: { contains: c => c === 'hidden' } }));
+ok('elemento sem classe hidden → true', RGATE.ehTelaVisivel('view-test', { classList: { contains: () => false } }));
+ok('elemento sem classe mas display none → false', !RGATE.ehTelaVisivel('view-test', { style: { display: 'none' } }));
+ok('elemento inexistente (null) → true (permite criar)', RGATE.ehTelaVisivel('view-inexistente', null));
 
 console.log('\nRESULTADO: Todos os novos testes de otimização passaram!');
