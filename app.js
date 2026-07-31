@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.6';
+const APP_VERSION='4.9.7';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -2155,16 +2155,19 @@ function fbImportToErp(rawData){
   };
 
   // ── CLIENTES ──
-  const rawClientes = findTable(rawData, ['CLIENTES']);
+  const rawClientes = findTable(rawData, ['CLIENTES','CLIENTE','CADASTRO_CLIENTES','CAD_CLIENTES','TB_CLIENTES','TB_CLIENTE','CLI','PESSOAS']);
   if(rawClientes && rawClientes.length){
     rawClientes.forEach(row => {
-      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || '';
+      const nome = row.NOME || row.RAZAO_SOCIAL || row.NOME_FANTASIA || row.FANTASIA || row.NOME_CLIENTE || row.CLIENTE || row.RAZAO || row.DESCRICAO || '';
       if(!nome.trim()) return;
-      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || '';
-      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || '');
-      // Upsert: por código antigo, senão por documento — nunca duplica migrado
-      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && sStr(c.codigoAntigo) === codAntigo) : null;
-      if(!existing && doc) existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === onlyDigits(doc));
+      const doc = row.CNPJ || row.CPF || row.DOCUMENTO || row.DOC || '';
+      const codAntigo = sStr(row.CODIGO || row.ID || row.COD_CLIENTE || row.CODIGO_CLIENTE || row.COD_CLI || row.NUMERO || '');
+      // Upsert: por código antigo, senão por documento válido (mínimo 8 dígitos para não mesclar "0"/"-"/"S/N")
+      let existing = codAntigo ? db.clientes.find(c => c.empresaId === empId && ehMigracao(c) && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo)) : null;
+      const digDoc = onlyDigits(doc);
+      if(!existing && digDoc && digDoc.length >= 8){
+        existing = db.clientes.find(c => c.empresaId === empId && c.documento && onlyDigits(c.documento) === digDoc);
+      }
       const dados = {
         codigoAntigo: codAntigo, codigo: codAntigo || (existing && existing.codigo) || '',
         nome: nome.trim(),
@@ -2181,7 +2184,7 @@ function fbImportToErp(rawData){
         mensalidade: parseFloat(row.MENSALIDADE || row.VALOR_MENSAL || 0) || 0,
       };
       if(existing){ Object.assign(existing, dados); result.clientes++; return; }
-      if(codAntigo && db.clientes.find(c => c.empresaId === empId && sStr(c.codigoAntigo) === codAntigo)) return; // manual com mesmo código: não duplica
+      if(codAntigo && db.clientes.find(c => c.empresaId === empId && (sStr(c.codigoAntigo) === codAntigo || sStr(c.codigo) === codAntigo))) return; // manual com mesmo código: não duplica
       const id = uid('cli');
       db.clientes.push(Object.assign({id, empresaId: empId, criadoEm: new Date().toISOString(), criadoPor: 'migracao', criadoPorNome: userName}, dados));
       result.clientes++;
@@ -2239,19 +2242,19 @@ function fbImportToErp(rawData){
     });
   }
 
-  // ── VENDAS (com cliente, vendedor original e ITENS da notinha) ──
-  const rawVendas = findTable(rawData, ['VENDAS']);
+  // ── VENDAS / OS (com cliente, vendedor original, ITENS e OS da notinha) ──
+  const rawVendas = findTable(rawData, ['VENDAS','VENDA','NOTA','NOTAS','NOTINHA','NOTINHAS','CUPOM','CUPONS','SAIDA','SAIDAS','ORDEM_SERVICO','OS','CHAMADO','CHAMADOS']);
   // Indexa os itens por código da venda (mantendo a ordem do sistema antigo)
   const itensPorVenda = {};
   rawItensAll.forEach(ir => {
-    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA);
+    const codV = sStr(ir.COD_VENDA || ir.NUMERO_VENDA || ir.VENDA_ID || ir.CODIGO_VENDA || ir.COD_NOTA || ir.COD_OS);
     if(!codV) return;
     const codProd = sStr(ir.COD_PRODUTO || ir.PRODUTO_ID || ir.COD_CARTUCHO || ir.COD_ITEM_PRODUTO);
     const rawProd = idxRawProdPorCodigo[codProd];
     const prodVinc = codProd ? db.produtos.find(p=>p.empresaId===empId && String(p.sku)===codProd) : null;
     const qtd = parseFloat(ir.QUANTIDADE || ir.QTD || ir.QTDE || 1) || 1;
     const unit = parseFloat(ir.VALOR_UNIT || ir.VALOR_UNITARIO || ir.PRECO_UNIT || ir.PRECO || ir.VALOR || 0) || 0;
-    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || 0) || (qtd*unit);
+    const sub = parseFloat(ir.SUBTOTAL || ir.VALOR_TOTAL || ir.VALOR_ITEM || ir.TOTAL || 0) || (qtd*unit);
     (itensPorVenda[codV] = itensPorVenda[codV] || []).push({
       _seq: parseInt(ir.COD_ITEM || ir.CODIGO || ir.ID || 0) || 0,
       produtoId: prodVinc ? prodVinc.id : null,
@@ -2262,10 +2265,25 @@ function fbImportToErp(rawData){
   Object.values(itensPorVenda).forEach(l=>l.sort((a,b)=>a._seq-b._seq));
   if(rawVendas && rawVendas.length){
     rawVendas.forEach(row => {
-      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || '');
+      const numero = sStr(row.NUMERO || row.CODIGO || row.ID || row.COD_VENDA || row.COD_NOTA || '');
       if(!numero) return;
       const codCli = sStr(row.COD_CLIENTE || row.CLIENTE_ID || row.COD_PESSOA || row.CODIGO_CLIENTE);
       const vendedor = nomeVendedor(row);
+      const calcTotal = (itensPorVenda[numero]||[]).reduce((s,it)=>s+(it.subtotal||0), 0);
+      const valRow = parseFloat(row.VALOR_LIQUIDO || row.TOTAL_LIQUIDO || row.TOTAL_NOTA || row.VALOR_NOTA || row.TOTAL_GERAL || row.TOTAL_OS || row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0;
+      const totalFinal = valRow > 0 ? valRow : calcTotal;
+      const temDadosOS = !!(row.MODELO || row.EQUIPAMENTO || row.SERIE || row.NUMERO_SERIE || row.PATRIMONIO || row.CONTADOR || row.DEFEITO || row.PROBLEMA || row.SERVICOS || row.SOLUCAO);
+      const osObj = temDadosOS ? {
+        migrado: true,
+        modelo: row.MODELO || row.EQUIPAMENTO || row.MAQUINA || row.IMPRESSORA || 'Equipamento',
+        numeroSerie: row.SERIE || row.NUMERO_SERIE || row.N_SERIE || row.SERIAL || '',
+        patrimonio: row.PATRIMONIO || row.PAT || '',
+        contador: row.CONTADOR || row.CONTADOR_PB || row.CONTADOR_ATUAL || '',
+        defeito: row.DEFEITO || row.PROBLEMA || row.DEFEITO_RELATADO || '',
+        servicos: row.SOLUCAO || row.SERVICO || row.SERVICOS || '',
+        tecnico: row.TECNICO || row.RESPONSAVEL || row.VENDEDOR || '',
+        numero: row.NUMERO_OS || row.NUM_OS || String(numero)
+      } : null;
       const dadosV = {
         numero,
         clienteId: idClientePorCodigo(codCli),
@@ -2277,11 +2295,12 @@ function fbImportToErp(rawData){
         data: row.DATA || row.DATA_VENDA || new Date().toISOString(),
         itens: (itensPorVenda[numero]||[]).map(it=>({produtoId: it.produtoId, descricao: it.descricao, qtd: it.qtd, preco: it.preco, subtotal: it.subtotal})),
         desconto: parseFloat(row.DESCONTO || 0) || 0,
-        total: parseFloat(row.TOTAL || row.VALOR_TOTAL || row.VALOR || 0) || 0,
+        total: totalFinal,
         formaPagamento: row.FORMA_PAGAMENTO || row.PAGAMENTO || '',
         status: normStatusVenda(row.STATUS || row.SITUACAO),
         vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || null,
-        criadoPorNome: vendedor
+        criadoPorNome: vendedor,
+        os: osObj
       };
       const existing = db.vendas.find(v => v.empresaId === empId && v.numero === numero);
       if(existing && !ehMigracao(existing)) return; // venda manual: não mexe
@@ -2412,24 +2431,27 @@ function fbImportToErp(rawData){
   renderDashboard();
 }
 
-// Utilitário: encontrar tabela no raw data (case insensitive)
+// Utilitário: encontrar tabela no raw data (case insensitive e combinando múltiplas tabelas)
 function findTable(rawData, possibleNames){
+  const res = [];
+  const addRows = arr => { if(Array.isArray(arr)) res.push(...arr); };
   for(const name of possibleNames){
     for(const key of Object.keys(rawData)){
       if(key.toUpperCase() === name.toUpperCase() && rawData[key].data){
-        return rawData[key].data;
+        addRows(rawData[key].data);
       }
     }
   }
+  if(res.length) return res;
   // Busca parcial
   for(const name of possibleNames){
     for(const key of Object.keys(rawData)){
       if(key.toUpperCase().includes(name.toUpperCase()) && rawData[key].data){
-        return rawData[key].data;
+        addRows(rawData[key].data);
       }
     }
   }
-  return null;
+  return res.length ? res : null;
 }
 
 async function fbExportExtracted(){

@@ -45,7 +45,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 .classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
 
 
-.app-titlebar{box-shadow:none}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{height:calc(100vh - 124px);display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}
+.app-titlebar{box-shadow:none}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{min-height:calc(100vh - 124px);height:auto;display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}
 
 
 .modern-topnav{position:sticky;top:26px;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
@@ -168,7 +168,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
-        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="if(typeof enviarDadosLocaisParaNuvem==='function') enviarDadosLocaisParaNuvem(); else toast('Sincronização indisponível','error')"><i class="ph ph-cloud-arrow-up"></i>Enviar dados p/ nuvem</button><button onclick="if(typeof carregarDadosDaNuvem==='function') carregarDadosDaNuvem(); else toast('Sincronização indisponível','error')"><i class="ph ph-cloud-arrow-down"></i>Baixar dados da nuvem</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
+        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -199,23 +199,23 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.9.6"></script>
-<script src="./logo_data.js?v=4.9.6"></script>
-<script src="./app.js?v=4.9.6"></script>
-<script src="./vendas_patch.js?v=4.9.6"></script>
-<script src="./evolucao_patch.js?v=4.9.6"></script>
-<script src="./notinha_patch.js?v=4.9.6"></script>
-<script src="./locacao_patch.js?v=4.9.6"></script>
-<script src="./sync_client.js?v=4.9.6"></script>
-<script src="./vendas_os_patch.js?v=4.9.6"></script>
-<script src="./performance_patch.js?v=4.9.6"></script>
-<script src="./pix_patch.js?v=4.9.6"></script>
-<script src="./notificacoes_patch.js?v=4.9.6"></script>
-<script src="./vendas_extra_patch.js?v=4.9.6"></script>
-<script src="./migrados_print_patch.js?v=4.9.6"></script>
-<script src="./clientes_patch.js?v=4.9.6"></script>
-<script src="./interface_patch.js?v=4.9.6"></script>
-<script src="./firebase_config.js?v=4.9.6"></script>
-<script src="./firebase_client.js?v=4.9.6"></script>
+<script src="./lz.js?v=4.9.7"></script>
+<script src="./logo_data.js?v=4.9.7"></script>
+<script src="./app.js?v=4.9.7"></script>
+<script src="./vendas_patch.js?v=4.9.7"></script>
+<script src="./evolucao_patch.js?v=4.9.7"></script>
+<script src="./notinha_patch.js?v=4.9.7"></script>
+<script src="./locacao_patch.js?v=4.9.7"></script>
+<script src="./sync_client.js?v=4.9.7"></script>
+<script src="./vendas_os_patch.js?v=4.9.7"></script>
+<script src="./performance_patch.js?v=4.9.7"></script>
+<script src="./pix_patch.js?v=4.9.7"></script>
+<script src="./notificacoes_patch.js?v=4.9.7"></script>
+<script src="./vendas_extra_patch.js?v=4.9.7"></script>
+<script src="./migrados_print_patch.js?v=4.9.7"></script>
+<script src="./clientes_patch.js?v=4.9.7"></script>
+<script src="./interface_patch.js?v=4.9.7"></script>
+<script src="./firebase_config.js?v=4.9.7"></script>
+<script src="./firebase_client.js?v=4.9.7"></script>
 </body>
 </html>

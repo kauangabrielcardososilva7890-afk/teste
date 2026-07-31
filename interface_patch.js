@@ -200,7 +200,8 @@ window.uiAjustarHome = function(){
   window.scrollTo(0, 0); // se veio de uma tela longa, a régua não pode medir com a página rolada
   const topo = home.getBoundingClientRect().top;
   const altFooter = footer ? footer.getBoundingClientRect().height : 0;
-  home.style.height = Math.max(240, window.innerHeight - topo - altFooter) + 'px';
+  home.style.minHeight = Math.max(240, window.innerHeight - topo - altFooter) + 'px';
+  home.style.height = 'auto';
 };
 window.addEventListener('resize', window.uiAjustarHome);
 const _uiNavOriginal = window.navigateTo;
