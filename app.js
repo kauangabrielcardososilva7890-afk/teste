@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.37';
+const APP_VERSION='4.9.38';
 const DB_KEY='digicopy_erp_v30';
 const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -414,8 +414,10 @@ function showApp(){
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
   if(typeof renderDashboard==='function') renderDashboard();
-  // load others
-  setTimeout(()=>{renderClientes(); renderProdutos(); renderEquipamentos(); renderContratos(); renderParque(); renderLeituras(); renderOs(); renderVendas(); renderFinanceiro(); renderConfig(); if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof renderAuditoria==='function') renderAuditoria();},100);
+  // v4.9.38: não renderiza telas escondidas no login.
+  // As telas carregam somente quando o usuário abre o menu correspondente.
+  // Isso evita travar em bases grandes migradas pelo banco antigo.
+  setTimeout(()=>{ if(window.IDX_LEGADO&&typeof window.IDX_LEGADO.rebuild==='function') window.IDX_LEGADO.rebuild(); },900);
 }
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');

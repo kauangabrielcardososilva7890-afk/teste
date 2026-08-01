@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.37**
+- Versão atual implementada: **v4.9.38**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2727,6 +2727,45 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.37**
+
+---
+
+
+## 8AB. Correções de uso diário e performance visual — v4.9.38
+
+Correções solicitadas pelo usuário após testar a versão com dados migrados.
+
+Arquivo criado:
+
+- `correcoes_uso_diario_patch.js`
+
+Ações tomadas:
+
+- Removido aviso de endereço provisório do GitHack.
+- `showApp` deixou de renderizar todas as telas escondidas ao entrar no sistema.
+- Dashboard foi limpo para não inflar números com dados antigos migrados.
+- Dashboard passa a contar movimento novo do ERP, mantendo os dados antigos guardados apenas para consulta/automação.
+- Menus automáticos das tabelas migradas foram escondidos de forma mais agressiva.
+- Acesso aos dados antigos ficou concentrado em **Dados migrados**.
+- Área de vendas/notinhas:
+  - removeu botões `Histórico`, `Imprimir` e `Excel/CSV` da barra principal;
+  - manteve apenas `Nova notinha` e `Excluir`;
+  - removeu aba `Orçamentos`;
+  - padrão agora mostra somente notinhas de hoje;
+  - busca e filtros consultam antigas quando usuário pedir;
+  - busca por texto deixou de filtrar a cada tecla, usando Enter/lupa;
+  - filtro por data/situação/pagamento foi refeito;
+  - listagem ignora tabelas migradas que não são notinhas reais, como bairros/assuntos/orçamentos/itens;
+  - histórico de notinha antiga agora mostra todos os campos originais do registro migrado e os itens vinculados quando encontrados;
+  - método de pagamento antigo tenta usar `COD_RECEBIMENTO` quando não houver texto.
+
+Teste criado:
+
+- `test_correcoes_uso_diario.js`
+
+Versão publicada:
+
+- **v4.9.38**
 
 ---
 
