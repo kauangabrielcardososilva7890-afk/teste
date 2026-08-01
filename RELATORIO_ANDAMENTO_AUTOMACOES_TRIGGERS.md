@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.27**
+- Versão atual implementada: **v4.9.28**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -171,7 +171,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 5 | Recebida e processada | Gerou v4.9.25 |
 | Parte 6 | Recebida e processada | Gerou v4.9.26 |
 | Parte 7 | Recebida e processada | Gerou v4.9.27 |
-| Parte 8 | Pendente | Aguardando envio |
+| Parte 8 | Recebida e processada | Gerou v4.9.28 |
 | Parte 9 | Pendente | Aguardando envio |
 | Parte 10 | Pendente | Aguardando envio |
 | Parte 11 | Pendente | Aguardando envio |
@@ -1528,6 +1528,152 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.27**
+
+
+---
+
+## 8M. Parte 8 — triggers recebidas e interpretação
+
+### 8M.1 Pix
+
+Recebido:
+
+- `PIX_INC_ANTES`
+- `PIX_INC_DEPOIS`
+- `PIX_ALT_ANTES`
+- `PIX_ALT_DEPOIS`
+- `PIX_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código do Pix.
+- Preenche data de cadastro, atualização, funcionário e vencimento.
+- Define situação conforme pagamento/cancelamento/estorno.
+- Ao pagar, cria histórico, recebimento, caixa e custo Pix.
+- Ao cancelar/estornar, limpa vínculo em contas a receber, remove custo Pix e altera situação da venda.
+
+Ação no ERP novo:
+
+- Criado `db.pixMigrados` e `db.pixHistoricoMigrado`.
+- Pix antigo vira histórico consultável.
+- Pagamento Pix migrado NÃO faz baixa automática, obedecendo regra atual do projeto.
+- Cancelado/estornado marca financeiro/venda quando vínculo exato é encontrado, sem apagar histórico em massa.
+
+### 8M.2 Contadores automáticos / Print counter
+
+Recebido:
+
+- `CONTADOR_BIU0`
+- `CONTADORES_BIU0`
+- `CONTADOR_ALERTAS_BI0`
+- `CONTADOR_ALERTAS_CONFIG_BI0`
+- `CONTADOR_CAPTURAS_BI0`
+- `CONTADOR_HOMOLOGAR_BI0`
+- `CONTADOR_LOCAL_OFF_BI0`
+
+O que faz no banco anterior:
+
+- Gera código do contador.
+- Associa contador ao item de locação pelo serial.
+- Se não estiver em contrato, cadastra impressora em estoque.
+- Calcula impressões do dia comparando com contador anterior.
+- Copia níveis anteriores de toner/drum/fusor/rolo/waste quando vierem zerados.
+- Evita datas futuras.
+- Avalia configurações de alertas por status e níveis.
+- Cria/atualiza `CONTADOR_ALERTAS` quando algum gatilho bate.
+
+Ação no ERP novo:
+
+- Criado `db.contadoresMigrados`.
+- Contadores são associados a equipamento/parque por serial ou patrimônio.
+- Atualiza contador PB do equipamento quando o contador capturado é maior.
+- Calcula `totalImpressaoDia`.
+- Cria `db.contadorAlertasMigrados` com alertas de status/níveis.
+- Usa configuração de alerta quando existir; senão, usa gatilho padrão seguro para níveis baixos e status problemático.
+
+### 8M.3 Contas/bancos
+
+Recebido:
+
+- `CONTAS_BIUD0`
+
+O que faz no banco anterior:
+
+- Gera código de conta.
+- Preenche saldo/agência/número/dígitos com zero.
+- Define se conta recebe boleto/cartão/Pix.
+- Mapeia banco/cobrança para código de banco.
+
+Ação no ERP novo:
+
+- Criado `db.contasBancariasMigradas`.
+- Preserva contas, banco, agência, número, saldo, custo Pix e flag de Pix.
+- Não reativa boleto no faturamento novo.
+
+### 8M.4 E-mails, links e auxiliares simples
+
+Recebido:
+
+- `EMAIL_BI0`
+- `EMAIL_DEL_ANTES`
+- `LINKS_BI0`
+- `SHOP_ACESSOS_BI0`
+- `SHOP_TOKEN_BI0`
+- `MANIFESTACAO_DFE_BI0`
+- `ITENS_RECEBIMENTO_NFE_INC_ANTES`
+- `ITENS_RECEBIMENTO_NFE_AI0`
+- `GASTOS_PRODUTO_INC_ANTES`
+- `GASTOS_PRODUTO_INC_DEPOIS`
+- `GASTOS_PRODUTO_DEL_DEPOIS`
+- `HORARIO_ATENDIMENTO_BI0`
+- `CATEGORIA_SUB_INC_ANTES`
+- `CREDITOS_INC_ANTES`
+- `CREDITOS_TRANSFERENCIA_INC_ANTE`
+- `CUPONS_INC_ANTES`
+- `PRODUTOS_PESQUISAS_ERRO_BI0`
+- `RESTRICAO_AU0`
+
+O que faz no banco anterior:
+
+- Em geral, gera código e data.
+- E-mail é normalizado para minúsculo e tenta vincular cliente por e-mail.
+- Links/créditos/cupons/horários/categorias auxiliares preservam registros.
+- Gastos de produto recalculam total de gastos do produto.
+- Restrição atualizada força logout de usuário.
+
+Ação no ERP novo:
+
+- Criado `db.emailsMigrados`, vinculando cliente por e-mail quando possível.
+- Criadas estruturas leves para links, créditos, cupons, horários, categorias auxiliares, manifestações e erros de pesquisa.
+- Restrição/logout antigo não foi copiado literalmente porque o ERP novo usa sessão/perfis próprios.
+- Gastos de produto foram preservados indiretamente nos cálculos de custos já existentes; a estrutura completa pode ser aprofundada se esse módulo virar prioridade.
+
+---
+
+## 8N. Patch gerado com base na Parte 8
+
+Arquivo criado:
+
+- `automacoes_pix_contadores_auxiliares_patch.js`
+
+Funções principais:
+
+- `pixStatus`
+- `sincronizarPixMigrado`
+- `bancoCodigo`
+- `sincronizarContasBancarias`
+- `sincronizarContadores`
+- `gerarAlertasContador`
+- `sincronizarEmailsLinksCreditos`
+- `aplicarAutomacoesPixContadoresAux`
+
+Teste criado:
+
+- `test_automacoes_pix_contadores_auxiliares.js`
+
+Versão publicada:
+
+- **v4.9.28**
 
 
 ---
