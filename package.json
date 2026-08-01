@@ -73,7 +73,8 @@
       "cadastros_nomes_patch.js",
       "main.js",
       "preload.js",
-      "logo.png"
+      "logo.png",
+      "assets/icon.ico"
     ],
     "win": {
       "target": [
@@ -84,7 +85,7 @@
           ]
         }
       ],
-      "icon": "logo.png"
+      "icon": "assets/icon.ico"
     },
     "directories": {
       "output": "dist"
