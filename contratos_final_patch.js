@@ -141,6 +141,7 @@ function recriarParque(empId){
   return mudou;
 }
 function reconciliar(empId){
+  if(window.DIGI_MODO_LEVE) return 0;
   if(!empId || !db) return 0;
   db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
   const sigAntes=assinaturaReconciliar(empId);

@@ -170,6 +170,7 @@ window.doLoginUser=function(){
 function totalLocal(){ return ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar'].reduce((s,k)=>s+((db[k]||[]).length||0),0); }
 function temBancoMigrado(){ return Object.values(db.modulosDinamicos||{}).some(m=>Array.isArray(m&&m.dados)&&m.dados.length>0) || totalLocal()>1000; }
 async function autoCarregarNuvemSeVazio(){
+  if(window.DIGI_MODO_LEVE) return;
   if(sessionStorage.getItem('digicopy_auto_load_try_v4939')) return;
   if(temBancoMigrado()) return;
   if(typeof window.syncCarregarDaNuvem!=='function') return;

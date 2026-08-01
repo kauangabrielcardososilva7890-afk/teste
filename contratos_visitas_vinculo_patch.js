@@ -67,6 +67,7 @@ function garantirParque(c, cli, eq, row, empId){
   return p;
 }
 function vincularPorVisitas(empId){
+  if(window.DIGI_MODO_LEVE) return 0;
   if(!db || !empId) return 0;
   db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
   const sig=[assinaturaLinhas(/^VISITAS$/i), assinaturaLinhas(/^CONTADOR_PAGINAS$/i), assinaturaArray('contratos',empId), assinaturaArray('parque',empId), assinaturaArray('equipamentos',empId)].join('|');

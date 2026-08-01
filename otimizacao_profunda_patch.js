@@ -95,6 +95,7 @@ function processar(){
   }, job.timeout||1200);
 }
 function auto(nome, fn, delay=0, opts={}){
+  if(window.DIGI_MODO_LEVE && !(opts&&opts.forcar)) return undefined;
   if(typeof fn!=='function') return undefined;
   const id=txt(nome)||('job_'+Math.random().toString(36).slice(2));
   const existente=porNome.get(id);

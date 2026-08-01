@@ -165,9 +165,13 @@ window.renderVendas=function(){
   const sess=getSess(); if(!sess) return;
   const view=document.getElementById('view-vendas')||(typeof ensureView==='function'?ensureView('vendas'):null); if(!view) return;
   const F=window.__vendasUsoFiltros=window.__vendasUsoFiltros||{tab:'hoje'};
-  const base=[...(db.vendas||[]).filter(v=>v.empresaId===sess.empresaId&&!['orcamento','aprovado'].includes(low(v.status))),...montarLegadas(sess)];
   const q=low(F.q||''), de=F.de||'', ate=F.ate||'', sit=F.sit||'todas', pag=F.pag||'todos', tab=F.tab||'hoje';
   const defaultHoje=tab==='hoje'&&!q&&!de&&!ate&&!F.forcouBusca;
+  const baseNovas=[...(db.vendas||[]).filter(v=>v.empresaId===sess.empresaId&&!['orcamento','aprovado'].includes(low(v.status)))];
+  // Modo leve: não converte milhares de notinhas antigas ao abrir a tela.
+  // Só busca legado quando o usuário pede por filtro/busca/todas.
+  const precisaLegado=!defaultHoje && (tab==='todas'||q||de||ate||sit!=='todas'||pag!=='todos');
+  const base=precisaLegado?[...baseNovas,...montarLegadas(sess)]:baseNovas;
   let list=base.slice();
   if(defaultHoje||tab==='hoje') list=list.filter(v=>String(v.data||v.criadoEm||'').slice(0,10)===hoje());
   if(tab==='abertas') list=list.filter(v=>!['faturado','finalizada'].includes(low(v.status)));

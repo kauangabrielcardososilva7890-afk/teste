@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.40**
+- Versão atual implementada: **v4.9.41**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.40**
+- **v4.9.41**
 
 ---
 
@@ -2828,7 +2828,33 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.40**
+- **v4.9.41**
+
+---
+
+
+## 8AE. Modo leve de teste e reset de armazenamento local — v4.9.41
+
+Correção após o usuário relatar travamento/congelamento.
+
+Arquivo criado:
+
+- `modo_leve_teste_patch.js`
+
+Ações tomadas:
+
+- Ativado modo leve de teste (`DIGI_MODO_LEVE`).
+- Desligada sincronização automática para não travar tentando baixar base grande.
+- Alterada a chave local do banco para uma base nova de teste (`v41_teste`), evitando carregar LocalStorage antigo pesado do navegador.
+- App passa a iniciar com dados demo/teste locais.
+- Automações pesadas agendadas pelo `DIGI_TURBO` não rodam automaticamente no modo leve.
+- Reconciliações pesadas de contratos/visitas foram puladas no modo leve.
+- Área de importar banco é escondida/removida do uso diário.
+- Vendas não convertem milhares de notinhas antigas ao abrir; legado só é processado quando o usuário usar busca/filtro/todas.
+
+Versão publicada:
+
+- **v4.9.41**
 
 ---
 
