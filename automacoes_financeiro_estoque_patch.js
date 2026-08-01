@@ -23,6 +23,8 @@ function logar(e,a,id,d){ if(typeof logAction === 'function') logAction(e,a,id,d
 function rows(nome){ return (((db.modulosDinamicos || {})[nome] || {}).dados) || []; }
 function rowsLike(rx){ const out=[]; Object.entries(db.modulosDinamicos||{}).forEach(([nome,m])=>{ if(rx.test(nome)) out.push(...(((m||{}).dados)||[])); }); return out; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c] !== undefined && r[c] !== null && txt(r[c]) !== '') return r[c]; } return ''; }
+function assinaturaTabela(nomes){ return nomes.map(nome=>{ const r=rows(nome); const last=r[r.length-1]||{}; return `${nome}:${r.length}:${JSON.stringify(last).slice(0,80)}`; }).join('|'); }
+function assinaturaArray(nome, empId){ const a=Array.isArray(db[nome])?db[nome].filter(x=>!empId||!x.empresaId||x.empresaId===empId):[]; const last=a[a.length-1]||{}; return `${nome}:${a.length}:${JSON.stringify(last).slice(0,80)}`; }
 function round2(v){ return Math.round(num(v,0) * 100) / 100; }
 function normalizeLocalizacaoDescricao(v){ return txt(v).replace(/\\/g, '/').trim(); }
 function produtoPorCodigo(codigo, empId){ const c=cod(codigo); if(!c) return null; return (db.produtos||[]).find(p => p.empresaId===empId && (cod(p.sku)===c || cod(p.codigo)===c || cod(p.codigoAntigo)===c || cod(p.idLegado)===c)) || null; }
@@ -229,12 +231,16 @@ function aplicarAutomacoesItensNota(empId){
 
 function aplicarAutomacoesFinanceiroEstoque(empId){
   if(!db || !empId) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sig=[assinaturaTabela(['CONTADOR_PAGINAS','PRODUTOS_HISTORICO','ITENS_NOTA','NOTA_FISCAL']), assinaturaArray('leituras',empId), assinaturaArray('contasReceber',empId), assinaturaArray('contasPagar',empId), assinaturaArray('vendas',empId)].join('|');
+  if(db.config.automacoes.financeiroEstoqueGeralAssinatura===sig) return 0;
   let total = 0;
   total += aplicarAutomacoesLeituras(empId);
   total += aplicarAutomacoesContas(empId);
   total += aplicarAutomacoesProdutosHistorico(empId);
   total += aplicarAutomacoesItensNota(empId);
-  if(total) salvar();
+  db.config.automacoes.financeiroEstoqueGeralAssinatura=sig;
+  if(total || sig) salvar();
   return total;
 }
 
@@ -254,11 +260,11 @@ if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 function run(){ const s = sess(); if(s) aplicarAutomacoesFinanceiroEstoque(s.empresaId); }
 const oldShowApp = window.showApp;
-window.showApp = function(){ const ret = oldShowApp ? oldShowApp.apply(this, arguments) : undefined; setTimeout(run, 250); return ret; };
+window.showApp = function(){ const ret = oldShowApp ? oldShowApp.apply(this, arguments) : undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_financeiro_estoque', run, 250); else setTimeout(run, 250); return ret; };
 const oldRenderFinanceiro = window.renderFinanceiro;
-window.renderFinanceiro = function(){ run(); return oldRenderFinanceiro ? oldRenderFinanceiro.apply(this, arguments) : undefined; };
+window.renderFinanceiro = function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_financeiro_estoque', run, 0); else run(); return oldRenderFinanceiro ? oldRenderFinanceiro.apply(this, arguments) : undefined; };
 const oldRenderLeituras = window.renderLeituras;
-window.renderLeituras = function(){ run(); return oldRenderLeituras ? oldRenderLeituras.apply(this, arguments) : undefined; };
+window.renderLeituras = function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_financeiro_estoque', run, 0); else run(); return oldRenderLeituras ? oldRenderLeituras.apply(this, arguments) : undefined; };
 const oldDeleteLeitura = window.deleteLeituraContrato;
 window.deleteLeituraContrato = function(leiId, contratoId){
   if(!confirm('Excluir esta leitura? O financeiro vinculado também será removido.')) return;
@@ -269,6 +275,6 @@ window.deleteLeituraContrato = function(leiId, contratoId){
   if(typeof renderFinanceiro === 'function') renderFinanceiro();
   toastMsg('Leitura e financeiro vinculado excluídos', 'success');
 };
-setTimeout(run, 900);
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_financeiro_estoque', run, 900); else setTimeout(run, 900);
 console.log('[DIGICOPY] automacoes_financeiro_estoque_patch.js v4.9.22 carregado');
 })();

@@ -254,15 +254,15 @@ window.AUTOMACOES_CAIXA_CHAT_AUXILIARES_PURE={ limparDescricao, garantirCategori
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesCaixaChatAuxiliares(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,1400); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 1400); else setTimeout(run, 1400); return ret; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 const oldRenderOs=window.renderOs;
-window.renderOs=function(){ run(); return oldRenderOs?oldRenderOs.apply(this,arguments):undefined; };
+window.renderOs=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 0); else run(); return oldRenderOs?oldRenderOs.apply(this,arguments):undefined; };
 const oldRenderClientes=window.renderClientes;
-window.renderClientes=function(){ run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
+window.renderClientes=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 0); else run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
 const oldRenderConfig=window.renderConfig;
-window.renderConfig=function(){ run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
-setTimeout(run,2800);
+window.renderConfig=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 0); else run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_caixa_chat_auxiliares', run, 2800); else setTimeout(run, 2800);
 console.log('[DIGICOPY] automacoes_caixa_chat_auxiliares_patch.js v4.9.31 carregado');
 })();

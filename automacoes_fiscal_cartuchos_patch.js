@@ -305,13 +305,13 @@ window.AUTOMACOES_FISCAL_CARTUCHOS_PURE={ defaultsNotaFiscal, totaisNotaPorItens
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesFiscalCartuchos(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,600); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 600); else setTimeout(run, 600); return ret; };
 const oldRenderProdutos=window.renderProdutos;
-window.renderProdutos=function(){ run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
+window.renderProdutos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 0); else run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
 const oldRenderVendas=window.renderVendas;
-window.renderVendas=function(){ run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
+window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 0); else run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
-setTimeout(run,1400);
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 1400); else setTimeout(run, 1400);
 console.log('[DIGICOPY] automacoes_fiscal_cartuchos_patch.js v4.9.25 carregado');
 })();

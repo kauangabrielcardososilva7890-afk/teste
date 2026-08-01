@@ -413,15 +413,15 @@ window.AUTOMACOES_COMPRAS_RECEBIMENTOS_CONTADORES_PURE={ limparMotivo, calcularR
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesComprasRecebimentosContadores(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,1200); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 1200); else setTimeout(run, 1200); return ret; };
 const oldRenderVendas=window.renderVendas;
-window.renderVendas=function(){ run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
+window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 0); else run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
 const oldRenderCompras=window.renderCompras;
-window.renderCompras=function(){ run(); return oldRenderCompras?oldRenderCompras.apply(this,arguments):undefined; };
+window.renderCompras=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 0); else run(); return oldRenderCompras?oldRenderCompras.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 const oldRenderContratos=window.renderContratos;
-window.renderContratos=function(){ run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
-setTimeout(run,2500);
+window.renderContratos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 0); else run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_compras_recebimentos_contadores', run, 2500); else setTimeout(run, 2500);
 console.log('[DIGICOPY] automacoes_compras_recebimentos_contadores_patch.js v4.9.30 carregado');
 })();

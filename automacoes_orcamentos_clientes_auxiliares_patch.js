@@ -242,13 +242,13 @@ window.AUTOMACOES_ORC_CLIENTES_AUX_PURE={ calcularItemOrcamento, normalizeClient
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesOrcClientesAux(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,800); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_orcamentos_clientes_auxiliares', run, 800); else setTimeout(run, 800); return ret; };
 const oldRenderClientes=window.renderClientes;
-window.renderClientes=function(){ run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
+window.renderClientes=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_orcamentos_clientes_auxiliares', run, 0); else run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
 const oldRenderVendas=window.renderVendas;
-window.renderVendas=function(){ run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
+window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_orcamentos_clientes_auxiliares', run, 0); else run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
-setTimeout(run,1800);
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_orcamentos_clientes_auxiliares', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_orcamentos_clientes_auxiliares', run, 1800); else setTimeout(run, 1800);
 console.log('[DIGICOPY] automacoes_orcamentos_clientes_auxiliares_patch.js v4.9.27 carregado');
 })();

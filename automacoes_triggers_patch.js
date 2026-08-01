@@ -24,6 +24,7 @@ function title(v){
 }
 function rows(nome){ return (((db.modulosDinamicos || {})[nome] || {}).dados) || []; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c] !== undefined && r[c] !== null && txt(r[c]) !== '') return r[c]; } return ''; }
+function assinaturaTabela(nomes){ return nomes.map(nome=>{ const r=rows(nome); const last=r[r.length-1]||{}; return `${nome}:${r.length}:${JSON.stringify(last).slice(0,80)}`; }).join('|'); }
 function clientePorCodigo(codigo, empId){ const c=cod(codigo); if(!c) return null; return (db.clientes||[]).find(x => x.empresaId===empId && (cod(x.codigo)===c || cod(x.codigoAntigo)===c)); }
 function produtoPorCodigo(codigo, empId){ const c=cod(codigo); if(!c) return null; return (db.produtos||[]).find(p => p.empresaId===empId && (cod(p.sku)===c || cod(p.codigo)===c || cod(p.codigoAntigo)===c)); }
 function vendaPorNumero(numero, empId){ const c=cod(numero); if(!c) return null; return (db.vendas||[]).find(v => v.empresaId===empId && (cod(v.numero)===c || cod(v.codigoAntigo)===c) && v.origem !== 'orcamento_migrado_convertido'); }
@@ -121,12 +122,16 @@ function recalcularSaldosMovimentacao(){
 }
 function aplicarAutomacoesTriggers(empId){
   if(!db || !empId) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sig=assinaturaTabela(['ORCAMENTO','ITENS_ORCAMENTO','VISITAS','MOVIMENTACAO']);
+  if(db.config.automacoes.triggersBaseAssinatura===sig) return 0;
   let total = 0;
   total += sincronizarOrcamentos(empId);
   total += atualizarUltimaVisitaParque(empId);
   const saldos = recalcularSaldosMovimentacao();
   if(Object.keys(saldos).length){ db.saldosMovimentacao = saldos; }
-  if(total) salvar();
+  db.config.automacoes.triggersBaseAssinatura=sig;
+  if(total || sig) salvar();
   return total;
 }
 
@@ -136,14 +141,14 @@ if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 function run(){ const s=sess(); if(s) aplicarAutomacoesTriggers(s.empresaId); }
 const oldShowApp = window.showApp;
-window.showApp = function(){ const ret = oldShowApp ? oldShowApp.apply(this, arguments) : undefined; setTimeout(run, 200); return ret; };
+window.showApp = function(){ const ret = oldShowApp ? oldShowApp.apply(this, arguments) : undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_triggers', run, 200); else setTimeout(run, 200); return ret; };
 const oldRenderVendas = window.renderVendas;
-window.renderVendas = function(){ run(); return oldRenderVendas ? oldRenderVendas.apply(this, arguments) : undefined; };
+window.renderVendas = function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_triggers', run, 0); else run(); return oldRenderVendas ? oldRenderVendas.apply(this, arguments) : undefined; };
 window.converterOrcamentoMigradoEmVenda = function(codigo){
   const s=sess(); if(!s) return;
   const venda = converterOrcamentoEmVenda(codigo, s.empresaId);
   if(venda){ salvar(); logar('venda','converter_orcamento',venda.id,`Orçamento ${codigo} convertido em venda ${venda.numero}`); if(typeof renderVendas==='function') renderVendas(); toastMsg('Orçamento convertido em venda', 'success'); }
 };
-setTimeout(run, 600);
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_triggers', run, 600); else setTimeout(run, 600);
 console.log('[DIGICOPY] automacoes_triggers_patch.js v4.9.21 carregado');
 })();

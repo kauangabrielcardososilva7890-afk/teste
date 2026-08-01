@@ -17,6 +17,8 @@ function sess(){ return typeof getSession==='function'?getSession():null; }
 function salvar(){ if(typeof saveDB==='function') saveDB(); }
 function moduloRows(rx){ const out=[]; Object.entries((db&&db.modulosDinamicos)||{}).forEach(([nome,m])=>{ if(rx.test(nome)) out.push(...(((m||{}).dados)||[])); }); return out; }
 function pick(row, arr){ for(const k of arr){ if(row && row[k]!==undefined && row[k]!==null && t(row[k])!=='') return row[k]; } return ''; }
+function assinaturaLinhas(rx){ const r=moduloRows(rx); const last=r[r.length-1]||{}; return `${r.length}:${JSON.stringify(last).slice(0,80)}`; }
+function assinaturaArray(nome, empId){ const a=Array.isArray(db[nome])?db[nome].filter(x=>!empId||!x.empresaId||x.empresaId===empId):[]; const last=a[a.length-1]||{}; return `${nome}:${a.length}:${JSON.stringify(last).slice(0,80)}`; }
 function title(nome){ const s=t(nome); if(!s) return ''; return s.toLowerCase().replace(/\b\p{L}/gu,c=>c.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos|E)\b/g,m=>m.toLowerCase()).replace(/\b(Jk|Me|Ltda|Eireli|Epp|Mei)\b/g,m=>m.toUpperCase()); }
 function clientePorCodigo(codigo, empId){ const c=cod(codigo); if(!c) return null; return (db.clientes||[]).find(x=>x.empresaId===empId && (cod(x.codigo)===c || cod(x.codigoAntigo)===c || cod(x.idLegado)===c)) || null; }
 function contratoPorCodigo(codigo, empId){ const c=cod(codigo); if(!c) return null; return (db.contratos||[]).find(x=>x.empresaId===empId && (cod(x.codigoAntigo)===c || cod(x.numero)===c || cod(x.codigo)===c || cod(x.idLegado)===c)) || null; }
@@ -66,6 +68,9 @@ function garantirParque(c, cli, eq, row, empId){
 }
 function vincularPorVisitas(empId){
   if(!db || !empId) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sig=[assinaturaLinhas(/^VISITAS$/i), assinaturaLinhas(/^CONTADOR_PAGINAS$/i), assinaturaArray('contratos',empId), assinaturaArray('parque',empId), assinaturaArray('equipamentos',empId)].join('|');
+  if(db.config.automacoes.contratosVisitasVinculoAssinatura===sig) return 0;
   let mudou=0;
   const visitas=moduloRows(/^VISITAS$/i);
   visitas.forEach(row=>{
@@ -92,7 +97,8 @@ function vincularPorVisitas(empId){
     p.setor=t(p.CP_DEPARTAMENTO||p.setor||pick(row,['CP_DEPARTAMENTO'])) || p.setor || 'Geral';
     if(cli && !p.clienteId) p.clienteId=cli.id;
   });
-  if(mudou) salvar();
+  db.config.automacoes.contratosVisitasVinculoAssinatura=sig;
+  if(mudou || sig) salvar();
   return mudou;
 }
 
@@ -101,9 +107,9 @@ window.CONTRATOS_VISITAS_PURE={ cod, vincularPorVisitas };
 if(typeof window==='undefined' || typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) vincularPorVisitas(s.empresaId); }
 const oldRender=window.renderContratos;
-window.renderContratos=function(){ run(); return oldRender?oldRender.apply(this,arguments):undefined; };
+window.renderContratos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_visitas_vinculo', run, 0); else run(); return oldRender?oldRender.apply(this,arguments):undefined; };
 const oldOpen=window.openContratoCompleto;
-window.openContratoCompleto=function(id){ run(); return oldOpen?oldOpen.apply(this,arguments):undefined; };
-setTimeout(run,600);
+window.openContratoCompleto=function(id){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_visitas_vinculo', run, 0); else run(); return oldOpen?oldOpen.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_visitas_vinculo', run, 600); else setTimeout(run, 600);
 console.log('[DIGICOPY] contratos_visitas_vinculo_patch.js v4.9.19 carregado');
 })();

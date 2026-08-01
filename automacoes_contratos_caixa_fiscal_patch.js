@@ -19,6 +19,8 @@ function sess(){ return typeof getSession==='function'?getSession():null; }
 function salvar(){ if(typeof saveDB==='function') saveDB(); }
 function rows(nome){ return (((db.modulosDinamicos||{})[nome]||{}).dados)||[]; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c]!==undefined && r[c]!==null && txt(r[c])!=='') return r[c]; } return ''; }
+function assinaturaTabela(nomes){ return nomes.map(nome=>{ const r=rows(nome); const last=r[r.length-1]||{}; return `${nome}:${r.length}:${JSON.stringify(last).slice(0,80)}`; }).join('|'); }
+function assinaturaArray(nome, empId){ const a=Array.isArray(db[nome])?db[nome].filter(x=>!empId||!x.empresaId||x.empresaId===empId):[]; const last=a[a.length-1]||{}; return `${nome}:${a.length}:${JSON.stringify(last).slice(0,80)}`; }
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function agora(){ return new Date().toISOString(); }
 function round2(v){ return Math.round(num(v,0)*100)/100; }
@@ -228,13 +230,17 @@ function aplicarDefaultsEmpresa(empId){
 }
 function aplicarAutomacoesContratosCaixaFiscal(empId){
   if(!db||!empId) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sig=[assinaturaTabela(['CAIXA','NOTA_FISCAL','ITENS_NOTA','EQUIPAMENTOS','EMPRESA','CONFIGURACAO']), assinaturaArray('contratos',empId), assinaturaArray('parque',empId), assinaturaArray('equipamentos',empId), assinaturaArray('contasReceber',empId)].join('|');
+  if(db.config.automacoes.contratosCaixaFiscalGeralAssinatura===sig) return 0;
   let total=0;
   total += aplicarAutomacoesContratos(empId);
   total += sincronizarCaixaMigrado(empId);
   total += sincronizarNotasFiscais(empId);
   total += aplicarAutomacoesProdutosEquipamentos(empId);
   total += aplicarDefaultsEmpresa(empId);
-  if(total) salvar();
+  db.config.automacoes.contratosCaixaFiscalGeralAssinatura=sig;
+  if(total || sig) salvar();
   return total;
 }
 
@@ -256,13 +262,13 @@ window.AUTOMACOES_CONTR_CAIXA_FISCAL_PURE={
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesContratosCaixaFiscal(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,450); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_contratos_caixa_fiscal', run, 450); else setTimeout(run, 450); return ret; };
 const oldRenderContratos=window.renderContratos;
-window.renderContratos=function(){ run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
+window.renderContratos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_contratos_caixa_fiscal', run, 0); else run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
 const oldRenderProdutos=window.renderProdutos;
-window.renderProdutos=function(){ run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
+window.renderProdutos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_contratos_caixa_fiscal', run, 0); else run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
-setTimeout(run,1200);
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_contratos_caixa_fiscal', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_contratos_caixa_fiscal', run, 1200); else setTimeout(run, 1200);
 console.log('[DIGICOPY] automacoes_contratos_caixa_fiscal_patch.js v4.9.24 carregado');
 })();

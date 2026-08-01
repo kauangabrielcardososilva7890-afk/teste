@@ -385,13 +385,13 @@ window.AUTOMACOES_FINAIS_LOCACAO_AUX_PURE={ descricaoStatusPix, classificarConta
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesFinaisLocacaoAux(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,1600); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_finais_locacao_auxiliares', run, 1600); else setTimeout(run, 1600); return ret; };
 const oldRenderContratos=window.renderContratos;
-window.renderContratos=function(){ run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
+window.renderContratos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_finais_locacao_auxiliares', run, 0); else run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_finais_locacao_auxiliares', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 const oldRenderConfig=window.renderConfig;
-window.renderConfig=function(){ run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
-setTimeout(run,3200);
+window.renderConfig=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_finais_locacao_auxiliares', run, 0); else run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_finais_locacao_auxiliares', run, 3200); else setTimeout(run, 3200);
 console.log('[DIGICOPY] automacoes_finais_locacao_auxiliares_patch.js v4.9.32 carregado');
 })();

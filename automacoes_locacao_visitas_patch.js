@@ -20,6 +20,8 @@ function logar(e,a,id,d){ if(typeof logAction==='function') logAction(e,a,id,d);
 function rows(nome){ return (((db.modulosDinamicos||{})[nome]||{}).dados)||[]; }
 function rowsLike(rx){ const out=[]; Object.entries(db.modulosDinamicos||{}).forEach(([nome,m])=>{ if(rx.test(nome)) out.push(...(((m||{}).dados)||[])); }); return out; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c]!==undefined && r[c]!==null && txt(r[c])!=='') return r[c]; } return ''; }
+function assinaturaTabela(nomes){ return nomes.map(nome=>{ const r=rows(nome); const last=r[r.length-1]||{}; return `${nome}:${r.length}:${JSON.stringify(last).slice(0,80)}`; }).join('|'); }
+function assinaturaArray(nome, empId){ const a=Array.isArray(db[nome])?db[nome].filter(x=>!empId||!x.empresaId||x.empresaId===empId):[]; const last=a[a.length-1]||{}; return `${nome}:${a.length}:${JSON.stringify(last).slice(0,80)}`; }
 function title(v){ const s=txt(v); if(!s) return ''; if(window.VOTM_PURE&&typeof window.VOTM_PURE.toTitleCase==='function') return window.VOTM_PURE.toTitleCase(s); return s.toLowerCase().replace(/\b\p{L}/gu,c=>c.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos|E)\b/g,m=>m.toLowerCase()); }
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function iso(v){ if(!v) return new Date().toISOString(); const s=txt(v); if(/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s.slice(0,10)+'T12:00:00').toISOString(); const d=new Date(s); return Number.isNaN(d.getTime())?new Date().toISOString():d.toISOString(); }
@@ -175,11 +177,15 @@ function sincronizarVisitasAvancado(empId){
 }
 function aplicarAutomacoesLocacaoVisitas(empId){
   if(!db||!empId) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sig=[assinaturaTabela(['ITENS_LOCACAO','DESPESAS_LOCACAO','VISITAS','CARTUCHOS','ITENS_VENDA']), assinaturaArray('contratos',empId), assinaturaArray('parque',empId), assinaturaArray('equipamentos',empId)].join('|');
+  if(db.config.automacoes.locacaoVisitasGeralAssinatura===sig) return 0;
   let total=0;
   total+=sincronizarItensLocacao(empId);
   total+=sincronizarDespesasLocacao(empId);
   total+=sincronizarVisitasAvancado(empId);
-  if(total) salvar();
+  db.config.automacoes.locacaoVisitasGeralAssinatura=sig;
+  if(total || sig) salvar();
   return total;
 }
 
@@ -188,11 +194,11 @@ window.AUTOMACOES_LOC_VISITAS_PURE={ descricaoSuprimento, tipoMedidorFromCodigo,
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s= sess(); if(s) aplicarAutomacoesLocacaoVisitas(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,350); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_locacao_visitas', run, 350); else setTimeout(run, 350); return ret; };
 const oldRenderContratos=window.renderContratos;
-window.renderContratos=function(){ run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
+window.renderContratos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_locacao_visitas', run, 0); else run(); return oldRenderContratos?oldRenderContratos.apply(this,arguments):undefined; };
 const oldRenderOs=window.renderOs;
-window.renderOs=function(){ run(); return oldRenderOs?oldRenderOs.apply(this,arguments):undefined; };
-setTimeout(run,1000);
+window.renderOs=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_locacao_visitas', run, 0); else run(); return oldRenderOs?oldRenderOs.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_locacao_visitas', run, 1000); else setTimeout(run, 1000);
 console.log('[DIGICOPY] automacoes_locacao_visitas_patch.js v4.9.23 carregado');
 })();

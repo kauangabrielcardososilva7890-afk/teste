@@ -248,11 +248,11 @@ window.AUTOMACOES_VENDAS_COMPRAS_CADASTROS_PURE={ ufIbge, normalizarCidade, calc
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesVendasComprasCadastros(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,700); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_compras_cadastros', run, 700); else setTimeout(run, 700); return ret; };
 const oldRenderVendas=window.renderVendas;
-window.renderVendas=function(){ run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
+window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_compras_cadastros', run, 0); else run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
 const oldRenderProdutos=window.renderProdutos;
-window.renderProdutos=function(){ run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
-setTimeout(run,1500);
+window.renderProdutos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_compras_cadastros', run, 0); else run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_compras_cadastros', run, 1500); else setTimeout(run, 1500);
 console.log('[DIGICOPY] automacoes_vendas_compras_cadastros_patch.js v4.9.26 carregado');
 })();

@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.32**
+- Versão atual implementada: **v4.9.33**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2400,6 +2400,45 @@ Versão publicada:
 Status geral das partes enviadas:
 
 - Partes 1 a 12 recebidas, analisadas, adaptadas em patches separados e testadas.
+
+---
+
+
+## 8W. Otimização profunda pós-Partes 1 a 12 — v4.9.33
+
+Motivo:
+
+- Depois de adaptar as 12 partes de automações, o carregamento ficou pesado em PCs fracos porque várias rotinas antigas verificavam dados grandes no login e em cada renderização.
+
+Arquivo criado:
+
+- `otimizacao_profunda_patch.js`
+
+Ações tomadas:
+
+- Automações pesadas passaram a entrar em uma fila ociosa, executando uma por vez, com respiro entre elas.
+- Renderizações principais ganharam debounce final para evitar múltiplas renderizações seguidas.
+- Busca em módulos migrados deixou de filtrar a cada tecla; agora é para Enter/lupa.
+- Rotinas antigas sem assinatura ganharam assinatura/cache para não varrer `VISITAS`, `CONTADOR_PAGINAS`, contratos, parque, financeiro e compras toda hora.
+- Reconciliadores de contratos/impressoras agora pulam quando nada mudou.
+
+Arquivos ajustados para reduzir travamento:
+
+- `automacoes_triggers_patch.js`
+- `automacoes_financeiro_estoque_patch.js`
+- `automacoes_locacao_visitas_patch.js`
+- `automacoes_contratos_caixa_fiscal_patch.js`
+- `contratos_final_patch.js`
+- `contratos_visitas_vinculo_patch.js`
+- patches de automações passaram a agendar execução via `DIGI_TURBO` em vez de rodar tudo imediatamente na renderização.
+
+Teste criado:
+
+- `test_otimizacao_profunda.js`
+
+Versão publicada:
+
+- **v4.9.33**
 
 ---
 

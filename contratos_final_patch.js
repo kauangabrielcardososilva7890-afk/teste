@@ -34,6 +34,9 @@ function linhasModulo(regex){
   });
   return out;
 }
+function assinaturaLinhas(regex){ const r=linhasModulo(regex); const last=r[r.length-1]||{}; return `${r.length}:${JSON.stringify(last).slice(0,80)}`; }
+function assinaturaArray(nome, empId){ const a=Array.isArray(db[nome])?db[nome].filter(x=>!empId||!x.empresaId||x.empresaId===empId):[]; const last=a[a.length-1]||{}; return `${nome}:${a.length}:${JSON.stringify(last).slice(0,80)}`; }
+function assinaturaReconciliar(empId){ return [assinaturaLinhas(/^LOCACAO$|^LOCAÇÃO$|CONTRATO/i), assinaturaLinhas(/^ITENS_LOCACAO$|^ITENS_LOCAÇÃO$|ITEM.*LOC/i), assinaturaArray('contratos',empId), assinaturaArray('clientes',empId), assinaturaArray('equipamentos',empId), assinaturaArray('parque',empId)].join('|'); }
 function pick(row, nomes){ for(const k of nomes){ if(row && row[k] !== undefined && row[k] !== null && txt(row[k]) !== '') return row[k]; } return ''; }
 function nomeRow(row){ return pick(row, ['NOME','RAZAO_SOCIAL','RAZAOSOCIAL','NOME_FANTASIA','FANTASIA','CLIENTE','NOME_CLIENTE','DESCRICAO','CONTATO']); }
 function iso(rowValue, fallback=''){
@@ -139,8 +142,12 @@ function recriarParque(empId){
 }
 function reconciliar(empId){
   if(!empId || !db) return 0;
+  db.config=db.config||{}; db.config.automacoes=db.config.automacoes||{};
+  const sigAntes=assinaturaReconciliar(empId);
+  if(db.config.automacoes.contratosFinalReconAssinatura===sigAntes) return 0;
   const total = vincularContratosClientes(empId) + recriarParque(empId);
-  if(total) salvar();
+  db.config.automacoes.contratosFinalReconAssinatura=assinaturaReconciliar(empId);
+  if(total || sigAntes) salvar();
   return total;
 }
 function maquinasContrato(c){
@@ -219,7 +226,7 @@ window.baixarContratoRTF = function(contratoId, tipo){
 window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar };
 
 const oldShowApp = window.showApp;
-window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s) setTimeout(()=>reconciliar(s.empresaId),100); return ret; };
-setTimeout(()=>{ const s=sess(); if(s) reconciliar(s.empresaId); },500);
+window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };
+{ const job=()=>{ const s=sess(); if(s) reconciliar(s.empresaId); }; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 500); else setTimeout(job,500); }
 console.log('[DIGICOPY] contratos_final_patch.js v4.9.17 carregado');
 })();

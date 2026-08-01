@@ -195,13 +195,13 @@ window.AUTOMACOES_PIX_CONTADORES_AUX_PURE={ pixStatus, bancoCodigo, compararAler
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesPixContadoresAux(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,900); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_pix_contadores_auxiliares', run, 900); else setTimeout(run, 900); return ret; };
 const oldRenderConfig=window.renderConfig;
-window.renderConfig=function(){ run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
+window.renderConfig=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_pix_contadores_auxiliares', run, 0); else run(); return oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_pix_contadores_auxiliares', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 const oldRenderEquip=window.renderEquipamentos;
-window.renderEquipamentos=function(){ run(); return oldRenderEquip?oldRenderEquip.apply(this,arguments):undefined; };
-setTimeout(run,1800);
+window.renderEquipamentos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_pix_contadores_auxiliares', run, 0); else run(); return oldRenderEquip?oldRenderEquip.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_pix_contadores_auxiliares', run, 1800); else setTimeout(run, 1800);
 console.log('[DIGICOPY] automacoes_pix_contadores_auxiliares_patch.js v4.9.28 carregado');
 })();

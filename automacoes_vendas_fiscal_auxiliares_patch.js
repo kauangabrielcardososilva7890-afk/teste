@@ -448,15 +448,15 @@ window.AUTOMACOES_VENDAS_FISCAL_AUX_PURE={ normalizarNcm, mascararNumeroCartao, 
 if(typeof window==='undefined'||typeof document==='undefined') return;
 function run(){ const s=sess(); if(s) aplicarAutomacoesVendasFiscalAuxiliares(s.empresaId); }
 const oldShowApp=window.showApp;
-window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; setTimeout(run,1000); return ret; };
+window.showApp=function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 1000); else setTimeout(run, 1000); return ret; };
 const oldRenderVendas=window.renderVendas;
-window.renderVendas=function(){ run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
+window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 0); else run(); return oldRenderVendas?oldRenderVendas.apply(this,arguments):undefined; };
 const oldRenderProdutos=window.renderProdutos;
-window.renderProdutos=function(){ run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
+window.renderProdutos=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 0); else run(); return oldRenderProdutos?oldRenderProdutos.apply(this,arguments):undefined; };
 const oldRenderFinanceiro=window.renderFinanceiro;
-window.renderFinanceiro=function(){ run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
+window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 const oldRenderClientes=window.renderClientes;
-window.renderClientes=function(){ run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
-setTimeout(run,2200);
+window.renderClientes=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 0); else run(); return oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; };
+if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_vendas_fiscal_auxiliares', run, 2200); else setTimeout(run, 2200);
 console.log('[DIGICOPY] automacoes_vendas_fiscal_auxiliares_patch.js v4.9.29 carregado');
 })();
