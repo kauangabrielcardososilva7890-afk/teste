@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.33**
+- Versão atual implementada: **v4.9.34**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2439,6 +2439,148 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.33**
+
+---
+
+
+## 8X. Procedures operacionais — primeira remessa — v4.9.34
+
+O usuário enviou a primeira remessa de **Procedures** depois das 12 partes de triggers.
+
+### Grupos principais recebidos
+
+Procedures relevantes recebidas nesta remessa:
+
+- Fiscal/nota:
+  - `ALTERAR_PERFIL_TRIBUTARIO`
+  - `ITENS_NOTA_FISCAL`
+  - `TOTAL_NOTA_FISCAL`
+  - `GERAR_NFE`
+  - `GERAR_NFSE`
+  - `CLONAR_NFE`
+  - `GERAR_DUPLICATAS_NFE`
+- Produtos/estoque:
+  - `ATUALIZAR_ESTOQUE`
+  - `CORRIGIR_ESTOQUE`
+  - `ATUALIZAR_VALORES_PRODUTOS`
+  - `ATUALIZA_ESTOQUE_PRODUTO_SERIAL`
+  - `PRODUTOS_CADASTRAR_EQUIPAMENTO`
+  - `SOMA_ITENS_INSUMOS`
+  - `TOTAL_GASTOS_PRODUTO`
+- Locação/leitura:
+  - `VALOR_LOCACAO`
+  - `TOTAL_FRANQUIAS_LOCACAO`
+  - `PROC_SOMA_LOCACAO`
+  - `ATUALIZA_INFO_LOCACAO`
+  - `ATUALIZA_ITENS_LOCACAO`
+  - `ATUALIZA_TOTAL_LEITURAS`
+  - `LOCACAO_ATUALIZA_VALOR_GLOBAL`
+  - `LOCACAO_CADASTRAR_CONTADOR`
+- Vendas/chamados/descontos:
+  - `CADASTRAR_CHAMADO`
+  - `CADASTRAR_CHAMADO_AVULSO`
+  - `VENDA_ALTERAR_SITUACAO`
+  - `VENDA_DELETAR`
+  - `VENDA_DUPLICAR`
+  - `VENDA_AGENDA`
+  - `VENDA_COMANDA`
+  - `REC_SITUACAO_CARTUCHO`
+  - `ALTERAR_VLR_PROD_ITENS_VENDAS`
+  - `AUTORIZAR_DESCONTO_PRODUTO`
+  - `DISTRIBUIR_DESCONTOS_ITENS`
+- Financeiro/Pix/cartão/boleto:
+  - `GERAR_CONTAS_RECEBER`
+  - `PIX_VALIDAR_EMISSAO`
+  - `VENDA_CARTAO`
+  - `VENDA_CARTAO_TRANSACAO`
+  - `BOLETOS_GERAR`
+  - `BOLETOS_GERAR_POR_PARCELAS`
+  - `BOLETOS_ALTERAR_DADOS`
+  - `REC_PARCIAL_CONTAS_RECEBER`
+  - `REC_PARCIAL_CONTAS_PAGAR`
+- Cadastros/utilitários:
+  - `CLIENTE_UNIFICAR_CADASTRO`
+  - `PESQUISAR_CLIENTE_AGENDA`
+  - `ATUALIZA_CONFIG_CLIENTES`
+  - `CONFIG_ATUALIZA`
+  - `REMOVE_ACENTOS`
+  - `SOMENTENUMEROS`
+  - `ROUNDABNT`
+  - `GERAR_CODIGO_NUMERICO_NF`
+  - `COD_FUNCIONARIO_VALIDO`
+  - `ATIVAR_DESATIVAR_TRIGGERS`
+  - `CORRIGIR_GENERATORS`
+  - `NEW_FIELD`
+  - `CLONAR`
+  - `CLONAR_PRODUTOS`
+
+### O que foi implementado no ERP novo
+
+Arquivo criado:
+
+- `automacoes_procedures_operacionais_patch.js`
+
+Implementado de forma leve e segura:
+
+- Helpers puros equivalentes a procedures utilitárias:
+  - `roundABNT`
+  - `somenteNumeros`
+  - remoção de acentos
+  - código numérico de NF evitando sequências inválidas.
+- Locação:
+  - cálculo de valor do contrato por globais/medidores;
+  - soma de franquias;
+  - quantidade de equipamentos;
+  - quantidade/situação de chamados;
+  - atualização de leitura/contador no parque.
+- Leituras:
+  - total por `CONTADOR_PAGINAS`;
+  - páginas/excedentes;
+  - total por toner/tinta/A3/scanner quando houver dados.
+- Estoque/produtos:
+  - saldo por histórico de entrada/saída;
+  - vínculo produto/equipamento/serial;
+  - alteração de preço de item por tabela varejo/promoção/atacado.
+- Vendas:
+  - totalização de peças, serviços, insumos e descontos;
+  - finalização de cartucho/recarga conforme configuração;
+  - chamado gerado por venda/entrega quando configuração antiga pedir;
+  - distribuição de desconto com arredondamento.
+- Fiscal leve:
+  - perfil tributário em item de nota;
+  - CFOP, CSOSN/CST, ICMS, IPI, PIS, COFINS, ISSQN;
+  - IBS/CBS preservados;
+  - totalização leve de nota fiscal migrada.
+- Pix:
+  - validação para não gerar Pix por cima de boleto;
+  - mantém regra atual: Pix **sem baixa automática** e com comprovante obrigatório.
+- Clientes:
+  - `CLIENTE_UNIFICAR_CADASTRO` virou sugestão de duplicados, sem mesclar/apagar automaticamente.
+- Configuração operacional:
+  - médias de tempo de aprovação/entrega preservadas como métricas internas.
+
+### O que foi ignorado ou mantido apenas como referência
+
+- `ATIVAR_DESATIVAR_TRIGGERS`, `CORRIGIR_GENERATORS`, `NEW_FIELD` e `CLONAR`:
+  - são rotinas administrativas do banco antigo;
+  - não fazem sentido no ERP novo em navegador/Electron.
+- Boleto/Gerencianet:
+  - não foi reativado como emissão automática;
+  - apenas regras úteis e validações foram preservadas.
+- NF-e completa:
+  - não foi copiada literalmente porque é grande, pesada e depende de emissão fiscal real;
+  - foi feita adaptação leve para preservar cálculo/campos importantes sem travar o sistema.
+- Mesclagem automática de clientes:
+  - não foi aplicada automaticamente para evitar apagar/vincular dados errados;
+  - o ERP agora gera sugestão de duplicados para conferência.
+
+Teste criado:
+
+- `test_automacoes_procedures_operacionais.js`
+
+Versão publicada:
+
+- **v4.9.34**
 
 ---
 
