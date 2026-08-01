@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.29**
+- Versão atual implementada: **v4.9.30**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -69,6 +69,7 @@
 - `automacoes_orcamentos_clientes_auxiliares_patch.js`
 - `automacoes_pix_contadores_auxiliares_patch.js`
 - `automacoes_vendas_fiscal_auxiliares_patch.js`
+- `automacoes_compras_recebimentos_contadores_patch.js`
 
 ---
 
@@ -181,7 +182,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 7 | Recebida e processada | Gerou v4.9.27 |
 | Parte 8 | Recebida e processada | Gerou v4.9.28 |
 | Parte 9 | Recebida e processada | Gerou v4.9.29 |
-| Parte 10 | Pendente | Aguardando envio |
+| Parte 10 | Recebida e processada | Gerou v4.9.30 |
 | Parte 11 | Pendente | Aguardando envio |
 | Parte 12 | Pendente | Aguardando envio |
 
@@ -1846,6 +1847,200 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.29**
+
+---
+
+
+## 8Q. Parte 10 — triggers recebidas e interpretação
+
+### 8Q.1 Vendas — inclusão, exclusão e vínculos
+
+Recebido:
+
+- `VENDAS_INC_ANTES`
+- `VENDAS_INC_DEPOIS`
+- `VENDAS_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera sequência/código de venda.
+- Preenche funcionário, empresa, cliente padrão, situação `ABERTA`, data/hora e flags padrão.
+- Preenche valores numéricos com zero.
+- Copia nome, telefone, e-mail e endereço do cliente para a venda.
+- Se a venda tiver endereço, define entrega como `ENTREGAR`; senão `AGUARDAR`.
+- Atualiza endereço do cliente com os dados da venda.
+- Incrementa ordem/acesso do cliente e ordem do equipamento.
+- Cria item de recebimento quando há forma de recebimento.
+- Ao excluir venda, apaga/desvincula itens, recebimentos, despesas, orçamento, visitas, agenda e contas a receber.
+
+Ação no ERP novo:
+
+- Vendas migradas recebem defaults seguros sem sobrescrever venda manual.
+- Cliente/endereço são completados quando estavam vazios ou com placeholder.
+- Ordem de cliente/equipamento é recalculada por contagem, sem ficar incrementando a cada abertura da tela.
+- Item de recebimento antigo é preservado como histórico, sem baixa automática.
+- Venda excluída é marcada como `excluida`, vínculos ficam limpos e contas a receber são canceladas, sem apagar histórico em massa.
+- Itens de remanufatura são preservados em histórico separado ao limpar venda excluída.
+
+### 8Q.2 Compras
+
+Recebido:
+
+- `COMPRA_INC_ANTES`
+- `COMPRA_ALT_ANTES`
+- `COMPRA_ALT_DEPOIS`
+- `COMPRAS_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Define situação padrão `AGUARDANDO ENTREGA`.
+- Define empresa e data do fornecedor.
+- Ao finalizar compra, cria produto automaticamente quando item não tem produto.
+- Converte `KG` para `GR` e `LT` para `ML` quando configurado.
+- Calcula custo unitário com desconto, ICMS ST, IPI, frete e acréscimo.
+- Recalcula total da compra.
+- Rateia frete, acréscimo e desconto entre os itens.
+- Ao estornar, remove contas a pagar e movimentação.
+
+Ação no ERP novo:
+
+- `db.comprasMigradas` e `db.itensCompraMigrados` foram aprofundados.
+- Rateio de frete/acréscimo/desconto agora fica gravado no item.
+- Produto faltante pode ser criado pela compra finalizada com código numérico simples.
+- Conversão `KG→GR` e `LT→ML` foi preservada quando a configuração antiga pedir.
+- Estorno de compra cancela financeiro/movimentação histórica relacionada, sem remover em massa.
+
+### 8Q.3 Contador de páginas / leituras
+
+Recebido:
+
+- `CONTADOR_PAGINAS_BI0`
+- `CONTADOR_PAGINAS_INC_DEPOIS`
+- `CONTADOR_PAGINAS_ALT_DEPOIS`
+- `CONTADOR_PAGINAS_DEL_ANTES`
+- `CONTADOR_PAGINAS_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código do contador.
+- Define leitura como não finalizada.
+- Preenche data, funcionário, desconto zero e departamento.
+- Recalcula total da leitura quando contador é inserido/alterado.
+- Ao excluir contador, limpa financeiro vinculado e volta medidores do item de locação para a última leitura válida.
+
+Ação no ERP novo:
+
+- Criado `db.contadorPaginasMigrados` com dados do contador antigo.
+- Leituras do ERP são recalculadas pela soma de `CP_VALOR_TOTAL`.
+- Parque/contrato recebe última leitura e medidores iniciais por tipo:
+  - preto;
+  - color;
+  - preto A3;
+  - color A3;
+  - scanner.
+- Financeiro ligado a contador excluído será tratado como cancelamento histórico quando identificado, não como exclusão cega.
+
+### 8Q.4 Carrinho da loja, tokens e acessos
+
+Recebido:
+
+- `PRODUTOS_CARRINHO_BI0`
+- `PRODUTOS_CARRINHO_BIU0`
+- `SHOP_TOKEN` relacionado pela trigger
+- `SHOP_ACESSOS` relacionado pela trigger
+
+O que faz no banco anterior:
+
+- Gera código/data do carrinho.
+- Define cliente padrão se faltar.
+- Liga token da loja ao cliente.
+- Atualiza acessos e token quando carrinho anônimo vira carrinho de cliente.
+- Remove duplicidade de item quando token é associado a cliente.
+
+Ação no ERP novo:
+
+- Criado `db.produtosCarrinhoMigrados`, `db.shopTokensMigrados` e `db.shopAcessosMigrados`.
+- Dados ficam históricos/consultáveis.
+- Duplicidade de carrinho é marcada como removida por duplicidade, sem apagar o registro original.
+
+### 8Q.5 Itens de recebimento e recebimento de contas
+
+Recebido:
+
+- `ITENS_RECEBIMENTO_BD0`
+- `PROX_COD_ITENS_RECEBIMENTO`
+- `PROX_COD_REC_CONTAS_RECEBER`
+- `REC_CONTAS_RECEBER_INC_ANTES`
+- `REC_CONTAS_RECEBER_INC_DEPOIS`
+- `REC_CONTAS_RECECEBER_DEL_ANTES`
+- `REC_CONTAS_RECEBER_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código de item de recebimento.
+- Preenche valor pelo total da venda quando vazio.
+- Pode alterar forma de recebimento padrão do cliente conforme configuração.
+- Recebimento total baixa conta a receber/pagar.
+- Recebimento parcial reduz saldo.
+- Gera movimentação bancária/caixa.
+- Em cartão, calcula data de compensação por configuração.
+- Excluindo recebimento, remove comissão, recibo e movimentação.
+
+Ação no ERP novo:
+
+- Criado/atualizado `db.itensRecebimentoMigrados`.
+- Criado `db.recebimentosContasMigrados`, `db.movimentacaoRecebimentosMigrada` e `db.contasPagarParciaisMigradas`.
+- Recebimento normal antigo pode marcar conta como paga/parcial por ser histórico do banco antigo.
+- Pix continua com a regra atual do ERP: preserva histórico, exige comprovante e NÃO faz baixa automática.
+- Recebimento ligado a venda excluída não reabre financeiro cancelado.
+
+### 8Q.6 Auxiliares simples
+
+Recebido:
+
+- `RAMO_ITENS_BI0`
+- `PROX_COD_FABRICANTE`
+- `PROX_COD_MOTIVO_DEFEITO`
+- `PROX_COD_VALOR_CLIENTE`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Motivo de defeito fica em maiúsculo e remove aspas/barra invertida.
+- Valor por cliente guarda preço específico.
+
+Ação no ERP novo:
+
+- Criado `db.ramoItensMigrados`, `db.fabricantesMigrados`, `db.motivosDefeitoMigrados` e `db.valoresClienteMigrados`.
+- Motivo de defeito é limpo e normalizado.
+
+---
+
+## 8R. Patch gerado com base na Parte 10
+
+Arquivo criado:
+
+- `automacoes_compras_recebimentos_contadores_patch.js`
+
+Funções principais:
+
+- `sincronizarVendasParte10`
+- `limparVinculosVendaExcluida`
+- `sincronizarComprasParte10`
+- `sincronizarContadorPaginasParte10`
+- `sincronizarCarrinhoLoja`
+- `sincronizarItensRecebimento`
+- `sincronizarRecebimentosContas`
+- `sincronizarAuxiliaresParte10`
+- `aplicarAutomacoesComprasRecebimentosContadores`
+
+Teste criado:
+
+- `test_automacoes_compras_recebimentos_contadores.js`
+
+Versão publicada:
+
+- **v4.9.30**
 
 ---
 
