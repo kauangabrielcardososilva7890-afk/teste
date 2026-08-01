@@ -79,17 +79,58 @@ function prepararEmpresaLogin(){
   return emp;
 }
 
+function renderLoginDireto(emp){
+  if(typeof document==='undefined') return;
+  const box=document.getElementById('login-step-user');
+  if(!box) return;
+  const active=document.activeElement;
+  const digitando=active && (active.id==='login-user'||active.id==='login-senha-user');
+  const loginAtual=document.getElementById('login-user')?.value || '';
+  const senhaAtual=document.getElementById('login-senha-user')?.value || '';
+  if(box.dataset.loginDiretoOk==='1'){
+    box.classList.remove('hidden');
+    box.style.display='block';
+    box.style.pointerEvents='auto';
+    const u=document.getElementById('login-user'); const sp=document.getElementById('login-senha-user');
+    if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
+    if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
+    return;
+  }
+  const primeiro=(db.usuarios||[]).find(u=>u.empresaId===emp.id&&u.ativo);
+  box.dataset.loginDiretoOk='1';
+  box.classList.remove('hidden');
+  box.style.display='block';
+  box.style.pointerEvents='auto';
+  box.innerHTML=`
+    <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef]">
+      <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[14px]">DG</div>
+      <div><p class="font-bold text-[13px] leading-tight">${title(emp.fantasia||emp.nome||'DIGICOPY')}</p><p class="text-[11px] text-slate-600">Acesso por usuário</p></div>
+      <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    </div>
+    <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Informe usuário e senha do sistema antigo ou do ERP.</p></div>
+    <form id="login-direto-form" class="space-y-4" onsubmit="event.preventDefault(); doLoginUser();">
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" autocomplete="username" value="${loginAtual || (primeiro?escHtml(primeiro.login||''):'')}" placeholder="ex: KAUAN" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" autocomplete="current-password" value="${senhaAtual?escHtml(senhaAtual):''}" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
+      <button type="submit" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no ERP</button>
+    </form>`;
+  const u=document.getElementById('login-user'); const sp=document.getElementById('login-senha-user');
+  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
+  if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
+  if(digitando && active && active.id){ const novo=document.getElementById(active.id); if(novo){ novo.focus(); try{ novo.setSelectionRange(novo.value.length,novo.value.length); }catch(e){} } }
+}
+function escHtml(v){ return txt(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c])); }
 function estilizarLogin(){
   if(typeof document==='undefined') return;
   const st=document.getElementById('login-direto-css')||document.createElement('style');
   st.id='login-direto-css';
   st.textContent=`
+    #login-screen{pointer-events:auto!important;}
     #login-screen > div:first-child{display:flex!important;align-items:center!important;justify-content:center!important;padding:30px!important;}
     #login-screen > div:first-child h1,#login-screen > div:first-child p,#login-screen > div:first-child .relative.z-10.flex,#login-screen > div:first-child span{display:none!important;}
     #login-screen > div:first-child img{width:min(420px,70vw)!important;height:auto!important;max-height:55vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
     #login-step-cnpj{display:none!important;}
-    #login-step-user{display:block!important;}
-    #login-step-user .mb-2{display:none!important;}
+    #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}
+    #login-step-user input,#login-step-user button,#login-direto-form{pointer-events:auto!important;}
     #login-empresa-cnpj{display:none!important;}
     .modern-topnav .module:first-child .module-menu{display:none!important;}
     .modern-topnav .module-menu button{white-space:nowrap;}
@@ -97,11 +138,7 @@ function estilizarLogin(){
   if(!st.parentNode) document.head.appendChild(st);
   const emp=prepararEmpresaLogin();
   const cnpj=document.getElementById('login-step-cnpj'); if(cnpj) cnpj.classList.add('hidden');
-  const user=document.getElementById('login-step-user'); if(user) user.classList.remove('hidden');
-  const n=document.getElementById('login-empresa-nome'); if(n) n.innerText=emp.fantasia||emp.nome||'DIGICOPY';
-  const c=document.getElementById('login-empresa-cnpj'); if(c) c.innerText='';
-  const i=document.getElementById('login-empresa-iniciais'); if(i) i.innerText='DG';
-  const login=document.getElementById('login-user'); if(login&&!login.value){ const u=(db.usuarios||[]).find(u=>u.empresaId===emp.id&&u.ativo); if(u) login.value=u.login||''; }
+  renderLoginDireto(emp);
   limparTopoMenus();
 }
 function limparTopoMenus(){

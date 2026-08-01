@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.39**
+- Versão atual implementada: **v4.9.40**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2770,7 +2770,7 @@ Versão publicada:
 ---
 
 
-## 8AC. Login direto, usuários migrados e carga automática — v4.9.39
+## 8AC. Login direto, usuários migrados e carga automática — v4.9.40
 
 Correções solicitadas pelo usuário após testar a tela inicial/login.
 
@@ -2806,7 +2806,29 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.39**
+- **v4.9.40**
+
+---
+
+
+## 8AD. Correção do campo de login — v4.9.40
+
+Correção emergencial após o usuário relatar que não conseguia digitar no campo de usuário.
+
+Arquivo ajustado:
+
+- `login_dados_automaticos_patch.js`
+
+Ações tomadas:
+
+- Recriada a área de login do usuário de forma direta e limpa.
+- Inputs de usuário/senha agora ficam explicitamente habilitados, editáveis e com `pointer-events` ativo.
+- O patch não re-renderiza a área enquanto o usuário está digitando.
+- Mantida a tela sem etapa de CNPJ e com logo grande.
+
+Versão publicada:
+
+- **v4.9.40**
 
 ---
 
