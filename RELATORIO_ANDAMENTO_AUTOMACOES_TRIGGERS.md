@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.23**
+- Versão atual implementada: **v4.9.24**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -167,7 +167,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 1 | Recebida e processada | Gerou v4.9.21 |
 | Parte 2 | Recebida e processada | Gerou v4.9.22 |
 | Parte 3 | Recebida e processada | Gerou v4.9.23 |
-| Parte 4 | Pendente | Aguardando envio |
+| Parte 4 | Recebida e processada | Gerou v4.9.24 |
 | Parte 5 | Pendente | Aguardando envio |
 | Parte 6 | Pendente | Aguardando envio |
 | Parte 7 | Pendente | Aguardando envio |
@@ -743,6 +743,223 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.23**
+
+
+---
+
+## 8E. Parte 4 — triggers recebidas e interpretação
+
+### 8E.1 Locação / contratos
+
+Recebido:
+
+- `LOCACAO_INC_ANTES`
+- `LOCACAO_INC_DEPOIS`
+- `LOCACAO_ALT_ANTES`
+- `LOCACAO_ALT_DEPOIS`
+- `LOCACAO_DELETE_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático da locação.
+- Preenche defaults de contrato, visitas e tipo.
+- Valor do contrato é recalculado por `VALOR_LOCACAO` + valores globais de medidores:
+  - preto A4;
+  - color A4;
+  - preto A3;
+  - color A3;
+  - scanner.
+- Ao ocultar/ativar contrato, atualiza estoque/status dos equipamentos seriais vinculados.
+- Ao excluir contrato, remove contas a receber e itens de locação.
+- Ao inserir contrato, incrementa ordem do cliente.
+
+Ação no ERP novo:
+
+- Criado cálculo de `valorCalculadoMensal` do contrato.
+- Se contrato não tem valor mensal definido e o cálculo encontrar valor, preenche `valorMensalFixo`.
+- Normaliza defaults de contrato:
+  - `cobrarExcedentesDias`;
+  - `qtdeVisitas`;
+  - `situacaoVisitas`;
+  - `locTipo`;
+  - `custoMedioVisitas`.
+- Quando contrato é encerrado/excluído/inativo, parque é inativado e equipamento volta para disponível.
+
+### 8E.2 Caixa
+
+Recebido:
+
+- `CAIXA_INC_ANTES`
+- `CAIXA_ALT_ANTES`
+- `CAIXA_DELETE_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático do caixa.
+- Preenche data, hora, situação aberta e todos os valores monetários como zero.
+- Se caixa volta para aberto, remove movimentação de fechamento diário.
+- Ao excluir caixa, remove itens de caixa, retiradas e movimentações vinculadas.
+
+Ação no ERP novo:
+
+- Criada normalização leve de caixas migrados em `db.caixasMigrados`.
+- Preenche defaults sem mexer nas tabelas originais.
+- Não foi implementado apagar movimentações automaticamente, para evitar perda de histórico real.
+
+### 8E.3 Fatura NFE e nota fiscal
+
+Recebido:
+
+- `FATURA_NFE_INC_ANTES`
+- `FATURA_NFE_UP_DEL`
+- `NOTA_FISCAL_ALT_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código automático de fatura de NFE.
+- Se valor de duplicata muda ou fatura é removida, apaga itens de recebimento NFE.
+- Nota fiscal vinculada a venda marca contas a receber com NFE.
+- Nota fiscal vinculada a leitura marca contas a receber com NFE.
+- Para NFE modelo 55, gera duplicatas com vencimento/valor a partir de contas abertas.
+- Se nota é cancelada/denegada, remove vínculo da NFE no financeiro e na leitura.
+- Se nota autorizada, atualiza produto com NCM, CEST e enquadramento IPI.
+
+Ação no ERP novo:
+
+- Criado `db.notasFiscaisMigradas` e `db.faturasNfe` como estruturas leves.
+- Nota fiscal migrada marca venda, leitura e conta a receber com NFE.
+- Cancelada/denegada limpa vínculo e registra observação no financeiro.
+- Atualiza produto com NCM/CEST/enquadramento quando faltando.
+- Gera faturas NFE a partir de contas abertas vinculadas.
+- Cálculo fiscal completo continua reservado para módulo fiscal próprio.
+
+### 8E.4 Motivos, contador alertas e cadastros auxiliares
+
+Recebido:
+
+- `MOTIVO_DEFEITO_DETALHE_BI0`
+- `CONTADOR_ALERTAS_BI0`
+- `CONTADOR_ALERTAS_CONFIG_BI0`
+- `CONTADOR_LOCAL_OFF_BI0`
+- `FATURA_NFE_INC_ANTES`
+- `ASSUNTO_EMAIL_INC_ANTES`
+- `ASSUNTO_SMS_INC_ANTES`
+- `VEICULOS_IND_ANTES`
+- `CORRECOES_INC_ANTES`
+- `CORRECOES_INC_DEPOIS`
+- `BAIRROS_DEL_ANTES`
+- `PROX_COD_BAIRRO`
+
+O que faz no banco anterior:
+
+- Gera códigos automáticos.
+- Preenche data atual.
+- Normaliza descrição de detalhes de motivo em maiúsculo.
+- Incrementa contadores/cliques.
+- Impede excluir bairro se cliente usa.
+- Correção de nota altera situação para corrigida.
+
+Ação no ERP novo:
+
+- Não copiado literalmente nesta etapa.
+- A maioria é geração de código ou regra de cadastros auxiliares.
+- Será reavaliado quando os módulos fiscal, SMS/agenda e cadastros auxiliares forem trabalhados.
+
+### 8E.5 Produtos e equipamentos
+
+Recebido:
+
+- `PRODUTOS_INC_ALT_ANTES`
+- `PRODUTOS_INC_DEPOIS`
+- `PRODUTOS_ALT_DEPOIS`
+- `PRODUTOS_DEL_ANTES`
+- `EQUIPAMENTOS_INC_ANTES`
+- `EQUIPAMENTOS_AIU0`
+
+O que faz no banco anterior:
+
+- Gera código de produto/equipamento.
+- Define categoria por descrição ou equipamento.
+- Vincula equipamento a produto auxiliar.
+- Descobre fabricante pelo nome do equipamento.
+- Preenche defaults de produto:
+  - peso;
+  - empresa;
+  - lucros;
+  - ordem;
+  - origem;
+  - categoria;
+  - custo;
+  - preço;
+  - estoque;
+  - unidade;
+  - promoção;
+  - tipo;
+  - data de cadastro;
+  - controle de estoque;
+  - vida útil;
+  - descontos máximos.
+- Calcula custo com gastos/frete.
+- Calcula preço e margens.
+- Ao inserir produto, cria histórico de estoque inicial.
+- Ao atualizar produto, incrementa ordem do NCM e atualiza custo dos insumos.
+- Ao deletar produto, remove gastos e histórico.
+
+Ação no ERP novo:
+
+- Criados defaults de produto de forma leve.
+- Equipamento cria/atualiza produto auxiliar de categoria `Impressoras`, sem duplicar.
+- Descobre fabricante pelo modelo: HP, Brother, Kyocera, Epson etc.
+- Não foi copiado controle de promoção/varejo/atacado, pois já foi removido por regra do projeto.
+- Histórico inicial e recálculo de estoque já são tratados pelo patch de financeiro/estoque quando há `PRODUTOS_HISTORICO`.
+
+### 8E.6 Ligações
+
+Recebido:
+
+- `LIGACOES_INC_ANTES`
+- `LIGACOES_BU0`
+
+O que faz no banco anterior:
+
+- Gera código de ligação.
+- Preenche data.
+- Puxa empresa pelo cliente.
+- Quando situação é concluído, limpa agendamento.
+
+Ação no ERP novo:
+
+- Não implementado agora.
+- Módulo de ligações/CRM ainda não é rotina principal.
+
+---
+
+## 8F. Patch gerado com base na Parte 4
+
+Arquivo criado:
+
+- `automacoes_contratos_caixa_fiscal_patch.js`
+
+Funções principais:
+
+- `calcularValorContrato`
+- `normalizarContrato`
+- `aplicarAutomacoesContratos`
+- `defaultsCaixa`
+- `sincronizarCaixaMigrado`
+- `sincronizarNotasFiscais`
+- `fabricantePeloModelo`
+- `defaultsProduto`
+- `aplicarAutomacoesProdutosEquipamentos`
+- `aplicarAutomacoesContratosCaixaFiscal`
+
+Teste criado:
+
+- `test_automacoes_contratos_caixa_fiscal.js`
+
+Versão publicada:
+
+- **v4.9.24**
 
 
 ---
