@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.26**
+- Versão atual implementada: **v4.9.27**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -170,7 +170,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 4 | Recebida e processada | Gerou v4.9.24 |
 | Parte 5 | Recebida e processada | Gerou v4.9.25 |
 | Parte 6 | Recebida e processada | Gerou v4.9.26 |
-| Parte 7 | Pendente | Aguardando envio |
+| Parte 7 | Recebida e processada | Gerou v4.9.27 |
 | Parte 8 | Pendente | Aguardando envio |
 | Parte 9 | Pendente | Aguardando envio |
 | Parte 10 | Pendente | Aguardando envio |
@@ -1340,6 +1340,194 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.26**
+
+
+---
+
+## 8K. Parte 7 — triggers recebidas e interpretação
+
+### 8K.1 Itens de orçamento
+
+Recebido:
+
+- `ITENS_ORCAMENTO_INSERT_UPDATE_D`
+- `ITENS_ORCAMENTO_INSERT_UPDATE`
+- `ITENS_ORCAMENTO_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Se orçamento não está finalizado, item puxa produto/cartucho e define tipo.
+- Produto define tipo de descrição: serviço, produto, cartucho, cartucho vazio ou insumo.
+- Preço do produto vem por tabela: preço 1, 2 ou 3.
+- Cartucho monta descrição de recarga/remanufatura usando tipo, fabricante, número e cor.
+- Cartucho usa preço por tipo: recarga, trocar, remanufaturado, compatível ou original.
+- Calcula valor total do item.
+- Valida desconto por percentual ou por valor.
+- Recalcula total do orçamento após inserir/alterar/deletar item.
+
+Ação no ERP novo:
+
+- Criado cálculo detalhado de item de orçamento em `automacoes_orcamentos_clientes_auxiliares_patch.js`.
+- Orçamentos migrados recebem itens já normalizados com preço, descrição, tipo, desconto e subtotal.
+- Total do orçamento é atualizado pelo total dos itens.
+- Desconto é validado em faixa segura, evitando exceção que travaria o uso.
+
+### 8K.2 Clientes e endereços
+
+Recebido:
+
+- `CLIENTES_INC_ANTES`
+- `CLIENTES_ALT_ANTES`
+- `CLIENTES_ALT_DEPOIS`
+- `CLIENTE_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código de cliente.
+- Define e-mail em minúsculo.
+- Define defaults: número, bairro, rua, cidade, UF, nome, limite de crédito, desconto, bloqueado e tipo.
+- Remove acentos da cidade e normaliza em maiúsculo.
+- Cria cidade, bairro e rua auxiliares se não existem.
+- Atualiza cadastro de endereço.
+- Atualiza dados fiscais em notas não autorizadas.
+- Ao excluir cliente, remove valores por cliente e valores de cartucho por cliente.
+
+Ação no ERP novo:
+
+- Clientes são normalizados sem CAPSLOCK nos nomes.
+- E-mail fica minúsculo.
+- Defaults de endereço são preenchidos quando faltam.
+- Cidade sem acento é mantida em campo auxiliar para busca.
+- Limite de crédito padrão é preservado.
+- Endereço do cliente gera registro em `db.enderecosMigrados`.
+- Não foi implementada exclusão agressiva de valores/vínculos, para preservar histórico real.
+
+### 8K.3 Boletos como legado
+
+Recebido:
+
+- `BOLETOS_INC_ANTES`
+- `BOLETOS_INC_DEPOIS`
+- `BOLETOS_ALT_ANTES`
+- `BOLETOS_ALT_DEPOIS`
+- `BOLETOS_DEL_ANTES`
+- `BOLETOS_AD0`
+
+O que faz no banco anterior:
+
+- Gera código/número do boleto.
+- Preenche datas e status.
+- Normaliza status vindo de integração: waiting/open/late/paid/identified/unpaid/refunded/contested/canceled/settled/link/expired.
+- Se boleto é pago, cria recebimento e movimentação.
+- Pode criar conta a pagar com custo de boleto.
+- Ao excluir boleto, limpa vínculo na conta a receber e registra log.
+
+Ação no ERP novo:
+
+- Como a regra atual do projeto é faturamento sem boleto, o boleto não foi reativado no faturamento.
+- Criado `db.boletosLegado` apenas para consulta/histórico.
+- Status de boleto antigo é normalizado.
+- Não bloqueia cliente e não gera cobrança nova por boleto.
+
+### 8K.4 NFSe
+
+Recebido:
+
+- `NFSE_BI0`
+- `NFSE_BU0`
+
+O que faz no banco anterior:
+
+- Gera código de NFSe.
+- Preenche data de emissão.
+- Se status vira cancelado, preenche data de cancelamento.
+
+Ação no ERP novo:
+
+- Criado `db.nfseMigradas` como estrutura preparada para módulo fiscal.
+- NFSe cancelada fica marcada com data de cancelamento.
+
+### 8K.5 Portal/usuários de clientes e auxiliares
+
+Recebido:
+
+- `SHOP_ACESSOS_BI0`
+- `SHOP_TOKEN_BI0`
+- `CLIENTES_USUARIOS_AI0`
+- `CLIENTES_USUARIOS_BI0`
+- `CLIENTES_USUARIOS_RESTRICAO_BI0`
+- `GRADES_BI0`
+- `PRODUTOS_CATEGORIA_BI0`
+- `VARIACAO_BI0`
+
+O que faz no banco anterior:
+
+- Gera códigos e datas.
+- Víncula token de loja online ao cliente.
+- Libera permissões padrão para usuário do cliente: FAQ, loja, pedidos, faturas, impressoras e chamados.
+- Grades, categorias de produto e variações recebem código e data.
+
+Ação no ERP novo:
+
+- Criado `db.clientesUsuariosMigrados` com permissões de portal preservadas para uso futuro.
+- Criado:
+  - `db.gradesMigradas`;
+  - `db.produtosCategoriaMigradas`;
+  - `db.variacaoTiposMigrados`.
+- Loja online/portal de cliente não foi ativado agora; só preservado como dados futuros.
+
+### 8K.6 Outros auxiliares
+
+Recebido:
+
+- `ITENS_INSUMOS_INC_ANTES`
+- `ITENS_INSUMOS_ALT_ANTES`
+- `ITENS_INSUMOS_INC_DEPOIS`
+- `ITENS_INSUMOS_DEL_DEPOIS`
+- `SITUACAO_INC_ANTES`
+- `CIDADES_*`
+- `RUAS_*`
+
+O que faz no banco anterior:
+
+- Gera código automático.
+- Calcula total de insumo do cartucho.
+- Normaliza cidade, rua, situação e UF.
+- Bloqueia exclusão de cidade/rua se estiver em uso.
+
+Ação no ERP novo:
+
+- O custo de insumo/cartucho já foi considerado nos patches de cartuchos e insumos.
+- Cidade/rua/situação já foram migradas como estruturas auxiliares.
+- Bloqueio de exclusão não foi aplicado por ainda não existir tela de edição desses auxiliares.
+
+---
+
+## 8L. Patch gerado com base na Parte 7
+
+Arquivo criado:
+
+- `automacoes_orcamentos_clientes_auxiliares_patch.js`
+
+Funções principais:
+
+- `calcularItemOrcamento`
+- `sincronizarItensOrcamentoDetalhes`
+- `normalizeCliente`
+- `sincronizarClientesDetalhes`
+- `statusBoleto`
+- `sincronizarBoletosLegado`
+- `sincronizarNfse`
+- `sincronizarPortalEAuxiliares`
+- `aplicarAutomacoesOrcClientesAux`
+
+Teste criado:
+
+- `test_automacoes_orcamentos_clientes_auxiliares.js`
+
+Versão publicada:
+
+- **v4.9.27**
 
 
 ---
