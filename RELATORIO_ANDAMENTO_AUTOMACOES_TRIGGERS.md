@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.22**
+- Versão atual implementada: **v4.9.23**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -166,7 +166,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 |---|---|---|
 | Parte 1 | Recebida e processada | Gerou v4.9.21 |
 | Parte 2 | Recebida e processada | Gerou v4.9.22 |
-| Parte 3 | Pendente | Aguardando envio |
+| Parte 3 | Recebida e processada | Gerou v4.9.23 |
 | Parte 4 | Pendente | Aguardando envio |
 | Parte 5 | Pendente | Aguardando envio |
 | Parte 6 | Pendente | Aguardando envio |
@@ -551,6 +551,198 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.22**
+
+
+---
+
+## 8C. Parte 3 — triggers recebidas e interpretação
+
+### 8C.1 Despesas de locação
+
+Recebido:
+
+- `DESPESAS_LOCACAO_INC_ANTES`
+- `DESPESAS_LOCACAO_ALT_ANTES`
+- `DESPESAS_LOCACAO_BD0`
+
+O que faz no banco anterior:
+
+- Gera código automático da despesa.
+- Define situação padrão como despesa lançada.
+- Se a despesa veio de uma visita, puxa:
+  - item de locação;
+  - motivo da visita;
+  - custo da visita;
+  - contrato da visita;
+  - data da visita.
+- Se a despesa veio de item de venda, puxa produto/cartucho, descrição, etiqueta e custo.
+- Se a descrição for toner/cartucho/refil/recarga, cria histórico de estoque de locação.
+- Usa vida útil do produto/cartucho para avisar lançamento fora da vida útil.
+- Ao excluir despesa, remove histórico de estoque relacionado.
+
+Ação no ERP novo:
+
+- Criado `db.despesasLocacao` como estrutura leve para registrar despesas vinculadas à locação.
+- Criado `db.locacaoEstoqueHistorico` para histórico de suprimentos da locação.
+- Despesa vinculada a visita puxa motivo, custo, item de locação, contrato, cliente e data.
+- Despesa de suprimento cria histórico com vida útil estimada pelo produto/cartucho quando possível.
+
+### 8C.2 Itens de locação / impressoras no contrato
+
+Recebido:
+
+- `ITENS_LOCACAO_INC_ANTES`
+- `ITENS_LOCACAO_INC_DEPOIS`
+- `ITENS_LOCACAO_ALT_ANTES`
+- `ITENS_LOCACAO_ALT_DEPOIS`
+- `ITENS_LOCACAO_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código do item de locação.
+- Busca variação do produto pelo serial.
+- Puxa descrição de localização quando tem localização cadastrada.
+- Se não tem departamento, cria/usa departamento `OUTROS`.
+- Normaliza serial.
+- Preenche data de instalação/cadastro.
+- Inicializa todos os contadores e valores de medidores em zero quando vazios.
+- Controla medidores independentes:
+  - Preto A4;
+  - Color A4;
+  - Scanner;
+  - Preto A3;
+  - Color A3.
+- Cada medidor tem tipo próprio e valores próprios.
+- Ao alterar/inserir/excluir, recalcula soma do contrato, franquias e informações da locação.
+- Atualiza estoque/status do equipamento quando entra/sai/remaneja/oculta/defeito.
+- Se situação é defeito, cria visita vinculada.
+
+Ação no ERP novo:
+
+- Criada normalização de `ITENS_LOCACAO` quando essa tabela estiver disponível.
+- Cada item vira/atualiza um registro em `db.parque`.
+- Cada medidor vira configuração independente em `parque.medidores`.
+- Status do parque/equipamento é atualizado conforme situação.
+- Departamento e localização são preservados.
+- Equipamento entra no cadastro do contrato e alimenta leituras/chamados.
+
+### 8C.3 Visitas / chamados técnicos
+
+Recebido:
+
+- `VISITAS_INC_ANTES`
+- `VISITAS_INC_DEPOIS`
+- `VISITAS_ALT_ANTES`
+- `VISITAS_ALT_DEPOIS`
+- `VISITAS_DEL_ANTES`
+- `VISITAS_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código da visita.
+- Preenche funcionário, custo, valor extra, prioridade, situação, data e hora.
+- Se atendimento é livre, limpa item de locação e contador.
+- Puxa endereço do cliente.
+- Se visita tem item de locação, puxa:
+  - contato;
+  - endereço específico;
+  - equipamento;
+  - serial;
+  - patrimônio;
+  - localização;
+  - departamento;
+  - contrato;
+  - cliente.
+- Preenche motivo padrão `OUTROS` quando faltando.
+- Se finalizada, preenche data finalizada e técnico responsável.
+- Cria/atualiza despesa de locação vinculada à visita.
+- Pode gerar venda a partir da visita quando marcado.
+- Atualiza situação da locação conforme chamado aberto/concluído.
+- Atualiza última visita do item de locação.
+- Atualiza contadores de uso de motivo/departamento/equipamento.
+- Remove despesas/históricos ao excluir visita.
+
+Ação no ERP novo:
+
+- Visitas migradas agora atualizam chamados (`db.os`) com mais campos.
+- Chamado puxa cliente, contrato, equipamento, parque, patrimônio, serial, motivo, custo, data e status.
+- Visita finalizada vira chamado concluído.
+- Visita com custo gera/atualiza despesa de locação.
+- Visita marcada para gerar venda cria venda de serviço vinculada ao chamado, sem duplicar quando já existe.
+- Contrato recebe situação de chamados (`C` ou `A`).
+- Parque recebe última visita.
+
+### 8C.4 Roteiros, veículos e assuntos
+
+Recebido:
+
+- `ROTEIROS_ALT_ANTES`
+- `ROTEIROS_DEL_ANTES`
+- `ASSUNTO_SMS_INC_ANTES`
+- `VEICULOS_IND_ANTES`
+
+O que faz no banco anterior:
+
+- Roteiro calcula km rodado.
+- Exclusão/alteração de roteiro remove itens vinculados.
+- Assunto SMS e veículos apenas geram códigos automáticos.
+
+Ação no ERP novo:
+
+- Não implementado agora.
+- Roteiros/logística e SMS não são rotina principal atual.
+- Códigos automáticos já têm regra própria no ERP novo.
+
+### 8C.5 Empresa/configuração inicial
+
+Recebido:
+
+- `EMPRESA_INC_ANTES`
+- `EMPRESA_INC_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código da empresa.
+- Remove acentos da cidade.
+- Preenche flags de módulos.
+- Cria tributos padrão.
+- Cria funcionário admin inicial.
+- Cria produtos de exemplo de cartuchos/impressoras.
+- Cria configuração padrão enorme.
+- Cria cliente balcão, caixa e contas padrão.
+
+Ação no ERP novo:
+
+- Não copiado literalmente.
+- ERP novo já tem configuração inicial, empresa, usuários e formas de pagamento próprias.
+- Copiar produtos/clientes de exemplo poderia poluir a base real da loja.
+- Regras úteis serão consideradas quando o módulo fiscal/permissões for finalizado.
+
+---
+
+## 8D. Patch gerado com base na Parte 3
+
+Arquivo criado:
+
+- `automacoes_locacao_visitas_patch.js`
+
+Funções principais:
+
+- `descricaoSuprimento`
+- `tipoMedidorFromCodigo`
+- `medidoresFromItemLocacao`
+- `sincronizarItensLocacao`
+- `sincronizarDespesasLocacao`
+- `sincronizarVisitasAvancado`
+- `aplicarAutomacoesLocacaoVisitas`
+
+Teste criado:
+
+- `test_automacoes_locacao_visitas.js`
+
+Versão publicada:
+
+- **v4.9.23**
 
 
 ---
