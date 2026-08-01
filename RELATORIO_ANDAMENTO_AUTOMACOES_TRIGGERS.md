@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.30**
+- Versão atual implementada: **v4.9.31**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -70,6 +70,7 @@
 - `automacoes_pix_contadores_auxiliares_patch.js`
 - `automacoes_vendas_fiscal_auxiliares_patch.js`
 - `automacoes_compras_recebimentos_contadores_patch.js`
+- `automacoes_caixa_chat_auxiliares_patch.js`
 
 ---
 
@@ -183,7 +184,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 8 | Recebida e processada | Gerou v4.9.28 |
 | Parte 9 | Recebida e processada | Gerou v4.9.29 |
 | Parte 10 | Recebida e processada | Gerou v4.9.30 |
-| Parte 11 | Pendente | Aguardando envio |
+| Parte 11 | Recebida e processada | Gerou v4.9.31 |
 | Parte 12 | Pendente | Aguardando envio |
 
 ---
@@ -2041,6 +2042,176 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.30**
+
+---
+
+
+## 8S. Parte 11 — triggers recebidas e interpretação
+
+### 8S.1 Retirada de caixa
+
+Recebido:
+
+- `PROX_COD_RETIRADA_CAIXA`
+- `RETIRADA_CAIXA_INC_DEPOIS`
+- `RETIRADA_CAIXA_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código da retirada.
+- Garante categoria de contas a pagar chamada `FECHAMENTO`.
+- Se a retirada for entrada (`E`), cria conta a receber já paga.
+- Se for saída (`S`), cria conta a pagar já paga.
+- Ao excluir retirada, apaga movimentação e financeiro vinculado.
+
+Ação no ERP novo:
+
+- Criado `db.retiradasCaixaMigradas`.
+- Criado `db.movimentacaoRetiradaCaixaMigrada`.
+- Entradas geram conta a receber histórica paga.
+- Saídas geram conta a pagar histórica paga na categoria `FECHAMENTO`.
+- Não foi feita exclusão cega de financeiro; o histórico fica preservado.
+
+### 8S.2 Fornecedores, transportadores e cidades
+
+Recebido:
+
+- `FORNECEDORES_INC_ANTES`
+- `TRANSPORTADORES_INC_ALT_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código do fornecedor.
+- Preenche placeholders de endereço, bairro, cidade, UF, número e fantasia.
+- Remove acentos da cidade.
+- Garante cadastro da cidade por nome/UF.
+- Transportador também cria/vincula cidade quando necessário.
+
+Ação no ERP novo:
+
+- Criado `db.fornecedoresMigrados`.
+- Criado `db.transportadoresMigrados`.
+- Cidades auxiliares são criadas em `db.cidadesMigradas` sem acento e em maiúsculo.
+- Dados ficam como histórico/consulta, sem misturar fornecedor com cliente.
+
+### 8S.3 Chat gerando chamado
+
+Recebido:
+
+- `CHAT_BI0`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Define cliente e empresa padrão quando faltam.
+- Se o chat não tem visita, cria ou localiza uma visita/chamado aberto com motivo `CHAT`.
+- Define origem como funcionário ou cliente.
+- Se o chat tem visita mas não tem cliente, puxa o cliente da visita.
+
+Ação no ERP novo:
+
+- Criado `db.chatsMigrados`.
+- Criado/garantido motivo `CHAT` em `db.motivosDefeitoMigrados`.
+- Chat antigo vira chamado leve em `db.os` quando não existe vínculo.
+- Se já existe chamado da visita, o chat é ligado a ele.
+- Mensagens ficam em histórico dentro do chamado e também em `db.chatsMigrados`.
+
+### 8S.4 Recibos, anexos e centro de custo
+
+Recebido:
+
+- `RECIBOS_EMITIDOS_INC_ANTES`
+- `ANEXOS_BI0`
+- `CENTRO_CUSTO_BI0`
+
+O que faz no banco anterior:
+
+- Gera códigos.
+- Recibo com parcela puxa o último item de recebimento daquela parcela.
+- Centro de custo recebe data, del `0`, ordem `0` e funcionário.
+
+Ação no ERP novo:
+
+- Criado `db.recibosEmitidosMigrados`.
+- Criado `db.anexosMigrados`.
+- Criado `db.centrosCustoMigrados`.
+- Recibo antigo mantém vínculo com o recebimento quando encontrado.
+
+### 8S.5 Departamentos, motivos, perguntas, localização e demais auxiliares
+
+Recebido:
+
+- `PROX_COD_SOLUCAO_DEFEITO`
+- `PROX_SOMA_ITENS_INSUMOS_GASTOS`
+- `DEPARTAMENTOS_INC_ANTES`
+- `LOCALIZACAO_BI0`
+- `ASSUNTOS_BI0`
+- `MOTIVO_SITUACAO_BI0`
+- `MOTIVO_SITUACAO_AI0`
+- `PROX_ITENS_CAIXA`
+- `PUBLICIDADE_BI`
+- `MOTIVO_PERGUNTA_TAGS_INC_ANTES`
+- `MOTIVO_RESPOSTA_INC_ANTES`
+- `MOTIVOS_INC_ANTES`
+- `VISITAS_HISTORICO_BI0`
+- `ENQUETES_BI0`
+- `ENQUETES_OPCOES_BI0`
+
+O que faz no banco anterior:
+
+- Em geral, gera código/data e defaults simples.
+- Departamento e motivos ficam em maiúsculo.
+- Solução/motivo remove caracteres ruins.
+- Assunto e motivo de situação recebem ordem/defaults.
+
+Ação no ERP novo:
+
+- Criadas estruturas históricas leves para cada auxiliar.
+- Departamento e motivos são normalizados em maiúsculo.
+- Soluções/motivos são limpos de aspas e barra invertida.
+- Nenhuma rotina pesada de publicidade/enquete foi ativada; apenas preservação dos dados.
+
+### 8S.6 Avaliações
+
+Recebido:
+
+- `AVALIACAO_BI0`
+
+O que faz no banco anterior:
+
+- Gera código.
+- Se a avaliação tem visita mas não tem cliente, busca o cliente pela visita.
+
+Ação no ERP novo:
+
+- Criado `db.avaliacoesMigradas`.
+- Avaliação tenta vincular cliente e chamado pela visita antiga.
+
+---
+
+## 8T. Patch gerado com base na Parte 11
+
+Arquivo criado:
+
+- `automacoes_caixa_chat_auxiliares_patch.js`
+
+Funções principais:
+
+- `sincronizarRetiradasCaixa`
+- `sincronizarFornecedoresTransportadores`
+- `sincronizarChat`
+- `sincronizarRecibosAnexosCentro`
+- `sincronizarDepartamentosEAux`
+- `sincronizarAvaliacoes`
+- `aplicarAutomacoesCaixaChatAuxiliares`
+
+Teste criado:
+
+- `test_automacoes_caixa_chat_auxiliares.js`
+
+Versão publicada:
+
+- **v4.9.31**
 
 ---
 
