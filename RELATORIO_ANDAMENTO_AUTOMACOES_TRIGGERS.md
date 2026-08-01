@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.36**
+- Versão atual implementada: **v4.9.37**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2665,6 +2665,68 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.36**
+
+---
+
+
+## 8AA. Tipos de dados/domínios legados — v4.9.37
+
+O usuário enviou os tipos/domínios do banco antigo.
+
+Principais domínios recebidos:
+
+- Documentos e contatos:
+  - `CPF_CNPJ`
+  - `RG_IE`
+  - `TELEFONE`
+  - `EMAIL`
+  - `CEP`
+  - `UF`
+- Endereço/cadastro:
+  - `RUA`
+  - `BAIRRO`
+  - `CIDADE`
+  - `NUMERO`
+  - `COMPLEMENTO`
+  - `NOME`
+- Descrições:
+  - `DESCRICAO_50`
+  - `DESCRICAO_1000`
+  - `DESCRICAO_2000`
+  - `DM_DESCRICAO_100`
+  - `DM_DESCRICAO_250`
+  - `DM_DESCRICAO_500`
+- Valores:
+  - `VALOR` com precisão `15` e escala `5`
+  - `DM_VALOR_METRO` com precisão `12` e escala `2`
+- Nativos:
+  - `INTEGER`, `BIGINT`, `NUMERIC`, `DECIMAL`, `TIMESTAMP`, `VARCHAR`, `BLOB`, `BOOLEAN` etc.
+
+Arquivo criado:
+
+- `tipos_dados_legado_patch.js`
+
+Ação no ERP novo:
+
+- Os tipos foram preservados em `db.config.tiposDadosLegado`.
+- Criados normalizadores/validadores leves para:
+  - CPF/CNPJ;
+  - CEP;
+  - UF;
+  - e-mail;
+  - telefone;
+  - valores monetários;
+  - textos com limite.
+- Nenhum dado existente foi reformatado automaticamente para não quebrar cadastros já importados.
+- Esses tipos ficam como base para formulários, validações e futuro banco local do `.exe`.
+
+Teste criado:
+
+- `test_tipos_dados_legado.js`
+
+Versão publicada:
+
+- **v4.9.37**
 
 ---
 
