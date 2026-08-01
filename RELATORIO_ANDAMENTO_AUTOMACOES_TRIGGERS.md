@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.24**
+- Versão atual implementada: **v4.9.25**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -168,7 +168,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 2 | Recebida e processada | Gerou v4.9.22 |
 | Parte 3 | Recebida e processada | Gerou v4.9.23 |
 | Parte 4 | Recebida e processada | Gerou v4.9.24 |
-| Parte 5 | Pendente | Aguardando envio |
+| Parte 5 | Recebida e processada | Gerou v4.9.25 |
 | Parte 6 | Pendente | Aguardando envio |
 | Parte 7 | Pendente | Aguardando envio |
 | Parte 8 | Pendente | Aguardando envio |
@@ -960,6 +960,205 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.24**
+
+
+---
+
+## 8G. Parte 5 — triggers recebidas e interpretação
+
+### 8G.1 Nota fiscal — preparação completa para módulo fiscal futuro
+
+Recebido:
+
+- `NOTA_FISCAL_INC_ANTES`
+- `NOTA_FISCAL_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Preenche dados do cliente na nota fiscal: nome, CPF/CNPJ, IE/RG, e-mail, endereço, bairro, cidade, UF, CEP, telefone e indicadores fiscais.
+- Preenche configuração fiscal padrão da empresa: modelo, série, ambiente, indicador de presença, frete.
+- Gera código e número da nota.
+- Inicializa todos os campos monetários em zero quando vazios.
+- Preenche natureza, pagamento, situação, data e hora.
+- Se nota vem de venda, monta observação com venda e parcelas.
+- Se nota vem de leitura, monta observação com leitura.
+- Calcula totais de produtos e serviços a partir dos itens da nota.
+- Monta mensagem de tributos aproximados.
+- Em exclusão de nota, remove itens, faturas, itens de recebimento NFE e limpa vínculo NFE do financeiro/venda/leitura.
+
+Ação no ERP novo:
+
+- Criada preparação fiscal leve em `automacoes_fiscal_cartuchos_patch.js`.
+- O ERP cria/atualiza `db.notasFiscaisMigradas` com snapshot de cliente e dados fiscais principais.
+- Nota puxa cliente, venda e leitura quando possível.
+- Nota calcula totais de produtos/serviços pelos itens.
+- Nota gera observações com venda/leitura e parcelas.
+- Nota marca venda/leitura/contas a receber com NFE.
+- Nota cancelada/denegada limpa vínculo e registra observação.
+- O cálculo fiscal completo foi mantido para o módulo fiscal futuro.
+
+### 8G.2 Produtos, equipamentos e variações
+
+Recebido:
+
+- `PRODUTOS_INC_ALT_ANTES`
+- `PRODUTOS_INC_DEPOIS`
+- `PRODUTOS_ALT_DEPOIS`
+- `PRODUTOS_DEL_ANTES`
+- `PRODUTOS_VARIACAO_BI0`
+- `PRODUTOS_VARIACAO_ITENS_BI0`
+- `EQUIPAMENTOS_INC_ANTES`
+- `EQUIPAMENTOS_AIU0`
+
+O que faz no banco anterior:
+
+- Produto recebe defaults de descrição, categoria, empresa, unidade, estoque, custo, preço, origem, vida útil e descontos.
+- Produto vinculado a equipamento vira tipo equipamento.
+- Equipamento cria/atualiza produto auxiliar.
+- Fabricante é sugerido pelo texto do equipamento.
+- Variações recebem código, data, empresa, valores do produto e quantidade mínima 1.
+- Quantidade negativa de variação vira zero.
+
+Ação no ERP novo:
+
+- Parte de produto/equipamento já havia sido iniciada na Parte 4.
+- Nesta parte foi criada estrutura de variações migradas:
+  - `db.produtosVariacaoMigrados`;
+  - `db.produtosVariacaoItensMigrados`.
+- Variações mantêm quantidade nunca negativa.
+- Valores de custo/venda são herdados do produto quando faltam.
+
+### 8G.3 Cartuchos e cartucho vazio
+
+Recebido:
+
+- `CARTUCHOS_INC_ANTES`
+- `CARTUCHOS_INC_DEPOIS`
+- `CARTUCHOS_ALT_ANTES`
+- `CARTUCHOS_ALT_DEPOIS`
+- `CARTUCHOS_DEL_ANTES`
+- `CARTUCHO_VALOR_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código de cartucho.
+- Inicializa valor de insumos e ocultar.
+- Soma custo dos insumos do cartucho.
+- Se configuração permitir, cria produto “Cartucho Vazio ...”.
+- Ao deletar cartucho, remove insumos e valores.
+
+Ação no ERP novo:
+
+- Criado `db.cartuchosMigrados`.
+- Soma `ITENS_INSUMOS` para calcular `valorInsumos`.
+- Cria produto de categoria `Cartucho Vazio` quando houver cartucho migrado e ainda não existir produto equivalente.
+- Não apaga histórico de insumos/valores automaticamente para preservar dados importados.
+
+### 8G.4 Insumos gastos em recarga/remanufatura
+
+Recebido:
+
+- `ITENS_INSUMOS_GASTOS_INC_ANTES`
+- `ITENS_INSUMOS_GASTOS_ALT_ANTES`
+- `ITENS_INSUMOS_GASTOS_ALT_DEPOIS`
+- `ITENS_INSUMOS_GASTOS_DEL_ANTES`
+- `ITENS_INSUMOS_GASTOS_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código de gasto de insumo.
+- Preenche custo unitário a partir do produto.
+- Calcula total e total de custo.
+- Soma insumos no item de venda/recarga.
+- Quando quantidade muda, movimenta histórico de produto como entrada/saída da diferença.
+- Ao excluir gasto, devolve estoque via histórico.
+
+Ação no ERP novo:
+
+- Criado `db.insumosGastosMigrados`.
+- Calcula total e total de custo de cada insumo gasto.
+- Soma valor de insumos no item de venda quando for possível vincular por código antigo.
+- Não faz baixa/devolução agressiva de estoque em massa, porque isso poderia duplicar movimentação histórica.
+
+### 8G.5 Estornos
+
+Recebido:
+
+- `ESTORNOS_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código/data do estorno.
+- Se estorno é de leitura, marca leitura para estornar e registra dados.
+- Se estorno é de venda, remove contas a receber/despesas, marca venda como estornada e registra dados.
+- Se estorno é de conta a receber, registra dados e tenta marcar venda como estornada.
+- Se estorno é de boleto, remove conta a pagar relacionada.
+
+Ação no ERP novo:
+
+- Criado `db.estornosMigrados`.
+- Estornos migrados marcam vendas/leituras/contas como estornadas quando o vínculo é encontrado.
+- Não remove histórico financeiro em massa; preserva dados e marca status.
+
+### 8G.6 Configurações, categorias, comissões e auxiliares
+
+Recebido:
+
+- `CONFIG_BI0`
+- `MOTIVO_PERGUNTA_BI0`
+- `LOG_BI0`
+- `CATEGORIA_INC_ANTES`
+- `CATEGORIA_CONTAS_PAGAR_BI`
+- `COMISSAO_INC_ANTES`
+- `FLUXO_CAIXA_INC_ANTES`
+- `FLUXO_CAIXA_INC_DEPOIS`
+- `FLUXO_CAIXA_DEL_DEPOIS`
+- `LIGACOES_INC_ANTES`
+- `LIGACOES_BU0`
+
+O que faz no banco anterior:
+
+- Principalmente geração de códigos automáticos.
+- Configuração comentada de bancos/pix/acqio/gerencianet.
+- Motivos e categorias são colocados em maiúsculo.
+- Comissão começa como não paga.
+- Ligação concluída limpa agendamento.
+
+Ação no ERP novo:
+
+- Não copiado literalmente agora.
+- Códigos já seguem regra própria do ERP.
+- Pix já foi adaptado para manual/comprovante.
+- Comissões, fluxo de caixa avançado e ligações/CRM ficam para módulos próprios se forem priorizados.
+
+---
+
+## 8H. Patch gerado com base na Parte 5
+
+Arquivo criado:
+
+- `automacoes_fiscal_cartuchos_patch.js`
+
+Funções principais:
+
+- `defaultsNotaFiscal`
+- `totaisNotaPorItens`
+- `observacaoNota`
+- `sincronizarNotasFiscaisPreparadas`
+- `somarInsumosCartucho`
+- `sincronizarCartuchos`
+- `sincronizarVariacoes`
+- `sincronizarInsumosGastos`
+- `aplicarEstornosMigrados`
+- `aplicarAutomacoesFiscalCartuchos`
+
+Teste criado:
+
+- `test_automacoes_fiscal_cartuchos.js`
+
+Versão publicada:
+
+- **v4.9.25**
 
 
 ---
