@@ -13,9 +13,9 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.28**
-- Último commit publicado no PR: `9d5ff65`
-- Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
+- Versão atual implementada: **v4.9.29**
+- Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
+- Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
 ---
 
@@ -61,6 +61,14 @@
 ### Automações de triggers
 
 - `automacoes_triggers_patch.js`
+- `automacoes_financeiro_estoque_patch.js`
+- `automacoes_locacao_visitas_patch.js`
+- `automacoes_contratos_caixa_fiscal_patch.js`
+- `automacoes_fiscal_cartuchos_patch.js`
+- `automacoes_vendas_compras_cadastros_patch.js`
+- `automacoes_orcamentos_clientes_auxiliares_patch.js`
+- `automacoes_pix_contadores_auxiliares_patch.js`
+- `automacoes_vendas_fiscal_auxiliares_patch.js`
 
 ---
 
@@ -172,7 +180,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 6 | Recebida e processada | Gerou v4.9.26 |
 | Parte 7 | Recebida e processada | Gerou v4.9.27 |
 | Parte 8 | Recebida e processada | Gerou v4.9.28 |
-| Parte 9 | Pendente | Aguardando envio |
+| Parte 9 | Recebida e processada | Gerou v4.9.29 |
 | Parte 10 | Pendente | Aguardando envio |
 | Parte 11 | Pendente | Aguardando envio |
 | Parte 12 | Pendente | Aguardando envio |
@@ -1675,6 +1683,169 @@ Versão publicada:
 
 - **v4.9.28**
 
+
+---
+
+
+## 8O. Parte 9 — triggers recebidas e interpretação
+
+### 8O.1 Cupons usados, endereços, encomendas e auxiliares de produto
+
+Recebido:
+
+- `CUPONS_ITENS_INC_ANTES`
+- `ENDERECOS_INC_ANTES`
+- `ENCOMENDAS_INC_ANTES`
+- `ENCOMENDAS_ITENS_BI0`
+- `PRODUTOS_FAVORITOS_BI0`
+- `PRODUTOS_PROMOCAO_BI0`
+- `PRODUTOS_TAGS_BI0`
+- `PRODUTOS_DIMENSAO_BI0`
+- `PRODUTOS_MOTIVO_PERGUNTA_BI0`
+- `PRODUTOS_VALORES_BI0`
+
+O que faz no banco anterior:
+
+- Gera código automático e data de cadastro.
+- Em cupom usado, completa valor/tipo a partir do cupom principal e quantidade padrão `1`.
+- Em endereço, transforma CEP em branco em `NULL`.
+- Em encomendas e itens, completa data e funcionário.
+- Em produtos, preserva favoritos, promoções, tags, dimensões, perguntas e valores auxiliares.
+
+Ação no ERP novo:
+
+- Criado `db.cuponsItensMigrados` para histórico de uso de cupons.
+- Criado complemento em `db.enderecosMigrados`, com CEP vazio salvo como `null` e preenchimento seguro no cliente quando o campo estava vazio.
+- Criados `db.encomendasMigradas` e `db.encomendasItensMigrados`.
+- Criadas estruturas leves para favoritos, promoções históricas, tags, dimensões, perguntas e tabelas de valores.
+- Promoção antiga foi preservada como histórico, sem reativar tela/regra de promoção pesada.
+
+### 8O.2 Campanhas de e-mail
+
+Recebido:
+
+- `EMAIL_CAMPANHA_BI0`
+- `EMAIL_CAMPANHA_ENVIOS_BI0`
+
+O que faz no banco anterior:
+
+- Gera código, data e funcionário.
+- Quando um envio vem sem campanha, procura/cria a campanha pela descrição.
+
+Ação no ERP novo:
+
+- Criado `db.emailCampanhasMigradas` e `db.emailCampanhaEnviosMigrados`.
+- Envios antigos ficam somente como histórico.
+- Não foi ativado disparo automático de e-mail.
+
+### 8O.3 Cartões, bandeiras, pagamentos e comandas
+
+Recebido:
+
+- `CARTAO_BANDEIRA_BI0`
+- `CARTAO_BI0`
+- `CARTAO_ALT_DEPOIS`
+- `CARTAO_HISTORICO_BI0`
+- `CARTAO_PAGAMENTO_BI0`
+- `COMANDAS_BI0`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Coloca titular do cartão em maiúsculo.
+- Se cartão tem CPF e nascimento, preenche nascimento do cliente quando estava vazio.
+- Preserva histórico e pagamentos de cartão.
+
+Ação no ERP novo:
+
+- Criado histórico seguro: `db.cartaoBandeirasMigradas`, `db.cartoesMigrados`, `db.cartaoHistoricoMigrado`, `db.cartaoPagamentosMigrados` e `db.comandasMigradas`.
+- Número de cartão fica mascarado.
+- Pagamentos de cartão NÃO fazem baixa automática.
+- Data de nascimento do cliente é preenchida apenas quando encontrada por CPF e o cadastro estava vazio.
+
+### 8O.4 Bancos, NCM, finalização, defeitos e tributos
+
+Recebido:
+
+- `PROX_COD_BANCO`
+- `NCM_INC_ANTES`
+- `TIPO_FINALIZACAO_INC_ANTES`
+- `PROX_COD_CARTUCHO_DEFEITO`
+- `TRIBUTOS_PRODUTOS_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático.
+- Normaliza NCM removendo pontos.
+- Define ordem e imposto de importação padrão.
+- Define defaults de IBS/CBS: CST `000`, classificação `000001`, IBS UF `0.1`, IBS Município `0` e CBS `0.9`.
+
+Ação no ERP novo:
+
+- Criado `db.bancosMigrados`, `db.ncmMigrados`, `db.tiposFinalizacaoMigrados`, `db.cartuchosDefeitosMigrados` e `db.tributosProdutosMigrados`.
+- NCM é salvo sem pontuação.
+- Tributação fica preservada para consulta/futuro fiscal, sem recalcular nota pesada automaticamente.
+
+### 8O.5 Vendas antes/depois de atualizar
+
+Recebido:
+
+- `VENDAS_ALT_ANTES`
+- `VENDAS_ALT_DEPOIS`
+
+O que faz no banco anterior:
+
+- Atualiza data de alteração.
+- Venda com equipamento vira serviço/OS.
+- Venda não finalizada limpa flags e itens de recebimento.
+- Preenche nome do cliente pelo código.
+- Ao finalizar:
+  - calcula garantia de serviço;
+  - muda entrega de `BUSCAR` para `ENTREGAR` se configurado;
+  - garante situação `FINALIZADA`;
+  - preenche data/hora de saída;
+  - limpa cancelamento.
+- Define funcionário de comissão conforme configuração.
+- Recalcula valores de serviço, peças, insumos e total.
+- Se venda for excluída, desvincula agenda, despesas, orçamento e visita.
+- Sincroniza empresa em contas a receber e gera chamado quando necessário.
+
+Ação no ERP novo:
+
+- Vendas migradas agora recebem totalização compatível com os itens antigos.
+- Finalizadas ganham situação `FINALIZADA`, data/hora de saída, garantia e forma de entrega ajustada.
+- Comissão é preservada como código antigo do funcionário quando possível.
+- Vendas excluídas são marcadas como `excluida` e seus vínculos são limpos sem apagar histórico em massa.
+- Venda de serviço/equipamento gera OS leve apenas quando necessário.
+
+---
+
+## 8P. Patch gerado com base na Parte 9
+
+Arquivo criado:
+
+- `automacoes_vendas_fiscal_auxiliares_patch.js`
+
+Funções principais:
+
+- `sincronizarCuponsItens`
+- `sincronizarEnderecosLegado`
+- `sincronizarEncomendas`
+- `sincronizarProdutosAuxiliaresParte9`
+- `sincronizarEmailCampanhas`
+- `sincronizarCartoesEComandas`
+- `sincronizarFiscalAuxParte9`
+- `calcularTotaisVenda`
+- `aplicarRegrasVendasParte9`
+- `aplicarAutomacoesVendasFiscalAuxiliares`
+
+Teste criado:
+
+- `test_automacoes_vendas_fiscal_auxiliares.js`
+
+Versão publicada:
+
+- **v4.9.29**
 
 ---
 
