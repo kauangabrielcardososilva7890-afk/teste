@@ -2,7 +2,7 @@
 // PATCH v4.9.8 — Otimização total de Vendas/Notinhas e regras de negócio:
 // • Exclusão de tabelas auxiliares/inválidas no Explorar Migrados ("S"/"N"/"ordens")
 // • Formatação Title Case (iniciais maiúsculas, fim de CAPSLOCK)
-// • Normalização de vendedores ("Vendas - ordens" → "Recepção", "admin" → "Kauan")
+// • Normalização de vendedores ("Vendas - ordens" → "Recepção", "admin" → "Operacional")
 // • Remoção de vendedores inativos/duplicados no filtro de notinhas (Kaio, admin, S, N)
 // • Botões "Estornar / Cancelar" e "Editar Notinha" no histórico
 // • Leveza máxima no fechamento do modal e renderização fatiada (anti-lag)
@@ -39,7 +39,7 @@ function ehRegistroVendaValido(numRaw, r){
 function normalizarNomeVendedor(nome){
   let s = String(nome||'').trim();
   if(!s || /^([NS]|VENDAS?.*ORDENS?|IMPORTADO)$/i.test(s)) return 'Recepção';
-  if(/^admin$/i.test(s)) return 'Kauan Gabriel';
+  if(/^admin$/i.test(s)) return 'Administrador';
   return toTitleCase(s);
 }
 

@@ -781,7 +781,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl"></div>
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div>
-            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sistema antigo (SisPrinter)</p>
+            <p class="text-[11px] font-bold tracking-[0.18em] uppercase text-white/60">Sistema antigo (sistema anterior)</p>
             <h2 class="text-[24px] font-extrabold tracking-tight mt-2">Explorar Migrados</h2>
             <p class="text-white/80 text-[13.5px] mt-2">${totalTabelas} tabelas com ${totalRegistros.toLocaleString('pt-BR')} registros trazidos do sistema antigo, organizadas por assunto.</p>
           </div>

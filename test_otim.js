@@ -32,7 +32,7 @@ ok('ITENS_VENDA não é tabela real', !VOTM.ehTabelaVendaReal('ITENS_VENDA'));
 ok('STATUS_NOTA não é tabela real', !VOTM.ehTabelaVendaReal('STATUS_NOTA'));
 
 console.log('== VOTM_PURE: normalizarNomeVendedor ==');
-ok('admin → Kauan Gabriel', VOTM.normalizarNomeVendedor('admin') === 'Kauan Gabriel');
+ok('admin → Administrador', VOTM.normalizarNomeVendedor('admin') === 'Administrador');
 ok('Vendas - ordens → Recepção', VOTM.normalizarNomeVendedor('Vendas - ordens') === 'Recepção');
 ok('N → Recepção', VOTM.normalizarNomeVendedor('N') === 'Recepção');
 ok('S → Recepção', VOTM.normalizarNomeVendedor('S') === 'Recepção');
@@ -40,7 +40,7 @@ ok('Importado → Recepção', VOTM.normalizarNomeVendedor('Importado') === 'Rec
 ok('CAPSLOCK → Title Case', VOTM.normalizarNomeVendedor('MARIA DA SILVA') === 'Maria da Silva');
 
 console.log('== VOTM_PURE: toTitleCase ==');
-ok('KAUAN GABRIEL CARDOSO', VOTM.toTitleCase('KAUAN GABRIEL CARDOSO') === 'Kauan Gabriel Cardoso');
+ok('MARIA DA SILVA SOUZA', VOTM.toTitleCase('MARIA DA SILVA SOUZA') === 'Maria da Silva Souza');
 ok('JOSE DE SOUZA', VOTM.toTitleCase('JOSE DE SOUZA') === 'Jose de Souza');
 ok('RECEPÇÃO', VOTM.toTitleCase('RECEPÇÃO') === 'Recepção');
 
@@ -55,9 +55,9 @@ console.log('== LOGOPT_PURE: loguinCompativel ==');
 ok('FULANO em maiúsculo casa fulano', LOGO.loguinCompativel({login:'fulano', nome:'Fulano da Silva'}, 'FULANO'));
 ok('Fulano da Silva casa fulano', LOGO.loguinCompativel({login:'f1', nome:'Fulano da Silva'}, 'fulano'));
 ok('fUlAnO casa FULANO', LOGO.loguinCompativel({login:'FULANO', nome:'Fulano'}, 'fUlAnO'));
-ok('incorreto não casa', !LOGO.loguinCompativel({login:'carlos', nome:'Carlos'}, 'kauan'));
+ok('incorreto não casa', !LOGO.loguinCompativel({login:'carlos', nome:'Carlos'}, 'gestor'));
 
-console.log('== LOGOPT_PURE: normalizarKauanAdmin ==');
+console.log('== LOGOPT_PURE: normalizarAdminPrincipal ==');
 {
   const dbTest = {
     vendas: [
@@ -67,14 +67,14 @@ console.log('== LOGOPT_PURE: normalizarKauanAdmin ==');
     os: [],
     usuarios: [
       { id: 'u1', empresaId: 'emp-1', login: 'admin', nome: 'Admin' },
-      { id: 'u2', empresaId: 'emp-1', login: 'kauan', nome: 'Kauan' }
+      { id: 'u2', empresaId: 'emp-1', login: 'gestor', nome: 'Administrador' }
     ]
   };
   global.db = dbTest;
-  LOGO.normalizarKauanAdmin({ empresaId: 'emp-1' }, dbTest);
-  ok('v1 criadoPorNome unificado para Kauan Gabriel', dbTest.vendas[0].criadoPorNome === 'Kauan Gabriel');
+  LOGO.normalizarAdminPrincipal({ empresaId: 'emp-1' }, dbTest);
+  ok('v1 criadoPorNome unificado para Administrador', dbTest.vendas[0].criadoPorNome === 'Administrador');
   ok('v2 atendenteNome virou Recepção', dbTest.vendas[1].atendenteNome === 'Recepção');
-  ok('apenas 1 usuário kauan ficou', dbTest.usuarios.length === 1 && dbTest.usuarios[0].id === 'u2');
+  ok('apenas 1 usuário principal ficou', dbTest.usuarios.length === 1 && dbTest.usuarios[0].id === 'u2');
 }
 
 console.log('== RGATE_PURE: ehTelaVisivel ==');

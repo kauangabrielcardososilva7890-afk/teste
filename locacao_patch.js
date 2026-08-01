@@ -322,7 +322,7 @@ function fbImportLocacaoFamilia(rawData){
       if(['F','C','CONC','CONCLUIDA','CONCLUIDO','FINALIZADA','FINALIZADO','S'].includes(sit)) status='concluido';
       else if(['E','EA','ATENDIMENTO','EM_ATENDIMENTO'].includes(sit)) status='em_atendimento';
       else if(['P','AG','AGUARDANDO'].includes(sit)) status='aguardando_peca';
-      // Prioridade (SisPrinter usa 1..3; preservamos com 3=alta)
+      // Prioridade (sistema anterior usa 1..3; preservamos com 3=alta)
       const prioN = jbInt(jbPick(row,['PRIORIDADE','VI_PRIORIDADE']));
       const prioridade = prioN>=3 ? 'alta' : (prioN===2 ? 'media' : (prioN===1 ? 'baixa' : 'media'));
       const parque = parquePorItemLocacao(row['VI_COD_ITENS_LOCACAO']);
@@ -414,7 +414,7 @@ function fbImportLocacaoFamilia(rawData){
         let html = `<div class="sm:col-span-2 xl:col-span-4 rounded-xl border bg-blue-50 border-blue-200 p-4">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-8 h-8 rounded-lg bg-blue-100 grid place-items-center"><i class="ph ph-printer text-[16px] text-blue-700"></i></div>
-            <p class="text-[13px] font-bold text-blue-800">Locação migrada do SisPrinter ${result.demosRemovidos?`<span class="ml-2 text-[11px] font-semibold text-emerald-700">✓ ${result.demosRemovidos} registros de demonstração removidos</span>`:''}</p>
+            <p class="text-[13px] font-bold text-blue-800">Locação migrada do sistema anterior ${result.demosRemovidos?`<span class="ml-2 text-[11px] font-semibold text-emerald-700">✓ ${result.demosRemovidos} registros de demonstração removidos</span>`:''}</p>
           </div>
           <p class="text-[12.5px] text-blue-700">${partes.join(' • ')||'Nenhum registro novo (já estavam atualizados)'}</p>
           <p class="text-[11px] text-blue-500 mt-1">Abra o menu <b>Contratos</b>, <b>Máquinas nos clientes</b>, <b>Leituras</b> e <b>Chamados</b> para conferir.</p>

@@ -17,7 +17,7 @@
 function ehEstoqueBaixo(estoque, estoqueMin){
   const e = Number(estoque||0);
   const m = Number(estoqueMin||0);
-  // Regra oficial do Kauan: quantidade exata do mínimo NÃO notifica. Só abaixo (<).
+  // Regra oficial do Operacional: quantidade exata do mínimo NÃO notifica. Só abaixo (<).
   return e < m;
 }
 
