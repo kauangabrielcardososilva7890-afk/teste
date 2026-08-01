@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.38**
+- Versão atual implementada: **v4.9.39**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2766,6 +2766,47 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.38**
+
+---
+
+
+## 8AC. Login direto, usuários migrados e carga automática — v4.9.39
+
+Correções solicitadas pelo usuário após testar a tela inicial/login.
+
+Arquivo criado:
+
+- `login_dados_automaticos_patch.js`
+
+Ações tomadas:
+
+- Tela de login:
+  - remove a etapa de login por CNPJ;
+  - deixa somente usuário e senha;
+  - painel esquerdo fica limpo, com logo grande;
+  - remove textos explicativos e versão da área visual do login.
+- Usuários:
+  - importa `FUNCIONARIOS` do banco antigo como usuários do ERP quando os dados migrados existem;
+  - preserva login/senha quando encontrados nas colunas antigas;
+  - perfil antigo é convertido para Admin/Comercial/Técnico/Operador;
+  - login aceita maiúsculas/minúsculas em qualquer combinação;
+  - login também aceita nome completo ou primeiro nome;
+  - admin demonstrativo é unido ao usuário administrador original migrado quando encontrado, sem duplicar usuário.
+- Menus superiores:
+  - remove submenu de `Início` e `Pesquisa rápida`;
+  - clicar em `Início` abre direto a área inicial;
+  - remove `Notinhas antigas` e `Novo orçamento` do menu Atendimento.
+- Dados/nuvem:
+  - quando o app abre sem banco migrado/local relevante, tenta carregar automaticamente da nuvem sem pedir confirmação;
+  - se já houver dados locais/migrados, não sobrescreve automaticamente.
+
+Teste criado:
+
+- `test_login_dados_automaticos.js`
+
+Versão publicada:
+
+- **v4.9.39**
 
 ---
 
