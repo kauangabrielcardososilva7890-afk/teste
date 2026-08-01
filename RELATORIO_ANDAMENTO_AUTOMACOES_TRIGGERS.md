@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.25**
+- Versão atual implementada: **v4.9.26**
 - Último commit publicado no PR: `9d5ff65`
 - Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
@@ -169,7 +169,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 3 | Recebida e processada | Gerou v4.9.23 |
 | Parte 4 | Recebida e processada | Gerou v4.9.24 |
 | Parte 5 | Recebida e processada | Gerou v4.9.25 |
-| Parte 6 | Pendente | Aguardando envio |
+| Parte 6 | Recebida e processada | Gerou v4.9.26 |
 | Parte 7 | Pendente | Aguardando envio |
 | Parte 8 | Pendente | Aguardando envio |
 | Parte 9 | Pendente | Aguardando envio |
@@ -1159,6 +1159,187 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.25**
+
+
+---
+
+## 8I. Parte 6 — triggers recebidas e interpretação
+
+### 8I.1 Insumos gastos e itens de venda
+
+Recebido:
+
+- `ITENS_INSUMOS_GASTOS_INC_DEPOIS`
+- `ITENS_VENDA_INC_ANTES`
+- `ITENS_VENDA_INC_DEPOIS`
+- `ITENS_VENDA_ALT_ANTES`
+- `ITENS_VENDA_ALT_DEPOIS`
+- `ITENS_VENDA_DEL_ANTES`
+- `ITENS_VENDA_DEL_DEPOIS`
+- `SOMA_INSUMOS_GASTOS_DELETE`
+
+O que faz no banco anterior:
+
+- Item de venda recebe código automático.
+- Puxa empresa, cliente, data, item de locação e contrato pela venda.
+- Para cartucho/recarga:
+  - monta descrição com tipo, fabricante, número e cor;
+  - puxa técnico padrão;
+  - usa preço de recarga ou preço específico do cliente;
+  - marca venda como tipo recarga;
+  - cria gastos de insumos automaticamente a partir de `ITENS_INSUMOS`;
+  - movimenta estoque de cartucho vazio quando marcado.
+- Para produto:
+  - puxa controle de estoque, descrição, tipo, custo, unidade e preço;
+  - respeita preço específico do cliente, atacado, promoção ou varejo;
+  - calcula custo e total.
+- Ao alterar quantidade, movimenta histórico de produto pela diferença.
+- Ao excluir item, devolve estoque, remove insumos gastos e zera descontos/acréscimos da venda.
+- Após inserir/alterar/excluir, recalcula total da venda.
+- Item ligado a locação cria despesa de locação.
+
+Ação no ERP novo:
+
+- Criado `automacoes_vendas_compras_cadastros_patch.js`.
+- Itens de venda migrados são normalizados dentro da venda.
+- Total do item é recalculado por quantidade, valor unitário e desconto.
+- Venda recebe `totalItensCalculado`; se total estiver zerado, recebe o total calculado.
+- Produto recebe `dataUltVenda`.
+- Produto favorito por cliente é registrado em `db.produtosFavoritos`.
+- Itens de cartucho geram insumos automáticos quando existir `ITENS_INSUMOS`.
+- Item vinculado a locação cria/atualiza despesa de locação.
+- Histórico de estoque é registrado em estruturas auxiliares, evitando mexer agressivamente no estoque real já importado.
+
+### 8I.2 Compras e itens de compra
+
+Recebido:
+
+- `ITENS_COMPRA_INC_ANTES`
+- `ITENS_COMPRA_INC_DEPOIS`
+- `ITENS_COMPRA_ALT_DEPOIS`
+- `ITENS_COMPRA_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Item de compra recebe código.
+- Descrição fica em maiúsculo.
+- Inicializa ICMS, ICMS-ST e IPI.
+- Atualiza NCM e código de barras do produto.
+- Calcula total do item.
+- Calcula custo unitário considerando desconto, ICMS-ST, IPI, frete e acréscimos.
+- Pode converter unidade KG/LT para GR/ML.
+- Atualiza custo do produto e, se configurado, preço de venda.
+- Gera histórico de estoque de entrada.
+- Ao excluir/alterar, reverte histórico anterior e recalcula total da compra.
+
+Ação no ERP novo:
+
+- Criado `db.itensCompraMigrados`.
+- Criado `db.comprasMigradas`.
+- Criado `db.produtosHistoricoCompra` como histórico auxiliar.
+- Produto recebe NCM/código de barras quando faltando.
+- Produto recebe `ultimoCustoCompra` e `dataUltCompra`.
+- Não foi alterado estoque real em massa para evitar duplicar estoque histórico já importado.
+
+### 8I.3 Cidades, ruas e situações
+
+Recebido:
+
+- `CIDADES_INC_ANTES`
+- `CIDADES_ALT_ANTES`
+- `CIDADES_ALT_DEPOIS`
+- `CIDADES_DEL_ANTES`
+- `PROX_COD_RUA`
+- `RUAS_DEL_ANTES`
+- `SITUACAO_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático de cidade, rua e situação.
+- Cidade é normalizada sem acento e em maiúsculo.
+- UF é normalizada em maiúsculo.
+- Código UF IBGE é preenchido pela sigla.
+- Atualiza notas fiscais sem protocolo quando cidade/UF muda.
+- Impede excluir cidade/rua usada por cliente, fornecedor ou funcionário.
+- Situação fica em maiúsculo.
+
+Ação no ERP novo:
+
+- Criadas estruturas consultáveis:
+  - `db.cidadesMigradas`;
+  - `db.ruasMigradas`;
+  - `db.situacoesMigradas`.
+- Cidade recebe UF IBGE conforme sigla.
+- Não foi implementada exclusão bloqueada porque esses cadastros auxiliares não são editados diretamente no ERP agora.
+
+### 8I.4 Agenda
+
+Recebido:
+
+- `AGENDA_PERSONALIZADA_BEFORE`
+- `AGENDA_PERSONALIZADA_AFTER`
+
+O que faz no banco anterior:
+
+- Gera código de agenda.
+- Define status, tipo, reagendado.
+- Tenta localizar cliente por telefone/e-mail/contato.
+- Se não existe cliente pelo contato, cria cliente.
+- Se início é maior/igual ao fim, ajusta fim pelo tempo padrão.
+- Ao concluir agenda, pode gerar venda.
+- Se estornar agenda, apaga venda gerada.
+
+Ação no ERP novo:
+
+- Criado `db.agendaMigrada`.
+- Agenda cria cliente pelo contato quando não houver vínculo.
+- Agenda registra se está concluída e se deveria gerar venda.
+- Não foi criada venda automaticamente nesta etapa para evitar duplicar vendas sem conferência.
+
+### 8I.5 Configuração de limite de crédito
+
+Recebido:
+
+- `CONFIGURACAO_ALT_DEPOIS`
+- `CONFIGURACAO_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Se limite de crédito padrão for preenchido, aplica para clientes sem limite.
+- Define `orc_multi_empresa` como `S` quando vazio.
+
+Ação no ERP novo:
+
+- Clientes sem `limiteCredito` recebem o limite padrão quando a configuração migrada existir.
+- Multiempresa de orçamento não foi copiado por não ser rotina atual.
+
+---
+
+## 8J. Patch gerado com base na Parte 6
+
+Arquivo criado:
+
+- `automacoes_vendas_compras_cadastros_patch.js`
+
+Funções principais:
+
+- `ufIbge`
+- `normalizarCidade`
+- `sincronizarCadastrosAuxiliares`
+- `calcularItemCompra`
+- `sincronizarItensCompra`
+- `calcularItemVenda`
+- `sincronizarItensVenda`
+- `sincronizarAgenda`
+- `aplicarAutomacoesVendasComprasCadastros`
+
+Teste criado:
+
+- `test_automacoes_vendas_compras_cadastros.js`
+
+Versão publicada:
+
+- **v4.9.26**
 
 
 ---
