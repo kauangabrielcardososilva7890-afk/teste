@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.35**
+- Versão atual implementada: **v4.9.36**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2622,6 +2622,49 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.35**
+
+---
+
+
+## 8Z. Índices legados e limpeza de menus migrados — v4.9.36
+
+O usuário enviou a lista de índices do banco antigo. A lista tinha muitos objetos, incluindo índices de sistema (`RDB$*`) e índices de log (`IBE$LOG_*`).
+
+O que foi aproveitado:
+
+- Campos críticos de vínculo e busca:
+  - clientes por código/documento/nome;
+  - vendas por código/cliente/situação/finalizada;
+  - visitas por contrato/cliente/item/equipamento/venda;
+  - contador de páginas por leitura/item/equipamento;
+  - itens de locação por contrato/equipamento/serial/situação;
+  - contas a receber por venda/leitura/cliente/boleto/Pix/vencimento;
+  - itens de venda por venda/produto/cartucho/etiqueta/item de locação;
+  - produtos por código/descrição/tributo/equipamento;
+  - produto variação por serial;
+  - nota fiscal por venda/leitura/data/cliente;
+  - NCM por código.
+
+Arquivo criado:
+
+- `indices_legado_performance_patch.js`
+
+Ações no ERP novo:
+
+- Criado resumo dos índices úteis em `db.config.indicesLegadoResumo`.
+- Criado cache rápido em memória `IDX_LEGADO` para consultas/vínculos internos.
+- Índices internos do Firebird (`RDB$*`) e logs (`IBE$LOG_*`) foram ignorados como regra de negócio.
+- Menus automáticos das tabelas migradas foram escondidos da navegação principal.
+- As tabelas migradas continuam acessíveis por um único botão: **Dados migrados**.
+- Os dados migrados não foram apagados; só deixaram de poluir o menu principal.
+
+Teste criado:
+
+- `test_indices_legado_performance.js`
+
+Versão publicada:
+
+- **v4.9.36**
 
 ---
 
