@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.31**
+- Versão atual implementada: **v4.9.32**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -71,6 +71,7 @@
 - `automacoes_vendas_fiscal_auxiliares_patch.js`
 - `automacoes_compras_recebimentos_contadores_patch.js`
 - `automacoes_caixa_chat_auxiliares_patch.js`
+- `automacoes_finais_locacao_auxiliares_patch.js`
 
 ---
 
@@ -185,7 +186,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte 9 | Recebida e processada | Gerou v4.9.29 |
 | Parte 10 | Recebida e processada | Gerou v4.9.30 |
 | Parte 11 | Recebida e processada | Gerou v4.9.31 |
-| Parte 12 | Pendente | Aguardando envio |
+| Parte 12 | Recebida e processada | Gerou v4.9.32 — última parte enviada |
 
 ---
 
@@ -2212,6 +2213,193 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.31**
+
+---
+
+
+## 8U. Parte 12 — triggers recebidas e interpretação
+
+> Última parte enviada pelo usuário.
+
+### 8U.1 Enquetes, votos e auxiliares de campanha
+
+Recebido:
+
+- `ENQUETES_PERGUNTA_BI0`
+- `ENQUETES_VOTOS_BI0`
+- `EMAIL_CAMPANHA_ENVIOS_EMAIL_BI0`
+
+O que faz no banco anterior:
+
+- Gera código de perguntas e votos.
+- Votos recebem data.
+- Evento de e-mail de campanha recebe código/data.
+- Ocorrência acompanha a ação.
+- Quando ação é maior que zero, incrementa contador de abertura do e-mail.
+
+Ação no ERP novo:
+
+- Criado `db.enquetesPerguntasMigradas` e `db.enquetesVotosMigrados`.
+- Criado `db.emailCampanhaEventosMigrados`.
+- Aberturas de e-mail migradas atualizam `emailAbriuMigrado`/`emailAbriu` em `db.emailsMigrados`.
+- Nada de envio automático foi ativado.
+
+### 8U.2 Cartão de cliente, contadores offline e e-mails offline
+
+Recebido:
+
+- `CARTAO_CLIENTE_BI0`
+- `CONTADORES_OFF_BI0`
+- `EMAIL_OFF_BI0`
+
+O que faz no banco anterior:
+
+- Gera código/data/funcionário.
+- Preserva filas offline de cartão, contador e e-mail.
+
+Ação no ERP novo:
+
+- Criado `db.cartoesClienteMigrados`.
+- Criado `db.contadoresOffMigrados`.
+- Criado `db.emailsOffMigrados`.
+- E-mails offline ficam somente como histórico, sem disparo automático.
+
+### 8U.3 Configurações de cliente/sisprinter e contas avulsas
+
+Recebido:
+
+- `CONFIG_CLIENTES_BI0`
+- `CONFIG_SISPRINTER_BI0`
+- `CONTAS_RECEBER_AVULSA_BI0`
+
+O que faz no banco anterior:
+
+- Gera códigos de configurações.
+- Conta avulsa classifica custos por descrição:
+  - envio de e-mail;
+  - SMS;
+  - WhatsApp;
+  - boleto;
+  - Gerencianet;
+  - NFC-e;
+  - NF-e;
+  - backup;
+  - geolocalização.
+- Busca valor configurado em `CONFIG_SISPRINTER` quando existir.
+- Ignora registros importados de banco MySQL.
+
+Ação no ERP novo:
+
+- Criado `db.configClientesMigradas`.
+- Criado `db.configSisprinterMigradas`.
+- Criado `db.contasReceberAvulsasMigradas`.
+- Os custos ficam apenas históricos/consultáveis e **não geram cobrança automática** no ERP novo.
+- Registros com observação `Importado Banco Mysql` são ignorados como no banco antigo.
+
+### 8U.4 Atacado, ramo, registros, selecionados e ramo/fabricante
+
+Recebido:
+
+- `PRODUTOS_ATACADO_BI0`
+- `RAMO_BI0`
+- `REGISTROS_BI0`
+- `SELECIONADOS_BI`
+- `RAMO_ITENS_FABRICANTE_BI0`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Guarda preço/quantidade de atacado, ramos, registros, seleção temporária e vínculo ramo/fabricante.
+
+Ação no ERP novo:
+
+- Criado `db.produtosAtacadoMigrados`.
+- Criado `db.ramosMigrados`.
+- Criado `db.registrosMigrados`.
+- Criado `db.selecionadosMigrados`.
+- Criado `db.ramoItensFabricanteMigrados`.
+- Tudo fica como histórico leve.
+
+### 8U.5 Histórico de boleto e Pix
+
+Recebido:
+
+- `BOLETOS_HISTORICO_BI0`
+- `PIX_HISTORICO_INC_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Histórico Pix recebe descrição do status por função antiga.
+
+Ação no ERP novo:
+
+- Criado `db.boletosHistoricoMigrado`.
+- `db.pixHistoricoMigrado` foi aprofundado com histórico individual.
+- Pix continua sem baixa automática.
+
+### 8U.6 Estoque de toner da locação
+
+Recebido:
+
+- `LOCACAO_ESTOQUE_BI0`
+- `LOCACAO_ESTOQUE_HISTORICO_BI0`
+- `LOCACAO_ESTOQUE_HISTORICO_AD0`
+
+O que faz no banco anterior:
+
+- Gera código/data.
+- Calcula média e máximo de impressão por dia usando contadores dos últimos 30 dias.
+- Normaliza estoque e impressões negativas para zero.
+- Calcula dias restantes e percentual de toner.
+- Histórico de entrada/saída recalcula saldo de toner e impressões restantes.
+- Quando a entrada vem de item de venda/cartucho/produto, tenta estimar rendimento por vida útil/quantidade de cópias.
+
+Ação no ERP novo:
+
+- Criado `db.locacaoEstoqueMigrado`.
+- `db.locacaoEstoqueHistorico` foi reaproveitado/aprofundado.
+- O sistema calcula:
+  - estoque atual de toner;
+  - impressões restantes;
+  - média de impressões por dia;
+  - máximo de impressões por dia;
+  - dias estimados;
+  - percentual estimado.
+- O contrato recebe resumo de toner para conferência.
+- Cálculo é histórico/operacional leve, sem rotina pesada em tempo real.
+
+---
+
+## 8V. Patch gerado com base na Parte 12
+
+Arquivo criado:
+
+- `automacoes_finais_locacao_auxiliares_patch.js`
+
+Funções principais:
+
+- `sincronizarEnquetesDetalhes`
+- `sincronizarCartoesOffEmails`
+- `sincronizarEmailCampanhaEventos`
+- `sincronizarConfigsAvulsas`
+- `sincronizarContasReceberAvulsas`
+- `sincronizarProdutosAtacadoRamoRegistros`
+- `sincronizarHistoricosBoletoPix`
+- `sincronizarLocacaoEstoqueFinal`
+- `aplicarAutomacoesFinaisLocacaoAux`
+
+Teste criado:
+
+- `test_automacoes_finais_locacao_auxiliares.js`
+
+Versão publicada:
+
+- **v4.9.32**
+
+Status geral das partes enviadas:
+
+- Partes 1 a 12 recebidas, analisadas, adaptadas em patches separados e testadas.
 
 ---
 
