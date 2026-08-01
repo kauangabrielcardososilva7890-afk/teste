@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.34**
+- Versão atual implementada: **v4.9.35**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2581,6 +2581,47 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.34**
+
+---
+
+
+## 8Y. Sequências legadas — v4.9.35
+
+O usuário enviou a lista de generators/sequências do banco antigo.
+
+Principais valores recebidos:
+
+- `GEN_CLIENTES_ID`: `2593`
+- `GEN_PRODUTOS_ID`: `1298`
+- `GEN_VENDAS_ID`: `16932`
+- `GEN_ITENS_LOCACAO_ID`: `1882`
+- `GEN_LOCACAO_ID`: `480`
+- `GEN_CONTAS_RECEBER_ID`: `18201`
+- `GEN_VISITAS_ID`: `6304`
+- `GEN_LEITURAS_ID`: `2604`
+- `GEN_NOTA_FISCAL_ID`: `442`
+- `GEN_ITENS_NOTA_ID`: `1406`
+- `GEN_SEL_CONTROLE_ID`: `537`
+- `GEN_SELECIONADOS_ID`: `539`
+
+Arquivo criado:
+
+- `sequencias_legado_patch.js`
+
+Ação no ERP novo:
+
+- Os últimos valores antigos foram preservados em `db.config.sequenciasLegado`.
+- As sequências novas em `db.config.seq` usam esses valores como **piso**.
+- Isso evita reaproveitar código antigo em clientes, vendas, OS/chamados, contratos, leituras, contas, nota fiscal etc.
+- A regra atual continua: código novo é **somente número**, sem prefixo e sem ano.
+
+Teste criado:
+
+- `test_sequencias_legado.js`
+
+Versão publicada:
+
+- **v4.9.35**
 
 ---
 
