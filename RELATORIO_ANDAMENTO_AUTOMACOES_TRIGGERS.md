@@ -13,9 +13,9 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.21**
-- Último commit publicado no PR: `f6cf4b9`
-- Link de teste atual: usar o link raw.githack com o hash do commit `f6cf4b9` e parâmetro `v=4.9.21`.
+- Versão atual implementada: **v4.9.22**
+- Último commit publicado no PR: `9d5ff65`
+- Link de teste atual: usar raw.githack com o hash do commit `9d5ff65` e parâmetro `v=4.9.22`.
 
 ---
 
@@ -165,7 +165,7 @@ O usuário informou que existem muitos arquivos/trechos, possivelmente 12 partes
 | Parte | Situação | Observação |
 |---|---|---|
 | Parte 1 | Recebida e processada | Gerou v4.9.21 |
-| Parte 2 | Pendente | Aguardando envio |
+| Parte 2 | Recebida e processada | Gerou v4.9.22 |
 | Parte 3 | Pendente | Aguardando envio |
 | Parte 4 | Pendente | Aguardando envio |
 | Parte 5 | Pendente | Aguardando envio |
@@ -320,6 +320,238 @@ Versão publicada:
 Commit:
 
 - `f6cf4b9`
+
+---
+
+## 8A. Parte 2 — triggers recebidas e interpretação
+
+### 8A.1 Localização de item de locação
+
+Recebido:
+
+- `ITENS_LOCACAO_LOCALIZACAO_BI0`
+- `ITENS_LOCACAO_LOCALIZACAO_BU0`
+
+O que faz no banco anterior:
+
+- Gera código automático para localização do item de locação.
+- Preenche data atual.
+- Preenche funcionário padrão.
+- Normaliza descrição trocando `\` por `/` e removendo espaços.
+
+Ação no ERP novo:
+
+- Criada função `normalizeLocalizacaoDescricao`.
+- A regra deve ser usada para padronizar local/departamento de impressoras no contrato.
+
+### 8A.2 Leituras
+
+Recebido:
+
+- `LEITURAS_INC_ANTES`
+- `LEITURA_ALT_ANTES`
+- `LEITURAS_AU0`
+- `LEITURAS_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Ao criar leitura, zera desconto, acréscimo, páginas, franquia, excedente e total.
+- Marca leitura como não finalizada e não estornada.
+- Define período da leitura com base na última leitura do contrato.
+- Busca franquia e valor total do contrato.
+- Ao alterar leitura, soma `CONTADOR_PAGINAS.CP_VALOR_TOTAL` para recalcular total.
+- Se estornar leitura, remove contas a receber e reabre contadores.
+- Ao excluir leitura, apaga contas a receber, contador de páginas e seleção vinculada.
+- Se leitura recebe NF/NFSe, propaga vínculo para contas a receber.
+
+Ação no ERP novo:
+
+- Criado cálculo leve por contadores em `automacoes_financeiro_estoque_patch.js`.
+- Leitura recalcula valor a partir de `CONTADOR_PAGINAS`.
+- Estorno de leitura remove financeiro vinculado e volta status para pendente.
+- Exclusão de leitura agora remove contas a receber vinculadas.
+- Vínculo de NFE/NFSe é preservado em contas a receber quando existir.
+
+### 8A.3 Itens de nota fiscal
+
+Recebido:
+
+- `ITENS_NOTA_INC_ANTES`
+- `ITENS_NOTA_INC_DEPOIS`
+- `ITENS_NOTA_ALT_DEPOIS`
+- `ITENS_NOTA_DEL_DEPOIS`
+
+O que faz no banco anterior:
+
+- Preenche muitos campos fiscais de item de nota.
+- Calcula total do item: quantidade x valor unitário.
+- Preenche NCM, CEST, origem, unidade, descrição e código do produto.
+- Calcula impostos ICMS/IPI/PIS/COFINS e campos IBS/CBS.
+- Ao inserir/alterar/deletar item, recalcula total da nota.
+- Marca venda como tendo NFE quando item de nota está ligado à venda.
+- Atualiza produto com NCM/CEST quando necessário.
+
+Ação no ERP novo:
+
+- Como módulo fiscal completo ainda é etapa futura, não foi copiada a regra fiscal inteira.
+- Foi implementada somente a parte segura e leve:
+  - total do item = quantidade x valor unitário;
+  - se item tem NCM e não tem CEST, busca CEST em `TAB_CEST`;
+  - atualiza produto com NCM/CEST se faltando;
+  - marca venda como `nfe = 'S'` quando item fiscal está ligado à venda.
+
+### 8A.4 Contas a pagar
+
+Recebido:
+
+- `CONTAS_PAGAR_INC_ANTES`
+- `CONTAS_PAGAR_INC_DEPOIS`
+- `CONTAS_PAGAR_ALT_ANTES`
+- `CONTAS_PAGAR_ALT_DEPOIS`
+- `CONTAS_PAGAR_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático.
+- Preenche data/hora de cadastro.
+- Preenche descrição padrão se vazia.
+- Define tipo, previsão, estorno, desconto, juros, parcela e valor.
+- Se credor vazio, usa “FORNECEDOR NAO IDENTIFICADO”.
+- Se for compra, categoriza como compras.
+- Se não tem centro de custo, usa/cria “OUTROS”.
+- Valor total = valor da parcela + juros.
+- Ao pagar, cria recebimento/movimentação.
+- Ao estornar ou excluir, remove recibos, movimentações e vínculos.
+
+Ação no ERP novo:
+
+- Criados defaults para contas a pagar:
+  - descrição padrão;
+  - fornecedor padrão;
+  - tipo;
+  - parcela;
+  - status;
+  - valor total.
+- Estorno limpa pagamento e reabre título de forma leve.
+- Não foi copiada a parte de boleto/recibo antigo de forma literal.
+
+### 8A.5 Contas a receber
+
+Recebido:
+
+- `CONTAS_RECEBER_INC_ANTES`
+- `CONTAS_RECEBER_INC_DEPOIS`
+- `CONTAS_RECEBER_ALT_ANTES`
+- `CONTAS_RECEBER_ALT_DEPOIS`
+- `CONTAS_RECEBER_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático de parcela.
+- Puxa cliente pela venda se estiver vazio.
+- Define forma de recebimento padrão do cliente ou prazo.
+- Preenche data de cadastro, valores zerados, situação e recibo.
+- Define tipo do título: venda, recarga, serviço, locação.
+- Pix muda forma de recebimento para Pix, mas não necessariamente baixa se sem data de pagamento.
+- Boleto muda forma para boleto/prazo.
+- Cartão crédito/débito pode compensar automático e aplicar desconto de taxa.
+- Ao pagar título, finaliza venda vinculada.
+- Ao pagar título de leitura, finaliza leitura e contadores.
+- Ao excluir/estornar, remove recibos/movimentações e reabre venda/leitura.
+
+Ação no ERP novo:
+
+- Criados defaults para contas a receber.
+- Conta paga marca venda como faturada/paga.
+- Conta paga ligada à leitura marca leitura como faturada/finalizada.
+- Estorno reabre título.
+- Pix continua sem baixa automática por regra atual do projeto.
+
+### 8A.6 Produtos/histórico de estoque
+
+Recebido:
+
+- `PRODUTOS_HISTORICO_BI0`
+
+O que faz no banco anterior:
+
+- Gera código e data do histórico.
+- Preenche funcionário.
+- Preenche custo e valor de venda do produto.
+- Calcula saldo do produto somando entradas menos saídas.
+- Atualiza `PRODUTOS.QTDE`.
+- Se houver variações, usa soma das variações como saldo.
+
+Ação no ERP novo:
+
+- Criado recálculo de estoque por `PRODUTOS_HISTORICO` quando existir.
+- Soma entradas `E` e saídas `S`.
+- Atualiza estoque do produto, ignorando serviços.
+- Usa assinatura para não recalcular a mesma base sem necessidade.
+
+### 8A.7 Itens de roteiro
+
+Recebido:
+
+- `ITENS_ROTEIRO_INC_ANTES`
+- `ITENS_ROTEIRO_DEL_ANTES`
+
+O que faz no banco anterior:
+
+- Gera código automático para itens de roteiro.
+- Ao excluir item de roteiro, remove itens de equipamento vinculados.
+
+Ação no ERP novo:
+
+- Não implementado agora.
+- Depende de módulo de roteiros/logística, que ainda não está como rotina principal.
+
+### 8A.8 Chaves referenciadas
+
+Recebido:
+
+- `CHAVE_REFERENCIADAS_INC_ANTES`
+- `CHAVE_REFERENCIADAS_INC_DEPOIS`
+
+O que faz no banco anterior:
+
+- Gera código.
+- Reprocessa itens de nota fiscal.
+- Atualiza chave referenciada na nota.
+
+Ação no ERP novo:
+
+- Não implementado agora.
+- Fica para módulo fiscal completo.
+
+---
+
+## 8B. Patch gerado com base na Parte 2
+
+Arquivo criado:
+
+- `automacoes_financeiro_estoque_patch.js`
+
+Funções principais:
+
+- `normalizeLocalizacaoDescricao`
+- `calcularLeituraPorContadores`
+- `aplicarDefaultsContaPagar`
+- `aplicarDefaultsContaReceber`
+- `aplicarAutomacoesLeituras`
+- `aplicarAutomacoesContas`
+- `aplicarAutomacoesProdutosHistorico`
+- `aplicarAutomacoesItensNota`
+- `aplicarAutomacoesFinanceiroEstoque`
+
+Teste criado:
+
+- `test_automacoes_financeiro_estoque.js`
+
+Versão publicada:
+
+- **v4.9.22**
+
 
 ---
 

@@ -1,13 +1,13 @@
 {
   "name": "digicopy-erp",
-  "version": "4.9.21",
+  "version": "4.9.22",
   "description": "DIGICOPY ERP - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "test": "node test_vos.js && node test_perf.js && node test_firebase.js && node test_persist.js && node test_pix.js && node test_extras.js && node test_clientes.js && node test_interface.js && node test_otim.js && node test_loc.js && node test_fluxos_operacionais.js && node test_contratos_refino.js && node test_cadastros_nomes.js && node test_contratos_final.js && node test_rtf_template.js && node test_diagnostico_migracao.js && node test_contratos_visitas.js && node test_arquivos_modelos.js && node test_automacoes_triggers.js",
-    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check sync_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check pix_patch.js && node --check notificacoes_patch.js && node --check vendas_extra_patch.js && node --check migrados_print_patch.js && node --check clientes_patch.js && node --check interface_patch.js && node --check logo_data.js && node --check firebase_config.js && node --check firebase_client.js && node --check vendas_otimizacao_patch.js && node --check login_otimizacao_patch.js && node --check render_gate_patch.js && node --check locacao_contratos_patch.js && node --check fluxos_operacionais_patch.js && node --check contratos_refino_patch.js && node --check contratos_final_patch.js && node --check contratos_visitas_vinculo_patch.js && node --check diagnostico_migracao_patch.js && node --check arquivos_modelos_diagnostico_patch.js && node --check automacoes_triggers_patch.js && node --check contratos_rtf_template_patch.js && node --check chamados_avulsos_aberto_patch.js && node --check desktop_otimizacao_patch.js && node --check pix_comprovante_manual_patch.js && node --check cadastros_nomes_patch.js && node --check main.js && node --check preload.js",
+    "test": "node test_vos.js && node test_perf.js && node test_firebase.js && node test_persist.js && node test_pix.js && node test_extras.js && node test_clientes.js && node test_interface.js && node test_otim.js && node test_loc.js && node test_fluxos_operacionais.js && node test_contratos_refino.js && node test_cadastros_nomes.js && node test_contratos_final.js && node test_rtf_template.js && node test_diagnostico_migracao.js && node test_contratos_visitas.js && node test_arquivos_modelos.js && node test_automacoes_triggers.js && node test_automacoes_financeiro_estoque.js",
+    "check": "node --check app.js && node --check vendas_patch.js && node --check evolucao_patch.js && node --check notinha_patch.js && node --check sync_client.js && node --check vendas_os_patch.js && node --check performance_patch.js && node --check pix_patch.js && node --check notificacoes_patch.js && node --check vendas_extra_patch.js && node --check migrados_print_patch.js && node --check clientes_patch.js && node --check interface_patch.js && node --check logo_data.js && node --check firebase_config.js && node --check firebase_client.js && node --check vendas_otimizacao_patch.js && node --check login_otimizacao_patch.js && node --check render_gate_patch.js && node --check locacao_contratos_patch.js && node --check fluxos_operacionais_patch.js && node --check contratos_refino_patch.js && node --check contratos_final_patch.js && node --check contratos_visitas_vinculo_patch.js && node --check diagnostico_migracao_patch.js && node --check arquivos_modelos_diagnostico_patch.js && node --check automacoes_triggers_patch.js && node --check automacoes_financeiro_estoque_patch.js && node --check contratos_rtf_template_patch.js && node --check chamados_avulsos_aberto_patch.js && node --check desktop_otimizacao_patch.js && node --check pix_comprovante_manual_patch.js && node --check cadastros_nomes_patch.js && node --check main.js && node --check preload.js",
     "build": "npm run build:win",
     "build:win": "electron-builder --win --x64"
   },
@@ -46,6 +46,7 @@
       "diagnostico_migracao_patch.js",
       "arquivos_modelos_diagnostico_patch.js",
       "automacoes_triggers_patch.js",
+      "automacoes_financeiro_estoque_patch.js",
       "contratos_rtf_template_patch.js",
       "chamados_avulsos_aberto_patch.js",
       "desktop_otimizacao_patch.js",
