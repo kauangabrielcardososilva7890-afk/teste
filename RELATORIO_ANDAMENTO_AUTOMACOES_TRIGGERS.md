@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.41**
+- Versão atual implementada: **v4.9.42**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.41**
+- **v4.9.42**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.41**
+- **v4.9.42**
 
 ---
 
@@ -2854,7 +2854,41 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.41**
+- **v4.9.42**
+
+---
+
+
+## 8AF. Modo apresentação em `.exe` — v4.9.42
+
+Ajuste solicitado para apresentação ao chefe/patrão.
+
+Arquivo criado:
+
+- `apresentacao_demo_patch.js`
+
+Ações tomadas:
+
+- Modo apresentação/demo ativado.
+- Base local nova para o `.exe`, com dados de teste.
+- Login travado para somente:
+  - usuário: `admin`
+  - senha: `admin123`
+- Módulos/tabelas migradas removidos da apresentação.
+- Menus de importação/migração escondidos.
+- Navegação limpa para demonstração.
+- Ao trocar de menu, a tela anterior é limpa para não ficar renderizando escondida.
+- Build configurado com `asar`, nome `DIGICOPY ERP Demo`, instalador NSIS, atalho na Área de Trabalho e Menu Iniciar.
+- Menu/devtools/context menu do Electron removidos para reduzir exposição casual do código.
+
+Observação:
+
+- Em Electron, código nunca fica 100% impossível de extrair, mas com `asar` e sem DevTools ele fica protegido o suficiente para apresentação/teste.
+- Fixar automaticamente na barra de tarefas é bloqueado/limitado pelo Windows; o instalador cria atalho na Área de Trabalho e Menu Iniciar, e o app fica identificável para desinstalar como `DIGICOPY ERP Demo`.
+
+Versão publicada:
+
+- **v4.9.42**
 
 ---
 

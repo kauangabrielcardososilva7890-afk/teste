@@ -1,15 +1,18 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow = null;
 
 function createWindow () {
+  try{ Menu.setApplicationMenu(null); }catch(e){}
+  try{ app.setAppUserModelId('br.com.digicopy.erp.demo'); }catch(e){}
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -17,10 +20,12 @@ function createWindow () {
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'DIGICOPY ERP v3.8'
+    title: 'DIGICOPY ERP Demo'
   });
 
   win.loadFile('index.html');
+  try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
+  win.webContents.on('context-menu', e => e.preventDefault());
   win.once('ready-to-show', () => win.show());
   return win;
 }
