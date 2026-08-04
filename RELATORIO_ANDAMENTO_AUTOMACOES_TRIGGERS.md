@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.42**
+- Versão atual implementada: **v4.9.43**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.42**
+- **v4.9.43**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.42**
+- **v4.9.43**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.42**
+- **v4.9.43**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.42
+## 8AF. Modo apresentação em `.exe` — v4.9.43
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,7 +2888,48 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.42**
+- **v4.9.43**
+
+---
+
+
+## 8AG. Ajustes do relatório de avaliação — v4.9.43
+
+Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
+
+Arquivo criado:
+
+- `ajustes_relatorio_pai_patch.js`
+
+Ações tomadas:
+
+- Modal com pilha/voltar: ao abrir uma aba dentro de outra, o botão volta para a tela anterior em vez de fechar tudo.
+- Clientes: busca refeita no padrão de vendas, com Enter/lupa e sem filtrar a cada tecla.
+- Contratos:
+  - novo contrato não usa mais select fechado de cliente; cliente é escolhido por busca/lupa;
+  - adicionada configuração de modalidades sem opção global;
+  - padrão: Preto A4 ativo e demais medidores inativos;
+  - modalidades Individual, Por Impressão e Mês Fixo mostram campos diferentes conforme solicitado.
+- Leituras:
+  - tela de leituras vira listagem com duplo clique para abrir detalhes;
+  - nova leitura cria cabeçalho e depois abre tela detalhada;
+  - dentro da leitura é possível lançar impressoras e escolher um dos medidores ativos;
+  - cálculo mostra utilizado, excedente e valor total;
+  - impressão de leitura gera notinha detalhada com todos os lançamentos e total.
+- Vendas/notinhas:
+  - busca de cliente/item dentro da nova notinha não abre resultados enquanto digita; busca só por Enter/lupa;
+  - impressão/PDF bloqueada antes de faturar;
+  - criada ação para estornar venda e permitir edição novamente.
+- Geral:
+  - faturado/finalizado mostra aviso ao tentar editar campos em modal de venda.
+
+Teste criado:
+
+- `test_ajustes_relatorio_pai.js`
+
+Versão publicada:
+
+- **v4.9.43**
 
 ---
 
