@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.43**
+- Versão atual implementada: **v4.9.44**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.43**
+- **v4.9.44**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.43**
+- **v4.9.44**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.43**
+- **v4.9.44**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.43
+## 8AF. Modo apresentação em `.exe` — v4.9.44
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,12 +2888,12 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.43**
+- **v4.9.44**
 
 ---
 
 
-## 8AG. Ajustes do relatório de avaliação — v4.9.43
+## 8AG. Ajustes do relatório de avaliação — v4.9.44
 
 Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
 
@@ -2929,7 +2929,38 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.43**
+- **v4.9.44**
+
+---
+
+
+## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.44
+
+Correção após o usuário apontar que as modalidades foram colocadas no cadastro do contrato, quando deveriam ficar no cadastro da impressora do contrato.
+
+Arquivo criado:
+
+- `contratos_leituras_definitivo_patch.js`
+
+Ações tomadas:
+
+- Novo contrato ficou simples: cliente por busca/lupa, início, término, vencimento e status.
+- Modalidades foram movidas para `Nova Impressora`/`Alterar Impressora` dentro do contrato.
+- Cada impressora possui medidores: Preto A4, Preto A3, Color A4, Color A3 e Scanner.
+- Padrão de nova impressora: Preto A4 ativo; demais inativos.
+- Modalidades por medidor: Individual, Por impressão, Mês fixo e Inativo.
+- Opção Global removida.
+- Leitura recebeu tela detalhada com lançamento por impressora e medidor ativo.
+- Leitura agora possui área de faturamento e botão para gerar conta a receber.
+- Impressão de leitura detalhada mostra cliente, contrato, período, impressora, tipo, contador anterior/atual, utilizado, excedente, valor e total.
+
+Teste criado:
+
+- `test_contratos_leituras_definitivo.js`
+
+Versão publicada:
+
+- **v4.9.44**
 
 ---
 
