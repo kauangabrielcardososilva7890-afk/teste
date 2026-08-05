@@ -3268,6 +3268,99 @@ Versão publicada:
 
 ---
 
+## 8AQ. Estado real após os vídeos e pedido para não fazer merge — v4.9.52
+
+Registro importante:
+
+- O botão de pedir merge foi clicado por engano pelo usuário.
+- **Não foi feito merge do PR.**
+- O trabalho continua somente na branch `arena/019fb6d3-teste` e no PR #11.
+
+Resposta objetiva ao usuário:
+
+### 1. Tudo que foi coletado dos vídeos foi implementado?
+
+- **Não 100%.**
+- Foi implementado o que era seguro, claro e prioritário para este ciclo:
+  - mapeamento mais correto das tabelas antigas;
+  - separação de configurações, permissões, empresas, caixa, comunicação, comissões, orçamentos e logística;
+  - exemplos das tabelas para conferência manual;
+  - configurações de cartuchos/recargas;
+  - etiquetas numéricas para cartuchos com código de barras;
+  - uso das etiquetas antigas para sugerir o próximo número;
+  - remoção da regra antiga de criar `Cartucho Vazio` como produto separado.
+- O restante virou base funcional documentada para continuar sem perder contexto, especialmente:
+  - venda/notinha completa;
+  - recarga/cartucho com fluxo operacional completo;
+  - logística/coleta/entrega;
+  - relatórios de recarga;
+  - garantia de cartucho;
+  - financeiro/caixa completo;
+  - chamados/OS;
+  - clientes;
+  - RTF/modelos.
+
+### 2. Foi otimizado para não travar?
+
+- **Sim, em várias partes**, mas ainda precisa validação com a base real do usuário.
+- O que já existe para desempenho:
+  - renderizar somente a tela aberta;
+  - não manter telas fechadas processando;
+  - busca pesada por Enter/lupa, não filtrando a cada letra;
+  - sincronização incremental por partes;
+  - cache/assinatura para automações não rodarem sem necessidade;
+  - modo leve/manual para testes;
+  - card de etiquetas e alinhamento trabalhando com amostras/limites, sem listar tudo pesado de uma vez.
+- Mesmo assim, com a base real, ainda pode aparecer travamento em alguma tela específica. Se acontecer, precisa identificar a tela e otimizar ela separadamente.
+
+### 3. Os dados antigos já estão alocados nos devidos lugares?
+
+- **Parcialmente, sim. 100% confirmado ainda não.**
+- Já existem automações e mapeamentos para levar dados antigos para:
+  - Clientes;
+  - Contratos/locação;
+  - Impressoras do contrato;
+  - Leituras;
+  - Contadores;
+  - Chamados/visitas;
+  - Vendas/notinhas;
+  - Itens da venda;
+  - Financeiro/contas a receber;
+  - Produtos/estoque;
+  - Cartuchos/recargas;
+  - Fiscal/notas;
+  - Usuários/funcionários;
+  - Empresas/dados da loja;
+  - Permissões;
+  - Caixa/contas;
+  - Comunicação;
+  - Comissões;
+  - Orçamentos/propostas;
+  - Coleta/entrega/logística;
+  - Auxiliares.
+- Porém, a confirmação final depende do usuário abrir a v4.9.52, carregar a nuvem, aplicar alinhamento e baixar o relatório.
+- O ambiente Arena não consegue validar a nuvem real com segurança por limitação de rede/TLS, então o relatório gerado no PC do usuário continua sendo a prova principal.
+- Importante: alguns dados antigos ficam preservados como fonte/histórico em `modulosDinamicos` e coleções migradas, mas não devem aparecer como menus principais. Eles servem para conferência e para reprocessamento seguro.
+
+### 4. Sobre remover dados da nuvem
+
+- Não apagar dados antigos em massa sem confirmação.
+- Pode remover/limpar apenas dados claramente indevidos e já definidos pelo usuário, como `Cartucho Vazio` criado automaticamente como produto separado.
+- Para isso foi criado botão em `Configurações > Etiquetas de cartuchos > Atualizar e enviar nuvem`.
+- Qualquer outro descarte deve passar por relatório/conferência antes.
+
+Próximo passo recomendado ao usuário:
+
+1. Abrir link v4.9.52.
+2. Ir em `Configurações > Alinhamento do banco antigo`.
+3. Clicar em `Carregar nuvem`, se os dados não aparecerem.
+4. Clicar em `Aplicar alinhamento automático`.
+5. Ir em `Configurações > Etiquetas de cartuchos` e clicar em `Atualizar e enviar nuvem`.
+6. Baixar o relatório `.txt`.
+7. Mandar o relatório no chat para fechar o mapeamento definitivo.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
