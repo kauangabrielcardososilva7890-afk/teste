@@ -14,8 +14,10 @@
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
 - Versão atual implementada: **v4.9.52**
-- Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
-- Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
+- Último commit de código publicado no PR: `37bc9a24661c71d8e41c7132589e347671490b53` — v4.9.52.
+- Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/37bc9a24661c71d8e41c7132589e347671490b53/index.html?v=4.9.52`.
+- ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
+- Situação do PR: aberto, **não fazer merge sem confirmação explícita do usuário**.
 
 ---
 
@@ -3361,6 +3363,128 @@ Próximo passo recomendado ao usuário:
 
 ---
 
+## 8AR. Atualização manual do relatório solicitada pelo usuário — v4.9.52
+
+Data da atualização: 2026-08-05.
+
+Objetivo desta atualização:
+
+- Reforçar o estado real do projeto após a análise dos vídeos públicos e após o clique acidental no botão de merge.
+- Deixar claro para qualquer continuação futura que **não deve fazer merge agora**.
+- Separar o que já foi implementado, o que está parcialmente resolvido e o que ainda depende de conferência com a base real.
+
+Estado do PR:
+
+- PR #11 continua aberto.
+- Branch fixa: `arena/019fb6d3-teste`.
+- Última versão de código: **v4.9.52**.
+- Último link funcional de teste da v4.9.52:
+  - `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/37bc9a24661c71d8e41c7132589e347671490b53/index.html?v=4.9.52`
+- **Não fazer merge** sem o usuário pedir novamente de forma intencional.
+
+O que já foi aplicado no código a partir dos vídeos/análises:
+
+1. Alinhamento assistido do banco antigo:
+   - sugestões de destino por tabela;
+   - usuário pode marcar tabela errada;
+   - usuário pode escolher destino correto;
+   - relatório `.txt`;
+   - exemplos seguros de registros por tabela.
+2. Novos destinos no alinhamento:
+   - clientes;
+   - contratos/locação;
+   - impressoras do contrato;
+   - leituras;
+   - contadores;
+   - chamados/visitas;
+   - vendas/notinhas;
+   - itens da venda;
+   - contas a receber;
+   - caixa/contas;
+   - produtos/estoque;
+   - cartuchos/recargas;
+   - usuários/funcionários;
+   - permissões;
+   - empresas/dados da loja;
+   - configurações;
+   - comunicação;
+   - comissões;
+   - orçamentos/propostas;
+   - coleta/entrega/logística;
+   - fiscal/notas;
+   - fornecedores;
+   - auxiliares;
+   - ignorar/técnico.
+3. Cartuchos/etiquetas:
+   - card `Etiquetas de cartuchos` em Configurações;
+   - geração de etiquetas numéricas próprias;
+   - código de barras;
+   - próximo número sugerido a partir de etiquetas antigas;
+   - regra de etiqueta nova: somente números, sem letras, sem prefixo e sem ano;
+   - configuração `db.config.cartuchosRecargas`;
+   - limpeza de produtos indevidos `Cartucho Vazio` / `CARTVAZ-*`.
+4. Regra corrigida:
+   - cartucho vazio não deve virar produto separado.
+5. Otimizações já existentes:
+   - renderização somente da tela aberta;
+   - busca pesada por Enter/lupa;
+   - cache/assinatura de automações;
+   - sincronização por partes;
+   - modo leve;
+   - exemplos/amostras limitadas para não carregar tudo de uma vez.
+
+O que **não** está 100% finalizado ainda:
+
+- O sistema ainda não está totalmente fechado para substituir o antigo.
+- Os vídeos renderam várias regras, mas nem todas viraram tela completa.
+- Ainda precisam evolução prática:
+  - vendas/notinhas completas;
+  - recarga/cartucho em tela operacional completa;
+  - logística/coleta/entrega;
+  - chamados/OS;
+  - financeiro/caixa;
+  - relatórios de recarga;
+  - clientes com detalhes finais;
+  - RTF/modelos de contrato/proposta.
+
+Estado real da alocação dos dados antigos:
+
+- O mapeamento automático está bem mais completo, mas ainda é **parcialmente confirmado**.
+- Para confirmar 100%, o usuário precisa gerar o relatório pela própria base carregada da nuvem.
+- Passos para confirmar:
+  1. abrir v4.9.52;
+  2. ir em `Configurações > Alinhamento do banco antigo`;
+  3. clicar em `Carregar nuvem`;
+  4. clicar em `Aplicar alinhamento automático`;
+  5. revisar exemplos/destinos;
+  6. ir em `Configurações > Etiquetas de cartuchos`;
+  7. clicar em `Atualizar e enviar nuvem`;
+  8. voltar ao alinhamento e baixar o relatório `.txt`;
+  9. enviar o relatório no chat.
+
+Cuidados para continuidade:
+
+- Não apagar tabelas antigas úteis.
+- Não remover dados em massa da nuvem sem confirmação.
+- Só remover automaticamente o que já foi definido pelo usuário como indevido, exemplo: `Cartucho Vazio` como produto separado.
+- Manter dados migrados fora do menu principal, mas preservados para conferência/reprocessamento.
+- Continuar priorizando:
+  1. Leituras;
+  2. Contratos;
+  3. Vendas/notinhas;
+  4. Chamados/OS;
+  5. Clientes;
+  6. Estoque;
+  7. Financeiro;
+  8. Impressão/RTF.
+
+Validação desta atualização documental:
+
+- `npm run check` executado com sucesso.
+- `npm test` executado com sucesso.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
@@ -3384,16 +3508,22 @@ Para cada nova parte recebida:
 
 ## 10. Pendências atuais
 
-1. Usuário vai enviar o restante das triggers/procedures em partes.
-2. Validar visualmente se contratos agora aparecem com cliente e impressoras após v4.9.19+.
-3. Confirmar se os modelos RTF carregados pelo sistema estão preenchendo corretamente.
-4. Se ainda houver contrato sem cliente/impressora, pedir novo diagnóstico da v4.9.20+ com:
-   - dados convertidos de `contratos`
-   - `clientes`
-   - `equipamentos`
-   - `parque`
-   - `VISITAS`
-   - `CONTADOR_PAGINAS`
+1. Usuário testar a v4.9.52 com a base real na nuvem.
+2. Usuário baixar e enviar o relatório de `Configurações > Alinhamento do banco antigo`.
+3. Confirmar, pelo relatório real, se cada tabela antiga caiu no destino correto.
+4. Ajustar mapeamento fino depois do relatório, sem apagar dados úteis.
+5. Continuar prioridade funcional definida pelo usuário:
+   - Leituras;
+   - Contratos;
+   - Vendas/notinhas;
+   - Chamados/OS;
+   - Clientes;
+   - Estoque;
+   - Financeiro;
+   - Impressão/RTF.
+6. Validar visualmente contratos com cliente, impressoras e leituras.
+7. Confirmar modelos de contrato/proposta em `Modelos contrato`.
+8. Evoluir recarga/cartuchos para tela operacional completa se o usuário aprovar o fluxo das etiquetas.
 
 ---
 
