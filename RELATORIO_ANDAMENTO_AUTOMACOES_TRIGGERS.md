@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.46**
+- Versão atual implementada: **v4.9.47**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.46
+## 8AF. Modo apresentação em `.exe` — v4.9.47
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,12 +2888,12 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
 
-## 8AG. Ajustes do relatório de avaliação — v4.9.46
+## 8AG. Ajustes do relatório de avaliação — v4.9.47
 
 Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
 
@@ -2929,12 +2929,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
 
-## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.46
+## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.47
 
 Correção após o usuário apontar que as modalidades foram colocadas no cadastro do contrato, quando deveriam ficar no cadastro da impressora do contrato.
 
@@ -2960,12 +2960,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
 
-## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.46
+## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.47
 
 Correção após o usuário esclarecer o fluxo exato esperado.
 
@@ -2992,12 +2992,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
 
 ---
 
 
-## 8AJ. Busca de impressora na leitura e acesso por duplo clique — v4.9.46
+## 8AJ. Busca de impressora na leitura e acesso por duplo clique — v4.9.47
 
 Correção após o usuário apontar que a tela ainda tinha botão/radio de seleção e que contratos com muitas impressoras precisam de busca personalizada.
 
@@ -3027,7 +3027,39 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.46**
+- **v4.9.47**
+
+---
+
+
+## 8AK. Leitura detalhada por departamento e lançamentos editáveis — v4.9.47
+
+Implementação com base nas respostas completas do usuário e nas imagens de exemplo da notinha de leitura.
+
+Arquivo criado:
+
+- `leitura_detalhada_departamentos_patch.js`
+
+Ações tomadas:
+
+- Dentro da leitura, lançamentos podem ser editados com duplo clique.
+- Lançamentos podem ser removidos.
+- Ao remover, o medidor volta para a lista de pendentes.
+- Leitura faturada bloqueia edição/remoção e exige estorno para alterar.
+- Novo lançamento mantém busca por impressora, serial, patrimônio, departamento/localização.
+- Remanejadas aparecem separadas apenas como histórico e não podem receber leitura.
+- Impressão da leitura agora agrupa por departamento.
+- Cada departamento soma utilizado, excedente e valor.
+- Cada impressora/medidor mostra serial, departamento, franquia, valor por página, excedente, contador anterior, contador atual, utilizado, acréscimo, valor excedente e total.
+- Rodapé soma total utilizado, total excedente e valor geral.
+
+Teste criado:
+
+- `test_leitura_detalhada_departamentos.js`
+
+Versão publicada:
+
+- **v4.9.47**
 
 ---
 
