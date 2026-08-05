@@ -16,6 +16,7 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'logo.png'),
@@ -25,6 +26,11 @@ function createWindow () {
 
   win.loadFile('index.html');
   try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
+  try{ win.webContents.on('before-input-event', (event, input) => {
+    const k=String(input.key||'').toLowerCase();
+    if((input.control||input.meta) && input.shift && ['i','j','c'].includes(k)) event.preventDefault();
+    if(k==='f12') event.preventDefault();
+  }); }catch(e){}
   win.webContents.on('context-menu', e => e.preventDefault());
   win.once('ready-to-show', () => win.show());
   return win;

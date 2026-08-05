@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.56**
+- Versão atual implementada: **v4.9.57**
 - Último commit de código publicado no PR: `30982c7435d69e8abad043ffba4cbfebe22ea5ae` — v4.9.56.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/30982c7435d69e8abad043ffba4cbfebe22ea5ae/index.html?v=4.9.56`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3847,6 +3847,69 @@ Testes atualizados:
 Versão publicada:
 
 - **v4.9.56**
+
+---
+
+## 8AW. Sistema virgem, usuários oficiais e proteção casual do código — v4.9.57
+
+Pedido do usuário:
+
+- Remover dados do banco antigo e deixar o sistema virgem.
+- Preservar somente clientes existentes, pois os clientes reais serão reenviados.
+- Publicar a base limpa na nuvem.
+- Remover login por CNPJ.
+- Criar usuários oficiais:
+  - Kauan / 6132;
+  - Recepção / 3232;
+  - Katia / 1524;
+  - Denivaldo / 1234 inicialmente.
+- Denivaldo deve trocar senha no primeiro acesso, com aviso para colocar a senha do usuário do banco antigo.
+- Reforçar proteção casual do código no `.exe`.
+
+Implementado:
+
+- Criado patch separado `sistema_virgem_usuarios_patch.js`.
+- Criado teste `test_sistema_virgem_usuarios.js`.
+- Ao abrir esta versão, se a base ainda não tiver sido marcada como virgem:
+  - limpa dados operacionais antigos/migrados;
+  - remove `modulosDinamicos`;
+  - remove vendas, contratos, leituras, chamados, produtos, equipamentos, financeiro, fiscal migrado, buscador escola e demais arrays operacionais;
+  - preserva `db.clientes`;
+  - recria usuários oficiais;
+  - remove admin/admin123;
+  - marca `db.config.sistemaVirgem`.
+- Login passa a ser direto por usuário/senha, sem CNPJ.
+- Usuários oficiais configurados.
+- Kauan fica como Admin total.
+- Denivaldo entra com senha temporária `1234` e recebe modal obrigatório:
+  - `mude a senha, coloque a senha do usuario do banco antigo`
+- Depois que Denivaldo troca, passa a usar a nova senha.
+- Em Configurações foi adicionado card `Sistema virgem / Nuvem` com botão para publicar base virgem.
+- Após login, o sistema tenta publicar a base virgem na nuvem usando `syncEnviarParaNuvem({forcar:true})`.
+- `sync_client.js` foi ampliado para sincronizar também dados do Buscador Escola:
+  - `escolaOrcamentos`;
+  - `escolaItens`;
+  - `escolaExcluidos`;
+  - `escolaLogs`.
+
+Proteção casual do código:
+
+- Em `main.js`, devtools foi desativado no `BrowserWindow` com `devTools:false`.
+- Atalhos F12 e Ctrl/Shift/I/J/C são bloqueados.
+- Menu e botão direito continuam bloqueados.
+- Observação importante: Electron/ASAR/ofuscação dificulta acesso casual, mas não torna impossível alguém extrair/ler código. Não prometer segurança absoluta.
+- Não existe “código DLL próprio” do ERP para ofuscar; as DLLs são do runtime Electron/Windows. O código do app está em JavaScript dentro do pacote.
+
+Resposta honesta sobre funcionamento:
+
+- `npm run check` e `npm test` passam, então o código não está quebrando nos testes automatizados.
+- As funções principais estão implementadas e salvam no banco interno/local e na nuvem quando sincronização funciona.
+- Porém, não afirmar que “tudo está 100% perfeito” sem teste real do usuário no fluxo completo. O correto é testar no PC com dados reais de clientes.
+- A partir desta versão, sem dados antigos, os registros novos devem salvar normalmente e ir para a nuvem pelo mecanismo já implementado.
+
+Versão publicada:
+
+- **v4.9.57**
 
 ---
 
