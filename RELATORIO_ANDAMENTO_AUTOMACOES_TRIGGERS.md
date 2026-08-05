@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.57**
+- Versão atual implementada: **v4.9.58**
 - Último commit de código publicado no PR: `08e79a4296563c35d7ecc82b5078eb63335c4d0a` — v4.9.57.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/08e79a4296563c35d7ecc82b5078eb63335c4d0a/index.html?v=4.9.57`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3910,6 +3910,108 @@ Resposta honesta sobre funcionamento:
 Versão publicada:
 
 - **v4.9.57**
+
+---
+
+## 8AX. Login diário, nome Sistema Digicopy, dados da loja e importação de clientes — v4.9.58
+
+Pedido do usuário:
+
+- Todo dia, na primeira inicialização, pedir login novamente.
+- Remover o nome `ERP` da interface e deixar somente `Sistema Digicopy`.
+- Criar área para preencher dados completos da loja e usar em qualquer relatório/notinha.
+- Explicar onde importar os clientes.
+- Importar somente clientes do banco antigo.
+- Manter continuação do código dos clientes.
+- Códigos devem ser somente número, sem letras e sem formato `0001`.
+- Demais módulos começam do 1 porque o sistema está virgem.
+
+Implementado:
+
+- Criado patch separado `sistema_clientes_loja_patch.js`.
+- Criado teste `test_sistema_clientes_loja.js`.
+- Login diário:
+  - cada sessão recebe `loginDia`;
+  - se abrir o sistema em outro dia, a sessão é removida e pede login novamente;
+  - se já logou no mesmo dia, continua podendo usar enquanto a sessão existir.
+- Nome visual ajustado para `Sistema Digicopy` em pontos principais da interface, título da janela e pacote.
+- `main.js` agora usa título `Sistema Digicopy`.
+- `package.json` agora usa `Sistema Digicopy` como nome do produto/atalho/instalador.
+
+Dados da loja:
+
+- Adicionado card em `Configurações`:
+  - `Dados da loja para relatórios e notinhas`.
+- Campos:
+  - nome fantasia;
+  - razão social;
+  - CNPJ;
+  - telefone;
+  - WhatsApp;
+  - rua/avenida;
+  - número;
+  - bairro;
+  - cidade;
+  - UF;
+  - CEP;
+  - e-mail.
+- Salva em:
+  - `db.config.loja`;
+  - `db.config.empresa`;
+  - primeira empresa em `db.empresas`.
+- Isso permite que notinhas/chamados/relatórios usem os dados completos da loja.
+
+Importação dos clientes:
+
+- Adicionado card na tela `Clientes` para importar JSON.
+- O usuário deve abrir:
+  - `Clientes > Importar clientes reais`.
+- Arquivos recomendados:
+  - `CLIENTES.json`;
+  - `CLIENTES_FINAL.json`.
+- Arquivos `CLIENTES_USUARIOS.json` e `CLIENTES_USUARIOS_RESTRICAO.json` não são necessários para os clientes, pois usuários agora são fixos. O importador ignora arquivos com `USUARIOS`/`RESTRICAO` no nome para não misturar dados.
+- O importador aceita formatos:
+  - array direto;
+  - `{dados:[...]}`;
+  - `{data:[...]}`;
+  - `{rows:[...]}`;
+  - `{items:[...]}`.
+- Campos aceitos para cliente incluem:
+  - `COD_CLIENTE`, `CODIGO`, `ID`;
+  - `NOME_RAZAOSOCIAL`, `RAZAO_SOCIAL`, `NOME`;
+  - `FANTASIA`, `NOME_FANTASIA`;
+  - `CPF_CNPJ`, `CNPJ`, `CPF`, `DOCUMENTO`;
+  - telefone/celular/WhatsApp;
+  - e-mail;
+  - endereço, número, bairro, cidade, UF, CEP;
+  - RG/IE.
+- Código do cliente é convertido para número puro:
+  - `00025` vira `25`;
+  - sem prefixo;
+  - sem letras;
+  - sem zeros à esquerda.
+- Se cliente já existir por documento ou código, atualiza. Caso contrário, cria.
+- O próximo cliente continua do maior código importado.
+
+Observação para continuidade:
+
+- Depois que o usuário confirmar que importou os clientes corretamente, fazer a versão final removendo abas administrativas/teste/nuvem conforme solicitado.
+- Ainda não remover essas áreas agora, porque o usuário precisa importar clientes e confirmar.
+
+Testes:
+
+- `test_sistema_clientes_loja.js` valida:
+  - extração de linhas JSON;
+  - mapeamento de cliente;
+  - código numérico puro;
+  - ignorar arquivos de usuários/restrição;
+  - continuação de código;
+  - salvar dados completos da loja;
+  - formato do login diário.
+
+Versão publicada:
+
+- **v4.9.58**
 
 ---
 

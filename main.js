@@ -21,7 +21,7 @@ function createWindow () {
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'DIGICOPY ERP Demo'
+    title: 'Sistema Digicopy'
   });
 
   win.loadFile('index.html');
