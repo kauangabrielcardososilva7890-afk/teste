@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.48**
+- Versão atual implementada: **v4.9.49**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.48
+## 8AF. Modo apresentação em `.exe` — v4.9.49
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,12 +2888,12 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AG. Ajustes do relatório de avaliação — v4.9.48
+## 8AG. Ajustes do relatório de avaliação — v4.9.49
 
 Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
 
@@ -2929,12 +2929,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.48
+## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.49
 
 Correção após o usuário apontar que as modalidades foram colocadas no cadastro do contrato, quando deveriam ficar no cadastro da impressora do contrato.
 
@@ -2960,12 +2960,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.48
+## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.49
 
 Correção após o usuário esclarecer o fluxo exato esperado.
 
@@ -2992,12 +2992,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AJ. Busca de impressora na leitura e acesso por duplo clique — v4.9.48
+## 8AJ. Busca de impressora na leitura e acesso por duplo clique — v4.9.49
 
 Correção após o usuário apontar que a tela ainda tinha botão/radio de seleção e que contratos com muitas impressoras precisam de busca personalizada.
 
@@ -3027,12 +3027,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AK. Leitura detalhada por departamento e lançamentos editáveis — v4.9.48
+## 8AK. Leitura detalhada por departamento e lançamentos editáveis — v4.9.49
 
 Implementação com base nas respostas completas do usuário e nas imagens de exemplo da notinha de leitura.
 
@@ -3059,12 +3059,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
 
 ---
 
 
-## 8AL. Notinha de leitura compacta e aba Produtos visível — v4.9.48
+## 8AL. Notinha de leitura compacta e aba Produtos visível — v4.9.49
 
 Correções solicitadas após teste da leitura impressa e menu de produtos.
 
@@ -3086,7 +3086,54 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.48**
+- **v4.9.49**
+
+---
+
+
+## 8AM. Alinhamento assistido do banco antigo — v4.9.49
+
+Implementado para o usuário validar onde cada tabela migrada deve entrar sem precisar conhecer a estrutura do banco.
+
+Arquivo criado:
+
+- `alinhamento_banco_assistido_patch.js`
+
+Ações tomadas:
+
+- Adicionada área em Configurações chamada `Alinhamento do banco antigo`.
+- O sistema analisa automaticamente as tabelas migradas e sugere destino:
+  - Clientes;
+  - Contratos/locação;
+  - Impressoras do contrato;
+  - Leituras;
+  - Contadores;
+  - Chamados;
+  - Vendas;
+  - Itens de venda;
+  - Financeiro;
+  - Produtos;
+  - Cartuchos;
+  - Fiscal;
+  - Usuários;
+  - Fornecedores;
+  - Auxiliares;
+  - Ignorar/técnico.
+- Cada tabela tem uma chave/checkbox para marcar se a sugestão está errada.
+- Usuário pode escolher o destino correto em uma caixa fechada.
+- Usuário pode preencher observação por tabela.
+- Módulos esperados podem ser marcados como presente/faltando/não usa/não sei.
+- Botão para aplicar alinhamento automático chama as automações já criadas.
+- Botão para carregar dados da nuvem fica disponível nessa mesma área.
+- Botão para baixar relatório completo gera TXT com tudo que pertence, o que foi marcado errado e o que falta.
+
+Teste criado:
+
+- `test_alinhamento_banco_assistido.js`
+
+Versão publicada:
+
+- **v4.9.49**
 
 ---
 

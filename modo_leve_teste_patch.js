@@ -6,8 +6,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
-window.DIGI_MODO_LEVE = true;
-try{ localStorage.setItem('digicopy_erp_autosync','0'); }catch(e){}
+const MODO_LEVE_ATIVO = (typeof location!=='undefined' && /[?&]leve=1\b/.test(location.search||'')) || (()=>{ try{return localStorage.getItem('digicopy_modo_leve')==='1'||localStorage.getItem('digicopy_modo_apresentacao')==='1';}catch(e){return false;} })();
+if(MODO_LEVE_ATIVO){
+  window.DIGI_MODO_LEVE = true;
+  try{ localStorage.setItem('digicopy_erp_autosync','0'); }catch(e){}
+}
 function limparAreaBanco(){
   if(typeof document==='undefined') return;
   const banco=document.getElementById('view-banco');
@@ -28,6 +31,7 @@ function reforcarDemoSeVazio(){
   return 0;
 }
 window.MODO_LEVE_TESTE_PURE={ reforcarDemoSeVazio };
+if(!MODO_LEVE_ATIVO){ console.log('[DIGICOPY] modo_leve_teste_patch.js v4.9.41 inativo'); return; }
 if(typeof document==='undefined') return;
 const oldBuildNav=window.buildNav;
 if(typeof oldBuildNav==='function'&&!oldBuildNav.__modoLeveTeste){

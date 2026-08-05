@@ -8,6 +8,13 @@
 (function(){
 'use strict';
 
+const DEMO_ATIVO = (typeof location!=='undefined' && /[?&]demo=1\b/.test(location.search||'')) || (()=>{ try{return localStorage.getItem('digicopy_modo_apresentacao')==='1';}catch(e){return false;} })();
+if(!DEMO_ATIVO){
+  window.DIGICOPY_APRESENTACAO_DEMO = false;
+  window.APRESENTACAO_DEMO_PURE = { prepararDemo:()=>0, travarUsuariosAdmin:()=>null, totalOperacional:()=>0 };
+  console.log('[DIGICOPY] apresentacao_demo_patch.js v4.9.42 inativo');
+  return;
+}
 window.DIGICOPY_APRESENTACAO_DEMO = true;
 window.DIGI_MODO_LEVE = true;
 try{ localStorage.setItem('digicopy_erp_autosync','0'); }catch(e){}

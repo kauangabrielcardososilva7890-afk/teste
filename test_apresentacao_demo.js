@@ -2,7 +2,7 @@ const fs=require('fs');
 function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1); } console.log('  ✔ '+name); }
 const code=fs.readFileSync('apresentacao_demo_patch.js','utf8');
 const db={empresas:[],usuarios:[{id:'x'}],clientes:[],produtos:[],equipamentos:[],contratos:[],parque:[],leituras:[],os:[],vendas:[],contasReceber:[],contasPagar:[],logs:[],modulosDinamicos:{TABELA:{dados:[{A:1}]}},config:{}};
-const ctx={window:{},db,localStorage:{setItem(){},getItem(){return null;}}};
+const ctx={window:{},db,localStorage:{setItem(){},getItem(k){return k==='digicopy_modo_apresentacao'?'1':null;}}};
 new Function('window','db','localStorage',code)(ctx.window,ctx.db,ctx.localStorage);
 const A=ctx.window.APRESENTACAO_DEMO_PURE;
 console.log('== APRESENTACAO_DEMO_PURE ==');
