@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.53**
+- Versão atual implementada: **v4.9.54**
 - Último commit de código publicado no PR: `f4e55ac213867e61f8610d4d75b83e3298916ba3` — v4.9.53.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/f4e55ac213867e61f8610d4d75b83e3298916ba3/index.html?v=4.9.53`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3586,6 +3586,110 @@ Testes:
 Versão publicada:
 
 - **v4.9.53**
+
+---
+
+## 8AT. Buscador Escola integrado ao ERP — v4.9.54
+
+Pedido do usuário:
+
+- Integrar ao DIGICOPY ERP um projeto separado que originalmente era Flask/SQLite para navegador.
+- Adaptar para funcionar dentro do app atual, sem depender de servidor Python.
+- Criar um menu único chamado `Buscador Escola`, posicionado antes de `Configurações`.
+
+Implementado:
+
+- Criado patch separado `buscador_escola_patch.js`.
+- Criado teste `test_buscador_escola.js`.
+- Criado menu lateral `Buscador Escola`, inserido antes de `Configurações`.
+- Criada tela própria com:
+  - configuração da API;
+  - CNPJ/CPF;
+  - senha local;
+  - status padrão `NAEN`;
+  - limite de páginas;
+  - botão `Sincronizar API`;
+  - busca por produto/item;
+  - botão `Importar dados antigos`;
+  - botão `Excel`;
+  - botão `Exemplos`;
+  - lista de resultados ordenada por região/distância;
+  - lista de descartados/restaurar.
+
+Adaptação técnica do projeto original:
+
+- A estrutura SQLite foi adaptada para o banco interno do ERP:
+  - `db.escolaOrcamentos`;
+  - `db.escolaItens`;
+  - `db.escolaExcluidos`;
+  - `db.config.buscadorEscola`.
+- O Flask foi substituído por JavaScript integrado ao Electron/Web.
+- A senha não é salva no banco/nuvem; fica somente no `localStorage` do computador.
+- A sincronização é assíncrona/paginada, com pausas curtas, para não travar a interface.
+- A busca não filtra pesado enquanto digita; usa Enter/lupa.
+- A exportação Excel foi adaptada para `.xls` em HTML compatível com Excel, sem depender de `openpyxl`.
+- O cálculo de distância usa fórmula Haversine no próprio JavaScript.
+- Base padrão: Janaúba/MG.
+- Prioridade regional:
+  - distância até 250 km = prioridade Norte/região próxima;
+  - acima disso = longe.
+
+Integração com API externa:
+
+- Criado IPC no Electron em `main.js` e `preload.js`:
+  - `caixaEscolarAPI.request(...)`;
+  - evita bloqueio de CORS no app `.exe`;
+  - tenta até 3 vezes em erros 500/502/503/504.
+- No navegador comum, o módulo tenta usar `fetch` direto. Se a API bloquear CORS, o funcionamento completo será pelo Electron.
+- Endpoint padrão configurado:
+  - `https://api.caixaescolar.mg.gov.br`
+- Fluxo implementado:
+  1. POST `/login`;
+  2. pega token;
+  3. GET `/orcamentos?status=NAEN&page=N`;
+  4. GET `/orcamentos/{id}/itens`;
+  5. salva/atualiza orçamento;
+  6. salva itens;
+  7. descarta como removido/expirado se sumir da API.
+
+Dados antigos:
+
+- Criada função `Importar dados antigos`, que tenta localizar em `modulosDinamicos` tabelas com nomes relacionados a orçamento/escola/caixa.
+- A importação heurística procura campos como:
+  - `NOME_ESCOLA`;
+  - `ESCOLA`;
+  - `MUNICIPIO`;
+  - `CIDADE`;
+  - `DATA_FIM`;
+  - `VALOR_TOTAL`;
+  - `DESCRICAO`;
+  - `ITEM`;
+  - `PRODUTO`;
+  - `QUANTIDADE`;
+  - `VALOR_UNITARIO`.
+- Isso permite aproveitar dados antigos se existirem tabelas compatíveis.
+
+Cuidados:
+
+- Não colocar CNPJ/senha real no código.
+- Não salvar senha na nuvem.
+- Validar a API real no PC do usuário, preferencialmente no Electron, porque o navegador pode bloquear CORS.
+- Se a API real tiver campos diferentes dos descritos, ajustar o normalizador depois do teste.
+
+Testes:
+
+- `test_buscador_escola.js` valida:
+  - normalização sem acento;
+  - cálculo de distância;
+  - prioridade regional;
+  - importação heurística de dados antigos;
+  - busca por descrição de item;
+  - descartar/restaurar;
+  - geração de Excel HTML.
+
+Versão publicada:
+
+- **v4.9.54**
 
 ---
 
