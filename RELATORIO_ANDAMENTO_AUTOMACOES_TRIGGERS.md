@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.45**
+- Versão atual implementada: **v4.9.46**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.45
+## 8AF. Modo apresentação em `.exe` — v4.9.46
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,12 +2888,12 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
 
-## 8AG. Ajustes do relatório de avaliação — v4.9.45
+## 8AG. Ajustes do relatório de avaliação — v4.9.46
 
 Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
 
@@ -2929,12 +2929,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
 
-## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.45
+## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.46
 
 Correção após o usuário apontar que as modalidades foram colocadas no cadastro do contrato, quando deveriam ficar no cadastro da impressora do contrato.
 
@@ -2960,12 +2960,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
 
 ---
 
 
-## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.45
+## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.46
 
 Correção após o usuário esclarecer o fluxo exato esperado.
 
@@ -2992,7 +2992,42 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.45**
+- **v4.9.46**
+
+---
+
+
+## 8AJ. Busca de impressora na leitura e acesso por duplo clique — v4.9.46
+
+Correção após o usuário apontar que a tela ainda tinha botão/radio de seleção e que contratos com muitas impressoras precisam de busca personalizada.
+
+Arquivo criado:
+
+- `leitura_busca_fluxo_patch.js`
+
+Ações tomadas:
+
+- Histórico de leituras removeu coluna/botão de selecionar.
+- Leitura agora é acessada somente por duplo clique na linha.
+- Faturamento fica dentro da leitura aberta, não por botão de seleção no histórico.
+- Lista de impressoras do contrato removeu a coluna de tipos/medidores; edição por duplo clique.
+- Novo lançamento de contador ganhou busca de impressoras por:
+  - Impressora;
+  - Serial;
+  - Patrimônio;
+  - Departamento;
+  - Localização.
+- Campo da impressora não mostra mais os tipos ativos ao lado.
+- Impressora some da lista de lançamento quando todos os medidores ativos dela já foram lançados naquela leitura.
+- Se uma impressora tiver mais de um medidor ativo, ela continua aparecendo até todos serem lançados.
+
+Teste criado:
+
+- `test_leitura_busca_fluxo.js`
+
+Versão publicada:
+
+- **v4.9.46**
 
 ---
 
