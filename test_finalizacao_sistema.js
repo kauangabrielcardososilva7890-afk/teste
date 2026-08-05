@@ -12,4 +12,6 @@ ok('ordena código numericamente crescente', P.ordenarLista(list,'codigo','asc')
 ok('ordena nome desc', P.ordenarLista(list,'nome','desc')[0].nome==='C');
 ok('filtra clientes por tudo', P.filtrarClientesFinal([{nome:'José',codigo:'1'},{nome:'Maria',codigo:'2'}],'jose','todos').length===1);
 ok('código interno só número', P.numCodigo('CLI-00045')===45);
+ok('clientes não lista tudo por padrão', P.clientesDeveListar('', 'todos', 'ativos')===false);
+ok('clientes lista quando pesquisar ou filtrar', P.clientesDeveListar('maria', 'todos', 'ativos')===true && P.clientesDeveListar('', 'todos', 'inadimplente')===true && P.clientesDeveListar('', 'nome', 'ativos')===true);
 console.log('\nRESULTADO: Testes de finalização passaram!');

@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.60**
+- Versão atual implementada: **v4.9.61**
 - Último commit de código publicado no PR: `536d6d888575b91f9c839f63fabf584649dbb35a` — v4.9.60.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/536d6d888575b91f9c839f63fabf584649dbb35a/index.html?v=4.9.60`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4109,6 +4109,47 @@ Sobre app para celular:
 Versão publicada:
 
 - **v4.9.60**
+
+---
+
+## 8BA. Clientes sem listar tudo por padrão e decisão mobile — v4.9.61
+
+Pedido do usuário:
+
+- Na tela de clientes, remover o padrão que mostra todos os clientes automaticamente.
+- Só listar clientes quando pesquisar ou usar filtros.
+- Confirmou que app mobile só deve ser feito depois que o sistema estiver 100%.
+
+Implementado:
+
+- Ajustado `finalizacao_sistema_patch.js`.
+- Tela de clientes agora abre sem carregar/listar todos os clientes por padrão.
+- A lista só aparece se:
+  - digitar uma busca e apertar Enter/lupa;
+  - escolher um campo específico de pesquisa;
+  - aplicar filtro de status/condição.
+- Filtros adicionados/visíveis:
+  - ativos;
+  - inadimplentes;
+  - ocultos/inativos;
+  - sem telefone;
+  - sem endereço;
+  - todos status.
+- Mensagem inicial explica: `Pesquise ou escolha um filtro para listar os clientes. A lista não abre tudo por padrão para ficar leve.`
+- Mantida ordenação por coluna, com padrão por código crescente quando a lista aparece.
+
+Mobile:
+
+- Decisão registrada: app para celular fica para depois que o sistema desktop estiver estabilizado/100%.
+- Quando chegar nessa fase, manter a mesma nuvem online e adaptar layout para mobile/PWA/Capacitor.
+
+Teste atualizado:
+
+- `test_finalizacao_sistema.js` agora valida que clientes não lista tudo por padrão e lista ao pesquisar/filtrar.
+
+Versão publicada:
+
+- **v4.9.61**
 
 ---
 

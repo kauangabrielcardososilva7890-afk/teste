@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.59 — Finalização operacional
+// PATCH v4.9.61 — Finalização operacional
 // • X/ESC volta para aba anterior quando fechar janela/modal pelo usuário
 // • Remove menus migrados/admin/nuvem/teste da navegação final
 // • Buscador Escola fica visível antes de Configurações
@@ -40,6 +40,9 @@ function filtrarClientesFinal(list,busca,campo){
     return ['codigo','nome','fantasia','telefone','whatsapp','documento','cidade','bairro','endereco','email','contato','cep'].some(k=>test(c[k]));
   });
 }
+function clientesDeveListar(busca,campo,status){
+  return !!txt(busca) || (campo&&campo!=='todos') || (status&&status!=='ativos');
+}
 function removerElementosFinais(){
   const termos=/migrad|importar arquivos|backup|migraç|recarregar dados demo|limpar dados|exportar backup|sistema virgem|alinhamento do banco|carregar nuvem|enviar.*nuvem|publicar.*nuvem|dados migrados|explorar migrados|notinhas antigas|relat[oó]rios|nova despesa|contas a pagar/i;
   document.querySelectorAll('button,a,span.dynamic-menu-heading,#nav-dinamico,#nav-dinamico-label').forEach(el=>{
@@ -62,7 +65,7 @@ function instalarBuscadorMenuFinal(){
   }
 }
 
-window.FINALIZACAO_SISTEMA_PURE={ordenarLista,filtrarClientesFinal,numCodigo};
+window.FINALIZACAO_SISTEMA_PURE={ordenarLista,filtrarClientesFinal,clientesDeveListar,numCodigo};
 
 if(typeof document==='undefined') return;
 
@@ -121,13 +124,23 @@ window.buscarClientesFinal=function(){ window.__clientesBuscaFinal=txt(document.
 window.renderClientes=function(){
   const s=sess(); if(!s) return;
   const view=document.getElementById('view-clientes')||(typeof ensureView==='function'?ensureView('clientes'):null); if(!view) return;
-  const busca=window.__clientesBuscaFinal||'', campo=window.__clientesCampoFinal||'todos', sort=window.__clientesSortFinal||{col:'codigo',dir:'asc'};
-  let list=(db.clientes||[]).filter(c=>c.empresaId===s.empresaId&&c.status!=='inativo');
-  list=filtrarClientesFinal(list,busca,campo); list=ordenarLista(list,sort.col,sort.dir);
+  const busca=window.__clientesBuscaFinal||'', campo=window.__clientesCampoFinal||'todos', status=window.__clientesStatusFinal||'ativos', sort=window.__clientesSortFinal||{col:'codigo',dir:'asc'};
+  const deveListar=clientesDeveListar(busca,campo,status);
+  let list=(db.clientes||[]).filter(c=>c.empresaId===s.empresaId);
+  if(status==='ativos') list=list.filter(c=>c.status!=='inativo'&&c.status!=='oculto');
+  else if(status==='inadimplente') list=list.filter(c=>c.status==='inadimplente');
+  else if(status==='ocultos') list=list.filter(c=>c.status==='inativo'||c.status==='oculto');
+  else if(status==='sem_telefone') list=list.filter(c=>!txt(c.telefone)&&!txt(c.whatsapp));
+  else if(status==='sem_endereco') list=list.filter(c=>!txt(c.endereco)&&!txt(c.rua));
+  if(deveListar) list=filtrarClientesFinal(list,busca,campo); else list=[];
+  list=ordenarLista(list,sort.col,sort.dir);
+  const totalGeral=(db.clientes||[]).filter(c=>c.empresaId===s.empresaId).length;
   const seta=col=>sort.col===col?(sort.dir==='asc'?' ▲':' ▼'):'';
   const th=(col,label)=>`<th onclick="ordenarClientesFinal('${col}')" class="cursor-pointer select-none hover:text-[#0a1e8a]">${label}${seta(col)}</th>`;
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão organizado por código. Clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="todos">Tudo</option><option value="codigo">Código</option><option value="nome">Nome</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><span class="text-[12px] text-slate-500 ml-auto"><b>${list.length}</b> cliente(s)</span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||'<tr><td colspan="7" class="text-center text-slate-400 py-10">Nenhum cliente encontrado.</td></tr>'}</tbody></table></div></div></div>`;
+  const vazioMsg=deveListar?'Nenhum cliente encontrado com esse filtro.':'Pesquise ou escolha um filtro para listar os clientes. A lista não abre tudo por padrão para ficar leve.';
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="todos">Tudo</option><option value="codigo">Código</option><option value="nome">Nome</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesBuscaFinal='';window.__clientesCampoFinal='todos';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
   const csel=document.getElementById('clientes-campo-final'); if(csel) csel.value=campo;
+  const ssel=document.getElementById('clientes-status-final'); if(ssel) ssel.value=status;
 };
 
 // Reforço para impressão: dados da loja sempre completos quando existir config.loja.
@@ -138,5 +151,5 @@ const oldBuildNav=window.buildNav;
 window.buildNav=function(){ const r=oldBuildNav?oldBuildNav.apply(this,arguments):undefined; setTimeout(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },80); return r; };
 setInterval(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },2000);
 setTimeout(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },600);
-console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.59 carregado');
+console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();
