@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.58**
+- Versão atual implementada: **v4.9.59**
 - Último commit de código publicado no PR: `d26cee219967bd448a09e65ed40dbfebf088e6ae` — v4.9.58.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/d26cee219967bd448a09e65ed40dbfebf088e6ae/index.html?v=4.9.58`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4012,6 +4012,64 @@ Testes:
 Versão publicada:
 
 - **v4.9.58**
+
+---
+
+## 8AY. Finalização operacional, menus finais e clientes ordenáveis — v4.9.59
+
+Pedido do usuário:
+
+- Ao clicar no X, fechar modal/aba ou apertar ESC, voltar para a aba anterior.
+- Ao salvar/faturar, permanecer na mesma tela e atualizar automaticamente.
+- Remover menus migrados e menus administrativos extras, como nuvem/importação/testes.
+- Garantir menu `Buscador Escola` visível.
+- Restaurar cliente com ordenação clicando em Código/Nome/Fantasia etc., padrão por código de cliente.
+- Manter principalmente notinhas/impressões com dados da loja completos e layout já solicitado.
+- Preparar versão final para baixar.
+
+Implementado:
+
+- Criado patch separado `finalizacao_sistema_patch.js`.
+- Criado teste `test_finalizacao_sistema.js`.
+- Histórico de abas:
+  - `navigateTo` agora guarda aba anterior;
+  - fechamento por X/ESC do modal chama volta para aba anterior.
+- Fechamento por ação programática de salvar/faturar não força voltar para outra aba.
+- Funções comuns de salvar/faturar são envolvidas para atualizar a tela atual e permanecer no módulo atual.
+- Menus finais:
+  - removidos itens migrados/dinâmicos;
+  - removidos atalhos visíveis de importação/migração/nuvem/teste/backup;
+  - removidos relatórios/contas a pagar/nova despesa do menu final;
+  - removidos cards administrativos extras de alinhamento e sistema virgem da tela final.
+- `Buscador Escola` agora é reinserido de forma reforçada:
+  - no menu lateral antes de Configurações;
+  - também no menu superior, antes de Configurações, quando disponível.
+- Clientes:
+  - nova tela final de clientes;
+  - padrão ordenado por código crescente;
+  - cabeçalhos clicáveis para ordenar por código, nome, fantasia, telefone, CPF/CNPJ e cidade;
+  - busca por Enter/lupa;
+  - sem barra A-Z;
+  - código mostrado como número puro.
+- Impressão/notinhas:
+  - reforçada substituição dos dados da loja nas notinhas quando `db.config.loja` estiver preenchido.
+
+Observação:
+
+- Esta versão ainda mantém o código dos módulos antigos no pacote para não quebrar dependências internas, mas os menus administrativos/migrados ficam escondidos/removidos da interface final.
+- O usuário informou que os dados já estão na nuvem; a versão passa a usar normalmente a base atual.
+
+Testes:
+
+- `test_finalizacao_sistema.js` valida:
+  - ordenação numérica de código;
+  - ordenação por nome;
+  - filtro de clientes;
+  - código numérico puro.
+
+Versão publicada:
+
+- **v4.9.59**
 
 ---
 
