@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.50 — Exemplos das tabelas no alinhamento do banco antigo
+// PATCH v4.9.51 — Exemplos das tabelas no alinhamento do banco antigo
 // • Mostra uma amostra segura de cada tabela para facilitar a conferência
 // • Botão "Ver exemplos" abre primeiros registros com documentos/senhas mascarados
 // • Relatório TXT passa a incluir exemplos resumidos das tabelas
@@ -174,5 +174,5 @@ if(typeof oldRenderConfig==='function'&&!oldRenderConfig.__alinhamentoExemplos){
 }
 let tentativas=0;
 (function tentar(){ tentativas+=1; const ok=aplicarColunaExemplos(); if(!ok&&tentativas<12) setTimeout(tentar,500); })();
-console.log('[DIGICOPY] alinhamento_banco_exemplos_patch.js v4.9.50 carregado');
+console.log('[DIGICOPY] alinhamento_banco_exemplos_patch.js v4.9.51 carregado');
 })();

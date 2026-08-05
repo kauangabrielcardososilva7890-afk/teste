@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.50**
+- Versão atual implementada: **v4.9.51**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -3160,6 +3160,58 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.50**
+
+---
+
+## 8AO. Aprendizado do vídeo público de configurações — v4.9.51
+
+Motivo:
+
+- O usuário enviou vídeo público de treinamento de configurações do sistema antigo e pediu para extrair o máximo de informação possível e já entender onde cada dado do banco deve ficar.
+
+Principais conclusões funcionais extraídas:
+
+- Tabelas de configuração não devem ser tratadas automaticamente como técnico/ignorar. Muitas guardam regra de negócio importante.
+- Configurações relevantes identificadas por módulo:
+  - empresa/dados da loja: razão social, fantasia, CNPJ, WhatsApp/e-mail público, logo, empresa ativa e recursos usados;
+  - funcionários/usuários: login, senha antiga, categoria administrativa/técnica/venda, comissão e e-mails adicionais;
+  - permissões: visualizar, cadastrar, alterar, deletar, faturar, relatório e exportar;
+  - clientes: limite de crédito, dia de vencimento, campos obrigatórios e vendedor vinculado;
+  - produtos/estoque: custo, estoque, estoque mínimo, margem, desconto por perfil, importação por XML e custo médio;
+  - locação/leitura: controle sequencial fiscal da leitura, bloqueio após faturar, impressão/notinha e configuração fiscal de locação;
+  - recarga/cartucho: etiqueta, histórico, técnico padrão, insumos, status e comunicação com cliente;
+  - financeiro/caixa: contas a receber, recebimento, caixa diário, contas/bancos/cofre, transferência, vencimento no mês seguinte, cartão/taxas;
+  - comunicação: SMTP, e-mail, SMS/WhatsApp, pesquisa de satisfação e avisos ao administrador;
+  - vendas/orçamentos: cliente balcão, bloqueio de venda finalizada, estorno com motivo, garantia de OS e mensagens padrão.
+
+Ajuste implementado no alinhamento assistido:
+
+- Adicionados novos destinos no seletor:
+  - `Empresas / dados da loja`;
+  - `Configurações do sistema`;
+  - `Permissões de usuários`;
+  - `Caixa / contas`;
+  - `Comunicação / e-mail / SMS`;
+  - `Comissões`;
+  - `Orçamentos / propostas`.
+- A heurística deixou de mandar qualquer tabela com `CONFIG` direto para `Ignorar / técnico`.
+- `CONFIG_FINANCEIRO`, `CONFIG_CLIENTES`, `CONFIG_PRODUTOS`, `CONFIG_VENDAS`, `CONFIG_LOCACAO`, `CONFIG_RECARGA`, etc. agora tendem a cair em `Configurações do sistema`.
+- `EMPRESAS`/`LOJAS`/`FILIAIS` caem em `Empresas / dados da loja`.
+- `RESTRICAO`/`PERMISSAO`/`PERFIL` caem em `Permissões de usuários`.
+- `CAIXA`, `FLUXO_CAIXA`, `CONTA_BANCARIA`, `TRANSFERENCIA`, `RETIRADA` caem em `Caixa / contas`.
+- `SMTP`, `EMAIL`, `SMS`, `WHATS`, `PUBLICIDADE`, `PESQUISA`, `NOTIFICACAO`, `MENSAGEM` caem em `Comunicação / e-mail / SMS`.
+
+Regra de cuidado:
+
+- O vídeo serve apenas como referência de fluxo e regra de negócio observável. Não copiar visual, nome, marca, código ou identidade do sistema antigo.
+
+Teste atualizado:
+
+- `test_alinhamento_banco_assistido.js` agora valida configurações, empresas, permissões e caixa.
+
+Versão publicada:
+
+- **v4.9.51**
 
 ---
 

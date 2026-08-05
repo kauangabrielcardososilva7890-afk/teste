@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.49 — Alinhamento assistido do banco antigo
+// PATCH v4.9.51 — Alinhamento assistido do banco antigo
 // • Analisa tabelas migradas, sugere onde cada tabela pertence no ERP novo
 // • Permite marcar sugestão errada e escolher destino correto
 // • Marca módulos esperados como presentes/faltando/não sei
 // • Gera relatório completo para correção fina da migração
+// • v4.9.51: configurações, empresa, caixa, permissões e comunicação não caem mais como técnico/ignorar
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -28,47 +29,68 @@ const DESTINOS=[
   {id:'itens_venda',label:'Itens da venda'},
   {id:'financeiro_receber',label:'Contas a receber'},
   {id:'financeiro_pagar',label:'Contas a pagar'},
+  {id:'caixa',label:'Caixa / contas'},
   {id:'produtos',label:'Produtos / estoque'},
   {id:'cartuchos',label:'Cartuchos / recargas'},
   {id:'fiscal',label:'Fiscal / notas'},
   {id:'usuarios',label:'Usuários / funcionários'},
+  {id:'permissoes',label:'Permissões de usuários'},
+  {id:'empresas',label:'Empresas / dados da loja'},
+  {id:'configuracoes',label:'Configurações do sistema'},
+  {id:'comunicacao',label:'Comunicação / e-mail / SMS'},
+  {id:'comissoes',label:'Comissões'},
+  {id:'orcamentos',label:'Orçamentos / propostas'},
   {id:'fornecedores',label:'Fornecedores'},
   {id:'auxiliares',label:'Auxiliares úteis'},
   {id:'ignorar',label:'Ignorar / técnico'}
 ];
 const ESPERADOS=[
-  ['clientes','Clientes'],['contratos','Contratos'],['impressoras_contrato','Impressoras do contrato'],['leituras','Leituras'],['contadores','Contadores da leitura'],['chamados','Chamados'],['vendas','Vendas/notinhas'],['itens_venda','Itens da venda'],['financeiro_receber','Contas a receber'],['produtos','Produtos'],['cartuchos','Cartuchos/recargas'],['usuarios','Usuários'],['fiscal','Fiscal/notas']
+  ['clientes','Clientes'],['contratos','Contratos'],['impressoras_contrato','Impressoras do contrato'],['leituras','Leituras'],['contadores','Contadores da leitura'],['chamados','Chamados'],['vendas','Vendas/notinhas'],['itens_venda','Itens da venda'],['financeiro_receber','Contas a receber'],['caixa','Caixa/contas'],['produtos','Produtos'],['cartuchos','Cartuchos/recargas'],['usuarios','Usuários'],['permissoes','Permissões'],['empresas','Empresas'],['configuracoes','Configurações'],['comunicacao','Comunicação'],['fiscal','Fiscal/notas']
 ];
 
 function classificarTabela(nome, modulo){
   const n=up(nome); const c=cols(modulo); let best={destino:'auxiliares',pontos:0,motivos:[]};
   function cand(destino,pontos,motivo){ if(pontos>best.pontos){ best={destino,pontos,motivos:[motivo]}; } else if(pontos===best.pontos&&pontos>0) best.motivos.push(motivo); }
+  if(/^RDB\$|IBE\$LOG|^LOG$|^LOG_|_LOG$|TEMPORAR|^TMP/.test(n)) cand('ignorar',20,'interno/técnico');
+  if(/EMPRESAS?|FILIAIS?|LOJAS?|DADOS_EMPRESA/.test(n)) cand('empresas',10,'empresa/dados da loja');
+  cand('empresas',score(c,['COD_EMPRESA','RAZAO_SOCIAL','NOME_FANTASIA','CNPJ','LOGOTIPO','WHATSAPP','EMAIL_EMPRESA']),'campos de empresa');
+  if(/RESTRICAO|RESTRIÇÕES|PERMISSAO|PERMISSÃO|PERFIL|ACESSO_MODULO/.test(n)) cand('permissoes',10,'permissões/restrições');
+  cand('permissoes',score(c,['VISUALIZAR','CADASTRAR','ALTERAR','DELETAR','FATURAR','RELATORIO','EXPORTAR','COD_FUNCIONARIO','COD_USUARIO']),'campos de permissão');
+  if(/CONFIG|CONFIGURACAO|CONFIGURAÇÃO|PARAMETRO|PARÂMETRO|OPCOES|OPÇÕES/.test(n)) cand('configuracoes',9,'configuração do sistema');
+  cand('configuracoes',score(c,['VALOR_PADRAO','DIAS_PRAZO','JUROS_PADRAO','ANO_EXERCICIO','MULTI_EMPRESA','CLIENTE_BALCAO','BLOQUEAR_USUARIO']),'campos de configuração');
+  if(/SMTP|EMAIL|E_MAIL|SMS|WHATS|PUBLICIDADE|PESQUISA|NOTIFICACAO|NOTIFICAÇÃO|MENSAGEM/.test(n)) cand('comunicacao',9,'comunicação/notificações');
+  cand('comunicacao',score(c,['SMTP','EMAIL','SMS','WHATSAPP','MENSAGEM_PADRAO','LINK_PESQUISA','NOTIFICAR_ADMIN']),'campos de comunicação');
+  if(/CAIXA|FLUXO_CAIXA|CONTAS_BANCO|CONTA_BANCARIA|MOVIMENTACAO|MOVIMENTAÇÃO|TRANSFERENCIA|TRANSFERÊNCIA|RETIRADA/.test(n)) cand('caixa',9,'caixa/contas');
+  cand('caixa',score(c,['COD_CAIXA','DATA_ABERTURA','DATA_FECHAMENTO','VALOR_ABERTURA','VALOR_FECHAMENTO','CONTA_DESTINO','SALDO']),'campos de caixa');
+  if(/COMISSAO|COMISSÃO/.test(n)) cand('comissoes',9,'comissões');
+  cand('comissoes',score(c,['COD_FUNCIONARIO','PERCENTUAL_COMISSAO','COMISSAO_VENDA','COMISSAO_SERVICO','COMISSAO_RECARGA','COMISSAO_LOCACAO']),'campos de comissão');
+  if(/ORCAMENTO|ORÇAMENTO|PROPOSTA/.test(n)) cand('orcamentos',9,'orçamentos/propostas');
   if(/^CLIENTES?$|CLIENTES_FINAL/.test(n)) cand('clientes',10,'nome da tabela');
-  cand('clientes',score(c,['COD_CLIENTE','NOME_RAZAOSOCIAL','CPF_CNPJ','TELEFONE','ENDERECO'])+(/CLIENT/.test(n)?3:0),'campos de cliente');
+  cand('clientes',score(c,['COD_CLIENTE','NOME_RAZAOSOCIAL','CPF_CNPJ','TELEFONE','ENDERECO','LIMITE_CREDITO','DIA_VENCIMENTO'])+(/CLIENT/.test(n)&&!/CONFIG/.test(n)?3:0),'campos de cliente');
   if(/^LOCACAO$|LOCAÇÃO|CONTRATO/.test(n)) cand('contratos',10,'nome de locação/contrato');
-  cand('contratos',score(c,['COD_LOCACAO','COD_CLIENTE','VALOR','LOC_COD_EMPRESA','DATA_INICIO'])+(/LOCACAO/.test(n)?4:0),'campos de contrato');
+  cand('contratos',score(c,['COD_LOCACAO','COD_CLIENTE','VALOR','LOC_COD_EMPRESA','DATA_INICIO'])+(/LOCACAO/.test(n)&&!/CONFIG/.test(n)?4:0),'campos de contrato');
   if(/ITENS_LOCACAO/.test(n)) cand('impressoras_contrato',10,'itens de locação');
   cand('impressoras_contrato',score(c,['IT_COD_ITENS_LOCACAO','IT_COD_LOCACAO','IT_COD_EQUIPAMENTO','IT_SERIAL','IT_SITUACAO'])+(/EQUIPAMENTOS/.test(n)?2:0),'campos de impressora do contrato');
   if(/^LEITURAS?$/.test(n)) cand('leituras',10,'nome de leituras');
-  cand('leituras',score(c,['LE_COD_LEITURA','LE_COD_LOCACAO','LE_VALOR_TOTAL','LE_DATA_INICIO','LE_DATA_FINAL']),'campos de leitura');
+  cand('leituras',score(c,['LE_COD_LEITURA','LE_COD_LOCACAO','LE_VALOR_TOTAL','LE_DATA_INICIO','LE_DATA_FINAL','CONTROLE_LEITURA']),'campos de leitura');
   if(/CONTADOR_PAGINAS|CONTADORES?$/.test(n)) cand('contadores',10,'contador de páginas');
   cand('contadores',score(c,['COD_CONTADOR','COD_ITENS_LOCACAO','CP_COD_LEITURA','CP_TIPO','PAGINAS_ATUAL','CP_VALOR_TOTAL','CON_SERIAL']),'campos de contador');
   if(/^VISITAS?$|CHAMADO|OS|ORDEM_SERVICO/.test(n)) cand('chamados',10,'visitas/chamados');
-  cand('chamados',score(c,['COD_VISITA','VI_COD_CLIENTE','VI_COD_ITENS_LOCACAO','VI_COD_EQUIPAMENTO','VI_SITUACAO','VI_COD_VENDA']),'campos de chamado');
+  cand('chamados',score(c,['COD_VISITA','VI_COD_CLIENTE','VI_COD_ITENS_LOCACAO','VI_COD_EQUIPAMENTO','VI_SITUACAO','VI_COD_VENDA','DEFEITO','SERVICO_EXECUTADO']),'campos de chamado');
   if(/^VENDAS?$|NOTINHA|CUPOM|SAIDA$/.test(n)) cand('vendas',10,'vendas/notinhas');
-  cand('vendas',score(c,['COD_VENDA','COD_CLIENTE','VALOR_TOTAL','FINALIZADA','COD_RECEBIMENTO','FORMA_ENTREGA']),'campos de venda');
+  cand('vendas',score(c,['COD_VENDA','COD_CLIENTE','VALOR_TOTAL','FINALIZADA','COD_RECEBIMENTO','FORMA_ENTREGA','VENDEDOR','CLIENTE_BALCAO']),'campos de venda');
   if(/ITENS_VENDA/.test(n)) cand('itens_venda',10,'itens da venda');
   cand('itens_venda',score(c,['COD_ITENS_VENDA','COD_VENDA','COD_PRODUTO','COD_CARTUCHO','QTDE','VALOR_UNITARIO','VALOR_TOTAL']),'campos de item venda');
   if(/CONTAS_RECEBER/.test(n)) cand('financeiro_receber',10,'contas a receber');
-  cand('financeiro_receber',score(c,['COD_PARCELA','COD_CLIENTE','COD_VENDA','CR_COD_LEITURA','VALOR_PARCELA','DATA_VENCIMENTO']),'campos receber');
+  cand('financeiro_receber',score(c,['COD_PARCELA','COD_CLIENTE','COD_VENDA','CR_COD_LEITURA','VALOR_PARCELA','DATA_VENCIMENTO','DATA_PAGAMENTO','FORMA_PAGAMENTO']),'campos receber');
   if(/CONTAS_PAGAR/.test(n)) cand('financeiro_pagar',10,'contas a pagar');
+  if(/BOLETO|GERENCIANET|PAGSEGURO|CARTAO|CARTÃO|PIX/.test(n)) cand('financeiro_receber',8,'cobrança/recebimento');
   if(/^PRODUTOS?$|PRODUTOS_HISTORICO|PRODUTOS_VARIACAO/.test(n)) cand('produtos',9,'produtos/estoque');
-  cand('produtos',score(c,['COD_PRODUTO','DESCRICAO','QTDE','VALOR_CUSTO','VALOR_TOTAL','PR_NCM','CODIGO_BARRA']),'campos produto');
-  if(/CARTUCHO/.test(n)) cand('cartuchos',9,'cartuchos/recargas');
-  if(/NOTA_FISCAL|ITENS_NOTA|NCM|TRIBUTOS|NFSE|FATURA_NFE/.test(n)) cand('fiscal',9,'fiscal/nota');
-  if(/FUNCIONARIOS|USUARIOS|RESTRICAO/.test(n)) cand('usuarios',9,'usuários/funcionários');
+  cand('produtos',score(c,['COD_PRODUTO','DESCRICAO','QTDE','ESTOQUE_MINIMO','VALOR_CUSTO','VALOR_TOTAL','PR_NCM','CODIGO_BARRA','LOCALIZACAO']),'campos produto');
+  if(/CARTUCHO|RECARGA|INSUMO|TONER|TINTA|ETIQUETA/.test(n)) cand('cartuchos',9,'cartuchos/recargas');
+  if(/NOTA_FISCAL|ITENS_NOTA|NCM|TRIBUTOS|NFSE|FATURA_NFE|CUPOM_FISCAL/.test(n)) cand('fiscal',9,'fiscal/nota');
+  if(/FUNCIONARIOS|USUARIOS/.test(n)) cand('usuarios',9,'usuários/funcionários');
   if(/FORNECEDOR|TRANSPORTADOR/.test(n)) cand('fornecedores',8,'fornecedor/transportador');
-  if(/^RDB\$|IBE\$LOG|CONFIG|LOG$/.test(n)) cand('ignorar',20,'interno/técnico');
   let confianca=Math.min(100,Math.max(20,best.pontos*10));
   if(best.destino==='auxiliares') confianca=35;
   return {tabela:nome,destino:best.destino,confianca,motivo:best.motivos[0]||'heurística',registros:((modulo||{}).dados||[]).length,colunas:c};
@@ -136,5 +158,5 @@ window.alinhamentoFaltante=function(id,val){ cfg().faltantes[id]=val; if(typeof 
 const oldRenderConfig=window.renderConfig;
 window.renderConfig=function(){ if(oldRenderConfig) oldRenderConfig.apply(this,arguments); setTimeout(renderAlinhamento,80); };
 setTimeout(renderAlinhamento,1200);
-console.log('[DIGICOPY] alinhamento_banco_assistido_patch.js v4.9.49 carregado');
+console.log('[DIGICOPY] alinhamento_banco_assistido_patch.js v4.9.51 carregado');
 })();
