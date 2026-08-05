@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.55**
+- Versão atual implementada: **v4.9.56**
 - Último commit de código publicado no PR: `c0a61ced127b16b4798459ef3c49cd8e07e87329` — v4.9.55.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/c0a61ced127b16b4798459ef3c49cd8e07e87329/index.html?v=4.9.55`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3764,6 +3764,89 @@ Testes atualizados:
 Versão publicada:
 
 - **v4.9.55**
+
+---
+
+## 8AV. Buscador Escola ajustado com app.py real — v4.9.56
+
+Motivo:
+
+- Usuário enviou o `app.py` e o `index.html` originais do projeto próprio do Buscador Escola.
+- A versão anterior estava genérica; agora foi ajustada para os endpoints e campos reais do projeto original.
+
+Ajustes principais:
+
+- API padrão corrigida para:
+  - `https://api.caixaescolar.educacao.mg.gov.br`
+- Login corrigido para o endpoint real:
+  - `POST /auth/login`
+  - corpo compatível com `txCpfCnpj` e `txPassword`.
+- Lista de orçamentos corrigida para:
+  - `GET /budget-proposal/summary-by-supplier-profile`
+  - parâmetros `filter.supplierStatus=$eq:NAEN`, `page` e `limit`.
+- Itens corrigidos para:
+  - `GET /budget-item/by-subprogram/{idSubprogram}/by-school/{idSchool}/by-budget/{idBudget}`
+  - com paginação `page` e `limit`.
+- Normalização de orçamento agora entende:
+  - `idBudget`;
+  - `idSchool`;
+  - `idSubprogram`;
+  - `schoolName`;
+  - `countyName`;
+  - `nuBudgetOrder`.
+- Normalização de itens agora entende:
+  - `txBudgetItemType`;
+  - `txDescription`;
+  - além dos campos antigos `id_budget`, `tipo` e `descricao`.
+
+Melhorias de busca e resultado:
+
+- Adicionado filtro de região igual ao projeto original:
+  - MG todo;
+  - Norte de Minas;
+  - Norte prioritário.
+- Adicionado intervalo de resultados no estilo `1-10`.
+- Busca considera tipo e descrição do item.
+- Ordenação melhorada para aproximar a lógica original:
+  - primeiro orçamentos que têm apenas o produto pesquisado;
+  - depois cidades prioritárias quando aplicável;
+  - depois menor quantidade de produtos extras;
+  - depois menor distância.
+- Tabela agora mostra:
+  - prioridade;
+  - código/escola;
+  - município;
+  - distância;
+  - tipo/produto;
+  - quantidade de extras;
+  - link para abrir orçamento no portal.
+
+Melhorias de sincronização:
+
+- Criado botão `Atualizar` para sincronização incremental.
+- Criado botão `Baixar tudo`, que limpa os orçamentos/itens do Buscador Escola e baixa novamente.
+- Mantido bloqueio contra sincronização dupla, evitando o problema antigo de concorrência.
+- No Electron, `main.js` agora retorna cookies da autenticação e aceita cookie nas requisições seguintes, além de Bearer token. Isso cobre API por token ou sessão/cookie.
+
+Segurança:
+
+- Não foi colocado CNPJ/senha real no código.
+- Senha continua salva somente localmente no computador, não na nuvem/código.
+
+Testes atualizados:
+
+- `test_buscador_escola.js` valida:
+  - campos reais da API;
+  - rota real de orçamentos;
+  - rota real de itens;
+  - item com `txBudgetItemType` e `txDescription`;
+  - filtro Norte de Minas;
+  - descarte/restauração;
+  - exportação Excel HTML.
+
+Versão publicada:
+
+- **v4.9.56**
 
 ---
 

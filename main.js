@@ -257,7 +257,7 @@ function registerEscolaIPC(){
   ipcMain.handle('escola:request', async (_evt, req) => {
     const method = String((req && req.method) || 'GET').toUpperCase();
     const url = String((req && req.url) || '');
-    if(!/^https:\/\/api\.caixaescolar\.mg\.gov\.br\//.test(url) && !/^https:\/\/[^\s]+/.test(url)){
+    if(!/^https:\/\/api\.caixaescolar\.(educacao\.)?mg\.gov\.br\//.test(url)){
       return { ok:false, error:'URL inválida para o Buscador Escola' };
     }
     let lastErr = '';
@@ -265,13 +265,15 @@ function registerEscolaIPC(){
       try{
         const headers = { 'Content-Type':'application/json', 'Accept':'application/json' };
         if(req && req.token) headers.Authorization = 'Bearer ' + String(req.token);
+        if(req && req.cookie) headers.Cookie = String(req.cookie);
         const resp = await fetch(url, { method, headers, body: req && req.body ? JSON.stringify(req.body) : undefined });
         const text = await resp.text();
         let data = null;
         try{ data = text ? JSON.parse(text) : null; }catch(e){ data = text; }
-        if(resp.ok) return { ok:true, status:resp.status, data };
+        const cookies = typeof resp.headers.getSetCookie === 'function' ? resp.headers.getSetCookie() : (resp.headers.get('set-cookie') ? [resp.headers.get('set-cookie')] : []);
+        if(resp.ok) return { ok:true, status:resp.status, data, cookies };
         lastErr = (data && data.message) || text || resp.statusText;
-        if(![500,502,503,504].includes(resp.status)) return { ok:false, status:resp.status, error:lastErr, data };
+        if(![429,500,502,503,504].includes(resp.status)) return { ok:false, status:resp.status, error:lastErr, data, cookies };
       }catch(e){ lastErr = e.message || String(e); }
       await new Promise(r => setTimeout(r, 700 * (tent + 1)));
     }
