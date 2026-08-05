@@ -14,8 +14,8 @@
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
 - Versão atual implementada: **v4.9.61**
-- Último commit de código publicado no PR: `536d6d888575b91f9c839f63fabf584649dbb35a` — v4.9.60.
-- Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/536d6d888575b91f9c839f63fabf584649dbb35a/index.html?v=4.9.60`.
+- Último commit de código publicado no PR: `faa0e50ba8158db4c2bfbd9dac71757a3353b53a` — v4.9.61.
+- Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/faa0e50ba8158db4c2bfbd9dac71757a3353b53a/index.html?v=4.9.61`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
 - Situação do PR: aberto, **não fazer merge sem confirmação explícita do usuário**.
 
