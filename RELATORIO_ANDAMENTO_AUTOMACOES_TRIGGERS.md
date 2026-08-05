@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.51**
+- Versão atual implementada: **v4.9.52**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -3212,6 +3212,59 @@ Teste atualizado:
 Versão publicada:
 
 - **v4.9.51**
+
+---
+
+## 8AP. Vídeo público de recarga/cartuchos e etiquetas — v4.9.52
+
+Motivo:
+
+- O usuário enviou vídeo público do módulo de recarga/cartucho e pediu para pegar o máximo possível, com atenção especial à geração de etiquetas a partir de 9:28.
+- Usar apenas como referência funcional/operacional, sem copiar visual, marca, nome, código ou identidade do sistema antigo.
+
+Principais regras funcionais extraídas do vídeo:
+
+- Antes de operar recarga, o modelo do cartucho precisa estar cadastrado.
+- Cada modelo de cartucho pode ter insumos padrão associados.
+- Insumos podem vir de produtos/estoque e compras/XML.
+- O custo da recarga é calculado pelos insumos somados a outros custos.
+- Cada cartucho físico pode receber uma etiqueta perpétua, funcionando como identidade do cartucho.
+- Etiqueta ajuda a rastrear histórico de recargas, clientes por onde passou, datas, defeitos, garantia e insumos usados.
+- Etiqueta pode ser digitada ou lida por código de barras.
+- Para o DIGICOPY ERP, etiqueta nova deve seguir a regra do usuário: somente números, sem prefixo, sem letras e sem ano.
+- Existe fluxo de remanufaturado em estoque, mas no DIGICOPY ERP não deve criar “cartucho vazio” como produto separado.
+- Venda/notinha pode ter recarga, remanufaturado, produto comum e OS, mas o ERP novo deve manter as regras já definidas pelo usuário para notinhas/chamados.
+- Logística de recarga tem status como recebido/reciclando/pronto/defeito/garantia/entregue e filtros por toner/tinta/status/técnico.
+- Garantia de recarga não gera financeiro.
+- Relatórios úteis: recargas por período, técnico, modelo, tipo toner/tinta, garantia, insumos gastos e rastreamento por etiqueta.
+
+Implementado:
+
+- Criado patch separado `cartuchos_etiquetas_config_patch.js`.
+- Adicionado card em `Configurações > Etiquetas de cartuchos`.
+- O card gera etiquetas numéricas próprias para cartuchos com código de barras, prontas para imprimir em folha A4.
+- O sistema lê etiquetas antigas de tabelas como `ITENS_VENDA`, `PRODUTOS_VARIACAO`, cartuchos/recargas/remanufaturados/logística e sugere o próximo número.
+- Criadas configurações automáticas em `db.config.cartuchosRecargas`:
+  - layout padrão de etiquetas;
+  - regra `codigoSomenteNumerico`;
+  - regra `cartuchoVazioComoProduto=false`;
+  - status de logística;
+  - resumo das etiquetas antigas encontradas.
+- Adicionado botão `Atualizar e enviar nuvem` para aplicar as regras, limpar produtos indevidos e enviar a base atualizada para a nuvem quando a conexão estiver disponível.
+- Corrigida automação de cartuchos para não criar mais produto `Cartucho Vazio`.
+- Adicionada limpeza automática de produtos gerados anteriormente como `Cartucho Vazio` / `CARTVAZ-*`, respeitando a regra já pedida pelo usuário.
+- Melhorado alinhamento assistido para classificar `ROTEIRO`, `COLETA`, `ENTREGA`, `LOGISTICA` e `MOTOBOY` como `Coleta / entrega / logística`.
+- Melhorado alinhamento para classificar `REMAN`/`REMANUFATURADO` em `Cartuchos / recargas`.
+
+Testes criados/atualizados:
+
+- `test_cartuchos_etiquetas_config.js`
+- `test_automacoes_fiscal_cartuchos.js`
+- `test_alinhamento_banco_assistido.js`
+
+Versão publicada:
+
+- **v4.9.52**
 
 ---
 

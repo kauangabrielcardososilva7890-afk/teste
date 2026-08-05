@@ -31,7 +31,7 @@ ok('aplicou automações', changed > 0);
 ok('nota fiscal migrada criada', db.notasFiscaisMigradas.length === 1 && db.notasFiscaisMigradas[0].clienteId === 'cli1');
 ok('fatura NFE criada', db.faturasNfe.length === 1);
 ok('produto recebeu NCM/CEST', db.produtos[0].ncm === '12345678' && db.produtos[0].cest === '01.001.00');
-ok('cartucho migrado e produto vazio criado', db.cartuchosMigrados.length === 1 && db.produtos.some(p => p.categoria === 'Cartucho Vazio'));
+ok('cartucho migrado sem criar produto vazio', db.cartuchosMigrados.length === 1 && !db.produtos.some(p => p.categoria === 'Cartucho Vazio') && db.cartuchosMigrados[0].usaCartuchoVazioComoProduto === false);
 ok('variação não fica negativa', db.produtosVariacaoMigrados[0].qtde === 0);
 ok('insumo gasto atualiza valor de insumos no item', db.vendas[0].itens[0].valorInsumos === 12);
 ok('estorno marca venda', db.vendas[0].status === 'estornada');

@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.25 — Automações fiscais preparatórias, cartuchos e estornos
+// PATCH v4.9.52 — Automações fiscais preparatórias, cartuchos e estornos
 // • Continuação da adaptação das triggers úteis do banco anterior
 // • NF-e/NFC-e fica preparada: defaults, cliente, totais, vínculos e observações
-// • Cartuchos migrados viram estrutura consultável e produto de cartucho vazio
+// • Cartuchos migrados viram estrutura consultável sem criar cartucho vazio como produto
 // • Insumos gastos de recarga/remanufatura ficam registrados para custo/histórico
 // • Estornos migrados marcam vendas, leituras e títulos sem apagar histórico
 // ═══════════════════════════════════════════════════════════════════════════
@@ -190,14 +190,10 @@ function sincronizarCartuchos(empId){
     const nome=txt(pick(r,['DESCRICAO'])) || ['Cartucho', tipo, fab, numero, cor].filter(Boolean).join(' ');
     const valorInsumos=somarInsumosCartucho(codigo)+num(pick(r,['VALOR_OUTROS_CUSTOS']),0);
     let c=db.cartuchosMigrados.find(x=>x.empresaId===empId&&x.codigoAntigo===codigo);
-    const dados={empresaId:empId,codigoAntigo:codigo,nome,categoria:'Cartucho',tipo,fabricante:fab,numero,cor,qtdeCopias:num(pick(r,['QTDE_COPIAS']),0),valorInsumos,ocultar:pick(r,['OCULTAR'])||'N',resetarImpressora:pick(r,['RESETAR_IMPRESSORA_CARTUCHO'])||'N'};
+    const dados={empresaId:empId,codigoAntigo:codigo,nome,categoria:'Cartucho',tipo,fabricante:fab,numero,cor,qtdeCopias:num(pick(r,['QTDE_COPIAS']),0),valorInsumos,ocultar:pick(r,['OCULTAR'])||'N',resetarImpressora:pick(r,['RESETAR_IMPRESSORA_CARTUCHO'])||'N',usaCartuchoVazioComoProduto:false};
     if(c) Object.assign(c,dados); else {c={id:uidSafe('cart'),...dados}; db.cartuchosMigrados.push(c);}
-    const prodNome='Cartucho Vazio '+[tipo,fab,numero,cor].filter(Boolean).join(' ');
-    if(prodNome.trim()!=='Cartucho Vazio'){
-      let p=(db.produtos||[]).find(p=>p.empresaId===empId && (p.cartuchoCodigoAntigo===codigo || up(p.nome)===up(prodNome)));
-      const payload={empresaId:empId,cartuchoCodigoAntigo:codigo,sku:'CARTVAZ-'+codigo,nome:prodNome,categoria:'Cartucho Vazio',fabricante:fab,estoque:0,estoqueMin:0,custo:0,preco:0,status:'ativo',controleEstoque:true};
-      if(p) Object.assign(p,payload); else db.produtos.push({id:uidSafe('prd'),criadoEm:agora(),criadoPor:'migracao',criadoPorNome:'Migração',...payload});
-    }
+    // Regra atual do DIGICOPY ERP: cartucho vazio NÃO é produto separado.
+    // O histórico/etiqueta fica no módulo de cartuchos/recargas, sem poluir estoque de produtos.
     alterou++;
   });
   return alterou;
@@ -313,5 +309,5 @@ window.renderVendas=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) wi
 const oldRenderFinanceiro=window.renderFinanceiro;
 window.renderFinanceiro=function(){ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 0); else run(); return oldRenderFinanceiro?oldRenderFinanceiro.apply(this,arguments):undefined; };
 if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes_fiscal_cartuchos', run, 1400); else setTimeout(run, 1400);
-console.log('[DIGICOPY] automacoes_fiscal_cartuchos_patch.js v4.9.25 carregado');
+console.log('[DIGICOPY] automacoes_fiscal_cartuchos_patch.js v4.9.52 carregado');
 })();
