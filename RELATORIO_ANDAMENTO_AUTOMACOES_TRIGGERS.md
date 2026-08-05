@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.44**
+- Versão atual implementada: **v4.9.45**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -2806,7 +2806,7 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
 
 ---
 
@@ -2828,7 +2828,7 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
 
 ---
 
@@ -2854,12 +2854,12 @@ Ações tomadas:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
 
 ---
 
 
-## 8AF. Modo apresentação em `.exe` — v4.9.44
+## 8AF. Modo apresentação em `.exe` — v4.9.45
 
 Ajuste solicitado para apresentação ao chefe/patrão.
 
@@ -2888,12 +2888,12 @@ Observação:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
 
 ---
 
 
-## 8AG. Ajustes do relatório de avaliação — v4.9.44
+## 8AG. Ajustes do relatório de avaliação — v4.9.45
 
 Correções agrupadas após o usuário enviar relatório completo para avaliação do sistema antes de carregar banco oficial.
 
@@ -2929,12 +2929,12 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
 
 ---
 
 
-## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.44
+## 8AH. Correção definitiva: modalidades na impressora e leitura detalhada — v4.9.45
 
 Correção após o usuário apontar que as modalidades foram colocadas no cadastro do contrato, quando deveriam ficar no cadastro da impressora do contrato.
 
@@ -2960,7 +2960,39 @@ Teste criado:
 
 Versão publicada:
 
-- **v4.9.44**
+- **v4.9.45**
+
+---
+
+
+## 8AI. Fluxo correto contrato > leitura > lançamento — v4.9.45
+
+Correção após o usuário esclarecer o fluxo exato esperado.
+
+Arquivo criado:
+
+- `fluxo_contrato_leitura_corrigido_patch.js`
+
+Ações tomadas:
+
+- Modalidades ficam definitivamente no cadastro da impressora dentro do contrato.
+- Novo contrato permanece simples, sem modalidades.
+- Tela do contrato mostra apenas um botão `Nova Impressora`.
+- Botão `Leituras` do contrato abre o histórico de leituras únicas, igual a lista de contratos.
+- No histórico é possível selecionar uma leitura já feita para abrir ou faturar.
+- Botão `Novo` no histórico cria uma nova leitura e abre os detalhes.
+- Detalhe da leitura mostra as impressoras/medidores já lançados.
+- Botão `Novo lançamento` abre uma aba separada para lançar contador.
+- No lançamento há select fechado de impressora, select fechado dos medidores ativos da impressora e campo aberto somente para digitar contador.
+- Faturamento ficou ligado à leitura selecionada.
+
+Teste criado:
+
+- `test_fluxo_contrato_leitura_corrigido.js`
+
+Versão publicada:
+
+- **v4.9.45**
 
 ---
 
