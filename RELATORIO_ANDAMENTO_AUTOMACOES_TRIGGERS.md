@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.59**
+- Versão atual implementada: **v4.9.60**
 - Último commit de código publicado no PR: `67be16f60457fd5d36ea6201b9361d9a7473032a` — v4.9.59.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/67be16f60457fd5d36ea6201b9361d9a7473032a/index.html?v=4.9.59`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4070,6 +4070,45 @@ Testes:
 Versão publicada:
 
 - **v4.9.59**
+
+---
+
+## 8AZ. Correção definitiva do menu Buscador Escola e planejamento mobile — v4.9.60
+
+Pedido do usuário:
+
+- O menu `Buscador Escola` ainda não aparecia.
+- Perguntou se é possível transformar o sistema em app de celular mantendo a mesma nuvem online.
+
+Correção implementada:
+
+- O `Buscador Escola` agora foi colocado diretamente no `buildNav()` do `app.js`, não dependendo apenas de injeção posterior por patch.
+- `navigateTo('buscador-escola')` agora cria a view pelo `ensureView('buscador-escola')` e chama `renderBuscadorEscola()` diretamente quando disponível.
+- O menu superior também ganhou item fixo `Buscador Escola` antes de Configurações.
+- Criado teste `test_menu_buscador_final.js` para validar:
+  - menu lateral;
+  - renderização via navigateTo;
+  - menu superior fixo.
+
+Sobre app para celular:
+
+- É possível transformar o Sistema Digicopy em app mobile.
+- Melhor caminho técnico recomendado:
+  1. manter o sistema web/Electron como base;
+  2. adaptar layout responsivo para celular;
+  3. empacotar com Capacitor/Ionic ou transformar em PWA;
+  4. manter a mesma nuvem/Firebase/sincronização online.
+- O app mobile deve usar a mesma base online, mas precisa cuidados:
+  - telas grandes viram listas/cards;
+  - impressão vira PDF/compartilhamento;
+  - busca sempre por botão/Enter para não travar;
+  - offline/cache precisa ser pensado para não duplicar dados;
+  - permissões e login diário permanecem.
+- Não iniciar mobile antes de estabilizar a versão final desktop, para não duplicar bug em duas plataformas.
+
+Versão publicada:
+
+- **v4.9.60**
 
 ---
 
