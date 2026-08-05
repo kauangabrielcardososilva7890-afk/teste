@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.52**
+- Versão atual implementada: **v4.9.53**
 - Último commit de código publicado no PR: `37bc9a24661c71d8e41c7132589e347671490b53` — v4.9.52.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/37bc9a24661c71d8e41c7132589e347671490b53/index.html?v=4.9.52`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3482,6 +3482,110 @@ Validação desta atualização documental:
 
 - `npm run check` executado com sucesso.
 - `npm test` executado com sucesso.
+
+---
+
+## 8AS. Reparo de vendas realizadas, notinha Pix e chamado avulso — v4.9.53
+
+Motivo:
+
+- Usuário relatou que, comparando com a v4.9.48, algumas funções de venda realizada/chamado ficaram difíceis de acessar.
+- Pediu para restaurar funções úteis, manter notinha de venda em meia folha mesmo com QR Code e completar dados da loja.
+- Pediu chamado avulso parecido com o chamado dentro do contrato, porém listando todos os chamados, sem mexer no fluxo de chamado específico do contrato.
+
+Implementado em patch separado:
+
+- `vendas_chamados_reparo_patch.js`
+
+Vendas/notinha:
+
+- Garantido atalho `showVenda` / `abrirVendaRealizada` apontando para o histórico da venda.
+- Notinha Pix agora usa bloco de QR Code compacto para continuar cabendo em meia folha.
+- Removido bloco extra de aviso Pix fora da página impressa para evitar virar folha maior.
+- Dados da loja na notinha foram reforçados:
+  - nome fantasia;
+  - razão social;
+  - CNPJ;
+  - endereço completo quando disponível;
+  - telefone;
+  - WhatsApp para envio do comprovante/QR: `+55 38 99109-8698`.
+- Notinha relacionada a chamado agora mostra aviso e botão para abrir o chamado.
+
+Chamado avulso / histórico geral:
+
+- `renderOs` foi substituído por uma tela de histórico geral de chamados.
+- A tela mostra chamados avulsos e chamados ligados a contrato em uma lista única, com busca por Enter/lupa.
+- Duplo clique abre o chamado.
+- Botões por linha:
+  - abrir;
+  - imprimir modelo técnico;
+  - imprimir chamado final quando faturado;
+  - abrir notinha relacionada quando existir.
+
+Formulário de chamado avulso:
+
+- Adicionados/organizados campos:
+  - cliente;
+  - impressora/equipamento;
+  - modelo;
+  - patrimônio;
+  - serial;
+  - local;
+  - motivo/defeito;
+  - serviço executado;
+  - técnico;
+  - status;
+  - contador preto anterior;
+  - contador preto atual;
+  - páginas preto usadas;
+  - contador color anterior;
+  - contador color atual;
+  - páginas color usadas;
+  - itens/peças usadas.
+- Ao escolher impressora, o contador atual fica vazio para o usuário preencher manualmente.
+- Contador color atual não é obrigatório.
+- Para faturar o chamado é obrigatório:
+  - cliente;
+  - modelo da impressora;
+  - motivo do chamado;
+  - serviço executado;
+  - contador preto atual.
+- O chamado faturado não gera financeiro automaticamente.
+- Se tiver item/peça, cria uma notinha relacionada ao chamado.
+- A notinha do chamado recebe campo `chamadoId` e aviso no histórico.
+- Importante: chamado não altera contador oficial da impressora. Só leitura altera contador oficial.
+
+Impressões do chamado:
+
+- Criado modelo 1: `Modelo técnico`:
+  - pode imprimir antes de faturar;
+  - vem com dados básicos, mas deixa áreas em branco para preencher em campo;
+  - campos em branco para serviço executado, data de atendimento, item/quantidade, contador preto atual, contador color atual e observações;
+  - assinatura do técnico e cliente.
+- Criado modelo 2: `Chamado final`:
+  - só imprime depois de faturar/concluir;
+  - preenche automaticamente os dados lançados no sistema;
+  - inclui dados completos da loja.
+
+Exemplos de teste:
+
+- Adicionado botão `Exemplos teste` na tela de chamados.
+- Ele cria um cliente, uma impressora, um produto e um chamado de exemplo para o usuário conferir o fluxo sem depender da base antiga.
+- Esses exemplos são marcados com `exemploTesteFluxo:true`.
+
+Testes:
+
+- Criado `test_vendas_chamados_reparo.js`.
+- Testa:
+  - dados completos da empresa;
+  - validação do chamado antes de faturar;
+  - contador color opcional;
+  - cálculo de contador;
+  - próximo número interno somente numérico.
+
+Versão publicada:
+
+- **v4.9.53**
 
 ---
 
