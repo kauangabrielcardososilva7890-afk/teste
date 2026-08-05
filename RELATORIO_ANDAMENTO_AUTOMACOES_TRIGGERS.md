@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.49**
+- Versão atual implementada: **v4.9.50**
 - Último commit publicado no PR: será informado na resposta/publicação da **v4.9.29**.
 - Link de teste atual: será informado na resposta/publicação da **v4.9.29** com o hash final do commit.
 
@@ -3134,6 +3134,32 @@ Teste criado:
 Versão publicada:
 
 - **v4.9.49**
+
+---
+
+## 8AN. Exemplos das tabelas no alinhamento do banco antigo — v4.9.50
+
+Pedido do usuário:
+
+- Mostrar exemplos das tabelas antigas para ele conseguir identificar melhor o que é cada tabela antes de marcar destino errado/correto.
+
+Implementado:
+
+- Criado patch separado `alinhamento_banco_exemplos_patch.js`.
+- A área `Configurações > Alinhamento do banco antigo` agora recebe uma coluna `Exemplo`.
+- Cada tabela mostra uma amostra curta dos primeiros registros, com alguns campos e valores.
+- Botão `Ver exemplos` abre modal com até 3 exemplos e os campos encontrados na tabela.
+- O relatório `.txt` baixado agora inclui a seção `Exemplos seguros das tabelas`.
+- Senhas, documentos, telefones e e-mails são mascarados/reduzidos quando possível para não expor dado sensível sem necessidade.
+- Corrigido escape local do patch de alinhamento para evitar erro ao abrir Configurações.
+
+Teste criado:
+
+- `test_alinhamento_banco_exemplos.js`
+
+Versão publicada:
+
+- **v4.9.50**
 
 ---
 

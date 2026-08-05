@@ -10,6 +10,7 @@
 
 function txt(v){ return String(v ?? '').trim(); }
 function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function esc(v){ if(typeof escapeHtml==='function') return escapeHtml(v); return txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function rows(nome){ return (((db.modulosDinamicos||{})[nome]||{}).dados)||[]; }
 function cols(mod){ return (mod&&mod.colunas&&mod.colunas.length?mod.colunas:(mod&&mod.dados&&mod.dados[0]?Object.keys(mod.dados[0]):[])).map(c=>String(c)); }
 function has(colunas, termos){ const U=colunas.map(up).join('|'); return (Array.isArray(termos)?termos:[termos]).some(t=>U.includes(up(t))); }
