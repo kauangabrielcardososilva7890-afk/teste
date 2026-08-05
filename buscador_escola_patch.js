@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.54 — Buscador Escola integrado ao DIGICOPY ERP
+// PATCH v4.9.55 — Buscador Escola integrado ao DIGICOPY ERP
 // • Adapta projeto Flask/SQLite para o app Electron/Web sem servidor Python
 // • Menu único "Buscador Escola" antes de Configurações
 // • Sincronização paginada com API externa, busca, ranqueamento por distância
 // • Exportação Excel compatível (.xls HTML) e descarte com motivo
+// • v4.9.55: sem SQLite lock, sem log em arquivo, rotas configuráveis e log interno
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -56,14 +57,29 @@ function calcularDistancia(o){
 function prioridadeRegiao(distanciaKm){ return n(distanciaKm,999)<=250?1:2; }
 function cfg(dbRef){
   dbRef.config=dbRef.config||{};
-  dbRef.config.buscadorEscola=dbRef.config.buscadorEscola||{apiBase:API_PADRAO,cidadeBase:'Janaúba/MG',statusPadrao:'NAEN',maxPaginas:30};
-  return dbRef.config.buscadorEscola;
+  dbRef.config.buscadorEscola=dbRef.config.buscadorEscola||{};
+  const c=dbRef.config.buscadorEscola;
+  c.apiBase=c.apiBase||API_PADRAO;
+  c.cidadeBase=c.cidadeBase||'Janaúba/MG';
+  c.statusPadrao=c.statusPadrao||'NAEN';
+  c.maxPaginas=c.maxPaginas||30;
+  c.loginPath=c.loginPath||'/login';
+  c.orcamentosPath=c.orcamentosPath||'/orcamentos';
+  c.itensPath=c.itensPath||'/orcamentos/{id}/itens';
+  c.salvarAposPaginas=c.salvarAposPaginas||1;
+  return c;
 }
 function store(dbRef){
   dbRef.escolaOrcamentos=dbRef.escolaOrcamentos||[];
   dbRef.escolaItens=dbRef.escolaItens||[];
   dbRef.escolaExcluidos=dbRef.escolaExcluidos||[];
-  return {orcamentos:dbRef.escolaOrcamentos,itens:dbRef.escolaItens,excluidos:dbRef.escolaExcluidos};
+  dbRef.escolaLogs=dbRef.escolaLogs||[];
+  return {orcamentos:dbRef.escolaOrcamentos,itens:dbRef.escolaItens,excluidos:dbRef.escolaExcluidos,logs:dbRef.escolaLogs};
+}
+function logEscola(dbRef,tipo,msg,detalhes){
+  const st=store(dbRef);
+  st.logs.unshift({id:uidSafe('esc_log'),data:hoje(),tipo:txt(tipo)||'info',mensagem:txt(msg),detalhes:detalhes||null});
+  if(st.logs.length>500) st.logs.length=500;
 }
 function idOrc(o){ return txt(o.id ?? o.orcamento_id ?? o.orcamentoId ?? o.numero_orcamento ?? o.numeroOrcamento ?? o.numero ?? o.codigo); }
 function normalizarOrcamento(raw){
@@ -86,12 +102,18 @@ function normalizarOrcamento(raw){
   };
 }
 function normalizarItem(raw,orcamentoId){
+  const descricao=txt(raw.descricao ?? raw.itemDescricao ?? raw.nome ?? raw.produto ?? raw.material ?? raw.descricaoItem) || 'Item sem descrição';
+  const tipo=txt(raw.tipo ?? raw.tipoItem ?? raw.categoria ?? raw.grupo ?? '');
+  const idBudget=txt(raw.id_budget ?? raw.idBudget ?? raw.budget_id ?? raw.budgetId ?? raw.orcamento_id ?? raw.orcamentoId ?? raw.idOrcamento ?? orcamentoId);
   return {
-    id:txt(raw.id ?? raw.item_id ?? raw.codigo ?? `${orcamentoId}_${normalizarTexto(raw.descricao||raw.nome||'item').slice(0,20)}_${raw.quantidade||1}`),
-    orcamento_id:txt(raw.orcamento_id ?? raw.orcamentoId ?? raw.idOrcamento ?? orcamentoId),
-    descricao:txt(raw.descricao ?? raw.itemDescricao ?? raw.nome ?? raw.produto ?? raw.material)||'Item sem descrição',
-    quantidade:n(raw.quantidade ?? raw.qtd ?? raw.qtde,1),
-    valor_unitario:n(raw.valor_unitario ?? raw.valorUnitario ?? raw.preco ?? raw.valor,0)
+    id:txt(raw.id ?? raw.item_id ?? raw.itemId ?? raw.codigo ?? raw.cod_item ?? `${idBudget}_${normalizarTexto(tipo||descricao).slice(0,24)}_${raw.quantidade||raw.qtd||1}`),
+    orcamento_id:idBudget,
+    id_budget:idBudget,
+    tipo,
+    descricao,
+    quantidade:n(raw.quantidade ?? raw.qtd ?? raw.qtde ?? raw.quantidadeSolicitada,1),
+    valor_unitario:n(raw.valor_unitario ?? raw.valorUnitario ?? raw.preco ?? raw.valor ?? raw.precoUnitario,0),
+    unidade:txt(raw.unidade ?? raw.und ?? raw.unidadeMedida ?? '')
   };
 }
 function upsertOrcamento(dbRef,raw){
@@ -117,8 +139,10 @@ function limparInexistentes(dbRef,idsApi){
 }
 function descartarOrcamento(dbRef,orcamentoId,motivo,auto){
   const st=store(dbRef); const id=txt(orcamentoId);
+  const m=txt(motivo)||'Descartado';
   if(!st.excluidos.find(e=>String(e.orcamento_id)===String(id))){
-    st.excluidos.push({id:uidSafe('esc_exc'),orcamento_id:id,motivo:txt(motivo)||'Descartado',data_exclusao:hoje(),automatico:!!auto});
+    st.excluidos.push({id:uidSafe('esc_exc'),orcamento_id:id,motivo:m,data_exclusao:hoje(),automatico:!!auto});
+    logEscola(dbRef,auto?'limpeza':'descarte',`Orçamento ${id} descartado`,m);
   }
   return true;
 }
@@ -130,8 +154,8 @@ function pesquisarOrcamentos(dbRef,termoBusca){
     if(excl.has(String(o.id))) return;
     const itens=st.itens.filter(i=>String(i.orcamento_id)===String(o.id));
     itens.forEach(i=>{
-      if(termo && !normalizarTexto(i.descricao).includes(termo)) return;
-      out.push({...o,item_descricao:i.descricao,quantidade:i.quantidade,valor_unitario:i.valor_unitario,item_id:i.id,prioridade_regiao:prioridadeRegiao(o.distancia_km)});
+      if(termo && !normalizarTexto(`${i.descricao} ${i.tipo} ${i.unidade}`).includes(termo)) return;
+      out.push({...o,item_descricao:i.descricao,item_tipo:i.tipo,quantidade:i.quantidade,valor_unitario:i.valor_unitario,item_id:i.id,prioridade_regiao:prioridadeRegiao(o.distancia_km)});
     });
     if(!itens.length && !termo) out.push({...o,item_descricao:'(sem itens baixados)',quantidade:0,valor_unitario:0,item_id:''});
   });
@@ -139,8 +163,8 @@ function pesquisarOrcamentos(dbRef,termoBusca){
   return out;
 }
 function excelHtml(linhas){
-  const rows=(linhas||[]).map(r=>`<tr><td>${esc(r.nome_escola)}</td><td>${esc(r.municipio)}</td><td>${esc(r.distancia_km)}</td><td>${esc(dataBR(r.data_fim))}</td><td>${esc(r.item_descricao)}</td><td>${esc(r.quantidade)}</td><td>${esc(n(r.valor_unitario,0).toFixed(2).replace('.',','))}</td><td>${esc(r.numero_orcamento)}</td></tr>`).join('');
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial;font-size:11pt}th{background:#1F4E78;color:#fff;font-weight:bold;text-align:center;border:1px solid #999;padding:6px}td{border:1px solid #ccc;padding:5px}tr:nth-child(even){background:#f3f6fb}</style></head><body><table><thead><tr><th>Escola</th><th>Município</th><th>Distância (km)</th><th>Data Fim</th><th>Item Solicitado</th><th>Qtd</th><th>Valor Unit. (R$)</th><th>Orçamento</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const rows=(linhas||[]).map(r=>`<tr><td>${esc(r.nome_escola)}</td><td>${esc(r.municipio)}</td><td>${esc(r.distancia_km)}</td><td>${esc(dataBR(r.data_fim))}</td><td>${esc(r.item_tipo||'')}</td><td>${esc(r.item_descricao)}</td><td>${esc(r.quantidade)}</td><td>${esc(n(r.valor_unitario,0).toFixed(2).replace('.',','))}</td><td>${esc(r.numero_orcamento)}</td></tr>`).join('');
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial;font-size:11pt}th{background:#1F4E78;color:#fff;font-weight:bold;text-align:center;border:1px solid #999;padding:6px}td{border:1px solid #ccc;padding:5px}tr:nth-child(even){background:#f3f6fb}</style></head><body><table><thead><tr><th>Escola</th><th>Município</th><th>Distância (km)</th><th>Data Fim</th><th>Tipo</th><th>Item Solicitado</th><th>Qtd</th><th>Valor Unit. (R$)</th><th>Orçamento</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
 }
 function baixarExcel(linhas){
   const blob=new Blob(['\ufeff'+excelHtml(linhas)],{type:'application/vnd.ms-excel;charset=utf-8'});
@@ -159,7 +183,7 @@ function importarAntigos(dbRef){
       const desc=r.DESCRICAO||r.ITEM||r.PRODUTO||r.MATERIAL;
       const orcId=r.ORCAMENTO_ID||r.COD_ORCAMENTO||r.ID_ORCAMENTO||r.ID||r.CODIGO||r.NUMERO_ORCAMENTO||`${nome}_${idx}`;
       if(escola){ upsertOrcamento(dbRef,{id:orcId,numero_orcamento:r.NUMERO_ORCAMENTO||r.NUMERO||orcId,nome_escola:escola,municipio:r.MUNICIPIO||r.CIDADE,data_fim:r.DATA_FIM||r.VALIDADE,valor_total:r.VALOR_TOTAL||r.TOTAL,status:r.STATUS||r.SITUACAO||'NAEN',distancia_km:r.DISTANCIA_KM}); totalO++; }
-      if(desc){ const st=store(dbRef); const item=normalizarItem({id:r.ITEM_ID||r.COD_ITEM||`${orcId}_${idx}`,descricao:desc,quantidade:r.QUANTIDADE||r.QTD,valor_unitario:r.VALOR_UNITARIO||r.PRECO||r.VALOR},orcId); if(!st.itens.find(i=>String(i.id)===String(item.id))){ st.itens.push(item); totalI++; } }
+      if(desc){ const st=store(dbRef); const item=normalizarItem({id:r.ITEM_ID||r.COD_ITEM||`${orcId}_${idx}`,id_budget:r.ID_BUDGET||r.ORCAMENTO_ID||orcId,tipo:r.TIPO||r.CATEGORIA,descricao:desc,quantidade:r.QUANTIDADE||r.QTD,valor_unitario:r.VALOR_UNITARIO||r.PRECO||r.VALOR},orcId); if(!st.itens.find(i=>String(i.id)===String(item.id))){ st.itens.push(item); totalI++; } }
     });
   });
   return {orcamentos:totalO,itens:totalI};
@@ -181,36 +205,71 @@ async function requestApi(method,url,body,token){
   }
   return {ok:false,error:lastErr||'Falha na comunicação'};
 }
+function listaConteudo(dados){
+  if(Array.isArray(dados)) return dados;
+  if(!dados||typeof dados!=='object') return [];
+  return dados.content||dados.data||dados.items||dados.resultados||dados.results||dados.orcamentos||dados.itens||[];
+}
+function apiBase(c){ return (c.apiBase||API_PADRAO).replace(/\/$/,''); }
+function urlPath(base,path){ return base + (String(path||'').startsWith('/')?'':'/') + String(path||''); }
+function urlOrcamentos(c,pagina){
+  const sep=String(c.orcamentosPath||'/orcamentos').includes('?')?'&':'?';
+  return urlPath(apiBase(c),c.orcamentosPath||'/orcamentos') + sep + `status=${encodeURIComponent(c.statusPadrao||'NAEN')}&page=${pagina}`;
+}
+function urlItens(c,id){ return urlPath(apiBase(c),(c.itensPath||'/orcamentos/{id}/itens').replace('{id}',encodeURIComponent(id))); }
+
 async function sincronizarAPI(){
   const s=sess(); if(!s) return;
+  if(window.__buscadorEscolaSyncAtivo) return toastMsg('Sincronização já está em andamento. Aguarde terminar.','info');
+  window.__buscadorEscolaSyncAtivo=true;
   const c=cfg(db); const senha=txt(document.getElementById('esc-senha')?.value||localStorage.getItem('digicopy_buscador_escola_senha_local')||'');
   const cnpj=txt(document.getElementById('esc-cnpj')?.value||c.cnpjCpf||'');
-  if(!cnpj||!senha) return toastMsg('Informe CNPJ/CPF e senha para sincronizar','error');
-  c.cnpjCpf=cnpj; c.apiBase=txt(document.getElementById('esc-api')?.value)||c.apiBase||API_PADRAO; c.statusPadrao=txt(document.getElementById('esc-status-api')?.value)||'NAEN'; c.maxPaginas=Math.max(1,inteiro(document.getElementById('esc-max-pag')?.value,30));
-  try{ localStorage.setItem('digicopy_buscador_escola_senha_local',senha); }catch(e){}
-  salvar(); renderBuscadorEscola('Sincronizando login...');
-  const login=await requestApi('POST',c.apiBase.replace(/\/$/,'')+'/login',{cnpjCpf:cnpj,senha},null);
-  if(!login.ok) { renderBuscadorEscola('Falha no login: '+(login.error||login.status)); return toastMsg('Falha na autenticação da API','error'); }
-  const token=(login.data&&login.data.token)||login.token||''; if(!token){ renderBuscadorEscola('Login OK, mas token não veio na resposta.'); return; }
-  let pagina=1,total=0,totalItens=0; const ids=new Set();
-  while(pagina<=c.maxPaginas){
-    renderBuscadorEscola(`Sincronizando página ${pagina}...`);
-    const url=c.apiBase.replace(/\/$/,'')+`/orcamentos?status=${encodeURIComponent(c.statusPadrao||'NAEN')}&page=${pagina}`;
-    const resp=await requestApi('GET',url,null,token);
-    if(!resp.ok){ renderBuscadorEscola('Erro na página '+pagina+': '+(resp.error||resp.status)); break; }
-    const dados=resp.data||{}; const content=Array.isArray(dados.content)?dados.content:(Array.isArray(dados)?dados:[]);
-    if(!content.length) break;
-    for(const raw of content){
-      const o=upsertOrcamento(db,raw); ids.add(String(o.id)); total++;
-      const rItens=await requestApi('GET',c.apiBase.replace(/\/$/,'')+`/orcamentos/${encodeURIComponent(o.id)}/itens`,null,token);
-      if(rItens.ok){ totalItens+=salvarItens(db,o.id,Array.isArray(rItens.data)?rItens.data:(rItens.data&&rItens.data.content)||[]); }
-      if(total%10===0){ salvar(); await delay(0); }
+  try{
+    if(!cnpj||!senha){ window.__buscadorEscolaSyncAtivo=false; return toastMsg('Informe CNPJ/CPF e senha para sincronizar','error'); }
+    c.cnpjCpf=cnpj;
+    c.apiBase=txt(document.getElementById('esc-api')?.value)||c.apiBase||API_PADRAO;
+    c.statusPadrao=txt(document.getElementById('esc-status-api')?.value)||'NAEN';
+    c.maxPaginas=Math.max(1,inteiro(document.getElementById('esc-max-pag')?.value,30));
+    c.loginPath=txt(document.getElementById('esc-login-path')?.value)||c.loginPath||'/login';
+    c.orcamentosPath=txt(document.getElementById('esc-orc-path')?.value)||c.orcamentosPath||'/orcamentos';
+    c.itensPath=txt(document.getElementById('esc-itens-path')?.value)||c.itensPath||'/orcamentos/{id}/itens';
+    try{ localStorage.setItem('digicopy_buscador_escola_senha_local',senha); }catch(e){}
+    salvar(); renderBuscadorEscola('Sincronizando login...');
+    logEscola(db,'sync','Iniciando sincronização',{api:c.apiBase,status:c.statusPadrao});
+    const login=await requestApi('POST',urlPath(apiBase(c),c.loginPath),{cnpjCpf:cnpj,senha},null);
+    if(!login.ok){ logEscola(db,'erro','Falha no login da API',login); renderBuscadorEscola('Falha no login: '+(login.error||login.status)); toastMsg('Falha na autenticação da API','error'); return; }
+    const token=(login.data&&(login.data.token||login.data.access_token||login.data.accessToken||login.data.jwt))||login.token||'';
+    if(!token){ logEscola(db,'erro','Login OK, mas token não veio na resposta',login.data); renderBuscadorEscola('Login OK, mas token não veio na resposta.'); return; }
+    let pagina=1,total=0,totalItens=0,errosItens=0; const ids=new Set();
+    while(pagina<=c.maxPaginas){
+      renderBuscadorEscola(`Sincronizando página ${pagina}...`);
+      const resp=await requestApi('GET',urlOrcamentos(c,pagina),null,token);
+      if(!resp.ok){
+        const msg=resp.status===404?'Rota de orçamentos não encontrada (404). Ajuste as rotas avançadas.':'Erro na página '+pagina+': '+(resp.error||resp.status);
+        logEscola(db,'erro',msg,resp);
+        renderBuscadorEscola(msg);
+        break;
+      }
+      const content=listaConteudo(resp.data);
+      if(!content.length) break;
+      for(const raw of content){
+        const o=upsertOrcamento(db,raw); ids.add(String(o.id)); total++;
+        const rItens=await requestApi('GET',urlItens(c,o.id),null,token);
+        if(rItens.ok){ totalItens+=salvarItens(db,o.id,listaConteudo(rItens.data)); }
+        else { errosItens++; logEscola(db,'erro',`Erro ao baixar itens do orçamento ${o.id}`,rItens); }
+        if(total%25===0){ salvar(); await delay(0); }
+      }
+      salvar();
+      pagina++; await delay(0);
     }
-    pagina++; await delay(0);
+    const limpos=limparInexistentes(db,ids); c.ultimoSyncEm=hoje(); c.ultimoSyncResumo={orcamentos:total,itens:totalItens,limpos,errosItens}; salvar();
+    const fim=`Sincronização finalizada: ${total} orçamento(s), ${totalItens} item(ns), ${limpos} removido(s)/expirado(s), ${errosItens} erro(s) de item.`;
+    logEscola(db,'sync',fim,c.ultimoSyncResumo);
+    renderBuscadorEscola(fim);
+    toastMsg('Buscador Escola sincronizado','success');
+  }finally{
+    window.__buscadorEscolaSyncAtivo=false;
   }
-  const limpos=limparInexistentes(db,ids); c.ultimoSyncEm=hoje(); c.ultimoSyncResumo={orcamentos:total,itens:totalItens,limpos}; salvar();
-  renderBuscadorEscola(`Sincronização finalizada: ${total} orçamento(s), ${totalItens} item(ns), ${limpos} removido(s)/expirado(s).`);
-  toastMsg('Buscador Escola sincronizado','success');
 }
 
 window.BUSCADOR_ESCOLA_PURE={normalizarTexto,haversineKm,calcularDistancia,prioridadeRegiao,normalizarOrcamento,normalizarItem,pesquisarOrcamentos,descartarOrcamento,restaurarOrcamento,excelHtml,importarAntigos};
@@ -241,7 +300,7 @@ function renderBuscadorEscola(msg){
   const c=cfg(db); const st=store(db); const termo=window.__escolaTermo||''; const resultados=pesquisarOrcamentos(db,termo); window.__escolaResultados=resultados;
   const limite=window.__escolaLimite||300; const rows=resultados.slice(0,limite);
   const resumo=`${st.orcamentos.length} orçamento(s) • ${st.itens.length} item(ns) • ${st.excluidos.length} descartado(s)`;
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Buscador Escola</h3><p>Busca orçamentos escolares por produto, distância e prioridade regional. Dados ficam dentro do ERP.</p></div><div class="neo-actions"><button onclick="escolaSincronizarAPI()" class="neo-btn primary"><i class="ph ph-cloud-arrow-down"></i>Sincronizar API</button><button onclick="escolaExportarExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button><button onclick="escolaExemplos()" class="neo-btn"><i class="ph ph-flask"></i>Exemplos</button></div></div><div class="p-4 border-b bg-white space-y-3"><div class="grid grid-cols-1 md:grid-cols-6 gap-2"><input id="esc-cnpj" value="${esc(c.cnpjCpf||'')}" placeholder="CNPJ/CPF da API" class="neo-input"><input id="esc-senha" type="password" value="${esc(localStorage.getItem('digicopy_buscador_escola_senha_local')||'')}" placeholder="Senha local" class="neo-input"><input id="esc-api" value="${esc(c.apiBase||API_PADRAO)}" placeholder="URL API" class="neo-input md:col-span-2"><input id="esc-status-api" value="${esc(c.statusPadrao||'NAEN')}" class="neo-input" title="Status na API"><input id="esc-max-pag" type="number" value="${esc(c.maxPaginas||30)}" class="neo-input" title="Máx. páginas"></div><div class="flex flex-wrap gap-2 items-center"><input id="esc-busca" value="${esc(termo)}" onkeydown="if(event.key==='Enter')escolaBuscar()" placeholder="Buscar item: toner, papel, cartucho..." class="neo-input flex-1 min-w-[260px]"><button onclick="escolaBuscar()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="escolaImportarAntigos()" class="neo-btn"><i class="ph ph-database"></i>Importar dados antigos</button><span class="text-[12px] text-slate-500 ml-auto">${esc(resumo)}</span></div>${msg?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-2 text-[12px] text-blue-900">${esc(msg)}</div>`:''}<div class="text-[11px] text-slate-500">Senha fica somente neste computador. Não salvar credenciais no código. Sincronização é paginada e não trava a tela.</div></div><div class="overflow-auto max-h-[calc(100vh-330px)]"><table class="neo-table"><thead><tr><th>Prior.</th><th>Escola</th><th>Município</th><th>Dist.</th><th>Data fim</th><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.prioridade_regiao===1?'<span class="neo-status ok">Norte</span>':'<span class="neo-status wait">Longe</span>'}</td><td><b>${esc(r.nome_escola)}</b><br><span class="text-[11px] text-slate-500">Orç. ${esc(r.numero_orcamento||r.id)}</span></td><td>${esc(r.municipio||'-')}</td><td>${n(r.distancia_km,999)===999?'—':esc(r.distancia_km)+' km'}</td><td>${dataBR(r.data_fim)}</td><td><b>${esc(r.item_descricao)}</b></td><td>${esc(r.quantidade)}</td><td>${money(r.valor_unitario)}</td><td><button onclick="escolaDescartar('${esc(r.id)}')" class="neo-btn !px-2" title="Descartar"><i class="ph ph-x-circle"></i></button></td></tr>`).join('')||'<tr><td colspan="9" class="text-center text-slate-400 py-10">Nenhum resultado. Clique em Exemplos ou Sincronizar API.</td></tr>'}</tbody></table>${resultados.length>rows.length?`<div class="p-3 text-center border-t bg-slate-50"><button onclick="escolaMais()" class="neo-btn primary">Mostrar mais</button></div>`:''}</div><div class="p-4 border-t bg-slate-50"><details><summary class="font-bold text-[12px] cursor-pointer">Orçamentos descartados (${st.excluidos.length})</summary><div class="mt-2 space-y-1">${st.excluidos.slice(-80).reverse().map(e=>`<div class="flex justify-between items-center rounded-lg bg-white border p-2 text-[12px]"><span><b>${esc(e.orcamento_id)}</b> — ${esc(e.motivo)} • ${dataBR(e.data_exclusao)}</span><button onclick="escolaRestaurar('${esc(e.orcamento_id)}')" class="neo-btn !h-8">Restaurar</button></div>`).join('')||'<p class="text-slate-400 text-[12px]">Nenhum descartado.</p>'}</div></details></div></div></div>`;
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Buscador Escola</h3><p>Busca orçamentos escolares por produto, distância e prioridade regional. Dados ficam dentro do ERP.</p></div><div class="neo-actions"><button onclick="escolaSincronizarAPI()" class="neo-btn primary"><i class="ph ph-cloud-arrow-down"></i>Sincronizar API</button><button onclick="escolaExportarExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button><button onclick="escolaExemplos()" class="neo-btn"><i class="ph ph-flask"></i>Exemplos</button></div></div><div class="p-4 border-b bg-white space-y-3"><div class="grid grid-cols-1 md:grid-cols-6 gap-2"><input id="esc-cnpj" value="${esc(c.cnpjCpf||'')}" placeholder="CNPJ/CPF da API" class="neo-input"><input id="esc-senha" type="password" value="${esc(localStorage.getItem('digicopy_buscador_escola_senha_local')||'')}" placeholder="Senha local" class="neo-input"><input id="esc-api" value="${esc(c.apiBase||API_PADRAO)}" placeholder="URL API" class="neo-input md:col-span-2"><input id="esc-status-api" value="${esc(c.statusPadrao||'NAEN')}" class="neo-input" title="Status na API"><input id="esc-max-pag" type="number" value="${esc(c.maxPaginas||30)}" class="neo-input" title="Máx. páginas"></div><details class="rounded-xl border bg-slate-50 p-3"><summary class="text-[12px] font-bold cursor-pointer">Rotas avançadas da API (usar se der 404)</summary><div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2"><input id="esc-login-path" value="${esc(c.loginPath||'/login')}" placeholder="/login" class="neo-input"><input id="esc-orc-path" value="${esc(c.orcamentosPath||'/orcamentos')}" placeholder="/orcamentos" class="neo-input"><input id="esc-itens-path" value="${esc(c.itensPath||'/orcamentos/{id}/itens')}" placeholder="/orcamentos/{id}/itens" class="neo-input"></div><p class="text-[11px] text-slate-500 mt-2">Os erros 404 do projeto antigo eram rotas inexistentes no Flask. Aqui o erro aparece na tela e você pode ajustar a rota sem mexer em código.</p></details><div class="flex flex-wrap gap-2 items-center"><input id="esc-busca" value="${esc(termo)}" onkeydown="if(event.key==='Enter')escolaBuscar()" placeholder="Buscar item: toner, papel, cartucho..." class="neo-input flex-1 min-w-[260px]"><button onclick="escolaBuscar()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="escolaImportarAntigos()" class="neo-btn"><i class="ph ph-database"></i>Importar dados antigos</button><span class="text-[12px] text-slate-500 ml-auto">${esc(resumo)}</span></div>${msg?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-2 text-[12px] text-blue-900">${esc(msg)}</div>`:''}<div class="text-[11px] text-slate-500">Senha fica somente neste computador. Não salvar credenciais no código. Sincronização é paginada e não trava a tela.</div></div><div class="overflow-auto max-h-[calc(100vh-330px)]"><table class="neo-table"><thead><tr><th>Prior.</th><th>Escola</th><th>Município</th><th>Dist.</th><th>Data fim</th><th>Tipo</th><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Ações</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.prioridade_regiao===1?'<span class="neo-status ok">Norte</span>':'<span class="neo-status wait">Longe</span>'}</td><td><b>${esc(r.nome_escola)}</b><br><span class="text-[11px] text-slate-500">Orç. ${esc(r.numero_orcamento||r.id)}</span></td><td>${esc(r.municipio||'-')}</td><td>${n(r.distancia_km,999)===999?'—':esc(r.distancia_km)+' km'}</td><td>${dataBR(r.data_fim)}</td><td>${esc(r.item_tipo||'-')}</td><td><b>${esc(r.item_descricao)}</b></td><td>${esc(r.quantidade)}</td><td>${money(r.valor_unitario)}</td><td><button onclick="escolaDescartar('${esc(r.id)}')" class="neo-btn !px-2" title="Descartar"><i class="ph ph-x-circle"></i></button></td></tr>`).join('')||'<tr><td colspan="10" class="text-center text-slate-400 py-10">Nenhum resultado. Clique em Exemplos ou Sincronizar API.</td></tr>'}</tbody></table>${resultados.length>rows.length?`<div class="p-3 text-center border-t bg-slate-50"><button onclick="escolaMais()" class="neo-btn primary">Mostrar mais</button></div>`:''}</div><div class="p-4 border-t bg-slate-50"><details><summary class="font-bold text-[12px] cursor-pointer">Orçamentos descartados (${st.excluidos.length})</summary><div class="mt-2 space-y-1">${st.excluidos.slice(-80).reverse().map(e=>`<div class="flex justify-between items-center rounded-lg bg-white border p-2 text-[12px]"><span><b>${esc(e.orcamento_id)}</b> — ${esc(e.motivo)} • ${dataBR(e.data_exclusao)}</span><button onclick="escolaRestaurar('${esc(e.orcamento_id)}')" class="neo-btn !h-8">Restaurar</button></div>`).join('')||'<p class="text-slate-400 text-[12px]">Nenhum descartado.</p>'}</div></details><details class="mt-3"><summary class="font-bold text-[12px] cursor-pointer">Log interno (${(st.logs||[]).length})</summary><div class="mt-2 space-y-1 max-h-[220px] overflow-auto">${(st.logs||[]).slice(0,120).map(l=>`<div class="rounded-lg bg-white border p-2 text-[11px]"><b>${esc(l.tipo)}</b> • ${dataBR(l.data)} — ${esc(l.mensagem)}${l.detalhes?`<pre class="mt-1 whitespace-pre-wrap text-[10px] text-slate-500">${esc(JSON.stringify(l.detalhes,null,2).slice(0,800))}</pre>`:''}</div>`).join('')||'<p class="text-slate-400 text-[12px]">Sem logs.</p>'}</div></details></div></div></div>`;
 }
 window.renderBuscadorEscola=renderBuscadorEscola;
 
@@ -267,5 +326,5 @@ window.navigateTo=function(view){
   return oldNavigate?oldNavigate.apply(this,arguments):undefined;
 };
 setTimeout(()=>{ instalarMenu(); },1200);
-console.log('[DIGICOPY] buscador_escola_patch.js v4.9.54 carregado');
+console.log('[DIGICOPY] buscador_escola_patch.js v4.9.55 carregado');
 })();

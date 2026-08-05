@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.54**
+- Versão atual implementada: **v4.9.55**
 - Último commit de código publicado no PR: `25ce51c0378e0f163880dc50d7934225e8c3edda` — v4.9.54.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/25ce51c0378e0f163880dc50d7934225e8c3edda/index.html?v=4.9.54`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -3690,6 +3690,80 @@ Testes:
 Versão publicada:
 
 - **v4.9.54**
+
+---
+
+## 8AU. Correções de erros do Buscador Escola antigo — v4.9.55
+
+Motivo:
+
+- Usuário enviou logs do projeto antigo do Buscador Escola com erros reais.
+- Erros recebidos:
+  - `PermissionError: Permission denied: log_orcamentos_deletados.txt`;
+  - `sqlite3.OperationalError: database is locked`;
+  - `404 Not Found` no Flask.
+
+Correções/adaptações no ERP:
+
+1. Erro de permissão no arquivo de log:
+   - O ERP não usa mais arquivo `log_orcamentos_deletados.txt`.
+   - Descartes e erros ficam em log interno no banco do ERP: `db.escolaLogs`.
+   - A tela do Buscador Escola agora mostra um painel `Log interno`.
+   - Isso evita erro de permissão em pasta protegida, OneDrive ou arquivo travado.
+
+2. Erro `database is locked` do SQLite:
+   - O ERP não usa SQLite separado para esse buscador.
+   - Os dados ficam em arrays internos do ERP e são salvos pela persistência já existente.
+   - Foi adicionado bloqueio para impedir duas sincronizações ao mesmo tempo: se uma já estiver rodando, o sistema avisa e não inicia outra.
+   - A sincronização salva em lotes/páginas e faz pausas curtas para não travar a tela.
+
+3. Erro `404 Not Found`:
+   - O app não usa Flask, então não existe mais rota web local quebrando por endereço errado.
+   - Para a API externa, foram adicionadas `Rotas avançadas da API` na tela:
+     - rota de login;
+     - rota de orçamentos;
+     - rota de itens.
+   - Se a API real tiver caminho diferente, o usuário ajusta na tela sem alterar código.
+   - Erros 404 agora aparecem na interface e são gravados no log interno, sem estourar exceção sem tratamento.
+
+Melhorias extras:
+
+- Normalização de itens agora aceita o formato antigo dos logs:
+  - `id_budget`;
+  - `tipo`;
+  - `descricao`.
+- Busca agora procura também pelo `tipo` do item.
+- Exportação Excel ganhou coluna `Tipo`.
+- Importação dos dados antigos tenta reaproveitar `ID_BUDGET` e `TIPO`.
+- O normalizador de JSON da API ficou mais tolerante para respostas em formatos como:
+  - `content`;
+  - `data`;
+  - `items`;
+  - `results`;
+  - `orcamentos`;
+  - `itens`.
+- Token de login agora tenta ler `token`, `access_token`, `accessToken` ou `jwt`.
+
+Dados que ainda podem ser úteis se o usuário tiver:
+
+- Um exemplo real do JSON de login da API, sem senha/token real.
+- Um exemplo real de um orçamento retornado pela API.
+- Um exemplo real dos itens de um orçamento.
+- Lista exata de filtros/colunas que existiam no projeto antigo e que o usuário quer manter.
+- Lista de cidades prioritárias além da base Janaúba/MG, se quiser ranqueamento mais fino.
+
+Testes atualizados:
+
+- `test_buscador_escola.js` agora valida:
+  - `id_budget`;
+  - `tipo`;
+  - busca por tipo;
+  - log interno ao descartar;
+  - Excel com coluna tipo.
+
+Versão publicada:
+
+- **v4.9.55**
 
 ---
 
