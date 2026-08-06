@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.65 — Ajustes pós-final: produtos, venda, impressão, usuários e assistente Gemini
+// PATCH v4.9.66 — Ajustes pós-final: produtos, venda, impressão e usuários
 // • Impressoras de locação não aparecem no menu Produtos
 // • Sair de venda em andamento pergunta se deseja salvar
 // • Rodapé de dados da loja em impressões HTML, sem repetir no rodapé da venda
@@ -77,50 +77,7 @@ function destacarChamadoModal(){
     }
   });
 }
-function respostaAssistente(q){
-  const s=fold(q);
-  if(!s) return 'Me diga o que você quer encontrar no sistema: venda, cliente, chamado, leitura, contrato, buscador escola, etiquetas, pix ou financeiro.';
-  if(s.includes('cliente')) return 'Clientes: abra Clientes, pesquise por Enter/lupa ou use filtros. A lista não abre todos por padrão para ficar leve. O código é número puro e continua do maior importado.';
-  if(s.includes('venda')||s.includes('notinha')) return 'Vendas/Notinhas: use Atendimento > Nova venda. Se tentar sair de uma venda em andamento, o sistema pergunta se deseja salvar. Notinha faturada bloqueia edição até estornar.';
-  if(s.includes('chamado')||s.includes('os')) return 'Chamados: ficam no menu Chamados. Chamado avulso mostra histórico geral; chamado de contrato fica dentro do contrato. Modelo técnico imprime antes de faturar; chamado final imprime depois.';
-  if(s.includes('leitura')) return 'Leituras: ficam dentro do contrato. Abra Contratos > selecione contrato > Leituras. Leitura faturada bloqueia edição até estornar.';
-  if(s.includes('contrato')) return 'Contratos: impressoras ficam dentro do contrato. Use Contratos > abrir contrato > Nova impressora, Leituras, Chamados e Modelos contrato.';
-  if(s.includes('buscador')||s.includes('escola')) return 'Buscador Escola: fica no menu Buscador Escola antes de Configurações. Use Atualizar, digite o termo e filtre por MG/Norte de Minas.';
-  if(s.includes('etiqueta')||s.includes('cartucho')) return 'Etiquetas: ficam em Configurações > Etiquetas de cartuchos enquanto a configuração estiver liberada. Agora saem pequenas e com número direto, sem zeros à esquerda.';
-  if(s.includes('pix')) return 'Pix: Pix e Pix QR Code não dão baixa automática. Peça comprovante e faça baixa manual.';
-  if(s.includes('financeiro')) return 'Financeiro: vendas/leitura faturadas geram contas a receber. Pix não baixa sozinho.';
-  return 'Ainda não achei uma resposta exata. Tente perguntar usando palavras como cliente, venda, notinha, chamado, leitura, contrato, buscador escola, etiqueta, pix ou financeiro.';
-}
-
-function iaCfg(){
-  db.config=db.config||{};
-  db.config.ia=db.config.ia||{};
-  // v4.9.65: a chave não fica mais salva localmente; somente no banco do sistema.
-  try{
-    localStorage.removeItem('digicopy_gemini_api_key');
-    localStorage.removeItem('digicopy_gemini_model');
-  }catch(e){}
-  db.config.ia.geminiModel=db.config.ia.geminiModel||'gemini-1.5-flash';
-  return db.config.ia;
-}
-function salvarGeminiKey(chave){
-  const c=iaCfg();
-  c.geminiApiKey=txt(chave);
-  c.geminiSalvaEm=new Date().toISOString();
-  salvar();
-  return c;
-}
-function apagarGeminiKey(){
-  const c=iaCfg();
-  delete c.geminiApiKey;
-  c.geminiRemovidaEm=new Date().toISOString();
-  salvar();
-}
-function limparHistoricoAssistente(){
-  try{ localStorage.removeItem('digicopy_ia_historico'); localStorage.removeItem('digicopy_ai_history'); }catch(e){}
-}
-
-window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao,respostaAssistente,iaCfg,salvarGeminiKey,limparHistoricoAssistente};
+window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao};
 
 if(typeof document==='undefined') return;
 
@@ -198,25 +155,6 @@ window.saveUsuarioFinal=function(id){
   if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof closeModal==='function') closeModal(); toastMsg('Usuário salvo','success');
 };
 
-// Assistente local.
-function renderAssistente(){
-  if(document.getElementById('assistente-digicopy')) return;
-  const box=document.createElement('div'); box.id='assistente-digicopy'; box.innerHTML=`<button id="assist-btn" title="Assistente" style="position:fixed;right:18px;bottom:18px;z-index:70;width:52px;height:52px;border-radius:18px;background:#0a1e8a;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);font-weight:800">IA</button><div id="assist-panel" class="hidden" style="position:fixed;right:18px;bottom:82px;z-index:70;width:min(390px,calc(100vw - 32px));background:white;border:1px solid #d9e0ee;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.25);overflow:hidden"><div style="padding:12px 14px;background:#0a1e8a;color:white;font-weight:800;display:flex;justify-content:space-between;gap:8px"><span>Assistente do Sistema Digicopy</span><button id="assist-config" style="background:rgba(255,255,255,.18);border:0;color:white;border-radius:8px;padding:2px 8px;font-size:11px">Gemini</button></div><div id="assist-chat" style="height:285px;overflow:auto;padding:12px;font-size:12px;color:#334155"><p><b>Assistente:</b> Pergunte sobre cliente, venda, chamado, leitura, contrato, buscador escola, etiqueta, pix ou financeiro. Se a chave Gemini estiver salva no sistema, eu respondo como IA online; sem chave uso ajuda local. O histórico apaga ao fechar o sistema.</p></div><div style="display:flex;gap:6px;padding:10px;border-top:1px solid #eef2f7"><input id="assist-input" style="flex:1;height:38px;border:1px solid #d9e0ee;border-radius:10px;padding:0 10px" placeholder="Digite sua pergunta"><button id="assist-send" style="height:38px;padding:0 12px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Enviar</button></div></div>`; document.body.appendChild(box);
-  document.getElementById('assist-btn').onclick=()=>document.getElementById('assist-panel').classList.toggle('hidden');
-  document.getElementById('assist-config').onclick=()=>{ const atual=!!iaCfg().geminiApiKey; const k=prompt('Cole sua chave API do Gemini. Pegue em: https://aistudio.google.com/app/apikey\n\nEla ficará salva no banco do sistema para usar em todos os PCs sincronizados. Não aparece em tela.\n\nSe já estiver configurada e quiser manter, clique Cancelar. Para apagar, deixe vazio e confirme.', ''); if(k!==null){ if(txt(k)){ salvarGeminiKey(k); toastMsg('Chave Gemini salva no sistema','success'); } else if(atual && confirm('Apagar a chave Gemini salva no sistema?')){ apagarGeminiKey(); toastMsg('Chave Gemini apagada; usando ajuda local','info'); } } };
-  const send=async()=>{
-    const inp=document.getElementById('assist-input'), chat=document.getElementById('assist-chat'); const q=inp.value; if(!txt(q)) return;
-    chat.insertAdjacentHTML('beforeend',`<p><b>Você:</b> ${esc(q)}</p><p><b>Assistente:</b> pensando...</p>`); inp.value=''; chat.scrollTop=chat.scrollHeight;
-    let resp=''; const cfgIA=iaCfg(); const key=cfgIA.geminiApiKey||'';
-    if(key&&window.digicopyAI&&typeof window.digicopyAI.chat==='function'){
-      try{ const r=await window.digicopyAI.chat({apiKey:key,prompt:q,model:cfgIA.geminiModel||'gemini-1.5-flash'}); resp=(r&&r.ok&&r.text)?r.text:('Gemini falhou: '+(r&&r.error?r.error:'erro desconhecido')+'\n\nResposta local: '+respostaAssistente(q)); }
-      catch(e){ resp='Gemini falhou: '+(e.message||e)+'\n\nResposta local: '+respostaAssistente(q); }
-    }else resp=respostaAssistente(q)+'\n\nPara resposta online grátis/limitada, clique em Gemini e salve sua chave API do Google AI Studio no sistema.';
-    const ps=chat.querySelectorAll('p'); const last=ps[ps.length-1]; if(last) last.innerHTML='<b>Assistente:</b> '+esc(resp).replace(/\n/g,'<br>'); chat.scrollTop=chat.scrollHeight;
-  };
-  document.getElementById('assist-send').onclick=send; document.getElementById('assist-input').onkeydown=e=>{ if(e.key==='Enter') send(); };
-}
-window.addEventListener('beforeunload',limparHistoricoAssistente);
-setTimeout(renderAssistente,1200);
-console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.65 carregado');
+
+console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 })();

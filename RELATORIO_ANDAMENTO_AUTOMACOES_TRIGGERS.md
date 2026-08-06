@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.65**
+- Versão atual implementada: **v4.9.66**
 - Último commit de código publicado no PR: `e28d0fc0359f63f19f60f10ee4b53803270646ff` — v4.9.65.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/e28d0fc0359f63f19f60f10ee4b53803270646ff/index.html?v=4.9.65`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4350,6 +4350,64 @@ Teste atualizado:
 Versão publicada:
 
 - **v4.9.65**
+
+---
+
+## 8BF. Remoção da IA, etiquetas ultra compactas e registro do Buscador — v4.9.66
+
+Pedido do usuário:
+
+- Esquecer/remover o sistema de IA.
+- Etiquetas devem economizar o máximo de espaço possível em uma folha.
+- O exemplo de 126 era apenas exemplo; o sistema deve calcular o máximo que cabe na folha automaticamente.
+- Ao informar número inicial, o final deve ser preenchido automaticamente com a capacidade máxima da folha.
+- Se o usuário alterar o final manualmente, deve diminuir a quantidade usada na folha sem alterar o início.
+- Código visível da etiqueta continua número direto, sem zeros à esquerda.
+- O usuário começou a reenviar o `app.py` do Buscador Escola para registro e avisou que enviará os códigos em partes até dizer `acabei`.
+
+Implementado:
+
+- Assistente IA removido da interface e do IPC:
+  - removido `digicopyAI` do `preload.js`;
+  - removido `ai:chat`/Gemini do `main.js`;
+  - removido botão flutuante de IA do patch final;
+  - removido `test_assistente_gemini.js` e referência do `npm test`.
+- Etiquetas:
+  - layout novo `A4_12X27_MICRO_MAX`;
+  - 12 colunas por 27 linhas;
+  - capacidade máxima padrão: 324 etiquetas por folha;
+  - número inicial preenche automaticamente o final como `início + 323`;
+  - se o usuário editar o número final manualmente, imprime somente do início ao final informado;
+  - código visível continua direto: `1`, `2`, `3`, sem `00001`;
+  - etiqueta contém texto pequeno `DIGICOPY`, código de barras compacto e número.
+
+Registro do Buscador Escola:
+
+- Usuário reenviou `app.py` original novamente.
+- Pontos importantes confirmados no código enviado:
+  - API base: `https://api.caixaescolar.educacao.mg.gov.br`;
+  - login: `/auth/login`;
+  - campos de login: `txCpfCnpj` e `txPassword`;
+  - lista: `/budget-proposal/summary-by-supplier-profile`;
+  - filtro: `filter.supplierStatus=$eq:NAEN`;
+  - itens: `/budget-item/by-subprogram/{idSubprogram}/by-school/{idSchool}/by-budget/{idBudget}`;
+  - campos de orçamento: `idBudget`, `idSchool`, `idSubprogram`, `schoolName`, `countyName`, `nuBudgetOrder`;
+  - campos de item: `txBudgetItemType`, `txDescription`;
+  - regiões prioritárias e Norte de Minas conforme lista já incorporada.
+- Aguardar o usuário enviar todos os arquivos/códigos e a mensagem `acabei` antes de novas adaptações grandes do Buscador.
+- Não gravar credenciais sensíveis no código/repositório. Se for necessário salvar login/senha do Buscador, preferir salvar em configuração do sistema/nuvem de forma controlada, não em arquivo de código.
+
+Testes atualizados:
+
+- `test_cartuchos_etiquetas_config.js` valida:
+  - capacidade 324;
+  - intervalo manual;
+  - layout pequeno 12 colunas;
+  - número sem zeros à esquerda.
+
+Versão publicada:
+
+- **v4.9.66**
 
 ---
 

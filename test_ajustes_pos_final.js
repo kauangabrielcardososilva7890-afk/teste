@@ -12,5 +12,5 @@ ok('não confunde produto com palavra impressora no nome', P.isProdutoImpressora
 ok('detecta impressora por patrimônio/serial', P.isProdutoImpressoraLocacao({categoria:'Produto',patrimonio:'123'})===true);
 const html=P.patchHtmlImpressao('<html><body><p class="audit">Emitido por X • CNPJ 00 • Cód. cliente 1</p></body></html>');
 ok('adiciona rodapé da loja e remove repetição de CNPJ no audit', html.includes('rodape-loja-final') && html.includes('DIGICOPY') && !html.includes('Cód. cliente 1'));
-ok('assistente responde funções', /Clientes/i.test(P.respostaAssistente('como vejo cliente?')) && /Buscador Escola/i.test(P.respostaAssistente('buscador')));
+ok('assistente foi removido do patch final', !('respostaAssistente' in P));
 console.log('\nRESULTADO: Testes de ajustes pós-final passaram!');

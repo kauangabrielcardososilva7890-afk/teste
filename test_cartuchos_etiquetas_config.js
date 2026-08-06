@@ -22,7 +22,8 @@ const etiquetas=P.extrairEtiquetasLegado(db);
 ok('extrai etiquetas só de tabelas de cartucho/recarga', etiquetas.length===2 && etiquetas.some(e=>e.etiqueta==='000123') && etiquetas.some(e=>e.etiqueta==='ABC-777'));
 ok('calcula maior número de etiqueta', P.maiorNumeroEtiqueta(etiquetas)===777);
 ok('gera sequência numérica sem letras e sem zeros à esquerda', P.gerarSequenciaEtiquetas(778,3).join(',')==='778,779,780');
-ok('gera intervalo de etiquetas do início ao final', P.gerarIntervaloEtiquetas(509,635).length===127 && P.gerarIntervaloEtiquetas(509,635)[126]==='635');
+ok('capacidade padrão é máxima compacta na folha', P.ETQ_CAPACIDADE===324 && P.gerarSequenciaEtiquetas(1,999).length===324);
+ok('gera intervalo manual de etiquetas do início ao final', P.gerarIntervaloEtiquetas(509,635).length===127 && P.gerarIntervaloEtiquetas(509,635)[126]==='635');
 const r=P.aplicarConfiguracoesCartuchos(db,{empresaId:'emp'});
 ok('aplica configuração e sugere próximo número', r.proximoNumero===778 && db.config.cartuchosRecargas.etiquetas.codigoSomenteNumerico===true);
 ok('remove cartucho vazio do estoque de produtos', r.produtosCartuchoVazioRemovidos===1 && db.produtos.length===1 && db.produtos[0].id==='p2');
@@ -30,5 +31,5 @@ ok('regra mantém cartucho vazio fora de produtos', db.config.cartuchosRecargas.
 const svg=P.code39Svg('000778');
 ok('gera código de barras em svg', svg.includes('<svg') && svg.includes('<rect'));
 const html=P.htmlEtiquetas(['778','779']);
-ok('html de impressão contém etiquetas pequenas', html.includes('778') && html.includes('DIGICOPY') && html.includes('24mm') && html.includes('repeat(7'));
+ok('html de impressão contém etiquetas pequenas', html.includes('778') && html.includes('DIGICOPY') && html.includes('16mm') && html.includes('repeat(12'));
 console.log('\nRESULTADO: Testes de etiquetas/configuração de cartuchos passaram!');
