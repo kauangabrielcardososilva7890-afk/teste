@@ -83,14 +83,17 @@ function limparDadosAntigos(dbRef,opts={}){
   dbRef.logs.unshift({id:uidSafe('log'),dataHora:agora(),empresaId:empresaPadrao(dbRef).id,usuarioId:'sistema',usuarioNome:'Sistema',usuarioLogin:'sistema',entidade:'sistema',acao:'reset_virgem',entidadeId:'-',detalhes:`Sistema virgem v${VIRGEM_VERSAO}; clientes preservados: ${clientes.length}`});
   return {clientesPreservados:clientes.length,usuarios:dbRef.usuarios.length};
 }
-function precisaAplicarVirgem(dbRef){ return !((dbRef.config||{}).sistemaVirgem||{}).aplicadoEm; }
+function precisaAplicarVirgem(dbRef){ return false; }
 function aplicarVirgemSePreciso(){
+  // v4.9.62: NUNCA limpar dados automaticamente em atualização.
+  // O reset virgem só foi usado uma vez; daqui para frente atualização não apaga banco.
   if(!window.db&&typeof db==='undefined') return null;
-  if(!precisaAplicarVirgem(db)) return null;
-  const r=limparDadosAntigos(db,{preservarClientes:true});
+  db.config=db.config||{};
+  db.config.sistemaVirgem=db.config.sistemaVirgem||{versao:VIRGEM_VERSAO,aplicadoEm:agora(),semResetAutomatico:true};
+  const temOficiais=(db.usuarios||[]).some(u=>fold(u.login)==='kauan')&&(db.usuarios||[]).some(u=>fold(u.login)==='recepcao'||fold(u.login)==='recepção');
+  if(!temOficiais && !(db.clientes||[]).length && !(db.vendas||[]).length) aplicarUsuariosOficiais(db);
   salvar();
-  try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(e){}
-  return r;
+  return null;
 }
 function usuarioPorLoginSenha(login,senha){
   const l=fold(login);
@@ -159,5 +162,5 @@ window.showLogin=function(){ if(oldShowLogin) oldShowLogin.apply(this,arguments)
 window.doLoginUser=loginDiretoVirgem;
 const oldRenderConfig=window.renderConfig;
 window.renderConfig=function(){ const r=oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; setTimeout(()=>{ const grid=document.querySelector('#view-config .grid')||document.getElementById('view-config'); if(grid&&!document.getElementById('virgem-cfg-card')){ const card=document.createElement('div'); card.id='virgem-cfg-card'; card.className='rounded-[16px] bg-white border p-6 lg:col-span-3'; card.innerHTML=`<h4 class="font-bold text-[15px]"><i class="ph ph-broom"></i> Sistema virgem / Nuvem</h4><p class="text-[12px] text-slate-500 mt-1">Dados antigos removidos. Clientes preservados. Usuários oficiais configurados.</p><div class="flex flex-wrap gap-2 mt-3"><button onclick="publicarNuvemVirgemAgora()" class="neo-btn primary"><i class="ph ph-cloud-arrow-up"></i>Publicar nuvem virgem agora</button></div><div class="mt-3 text-[12px] text-slate-500">Versão: ${VIRGEM_VERSAO} • Clientes preservados: ${((db.config||{}).sistemaVirgem||{}).preservouClientes||0}</div>`; grid.appendChild(card); } },120); return r; };
-console.log('[DIGICOPY] sistema_virgem_usuarios_patch.js v4.9.57 carregado');
+console.log('[DIGICOPY] sistema_virgem_usuarios_patch.js v4.9.62 carregado');
 })();

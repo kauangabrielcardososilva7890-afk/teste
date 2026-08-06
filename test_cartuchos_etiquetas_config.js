@@ -21,13 +21,13 @@ ok('exporta funções puras', !!P && typeof P.extrairEtiquetasLegado==='function
 const etiquetas=P.extrairEtiquetasLegado(db);
 ok('extrai etiquetas só de tabelas de cartucho/recarga', etiquetas.length===2 && etiquetas.some(e=>e.etiqueta==='000123') && etiquetas.some(e=>e.etiqueta==='ABC-777'));
 ok('calcula maior número de etiqueta', P.maiorNumeroEtiqueta(etiquetas)===777);
-ok('gera sequência numérica sem letras', P.gerarSequenciaEtiquetas(778,3).join(',')==='000778,000779,000780');
+ok('gera sequência numérica sem letras e sem zeros à esquerda', P.gerarSequenciaEtiquetas(778,3).join(',')==='778,779,780');
 const r=P.aplicarConfiguracoesCartuchos(db,{empresaId:'emp'});
 ok('aplica configuração e sugere próximo número', r.proximoNumero===778 && db.config.cartuchosRecargas.etiquetas.codigoSomenteNumerico===true);
 ok('remove cartucho vazio do estoque de produtos', r.produtosCartuchoVazioRemovidos===1 && db.produtos.length===1 && db.produtos[0].id==='p2');
 ok('regra mantém cartucho vazio fora de produtos', db.config.cartuchosRecargas.regras.cartuchoVazioComoProduto===false);
 const svg=P.code39Svg('000778');
 ok('gera código de barras em svg', svg.includes('<svg') && svg.includes('<rect'));
-const html=P.htmlEtiquetas(['000778','000779']);
-ok('html de impressão contém etiquetas', html.includes('000778') && html.includes('DIGICOPY CARTUCHO'));
+const html=P.htmlEtiquetas(['778','779']);
+ok('html de impressão contém etiquetas pequenas', html.includes('778') && html.includes('DIGICOPY') && html.includes('38mm'));
 console.log('\nRESULTADO: Testes de etiquetas/configuração de cartuchos passaram!');

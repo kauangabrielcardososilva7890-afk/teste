@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.61**
+- Versão atual implementada: **v4.9.62**
 - Último commit de código publicado no PR: `faa0e50ba8158db4c2bfbd9dac71757a3353b53a` — v4.9.61.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/faa0e50ba8158db4c2bfbd9dac71757a3353b53a/index.html?v=4.9.61`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4150,6 +4150,77 @@ Teste atualizado:
 Versão publicada:
 
 - **v4.9.61**
+
+---
+
+## 8BB. Ajustes pós-final solicitados pelo usuário — v4.9.62
+
+Pedido do usuário:
+
+- Impressoras de locação não podem aparecer no menu Produtos.
+- Ao sair de uma venda em andamento pelo botão sair, X ou ESC, perguntar se deseja salvar a notinha.
+- Impressões/PDFs devem ter rodapé com dados completos da loja, sem repetir informações da empresa no rodapé da venda.
+- Chamados devem destacar as áreas/seções como motivo, serviços, observações, contadores e itens.
+- Atualizações não podem apagar/comprometer o banco de dados.
+- Remover a barra superior duplicada do app, porque o `.exe` já tem barra própria.
+- Usuários precisam ser modificáveis: nome, senha e perfil, com perfil alterável somente por Kauan ou Denivaldo.
+- Adicionar assistente local para explicar funções do sistema.
+- Etiquetas devem ser menores e usar número direto, sem `00001`.
+
+Implementado:
+
+- Criado patch separado `ajustes_pos_final_patch.js`.
+- Criado teste `test_ajustes_pos_final.js`.
+
+Correções:
+
+1. Produtos / impressoras de locação:
+   - Produtos identificados como impressora/equipamento de locação ficam ocultos do menu Produtos.
+   - Produtos normais que apenas possuem a palavra impressora no nome continuam aparecendo.
+
+2. Venda em andamento:
+   - Ao tentar fechar modal de venda com dados/itens preenchidos, aparece confirmação:
+     - OK: salva a notinha;
+     - Cancelar: sai sem salvar.
+
+3. Impressões/PDF:
+   - Adicionado rodapé padrão com dados da loja para janelas HTML de impressão.
+   - Evita repetir CNPJ/dados da empresa no audit/rodapé da notinha de venda.
+   - Contrato RTF não é alterado.
+
+4. Chamados:
+   - Seções de chamado recebem faixa visual destacada para Motivo/Defeito, Serviço executado, Observações, Contadores, Itens/Peças.
+
+5. Banco não apagar em atualização:
+   - `sistema_virgem_usuarios_patch.js` foi ajustado para nunca limpar dados automaticamente em atualização.
+   - Reset virgem destrutivo não roda mais sozinho.
+   - Atualizações futuras não devem apagar clientes/vendas/contratos por causa desse patch.
+
+6. Barra duplicada:
+   - `.app-titlebar` foi ocultada. O `.exe` fica com a barra própria do sistema.
+
+7. Usuários editáveis:
+   - Usuário pode alterar nome/senha conforme permissão.
+   - Perfil só pode ser alterado por Kauan ou Denivaldo.
+
+8. Assistente local:
+   - Adicionado botão flutuante `IA`.
+   - É um assistente local de ajuda, não uma IA online paga.
+   - Responde dúvidas sobre cliente, venda/notinha, chamado, leitura, contrato, Buscador Escola, etiquetas, Pix e financeiro.
+
+9. Etiquetas:
+   - Etiquetas agora são menores.
+   - Layout padrão ajustado para 5 colunas por 13 linhas.
+   - Sequência de etiquetas agora usa número direto: `1`, `2`, `3`, sem zeros à esquerda.
+
+Testes atualizados:
+
+- `test_cartuchos_etiquetas_config.js` ajustado para número direto e etiqueta pequena.
+- `test_ajustes_pos_final.js` criado para validações pós-final.
+
+Versão publicada:
+
+- **v4.9.62**
 
 ---
 

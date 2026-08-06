@@ -64,9 +64,8 @@ function numeroDaEtiqueta(v){
 function maiorNumeroEtiqueta(valores){ return (valores||[]).reduce((m,v)=>Math.max(m,numeroDaEtiqueta(typeof v==='object'?v.etiqueta:v)),0); }
 function gerarSequenciaEtiquetas(inicio, quantidade){
   const ini=Math.max(1,inteiro(inicio,1));
-  const qtd=Math.min(300,Math.max(1,inteiro(quantidade,30)));
-  const largura=Math.max(6,String(ini+qtd-1).length);
-  return Array.from({length:qtd},(_,i)=>String(ini+i).padStart(largura,'0'));
+  const qtd=Math.min(500,Math.max(1,inteiro(quantidade,65)));
+  return Array.from({length:qtd},(_,i)=>String(ini+i));
 }
 function removerProdutosCartuchoVazio(dbRef, empId){
   if(!dbRef||!Array.isArray(dbRef.produtos)) return 0;
@@ -91,15 +90,15 @@ function aplicarConfiguracoesCartuchos(dbRef, opts={}){
   const maior=maiorNumeroEtiqueta(etiquetas);
   const removidos=removerProdutosCartuchoVazio(dbRef, opts.empresaId);
   cfg.etiquetas={
-    layout:'A4_3X10',
-    colunas:3,
-    linhas:10,
-    larguraMm:63.5,
-    alturaMm:25.4,
-    margemSuperiorMm:12.7,
-    margemEsquerdaMm:4.5,
-    espacoHorizontalMm:2.5,
-    espacoVerticalMm:0,
+    layout:'A4_5X13_PEQUENA',
+    colunas:5,
+    linhas:13,
+    larguraMm:38,
+    alturaMm:21,
+    margemSuperiorMm:8,
+    margemEsquerdaMm:7,
+    espacoHorizontalMm:2,
+    espacoVerticalMm:1,
     usarCodigoBarras:true,
     codigoSomenteNumerico:true,
     permitirLetras:false,
@@ -161,9 +160,9 @@ function code39Svg(valor,opt={}){
   return `<svg viewBox="0 0 ${Math.ceil(x+2)} ${height}" preserveAspectRatio="none" aria-label="${code}">${rects}</svg>`;
 }
 function htmlEtiquetas(codigos,opt={}){
-  const c={colunas:3,linhas:10,larguraMm:63.5,alturaMm:25.4,margemSuperiorMm:12.7,margemEsquerdaMm:4.5,espacoHorizontalMm:2.5,espacoVerticalMm:0,usarCodigoBarras:true,...(opt||{})};
-  const css=`@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#0f172a}.folha{padding-top:${c.margemSuperiorMm}mm;padding-left:${c.margemEsquerdaMm}mm;display:grid;grid-template-columns:repeat(${c.colunas},${c.larguraMm}mm);grid-auto-rows:${c.alturaMm}mm;column-gap:${c.espacoHorizontalMm}mm;row-gap:${c.espacoVerticalMm}mm}.etq{width:${c.larguraMm}mm;height:${c.alturaMm}mm;border:0.2mm dashed #d7dce5;padding:1.5mm 2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-inside:avoid}.titulo{font-size:7pt;font-weight:700;letter-spacing:.02em}.codigo{font-size:12pt;font-weight:900;letter-spacing:.08em;margin-top:.5mm}.barra{width:100%;height:9mm;margin-top:.8mm}.barra svg{width:100%;height:100%;display:block}.obs{font-size:5.8pt;color:#64748b;margin-top:.5mm}@media print{.etq{border:0}}`;
-  const itens=(codigos||[]).map(cod=>`<div class="etq"><div class="titulo">DIGICOPY CARTUCHO</div>${c.usarCodigoBarras?`<div class="barra">${code39Svg(cod)}</div>`:''}<div class="codigo">${esc(cod)}</div><div class="obs">identificação do cartucho</div></div>`).join('');
+  const c={colunas:5,linhas:13,larguraMm:38,alturaMm:21,margemSuperiorMm:8,margemEsquerdaMm:7,espacoHorizontalMm:2,espacoVerticalMm:1,usarCodigoBarras:true,...(opt||{})};
+  const css=`@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#0f172a}.folha{padding-top:${c.margemSuperiorMm}mm;padding-left:${c.margemEsquerdaMm}mm;display:grid;grid-template-columns:repeat(${c.colunas},${c.larguraMm}mm);grid-auto-rows:${c.alturaMm}mm;column-gap:${c.espacoHorizontalMm}mm;row-gap:${c.espacoVerticalMm}mm}.etq{width:${c.larguraMm}mm;height:${c.alturaMm}mm;border:0.2mm dashed #d7dce5;padding:1mm 1.5mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-inside:avoid}.titulo{font-size:5.5pt;font-weight:700;letter-spacing:.02em}.codigo{font-size:10pt;font-weight:900;letter-spacing:.03em;margin-top:.2mm}.barra{width:100%;height:7mm;margin-top:.4mm}.barra svg{width:100%;height:100%;display:block}.obs{font-size:4.8pt;color:#64748b;margin-top:.2mm}@media print{.etq{border:0}}`;
+  const itens=(codigos||[]).map(cod=>`<div class="etq"><div class="titulo">DIGICOPY</div>${c.usarCodigoBarras?`<div class="barra">${code39Svg(cod)}</div>`:''}<div class="codigo">${esc(cod)}</div><div class="obs">cartucho</div></div>`).join('');
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiquetas de cartuchos</title><style>${css}</style></head><body><div class="folha">${itens}</div><script>setTimeout(()=>window.print(),250)<\/script></body></html>`;
 }
 function cfgAtual(){ return (((db||{}).config||{}).cartuchosRecargas)||{}; }
