@@ -4675,6 +4675,63 @@ Estado:
 
 ---
 
+## 8BL. Buscador Escola — confirmação de credenciais dentro do sistema e template completo — v4.9.66
+
+Contexto:
+
+- Usuário confirmou que aceita colocar usuário/senha dentro do próprio Sistema Digicopy.
+- Depois que ele colocar e confirmar, a área para preencher credenciais deve ser escondida/removida do uso normal.
+- Usuário reenviou o `templates/index.html` completo do projeto antigo para garantir que o layout/fluxo seja considerado.
+
+Decisão funcional registrada:
+
+- Criar área temporária no Buscador Escola para configurar credenciais:
+  - usuário/CNPJ da API;
+  - senha da API;
+  - botão salvar;
+  - campos mascarados.
+- Essas credenciais não devem ficar em arquivo `.env`, `.bat`, código JS ou relatório.
+- Devem ser salvas na configuração do sistema/banco, para evitar digitar toda hora.
+- Depois que o usuário disser que colocou, esconder/remover a área de credenciais da tela final.
+
+Layout/fluxo do template antigo que deve ser preservado em versão Sistema Digicopy:
+
+- Header com resumo de:
+  - última atualização;
+  - total de orçamentos em banco.
+- Busca com:
+  - termo;
+  - região;
+  - intervalo.
+- Botões/ações equivalentes:
+  - Pesquisar;
+  - Atualizar;
+  - Baixar Tudo;
+  - Excluídos;
+  - Exportar Excel.
+- Barra de progresso de sincronização.
+- Resultados em cards com:
+  - código;
+  - abrir orçamento;
+  - excluir;
+  - município;
+  - distância de Janaúba;
+  - produtos encontrados/total;
+  - produtos pesquisados com tipo/descrição.
+- Destaques:
+  - `Este orçamento contém APENAS o produto pesquisado`;
+  - aviso para produtos adicionais/extras.
+- Tela de excluídos com:
+  - ativar/restaurar;
+  - motivo da exclusão.
+
+Aguardar:
+
+- Usuário ainda está enviando arquivos/dados.
+- Só implementar a adaptação completa do Buscador Escola quando o usuário escrever `acabei`.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
