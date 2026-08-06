@@ -64,7 +64,13 @@ function numeroDaEtiqueta(v){
 function maiorNumeroEtiqueta(valores){ return (valores||[]).reduce((m,v)=>Math.max(m,numeroDaEtiqueta(typeof v==='object'?v.etiqueta:v)),0); }
 function gerarSequenciaEtiquetas(inicio, quantidade){
   const ini=Math.max(1,inteiro(inicio,1));
-  const qtd=Math.min(500,Math.max(1,inteiro(quantidade,65)));
+  const qtd=Math.min(300,Math.max(1,inteiro(quantidade,126)));
+  return Array.from({length:qtd},(_,i)=>String(ini+i));
+}
+function gerarIntervaloEtiquetas(inicio, fim){
+  const ini=Math.max(1,inteiro(inicio,1));
+  const end=Math.max(ini,inteiro(fim,ini+125));
+  const qtd=Math.min(300,(end-ini)+1);
   return Array.from({length:qtd},(_,i)=>String(ini+i));
 }
 function removerProdutosCartuchoVazio(dbRef, empId){
@@ -90,14 +96,14 @@ function aplicarConfiguracoesCartuchos(dbRef, opts={}){
   const maior=maiorNumeroEtiqueta(etiquetas);
   const removidos=removerProdutosCartuchoVazio(dbRef, opts.empresaId);
   cfg.etiquetas={
-    layout:'A4_5X13_PEQUENA',
-    colunas:5,
-    linhas:13,
-    larguraMm:38,
-    alturaMm:21,
+    layout:'A4_7X18_MICRO',
+    colunas:7,
+    linhas:18,
+    larguraMm:24,
+    alturaMm:14,
     margemSuperiorMm:8,
-    margemEsquerdaMm:7,
-    espacoHorizontalMm:2,
+    margemEsquerdaMm:12,
+    espacoHorizontalMm:3,
     espacoVerticalMm:1,
     usarCodigoBarras:true,
     codigoSomenteNumerico:true,
@@ -160,9 +166,9 @@ function code39Svg(valor,opt={}){
   return `<svg viewBox="0 0 ${Math.ceil(x+2)} ${height}" preserveAspectRatio="none" aria-label="${code}">${rects}</svg>`;
 }
 function htmlEtiquetas(codigos,opt={}){
-  const c={colunas:5,linhas:13,larguraMm:38,alturaMm:21,margemSuperiorMm:8,margemEsquerdaMm:7,espacoHorizontalMm:2,espacoVerticalMm:1,usarCodigoBarras:true,...(opt||{})};
-  const css=`@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#0f172a}.folha{padding-top:${c.margemSuperiorMm}mm;padding-left:${c.margemEsquerdaMm}mm;display:grid;grid-template-columns:repeat(${c.colunas},${c.larguraMm}mm);grid-auto-rows:${c.alturaMm}mm;column-gap:${c.espacoHorizontalMm}mm;row-gap:${c.espacoVerticalMm}mm}.etq{width:${c.larguraMm}mm;height:${c.alturaMm}mm;border:0.2mm dashed #d7dce5;padding:1mm 1.5mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-inside:avoid}.titulo{font-size:5.5pt;font-weight:700;letter-spacing:.02em}.codigo{font-size:10pt;font-weight:900;letter-spacing:.03em;margin-top:.2mm}.barra{width:100%;height:7mm;margin-top:.4mm}.barra svg{width:100%;height:100%;display:block}.obs{font-size:4.8pt;color:#64748b;margin-top:.2mm}@media print{.etq{border:0}}`;
-  const itens=(codigos||[]).map(cod=>`<div class="etq"><div class="titulo">DIGICOPY</div>${c.usarCodigoBarras?`<div class="barra">${code39Svg(cod)}</div>`:''}<div class="codigo">${esc(cod)}</div><div class="obs">cartucho</div></div>`).join('');
+  const c={colunas:7,linhas:18,larguraMm:24,alturaMm:14,margemSuperiorMm:8,margemEsquerdaMm:12,espacoHorizontalMm:3,espacoVerticalMm:1,usarCodigoBarras:true,...(opt||{})};
+  const css=`@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#0f172a}.folha{padding-top:${c.margemSuperiorMm}mm;padding-left:${c.margemEsquerdaMm}mm;display:grid;grid-template-columns:repeat(${c.colunas},${c.larguraMm}mm);grid-auto-rows:${c.alturaMm}mm;column-gap:${c.espacoHorizontalMm}mm;row-gap:${c.espacoVerticalMm}mm}.etq{width:${c.larguraMm}mm;height:${c.alturaMm}mm;border:0;padding:.5mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-inside:avoid}.titulo{display:none}.codigo{font-size:7pt;font-weight:700;letter-spacing:0;margin-top:.2mm;line-height:1}.barra{width:8mm;height:6mm;margin:0 auto}.barra svg{width:100%;height:100%;display:block}.obs{display:none}@media print{.etq{border:0}}`;
+  const itens=(codigos||[]).map(cod=>`<div class="etq"><div class="titulo">DIGICOPY</div>${c.usarCodigoBarras?`<div class="barra">${code39Svg(cod,{narrow:.42,wide:1.08,height:32})}</div>`:''}<div class="codigo">${esc(cod)}</div><div class="obs">cartucho</div></div>`).join('');
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiquetas de cartuchos</title><style>${css}</style></head><body><div class="folha">${itens}</div><script>setTimeout(()=>window.print(),250)<\/script></body></html>`;
 }
 function cfgAtual(){ return (((db||{}).config||{}).cartuchosRecargas)||{}; }
@@ -176,8 +182,8 @@ function aplicarNoApp(opts={}){
 function imprimirEtiquetasUI(){
   const cfg=cfgAtual().etiquetas||{};
   const inicio=inteiro(document.getElementById('cart-etq-inicio')?.value,cfg.proximoNumero||1);
-  const qtd=inteiro(document.getElementById('cart-etq-qtd')?.value,30);
-  const codigos=gerarSequenciaEtiquetas(inicio,qtd);
+  const fim=inteiro(document.getElementById('cart-etq-fim')?.value,(inicio===1?126:inicio+126));
+  const codigos=gerarIntervaloEtiquetas(inicio,fim);
   db.config=db.config||{}; db.config.cartuchosRecargas=db.config.cartuchosRecargas||{}; db.config.cartuchosRecargas.etiquetas={...(db.config.cartuchosRecargas.etiquetas||{}),proximoNumero:inicio+codigos.length};
   if(typeof saveDB==='function') saveDB();
   const html=htmlEtiquetas(codigos,db.config.cartuchosRecargas.etiquetas);
@@ -202,11 +208,12 @@ function renderCardEtiquetas(){
   const cfg=cfgAtual(); const et=cfg.etiquetas||{}; const ant=cfg.dadosAntigos||{};
   let card=document.getElementById('cartuchos-etiquetas-card');
   if(!card){ card=document.createElement('div'); card.id='cartuchos-etiquetas-card'; card.className='rounded-[16px] bg-white border p-6 lg:col-span-3'; grid.appendChild(card); }
-  card.innerHTML=`<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3"><div><h4 class="font-bold text-[15px]"><i class="ph ph-barcode"></i> Etiquetas de cartuchos</h4><p class="text-[12px] text-slate-500 mt-1">Gera etiquetas numéricas próprias, com código de barras, para colar nos cartuchos. Usa as etiquetas antigas só para sugerir o próximo número.</p></div><div class="text-[11px] text-slate-500">Próximo: <b class="text-slate-800">${et.proximoNumero||1}</b></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4"><div class="neo-card"><p class="neo-label">Etiquetas antigas</p><div class="neo-total">${ant.etiquetasEncontradas||0}</div></div><div class="neo-card"><p class="neo-label">Maior etiqueta</p><div class="neo-total">${ant.maiorNumeroEtiqueta||0}</div></div><div class="neo-card"><p class="neo-label">Produtos vazios removidos</p><div class="neo-total">${cfg.produtosCartuchoVazioRemovidos||0}</div></div><div class="neo-card"><p class="neo-label">Regra atual</p><div class="text-[13px] font-bold text-emerald-700 mt-2">vazio não é produto</div></div></div><div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"><label class="text-[12px] font-bold text-slate-600">Número inicial<input id="cart-etq-inicio" type="number" min="1" value="${et.proximoNumero||1}" class="mt-1 w-full h-10 px-3 rounded-xl border"></label><label class="text-[12px] font-bold text-slate-600">Quantidade<input id="cart-etq-qtd" type="number" min="1" max="300" value="30" class="mt-1 w-full h-10 px-3 rounded-xl border"></label><button onclick="imprimirEtiquetasCartucho()" class="neo-btn primary"><i class="ph ph-printer"></i> Imprimir etiquetas</button><button onclick="atualizarConfigCartuchosAntigos()" class="neo-btn"><i class="ph ph-cloud-arrow-up"></i> Atualizar e enviar nuvem</button></div><div class="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900"><b>Importante:</b> as etiquetas novas são só números, sem prefixo e sem ano. Cartucho vazio não entra como produto separado no estoque.</div>`;
+  card.innerHTML=`<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3"><div><h4 class="font-bold text-[15px]"><i class="ph ph-barcode"></i> Etiquetas de cartuchos</h4><p class="text-[12px] text-slate-500 mt-1">Gera etiquetas numéricas próprias, com código de barras, para colar nos cartuchos. Usa as etiquetas antigas só para sugerir o próximo número.</p></div><div class="text-[11px] text-slate-500">Próximo: <b class="text-slate-800">${et.proximoNumero||1}</b></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4"><div class="neo-card"><p class="neo-label">Etiquetas antigas</p><div class="neo-total">${ant.etiquetasEncontradas||0}</div></div><div class="neo-card"><p class="neo-label">Maior etiqueta</p><div class="neo-total">${ant.maiorNumeroEtiqueta||0}</div></div><div class="neo-card"><p class="neo-label">Produtos vazios removidos</p><div class="neo-total">${cfg.produtosCartuchoVazioRemovidos||0}</div></div><div class="neo-card"><p class="neo-label">Regra atual</p><div class="text-[13px] font-bold text-emerald-700 mt-2">vazio não é produto</div></div></div><div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"><label class="text-[12px] font-bold text-slate-600">Número inicial<input id="cart-etq-inicio" type="number" min="1" value="${et.proximoNumero||1}" oninput="cartEtiquetasAtualizarFim()" class="mt-1 w-full h-10 px-3 rounded-xl border"></label><label class="text-[12px] font-bold text-slate-600">Número final<input id="cart-etq-fim" type="number" min="1" value="${(et.proximoNumero||1)===1?126:(et.proximoNumero||1)+126}" class="mt-1 w-full h-10 px-3 rounded-xl border"></label><button onclick="imprimirEtiquetasCartucho()" class="neo-btn primary"><i class="ph ph-printer"></i> Imprimir etiquetas</button><button onclick="atualizarConfigCartuchosAntigos()" class="neo-btn"><i class="ph ph-cloud-arrow-up"></i> Atualizar e enviar nuvem</button></div><div class="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900"><b>Importante:</b> as etiquetas novas são só números, sem prefixo e sem ano. Cartucho vazio não entra como produto separado no estoque.</div>`;
 }
 
-window.CARTUCHOS_ETIQUETAS_PURE={extrairEtiquetasLegado,numeroDaEtiqueta,maiorNumeroEtiqueta,gerarSequenciaEtiquetas,removerProdutosCartuchoVazio,aplicarConfiguracoesCartuchos,code39Svg,htmlEtiquetas};
+window.CARTUCHOS_ETIQUETAS_PURE={extrairEtiquetasLegado,numeroDaEtiqueta,maiorNumeroEtiqueta,gerarSequenciaEtiquetas,gerarIntervaloEtiquetas,removerProdutosCartuchoVazio,aplicarConfiguracoesCartuchos,code39Svg,htmlEtiquetas};
 window.imprimirEtiquetasCartucho=imprimirEtiquetasUI;
+window.cartEtiquetasAtualizarFim=function(){ const ini=inteiro(document.getElementById('cart-etq-inicio')?.value,1); const fim=document.getElementById('cart-etq-fim'); if(fim) fim.value=(ini===1?126:ini+126); };
 window.atualizarConfigCartuchosAntigos=atualizarEEnviarNuvem;
 
 if(typeof document==='undefined') return;

@@ -27,3 +27,8 @@ contextBridge.exposeInMainWorld('fileAPI', {
 contextBridge.exposeInMainWorld('caixaEscolarAPI', {
   request: (req) => ipcRenderer.invoke('escola:request', req)
 });
+
+// Assistente IA opcional — usa chave local do usuário
+contextBridge.exposeInMainWorld('digicopyAI', {
+  chat: (req) => ipcRenderer.invoke('ai:chat', req)
+});

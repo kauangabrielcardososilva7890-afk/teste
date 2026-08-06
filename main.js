@@ -41,6 +41,7 @@ app.whenReady().then(() => {
   registerFirebirdIPC();
   registerFileIPC();
   registerEscolaIPC();
+  registerAIIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -254,6 +255,26 @@ function mapFbType(typeNum){
     261:'BLOB'
   };
   return map[typeNum] || `TYPE_${typeNum}`;
+}
+
+// ──────────────────────────────────────────────
+// ASSISTENTE IA IPC — ChatGPT opcional com chave local do usuário
+// ──────────────────────────────────────────────
+function registerAIIPC(){
+  ipcMain.handle('ai:chat', async (_evt, req) => {
+    try{
+      const apiKey=String((req&&req.apiKey)||'').trim();
+      const prompt=String((req&&req.prompt)||'').trim();
+      const model=String((req&&req.model)||'gpt-4o-mini').trim()||'gpt-4o-mini';
+      if(!apiKey) return {ok:false,error:'Chave da IA não informada'};
+      if(!prompt) return {ok:false,error:'Mensagem vazia'};
+      const system='Você é o assistente do Sistema Digicopy. Responda em português brasileiro, direto, prático e focado nas funções do sistema: clientes, vendas, notinhas, chamados, contratos, leituras, etiquetas, Buscador Escola, Pix e financeiro. Não invente dados privados.';
+      const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model,messages:[{role:'system',content:system},{role:'user',content:prompt}],temperature:0.2,max_tokens:500})});
+      const data=await resp.json().catch(()=>null);
+      if(!resp.ok) return {ok:false,status:resp.status,error:(data&&data.error&&data.error.message)||resp.statusText};
+      return {ok:true,text:(((data||{}).choices||[])[0]||{}).message?.content||''};
+    }catch(e){ return {ok:false,error:e.message||String(e)}; }
+  });
 }
 
 // ──────────────────────────────────────────────

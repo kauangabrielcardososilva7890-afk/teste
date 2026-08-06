@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.62**
+- Versão atual implementada: **v4.9.63**
 - Último commit de código publicado no PR: `015fd177b0064c8811133ada42b9caccb5873c4e` — v4.9.62.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/015fd177b0064c8811133ada42b9caccb5873c4e/index.html?v=4.9.62`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4221,6 +4221,56 @@ Testes atualizados:
 Versão publicada:
 
 - **v4.9.62**
+
+---
+
+## 8BC. Etiquetas 1–126, IA com ChatGPT opcional e resposta sobre Buscador — v4.9.63
+
+Pedido do usuário:
+
+- Etiquetas ainda estavam com espaço grande/comprido.
+- Etiqueta usada na loja é pequena, como a imagem enviada.
+- Padrão deve ir de `1` até `126`. Se alterar início para `509`, o final deve ir para `635`.
+- Assistente local deve poder funcionar como ChatGPT.
+- A barra/rodapé removido deixou área vazia; menus devem ocupar melhor o espaço.
+- Usuário pediu retorno sobre o Buscador Escola.
+
+Implementado:
+
+- Etiquetas:
+  - Layout padrão alterado para micro etiquetas em folha A4.
+  - Agora usa 7 colunas por 18 linhas.
+  - Etiqueta menor, com código de barras compacto e número abaixo.
+  - Número direto, sem zeros à esquerda.
+  - Adicionado campo `Número final`.
+  - Padrão inicial/final: `1` até `126`.
+  - Ao trocar o início para número maior, o final é sugerido como início + 126, atendendo o exemplo `509` → `635`.
+
+- Assistente:
+  - O botão `IA` continua como ajuda local.
+  - Agora tem botão `GPT` para configurar uma chave de IA/OpenAI localmente.
+  - A chave fica somente no computador do usuário (`localStorage`), não vai para o código nem para a nuvem.
+  - No Electron, `main.js` ganhou IPC `ai:chat` para chamar ChatGPT/OpenAI sem expor lógica na tela.
+  - Se não houver chave ou falhar internet/API, o assistente responde com ajuda local.
+
+- Layout/topo:
+  - Corrigida a barra superior duplicada com CSS para o menu superior ocupar o topo (`top:0`) sem deixar faixa vazia.
+
+- Buscador Escola:
+  - Já havia sido corrigido na v4.9.60 para aparecer direto no menu lateral e superior.
+  - Nesta resposta deve deixar claro ao usuário que pode enviar todos os dados do Buscador, mas os dados sensíveis/senhas devem ser omitidos.
+  - Se quiser “igual antes”, usar como base o app.py/index.html enviados e manter a tela limpa com termo, região, intervalo, Atualizar, Baixar Tudo, Excluídos e Excel.
+
+Testes atualizados:
+
+- `test_cartuchos_etiquetas_config.js` atualizado para validar:
+  - sequência sem zeros;
+  - intervalo `509` até `635`;
+  - layout pequeno 7 colunas.
+
+Versão publicada:
+
+- **v4.9.63**
 
 ---
 
