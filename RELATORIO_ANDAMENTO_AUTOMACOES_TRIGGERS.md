@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.66**
+- Versão atual implementada: **v4.9.67**
 - Último commit publicado no PR: `f4128993b862e225b4c9d71a6d6123d2d62b4653` — registro parcial do Buscador Escola v4.9.66.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/d0193b1934e76f4cbad71973b8bac24947623eea/index.html?v=4.9.66`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4729,6 +4729,74 @@ Aguardar:
 
 - Usuário ainda está enviando arquivos/dados.
 - Só implementar a adaptação completa do Buscador Escola quando o usuário escrever `acabei`.
+
+---
+
+## 8BM. Buscador Escola final implantado no layout do Sistema Digicopy — v4.9.67
+
+Motivo:
+
+- Usuário escreveu `acabei`, indicando que todos os arquivos/dados relevantes do Buscador Escola antigo foram enviados.
+- Implementar a adaptação completa usando o layout do próprio Sistema Digicopy.
+- Nenhum PC deve ser fixo como principal: qualquer PC pode atualizar, com controle para não baixar toda hora.
+
+Implementado:
+
+- Criado patch separado `buscador_escola_final_patch.js`.
+- Criado teste `test_buscador_escola_final.js`.
+- O Buscador Escola agora tem tela final no padrão do Sistema Digicopy:
+  - cards de resumo;
+  - busca por termo;
+  - região;
+  - intervalo;
+  - resultados em cards;
+  - badges de prioridade;
+  - aviso de orçamento com somente o produto pesquisado;
+  - aviso de produtos extras;
+  - abrir orçamento;
+  - excluir/descartar orçamento;
+  - área de excluídos/restaurar;
+  - exportar Excel.
+
+Credenciais:
+
+- `.env` não é usado.
+- A tela tem área para configurar usuário/CNPJ e senha da API dentro do próprio sistema.
+- Credenciais são salvas em `db.config.buscadorEscola.credenciais`, não em código nem em arquivo `.env`.
+- O usuário poderá preencher uma vez.
+- Depois, pode clicar em `Ocultar configuração` para remover a área da visualização normal.
+
+Autoatualização:
+
+- Autoatualização ligada por padrão.
+- Intervalo padrão: 1 hora.
+- Não há PC padrão/fixo.
+- Qualquer PC pode atualizar quando estiver com dados vencidos ou base vazia.
+- Depois de atualizar, tenta publicar pela nuvem com `syncEnviarParaNuvem({confirmar:false, forcar:true, automatico:true})`.
+- Se outro PC já recebeu a configuração/dados atualizados da nuvem, ele não precisa baixar da API novamente até completar 1 hora.
+- Busca continua local e por Enter/lupa.
+
+Sem Python/Flask/SQLite:
+
+- Não usa mais `app.py` para rodar servidor.
+- Não usa `.bat`.
+- Não usa `orcamentos.db` separado.
+- Não usa `.env`.
+- Não instala Flask/openpyxl/geopy/requests.
+- Exportação Excel foi mantida via HTML `.xls` compatível com Excel.
+
+Testes:
+
+- `test_buscador_escola_final.js` valida:
+  - configurações finais;
+  - credenciais no banco;
+  - autoatualização por 1 hora;
+  - busca local;
+  - exportação Excel final.
+
+Versão publicada:
+
+- **v4.9.67**
 
 ---
 
