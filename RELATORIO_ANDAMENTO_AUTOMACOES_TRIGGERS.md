@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.68**
+- Versão atual implementada: **v4.9.69**
 - Último commit de código publicado no PR: `96534451c6cf222e1e7db597257808a18cb474f9` — v4.9.68.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/96534451c6cf222e1e7db597257808a18cb474f9/index.html?v=4.9.68`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4839,6 +4839,63 @@ Teste atualizado:
 Versão publicada:
 
 - **v4.9.68**
+
+---
+
+## 8BO. Login vazio e botão claro para credenciais do Buscador — v4.9.69
+
+Pedido do usuário:
+
+- Confirmar se o login de usuário foi alterado.
+- Deixar o campo de login do sistema vazio, sem `Kauan` preenchido por padrão e sem bolinhas/senha aparente.
+- Explicar o que o arquivo `sistema_virgem_usuarios_patch.js` faz.
+- Mostrar claramente onde salvar usuário/senha do Buscador Escola na nuvem.
+- No card de autoatualização de 1 hora, mostrar contador até a próxima atualização.
+- Esclarecer a diferença entre testar versão nova e dados antigos que ainda aparecem numa versão antiga instalada.
+
+Implementado:
+
+- `sistema_virgem_usuarios_patch.js` ajustado:
+  - campo `Usuário` agora abre vazio;
+  - não preenche mais `Kauan` por padrão;
+  - texto inferior não lista os usuários;
+  - campo de senha continua vazio.
+- `buscador_escola_final_patch.js` ajustado:
+  - botão visível `Login API` no topo do Buscador Escola;
+  - área de credenciais com botão `Salvar e enviar nuvem`;
+  - quando credenciais já estão ocultas, aparece link `Enviar login para nuvem`;
+  - card `Auto` agora mostra contador/estado da próxima atualização com `proximaAtualizacaoTexto()`.
+- Criado teste `test_login_buscador_ui_final.js`.
+
+Explicação do `sistema_virgem_usuarios_patch.js`:
+
+- No começo, ele foi criado para limpar o sistema antigo e deixar a base virgem, preservando clientes e criando usuários oficiais.
+- Depois, por segurança, foi alterado para **não limpar dados automaticamente em atualizações futuras**.
+- Hoje ele cuida principalmente de:
+  - login direto sem CNPJ;
+  - usuários oficiais;
+  - troca obrigatória de senha do Denivaldo quando aplicável;
+  - evitar reset destrutivo automático.
+
+Esclarecimento sobre versão/nuvem:
+
+- Link/ZIP novo atualiza o código do sistema.
+- Dados são outra coisa: podem estar no localStorage do navegador, no `.exe` antigo ou na nuvem.
+- Se o usuário estiver usando uma versão antiga instalada, ela continuará mostrando os dados antigos até atualizar o `.exe` ou abrir o link novo.
+- A versão nova não apaga automaticamente a base existente.
+
+Teste criado:
+
+- `test_login_buscador_ui_final.js` valida:
+  - login vazio;
+  - sem dica de Kauan;
+  - botão Login API;
+  - botão Salvar e enviar nuvem;
+  - contador da próxima atualização.
+
+Versão publicada:
+
+- **v4.9.69**
 
 ---
 
