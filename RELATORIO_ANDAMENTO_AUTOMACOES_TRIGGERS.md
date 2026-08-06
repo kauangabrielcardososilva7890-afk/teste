@@ -4411,6 +4411,95 @@ Versão publicada:
 
 ---
 
+## 8BG. Buscador Escola — index.html original recebido e cuidado com senha — v4.9.66
+
+Contexto:
+
+- Usuário enviou o `index.html` original da pasta `templates` do projeto próprio do Buscador Escola.
+- Usuário informou que pretende enviar usuário/senha porque não quer digitar sempre.
+
+Arquivo recebido nesta etapa:
+
+- `templates/index.html` original do projeto Flask.
+
+Elementos funcionais extraídos do HTML:
+
+- Tela original possui cabeçalho `CAIXA ESCOLAR MG - BUSCADOR`.
+- Cards no topo:
+  - última atualização;
+  - orçamentos em banco.
+- Área de busca com:
+  - termo de busca;
+  - região;
+  - intervalo;
+  - botão pesquisar.
+- Botões principais:
+  - Atualizar;
+  - Baixar Tudo;
+  - Excluídos.
+- Barra de progresso:
+  - porcentagem;
+  - mensagem de sincronização.
+- Resultados em cards com:
+  - código do orçamento;
+  - link abrir orçamento;
+  - botão excluir;
+  - badge de prioritário;
+  - badge verde quando orçamento contém apenas o produto pesquisado;
+  - aviso amarelo/vermelho quando há produtos adicionais;
+  - escola;
+  - município;
+  - distância de Janaúba;
+  - produtos encontrados/total;
+  - lista de produtos com tipo e descrição.
+- Tela de excluídos com:
+  - abrir orçamento;
+  - ativar/restaurar;
+  - motivo da exclusão.
+- Exportação Excel usava `/api/exportar`.
+- Intervalo de resultados usava formato `1-10`.
+
+Pontos para adaptar no Sistema Digicopy quando o usuário disser `acabei`:
+
+1. Fazer o Buscador Escola ficar visualmente mais próximo do fluxo antigo, porém com estética do Sistema Digicopy.
+2. Manter:
+   - termo;
+   - região;
+   - intervalo;
+   - Atualizar;
+   - Baixar Tudo;
+   - Excluídos;
+   - progresso de sincronização;
+   - cards de resultado;
+   - badges de apenas produto pesquisado e produtos extras;
+   - link para abrir orçamento no portal;
+   - exportação Excel.
+3. Não usar Flask nem SQLite separado.
+4. Continuar usando banco interno/nuvem do Sistema Digicopy.
+5. Evitar travamento:
+   - sincronização paginada;
+   - renderização por intervalo;
+   - busca somente por botão/Enter.
+
+Sobre usuário/senha da API do Buscador:
+
+- Não é recomendado o usuário enviar senha no chat.
+- Melhor solução a implementar:
+  - criar área de configuração do Buscador Escola no próprio Sistema Digicopy;
+  - usuário digita usuário/senha uma vez dentro do app;
+  - o sistema salva em `db.config.buscadorEscola.credenciais` ou estrutura equivalente;
+  - campos aparecem mascarados;
+  - sincroniza pela nuvem se o usuário quiser que todos os PCs usem;
+  - não gravar credencial em arquivo de código/repositório.
+- Se o usuário já tiver colado uma senha no chat, tratar como senha exposta e recomendar trocar depois.
+
+Estado:
+
+- Aguardar o usuário enviar os demais códigos/arquivos.
+- Só fazer adaptação completa do Buscador quando o usuário escrever `acabei`.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
