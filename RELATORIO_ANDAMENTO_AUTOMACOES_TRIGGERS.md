@@ -4531,6 +4531,150 @@ Adaptação futura quando usuário disser `acabei`:
 
 ---
 
+## 8BI. Buscador Escola — `.gitignore` original recebido — v4.9.66
+
+Contexto:
+
+- Usuário enviou o `.gitignore` original do projeto próprio do Buscador Escola.
+
+Conteúdo recebido:
+
+```gitignore
+.env
+*.db
+__pycache__/
+*.pyc
+.pytest_cache/
+*.xlsx
+*.pdf
+.DS_Store
+```
+
+Conclusões para adaptação ao Sistema Digicopy:
+
+- O projeto original já tratava `.env` como arquivo sensível e fora do Git.
+- O banco local `*.db` também não era versionado.
+- Relatórios gerados (`*.xlsx`, `*.pdf`) não eram versionados.
+- No Sistema Digicopy final:
+  - não usar `.env` para credenciais do Buscador;
+  - não salvar senha em código/repositório;
+  - se credenciais forem necessárias, salvar em configuração do próprio sistema, com campo mascarado;
+  - não gerar/guardar `.db` separado;
+  - usar o banco/nuvem já existente do Sistema Digicopy;
+  - exportações Excel/PDF devem continuar como arquivos gerados pelo usuário, não parte do código.
+
+Estado:
+
+- Aguardar o usuário enviar os demais arquivos/códigos e escrever `acabei` antes de adaptar o Buscador Escola completo.
+
+---
+
+## 8BJ. Buscador Escola — `.bat` de inicialização original recebido — v4.9.66
+
+Contexto:
+
+- Usuário enviou o arquivo `.bat` usado no projeto antigo para iniciar o Flask local e abrir o navegador.
+
+Fluxo original do `.bat`:
+
+```bat
+@echo off
+chcp 65001 > nul
+cd /d "%~dp0"
+echo.
+echo INICIANDO CAIXA ESCOLAR WEB
+echo [*] Iniciando servidor...
+start python app.py
+timeout /t 3 /nobreak
+echo [*] Abrindo navegador...
+start http://127.0.0.1:5000
+echo Servidor rodando em: http://127.0.0.1:5000
+echo Para fechar tudo: Feche o navegador e aperte Ctrl+C aqui
+pause
+```
+
+Conclusões para o Sistema Digicopy:
+
+- No app final/Electron não deve existir esse `.bat` para abrir Flask.
+- O Sistema Digicopy já abre como app/`.exe`, sem precisar iniciar `python app.py` nem abrir navegador local.
+- O equivalente no app final será:
+  - menu `Buscador Escola`;
+  - botão `Atualizar`;
+  - botão `Baixar Tudo`;
+  - progresso dentro da tela;
+  - dados salvos no banco/nuvem do próprio sistema.
+- O código do `.bat` serve apenas para entender o fluxo antigo de uso, não para ser copiado para o app final.
+
+Decisão do usuário registrada:
+
+- Usuário disse que pode digitar usuário/senha dentro do próprio sistema uma vez.
+- Depois que ele confirmar que colocou, remover/esconder o local de configuração de credenciais para não ficar aparecendo no uso normal.
+- Implementação futura deve ser temporária:
+  1. criar área de credenciais do Buscador;
+  2. usuário preenche;
+  3. sincroniza/salva;
+  4. depois esconder/remover essa área quando o usuário avisar.
+
+Estado:
+
+- Aguardar os próximos arquivos/códigos.
+- Só adaptar o Buscador Escola completo quando o usuário escrever `acabei`.
+
+---
+
+## 8BK. Buscador Escola — `instalar_dependencias.bat` original recebido — v4.9.66
+
+Contexto:
+
+- Usuário enviou o arquivo `instalar_dependencias.bat` original do projeto próprio do Buscador Escola.
+
+Fluxo original do `.bat`:
+
+```bat
+@echo off
+chcp 65001 > nul
+cd /d "%~dp0"
+python -m pip install --upgrade pip --quiet
+python -m pip install flask --quiet
+python -m pip install openpyxl --quiet
+python -m pip install geopy --quiet
+python -m pip install python-dotenv --quiet
+python -m pip install requests --quiet
+python -m pip install urllib3 --quiet
+pause
+```
+
+Dependências originais e substituição no Sistema Digicopy:
+
+- `flask`:
+  - usado para servidor local antigo;
+  - no Sistema Digicopy final não será usado, porque a tela fica dentro do Electron/app.
+- `openpyxl`:
+  - usado para gerar `.xlsx`;
+  - no Sistema Digicopy pode ser substituído por exportação HTML/CSV compatível com Excel ou outra rotina JS.
+- `geopy`:
+  - usado para geolocalização/distância;
+  - no Sistema Digicopy já existe cálculo JS por Haversine e lista de cidades. Se precisar mais precisão, adicionar tabela local de coordenadas.
+- `python-dotenv`:
+  - usado para `.env`;
+  - não será usado. Credenciais devem ficar na configuração do sistema, não em arquivo `.env`.
+- `requests` / `urllib3`:
+  - usados para HTTP e retentativas;
+  - no Sistema Digicopy/Electron será usado `fetch`/IPC com retry já implementado.
+
+Conclusão para adaptação final:
+
+- O app final não deve ter instalador Python para o Buscador Escola.
+- Não usar `instalar_dependencias.bat`.
+- O instalador único será o do Sistema Digicopy (`.exe` via Electron Builder).
+- Quando o usuário escrever `acabei`, adaptar o Buscador mantendo o fluxo antigo, mas sem Python/Flask/SQLite/dependências externas.
+
+Estado:
+
+- Aguardar o usuário enviar os demais arquivos/códigos e escrever `acabei`.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
