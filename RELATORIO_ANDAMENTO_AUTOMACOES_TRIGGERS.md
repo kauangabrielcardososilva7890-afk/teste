@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.64**
+- Versão atual implementada: **v4.9.65**
 - Último commit de código publicado no PR: `f77e2d647d0b7cfb254e9b622ca5eaa01d3c55ba` — v4.9.64.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/f77e2d647d0b7cfb254e9b622ca5eaa01d3c55ba/index.html?v=4.9.64`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4310,6 +4310,46 @@ Valida:
 Versão publicada:
 
 - **v4.9.64**
+
+---
+
+## 8BE. Chave Gemini salva no sistema e histórico apagado ao fechar — v4.9.65
+
+Pedido do usuário:
+
+- Não salvar a chave Gemini apenas localmente.
+- Deixar a chave salva no sistema.
+- Apagar histórico do chat ao fechar o sistema.
+- Usuário colou uma chave no chat, mas por segurança ela não deve ser gravada no código/repositório.
+
+Implementado:
+
+- A chave Gemini agora é salva em `db.config.ia.geminiApiKey`, ou seja, no banco/configuração do sistema.
+- A versão nova não usa `localStorage.setItem('digicopy_gemini_api_key')` para salvar a chave.
+- Ao abrir o botão `Gemini`, o usuário cola a chave uma vez e ela fica salva no sistema para os PCs que sincronizam a base.
+- Se a chave já estiver configurada, clicar em Cancelar mantém a chave.
+- Se deixar vazio e confirmar, apaga a chave salva.
+- Histórico do chat não é persistido.
+- No `beforeunload`, o sistema também remove chaves antigas de histórico local se existirem.
+
+Segurança:
+
+- A chave enviada pelo usuário no chat não foi escrita no código.
+- Recomendar ao usuário revogar/gerar outra chave no Google AI Studio porque uma chave colada no chat deve ser tratada como exposta.
+- Link para gerar chave Gemini:
+  - `https://aistudio.google.com/app/apikey`
+
+Teste atualizado:
+
+- `test_assistente_gemini.js` valida que:
+  - o endpoint Gemini é usado;
+  - OpenAI não é usado;
+  - a interface fala Gemini;
+  - a chave não é salva no localStorage antigo.
+
+Versão publicada:
+
+- **v4.9.65**
 
 ---
 

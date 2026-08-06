@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.64 — Ajustes pós-final: produtos, venda, impressão, usuários e assistente Gemini
+// PATCH v4.9.65 — Ajustes pós-final: produtos, venda, impressão, usuários e assistente Gemini
 // • Impressoras de locação não aparecem no menu Produtos
 // • Sair de venda em andamento pergunta se deseja salvar
 // • Rodapé de dados da loja em impressões HTML, sem repetir no rodapé da venda
@@ -92,7 +92,35 @@ function respostaAssistente(q){
   return 'Ainda não achei uma resposta exata. Tente perguntar usando palavras como cliente, venda, notinha, chamado, leitura, contrato, buscador escola, etiqueta, pix ou financeiro.';
 }
 
-window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao,respostaAssistente};
+function iaCfg(){
+  db.config=db.config||{};
+  db.config.ia=db.config.ia||{};
+  // v4.9.65: a chave não fica mais salva localmente; somente no banco do sistema.
+  try{
+    localStorage.removeItem('digicopy_gemini_api_key');
+    localStorage.removeItem('digicopy_gemini_model');
+  }catch(e){}
+  db.config.ia.geminiModel=db.config.ia.geminiModel||'gemini-1.5-flash';
+  return db.config.ia;
+}
+function salvarGeminiKey(chave){
+  const c=iaCfg();
+  c.geminiApiKey=txt(chave);
+  c.geminiSalvaEm=new Date().toISOString();
+  salvar();
+  return c;
+}
+function apagarGeminiKey(){
+  const c=iaCfg();
+  delete c.geminiApiKey;
+  c.geminiRemovidaEm=new Date().toISOString();
+  salvar();
+}
+function limparHistoricoAssistente(){
+  try{ localStorage.removeItem('digicopy_ia_historico'); localStorage.removeItem('digicopy_ai_history'); }catch(e){}
+}
+
+window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao,respostaAssistente,iaCfg,salvarGeminiKey,limparHistoricoAssistente};
 
 if(typeof document==='undefined') return;
 
@@ -173,21 +201,22 @@ window.saveUsuarioFinal=function(id){
 // Assistente local.
 function renderAssistente(){
   if(document.getElementById('assistente-digicopy')) return;
-  const box=document.createElement('div'); box.id='assistente-digicopy'; box.innerHTML=`<button id="assist-btn" title="Assistente" style="position:fixed;right:18px;bottom:18px;z-index:70;width:52px;height:52px;border-radius:18px;background:#0a1e8a;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);font-weight:800">IA</button><div id="assist-panel" class="hidden" style="position:fixed;right:18px;bottom:82px;z-index:70;width:min(390px,calc(100vw - 32px));background:white;border:1px solid #d9e0ee;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.25);overflow:hidden"><div style="padding:12px 14px;background:#0a1e8a;color:white;font-weight:800;display:flex;justify-content:space-between;gap:8px"><span>Assistente do Sistema Digicopy</span><button id="assist-config" style="background:rgba(255,255,255,.18);border:0;color:white;border-radius:8px;padding:2px 8px;font-size:11px">Gemini</button></div><div id="assist-chat" style="height:285px;overflow:auto;padding:12px;font-size:12px;color:#334155"><p><b>Assistente:</b> Pergunte sobre cliente, venda, chamado, leitura, contrato, buscador escola, etiqueta, pix ou financeiro. Se configurar uma chave Gemini, eu respondo como IA online; sem chave uso ajuda local.</p></div><div style="display:flex;gap:6px;padding:10px;border-top:1px solid #eef2f7"><input id="assist-input" style="flex:1;height:38px;border:1px solid #d9e0ee;border-radius:10px;padding:0 10px" placeholder="Digite sua pergunta"><button id="assist-send" style="height:38px;padding:0 12px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Enviar</button></div></div>`; document.body.appendChild(box);
+  const box=document.createElement('div'); box.id='assistente-digicopy'; box.innerHTML=`<button id="assist-btn" title="Assistente" style="position:fixed;right:18px;bottom:18px;z-index:70;width:52px;height:52px;border-radius:18px;background:#0a1e8a;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25);font-weight:800">IA</button><div id="assist-panel" class="hidden" style="position:fixed;right:18px;bottom:82px;z-index:70;width:min(390px,calc(100vw - 32px));background:white;border:1px solid #d9e0ee;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.25);overflow:hidden"><div style="padding:12px 14px;background:#0a1e8a;color:white;font-weight:800;display:flex;justify-content:space-between;gap:8px"><span>Assistente do Sistema Digicopy</span><button id="assist-config" style="background:rgba(255,255,255,.18);border:0;color:white;border-radius:8px;padding:2px 8px;font-size:11px">Gemini</button></div><div id="assist-chat" style="height:285px;overflow:auto;padding:12px;font-size:12px;color:#334155"><p><b>Assistente:</b> Pergunte sobre cliente, venda, chamado, leitura, contrato, buscador escola, etiqueta, pix ou financeiro. Se a chave Gemini estiver salva no sistema, eu respondo como IA online; sem chave uso ajuda local. O histórico apaga ao fechar o sistema.</p></div><div style="display:flex;gap:6px;padding:10px;border-top:1px solid #eef2f7"><input id="assist-input" style="flex:1;height:38px;border:1px solid #d9e0ee;border-radius:10px;padding:0 10px" placeholder="Digite sua pergunta"><button id="assist-send" style="height:38px;padding:0 12px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Enviar</button></div></div>`; document.body.appendChild(box);
   document.getElementById('assist-btn').onclick=()=>document.getElementById('assist-panel').classList.toggle('hidden');
-  document.getElementById('assist-config').onclick=()=>{ const k=prompt('Cole sua chave API do Gemini. Pegue em: https://aistudio.google.com/app/apikey\n\nEla fica salva só neste computador. Deixe vazio para usar ajuda local.',localStorage.getItem('digicopy_gemini_api_key')||''); if(k!==null){ if(txt(k)) localStorage.setItem('digicopy_gemini_api_key',txt(k)); else localStorage.removeItem('digicopy_gemini_api_key'); toastMsg(txt(k)?'Chave Gemini salva localmente':'Gemini desativado; usando ajuda local','success'); } };
+  document.getElementById('assist-config').onclick=()=>{ const atual=!!iaCfg().geminiApiKey; const k=prompt('Cole sua chave API do Gemini. Pegue em: https://aistudio.google.com/app/apikey\n\nEla ficará salva no banco do sistema para usar em todos os PCs sincronizados. Não aparece em tela.\n\nSe já estiver configurada e quiser manter, clique Cancelar. Para apagar, deixe vazio e confirme.', ''); if(k!==null){ if(txt(k)){ salvarGeminiKey(k); toastMsg('Chave Gemini salva no sistema','success'); } else if(atual && confirm('Apagar a chave Gemini salva no sistema?')){ apagarGeminiKey(); toastMsg('Chave Gemini apagada; usando ajuda local','info'); } } };
   const send=async()=>{
     const inp=document.getElementById('assist-input'), chat=document.getElementById('assist-chat'); const q=inp.value; if(!txt(q)) return;
     chat.insertAdjacentHTML('beforeend',`<p><b>Você:</b> ${esc(q)}</p><p><b>Assistente:</b> pensando...</p>`); inp.value=''; chat.scrollTop=chat.scrollHeight;
-    let resp=''; const key=localStorage.getItem('digicopy_gemini_api_key')||'';
+    let resp=''; const cfgIA=iaCfg(); const key=cfgIA.geminiApiKey||'';
     if(key&&window.digicopyAI&&typeof window.digicopyAI.chat==='function'){
-      try{ const r=await window.digicopyAI.chat({apiKey:key,prompt:q,model:localStorage.getItem('digicopy_gemini_model')||'gemini-1.5-flash'}); resp=(r&&r.ok&&r.text)?r.text:('Gemini falhou: '+(r&&r.error?r.error:'erro desconhecido')+'\n\nResposta local: '+respostaAssistente(q)); }
+      try{ const r=await window.digicopyAI.chat({apiKey:key,prompt:q,model:cfgIA.geminiModel||'gemini-1.5-flash'}); resp=(r&&r.ok&&r.text)?r.text:('Gemini falhou: '+(r&&r.error?r.error:'erro desconhecido')+'\n\nResposta local: '+respostaAssistente(q)); }
       catch(e){ resp='Gemini falhou: '+(e.message||e)+'\n\nResposta local: '+respostaAssistente(q); }
-    }else resp=respostaAssistente(q)+'\n\nPara resposta online grátis/limitada, clique em Gemini e informe sua chave API do Google AI Studio neste computador.';
+    }else resp=respostaAssistente(q)+'\n\nPara resposta online grátis/limitada, clique em Gemini e salve sua chave API do Google AI Studio no sistema.';
     const ps=chat.querySelectorAll('p'); const last=ps[ps.length-1]; if(last) last.innerHTML='<b>Assistente:</b> '+esc(resp).replace(/\n/g,'<br>'); chat.scrollTop=chat.scrollHeight;
   };
   document.getElementById('assist-send').onclick=send; document.getElementById('assist-input').onkeydown=e=>{ if(e.key==='Enter') send(); };
 }
+window.addEventListener('beforeunload',limparHistoricoAssistente);
 setTimeout(renderAssistente,1200);
-console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.64 carregado');
+console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.65 carregado');
 })();

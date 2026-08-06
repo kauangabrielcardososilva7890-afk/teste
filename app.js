@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.64';
+const APP_VERSION='4.9.65';
 const DB_KEY='digicopy_erp_v42_demo_apresentacao';
 const DB_MANIFEST_KEY='digicopy_erp_v42_demo_apresentacao_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v42_demo_apresentacao_part__';    // 1 chave comprimida por entidade (v4.4.0)
