@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.67**
+- Versão atual implementada: **v4.9.68**
 - Último commit de código publicado no PR: `151113ba99839e9e2f016fd36a91dcd5140ccb29` — v4.9.67.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/151113ba99839e9e2f016fd36a91dcd5140ccb29/index.html?v=4.9.67`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4797,6 +4797,48 @@ Testes:
 Versão publicada:
 
 - **v4.9.67**
+
+---
+
+## 8BN. Credenciais do Buscador salvas na nuvem sem sobrescrever a base — v4.9.68
+
+Pedido do usuário:
+
+- Conseguir guardar usuário/senha do Buscador Escola sem precisar baixar ZIP/EXE antes.
+- Não ter que mandar senha pelo chat.
+- Salvar as credenciais de forma que fiquem disponíveis na nuvem.
+
+Implementado:
+
+- Ajustado `buscador_escola_final_patch.js`.
+- O botão da área de credenciais agora é `Salvar e enviar nuvem`.
+- Ao salvar, o sistema grava as credenciais em `db.config.buscadorEscola.credenciais`.
+- Depois tenta publicar **somente a parte `config`** na nuvem usando `__supabaseSyncInternals`, sem enviar a base inteira.
+- Isso evita o risco de sobrescrever clientes/vendas/contratos com uma base local vazia apenas por salvar a senha.
+- Se a nuvem não estiver disponível, mantém salvo localmente e mostra aviso.
+
+Fluxo recomendado ao usuário:
+
+1. Abrir o link web atual do Sistema Digicopy.
+2. Entrar com usuário do sistema.
+3. Ir em `Buscador Escola`.
+4. Preencher `Usuário/CNPJ API` e `Senha API`.
+5. Clicar em `Salvar e enviar nuvem`.
+6. Depois, quando confirmar que salvou, pedir para esconder/remover a área de credenciais.
+
+Segurança:
+
+- Não salvar senha em código/repositório.
+- Não pedir senha pelo chat.
+- A credencial vai para a configuração da base do sistema/nuvem, conforme pedido do usuário.
+
+Teste atualizado:
+
+- `test_buscador_escola_final.js` valida que existe publicação de config na nuvem sem usar envio total forçado para salvar credencial.
+
+Versão publicada:
+
+- **v4.9.68**
 
 ---
 

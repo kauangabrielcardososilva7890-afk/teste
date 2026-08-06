@@ -22,4 +22,6 @@ const res=B.pesquisarFinal('toner','3');
 ok('busca final local por termo/região', res.length===1 && res[0].apenas_pesquisado===true);
 const html=B.excelHtmlFinal(res);
 ok('excel final contém campos principais', html.includes('Código') && html.includes('Toner HP'));
+ok('salvar credenciais publica só config na nuvem', code.includes('publicarConfigBuscadorNuvem') && code.includes('config__p'));
+ok('não usa envio total forçado ao salvar credenciais', !code.includes('salvarCredenciaisBuscador=function(){ const c=cfgFinal'));
 console.log('\nRESULTADO: Testes do Buscador Escola final passaram!');
