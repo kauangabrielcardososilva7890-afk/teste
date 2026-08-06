@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.56 — Buscador Escola integrado ao DIGICOPY ERP
-// • Adapta o projeto Flask/SQLite para o app Electron/Web sem servidor Python
-// • Usa a API real descrita no app.py: /auth/login, /budget-proposal e /budget-item
-// • Corrige erros antigos: log .txt sem permissão, SQLite locked e 404 sem tratamento
-// • Busca por tipo/descrição, região, intervalo, descartados, log interno e Excel
+// PATCH v4.9.67 — Buscador Escola final integrado ao Sistema Digicopy
+// • Fluxo adaptado do projeto Flask para Electron/Web, sem Python/SQLite/.env
+// • Credenciais salvas na configuração do sistema, não em arquivo/código
+// • Autoatualização controlada a cada 1 hora, qualquer PC pode atualizar
+// • Layout no padrão do Sistema Digicopy, com cards, badges, excluídos e Excel
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -12,18 +12,21 @@ function txt(v){ return String(v ?? '').trim(); }
 function esc(v){ if(typeof escapeHtml==='function') return escapeHtml(v); return txt(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
 function n(v,fb=0){ if(v===null||v===undefined||String(v).trim()==='') return fb; const x=Number(String(v).replace(',','.')); return Number.isFinite(x)?x:fb; }
 function inteiro(v,fb=0){ const x=parseInt(String(v ?? '').replace(/\D+/g,''),10); return Number.isFinite(x)?x:fb; }
-function hoje(){ return new Date().toISOString(); }
+function agora(){ return new Date().toISOString(); }
 function money(v){ return typeof fmtMoney==='function'?fmtMoney(n(v,0)):n(v,0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):txt(v).slice(0,10); }
+function dataHoraBR(v){ return typeof fmtDateTime==='function'?fmtDateTime(v):txt(v); }
 function uidSafe(p){ return typeof uid==='function'?uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
 function toastMsg(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
 function salvar(){ if(typeof saveDB==='function') saveDB(); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
 function delay(ms){ return new Promise(r=>setTimeout(r,ms||0)); }
 function normalizarTexto(texto){ return txt(texto).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/gi,'').toLowerCase().trim(); }
+function msDesde(v){ const t=Date.parse(v||''); return Number.isFinite(t)?Date.now()-t:Infinity; }
 
 const API_PADRAO='https://api.caixaescolar.educacao.mg.gov.br';
 const BASE_COORDS={lat:-15.8025,lng:-43.3089,nome:'Janaúba/MG'};
+const UMA_HORA_MS=60*60*1000;
 const MUNICIPIOS_NORTE_MINAS=new Set([
   'janauba','nova porteirinha','porteirinha','riacho dos machados','verdelandia','jaiba','mato verde','monte azul','espinosa','gameleiras','catuti','pai pedro','mamonas','serranopolis de minas','rio pardo de minas','indaiabira','ninheira','montezuma','santo antonio do retiro','vargem grande do rio pardo','sao joao do paraiso','taiobeiras','berizal','curral de dentro','rubelita','fruta de leite','novorizonte','salinas','santa cruz de salinas','aguas vermelhas','divisa alegre','padre carvalho','josenopolis','montes claros','bocaiuva','francisco sa','capitao eneas','sao joao da ponte','varzelandia','ibiracatu','japonvar','lontra','mirabela','juramento','glaucilandia','guaraciama','engenheiro navarro','claro dos pocoes','coracao de jesus','sao joao da lagoa','sao joao do pacui','patis','luislandia','brasilia de minas','ubai','sao francisco','pintopolis','icarai de minas','sao romao','santa fe de minas','pirapora','buritizeiro','varzea da palma','lassance','jequitai','ponto chique','ibiai','lagoa dos patos','riachinho','januaria','itacarambi','bonito de minas','conego marinho','pedras de maria da cruz','sao joao das missoes','manga','matias cardoso','montalvania','juvenilia','miravania','urucuia','grao mogol','cristalia','botumirim','itacambira'
 ]);
@@ -63,11 +66,15 @@ function cfg(dbRef){
   c.apiBase=c.apiBase||API_PADRAO;
   c.cidadeBase=c.cidadeBase||'Janaúba/MG';
   c.statusPadrao=c.statusPadrao||'NAEN';
-  c.maxPaginas=c.maxPaginas||50;
+  c.maxPaginas=c.maxPaginas||80;
   c.loginPath=c.loginPath||'/auth/login';
   c.orcamentosPath=c.orcamentosPath||'/budget-proposal/summary-by-supplier-profile';
   c.itensPath=c.itensPath||'/budget-item/by-subprogram/{idSubprogram}/by-school/{idSchool}/by-budget/{idBudget}';
   c.limit=c.limit||100;
+  c.autoSync=c.autoSync!==false;
+  c.intervaloMinutos=c.intervaloMinutos||60;
+  c.credenciais=c.credenciais||{usuario:'',senha:''};
+  c.layoutFinal=true;
   return c;
 }
 function store(dbRef){
@@ -79,7 +86,7 @@ function store(dbRef){
 }
 function logEscola(dbRef,tipo,msg,detalhes){
   const st=store(dbRef);
-  st.logs.unshift({id:uidSafe('esc_log'),data:hoje(),tipo:txt(tipo)||'info',mensagem:txt(msg),detalhes:detalhes||null});
+  st.logs.unshift({id:uidSafe('esc_log'),data:agora(),tipo:txt(tipo)||'info',mensagem:txt(msg),detalhes:detalhes||null});
   if(st.logs.length>500) st.logs.length=500;
 }
 function idOrc(o){ return txt(o.idBudget ?? o.id_budget ?? o.id ?? o.orcamento_id ?? o.orcamentoId ?? o.numero_orcamento ?? o.numeroOrcamento ?? o.nuBudgetOrder ?? o.numero ?? o.codigo); }
@@ -103,7 +110,7 @@ function normalizarOrcamento(raw){
     norte_minas:isNorte(municipio),
     prioritario:isPrioritario(municipio),
     prioridade_regiao:prioridadeRegiao(distancia,municipio),
-    atualizadoEm:hoje(), origem:'api'
+    atualizadoEm:agora(), origem:'api'
   };
 }
 function normalizarItem(raw,orcamentoId){
@@ -132,7 +139,7 @@ function limparInexistentes(dbRef,idsApi){
 }
 function descartarOrcamento(dbRef,orcamentoId,motivo,auto){
   const st=store(dbRef); const id=txt(orcamentoId); const m=txt(motivo)||'Descartado';
-  if(!st.excluidos.find(e=>String(e.orcamento_id)===String(id))){ st.excluidos.push({id:uidSafe('esc_exc'),orcamento_id:id,motivo:m,data_exclusao:hoje(),automatico:!!auto}); logEscola(dbRef,auto?'limpeza':'descarte',`Orçamento ${id} descartado`,m); }
+  if(!st.excluidos.find(e=>String(e.orcamento_id)===String(id))){ st.excluidos.push({id:uidSafe('esc_exc'),orcamento_id:id,motivo:m,data_exclusao:agora(),automatico:!!auto}); logEscola(dbRef,auto?'limpeza':'descarte',`Orçamento ${id} descartado`,m); }
   return true;
 }
 function restaurarOrcamento(dbRef,orcamentoId){ const st=store(dbRef); dbRef.escolaExcluidos=st.excluidos.filter(e=>String(e.orcamento_id)!==String(orcamentoId)); logEscola(dbRef,'restaurar',`Orçamento ${orcamentoId} restaurado`); return true; }
