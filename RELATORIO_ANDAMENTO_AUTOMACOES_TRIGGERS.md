@@ -14,8 +14,8 @@
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
 - Versão atual implementada: **v4.9.67**
-- Último commit publicado no PR: `f4128993b862e225b4c9d71a6d6123d2d62b4653` — registro parcial do Buscador Escola v4.9.66.
-- Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/d0193b1934e76f4cbad71973b8bac24947623eea/index.html?v=4.9.66`.
+- Último commit de código publicado no PR: `151113ba99839e9e2f016fd36a91dcd5140ccb29` — v4.9.67.
+- Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/151113ba99839e9e2f016fd36a91dcd5140ccb29/index.html?v=4.9.67`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
 - Situação do PR: aberto, **não fazer merge sem confirmação explícita do usuário**.
 
