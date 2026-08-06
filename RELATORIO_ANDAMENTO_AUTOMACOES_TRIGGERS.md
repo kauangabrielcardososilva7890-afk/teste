@@ -14,7 +14,7 @@
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
 - Versão atual implementada: **v4.9.66**
-- Último commit de código publicado no PR: `d0193b1934e76f4cbad71973b8bac24947623eea` — v4.9.66.
+- Último commit publicado no PR: `f4128993b862e225b4c9d71a6d6123d2d62b4653` — registro parcial do Buscador Escola v4.9.66.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/d0193b1934e76f4cbad71973b8bac24947623eea/index.html?v=4.9.66`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
 - Situação do PR: aberto, **não fazer merge sem confirmação explícita do usuário**.
@@ -4497,6 +4497,37 @@ Estado:
 
 - Aguardar o usuário enviar os demais códigos/arquivos.
 - Só fazer adaptação completa do Buscador quando o usuário escrever `acabei`.
+
+---
+
+## 8BH. Buscador Escola — `.env` original recebido parcialmente — v4.9.66
+
+Contexto:
+
+- Usuário enviou o conteúdo do `.env` do projeto original do Buscador Escola.
+- O arquivo possuía duas variáveis principais:
+  - `USUARIO` — CPF/CNPJ usado no login da API;
+  - `SENHA` — senha da API.
+- A senha real não foi registrada aqui.
+
+Regra de segurança:
+
+- Não salvar usuário/senha da API diretamente em código do repositório.
+- Não colocar senha real no relatório.
+- Para resolver a necessidade do usuário de não digitar sempre, criar configuração dentro do próprio Sistema Digicopy:
+  - campo `Usuário/CNPJ da API`;
+  - campo `Senha da API`;
+  - botão `Salvar credenciais`;
+  - campos mascarados;
+  - dados salvos em configuração do banco do sistema/nuvem, não em arquivo `.env` nem no código.
+
+Adaptação futura quando usuário disser `acabei`:
+
+- Migrar a ideia do `.env` para `db.config.buscadorEscola.credenciais` ou estrutura equivalente.
+- Manter endpoint real já identificado no `app.py`:
+  - login `/auth/login`;
+  - corpo com `txCpfCnpj` e `txPassword`.
+- Não depender de arquivo `.env` no app final/Electron.
 
 ---
 
