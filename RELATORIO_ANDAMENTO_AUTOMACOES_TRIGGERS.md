@@ -4899,6 +4899,306 @@ Versão publicada:
 
 ---
 
+## 8BP. Relatório consolidado detalhado do que já foi feito — v4.9.69
+
+Objetivo desta seção:
+
+- Consolidar o estado real do Sistema Digicopy até a v4.9.69.
+- Evitar perda de contexto.
+- Deixar claro o que já foi feito, o que foi removido/escondido e o que ainda precisa teste real.
+
+### 1. Estado atual geral
+
+- Sistema atual: **Sistema Digicopy**.
+- Versão atual: **v4.9.69**.
+- Branch de trabalho: `arena/019fb6d3-teste`.
+- PR #11 aberto.
+- Não fazer merge sem confirmação explícita do usuário.
+- Link de teste atual:
+  - `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/e95726ced856f021a7a8034b2ae83b5c2dc52b66/index.html?v=4.9.69`
+- ZIP atual:
+  - `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`
+
+### 2. Sistema virgem e dados antigos
+
+- O sistema foi ajustado para trabalhar como base virgem.
+- Dados antigos/migrados foram removidos/ocultados da interface final.
+- O reset destrutivo automático foi desativado.
+- Atualizar o sistema não deve mais limpar banco automaticamente.
+- `modulosDinamicos` e menus migrados não devem aparecer para uso normal.
+- Dados antigos não devem voltar para menus principais.
+- Clientes são a única parte antiga que o usuário quis reaproveitar/reimportar.
+
+### 3. Login e usuários
+
+- Login por CNPJ foi removido da experiência final.
+- Login é por usuário e senha.
+- Usuários oficiais definidos:
+  - Kauan / 6132 — admin total;
+  - Recepção / 3232;
+  - Katia / 1524;
+  - Denivaldo / senha inicial temporária 1234, com troca obrigatória quando aplicável.
+- Login agora abre com os campos vazios:
+  - não vem `Kauan` escrito;
+  - não mostra lista/dica de usuários;
+  - senha vazia.
+- Usuários podem ser editados:
+  - nome;
+  - senha;
+  - status;
+  - perfil.
+- Perfil só pode ser alterado por Kauan ou Denivaldo.
+
+### 4. Nuvem e dados
+
+- A sincronização por partes já existe.
+- Dados são separados do código:
+  - abrir link/baixar ZIP atualiza o sistema;
+  - os dados ficam no navegador, no `.exe` antigo ou na nuvem.
+- Se o usuário usa um `.exe` antigo, ele pode continuar mostrando dados antigos locais.
+- Para salvar login do Buscador Escola, foi criado envio apenas da configuração `config` para a nuvem, evitando sobrescrever a base inteira.
+
+### 5. Clientes
+
+- Tela de clientes foi ajustada para PC fraco.
+- Não lista todos os clientes ao abrir.
+- Só lista quando:
+  - pesquisar por Enter/lupa;
+  - ou aplicar filtro.
+- Filtros disponíveis:
+  - ativos;
+  - inadimplentes;
+  - ocultos/inativos;
+  - sem telefone;
+  - sem endereço;
+  - todos status.
+- Ordenação por cabeçalho:
+  - código;
+  - nome;
+  - fantasia;
+  - telefone;
+  - CPF/CNPJ;
+  - cidade.
+- Padrão quando lista: código crescente.
+- Código de cliente é número puro:
+  - sem letras;
+  - sem prefixo;
+  - sem ano;
+  - sem zeros à esquerda.
+- Importador de clientes aceita JSON de:
+  - `CLIENTES.json`;
+  - `CLIENTES_FINAL.json`.
+- Arquivos com `USUARIOS`/`RESTRICAO` são ignorados no importador de clientes.
+
+### 6. Dados da loja
+
+- Criada área em Configurações para dados completos da loja.
+- Campos:
+  - nome fantasia;
+  - razão social;
+  - CNPJ;
+  - telefone;
+  - WhatsApp;
+  - rua/avenida;
+  - número;
+  - bairro;
+  - cidade;
+  - UF;
+  - CEP;
+  - e-mail.
+- Esses dados são usados em notinhas/relatórios/impressões HTML.
+
+### 7. Vendas e notinhas
+
+- Venda/notinha tem histórico/abertura por duplo clique/atalho.
+- Se houver venda em andamento e o usuário tentar sair pelo botão sair, X ou ESC, aparece aviso perguntando se deseja salvar.
+- Salvar/faturar tenta permanecer na tela atual e atualizar a tela.
+- Notinha Pix usa QR compacto para caber em meia folha.
+- Pix não baixa automaticamente.
+- Pix exige comprovante/baixa manual.
+- Rodapé padrão com dados da loja foi reforçado para impressões HTML.
+- Repetição de CNPJ/dados no rodapé/audit da notinha de venda foi tratada.
+
+### 8. Chamados / OS
+
+- Chamado avulso existe fora do contrato.
+- Chamados também existem dentro do contrato.
+- Tela geral de chamados mostra histórico geral.
+- Chamado avulso tem campos de:
+  - cliente;
+  - impressora/equipamento;
+  - modelo;
+  - patrimônio;
+  - serial;
+  - local;
+  - motivo/defeito;
+  - serviço executado;
+  - técnico;
+  - status;
+  - contador preto anterior/atual;
+  - contador color anterior/atual;
+  - itens/peças usadas.
+- Contador atual fica vazio para preenchimento manual.
+- Contador color não é obrigatório.
+- Para faturar chamado é obrigatório:
+  - cliente;
+  - modelo;
+  - motivo;
+  - serviço executado;
+  - contador preto atual.
+- Chamado não altera contador oficial da impressora.
+- Só leitura altera contador oficial.
+- Chamado faturado não gera financeiro automático.
+- Se tiver item/peça, gera notinha relacionada ao chamado.
+- Impressões de chamado:
+  - modelo técnico antes de faturar;
+  - chamado final depois de faturar.
+- Áreas/seções de chamados foram destacadas com faixas visuais.
+
+### 9. Contratos, impressoras e leituras
+
+- Impressoras de contrato ficam dentro do contrato.
+- Impressoras de locação/equipamentos não devem aparecer como produto comum no menu Produtos.
+- Leituras ficam dentro do contrato.
+- Fluxo de leitura foi trabalhado:
+  - histórico de leituras;
+  - abertura por duplo clique;
+  - lançamento por impressora/medidor ativo;
+  - contador anterior/atual;
+  - cálculo de usado/excedente/valor;
+  - bloqueio quando faturada;
+  - estorno para editar.
+- Notinha de leitura compacta com departamentos foi implementada.
+- Contrato RTF não deve receber rodapé HTML/padrão de notinha.
+
+### 10. Produtos/estoque
+
+- Menu Produtos não deve mostrar impressoras de locação/equipamentos.
+- Produto normal que apenas tem a palavra “impressora” no nome continua podendo aparecer.
+- Cartucho vazio não é produto separado.
+- Produtos gerados como `Cartucho Vazio` / `CARTVAZ-*` foram tratados para limpeza.
+
+### 11. Etiquetas de cartucho
+
+- Etiquetas foram ajustadas para micro layout.
+- Layout atual: `A4_12X27_MICRO_MAX`.
+- Capacidade padrão: até 324 etiquetas por folha.
+- Número visível direto:
+  - `1`;
+  - `2`;
+  - `3`;
+  - sem `00001`.
+- Usuário informa número inicial.
+- O final é sugerido pelo máximo que cabe na folha.
+- Se o usuário alterar o final manualmente, imprime só até o final informado.
+- Etiqueta mostra `DIGICOPY` pequeno, código de barras compacto e número.
+
+### 12. Buscador Escola
+
+- O projeto Flask/SQLite foi adaptado para o Sistema Digicopy.
+- Arquivos recebidos/registrados:
+  - `app.py`;
+  - `templates/index.html`;
+  - `.env` sem senha real;
+  - `.gitignore`;
+  - `.bat` de iniciar;
+  - `instalar_dependencias.bat`.
+- Não usa mais:
+  - Flask;
+  - Python;
+  - SQLite `.db`;
+  - `.env`;
+  - `.bat`;
+  - openpyxl/geopy/requests como dependências Python.
+- API base identificada:
+  - `https://api.caixaescolar.educacao.mg.gov.br`
+- Login:
+  - `/auth/login`;
+  - `txCpfCnpj`;
+  - `txPassword`.
+- Lista:
+  - `/budget-proposal/summary-by-supplier-profile`;
+  - `filter.supplierStatus=$eq:NAEN`;
+  - `page`;
+  - `limit`.
+- Itens:
+  - `/budget-item/by-subprogram/{idSubprogram}/by-school/{idSchool}/by-budget/{idBudget}`.
+- Buscador final tem:
+  - cards de resumo;
+  - credenciais dentro do sistema;
+  - busca por termo/região/intervalo;
+  - resultados em cards;
+  - badges de prioridade;
+  - aviso quando só tem produto pesquisado;
+  - aviso quando tem produtos extras;
+  - excluir/restaurar;
+  - exportar Excel;
+  - autoatualização de 1 hora.
+- Nenhum PC fixo/principal.
+- Qualquer PC pode atualizar quando necessário.
+- Se um PC atualiza, tenta publicar na nuvem para os outros.
+- Credenciais são salvas em:
+  - `db.config.buscadorEscola.credenciais`.
+- Botões/links importantes:
+  - `Login API`;
+  - `Salvar e enviar nuvem`;
+  - `Enviar login para nuvem`;
+  - `Ocultar configuração`.
+
+### 13. IA / assistente
+
+- O assistente de IA/Gemini foi removido a pedido do usuário.
+- Não há integração OpenAI/Gemini ativa na versão final atual.
+
+### 14. Menus/interface final
+
+- Menus migrados/dinâmicos foram escondidos/removidos da interface final.
+- Menus extras de nuvem/importação/teste/backup/alinhamento foram escondidos/removidos da navegação normal.
+- `Buscador Escola` fica fixado no menu.
+- Nome visual principal: `Sistema Digicopy`.
+- Barra duplicada do topo foi ocultada no `.exe`.
+
+### 15. Build / .exe
+
+- Configuração do Electron Builder existe.
+- Produto/atalho/instalador usa `Sistema Digicopy`.
+- Comandos para gerar no PC do usuário:
+
+```powershell
+npm.cmd install --no-audit --no-fund
+npm.cmd run build:win
+```
+
+- Arena não consegue garantir gerar `.exe` aqui por problemas anteriores de rede/TLS no download do Electron.
+
+### 16. Testes e validação
+
+- A cada alteração publicada foram rodados:
+  - `npm run check`;
+  - `npm test`.
+- Testes recentes cobrem:
+  - Buscador Escola final;
+  - menu do Buscador;
+  - login vazio;
+  - clientes sob demanda;
+  - sistema virgem sem reset automático;
+  - etiquetas;
+  - notinhas/chamados;
+  - Pix;
+  - automações/mapeamentos antigos.
+
+### 17. Atenções atuais
+
+- O usuário relatou precisar recuperar dados feitos em versão antiga.
+- Não apagar `.exe` antigo nem navegador/perfil onde os dados aparecem.
+- Se dados aparecem numa versão antiga, fazer backup/exportação antes de trocar.
+- Próximo foco, se o usuário pedir, deve ser:
+  - orientar recuperação desses dados;
+  - testar Buscador com credenciais reais dentro do sistema;
+  - depois esconder área de credenciais do Buscador.
+
+---
+
 ## 9. Como continuar quando o usuário mandar novas partes
 
 Para cada nova parte recebida:
@@ -4922,22 +5222,15 @@ Para cada nova parte recebida:
 
 ## 10. Pendências atuais
 
-1. Usuário testar a v4.9.52 com a base real na nuvem.
-2. Usuário baixar e enviar o relatório de `Configurações > Alinhamento do banco antigo`.
-3. Confirmar, pelo relatório real, se cada tabela antiga caiu no destino correto.
-4. Ajustar mapeamento fino depois do relatório, sem apagar dados úteis.
-5. Continuar prioridade funcional definida pelo usuário:
-   - Leituras;
-   - Contratos;
-   - Vendas/notinhas;
-   - Chamados/OS;
-   - Clientes;
-   - Estoque;
-   - Financeiro;
-   - Impressão/RTF.
-6. Validar visualmente contratos com cliente, impressoras e leituras.
-7. Confirmar modelos de contrato/proposta em `Modelos contrato`.
-8. Evoluir recarga/cartuchos para tela operacional completa se o usuário aprovar o fluxo das etiquetas.
+1. Usuário testar a v4.9.69 no link novo ou gerar `.exe` novo.
+2. Se houver dados importantes em versão antiga, não apagar a versão antiga; primeiro exportar/recuperar.
+3. Usuário preencher credenciais do Buscador Escola em `Buscador Escola > Login API > Salvar e enviar nuvem`.
+4. Depois que credenciais estiverem salvas, esconder/remover a área de credenciais do Buscador.
+5. Testar sincronização real do Buscador Escola com API real.
+6. Confirmar se a autoatualização de 1 hora funciona sem travar.
+7. Revisar visual das etiquetas em impressora real.
+8. Testar fluxo completo de venda/notinha/chamado/leitura em uso real.
+9. Se tudo estiver validado, gerar `.exe` final e remover/ocultar definitivamente qualquer área administrativa restante que o usuário não quer no uso diário.
 
 ---
 
