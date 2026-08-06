@@ -1,0 +1,23 @@
+const fs=require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1); } console.log('  ✔ '+name); }
+const code=fs.readFileSync('tipos_dados_legado_patch.js','utf8');
+const db={config:{}};
+const ctx={window:{},db};
+new Function('window','db',code)(ctx.window,ctx.db);
+const T=ctx.window.TIPOS_DADOS_LEGADO_PURE;
+console.log('== TIPOS_DADOS_LEGADO_PURE ==');
+ok('tem domínio VALOR com precisão antiga', T.TIPOS_DADOS_LEGADO.VALOR.precisao===15 && T.TIPOS_DADOS_LEGADO.VALOR.escala===5);
+ok('tem domínio DM_VALOR_METRO com escala 2', T.TIPOS_DADOS_LEGADO.DM_VALOR_METRO.escala===2);
+ok('normaliza CPF/CNPJ só números', T.normalizarPorTipo('CPF_CNPJ','12.345.678/0001-99')==='12345678000199');
+ok('normaliza CEP só com 8 dígitos', T.normalizarPorTipo('CEP','39.390-000')==='39390000');
+ok('normaliza UF', T.normalizarPorTipo('UF','mg')==='MG');
+ok('normaliza e-mail', T.normalizarPorTipo('EMAIL','TESTE@EMAIL.COM')==='teste@email.com');
+ok('normaliza telefone', T.normalizarPorTipo('TELEFONE','(38) 99999-8888')==='38999998888');
+ok('normaliza valor com escala 5', T.normalizarPorTipo('VALOR','10,123456')===10.12346);
+ok('valida documento bom', T.validarPorTipo('CPF_CNPJ','123.456.789-00'));
+ok('rejeita documento ruim', !T.validarPorTipo('CPF_CNPJ','12345'));
+ok('rejeita email ruim', !T.validarPorTipo('EMAIL','email_errado'));
+ok('limita texto max', T.normalizarPorTipo('DESCRICAO_50','x'.repeat(60)).length===50);
+const changed=T.aplicarTiposDadosLegado(db);
+ok('aplica tipos no config', changed===1 && db.config.tiposDadosLegadoResumo.total>=40);
+console.log('\nRESULTADO: Testes de tipos de dados legados passaram!');

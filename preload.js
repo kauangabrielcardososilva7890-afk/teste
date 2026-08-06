@@ -22,3 +22,8 @@ contextBridge.exposeInMainWorld('fileAPI', {
   selectFdb: ()  => ipcRenderer.invoke('file:select-fdb'),
   saveJson: (data, name) => ipcRenderer.invoke('file:save-json', data, name)
 });
+
+// API Buscador Escola — evita bloqueio de CORS no Electron
+contextBridge.exposeInMainWorld('caixaEscolarAPI', {
+  request: (req) => ipcRenderer.invoke('escola:request', req)
+});

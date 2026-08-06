@@ -1,12 +1,12 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.12';
-const DB_KEY='digicopy_erp_v30';
-const DB_MANIFEST_KEY='digicopy_erp_v30_manifest'; // mapa entidade -> hash (v4.4.0)
-const DB_PART_PREFIX='digicopy_erp_v30_part__';    // 1 chave comprimida por entidade (v4.4.0)
-const SESSION_KEY='digicopy_session_v30';
-const PENDING_CNPJ_KEY='digicopy_pending_cnpj';
+const APP_VERSION='4.9.69';
+const DB_KEY='digicopy_erp_v42_demo_apresentacao';
+const DB_MANIFEST_KEY='digicopy_erp_v42_demo_apresentacao_manifest'; // mapa entidade -> hash (v4.4.0)
+const DB_PART_PREFIX='digicopy_erp_v42_demo_apresentacao_part__';    // 1 chave comprimida por entidade (v4.4.0)
+const SESSION_KEY='digicopy_session_v42_demo_apresentacao';
+const PENDING_CNPJ_KEY='digicopy_pending_cnpj_v42_demo_apresentacao';
 
 const defaultData={
   empresas:[],
@@ -267,7 +267,7 @@ function seedData(force=false){
   const empresaId=gen('emp');
   const empresas=[{id:empresaId,cnpj:'12.345.678/0001-90',cnpjDigits:onlyDigits('12.345.678/0001-90'),senha:'123456',nome:'DIGICOPY Cartuchos e Impressoras LTDA',fantasia:'DIGICOPY',criadoEm:new Date().toISOString()}];
   const usuarios=[
-    {id:gen('usr'),empresaId, nome:'Kauan Gabriel', login:'admin', senha:'admin123', perfil:'Admin', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
+    {id:gen('usr'),empresaId, nome:'Administrador', login:'admin', senha:'admin123', perfil:'Admin', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
     {id:gen('usr'),empresaId, nome:'Carlos Mendes', login:'carlos', senha:'123456', perfil:'Técnico', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
     {id:gen('usr'),empresaId, nome:'Ana Souza', login:'ana', senha:'123456', perfil:'Comercial', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
     {id:gen('usr'),empresaId, nome:'Financeiro', login:'financeiro', senha:'123456', perfil:'Financeiro', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
@@ -414,8 +414,10 @@ function showApp(){
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
   if(typeof renderDashboard==='function') renderDashboard();
-  // load others
-  setTimeout(()=>{renderClientes(); renderProdutos(); renderEquipamentos(); renderContratos(); renderParque(); renderLeituras(); renderOs(); renderVendas(); renderFinanceiro(); renderConfig(); if(typeof renderUsuarios==='function') renderUsuarios(); if(typeof renderAuditoria==='function') renderAuditoria();},100);
+  // v4.9.38: não renderiza telas escondidas no login.
+  // As telas carregam somente quando o usuário abre o menu correspondente.
+  // Isso evita travar em bases grandes migradas pelo banco antigo.
+  setTimeout(()=>{ if(window.IDX_LEGADO&&typeof window.IDX_LEGADO.rebuild==='function') window.IDX_LEGADO.rebuild(); },900);
 }
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');
@@ -488,11 +490,12 @@ function navigateTo(view){
     window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  if(view==='buscador-escola' && typeof ensureView==='function') ensureView('buscador-escola');
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito']};
+  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'], 'buscador-escola':['Buscador Escola','Orçamentos escolares, busca por produto e distância']};
   const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
@@ -508,6 +511,7 @@ function navigateTo(view){
   if(view==='config') renderConfig();
   if(view==='usuarios') renderUsuarios();
   if(view==='auditoria') renderAuditoria();
+  if(view==='buscador-escola'){ if(typeof renderBuscadorEscola==='function') renderBuscadorEscola(); else if(target) target.innerHTML='<div class="neo-card p-6"><b>Buscador Escola</b><p class="text-slate-500 text-[13px] mt-1">Carregando módulo...</p></div>'; }
   // Módulos dinâmicos (tabelas migradas sem mapeamento direto)
   if(view.startsWith('mod_')){
     const nomeTabela = view.substring(4).toUpperCase();
@@ -532,7 +536,7 @@ function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
   const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
-  const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'relatorios',icon:'ph-chart-line',label:'Relatórios'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
+  const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'buscador-escola',icon:'ph-magnifying-glass',label:'Buscador Escola'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   
   // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)
   const dinamicos = [];

@@ -1,26 +1,37 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow = null;
 
 function createWindow () {
+  try{ Menu.setApplicationMenu(null); }catch(e){}
+  try{ app.setAppUserModelId('br.com.digicopy.erp.demo'); }catch(e){}
   const win = new BrowserWindow({
     width: 1400,
     height: 900,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'DIGICOPY ERP v3.8'
+    title: 'Sistema Digicopy'
   });
 
   win.loadFile('index.html');
+  try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
+  try{ win.webContents.on('before-input-event', (event, input) => {
+    const k=String(input.key||'').toLowerCase();
+    if((input.control||input.meta) && input.shift && ['i','j','c'].includes(k)) event.preventDefault();
+    if(k==='f12') event.preventDefault();
+  }); }catch(e){}
+  win.webContents.on('context-menu', e => e.preventDefault());
   win.once('ready-to-show', () => win.show());
   return win;
 }
@@ -29,6 +40,7 @@ app.whenReady().then(() => {
   mainWindow = createWindow();
   registerFirebirdIPC();
   registerFileIPC();
+  registerEscolaIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -242,6 +254,37 @@ function mapFbType(typeNum){
     261:'BLOB'
   };
   return map[typeNum] || `TYPE_${typeNum}`;
+}
+
+// ──────────────────────────────────────────────
+// BUSCADOR ESCOLA IPC — chamada HTTP sem CORS no Electron
+// ──────────────────────────────────────────────
+function registerEscolaIPC(){
+  ipcMain.handle('escola:request', async (_evt, req) => {
+    const method = String((req && req.method) || 'GET').toUpperCase();
+    const url = String((req && req.url) || '');
+    if(!/^https:\/\/api\.caixaescolar\.(educacao\.)?mg\.gov\.br\//.test(url)){
+      return { ok:false, error:'URL inválida para o Buscador Escola' };
+    }
+    let lastErr = '';
+    for(let tent=0; tent<3; tent++){
+      try{
+        const headers = { 'Content-Type':'application/json', 'Accept':'application/json' };
+        if(req && req.token) headers.Authorization = 'Bearer ' + String(req.token);
+        if(req && req.cookie) headers.Cookie = String(req.cookie);
+        const resp = await fetch(url, { method, headers, body: req && req.body ? JSON.stringify(req.body) : undefined });
+        const text = await resp.text();
+        let data = null;
+        try{ data = text ? JSON.parse(text) : null; }catch(e){ data = text; }
+        const cookies = typeof resp.headers.getSetCookie === 'function' ? resp.headers.getSetCookie() : (resp.headers.get('set-cookie') ? [resp.headers.get('set-cookie')] : []);
+        if(resp.ok) return { ok:true, status:resp.status, data, cookies };
+        lastErr = (data && data.message) || text || resp.statusText;
+        if(![429,500,502,503,504].includes(resp.status)) return { ok:false, status:resp.status, error:lastErr, data, cookies };
+      }catch(e){ lastErr = e.message || String(e); }
+      await new Promise(r => setTimeout(r, 700 * (tent + 1)));
+    }
+    return { ok:false, error:lastErr || 'Falha na comunicação com a API' };
+  });
 }
 
 // ──────────────────────────────────────────────

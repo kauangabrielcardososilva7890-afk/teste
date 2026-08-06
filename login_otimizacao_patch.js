@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.8 — Otimização de Login, Funcionários e Vendedores:
 // • Login flexível case-insensitive para qualquer formato (FULANO, Fulano, fUlAnO)
-// • Unificação do usuário 'admin' com 'Kauan' (evita dois Kauan duplicados)
+// • Normalização do usuário principal sem gravar nome pessoal no código
 // • Conversão de vendedores 'Vendas - ordens', 'N', 'S', 'Importado' para 'Recepção'
 // • Importação de funcionários migrados do banco como usuários de login (com senha)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -16,32 +16,32 @@ function loguinCompativel(u, typed){
   return (l === t || n === t || primeiroNome === t);
 }
 
-function normalizarKauanAdmin(sess, dbRef){
+function normalizarAdminPrincipal(sess, dbRef){
   const _db = dbRef || (typeof db !== 'undefined' ? db : window.db);
   if(!sess || !_db) return;
   const empId = sess.empresaId;
   const adminUser = (_db.usuarios||[]).find(u => u.empresaId === empId && u.login === 'admin');
-  const kauanUser = (_db.usuarios||[]).find(u => u.empresaId === empId && u.login !== 'admin' && (String(u.nome).toLowerCase().includes('kauan') || String(u.login).toLowerCase().includes('kauan')));
+  const principalUser = (_db.usuarios||[]).find(u => u.empresaId === empId && u.login !== 'admin' && (String(u.nome).toLowerCase().includes('administrador') || String(u.login).toLowerCase().includes('gestor')));
   if(adminUser){
-    adminUser.nome = 'Kauan Gabriel';
-    adminUser.login = 'kauan';
-    if(kauanUser && kauanUser.id !== adminUser.id){
-      // Unifica admin com o cadastro já existente de Kauan
-      const targetId = kauanUser.id;
+    adminUser.nome = 'Administrador';
+    adminUser.login = 'admin';
+    if(principalUser && principalUser.id !== adminUser.id){
+      // Unifica admin com o cadastro principal já existente
+      const targetId = principalUser.id;
       (_db.vendas||[]).forEach(v => {
         if(v.criadoPor === adminUser.id) v.criadoPor = targetId;
-        if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Kauan Gabriel';
-        if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Kauan Gabriel';
+        if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Administrador';
+        if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Administrador';
       });
       (_db.os||[]).forEach(o => {
         if(o.criadoPor === adminUser.id) o.criadoPor = targetId;
-        if(/^admin$/i.test(o.criadoPorNome||'')) o.criadoPorNome = 'Kauan Gabriel';
+        if(/^admin$/i.test(o.criadoPorNome||'')) o.criadoPorNome = 'Administrador';
       });
       _db.usuarios = _db.usuarios.filter(u => u.id !== adminUser.id);
     } else {
       (_db.vendas||[]).forEach(v => {
-        if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Kauan Gabriel';
-        if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Kauan Gabriel';
+        if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Administrador';
+        if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Administrador';
       });
     }
   }
@@ -49,8 +49,8 @@ function normalizarKauanAdmin(sess, dbRef){
   // Normalizar registros legados com vendedor "admin", "N", "S", "Vendas - ordens"
   (_db.vendas||[]).forEach(v => {
     if(v.empresaId === empId){
-      if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Kauan Gabriel';
-      if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Kauan Gabriel';
+      if(/^admin$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Administrador';
+      if(/^admin$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Administrador';
       if(/^([NS]|VENDAS?.*ORDENS?|IMPORTADO)$/i.test(v.criadoPorNome||'')) v.criadoPorNome = 'Recepção';
       if(/^([NS]|VENDAS?.*ORDENS?|IMPORTADO)$/i.test(v.atendenteNome||'')) v.atendenteNome = 'Recepção';
     }
@@ -86,7 +86,7 @@ function importarFuncionariosComoUsuarios(sess){
 
 window.LOGOPT_PURE = {
   loguinCompativel,
-  normalizarKauanAdmin,
+  normalizarAdminPrincipal,
   importarFuncionariosComoUsuarios
 };
 
@@ -137,7 +137,7 @@ window.doLoginUser = function(){
     entidadeId: user.id,
     detalhes: `Login usuário ${user.login} perfil ${user.perfil}`
   });
-  normalizarKauanAdmin(session);
+  normalizarAdminPrincipal(session);
   importarFuncionariosComoUsuarios(session);
   saveDB();
   if(typeof showApp==='function') showApp();
@@ -149,11 +149,11 @@ const _origShowApp = window.showApp;
 window.showApp = function(){
   const sess = typeof getSession==='function' ? getSession() : null;
   if(sess){
-    normalizarKauanAdmin(sess);
+    normalizarAdminPrincipal(sess);
     importarFuncionariosComoUsuarios(sess);
   }
   if(_origShowApp) _origShowApp.apply(this, arguments);
 };
 
-console.log('[DIGICOPY] PATCH login_otimizacao_patch.js v4.9.8 — Login case-insensitive, unificação Kauan/admin e Recepção');
+console.log('[DIGICOPY] PATCH login_otimizacao_patch.js v4.9.8 — Login case-insensitive, unificação admin principal e Recepção');
 })();

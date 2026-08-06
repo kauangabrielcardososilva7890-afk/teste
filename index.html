@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIGICOPY ERP - Vendas e Locação de Impressoras</title>
+<title>Sistema Digicopy</title>
 <link rel="icon" href="./logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -74,7 +74,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <div class="relative z-10">
       <img src="./logo.png" alt="DIGICOPY" class="h-14 w-auto object-contain">
       <div class="mt-12 max-w-[460px]">
-        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">ERP simples para<br> vendas e locação<br> de impressoras</h1>
+        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Sistema simples para<br> vendas e locação<br> de impressoras</h1>
         <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema em modo fácil: botões grandes, fluxo guiado e nomes diretos para vender, orçar, locar impressoras, abrir chamados e controlar financeiro.</p>
       </div>
     </div>
@@ -105,7 +105,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
           <div class="space-y-4">
             <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" placeholder="ex: admin, carlos" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
             <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no ERP</button>
+            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
             
           </div>
         </div>
@@ -121,7 +121,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <div class="flex min-h-screen">
   <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[300px] bg-[#060e2f] text-white flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-white/5">
     <div class="h-[76px] px-5 flex items-center justify-between border-b border-white/[0.08] bg-[#0a1e8a]">
-      <div class="flex items-center gap-3"><img src="./logo.png" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">ERP</p></div></div>
+      <div class="flex items-center gap-3"><img src="./logo.png" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">Sistema</p></div></div>
       <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 grid place-items-center rounded-lg bg-white/10"><i class="ph ph-x"></i></button>
     </div>
     <div class="px-4 py-4">
@@ -149,7 +149,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="app-titlebar sticky top-0 z-30">
   <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
-    <div class="absolute left-2 flex items-center gap-2"><img src="./logo.png" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">DIGICOPY ERP</span></div>
+    <div class="absolute left-2 flex items-center gap-2"><img src="./logo.png" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
     <span id="page-title" class="font-medium">Início</span>
     <div class="absolute right-2 flex items-center gap-2">
       <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
@@ -168,6 +168,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
+        <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
       </div></div>
@@ -188,7 +189,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-auditoria" class="view hidden space-y-4"></section>
       <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>DIGICOPY ERP • Banco na Nuvem</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
@@ -199,27 +200,75 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.9.12"></script>
-<script src="./logo_data.js?v=4.9.12"></script>
-<script src="./app.js?v=4.9.12"></script>
-<script src="./vendas_patch.js?v=4.9.12"></script>
-<script src="./evolucao_patch.js?v=4.9.12"></script>
-<script src="./notinha_patch.js?v=4.9.12"></script>
-<script src="./locacao_patch.js?v=4.9.12"></script>
-<script src="./sync_client.js?v=4.9.12"></script>
-<script src="./vendas_os_patch.js?v=4.9.12"></script>
-<script src="./performance_patch.js?v=4.9.12"></script>
-<script src="./pix_patch.js?v=4.9.12"></script>
-<script src="./notificacoes_patch.js?v=4.9.12"></script>
-<script src="./vendas_extra_patch.js?v=4.9.12"></script>
-<script src="./migrados_print_patch.js?v=4.9.12"></script>
-<script src="./clientes_patch.js?v=4.9.12"></script>
-<script src="./interface_patch.js?v=4.9.12"></script>
-<script src="./firebase_config.js?v=4.9.12"></script>
-<script src="./firebase_client.js?v=4.9.12"></script>
-<script src="./vendas_otimizacao_patch.js?v=4.9.12"></script>
-<script src="./login_otimizacao_patch.js?v=4.9.12"></script>
-<script src="./render_gate_patch.js?v=4.9.12"></script>
-<script src="./locacao_contratos_patch.js?v=4.9.12"></script>
+<script src="./lz.js?v=4.9.69"></script>
+<script src="./logo_data.js?v=4.9.69"></script>
+<script src="./app.js?v=4.9.69"></script>
+<script src="./vendas_patch.js?v=4.9.69"></script>
+<script src="./evolucao_patch.js?v=4.9.69"></script>
+<script src="./notinha_patch.js?v=4.9.69"></script>
+<script src="./locacao_patch.js?v=4.9.69"></script>
+<script src="./sync_client.js?v=4.9.69"></script>
+<script src="./vendas_os_patch.js?v=4.9.69"></script>
+<script src="./performance_patch.js?v=4.9.69"></script>
+<script src="./pix_patch.js?v=4.9.69"></script>
+<script src="./notificacoes_patch.js?v=4.9.69"></script>
+<script src="./vendas_extra_patch.js?v=4.9.69"></script>
+<script src="./migrados_print_patch.js?v=4.9.69"></script>
+<script src="./clientes_patch.js?v=4.9.69"></script>
+<script src="./interface_patch.js?v=4.9.69"></script>
+<script src="./firebase_config.js?v=4.9.69"></script>
+<script src="./firebase_client.js?v=4.9.69"></script>
+<script src="./vendas_otimizacao_patch.js?v=4.9.69"></script>
+<script src="./login_otimizacao_patch.js?v=4.9.69"></script>
+<script src="./render_gate_patch.js?v=4.9.69"></script>
+<script src="./locacao_contratos_patch.js?v=4.9.69"></script>
+<script src="./fluxos_operacionais_patch.js?v=4.9.69"></script>
+<script src="./contratos_refino_patch.js?v=4.9.69"></script>
+<script src="./contratos_final_patch.js?v=4.9.69"></script>
+<script src="./contratos_visitas_vinculo_patch.js?v=4.9.69"></script>
+<script src="./contratos_rtf_template_patch.js?v=4.9.69"></script>
+<script src="./diagnostico_migracao_patch.js?v=4.9.69"></script>
+<script src="./arquivos_modelos_diagnostico_patch.js?v=4.9.69"></script>
+<script src="./modo_leve_teste_patch.js?v=4.9.69"></script>
+<script src="./otimizacao_profunda_patch.js?v=4.9.69"></script>
+<script src="./automacoes_triggers_patch.js?v=4.9.69"></script>
+<script src="./automacoes_financeiro_estoque_patch.js?v=4.9.69"></script>
+<script src="./automacoes_locacao_visitas_patch.js?v=4.9.69"></script>
+<script src="./automacoes_contratos_caixa_fiscal_patch.js?v=4.9.69"></script>
+<script src="./automacoes_fiscal_cartuchos_patch.js?v=4.9.69"></script>
+<script src="./automacoes_vendas_compras_cadastros_patch.js?v=4.9.69"></script>
+<script src="./automacoes_orcamentos_clientes_auxiliares_patch.js?v=4.9.69"></script>
+<script src="./automacoes_pix_contadores_auxiliares_patch.js?v=4.9.69"></script>
+<script src="./automacoes_vendas_fiscal_auxiliares_patch.js?v=4.9.69"></script>
+<script src="./automacoes_compras_recebimentos_contadores_patch.js?v=4.9.69"></script>
+<script src="./automacoes_caixa_chat_auxiliares_patch.js?v=4.9.69"></script>
+<script src="./automacoes_finais_locacao_auxiliares_patch.js?v=4.9.69"></script>
+<script src="./automacoes_procedures_operacionais_patch.js?v=4.9.69"></script>
+<script src="./sequencias_legado_patch.js?v=4.9.69"></script>
+<script src="./indices_legado_performance_patch.js?v=4.9.69"></script>
+<script src="./tipos_dados_legado_patch.js?v=4.9.69"></script>
+<script src="./chamados_avulsos_aberto_patch.js?v=4.9.69"></script>
+<script src="./cadastros_nomes_patch.js?v=4.9.69"></script>
+<script src="./pix_comprovante_manual_patch.js?v=4.9.69"></script>
+<script src="./desktop_otimizacao_patch.js?v=4.9.69"></script>
+<script src="./correcoes_uso_diario_patch.js?v=4.9.69"></script>
+<script src="./login_dados_automaticos_patch.js?v=4.9.69"></script>
+<script src="./apresentacao_demo_patch.js?v=4.9.69"></script>
+<script src="./ajustes_relatorio_pai_patch.js?v=4.9.69"></script>
+<script src="./contratos_leituras_definitivo_patch.js?v=4.9.69"></script>
+<script src="./fluxo_contrato_leitura_corrigido_patch.js?v=4.9.69"></script>
+<script src="./leitura_busca_fluxo_patch.js?v=4.9.69"></script>
+<script src="./leitura_detalhada_departamentos_patch.js?v=4.9.69"></script>
+<script src="./leitura_impressao_compacta_produtos_patch.js?v=4.9.69"></script>
+<script src="./alinhamento_banco_assistido_patch.js?v=4.9.69"></script>
+<script src="./alinhamento_banco_exemplos_patch.js?v=4.9.69"></script>
+<script src="./cartuchos_etiquetas_config_patch.js?v=4.9.69"></script>
+<script src="./vendas_chamados_reparo_patch.js?v=4.9.69"></script>
+<script src="./buscador_escola_patch.js?v=4.9.69"></script>
+<script src="./buscador_escola_final_patch.js?v=4.9.69"></script>
+<script src="./sistema_virgem_usuarios_patch.js?v=4.9.69"></script>
+<script src="./sistema_clientes_loja_patch.js?v=4.9.69"></script>
+<script src="./finalizacao_sistema_patch.js?v=4.9.69"></script>
+<script src="./ajustes_pos_final_patch.js?v=4.9.69"></script>
 </body>
 </html>

@@ -1,0 +1,27 @@
+const fs=require('fs');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1); } console.log('  ✔ '+name); }
+const base=fs.readFileSync('buscador_escola_patch.js','utf8');
+const code=fs.readFileSync('buscador_escola_final_patch.js','utf8');
+const db={config:{},escolaOrcamentos:[],escolaItens:[],escolaExcluidos:[],escolaLogs:[]};
+const ctx={window:{},document:undefined,db};
+new Function('window','document','db',base)(ctx.window,ctx.document,ctx.db);
+new Function('window','document','db',code)(ctx.window,ctx.document,ctx.db);
+const B=ctx.window.BUSCADOR_ESCOLA_FINAL_PURE;
+console.log('== BUSCADOR_ESCOLA_FINAL_PURE ==');
+ok('exporta funções puras finais', !!B && typeof B.cfgFinal==='function');
+const cfg=B.cfgFinal(db);
+ok('config padrão tem auto sync 1 hora e credenciais no banco', cfg.autoSync===true && cfg.intervaloMinutos===60 && cfg.credenciais && cfg.credenciais.usuario==='');
+ok('sem credencial não auto sincroniza', B.deveAutoSync(cfg)===false);
+cfg.credenciais={usuario:'123',senha:'abc'};
+ok('com credencial e vazio deve auto sincronizar', B.credOk(cfg)===true && B.deveAutoSync(cfg)===true);
+db.escolaOrcamentos.push({id:'1',numero_orcamento:'10',nome_escola:'Escola',municipio:'Janaúba',distancia_km:0,prioritario:true,norte_minas:true});
+db.escolaItens.push({id:'i1',orcamento_id:'1',tipo:'Toner',descricao:'Toner HP'});
+cfg.ultimoSyncEm=new Date().toISOString();
+ok('sincronização recente não precisa baixar de novo', B.deveAutoSync(cfg)===false);
+const res=B.pesquisarFinal('toner','3');
+ok('busca final local por termo/região', res.length===1 && res[0].apenas_pesquisado===true);
+const html=B.excelHtmlFinal(res);
+ok('excel final contém campos principais', html.includes('Código') && html.includes('Toner HP'));
+ok('salvar credenciais publica só config na nuvem', code.includes('publicarConfigBuscadorNuvem') && code.includes('config__p'));
+ok('não usa envio total forçado ao salvar credenciais', !code.includes('salvarCredenciaisBuscador=function(){ const c=cfgFinal'));
+console.log('\nRESULTADO: Testes do Buscador Escola final passaram!');
