@@ -13,7 +13,7 @@
 - Repositório: projeto DIGICOPY ERP no GitHub
 - Branch fixo da sessão: `arena/019fb6d3-teste`
 - PR aberto: #11
-- Versão atual implementada: **v4.9.63**
+- Versão atual implementada: **v4.9.64**
 - Último commit de código publicado no PR: `0c06eaa223cfb3e40e951ef0c8dab6e1389aa5c1` — v4.9.63.
 - Link de teste atual: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/0c06eaa223cfb3e40e951ef0c8dab6e1389aa5c1/index.html?v=4.9.63`.
 - ZIP da branch: `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/019fb6d3-teste.zip`.
@@ -4271,6 +4271,45 @@ Testes atualizados:
 Versão publicada:
 
 - **v4.9.63**
+
+---
+
+## 8BD. Assistente IA trocado para Gemini — v4.9.64
+
+Pedido do usuário:
+
+- Usar Gemini por ter opção grátis/limitada.
+- Remover OpenAI do assistente.
+- Enviar novamente o link para pegar a API key do Gemini.
+
+Implementado:
+
+- Removida integração OpenAI/ChatGPT do código do assistente.
+- `main.js` agora usa Gemini via endpoint:
+  - `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+- Modelo padrão:
+  - `gemini-1.5-flash`
+- Botão do assistente mudou de `GPT` para `Gemini`.
+- A chave agora é salva localmente em:
+  - `localStorage.digicopy_gemini_api_key`
+- A interface orienta pegar chave em:
+  - `https://aistudio.google.com/app/apikey`
+- Sem chave ou sem internet/API, o assistente continua respondendo com a ajuda local do sistema.
+- A IA online recebe contexto para responder sobre o Sistema Digicopy e também perguntas gerais.
+
+Teste criado:
+
+- `test_assistente_gemini.js`
+
+Valida:
+
+- `main.js` usa endpoint Gemini;
+- código não usa endpoint OpenAI;
+- interface fala Gemini e usa chave local própria.
+
+Versão publicada:
+
+- **v4.9.64**
 
 ---
 

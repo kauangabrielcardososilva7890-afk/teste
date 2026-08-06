@@ -258,21 +258,24 @@ function mapFbType(typeNum){
 }
 
 // ──────────────────────────────────────────────
-// ASSISTENTE IA IPC — ChatGPT opcional com chave local do usuário
+// ASSISTENTE IA IPC — Gemini opcional com chave local do usuário
 // ──────────────────────────────────────────────
 function registerAIIPC(){
   ipcMain.handle('ai:chat', async (_evt, req) => {
     try{
       const apiKey=String((req&&req.apiKey)||'').trim();
       const prompt=String((req&&req.prompt)||'').trim();
-      const model=String((req&&req.model)||'gpt-4o-mini').trim()||'gpt-4o-mini';
-      if(!apiKey) return {ok:false,error:'Chave da IA não informada'};
+      const model=String((req&&req.model)||'gemini-1.5-flash').trim()||'gemini-1.5-flash';
+      if(!apiKey) return {ok:false,error:'Chave Gemini não informada'};
       if(!prompt) return {ok:false,error:'Mensagem vazia'};
-      const system='Você é o assistente do Sistema Digicopy. Responda em português brasileiro, direto, prático e focado nas funções do sistema: clientes, vendas, notinhas, chamados, contratos, leituras, etiquetas, Buscador Escola, Pix e financeiro. Não invente dados privados.';
-      const resp=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model,messages:[{role:'system',content:system},{role:'user',content:prompt}],temperature:0.2,max_tokens:500})});
+      const system='Você é o assistente do Sistema Digicopy. Responda em português brasileiro, direto, prático e focado nas funções do sistema: clientes, vendas, notinhas, chamados, contratos, leituras, etiquetas, Buscador Escola, Pix e financeiro. Também pode responder perguntas gerais do usuário quando ele pedir. Não invente dados privados.';
+      const url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(apiKey);
+      const resp=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:system+'\n\nPergunta do usuário:\n'+prompt}]}],generationConfig:{temperature:0.25,maxOutputTokens:700}})});
       const data=await resp.json().catch(()=>null);
       if(!resp.ok) return {ok:false,status:resp.status,error:(data&&data.error&&data.error.message)||resp.statusText};
-      return {ok:true,text:(((data||{}).choices||[])[0]||{}).message?.content||''};
+      const parts=((((data||{}).candidates||[])[0]||{}).content||{}).parts||[];
+      const text=parts.map(p=>p.text||'').join('').trim();
+      return {ok:true,text:text||'A Gemini respondeu sem texto.'};
     }catch(e){ return {ok:false,error:e.message||String(e)}; }
   });
 }
