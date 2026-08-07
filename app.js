@@ -791,6 +791,17 @@ function initTemplates(){
       </div>
     </div>
 
+    <div class="rounded-[18px] bg-gradient-to-r from-emerald-600 to-emerald-800 text-white p-5 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-[16px]">☁️ Enviar dados para a Nuvem</h3>
+        <p class="text-[13px] text-white/80 mt-1">Envie todos os dados deste PC para o Firebase. Os outros PCs recebem automaticamente.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="enviarDadosLocaisParaNuvem()" class="h-11 px-6 rounded-xl bg-white text-emerald-800 font-bold text-[14px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-cloud-arrow-up text-[18px]"></i>Enviar para nuvem</button>
+        <button onclick="carregarDadosDaNuvem()" class="h-11 px-5 rounded-xl bg-white/15 border border-white/30 text-white font-bold text-[13px] hover:bg-white/25 transition flex items-center gap-2"><i class="ph ph-cloud-arrow-down text-[16px]"></i>Carregar da nuvem</button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
         <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
