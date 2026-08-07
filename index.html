@@ -74,12 +74,12 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <div class="relative z-10">
       <img src="./logo.png" alt="DIGICOPY" class="h-14 w-auto object-contain">
       <div class="mt-12 max-w-[460px]">
-        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Sistema simples para<br> vendas e locação<br> de impressoras</h1>
-        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema em modo fácil: botões grandes, fluxo guiado e nomes diretos para vender, orçar, locar impressoras, abrir chamados e controlar financeiro.</p>
+        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Sistema Digicopy</h1>
+        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Vendas, locação e outsourcing de impressoras</p>
       </div>
     </div>
     <div class="relative z-10 flex items-center justify-between text-[11px] text-white/50">
-      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.4 • Modo Fácil</span>
+      <span>© 2026 DIGICOPY</span>
     </div>
   </div>
   <!-- RIGHT PANEL - FORMS -->
@@ -87,32 +87,18 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo.png" class="h-9 w-auto"></div>
     <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
       <div class="w-full max-w-[400px]">
-        <!-- STEP 1 CNPJ -->
-        <div id="login-step-cnpj">
-          <div class="mb-8"><h2 class="text-[22px] font-bold tracking-tight">Acesso da empresa</h2><p class="text-[13.5px] text-slate-500 mt-2 leading-snug">Informe o CNPJ e a senha CNPJ cadastrados. Esta é a primeira camada de segurança da sua empresa.</p></div>
+        <!-- LOGIN DIRETO - SEM CNPJ -->
+        <div id="login-step-user">
+          <div class="mb-8"><h2 class="text-[22px] font-bold tracking-tight">Login</h2><p class="text-[13.5px] text-slate-500 mt-2 leading-snug">Informe seu usuário e senha.</p></div>
           <div class="space-y-4">
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">CNPJ da empresa</label><input id="login-cnpj" oninput="formatarLoginCNPJ(this)" placeholder="12.345.678/0001-90" maxlength="18" autocomplete="username" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px] font-medium"></div>
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">Senha CNPJ</label><div class="relative"><input id="login-senha-cnpj" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-cnpj')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginCNPJ()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20 flex items-center justify-center gap-2"><span>Validar empresa</span><i class="ph ph-arrow-right"></i></button>
-            
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário</label><input id="login-user" placeholder="ex: admin, kauan" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
+            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar</button>
           </div>
         </div>
-        <!-- STEP 2 USUARIO -->
-        <div id="login-step-user" class="hidden">
-          <div class="mb-2"><button onclick="backToCNPJ()" class="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-[12px] font-medium flex items-center gap-1.5"><i class="ph ph-arrow-left"></i>Trocar empresa</button></div>
-          <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef]"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[14px]" id="login-empresa-iniciais">DG</div><div><p class="font-bold text-[13px] leading-tight" id="login-empresa-nome">DIGICOPY</p><p class="text-[11px] text-slate-600 font-mono" id="login-empresa-cnpj">12.345.678/0001-90</p></div><span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span></div>
-          <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Agora informe seu usuário e senha pessoais vinculados a este CNPJ.</p></div>
-          <div class="space-y-4">
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" placeholder="ex: admin, carlos" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
-            
-          </div>
-        </div>
-        <div class="mt-10 text-center text-[11px] text-slate-400">Acesso corporativo protegido</div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
       </div>
     </div>
-    <div class="h-10 px-6 flex items-center justify-between text-[10.5px] text-slate-400 border-t border-slate-100"><span>Ambiente seguro • Auditoria por usuário</span><span>Suporte: contato@digicopy.com.br</span></div>
   </div>
 </div>
 
