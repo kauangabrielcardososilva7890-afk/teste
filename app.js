@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.69';
+const APP_VERSION='4.9.73';
 const DB_KEY='digicopy_erp_v42_demo_apresentacao';
 const DB_MANIFEST_KEY='digicopy_erp_v42_demo_apresentacao_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v42_demo_apresentacao_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -383,16 +383,16 @@ function backToCNPJ(){
   document.getElementById('login-step-cnpj').classList.remove('hidden');
 }
 function doLoginUser(){
-  const pending=getPendingEmpresa(); if(!pending){toast('Valide o CNPJ primeiro','error'); backToCNPJ(); return;}
-  const login=document.getElementById('login-user').value.trim().toLowerCase();
-  const senha=document.getElementById('login-senha-user').value.trim();
+  const login=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
+  const senha=(document.getElementById('login-senha-user')?.value||'').trim();
   if(!login || !senha){toast('Informe usuário e senha','error'); return;}
-  const user=db.usuarios.find(u=>u.empresaId===pending.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){toast('Usuário ou senha inválidos para este CNPJ','error'); return;}
-  const session={empresaId:pending.id, empresaNome:pending.fantasia||pending.nome, cnpj:pending.cnpj, cnpjDigits:onlyDigits(pending.cnpj), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
+  // Busca empresa (pega a primeira disponível)
+  let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
+  const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
+  if(!user){toast('Usuário ou senha inválidos','error'); return;}
+  const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
-  // log
-  db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:pending.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login usuário ${user.login} perfil ${user.perfil}`});
+  db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
   saveDB();
   showApp();
   toast('Bem-vindo, '+user.nome+'!','success');
@@ -422,16 +422,14 @@ function showApp(){
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
-  const pending=getPendingEmpresa();
-  if(pending){
-    document.getElementById('login-step-cnpj').classList.add('hidden');
-    document.getElementById('login-step-user').classList.remove('hidden');
-    document.getElementById('login-empresa-nome').innerText=pending.fantasia||pending.nome;
-    document.getElementById('login-empresa-cnpj').innerText=pending.cnpj;
-  } else {
-    document.getElementById('login-step-cnpj').classList.remove('hidden');
-    document.getElementById('login-step-user').classList.add('hidden');
-  }
+  // Login direto: sempre mostra a tela de usuário
+  document.getElementById('login-step-user').classList.remove('hidden');
+  document.getElementById('login-step-user').style.display='block';
+  // Garante que campos estejam vazios
+  const u=document.getElementById('login-user');
+  const s=document.getElementById('login-senha-user');
+  if(u){ u.value=''; u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
+  if(s){ s.value=''; s.disabled=false; s.readOnly=false; s.style.pointerEvents='auto'; }
 }
 function doLogout(){
   if(confirm('Sair do sistema?')){
@@ -883,7 +881,7 @@ function initTemplates(){
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Ações sistema</h4><div class="mt-4 space-y-2"><button onclick="seedData(true)" class="w-full h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-semibold">Recarregar dados demo</button><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[13px] font-semibold">Exportar backup JSON</button><button onclick="clearAllData()" class="w-full h-11 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold">Limpar dados</button><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">DIGICOPY ERP — login por CNPJ e usuário, auditoria sempre ativa.</div></div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]"><i class="ph ph-cloud text-[#0a1e8a]"></i> Sincronização com a Nuvem</h4><p class="text-[12px] text-slate-500 mt-1">Envie os dados deste PC para a nuvem. Os outros PCs recebem automaticamente.</p><div class="mt-4 space-y-2"><button onclick="enviarDadosLocaisParaNuvem()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up"></i>Enviar para nuvem</button><button onclick="carregarDadosDaNuvem()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-down"></i>Carregar da nuvem</button><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div id="cloud-sync-status" class="mt-3 text-[12px]"></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários do CNPJ</h3><p class="text-[13px] text-slate-500 mt-1">Criação de login exige senha CNPJ para autorização. Auditoria rastreia quem criou cada registro.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">1º - CNPJ + Senha CNPJ:</b> valida empresa.</p><p><b class="text-white">2º - Usuário + Senha Usuário:</b> acesso pessoal.</p><p><b class="text-white">Criar usuário:</b> precisa informar senha CNPJ para autorizar.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -1254,7 +1252,7 @@ function addTecnico(){const nome=document.getElementById('new-tecnico-nome').val
 function removeTecnico(id){db.tecnicos=db.tecnicos.filter(t=>t.id!==id); saveDB(); renderConfig();}
 function exportBackup(){const dataStr=JSON.stringify(db,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`digicopy-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();}
 function exportClientes(){exportBackup();}
-function clearAllData(){if(confirm('Apagar TUDO deste CNPJ?')){const sess=getSession(); if(!sess) return; const empId=sess.empresaId; db.clientes=db.clientes.filter(c=>c.empresaId!==empId); db.produtos=db.produtos.filter(p=>p.empresaId!==empId); db.equipamentos=db.equipamentos.filter(e=>e.empresaId!==empId); db.contratos=db.contratos.filter(c=>c.empresaId!==empId); db.parque=db.parque.filter(p=>p.empresaId!==empId); db.leituras=db.leituras.filter(l=>l.empresaId!==empId); db.os=db.os.filter(o=>o.empresaId!==empId); db.vendas=db.vendas.filter(v=>v.empresaId!==empId); db.contasReceber=db.contasReceber.filter(cr=>cr.empresaId!==empId); db.contasPagar=db.contasPagar.filter(cp=>cp.empresaId!==empId); db.logs=db.logs.filter(l=>l.empresaId!==empId); saveDB(); toast('Dados deste CNPJ limpos','success'); location.reload();}}
+function clearAllData(){toast('Função desativada por segurança. Use Exportar backup para salvar seus dados.','error');}
 function handleGlobalSearch(q){if(!q) return; const low=q.toLowerCase(); const sess=getSession(); if(!sess) return; const cli=db.clientes.find(c=>c.empresaId===sess.empresaId && (c.nome.toLowerCase().includes(low)||c.documento.includes(low))); const ctr=db.contratos.find(c=>c.empresaId===sess.empresaId && c.numero.toLowerCase().includes(low)); const eq=db.equipamentos.find(e=>e.empresaId===sess.empresaId && (e.patrimonio.toLowerCase().includes(low)||e.serie.toLowerCase().includes(low))); if(cli){navigateTo('clientes'); document.getElementById('search-clientes').value=q; renderClientes();} else if(ctr){navigateTo('contratos'); document.getElementById('search-contratos').value=q; renderContratos();} else if(eq){navigateTo('impressoras'); document.getElementById('search-equip').value=q; renderEquipamentos();}}
 function openQuickReading(){navigateTo('leituras'); openModal('leitura');}
 function openQuickOS(){navigateTo('manutencao'); openModal('os');}
@@ -1271,8 +1269,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
       if(!document.getElementById('login-screen').classList.contains('hidden')){
-        if(!document.getElementById('login-step-cnpj').classList.contains('hidden')) doLoginCNPJ();
-        else if(!document.getElementById('login-step-user').classList.contains('hidden')) doLoginUser();
+        if(typeof doLoginUser==='function') doLoginUser();
       }
     }
   });
