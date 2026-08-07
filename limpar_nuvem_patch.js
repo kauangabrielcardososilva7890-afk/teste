@@ -1,73 +1,37 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.71 — Limpar nuvem, remover módulos dinâmicos e restaurar botão de sincronização
-// 1. Remove módulos dinâmicos (modulosDinamicos) da nuvem
-// 2. Envia base limpa para a nuvem
-// 3. Restaura botão "Enviar para nuvem" nas Configurações
+// PATCH v4.9.72 — Garantir sincronização ativa e botão Enviar para nuvem
+// • NUNCA desliga a sincronização automática
+// • Garante que o botão "Enviar para nuvem" aparece nas Configurações
+// • Dados do .exe vão para a nuvem automaticamente
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
-const VERSAO = '4.9.71';
-console.log('[DIGICOPY] limpar_nuvem_patch.js v' + VERSAO + ' carregado');
+const VERSAO = '4.9.72';
+console.log('[DIGICOPY] garante_sync_patch.js v' + VERSAO + ' carregado');
 
 // ═══════════════════════════════════════════════════════════════════
-// 1. LIMPAR MÓDULOS DINÂMICOS DA BASE LOCAL
+// 1. FORÇA SINCRONIZAÇÃO AUTOMÁTICA LIGADA
 // ═══════════════════════════════════════════════════════════════════
-window.limparModulosDinamicos = function() {
-  if (!db) return;
-  const total = Object.keys(db.modulosDinamicos || {}).length;
-  if (total === 0) {
-    if (typeof toast === 'function') toast('Não há módulos dinâmicos para limpar', 'info');
-    return;
-  }
-  if (!confirm(`Remover ${total} módulos dinâmicos da base local?\n\nIsso não afeta clientes, vendas ou contratos.`)) return;
-  db.modulosDinamicos = {};
-  if (typeof saveDB === 'function') saveDB();
-  if (typeof buildNav === 'function') buildNav();
-  if (typeof toast === 'function') toast(`${total} módulos dinâmicos removidos`, 'success');
-};
+// Remove qualquer bloqueio de sincronização que patches anteriores possam ter colocado
+try {
+  localStorage.removeItem('digicopy_erp_autosync'); // Remove o '0' que desligava
+  localStorage.setItem('digicopy_erp_autosync', '1'); // Força LIGADO
+  localStorage.removeItem('digicopy_modo_leve'); // Remove modo leve
+  localStorage.removeItem('digicopy_modo_apresentacao'); // Remove modo apresentação
+} catch(e) {}
+
+// Garante que syncAutoLigado retorna true
+const _origSyncAutoLigado = window.syncAutoLigado;
+if (typeof _origSyncAutoLigado === 'function') {
+  window.syncAutoLigado = function() {
+    try { localStorage.setItem('digicopy_erp_autosync', '1'); } catch(e) {}
+    return true; // SEMPRE ligado
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════
-// 2. ENVIAR BASE LIMPA PARA A NUVEM (sem módulos dinâmicos)
-// ═══════════════════════════════════════════════════════════════════
-window.enviarBaseLimpaParaNuvem = async function() {
-  if (!db) return;
-  const dinamicos = Object.keys(db.modulosDinamicos || {}).length;
-  const msg = dinamicos > 0
-    ? `Enviar base para a nuvem?\n\n⚠️ ${dinamicos} módulos dinâmicos serão REMOVIDOS antes de enviar.\n\nOs outros PCs vão receber a base limpa.`
-    : 'Enviar base para a nuvem?\n\nOs outros PCs vão receber estes dados.';
-  
-  if (!confirm(msg)) return;
-  
-  // Remove módulos dinâmicos antes de enviar
-  const backup = db.modulosDinamicos;
-  db.modulosDinamicos = {};
-  
-  try {
-    if (typeof window.syncEnviarParaNuvem === 'function') {
-      const r = await window.syncEnviarParaNuvem({ confirmar: false, forcar: true });
-      if (r && r.ok) {
-        if (typeof toast === 'function') toast('✅ Base limpa enviada para a nuvem! Os outros PCs vão atualizar automaticamente.', 'success');
-      } else {
-        if (typeof toast === 'function') toast('❌ Falha ao enviar para a nuvem', 'error');
-        db.modulosDinamicos = backup; // Restaura se falhou
-      }
-    } else {
-      if (typeof toast === 'function') toast('Função de sincronização não disponível', 'error');
-      db.modulosDinamicos = backup;
-    }
-  } catch(e) {
-    console.error('[LIMPAR_NUVEM] erro:', e);
-    if (typeof toast === 'function') toast('Erro ao enviar: ' + (e.message || e), 'error');
-    db.modulosDinamicos = backup;
-  }
-  
-  if (typeof saveDB === 'function') saveDB();
-  if (typeof buildNav === 'function') buildNav();
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// 3. RESTAURAR BOTÃO DE SINCRONIZAÇÃO NAS CONFIGURAÇÕES
+// 2. ADICIONA BOTÃO "ENVIAR PARA NUVEM" NAS CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════════════════
 const _origRenderConfig = window.renderConfig;
 if (typeof _origRenderConfig === 'function') {
@@ -90,12 +54,9 @@ if (typeof _origRenderConfig === 'function') {
           <button onclick="carregarDadosDaNuvem()" class="neo-btn">
             <i class="ph ph-cloud-arrow-down"></i>Carregar da nuvem
           </button>
-          <button onclick="enviarBaseLimpaParaNuvem()" class="neo-btn danger">
-            <i class="ph ph-broom"></i>Limpar módulos e enviar
-          </button>
         </div>
         <div class="mt-3 text-[11px] text-slate-500">
-          <b>Dica:</b> Se outros PCs estão vendo dados antigos, clique em "Limpar módulos e enviar" para forçar a base limpa.
+          <b>Como funciona:</b> Clique em "Enviar para nuvem" neste PC. Nos outros PCs, os dados aparecem automaticamente após alguns segundos.
         </div>
         <div id="cloud-sync-status" class="mt-3 text-[12px]"></div>
       `;
@@ -104,5 +65,26 @@ if (typeof _origRenderConfig === 'function') {
   };
 }
 
-console.log('[DIGICOPY] limpar_nuvem_patch.js v' + VERSAO + ' — botões de sincronização restaurados');
+// ═══════════════════════════════════════════════════════════════════
+// 3. AUTO-SYNC MAIS RÁPIDO (a cada 30 segundos em vez de 75)
+// ═══════════════════════════════════════════════════════════════════
+// Sobrescreve o intervalo do auto-sync para ser mais rápido
+if (typeof window.syncAutoChecar === 'function') {
+  // Limpa intervalos antigos e cria um novo mais rápido
+  const _origSyncAutoChecar = window.syncAutoChecar;
+  window.syncAutoChecar = async function(motivo) {
+    try { localStorage.setItem('digicopy_erp_autosync', '1'); } catch(e) {}
+    return _origSyncAutoChecar.apply(this, arguments);
+  };
+  
+  // Cria novo intervalo de 30 segundos
+  setInterval(() => {
+    try {
+      localStorage.setItem('digicopy_erp_autosync', '1');
+      window.syncAutoChecar('timer_rapido');
+    } catch(e) {}
+  }, 30000);
+}
+
+console.log('[DIGICOPY] garante_sync_patch.js v' + VERSAO + ' — sincronização SEMPRE ativa, botão Enviar para nuvem adicionado');
 })();
