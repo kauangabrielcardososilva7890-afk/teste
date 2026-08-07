@@ -85,6 +85,16 @@ window.renderDashboard=function(){
   const vendasHoje=vendas.filter(v=>String(v.data||v.criadoEm||'').slice(0,10)===hojeIso);
   const faturamentoHoje=vendasHoje.reduce((a,v)=>a+num(v.total,0),0)+cr.filter(c=>String(c.pagamentoData||'').slice(0,10)===hojeIso&&c.status==='pago').reduce((a,c)=>a+num(c.valor,0),0);
   view.innerHTML=`<div class="space-y-5">
+    <div class="rounded-[22px] bg-gradient-to-r from-emerald-600 to-emerald-800 text-white p-5 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <h3 class="font-bold text-[16px]">☁️ Enviar dados para a Nuvem</h3>
+        <p class="text-[13px] text-white/80 mt-1">Envie todos os dados deste PC para o Firebase. Os outros PCs recebem automaticamente.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="enviarDadosLocaisParaNuvem()" class="h-11 px-6 rounded-xl bg-white text-emerald-800 font-bold text-[14px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-cloud-arrow-up text-[18px]"></i>Enviar para nuvem</button>
+        <button onclick="carregarDadosDaNuvem()" class="h-11 px-5 rounded-xl bg-white/15 border border-white/30 text-white font-bold text-[13px] hover:bg-white/25 transition flex items-center gap-2"><i class="ph ph-cloud-arrow-down text-[16px]"></i>Carregar da nuvem</button>
+      </div>
+    </div>
     <div class="rounded-[22px] bg-gradient-to-r from-[#0a1e8a] to-blue-700 text-white p-6 shadow-xl">
       <p class="text-[11px] font-bold tracking-[.16em] uppercase text-white/60">Dashboard limpo</p>
       <h2 class="text-[24px] font-extrabold mt-1">Acompanhamento a partir de agora</h2>
