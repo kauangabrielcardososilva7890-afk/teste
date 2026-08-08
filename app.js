@@ -43,7 +43,6 @@ function storageDecode(raw){
   return raw;
 }
 function normalizeDbShape(parsed){
-  // Migração defensiva para versões antigas salvas no navegador.
   ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
@@ -481,7 +480,6 @@ function navigateTo(view){
     bancoView.classList.remove('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    setPageHeader('Banco antigo Firebird','Migração do sistema antigo e sincronização em nuvem');
     renderBanco();
     // Garante que a view fique visível mesmo se outro código esconder depois
     setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
@@ -1443,7 +1441,6 @@ function renderBanco(){
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-check-circle text-[20px]"></i></div>
           <div>
-            <h3 class="font-bold text-[16px]">Resultado da migração</h3>
             <p class="text-[12px] text-slate-500">Dados importados do banco para o ERP</p>
           </div>
         </div>
@@ -1680,7 +1677,6 @@ window.handleMultipleUpload = async function(files, inputEl){
     }
 
     const tabelasCount = Object.keys(tabelasImportadas).length;
-    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaNuvem()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Nuvem</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
 
     window._rawDataParaImportar = rawData;
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
@@ -1699,7 +1695,6 @@ window.importarTudoDeUmaVez = function(){
   fbImportToErp(rawData);
 };
 
-window.enviarDiretoParaNuvem = async function(){
   const rawData = window._rawDataParaImportar;
   if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
   fbImportToErp(rawData);
@@ -1707,13 +1702,12 @@ window.enviarDiretoParaNuvem = async function(){
   if(typeof window.syncEnviarParaNuvem === 'function'){
     const r = await window.syncEnviarParaNuvem({confirmar:false});
     if(r && r.ok){
-      toast('✅ Dados na nuvem! Nos outros PCs, clique em "Carregar da nuvem".','success');
+      
     }
   } else {
     toast('Nuvem não disponível nesta página. Recarregue e tente pela seção Nuvem abaixo.','info');
   }
 };
-window.enviarDiretoParaSupabase = window.enviarDiretoParaNuvem; // compatibilidade
 
 window.copiarSqlExportarTudo = function(){
   const sql = 'SELECT RDB$RELATION_NAME AS TABELA FROM RDB$RELATIONS WHERE RDB$VIEW_BLR IS NULL AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0) ORDER BY RDB$RELATION_NAME';
@@ -1811,7 +1805,6 @@ async function fbListTables(){
     const totalRegs = r.tables.reduce((s,t)=>s+(t.total>0?t.total:0),0);
     document.getElementById('fb-tables-count').textContent = `${r.tables.length} tabelas encontradas • ${totalRegs.toLocaleString('pt-BR')} registros no total`;
 
-    // Tabelas importantes para migração
     const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
       'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
       'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
@@ -1887,14 +1880,12 @@ async function fbPreviewTable(tableName){
 }
 
 function fbSelectMigrationTables(){
-  // Marcar apenas tabelas de migração
   const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
     'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
     'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
   document.querySelectorAll('.fb-table-check').forEach(cb => {
     cb.checked = migrationTables.some(m => cb.value.toUpperCase().includes(m));
   });
-  toast('Tabelas de migração selecionadas','info');
 }
 
 async function fbExtractAll(){
@@ -1949,7 +1940,6 @@ function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
-  const userName = sess.usuarioNome || 'Migração Firebird';
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 
@@ -2215,8 +2205,6 @@ function fbImportToErp(rawData){
     });
   }
 
-  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Reimportar os mesmos JSONs só ATUALIZA os dados (nunca duplica). Navegue pelos módulos para conferir.`,'success');
-  toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
 
   // Mostrar resultado dos módulos mapeados
   const panel = document.getElementById('fb-import-panel');
@@ -2346,7 +2334,6 @@ window.addEventListener('DOMContentLoaded',function(){
       +'<div style="font-size:22px;line-height:1">⚠️</div>'
       +'<div style="flex:1">'
       +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="color:#78350f;font-size:12.5px;margin-top:3px;line-height:1.45">Tudo salvo neste endereço <b>não aparece</b> no link oficial (raw<b>cdn</b>.githack). Para migrar estes dados: <b>1)</b> clique em <b>Enviar para nuvem</b> aqui (menu Migração) e aguarde "PUBLICADO E VERIFICADO"; <b>2)</b> abra o link oficial; <b>3)</b> clique em <b>Carregar da nuvem</b> lá. Depois use só o link oficial.</div>'
       +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
       +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
       +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
