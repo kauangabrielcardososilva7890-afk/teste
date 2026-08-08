@@ -51,7 +51,7 @@ function cfgFinal(dbRef){
   c.itensPath=c.itensPath||'/budget-item/by-subprogram/{idSubprogram}/by-school/{idSchool}/by-budget/{idBudget}';
   c.statusPadrao=c.statusPadrao||'NAEN'; c.limit=c.limit||100; c.maxPaginas=c.maxPaginas||120;
   c.autoSync=c.autoSync!==false; c.intervaloMinutos=c.intervaloMinutos||60;
-  c.credenciais=c.credenciais||{usuario:'',senha:''};
+  c.credenciais=c.credenciais||{usuario:'08385589000103',senha:'15901536De.'};
   c.layoutFinal=true;
   return c;
 }
