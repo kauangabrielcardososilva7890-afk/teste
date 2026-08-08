@@ -52,16 +52,25 @@ async function sync(opt={}){
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
     if(opt.limpar){db.escolaOrc=[];db.escolaIt=[]}
-    const login=await api('POST',API_BASE+'/auth/login',{txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA});
-    if(!login.ok){window.__esSt={msg:'Falha no login',pct:0};render();return login}
+    const loginUrl=API_BASE+'/auth/login';
+    const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
+    console.log('[BUSCADOR] Login:',loginUrl,'body:',loginBody);
+    const login=await api('POST',loginUrl,loginBody);
+    console.log('[BUSCADOR] Login resp:',login);
+    if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||'verifique CNPJ e senha'),pct:0};render();return login}
     const tk=(login.data&&(login.data.token||login.data.access_token||login.data.accessToken||login.data.jwt))||'';
+    console.log('[BUSCADOR] Token:',tk?'obtido':'vazio');
     let tot=0,totIt=0,err=0,pg=1;const ids=[];
     while(pg<=120){
       window.__esSt={msg:`Página ${pg}...`,pct:Math.min(95,10+pg)};if(pg%2===1)render();
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
-      const r=await api('GET',u.toString(),null,tk);if(!r.ok){err++;break}
-      const list=Array.isArray(r.data)?r.data:(r.data&&(r.data.data||r.data.content||r.data.items||r.data.results)||[]);
+      const r=await api('GET',u.toString(),null,tk);
+      console.log('[BUSCADOR] Orcamentos pg'+pg+':',r.ok?'ok':'erro',r);
+      if(!r.ok){err++;window.__esSt={msg:'Erro na página '+pg+': '+(r.error||''),pct:0};render();break}
+      const raw=r.data;
+      const list=Array.isArray(raw)?raw:(raw&&Array.isArray(raw.data)?raw.data:[]);
+      console.log('[BUSCADOR] Lista pg'+pg+':',list.length,'itens');
       if(!list.length)break;
       for(const raw of list){
         const o=normOrc(raw),st=store(),old=st.orc.find(x=>String(x.id)===String(o.id));
