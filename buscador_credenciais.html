@@ -24,7 +24,7 @@ button:hover{background:#08176e}
 <body>
 <div class="card">
   <h1>🔐 Buscador Escola</h1>
-  <p>Configure o login da API do Caixa Escolar MG. As credenciais são salvas na nuvem.</p>
+  <p>Configure o login da API do Caixa Escolar MG.</p>
   
   <label>Usuário / CNPJ</label>
   <input type="text" id="usuario" placeholder="Seu CNPJ ou usuário da API">
@@ -38,17 +38,10 @@ button:hover{background:#08176e}
   <div id="status" class="status"></div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAEsHFZWRNiwMypSRU1azBj66p8g0FTi8U",
-  projectId: "digicopy-sistema-nuvem",
-  authDomain: "digicopy-sistema-nuvem.firebaseapp.com"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const API_KEY = 'AIzaSyAEsHFZWRNiwMypSRU1azBj66p8g0FTi8U';
+const PROJECT = 'digicopy-sistema-nuvem';
+const DOC_KEY = 'buscador_credenciais';
 
 function show(msg, type) {
   const el = document.getElementById('status');
@@ -56,24 +49,47 @@ function show(msg, type) {
   el.textContent = msg;
 }
 
+async function firestoreRequest(path, method, body) {
+  const url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/' + path + '?key=' + API_KEY;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error('HTTP ' + r.status + ': ' + (await r.text()));
+  return r.json();
+}
+
+function toFirestore(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === 'string') fields[k] = { stringValue: v };
+    else if (typeof v === 'number') fields[k] = { integerValue: String(v) };
+  }
+  return { fields };
+}
+
+function fromFirestore(doc) {
+  const f = doc.fields || {};
+  const out = {};
+  for (const [k, v] of Object.entries(f)) {
+    if (v.stringValue !== undefined) out[k] = v.stringValue;
+    else if (v.integerValue !== undefined) out[k] = parseInt(v.integerValue);
+  }
+  return out;
+}
+
 async function salvar() {
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   
-  if (!usuario || !senha) {
-    show('Preencha usuário e senha', 'err');
-    return;
-  }
+  if (!usuario || !senha) { show('Preencha usuário e senha', 'err'); return; }
   
   try {
     show('Salvando na nuvem...', 'info');
-    
-    await db.collection('buscador_credenciais').doc('login').set({
-      usuario: usuario,
-      senha: senha,
+    const data = toFirestore({
+      usuario, senha,
       atualizadoEm: new Date().toISOString()
     });
-    
+    await firestoreRequest('app_state/' + DOC_KEY, 'PATCH', data);
     show('✅ Credenciais salvas na nuvem com sucesso!', 'ok');
   } catch (e) {
     show('Erro ao salvar: ' + e.message, 'err');
@@ -83,14 +99,12 @@ async function salvar() {
 async function carregar() {
   try {
     show('Carregando da nuvem...', 'info');
-    
-    const doc = await db.collection('buscador_credenciais').doc('login').get();
-    
-    if (doc.exists) {
-      const data = doc.data();
+    const doc = await firestoreRequest('app_state/' + DOC_KEY, 'GET');
+    const data = fromFirestore(doc);
+    if (data.usuario) {
       document.getElementById('usuario').value = data.usuario || '';
       document.getElementById('senha').value = data.senha || '';
-      show('✅ Credenciais carregadas da nuvem!', 'ok');
+      show('✅ Credenciais carregadas! Usuário: ' + data.usuario, 'ok');
     } else {
       show('Nenhuma credencial encontrada na nuvem', 'err');
     }
@@ -99,10 +113,7 @@ async function carregar() {
   }
 }
 
-// Tenta carregar automaticamente ao abrir
-window.onload = function() {
-  setTimeout(carregar, 1000);
-};
+window.onload = function() { setTimeout(carregar, 500); };
 </script>
 </body>
 </html>
