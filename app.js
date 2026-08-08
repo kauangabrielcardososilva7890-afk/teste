@@ -1,7 +1,7 @@
 // DIGICOPY ERP v4.4.0 - Core com Login 2 etapas (CNPJ > Usuário) + Auditoria
 // v4.4.0: persistência local incremental (uma chave por entidade, só regrava
 // o que mudou) — fim dos congelamentos causados pela gravação da base inteira.
-const APP_VERSION='4.9.69';
+const APP_VERSION='4.9.73';
 const DB_KEY='digicopy_erp_v42_demo_apresentacao';
 const DB_MANIFEST_KEY='digicopy_erp_v42_demo_apresentacao_manifest'; // mapa entidade -> hash (v4.4.0)
 const DB_PART_PREFIX='digicopy_erp_v42_demo_apresentacao_part__';    // 1 chave comprimida por entidade (v4.4.0)
@@ -43,7 +43,6 @@ function storageDecode(raw){
   return raw;
 }
 function normalizeDbShape(parsed){
-  // Migração defensiva para versões antigas salvas no navegador.
   ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
@@ -383,16 +382,16 @@ function backToCNPJ(){
   document.getElementById('login-step-cnpj').classList.remove('hidden');
 }
 function doLoginUser(){
-  const pending=getPendingEmpresa(); if(!pending){toast('Valide o CNPJ primeiro','error'); backToCNPJ(); return;}
-  const login=document.getElementById('login-user').value.trim().toLowerCase();
-  const senha=document.getElementById('login-senha-user').value.trim();
+  const login=(document.getElementById('login-user')?.value||'').trim().toLowerCase();
+  const senha=(document.getElementById('login-senha-user')?.value||'').trim();
   if(!login || !senha){toast('Informe usuário e senha','error'); return;}
-  const user=db.usuarios.find(u=>u.empresaId===pending.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){toast('Usuário ou senha inválidos para este CNPJ','error'); return;}
-  const session={empresaId:pending.id, empresaNome:pending.fantasia||pending.nome, cnpj:pending.cnpj, cnpjDigits:onlyDigits(pending.cnpj), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
+  // Busca empresa (pega a primeira disponível)
+  let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
+  const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
+  if(!user){toast('Usuário ou senha inválidos','error'); return;}
+  const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
-  // log
-  db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:pending.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login usuário ${user.login} perfil ${user.perfil}`});
+  db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
   saveDB();
   showApp();
   toast('Bem-vindo, '+user.nome+'!','success');
@@ -422,16 +421,14 @@ function showApp(){
 function showLogin(){
   document.getElementById('app-shell').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
-  const pending=getPendingEmpresa();
-  if(pending){
-    document.getElementById('login-step-cnpj').classList.add('hidden');
-    document.getElementById('login-step-user').classList.remove('hidden');
-    document.getElementById('login-empresa-nome').innerText=pending.fantasia||pending.nome;
-    document.getElementById('login-empresa-cnpj').innerText=pending.cnpj;
-  } else {
-    document.getElementById('login-step-cnpj').classList.remove('hidden');
-    document.getElementById('login-step-user').classList.add('hidden');
-  }
+  // Login direto: sempre mostra a tela de usuário
+  document.getElementById('login-step-user').classList.remove('hidden');
+  document.getElementById('login-step-user').style.display='block';
+  // Garante que campos estejam vazios
+  const u=document.getElementById('login-user');
+  const s=document.getElementById('login-senha-user');
+  if(u){ u.value=''; u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
+  if(s){ s.value=''; s.disabled=false; s.readOnly=false; s.style.pointerEvents='auto'; }
 }
 function doLogout(){
   if(confirm('Sair do sistema?')){
@@ -483,19 +480,18 @@ function navigateTo(view){
     bancoView.classList.remove('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
     const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    setPageHeader('Banco antigo Firebird','Migração do sistema antigo e sincronização em nuvem');
     renderBanco();
     // Garante que a view fique visível mesmo se outro código esconder depois
     setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
     window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-  if(view==='buscador-escola' && typeof ensureView==='function') ensureView('buscador-escola');
+
   const target=document.getElementById('view-'+view);
   if(target) target.classList.remove('hidden');
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'], 'buscador-escola':['Buscador Escola','Orçamentos escolares, busca por produto e distância']};
+  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'],'buscador-escola':['Buscador Escola','Orçamentos escolares Caixa Escolar MG']};
   const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
@@ -509,9 +505,10 @@ function navigateTo(view){
   if(view==='financeiro'){renderFinanceiro(); if(document.getElementById('fluxoChart')) renderFluxoChart();}
   if(view==='relatorios') renderRelatorios();
   if(view==='config') renderConfig();
+  if(view==='buscador-escola'){ if(typeof renderBuscadorEscola==='function') renderBuscadorEscola(); }
   if(view==='usuarios') renderUsuarios();
   if(view==='auditoria') renderAuditoria();
-  if(view==='buscador-escola'){ if(typeof renderBuscadorEscola==='function') renderBuscadorEscola(); else if(target) target.innerHTML='<div class="neo-card p-6"><b>Buscador Escola</b><p class="text-slate-500 text-[13px] mt-1">Carregando módulo...</p></div>'; }
+
   // Módulos dinâmicos (tabelas migradas sem mapeamento direto)
   if(view.startsWith('mod_')){
     const nomeTabela = view.substring(4).toUpperCase();
@@ -883,7 +880,7 @@ function initTemplates(){
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Ações sistema</h4><div class="mt-4 space-y-2"><button onclick="seedData(true)" class="w-full h-11 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[13px] font-semibold">Recarregar dados demo</button><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-[#e8eaf8] border border-[#c9ceef] text-[#0a1e8a] text-[13px] font-semibold">Exportar backup JSON</button><button onclick="clearAllData()" class="w-full h-11 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold">Limpar dados</button><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">DIGICOPY ERP — login por CNPJ e usuário, auditoria sempre ativa.</div></div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários do CNPJ</h3><p class="text-[13px] text-slate-500 mt-1">Criação de login exige senha CNPJ para autorização. Auditoria rastreia quem criou cada registro.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">1º - CNPJ + Senha CNPJ:</b> valida empresa.</p><p><b class="text-white">2º - Usuário + Senha Usuário:</b> acesso pessoal.</p><p><b class="text-white">Criar usuário:</b> precisa informar senha CNPJ para autorizar.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -1254,7 +1251,7 @@ function addTecnico(){const nome=document.getElementById('new-tecnico-nome').val
 function removeTecnico(id){db.tecnicos=db.tecnicos.filter(t=>t.id!==id); saveDB(); renderConfig();}
 function exportBackup(){const dataStr=JSON.stringify(db,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`digicopy-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();}
 function exportClientes(){exportBackup();}
-function clearAllData(){if(confirm('Apagar TUDO deste CNPJ?')){const sess=getSession(); if(!sess) return; const empId=sess.empresaId; db.clientes=db.clientes.filter(c=>c.empresaId!==empId); db.produtos=db.produtos.filter(p=>p.empresaId!==empId); db.equipamentos=db.equipamentos.filter(e=>e.empresaId!==empId); db.contratos=db.contratos.filter(c=>c.empresaId!==empId); db.parque=db.parque.filter(p=>p.empresaId!==empId); db.leituras=db.leituras.filter(l=>l.empresaId!==empId); db.os=db.os.filter(o=>o.empresaId!==empId); db.vendas=db.vendas.filter(v=>v.empresaId!==empId); db.contasReceber=db.contasReceber.filter(cr=>cr.empresaId!==empId); db.contasPagar=db.contasPagar.filter(cp=>cp.empresaId!==empId); db.logs=db.logs.filter(l=>l.empresaId!==empId); saveDB(); toast('Dados deste CNPJ limpos','success'); location.reload();}}
+function clearAllData(){toast('Função desativada por segurança. Use Exportar backup para salvar seus dados.','error');}
 function handleGlobalSearch(q){if(!q) return; const low=q.toLowerCase(); const sess=getSession(); if(!sess) return; const cli=db.clientes.find(c=>c.empresaId===sess.empresaId && (c.nome.toLowerCase().includes(low)||c.documento.includes(low))); const ctr=db.contratos.find(c=>c.empresaId===sess.empresaId && c.numero.toLowerCase().includes(low)); const eq=db.equipamentos.find(e=>e.empresaId===sess.empresaId && (e.patrimonio.toLowerCase().includes(low)||e.serie.toLowerCase().includes(low))); if(cli){navigateTo('clientes'); document.getElementById('search-clientes').value=q; renderClientes();} else if(ctr){navigateTo('contratos'); document.getElementById('search-contratos').value=q; renderContratos();} else if(eq){navigateTo('impressoras'); document.getElementById('search-equip').value=q; renderEquipamentos();}}
 function openQuickReading(){navigateTo('leituras'); openModal('leitura');}
 function openQuickOS(){navigateTo('manutencao'); openModal('os');}
@@ -1271,8 +1268,7 @@ function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
       if(!document.getElementById('login-screen').classList.contains('hidden')){
-        if(!document.getElementById('login-step-cnpj').classList.contains('hidden')) doLoginCNPJ();
-        else if(!document.getElementById('login-step-user').classList.contains('hidden')) doLoginUser();
+        if(typeof doLoginUser==='function') doLoginUser();
       }
     }
   });
@@ -1446,7 +1442,6 @@ function renderBanco(){
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center"><i class="ph ph-check-circle text-[20px]"></i></div>
           <div>
-            <h3 class="font-bold text-[16px]">Resultado da migração</h3>
             <p class="text-[12px] text-slate-500">Dados importados do banco para o ERP</p>
           </div>
         </div>
@@ -1683,7 +1678,6 @@ window.handleMultipleUpload = async function(files, inputEl){
     }
 
     const tabelasCount = Object.keys(tabelasImportadas).length;
-    if(status) status.innerHTML = '<div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4"><p class="font-bold text-emerald-800 text-[14px]">✅ '+totalRegistros+' registros carregados de '+tabelasCount+' tabelas!</p><div class="flex flex-wrap gap-1.5 mt-2 mb-3">'+Object.entries(tabelasImportadas).map(function(e){return '<span class="px-2 py-1 rounded bg-emerald-100 text-[11px] font-bold text-emerald-700">'+e[0]+' ('+e[1]+')</span>'}).join('')+'</div><div class="flex gap-2"><button onclick="importarTudoDeUmaVez()" class="flex-1 h-11 rounded-xl bg-emerald-600 text-white font-bold text-[13px] hover:bg-emerald-700 transition flex items-center justify-center gap-2"><i class="ph ph-download-simple text-[16px]"></i> Importar TUDO para o ERP</button><button onclick="enviarDiretoParaNuvem()" class="h-11 px-4 rounded-xl bg-blue-600 text-white font-bold text-[13px] hover:bg-blue-700 transition flex items-center justify-center gap-2"><i class="ph ph-cloud-arrow-up text-[16px]"></i> Importar + Nuvem</button></div><p class="text-[11px] text-emerald-600 mt-2"><b>Fluxo:</b> Importar → Enviar para nuvem → Todos os PCs acessam</p></div>';
 
     window._rawDataParaImportar = rawData;
     console.log('[UPLOAD] fim: '+totalRegistros+' registros, '+tabelasCount+' tabelas');
@@ -1701,22 +1695,6 @@ window.importarTudoDeUmaVez = function(){
   if(!confirm('Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.')) return;
   fbImportToErp(rawData);
 };
-
-window.enviarDiretoParaNuvem = async function(){
-  const rawData = window._rawDataParaImportar;
-  if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
-  fbImportToErp(rawData);
-  toast('Dados importados! Enviando para a nuvem em partes (sem timeout)...','info');
-  if(typeof window.syncEnviarParaNuvem === 'function'){
-    const r = await window.syncEnviarParaNuvem({confirmar:false});
-    if(r && r.ok){
-      toast('✅ Dados na nuvem! Nos outros PCs, clique em "Carregar da nuvem".','success');
-    }
-  } else {
-    toast('Nuvem não disponível nesta página. Recarregue e tente pela seção Nuvem abaixo.','info');
-  }
-};
-window.enviarDiretoParaSupabase = window.enviarDiretoParaNuvem; // compatibilidade
 
 window.copiarSqlExportarTudo = function(){
   const sql = 'SELECT RDB$RELATION_NAME AS TABELA FROM RDB$RELATIONS WHERE RDB$VIEW_BLR IS NULL AND (RDB$SYSTEM_FLAG IS NULL OR RDB$SYSTEM_FLAG = 0) ORDER BY RDB$RELATION_NAME';
@@ -1814,7 +1792,6 @@ async function fbListTables(){
     const totalRegs = r.tables.reduce((s,t)=>s+(t.total>0?t.total:0),0);
     document.getElementById('fb-tables-count').textContent = `${r.tables.length} tabelas encontradas • ${totalRegs.toLocaleString('pt-BR')} registros no total`;
 
-    // Tabelas importantes para migração
     const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
       'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
       'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
@@ -1890,14 +1867,12 @@ async function fbPreviewTable(tableName){
 }
 
 function fbSelectMigrationTables(){
-  // Marcar apenas tabelas de migração
   const migrationTables = ['CLIENTES','PRODUTOS','CARTUCHOS','VENDAS','ITENS_VENDA','ORCAMENTO','ITENS_ORCAMENTO',
     'EQUIPAMENTOS','LOCACAO','ITENS_LOCACAO','LEITURAS','CONTAS_PAGAR','CONTAS_RECEBER','RECIBOS_EMITIDOS',
     'FORMA_PAGAMENTO','EMPRESA','CONFIGURACAO','FORNECEDORES','FUNCIONARIOS','CATEGORIA','FABRICANTE','UNIDADE_MEDIDA'];
   document.querySelectorAll('.fb-table-check').forEach(cb => {
     cb.checked = migrationTables.some(m => cb.value.toUpperCase().includes(m));
   });
-  toast('Tabelas de migração selecionadas','info');
 }
 
 async function fbExtractAll(){
@@ -1952,7 +1927,6 @@ function fbImportToErp(rawData){
   const sess = getSession();
   if(!sess) { toast('Faça login primeiro','error'); return; }
   const empId = sess.empresaId;
-  const userName = sess.usuarioNome || 'Migração Firebird';
 
   const result = { clientes:0, produtos:0, equipamentos:0, vendas:0, financeiro:0 };
 
@@ -2218,8 +2192,6 @@ function fbImportToErp(rawData){
     });
   }
 
-  fbSetStatus(`✅ Migração concluída! ${result.clientes} clientes, ${result.produtos} produtos, ${result.equipamentos} equipamentos, ${result.vendas} vendas, ${result.financeiro} financeiro. Reimportar os mesmos JSONs só ATUALIZA os dados (nunca duplica). Navegue pelos módulos para conferir.`,'success');
-  toast(`Migração concluída! ${result.clientes+result.produtos+result.equipamentos+result.vendas+result.financeiro} registros importados`,'success');
 
   // Mostrar resultado dos módulos mapeados
   const panel = document.getElementById('fb-import-panel');
@@ -2349,7 +2321,6 @@ window.addEventListener('DOMContentLoaded',function(){
       +'<div style="font-size:22px;line-height:1">⚠️</div>'
       +'<div style="flex:1">'
       +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="color:#78350f;font-size:12.5px;margin-top:3px;line-height:1.45">Tudo salvo neste endereço <b>não aparece</b> no link oficial (raw<b>cdn</b>.githack). Para migrar estes dados: <b>1)</b> clique em <b>Enviar para nuvem</b> aqui (menu Migração) e aguarde "PUBLICADO E VERIFICADO"; <b>2)</b> abra o link oficial; <b>3)</b> clique em <b>Carregar da nuvem</b> lá. Depois use só o link oficial.</div>'
       +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
       +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
       +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'

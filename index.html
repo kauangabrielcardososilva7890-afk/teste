@@ -74,12 +74,12 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <div class="relative z-10">
       <img src="./logo.png" alt="DIGICOPY" class="h-14 w-auto object-contain">
       <div class="mt-12 max-w-[460px]">
-        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Sistema simples para<br> vendas e locação<br> de impressoras</h1>
-        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Sistema em modo fácil: botões grandes, fluxo guiado e nomes diretos para vender, orçar, locar impressoras, abrir chamados e controlar financeiro.</p>
+        <h1 class="text-[36px] font-extrabold leading-tight tracking-tight">Sistema Digicopy</h1>
+        <p class="mt-5 text-[15px] leading-relaxed text-white/70">Vendas, locação e outsourcing de impressoras</p>
       </div>
     </div>
     <div class="relative z-10 flex items-center justify-between text-[11px] text-white/50">
-      <span>© 2026 DIGICOPY Cartuchos e Impressoras</span><span class="font-mono">v3.4 • Modo Fácil</span>
+      <span>© 2026 DIGICOPY</span>
     </div>
   </div>
   <!-- RIGHT PANEL - FORMS -->
@@ -87,32 +87,18 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo.png" class="h-9 w-auto"></div>
     <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
       <div class="w-full max-w-[400px]">
-        <!-- STEP 1 CNPJ -->
-        <div id="login-step-cnpj">
-          <div class="mb-8"><h2 class="text-[22px] font-bold tracking-tight">Acesso da empresa</h2><p class="text-[13.5px] text-slate-500 mt-2 leading-snug">Informe o CNPJ e a senha CNPJ cadastrados. Esta é a primeira camada de segurança da sua empresa.</p></div>
+        <!-- LOGIN DIRETO - SEM CNPJ -->
+        <div id="login-step-user">
+          <div class="mb-8"><h2 class="text-[22px] font-bold tracking-tight">Login</h2><p class="text-[13.5px] text-slate-500 mt-2 leading-snug">Informe seu usuário e senha.</p></div>
           <div class="space-y-4">
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">CNPJ da empresa</label><input id="login-cnpj" oninput="formatarLoginCNPJ(this)" placeholder="12.345.678/0001-90" maxlength="18" autocomplete="username" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px] font-medium"></div>
-            <div><label class="text-[11px] font-bold tracking-wide uppercase text-slate-500">Senha CNPJ</label><div class="relative"><input id="login-senha-cnpj" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-cnpj')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginCNPJ()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20 flex items-center justify-center gap-2"><span>Validar empresa</span><i class="ph ph-arrow-right"></i></button>
-            
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário</label><input id="login-user" placeholder="ex: admin, kauan" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
+            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar</button>
           </div>
         </div>
-        <!-- STEP 2 USUARIO -->
-        <div id="login-step-user" class="hidden">
-          <div class="mb-2"><button onclick="backToCNPJ()" class="h-8 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-[12px] font-medium flex items-center gap-1.5"><i class="ph ph-arrow-left"></i>Trocar empresa</button></div>
-          <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef]"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[14px]" id="login-empresa-iniciais">DG</div><div><p class="font-bold text-[13px] leading-tight" id="login-empresa-nome">DIGICOPY</p><p class="text-[11px] text-slate-600 font-mono" id="login-empresa-cnpj">12.345.678/0001-90</p></div><span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span></div>
-          <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Agora informe seu usuário e senha pessoais vinculados a este CNPJ.</p></div>
-          <div class="space-y-4">
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" placeholder="ex: admin, carlos" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
-            
-          </div>
-        </div>
-        <div class="mt-10 text-center text-[11px] text-slate-400">Acesso corporativo protegido</div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
       </div>
     </div>
-    <div class="h-10 px-6 flex items-center justify-between text-[10.5px] text-slate-400 border-t border-slate-100"><span>Ambiente seguro • Auditoria por usuário</span><span>Suporte: contato@digicopy.com.br</span></div>
   </div>
 </div>
 
@@ -168,6 +154,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
+
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
@@ -227,9 +214,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./contratos_final_patch.js?v=4.9.69"></script>
 <script src="./contratos_visitas_vinculo_patch.js?v=4.9.69"></script>
 <script src="./contratos_rtf_template_patch.js?v=4.9.69"></script>
-<script src="./diagnostico_migracao_patch.js?v=4.9.69"></script>
-<script src="./arquivos_modelos_diagnostico_patch.js?v=4.9.69"></script>
-<script src="./modo_leve_teste_patch.js?v=4.9.69"></script>
 <script src="./otimizacao_profunda_patch.js?v=4.9.69"></script>
 <script src="./automacoes_triggers_patch.js?v=4.9.69"></script>
 <script src="./automacoes_financeiro_estoque_patch.js?v=4.9.69"></script>
@@ -244,31 +228,25 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./automacoes_caixa_chat_auxiliares_patch.js?v=4.9.69"></script>
 <script src="./automacoes_finais_locacao_auxiliares_patch.js?v=4.9.69"></script>
 <script src="./automacoes_procedures_operacionais_patch.js?v=4.9.69"></script>
-<script src="./sequencias_legado_patch.js?v=4.9.69"></script>
-<script src="./indices_legado_performance_patch.js?v=4.9.69"></script>
-<script src="./tipos_dados_legado_patch.js?v=4.9.69"></script>
 <script src="./chamados_avulsos_aberto_patch.js?v=4.9.69"></script>
 <script src="./cadastros_nomes_patch.js?v=4.9.69"></script>
 <script src="./pix_comprovante_manual_patch.js?v=4.9.69"></script>
 <script src="./desktop_otimizacao_patch.js?v=4.9.69"></script>
 <script src="./correcoes_uso_diario_patch.js?v=4.9.69"></script>
 <script src="./login_dados_automaticos_patch.js?v=4.9.69"></script>
-<script src="./apresentacao_demo_patch.js?v=4.9.69"></script>
 <script src="./ajustes_relatorio_pai_patch.js?v=4.9.69"></script>
 <script src="./contratos_leituras_definitivo_patch.js?v=4.9.69"></script>
 <script src="./fluxo_contrato_leitura_corrigido_patch.js?v=4.9.69"></script>
 <script src="./leitura_busca_fluxo_patch.js?v=4.9.69"></script>
 <script src="./leitura_detalhada_departamentos_patch.js?v=4.9.69"></script>
 <script src="./leitura_impressao_compacta_produtos_patch.js?v=4.9.69"></script>
-<script src="./alinhamento_banco_assistido_patch.js?v=4.9.69"></script>
-<script src="./alinhamento_banco_exemplos_patch.js?v=4.9.69"></script>
 <script src="./cartuchos_etiquetas_config_patch.js?v=4.9.69"></script>
 <script src="./vendas_chamados_reparo_patch.js?v=4.9.69"></script>
-<script src="./buscador_escola_patch.js?v=4.9.69"></script>
-<script src="./buscador_escola_final_patch.js?v=4.9.69"></script>
-<script src="./sistema_virgem_usuarios_patch.js?v=4.9.69"></script>
 <script src="./sistema_clientes_loja_patch.js?v=4.9.69"></script>
 <script src="./finalizacao_sistema_patch.js?v=4.9.69"></script>
-<script src="./ajustes_pos_final_patch.js?v=4.9.69"></script>
+<script src="./ajustes_pos_final_patch.js?v=4.9.70"></script>
+<script src="./correcoes_relatorio_patch.js?v=4.9.72"></script>
+<script src="./limpar_nuvem_patch.js?v=4.9.88"></script>
+<script src="./buscador_escola_patch.js?v=4.9.88"></script>
 </body>
 </html>
