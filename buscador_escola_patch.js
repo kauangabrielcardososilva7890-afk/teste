@@ -49,28 +49,30 @@ async function api(method,url,body,tk){
 
 async function sync(opt={}){
   if(window.__esSync)return{ok:false};window.__esSync=true;
+  const logs=[];
+  function log(m){logs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m);window.__esLogs=logs.slice();render()}
+  log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
-    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[]}
+    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
     const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
-    console.log('[BUSCADOR] Login:',loginUrl,'body:',loginBody);
+    log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
-    console.log('[BUSCADOR] Login resp:',login);
-    if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||'verifique CNPJ e senha'),pct:0};render();return login}
+    log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
+    if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||''),pct:0};render();return login}
     const tk=(login.data&&(login.data.token||login.data.access_token||login.data.accessToken||login.data.jwt))||'';
-    console.log('[BUSCADOR] Token:',tk?'obtido':'vazio');
+    log('Token: '+(tk?'obtido ('+tk.length+' chars)':'vazio'));
     let tot=0,totIt=0,err=0,pg=1;const ids=[];
     while(pg<=120){
       window.__esSt={msg:`Página ${pg}...`,pct:Math.min(95,10+pg)};if(pg%2===1)render();
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
       const r=await api('GET',u.toString(),null,tk);
-      console.log('[BUSCADOR] Orcamentos pg'+pg+':',r.ok?'ok':'erro',r);
-      if(!r.ok){err++;window.__esSt={msg:'Erro na página '+pg+': '+(r.error||''),pct:0};render();break}
+      if(!r.ok){err++;log('Erro página '+pg+': '+(r.error||''));break}
       const raw=r.data;
       const list=Array.isArray(raw)?raw:(raw&&Array.isArray(raw.data)?raw.data:[]);
-      console.log('[BUSCADOR] Lista pg'+pg+':',list.length,'itens');
+      log('Página '+pg+': '+list.length+' orçamentos');
       if(!list.length)break;
       for(const raw of list){
         const o=normOrc(raw),st=store(),old=st.orc.find(x=>String(x.id)===String(o.id));
@@ -168,6 +170,7 @@ function render(msg){
 <button onclick="esSyncTudo()" class="h-10 px-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrow-counter-clockwise"></i>Baixar Tudo</button></div></div>
 
 ${sts.msg?`<div class="px-4 py-2 bg-blue-50 border-b text-[12px] text-blue-900">${esc(sts.msg)} ${sts.pct?`• ${sts.pct}%`:''}</div>`:''}
+${(window.__esLogs||[]).length?`<div class="px-4 py-2 bg-slate-100 border-b text-[11px] font-mono text-slate-600 max-h-[120px] overflow-auto">${window.__esLogs.map(l=>'<div>'+esc(l)+'</div>').join('')}</div>`:''}
 
 <div class="p-4 space-y-3 bg-slate-50/60 min-h-[400px]">
 ${window.__esExc?
