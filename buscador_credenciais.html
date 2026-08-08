@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buscador Escola - Configurar Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:40px;width:100%;max-width:420px}
+h1{font-size:20px;color:#0a1e8a;margin-bottom:8px}
+p{font-size:13px;color:#666;margin-bottom:24px}
+label{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;margin-bottom:4px}
+input{width:100%;height:44px;border:1px solid #ddd;border-radius:10px;padding:0 12px;font-size:14px;margin-bottom:16px}
+input:focus{outline:none;border-color:#0a1e8a;box-shadow:0 0 0 3px rgba(10,30,138,.1)}
+button{width:100%;height:48px;background:#0a1e8a;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:8px}
+button:hover{background:#08176e}
+.status{margin-top:16px;padding:12px;border-radius:10px;font-size:13px;display:none}
+.status.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #86efac}
+.status.err{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.status.info{display:block;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 Buscador Escola</h1>
+  <p>Configure o login da API do Caixa Escolar MG. As credenciais são salvas na nuvem.</p>
+  
+  <label>Usuário / CNPJ</label>
+  <input type="text" id="usuario" placeholder="Seu CNPJ ou usuário da API">
+  
+  <label>Senha</label>
+  <input type="password" id="senha" placeholder="Senha da API">
+  
+  <button onclick="salvar()">Salvar e enviar para nuvem</button>
+  <button onclick="carregar()" style="background:#fff;color:#0a1e8a;border:2px solid #0a1e8a">Carregar da nuvem</button>
+  
+  <div id="status" class="status"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAEsHFZWRNiwMypSRU1azBj66p8g0FTi8U",
+  projectId: "digicopy-sistema-nuvem",
+  authDomain: "digicopy-sistema-nuvem.firebaseapp.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function show(msg, type) {
+  const el = document.getElementById('status');
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+async function salvar() {
+  const usuario = document.getElementById('usuario').value.trim();
+  const senha = document.getElementById('senha').value.trim();
+  
+  if (!usuario || !senha) {
+    show('Preencha usuário e senha', 'err');
+    return;
+  }
+  
+  try {
+    show('Salvando na nuvem...', 'info');
+    
+    await db.collection('buscador_credenciais').doc('login').set({
+      usuario: usuario,
+      senha: senha,
+      atualizadoEm: new Date().toISOString()
+    });
+    
+    show('✅ Credenciais salvas na nuvem com sucesso!', 'ok');
+  } catch (e) {
+    show('Erro ao salvar: ' + e.message, 'err');
+  }
+}
+
+async function carregar() {
+  try {
+    show('Carregando da nuvem...', 'info');
+    
+    const doc = await db.collection('buscador_credenciais').doc('login').get();
+    
+    if (doc.exists) {
+      const data = doc.data();
+      document.getElementById('usuario').value = data.usuario || '';
+      document.getElementById('senha').value = data.senha || '';
+      show('✅ Credenciais carregadas da nuvem!', 'ok');
+    } else {
+      show('Nenhuma credencial encontrada na nuvem', 'err');
+    }
+  } catch (e) {
+    show('Erro ao carregar: ' + e.message, 'err');
+  }
+}
+
+// Tenta carregar automaticamente ao abrir
+window.onload = function() {
+  setTimeout(carregar, 1000);
+};
+</script>
+</body>
+</html>
