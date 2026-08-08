@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.69 — Buscador Escola final
-// • Layout no padrão do Sistema Digicopy, preservando fluxo do projeto original
-// • Credenciais salvas no banco/configuração do sistema, não em .env/código
-// • Autoatualização a cada 1 hora; qualquer PC pode atualizar, sem PC fixo
-// • Busca local, resultados em cards, excluídos/restaurar e Excel
+// PATCH v4.9.79 — Buscador Escola final
+// • Busca local com atualização automática
+// • Credenciais carregadas da nuvem (Firebase) automaticamente
+// • Sem área de login na tela — login configurado externamente
+// • Sem busca avançada
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -28,7 +28,7 @@ function formatarTempo(ms){
   return `${m}m ${String(s).padStart(2,'0')}s`;
 }
 function proximaAtualizacaoTexto(c){
-  if(!credOk(c)) return 'configure login';
+  if(!credOk(c)) return 'aguardando login da nuvem';
   if(window.__buscadorEscolaSyncAtivo) return 'atualizando agora';
   if(!c.ultimoSyncEm) return 'primeira carga pendente';
   const intervalo=Math.max(5,c.intervaloMinutos||60)*60*1000;
@@ -37,7 +37,6 @@ function proximaAtualizacaoTexto(c){
 }
 
 const API_PADRAO='https://api.caixaescolar.educacao.mg.gov.br';
-const UMA_HORA_MS=60*60*1000;
 const P=(window.BUSCADOR_ESCOLA_PURE||{});
 const MUNICIPIOS_NORTE_MINAS=new Set(['janauba','nova porteirinha','porteirinha','riacho dos machados','verdelandia','jaiba','mato verde','monte azul','espinosa','gameleiras','catuti','pai pedro','mamonas','serranopolis de minas','rio pardo de minas','indaiabira','ninheira','montezuma','santo antonio do retiro','vargem grande do rio pardo','sao joao do paraiso','taiobeiras','berizal','curral de dentro','rubelita','fruta de leite','novorizonte','salinas','santa cruz de salinas','aguas vermelhas','divisa alegre','padre carvalho','josenopolis','montes claros','bocaiuva','francisco sa','capitao eneas','sao joao da ponte','varzelandia','ibiracatu','japonvar','lontra','mirabela','juramento','glaucilandia','guaraciama','engenheiro navarro','claro dos pocoes','coracao de jesus','sao joao da lagoa','sao joao do pacui','patis','luislandia','brasilia de minas','ubai','sao francisco','pintopolis','icarai de minas','sao romao','santa fe de minas','pirapora','buritizeiro','varzea da palma','lassance','jequitai','ponto chique','ibiai','lagoa dos patos','riachinho','januaria','itacarambi','bonito de minas','conego marinho','pedras de maria da cruz','sao joao das missoes','manga','matias cardoso','montalvania','juvenilia','miravania','urucuia','grao mogol','cristalia','botumirim','itacambira']);
 const CIDADES_PRIORITARIAS=new Set(['janauba','porteirinha','pai pedro','mato verde','catuti','monte azul','gameleiras','espinosa','santo antonio do retiro','rio pardo de minas','verdelandia','jaiba','matias cardoso','manga','montalvania','capitao eneas','francisco sa']);
@@ -54,7 +53,6 @@ function cfgFinal(dbRef){
   c.autoSync=c.autoSync!==false; c.intervaloMinutos=c.intervaloMinutos||60;
   c.credenciais=c.credenciais||{usuario:'',senha:''};
   c.layoutFinal=true;
-  try{ localStorage.removeItem('digicopy_buscador_escola_senha_local'); }catch(e){}
   return c;
 }
 function storeFinal(dbRef){ dbRef.escolaOrcamentos=dbRef.escolaOrcamentos||[]; dbRef.escolaItens=dbRef.escolaItens||[]; dbRef.escolaExcluidos=dbRef.escolaExcluidos||[]; dbRef.escolaLogs=dbRef.escolaLogs||[]; return {orcamentos:dbRef.escolaOrcamentos,itens:dbRef.escolaItens,excluidos:dbRef.escolaExcluidos,logs:dbRef.escolaLogs}; }
@@ -112,9 +110,31 @@ function restaurarFinal(id){ db.escolaExcluidos=(db.escolaExcluidos||[]).filter(
 function limparSumidos(ids){ const idsApi=new Set(Array.from(ids).map(String)); let c=0; (db.escolaOrcamentos||[]).forEach(o=>{ if(o.origem==='api'&&!idsApi.has(String(o.id))){ descartarFinal(o.id,'Removido/expirado na API',true); c++; } }); return c; }
 function credOk(c){ return !!(txt(c.credenciais&&c.credenciais.usuario)&&txt(c.credenciais&&c.credenciais.senha)); }
 function deveAutoSync(c){ if(!c.autoSync||!credOk(c)) return false; if(window.__buscadorEscolaSyncAtivo) return false; const vazio=!(db.escolaOrcamentos||[]).length; return vazio||msDesde(c.ultimoSyncEm)>=Math.max(5,c.intervaloMinutos||60)*60*1000; }
+
+// ═══════════════════════════════════════════════════
+// CARREGAR CREDENCIAIS DA NUVEM (Firebase REST API)
+// ═══════════════════════════════════════════════════
+async function carregarCredenciaisDaNuvem(){
+  try{
+    const I=window.__supabaseSyncInternals;
+    if(!I||typeof I.supabaseRequest!=='function') return null;
+    const rows=await I.supabaseRequest(`app_state?select=data&key=eq.buscador_credenciais&limit=1`,{method:'GET'});
+    if(rows&&rows[0]&&rows[0].data){
+      const d=rows[0].data;
+      if(d.usuario&&d.senha) return {usuario:d.usuario,senha:d.senha,carregadoEm:agora()};
+    }
+  }catch(e){ console.warn('[BUSCADOR] carregar credenciais da nuvem:',e); }
+  return null;
+}
+
 async function sincronizarFinal(opt={}){
   const c=cfgFinal(db); if(window.__buscadorEscolaSyncAtivo) return {ok:false,ocupado:true};
-  if(!credOk(c)){ if(!opt.automatico) toastMsg('Configure usuário e senha do Buscador Escola uma vez.','error'); renderBuscadorEscolaFinal('Configure as credenciais para sincronizar.'); return {ok:false,semCredencial:true}; }
+  // Tenta carregar credenciais da nuvem se não tiver local
+  if(!credOk(c)){
+    const nuvem=await carregarCredenciaisDaNuvem();
+    if(nuvem){ c.credenciais={usuario:nuvem.usuario,senha:nuvem.senha}; c.credenciaisCarregadasDaNuvem=nuvem.carregadoEm; salvar(); }
+  }
+  if(!credOk(c)){ if(!opt.automatico) toastMsg('Login do Buscador não encontrado na nuvem. Configure pelo site de credenciais.','error'); renderBuscadorEscolaFinal('Login não encontrado na nuvem.'); return {ok:false,semCredencial:true}; }
   window.__buscadorEscolaSyncAtivo=true; window.__buscadorStatus={msg:'Autenticando...',progresso:5}; renderBuscadorEscolaFinal();
   try{
     if(opt.limpar){ db.escolaOrcamentos=[]; db.escolaItens=[]; logFinal('limpeza','Baixar tudo: base local do Buscador limpa'); }
@@ -135,37 +155,6 @@ async function sincronizarFinal(opt={}){
   }finally{ window.__buscadorEscolaSyncAtivo=false; }
 }
 
-async function publicarConfigBuscadorNuvem(){
-  const I=window.__supabaseSyncInternals;
-  if(!I||typeof I.supabaseRequest!=='function'||typeof I.objetoParaItens!=='function'||typeof I.empacotarPartes!=='function') return {ok:false,error:'sincronização da nuvem não carregada'};
-  const itens=I.objetoParaItens(db.config||{});
-  const packs=I.empacotarPartes(itens);
-  const atualizadoEm=agora();
-  for(let idx=0; idx<packs.length; idx++){
-    await I.supabaseRequest('app_state?on_conflict=key',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:I.stringifyNuvem({key:`${I.CLOUD_PART_PREFIX}config__p${idx}`,data:{itens:packs[idx]},updated_at:atualizadoEm})});
-  }
-  let meta={};
-  try{ const rows=await I.supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(I.CLOUD_META_KEY)}&limit=1`,{method:'GET'}); meta=(rows&&rows[0]&&rows[0].data)||{}; }catch(e){}
-  meta={...meta,versao:2,app:'digicopy_erp',atualizadoEm,entidades:{...(meta.entidades||{}),config:{tipo:'objeto',partes:packs.length,total:itens.length}}};
-  await I.supabaseRequest('app_state?on_conflict=key',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:I.stringifyNuvem({key:I.CLOUD_META_KEY,data:meta,updated_at:atualizadoEm})});
-  return {ok:true,partes:packs.length};
-}
-window.salvarCredenciaisBuscador=async function(){
-  const c=cfgFinal(db);
-  const usuario=txt(document.getElementById('be-usuario')?.value);
-  const senha=txt(document.getElementById('be-senha')?.value);
-  if(!usuario||!senha) return toastMsg('Informe usuário/CNPJ e senha da API','error');
-  c.credenciais={usuario,senha}; c.credenciaisSalvasEm=agora(); salvar();
-  renderBuscadorEscolaFinal('Credenciais salvas neste computador. Enviando configuração para a nuvem...');
-  try{
-    const r=await publicarConfigBuscadorNuvem();
-    if(r.ok){ c.credenciaisPublicadasEm=agora(); salvar(); toastMsg('Credenciais salvas e enviadas para a nuvem','success'); renderBuscadorEscolaFinal('Credenciais salvas e enviadas para a nuvem. Você não precisa digitar novamente.'); }
-    else { toastMsg('Credenciais salvas localmente. Não consegui enviar para nuvem agora.','info'); renderBuscadorEscolaFinal('Credenciais salvas localmente. Abra em um PC com nuvem ativa para publicar.'); }
-  }catch(e){ console.warn('[BUSCADOR] publicar credenciais',e); toastMsg('Credenciais salvas localmente. Falha ao enviar para nuvem.','error'); renderBuscadorEscolaFinal('Credenciais salvas localmente, mas falhou publicar na nuvem: '+(e.message||e)); }
-};
-window.ocultarCredenciaisBuscador=function(){ const c=cfgFinal(db); c.credenciaisOcultas=true; salvar(); renderBuscadorEscolaFinal('Área de credenciais ocultada.'); };
-window.mostrarCredenciaisBuscador=function(){ const c=cfgFinal(db); c.credenciaisOcultas=false; salvar(); renderBuscadorEscolaFinal(); };
-window.enviarCredenciaisBuscadorNuvem=async function(){ const c=cfgFinal(db); if(!credOk(c)) return toastMsg('Configure usuário e senha antes de enviar para a nuvem','error'); try{ const r=await publicarConfigBuscadorNuvem(); if(r.ok){ c.credenciaisPublicadasEm=agora(); salvar(); toastMsg('Login do Buscador enviado para a nuvem','success'); renderBuscadorEscolaFinal('Login do Buscador enviado para a nuvem.'); } }catch(e){ toastMsg('Falha ao enviar login para nuvem: '+(e.message||e),'error'); } };
 window.escolaSincronizarAPI=function(){ return sincronizarFinal({automatico:false}); };
 window.escolaSincronizarTudo=function(){ if(confirm('Baixar tudo limpa orçamentos/itens do Buscador e baixa novamente. Continuar?')) return sincronizarFinal({limpar:true,automatico:false}); };
 window.escolaBuscar=function(){ window.__escolaTermo=txt(document.getElementById('be-termo')?.value); window.__escolaRegiao=txt(document.getElementById('be-regiao')?.value)||'1'; const iv=txt(document.getElementById('be-intervalo')?.value)||'1-10'; const p=iv.includes('-')?iv.split('-'):[iv,iv]; window.__escolaInicio=Math.max(1,inteiro(p[0],1)); window.__escolaFim=Math.max(window.__escolaInicio,inteiro(p[1],window.__escolaInicio)); renderBuscadorEscolaFinal(); };
@@ -175,21 +164,17 @@ window.escolaDescartar=function(id){ const motivo=prompt('Motivo da exclusão:',
 window.escolaRestaurar=function(id){ restaurarFinal(id); salvar(); renderBuscadorEscolaFinal('Orçamento restaurado.'); };
 window.escolaExcluidosToggle=function(){ window.__escolaMostrarExcluidos=!window.__escolaMostrarExcluidos; renderBuscadorEscolaFinal(); };
 window.escolaAutoSyncTick=function(){ const c=cfgFinal(db); if(deveAutoSync(c)) return sincronizarFinal({automatico:true,limpar:!(db.escolaOrcamentos||[]).length}); return null; };
-window.BUSCADOR_ESCOLA_FINAL_PURE={cfgFinal,storeFinal,normalizarOrc,normalizarItem,pesquisarFinal,credOk,deveAutoSync,excelHtmlFinal,proximaAtualizacaoTexto,formatarTempo};
 
 function badge(r){ if(r.apenas_pesquisado) return '<span class="neo-status ok">Só pesquisado</span>'; if(r.prioritario) return '<span class="neo-status info">Prioritário</span>'; if(r.norte_minas) return '<span class="neo-status ok">Norte</span>'; return '<span class="neo-status wait">MG</span>'; }
 function linkOrc(r){ return r.numero_orcamento?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero_orcamento)}&status=${encodeURIComponent(r.status||'NAEN')}`:'#'; }
 function renderCard(r){ return `<div class="rounded-[16px] border bg-white p-4 shadow-sm"><div class="flex flex-wrap justify-between gap-3"><div><div class="flex flex-wrap items-center gap-2"><b class="px-2.5 py-1 rounded-lg bg-[#0a1e8a] text-white font-mono text-[12px]">${esc(r.numero_orcamento||r.id)}</b>${badge(r)}</div><h4 class="mt-2 font-bold text-[15px]">${esc(r.nome_escola)}</h4><p class="text-[12px] text-slate-500">${esc(r.municipio||'-')} • ${r.distancia_km===999?'Distância N/A':esc(r.distancia_km)+' km de Janaúba'}</p></div><div class="flex gap-2"><a href="${esc(linkOrc(r))}" target="_blank" class="neo-btn !h-9"><i class="ph ph-arrow-square-out"></i>Abrir</a><button onclick="escolaDescartar('${esc(r.id)}')" class="neo-btn danger !h-9"><i class="ph ph-x-circle"></i>Excluir</button></div></div>${r.apenas_pesquisado?'<div class="mt-3 rounded-xl bg-emerald-50 border border-emerald-200 p-2 text-[12px] text-emerald-800 font-bold">✅ Este orçamento contém APENAS o produto pesquisado.</div>':''}${r.tem_produtos_extras?`<div class="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-2 text-[12px] text-amber-900 font-bold">⚠️ Contém ${r.quantidade_produtos_extras} produto(s) adicional(is) além do pesquisado.</div>`:''}<div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2 text-[12px]"><div class="rounded-xl bg-slate-50 p-2"><span class="neo-label">Encontrados / total</span><br><b>${r.produtos_encontrados}/${r.total_produtos}</b></div><div class="rounded-xl bg-slate-50 p-2 md:col-span-3"><span class="neo-label">Produto pesquisado</span><br><b>${esc(r.item_tipo||'Sem tipo')}</b><br><span class="text-slate-600">${esc(r.item_descricao||'')}</span></div></div></div>`; }
+
 function renderBuscadorEscolaFinal(msg){
   const s=typeof getSession==='function'?getSession():null; if(!s) return; const view=typeof ensureView==='function'?ensureView('buscador-escola'):document.getElementById('view-buscador-escola'); if(!view) return;
   const c=cfgFinal(db), st=storeFinal(db), termo=window.__escolaTermo||'', regiao=window.__escolaRegiao||'1', inicio=window.__escolaInicio||1, fim=window.__escolaFim||10;
   const resultados=pesquisarFinal(termo,regiao); window.__escolaResultados=resultados; const rows=resultados.slice(inicio-1,fim); const status=window.__buscadorStatus||{};
-  // Área de credenciais: SEMPRE visível quando não configuradas; quando configuradas,
-  // mostra resumo + botão alterar. Autoatualização NÃO esconde a área.
   const credsOk=credOk(c);
-  const credsOcultas=c.credenciaisOcultas&&credsOk;
-  const mostrarCreds=!credsOcultas||!credsOk;
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Buscador Escola</h3><p>Busca local rápida com atualização automática a cada 1 hora. Qualquer PC pode atualizar; os outros recebem pela nuvem.</p></div><div class="neo-actions"><button onclick="mostrarCredenciaisBuscador()" class="neo-btn"><i class="ph ph-key"></i>Login API</button><button onclick="escolaExcluidosToggle()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button><button onclick="escolaExportarExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div><div class="p-4 border-b bg-white space-y-3"><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div class="neo-card"><p class="neo-label">Última atualização</p><div class="font-bold text-[13px]">${c.ultimoSyncEm?fmtHora(c.ultimoSyncEm):'Nunca'}</div></div><div class="neo-card"><p class="neo-label">Orçamentos</p><div class="neo-total">${st.orcamentos.length}</div></div><div class="neo-card"><p class="neo-label">Itens</p><div class="neo-total">${st.itens.length}</div></div><div class="neo-card"><p class="neo-label">Auto</p><div class="font-bold text-[13px] ${c.autoSync?'text-emerald-700':'text-slate-500'}">${c.autoSync?'1 hora':'desligado'}</div><div class="text-[11px] text-slate-500 mt-1">Próxima: <b>${esc(proximaAtualizacaoTexto(c))}</b></div></div></div>${mostrarCreds?`<div class="rounded-xl border bg-blue-50 p-3"><div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end"><label class="text-[11px] font-bold uppercase text-blue-900 md:col-span-2">Usuário/CNPJ API<input id="be-usuario" value="${esc(c.credenciais.usuario||'')}" class="mt-1 w-full h-10 px-3 rounded-xl border bg-white"></label><label class="text-[11px] font-bold uppercase text-blue-900 md:col-span-2">Senha API<input id="be-senha" type="password" value="${esc(c.credenciais.senha||'')}" class="mt-1 w-full h-10 px-3 rounded-xl border bg-white"></label><button onclick="salvarCredenciaisBuscador()" class="neo-btn primary">Salvar e enviar nuvem</button></div>${credsOk?`<div class="mt-2 flex flex-wrap gap-2 items-center"><span class="text-[11px] text-emerald-700 font-bold">✅ Login configurado.</span><button onclick="ocultarCredenciaisBuscador()" class="neo-btn !h-8">Ocultar esta área</button><button onclick="enviarCredenciaisBuscadorNuvem()" class="neo-btn !h-8">Enviar login para nuvem</button></div>`:''}</div>`:`<div class="rounded-xl border bg-emerald-50 p-3 flex flex-wrap gap-3 items-center text-[12px]"><span class="text-emerald-800 font-bold">✅ Login do Buscador configurado.</span><span class="text-slate-500">Usuário: <b>${esc(c.credenciais.usuario||'')}</b></span><button onclick="mostrarCredenciaisBuscador()" class="neo-btn !h-8"><i class="ph ph-pencil"></i>Alterar login</button><button onclick="enviarCredenciaisBuscadorNuvem()" class="neo-btn !h-8"><i class="ph ph-cloud-arrow-up"></i>Enviar para nuvem</button></div>`}<div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center"><input id="be-termo" value="${esc(termo)}" onkeydown="if(event.key==='Enter')escolaBuscar()" placeholder="Ex.: toner, cartucho, papel..." class="neo-input md:col-span-5"><select id="be-regiao" class="neo-select md:col-span-2"><option value="1" ${regiao==='1'?'selected':''}>MG todo</option><option value="2" ${regiao==='2'?'selected':''}>Norte de Minas</option><option value="3" ${regiao==='3'?'selected':''}>Norte prioritário</option></select><input id="be-intervalo" value="${inicio}-${fim}" class="neo-input md:col-span-2"><button onclick="escolaBuscar()" class="neo-btn primary md:col-span-1"><i class="ph ph-magnifying-glass"></i>Pesquisar</button><details class="md:col-span-2"><summary class="neo-btn cursor-pointer">Avançado</summary><div class="absolute z-50 mt-2 right-4 rounded-xl bg-white border shadow-xl p-3 flex gap-2"><button onclick="escolaSincronizarAPI()" class="neo-btn">Atualizar</button><button onclick="escolaSincronizarTudo()" class="neo-btn danger">Baixar Tudo</button></div></details></div>${msg||status.msg?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-2 text-[12px] text-blue-900">${esc(msg||status.msg)} ${status.progresso?`• ${status.progresso}%`:''}</div>`:''}</div><div class="p-4 space-y-3 bg-slate-50/60 min-h-[420px]">${window.__escolaMostrarExcluidos?`<h4 class="font-bold text-[14px]">Orçamentos excluídos</h4>${st.excluidos.slice().reverse().map(e=>`<div class="rounded-xl border bg-white p-3 text-[12px] flex justify-between gap-3"><span><b>${esc(e.orcamento_id)}</b> — ${esc(e.motivo)} • ${fmtData(e.data_exclusao)}</span><button onclick="escolaRestaurar('${esc(e.orcamento_id)}')" class="neo-btn !h-8">Ativar</button></div>`).join('')||'<p class="text-slate-400 text-[13px]">Nenhum excluído.</p>'}`:`<div class="flex justify-between text-[12px] text-slate-500"><span>Resultados ${inicio}-${Math.min(fim,resultados.length)} de ${resultados.length}</span><span>Busca local • Enter/lupa</span></div>${rows.map(renderCard).join('')||'<div class="text-center text-slate-400 py-16">Faça uma busca para começar ou aguarde a atualização automática.</div>'}${resultados.length>fim?'<div class="text-center"><button onclick="escolaMais()" class="neo-btn primary">Mostrar mais</button></div>':''}`}</div></div></div>`;
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Buscador Escola</h3><p>Busca local com atualização automática. Login carregado da nuvem.</p></div><div class="neo-actions"><button onclick="escolaExcluidosToggle()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button><button onclick="escolaExportarExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div><div class="p-4 border-b bg-white space-y-3"><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div class="neo-card"><p class="neo-label">Última atualização</p><div class="font-bold text-[13px]">${c.ultimoSyncEm?fmtHora(c.ultimoSyncEm):'Nunca'}</div></div><div class="neo-card"><p class="neo-label">Orçamentos</p><div class="neo-total">${st.orcamentos.length}</div></div><div class="neo-card"><p class="neo-label">Itens</p><div class="neo-total">${st.itens.length}</div></div><div class="neo-card"><p class="neo-label">Status</p><div class="font-bold text-[13px] ${credsOk?'text-emerald-700':'text-amber-700'}">${credsOk?'Login OK':'Aguardando login'}</div><div class="text-[11px] text-slate-500 mt-1">Próxima: <b>${esc(proximaAtualizacaoTexto(c))}</b></div></div></div>${!credsOk?'<div class="rounded-xl border bg-amber-50 p-3 text-[12px] text-amber-900">⚠️ Login do Buscador não encontrado. Configure pelo site de credenciais e aguarde a sincronização.</div>':''}<div class="grid grid-cols-1 md:grid-cols-10 gap-2 items-center"><input id="be-termo" value="${esc(termo)}" onkeydown="if(event.key==='Enter')escolaBuscar()" placeholder="Ex.: toner, cartucho, papel..." class="neo-input md:col-span-5"><select id="be-regiao" class="neo-select md:col-span-2"><option value="1" ${regiao==='1'?'selected':''}>MG todo</option><option value="2" ${regiao==='2'?'selected':''}>Norte de Minas</option><option value="3" ${regiao==='3'?'selected':''}>Norte prioritário</option></select><input id="be-intervalo" value="${inicio}-${fim}" class="neo-input md:col-span-1"><button onclick="escolaBuscar()" class="neo-btn primary md:col-span-1"><i class="ph ph-magnifying-glass"></i>Pesquisar</button><button onclick="escolaSincronizarAPI()" class="neo-btn md:col-span-1"><i class="ph ph-arrows-clockwise"></i>Atualizar</button></div>${msg||status.msg?`<div class="rounded-xl bg-blue-50 border border-blue-200 p-2 text-[12px] text-blue-900">${esc(msg||status.msg)} ${status.progresso?`• ${status.progresso}%`:''}</div>`:''}</div><div class="p-4 space-y-3 bg-slate-50/60 min-h-[420px]">${window.__escolaMostrarExcluidos?`<h4 class="font-bold text-[14px]">Orçamentos excluídos</h4>${st.excluidos.slice().reverse().map(e=>`<div class="rounded-xl border bg-white p-3 text-[12px] flex justify-between gap-3"><span><b>${esc(e.orcamento_id)}</b> — ${esc(e.motivo)} • ${fmtData(e.data_exclusao)}</span><button onclick="escolaRestaurar('${esc(e.orcamento_id)}')" class="neo-btn !h-8">Ativar</button></div>`).join('')||'<p class="text-slate-400 text-[13px]">Nenhum excluído.</p>'}`:`<div class="flex justify-between text-[12px] text-slate-500"><span>Resultados ${inicio}-${Math.min(fim,resultados.length)} de ${resultados.length}</span><span>Busca local • Enter/lupa</span></div>${rows.map(renderCard).join('')||'<div class="text-center text-slate-400 py-16">Faça uma busca para começar ou aguarde a atualização automática.</div>'}${resultados.length>fim?'<div class="text-center"><button onclick="escolaMais()" class="neo-btn primary">Mostrar mais</button></div>':''}`}</div></div></div>`;
   const r=document.getElementById('be-regiao'); if(r) r.value=regiao;
 }
 window.renderBuscadorEscola=renderBuscadorEscolaFinal;
@@ -197,5 +182,5 @@ if(typeof document!=='undefined'){
   setTimeout(()=>{ window.escolaAutoSyncTick(); },8000);
   setInterval(()=>{ window.escolaAutoSyncTick(); },60000);
 }
-console.log('[DIGICOPY] buscador_escola_final_patch.js v4.9.69 carregado');
+console.log('[DIGICOPY] buscador_escola_final_patch.js v4.9.79 carregado');
 })();
