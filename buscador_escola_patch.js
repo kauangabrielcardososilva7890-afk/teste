@@ -48,9 +48,10 @@ async function api(method,url,body,tk){
 }
 
 async function sync(opt={}){
-  if(window.__esSync)return{ok:false};window.__esSync=true;
-  const logs=[];
-  function log(m){logs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m);window.__esLogs=logs.slice();render()}
+  window.__esSync=false; // Reset always before starting
+  window.__esSync=true;
+  window.__esLogs=[];
+  function log(m){window.__esLogs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m);render()}
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
@@ -147,8 +148,9 @@ function render(msg){
   const v=typeof ensureView==='function'?ensureView('buscador-escola'):document.getElementById('view-buscador-escola');if(!v)return;
   const st=store(),c=(db.config&&db.config.escolaSync)||{};
   const term=window.__esTerm||'',reg=window.__esReg||'1',ini=window.__esIni||1,fim=window.__esFim||10;
-  const res=search(term,reg);window.__esRes=res;const rows=res.slice(ini-1,fim);
+  const res=term?search(term,reg):[];window.__esRes=res;const rows=res.slice(ini-1,fim);
   const sts=window.__esSt||{};
+  const logs=window.__esLogs||[];
 
   v.innerHTML=`<div class="neo-shell"><div class="neo-panel">
 <div class="neo-head"><div><h3>Buscador Escola</h3><p>Caixa Escolar MG • Atualização automática a cada 1 hora</p></div>
@@ -167,10 +169,11 @@ function render(msg){
 <input id="es-int" value="${ini}-${fim}" class="h-10 w-20 px-2 rounded-lg border text-[13px] text-center">
 <button onclick="esSearch()" class="h-10 px-4 rounded-lg bg-[#0a1e8a] text-white font-bold text-[13px]"><i class="ph ph-magnifying-glass"></i></button>
 <button onclick="esSync()" class="h-10 px-4 rounded-lg bg-white border font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrows-clockwise"></i>Atualizar</button>
-<button onclick="esSyncTudo()" class="h-10 px-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrow-counter-clockwise"></i>Baixar Tudo</button></div></div>
+<button onclick="esSyncTudo()" class="h-10 px-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrow-counter-clockwise"></i>Baixar Tudo</button>
+<button onclick="esClearLog()" class="h-10 px-3 rounded-lg bg-slate-100 border text-[12px] text-slate-600">Limpar log</button></div></div>
 
 ${sts.msg?`<div class="px-4 py-2 bg-blue-50 border-b text-[12px] text-blue-900">${esc(sts.msg)} ${sts.pct?`• ${sts.pct}%`:''}</div>`:''}
-${(window.__esLogs||[]).length?`<div class="px-4 py-2 bg-slate-100 border-b text-[11px] font-mono text-slate-600 max-h-[120px] overflow-auto">${window.__esLogs.map(l=>'<div>'+esc(l)+'</div>').join('')}</div>`:''}
+${logs.length?`<div class="px-4 py-2 bg-slate-100 border-b text-[11px] font-mono text-slate-600 max-h-[150px] overflow-auto"><b>Log:</b><br>${logs.map(l=>'<div>'+esc(l)+'</div>').join('')}</div>`:''}
 
 <div class="p-4 space-y-3 bg-slate-50/60 min-h-[400px]">
 ${window.__esExc?
@@ -182,8 +185,9 @@ ${window.__esExc?
 }</div></div></div>`;
 }
 
-window.esSync=function(){return sync({})};
-window.esSyncTudo=function(){if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
+window.esSync=function(){window.__esSync=false;return sync({})};
+window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
+window.esClearLog=function(){window.__esLogs=[];render()};
 window.esSearch=function(){window.__esTerm=t(document.getElementById('es-term')?.value);window.__esReg=t(document.getElementById('es-reg')?.value)||'1';const iv=t(document.getElementById('es-int')?.value)||'1-10';const p=iv.includes('-')?iv.split('-'):[iv,iv];window.__esIni=Math.max(1,int(p[0],1));window.__esFim=Math.max(window.__esIni,int(p[1],window.__esIni));render()};
 window.esMais=function(){window.__esFim=(window.__esFim||10)+10;render()};
 window.esExcel=function(){const rows=window.__esRes||search(window.__esTerm||'',window.__esReg||'1');const trs=rows.map(r=>`<tr><td>${esc(r.numero)}</td><td>${esc(r.escola)}</td><td>${esc(r.municipio)}</td><td>${r.dist===999?'N/A':r.dist}</td><td>${esc(r.only?'SIM':'')}</td><td>${r.ext||0}</td><td>${esc(r.ipo||'')}</td><td>${esc(r.ides)}</td></tr>`).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial}th{background:#0a1e8a;color:#fff;padding:6px}td{border:1px solid #ddd;padding:5px}</style></head><body><table><thead><tr><th>Código</th><th>Escola</th><th>Município</th><th>Distância</th><th>Só pesquisado</th><th>Extras</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${trs}</tbody></table></body></html>`;const b=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'});const a=document.createElement('a'),u=URL.createObjectURL(b);a.href=u;a.download='buscador_'+new Date().toISOString().slice(0,10)+'.xls';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1000)};
