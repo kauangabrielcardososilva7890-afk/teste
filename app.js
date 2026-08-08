@@ -491,7 +491,7 @@ function navigateTo(view){
   if(target) target.classList.remove('hidden');
   document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
   const act=document.querySelector(`[data-nav="${view}"]`); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito']};
+  const titles={dashboard:['Início','Escolha uma ação rápida e siga o passo a passo'],clientes:['Clientes','Cadastro simples de pessoas e empresas'],produtos:['Estoque','Produtos, cartuchos, peças e serviços'],impressoras:['Impressoras','Patrimônio e máquinas disponíveis'],contratos:['Contratos de locação','Franquias, vigências e mensalidades'],parque:['Máquinas nos clientes','Onde cada impressora está instalada'],leituras:['Leituras','Lançar contadores e gerar cobrança'],manutencao:['Chamados','Atendimento técnico sem complicação'],vendas:['Vender / Orçar','Venda rápida, orçamento e notinha'],financeiro:['Financeiro','Contas a receber, pagar e fluxo'],relatorios:['Relatórios','Resumo para conferência'],config:['Configurações','Empresa, técnicos e ajustes'],usuarios:['Usuários','Quem pode acessar o sistema'],auditoria:['Auditoria','Registro automático do que foi feito'],'buscador-escola':['Buscador Escola','Orçamentos escolares Caixa Escolar MG']};
   const t=titles[view]||[view,'']; setPageHeader(t[0], t[1]);
   if(view==='dashboard') renderDashboard();
   if(view==='clientes') renderClientes();
@@ -505,6 +505,7 @@ function navigateTo(view){
   if(view==='financeiro'){renderFinanceiro(); if(document.getElementById('fluxoChart')) renderFluxoChart();}
   if(view==='relatorios') renderRelatorios();
   if(view==='config') renderConfig();
+  if(view==='buscador-escola'){ if(typeof renderBuscadorEscola==='function') renderBuscadorEscola(); }
   if(view==='usuarios') renderUsuarios();
   if(view==='auditoria') renderAuditoria();
 
@@ -532,7 +533,7 @@ function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
   const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
-  const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
+  const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'buscador-escola',icon:'ph-magnifying-glass',label:'Buscador Escola'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   
   // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)
   const dinamicos = [];
@@ -1693,20 +1694,6 @@ window.importarTudoDeUmaVez = function(){
   const totalReg = tabelas.reduce(function(s,t){return s+(rawData[t].data?.length||0)},0);
   if(!confirm('Importar '+totalReg+' registros de '+tabelas.length+' tabelas?\n\nTabelas: '+tabelas.join(', ')+'\n\nTabelas sem correspondência viram menus novos no sidebar.')) return;
   fbImportToErp(rawData);
-};
-
-  const rawData = window._rawDataParaImportar;
-  if(!rawData || Object.keys(rawData).length === 0){ toast('Nenhum dado carregado','error'); return; }
-  fbImportToErp(rawData);
-  toast('Dados importados! Enviando para a nuvem em partes (sem timeout)...','info');
-  if(typeof window.syncEnviarParaNuvem === 'function'){
-    const r = await window.syncEnviarParaNuvem({confirmar:false});
-    if(r && r.ok){
-      
-    }
-  } else {
-    toast('Nuvem não disponível nesta página. Recarregue e tente pela seção Nuvem abaixo.','info');
-  }
 };
 
 window.copiarSqlExportarTudo = function(){

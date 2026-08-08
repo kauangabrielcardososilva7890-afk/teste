@@ -155,6 +155,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
 
+        <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
       </div></div>
@@ -245,6 +246,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./finalizacao_sistema_patch.js?v=4.9.69"></script>
 <script src="./ajustes_pos_final_patch.js?v=4.9.70"></script>
 <script src="./correcoes_relatorio_patch.js?v=4.9.72"></script>
-<script src="./limpar_nuvem_patch.js?v=4.9.72"></script>
+<script src="./limpar_nuvem_patch.js?v=4.9.88"></script>
+<script src="./buscador_escola_patch.js?v=4.9.88"></script>
 </body>
 </html>
