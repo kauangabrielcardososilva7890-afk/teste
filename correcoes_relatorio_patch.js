@@ -1,10 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v4.9.70 — Correções do relatório do usuário
+// PATCH v4.9.84 — Correções do relatório do usuário
 // 1. Impressoras de locação NÃO aparecem no menu Produtos
 // 2. Aviso ao sair de venda em andamento (salvar ou descartar)
 // 3. Rodapé de impressão sem repetir dados da empresa
 // 4. Chamados com faixas visuais destacadas por seção
-// 5. Botão "Salvar e enviar nuvem" do Buscador sempre visível
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -234,32 +233,5 @@ if (typeof _origRenderModalOS === 'function') {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// 5. BOTÃO SALVAR E ENVIAR NUVEM SEMPRE VISÍVEL
-// (Complemento ao fix do buscador_escola_final_patch.js)
-// ═══════════════════════════════════════════════════════════════════
-// Garante que a renderização do Buscador Escola sempre mostre
-// a área de credenciais quando necessário, mesmo após auto-sync
-const _origRenderBuscador = window.renderBuscadorEscolaFinal;
-if (typeof _origRenderBuscador === 'function') {
-  window.renderBuscadorEscolaFinal = function(msg) {
-    _origRenderBuscador.apply(this, arguments);
-    // Após renderizar, verifica se o botão de salvar existe
-    setTimeout(() => {
-      const btnSalvar = document.querySelector('[onclick="salvarCredenciaisBuscador()"]');
-      const btnAlterar = document.querySelector('[onclick="mostrarCredenciaisBuscador()"]');
-      // Se nenhum dos dois existe, a área sumiu — re-renderiza forçando mostrar
-      if (!btnSalvar && !btnAlterar) {
-        const c = (db.config || {}).buscadorEscola || {};
-        if (c.credenciaisOcultas) {
-          c.credenciaisOcultas = false;
-          if (typeof saveDB === 'function') saveDB();
-          _origRenderBuscador.apply(this, [msg]);
-        }
-      }
-    }, 200);
-  };
-}
-
-console.log('[DIGICOPY] correcoes_relatorio_patch.js v' + VERSAO + ' — todas as 5 correções aplicadas');
+console.log('[DIGICOPY] correcoes_relatorio_patch.js v4.9.84 — correções aplicadas');
 })();
