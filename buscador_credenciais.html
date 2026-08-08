@@ -6,46 +6,66 @@
 <title>Buscador Escola - Configurar Login</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:40px;width:100%;max-width:420px}
-h1{font-size:20px;color:#0a1e8a;margin-bottom:8px}
-p{font-size:13px;color:#666;margin-bottom:24px}
+body{font-family:Arial,sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.wrap{display:flex;gap:16px;width:100%;max-width:700px}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);padding:32px;flex:1}
+h1{font-size:18px;color:#0a1e8a;margin-bottom:6px}
+p{font-size:12px;color:#666;margin-bottom:20px}
 label{display:block;font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;margin-bottom:4px}
-input{width:100%;height:44px;border:1px solid #ddd;border-radius:10px;padding:0 12px;font-size:14px;margin-bottom:16px}
+input{width:100%;height:42px;border:1px solid #ddd;border-radius:10px;padding:0 12px;font-size:14px;margin-bottom:14px}
 input:focus{outline:none;border-color:#0a1e8a;box-shadow:0 0 0 3px rgba(10,30,138,.1)}
-button{width:100%;height:48px;background:#0a1e8a;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:8px}
+button{width:100%;height:46px;background:#0a1e8a;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:bold;cursor:pointer}
 button:hover{background:#08176e}
 button:disabled{background:#94a3b8;cursor:not-allowed}
-.status{margin-top:16px;padding:12px;border-radius:10px;font-size:13px;display:none}
+.status{margin-top:14px;padding:10px;border-radius:10px;font-size:12px;display:none}
 .status.ok{display:block;background:#dcfce7;color:#166534;border:1px solid #86efac}
 .status.err{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 .status.info{display:block;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.result{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;min-height:60px}
+.result h3{font-size:13px;color:#0a1e8a;margin-bottom:10px}
+.result .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:12px}
+.result .row:last-child{border:none}
+.result .lbl{color:#64748b;font-weight:bold}
+.result .val{color:#1e293b;font-weight:bold}
+.empty{color:#94a3b8;font-size:12px;text-align:center;padding:20px}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>🔐 Buscador Escola</h1>
-  <p>Configure o login da API do Caixa Escolar MG. As credenciais são salvas na nuvem.</p>
+<div class="wrap">
+  <!-- ESQUERDA: INPUT -->
+  <div class="card">
+    <h1>🔐 Login API</h1>
+    <p>Configure o CNPJ e senha da API do Caixa Escolar MG.</p>
+    
+    <label>CNPJ / Usuário</label>
+    <input type="text" id="usuario" placeholder="08.385.589/0001-03">
+    
+    <label>Senha</label>
+    <input type="password" id="senha" placeholder="Senha da API">
+    
+    <button id="btnSalvar" onclick="salvar()">Salvar na nuvem</button>
+    
+    <div id="status" class="status"></div>
+  </div>
   
-  <label>Usuário / CNPJ</label>
-  <input type="text" id="usuario" placeholder="Seu CNPJ ou usuário da API">
-  
-  <label>Senha</label>
-  <input type="password" id="senha" placeholder="Senha da API">
-  
-  <button id="btnSalvar" onclick="salvar()">Salvar e enviar para nuvem</button>
-  <button onclick="carregar()" style="background:#fff;color:#0a1e8a;border:2px solid #0a1e8a">Carregar da nuvem</button>
-  
-  <div id="status" class="status"></div>
+  <!-- DIREITA: RESULTADO (somente leitura) -->
+  <div class="card">
+    <h1>☁️ Salvo na nuvem</h1>
+    <p>Dados atualmente salvos no Firebase.</p>
+    
+    <div id="resultado" class="result">
+      <p class="empty">Clique em "Salvar na nuvem" para ver o resultado aqui.</p>
+    </div>
+  </div>
 </div>
 
 <script>
 const API_KEY = 'AIzaSyAEsHFZWRNiwMypSRU1azBj66p8g0FTi8U';
 const PROJECT = 'digicopy-sistema-nuvem';
-const RES_BASE = 'projects/' + PROJECT + '/databases/(default)/documents';
-const BASE = 'https://firestore.googleapis.com/v1/' + RES_BASE;
+const BASE = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents';
 const AUTH_KEY = 'digicopy_firebase_auth_v1';
-const DOC_KEY = 'buscador_credenciais';
+const COLL = 'app_state';
+const DOC_ID = 'buscador_credenciais';
 
 function show(msg, type) {
   const el = document.getElementById('status');
@@ -53,7 +73,20 @@ function show(msg, type) {
   el.textContent = msg;
 }
 
-// Autenticação anônima (igual ao sistema principal)
+function mostrarResultado(data) {
+  const el = document.getElementById('resultado');
+  if (!data || !data.usuario) {
+    el.innerHTML = '<p class="empty">Nenhum dado salvo ainda.</p>';
+    return;
+  }
+  el.innerHTML = '<h3>✅ Dados salvos</h3>'
+    + '<div class="row"><span class="lbl">CNPJ/Usuário</span><span class="val">' + esc(data.usuario) + '</span></div>'
+    + '<div class="row"><span class="lbl">Senha</span><span class="val">' + esc(data.senha) + '</span></div>'
+    + '<div class="row"><span class="lbl">Atualizado em</span><span class="val">' + esc(data.atualizadoEm || '-') + '</span></div>';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 async function getToken() {
   let salvo = null;
   try { salvo = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch(e) {}
@@ -73,7 +106,6 @@ async function getToken() {
       }
     } catch(e) {}
   }
-  // Cria sessão anônima nova
   try {
     const r2 = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + API_KEY, {
       method: 'POST',
@@ -127,15 +159,17 @@ function fromFields(doc) {
 async function salvar() {
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
-  if (!usuario || !senha) { show('Preencha usuário e senha', 'err'); return; }
+  if (!usuario || !senha) { show('Preencha CNPJ e senha', 'err'); return; }
   
   const btn = document.getElementById('btnSalvar');
   btn.disabled = true;
   try {
-    show('Autenticando e salvando...', 'info');
+    show('Salvando na nuvem...', 'info');
     const data = toFields({ usuario, senha, atualizadoEm: new Date().toISOString() });
-    await fireFetch(BASE + '/' + DOC_KEY, 'PATCH', data);
-    show('✅ Credenciais salvas na nuvem! Usuário: ' + usuario, 'ok');
+    await fireFetch(BASE + '/' + COLL + '/' + DOC_ID, 'PATCH', data);
+    const resultado = { usuario, senha, atualizadoEm: new Date().toLocaleString('pt-BR') };
+    mostrarResultado(resultado);
+    show('✅ Salvo com sucesso!', 'ok');
   } catch (e) {
     show('Erro: ' + e.message, 'err');
   } finally {
@@ -143,24 +177,16 @@ async function salvar() {
   }
 }
 
-async function carregar() {
+// Carrega automaticamente ao abrir
+window.onload = async function() {
   try {
-    show('Carregando da nuvem...', 'info');
-    const doc = await fireFetch(BASE + '/' + DOC_KEY, 'GET');
+    const doc = await fireFetch(BASE + '/' + COLL + '/' + DOC_ID, 'GET');
     const data = fromFields(doc);
     if (data.usuario) {
-      document.getElementById('usuario').value = data.usuario || '';
-      document.getElementById('senha').value = data.senha || '';
-      show('✅ Carregado! Usuário: ' + data.usuario + ' (atualizado: ' + (data.atualizadoEm || '-') + ')', 'ok');
-    } else {
-      show('Nenhuma credencial encontrada na nuvem', 'err');
+      mostrarResultado(data);
     }
-  } catch (e) {
-    show('Erro ao carregar: ' + e.message, 'err');
-  }
-}
-
-window.onload = function() { setTimeout(carregar, 500); };
+  } catch(e) {}
+};
 </script>
 </body>
 </html>
