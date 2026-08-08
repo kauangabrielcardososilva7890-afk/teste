@@ -61,8 +61,10 @@ async function sync(opt={}){
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
+    if(login.data){log('Resposta login: '+JSON.stringify(login.data).substring(0,200))}
     if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||''),pct:0};render();return login}
-    const tk=(login.data&&(login.data.token||login.data.access_token||login.data.accessToken||login.data.jwt))||'';
+    const ld=login.data||{};
+    const tk=ld.token||ld.access_token||ld.accessToken||ld.jwt||ld.data?.token||ld.data?.access_token||ld.result?.token||ld.auth?.token||'';
     log('Token: '+(tk?'obtido ('+tk.length+' chars)':'vazio'));
     let tot=0,totIt=0,err=0,pg=1;const ids=[];
     while(pg<=120){
