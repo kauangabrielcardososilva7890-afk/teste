@@ -85,6 +85,8 @@ async function sync(opt={}){
     db.escolaOrc=(db.escolaOrc||[]).filter(o=>idsSet.has(String(o.id)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
     window.__esSt={msg:`✅ ${tot} orçamentos, ${totIt} itens`,pct:100};save();render();
+    // Envia dados para a nuvem
+    if(typeof syncEnviarParaNuvem==='function'){try{await syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true})}catch(e){}}
     return{ok:true,tot,totIt,err};
   }catch(e){window.__esSt={msg:'Erro: '+e.message,pct:0};render();return{ok:false,error:e.message}}
   finally{window.__esSync=false}
@@ -153,7 +155,8 @@ function render(msg){
 <select id="es-reg" class="h-10 px-3 rounded-lg border text-[13px]"><option value="1" ${reg==='1'?'selected':''}>MG todo</option><option value="2" ${reg==='2'?'selected':''}>Norte de Minas</option><option value="3" ${reg==='3'?'selected':''}>Norte prioritário</option></select>
 <input id="es-int" value="${ini}-${fim}" class="h-10 w-20 px-2 rounded-lg border text-[13px] text-center">
 <button onclick="esSearch()" class="h-10 px-4 rounded-lg bg-[#0a1e8a] text-white font-bold text-[13px]"><i class="ph ph-magnifying-glass"></i></button>
-<button onclick="esSync()" class="h-10 px-4 rounded-lg bg-white border font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrows-clockwise"></i>Atualizar</button></div></div>
+<button onclick="esSync()" class="h-10 px-4 rounded-lg bg-white border font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrows-clockwise"></i>Atualizar</button>
+<button onclick="esSyncTudo()" class="h-10 px-4 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold text-[13px] flex items-center gap-1"><i class="ph ph-arrow-counter-clockwise"></i>Baixar Tudo</button></div></div>
 
 ${sts.msg?`<div class="px-4 py-2 bg-blue-50 border-b text-[12px] text-blue-900">${esc(sts.msg)} ${sts.pct?`• ${sts.pct}%`:''}</div>`:''}
 
@@ -168,6 +171,7 @@ ${window.__esExc?
 }
 
 window.esSync=function(){return sync({})};
+window.esSyncTudo=function(){if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esSearch=function(){window.__esTerm=t(document.getElementById('es-term')?.value);window.__esReg=t(document.getElementById('es-reg')?.value)||'1';const iv=t(document.getElementById('es-int')?.value)||'1-10';const p=iv.includes('-')?iv.split('-'):[iv,iv];window.__esIni=Math.max(1,int(p[0],1));window.__esFim=Math.max(window.__esIni,int(p[1],window.__esIni));render()};
 window.esMais=function(){window.__esFim=(window.__esFim||10)+10;render()};
 window.esExcel=function(){const rows=window.__esRes||search(window.__esTerm||'',window.__esReg||'1');const trs=rows.map(r=>`<tr><td>${esc(r.numero)}</td><td>${esc(r.escola)}</td><td>${esc(r.municipio)}</td><td>${r.dist===999?'N/A':r.dist}</td><td>${esc(r.only?'SIM':'')}</td><td>${r.ext||0}</td><td>${esc(r.ipo||'')}</td><td>${esc(r.ides)}</td></tr>`).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial}th{background:#0a1e8a;color:#fff;padding:6px}td{border:1px solid #ddd;padding:5px}</style></head><body><table><thead><tr><th>Código</th><th>Escola</th><th>Município</th><th>Distância</th><th>Só pesquisado</th><th>Extras</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${trs}</tbody></table></body></html>`;const b=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'});const a=document.createElement('a'),u=URL.createObjectURL(b);a.href=u;a.download='buscador_'+new Date().toISOString().slice(0,10)+'.xls';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1000)};
