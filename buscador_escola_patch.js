@@ -10,7 +10,7 @@
 'use strict';
 
 const API_BASE='https://api.caixaescolar.educacao.mg.gov.br';
-const USUARIO='08385589000103';
+const USUARIO='08.385.589/0001-03';
 const SENHA='15901536De.';
 
 function t(v){return String(v??'').trim()}
@@ -52,7 +52,7 @@ async function sync(opt={}){
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
     if(opt.limpar){db.escolaOrc=[];db.escolaIt=[]}
-    const login=await api('POST',API_BASE+'/auth/login',{txCpfCnpj:USUARIO,txPassword:SENHA});
+    const login=await api('POST',API_BASE+'/auth/login',{txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA});
     if(!login.ok){window.__esSt={msg:'Falha no login',pct:0};render();return login}
     const tk=(login.data&&(login.data.token||login.data.access_token||login.data.accessToken||login.data.jwt))||'';
     let tot=0,totIt=0,err=0,pg=1;const ids=[];
@@ -181,8 +181,8 @@ window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};if(!c.at||elapsed(c.at)>60*60*1000)sync({auto:true})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};if(elapsed(c.at)>60*60*1000)sync({auto:true})},60000);
+  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},15000);
+  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},60000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();
