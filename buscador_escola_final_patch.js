@@ -118,11 +118,24 @@ async function carregarCredenciaisDaNuvem(){
   try{
     const I=window.__supabaseSyncInternals;
     if(!I||typeof I.supabaseRequest!=='function') return null;
-    const rows=await I.supabaseRequest(`app_state?select=data&key=eq.buscador_credenciais&limit=1`,{method:'GET'});
-    if(rows&&rows[0]&&rows[0].data){
-      const d=rows[0].data;
-      if(d.usuario&&d.senha) return {usuario:d.usuario,senha:d.senha,carregadoEm:agora()};
-    }
+    // Tenta buscar pelo campo key primeiro (formato do sync)
+    try{
+      const rows=await I.supabaseRequest(`app_state?select=data&key=eq.buscador_credenciais&limit=1`,{method:'GET'});
+      if(rows&&rows[0]&&rows[0].data){
+        const d=rows[0].data;
+        if(d.usuario&&d.senha) return {usuario:d.usuario,senha:d.senha,carregadoEm:agora()};
+      }
+    }catch(e){}
+    // Tenta buscar direto pelo documento (formato da página de credenciais)
+    try{
+      const doc=await I.supabaseRequest('app_state/buscador_credenciais',{method:'GET'});
+      if(doc){
+        const f=doc.fields||doc;
+        const usuario=f.usuario?.stringValue||f.usuario||'';
+        const senha=f.senha?.stringValue||f.senha||'';
+        if(usuario&&senha) return {usuario,senha,carregadoEm:agora()};
+      }
+    }catch(e){}
   }catch(e){ console.warn('[BUSCADOR] carregar credenciais da nuvem:',e); }
   return null;
 }
