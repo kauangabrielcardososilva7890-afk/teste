@@ -116,27 +116,29 @@ function deveAutoSync(c){ if(!c.autoSync||!credOk(c)) return false; if(window.__
 // ═══════════════════════════════════════════════════
 async function carregarCredenciaisDaNuvem(){
   try{
-    const I=window.__supabaseSyncInternals;
-    if(!I||typeof I.supabaseRequest!=='function') return null;
-    // Tenta buscar pelo campo key primeiro (formato do sync)
-    try{
-      const rows=await I.supabaseRequest(`app_state?select=data&key=eq.buscador_credenciais&limit=1`,{method:'GET'});
-      if(rows&&rows[0]&&rows[0].data){
-        const d=rows[0].data;
-        if(d.usuario&&d.senha) return {usuario:d.usuario,senha:d.senha,carregadoEm:agora()};
-      }
-    }catch(e){}
-    // Tenta buscar direto pelo documento (formato da página de credenciais)
-    try{
-      const doc=await I.supabaseRequest('app_state/buscador_credenciais',{method:'GET'});
-      if(doc){
-        const f=doc.fields||doc;
-        const usuario=f.usuario?.stringValue||f.usuario||'';
-        const senha=f.senha?.stringValue||f.senha||'';
+    // Usa fireGetDoc do firebase_client.js para ler direto do Firestore
+    if(typeof fireGetDoc==='function'){
+      const doc=await fireGetDoc('buscador_credenciais');
+      if(doc&&doc.fields){
+        const f=doc.fields;
+        const usuario=f.usuario?.stringValue||'';
+        const senha=f.senha?.stringValue||'';
         if(usuario&&senha) return {usuario,senha,carregadoEm:agora()};
       }
-    }catch(e){}
-  }catch(e){ console.warn('[BUSCADOR] carregar credenciais da nuvem:',e); }
+    }
+    // Fallback: fetch direto com auth anônima
+    const API_KEY=window.FIREBASE_CONFIG?.apiKey||'AIzaSyAEsHFZWRNiwMypSRU1azBj66p8g0FTi8U';
+    const PROJECT=window.FIREBASE_CONFIG?.projectId||'digicopy-sistema-nuvem';
+    const url='https://firestore.googleapis.com/v1/projects/'+PROJECT+'/databases/(default)/documents/app_state/buscador_credenciais?key='+API_KEY;
+    const r=await fetch(url);
+    if(r.ok){
+      const doc=await r.json();
+      const f=doc.fields||{};
+      const usuario=f.usuario?.stringValue||'';
+      const senha=f.senha?.stringValue||'';
+      if(usuario&&senha) return {usuario,senha,carregadoEm:agora()};
+    }
+  }catch(e){ console.warn('[BUSCADOR] carregar credenciais:',e); }
   return null;
 }
 
