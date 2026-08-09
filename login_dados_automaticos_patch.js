@@ -156,9 +156,9 @@ window.doLoginUser=function(){
   const emp=prepararEmpresaLogin();
   const loginInput=document.getElementById('login-user')?.value || '';
   const senhaInput=document.getElementById('login-senha-user')?.value || '';
-  if(!txt(loginInput)||!txt(senhaInput)){ if(typeof toast==='function') toast('Informe usuário e senha','error'); return; }
+  if(!txt(loginInput)||!txt(senhaInput)){ alert('Informe usuário e senha'); return; }
   const user=(db.usuarios||[]).find(u=>u.empresaId===emp.id&&u.ativo&&loginCompativel(u,loginInput)&&senhaCompativel(u,senhaInput));
-  if(!user){ if(typeof toast==='function') toast('Usuário ou senha inválidos','error'); return; }
+  if(!user){ alert('Usuário ou senha incorreto'); return; }
   const session={empresaId:emp.id,empresaNome:emp.fantasia||emp.nome,cnpj:emp.cnpj||'',cnpjDigits:onlyDigitsSafe(emp.cnpj||''),usuarioId:user.id,usuarioNome:title(user.nome),login:user.login,perfil:user.perfil,loginAt:new Date().toISOString()};
   if(typeof setSession==='function') setSession(session);
   db.logs=db.logs||[]; db.logs.unshift({id:uidSafe('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:session.usuarioNome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login usuário ${user.login} perfil ${user.perfil}`});
