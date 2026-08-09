@@ -107,14 +107,26 @@ async function sync(opt={}){
 function search(term,reg){
   const st=store(),q=norm(term),exc=new Set(st.exc.map(e=>String(e.oid))),out=[];
   st.orc.forEach(o=>{
-    if(exc.has(String(o.id)))return;if((reg==='2'||reg==='3')&&!NORTE.has(norm(o.municipio)))return;
+    if(exc.has(String(o.id)))return;if(reg==='2'&&!NORTE.has(norm(o.municipio)))return;if(reg==='3'&&!PRIO.has(norm(o.municipio)))return;
     const its=st.it.filter(i=>String(i.oid)===String(o.id));
-    const hit=its.filter(i=>!q||norm(`${i.tipo} ${i.desc}`).includes(q));
+    const hit=its.filter(i=>!q||norm(i.tipo).includes(q));
     if(q&&!hit.length)return;
     const tot=its.length,ext=Math.max(0,tot-hit.length),only=!!q&&tot>0&&ext===0;
     (hit.length?hit:[{tipo:'',desc:'(sem itens)',qtd:0,vlr:0,id:''}]).forEach(i=>out.push({...o,ipo:i.tipo,ides:i.desc,iqtd:i.qtd,ivlr:i.vlr,tot,found:hit.length,ext,only,hasExt:ext>0}));
   });
-  out.sort((a,b)=>(a.only?0:1)-(b.only?0:1)||((reg==='3')?((a.prio?0:1)-(b.prio?0:1)):0)||(a.ext-b.ext)||(a.dist-b.dist));
+  out.sort((a,b)=>{
+  // 1. APENAS pesquisado primeiro
+  if(a.only!==b.only) return a.only?-1:1;
+  // 2. Sem extras primeiro
+  if(a.ext!==b.ext) return a.ext-b.ext;
+  // 3. Prioridade regional (prio > norte > mg)
+  if(reg==='3'||reg==='2'){
+    if(a.prio!==b.prio) return a.prio?-1:1;
+    if(a.norte!==b.norte) return a.norte?-1:1;
+  }
+  // 4. Menor distância
+  return (a.dist===999?9999:a.dist)-(b.dist===999?9999:b.dist);
+});
   return out;
 }
 
