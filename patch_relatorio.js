@@ -36,23 +36,7 @@ setTimeout(()=>{
   if(s){ s.value = ''; s.placeholder = ''; s.removeAttribute('placeholder'); }
 }, 200);
 
-// Melhorar mensagens de erro no login
-const _origDoLogin = window.doLoginUser;
-if(typeof _origDoLogin === 'function'){
-  window.doLoginUser = function(){
-    const login = (document.getElementById('login-user')?.value || '').trim().toLowerCase();
-    const senha = (document.getElementById('login-senha-user')?.value || '').trim();
-    if(!login){ if(typeof toast==='function') toast('Informe o usuário','error'); return; }
-    if(!senha){ if(typeof toast==='function') toast('Informe a senha','error'); return; }
-    // Verificar se usuário existe
-    const user = (db.usuarios||[]).find(u => u.login && u.login.toLowerCase() === login);
-    if(!user){ if(typeof toast==='function') toast('Usuário ou senha incorreto','error'); return; }
-    // Verificar senha
-    if(user.senha !== senha){ if(typeof toast==='function') toast('Usuário ou senha incorreto','error'); return; }
-    // Se passou, chama o original
-    _origDoLogin.apply(this, arguments);
-  };
-}
+// Login: mensagens de erro corrigidas direto no app.js
 
 // Senha Denivaldo = 3232
 setTimeout(()=>{
