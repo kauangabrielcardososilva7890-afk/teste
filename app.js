@@ -388,7 +388,7 @@ function doLoginUser(){
   // Busca empresa (pega a primeira disponível)
   let emp=db.empresas.find(e=>e.id) || escolherEmpresaPadrao(db);
   const user=db.usuarios.find(u=>u.empresaId===emp.id && u.login.toLowerCase()===login && u.senha===senha && u.ativo);
-  if(!user){toast('Usuário ou senha incorreto','error'); return;}
+  if(!user){alert('Usuário ou senha incorreto'); return;}
   const session={empresaId:emp.id, empresaNome:emp.fantasia||emp.nome, cnpj:emp.cnpj||'', cnpjDigits:onlyDigits(emp.cnpj||''), usuarioId:user.id, usuarioNome:user.nome, login:user.login, perfil:user.perfil, loginAt:new Date().toISOString()};
   setSession(session);
   db.logs.unshift({id:uid('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:user.nome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login ${user.login} perfil ${user.perfil}`});
