@@ -10,6 +10,21 @@
 (function(){
 'use strict';
 
+function avisoLogin(msg){
+  const existing = document.getElementById('aviso-login-modal');
+  if(existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'aviso-login-modal';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4)';
+  div.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3)">' +
+    '<div style="width:48px;height:48px;border-radius:50%;background:#fee2e2;margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><span style="font-size:24px">⚠️</span></div>' +
+    '<p style="font-size:15px;font-weight:700;color:#1e293b;margin:0 0 8px">' + msg + '</p>' +
+    '<button onclick="document.getElementById(\u0027aviso-login-modal\u0027).remove()" style="margin-top:12px;height:40px;padding:0 24px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">OK</button>' +
+    '</div>';
+  document.body.appendChild(div);
+}
+
+
 function txt(v){ return String(v ?? '').trim(); }
 function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
 function cod(v){ const g=txt(v).match(/\d+/g); if(!g||!g.length) return ''; const c=g[g.length-1].replace(/^0+/,''); return c||'0'; }
@@ -156,9 +171,9 @@ window.doLoginUser=function(){
   const emp=prepararEmpresaLogin();
   const loginInput=document.getElementById('login-user')?.value || '';
   const senhaInput=document.getElementById('login-senha-user')?.value || '';
-  if(!txt(loginInput)||!txt(senhaInput)){ alert('Informe usuário e senha'); return; }
+  if(!txt(loginInput)||!txt(senhaInput)){ avisoLogin('Informe usuário e senha'); return; }
   const user=(db.usuarios||[]).find(u=>u.empresaId===emp.id&&u.ativo&&loginCompativel(u,loginInput)&&senhaCompativel(u,senhaInput));
-  if(!user){ alert('Usuário ou senha incorreto'); return; }
+  if(!user){ avisoLogin('Usuário ou senha incorreto'); return; }
   const session={empresaId:emp.id,empresaNome:emp.fantasia||emp.nome,cnpj:emp.cnpj||'',cnpjDigits:onlyDigitsSafe(emp.cnpj||''),usuarioId:user.id,usuarioNome:title(user.nome),login:user.login,perfil:user.perfil,loginAt:new Date().toISOString()};
   if(typeof setSession==='function') setSession(session);
   db.logs=db.logs||[]; db.logs.unshift({id:uidSafe('log'),dataHora:new Date().toISOString(),empresaId:emp.id,usuarioId:user.id,usuarioNome:session.usuarioNome,usuarioLogin:user.login,entidade:'auth',acao:'login',entidadeId:user.id,detalhes:`Login usuário ${user.login} perfil ${user.perfil}`});
