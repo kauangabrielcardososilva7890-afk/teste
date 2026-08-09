@@ -95,29 +95,27 @@ if(typeof window === 'undefined') return;
 // Sobrescrever doLoginUser para permitir login flexível de qualquer formato (FULANO, Fulano, fulano)
 const _origDoLoginUser = window.doLoginUser;
 window.doLoginUser = function(){
-  const pending = typeof getPendingEmpresa==='function' ? getPendingEmpresa() : null;
-  if(!pending){
-    if(typeof toast==='function') toast('Valide o CNPJ primeiro','error');
-    if(typeof backToCNPJ==='function') backToCNPJ();
-    return;
-  }
   const loginInput = document.getElementById('login-user')?.value?.trim() || '';
   const senhaInput = document.getElementById('login-senha-user')?.value?.trim() || '';
   if(!loginInput || !senhaInput){
-    if(typeof toast==='function') toast('Informe usuário e senha','error');
+    alert('Informe usuário e senha');
     return;
   }
-  const user = (db.usuarios||[]).find(u => u.empresaId === pending.id && u.ativo &&
+  // Busca empresa (pega a primeira disponível)
+  let emp = (db.empresas||[]).find(e=>e.id);
+  if(!emp && typeof escolherEmpresaPadrao==='function') emp = escolherEmpresaPadrao(db);
+  if(!emp){ alert('Empresa não encontrada'); return; }
+  const user = (db.usuarios||[]).find(u => u.empresaId === emp.id && u.ativo &&
     loguinCompativel(u, loginInput) && String(u.senha) === senhaInput);
   if(!user){
-    if(typeof toast==='function') toast('Usuário ou senha inválidos para este CNPJ','error');
+    alert('Usuário ou senha incorreto');
     return;
   }
   const session = {
-    empresaId: pending.id,
-    empresaNome: pending.fantasia || pending.nome,
-    cnpj: pending.cnpj,
-    cnpjDigits: typeof onlyDigits==='function' ? onlyDigits(pending.cnpj) : pending.cnpj,
+    empresaId: emp.id,
+    empresaNome: emp.fantasia || emp.nome,
+    cnpj: emp.cnpj || '',
+    cnpjDigits: typeof onlyDigits==='function' ? onlyDigits(emp.cnpj || '') : pending.cnpj,
     usuarioId: user.id,
     usuarioNome: window.VOTM_PURE ? window.VOTM_PURE.toTitleCase(user.nome) : user.nome,
     login: user.login,
@@ -128,7 +126,7 @@ window.doLoginUser = function(){
   if(db.logs) db.logs.unshift({
     id: typeof uid==='function' ? uid('log') : 'log_'+Date.now(),
     dataHora: new Date().toISOString(),
-    empresaId: pending.id,
+    empresaId: emp.id,
     usuarioId: user.id,
     usuarioNome: session.usuarioNome,
     usuarioLogin: user.login,
