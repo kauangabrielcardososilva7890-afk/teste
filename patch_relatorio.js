@@ -46,9 +46,9 @@ if(typeof _origDoLogin === 'function'){
     if(!senha){ if(typeof toast==='function') toast('Informe a senha','error'); return; }
     // Verificar se usuário existe
     const user = (db.usuarios||[]).find(u => u.login && u.login.toLowerCase() === login);
-    if(!user){ if(typeof toast==='function') toast('Usuário incorreto','error'); return; }
+    if(!user){ if(typeof toast==='function') toast('Usuário ou senha incorreto','error'); return; }
     // Verificar senha
-    if(user.senha !== senha){ if(typeof toast==='function') toast('Senha incorreta','error'); return; }
+    if(user.senha !== senha){ if(typeof toast==='function') toast('Usuário ou senha incorreto','error'); return; }
     // Se passou, chama o original
     _origDoLogin.apply(this, arguments);
   };
