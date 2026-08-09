@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v5.0.4 — Chamados (relatório do usuário)
+// PATCH v5.0.5 — Chamados (relatório do usuário)
 // 1. Código global sequencial (não por cliente)
 // 2. Contador color opcional com checkbox "não adquirido"
 // 3. Seções destacadas com faixas visuais
@@ -147,5 +147,104 @@ if(typeof _origRenderModalOS === 'function'){
   };
 }
 
-console.log('[DIGICOPY] patch_chamados v5.0.4 carregado');
+console.log('[DIGICOPY] patch_chamados v5.0.5 carregado');
 })();
+
+
+// PDF do chamado com áreas em branco para escrita manual
+window.imprimirChamado = function(id){
+  const sess = getSession(); if(!sess) return;
+  const o = db.os.find(x=>x.id===id && x.empresaId===sess.empresaId);
+  if(!o) return toast('Chamado não encontrado','error');
+  const cli = db.clientes.find(c=>c.id===o.clienteId);
+  const eq = db.equipamentos.find(e=>e.id===o.equipamentoId);
+  const loja = (db.config&&db.config.loja)||{};
+  const finalizado = o.status === 'concluido';
+  
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${o.numero}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px;font-size:12px;color:#333}
+    .header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}
+    .header h1{font-size:18px;color:#0a1e8a;margin:0}
+    .header .loja{text-align:right;font-size:11px}
+    .section{border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px}
+    .section-title{font-size:11px;font-weight:bold;text-transform:uppercase;color:#0a1e8a;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:4px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .field{margin-bottom:6px}
+    .field label{font-size:10px;color:#666;display:block}
+    .field .value{font-weight:bold;font-size:12px}
+    .blank-line{border-bottom:1px dotted #999;min-height:20px;margin:4px 0}
+    .signature{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px}
+    .signature-line{border-top:1px solid #333;padding-top:4px;text-align:center;font-size:10px}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <div class="header">
+    <div><h1>CHAMADO ${o.numero}</h1><div style="font-size:11px;color:#666">${o.tipo} • ${o.prioridade} • ${o.status}</div></div>
+    <div class="loja"><div style="font-weight:bold">${esc(loja.fantasia||loja.nome||'DIGICOPY')}</div><div>${esc(loja.cnpj||'')}</div><div>${esc(loja.telefone||'')}</div></div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">CLIENTE</div>
+    <div class="grid">
+      <div class="field"><label>Cliente</label><div class="value">${esc(cli?.nome||'-')}</div></div>
+      <div class="field"><label>Documento</label><div class="value">${esc(cli?.documento||'-')}</div></div>
+      <div class="field"><label>Telefone</label><div class="value">${esc(cli?.telefone||'-')}</div></div>
+      <div class="field"><label>Endereço</label><div class="value">${esc(cli?.endereco||'-')}</div></div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">IMPRESSORA</div>
+    <div class="grid">
+      <div class="field"><label>Modelo</label><div class="value">${esc(eq?.modelo||'-')}</div></div>
+      <div class="field"><label>Serial</label><div class="value">${esc(eq?.serie||'-')}</div></div>
+      <div class="field"><label>Patrimônio</label><div class="value">${esc(eq?.patrimonio||'-')}</div></div>
+      <div class="field"><label>Local</label><div class="value">${esc(o.local||'-')}</div></div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">MOTIVO / DEFEITO</div>
+    ${finalizado ? '<div style="font-size:12px">'+esc(o.motivoDefeito||o.descricao||'-')+'</div>' : '<div class="blank-line"></div><div class="blank-line"></div><div class="blank-line"></div>'}
+  </div>
+  
+  <div class="section">
+    <div class="section-title">SERVIÇO EXECUTADO</div>
+    ${finalizado ? '<div style="font-size:12px">'+esc(o.servicoExecutado||'-')+'</div>' : '<div class="blank-line"></div><div class="blank-line"></div><div class="blank-line"></div>'}
+  </div>
+  
+  <div class="section">
+    <div class="section-title">CONTADORES</div>
+    <div class="grid">
+      <div class="field"><label>Contador Preto</label><div class="value">${o.contadorPB||'_____'}</div></div>
+      <div class="field"><label>Contador Color</label><div class="value">${o.contadorColorNA?'N/A':(o.contadorColor||'_____')}</div></div>
+    </div>
+  </div>
+  
+  ${finalizado ? '' : `
+  <div class="section">
+    <div class="section-title">DATA DE EXECUÇÃO</div>
+    <div class="blank-line"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">PRODUTOS / PEÇAS UTILIZADAS</div>
+    <div class="blank-line"></div><div class="blank-line"></div><div class="blank-line"></div>
+  </div>`}
+  
+  <div class="signature">
+    <div><div class="signature-line">Técnico</div></div>
+    <div><div class="signature-line">Cliente</div></div>
+  </div>
+  
+  <div style="margin-top:15px;font-size:9px;color:#999;text-align:center">
+    ${esc(loja.fantasia||'DIGICOPY')} • ${esc(loja.cnpj||'')} • ${esc(loja.telefone||'')} • ${esc(loja.email||'')}
+  </div>
+  </body></html>`;
+  
+  const win = window.open('', '_blank');
+  if(win){
+    win.document.write(html);
+    win.document.close();
+    setTimeout(()=>win.print(), 500);
+  }
+};
