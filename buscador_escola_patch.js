@@ -63,15 +63,13 @@ async function sync(opt={}){
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
     if(login.data){log('Resposta login: '+JSON.stringify(login.data).substring(0,200))}
     if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||''),pct:0};render();return login}
-    const ld=login.data||{};
-    const tk=ld.token||ld.access_token||ld.accessToken||ld.jwt||ld.data?.token||ld.data?.access_token||ld.result?.token||ld.auth?.token||'';
-    log('Token: '+(tk?'obtido ('+tk.length+' chars)':'vazio'));
+    log('Autenticado via sessão (cookies). Baixando orçamentos...');
     let tot=0,totIt=0,err=0,pg=1;const ids=[];
     while(pg<=120){
       window.__esSt={msg:`Página ${pg}...`,pct:Math.min(95,10+pg)};if(pg%2===1)render();
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
-      const r=await api('GET',u.toString(),null,tk);
+      const r=await api('GET',u.toString(),null,'');
       if(!r.ok){err++;log('Erro página '+pg+': '+(r.error||''));break}
       const raw=r.data;
       const list=Array.isArray(raw)?raw:(raw&&Array.isArray(raw.data)?raw.data:[]);
@@ -84,7 +82,7 @@ async function sync(opt={}){
         for(let ip=1;ip<=50;ip++){
           const p=new URL(API_BASE+'/budget-item/by-subprogram/'+encodeURIComponent(o.idSubprogram||'')+'/by-school/'+encodeURIComponent(o.idSchool||'')+'/by-budget/'+encodeURIComponent(o.idBudget||o.id||''));
           p.searchParams.set('page',String(ip));p.searchParams.set('limit','100');
-          const ir=await api('GET',p.toString(),null,tk);if(!ir.ok){err++;break}
+          const ir=await api('GET',p.toString(),null,'');if(!ir.ok){err++;break}
           const items=Array.isArray(ir.data)?ir.data:(ir.data&&(ir.data.data||ir.data.content||ir.data.items||ir.data.results)||[]);
           if(!items.length)break;
           const st2=store();st2.it=st2.it.filter(i=>String(i.oid)!==String(o.id));db.escolaIt=st2.it;

@@ -258,8 +258,11 @@ function mapFbType(typeNum){
 
 // ──────────────────────────────────────────────
 // BUSCADOR ESCOLA IPC — chamada HTTP sem CORS no Electron
+// Mantém cookies/sessão entre requisições (como requests.Session do Python)
 // ──────────────────────────────────────────────
 function registerEscolaIPC(){
+  const escolaCookies = new Map(); // cookie store for session persistence
+  
   ipcMain.handle('escola:request', async (_evt, req) => {
     const method = String((req && req.method) || 'GET').toUpperCase();
     const url = String((req && req.url) || '');
@@ -271,20 +274,38 @@ function registerEscolaIPC(){
       try{
         const headers = { 'Content-Type':'application/json', 'Accept':'application/json' };
         if(req && req.token) headers.Authorization = 'Bearer ' + String(req.token);
-        if(req && req.cookie) headers.Cookie = String(req.cookie);
+        // Build cookie header from stored cookies
+        const cookieParts = [];
+        for(const [k,v] of escolaCookies) cookieParts.push(k+'='+v);
+        if(req && req.cookie) cookieParts.push(String(req.cookie));
+        if(cookieParts.length) headers.Cookie = cookieParts.join('; ');
         const resp = await fetch(url, { method, headers, body: req && req.body ? JSON.stringify(req.body) : undefined });
+        // Store any Set-Cookie headers
+        const setCookies = typeof resp.headers.getSetCookie === 'function' ? resp.headers.getSetCookie() : [];
+        for(const sc of setCookies){
+          const m = String(sc).match(/^([^=]+)=([^;]*)/);
+          if(m) escolaCookies.set(m[1], m[2]);
+        }
+        // Also check single set-cookie
+        const singleCookie = resp.headers.get('set-cookie');
+        if(singleCookie && !setCookies.length){
+          const m = String(singleCookie).match(/^([^=]+)=([^;]*)/);
+          if(m) escolaCookies.set(m[1], m[2]);
+        }
         const text = await resp.text();
         let data = null;
         try{ data = text ? JSON.parse(text) : null; }catch(e){ data = text; }
-        const cookies = typeof resp.headers.getSetCookie === 'function' ? resp.headers.getSetCookie() : (resp.headers.get('set-cookie') ? [resp.headers.get('set-cookie')] : []);
-        if(resp.ok) return { ok:true, status:resp.status, data, cookies };
+        if(resp.ok) return { ok:true, status:resp.status, data, cookies: setCookies };
         lastErr = (data && data.message) || text || resp.statusText;
-        if(![429,500,502,503,504].includes(resp.status)) return { ok:false, status:resp.status, error:lastErr, data, cookies };
+        if(![429,500,502,503,504].includes(resp.status)) return { ok:false, status:resp.status, error:lastErr, data, cookies: setCookies };
       }catch(e){ lastErr = e.message || String(e); }
       await new Promise(r => setTimeout(r, 700 * (tent + 1)));
     }
     return { ok:false, error:lastErr || 'Falha na comunicação com a API' };
   });
+  
+  // Clear cookies on app quit
+  ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
 }
 
 // ──────────────────────────────────────────────
