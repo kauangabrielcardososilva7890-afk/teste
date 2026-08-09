@@ -79,6 +79,7 @@
       "main.js",
       "preload.js",
       "logo.png",
+      "logo_2.png",
       "assets/icon.ico"
     ],
     "win": {
