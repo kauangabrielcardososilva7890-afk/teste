@@ -102,7 +102,9 @@ function renderLoginDireto(emp){
   const digitando=active && (active.id==='login-user'||active.id==='login-senha-user');
   const loginAtual=document.getElementById('login-user')?.value || '';
   const senhaAtual=document.getElementById('login-senha-user')?.value || '';
-  if(box.dataset.loginDiretoOk==='1'){
+  // força recriar para garantir B (deleta A)
+  box.removeAttribute('data-login-direto-ok');
+  if(false && box.dataset.loginDiretoOk==='1'){
     box.classList.remove('hidden');
     box.style.display='block';
     box.style.pointerEvents='auto';
@@ -124,9 +126,9 @@ function renderLoginDireto(emp){
     </div>
     <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Informe usuário e senha do sistema antigo ou do ERP.</p></div>
     <form id="login-direto-form" class="space-y-4" onsubmit="event.preventDefault(); doLoginUser();">
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Usuário / Login</label><input id="login-user" autocomplete="username" value="${loginAtual || (primeiro?escHtml(primeiro.login||''):'')}" placeholder="ex: KAUAN" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário</label><div class="relative"><input id="login-senha-user" autocomplete="current-password" value="${senhaAtual?escHtml(senhaAtual):''}" type="password" placeholder="••••••••" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-      <button type="submit" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no ERP</button>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">USUÁRIO / LOGIN</label><input id="login-user" autocomplete="username" value="" placeholder="" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">SENHA USUÁRIO</label><div class="relative"><input id="login-senha-user" autocomplete="current-password" value="" type="password" placeholder="" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
+      <button type="submit" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
     </form>`;
   const u=document.getElementById('login-user'); const sp=document.getElementById('login-senha-user');
   if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
@@ -141,7 +143,7 @@ function estilizarLogin(){
   st.textContent=`
     #login-screen{pointer-events:auto!important;}
     #login-screen > div:first-child{display:flex!important;align-items:center!important;justify-content:center!important;padding:30px!important;}
-    #login-screen > div:first-child img{width:min(520px,78vw)!important;height:auto!important;max-height:62vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
+    #login-screen > div:first-child img{width:min(600px,82vw)!important;height:auto!important;max-height:68vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
     /* logo_2 keep original size */
     #login-step-cnpj{display:none!important;}
     #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}

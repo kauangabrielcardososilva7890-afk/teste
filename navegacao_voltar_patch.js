@@ -71,6 +71,25 @@
     {tabs:['ko-tab-geral','ko-tab-finais'], panels:['ko-painel-geral','ko-painel-finais']},
   ];
   function clickPrevTab(){
+    // DEBUG: try history first
+    if(tabHistory.length>=2){
+      const prev = tabHistory[tabHistory.length-2];
+      // remove current
+      tabHistory.pop();
+      for(const g of GRUPOS){
+        const idx = g.tabs.indexOf(prev);
+        if(idx>=0){
+          const btn=document.getElementById(g.tabs[idx]);
+          if(btn && !btn.classList.contains('hidden')){ btn.click(); return true; }
+        }
+        const pIdx = g.panels.indexOf(prev);
+        if(pIdx>=0){
+          const tabId=g.tabs[pIdx];
+          const btn=document.getElementById(tabId);
+          if(btn){ btn.click(); return true; }
+        }
+      }
+    }
     // primeiro tenta histórico real de abas
     if(tabHistory.length>=2){
       const atual = tabHistory[tabHistory.length-1];
@@ -229,3 +248,5 @@
   if(origRC) window.renderConfig = function(){ const r=origRC.apply(this,arguments); setTimeout(garantirEtiquetas7x18, 250); return r; };
   console.log('[DIGICOPY] navegacao_voltar_patch v2 carregado');
 })();
+
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); if(typeof toast==='function') toast('ESC', 'info'); const m=document.getElementById('modal-root'); if(m && !m.classList.contains('hidden')) voltarOuFechar(); }}, true);
