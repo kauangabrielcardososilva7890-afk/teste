@@ -41,7 +41,7 @@ function instalarCssMenuLimpo(){
   st.textContent=`
     [data-dynamic-category], .dynamic-menu-heading, #nav-dinamico, #nav-dinamico-label { display:none!important; }
     [data-nav^="mod_"] { display:none!important; }
-    [data-nav="migrados"] { display:flex!important; }
+    [data-nav="migrados"] { display:none!important; }
   `;
   document.head.appendChild(st);
 }
@@ -73,7 +73,9 @@ if(typeof MutationObserver!=='undefined'){
 
 // 3) Dashboard limpo: não usa legado/migração para inflar indicadores.
 function ehNovoOperacional(x){ return x && !x.origemMigracao && !/migr/i.test(txt(x.criadoPor||x.origem||x.criadoPorNome)); }
-window.renderDashboard=function(){
+window._origRenderDashboard = window.renderDashboard;
+window.renderDashboard=function(){ if(window._origRenderDashboard && !window.__forceDashboardLimpo) return window._origRenderDashboard();
+
   const s=getSess(); if(!s) return;
   const view=document.getElementById('view-dashboard')|| (typeof ensureView==='function'?ensureView('dashboard'):null); if(!view) return;
   const ini=(db.config&&db.config.dashboardInicioEm)||new Date().toISOString();
@@ -103,7 +105,6 @@ window.renderDashboard=function(){
         <button onclick="navigateTo('clientes')" class="neo-btn"><i class="ph ph-users"></i>Clientes</button>
         <button onclick="navigateTo('contratos')" class="neo-btn"><i class="ph ph-file-text"></i>Contratos</button>
         <button onclick="navigateTo('manutencao')" class="neo-btn"><i class="ph ph-wrench"></i>Chamados</button>
-        <button onclick="navigateTo('migrados')" class="neo-btn"><i class="ph ph-database"></i>Dados migrados</button>
       </div>
     </div>
   </div>`;

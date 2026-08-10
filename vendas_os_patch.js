@@ -108,6 +108,26 @@ window.novaVenda = function(){
   __vosCliIdx = null; __vosProdIdx = null; // reconstrói os índices de busca com os dados atuais
   window.__vosForm = vosNovoForm();
   const f = window.__vosForm;
+  // reset vendas seq se gap grande (pedido extra2: reiniciar do 1)
+(function(){
+  try{
+    const sess = typeof getSession==='function'?getSession():null;
+    if(!sess) return;
+    const vendas = (db.vendas||[]).filter(v=>v.empresaId===sess.empresaId);
+    const maxNum = Math.max(0, ...vendas.map(v=>{const m=String(v.numero||'').match(/(\d+)(?!.*\d)/); return m?parseInt(m[1]):0}));
+    const qtd = vendas.length;
+    // se max > qtd+50 => renumera do 1 e reseta seq
+    if(maxNum > qtd + 50 && qtd < 100){
+      const ord=[...vendas].sort((a,b)=> new Date(a.data||a.criadoEm||0)-new Date(b.data||a.criadoEm||0));
+      ord.forEach((v,i)=>{ v.numero=String(i+1); });
+      if(db.config && db.config.seq){
+        const key='venda_'+sess.empresaId;
+        db.config.seq[key]=ord.length+1;
+        try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+      }
+    }
+  }catch(e){}
+})();
   f.codigo = window.proximoNumeroSimples('venda', db.vendas, sess.empresaId);
   const box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
@@ -414,6 +434,13 @@ window.vosAddItem = function(){
   const descTxt = (document.getElementById('vos-prod-search').value||'').trim();
   const p = f.produtoSel;
   if(!p && !descTxt) return toast('Selecione um produto ou escreva a descrição','error');
+  // bloqueio estoque
+  if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+    const est = Number(p.estoque||0);
+    const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
+    if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
+    if(qtd>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
+  }
   const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
   const preco = parseFloat(document.getElementById('vos-item-vunit').value)||0;
   const desc = parseFloat(document.getElementById('vos-item-desc').value)||0;

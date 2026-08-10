@@ -375,6 +375,43 @@ window.handleTopSearchOperacional = function(){
 function produtoCodigo(p){
   return p.codigo ?? p.sku ?? p.id ?? '';
 }
+function _getSeqProduto(empresaId){
+  db._seq = db._seq || {};
+  db._seq.produto = db._seq.produto || {};
+  const key = empresaId || 'global';
+  if(db._seq.produto[key]==null){
+    const prods = (db.produtos||[]).filter(pr=>pr.empresaId===empresaId);
+    // se tiver codigos altos tipo 8k mas poucos produtos, renumera do 1
+    let max = 0;
+    prods.forEach(pr=>{
+      const n = parseInt(String(pr.sku||pr.codigo||'').replace(/\D/g,''))||0;
+      if(n>max) max=n;
+    });
+    // se max muito maior que quantidade (ex: 8000 com 10 produtos), renumera
+    if(max > prods.length + 50){
+      const ordenados = [...prods].sort((a,b)=> new Date(a.criadoEm||0) - new Date(b.criadoEm||0));
+      ordenados.forEach((pr,i)=>{ pr.sku = String(i+1); pr.codigo = String(i+1); });
+      max = ordenados.length;
+      if(typeof saveSafe==='function') try{saveSafe();}catch(e){}
+    }
+    db._seq.produto[key] = max + 1;
+    if(typeof saveSafe==='function') try{saveSafe();}catch(e){}
+  }
+  return db._seq.produto[key];
+}
+function peekCodigoProduto(empresaId){
+  return String(_getSeqProduto(empresaId));
+}
+function consumirCodigoProduto(empresaId){
+  db._seq = db._seq || {};
+  db._seq.produto = db._seq.produto || {};
+  const key = empresaId || 'global';
+  const cod = _getSeqProduto(empresaId);
+  db._seq.produto[key] = cod + 1;
+  if(typeof saveSafe==='function') try{saveSafe();}catch(e){}
+  return String(cod);
+}
+
 
 function produtoCategoriaOptions(selected){
   const opts = [...new Set([...CATEGORIAS_PRODUTO, ...((db.produtos || []).map(p => categoriaUnificada(p.categoria))).filter(Boolean)])];
@@ -473,7 +510,7 @@ window.renderProdutos = function(){
             <tbody class="divide-y">
               ${vis.map(p => {
                 const isLow = estoqueBaixoEstrito(p.estoque, p.estoqueMin);
-                return `<tr class="hover:bg-slate-50 ${isLow ? 'bg-red-50/40' : ''}">
+                return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
                   <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-[#0a1e8a]">${html(produtoCodigo(p))}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold text-[13px]">${html(p.nome || p.descricao || '')}</p><p class="text-[11px] text-slate-500">Marca: ${html(p.fabricante || '-')} • Criado por ${html(p.criadoPorNome || '-')}</p></td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${html(categoriaUnificada(p.categoria))}</span></td>
@@ -512,7 +549,7 @@ window.renderModalProduto = function(id){
 
       <div id="kp-prod-dados" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Código (automático)</label><input id="kp-prd-sku" value="${isEdit ? html(produtoCodigo(p)) : String(((db.produtos||[]).filter(pr=>pr.empresaId===sess.empresaId).map(pr=>parseInt(String(pr.sku||'').replace(/\D/g,''))||0).reduce((a,b)=>Math.max(a,b),0))+1)}" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-100 font-mono cursor-not-allowed"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Código (automático)</label><input id="kp-prd-sku" value="${isEdit ? html(produtoCodigo(p)) : peekCodigoProduto(sess.empresaId)}" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-100 font-mono cursor-not-allowed"></div>
           <div class="md:col-span-2"><label class="block font-bold text-slate-600 mb-1">Tipo de Cadastro / Categoria</label><select id="kp-prd-cat" class="w-full h-10 px-3 rounded-xl border font-semibold">${produtoCategoriaOptions(cat)}</select></div>
         </div>
         <div><label class="block font-bold text-slate-600 mb-1">Cadastrar novo tipo/categoria (opcional)</label><input id="kp-prd-cat-nova" class="w-full h-10 px-3 rounded-xl border" placeholder="Se preencher aqui, será usado no lugar da lista"></div>
@@ -577,7 +614,7 @@ window.salvarProdutoOperacional = function(id){
   const categoria = categoriaUnificada(catNova || document.getElementById('kp-prd-cat')?.value || 'Produto');
   const payload = {
     empresaId: sess.empresaId,
-    sku: document.getElementById('kp-prd-sku')?.value?.trim() || uidSafe('prd'),
+    sku: (id ? (document.getElementById('kp-prd-sku')?.value?.trim() || uidSafe('prd')) : consumirCodigoProduto(sess.empresaId)),
     nome,
     descricao: nome,
     categoria,

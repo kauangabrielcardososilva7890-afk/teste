@@ -307,6 +307,12 @@
     };
     window.selectProdutoVenda = function(id){
       const p = db.produtos.find(x=>x.id===id); if(!p) return;
+      if(p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+        const est = Number(p.estoque||0);
+        let existingQtd = (window.itensTemp.find(i=>i.produtoId===id)?.qtd||0);
+        if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
+        if(existingQtd+1>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
+      }
       // verificar se já existe nos itensTemp
       let existing = window.itensTemp.find(i=>i.produtoId===id);
       if(existing){ existing.qtd++; existing.subtotal = existing.qtd*existing.preco; }
@@ -343,6 +349,13 @@
     };
     window.alterarQtdItem = function(idx,delta){
       const it = window.itensTemp[idx]; if(!it) return;
+      if(delta>0){
+        const p = db.produtos.find(x=>x.id===it.produtoId);
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+          const est = Number(p.estoque||0);
+          if(it.qtd+1>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
+        }
+      }
       it.qtd += delta;
       if(it.qtd<=0){ window.itensTemp.splice(idx,1); }
       else{ it.subtotal = it.qtd*it.preco; }
