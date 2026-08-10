@@ -73,7 +73,9 @@ if(typeof MutationObserver!=='undefined'){
 
 // 3) Dashboard limpo: não usa legado/migração para inflar indicadores.
 function ehNovoOperacional(x){ return x && !x.origemMigracao && !/migr/i.test(txt(x.criadoPor||x.origem||x.criadoPorNome)); }
-window.renderDashboard=function(){
+window._origRenderDashboard = window.renderDashboard;
+window.renderDashboard=function(){ if(window._origRenderDashboard && !window.__forceDashboardLimpo) return window._origRenderDashboard();
+
   const s=getSess(); if(!s) return;
   const view=document.getElementById('view-dashboard')|| (typeof ensureView==='function'?ensureView('dashboard'):null); if(!view) return;
   const ini=(db.config&&db.config.dashboardInicioEm)||new Date().toISOString();

@@ -18,6 +18,22 @@
     return origNav ? origNav.apply(this, arguments) : null;
   };
 
+  const tabHistory = window._tabHistory = window._tabHistory || [];
+  // wrap mudarAba para registrar histórico
+  ['mudarAbaProdutoOperacional','mudarAbaContratoOperacional','mudarAbaChamadoOperacional','vosSetAba'].forEach(fn=>{
+    const orig = window[fn];
+    if(orig && !orig.__wrapped){
+      window[fn] = function(...args){
+        const cur = args[0];
+        const last = tabHistory[tabHistory.length-1];
+        if(last !== cur) tabHistory.push(cur);
+        if(tabHistory.length>20) tabHistory.shift();
+        return orig.apply(this, args);
+      };
+      window[fn].__wrapped=true;
+    }
+  });
+  // grupos conhecidos de abas
   // grupos conhecidos de abas
   const GRUPOS = [
     {tabs:['kp-tab-prod-dados','kp-tab-prod-estoque','kp-tab-prod-nf'], panels:['kp-prod-dados','kp-prod-estoque','kp-prod-nf']},

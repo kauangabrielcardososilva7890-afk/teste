@@ -120,11 +120,11 @@
       + '<div class="flex gap-2"><div class="flex-1 relative"><i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="etq-busca-input" onkeydown="if(event.key===\'Enter\') buscarVendasPorEtiqueta()" placeholder="Ex: 000123, CART-001..." class="w-full h-11 pl-10 pr-3 rounded-xl border bg-white text-[13px]"></div><button onclick="buscarVendasPorEtiqueta()" class="h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[13px]">Buscar</button></div>'
       + '<div id="etq-busca-result" class="hidden mt-3 rounded-xl border bg-slate-50 p-3"></div>';
     // insere após o primeiro grid de KPIs ou no topo
-    const container = view.querySelector('.space-y-6') || view;
-    // insere após header
-    const header = container.firstElementChild;
-    if(header && header.nextSibling) header.parentNode.insertBefore(box, header.nextSibling);
-    else container.prepend(box);
+    // injeta como irmão de view-dashboard para não ser apagado no re-render
+    const main = document.querySelector('#app-shell main .flex-1') || view.parentElement;
+    if(main && !document.getElementById('etq-busca-box')){
+      view.parentElement.insertBefore(box, view);
+    }
   }
 
   // tenta injetar quando dashboard renderiza
