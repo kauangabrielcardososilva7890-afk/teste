@@ -68,11 +68,13 @@
       }
       const prev = stack.pop();
       if(prev) setTimeout(()=> origNav(prev), 40);
+      // sem histórico não volta ao Início
       return;
     }
     const prev = stack.pop();
     if(prev) origNav(prev);
-    else origNav('dashboard');
+    // se não tem histórico, não faz nada (não vai para Início)
+    else { /* fica onde está */ }
   }
   window.voltarUmaAba = voltarOuFechar;
 
