@@ -18,38 +18,55 @@
     return origNav ? origNav.apply(this, arguments) : null;
   };
 
-  function findTabs(){
-    const root = document.getElementById('modal-root');
-    if(!root || root.classList.contains('hidden')) return null;
-    const btns = Array.from(root.querySelectorAll('[id^="kc-tab-"],[id^="ko-tab-"],[id^="kl-tab-"],[id^="kp-tab-"],[id*="tab-"]')).filter(b=> b.offsetParent!==null || b.getBoundingClientRect().width>0);
-    // fallback: procura botões que parecem aba (border-b-2)
-    if(btns.length<2){
-      const alt = Array.from(root.querySelectorAll('button')).filter(b=> /Dados|Contato|Endere|Impressora|Geral|Finais|Detalhes|Estoque|NF|Itens|Ordem/i.test(b.textContent||''));
-      if(alt.length>=2) return alt.slice(0,6);
-    }
-    return btns.length>=2 ? btns : null;
-  }
-  function activeTab(btns){
-    for(const b of btns){
-      if(b.classList.contains('border-[#0a1e8a]') || b.classList.contains('text-[#0a1e8a]') || b.classList.contains('border-[#0a1e8a]')) return b;
-    }
-    // tenta pelo painel visível
-    const panels = Array.from(document.querySelectorAll('[id^="kc-painel-"],[id^="ko-painel-"],[id^="kl-"],[id^="kp-prod-"]'));
-    for(const p of panels){
-      if(!p.classList.contains('hidden')){
-        const id = p.id.replace('painel-','tab-').replace('kc-','kc-tab-').replace('ko-','ko-tab-');
-        const btn = document.getElementById(id);
-        if(btn) return btn;
-      }
-    }
-    return btns[0]||null;
-  }
+  // grupos conhecidos de abas
+  const GRUPOS = [
+    {tabs:['kp-tab-prod-dados','kp-tab-prod-estoque','kp-tab-prod-nf'], panels:['kp-prod-dados','kp-prod-estoque','kp-prod-nf']},
+    {tabs:['kc-tab-dados','kc-tab-contato','kc-tab-endereco','kc-tab-impressoras'], panels:['kc-painel-dados','kc-painel-contato','kc-painel-endereco','kc-painel-impressoras']},
+    {tabs:['ko-tab-geral','ko-tab-finais','ko-tab-detalhes'], panels:['ko-painel-geral','ko-painel-finais','ko-painel-detalhes']},
+    {tabs:['vos-tab-itens','vos-tab-os'], panels:['vos-aba-itens','vos-aba-os']},
+    {tabs:['ko-tab-geral','ko-tab-finais'], panels:['ko-painel-geral','ko-painel-finais']},
+  ];
   function clickPrevTab(){
-    const btns = findTabs();
-    if(!btns || btns.length<2) return false;
-    const cur = activeTab(btns);
-    const idx = btns.indexOf(cur);
-    if(idx>0){ btns[idx-1].click(); return true; }
+    const root=document.getElementById('modal-root');
+    if(!root || root.classList.contains('hidden')) return false;
+    for(const g of GRUPOS){
+      const panels = g.panels.map(id=>document.getElementById(id)).filter(Boolean);
+      if(!panels.length) continue;
+      // este grupo está presente no modal atual?
+      const presente = panels.some(p=> root.contains(p));
+      if(!presente) continue;
+      // acha painel visível
+      let idxVis = -1;
+      for(let i=0;i<panels.length;i++){
+        const p=panels[i];
+        if(p && !p.classList.contains('hidden') && p.offsetParent!==null) { idxVis=i; break; }
+        // fallback: sem hidden mas display não none
+        if(p && !p.classList.contains('hidden')) { idxVis=i; break; }
+      }
+      if(idxVis===-1){
+        // tenta por botão ativo
+        const tabs=g.tabs.map(id=>document.getElementById(id)).filter(Boolean);
+        for(let i=0;i<tabs.length;i++){
+          const b=tabs[i];
+          if(b && (b.classList.contains('border-[#0a1e8a]')||b.classList.contains('text-[#0a1e8a]'))) { idxVis=i; break; }
+        }
+      }
+      if(idxVis>0){
+        const prevTab=document.getElementById(g.tabs[idxVis-1]);
+        if(prevTab){ prevTab.click(); return true; }
+      }
+      if(idxVis===0) return false; // primeira aba -> fechar
+      if(idxVis===-1) return false;
+    }
+    // fallback genérico: procura qualquer tab visível
+    const allTabs = Array.from(root.querySelectorAll('button[id*="tab-"]')).filter(b=> root.contains(b));
+    if(allTabs.length>=2){
+      let idxVis=-1;
+      for(let i=0;i<allTabs.length;i++){
+        if(allTabs[i].classList.contains('border-[#0a1e8a]')||allTabs[i].classList.contains('text-[#0a1e8a]')) idxVis=i;
+      }
+      if(idxVis>0){ allTabs[idxVis-1].click(); return true; }
+    }
     return false;
   }
 
