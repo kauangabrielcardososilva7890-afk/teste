@@ -512,7 +512,7 @@ window.renderModalProduto = function(id){
 
       <div id="kp-prod-dados" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label class="block font-bold text-slate-600 mb-1">Código / SKU</label><input id="kp-prd-sku" value="${html(produtoCodigo(p))}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono"></div>
+          <div><label class="block font-bold text-slate-600 mb-1">Código (automático)</label><input id="kp-prd-sku" value="${isEdit ? html(produtoCodigo(p)) : String(((db.produtos||[]).filter(pr=>pr.empresaId===sess.empresaId).map(pr=>parseInt(String(pr.sku||'').replace(/\D/g,''))||0).reduce((a,b)=>Math.max(a,b),0))+1)}" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-100 font-mono cursor-not-allowed"></div>
           <div class="md:col-span-2"><label class="block font-bold text-slate-600 mb-1">Tipo de Cadastro / Categoria</label><select id="kp-prd-cat" class="w-full h-10 px-3 rounded-xl border font-semibold">${produtoCategoriaOptions(cat)}</select></div>
         </div>
         <div><label class="block font-bold text-slate-600 mb-1">Cadastrar novo tipo/categoria (opcional)</label><input id="kp-prd-cat-nova" class="w-full h-10 px-3 rounded-xl border" placeholder="Se preencher aqui, será usado no lugar da lista"></div>

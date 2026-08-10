@@ -62,8 +62,8 @@ function numeroDaEtiqueta(v){
   return inteiro(grupos[grupos.length-1],0);
 }
 function maiorNumeroEtiqueta(valores){ return (valores||[]).reduce((m,v)=>Math.max(m,numeroDaEtiqueta(typeof v==='object'?v.etiqueta:v)),0); }
-const ETQ_COLUNAS=12;
-const ETQ_LINHAS=27;
+const ETQ_COLUNAS=7;
+const ETQ_LINHAS=18;
 const ETQ_CAPACIDADE=ETQ_COLUNAS*ETQ_LINHAS;
 function gerarSequenciaEtiquetas(inicio, quantidade){
   const ini=Math.max(1,inteiro(inicio,1));
@@ -99,7 +99,7 @@ function aplicarConfiguracoesCartuchos(dbRef, opts={}){
   const maior=maiorNumeroEtiqueta(etiquetas);
   const removidos=removerProdutosCartuchoVazio(dbRef, opts.empresaId);
   cfg.etiquetas={
-    layout:'A4_12X27_MICRO_MAX',
+    layout:'A4_7X18',
     colunas:ETQ_COLUNAS,
     linhas:ETQ_LINHAS,
     larguraMm:16,
@@ -169,7 +169,7 @@ function code39Svg(valor,opt={}){
   return `<svg viewBox="0 0 ${Math.ceil(x+2)} ${height}" preserveAspectRatio="none" aria-label="${code}">${rects}</svg>`;
 }
 function htmlEtiquetas(codigos,opt={}){
-  const c={colunas:ETQ_COLUNAS,linhas:ETQ_LINHAS,larguraMm:16,alturaMm:10,margemSuperiorMm:6,margemEsquerdaMm:6,espacoHorizontalMm:1,espacoVerticalMm:.6,usarCodigoBarras:true,...(opt||{})};
+  const c={colunas:ETQ_COLUNAS,linhas:ETQ_LINHAS,larguraMm:27,alturaMm:14,margemSuperiorMm:6,margemEsquerdaMm:6,espacoHorizontalMm:2,espacoVerticalMm:2,usarCodigoBarras:true,...(opt||{})};
   const css=`@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;color:#0f172a}.folha{padding-top:${c.margemSuperiorMm}mm;padding-left:${c.margemEsquerdaMm}mm;display:grid;grid-template-columns:repeat(${c.colunas},${c.larguraMm}mm);grid-auto-rows:${c.alturaMm}mm;column-gap:${c.espacoHorizontalMm}mm;row-gap:${c.espacoVerticalMm}mm}.etq{width:${c.larguraMm}mm;height:${c.alturaMm}mm;border:0;padding:.15mm;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;page-break-inside:avoid}.titulo{font-size:3.6pt;font-weight:700;line-height:1;margin:0;color:#111;letter-spacing:.02em}.codigo{font-size:5.6pt;font-weight:700;letter-spacing:0;margin:0;line-height:1}.barra{width:8.8mm;height:4.6mm;margin:.1mm auto}.barra svg{width:100%;height:100%;display:block}.obs{display:none}@media print{.etq{border:0}}`;
   const itens=(codigos||[]).map(cod=>`<div class="etq"><div class="titulo">DIGICOPY</div>${c.usarCodigoBarras?`<div class="barra">${code39Svg(cod,{narrow:.26,wide:.7,height:30})}</div>`:''}<div class="codigo">${esc(cod)}</div><div class="obs">cartucho</div></div>`).join('');
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Etiquetas de cartuchos</title><style>${css}</style></head><body><div class="folha">${itens}</div><script>setTimeout(()=>window.print(),250)<\/script></body></html>`;
