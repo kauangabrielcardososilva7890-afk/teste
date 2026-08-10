@@ -41,7 +41,7 @@ function instalarCssMenuLimpo(){
   st.textContent=`
     [data-dynamic-category], .dynamic-menu-heading, #nav-dinamico, #nav-dinamico-label { display:none!important; }
     [data-nav^="mod_"] { display:none!important; }
-    [data-nav="migrados"] { display:flex!important; }
+    [data-nav="migrados"] { display:none!important; }
   `;
   document.head.appendChild(st);
 }
@@ -103,7 +103,6 @@ window.renderDashboard=function(){
         <button onclick="navigateTo('clientes')" class="neo-btn"><i class="ph ph-users"></i>Clientes</button>
         <button onclick="navigateTo('contratos')" class="neo-btn"><i class="ph ph-file-text"></i>Contratos</button>
         <button onclick="navigateTo('manutencao')" class="neo-btn"><i class="ph ph-wrench"></i>Chamados</button>
-        <button onclick="navigateTo('migrados')" class="neo-btn"><i class="ph ph-database"></i>Dados migrados</button>
       </div>
     </div>
   </div>`;

@@ -142,7 +142,7 @@ function estilizarLogin(){
     #login-screen{pointer-events:auto!important;}
     #login-screen > div:first-child{display:flex!important;align-items:center!important;justify-content:center!important;padding:30px!important;}
     #login-screen > div:first-child h1,#login-screen > div:first-child p,#login-screen > div:first-child .relative.z-10.flex,#login-screen > div:first-child span{display:none!important;}
-    #login-screen > div:first-child img{width:min(420px,70vw)!important;height:auto!important;max-height:55vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
+    /* logo_2 keep original size */
     #login-step-cnpj{display:none!important;}
     #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}
     #login-step-user input,#login-step-user button,#login-direto-form{pointer-events:auto!important;}
