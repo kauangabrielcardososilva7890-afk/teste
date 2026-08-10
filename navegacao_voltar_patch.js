@@ -249,4 +249,4 @@
   console.log('[DIGICOPY] navegacao_voltar_patch v2 carregado');
 })();
 
-window.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); if(typeof toast==='function') toast('ESC', 'info'); const m=document.getElementById('modal-root'); if(m && !m.classList.contains('hidden')) voltarOuFechar(); }}, true);
+window.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation();  const m=document.getElementById('modal-root'); if(m && !m.classList.contains('hidden')) voltarOuFechar(); }}, true);

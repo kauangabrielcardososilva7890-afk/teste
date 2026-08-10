@@ -158,6 +158,15 @@ function estilizarLogin(){
   renderLoginDireto(emp);
   limparTopoMenus();
 }
+function deletaAbaOculta(){
+  try{
+    const abaA=document.getElementById('login-step-cnpj');
+    if(abaA) abaA.remove();
+    document.querySelectorAll('[id*="login-step"]').forEach(el=>{ if(el.id!=='login-step-user' && el.style.display==='none') el.remove(); });
+  }catch(e){}
+}
+setTimeout(deletaAbaOculta,50);
+setTimeout(deletaAbaOculta,500);
 function deletaTextoLogin(){
   try{
     const left = document.querySelector('#login-screen > div:first-child');
