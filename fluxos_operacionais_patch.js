@@ -510,7 +510,7 @@ window.renderProdutos = function(){
             <tbody class="divide-y">
               ${vis.map(p => {
                 const isLow = estoqueBaixoEstrito(p.estoque, p.estoqueMin);
-                return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
+                return `<tr data-produto-id="${p.id}" ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
                   <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-[#0a1e8a]">${html(produtoCodigo(p))}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold text-[13px]">${html(p.nome || p.descricao || '')}</p><p class="text-[11px] text-slate-500">Marca: ${html(p.fabricante || '-')} • Criado por ${html(p.criadoPorNome || '-')}</p></td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${html(categoriaUnificada(p.categoria))}</span></td>
