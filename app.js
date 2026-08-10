@@ -412,7 +412,7 @@ function showApp(){
   // init app
   if(typeof initTemplates==='function') initTemplates();
   if(typeof buildNav==='function') buildNav();
-  if(typeof renderDashboard==='function') { renderDashboard(); setTimeout(()=>{ try{renderDashboard();}catch(e){} }, 600); setTimeout(()=>{ try{renderDashboard();}catch(e){} }, 1800); }
+  if(typeof renderDashboard==='function') renderDashboard();
   // v4.9.38: não renderiza telas escondidas no login.
   // As telas carregam somente quando o usuário abre o menu correspondente.
   // Isso evita travar em bases grandes migradas pelo banco antigo.
