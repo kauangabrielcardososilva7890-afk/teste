@@ -75,19 +75,16 @@
     const aberto = modal && !modal.classList.contains('hidden');
     if(aberto){
       if(clickPrevTab()) return;
-      // ultima aba: fecha e volta ao menu
+      // última aba ou sem abas: apenas fecha o modal e permanece na mesma view
       const origClose = window.__origCloseModal || window.closeModal;
-      if(origClose) origClose.call(window);
-      else modal.classList.add('hidden');
-      if(window._lastVendasEntry && (Date.now()-window._lastVendasEntry)<600000){
-        setTimeout(()=> window.navigateTo('vendas'), 40);
-        return;
-      }
-      const prev = stack.pop();
-      if(prev) setTimeout(()=> origNav(prev), 40);
-      // sem histórico não volta ao Início
+      // evita recursão: chama o original diretamente sem passar por nosso wrapper
+      try{
+        if(window.__origCloseModal) window.__origCloseModal.call(window);
+        else modal.classList.add('hidden');
+      }catch(e){ modal.classList.add('hidden'); }
       return;
     }
+    // sem modal: volta ao view anterior da pilha
     const prev = stack.pop();
     if(prev) origNav(prev);
     // se não tem histórico, não faz nada (não vai para Início)
