@@ -399,7 +399,7 @@ function doLoginUser(){
 function showApp(){
   const sess=getSession(); if(!sess) {showLogin(); return;}
   document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('app-shell').classList.remove('hidden');
+  document.getElementById('app-shell').classList.remove('hidden'); document.getElementById('app-shell').style.display='flex';
   document.getElementById('user-name').innerText=sess.usuarioNome;
   document.getElementById('user-perfil').innerText=sess.perfil;
   document.getElementById('user-empresa').innerText=sess.empresaNome;

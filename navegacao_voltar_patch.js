@@ -127,11 +127,9 @@
       }catch(e){ modal.classList.add('hidden'); }
       return;
     }
-    // sem modal: volta ao view anterior da pilha
-    const prev = stack.pop();
-    if(prev) origNav(prev);
-    // se não tem histórico, não faz nada (não vai para Início)
-    else { /* fica onde está */ }
+    // sem modal: NÃO navega (ESC só serve para voltar aba dentro do modal)
+    // fica onde está, não vai para Início
+    return;
   }
   window.voltarUmaAba = voltarOuFechar;
 
