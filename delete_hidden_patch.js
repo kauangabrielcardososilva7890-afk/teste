@@ -1,6 +1,10 @@
 // PATCH delete_hidden - DELETA de vez em vez de ocultar
 (function(){
   function deletarOcultos(){
+    // 1 - texto Sistema Digicopy do login (deleta de vez)
+    document.querySelectorAll('#login-screen h1, #login-screen p, #login-screen span').forEach(el=>{
+      if(/Sistema Digicopy|Vendas, loca|© 2026 DIGICOPY/i.test(el.textContent||'')) el.remove();
+    });
     // Remove elementos que foram apenas ocultados via hidden/display:none mas deveriam ser deletados
     const sel = [
       '[data-nav="migrados"]',

@@ -141,8 +141,7 @@ function estilizarLogin(){
   st.textContent=`
     #login-screen{pointer-events:auto!important;}
     #login-screen > div:first-child{display:flex!important;align-items:center!important;justify-content:center!important;padding:30px!important;}
-    #login-screen > div:first-child h1,#login-screen > div:first-child p,#login-screen > div:first-child .relative.z-10.flex,#login-screen > div:first-child span{display:none!important;}
-    #login-screen > div:first-child img{width:min(420px,70vw)!important;height:auto!important;max-height:55vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
+    #login-screen > div:first-child img{width:min(520px,78vw)!important;height:auto!important;max-height:62vh!important;object-fit:contain!important;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35));}
     /* logo_2 keep original size */
     #login-step-cnpj{display:none!important;}
     #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}
@@ -157,6 +156,21 @@ function estilizarLogin(){
   renderLoginDireto(emp);
   limparTopoMenus();
 }
+function deletaTextoLogin(){
+  try{
+    const left = document.querySelector('#login-screen > div:first-child');
+    if(left){
+      left.querySelectorAll('h1, p').forEach(el=>{
+        if(/Sistema Digicopy|Vendas, loca|© 2026/i.test(el.textContent||'')) el.remove();
+      });
+      left.querySelectorAll('span').forEach(el=>{
+        if(/© 2026/i.test(el.textContent||'')) el.remove();
+      });
+    }
+  }catch(e){}
+}
+setTimeout(deletaTextoLogin, 100);
+setTimeout(deletaTextoLogin, 800);
 function limparTopoMenus(){
   if(typeof document==='undefined') return;
   const inicio=[...document.querySelectorAll('.modern-topnav .module')].find(m=>/^\s*Início/i.test(m.querySelector('button')?.textContent||''));

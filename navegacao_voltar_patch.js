@@ -19,20 +19,29 @@
   };
 
   const tabHistory = window._tabHistory = window._tabHistory || [];
-  // wrap mudarAba para registrar histórico
-  ['mudarAbaProdutoOperacional','mudarAbaContratoOperacional','mudarAbaChamadoOperacional','vosSetAba'].forEach(fn=>{
-    const orig = window[fn];
-    if(orig && !orig.__wrapped){
-      window[fn] = function(...args){
-        const cur = args[0];
-        const last = tabHistory[tabHistory.length-1];
-        if(last !== cur) tabHistory.push(cur);
-        if(tabHistory.length>20) tabHistory.shift();
-        return orig.apply(this, args);
-      };
-      window[fn].__wrapped=true;
-    }
-  });
+  function wrapAbas(){
+    ['mudarAbaProdutoOperacional','mudarAbaContratoOperacional','mudarAbaChamadoOperacional','vosSetAba','mudarAbaChamadoOperacional'].forEach(fn=>{
+      const orig = window[fn];
+      if(orig && !orig.__wrapped){
+        window[fn] = function(...args){
+          const cur = args[0];
+          // empilha aba atual antes de mudar
+          const last = tabHistory[tabHistory.length-1];
+          if(last !== cur) tabHistory.push(cur);
+          if(tabHistory.length>20) tabHistory.shift();
+          // guarda qual aba estava ativa antes
+          const prevAba = document.querySelector('.border-\\[\\#0a1e8a\\]')?.id || '';
+          const res = orig.apply(this, args);
+          return res;
+        };
+        window[fn].__wrapped=true;
+      }
+    });
+  }
+  setTimeout(wrapAbas, 500);
+  setTimeout(wrapAbas, 1500);
+  setTimeout(wrapAbas, 3000);
+  try{ const obsAba=new MutationObserver(()=> wrapAbas()); obsAba.observe(document.body,{childList:true,subtree:true}); }catch(e){}
   // grupos conhecidos de abas
   // grupos conhecidos de abas
   const GRUPOS = [
@@ -43,24 +52,43 @@
     {tabs:['ko-tab-geral','ko-tab-finais'], panels:['ko-painel-geral','ko-painel-finais']},
   ];
   function clickPrevTab(){
+    // primeiro tenta histórico real de abas
+    if(tabHistory.length>=2){
+      const atual = tabHistory[tabHistory.length-1];
+      const prev = tabHistory[tabHistory.length-2];
+      // remove atual do histórico e volta para anterior
+      tabHistory.pop();
+      // procura função que troca para prev
+      for(const g of GRUPOS){
+        if(g.tabs.includes(prev) || g.panels.includes(prev)){
+          const idx = g.tabs.indexOf(prev);
+          if(idx>=0){
+            const btn=document.getElementById(g.tabs[idx]);
+            if(btn){ btn.click(); return true; }
+          }
+          // se prev é panel id, converte para tab
+          const tabId = g.tabs[g.panels.indexOf(prev)];
+          if(tabId){ document.getElementById(tabId)?.click(); return true; }
+        }
+      }
+      // genérico: tenta achar botão com onclick contendo prev
+      const cand=document.querySelector('[onclick*="'+prev+'"]');
+      if(cand){ cand.click(); return true; }
+    }
     const root=document.getElementById('modal-root');
     if(!root || root.classList.contains('hidden')) return false;
     for(const g of GRUPOS){
       const panels = g.panels.map(id=>document.getElementById(id)).filter(Boolean);
       if(!panels.length) continue;
-      // este grupo está presente no modal atual?
       const presente = panels.some(p=> root.contains(p));
       if(!presente) continue;
-      // acha painel visível
       let idxVis = -1;
       for(let i=0;i<panels.length;i++){
         const p=panels[i];
         if(p && !p.classList.contains('hidden') && p.offsetParent!==null) { idxVis=i; break; }
-        // fallback: sem hidden mas display não none
         if(p && !p.classList.contains('hidden')) { idxVis=i; break; }
       }
       if(idxVis===-1){
-        // tenta por botão ativo
         const tabs=g.tabs.map(id=>document.getElementById(id)).filter(Boolean);
         for(let i=0;i<tabs.length;i++){
           const b=tabs[i];
@@ -71,10 +99,9 @@
         const prevTab=document.getElementById(g.tabs[idxVis-1]);
         if(prevTab){ prevTab.click(); return true; }
       }
-      if(idxVis===0) return false; // primeira aba -> fechar
+      if(idxVis===0) return false;
       if(idxVis===-1) return false;
     }
-    // fallback genérico: procura qualquer tab visível
     const allTabs = Array.from(root.querySelectorAll('button[id*="tab-"]')).filter(b=> root.contains(b));
     if(allTabs.length>=2){
       let idxVis=-1;
