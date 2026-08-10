@@ -46,10 +46,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 
 .app-titlebar{box-shadow:none}#app-shell{display:flex;flex-direction:column;min-height:100vh}#app-shell main{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{min-height:calc(100vh - 124px);height:auto;display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:15;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}#app-shell main{padding-bottom:22px;overflow:visible}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}.app-titlebar{position:sticky;top:0;z-index:40}.modern-topnav{position:relative;top:auto;z-index:35;overflow:visible}.module-menu{z-index:999 !important;}
-/* header-top-fix v2 */
-header, .modern-topnav, .module-row, .module, #app-shell, #app-shell main, .flex-1 { overflow: visible !important; }
-.module { position: relative; }
-.module-menu { z-index: 9999 !important; }
+
 
 
 .modern-topnav{position:relative;top:auto;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
@@ -67,6 +64,10 @@ header, .modern-topnav, .module-row, .module, #app-shell, #app-shell main, .flex
 /* anti-flash login */
 #app-shell.hidden{display:none!important}
 #login-screen:not(.hidden){display:flex!important}
+
+/* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
+.view { scroll-margin-top: 80px; }
+#view-contratos, #view-dashboard, #view-vendas { padding-top: 4px; }
 </style>
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">

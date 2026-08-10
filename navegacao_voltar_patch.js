@@ -131,11 +131,8 @@
 
   document.addEventListener('keydown', (e)=>{
     if(e.key==='Escape'){
-      const m=document.getElementById('modal-root');
-      if(m && !m.classList.contains('hidden')){
-        e.preventDefault(); e.stopImmediatePropagation();
-        voltarUmaAba();
-      }
+      e.preventDefault(); e.stopImmediatePropagation();
+      voltarUmaAba();
     }
   }, true);
 
