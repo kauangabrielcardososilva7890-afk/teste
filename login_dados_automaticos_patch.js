@@ -140,8 +140,6 @@ function estilizarLogin(){
   st.id='login-direto-css';
   st.textContent=`
     #login-screen{pointer-events:auto!important;}
-    #login-screen > div:first-child{display:flex!important;align-items:center!important;justify-content:center!important;padding:30px!important;}
-    #login-screen > div:first-child h1,#login-screen > div:first-child p,#login-screen > div:first-child .relative.z-10.flex,#login-screen > div:first-child span{display:none!important;}
     /* logo_2 keep original size */
     #login-step-cnpj{display:none!important;}
     #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}

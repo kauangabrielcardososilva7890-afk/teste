@@ -1017,22 +1017,7 @@ function renderDashboard(){
   const recOs=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').slice(0,4);
   document.getElementById('list-chamados-recentes').innerHTML=recOs.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); return `<div class="p-4 flex items-center gap-3 hover:bg-slate-50"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-mono text-[10px] font-bold">${o.numero.slice(-4)}</div><div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">${cli?.nome} • ${o.tipo}</p><p class="text-[11.5px] text-slate-500 truncate">por ${o.criadoPorNome||'-'} • ${o.descricao.slice(0,40)}</p></div><span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 uppercase">${o.prioridade}</span></div>`;}).join('')||'<div class="p-8 text-center text-[12px] text-slate-500">Sem chamados</div>';
   const logs=db.logs.filter(l=>l.empresaId===sess.empresaId).slice(0,5);
-  // preserva busca etiqueta se existir
-  const _etqBox = document.getElementById('etq-busca-box');
-  const _etqHTML = _etqBox ? _etqBox.outerHTML : null;
-    document.getElementById('list-alertas').innerHTML=logs.map(l=>`<div class="rounded-xl border p-3 flex gap-3 bg-white hover:bg-slate-50"><div class="w-8 h-8 rounded-lg bg-[#0a1e8a] text-white grid place-items-center text-[12px] font-bold">${initials(l.usuarioNome)}</div><div class="flex-1"><p class="font-semibold text-[12px] leading-tight">${l.usuarioNome} ${l.acao} ${l.entidade}</p><p class="text-[11px] text-slate-500 mt-0.5">${fmtDateTime(l.dataHora)} • ${l.detalhes.slice(0,60)}</p></div></div>`).join('')||'<p class="text-[12px] text-slate-500">Sem logs</p>';
-  if(_etqHTML){
-    setTimeout(()=>{
-      const v=document.getElementById('view-dashboard');
-      if(v && !document.getElementById('etq-busca-box')){
-        const c=v.querySelector('.space-y-6');
-        if(c && c.firstElementChild){
-          const tmp=document.createElement('div'); tmp.innerHTML=_etqHTML;
-          c.insertBefore(tmp.firstElementChild, c.firstElementChild.nextSibling);
-        }
-      }
-    },0);
-  }
+  document.getElementById('list-alertas').innerHTML=logs.map(l=>`<div class="rounded-xl border p-3 flex gap-3 bg-white hover:bg-slate-50"><div class="w-8 h-8 rounded-lg bg-[#0a1e8a] text-white grid place-items-center text-[12px] font-bold">${initials(l.usuarioNome)}</div><div class="flex-1"><p class="font-semibold text-[12px] leading-tight">${l.usuarioNome} ${l.acao} ${l.entidade}</p><p class="text-[11px] text-slate-500 mt-0.5">${fmtDateTime(l.dataHora)} • ${l.detalhes.slice(0,60)}</p></div></div>`).join('')||'<p class="text-[12px] text-slate-500">Sem logs</p>';
 }
 
 // USUARIOS RENDER
