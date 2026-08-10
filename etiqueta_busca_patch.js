@@ -127,10 +127,24 @@
     }
   }
 
+  // mostra só no Início (dashboard), esconde em outros menus
+  function atualizarVisibilidadeEtiqueta(){
+    const box=document.getElementById('etq-busca-box');
+    if(!box) return;
+    const dash=document.getElementById('view-dashboard');
+    const visivel = dash && !dash.classList.contains('hidden');
+    box.style.display = visivel ? 'block' : 'none';
+  }
   // tenta injetar quando dashboard renderiza
   const origRenderDash = window.renderDashboard;
   if(origRenderDash){
-    window.renderDashboard = function(){ const r=origRenderDash.apply(this,arguments); setTimeout(injetarBuscaInicio, 300); return r; };
+    window.renderDashboard = function(){ const r=origRenderDash.apply(this,arguments); setTimeout(()=>{ injetarBuscaInicio(); atualizarVisibilidadeEtiqueta(); }, 300); return r; };
+  }
+  // também observa navegação para esconder/mostrar
+  const origNavEtq = window.navigateTo;
+  if(origNavEtq && !origNavEtq.__etqPatched){
+    window.navigateTo = function(...args){ const r=origNavEtq.apply(this,args); setTimeout(atualizarVisibilidadeEtiqueta, 50); return r; };
+    window.navigateTo.__etqPatched=true;
   }
   // também observa view-dashboard
   try{

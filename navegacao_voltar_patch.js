@@ -38,10 +38,29 @@
       }
     });
   }
+  function seedTabInicial(){
+    const root=document.getElementById('modal-root');
+    if(!root || root.classList.contains('hidden')) return;
+    // detecta qual grupo está no modal e empilha aba inicial se histórico vazio
+    for(const g of GRUPOS){
+      const panels=g.panels.map(id=>document.getElementById(id)).filter(Boolean);
+      if(!panels.some(p=> root.contains(p))) continue;
+      if(tabHistory.length===0){
+        // acha painel visível inicial
+        for(let i=0;i<panels.length;i++) if(!panels[i].classList.contains('hidden')){ tabHistory.push(g.tabs[i]||g.panels[i]); break; }
+      }
+    }
+  }
   setTimeout(wrapAbas, 500);
   setTimeout(wrapAbas, 1500);
   setTimeout(wrapAbas, 3000);
-  try{ const obsAba=new MutationObserver(()=> wrapAbas()); obsAba.observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  try{ const obsAba=new MutationObserver(()=> { wrapAbas(); seedTabInicial(); }); obsAba.observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  // seed ao abrir modal
+  const _origOpenModalNav = window.openModal;
+  if(_origOpenModal && !_origOpenModal.__navPatched){
+    window.openModal = function(...args){ const r=_origOpenModal.apply(this,args); setTimeout(()=>{ wrapAbas(); seedTabInicial(); tabHistory.push('open:'+args[0]); }, 100); return r; };
+    window.openModal.__navPatched=true;
+  }
   // grupos conhecidos de abas
   // grupos conhecidos de abas
   const GRUPOS = [
