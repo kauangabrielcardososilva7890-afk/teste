@@ -15,9 +15,9 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 <style>
 :root{--digi:#0a1e8a;--digi-dark:#08176e;--digi-light:#e8eaf8}
 .bg-indigo-600{background:var(--digi) !important} .hover\:bg-indigo-700:hover{background:var(--digi-dark) !important}
-.text-indigo-600{color:var(--digi) !important} .text-indigo-700{color:var(--digi) !important}
-.bg-indigo-50{background:var(--digi-light) !important} .border-indigo-100{border-color:#c9ceef !important}
-.focus\:border-indigo-200:focus{border-color:#8a93d6 !important} .focus\:ring-indigo-500\/10:focus{--tw-ring-color:rgba(10,30,138,0.12) !important}
+.text-indigo-600{color:var(--digi) !important}.text-indigo-700{color:var(--digi) !important}
+.bg-indigo-50{background:var(--digi-light) !important}.border-indigo-100{border-color:#c9ceef !important}
+.focus\:border-indigo-200:focus{border-color:#8a93d6 !important}.focus\:ring-indigo-500\/10:focus{--tw-ring-color:rgba(10,30,138,0.12) !important}
 .shadow-indigo-500\/20{--tw-shadow-color:rgba(10,30,138,0.2) !important}
 .glass{backdrop-filter:blur(16px)}
 @keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -26,8 +26,6 @@ tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['J
 .animate-fadeIn{animation:fadeIn .3s ease-out}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
 .login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
-
-
 
 .classic-toolbar{background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .classic-toolbar-scroll{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:0 18px}
@@ -44,10 +42,7 @@ body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.sh
 header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
 .classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
 
-
 .app-titlebar{box-shadow:none}#app-shell{display:flex;flex-direction:column;min-height:100vh}#app-shell main{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{min-height:calc(100vh - 124px);height:auto;display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:15;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}#app-shell main{padding-bottom:22px;overflow:visible}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}.app-titlebar{position:sticky;top:0;z-index:40}.modern-topnav{position:relative;top:auto;z-index:35;overflow:visible}.module-menu{z-index:999 !important;}
-
-
 
 .modern-topnav{position:relative;top:auto;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
 .module-row{height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:linear-gradient(180deg,#ffffff,#f8fbff);overflow:visible}
@@ -60,7 +55,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 .neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:calc(100vh - 170px);animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
 
-
 /* anti-flash login */
 #app-shell.hidden{display:none!important}
 #login-screen:not(.hidden){display:flex!important}
@@ -72,34 +66,48 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 </head>
 <body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN SCREEN - SOMENTE LOGO_2 GRANDE CENTRALIZADA -->
 <div id="login-screen" class="fixed inset-0 z-[100] flex">
-  <!-- LEFT PANEL -->
+  <!-- LEFT PANEL - SOMENTE LOGO_2 -->
   <div class="hidden lg:flex w-[52%] login-bg text-white flex-col justify-between p-12 relative overflow-hidden">
     <div class="absolute inset-0 opacity-20 pointer-events-none">
       <div class="absolute -right-32 -top-32 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl"></div>
       <div class="absolute -left-40 bottom-0 w-[700px] h-[700px] rounded-full bg-indigo-400/10 blur-3xl"></div>
     </div>
-    <div class="relative z-10 flex items-center justify-center" style="min-height:280px">
-      <img src="./logo_2.png?v=5.3.8" alt="DIGICOPY" style="width:min(520px,78vw);height:auto;max-height:62vh;object-fit:contain;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35))">
+    <div class="relative z-10 flex items-center justify-center flex-1">
+      <img src="./logo_2.png?v=5.4.0" alt="DIGICOPY" style="width:min(700px,90vw);height:auto;max-height:80vh;object-fit:contain;filter:drop-shadow(0 25px 50px rgba(0,0,0,.40))">
     </div>
   </div>
-  <!-- RIGHT PANEL - FORMS -->
+  
+  <!-- RIGHT PANEL - SOMENTE CAMPOS DE LOGIN -->
   <div class="flex-1 bg-white flex flex-col">
-    <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo_2.png?v=5.3.5" class="h-9 w-auto"></div>
+    <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]">
+      <img src="./logo_2.png?v=5.4.0" class="h-9 w-auto" style="filter:drop-shadow(0 10px 20px rgba(0,0,0,.40))">
+    </div>
     <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
       <div class="w-full max-w-[400px]">
-        <!-- LOGIN DIRETO - SEM CNPJ -->
-        <div id="login-step-user">
-          <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#eef2ff] border border-[#c9ceef]"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[13px]">DG</div><div><p class="font-bold text-[13px] leading-tight">Digicopy</p><p class="text-[11px] text-slate-500">Acesso por usuário</p></div><span class="ml-auto w-2 h-2 rounded-full bg-emerald-500"></span></div>
-          <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Informe usuário e senha do sistema antigo ou do Sistema.</p></div>
-          <div class="space-y-4">
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">USUÁRIO / LOGIN</label><input id="login-user" placeholder="" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
-            <div><label class="text-[11px] font-bold uppercase text-slate-500">SENHA USUÁRIO</label><div class="relative"><input id="login-senha-user" type="password" placeholder="" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
+        <div class="space-y-4">
+          <div>
+            <label class="text-[11px] font-bold uppercase text-slate-500">USUÁRIO</label>
+            <input id="login-user" placeholder="" 
+                   class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]">
           </div>
+          <div>
+            <label class="text-[11px] font-bold uppercase text-slate-500">SENHA</label>
+            <div class="relative">
+              <input id="login-senha-user" type="password" placeholder="" 
+                     class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]">
+              <button type="button" onclick="togglePass('login-senha-user')" 
+                      class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100">
+                <i class="ph ph-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button onclick="doLoginUser()" 
+                  class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">
+            Entrar no Sistema
+          </button>
         </div>
-        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
       </div>
     </div>
   </div>
@@ -110,7 +118,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <div class="flex min-h-screen">
   <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[300px] bg-[#060e2f] text-white flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-white/5">
     <div class="h-[76px] px-5 flex items-center justify-between border-b border-white/[0.08] bg-[#0a1e8a]">
-      <div class="flex items-center gap-3"><img src="./logo_2.png?v=5.3.5" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">Sistema</p></div></div>
+      <div class="flex items-center gap-3"><img src="./logo_2.png?v=5.4.0" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">Sistema</p></div></div>
       <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 grid place-items-center rounded-lg bg-white/10"><i class="ph ph-x"></i></button>
     </div>
     <div class="px-4 py-4">
@@ -127,7 +135,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
-  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
     </nav>
     <div class="p-4 border-t border-white/5">
       <div class="rounded-xl bg-[#0a1e8a] border border-white/10 p-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-28 h-28 bg-white/10 rounded-full blur-xl"></div><p class="text-[12px] font-semibold relative z-10">Contratos a vencer</p><p class="text-[11px] text-white/70 mt-1 relative z-10"><span id="alert-vencendo">0</span> nos próximos 30 dias</p><button onclick="navigateTo('contratos')" class="mt-3 w-full h-8 rounded-lg bg-white text-[#0a1e8a] text-[12px] font-bold hover:bg-white/90 relative z-10">Ver contratos</button></div>
@@ -137,19 +145,19 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="app-titlebar sticky top-0 z-30">
-  <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
-    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
-    <span id="page-title" class="font-medium">Início</span>
-    <div class="absolute right-2 flex items-center gap-2">
-      <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
-        <i class="ph ph-bell text-[15px]"></i>
-        <span id="ntf-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9.5px] font-bold grid place-items-center">0</span>
-      </button>
-      <span class="text-[11px] opacity-80" id="current-date"></span>
-    </div>
-  </div>
-</header>
-<div class="modern-topnav">
+      <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
+        <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.4.0" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
+        <span id="page-title" class="font-medium">Início</span>
+        <div class="absolute right-2 flex items-center gap-2">
+          <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
+            <i class="ph ph-bell text-[15px]"></i>
+            <span id="ntf-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9.5px] font-bold grid place-items-center">0</span>
+          </button>
+          <span class="text-[11px] opacity-80" id="current-date"></span>
+        </div>
+      </div>
+    </header>
+    <div class="modern-topnav">
       <div class="module-row">
         <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button><div class="module-menu"><button onclick="navigateTo('dashboard')"><i class="ph ph-monitor"></i>Área inicial<small>Home</small></button><button onclick="handleGlobalSearch(document.getElementById('top-command-search')?.value||'')"><i class="ph ph-magnifying-glass"></i>Pesquisa rápida</button></div></div>
         <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="abrirNotinhasAntigas()"><i class="ph ph-archive"></i>Notinhas antigas<small>sistema anterior</small></button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
@@ -157,11 +165,12 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
         <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
-
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
-        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
-      </div></div>
+        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div>
+        <div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
+      </div>
+    </div>
     <div class="flex-1 p-4 lg:p-8">
       <section id="view-dashboard" class="view space-y-6"></section>
       <section id="view-clientes" class="view hidden space-y-4"></section>
@@ -190,72 +199,74 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.9.69"></script>
-<script src="./logo_data.js?v=4.9.69"></script>
-<script src="./app.js?v=4.9.69"></script>
-<script src="./vendas_patch.js?v=4.9.69"></script>
-<script src="./evolucao_patch.js?v=4.9.69"></script>
-<script src="./notinha_patch.js?v=4.9.69"></script>
-<script src="./locacao_patch.js?v=4.9.69"></script>
-<script src="./sync_client.js?v=4.9.69"></script>
-<script src="./vendas_os_patch.js?v=4.9.69"></script>
-<script src="./performance_patch.js?v=4.9.69"></script>
-<script src="./pix_patch.js?v=4.9.69"></script>
-<script src="./notificacoes_patch.js?v=4.9.69"></script>
-<script src="./vendas_extra_patch.js?v=4.9.69"></script>
-<script src="./migrados_print_patch.js?v=4.9.69"></script>
-<script src="./clientes_patch.js?v=4.9.69"></script>
-<script src="./interface_patch.js?v=4.9.69"></script>
-<script src="./firebase_config.js?v=4.9.69"></script>
-<script src="./firebase_client.js?v=4.9.69"></script>
-<script src="./vendas_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./login_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./render_gate_patch.js?v=4.9.69"></script>
-<script src="./locacao_contratos_patch.js?v=4.9.69"></script>
-<script src="./fluxos_operacionais_patch.js?v=4.9.69"></script>
-<script src="./contratos_refino_patch.js?v=4.9.69"></script>
-<script src="./contratos_final_patch.js?v=4.9.69"></script>
-<script src="./contratos_visitas_vinculo_patch.js?v=4.9.69"></script>
-<script src="./contratos_rtf_template_patch.js?v=4.9.69"></script>
-<script src="./otimizacao_profunda_patch.js?v=4.9.69"></script>
-<script src="./automacoes_triggers_patch.js?v=4.9.69"></script>
-<script src="./automacoes_financeiro_estoque_patch.js?v=4.9.69"></script>
-<script src="./automacoes_locacao_visitas_patch.js?v=4.9.69"></script>
-<script src="./automacoes_contratos_caixa_fiscal_patch.js?v=4.9.69"></script>
-<script src="./automacoes_fiscal_cartuchos_patch.js?v=4.9.69"></script>
-<script src="./automacoes_vendas_compras_cadastros_patch.js?v=4.9.69"></script>
-<script src="./automacoes_orcamentos_clientes_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_pix_contadores_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_vendas_fiscal_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_compras_recebimentos_contadores_patch.js?v=4.9.69"></script>
-<script src="./automacoes_caixa_chat_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_finais_locacao_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_procedures_operacionais_patch.js?v=4.9.69"></script>
-<script src="./chamados_avulsos_aberto_patch.js?v=4.9.69"></script>
-<script src="./cadastros_nomes_patch.js?v=4.9.69"></script>
-<script src="./pix_comprovante_manual_patch.js?v=4.9.69"></script>
-<script src="./desktop_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./correcoes_uso_diario_patch.js?v=4.9.69"></script>
-<script src="./login_dados_automaticos_patch.js?v=4.9.69"></script>
-<script src="./ajustes_relatorio_pai_patch.js?v=4.9.69"></script>
-<script src="./contratos_leituras_definitivo_patch.js?v=4.9.69"></script>
-<script src="./fluxo_contrato_leitura_corrigido_patch.js?v=4.9.69"></script>
-<script src="./leitura_busca_fluxo_patch.js?v=4.9.69"></script>
-<script src="./leitura_detalhada_departamentos_patch.js?v=4.9.69"></script>
-<script src="./leitura_impressao_compacta_produtos_patch.js?v=4.9.69"></script>
-<script src="./cartuchos_etiquetas_config_patch.js?v=4.9.69"></script>
-<script src="./sistema_clientes_loja_patch.js?v=4.9.69"></script>
-<script src="./finalizacao_sistema_patch.js?v=4.9.69"></script>
-<script src="./ajustes_pos_final_patch.js?v=4.9.70"></script>
-<script src="./limpar_nuvem_patch.js?v=4.9.88"></script>
-<script src="./buscador_escola_patch.js?v=4.9.88"></script>
-<script src="./estoque_alert_patch.js?v=5.3.1"></script>
-<script src="./popup_sistema_patch.js?v=5.3.4"></script>
-<script src="./etiqueta_busca_patch.js?v=5.3.4"></script>
-<script src="./delete_hidden_patch.js?v=5.3.7"></script>
-<script src="./patch_relatorio.js?v=5.0.4"></script>
-<script src="./patch_vendas_financeiro.js?v=5.0.4"></script>
-<script src="./patch_chamados.js?v=5.0.4"></script>
-<script src="./navegacao_voltar_patch.js?v=5.3.4"></script>
+<script src="./lz.js?v=5.4.0"></script>
+<script src="./logo_data.js?v=5.4.0"></script>
+<script src="./app.js?v=5.4.0"></script>
+
+<!-- FIXES - Carregados DEPOIS do app.js para sobrescrever -->
+<script src="./fix_login.js?v=5.4.0"></script>
+<script src="./fix_navegacao.js?v=5.4.0"></script>
+<script src="./fix_produtos_final.js?v=5.4.0"></script>
+<script src="./fix_vendas_final.js?v=5.4.0"></script>
+<script src="./fix_financeiro_final.js?v=5.4.0"></script>
+<script src="./fix_etiquetas_final.js?v=5.4.0"></script>
+
+<!-- PATCHES ANTIGOS (manter para não quebrar funcionalidades existentes) -->
+<script src="./vendas_patch.js?v=5.4.0"></script>
+<script src="./evolucao_patch.js?v=5.4.0"></script>
+<script src="./notinha_patch.js?v=5.4.0"></script>
+<script src="./locacao_patch.js?v=5.4.0"></script>
+<script src="./sync_client.js?v=5.4.0"></script>
+<script src="./vendas_os_patch.js?v=5.4.0"></script>
+<script src="./performance_patch.js?v=5.4.0"></script>
+<script src="./pix_patch.js?v=5.4.0"></script>
+<script src="./notificacoes_patch.js?v=5.4.0"></script>
+<script src="./vendas_extra_patch.js?v=5.4.0"></script>
+<script src="./migrados_print_patch.js?v=5.4.0"></script>
+<script src="./clientes_patch.js?v=5.4.0"></script>
+<script src="./interface_patch.js?v=5.4.0"></script>
+<script src="./firebase_config.js?v=5.4.0"></script>
+<script src="./firebase_client.js?v=5.4.0"></script>
+<script src="./vendas_otimizacao_patch.js?v=5.4.0"></script>
+<script src="./login_otimizacao_patch.js?v=5.4.0"></script>
+<script src="./render_gate_patch.js?v=5.4.0"></script>
+<script src="./locacao_contratos_patch.js?v=5.4.0"></script>
+<script src="./fluxos_operacionais_patch.js?v=5.4.0"></script>
+<script src="./contratos_refino_patch.js?v=5.4.0"></script>
+<script src="./contratos_final_patch.js?v=5.4.0"></script>
+<script src="./contratos_visitas_vinculo_patch.js?v=5.4.0"></script>
+<script src="./contratos_rtf_template_patch.js?v=5.4.0"></script>
+<script src="./otimizacao_profunda_patch.js?v=5.4.0"></script>
+<script src="./automacoes_triggers_patch.js?v=5.4.0"></script>
+<script src="./automacoes_financeiro_estoque_patch.js?v=5.4.0"></script>
+<script src="./automacoes_locacao_visitas_patch.js?v=5.4.0"></script>
+<script src="./automacoes_contratos_caixa_fiscal_patch.js?v=5.4.0"></script>
+<script src="./automacoes_fiscal_cartuchos_patch.js?v=5.4.0"></script>
+<script src="./automacoes_vendas_compras_cadastros_patch.js?v=5.4.0"></script>
+<script src="./automacoes_orcamentos_clientes_auxiliares_patch.js?v=5.4.0"></script>
+<script src="./automacoes_pix_contadores_auxiliares_patch.js?v=5.4.0"></script>
+<script src="./automacoes_vendas_fiscal_auxiliares_patch.js?v=5.4.0"></script>
+<script src="./automacoes_compras_recebimentos_contadores_patch.js?v=5.4.0"></script>
+<script src="./automacoes_caixa_chat_auxiliares_patch.js?v=5.4.0"></script>
+<script src="./automacoes_finais_locacao_auxiliares_patch.js?v=5.4.0"></script>
+<script src="./automacoes_procedures_operacionais_patch.js?v=5.4.0"></script>
+<script src="./chamados_avulsos_aberto_patch.js?v=5.4.0"></script>
+<script src="./cadastros_nomes_patch.js?v=5.4.0"></script>
+<script src="./pix_comprovante_manual_patch.js?v=5.4.0"></script>
+<script src="./desktop_otimizacao_patch.js?v=5.4.0"></script>
+<script src="./correcoes_uso_diario_patch.js?v=5.4.0"></script>
+<script src="./login_dados_automaticos_patch.js?v=5.4.0"></script>
+<script src="./ajustes_relatorio_pai_patch.js?v=5.4.0"></script>
+<script src="./contratos_leituras_definitivo_patch.js?v=5.4.0"></script>
+<script src="./fluxo_contrato_leitura_corrigido_patch.js?v=5.4.0"></script>
+<script src="./leitura_busca_fluxo_patch.js?v=5.4.0"></script>
+<script src="./leitura_detalhada_departamentos_patch.js?v=5.4.0"></script>
+<script src="./leitura_impressao_compacta_produtos_patch.js?v=5.4.0"></script>
+<script src="./cartuchos_etiquetas_config_patch.js?v=5.4.0"></script>
+<script src="./sistema_clientes_loja_patch.js?v=5.4.0"></script>
+<script src="./finalizacao_sistema_patch.js?v=5.4.0"></script>
+<script src="./ajustes_pos_final_patch.js?v=5.4.0"></script>
+<script src="./limpar_nuvem_patch.js?v=5.4.0"></script>
+<script src="./buscador_escola_patch.js?v=5.4.0"></script>
 </body>
 </html>
