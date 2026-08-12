@@ -62,6 +62,8 @@
     if (v.clienteId && typeof window.vosVendaSelectCliente === 'function') {
       window.vosVendaSelectCliente(v.clienteId);
     }
+    window.__vosPersistida = true;
+    window.__vosDirty = false;
 
     if (typeof window.vosRenderItens === 'function') window.vosRenderItens();
     if (typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
@@ -92,11 +94,12 @@
 
   const _origVosSalvarVenda = window.vosSalvarVenda;
   window.vosSalvarVenda = function() {
-    window.__vosSalvoConfirmadoTemp = true;
     const v = typeof window.vosGravarVenda === 'function' ? window.vosGravarVenda(true) : null;
     if (v) {
-      if (typeof toast === 'function') toast('Venda salva com sucesso! Você pode continuar editando de onde parou.', 'success');
+      window.__vosPersistida = true;
+      window.__vosDirty = false;
       window.__vosItensAdicionadosTemp = [];
+      if (typeof toast === 'function') toast('Venda salva com sucesso! Você pode continuar editando de onde parou.', 'success');
     } else if (_origVosSalvarVenda) {
       _origVosSalvarVenda.apply(this, arguments);
     }
@@ -427,7 +430,8 @@
   const _origNovaVenda = window.novaVenda;
   window.novaVenda = function() {
     window.__vosItensAdicionadosTemp = [];
-    window.__vosSalvoConfirmadoTemp = false;
+    window.__vosPersistida = false;
+    window.__vosDirty = false;
     window.__vosSaindoVenda = false;
     const r = _origNovaVenda ? _origNovaVenda.apply(this, arguments) : undefined;
     return r;
@@ -437,7 +441,17 @@
     return !!(document.getElementById('vos-itens-body') || document.getElementById('vos-cli-search'));
   }
 
-  function devolverEstoqueELimparNaoSalva() {
+  function vendaJaExisteNoBanco() {
+    const id = window.__vosForm && window.__vosForm.vendaId;
+    if (!id || typeof db === 'undefined') return !!window.__vosPersistida;
+    return !!(db.vendas || []).find(x => x.id === id) || !!window.__vosPersistida;
+  }
+
+  function marcarVendaSuja() {
+    window.__vosDirty = true;
+  }
+
+  function devolverReservaTemporaria() {
     (window.__vosItensAdicionadosTemp || []).forEach(it => {
       const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
       if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
@@ -445,14 +459,18 @@
       }
     });
     window.__vosItensAdicionadosTemp = [];
-    if (window.__vosForm && window.__vosForm.vendaId && !window.__vosSalvoConfirmadoTemp) {
-      const idNaoSalva = window.__vosForm.vendaId;
-      const v = (db.vendas || []).find(x => x.id === idNaoSalva);
-      if (v && !['faturado', 'finalizada', 'concluido', 'pago'].includes(low(v.status))) {
+  }
+
+  function cancelarSairVenda() {
+    devolverReservaTemporaria();
+    if (!vendaJaExisteNoBanco()) {
+      if (window.__vosForm && window.__vosForm.vendaId) {
+        const idNaoSalva = window.__vosForm.vendaId;
         db.vendas = (db.vendas || []).filter(x => x.id !== idNaoSalva);
       }
     }
     window.__vosForm = null;
+    window.__vosDirty = false;
     if (typeof saveDB === 'function') saveDB();
     if (typeof renderProdutos === 'function') renderProdutos();
     if (typeof renderVendas === 'function') renderVendas();
@@ -460,12 +478,14 @@
 
   function perguntarSairVenda(depoisFechar) {
     if (window.__vosSaindoVenda) return;
-    if (!telaVendaAberta() || !window.__vosForm || window.__vosSalvoConfirmadoTemp) {
+    if (!telaVendaAberta() || !window.__vosForm) {
       depoisFechar();
       return;
     }
-    const temAlgo = (window.__vosForm.itens || []).length > 0 || window.__vosForm.cliente;
-    if (!temAlgo) {
+    const temCliente = !!(window.__vosForm.cliente || window.__vosForm.clienteId);
+    const temItem = (window.__vosForm.itens || []).length > 0;
+    const precisaAviso = window.__vosDirty || temCliente || temItem;
+    if (!precisaAviso) {
       depoisFechar();
       return;
     }
@@ -479,10 +499,8 @@
       window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
         if (salvar) {
           if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-          window.__vosSalvoConfirmadoTemp = true;
         } else {
-          devolverEstoqueELimparNaoSalva();
-          window.__vosSalvoConfirmadoTemp = true;
+          cancelarSairVenda();
         }
         fechar();
       });
@@ -503,7 +521,7 @@
       if (pend && pend.snap) setTimeout(() => restaurarVendaDoSnapshot(pend.snap, null), 20);
       return r;
     }
-    if (telaVendaAberta() && window.__vosForm && !window.__vosSalvoConfirmadoTemp) {
+    if (telaVendaAberta() && window.__vosForm) {
       perguntarSairVenda(() => {
         if (_origCloseModalEst) _origCloseModalEst.call(window, true);
         else {
@@ -520,7 +538,7 @@
   if (typeof _origVoltarNivel === 'function') {
     window.voltarNivelModal = function(e) {
       if (window.__vosPendenteReporEstoque) return;
-      if (telaVendaAberta() && window.__vosForm && !window.__vosSalvoConfirmadoTemp) {
+      if (telaVendaAberta() && window.__vosForm) {
         if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); }
         perguntarSairVenda(() => {
           const modal = document.getElementById('modal-root');
@@ -547,6 +565,7 @@
         window.__vosItensAdicionadosTemp.splice(idxTemp, 1);
       }
     }
+    marcarVendaSuja();
     if (_origVosRemoveItem) _origVosRemoveItem.apply(this, arguments);
   };
 
@@ -1198,6 +1217,7 @@
     }
     if (typeof window.vosItemCalcTotal === 'function') window.vosItemCalcTotal();
     f.itens.splice(i, 1);
+    marcarVendaSuja();
     window.vosRenderItens();
     if (typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
     document.getElementById('vos-prod-search')?.focus();
@@ -1246,6 +1266,5 @@
   };
   setTimeout(otimizarCliqueVendas, 400);
 
-  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.15.0 — lápis, 2 tipos, vendas mais rápida');
-
+  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.15.2 — cancelar não apaga venda já salva');
 })();
