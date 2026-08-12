@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v5.14.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
+// PATCH v5.15.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
@@ -1146,5 +1146,106 @@
     if (v) persistirRecargasAoFaturar(v);
   };
 
-  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.14.0 — sair/reposicao/PE-PS');
+
+  // 6) Lápis ao lado da lixeira para editar o item sem cadastrar de novo
+  const _origRenderItens = window.vosRenderItens;
+  window.vosRenderItens = function() {
+    if (_origRenderItens) _origRenderItens.apply(this, arguments);
+    const body = document.getElementById('vos-itens-body');
+    if (!body) return;
+    body.querySelectorAll('tr').forEach((tr, i) => {
+      const td = tr.querySelector('td:last-child');
+      if (!td || td.querySelector('[data-vos-edit]')) return;
+      if (!tr.querySelector('button')) return;
+      const btn = document.createElement('button');
+      btn.setAttribute('data-vos-edit', '1');
+      btn.type = 'button';
+      btn.className = 'w-7 h-7 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 mr-1';
+      btn.title = 'Editar item';
+      btn.innerHTML = '<i class="ph ph-pencil-simple"></i>';
+      btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); window.vosEditarItem(i); };
+      const trash = td.querySelector('button');
+      if (trash) td.insertBefore(btn, trash);
+      else td.appendChild(btn);
+    });
+  };
+
+  window.vosEditarItem = function(i) {
+    const f = window.__vosForm;
+    const it = f && f.itens && f.itens[i];
+    if (!it) return;
+    const tipoEl = document.getElementById('vos-item-tipo');
+    if (tipoEl) {
+      tipoEl.value = /recarga/i.test(it.tipo || '') ? 'Recarga de toner' : 'Produto';
+      if (typeof window.vosOnTipoItem === 'function') window.vosOnTipoItem();
+    }
+    const setv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; };
+    setv('vos-prod-search', it.descricao || '');
+    setv('vos-item-qtd', it.qtd || 1);
+    setv('vos-item-vunit', it.preco || 0);
+    setv('vos-item-desc', it.desconto || 0);
+    setv('vos-item-cartucho', it.numCartucho || '');
+    setv('vos-item-ident', it.identificacao || '');
+    setv('vos-item-sit', it.situacao || 'Pendente');
+    setv('vos-item-tec', it.tecnico || '');
+    const pe = document.getElementById('vos-item-pe'); if (pe) pe.checked = !!it.pe;
+    const ps = document.getElementById('vos-item-ps'); if (ps) ps.checked = !!it.ps;
+    if (it.produtoId) {
+      const p = (db.produtos || []).find(x => x.id === it.produtoId);
+      if (p) f.produtoSel = p;
+    } else {
+      f.produtoSel = null;
+    }
+    if (typeof window.vosItemCalcTotal === 'function') window.vosItemCalcTotal();
+    f.itens.splice(i, 1);
+    window.vosRenderItens();
+    if (typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
+    document.getElementById('vos-prod-search')?.focus();
+  };
+
+  // 7) Tipo só Produto e Recarga de toner
+  function aplicarTiposVenda() {
+    const sel = document.getElementById('vos-item-tipo');
+    if (!sel) return;
+    const atual = sel.value;
+    sel.innerHTML = '<option value="Produto">Produto</option><option value="Recarga de toner">Recarga de toner</option>';
+    sel.value = /recarga/i.test(atual) ? 'Recarga de toner' : 'Produto';
+    if (typeof window.vosOnTipoItem === 'function') window.vosOnTipoItem();
+  }
+  const _nvTipos = window.novaVenda;
+  window.novaVenda = function() {
+    const r = _nvTipos ? _nvTipos.apply(this, arguments) : undefined;
+    aplicarTiposVenda();
+    return r;
+  };
+
+  // 8) Vendas mais rápida: clicar na linha NÃO redesenha a tabela inteira
+  function otimizarCliqueVendas() {
+    const view = document.getElementById('view-vendas');
+    if (!view || view.classList.contains('hidden')) return;
+    const tabela = view.querySelector('table.neo-table');
+    if (!tabela || tabela.__vosClickOpt) return;
+    tabela.__vosClickOpt = true;
+    tabela.addEventListener('click', function(e) {
+      const tr = e.target.closest('tbody tr');
+      if (!tr || e.target.closest('input,button,a')) return;
+      const id = tr.querySelector('input[name="venda-check-lote"]')?.value
+        || (tr.getAttribute('onclick') || '').match(/'([^']+)'/)?.[1];
+      if (!id) return;
+      e.stopPropagation();
+      window.neoVendaSelecionada = id;
+      tabela.querySelectorAll('tbody tr').forEach(r => r.classList.remove('neo-selected'));
+      tr.classList.add('neo-selected');
+    }, true);
+  }
+  const _rvOpt = window.renderVendas;
+  window.renderVendas = function() {
+    const ret = _rvOpt ? _rvOpt.apply(this, arguments) : undefined;
+    setTimeout(otimizarCliqueVendas, 0);
+    return ret;
+  };
+  setTimeout(otimizarCliqueVendas, 400);
+
+  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.15.0 — lápis, 2 tipos, vendas mais rápida');
+
 })();
