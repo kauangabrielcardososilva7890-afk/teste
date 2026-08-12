@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v5.11.0 — Vendas e Notinhas (Ajustes Finais 100% de Ponta a Ponta)
+// PATCH v5.12.0 — Vendas e Notinhas (estoque + recarga de toner)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
@@ -90,13 +90,38 @@
     if (_origHistVenda) _origHistVenda.apply(this, arguments);
   };
 
+  const _origVosGravarVenda = window.vosGravarVenda;
+  if (typeof _origVosGravarVenda === 'function') {
+    window.vosGravarVenda = function(silencioso) {
+      const f = window.__vosForm;
+      const jaBaixou = (window.__vosItensAdicionadosTemp || []).length > 0;
+      const snapEstoque = {};
+      if (jaBaixou && typeof db !== 'undefined') {
+        (f && f.itens || []).forEach(it => {
+          if (!it.produtoId || snapEstoque[it.produtoId] != null) return;
+          const p = (db.produtos || []).find(x => x.id === it.produtoId);
+          if (p) snapEstoque[it.produtoId] = p.estoque;
+        });
+      }
+      const v = _origVosGravarVenda.apply(this, arguments);
+      if (v && jaBaixou && typeof db !== 'undefined') {
+        Object.keys(snapEstoque).forEach(pid => {
+          const p = (db.produtos || []).find(x => x.id === pid);
+          if (p) p.estoque = snapEstoque[pid];
+        });
+        if (typeof saveDB === 'function') saveDB();
+      }
+      return v;
+    };
+  }
+
   const _origVosSalvarVenda = window.vosSalvarVenda;
   window.vosSalvarVenda = function() {
     window.__vosSalvoConfirmadoTemp = true;
     const v = typeof window.vosGravarVenda === 'function' ? window.vosGravarVenda(true) : null;
     if (v) {
       if (typeof toast === 'function') toast('Venda salva com sucesso! Você pode continuar editando de onde parou.', 'success');
-      window.__vosItensAdicionadosTemp = []; // consolida a baixa temporária
+      window.__vosItensAdicionadosTemp = [];
     } else if (_origVosSalvarVenda) {
       _origVosSalvarVenda.apply(this, arguments);
     }
@@ -497,6 +522,7 @@
 
   // G) Aviso "Escolha o cliente primeiro" em Nova Venda
   function clienteSelecionadoNaVenda() {
+    if (window.__vosForm && window.__vosForm.cliente) return true;
     if (window.__vosForm && window.__vosForm.clienteId) return true;
     if (window.neoVendaCliente) return true;
     if (window.vendaClienteSelecionado) return true;
@@ -600,7 +626,16 @@
       } else if (typeof toast === 'function') {
         toast('O estoque salvo ainda é menor que a quantidade solicitada.', 'info');
       }
-    }, 150);
+    }, 80);
+  }
+
+  const _origFecharModalOp = window.fecharModal || window.fecharModalOperacional;
+  if (typeof window.fecharModalOperacional === 'function') {
+    const _fm = window.fecharModalOperacional;
+    window.fecharModalOperacional = function() {
+      if (window.__vosPendenteReporEstoque) return;
+      return _fm.apply(this, arguments);
+    };
   }
 
   const _origSaveProd1 = window.saveProduto;
@@ -611,7 +646,9 @@
   };
   const _origSaveProd2 = window.salvarProdutoOperacional;
   window.salvarProdutoOperacional = function() {
+    const pend = window.__vosPendenteReporEstoque;
     const res = _origSaveProd2 ? _origSaveProd2.apply(this, arguments) : undefined;
+    if (pend) window.__vosPendenteReporEstoque = pend;
     processarReposicaoEstoqueNaVenda();
     return res;
   };
@@ -750,6 +787,11 @@
   // J) Limpeza do Histórico
   const _origHist = window.historicoVenda;
   window.historicoVenda = function(id) {
+    const vPre = (typeof db !== 'undefined' && db.vendas && db.vendas.find(x => x.id === id));
+    if (vPre && !['faturado', 'finalizada', 'concluido', 'pago', 'estornada', 'estornado', 'cancelada', 'cancelado'].includes(low(vPre.status))) {
+      if (_origHist) return _origHist.apply(this, arguments);
+      return;
+    }
     if (_origHist) _origHist.apply(this, arguments);
 
     const footer = document.getElementById('modal-footer');
@@ -880,5 +922,171 @@
     };
   }
 
-  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.11.0 — 100% dos retornos e reposição de estoque com desconto automático ativos');
+
+  // L) Recarga de toner: campos (descrição, etiqueta, valor, desconto, total, técnico) + busca por etiqueta
+  function ehTipoRecargaToner() {
+    const t = (document.getElementById('vos-item-tipo')?.value || '');
+    return /recarga/i.test(t);
+  }
+  function recargasStore() {
+    if (typeof db === 'undefined') return [];
+    db.recargasEtiquetas = db.recargasEtiquetas || [];
+    return db.recargasEtiquetas;
+  }
+  function normEtq(v) { return txt(v).replace(/\s+/g, '').toUpperCase(); }
+  function acharRecargaPorEtiqueta(codigo) {
+    const k = normEtq(codigo);
+    if (!k) return null;
+    return recargasStore().find(r => normEtq(r.etiqueta) === k) || null;
+  }
+  function aplicarLayoutRecargaToner() {
+    const recarga = ehTipoRecargaToner();
+    const extra = document.getElementById('vos-item-extra');
+    if (extra) extra.classList.toggle('hidden', !recarga && !/Toner|Manutenção|Serviço/i.test(document.getElementById('vos-item-tipo')?.value || ''));
+    const qtdWrap = document.getElementById('vos-item-qtd')?.closest('label');
+    if (qtdWrap) qtdWrap.classList.toggle('hidden', recarga);
+    const qtdEl = document.getElementById('vos-item-qtd');
+    if (recarga && qtdEl) qtdEl.value = 1;
+    const cart = document.getElementById('vos-item-cartucho');
+    if (cart) {
+      cart.placeholder = recarga ? 'Nº da etiqueta (Enter para buscar)' : '';
+      cart.setAttribute('title', recarga ? 'Digite a etiqueta e pressione Enter para buscar' : '');
+    }
+    const ident = document.getElementById('vos-item-ident');
+    if (ident && recarga) ident.closest('label')?.classList.add('hidden');
+    else if (ident) ident.closest('label')?.classList.remove('hidden');
+    let btn = document.getElementById('vos-btn-cadastrar-etiqueta');
+    if (recarga) {
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'vos-btn-cadastrar-etiqueta';
+        btn.type = 'button';
+        btn.className = 'hidden h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white text-[11px] font-bold';
+        btn.textContent = 'Cadastrar esta etiqueta';
+        btn.onclick = function(e) { e.preventDefault(); window.vosCadastrarEtiquetaRecarga(); };
+        extra?.appendChild(btn);
+      }
+    } else if (btn) btn.classList.add('hidden');
+  }
+  const _origOnTipo = window.vosOnTipoItem;
+  window.vosOnTipoItem = function() {
+    if (_origOnTipo) _origOnTipo.apply(this, arguments);
+    aplicarLayoutRecargaToner();
+  };
+
+  window.vosCadastrarEtiquetaRecarga = function() {
+    if (!validarClienteVendaAviso()) return;
+    const etq = txt(document.getElementById('vos-item-cartucho')?.value);
+    if (!etq) {
+      if (typeof window.lfbAlert === 'function') window.lfbAlert('Informe o número da etiqueta para cadastrar.', 'Etiqueta');
+      return;
+    }
+    const existente = acharRecargaPorEtiqueta(etq);
+    if (existente) {
+      if (typeof window.lfbAlert === 'function') window.lfbAlert('Esta etiqueta já está cadastrada. Use Enter para buscar.', 'Etiqueta');
+      return;
+    }
+    const desc = txt(document.getElementById('vos-prod-search')?.value) || 'Recarga de toner';
+    const valor = n(document.getElementById('vos-item-vunit')?.value, 0);
+    const cli = window.__vosForm && window.__vosForm.cliente;
+    recargasStore().push({
+      id: (typeof uid === 'function' ? uid('etq') : 'etq_' + Date.now()),
+      etiqueta: etq,
+      descricao: desc,
+      valor,
+      clienteId: cli ? cli.id : null,
+      clienteNome: cli ? (cli.nome || '') : '',
+      criadoEm: new Date().toISOString()
+    });
+    if (typeof saveDB === 'function') saveDB();
+    const btn = document.getElementById('vos-btn-cadastrar-etiqueta');
+    if (btn) btn.classList.add('hidden');
+    if (typeof window.lfbAlert === 'function') window.lfbAlert('Etiqueta cadastrada. Ao faturar a venda ela fica salva no cliente.', 'Etiqueta cadastrada');
+    else if (typeof toast === 'function') toast('Etiqueta cadastrada', 'success');
+  };
+
+  window.vosBuscarEtiquetaNaVenda = function() {
+    if (!ehTipoRecargaToner()) return;
+    if (!validarClienteVendaAviso()) return;
+    const etq = txt(document.getElementById('vos-item-cartucho')?.value);
+    if (!etq) return;
+    const rec = acharRecargaPorEtiqueta(etq);
+    const btn = document.getElementById('vos-btn-cadastrar-etiqueta');
+    if (!rec) {
+      if (btn) btn.classList.remove('hidden');
+      if (typeof window.lfbAlert === 'function') {
+        window.lfbAlert('Etiqueta não encontrada. Preencha descrição e valor e clique em "Cadastrar esta etiqueta".', 'Etiqueta não encontrada');
+      }
+      return;
+    }
+    if (btn) btn.classList.add('hidden');
+    const cliAtual = window.__vosForm && window.__vosForm.cliente;
+    const outro = rec.clienteId && cliAtual && rec.clienteId !== cliAtual.id;
+    const preencher = () => {
+      const descEl = document.getElementById('vos-prod-search');
+      const vu = document.getElementById('vos-item-vunit');
+      const cart = document.getElementById('vos-item-cartucho');
+      if (descEl) descEl.value = rec.descricao || '';
+      if (vu) vu.value = rec.valor || 0;
+      if (cart) cart.value = rec.etiqueta || etq;
+      if (typeof window.vosItemCalcTotal === 'function') window.vosItemCalcTotal();
+    };
+    if (outro) {
+      const nomeOutro = rec.clienteNome || 'outro cliente';
+      const msg = 'Essa recarga está cadastrada em outro cliente (' + nomeOutro + '). Deseja usar os dados desta etiqueta sem trocar o cliente atual?';
+      if (typeof window.confirmSistema === 'function') {
+        window.confirmSistema(msg, 'Etiqueta de outro cliente').then(ok => { if (ok) preencher(); });
+      } else preencher();
+      return;
+    }
+    preencher();
+  };
+
+  document.addEventListener('keydown', function(ev) {
+    if (ev.key !== 'Enter') return;
+    const active = document.activeElement;
+    if (active && active.id === 'vos-item-cartucho' && ehTipoRecargaToner()) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.vosBuscarEtiquetaNaVenda();
+    }
+  }, true);
+
+  function persistirRecargasAoFaturar(v) {
+    if (!v || !v.clienteId) return;
+    const cli = (db.clientes || []).find(c => c.id === v.clienteId);
+    (v.itens || []).forEach(it => {
+      if (!/recarga/i.test(it.tipo || '')) return;
+      const etq = txt(it.numCartucho || it.identificacao);
+      if (!etq) return;
+      const lista = recargasStore();
+      let rec = lista.find(r => normEtq(r.etiqueta) === normEtq(etq));
+      if (!rec) {
+        rec = { id: (typeof uid === 'function' ? uid('etq') : 'etq_' + Date.now()), etiqueta: etq };
+        lista.push(rec);
+      }
+      rec.descricao = it.descricao || rec.descricao || 'Recarga de toner';
+      rec.valor = n(it.preco, rec.valor || 0);
+      rec.clienteId = v.clienteId;
+      rec.clienteNome = cli ? cli.nome : (rec.clienteNome || '');
+      rec.ultimaVendaId = v.id;
+      rec.ultimaVendaNumero = v.numero;
+      rec.atualizadoEm = new Date().toISOString();
+    });
+    if (typeof saveDB === 'function') saveDB();
+  }
+  const _origFatZero = faturarVendaZeradaDireto;
+  faturarVendaZeradaDireto = function(v) {
+    _origFatZero(v);
+    persistirRecargasAoFaturar(v);
+  };
+  const _origConcluirFatRec = window.vosConcluirFaturamento;
+  window.vosConcluirFaturamento = function() {
+    const vId = window.__vosFatVendaId || (window.__vosForm && window.__vosForm.vendaId);
+    if (_origConcluirFatRec) _origConcluirFatRec.apply(this, arguments);
+    const v = vId && (db.vendas || []).find(x => x.id === vId);
+    if (v) persistirRecargasAoFaturar(v);
+  };
+
+  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.12.0 — estoque + recarga de toner');
 })();
