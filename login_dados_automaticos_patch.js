@@ -98,42 +98,15 @@ function renderLoginDireto(emp){
   if(typeof document==='undefined') return;
   const box=document.getElementById('login-step-user');
   if(!box) return;
-  const active=document.activeElement;
-  const digitando=active && (active.id==='login-user'||active.id==='login-senha-user');
-  const loginAtual=document.getElementById('login-user')?.value || '';
-  const senhaAtual=document.getElementById('login-senha-user')?.value || '';
-  // força recriar para garantir B (deleta A)
-  box.removeAttribute('data-login-direto-ok');
-  if(false && box.dataset.loginDiretoOk==='1'){
-    box.classList.remove('hidden');
-    box.style.display='block';
-    box.style.pointerEvents='auto';
-    const u=document.getElementById('login-user'); const sp=document.getElementById('login-senha-user');
-    if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
-    if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
-    return;
-  }
-  const primeiro=(db.usuarios||[]).find(u=>u.empresaId===emp.id&&u.ativo);
-  box.dataset.loginDiretoOk='1';
+  const cnpj=document.getElementById('login-step-cnpj');
+  if(cnpj) cnpj.remove();
   box.classList.remove('hidden');
   box.style.display='block';
   box.style.pointerEvents='auto';
-  box.innerHTML=`
-    <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#e8eaf8] border border-[#c9ceef]">
-      <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[14px]">DG</div>
-      <div><p class="font-bold text-[13px] leading-tight">${title(emp.fantasia||emp.nome||'DIGICOPY')}</p><p class="text-[11px] text-slate-600">Acesso por usuário</p></div>
-      <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-    </div>
-    <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Informe usuário e senha do sistema antigo ou do ERP.</p></div>
-    <form id="login-direto-form" class="space-y-4" onsubmit="event.preventDefault(); doLoginUser();">
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">USUÁRIO / LOGIN</label><input id="login-user" autocomplete="username" value="" placeholder="" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">SENHA USUÁRIO</label><div class="relative"><input id="login-senha-user" autocomplete="current-password" value="" type="password" placeholder="" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
-      <button type="submit" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
-    </form>`;
-  const u=document.getElementById('login-user'); const sp=document.getElementById('login-senha-user');
-  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; }
+  const u=document.getElementById('login-user');
+  const sp=document.getElementById('login-senha-user');
+  if(u){ u.disabled=false; u.readOnly=false; u.style.pointerEvents='auto'; if(u.value==='kauan') u.value=''; }
   if(sp){ sp.disabled=false; sp.readOnly=false; sp.style.pointerEvents='auto'; }
-  if(digitando && active && active.id){ const novo=document.getElementById(active.id); if(novo){ novo.focus(); try{ novo.setSelectionRange(novo.value.length,novo.value.length); }catch(e){} } }
 }
 function escHtml(v){ return txt(v).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c])); }
 function estilizarLogin(){
