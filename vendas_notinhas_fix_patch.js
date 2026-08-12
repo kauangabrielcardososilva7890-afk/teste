@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v5.12.0 — Vendas e Notinhas (estoque + recarga de toner)
+// PATCH v5.13.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
@@ -89,31 +89,6 @@
     }
     if (_origHistVenda) _origHistVenda.apply(this, arguments);
   };
-
-  const _origVosGravarVenda = window.vosGravarVenda;
-  if (typeof _origVosGravarVenda === 'function') {
-    window.vosGravarVenda = function(silencioso) {
-      const f = window.__vosForm;
-      const jaBaixou = (window.__vosItensAdicionadosTemp || []).length > 0;
-      const snapEstoque = {};
-      if (jaBaixou && typeof db !== 'undefined') {
-        (f && f.itens || []).forEach(it => {
-          if (!it.produtoId || snapEstoque[it.produtoId] != null) return;
-          const p = (db.produtos || []).find(x => x.id === it.produtoId);
-          if (p) snapEstoque[it.produtoId] = p.estoque;
-        });
-      }
-      const v = _origVosGravarVenda.apply(this, arguments);
-      if (v && jaBaixou && typeof db !== 'undefined') {
-        Object.keys(snapEstoque).forEach(pid => {
-          const p = (db.produtos || []).find(x => x.id === pid);
-          if (p) p.estoque = snapEstoque[pid];
-        });
-        if (typeof saveDB === 'function') saveDB();
-      }
-      return v;
-    };
-  }
 
   const _origVosSalvarVenda = window.vosSalvarVenda;
   window.vosSalvarVenda = function() {
@@ -453,68 +428,114 @@
   window.novaVenda = function() {
     window.__vosItensAdicionadosTemp = [];
     window.__vosSalvoConfirmadoTemp = false;
+    window.__vosSaindoVenda = false;
     const r = _origNovaVenda ? _origNovaVenda.apply(this, arguments) : undefined;
     return r;
   };
 
+  function telaVendaAberta() {
+    return !!(document.getElementById('vos-itens-body') || document.getElementById('vos-cli-search'));
+  }
+
   function devolverEstoqueELimparNaoSalva() {
-    if (window.__vosItensAdicionadosTemp && window.__vosItensAdicionadosTemp.length) {
-      window.__vosItensAdicionadosTemp.forEach(it => {
-        const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
-        if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
-          p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
-        }
-      });
-      window.__vosItensAdicionadosTemp = [];
-      if (window.__vosForm && window.__vosForm.vendaId && !window.__vosSalvoConfirmadoTemp) {
-        const idNaoSalva = window.__vosForm.vendaId;
-        db.vendas = (db.vendas || []).filter(v => v.id !== idNaoSalva);
+    (window.__vosItensAdicionadosTemp || []).forEach(it => {
+      const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
+      if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+        p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
       }
-      if (typeof saveDB === 'function') saveDB();
-      if (typeof renderProdutos === 'function') renderProdutos();
+    });
+    window.__vosItensAdicionadosTemp = [];
+    if (window.__vosForm && window.__vosForm.vendaId && !window.__vosSalvoConfirmadoTemp) {
+      const idNaoSalva = window.__vosForm.vendaId;
+      const v = (db.vendas || []).find(x => x.id === idNaoSalva);
+      if (v && !['faturado', 'finalizada', 'concluido', 'pago'].includes(low(v.status))) {
+        db.vendas = (db.vendas || []).filter(x => x.id !== idNaoSalva);
+      }
     }
+    window.__vosForm = null;
+    if (typeof saveDB === 'function') saveDB();
+    if (typeof renderProdutos === 'function') renderProdutos();
+    if (typeof renderVendas === 'function') renderVendas();
+  }
+
+  function perguntarSairVenda(depoisFechar) {
+    if (window.__vosSaindoVenda) return;
+    if (!telaVendaAberta() || !window.__vosForm || window.__vosSalvoConfirmadoTemp) {
+      depoisFechar();
+      return;
+    }
+    const temAlgo = (window.__vosForm.itens || []).length > 0 || window.__vosForm.cliente;
+    if (!temAlgo) {
+      depoisFechar();
+      return;
+    }
+    window.__vosSaindoVenda = true;
+    const msg = 'Deseja salvar esta venda?';
+    const fechar = () => {
+      window.__vosSaindoVenda = false;
+      depoisFechar();
+    };
+    if (typeof window.confirmSistema === 'function') {
+      window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
+        if (salvar) {
+          if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
+          window.__vosSalvoConfirmadoTemp = true;
+        } else {
+          devolverEstoqueELimparNaoSalva();
+          window.__vosSalvoConfirmadoTemp = true;
+        }
+        fechar();
+      });
+      return;
+    }
+    fechar();
   }
 
   const _origCloseModalEst = window.closeModal;
   window.closeModal = function(force) {
-    const modal = document.getElementById('modal-root');
-    if (modal && !modal.classList.contains('hidden') && window.__vosForm && (window.__vosForm.itens || []).length > 0 && !window.__vosSalvoConfirmadoTemp) {
-      if (!force) {
-        const msg = 'Deseja salvar esta venda antes de sair?\n\nOK / Confirmar = Salvar venda\nCancelar = Sair sem salvar (não existirá notinha e devolve estoque)';
-        if (typeof window.confirmSistema === 'function') {
-          window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
-            if (salvar) {
-              if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-              window.__vosSalvoConfirmadoTemp = true;
-              _origCloseModalEst ? _origCloseModalEst(true) : modal.classList.add('hidden');
-            } else {
-              devolverEstoqueELimparNaoSalva();
-              window.__vosSalvoConfirmadoTemp = true;
-              _origCloseModalEst ? _origCloseModalEst(true) : modal.classList.add('hidden');
-            }
-          });
-          return;
-        } else if (confirm(msg)) {
-          if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-          window.__vosSalvoConfirmadoTemp = true;
-          return _origCloseModalEst ? _origCloseModalEst(true) : modal.classList.add('hidden');
+    if (window.__vosPendenteReporEstoque) return;
+    if (telaVendaAberta() && window.__vosForm && !window.__vosSalvoConfirmadoTemp) {
+      perguntarSairVenda(() => {
+        if (_origCloseModalEst) _origCloseModalEst.call(window, true);
+        else {
+          const modal = document.getElementById('modal-root');
+          if (modal) modal.classList.add('hidden');
         }
-      }
-      devolverEstoqueELimparNaoSalva();
+      });
+      return;
     }
     return _origCloseModalEst ? _origCloseModalEst.apply(this, arguments) : undefined;
   };
+
+  const _origVoltarNivel = window.voltarNivelModal;
+  if (typeof _origVoltarNivel === 'function') {
+    window.voltarNivelModal = function(e) {
+      if (window.__vosPendenteReporEstoque) return;
+      if (telaVendaAberta() && window.__vosForm && !window.__vosSalvoConfirmadoTemp) {
+        if (e && e.preventDefault) { e.preventDefault(); e.stopPropagation(); }
+        perguntarSairVenda(() => {
+          const modal = document.getElementById('modal-root');
+          if (modal) modal.classList.add('hidden');
+          window.__vosForm = null;
+        });
+        return;
+      }
+      return _origVoltarNivel.apply(this, arguments);
+    };
+  }
 
   const _origVosRemoveItem = window.vosRemoveItem;
   window.vosRemoveItem = function(i) {
     const f = window.__vosForm;
     if (f && f.itens && f.itens[i]) {
       const item = f.itens[i];
-      if (item.produtoId && typeof db.produtos !== 'undefined') {
-        const p = db.produtos.find(x => x.id === item.produtoId);
+      const idxTemp = (window.__vosItensAdicionadosTemp || []).findIndex(t => t.produtoId === item.produtoId);
+      if (idxTemp >= 0) {
+        const p = db.produtos && db.produtos.find(x => x.id === item.produtoId);
         if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
           p.estoque = (p.estoque || 0) + (parseFloat(item.qtd) || 1);
         }
+        window.__vosItensAdicionadosTemp.splice(idxTemp, 1);
       }
     }
     if (_origVosRemoveItem) _origVosRemoveItem.apply(this, arguments);
@@ -626,7 +647,7 @@
       } else if (typeof toast === 'function') {
         toast('O estoque salvo ainda é menor que a quantidade solicitada.', 'info');
       }
-    }, 80);
+    }, 220);
   }
 
   const _origFecharModalOp = window.fecharModal || window.fecharModalOperacional;
@@ -694,9 +715,8 @@
       }
       return;
     }
-    // Desconta imediatamente do estoque ao adicionar no carrinho (Req 6)
-    p.estoque = est - qtdSolicitada;
-    window.__vosItensAdicionadosTemp.push({ produtoId: p.id, qtd: qtdSolicitada });
+    // 4: NÃO altera o estoque do cadastro ao adicionar na venda. Só reserva na notinha.
+    // A baixa no cadastro acontece só ao SALVAR / FATURAR (vosGravarVenda).
     callbackOk();
   }
 
@@ -1088,5 +1108,5 @@
     if (v) persistirRecargasAoFaturar(v);
   };
 
-  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.12.0 — estoque + recarga de toner');
+  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.13.0 — 4/6/7/8 estoque + recarga');
 })();
