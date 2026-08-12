@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PATCH v5.13.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
+// PATCH v5.14.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
@@ -493,7 +493,16 @@
 
   const _origCloseModalEst = window.closeModal;
   window.closeModal = function(force) {
-    if (window.__vosPendenteReporEstoque) return;
+    if (window.__vosIgnorarSair) {
+      return _origCloseModalEst ? _origCloseModalEst.apply(this, arguments) : undefined;
+    }
+    if (window.__vosPendenteReporEstoque && !telaVendaAberta()) {
+      const pend = window.__vosPendenteReporEstoque;
+      window.__vosPendenteReporEstoque = null;
+      const r = _origCloseModalEst ? _origCloseModalEst.apply(this, arguments) : undefined;
+      if (pend && pend.snap) setTimeout(() => restaurarVendaDoSnapshot(pend.snap, null), 20);
+      return r;
+    }
     if (telaVendaAberta() && window.__vosForm && !window.__vosSalvoConfirmadoTemp) {
       perguntarSairVenda(() => {
         if (_origCloseModalEst) _origCloseModalEst.call(window, true);
@@ -603,82 +612,135 @@
     if (_origNeoSearchProd) _origNeoSearchProd.apply(this, arguments);
   };
 
-  // H) Reposição inteligente: abre cadastro, ao salvar adiciona na notinha e desconta do estoque na hora (Req 2 e 4)
-  function processarReposicaoEstoqueNaVenda() {
-    if (!window.__vosPendenteReporEstoque) return;
-    const pend = window.__vosPendenteReporEstoque;
-    window.__vosPendenteReporEstoque = null;
-
-    setTimeout(() => {
-      const prd = (db.produtos || []).find(x => x.id === pend.produtoId);
-      if (prd && (prd.estoque || 0) >= pend.qtdSolicitada) {
-        const modal = document.getElementById('modal-root');
-        const box = document.getElementById('modal-box');
-        if (modal && box && pend.vendaHtmlSnap && pend.vendaHtmlSnap.body) {
-          box.className = pend.vendaHtmlSnap.boxClass;
-          document.getElementById('modal-title').innerText = pend.vendaHtmlSnap.title;
-          document.getElementById('modal-body').innerHTML = pend.vendaHtmlSnap.body;
-          document.getElementById('modal-footer').innerHTML = pend.vendaHtmlSnap.footer;
-          modal.classList.remove('hidden');
-          if (pend.vendaHtmlSnap.formState) window.__vosForm = pend.vendaHtmlSnap.formState;
-        }
-
-        // Desconta a quantidade adicionada na hora do novo estoque
-        prd.estoque = (prd.estoque || 0) - pend.qtdSolicitada;
-        window.__vosItensAdicionadosTemp.push({ produtoId: prd.id, qtd: pend.qtdSolicitada });
-
-        if (window.__vosForm && window.__vosForm.itens) {
-          const pu = prd.preco || 0;
-          window.__vosForm.itens.push({
-            id: (typeof uid === 'function' ? uid('it') : 'it_' + Date.now()),
-            produtoId: prd.id,
-            codigo: prd.sku || '',
-            descricao: prd.nome || '',
-            qtd: pend.qtdSolicitada,
-            preco: pu,
-            desconto: 0,
-            subtotal: pend.qtdSolicitada * pu,
-            tipo: prd.categoria || 'Produto'
-          });
-          if (typeof window.vosRenderItens === 'function') window.vosRenderItens();
-          if (typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
-          if (typeof toast === 'function') toast(`Estoque reposto! "${prd.nome}" (${pend.qtdSolicitada} un) adicionado à notinha. Estoque restante: ${prd.estoque}`, 'success');
-        }
-      } else if (typeof toast === 'function') {
-        toast('O estoque salvo ainda é menor que a quantidade solicitada.', 'info');
+  // H) Reposição: salva estado da venda (NÃO o HTML) e reconstrói depois — evita travar
+  function snapshotVendaAtual() {
+    const f = window.__vosForm;
+    if (!f) return null;
+    let formCopy = null;
+    try { formCopy = structuredClone(f); } catch (e) {
+      formCopy = { vendaId: f.vendaId, codigo: f.codigo, data: f.data, hora: f.hora, itens: (f.itens || []).map(it => ({ ...it })), cliente: f.cliente ? { ...f.cliente } : null, produtoSel: null };
+    }
+    return {
+      form: formCopy,
+      campos: {
+        destino: document.getElementById('vos-destino')?.value || '',
+        dataSaida: document.getElementById('vos-data-saida')?.value || '',
+        prazo: document.getElementById('vos-prazo-entrega')?.value || '',
+        obs: document.getElementById('vos-obs')?.value || '',
+        status: document.getElementById('vos-status')?.value || '',
+        desc: document.getElementById('vos-desc-venda')?.value || '0'
       }
-    }, 220);
-  }
-
-  const _origFecharModalOp = window.fecharModal || window.fecharModalOperacional;
-  if (typeof window.fecharModalOperacional === 'function') {
-    const _fm = window.fecharModalOperacional;
-    window.fecharModalOperacional = function() {
-      if (window.__vosPendenteReporEstoque) return;
-      return _fm.apply(this, arguments);
     };
   }
 
-  const _origSaveProd1 = window.saveProduto;
-  window.saveProduto = function() {
-    const res = _origSaveProd1 ? _origSaveProd1.apply(this, arguments) : undefined;
-    processarReposicaoEstoqueNaVenda();
-    return res;
-  };
-  const _origSaveProd2 = window.salvarProdutoOperacional;
-  window.salvarProdutoOperacional = function() {
+  function restaurarVendaDoSnapshot(snap, itemExtra) {
+    if (!snap || typeof window.novaVenda !== 'function') return;
+    window.__vosIgnorarSair = true;
+    window.__vosSalvoConfirmadoTemp = true;
+    window.novaVenda();
+    window.__vosSalvoConfirmadoTemp = false;
+    const f = window.__vosForm;
+    if (f && snap.form) {
+      f.vendaId = snap.form.vendaId || null;
+      f.codigo = snap.form.codigo || f.codigo;
+      f.data = snap.form.data || f.data;
+      f.hora = snap.form.hora || f.hora;
+      f.itens = (snap.form.itens || []).map(it => ({ ...it }));
+      if (snap.form.cliente && snap.form.cliente.id && typeof window.vosVendaSelectCliente === 'function') {
+        window.vosVendaSelectCliente(snap.form.cliente.id);
+      }
+    }
+    const c = snap.campos || {};
+    const setv = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+    setv('vos-destino', c.destino);
+    setv('vos-data-saida', c.dataSaida);
+    setv('vos-prazo-entrega', c.prazo);
+    setv('vos-obs', c.obs);
+    setv('vos-status', c.status);
+    setv('vos-desc-venda', c.desc);
+    const elCod = document.getElementById('vos-codigo');
+    if (elCod && f && f.codigo) elCod.textContent = f.codigo;
+    if (itemExtra && f) {
+      f.itens.push(itemExtra);
+    }
+    if (typeof window.vosRenderItens === 'function') window.vosRenderItens();
+    if (typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
+    const modal = document.getElementById('modal-root');
+    if (modal) modal.classList.remove('hidden');
+    setTimeout(() => { window.__vosIgnorarSair = false; }, 80);
+  }
+
+  function processarReposicaoEstoqueNaVenda() {
     const pend = window.__vosPendenteReporEstoque;
-    const res = _origSaveProd2 ? _origSaveProd2.apply(this, arguments) : undefined;
-    if (pend) window.__vosPendenteReporEstoque = pend;
-    processarReposicaoEstoqueNaVenda();
-    return res;
-  };
-  const _origSaveProd3 = window.salvarProdutoModal;
-  window.salvarProdutoModal = function() {
-    const res = _origSaveProd3 ? _origSaveProd3.apply(this, arguments) : undefined;
-    processarReposicaoEstoqueNaVenda();
-    return res;
-  };
+    if (!pend || !pend.snap) return;
+    window.__vosPendenteReporEstoque = null;
+    const prd = (db.produtos || []).find(x => x.id === pend.produtoId);
+    if (!prd) {
+      restaurarVendaDoSnapshot(pend.snap, null);
+      return;
+    }
+    if ((prd.estoque || 0) < pend.qtdSolicitada) {
+      restaurarVendaDoSnapshot(pend.snap, null);
+      if (typeof window.lfbAlert === 'function') {
+        window.lfbAlert('O estoque salvo ainda é menor que a quantidade solicitada.', 'Estoque insuficiente');
+      }
+      return;
+    }
+    prd.estoque = (prd.estoque || 0) - pend.qtdSolicitada;
+    window.__vosItensAdicionadosTemp = window.__vosItensAdicionadosTemp || [];
+    window.__vosItensAdicionadosTemp.push({ produtoId: prd.id, qtd: pend.qtdSolicitada });
+    if (typeof saveDB === 'function') saveDB();
+    const pu = prd.preco || 0;
+    const item = {
+      produtoId: prd.id,
+      descricao: prd.nome || '',
+      sku: prd.sku || '',
+      tipo: prd.categoria || 'Produto',
+      qtd: pend.qtdSolicitada,
+      preco: pu,
+      desconto: 0,
+      subtotal: pend.qtdSolicitada * pu,
+      situacao: 'Pendente'
+    };
+    restaurarVendaDoSnapshot(pend.snap, item);
+    if (typeof window.lfbAlert === 'function') {
+      window.lfbAlert('Estoque reposto. Item adicionado na notinha. Estoque restante: ' + prd.estoque, 'Estoque');
+    }
+  }
+
+  function wrapSaveProduto(nome) {
+    const orig = window[nome];
+    if (typeof orig !== 'function' || orig.__vosWrap) return;
+    window[nome] = function() {
+      const pend = window.__vosPendenteReporEstoque;
+      window.__vosIgnorarSair = true;
+      const res = orig.apply(this, arguments);
+      if (pend) window.__vosPendenteReporEstoque = pend;
+      if (pend) {
+        setTimeout(() => {
+          window.__vosIgnorarSair = false;
+          processarReposicaoEstoqueNaVenda();
+        }, 30);
+      } else {
+        window.__vosIgnorarSair = false;
+      }
+      return res;
+    };
+    window[nome].__vosWrap = true;
+  }
+  wrapSaveProduto('saveProduto');
+  wrapSaveProduto('salvarProdutoOperacional');
+  wrapSaveProduto('salvarProdutoModal');
+
+  function abrirCadastroProdutoDaVenda(p, qtdSolicitada) {
+    window.__vosPendenteReporEstoque = {
+      produtoId: p.id,
+      qtdSolicitada: qtdSolicitada,
+      snap: snapshotVendaAtual()
+    };
+    window.__vosIgnorarSair = true;
+    if (typeof window.openModal === 'function') window.openModal('produto', p.id);
+  }
 
   function checarEstoqueComPopup(p, qtdSolicitada, callbackOk) {
     if (!p || p.categoria === 'Serviço' || p.categoria === 'Recarga') {
@@ -688,52 +750,20 @@
     const est = Number(p.estoque || 0);
     if (est <= 0 || qtdSolicitada > est) {
       const msg = est <= 0
-        ? `Este produto "${p.nome}" (Cód: ${p.sku || p.codigo || '-'}) está sem estoque disponível (Estoque atual: ${est}).\n\nDeseja abrir o cadastro para adicionar estoque neste produto agora?`
-        : `Estoque insuficiente para "${p.nome}".\n\nQuantidade solicitada: ${qtdSolicitada} | Disponível em estoque: ${est}.\n\nDeseja abrir o cadastro para ajustar o estoque?`;
-
+        ? `Este produto "${p.nome}" (Cód: ${p.sku || p.codigo || '-'}) está sem estoque (atual: ${est}).\n\nDeseja abrir o cadastro para adicionar estoque agora?`
+        : `Estoque insuficiente para "${p.nome}".\n\nSolicitado: ${qtdSolicitada} | Disponível: ${est}.\n\nDeseja abrir o cadastro para ajustar o estoque?`;
       const tit = est <= 0 ? 'Produto Sem Estoque' : 'Estoque Insuficiente';
-
       if (typeof window.confirmSistema === 'function') {
         window.confirmSistema(msg, tit).then(ok => {
-          if (ok && typeof window.openModal === 'function') {
-            window.__vosPendenteReporEstoque = {
-              produtoId: p.id,
-              qtdSolicitada: qtdSolicitada,
-              vendaHtmlSnap: {
-                title: document.getElementById('modal-title')?.innerText || '',
-                body: document.getElementById('modal-body')?.innerHTML || '',
-                footer: document.getElementById('modal-footer')?.innerHTML || '',
-                boxClass: document.getElementById('modal-box')?.className || '',
-                formState: structuredClone(window.__vosForm)
-              }
-            };
-            window.openModal('produto', p.id);
-          }
+          if (ok) abrirCadastroProdutoDaVenda(p, qtdSolicitada);
         });
       } else if (typeof window.lfbAlert === 'function') {
         window.lfbAlert(msg, tit);
       }
       return;
     }
-    // 4: NÃO altera o estoque do cadastro ao adicionar na venda. Só reserva na notinha.
-    // A baixa no cadastro acontece só ao SALVAR / FATURAR (vosGravarVenda).
     callbackOk();
   }
-
-  const _origVosAddItem = window.vosAddItem;
-  window.vosAddItem = function() {
-    if (!validarClienteVendaAviso()) return;
-    const f = window.__vosForm;
-    const p = f && f.produtoSel;
-    const qtd = parseFloat(document.getElementById('vos-item-qtd')?.value) || 1;
-    if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
-      checarEstoqueComPopup(p, qtd, () => {
-        if (_origVosAddItem) _origVosAddItem.apply(this, arguments);
-      });
-      return;
-    }
-    if (_origVosAddItem) _origVosAddItem.apply(this, arguments);
-  };
 
   // I) Estornar venda mostra status ESTORNADA, destrava campos e REMOVE título do financeiro (Req 1)
   window.estornarNotinha = window.estornarVenda = function(id) {
@@ -975,6 +1005,14 @@
     const ident = document.getElementById('vos-item-ident');
     if (ident && recarga) ident.closest('label')?.classList.add('hidden');
     else if (ident) ident.closest('label')?.classList.remove('hidden');
+    ['vos-item-pe', 'vos-item-ps'].forEach(id => {
+      const el = document.getElementById(id);
+      const lab = el && el.closest('label');
+      if (lab) lab.classList.toggle('hidden', recarga);
+    });
+    const sit = document.getElementById('vos-item-sit');
+    if (sit && recarga) sit.closest('label')?.classList.add('hidden');
+    else if (sit) sit.closest('label')?.classList.remove('hidden');
     let btn = document.getElementById('vos-btn-cadastrar-etiqueta');
     if (recarga) {
       if (!btn) {
@@ -1108,5 +1146,5 @@
     if (v) persistirRecargasAoFaturar(v);
   };
 
-  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.13.0 — 4/6/7/8 estoque + recarga');
+  console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.14.0 — sair/reposicao/PE-PS');
 })();

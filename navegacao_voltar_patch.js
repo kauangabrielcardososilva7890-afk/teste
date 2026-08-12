@@ -92,7 +92,7 @@
     if (btnX && !btnX.__hierPatched) {
       btnX.__hierPatched = true;
       btnX.onclick = function(e) {
-        voltarNivelModal(e);
+        (window.voltarNivelModal || voltarNivelModal)(e);
       };
     }
   }
