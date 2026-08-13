@@ -16,6 +16,9 @@ function clienteTemContrato(clienteId){
 function parqueAtivo(p){ return p && p.status!=='inativo' && p.modalidade!=='inativo'; }
 function impressoraTemColor(p, eq){
   if(p && (p.temColor===true || p.colorAtivo===true)) return true;
+  const meds = (p && (p.medidoresConfig||p.medidores)) || {};
+  if(meds.colorA4 && meds.colorA4.modalidade && meds.colorA4.modalidade!=='inativo') return true;
+  if(meds.colorA3 && meds.colorA3.modalidade && meds.colorA3.modalidade!=='inativo') return true;
   if(eq && (eq.temColor===true || /color/i.test(eq.tipo||''))) return true;
   return false;
 }
@@ -255,16 +258,26 @@ window.abrirChamadosContrato = function(contratoId){
 // ── 2.1 / 4 color + campos no chamado de contrato ──
 function injetarCamposChamado(contrato){
   const body = document.getElementById('modal-body');
-  if(!body || document.getElementById('lc-cont-color-atu')) return;
+  if(!body) return;
+  body.querySelectorAll('label').forEach(lab=>{
+    if(/buscar impressora do cliente/i.test(lab.textContent||'')){
+      const box = lab.closest('.rounded-xl') || lab.parentElement;
+      if(box) box.remove();
+    }
+  });
   const pb = document.getElementById('ko-cont-atu') || document.getElementById('o-cont-atu') || document.getElementById('ca-cont-atu');
-  if(pb && pb.parentElement && pb.parentElement.parentElement){
-    const grid = pb.parentElement.parentElement;
-    const divAnt = document.createElement('div');
-    divAnt.innerHTML = `<label class="block font-bold text-slate-500 mb-1 text-[11px] uppercase">Contador Color Antigo</label><input id="lc-cont-color-ant" type="number" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono">`;
-    const divAtu = document.createElement('div');
-    divAtu.innerHTML = `<label class="block font-bold text-[#0a1e8a] mb-1 text-[11px] uppercase">Contador Color Atual</label><input id="lc-cont-color-atu" type="number" disabled class="w-full h-10 px-3 rounded-xl border font-mono bg-slate-100" placeholder="Somente se a impressora tiver Color">`;
-    grid.appendChild(divAnt);
-    grid.appendChild(divAtu);
+  if(pb && !document.getElementById('lc-cont-color-atu')){
+    const cell = pb.closest('div') || pb.parentElement;
+    const grid = cell && cell.parentElement;
+    if(grid){
+      grid.className = (grid.className||'').replace(/md:grid-cols-3/,'md:grid-cols-5');
+      const divAnt = document.createElement('div');
+      divAnt.innerHTML = `<label class="block font-bold text-slate-500 mb-1 text-[11px] uppercase">Contador Color Antigo</label><input id="lc-cont-color-ant" type="number" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono">`;
+      const divAtu = document.createElement('div');
+      divAtu.innerHTML = `<label class="block font-bold text-[#0a1e8a] mb-1 text-[11px] uppercase">Contador Color Atual</label><input id="lc-cont-color-atu" type="number" disabled class="w-full h-10 px-3 rounded-xl border font-mono bg-slate-100" placeholder="Só se Color A4/A3 estiver ativo">`;
+      if(cell.nextSibling){ grid.insertBefore(divAnt, cell.nextSibling); grid.insertBefore(divAtu, divAnt.nextSibling); }
+      else { grid.appendChild(divAnt); grid.appendChild(divAtu); }
+    }
   }
   if(!document.getElementById('lc-data-atend')){
     const geral = document.getElementById('ko-painel-geral') || document.getElementById('painel-os-geral') || body;
@@ -272,10 +285,10 @@ function injetarCamposChamado(contrato){
     d.innerHTML = `<label class="block font-bold text-slate-600 mb-1 mt-2">Data de atendimento</label><input id="lc-data-atend" type="date" class="w-full h-10 px-3 rounded-xl border max-w-[220px]">`;
     geral.appendChild(d);
   }
-  if(!document.getElementById('lc-pecas')){
+  if(!document.getElementById('lc-pecas') && !document.getElementById('ko-produto')){
     const finais = document.getElementById('ko-painel-finais') || document.getElementById('painel-os-finais') || body;
     const d = document.createElement('div');
-    d.innerHTML = `<label class="block font-bold text-slate-600 mb-1 mt-2">Produtos / peças utilizadas</label><textarea id="lc-pecas" class="w-full h-20 p-2 rounded-xl border"></textarea>`;
+    d.innerHTML = `<label class="block font-bold text-slate-600 mb-1 mt-2">Produtos / peças utilizadas</label><div id="lc-pecas-wrap" class="space-y-1">${[0,1,2,3,4].map(i=>`<div class="grid grid-cols-12 gap-2"><input id="lc-peca-desc-${i}" placeholder="Descrição" class="col-span-8 h-9 px-2 rounded-lg border"><input id="lc-peca-qtd-${i}" placeholder="Qtd" class="col-span-4 h-9 px-2 rounded-lg border"></div>`).join('')}</div><textarea id="lc-pecas" class="hidden"></textarea>`;
     finais.appendChild(d);
   }
   const colorAtu = document.getElementById('lc-cont-color-atu');
@@ -325,6 +338,7 @@ if(typeof _openCham==='function'){
     window.__lcChamDirty = false;
     window.__lcChamPersistida = !!osId;
     window.__lcChamFormAberto = true;
+    window.modalContext = Object.assign(window.modalContext||{}, { type:'chamado', id:osId||'', contratoId:contratoId||'' });
     const r = _openCham.apply(this, arguments);
     setTimeout(()=>{
       injetarCamposChamado(true);
@@ -335,8 +349,11 @@ if(typeof _openCham==='function'){
         const ca = document.getElementById('lc-cont-color-atu'); if(ca && o.contadorColor!=null) ca.value = o.contadorColor;
       }
       if(o && o.equipamentoId) atualizarColorPorImpressora(o.equipamentoId);
+      const eqSel = document.getElementById('ko-equip')?.value;
+      if(eqSel) atualizarColorPorImpressora(eqSel);
       marcarDirtyChamado();
     }, 80);
+    setTimeout(()=>injetarCamposChamado(true), 200);
     return r;
   };
 }
@@ -384,14 +401,32 @@ function wrapSalvarChamado(nome, isContrato){
   window[nome] = function(){
     if(!validarFinalizar(isContrato)) return;
     const extras = coletarExtrasChamado();
+    const equipId = document.getElementById('ko-equip')?.value || document.getElementById('ca-modelo') && window.__CHAMADO_AVULSO?.equipamentoId;
+    const eq0 = (db.equipamentos||[]).find(e=>e.id===equipId);
+    const snap = eq0 ? {pb:eq0.contadorPB, cor:eq0.contadorCor} : null;
     const r = orig.apply(this, arguments);
+    if(snap && eq0){ eq0.contadorPB=snap.pb; eq0.contadorCor=snap.cor; }
     try{
       const id = arguments[0];
       let o = id && (db.os||[]).find(x=>x.id===id);
       if(!o) o = (db.os||[]).slice(-1)[0];
       if(o){
+        const chk = document.getElementById('ko-concluido') || document.getElementById('o-concluido') || document.getElementById('ca-concluido');
+        if(chk && chk.checked){ o.status='concluido'; o.dataFechamento=o.dataFechamento||new Date().toISOString(); o.faturado=true; }
         Object.assign(o, extras);
-        // chamado NÃO altera contador final da impressora (color)
+        const pecasLinhas=[];
+        for(let i=0;i<5;i++){
+          const d=document.getElementById('lc-peca-desc-'+i)?.value||'';
+          const q=document.getElementById('lc-peca-qtd-'+i)?.value||'';
+          if(d||q) pecasLinhas.push({descricao:d,qtd:q});
+        }
+        if(pecasLinhas.length) o.pecasTexto = pecasLinhas.map(x=>x.descricao+(x.qtd?(' x'+x.qtd):'')).join('\n');
+        // chamado NÃO altera contador final da impressora
+        const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId);
+        if(eq){
+          if(o._pbAntes!=null) eq.contadorPB = o._pbAntes;
+          if(o._corAntes!=null) eq.contadorCor = o._corAntes;
+        }
         if(typeof saveDB==='function') saveDB();
       }
     }catch(e){}
@@ -438,20 +473,47 @@ window.imprimirChamadoPDF = function(osId){
   const p = (db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
   const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
   const temColor = !deContrato || impressoraTemColor(p, eq);
-  const linha = (label, val) => fin
-    ? `<div class="sec"><b>${label}</b><div>${esc(val||'-')}</div></div>`
-    : `<div class="sec"><b>${label}</b><div class="blank"></div><div class="blank"></div></div>`;
+  const pecas = Array.isArray(o.pecas)&&o.pecas.length
+    ? o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''}))
+    : String(o.pecasTexto||'').split('\n').filter(Boolean).map(line=>{
+        const m=line.match(/^(.*?)(?:\s+x\s*(\d+))?$/i); return {d:(m&&m[1])||line,q:(m&&m[2])||''};
+      });
+  while(pecas.length<5) pecas.push({d:'',q:''});
+  const fill = (v, blank)=>{
+    if(fin) return esc(v==null||v===''?'-':v);
+    return blank || '&nbsp;';
+  };
+  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>body{font-family:Arial;margin:16px;font-size:12px}.cab{border-bottom:2px solid #0a1e8a;margin-bottom:10px}.sec{border:1px solid #ccc;padding:8px;margin:8px 0;border-radius:6px}.blank{border-bottom:1px dotted #999;height:18px;margin:4px 0}@media print{.no-print{display:none}}</style></head><body>
+  <style>
+    body{font-family:Arial,sans-serif;margin:18px;color:#111;font-size:12px}
+    .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:12px}
+    .cab h1{color:#0a1e8a;font-size:18px;margin:0}
+    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;letter-spacing:.08em;padding:7px 10px;margin:12px 0 6px}
+    .linha{border:1px solid #bbb;min-height:28px;padding:6px 8px;margin-bottom:8px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    table{width:100%;border-collapse:collapse;margin-top:4px}
+    th,td{border:1px solid #bbb;padding:7px;height:22px}
+    th{background:#eef2ff;color:#0a1e8a;text-align:left}
+    .data{display:inline-block;border-bottom:1px solid #333;min-width:92px;text-align:center;letter-spacing:2px}
+    @media print{.no-print{display:none}}
+  </style></head><body>
   <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="cab"><h2>CHAMADO ${esc(o.numero||'')}</h2><p>${esc(cli.nome||'')}</p></div>
-  ${!deContrato? linha('Impressora', o.modelo)+linha('Serial', o.serie): ''}
-  ${linha('Contador preto atual', fin?o.contadorAtual:'')}
-  ${temColor? linha('Contador color atual', fin?o.contadorColor:'') : ''}
-  ${linha('Motivo / Defeito', fin?o.descricao:'')}
-  ${linha('Produtos e peças utilizadas', fin?(o.pecasTexto||''):'')}
-  ${linha('Observação', fin?(o.observacao||o.servicos||''):'')}
-  ${linha('Data de atendimento', fin?dia(o.dataAtendimento):'')}
+  <div class="cab"><div><h1>DIGICOPY — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${esc(cli.nome||'')}</p></div><div style="text-align:right"><p><b>OS:</b> ${esc(o.numero||'')}</p><p><b>Status:</b> ${esc(o.status||'')}</p></div></div>
+  ${!deContrato?`<div class="grid2"><div class="linha"><b>Impressora</b><div>${fill(o.modelo)}</div></div><div class="linha"><b>Serial</b><div>${fill(o.serie)}</div></div></div>`:''}
+  <div class="grid2">
+    <div class="linha"><b>Contador preto atual</b><div>${fill(o.contadorAtual)}</div></div>
+    ${temColor?`<div class="linha"><b>Contador color atual</b><div>${fill(o.contadorColor)}</div></div>`:'<div></div>'}
+  </div>
+  <div class="faixa">MOTIVO / DEFEITO</div>
+  <div class="linha" style="min-height:42px">${fill(o.descricao)}</div>
+  <div class="faixa">PRODUTO / PEÇAS</div>
+  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
+  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d||''):'&nbsp;'}</td><td>${fin?esc(it.q||''):'&nbsp;'}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="faixa">OBSERVAÇÃO</div>
+  <div class="linha" style="min-height:48px">${fill(o.observacao||o.servicos)}</div>
+  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
   </body></html>`;
   const w = window.open('','_blank');
   if(w){ w.document.write(html); w.document.close(); }
@@ -551,5 +613,52 @@ if(typeof _leit==='function'){
   };
 }
 
-console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.16.0');
+const _voltar = window.voltarNivelModal;
+window.voltarNivelModal = function(e){
+  if(window.__lcChamFormAberto && window.__lcChamDirty){
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema('Deseja salvar este chamado?','Sair do chamado').then(ok=>{
+        if(ok){
+          if(document.getElementById('ko-desc')||document.getElementById('o-desc')){
+            window.salvarChamadoCompleto && window.salvarChamadoCompleto(window.modalContext?.id||'', window.modalContext?.contratoId||'');
+          } else {
+            window.salvarChamadoAvulso && window.salvarChamadoAvulso(window.modalContext?.id||'');
+          }
+        }
+        window.__lcChamFormAberto=false; window.__lcChamDirty=false;
+        if(_voltar) _voltar.call(window, e);
+      });
+      return;
+    }
+  }
+  return _voltar ? _voltar.apply(this, arguments) : undefined;
+};
+
+// 5 Todos nas leituras
+const _lei2 = window.abrirLeiturasContrato;
+if(typeof _lei2==='function' && !_lei2.__lcTodos){
+  window.abrirLeiturasContrato = function(contratoId){
+    const r = _lei2.apply(this, arguments);
+    setTimeout(()=>{
+      const bar = document.getElementById('lc-lei-de') && document.getElementById('lc-lei-de').parentElement && document.getElementById('lc-lei-de').parentElement.parentElement;
+      if(bar && !document.getElementById('lc-lei-todos')){
+        const b=document.createElement('button');
+        b.id='lc-lei-todos'; b.type='button';
+        b.className='h-9 px-3 rounded-lg border font-bold text-[12px]';
+        b.textContent='Todos';
+        b.onclick=function(){
+          const de=document.getElementById('lc-lei-de'); const ate=document.getElementById('lc-lei-ate');
+          if(de) de.value=''; if(ate) ate.value='';
+          document.querySelectorAll('#modal-body tbody tr').forEach(tr=>tr.style.display='');
+        };
+        bar.appendChild(b);
+      }
+    }, 80);
+    return r;
+  };
+  window.abrirLeiturasContrato.__lcTodos=true;
+}
+
+console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
+

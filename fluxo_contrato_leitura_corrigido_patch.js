@@ -67,7 +67,7 @@ function htmlMedidor(key, med){
   return `${top}<div class="mt-3">${med.modalidade==='individual'?individual:med.modalidade==='impressao'?impressao:med.modalidade==='mes_fixo'?mes:'<p class="text-[12px] text-slate-400">Medidor inativo/oculto.</p>'}</div>`;
 }
 window.impfTrocarMedidor=function(key){ const med=coletarMedidor(key); const box=document.getElementById(`impf-box-${key}`); if(box) box.innerHTML=htmlMedidor(key,med); };
-function editorMedidores(p){ const meds=getMedidores(p); return `<div class="rounded-xl border bg-slate-50 p-3"><h4 class="font-bold text-[13px] mb-1">Modalidades desta impressora</h4><p class="text-[11px] text-slate-500 mb-3">Global removido. Padrão da nova impressora: só Preto A4 ativo.</p><div class="space-y-3">${MEDS.map(([key,label])=>`<details ${key==='pretoA4'?'open':''} class="rounded-xl bg-white border p-3"><summary class="font-bold text-[#0a1e8a] cursor-pointer">${label}</summary><div id="impf-box-${key}" class="pt-3">${htmlMedidor(key,meds[key])}</div></details>`).join('')}</div></div>`; }
+function editorMedidores(p){ const meds=getMedidores(p); return `<div class="rounded-xl border bg-slate-50 p-3"><h4 class="font-bold text-[13px] mb-1">Modalidades desta impressora</h4><p class="text-[11px] text-slate-500 mb-3">Ao editar, as modalidades que não estão Inativo já abrem.</p><div class="space-y-3">${MEDS.map(([key,label])=>{ const m=Object.assign(medPadrao(key),meds[key]||{}); const aberto=(m.modalidade&&m.modalidade!=='inativo')||(key==='pretoA4'&&!(p&&p.id)); return `<details ${aberto?'open':''} class="rounded-xl bg-white border p-3"><summary class="font-bold text-[#0a1e8a] cursor-pointer">${label}</summary><div id="impf-box-${key}" class="pt-3">${htmlMedidor(key,meds[key])}</div></details>`; }).join('')}</div></div>`; }
 function calc(m, ant, atu){ const usado=Math.max(0,n(atu)-n(ant)); if(m.modalidade==='impressao') return {usado,excedente:usado,valorTotal:usado*n(m.valorPagina)+n(m.acrescimo)}; if(m.modalidade==='mes_fixo') return {usado,excedente:0,valorTotal:n(m.valorLocacao)}; const exc=Math.max(0,usado-n(m.franquia)); return {usado,excedente:exc,valorTotal:n(m.valorLocacao)+n(m.valorFranquia)+exc*n(m.valorExcedente)+n(m.acrescimo)}; }
 
 // Contrato simples: não há medidores aqui.
@@ -93,12 +93,19 @@ window.abrirModalEquipamentoContrato=function(contratoId, parqueId){
 };
 window.salvarImpressoraContrato=function(contratoId, parqueId){
   const s=sess(); const c=ctr(contratoId); if(!s||!c) return; const modelo=txt(document.getElementById('impf-modelo')?.value); if(!modelo) return toastMsg('Informe o modelo','error');
+  const serie=txt(document.getElementById('impf-serie')?.value); if(!serie) return toastMsg('Informe o serial','error');
   let p=parqueId?prq(parqueId):null; let e=p&&p.equipamentoId?eq(p.equipamentoId):null;
   if(!e){ e={id:uidSafe('eq'),empresaId:s.empresaId,criadoEm:new Date().toISOString(),criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome}; db.equipamentos.push(e); }
-  Object.assign(e,{modelo,patrimonio:txt(document.getElementById('impf-patr')?.value)||e.patrimonio,serie:txt(document.getElementById('impf-serie')?.value)||e.serie,tipo:e.tipo||'Laser',status:'locado'});
+  Object.assign(e,{modelo,patrimonio:txt(document.getElementById('impf-patr')?.value)||e.patrimonio,serie:serie||txt(document.getElementById('impf-serie')?.value)||e.serie,tipo:e.tipo||'Laser',status:'locado'});
   const medidoresConfig={}; MEDS.forEach(([k])=>medidoresConfig[k]=coletarMedidor(k));
   const algumAtivo=Object.values(medidoresConfig).some(m=>m && m.modalidade!=='inativo' && m.ativo);
   if(!algumAtivo) return toastMsg('Deixe ao menos UMA modalidade ativa (não inativa) para salvar.','error');
+  for(const [k,lab] of MEDS){
+    const m=medidoresConfig[k];
+    if(!m || m.modalidade==='inativo') continue;
+    const el=document.getElementById('impf-'+k+'-contadorInicial');
+    if(el && String(el.value??'').trim()==='') return toastMsg('Informe Alterar Cont. de '+lab+' (obrigatório nas modalidades ativas).','error');
+  }
   const dados={empresaId:s.empresaId,contratoId:c.id,clienteId:c.clienteId,equipamentoId:e.id,setor:txt(document.getElementById('impf-setor')?.value)||'Geral',localInstalacao:txt(document.getElementById('impf-local')?.value),patrimonio:e.patrimonio,status:'ativo',medidoresConfig,medidores:medidoresConfig,atualizadoEm:new Date().toISOString()};
   if(p) Object.assign(p,dados); else { p={id:uidSafe('prq'),criadoEm:new Date().toISOString(),criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome,...dados}; db.parque.push(p); }
   c.equipamentos=c.equipamentos||[]; if(!c.equipamentos.includes(e.id)) c.equipamentos.push(e.id);
