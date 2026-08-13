@@ -351,27 +351,7 @@ function perguntarSairChamado(seguir){
   });
 }
 
-const _cm=window.closeModal;
-window.closeModal=function(force){
-  if(force){ window.__lcChamFormAberto=false; return _cm ? _cm.call(window,true) : undefined; }
-  perguntarSairChamado(()=>{ if(_cm) _cm.call(window,true); });
-};
-
-const _vol=window.voltarNivelModal;
-window.voltarNivelModal=function(e){
-  perguntarSairChamado(()=>{ if(_vol) _vol.call(window,e); });
-};
-
-document.addEventListener('click', function(ev){
-  if(!window.__lcChamFormAberto) return;
-  const btn=ev.target.closest && ev.target.closest('button');
-  if(!btn) return;
-  const t=low(btn.textContent);
-  if(/^(cancelar|fechar|sair|×|x)$/.test(t) || btn.querySelector('.ph-x')){
-    ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation();
-    perguntarSairChamado(()=>{ if(_cm) _cm.call(window,true); });
-  }
-}, true);
+// Fechar/ESC/Cancelar do chamado ficou só no v5.17.2 (evita popup empilhado).
 
 // 5 Leituras: barra De/Até + Todos que realmente mostra tudo
 const _lei=window.abrirLeiturasContrato;

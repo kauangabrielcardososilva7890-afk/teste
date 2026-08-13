@@ -402,7 +402,8 @@ function voltarListaChamado(){
     window.abrirHistoricoChamadosGeral();
     return;
   }
-  if(typeof window.closeModal==='function') window.closeModal(true);
+  if(typeof _cmPrev==='function') _cmPrev.call(window,true);
+  else document.getElementById('modal-root')?.classList.add('hidden');
 }
 
 function perguntarSairUmaVez(){
@@ -420,30 +421,33 @@ function perguntarSairUmaVez(){
   });
 }
 
+const _cmPrev=window.closeModal;
+const _volPrev=window.voltarNivelModal;
 window.closeModal=function(force){
-  if(force){ window.__lcChamFormAberto=false; const root=document.getElementById('modal-root'); if(root) root.classList.add('hidden'); return; }
-  if(window.__lcChamFormAberto){ perguntarSairUmaVez(); return; }
-  const root=document.getElementById('modal-root'); if(root) root.classList.add('hidden');
+  if(window.__lcChamFormAberto && !force){ perguntarSairUmaVez(); return; }
+  if(force) window.__lcChamFormAberto=false;
+  if(typeof _cmPrev==='function') return _cmPrev.apply(this, arguments);
+  document.getElementById('modal-root')?.classList.add('hidden');
 };
-
 window.voltarNivelModal=function(e){
-  if(e&&e.preventDefault) e.preventDefault();
-  if(window.__lcChamFormAberto){ perguntarSairUmaVez(); return; }
+  if(window.__lcChamFormAberto){ if(e&&e.preventDefault) e.preventDefault(); perguntarSairUmaVez(); return; }
+  if(typeof _volPrev==='function') return _volPrev.apply(this, arguments);
   const footer=document.getElementById('modal-footer');
-  const btns=footer?Array.from(footer.querySelectorAll('button')):[];
-  const voltar=btns.find(b=>/voltar/i.test(b.textContent||''));
+  const voltar=footer&&Array.from(footer.querySelectorAll('button')).find(b=>/voltar/i.test(b.textContent||''));
   if(voltar){ voltar.click(); return; }
-  window.closeModal(true);
+  if(typeof _cmPrev==='function') _cmPrev.call(window,true);
 };
-
-// remove o listener antigo de click que empilhava avisos: substitui por um só
 document.addEventListener('click', function(ev){
   if(!window.__lcChamFormAberto) return;
   const btn=ev.target.closest&&ev.target.closest('button');
   if(!btn) return;
-  if(btn.closest('#aviso-system-modal') || (btn.id||'').includes('aviso-system')) return;
+  if((btn.id||'').includes('aviso-system')) return;
+  if(btn.closest('[style*="z-index:99999"]') || btn.closest('[style*="z-index: 99999"]')) return;
   const t=low(btn.textContent);
-  if(/^(cancelar|fechar|sair|×|x)$/.test(t) || (btn.querySelector&&btn.querySelector('.ph-x') && btn.closest('#modal-box'))){
+  const noFooter=btn.closest('#modal-footer');
+  const noX=btn.closest('#modal-box') && btn.querySelector && btn.querySelector('.ph-x');
+  if(!noFooter && !noX) return;
+  if(/^(cancelar|fechar|sair|×|x)$/.test(t) || noX){
     ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation();
     perguntarSairUmaVez();
   }
