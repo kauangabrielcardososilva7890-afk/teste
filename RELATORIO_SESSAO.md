@@ -4,9 +4,11 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/019fed4b-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.17.2**  
-**Commit:** `7a704fb`  
-**GitHack:** https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/7a704fb/index.html?v=5.17.2
+**Última versão:** **v5.17.4**  
+**Commit:** atualizar após push  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.17.4`
+
+v5.17.4: contador antigo do chamado vem da LEITURA (não do último chamado); aviso de que não mexe no contador da leitura; color embaixo e some se inativo; peças = busca no bloco “Produtos / Peças usadas”; PDF com serviços executados, linhas, faixas que imprimem, atendimento com técnico/motivo/data cadastro; Todos leituras pergunta; busca impressora só no chamado de contrato.
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
