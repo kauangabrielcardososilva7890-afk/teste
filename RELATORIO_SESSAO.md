@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## v5.18.2
+- PDF peças: só **Descrição, Quantidade, Valor**.
+- Cadastro do item no chamado = vendas: busca (lupa/Enter), qtd, valor, desconto, valor final, Adicionar item.
+- 1.2.1 e 1.2.2 **não** nesta versão.
+
 ## v5.18.1
 - Peças no chamado: qtd, valor, desconto, valor final (igual vendas). Contrato e avulso.
 - PDF: colunas Valor / Desc. / Valor final + total (só preenchido se finalizado).
