@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## v5.17.9
+- Avulso: ao escolher cliente some a lista; botão **Limpar** para trocar.
+- PDF contrato: color se modalidade Color A4/A3 ativa (parque certo).
+- Contadores do PDF sem número se o chamado não estiver finalizado.
+- Rodapé da loja **dentro** da 1ª folha (não empurra 2ª página). Sem `min-height` estourando.
+
 ## v5.17.8
 - Tirar peça: captura mousedown/click (não fecha chamado; aviso “Deseja remover esse item?”).
 - PDF: assinaturas no **rodapé da folha A4** (`min-height:273mm` + `margin-top:auto`).
