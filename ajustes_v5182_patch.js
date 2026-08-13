@@ -1,13 +1,13 @@
-// PATCH v5.18.1 — peças com valor/desconto; PDF valor; venda faturada; excluir apaga chamado
+// PATCH v5.18.2 — peças igual vendas; PDF só desc/qtd/valor; sem 1.2.1/1.2.2
 (function(){
 'use strict';
 
 function esc(s){ return String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])); }
+function low(v){ return String(v??'').toLowerCase().trim(); }
 function n(v,fb){ const x=Number(String(v??'').replace(',','.')); return Number.isFinite(x)?x:(fb===undefined?0:fb); }
 function money(v){ return typeof fmtMoney==='function'?fmtMoney(n(v)):('R$ '+n(v).toFixed(2).replace('.',',')); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
-function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); }
-function confirmar(m,t){ return typeof window.confirmSistema==='function'?window.confirmSistema(m,t||'Confirmar'):Promise.resolve(false); }
+function aviso(m){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,'Aviso'); }
 function logoSrc(){ return window.DIGICOPY_LOGO||'./logo.png'; }
 function dia(v){ return String(v||'').slice(0,10); }
 function dataBR(v){ const s=dia(v); if(!s) return ''; const p=s.split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:s; }
@@ -16,109 +16,150 @@ function normItem(it){
   const qtd=Math.max(1,n(it.qtd,1));
   const preco=n(it.preco,0);
   const desconto=Math.max(0,n(it.desconto,0));
-  const bruto=qtd*preco;
-  const subtotal=Math.max(0,bruto-desconto);
-  return Object.assign({},it,{qtd,preco,desconto,subtotal});
-}
-function totalPecas(lista){
-  return (lista||[]).reduce((s,it)=>s+n(normItem(it).subtotal),0);
+  return Object.assign({},it,{qtd,preco,desconto,subtotal:Math.max(0,qtd*preco-desconto)});
 }
 
-window.lcAddPeca=function(prefix,prodId){
-  const p=(db.produtos||[]).find(x=>x.id===prodId);
-  if(!p){ aviso('Produto não encontrado'); return; }
-  const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
-  const precoEl=document.getElementById(prefix+'-prod-preco');
-  const descEl=document.getElementById(prefix+'-prod-desc');
-  const preco=precoEl&&String(precoEl.value).trim()!==''?n(precoEl.value,n(p.preco)):n(p.preco);
-  const desconto=Math.max(0,n(descEl&&descEl.value,0));
-  window.__chamadoPecasTemp=window.__chamadoPecasTemp||[];
-  const ex=window.__chamadoPecasTemp.find(i=>i.produtoId===prodId);
-  if(ex){
-    ex.qtd=n(ex.qtd)+qtd;
-    ex.preco=preco;
-    ex.desconto=n(ex.desconto)+desconto;
-    Object.assign(ex,normItem(ex));
-  } else {
-    window.__chamadoPecasTemp.push(normItem({produtoId:prodId,descricao:p.nome,qtd,preco,desconto}));
+window.__lcPecaSel=null;
+
+function htmlPecasVendas(prefix){
+  return `<div class="rounded-xl border p-3 bg-[#f8f9ff]" id="${prefix}-pecas-box">
+    <p class="font-bold text-slate-700 mb-2">Produtos / Peças usadas</p>
+    <div class="grid grid-cols-12 gap-2 items-end">
+      <label class="col-span-12 md:col-span-5 text-[11px] font-bold uppercase text-slate-500 relative">Descrição ou código
+        <div class="flex gap-1 mt-1">
+          <input id="${prefix}-prod-search" class="flex-1 h-10 px-3 rounded-xl border bg-white" placeholder="Nome, código, ref. — Enter ou lupa" autocomplete="off">
+          <button type="button" id="${prefix}-prod-lupa" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
+        </div>
+        <div id="${prefix}-prod-results" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl"></div>
+      </label>
+      <label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Qtd
+        <input id="${prefix}-prod-qtd" type="number" min="1" value="1" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+      <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
+        <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+      <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+      <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
+        <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
+    </div>
+    <div class="flex justify-end mt-2">
+      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+    </div>
+    <div id="${prefix}-pecas-list" class="mt-3"></div>
+  </div>`;
+}
+
+window.lcPecaCalc=function(prefix){
+  const qtd=n(document.getElementById(prefix+'-prod-qtd')?.value,0);
+  const vu=n(document.getElementById(prefix+'-prod-preco')?.value,0);
+  const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
+  const el=document.getElementById(prefix+'-prod-total');
+  if(el) el.value=money(Math.max(0,qtd*vu-de));
+};
+
+window.lcBuscarPeca=function(prefix){
+  if(arguments.length>1) return;
+  const inp=document.getElementById(prefix+'-prod-search');
+  const res=document.getElementById(prefix+'-prod-results');
+  if(!res) return;
+  const q=low(inp&&inp.value);
+  if(!q){ res.classList.add('hidden'); res.innerHTML=''; return; }
+  const s=sess();
+  let lista=(db.produtos||[]).filter(p=>(!s||p.empresaId===s.empresaId)&&p.status!=='inativo'&&p.status!=='excluido');
+  lista=lista.filter(p=>[p.nome,p.sku,p.codigo,p.categoria,p.fabricante].some(v=>low(v).includes(q))).slice(0,20);
+  if(!lista.length){
+    res.innerHTML='<p class="p-3 text-[12px] text-slate-400">Nenhum item — a descrição digitada pode ser usada no Adicionar</p>';
+    res.classList.remove('hidden'); return;
   }
-  window.lcRenderPecas(prefix);
+  res.innerHTML=lista.map(p=>`<div class="px-3 py-2 border-b hover:bg-blue-50 cursor-pointer" onmousedown="event.preventDefault();lcSelPeca('${prefix}','${p.id}')"><b>${esc(p.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(p.sku||p.codigo||'')} • est ${n(p.estoque)} • <b>${money(p.preco)}</b></span></div>`).join('');
+  res.classList.remove('hidden');
+};
+
+window.lcSelPeca=function(prefix,prodId){
+  const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
+  window.__lcPecaSel=p;
+  const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
+  window.lcPecaCalc(prefix);
+};
+
+window.lcAddPecaManual=function(prefix){
+  const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
+  const p=window.__lcPecaSel;
+  if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
+  const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
+  const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
+  window.__chamadoPecasTemp=window.__chamadoPecasTemp||[];
+  window.__chamadoPecasTemp.push(normItem({
+    produtoId:p?p.id:null,
+    descricao:p?(p.nome||''):desc,
+    qtd,preco,desconto
+  }));
+  window.__lcPecaSel=null;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
+  const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  window.lcPecaCalc(prefix);
+  window.lcRenderPecas(prefix);
+};
+
+window.lcAddPeca=function(prefix,prodId){
+  window.lcSelPeca(prefix,prodId);
 };
 
 window.lcUpdPeca=function(prefix,idx,campo,val){
   const it=(window.__chamadoPecasTemp||[])[idx]; if(!it) return;
-  it[campo]=val;
-  Object.assign(it,normItem(it));
+  it[campo]=val; Object.assign(it,normItem(it));
   window.lcRenderPecas(prefix);
 };
 
 window.lcRenderPecas=function(prefix){
   const cont=document.getElementById(prefix+'-pecas-list'); if(!cont) return;
   const itens=window.__chamadoPecasTemp||[];
-  if(!itens.length){
-    cont.innerHTML='<p class="text-[12px] text-slate-400 text-center py-2">Nenhum produto lançado</p>';
-    const tot=document.getElementById(prefix+'-pecas-total'); if(tot) tot.textContent=money(0);
-    return;
-  }
-  cont.innerHTML=`<div class="overflow-auto"><table class="w-full text-[11px]"><thead><tr class="text-slate-500">
-    <th class="text-left py-1">Item</th><th class="w-16">Qtd</th><th class="w-24">Valor</th><th class="w-20">Desc.</th><th class="w-24">Final</th><th></th>
+  if(!itens.length){ cont.innerHTML='<p class="text-[12px] text-slate-400 text-center py-2">Nenhum produto lançado</p>'; return; }
+  cont.innerHTML=`<div class="overflow-auto rounded-xl border bg-white"><table class="w-full text-[11px]"><thead class="bg-slate-50"><tr>
+    <th class="text-left px-2 py-1">Descrição</th><th>Qtd</th><th>Valor</th><th>Desc.</th><th>Final</th><th></th>
   </tr></thead><tbody>${itens.map((raw,i)=>{
     const it=normItem(raw);
-    const p=(db.produtos||[]).find(x=>x.id===it.produtoId)||{};
-    return `<tr class="border-t bg-white">
-      <td class="py-1 pr-2"><b>${esc(p.nome||it.descricao||'')}</b><div class="text-slate-400">${esc(p.sku||'')}</div></td>
-      <td><input type="number" min="1" value="${it.qtd}" class="w-14 h-8 px-1 rounded-lg border" onchange="lcUpdPeca('${prefix}',${i},'qtd',this.value)"></td>
-      <td><input type="number" step="0.01" value="${it.preco}" class="w-20 h-8 px-1 rounded-lg border" onchange="lcUpdPeca('${prefix}',${i},'preco',this.value)"></td>
-      <td><input type="number" step="0.01" min="0" value="${it.desconto}" class="w-16 h-8 px-1 rounded-lg border" onchange="lcUpdPeca('${prefix}',${i},'desconto',this.value)"></td>
-      <td class="font-bold text-right pr-1">${money(it.subtotal)}</td>
+    return `<tr class="border-t">
+      <td class="px-2 py-1"><b>${esc(it.descricao||'')}</b></td>
+      <td class="text-center">${it.qtd}</td>
+      <td class="text-right">${money(it.preco)}</td>
+      <td class="text-right">${money(it.desconto)}</td>
+      <td class="text-right font-bold">${money(it.subtotal)}</td>
       <td><button type="button" data-lc-del="${prefix}:${i}" class="lc-peca-del h-7 px-2 rounded-lg bg-red-50 text-red-600 font-bold">Tirar</button></td>
     </tr>`;
-  }).join('')}</tbody></table></div>`;
-  let tot=document.getElementById(prefix+'-pecas-total');
-  if(!tot){
-    tot=document.createElement('p');
-    tot.id=prefix+'-pecas-total';
-    tot.className='text-right font-bold text-[#0a1e8a] mt-2';
-    cont.parentElement.appendChild(tot);
-  }
-  tot.textContent='Total peças: '+money(totalPecas(itens));
+  }).join('')}</tbody></table></div>
+  <p class="text-right font-bold text-[#0a1e8a] mt-2">Total: ${money(itens.reduce((s,it)=>s+n(normItem(it).subtotal),0))}</p>`;
 };
 
-function garantirCamposPeca(prefix){
-  if(document.getElementById(prefix+'-prod-preco')) return;
-  const qtd=document.getElementById(prefix+'-prod-qtd');
-  if(!qtd||!qtd.parentElement) return;
-  const wrap=qtd.parentElement;
-  wrap.className='grid grid-cols-12 gap-2 items-end';
-  qtd.className='col-span-2 h-10 px-2 rounded-xl border bg-white';
-  qtd.placeholder='Qtd';
-  const preco=document.createElement('input');
-  preco.id=prefix+'-prod-preco'; preco.type='number'; preco.step='0.01';
-  preco.className='col-span-3 h-10 px-2 rounded-xl border bg-white';
-  preco.placeholder='Valor';
-  const desc=document.createElement('input');
-  desc.id=prefix+'-prod-desc'; desc.type='number'; desc.step='0.01'; desc.value='0';
-  desc.className='col-span-3 h-10 px-2 rounded-xl border bg-white';
-  desc.placeholder='Desconto';
-  const hint=document.createElement('p');
-  hint.className='col-span-4 text-[11px] text-slate-500 self-center';
-  hint.textContent='Qtd, valor e desconto — igual vendas.';
-  wrap.appendChild(preco); wrap.appendChild(desc); wrap.appendChild(hint);
+function montarPecas(prefix){
+  const box=document.getElementById(prefix+'-pecas-box');
+  if(!box) return;
+  if(!document.getElementById(prefix+'-prod-total')){
+    const wrap=document.createElement('div');
+    wrap.innerHTML=htmlPecasVendas(prefix);
+    box.replaceWith(wrap.firstChild);
+  }
+  const inp=document.getElementById(prefix+'-prod-search');
+  const lupa=document.getElementById(prefix+'-prod-lupa');
+  if(inp){
+    inp.removeAttribute('oninput'); inp.oninput=null;
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.lcBuscarPeca(prefix); } };
+  }
+  if(lupa) lupa.onclick=function(ev){ ev.preventDefault(); window.lcBuscarPeca(prefix); };
+  window.lcRenderPecas(prefix);
+  window.lcPecaCalc(prefix);
 }
 
-function afterOpenPecas(prefix){
-  setTimeout(()=>{
-    garantirCamposPeca(prefix);
-    if(typeof window.lcRenderPecas==='function') window.lcRenderPecas(prefix);
-  },60);
-}
 const _open=window.openModalChamadoCompleto;
 if(typeof _open==='function'){
   window.openModalChamadoCompleto=function(){
     const r=_open.apply(this,arguments);
-    afterOpenPecas('ko');
+    setTimeout(()=>montarPecas('ko'),40);
+    setTimeout(()=>montarPecas('ko'),140);
     return r;
   };
 }
@@ -126,91 +167,39 @@ const _av=window.abrirChamadoAvulsoForm;
 if(typeof _av==='function'){
   window.abrirChamadoAvulsoForm=function(){
     const r=_av.apply(this,arguments);
-    afterOpenPecas('ca');
+    setTimeout(()=>montarPecas('ca'),90);
+    setTimeout(()=>montarPecas('ca'),200);
     return r;
   };
 }
 
-window.lcCriarVendaDoChamado=function(o){
-  if(!o||o.status!=='concluido') return null;
-  const pecas=(o.pecas||[]).map(normItem);
-  if(!pecas.length) return null;
-  let venda=(db.vendas||[]).find(v=>v.chamadoId===o.id);
-  const s=sess(); if(!s) return venda||null;
-  const descTot=pecas.reduce((s,it)=>s+n(it.desconto),0);
-  const total=pecas.reduce((s,it)=>s+n(it.subtotal),0);
-  if(!venda){
-    venda={
-      id:(typeof uid==='function'?uid('vda'):'vda_'+Date.now()),
-      empresaId:s.empresaId,
-      numero:typeof proximoNumeroSimples==='function'?proximoNumeroSimples('venda',db.vendas||[],s.empresaId):String((db.vendas||[]).length+1),
-      clienteId:o.clienteId,
-      data:new Date().toISOString(),
-      itens:pecas.map(it=>({produtoId:it.produtoId,descricao:it.descricao,qtd:it.qtd,preco:it.preco,desconto:it.desconto,subtotal:it.subtotal})),
-      desconto:descTot,total,formaPagamento:'Chamado',status:'faturado',situacao:'faturado',
-      dataFaturamento:new Date().toISOString(),
-      chamadoId:o.id,chamadoNumero:o.numero,
-      criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome
-    };
-    db.vendas=db.vendas||[]; db.vendas.push(venda);
-    pecas.forEach(it=>{ const pr=(db.produtos||[]).find(x=>x.id===it.produtoId); if(pr&&pr.categoria!=='Serviço'&&pr.categoria!=='Recarga') pr.estoque=n(pr.estoque)-n(it.qtd); });
-    db.contasReceber=db.contasReceber||[];
-    if(!(db.contasReceber||[]).some(c=>c.vendaId===venda.id)){
-      db.contasReceber.push({id:(typeof uid==='function'?uid('cr'):'cr_'+Date.now()),empresaId:s.empresaId,origem:'chamado',clienteId:o.clienteId,descricao:'Venda do chamado '+(o.numero||''),valor:total,vencimento:new Date().toISOString(),status:'aberto',vendaId:venda.id,chamadoId:o.id,criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome});
-    }
-  }
-  o.vendaId=venda.id; o.vendaNumero=venda.numero;
-  if(typeof saveDB==='function') saveDB();
-  return venda;
-};
-
-function abrirVendaFaturada(venda){
-  if(!venda) return;
-  window.__lcChamFormAberto=false;
-  const open=function(){
-    if(typeof window.vosCarregarVendaNaTela==='function') window.vosCarregarVendaNaTela(venda.id);
-    else if(typeof window.historicoVenda==='function') window.historicoVenda(venda.id);
-    setTimeout(()=>{ if(typeof window.lockVendaFaturadaUI==='function') window.lockVendaFaturadaUI(venda.id); },120);
-  };
-  if(typeof window.closeModal==='function'){ try{ window.closeModal(true); }catch(_){ } }
-  setTimeout(open,80);
-}
-
-function afterSaveChamado(o){
-  if(!o) return;
-  o.pecas=(window.__chamadoPecasTemp||o.pecas||[]).map(normItem);
-  // 1.2.1 / 1.2.2 ficam para depois — não abre venda agora
-}
-
+// salva pecas sem abrir venda (1.2.1 fica pra depois)
 const _sav=window.salvarChamadoCompleto;
-if(typeof _sav==='function' && !_sav.__v5181){
+if(typeof _sav==='function' && !_sav.__v5182pecas){
   window.salvarChamadoCompleto=function(){
     const pecas=(window.__chamadoPecasTemp||[]).map(normItem);
     const r=_sav.apply(this,arguments);
-    const cid=arguments[1]|| (window.modalContext&&window.modalContext.contratoId);
+    const cid=arguments[1]||(window.modalContext&&window.modalContext.contratoId);
     let o=arguments[0]&&(db.os||[]).find(x=>x.id===arguments[0]);
     if(!o) o=(db.os||[]).slice().reverse().find(x=>x.contratoId===cid);
-    if(o){ o.pecas=pecas; afterSaveChamado(o); if(typeof saveDB==='function') saveDB(); }
+    if(o){ o.pecas=pecas; if(typeof saveDB==='function') saveDB(); }
     return r;
   };
-  window.salvarChamadoCompleto.__v5181=true;
+  window.salvarChamadoCompleto.__v5182pecas=true;
 }
 const _savAv=window.salvarChamadoAvulso;
-if(typeof _savAv==='function' && !_savAv.__v5181){
+if(typeof _savAv==='function' && !_savAv.__v5182pecas){
   window.salvarChamadoAvulso=function(){
     const pecas=(window.__chamadoPecasTemp||[]).map(normItem);
     const r=_savAv.apply(this,arguments);
     let o=arguments[0]&&(db.os||[]).find(x=>x.id===arguments[0]);
     if(!o) o=(db.os||[]).slice(-1)[0];
-    if(o){ o.pecas=pecas; afterSaveChamado(o); if(typeof saveDB==='function') saveDB(); }
+    if(o){ o.pecas=pecas; if(typeof saveDB==='function') saveDB(); }
     return r;
   };
-  window.salvarChamadoAvulso.__v5181=true;
+  window.salvarChamadoAvulso.__v5182pecas=true;
 }
 
-// 1.2.2 desligado nesta versão — usuário testa 1.1/1.2 primeiro
-
-// 1.1 PDF com valor (mantém layout 5.18.0)
 function chamadoFinalizado(o){
   if(!o) return false;
   const chk=document.getElementById('ko-concluido')||document.getElementById('ca-concluido');
@@ -249,15 +238,14 @@ window.imprimirChamadoPDF=function(osId){
   const fin=chamadoFinalizado(o);
   const p=parqueDaOs(o);
   const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(it=>normItem(Object.assign({d:it.descricao,q:it.qtd},it))):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',preco:'',desconto:'',subtotal:''});
+  let pecas=Array.isArray(o.pecas)?o.pecas.map(normItem):[];
+  while(pecas.length<5) pecas.push({descricao:'',qtd:'',subtotal:''});
   const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
   const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
   const dataCad=dataBR(o.criadoEm||o.dataAbertura);
   const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
   const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
   const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const totFin=fin?money(totalPecas(o.pecas||[])):'';
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
   <style>
     @page{size:A4;margin:10mm}
@@ -294,9 +282,8 @@ window.imprimirChamadoPDF=function(osId){
   <div class="faixa">SERVIÇOS EXECUTADOS</div>
   <div class="box-write">${cell(o.servicos)}</div>
   <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th>Descrição</th><th>Qtd</th><th>Valor</th><th>Desc.</th><th>Valor final</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao||it.d)}&nbsp;</td><td>${cell(it.qtd||it.q)}&nbsp;</td><td>${it.preco===''?'':cellM(it.preco)}&nbsp;</td><td>${it.desconto===''?'':cellM(it.desconto)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  <tr><td colspan="4" style="text-align:right"><b>Total</b></td><td><b>${totFin}</b></td></tr>
+  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
+  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
   </tbody></table>
   <div class="faixa">OBSERVAÇÃO</div>
   <div class="box-write">${cell(o.observacao)}</div>
@@ -313,5 +300,5 @@ window.imprimirChamadoPDF=function(osId){
   const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
 };
 
-console.log('[DIGICOPY] ajustes_v5181_patch.js');
+console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();
