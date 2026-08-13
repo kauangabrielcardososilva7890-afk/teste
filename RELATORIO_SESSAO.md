@@ -27,6 +27,10 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## v5.18.0
+- Contador no PDF **só tem número se o chamado estiver finalizado** (checkbox ou status). Aberto = linha em branco.
+- Assinaturas + dados da loja **no fim da folha A4** (`height:277mm` + `margin-top:auto`), uma página.
+
 ## v5.17.9
 - Avulso: ao escolher cliente some a lista; botão **Limpar** para trocar.
 - PDF contrato: color se modalidade Color A4/A3 ativa (parque certo).
