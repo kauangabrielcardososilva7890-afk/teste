@@ -9,7 +9,7 @@ function n(v,fb){ const x=Number(String(v??'').replace(',','.')); return Number.
 function hoje(){ return new Date().toISOString().slice(0,10); }
 function dia(v){ return String(v||'').slice(0,10); }
 function sess(){ return typeof getSession==='function'?getSession():null; }
-function toastMsg(m,t){ if(typeof window.lfbAlert==='function' && t==='error') window.lfbAlert(m,'Aviso'); else if(typeof toast==='function') toast(m,t||'info'); }
+function toastMsg(m,t){ if(typeof window.lfbAlert==='function') window.lfbAlert(m,'Aviso'); else if(typeof toast==='function') toast(m,t||'info'); }
 function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
