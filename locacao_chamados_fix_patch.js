@@ -25,26 +25,11 @@ function chamadoDeContrato(o){ return !!(o && o.contratoId); }
 function injetarAjustesImpressora(){
   const body = document.getElementById('modal-body');
   if(!body) return;
-  body.querySelectorAll('input[type="checkbox"]').forEach(ch=>{
-    const lab = (ch.closest('label')||ch.parentElement);
-    const t = (lab && lab.textContent||'').toLowerCase();
-    if(/^\s*ativo\s*$/.test(t.trim()) || (t.includes('ativo') && !t.includes('inativo') && !t.includes('finaliz'))){
-      if(lab) lab.remove();
-    }
+  body.querySelectorAll('input[id$="-ativo"], input[id*="-ativo"]').forEach(ch=>{
+    const lab = ch.closest('label') || ch.parentElement;
+    if(lab) lab.remove();
+    else ch.remove();
   });
-  if(!document.getElementById('lc-tem-color')){
-    const mods = body.querySelector('input[name="ki-modalidade"], input[name="pe-modalidade"]');
-    const box = mods && mods.closest('div');
-    if(box){
-      const wrap = document.createElement('label');
-      wrap.className = 'flex items-center gap-2 mt-2 font-semibold text-[13px]';
-      wrap.innerHTML = '<input type="checkbox" id="lc-tem-color" class="w-4 h-4"> Esta impressora tem Color (A4/A3 unificado)';
-      box.appendChild(wrap);
-      const prqId = (window.modalContext && window.modalContext.parqueId) || null;
-      const p = prqId && (db.parque||[]).find(x=>x.id===prqId);
-      if(p && p.temColor) document.getElementById('lc-tem-color').checked = true;
-    }
-  }
 }
 
 const _abrirImp = window.abrirModalEquipamentoContrato;
@@ -61,29 +46,15 @@ function wrapSalvarImp(nome){
   const orig = window[nome];
   if(typeof orig!=='function' || orig.__lcWrap) return;
   window[nome] = function(){
-    const mod = document.querySelector('input[name="ki-modalidade"]:checked, input[name="pe-modalidade"]:checked');
-    if(!mod){
-      toastMsg('Escolha uma modalidade. Sem modalidade ativa a impressora não é cadastrada.','error');
-      return;
-    }
-    if(mod.value==='inativo'){
-      const isNew = !arguments[1];
-      if(isNew){
-        // permite cadastrar inativa no cliente, mas não entra em leitura/chamado
+    const mods = Array.from(document.querySelectorAll('select[id^="impf-"][id$="-mod"], select[id^="imp-med-"][id$="-mod"]'));
+    if(mods.length){
+      const algumAtivo = mods.some(sel => String(sel.value||'') !== 'inativo');
+      if(!algumAtivo){
+        toastMsg('Deixe ao menos UMA modalidade ativa. Só bloqueia se TODAS estiverem Inativo.','error');
+        return;
       }
     }
-    const r = orig.apply(this, arguments);
-    try{
-      const temColor = !!document.getElementById('lc-tem-color')?.checked;
-      const contratoId = arguments[0];
-      const parqueId = arguments[1];
-      let p = parqueId && (db.parque||[]).find(x=>x.id===parqueId);
-      if(!p){
-        p = (db.parque||[]).filter(x=>x.contratoId===contratoId).slice(-1)[0];
-      }
-      if(p){ p.temColor = temColor; if(typeof saveDB==='function') saveDB(); }
-    }catch(e){}
-    return r;
+    return orig.apply(this, arguments);
   };
   window[nome].__lcWrap = true;
 }
