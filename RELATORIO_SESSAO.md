@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## v5.18.1
+- Peças no chamado: qtd, valor, desconto, valor final (igual vendas). Contrato e avulso.
+- PDF: colunas Valor / Desc. / Valor final + total (só preenchido se finalizado).
+- Finalizar chamado com peças: cria venda **faturada** e abre a tela normal de venda (estorno etc.), ligada ao chamado.
+- Excluir venda de chamado: aviso e apaga o chamado junto (depois de estornar, se faturada).
+
 ## v5.18.0
 - Contador no PDF **só tem número se o chamado estiver finalizado** (checkbox ou status). Aberto = linha em branco.
 - Assinaturas + dados da loja **no fim da folha A4** (`height:277mm` + `margin-top:auto`), uma página.
