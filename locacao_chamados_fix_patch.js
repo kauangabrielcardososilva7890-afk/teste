@@ -109,7 +109,8 @@ if(typeof _nav==='function' && !_nav.__lcMenu){
       return _nav.call(this, 'impressoras');
     }
     if(view==='manutencao'){
-      setTimeout(abrirHistoricoChamadosGeral, 30);
+      abrirHistoricoChamadosGeral();
+      return;
     }
     const r = _nav.apply(this, arguments);
     setTimeout(montarMenuLocacao, 0);
