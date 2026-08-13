@@ -5,8 +5,8 @@
 **Branch fixa da sessão:** `arena/019fed4b-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
 **Última versão:** **v5.17.2**  
-**GitHack (atualizar hash após push):**  
-`https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HEAD/index.html?v=5.17.2`
+**Commit:** `7a704fb`  
+**GitHack:** https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/7a704fb/index.html?v=5.17.2
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
