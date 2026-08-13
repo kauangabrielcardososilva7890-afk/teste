@@ -27,7 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
-## v5.17.7 (este turno)
+## v5.17.8
+- Tirar peça: captura mousedown/click (não fecha chamado; aviso “Deseja remover esse item?”).
+- PDF: assinaturas no **rodapé da folha A4** (`min-height:273mm` + `margin-top:auto`).
+
+## v5.17.7
 
 ### 2.1
 - Contador antigo do **último chamado** só no **chamado de contrato**.
