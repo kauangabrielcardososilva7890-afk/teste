@@ -1,4 +1,4 @@
-// PATCH v5.18.4 — Correção 2.3: fechar leitura com confirmação APENAS se dados modificados
+// PATCH v5.18.4 — Correções: 2.3 salvar lançamento e faixas nos chamados de contrato
 (function(){
 'use strict';
 
@@ -11,115 +11,164 @@ function confirmar(msg,titulo){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// 2.3: Fechar leitura — confirmação APENAS se houver dados no contador modificados
+// 2.3: Ao fechar lançamento de contador com dados modificados, pergunta se quer SALVAR
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-function ehModalLeituraAberta(){
+function ehModalLancamento(){
   const t=low(document.getElementById('modal-title')?.textContent||'');
-  const contemLeitura = /\bleitura\b/.test(t);
-  const contemHistorico = t.includes('histórico') || t.includes('historico') || t.includes('lista');
-  return contemLeitura && !contemHistorico;
+  return t.includes('lançamento') || t.includes('lancamento') || t.includes('editar lançamento');
 }
 
-// Rastreia se o campo de contador foi modificado nesta sessão
-let contadorModificado = false;
+let lancamentoModificado = false;
 
-function marcarContadorModificado(){
-  contadorModificado = true;
+function resetarLancamento(){
+  lancamentoModificado = false;
 }
 
-function resetarContadorModificado(){
-  contadorModificado = false;
+function initLancamentoHooks(){
+  // Detectar modificações nos campos de lançamento
+  document.addEventListener('input', function(ev){
+    const target = ev.target;
+    if(!target) return;
+    const ids = ['lan-cont', 'lei-cont-def', 'leit-cont', 'lan-cont-def', 'lei-cont', 'lan-med', 'lan-prq'];
+    if(ids.includes(target.id)){
+      lancamentoModificado = true;
+    }
+  });
+  
+  // Resetar ao abrir modais de lançamento
+  ['abrirLancamentoContador','abrirLancamentoDefinitiva','abrirLeituraContratoDetalhe','editarLancamentoLeitura'].forEach(fn=>{
+    const orig = window[fn];
+    if(typeof orig === 'function' && !orig.__v5184Reset){
+      window[fn] = function(){
+        resetarLancamento();
+        return orig.apply(this, arguments);
+      };
+      window[fn].__v5184Reset = true;
+    }
+  });
 }
 
 let bypassClose = false;
 
-function tentarFecharLeitura(){
-  if(bypassClose) return false;
-  if(!ehModalLeituraAberta()) return false;
-  if(!contadorModificado) return false; // Não pergunta se não modificou nada
-  
-  bypassClose = true;
-  return confirmar('Deseja salvar a leitura antes de fechar?', 'Fechar leitura').then(ok=>{
-    if(ok) salvar();
-    bypassClose = false;
-    return ok;
-  });
-}
-
 const closeAntigo = window.closeModal;
-if(typeof closeAntigo === 'function' && !closeAntigo.__v5184Fechar){
+if(typeof closeAntigo === 'function' && !closeAntigo.__v5184Lanc){
   window.closeModal = function(){
-    if(ehModalLeituraAberta() && contadorModificado){
+    if(bypassClose) return closeAntigo.apply(this, arguments);
+    
+    // Se é modal de lançamento e foi modificado, pergunta se quer salvar
+    if(ehModalLancamento() && lancamentoModificado){
       bypassClose = true;
-      return confirmar('Deseja salvar a leitura antes de fechar?', 'Fechar leitura').then(ok=>{
-        if(ok) salvar();
+      return confirmar('Deseja salvar este lançamento de contador?', 'Lançamento modificado').then(ok=>{
         bypassClose = false;
-        if(ok) closeAntigo.apply(this, arguments);
+        if(ok){
+          // Simular click no botão Salvar
+          const btn = document.querySelector('button[onclick*="salvarLancamento"], button[onclick*="salvarItemLeitura"]');
+          if(btn) btn.click();
+        }
+        closeAntigo.apply(this, arguments);
       });
     }
+    
     return closeAntigo.apply(this, arguments);
   };
-  window.closeModal.__v5184Fechar = true;
+  window.closeModal.__v5184Lanc = true;
 }
 
-const voltarAntigo = window.fecharOuVoltar;
-if(typeof voltarAntigo === 'function' && !voltarAntigo.__v5184Fechar){
-  window.fecharOuVoltar = function(){
-    if(ehModalLeituraAberta() && contadorModificado){
-      bypassClose = true;
-      return confirmar('Deseja salvar a leitura antes de fechar?', 'Fechar leitura').then(ok=>{
-        if(ok) salvar();
-        bypassClose = false;
-        if(ok) voltarAntigo.apply(this, arguments);
-      });
-    }
-    return voltarAntigo.apply(this, arguments);
-  };
-  window.fecharOuVoltar.__v5184Fechar = true;
-}
+// ═══════════════════════════════════════════════════════════════════════════════════
+// 4.1: Faixas azuis nos chamados de contrato (igual aos chamados avulsos)
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// Hook para detectar quando campos de contador são modificados
-function initContadorHooks(){
-  document.addEventListener('input', function(ev){
-    const target = ev.target;
-    if(!target) return;
-    // Campos de contador de leitura
-    const ids = ['lan-cont', 'lei-cont-def', 'leit-cont', 'lan-cont-def', 'lei-cont'];
-    if(ids.includes(target.id)){
-      marcarContadorModificado();
-    }
+function injetarFaixasChamadoContrato(){
+  const modalBody = document.getElementById('modal-body');
+  if(!modalBody) return;
+  
+  // Verifica se está no modal de chamado de contrato
+  const title = low(document.getElementById('modal-title')?.textContent||'');
+  if(!title.includes('chamado')) return;
+  
+  // Já tem faixas?
+  if(modalBody.querySelector('.faixa-kr')) return;
+  
+  // Adiciona CSS se não existir
+  if(!document.getElementById('faixa-kr-css')){
+    const style = document.createElement('style');
+    style.id = 'faixa-kr-css';
+    style.textContent = `
+      .faixa-kr {
+        background: linear-gradient(90deg, #0a1e8a, #1d4ed8);
+        color: #fff !important;
+        text-align: center;
+        font-weight: 800;
+        padding: 8px 12px;
+        margin: 16px 0 8px;
+        border-radius: 8px;
+        letter-spacing: .06em;
+        font-size: 11px;
+        text-transform: uppercase;
+      }
+      .faixa-kr:first-child { margin-top: 0; }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  // Encontra as seções para adicionar faixas
+  const sections = [
+    { antes: 'Motivo / Defeito', texto: 'Motivo / Defeito' },
+    { antes: 'Serviços Executados', texto: 'Serviços Executados' },
+    { antes: 'Anotações', texto: 'Anotações / Pendências' },
+    { antes: 'Produtos / Peças usadas', texto: 'Produtos / Peças Utilizadas' }
+  ];
+  
+  sections.forEach(sec => {
+    // Procura elementos que contenham o texto
+    const labels = modalBody.querySelectorAll('label, p, div');
+    labels.forEach(el => {
+      const text = low(el.textContent||'');
+      if(text.includes(sec.antes.toLowerCase()) && !el.classList.contains('faixa-kr')){
+        // Verifica se já tem uma faixa antes
+        if(el.previousElementSibling?.classList.contains('faixa-kr')) return;
+        if(el.classList.contains('faixa-kr')) return;
+        
+        const faixa = document.createElement('div');
+        faixa.className = 'faixa-kr';
+        faixa.textContent = sec.texto;
+        el.parentNode.insertBefore(faixa, el);
+      }
+    });
   });
-  
-  // Resetar quando abrir nova leitura/lançamento
-  const origLanc = window.abrirLancamentoContador;
-  if(typeof origLanc === 'function' && !origLanc.__v5184Reset){
-    window.abrirLancamentoContador = function(){
-      resetarContadorModificado();
-      return origLanc.apply(this, arguments);
+}
+
+// Hook no openModalChamadoCompleto do contratos_refino_patch.js
+function hookFaixasChamado(){
+  const orig = window.openModalChamadoCompleto;
+  if(typeof orig === 'function' && !orig.__v5184Faixa){
+    window.openModalChamadoCompleto = function(){
+      const r = orig.apply(this, arguments);
+      setTimeout(injetarFaixasChamadoContrato, 100);
+      setTimeout(injetarFaixasChamadoContrato, 300);
+      return r;
     };
-    window.abrirLancamentoContador.__v5184Reset = true;
+    window.openModalChamadoCompleto.__v5184Faixa = true;
   }
-  
-  const origLancDef = window.abrirLancamentoDefinitiva;
-  if(typeof origLancDef === 'function' && !origLancDef.__v5184Reset){
-    window.abrirLancamentoDefinitiva = function(){
-      resetarContadorModificado();
-      return origLancDef.apply(this, arguments);
-    };
-    window.abrirLancamentoDefinitiva.__v5184Reset = true;
-  }
-  
-  const origDetalhe = window.abrirLeituraContratoDetalhe;
-  if(typeof origDetalhe === 'function' && !origDetalhe.__v5184Reset){
-    window.abrirLeituraContratoDetalhe = function(){
-      resetarContadorModificado();
-      return origDetalhe.apply(this, arguments);
-    };
-    window.abrirLeituraContratoDetalhe.__v5184Reset = true;
-  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// Inicialização
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+function init(){
+  initLancamentoHooks();
+  hookFaixasChamado();
+  setTimeout(hookFaixasChamado, 1000);
+  setTimeout(hookFaixasChamado, 2000);
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  setTimeout(init, 200);
 }
 
 console.log('[DIGICOPY] ajustes_v5184_correcoes_patch.js carregado');
-initContadorHooks();
 })();
