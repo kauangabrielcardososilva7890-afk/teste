@@ -1,0 +1,34 @@
+# Dependências e builds
+node_modules/
+dist/
+build/
+out/
+coverage/
+
+# Electron / instaladores gerados
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+
+# Backups/exportações locais
+backups/
+exports/
+*.backup.json
+migration-export.json
+
+# Logs / temporários
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+
+# Bancos locais novos usados em testes
+*.sqlite
+*.sqlite3
+*.db
+*.fdb.local
