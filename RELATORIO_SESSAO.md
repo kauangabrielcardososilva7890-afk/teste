@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/019fed4b-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.18.2**  
-**Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.18.2`
+**Última versão:** **v5.18.4**  
+**Commit:** 80b107b  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/80b107b/index.html?v=5.18.4`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -83,6 +83,22 @@ Arquivo novo: `ajustes_v5177_patch.js`.
 - PDF de chamados mantém o relatório original e apenas adiciona uma caixa de dados da impressora. Em chamado de contrato mostra modelo, patrimônio, serial e local; em chamado fora de contrato deixa linhas para preenchimento manual.
 - Etiquetas corrigidas para capacidade máxima 12 x 27 = 324 por folha, conforme pendência anterior.
 - Teste criado: `test_ajustes_v5183.js`.
+
+## v5.18.4.1 (2026-08-14)
+
+### 2.3 - Fechar Leitura CORRIGIDO
+- `ehModalLeituraAberta()` agora usa regex `/\bleitura\b/` para detectar "leitura"
+- Exclui "histórico", "historico" e "lista" do título
+- closeModal e fecharOuVoltar pedem confirmação apenas para leitura ABERTA
+- Não afecta o histórico de leituras
+
+### 1.2 - Peças nos Chamados
+- Pendente: implementar de forma que não quebre área de contratos
+- Aguardar orientação do usuário sobre como fazer
+
+### Arquivos novos
+- `ajustes_v5184_correcoes_patch.js` - correção 2.3
+- `test_ajustes_v5184.js` - testes da função
 
 ## Pendente de teste
 
