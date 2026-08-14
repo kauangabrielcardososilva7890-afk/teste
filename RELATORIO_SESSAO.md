@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/019fed4b-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.18.2**  
+**Última versão:** **v5.18.4**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.18.2`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.18.4`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -83,6 +83,27 @@ Arquivo novo: `ajustes_v5177_patch.js`.
 - PDF de chamados mantém o relatório original e apenas adiciona uma caixa de dados da impressora. Em chamado de contrato mostra modelo, patrimônio, serial e local; em chamado fora de contrato deixa linhas para preenchimento manual.
 - Etiquetas corrigidas para capacidade máxima 12 x 27 = 324 por folha, conforme pendência anterior.
 - Teste criado: `test_ajustes_v5183.js`.
+
+## v5.18.4.1 (correções)
+
+### 1.2 - Peças nos Chamados (CORRIGIDO)
+- Box de peças agora é injetado diretamente no modal de chamado quando ele é aberto
+- Usa MutationObserver para detectar quando o modal de chamado é criado
+- Hook nas funções `openModalChamadoCompleto` e `abrirChamadoAvulsoForm`
+- Funciona tanto para chamados de contrato (prefixo ko) quanto avulsos (prefixo ca)
+- Campos: Descrição, Qtd, Valor, Desc. R$, Valor final, Adicionar item
+- Botão "Tirar" para remover item
+
+### 2.3 - Fechar Leitura (CORRIGIDO)
+- X, ESC e Voltar agora pedem confirmação antes de fechar a leitura aberta
+- Detecta se o modal atual é uma leitura aberta (não histórico)
+- Pergunta: "Deseja salvar a leitura antes de fechar?"
+- Sim = salva e fecha; Não = fecha sem salvar
+- Não afeta o histórico de leituras
+
+### Arquivos novos
+- `ajustes_v5184_correcoes_patch.js` - contém as correções
+- `test_ajustes_v5184.js` - testes das funções puras
 
 ## Pendente de teste
 
