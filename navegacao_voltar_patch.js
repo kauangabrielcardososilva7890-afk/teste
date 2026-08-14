@@ -1,94 +1,107 @@
-// PATCH navegacao - DELETA aba anterior, não esconde - TODAS as abas
-(function(){
-  function voltarUmaAba(){
-    const modal=document.getElementById('modal-root');
-    if(!modal || modal.classList.contains('hidden')) return;
-    // Acha TODOS os botões que são abas (qualquer botão com onclick mudarAba ou id com tab-)
-    let tabs = Array.from(modal.querySelectorAll('button')).filter(b=>{
-      const oc=b.getAttribute('onclick')||'';
-      const id=b.id||'';
-      return oc.includes('mudarAba') || id.includes('tab-') || b.className.includes('border-b-2');
-    });
-    // Filtra só os que são abas de verdade (têm borda ou estão no topo do modal)
-    tabs = tabs.filter(b=> b.offsetParent!==null || b.getBoundingClientRect().width>10);
-    // Remove duplicados e mantém ordem do DOM
-    tabs = [...new Set(tabs)];
-    if(tabs.length<2){
-      // Sem abas detectadas: só fecha modal
-      const orig = window.__origCloseModal;
-      if(orig) orig.call(window); else modal.classList.add('hidden');
-      return;
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.3.9 — Navegação hierárquica completa (4 -> 3 -> 2 -> 1 e sub-menus x.1, x.2)
+// • Deleta/neutraliza qualquer duplicação de página ou pilha interna com innerHTML
+// • Respeita a cadeia hierárquica: de sub-telas (nível 4 e 3) para o pai, até a lista principal (nível 1)
+// • Tecla ESC e botão X do modal executam o retorno hierárquico sem trocar de abas em formulários
+// • Quando uma venda/notinha é aberta pelo Financeiro (nível 3.1), fechar/ESC volta para o Financeiro (2.1)
+// • Neutraliza redirecionamentos automáticos para "Início" ao fechar modais
+// ═══════════════════════════════════════════════════════════════════════════
+(function() {
+  'use strict';
+
+  // 1) Neutraliza redirecionamento automático para "Início" do finalizacao_sistema_patch.js
+  window.voltarAbaAnteriorFinal = function() {};
+  window.__abaHistFinal = [];
+
+  // 2) Retorno hierárquico limpo (sem duplicação de DOM e sem re-injeção de innerHTML)
+  function voltarNivelModal(e) {
+    if (window.__lastVoltarTs && (Date.now() - window.__lastVoltarTs < 150)) return;
+    window.__lastVoltarTs = Date.now();
+
+    const modal = document.getElementById('modal-root');
+    if (!modal || modal.classList.contains('hidden')) return;
+
+    if (e && e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-    // Acha aba ativa: tem borda azul ou texto azul ou painel correspondente visível
-    let idxAtiva = -1;
-    for(let i=0;i<tabs.length;i++){
-      const c=tabs[i].className||'';
-      if(c.includes('border-[#0a1e8a]') || c.includes('text-[#0a1e8a]') || c.includes('bg-[#0a1e8a]')){
-        idxAtiva=i; break;
+
+    // A) Caso especial: Venda de origem (financeiro 3.1) aberta a partir do histórico financeiro (financeiro 2.1)
+    if (window.__origemFinanceiroVoltar) {
+      const orig = window.__origemFinanceiroVoltar;
+      window.__origemFinanceiroVoltar = null;
+      if (typeof window.historicoLancamento === 'function') {
+        window.historicoLancamento(orig.tipo, orig.id);
+        return;
       }
     }
-    // Fallback: procura painel visível e mapeia para aba por ordem
-    if(idxAtiva===-1){
-      const panels = Array.from(modal.querySelectorAll('[id*="painel"],[id*="prod-"],[id*="aba-"]')).filter(p=> !p.classList.contains('hidden') && modal.contains(p));
-      if(panels.length===1){
-        // Tenta mapear painel visível para aba por índice
-        const allPanels = Array.from(modal.querySelectorAll('[id*="painel"],[id*="prod-"],[id*="aba-"]')).filter(p=> modal.contains(p));
-        const visId = panels[0].id;
-        // Acha índice do painel visível entre todos os painéis do mesmo grupo
-        for(let i=0;i<allPanels.length;i++){
-          if(allPanels[i].id===visId){ idxAtiva=i; break; }
-        }
-      }
-    }
-    if(idxAtiva>0){
-      tabs[idxAtiva-1].click();
+
+    // B) Procura botões visíveis no footer do modal (ou no topo/corpo se footer estiver vazio)
+    const container = document.getElementById('modal-footer') || modal;
+    const botoes = Array.from(container.querySelectorAll('button')).filter(b => b.offsetParent !== null);
+
+    // Prioridade 1: Botão Voltar (ex: "← Voltar", "Voltar ao contrato", "Voltar", "Voltar ao histórico") -> Nível 3 para 2
+    const btnVoltar = botoes.find(b => /^\s*(←\s*)?voltar/i.test(b.textContent || ''));
+    if (btnVoltar) {
+      btnVoltar.click();
       return;
     }
-    if(idxAtiva===0){
-      const orig = window.__origCloseModal;
-      if(orig) orig.call(window); else modal.classList.add('hidden');
+
+    // Prioridade 2: Botão Cancelar (ex: "Cancelar") -> Nível 4 para 3 (ex: Novo chamado no contrato) ou fecha modal 2
+    const btnCancelar = botoes.find(b => /^\s*cancelar\s*$/i.test(b.textContent || ''));
+    if (btnCancelar) {
+      btnCancelar.click();
       return;
     }
-    // Se não achou ativa, tenta clicar na primeira anterior visível
-    if(tabs.length>=2){
-      // Assume que a última é a ativa se não detectou
-      tabs[tabs.length-2].click();
+
+    // Prioridade 3: Botão Fechar/Sair (ex: "Fechar", "Sair", "×", "x") -> Nível 2 para 1
+    const btnFechar = botoes.find(b => /^\s*(fechar|sair|×|x)\s*$/i.test(b.textContent || ''));
+    if (btnFechar && btnFechar !== e?.currentTarget) {
+      btnFechar.click();
       return;
+    }
+
+    // C) Fallback limpo: fecha o modal de volta à tela inicial do contexto (Nível 1)
+    if (typeof window.closeModal === 'function') {
+      window.closeModal(true);
+    } else {
+      modal.classList.add('hidden');
     }
   }
-  window.voltarUmaAba = voltarUmaAba;
-  window.__origCloseModal = window.closeModal;
-  window.closeModal = function(){ voltarUmaAba(); };
-  window.fecharModal = window.closeModal;
-  window.fecharModalOperacional = window.closeModal;
 
-  document.addEventListener('keydown', (e)=>{
-    if(e.key==='Escape'){
-      const m=document.getElementById('modal-root');
-      if(m && !m.classList.contains('hidden')){
-        e.preventDefault(); e.stopImmediatePropagation();
-        voltarUmaAba();
+  window.voltarNivelModal = voltarNivelModal;
+
+  // 3) Captura ESC no teclado em WINDOW na fase de captura (capture: true) para executar ANTES de document e patches antigos
+  window.addEventListener('keydown', function(ev) {
+    if (ev.key === 'Escape' || ev.keyCode === 27) {
+      const modal = document.getElementById('modal-root');
+      if (modal && !modal.classList.contains('hidden')) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        ev.stopPropagation();
+        voltarNivelModal(ev);
       }
     }
   }, true);
 
-  function patchButtons(){
-    const modal=document.getElementById('modal-root');
-    if(!modal) return;
-    modal.querySelectorAll('button').forEach(b=>{
-      const oc=b.getAttribute('onclick')||'';
-      if(/closeModal|fecharModal/i.test(oc)) b.setAttribute('onclick','voltarUmaAba()');
-      const txt=(b.textContent||'').trim().toLowerCase();
-      if(['x','sair','fechar','cancelar','voltar','← voltar'].includes(txt) && !b.__vPatched){
-        b.__vPatched=true;
-        b.addEventListener('click', (e)=>{
-          const m=document.getElementById('modal-root');
-          if(m && !m.classList.contains('hidden')){ e.preventDefault(); e.stopPropagation(); voltarUmaAba(); }
-        }, true);
-      }
-    });
+  // 4) Associa o X superior do modal (#modal-box > header .ph-x) ao retorno hierárquico
+  function patchBotaoXModal() {
+    const modal = document.getElementById('modal-root');
+    if (!modal) return;
+    const btnX = modal.querySelector('#modal-box button i.ph-x')?.closest('button');
+    if (btnX && !btnX.__hierPatched) {
+      btnX.__hierPatched = true;
+      btnX.onclick = function(e) {
+        (window.voltarNivelModal || voltarNivelModal)(e);
+      };
+    }
   }
-  try{ const obs=new MutationObserver(()=> patchButtons()); obs.observe(document.body,{childList:true,subtree:true}); }catch(e){}
-  setTimeout(patchButtons, 500);
-  console.log('[DIGICOPY] navegacao TODAS abas - DELETA, não esconde');
+
+  try {
+    const obs = new MutationObserver(() => patchBotaoXModal());
+    obs.observe(document.body, { childList: true, subtree: true });
+  } catch (e) {}
+  setTimeout(patchBotaoXModal, 300);
+
+  console.log('[DIGICOPY] navegacao_voltar_patch.js v5.3.9 — Hierarquia 4->3->2->1 ativa, sem duplicação');
 })();
