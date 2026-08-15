@@ -17,8 +17,8 @@ g.db = {
 g.getSession = () => ({ empresaId: 'e1' });
 new Function('window', 'db', 'getSession', code)(g.window, g.db, g.getSession);
 
-console.log('== AJUSTES_V5188: logo + dados da loja ==');
-ok('digicopyLogo retorna logo customizada', g.window.digicopyLogo() === 'data:image/png;base64,CUSTOM');
+console.log('== AJUSTES_V5188: logo padrão + dados da loja ==');
+ok('digicopyLogo usa SEMPRE a logo padrão (ignora custom)', g.window.digicopyLogo() === 'data:image/png;base64,ORIGINAL');
 ok('digicopyLoja mescla empresa + loja (loja vence)', g.window.digicopyLoja().fantasia === 'Minha Loja');
 ok('digicopyLoja traz razão social', g.window.digicopyLoja().razaoSocial === 'Minha Loja LTDA');
 

@@ -254,6 +254,10 @@ function garantirPecasVendas(prefix){
 }
 
 function garantirChamadoContrato(){
+  // Guarda barato: só trabalha quando há um modal de chamado aberto.
+  var titleEl = document.getElementById('modal-title');
+  var title = titleEl ? (titleEl.innerText || '') : '';
+  if(!/chamado|ordem/i.test(title)) return;
   garantirFaixasChamado();
   garantirPecasVendas('ko');
   garantirPecasVendas('ca');

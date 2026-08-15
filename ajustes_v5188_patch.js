@@ -26,15 +26,12 @@ window.digicopyLoja = function(){
 };
 
 window.digicopyLogo = function(){
-  var loja = (typeof db !== 'undefined' && db.config && db.config.loja) || {};
-  return loja.logo || _ORIGINAL_LOGO || './logo.png';
+  return _ORIGINAL_LOGO || './logo.png';
 };
 
-// Reaplica a logo global (para todas as impressões que usam window.DIGICOPY_LOGO)
+// Reaplica a logo global (sempre a PADRÃO logo.png — não usa logo customizada)
 function aplicarLogoConfig(){
-  var loja = (typeof db !== 'undefined' && db.config && db.config.loja) || {};
-  if(loja.logo){ window.DIGICOPY_LOGO = loja.logo; }
-  else if(_ORIGINAL_LOGO){ window.DIGICOPY_LOGO = _ORIGINAL_LOGO; }
+  if(_ORIGINAL_LOGO){ window.DIGICOPY_LOGO = _ORIGINAL_LOGO; }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.0**  
+**Última versão:** **v5.19.1**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.0`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.1`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.1
+- **Otimização / correção de interferência:**
+  - Corrigido o bug da sincronização manual: "Enviar para nuvem" e "Carregar da nuvem" cancelavam sem fazer nada porque `window.confirm` foi desativado pelo sistema de popups (retorna false). Agora usam `confirmSistema` (assíncrono).
+  - Logo padrão (logo.png) reaplicada por segurança após o carregamento (evita qualquer sobrescrita por logo customizada antiga).
+  - Guard de performance nos observadores: não fazem trabalho quando não há modal de chamado aberto.
+- Arquivo novo: `ajustes_v5191_patch.js`.
 
 ## v5.19.0
 - **4 (Ctrl+P)** — No programa (.exe), o Ctrl+P agora é interceptado no `main.js` (evento `web-contents-created`) e imprime LIMPO (sem URL nem contador de páginas). No navegador (GitHack), o Ctrl+P é a janela do próprio navegador — aparece um aviso lembrando de desmarcar "Cabeçalhos e rodapés".
