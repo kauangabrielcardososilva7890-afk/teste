@@ -41,9 +41,37 @@ app.whenReady().then(() => {
   registerFirebirdIPC();
   registerFileIPC();
   registerEscolaIPC();
+  registerPrintIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
+});
+
+// Imprime sem cabeçalho/rodapé do navegador (sem contador de páginas nem URL)
+function registerPrintIPC(){
+  ipcMain.handle('print:clean', (evt) => {
+    return new Promise((resolve) => {
+      try{
+        evt.sender.print({ printBackground: true, header: '', footer: '' }, (success) => resolve(!!success));
+      }catch(e){ resolve(false); }
+    });
+  });
+}
+
+// Dá preload às janelas de impressão (window.open) para o printAPI funcionar
+app.on('web-contents-created', (_event, contents) => {
+  try{
+    contents.setWindowOpenHandler(() => ({
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          preload: path.join(__dirname, 'preload.js')
+        }
+      }
+    }));
+  }catch(e){}
 });
 
 app.on('window-all-closed', () => {
