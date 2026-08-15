@@ -30,7 +30,7 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 ## v5.19.20
 - **Chamados (validação obrigatória):**
   - Ao salvar: exige motivo/defeito, modelo e serial (e cliente no chamado fora de contrato).
-  - Ao finalizar: exige contador preto atual; no chamado de contrato, se a impressora tiver Color ativo, o contador color também é obrigatório. Fora de contrato, só o preto.
+  - A validação de contador ao finalizar NÃO foi duplicada (já existia em `validarFinalizar`).
 - Arquivo novo: `ajustes_v51920_patch.js`.
 
 ## v5.19.19
