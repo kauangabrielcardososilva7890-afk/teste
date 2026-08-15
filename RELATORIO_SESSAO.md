@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.5**  
+**Última versão:** **v5.19.6**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.5`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.6`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,17 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.6
+- **Usuários e permissões** (hierarquia):
+  - **0** — Removida toda a exigência de "senha CNPJ" na criação/edição de usuário.
+  - **1/2** — Cada um edita só o próprio usuário. Editar os outros: só **Admin (Kauan)** e **Dono (Denivaldo)**.
+  - **3** — Ao criar, perfil é sempre **Funcionário** (Admin/Dono ocultos). Troca de perfil só aparece para Admin/Dono editando outro usuário.
+  - **4** — "Cadastrar para escolher em vendas/chamados" virou **"Novo técnico"** (só nome). Técnicos aparecem na listagem junto com usuários, com menos info e editar só o nome.
+  - **5** — Quem não tem permissão não vê o botão de editar.
+  - **6** — Campos abertos de "técnico" (chamados e vendas) viraram lista de seleção com os técnicos criados.
+- Perfis agora: **Admin**, **Dono**, **Funcionário** (Comercial/Financeiro/Técnico passam a ser Funcionário).
+- Arquivo novo: `ajustes_v5196_patch.js`.
 
 ## v5.19.5
 - **Menu Cadastros** — Removido o item "Usuários" duplicado do submenu "Cadastros" (o acesso correto continua em Configurações → "Usuários e permissões").
