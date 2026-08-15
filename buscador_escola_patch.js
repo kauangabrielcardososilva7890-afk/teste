@@ -55,18 +55,19 @@ async function sync(opt={}){
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
-    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];log('Base limpa')}
+    const incremental = opt.incremental !== false && !opt.limpar;
+    const knownIds = new Set((db.escolaOrc||[]).map(o=>String(o.id)));
+    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];knownIds.clear();log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
     const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
-    if(login.data){log('Resposta login: '+JSON.stringify(login.data).substring(0,200))}
     if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||''),pct:0};render();return login}
-    log('Autenticado via sessão (cookies). Baixando orçamentos...');
-    let tot=0,totIt=0,err=0,pg=1;const ids=[];
+    log(incremental?'Modo ATUALIZAR: só baixa itens de orçamentos novos.':'Modo BAIXAR TUDO: baixa itens de todos.');
+    let tot=0,totIt=0,err=0,novos=0,pg=1;const ids=[];
     while(pg<=120){
-      window.__esSt={msg:`Página ${pg}...`,pct:Math.min(95,10+pg)};if(pg%2===1)render();
+      window.__esSt={msg:`Página ${pg} — listando orçamentos...`,pct:Math.min(95,10+pg)};render();
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
       const r=await api('GET',u.toString(),null,'');
@@ -79,6 +80,11 @@ async function sync(opt={}){
         const o=normOrc(raw),st=store(),old=st.orc.find(x=>String(x.id)===String(o.id));
         if(old)Object.assign(old,o);else st.orc.push(o);
         ids.push(o.id);tot++;
+        const isNew=!knownIds.has(String(o.id));
+        // ATUALIZAR: orçamento já baixado antes → pula os itens (economiza MUITO tempo)
+        if(incremental && !isNew){ continue; }
+        novos++;
+        window.__esSt={msg:`Baixando itens do orçamento ${o.numero||o.id}...`,pct:Math.min(95,10+pg)};render();
         for(let ip=1;ip<=50;ip++){
           const p=new URL(API_BASE+'/budget-item/by-subprogram/'+encodeURIComponent(o.idSubprogram||'')+'/by-school/'+encodeURIComponent(o.idSchool||'')+'/by-budget/'+encodeURIComponent(o.idBudget||o.id||''));
           p.searchParams.set('page',String(ip));p.searchParams.set('limit','100');
@@ -89,17 +95,18 @@ async function sync(opt={}){
           items.forEach(r=>st2.it.push(normIt(r,o.id)));totIt+=items.length;
           if(items.length<100)break;await wait(0);
         }
-        if(tot%25===0){save();await wait(0)}
+        if(novos%5===0){save();await wait(0)}
       }
       pg++;save();await wait(0);
     }
     const idsSet=new Set(ids.map(String));
     db.escolaOrc=(db.escolaOrc||[]).filter(o=>idsSet.has(String(o.id)));
+    db.escolaIt=(db.escolaIt||[]).filter(i=>idsSet.has(String(i.oid)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
-    window.__esSt={msg:`✅ ${tot} orçamentos, ${totIt} itens`,pct:100};save();render();
+    window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();render();
     // Envia dados para a nuvem
     if(typeof syncEnviarParaNuvem==='function'){try{await syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true})}catch(e){}}
-    return{ok:true,tot,totIt,err};
+    return{ok:true,tot,totIt,novos,err};
   }catch(e){window.__esSt={msg:'Erro: '+e.message,pct:0};render();return{ok:false,error:e.message}}
   finally{window.__esSync=false}
 }
@@ -197,7 +204,7 @@ ${window.__esExc?
 }</div></div></div>`;
 }
 
-window.esSync=function(){window.__esSync=false;return sync({})};
+window.esSync=function(){window.__esSync=false;return sync({incremental:true})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esClearLog=function(){window.__esLogs=[];render()};
 window.esSearch=function(){window.__esTerm=t(document.getElementById('es-term')?.value);window.__esReg=t(document.getElementById('es-reg')?.value)||'1';const iv=t(document.getElementById('es-int')?.value)||'1-10';const p=iv.includes('-')?iv.split('-'):[iv,iv];window.__esIni=Math.max(1,int(p[0],1));window.__esFim=Math.max(window.__esIni,int(p[1],window.__esIni));render()};
@@ -209,8 +216,8 @@ window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},60000);
+  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
+  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();
