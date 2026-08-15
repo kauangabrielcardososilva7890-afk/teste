@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.2**  
+**Última versão:** **v5.19.3**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.2`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.3`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,14 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.3
+- **Aba Clientes:**
+  - **1** — "Tudo" saiu da caixa (select) e virou botão **"Todos"** separado (igual leituras/chamados), que lista todos os clientes.
+  - **2** — Padrão continua sem listar nada; só aparece cliente ao pesquisar ou clicar em "Todos".
+  - **3** — Ordenação padrão por **código crescente** (do primeiro ao último).
+  - **4** — Ao alterar um cliente, se modificar qualquer informação e sair (Cancelar/X/fora/ESC), aparece "Deseja salvar as alterações antes de sair?" — só se realmente mudou algo.
+- Arquivo novo: `ajustes_v5193_patch.js` + edição em `finalizacao_sistema_patch.js`.
 
 ## v5.19.2
 - **Corrigido de vez o "Informe o motivo do chamado"** ao salvar/sair: a causa era que o formulário do chamado usa campos de um nome (`ko-*`/`ca-*`) e o salvar lia outro (`kr-os-*`), então achava o motivo vazio mesmo com texto. Agora, antes de salvar, o que está digitado é copiado para os campos que o salvar lê (motivo, modelo, patrimônio, serial, local, contadores, serviços, observação, técnico, impressora e "finalizado?").
