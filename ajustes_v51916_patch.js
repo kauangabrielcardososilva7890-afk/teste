@@ -112,7 +112,8 @@ function extrairIdDe(onclick){
 }
 
 window.excluirChamadosSelecionados = function(){
-  const checks = Array.from(document.querySelectorAll('input[name="chamado-check-lote"]:checked'));
+  // Reusa os checkboxes já existentes (lc-chk-os, do "finalizar selecionados")
+  const checks = Array.from(document.querySelectorAll('.lc-chk-os:checked'));
   let ids = checks.map(ch => ch.value).filter(Boolean);
   if(!ids.length){ avisar('Marque os chamados na tabela para excluir.'); return; }
   confirmar('Deseja excluir ' + ids.length + ' chamado(s)?', 'Excluir Chamados').then(function(ok){
@@ -120,39 +121,19 @@ window.excluirChamadosSelecionados = function(){
     db.os = (db.os || []).filter(function(o){ return ids.indexOf(o.id) === -1; });
     if(typeof saveDB === 'function') saveDB();
     if(typeof toast === 'function') toast(ids.length + ' chamado(s) excluído(s)', 'success');
-    // reabre a lista de chamados
     if(typeof abrirHistoricoChamadosGeral === 'function') abrirHistoricoChamadosGeral();
   });
 };
 
+// Adiciona APENAS o botão "Excluir" no rodapé da lista de chamados
+// (a caixa de seleção já existe — não duplicamos)
 function injetarExcluirChamados(){
   const body = document.getElementById('modal-body');
   if(!body) return;
   const table = body.querySelector('table');
   if(!table) return;
-  // Só age na lista de chamados (tem coluna "Motivo" e "Equipamento")
   const ths = Array.from(table.querySelectorAll('thead th')).map(th => (th.textContent||'').trim());
   if(!(ths.indexOf('Motivo') !== -1 && ths.indexOf('Equipamento') !== -1)) return;
-
-  // checkbox no thead
-  const theadTr = table.querySelector('thead tr');
-  if(theadTr && !theadTr.querySelector('.th-chamado-lote')){
-    const th = document.createElement('th');
-    th.className = 'th-chamado-lote px-2 py-2 w-8';
-    th.innerHTML = '<input type="checkbox" onclick="document.querySelectorAll(\'input[name=\\\'chamado-check-lote\\\']\').forEach(c=>c.checked=this.checked)">';
-    theadTr.prepend(th);
-  }
-  // checkbox em cada linha
-  table.querySelectorAll('tbody tr').forEach(function(tr){
-    if(tr.querySelector('.td-chamado-lote')) return;
-    const oc = tr.getAttribute('onclick') || '';
-    const id = extrairIdDe(oc);
-    const td = document.createElement('td');
-    td.className = 'td-chamado-lote px-2 py-2 w-8';
-    td.innerHTML = id ? '<input type="checkbox" name="chamado-check-lote" value="' + id + '" onclick="event.stopPropagation()">' : '';
-    tr.prepend(td);
-  });
-  // botão Excluir no rodapé
   const footer = document.getElementById('modal-footer');
   if(footer && !footer.querySelector('#btn-excluir-chamados')){
     const btn = document.createElement('button');

@@ -285,7 +285,7 @@ window.FLUXOS_PURE = {
 if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
-  prod: { q: '', cat: '', baixo: false, sort: 'codigo' },
+  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo' },
   ctr: { q: '', status: '', sort: 'codigo' },
   leiturasBusca: '',
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
@@ -422,6 +422,7 @@ window.aplicarBuscaProdutosOperacional = function(){
   STATE.prod.q = document.getElementById('search-produtos')?.value || '';
   STATE.prod.cat = document.getElementById('filter-prod-cat')?.value || '';
   STATE.prod.baixo = !!document.getElementById('filter-prod-baixo')?.checked;
+  STATE.prod.todos = false;
   window.renderProdutos();
 };
 
@@ -434,6 +435,7 @@ window.limparBuscaProdutosOperacional = function(){
   STATE.prod.q = '';
   STATE.prod.cat = '';
   STATE.prod.baixo = false;
+  STATE.prod.todos = false;
   window.renderProdutos();
 };
 
@@ -442,6 +444,16 @@ window.verProdutosBaixos = function(){
   STATE.prod.q = '';
   STATE.prod.cat = '';
   STATE.prod.baixo = true;
+  STATE.prod.todos = false;
+  window.renderProdutos();
+};
+
+// Botão "Mostrar todos" — lista todos os produtos
+window.verTodosProdutos = function(){
+  STATE.prod.q = '';
+  STATE.prod.cat = '';
+  STATE.prod.baixo = false;
+  STATE.prod.todos = true;
   window.renderProdutos();
 };
 
@@ -471,8 +483,8 @@ window.renderProdutos = function(){
     local: p => p.local || ''
   };
   list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
-  // Por padrão não lista nada (só aparece ao pesquisar ou usar "Estoque baixo")
-  const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo);
+  // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
+  const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
   const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
@@ -485,6 +497,7 @@ window.renderProdutos = function(){
         <div class="flex flex-wrap gap-2">
           <button onclick="openModal('produto')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo produto</button>
           <button onclick="verProdutosBaixos()" class="h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-semibold"><i class="ph ph-warning mr-1"></i>Estoque baixo</button>
+          <button onclick="verTodosProdutos()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Mostrar todos</button>
           <button onclick="limparBuscaProdutosOperacional()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Limpar filtros</button>
           <button onclick="excluirProdutoUnificado()" class="h-10 px-4 rounded-xl bg-red-600 text-white text-[13px] font-semibold"><i class="ph ph-trash mr-1"></i>Excluir</button>
         </div>
