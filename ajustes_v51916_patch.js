@@ -111,6 +111,29 @@ function extrairIdDe(onclick){
   return m ? m[1] : '';
 }
 
+// Adiciona o botão "Excluir" no topo (ao lado de "Novo produto"/"Novo contrato")
+function adicionarBotaoExcluirTopo(view, alvoOnclick, idBtn, fn){
+  if(!view || view.querySelector('#' + idBtn)) return;
+  const botaoNovo = Array.from(view.querySelectorAll('button')).find(function(b){
+    return (b.getAttribute('onclick') || '').indexOf(alvoOnclick) !== -1;
+  });
+  if(!botaoNovo) return;
+  const btn = document.createElement('button');
+  btn.id = idBtn;
+  btn.className = 'h-10 px-4 rounded-xl bg-red-600 text-white font-bold text-[13px]';
+  btn.innerHTML = '<i class="ph ph-trash mr-1"></i>Excluir';
+  btn.onclick = fn;
+  botaoNovo.parentNode.insertBefore(btn, botaoNovo.nextSibling);
+}
+
+// Remove os botões de lixeira INDIVIDUAIS (deixando só o do topo)
+function removerLixeirasIndividuais(view, alvoOnclick){
+  view.querySelectorAll('button').forEach(function(b){
+    const oc = b.getAttribute('onclick') || '';
+    if(oc.indexOf(alvoOnclick) !== -1) b.remove();
+  });
+}
+
 function injetarSelecaoMultipla(){
   // PRODUTOS
   var vp = document.getElementById('view-produtos');
@@ -126,10 +149,9 @@ function injetarSelecaoMultipla(){
       }
       tbp.querySelectorAll('tbody tr').forEach(function(tr){
         if(tr.querySelector('.td-prod-lote')) return;
-        var btn = tr.querySelector('button[onclick*="deleteProduto"], button[onclick*="openModal(\'produto\'"]');
+        var btn = tr.querySelector('button[onclick*="deleteProduto"]');
         var id = btn ? extrairIdDe(btn.getAttribute('onclick')) : '';
         if(!id){
-          // tenta extrair do ondblclick da linha
           var odc = tr.getAttribute('ondblclick') || '';
           id = extrairIdDe(odc);
         }
@@ -138,17 +160,10 @@ function injetarSelecaoMultipla(){
         td.innerHTML = id ? '<input type="checkbox" name="produto-check-lote" value="' + id + '" onclick="event.stopPropagation()">' : '';
         tr.prepend(td);
       });
-      // botão excluir na actions
-      var actp = vp.querySelector('.neo-actions');
-      if(actp && !actp.querySelector('#btn-excluir-produto-lote')){
-        var bp = document.createElement('button');
-        bp.id = 'btn-excluir-produto-lote';
-        bp.className = 'neo-btn danger';
-        bp.innerHTML = '<i class="ph ph-trash"></i>Excluir';
-        bp.onclick = window.excluirProdutoUnificado;
-        actp.appendChild(bp);
-      }
     }
+    // remove lixeiras individuais + adiciona botão Excluir no topo
+    removerLixeirasIndividuais(vp, 'deleteProduto');
+    adicionarBotaoExcluirTopo(vp, "openModal('produto')", 'btn-excluir-produto-lote', window.excluirProdutoUnificado);
   }
 
   // CONTRATOS
@@ -177,6 +192,10 @@ function injetarSelecaoMultipla(){
         tr.prepend(td);
       });
     }
+    // remove lixeiras individuais (mantendo editar)
+    removerLixeirasIndividuais(vc, 'excluirContratoOperacional');
+    // adiciona botão Excluir no topo (não há botão "Novo contrato" no fluxos? usa openModal('contrato'))
+    adicionarBotaoExcluirTopo(vc, "openModal('contrato')", 'btn-excluir-contrato-lote', window.excluirContratoUnificado);
   }
 }
 
