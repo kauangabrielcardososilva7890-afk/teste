@@ -200,6 +200,8 @@ function garantirFaixasChamado(){
     faixa.className = 'faixa-chamado-final';
     faixa.textContent = window.AJUSTES_V5186_PURE.tituloFaixa(t);
     el.parentNode.insertBefore(faixa, el);
+    // esconde o título original para não duplicar o nome (a faixa já mostra)
+    if(el.tagName === 'LABEL' || el.tagName === 'P'){ el.style.display = 'none'; }
     el.dataset.faixa5186 = '1';
   }
 }

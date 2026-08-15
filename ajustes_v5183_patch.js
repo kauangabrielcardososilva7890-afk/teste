@@ -89,6 +89,8 @@ function adicionarFaixasChamado(){
     faixa.className = 'faixa-chamado-final';
     faixa.textContent = tituloFaixa(t);
     el.parentNode.insertBefore(faixa, el);
+    // esconde o título original para não duplicar o nome (a faixa já mostra)
+    if(el.tagName === 'LABEL' || el.tagName === 'P'){ el.style.display = 'none'; }
   }
 }
 
