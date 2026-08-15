@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.12**  
+**Última versão:** **v5.19.13**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.12`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.13`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,9 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.13
+- **Buscador Escola** — orçamento com vários itens pesquisados aparece em UM cartão só (itens listados juntos). Sem resultados, mostra "Nada encontrado para ...".
 
 ## v5.19.12
 - **Buscador Escola** — tela não pisca mais durante a sincronização: o log acumula sem redesenhar; a contagem (orçamentos + itens) só é mostrada no final, quando o processo termina.

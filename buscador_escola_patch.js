@@ -121,7 +121,8 @@ function search(term,reg){
     const hit=its.filter(i=>!q||norm(i.tipo).includes(q));
     if(q&&!hit.length)return;
     const tot=its.length,ext=Math.max(0,tot-hit.length),only=!!q&&tot>0&&ext===0;
-    (hit.length?hit:[{tipo:'',desc:'(sem itens)',qtd:0,vlr:0,id:''}]).forEach(i=>out.push({...o,ipo:i.tipo,ides:i.desc,iqtd:i.qtd,ivlr:i.vlr,tot,found:hit.length,ext,only,hasExt:ext>0}));
+    // agrupa os itens do MESMO orçamento num único resultado
+    out.push({...o,itens:(hit.length?hit:[{tipo:'',desc:'(sem itens)',qtd:0,vlr:0,id:''}]),tot,found:hit.length,ext,only,hasExt:ext>0});
   });
   out.sort((a,b)=>{
   // 1. APENAS pesquisado primeiro
@@ -147,6 +148,9 @@ function badge(r){
 }
 function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:'#'}
 function card(r){
+  const itens = (r.itens||[]);
+  // exibe todos os itens encontrados (mesmo orçamento) num cartão só
+  const produtos = itens.map(i=>`<b>${esc(i.tipo||'')}</b> — ${esc(i.desc||'')}`).join('<br>');
   return`<div class="rounded-[14px] border bg-white p-4 shadow-sm hover:shadow-md transition">
 <div class="flex flex-wrap justify-between gap-3"><div><div class="flex items-center gap-2"><b class="px-2 py-1 rounded-lg bg-[#0a1e8a] text-white font-mono text-[11px]">${esc(r.numero||r.id)}</b>${badge(r)}</div>
 <h4 class="mt-1 font-bold text-[14px]">${esc(r.escola)}</h4><p class="text-[11px] text-slate-500">${esc(r.municipio||'-')} • ${r.dist===999?'N/A':r.dist+' km'}</p></div>
@@ -155,7 +159,7 @@ function card(r){
 ${r.only?'<div class="mt-2 rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-[11px] text-emerald-800 font-bold">✅ APENAS o produto pesquisado.</div>':''}
 ${r.hasExt?`<div class="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 font-bold">⚠️ ${r.ext} produto(s) extras.</div>`:''}
 <div class="mt-2 grid grid-cols-4 gap-2 text-[11px]"><div class="rounded-lg bg-slate-50 p-2"><span class="text-[9px] uppercase font-bold text-slate-400">Achados/Total</span><br><b>${r.found}/${r.tot}</b></div>
-<div class="rounded-lg bg-slate-50 p-2 col-span-3"><span class="text-[9px] uppercase font-bold text-slate-400">Produto</span><br><b>${esc(r.ipo||'')}</b> — ${esc(r.ides||'')}</div></div></div>`;
+<div class="rounded-lg bg-slate-50 p-2 col-span-3"><span class="text-[9px] uppercase font-bold text-slate-400">${itens.length>1?('Produtos ('+itens.length+')'):'Produto'}</span><br>${produtos}</div></div></div>`;
 }
 
 function proxTxt(c){
@@ -201,7 +205,7 @@ ${window.__esExc?
   `<h4 class="font-bold text-[14px] mb-3">Excluídos</h4>${st.exc.length?st.exc.slice().reverse().map(e=>`<div class="rounded-xl border bg-white p-3 text-[12px] flex justify-between gap-3"><span><b>${esc(e.oid)}</b> — ${esc(e.mot)} • ${fData(e.dt)}</span><button onclick="esRest('${esc(e.oid)}')" class="h-8 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[11px]">Restaurar</button></div>`).join(''):'<p class="text-slate-400 text-[13px]">Nenhum.</p>'}`
   :
   `<div class="flex justify-between text-[12px] text-slate-500 mb-2"><span>${ini}-${Math.min(fim,res.length)} de ${res.length}</span><span>Enter/lupa</span></div>
-  <div class="space-y-3">${rows.map(card).join('')||'<div class="text-center text-slate-400 py-16">Busque ou aguarde atualização.</div>'}</div>
+  <div class="space-y-3">${rows.length?rows.map(card).join(''):(term?'<div class="text-center text-slate-500 py-16"><i class="ph ph-magnifying-glass text-[40px] block opacity-30 mb-3"></i>Nada encontrado para "${esc(term)}".</div>':'<div class="text-center text-slate-400 py-16">Busque ou aguarde atualização.</div>')}</div>
   ${res.length>fim?'<div class="text-center mt-3"><button onclick="esMais()" class="h-10 px-6 rounded-lg bg-[#0a1e8a] text-white font-bold text-[13px]">Mais</button></div>':''}`
 }</div></div></div>`;
 }

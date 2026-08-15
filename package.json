@@ -1,6 +1,6 @@
 {
   "name": "digicopy-erp",
-  "version": "5.19.12",
+  "version": "5.19.13",
   "description": "Sistema Digicopy - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
