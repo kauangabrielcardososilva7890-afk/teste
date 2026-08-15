@@ -83,19 +83,8 @@ function avisoContadorOficial(){
 }
 
 function montarColor(){
-  const pb=document.getElementById('ko-cont-atu'); if(!pb) return;
-  const grid=pb.closest('.grid');
-  let block=document.getElementById('lc-color-block');
-  if(!block){
-    block=document.createElement('div');
-    block.id='lc-color-block';
-    block.style.display='none';
-    block.className='grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-3 border rounded-xl mt-3';
-    block.innerHTML=`<div><label class="block font-bold text-slate-500 mb-1 text-[11px] uppercase">Contador Color Antigo</label><input id="lc-cont-color-ant" type="number" readonly class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono"></div>
-      <div><label class="block font-bold text-[#0a1e8a] mb-1 text-[11px] uppercase">Contador Color Atual</label><input id="lc-cont-color-atu" type="number" class="w-full h-10 px-3 rounded-xl border font-mono" oninput="lcCalcColor()"></div>
-      <div><label class="block font-bold text-emerald-700 mb-1 text-[11px] uppercase">Qtd Color</label><input id="lc-qtd-color" type="number" readonly class="w-full h-10 px-3 rounded-xl border bg-emerald-50 font-bold"></div>`;
-    if(grid&&grid.parentElement) grid.parentElement.insertBefore(block, (document.getElementById('lc-aviso-cont')||grid).nextSibling);
-  }
+  // Desativado (v5.19.21): o color já vem no htmlContadores (v5175).
+  return;
 }
 
 window.lcCalcColor=function(){
