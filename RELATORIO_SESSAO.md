@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.22**  
+**Última versão:** **v5.19.23**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.22`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.23`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.23
+- **Chamados — duplicação de tudo (causa raiz):**
+  - `ajustes_pos_final_patch.js` tinha uma função antiga (`destacarChamadoModal`) que adicionava faixa azul SEM esconder o título → nomes duplicados. Desativada (as faixas agora ficam só no `ajustes_v5186`).
+  - `locacao_chamados_fix_patch.js` injetava "Contador Color" e "Produtos/peças" no chamado avulso, colidindo com o `ajustes_v5175` → duplicação. Desativado no avulso.
+  - Corrigido o guard do `ajustes_v5175` (antes usava um id que nunca existia, permitindo injetar de novo).
 
 ## v5.19.22
 - **Chamados — duplicação do contador/color (causa raiz):** três patches antigos (v5171, v5172, v5174) injetavam o bloco "Contador Color" de novo por cima do bloco que o v5175 já cria. Removidas essas injeções na origem — agora só o v5175 desenha contador preto + color (uma vez só).

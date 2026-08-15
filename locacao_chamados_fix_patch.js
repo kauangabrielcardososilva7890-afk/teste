@@ -447,7 +447,9 @@ window.abrirChamadoAvulsoForm = function(id){
   window.__lcChamDirty = false;
   if(typeof window.openModal==='function') window.openModal('os', id||null);
   setTimeout(()=>{
-    injetarCamposChamado(false);
+    // DESATIVADO (v5.19.23): no avulso, contador color e peças já vêm do
+    // ajustes_v5175_patch.js. Chamar injetarCamposChamado aqui duplicava o
+    // "Contador Color" e "Produtos/peças".
     marcarDirtyChamado();
   }, 80);
 };
