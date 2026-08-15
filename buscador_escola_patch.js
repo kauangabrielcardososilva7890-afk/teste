@@ -10,8 +10,8 @@
 'use strict';
 
 const API_BASE='https://api.caixaescolar.educacao.mg.gov.br';
-// Credenciais NÃO ficam mais no código — são salvas no banco (local + nuvem)
-// pelo botão "Login API" da tela do Buscador Escola.
+const USUARIO='08.385.589/0001-03';
+const SENHA='15901536De.';
 
 function t(v){return String(v??'').trim()}
 function esc(v){if(typeof escapeHtml==='function')return escapeHtml(v);return t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -36,12 +36,6 @@ function dist(m){const c=GPS[norm(m)];if(!c)return 999;const R=6371,rad=x=>x*Mat
 
 function store(){db.escolaOrc= db.escolaOrc||[];db.escolaIt=db.escolaIt||[];db.escolaExc=db.escolaExc||[];return{orc:db.escolaOrc,it:db.escolaIt,exc:db.escolaExc}}
 
-// Credenciais do login da Caixa Escolar, salvas no banco (local + nuvem).
-function creds(){
-  const c=(db.config&&db.config.escolaLogin)||{};
-  return { usuario: t(c.usuario||c.txCpfCnpj||''), senha: t(c.senha||c.txPassword||'') };
-}
-
 function normOrc(r){
   const m=t(r.countyName||r.county_name||r.municipio||'');
   return{id:t(r.idBudget||r.id||r.nuBudgetOrder),idBudget:t(r.idBudget||r.id),idSchool:t(r.idSchool),idSubprogram:t(r.idSubprogram),numero:t(r.nuBudgetOrder||r.idBudget||r.id),escola:t(r.schoolName||r.school_name)||'Escola',municipio:m,dist:dist(m),norte:NORTE.has(norm(m)),prio:PRIO.has(norm(m)),at:now()};
@@ -61,14 +55,9 @@ async function sync(opt={}){
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
-    const cred = creds();
-    if(!cred.usuario || !cred.senha){
-      window.__esSt={msg:'Configure o login da Caixa Escolar (botão "Login API") antes de atualizar.',pct:0};render();
-      return {ok:false, error:'sem credenciais'};
-    }
     if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
-    const loginBody={txCpfCnpj:cred.usuario.replace(/\D/g,''),txPassword:cred.senha};
+    const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
@@ -177,8 +166,7 @@ function render(msg){
 
   v.innerHTML=`<div class="neo-shell"><div class="neo-panel">
 <div class="neo-head"><div><h3>Buscador Escola</h3><p>Caixa Escolar MG • Atualização automática a cada 1 hora</p></div>
-<div class="neo-actions"><button onclick="esLoginApi()" class="neo-btn"><i class="ph ph-key"></i>Login API</button>
-<button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
+<div class="neo-actions"><button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
 <button onclick="esExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div>
 
 <div class="p-4 border-b bg-white"><div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -208,32 +196,6 @@ ${window.__esExc?
   ${res.length>fim?'<div class="text-center mt-3"><button onclick="esMais()" class="h-10 px-6 rounded-lg bg-[#0a1e8a] text-white font-bold text-[13px]">Mais</button></div>':''}`
 }</div></div></div>`;
 }
-
-// ── Login API: configura CNPJ + senha da Caixa Escolar (salvo no banco) ──
-window.esLoginApi=function(){
-  const c=creds();
-  const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
-  document.getElementById('modal-title').innerText='Login API — Caixa Escolar';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4">
-    <p class="text-[12px] text-slate-500">Digite o CNPJ e a senha da Caixa Escolar MG. Ficam salvos no seu banco (local + nuvem), não no código.</p>
-    <div><label class="text-[11px] font-bold uppercase text-slate-500">CNPJ</label><input id="es-api-cnpj" value="${esc(c.usuario)}" placeholder="00.000.000/0000-00" class="mt-1 w-full h-11 px-3 rounded-xl border font-mono"></div>
-    <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="es-api-senha" type="password" value="${esc(c.senha)}" placeholder="Senha da Caixa Escolar" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-  </div>`;
-  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="esSalvarLogin()" class="neo-btn primary">Salvar e enviar para a nuvem</button>`;
-};
-window.esSalvarLogin=function(){
-  const usuario=t(document.getElementById('es-api-cnpj')?.value);
-  const senha=t(document.getElementById('es-api-senha')?.value);
-  if(!usuario||!senha){ msg('Informe CNPJ e senha','error'); return; }
-  db.config=db.config||{};
-  db.config.escolaLogin={ usuario: usuario, senha: senha };
-  save();
-  if(typeof closeModal==='function') closeModal();
-  msg('Login API salvo','success');
-  // envia para a nuvem (para os outros PCs usarem o mesmo login)
-  if(typeof syncEnviarParaNuvem==='function'){ try{ syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true}); }catch(e){} }
-  render('Login configurado.');
-};
 
 window.esSync=function(){window.__esSync=false;return sync({})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};

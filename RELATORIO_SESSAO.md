@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.9**  
+**Última versão:** **v5.19.10**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.9`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.10`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,9 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.10
+- **Buscador Escola** — credenciais (CNPJ + senha) mantidas no código (usuário vai deixar o repositório privado). Removido o botão "Login API" adicionado temporariamente.
 
 ## v5.19.9
 - **Segurança (Buscador Escola)** — senha da Caixa Escolar removida do código-fonte. Adicionado botão "Login API" onde o CNPJ + senha são digitados uma vez e salvos no banco (local + nuvem), não no código.
