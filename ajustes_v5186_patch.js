@@ -388,7 +388,8 @@ if(typeof _doLogin === 'function'){
       const nome = s ? s.usuarioNome : null;
       if(nome && nome !== antesNome){
         const msg = 'Bem-vindo, ' + nome + '!';
-        if(typeof window.lfbAlert === 'function') window.lfbAlert(msg, 'Bem-vindo');
+        // aviso no canto (sem popup) — definido no v5.18.7
+        if(typeof window.lfbCornerToast === 'function') window.lfbCornerToast(msg);
         else if(typeof toast === 'function') toast(msg, 'success');
       }
     }, 350);
