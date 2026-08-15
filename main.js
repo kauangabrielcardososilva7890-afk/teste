@@ -56,9 +56,16 @@ function registerPrintIPC(){
       }catch(e){ resolve(false); }
     });
   });
+  ipcMain.handle('print:clean-silent', (evt) => {
+    return new Promise((resolve) => {
+      try{
+        evt.sender.print({ silent: true, printBackground: true, header: '', footer: '' }, (success) => resolve(!!success));
+      }catch(e){ resolve(false); }
+    });
+  });
 }
 
-// Dá preload às janelas de impressão (window.open) para o printAPI funcionar
+// Dá preload às janelas de impressão (window.open) + intercepta Ctrl+P em todas
 app.on('web-contents-created', (_event, contents) => {
   try{
     contents.setWindowOpenHandler(() => ({
@@ -71,6 +78,17 @@ app.on('web-contents-created', (_event, contents) => {
         }
       }
     }));
+  }catch(e){}
+  // Ctrl+P em qualquer janela (inclusive a janela de impressão aberta):
+  // imprime LIMPO, sem cabeçalho/rodapé (sem URL nem contador de páginas).
+  try{
+    contents.on('before-input-event', (event, input) => {
+      const k = String(input.key || '').toLowerCase();
+      if((input.control || input.meta) && k === 'p'){
+        event.preventDefault();
+        try{ contents.print({ printBackground: true, header: '', footer: '' }, () => {}); }catch(e){}
+      }
+    });
   }catch(e){}
 });
 
