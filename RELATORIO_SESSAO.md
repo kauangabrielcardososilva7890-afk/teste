@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.19**  
+**Última versão:** **v5.19.20**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.19`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.20`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.20
+- **Chamados (validação obrigatória):**
+  - Ao salvar: exige motivo/defeito, modelo e serial (e cliente no chamado fora de contrato).
+  - Ao finalizar: exige contador preto atual; no chamado de contrato, se a impressora tiver Color ativo, o contador color também é obrigatório. Fora de contrato, só o preto.
+- Arquivo novo: `ajustes_v51920_patch.js`.
 
 ## v5.19.19
 - **3** — Botão "Excluir" de contratos agora fica ao lado de "Novo contrato" (na tela correta).
