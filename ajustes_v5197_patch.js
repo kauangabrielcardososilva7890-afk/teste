@@ -28,17 +28,19 @@ function podeVerAuditoria(){
   return temPermissaoTotal(sess());
 }
 
-// Esconde os itens de menu de auditoria (lateral + submenu Configurações).
+// Mostra/esconde os itens de menu de auditoria conforme a permissão.
 function esconderAuditoria(){
-  if(podeVerAuditoria()) return;
+  // Sem sessão (tela de login): não mexe em nada.
+  if(!sess()) return;
+  var pode = podeVerAuditoria();
   // Lateral (data-nav="auditoria")
   var els = document.querySelectorAll('[data-nav="auditoria"]');
-  for(var i = 0; i < els.length; i++){ els[i].style.display = 'none'; }
+  for(var i = 0; i < els.length; i++){ els[i].style.display = pode ? '' : 'none'; }
   // Submenu Configurações: botão com onclick navigateTo('auditoria')
   var btns = document.querySelectorAll('button');
   for(var j = 0; j < btns.length; j++){
     var oc = btns[j].getAttribute('onclick') || '';
-    if(/navigateTo\(['"]auditoria['"]\)/.test(oc)) btns[j].style.display = 'none';
+    if(/navigateTo\(['"]auditoria['"]\)/.test(oc)) btns[j].style.display = pode ? '' : 'none';
   }
 }
 
