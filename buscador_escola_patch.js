@@ -20,7 +20,7 @@ function int(v,d=0){const x=parseInt(String(v??'').replace(/\D+/g,''),10);return
 function now(){return new Date().toISOString()}
 function fData(v){return typeof fmtDate==='function'?fmtDate(v):t(v).slice(0,10)}
 function fTime(v){return typeof fmtDateTime==='function'?fmtDateTime(v):t(v)}
-function uid(p){return typeof uid==='function'?uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
+function uid(p){return typeof window.uid==='function'?window.uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
 function msg(m,c){if(typeof toast==='function')toast(m,c||'info')}
 function save(){if(typeof saveDB==='function')saveDB()}
 function wait(ms){return new Promise(r=>setTimeout(r,ms||0))}
