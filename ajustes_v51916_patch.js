@@ -104,121 +104,74 @@ window.excluirContratoOperacional = function(id){
 };
 
 // ═════════════════════════════════════════════════════════════════════════
-// Seleção múltipla: injeta checkboxes + botão "Excluir" (igual vendas)
+// Item 4 — botão de deletar nos chamados fora de contrato (lista de chamados)
 // ═════════════════════════════════════════════════════════════════════════
 function extrairIdDe(onclick){
   const m = String(onclick || '').match(/'([^']+)'/);
   return m ? m[1] : '';
 }
 
-// Adiciona o botão "Excluir" no topo (ao lado de "Novo produto"/"Novo contrato")
-function adicionarBotaoExcluirTopo(view, alvoOnclick, idBtn, fn){
-  if(!view || view.querySelector('#' + idBtn)) return;
-  const botaoNovo = Array.from(view.querySelectorAll('button')).find(function(b){
-    return (b.getAttribute('onclick') || '').indexOf(alvoOnclick) !== -1;
+window.excluirChamadosSelecionados = function(){
+  const checks = Array.from(document.querySelectorAll('input[name="chamado-check-lote"]:checked'));
+  let ids = checks.map(ch => ch.value).filter(Boolean);
+  if(!ids.length){ avisar('Marque os chamados na tabela para excluir.'); return; }
+  confirmar('Deseja excluir ' + ids.length + ' chamado(s)?', 'Excluir Chamados').then(function(ok){
+    if(!ok) return;
+    db.os = (db.os || []).filter(function(o){ return ids.indexOf(o.id) === -1; });
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof toast === 'function') toast(ids.length + ' chamado(s) excluído(s)', 'success');
+    // reabre a lista de chamados
+    if(typeof abrirHistoricoChamadosGeral === 'function') abrirHistoricoChamadosGeral();
   });
-  if(!botaoNovo) return;
-  const btn = document.createElement('button');
-  btn.id = idBtn;
-  btn.className = 'h-10 px-4 rounded-xl bg-red-600 text-white font-bold text-[13px]';
-  btn.innerHTML = '<i class="ph ph-trash mr-1"></i>Excluir';
-  btn.onclick = fn;
-  botaoNovo.parentNode.insertBefore(btn, botaoNovo.nextSibling);
-}
+};
 
-// Remove os botões de lixeira INDIVIDUAIS (deixando só o do topo)
-function removerLixeirasIndividuais(view, alvoOnclick){
-  view.querySelectorAll('button').forEach(function(b){
-    const oc = b.getAttribute('onclick') || '';
-    if(oc.indexOf(alvoOnclick) !== -1) b.remove();
-  });
-}
+function injetarExcluirChamados(){
+  const body = document.getElementById('modal-body');
+  if(!body) return;
+  const table = body.querySelector('table');
+  if(!table) return;
+  // Só age na lista de chamados (tem coluna "Motivo" e "Equipamento")
+  const ths = Array.from(table.querySelectorAll('thead th')).map(th => (th.textContent||'').trim());
+  if(!(ths.indexOf('Motivo') !== -1 && ths.indexOf('Equipamento') !== -1)) return;
 
-function injetarSelecaoMultipla(){
-  // PRODUTOS
-  var vp = document.getElementById('view-produtos');
-  if(vp){
-    var tbp = vp.querySelector('table');
-    if(tbp){
-      var theadp = tbp.querySelector('thead tr');
-      if(theadp && !theadp.querySelector('.th-prod-lote')){
-        var thp = document.createElement('th');
-        thp.className = 'th-prod-lote px-2 w-8';
-        thp.innerHTML = '<input type="checkbox" onclick="document.querySelectorAll(\'input[name=\\\'produto-check-lote\\\']\').forEach(c=>c.checked=this.checked)">';
-        theadp.prepend(thp);
-      }
-      tbp.querySelectorAll('tbody tr').forEach(function(tr){
-        if(tr.querySelector('.td-prod-lote')) return;
-        var btn = tr.querySelector('button[onclick*="deleteProduto"]');
-        var id = btn ? extrairIdDe(btn.getAttribute('onclick')) : '';
-        if(!id){
-          var odc = tr.getAttribute('ondblclick') || '';
-          id = extrairIdDe(odc);
-        }
-        var td = document.createElement('td');
-        td.className = 'td-prod-lote px-2 w-8';
-        td.innerHTML = id ? '<input type="checkbox" name="produto-check-lote" value="' + id + '" onclick="event.stopPropagation()">' : '';
-        tr.prepend(td);
-      });
-    }
-    // remove lixeiras individuais + adiciona botão Excluir no topo
-    removerLixeirasIndividuais(vp, 'deleteProduto');
-    adicionarBotaoExcluirTopo(vp, "openModal('produto')", 'btn-excluir-produto-lote', window.excluirProdutoUnificado);
+  // checkbox no thead
+  const theadTr = table.querySelector('thead tr');
+  if(theadTr && !theadTr.querySelector('.th-chamado-lote')){
+    const th = document.createElement('th');
+    th.className = 'th-chamado-lote px-2 py-2 w-8';
+    th.innerHTML = '<input type="checkbox" onclick="document.querySelectorAll(\'input[name=\\\'chamado-check-lote\\\']\').forEach(c=>c.checked=this.checked)">';
+    theadTr.prepend(th);
   }
-
-  // CONTRATOS
-  var vc = document.getElementById('view-contratos');
-  if(vc){
-    var tbc = vc.querySelector('table');
-    if(tbc){
-      var theadc = tbc.querySelector('thead tr');
-      if(theadc && !theadc.querySelector('.th-contrato-lote')){
-        var thc = document.createElement('th');
-        thc.className = 'th-contrato-lote px-2 w-8';
-        thc.innerHTML = '<input type="checkbox" onclick="document.querySelectorAll(\'input[name=\\\'contrato-check-lote\\\']\').forEach(c=>c.checked=this.checked)">';
-        theadc.prepend(thc);
-      }
-      tbc.querySelectorAll('tbody tr').forEach(function(tr){
-        if(tr.querySelector('.td-contrato-lote')) return;
-        var btn = tr.querySelector('button[onclick*="excluirContratoOperacional"]');
-        var id = btn ? extrairIdDe(btn.getAttribute('onclick')) : '';
-        if(!id){
-          var odc = tr.getAttribute('ondblclick') || '';
-          id = extrairIdDe(odc);
-        }
-        var td = document.createElement('td');
-        td.className = 'td-contrato-lote px-2 w-8';
-        td.innerHTML = id ? '<input type="checkbox" name="contrato-check-lote" value="' + id + '" onclick="event.stopPropagation()">' : '';
-        tr.prepend(td);
-      });
-    }
-    // remove lixeiras individuais (mantendo editar)
-    removerLixeirasIndividuais(vc, 'excluirContratoOperacional');
-    // adiciona botão Excluir no topo (não há botão "Novo contrato" no fluxos? usa openModal('contrato'))
-    adicionarBotaoExcluirTopo(vc, "openModal('contrato')", 'btn-excluir-contrato-lote', window.excluirContratoUnificado);
+  // checkbox em cada linha
+  table.querySelectorAll('tbody tr').forEach(function(tr){
+    if(tr.querySelector('.td-chamado-lote')) return;
+    const oc = tr.getAttribute('onclick') || '';
+    const id = extrairIdDe(oc);
+    const td = document.createElement('td');
+    td.className = 'td-chamado-lote px-2 py-2 w-8';
+    td.innerHTML = id ? '<input type="checkbox" name="chamado-check-lote" value="' + id + '" onclick="event.stopPropagation()">' : '';
+    tr.prepend(td);
+  });
+  // botão Excluir no rodapé
+  const footer = document.getElementById('modal-footer');
+  if(footer && !footer.querySelector('#btn-excluir-chamados')){
+    const btn = document.createElement('button');
+    btn.id = 'btn-excluir-chamados';
+    btn.className = 'h-10 px-5 rounded-xl bg-red-600 text-white font-bold';
+    btn.innerHTML = '<i class="ph ph-trash mr-1"></i>Excluir';
+    btn.onclick = window.excluirChamadosSelecionados;
+    footer.appendChild(btn);
   }
 }
 
-// Roda após qualquer render (observer)
 var _injTimer = null;
 function agendarInjecao(){
   if(_injTimer) return;
-  _injTimer = setTimeout(function(){ _injTimer = null; injetarSelecaoMultipla(); }, 60);
+  _injTimer = setTimeout(function(){ _injTimer = null; injetarExcluirChamados(); }, 60);
 }
 try{
   new MutationObserver(function(){ agendarInjecao(); }).observe(document.body, { childList: true, subtree: true });
 }catch(e){}
-
-// Também reaplica ao trocar de tela (navigateTo)
-const _nav51916 = window.navigateTo;
-if(typeof _nav51916 === 'function'){
-  window.navigateTo = function(){
-    const r = _nav51916.apply(this, arguments);
-    setTimeout(injetarSelecaoMultipla, 0);
-    setTimeout(injetarSelecaoMultipla, 120);
-    return r;
-  };
-}
 
 console.log('[DIGICOPY] ajustes_v51916_patch.js');
 })();

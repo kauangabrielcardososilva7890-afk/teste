@@ -437,6 +437,14 @@ window.limparBuscaProdutosOperacional = function(){
   window.renderProdutos();
 };
 
+// Botão "Estoque baixo" — mostra só os produtos abaixo do mínimo
+window.verProdutosBaixos = function(){
+  STATE.prod.q = '';
+  STATE.prod.cat = '';
+  STATE.prod.baixo = true;
+  window.renderProdutos();
+};
+
 window.renderProdutos = function(){
   const sess = getSess();
   if(!sess || sectionHidden('view-produtos')) return;
@@ -463,7 +471,9 @@ window.renderProdutos = function(){
     local: p => p.local || ''
   };
   list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
-  const vis = list.slice(0, 300);
+  // Por padrão não lista nada (só aparece ao pesquisar ou usar "Estoque baixo")
+  const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo);
+  const vis = temFiltro ? list.slice(0, 300) : [];
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
   const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
   const estoqueTotal = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido')
@@ -474,8 +484,9 @@ window.renderProdutos = function(){
       <div class="flex flex-wrap gap-3 justify-between items-center">
         <div class="flex flex-wrap gap-2">
           <button onclick="openModal('produto')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo produto</button>
-          <button onclick="openModal('entradaEstoque')" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Entrada estoque</button>
+          <button onclick="verProdutosBaixos()" class="h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-semibold"><i class="ph ph-warning mr-1"></i>Estoque baixo</button>
           <button onclick="limparBuscaProdutosOperacional()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Limpar filtros</button>
+          <button onclick="excluirProdutoUnificado()" class="h-10 px-4 rounded-xl bg-red-600 text-white text-[13px] font-semibold"><i class="ph ph-trash mr-1"></i>Excluir</button>
         </div>
         <div class="flex flex-wrap gap-2 items-center">
           <select id="filter-prod-cat" onchange="aplicarBuscaProdutosOperacional()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todas categorias</option>${produtoCategoriaOptions(STATE.prod.cat)}</select>
@@ -497,6 +508,7 @@ window.renderProdutos = function(){
           <table class="w-full text-left text-[13px]">
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500">
               <tr>
+                <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'produto-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
                 ${thSort('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort)}
                 ${thSort('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort)}
                 ${thSort('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort)}
@@ -511,6 +523,7 @@ window.renderProdutos = function(){
               ${vis.map(p => {
                 const isLow = estoqueBaixoEstrito(p.estoque, p.estoqueMin);
                 return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
+                  <td class="px-2 py-2.5 w-8"><input type="checkbox" name="produto-check-lote" value="${p.id}" onclick="event.stopPropagation()"></td>
                   <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-[#0a1e8a]">${html(produtoCodigo(p))}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold text-[13px]">${html(p.nome || p.descricao || '')}</p><p class="text-[11px] text-slate-500">Marca: ${html(p.fabricante || '-')} • Criado por ${html(p.criadoPorNome || '-')}</p></td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${html(categoriaUnificada(p.categoria))}</span></td>
@@ -518,10 +531,10 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5">${toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
                   <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
-                  <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir"><i class="ph ph-trash"></i></button></div></td>
+                  <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              }).join('') || '<tr><td colspan="9" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              ${list.length > vis.length ? `<tr><td colspan="9" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -708,7 +721,7 @@ window.renderContratos = function(){
   view.innerHTML = `
     <div class="space-y-4">
       <div class="flex flex-wrap justify-between gap-3 items-center">
-        <div class="flex gap-2"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo contrato</button></div>
+        <div class="flex gap-2"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo contrato</button><button onclick="excluirContratoUnificado()" class="h-10 px-4 rounded-xl bg-red-600 text-white text-[13.5px] font-semibold"><i class="ph ph-trash mr-1"></i>Excluir</button></div>
         <div class="flex flex-wrap gap-2 items-center">
           <select id="filter-contrato-status" onchange="aplicarBuscaContratosOperacional()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo" ${STATE.ctr.status==='ativo'?'selected':''}>Ativo</option><option value="pendente" ${STATE.ctr.status==='pendente'?'selected':''}>Pendente</option><option value="vencido" ${STATE.ctr.status==='vencido'?'selected':''}>Vencido</option><option value="encerrado" ${STATE.ctr.status==='encerrado'?'selected':''}>Encerrado</option></select>
           <input id="search-contratos" value="${html(STATE.ctr.q)}" placeholder="Número ou cliente..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]">
@@ -725,6 +738,7 @@ window.renderContratos = function(){
         <div class="overflow-auto max-h-[690px]">
           <table class="w-full text-left text-[13px]">
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr>
+              <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'contrato-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
               ${thSort('contratosSortOperacional', 'codigo', 'Código', STATE.ctr.sort)}
               ${thSort('contratosSortOperacional', 'cliente', 'Cliente', STATE.ctr.sort)}
               ${thSort('contratosSortOperacional', 'inicio', 'Início', STATE.ctr.sort)}
@@ -733,13 +747,13 @@ window.renderContratos = function(){
               ${thSort('contratosSortOperacional', 'chamados', 'Chamados', STATE.ctr.sort)}
               ${thSort('contratosSortOperacional', 'valor', 'Valor', STATE.ctr.sort)}
               ${thSort('contratosSortOperacional', 'status', 'Status', STATE.ctr.sort)}
-              <th class="px-4 py-2.5 text-right">Excluir</th>
             </tr></thead>
             <tbody class="divide-y">
               ${list.map(c => {
                 const impressoras = (db.parque || []).filter(p => p.contratoId === c.id && p.status === 'ativo').length;
                 const chamados = (db.os || []).filter(o => o.clienteId === c.clienteId && o.status !== 'concluido' && o.status !== 'cancelado').length;
                 return `<tr ondblclick="openContratoCompleto('${c.id}')" class="hover:bg-blue-50/50 cursor-pointer">
+                  <td class="px-2 py-2.5 w-8"><input type="checkbox" name="contrato-check-lote" value="${c.id}" onclick="event.stopPropagation()"></td>
                   <td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">${html(c.numero || '')}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold">${html(contratoClienteNome(c))}</p><p class="text-[11px] text-slate-500">Duplo clique para abrir</p></td>
                   <td class="px-4 py-2.5">${dateBR(c.dataInicio)}</td>
@@ -748,7 +762,6 @@ window.renderContratos = function(){
                   <td class="px-4 py-2.5 ${chamados ? 'font-bold text-amber-700' : ''}">${chamados}</td>
                   <td class="px-4 py-2.5 font-bold">${money(c.valorMensalFixo || 0)}</td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-bold uppercase">${html(c.status || 'ativo')}</span></td>
-                  <td class="px-4 py-2.5 text-right"><button onclick="event.stopPropagation(); excluirContratoOperacional('${c.id}')" class="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir"><i class="ph ph-trash"></i></button></td>
                 </tr>`;
               }).join('') || '<tr><td colspan="9" class="p-12 text-center text-slate-500">Nenhum contrato encontrado</td></tr>'}
             </tbody>
