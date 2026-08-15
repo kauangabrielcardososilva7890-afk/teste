@@ -51,7 +51,8 @@ async function sync(opt={}){
   window.__esSync=false; // Reset always before starting
   window.__esSync=true;
   window.__esLogs=[];
-  function log(m){window.__esLogs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m);render()}
+  // log apenas acumula — NÃO redesenha a tela (evita piscar)
+  function log(m){window.__esLogs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m)}
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
@@ -67,7 +68,7 @@ async function sync(opt={}){
     log(incremental?'Modo ATUALIZAR: só baixa itens de orçamentos novos.':'Modo BAIXAR TUDO: baixa itens de todos.');
     let tot=0,totIt=0,err=0,novos=0,pg=1;const ids=[];
     while(pg<=120){
-      window.__esSt={msg:`Página ${pg} — listando orçamentos...`,pct:Math.min(95,10+pg)};render();
+      window.__esSt={msg:`Página ${pg} — listando orçamentos...`,pct:Math.min(95,10+pg)};
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
       const r=await api('GET',u.toString(),null,'');
@@ -84,7 +85,7 @@ async function sync(opt={}){
         // ATUALIZAR: orçamento já baixado antes → pula os itens (economiza MUITO tempo)
         if(incremental && !isNew){ continue; }
         novos++;
-        window.__esSt={msg:`Baixando itens do orçamento ${o.numero||o.id}...`,pct:Math.min(95,10+pg)};render();
+        window.__esSt={msg:`Baixando itens do orçamento ${o.numero||o.id}...`,pct:Math.min(95,10+pg)};
         for(let ip=1;ip<=50;ip++){
           const p=new URL(API_BASE+'/budget-item/by-subprogram/'+encodeURIComponent(o.idSubprogram||'')+'/by-school/'+encodeURIComponent(o.idSchool||'')+'/by-budget/'+encodeURIComponent(o.idBudget||o.id||''));
           p.searchParams.set('page',String(ip));p.searchParams.set('limit','100');
@@ -103,9 +104,10 @@ async function sync(opt={}){
     db.escolaOrc=(db.escolaOrc||[]).filter(o=>idsSet.has(String(o.id)));
     db.escolaIt=(db.escolaIt||[]).filter(i=>idsSet.has(String(i.oid)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
-    window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();render();
+    window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();
     // Envia dados para a nuvem
     if(typeof syncEnviarParaNuvem==='function'){try{await syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true})}catch(e){}}
+    render(); // renderiza UMA vez no final, com a contagem pronta
     return{ok:true,tot,totIt,novos,err};
   }catch(e){window.__esSt={msg:'Erro: '+e.message,pct:0};render();return{ok:false,error:e.message}}
   finally{window.__esSync=false}
