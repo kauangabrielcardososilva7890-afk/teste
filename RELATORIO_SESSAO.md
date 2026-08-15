@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.4**  
+**Última versão:** **v5.19.5**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.4`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.5`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,9 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.5
+- **Menu Cadastros** — Removido o item "Usuários" duplicado do submenu "Cadastros" (o acesso correto continua em Configurações → "Usuários e permissões").
 
 ## v5.19.4
 - **Aba Clientes:** filtro **"Nome"** pré-selecionado por padrão (sem disparar a listagem — continua vazio até pesquisar ou clicar em "Todos").
