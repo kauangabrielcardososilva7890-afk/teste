@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.18.7**  
+**Última versão:** **v5.18.8**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.18.7`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.18.8`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.18.8
+- **Dados da loja + logo** — Adicionado upload de LOGO no card "Dados da loja para relatórios e notinhas" (salvo em `db.config.loja.logo`, base64).
+- A logo configurada passa a ser usada nos **chamados (dentro e fora de contrato)**, **leituras** e **notinhas de vendas** (via `window.DIGICOPY_LOGO`, reaplicado com a logo da loja).
+- Leitura (notinha compacta): cabeçalho agora lê nome fantasia, razão social, CNPJ, telefone, e-mail e endereço do card "Dados da loja".
+- Arquivo novo: `ajustes_v5188_patch.js` + edição em `leitura_impressao_compacta_produtos_patch.js`.
 
 ## v5.18.7
 - **3** — Ao imprimir o PDF do chamado, os dados digitados nas caixas (motivo, serviços, observação, contador, modelo/patrimônio/serial/local) são puxados automaticamente, mesmo sem salvar. Não altera o que está salvo.
