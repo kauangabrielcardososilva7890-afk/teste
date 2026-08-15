@@ -103,6 +103,8 @@ async function sync(opt={}){
     const idsSet=new Set(ids.map(String));
     db.escolaOrc=(db.escolaOrc||[]).filter(o=>idsSet.has(String(o.id)));
     db.escolaIt=(db.escolaIt||[]).filter(i=>idsSet.has(String(i.oid)));
+    // Limpeza automática: orçamento que saiu da NAEN some sozinho dos Excluídos
+    db.escolaExc=(db.escolaExc||[]).filter(e=>idsSet.has(String(e.oid)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
     window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();
     // Envia dados para a nuvem
@@ -216,8 +218,41 @@ window.esClearLog=function(){window.__esLogs=[];render()};
 window.esSearch=function(){window.__esTerm=t(document.getElementById('es-term')?.value);window.__esReg=t(document.getElementById('es-reg')?.value)||'1';const iv=t(document.getElementById('es-int')?.value)||'1-10';const p=iv.includes('-')?iv.split('-'):[iv,iv];window.__esIni=Math.max(1,int(p[0],1));window.__esFim=Math.max(window.__esIni,int(p[1],window.__esIni));render()};
 window.esMais=function(){window.__esFim=(window.__esFim||10)+10;render()};
 window.esExcel=function(){const rows=window.__esRes||search(window.__esTerm||'',window.__esReg||'1');const trs=rows.map(r=>`<tr><td>${esc(r.numero)}</td><td>${esc(r.escola)}</td><td>${esc(r.municipio)}</td><td>${r.dist===999?'N/A':r.dist}</td><td>${esc(r.only?'SIM':'')}</td><td>${r.ext||0}</td><td>${esc(r.ipo||'')}</td><td>${esc(r.ides)}</td></tr>`).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial}th{background:#0a1e8a;color:#fff;padding:6px}td{border:1px solid #ddd;padding:5px}</style></head><body><table><thead><tr><th>Código</th><th>Escola</th><th>Município</th><th>Distância</th><th>Só pesquisado</th><th>Extras</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${trs}</tbody></table></body></html>`;const b=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'});const a=document.createElement('a'),u=URL.createObjectURL(b);a.href=u;a.download='buscador_'+new Date().toISOString().slice(0,10)+'.xls';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1000)};
-window.esExc=function(id){const m=prompt('Motivo:','Não interessa / longe');if(m===null)return;const st=store();if(!st.exc.find(e=>String(e.oid)===String(id)))st.exc.push({uid:uid('exc'),oid:String(id),mot:m||'Descartado',dt:now()});save();render('Excluído.')};
-window.esRest=function(id){db.escolaExc=(db.escolaExc||[]).filter(e=>String(e.oid)!==String(id));save();render('Restaurado.')};
+window.esExc=function(id){
+  const confirmar = typeof window.confirmSistema==='function' ? window.confirmSistema : null;
+  const pedirMotivo = function(){ window.__esExcPendingId=id; esExcMotivo(); };
+  if(confirmar){
+    confirmar('Deseja realmente excluir este orçamento?', 'Excluir').then(function(ok){ if(ok) pedirMotivo(); });
+  } else {
+    pedirMotivo();
+  }
+};
+window.esExcMotivo=function(){
+  const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
+  document.getElementById('modal-title').innerText='Motivo da exclusão';
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-3"><p class="text-[12px] text-slate-500">Escreva o motivo para excluir este orçamento.</p><input id="es-exc-motivo" placeholder="Ex.: Não interessa / longe" class="w-full h-11 px-3 rounded-xl border"></div>`;
+  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="esExcConfirmar()" class="neo-btn primary">Excluir</button>`;
+};
+window.esExcConfirmar=function(){
+  const id=window.__esExcPendingId;
+  const m=t(document.getElementById('es-exc-motivo')?.value)||'Descartado';
+  const st=store();
+  if(!st.exc.find(e=>String(e.oid)===String(id))) st.exc.push({uid:uid('exc'),oid:String(id),mot:m,dt:now()});
+  save();
+  if(typeof closeModal==='function') closeModal();
+  render('Excluído.');
+};
+window.esRest=function(id){
+  const executar=function(){
+    db.escolaExc=(db.escolaExc||[]).filter(e=>String(e.oid)!==String(id));
+    save(); render('Restaurado.');
+  };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema('Deseja voltar este orçamento para a busca?', 'Restaurar').then(function(ok){ if(ok) executar(); });
+  } else {
+    executar();
+  }
+};
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
