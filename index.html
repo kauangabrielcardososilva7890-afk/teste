@@ -123,7 +123,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
         <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
         <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
       </div>
-      <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span class="flex items-center gap-2"><button id="btn-teste-nuvem" type="button" onclick="__syncDiagnosticoAlert()" title="Teste da nuvem: mostra o erro exato da sincronização" class="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-white/50 font-semibold cursor-pointer">☁ teste nuvem</button><span id="session-time">00:00</span></span></div>
+      <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
     </div>
     <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
       <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
@@ -161,6 +161,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button id="btn-teste-nuvem" type="button" onclick="__syncDiagnosticoAlert()" title="Testar conexão e sincronização com a nuvem"><i class="ph ph-cloud-check"></i>Teste nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -288,7 +289,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./ajustes_v51920_patch.js?v=5.19.20"></script>
 <script src="./ajustes_v52023_patch.js?v=5.20.24"></script>
 <script src="./ajustes_v52024_patch.js?v=5.20.24"></script>
-<script src="./ajustes_v52025_patch.js?v=5.20.25"></script>
+<script src="./ajustes_v52025_patch.js?v=5.20.26"></script>
 <script src="./sync_realtime_patch.js?v=5.20.5"></script>
 </body>
 </html>

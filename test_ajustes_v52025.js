@@ -27,9 +27,11 @@ const regras = P.textoRegrasFirebase();
 ok('regras liberam tudo', /match \/\{document=\*\*\}/.test(regras));
 ok('regras exigem auth', /request\.auth != null/.test(regras));
 
-// script tag do patch + botão ☁ existem no index.html
+// O patch deve carregar e o botão deve ficar na barra superior visível (a sidebar é oculta por CSS).
 const html = fs.readFileSync('index.html','utf8');
 ok('patch carregado no index.html', /ajustes_v52025_patch\.js/.test(html));
-ok('botão ☁ teste nuvem na sidebar', /btn-teste-nuvem/.test(html) && /__syncDiagnosticoAlert\(\)/.test(html));
+const topnav = (html.match(/<div class="modern-topnav">([\s\S]*?)<div class="flex-1 p-4/) || [,''])[1];
+ok('botão Teste nuvem na barra superior visível', /id="btn-teste-nuvem"/.test(topnav) && /__syncDiagnosticoAlert\(\)/.test(topnav));
+ok('botão não ficou preso na sidebar oculta', !/<aside id="sidebar"[\s\S]*?id="btn-teste-nuvem"[\s\S]*?<\/aside>/.test(html));
 
 console.log('\nRESULTADO: Testes do ajustes_v52025 passaram!');

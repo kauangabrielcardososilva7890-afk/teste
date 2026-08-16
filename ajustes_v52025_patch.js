@@ -3,8 +3,7 @@
 // • O sync só falha EM SILÊNCIO (o diagnóstico antigo foi removido na v5.20.15).
 //   Este patch recoloca o teste passo a passo (config → login anônimo → gravar
 //   → ler) mostrando o ERRO EXATO do Firebase (permissão, cota, auth...).
-// • Botão "☁ teste nuvem" na barra lateral (rodapé do cartão do usuário no
-//   index.html). Só gasta cota quando CLICADO (não roda automático).
+// • Botão "Teste nuvem" na barra superior visível do sistema. Só gasta cota quando CLICADO (não roda automático).
 // • O doc de teste (__diag_ping) é apagado da nuvem logo depois e removido do
 //   banco local — não polui o backup.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -103,5 +102,5 @@ window.__syncDiagnosticoAlert = async function(){
 };
 
 limparDiagLocal();
-console.log('[DIGICOPY] ajustes_v52025_patch.js carregado — teste da nuvem disponível no botão ☁ da barra lateral');
+console.log('[DIGICOPY] ajustes_v52025_patch.js carregado — teste da nuvem disponível no botão da barra superior');
 })();
