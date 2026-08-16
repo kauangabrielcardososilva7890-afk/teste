@@ -25,7 +25,7 @@
   var COLL      = 'erp_rt';
   var AUTH_KEY  = 'digicopy_firebase_auth_v1';   // reaproveita o token anônimo
   var STATE_KEY = 'digicopy_rt_state_v1';
-  var POLL_MS   = 6000;   // consulta de fundo a cada 6s (era 1,5s — estourava a cota)
+
   var PAGE_SIZE = 500;
   var TAM_MAX_REC = 850000; // ~850 KB por registro (limite Firestore 1 MiB)
 
@@ -291,9 +291,11 @@
   }
 
   /* ---------------- PULL: baixa o que mudou na nuvem e mescla ---------------- */
+  // Retorna um Set com os NOMES das entidades que mudaram (pra saber qual
+  // parte da tela redesenhar). Vazio = nada de novo.
   async function pullMudancas(){
-    if(typeof db === 'undefined') return false;
-    var mudou = false;
+    if(typeof db === 'undefined') return new Set();
+    var mudou = new Set();
     var cursor = state.cursor || null;
     for(var pagina=0; pagina<200; pagina++){
       var docs = await rtListDesde(cursor);
@@ -311,7 +313,7 @@
         if(!t && f.d && f.d.stringValue){ try{ dados = JSON.parse(f.d.stringValue); }catch(err){ dados = null; } }
         if(!e) continue;
         if(tsKey(tsRaw) > maxTsN){ maxTsN = tsKey(tsRaw); maxTsStr = tsRaw; }
-        if(aplicarRemoto(e, id, dados, t, tsRaw)) mudou = true;
+        if(aplicarRemoto(e, id, dados, t, tsRaw)) mudou.add(e);
       }
       cursor = maxTsStr;
       if(docs.length < PAGE_SIZE) break;
@@ -336,25 +338,39 @@
     state.cursor = null;
   }
 
-  /* ---------------- refresh da tela ---------------- */
-  var viewAtual = 'dashboard';
-  function refreshUI(){
-    if(typeof getSession !== 'function') return;
-    if(!getSession()) return;               // sem login: não há tela pra redesenhar
-    if(document.activeElement && /INPUT|TEXTAREA|SELECT/i.test(document.activeElement.tagName||'')) return; // usuário digitando
-    if(typeof navigateTo === 'function'){ try{ navigateTo(viewAtual); }catch(e){} }
-  }
-
   /* ---------------- nuvem tem dados? (checagem leve) ---------------- */
   async function nuvemTemDados(){
     try{ var docs = await rtListDesde(null, 1); return !!(docs && docs.length); }
     catch(e){ return false; }
   }
 
+  /* ---------------- mapeia cada tela às entidades que ela mostra ---------------- */
+  var VIEW_ENTS = {
+    clientes: ['clientes'],
+    produtos: ['produtos'],
+    impressoras: ['equipamentos'],
+    contratos: ['contratos','parque','equipamentos'],
+    parque: ['parque'],
+    leituras: ['leituras'],
+    manutencao: ['os'],
+    vendas: ['vendas'],
+    financeiro: ['contasReceber','contasPagar'],
+    usuarios: ['usuarios'],
+    config: ['config','tecnicos'],
+    'buscador-escola': ['modulosDinamicos']
+    // dashboard, relatorios, auditoria, mod_* → null = qualquer mudança recarrega
+  };
+  function viewRelevante(view, mudou){
+    if(!mudou || !mudou.size) return false;
+    var lista = VIEW_ENTS[view];
+    if(!lista) return true; // view sem mapeamento: recarrega se QUALQUER coisa mudou
+    for(var i=0;i<lista.length;i++){ if(mudou.has(lista[i])) return true; }
+    return false;
+  }
+
   /* ---------------- loop ---------------- */
   var ocupado = false;
   var __dirty = false;
-  var __mudouUI = false;
   var __eraDemo = false;
   var __reloaded = false;
   async function tick(){
@@ -362,27 +378,21 @@
     ocupado = true;
     try{
       if(ehDemo()){
-        // PC novo (só tem a demo): só limpa a demo se a nuvem tiver dados reais
         if(await nuvemTemDados()){
           limparDemo(); __eraDemo = true;
           try{ saveDB(); }catch(e){}
         }
       }
       if(__dirty || !state.cursor){ await pushMudancas(); __dirty = false; }
-      var m = await pullMudancas();
-      // NÃO re-renderiza mais aqui (isso causava o "piscar" a cada ~1,5s).
-      // Só guarda os dados (saveDB) e marca que a tela está desatualizada;
-      // a UI redesenha quando o usuário voltar pra aba (ver iniciar()).
-      if(m){ try{ saveDB(); }catch(e){} __mudouUI = true; }
-      // veio de demo e os dados reais acabaram de chegar: recarrega 1x pra
-      // a tela de login mostrar a empresa real
+      var mudou = await pullMudancas();
+      if(mudou.size){ try{ saveDB(); }catch(e){} }
       if(__eraDemo && !__reloaded && db.empresas && db.empresas.length){
         if(typeof getSession === 'function' && !getSession()){
           __reloaded = true;
           setTimeout(function(){ try{ location.reload(); }catch(e){} }, 500);
         }
       }
-    }catch(e){ setErr(e); /* rede fora etc.: tenta de novo na próxima */ }
+    }catch(e){ setErr(e); }
     finally{ ocupado = false; }
   }
 
@@ -394,34 +404,42 @@
     loadState();
     // desliga o auto-carregar ANTIGO (full-replace) para não conflitar
     try{ sessionStorage.setItem('digicopy_auto_load_try_v4939','1'); }catch(e){}
-    // rastreia a view atual para redesenhar sem piscar
-    if(typeof window.navigateTo === 'function' && !window.navigateTo.__rtTrack){
-      var _nav = window.navigateTo;
-      window.navigateTo = function(v){ viewAtual = v; __mudouUI = false; return _nav.apply(this, arguments); };
+    // rastreia a view atual; ao NAVEGAR pra uma tela, puxa o que mudou e
+    // redesenha SÓ se houver novidade naquela tela específica.
+    var _nav = (typeof window.navigateTo === 'function') ? window.navigateTo : null;
+    if(_nav && !_nav.__rtTrack){
+      window.navigateTo = function(v){
+        var r = _nav.apply(this, arguments); // renderiza com o que já tem
+        // busca o que mudou e re-renderiza esta tela SÓ se veio algo relevante
+        if(v !== 'banco') atualizarTelaAtual(v);
+        return r;
+      };
       window.navigateTo.__rtTrack = true;
     }
-    // A tela NÃO fica se redesenhando sozinha. Ela redesenha:
-    //  - quando o usuário navega para outra view e volta (navigateTo já faz);
-    //  - quando a aba do navegador volta a ficar visível (visibilitychange);
-    //  - quando a janela recupera o foco.
-    // Ao voltar pra aba/foco, também PUXA na hora (pra já estar em dia) antes
-    // de redesenhar — assim a atualização parece instantânea sem ficar
-    // consultando a nuvem o tempo todo.
-    function renderSeVisivel(){
-      try{ if(document.hidden) return; }catch(e){}
-      tick().then(function(){ refreshUI(); });   // puxa + redesenha (sem loop)
+    // Atualiza a tela atual APENAS se houve mudança nas entidades dela.
+    async function atualizarTelaAtual(v){
+      try{
+        var mudou = await pullMudancas();
+        if(mudou.size){ try{ saveDB(); }catch(e){} }
+        if(viewRelevante(v, mudou) && typeof _nav === 'function'){
+          _nav(v); // recarrega a tela (só quando há novidade nela)
+        }
+      }catch(e){ /* offline etc. */ }
     }
-    try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) renderSeVisivel(); }); }catch(e){}
-    try{ window.addEventListener('focus', renderSeVisivel); }catch(e){}
+    // Ao voltar pra aba/janela: só mantém os dados em dia (sem redesenhar).
+    // O redesenho acontece quando você clicar no menu (navigateTo).
+    function puxarEmSilencio(){ tick(); }
+    try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) puxarEmSilencio(); }); }catch(e){}
+    try{ window.addEventListener('focus', puxarEmSilencio); }catch(e){}
+
     // push rápido quando o sistema salvar
     if(typeof window.saveDB === 'function' && !window.saveDB.__rtWrapped){
       var _sv = window.saveDB;
       window.saveDB = function(){ var r = _sv.apply(this, arguments); agendaPush(); return r; };
       window.saveDB.__rtWrapped = true;
     }
-    setTimeout(function(){ tick(); }, 600);     // bootstrap + 1ª mescla
-    setInterval(function(){ tick(); }, POLL_MS); // manutenção automática
-    console.log('[SYNC-RT] sincronização automática ATIVA — mescla '+ARRAY_ENT.length+' entidades + '+OBJ_ENT.length+' objetos.');
+    setTimeout(function(){ tick(); }, 600); // bootstrap (1ª mescla) — SEM loop
+    console.log('[SYNC-RT] sincronização automática ATIVA — atualiza por tela (só quando há novidade nela).');
   }
 
   // expõe internos (testes / diagnóstico)
@@ -429,6 +447,7 @@
     ARRAY_ENT:ARRAY_ENT, OBJ_ENT:OBJ_ENT, COLL:COLL, STATE_KEY:STATE_KEY,
     hashStr:hashStr, hashRec:hashRec, tsKey:tsKey, aplicarRemoto:aplicarRemoto,
     ehDemo:ehDemo, limparDemo:limparDemo, pushMudancas:pushMudancas, pullMudancas:pullMudancas,
+    viewRelevante:viewRelevante, VIEW_ENTS:VIEW_ENTS,
     rtFetch:rtFetch, rtWrite:rtWrite, rtListDesde:rtListDesde, authToken:authToken
   };
 

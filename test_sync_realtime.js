@@ -90,5 +90,12 @@ ok(db.empresas.length === 0 && db.clientes.length === 0, 'limparDemo zera entida
 ok(I.tsKey('2026-08-16T10:00:00.9Z')  >  I.tsKey('2026-08-16T10:00:00.10Z'), '0.9s > 0.10s (numérico, não string)');
 ok(I.tsKey('2026-08-16T10:00:00.123Z') < I.tsKey('2026-08-16T10:00:00.1234Z'), '0.123 < 0.1234');
 
+// ===== 8. viewRelevante: só recarrega a tela se a ENTIDADE dela mudou =====
+ok(I.viewRelevante('clientes', new Set()) === false, 'sem mudança → não recarrega');
+ok(I.viewRelevante('clientes', new Set(['clientes'])) === true, 'cliente mudou → recarrega clientes');
+ok(I.viewRelevante('clientes', new Set(['vendas'])) === false, 'venda mudou → NÃO recarrega clientes');
+ok(I.viewRelevante('vendas', new Set(['vendas'])) === true, 'venda mudou → recarrega vendas');
+ok(I.viewRelevante('dashboard', new Set(['vendas'])) === true, 'dashboard (sem mapeamento) recarrega com qualquer mudança');
+
 console.log('\n'+(fail===0?'✔ TODOS OS TESTES PASSARAM':'✗ '+fail+' falha(s)')+'  ('+pass+' ok)');
 process.exit(fail===0?0:1);
