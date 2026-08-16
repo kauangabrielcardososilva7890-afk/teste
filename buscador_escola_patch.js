@@ -107,8 +107,6 @@ async function sync(opt={}){
     db.escolaExc=(db.escolaExc||[]).filter(e=>idsSet.has(String(e.oid)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
     window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();
-    // Envia dados para a nuvem
-    if(typeof syncEnviarParaNuvem==='function'){try{await syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true})}catch(e){}}
     render(); // renderiza UMA vez no final, com a contagem pronta
     return{ok:true,tot,totIt,novos,err};
   }catch(e){window.__esSt={msg:'Erro: '+e.message,pct:0};render();return{ok:false,error:e.message}}

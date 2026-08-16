@@ -196,11 +196,8 @@ function imprimirEtiquetasUI(){
   setTimeout(renderCardEtiquetas,100);
 }
 async function atualizarEEnviarNuvem(){
+  // A sincronização automática (sync_realtime) já envia o config sozinho no saveDB.
   const r=aplicarNoApp({forcar:true,toast:true});
-  if(typeof window.syncEnviarParaNuvem==='function'){
-    try{ await window.syncEnviarParaNuvem({confirmar:false}); if(typeof toast==='function') toast('Configuração salva e enviada para a nuvem','success'); }
-    catch(e){ console.warn('[CARTUCHOS_ETIQUETAS] sync',e); if(typeof toast==='function') toast('Salvo localmente. Não consegui enviar para a nuvem agora.','error'); }
-  }
   return r;
 }
 function renderCardEtiquetas(){

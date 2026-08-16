@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.5**  
+**Última versão:** **v5.20.6**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.5.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.6.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.6 — Revisão de robustez + limpeza (enquanto aguarda a cota)
+- **`_rt` não vaza mais no backup:** `exportBackup()` filtra o campo interno de sincronização (`_rt`) via `JSON.parse/stringify` com replacer.
+- **Sync antigo (full-replace, coleção `app_state`) removido de 2 lugares que disparavam à toa** (gastava cota): `buscador_escola_patch.js` (após baixar orçamentos) e `cartuchos_etiquetas_config_patch.js` (`atualizarEEnviarNuvem`). O sync novo já envia tudo no `saveDB`.
+- **Arquivos mortos deletados:** `recuperar_dados.html` e `ler_chaves_leveldb.js` (eram da migração de `.ldb`, que o usuário descartou).
+- Pendências que dependem de decisão do usuário: (a) dados do Buscador Escola (`escolaOrc/escolaIt/escolaExc`) NÃO entram no sync novo — hoje ficam locais por PC (cada PC baixa da NAEN); perguntar se quer sincronizar entre PCs; (b) remover de vez os botões legados "Enviar/Carregar da nuvem" e a área importar/exportar JSON.
 
 ## v5.20.5 — Sync por tela (sem poll, só quando há novidade naquela parte)
 - Usuário pediu: atualizar **só ao navegar de tela** (clicar no menu), e **só redesenhar se houver algo novo naquela tela específica**. 5 PCs previstos.
