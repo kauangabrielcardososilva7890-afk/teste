@@ -5,7 +5,8 @@
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
 **Última versão:** **v5.19.25**  
-**Commit:** atualizar após push  
+**Commit:** `818a50b`  
+**Zip:** `Sistema-Digicopy-v5.19.25.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
