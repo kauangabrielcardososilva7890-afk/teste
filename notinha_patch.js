@@ -324,83 +324,9 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     (document.getElementById('view-manutencao')||ensureView('manutencao')).innerHTML=neoPage('Chamados', 'Atendimento técnico, manutenção e ordens de serviço', `<button onclick="openModal('os')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo chamado</button>`, `${inputSearch('neo-search-os',q,'renderOs','Pesquisar cliente, OS ou problema...')}<button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Cadastrar cliente</button><button onclick="addTecnico && navigateTo('config')" class="neo-btn"><i class="ph ph-user-gear"></i>Cadastrar técnico</button>`, `<table class="neo-table"><thead><tr><th>OS</th><th>Cliente</th><th>Problema</th><th>Técnico</th><th>Abertura</th><th>Prioridade</th><th>Status</th></tr></thead><tbody>${list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return `<tr><td><b class="text-[#0a1e8a]">${escapeHtml(o.numero||'')}</b></td><td><b>${escapeHtml(cli.nome||'')}</b></td><td>${escapeHtml(o.problema||o.descricao||'')}</td><td>${escapeHtml(o.tecnicoNome||o.tecnico||'-')}</td><td>${fmtDate(o.abertura||o.criadoEm)}</td><td>${escapeHtml(o.prioridade||'Normal')}</td><td>${statusPill(o.status,o.status==='concluido'?'ok':'wait')}</td></tr>`}).join('')||emptyRow(7,'Nenhum chamado aberto')}</tbody></table>`);
   };
 
-  // ── FINANCEIRO com pesquisa, ordenação, filtro e histórico ──
-  window.renderFinanceiro = function(){
-    const sess=getSession(); if(!sess) return;
-    const view=document.getElementById('view-financeiro')||ensureView('financeiro');
-    const nomeCli=c=>{ const cli=db.clientes.find(x=>x.id===c.clienteId); return cli?cli.nome:(c.clienteNomeAntigo||(c.fornecedor||'')); };
-
-    // --- Nova função de exclusão unificada ---
-    window.excluirLancamentoUnificado = function() {
-        const checks = Array.from(document.querySelectorAll('input[name="fin-check-lote"]:checked'));
-        let alvosCR = [];
-        let alvosCP = [];
-
-        checks.forEach(ch => {
-            const id = ch.value;
-            const type = ch.dataset.type; // 'cr' or 'cp'
-            if (type === 'cr') {
-                alvosCR.push((db.contasReceber || []).find(x => x.id === id && x.empresaId === sess.empresaId));
-            } else if (type === 'cp') {
-                alvosCP.push((db.contasPagar || []).find(x => x.id === id && x.empresaId === sess.empresaId));
-            }
-        });
-
-        const totalAlvos = alvosCR.length + alvosCP.length;
-        if (!totalAlvos) { if(typeof toast==='function') toast('Marque os lançamentos na tabela para excluir.','info'); return; }
-
-        if(typeof window.confirmSistema === 'function') {
-          window.confirmSistema('Deseja excluir ' + totalAlvos + ' lançamento(s) financeiro(s)?', 'Excluir Lançamentos').then(function(ok) {
-              if (!ok) return;
-
-              alvosCR.forEach(function(c) {
-                  db.contasReceber = (db.contasReceber || []).filter(x => x.id !== c.id);
-                  if (typeof logAction === 'function') logAction('financeiro', 'excluir_receber', c.id, 'Excluído CR ' + (c.descricao || ''));
-              });
-              alvosCP.forEach(function(c) {
-                  db.contasPagar = (db.contasPagar || []).filter(x => x.id !== c.id);
-                  if (typeof logAction === 'function') logAction('financeiro', 'excluir_pagar', c.id, 'Excluído CP ' + (c.descricao || ''));
-              });
-
-              if (typeof saveDB === 'function') saveDB();
-              if (typeof renderFinanceiro === 'function') renderFinanceiro();
-              if (typeof toast === 'function') toast(totalAlvos + ' lançamento(s) excluído(s)', 'success');
-              if (typeof renderAuditoria === 'function') renderAuditoria();
-          });
-        } else { // Fallback para ambiente sem confirmSistema
-            if(confirm('Deseja excluir ' + totalAlvos + ' lançamento(s) financeiro(s)?')) {
-                alvosCR.forEach(function(c) {
-                    db.contasReceber = (db.contasReceber || []).filter(x => x.id !== c.id);
-                    if (typeof logAction === 'function') logAction('financeiro', 'excluir_receber', c.id, 'Excluído CR ' + (c.descricao || ''));
-                });
-                alvosCP.forEach(function(c) {
-                    db.contasPagar = (db.contasPagar || []).filter(x => x.id !== c.id);
-                    if (typeof logAction === 'function') logAction('financeiro', 'excluir_pagar', c.id, 'Excluído CP ' + (c.descricao || ''));
-                });
-
-                if (typeof saveDB === 'function') saveDB();
-                if (typeof renderFinanceiro === 'function') renderFinanceiro();
-                if (typeof toast === 'function') toast(totalAlvos + ' lançamento(s) excluído(s)', 'success');
-                if (typeof renderAuditoria === 'function') renderAuditoria();
-            }
-        }
-    };
-    // --- Fim da nova função de exclusão ---
-
-    const receber=db.contasReceber.filter(c=>c.empresaId===sess.empresaId);
-    const pagar=db.contasPagar.filter(c=>c.empresaId===sess.empresaId);
-    const totalRec=receber.reduce((s,c)=>s+(c.valor||0),0), totalPag=pagar.reduce((s,c)=>s+(c.valor||0),0);
-    let all=receber.map(c=>({ref:c,_tipo:'Receber'})).concat(pagar.map(c=>({ref:c,_tipo:'Pagar'})));
-    
-    // Removendo filtros e a área de pagar, apenas listando tudo
-    const mostrar=all; // Mostrar todos, sem paginação de "lim" ou filtros específicos
-
-    view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Financeiro</h3><p>Contas a receber e a pagar. Clique no olho 👁 para ver o histórico de cada lançamento.</p></div><div class="neo-actions"><button onclick="openModal('contaReceber')" class="neo-btn primary"><i class="ph ph-arrow-circle-down"></i>Receber</button><button onclick="excluirLancamentoUnificado()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
-      <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3"><div class="neo-card"><p class="neo-label">A receber</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec)}</div></div><div class="neo-card"><p class="neo-label">A pagar</p><div class="neo-total !text-[24px] !text-red-600">${fmtMoney(totalPag)}</div></div><div class="neo-card"><p class="neo-label">Saldo previsto</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec-totalPag)}</div></div></div>
-      
-      <div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr><th><input type="checkbox" onchange="document.querySelectorAll('input[name=\'fin-check-lote\']').forEach(el => el.checked = this.checked)"></th><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>${mostrar.map(x=>{const c=x.ref; const cli=db.clientes.find(z=>z.id===c.clienteId); const nome=cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||''); return `<tr class="cursor-pointer" ondblclick="historicoLancamento('${x._tipo==='Receber'?'cr':'cp'}','${c.id}')"><td><input type="checkbox" name="fin-check-lote" value="${c.id}" data-type="${x._tipo==='Receber'?'cr':'cp'}"></td><td>${x._tipo}</td><td>${escapeHtml(c.descricao||'')} ${c.legadoCodigo?'<span class="text-[10px] text-slate-400">#'+escapeHtml(c.legadoCodigo)+'</span>':''}</td><td>${escapeHtml(nome)}${!cli&&c.clienteNomeAntigo?' <span class="text-[10px] text-slate-400">(sist. antigo)</span>':''}</td><td><b class="${x._tipo==='Pagar'?'text-red-600':''}">${fmtMoney(c.valor||0)}</b></td><td>${fmtDate(c.vencimento)}</td><td>${statusPillFin(c.status)}</td><td><button onclick="historicoLancamento('${x._tipo==='Receber'?'cr':'cp'}','${c.id}')" class="neo-btn !px-2" title="Abrir histórico"><i class="ph ph-eye"></i></button></td></tr>`;}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhum lançamento encontrado</td></tr>'}</tbody></table></div>
-    </div></div>`;
+  window.renderFinanceiro=function(){
+    const sess=getSession(); if(!sess) return; const receber=db.contasReceber.filter(c=>c.empresaId===sess.empresaId); const pagar=db.contasPagar.filter(c=>c.empresaId===sess.empresaId); const totalRec=receber.reduce((s,c)=>s+(c.valor||0),0); const totalPag=pagar.reduce((s,c)=>s+(c.valor||0),0);
+    document.getElementById('view-financeiro').innerHTML=neoPage('Financeiro', 'Contas a receber, pagar e fluxo simples', `<button onclick="openModal('contaReceber')" class="neo-btn primary"><i class="ph ph-arrow-circle-down"></i>Receber</button><button onclick="openModal('contaPagar')" class="neo-btn"><i class="ph ph-arrow-circle-up"></i>Pagar</button>`, `<div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full"><div class="neo-card"><p class="neo-label">A receber</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec)}</div></div><div class="neo-card"><p class="neo-label">A pagar</p><div class="neo-total !text-[24px] !text-red-600">${fmtMoney(totalPag)}</div></div><div class="neo-card"><p class="neo-label">Saldo previsto</p><div class="neo-total !text-[24px]">${fmtMoney(totalRec-totalPag)}</div></div></div>`, `<table class="neo-table"><thead><tr><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th></tr></thead><tbody>${receber.map(c=>{const cli=db.clientes.find(x=>x.id===c.clienteId)||{}; return `<tr><td>Receber</td><td>${escapeHtml(c.descricao||'')}</td><td>${escapeHtml(cli.nome||'')}</td><td><b>${fmtMoney(c.valor||0)}</b></td><td>${fmtDate(c.vencimento)}</td><td>${statusPill(c.status,c.status==='pago'?'ok':'wait')}</td></tr>`}).concat(pagar.map(c=>`<tr><td>Pagar</td><td>${escapeHtml(c.descricao||'')}</td><td>${escapeHtml(c.fornecedor||'')}</td><td><b class="text-red-600">${fmtMoney(c.valor||0)}</b></td><td>${fmtDate(c.vencimento)}</td><td>${statusPill(c.status,c.status==='pago'?'ok':'wait')}</td></tr>`)).join('')||emptyRow(6,'Nenhum lançamento financeiro')}</tbody></table>`);
   };
 
   window.renderRelatorios=function(){
