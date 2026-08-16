@@ -68,10 +68,10 @@ function importarFuncionariosLegados(dbRef, empId){
     else { dbRef.usuarios.push({id:uidSafe('usr'),criadoEm:new Date().toISOString(),criadoPor:'migracao',...dados}); }
     alterou++;
   });
-  // Se não veio FUNCIONARIOS ainda, mantém pelo menos um admin para conseguir entrar.
-  if(!dbRef.usuarios.some(u=>u.empresaId===empId&&u.ativo)){
-    const jaTemAdmin = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_admin');
-    dbRef.usuarios.push({id: jaTemAdmin?uidSafe('usr'):'usr_admin',empresaId:empId,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+  // Se não veio FUNCIONARIOS ainda, garante o usuário real (kauan) como admin.
+  if(!dbRef.usuarios.some(u=>u.empresaId===empId && u.ativo)){
+    const jaTemKauan = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_kauan');
+    dbRef.usuarios.push({id: jaTemKauan?uidSafe('usr'):'usr_kauan',empresaId:empId,nome:'Kauan',login:'kauan',senha:'6132',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
     alterou++;
   }
   return alterou;

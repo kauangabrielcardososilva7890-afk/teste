@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.16**  
+**Última versão:** **v5.20.17**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.16.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.17.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,15 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.17 — Logins REAIS garantidos (kauan Admin / denivaldo Dono)
+- **Usuários reais viram o padrão** (não mais admin/admin123):
+  - `kauan` / `6132` → perfil **Admin**
+  - `denivaldo` / `3232` → perfil **Dono**
+- `seedData` garante esses dois (idempotente) e **remove o antigo `admin/admin123`** (id `usr_admin`) quando o kauan existe — nunca fica sem acesso.
+- Fallback do `login_dados_automaticos_patch.js` (`importarFuncionariosLegados`) trocado de admin/admin123 → kauan/6132.
+- A hierarquia (`perfilEfetivo` em ajustes_v5196) já tratava kauan=Admin e denivaldo=Dono por nome de login, então está coerente.
+- IMPORTANTE p/ o usuário: os dados dos clientes que ele importou continuam na nuvem; os outros usuários (carlos/ana/financeiro da demo) não voltam — só kauan e denivaldo são garantidos. Se quiser mais usuários (funcionários), cria na tela Usuários.
 
 ## v5.20.16 — Login se AUTO-RECRIA (nunca mais some)
 - Causa raiz: o botão "Limpar todos os dados" (já removido) apagou empresa/usuários, e a auto-recriação antiga (`seedData`) só rodava quando a lista de empresas estava TOTALMENTE vazia — se sobrasse uma empresa "quebrada" (sem usuário ativo), não corrigia.

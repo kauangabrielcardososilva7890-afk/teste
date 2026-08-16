@@ -284,9 +284,11 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // GARANTE (sempre, idempotente) uma empresa única + um admin ativo.
-  // Roda em TODA carga — o login nunca mais "some", mesmo que algo apague os
-  // dados. Nunca sobrescreve usuários/empresas existentes (só adiciona o que falta).
+  // GARANTE (sempre, idempotente) uma empresa única + os usuários reais:
+  //   • Kauan (Admin)   → login "kauan"    senha "6132"
+  //   • Denivaldo (Dono) → login "denivaldo" senha "3232"
+  // Roda em TODA carga — os logins nunca mais "somem". Nunca sobrescreve
+  // usuários existentes (só adiciona o que falta, preservando senha atual).
   db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
   let mudou = false;
@@ -298,10 +300,25 @@ function seedData(force=false){
     db.empresas.push(emp);
     mudou = true;
   }
-  const temAdmin = db.usuarios.some(u=>u.empresaId===emp.id && u.ativo && String(u.login||'').toLowerCase()==='admin');
-  if(!temAdmin){
-    db.usuarios.push({id:'usr_admin',empresaId:emp.id,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
-    mudou = true;
+  const garantidos = [
+    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
+    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
+  ];
+  garantidos.forEach(g=>{
+    const existe = db.usuarios.some(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()===g.login);
+    if(!existe){
+      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+      mudou = true;
+    }
+  });
+  // Remove o antigo "admin/admin123" de demonstração (sobrou de versões antigas)
+  // — o usuário real agora é o "kauan". Só remove se o kauan já existe, pra
+  // nunca ficar sem acesso.
+  const temKauan = db.usuarios.some(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()==='kauan');
+  if(temKauan){
+    const antes = db.usuarios.length;
+    db.usuarios = db.usuarios.filter(u=>!(String(u.login||'').toLowerCase()==='admin' && u.id==='usr_admin'));
+    if(db.usuarios.length !== antes) mudou = true;
   }
   if(mudou) saveDB();
 }
