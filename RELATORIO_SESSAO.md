@@ -4,7 +4,7 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00b4d-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/20  
-**Última versão:** **v5.20.25**  
+**Última versão:** **v5.20.26**  
 **Commit:** `12ec1095543d3c6849df5fc1052d562fde022076`  
 **Zip:** não gerado nesta versão (a pedido do usuário)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/12ec1095543d3c6849df5fc1052d562fde022076/index.html?v=5.20.25`
@@ -27,6 +27,46 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.26 — Empresa única: correção DEFINITIVA dos dados invisíveis
+
+**Crítica do usuário (procedente):** "pq ta fazendo varias vezes? independente do
+login vai ser o mesmo historico que vai acessar em vendas, contratos..."
+
+### Causa raiz (o que as versões anteriores só remendavam)
+O sistema atende **uma empresa só**, mas carrega **511 filtros**
+`x.empresaId === s.empresaId` espalhados pelas telas — herança de um desenho
+multi-empresa que nunca se aplicou aqui. Qualquer divergência de `empresaId`
+(import sem empresa, sessão antiga, base recriada com id novo) fazia a tela
+filtrar tudo fora → "os dados sumiram". Corrigir caso a caso a cada versão era
+enxugar gelo; por isso o problema voltava.
+
+### Solução
+`ajustes_v52026_patch.js` — uma única fonte de verdade (`EMPRESA_ID = 'emp_digicopy'`):
+- `unificarCadastroEmpresa` — mantém 1 empresa, preservando CNPJ/razão social.
+- `unificarEmpresa` — **todo** registro passa a pertencer a ela, qualquer que fosse
+  o empresaId anterior (vazio, antigo ou aleatório). Nada é apagado.
+- `normalizarSessao` — a sessão sempre aponta para a empresa única, sem relogar.
+- Reaplica em `showApp` (pós-login), então import novo já entra normalizado.
+
+**Consequência:** qualquer login (kauan, denivaldo, katia, recepção) enxerga
+exatamente o mesmo histórico em vendas, contratos, OS e clientes. Testado.
+
+### Usuários que voltavam sozinhos — origem encontrada
+`importarFuncionariosComoUsuarios` (`login_otimizacao_patch.js:60`) transformava
+cada nome de `db.tecnicos` em usuário de login com senha `'123'`, e rodava **em
+todo login e em todo showApp**. Desativado na v5.20.26: técnico é cadastro de
+técnico, não credencial de acesso.
+
+### Testes
+`test_ajustes_v52026.js` — **43/43 ✔** (inclui: dois logins diferentes veem o mesmo
+histórico; 880 registros unificados sem perda; idempotência em 3 passadas).
+Suítes anteriores seguem passando. `npm run check` OK, boot jsdom sem erros.
+
+### Pendente para a PRÓXIMA versão (a pedido do usuário)
+Remover os botões/telas de importação e fechar o sistema para uso final. Pontos
+mapeados: `importarClientesJsonFinal` (`finalizacao_sistema_patch.js:117`, botão em :158),
+`importarTudoDeUmaVez` (`app.js:1696`), `importarJsonDBeaver` (`app.js:1525`).
 
 ## v5.20.25 — Usuários fixos + recuperação dos dados "sumidos"
 
