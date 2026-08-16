@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00bb1-teste` (a sessão mudou de branch; a antiga `arena/01a001ed-teste` já foi mergeada na `main` pelo PR #18)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/21  
-**Última versão:** **v5.20.24**  
-**Commit:** `916a9bf`  
-**Zip:** `Sistema-Digicopy-v5.20.24.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/916a9bf22358bf9eb69bafa69e49bd76e8b55566/index.html?v=5.20.24`
+**Última versão:** **v5.20.25**  
+**Commit:** atualizar após push  
+**Zip:** `Sistema-Digicopy-v5.20.25.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.25 — "Teste da nuvem" de volta (sync parou em silêncio)
+- Sintoma do usuário: "não está sincronizando" após a v5.20.24. Verificado: `sync_realtime_patch.js`/`firebase_*` **intocados** desde a versão que funcionava (diff vazio) — o motor é o mesmo; falha é ambiental e agora invisível (o diagnóstico automático foi removido na v5.20.15).
+- **Recolocado o Teste da nuvem sob demanda:** botão **"☁ teste nuvem"** no rodapé do cartão do usuário (barra lateral, ao lado do relógio). Passos: **1** config Firebase → **2** login anônimo → **3** gravar → **4** ler → **5** "este aparelho já sincronizou alguma vez" + contagens locais + último backup. Mostra o **ERRO EXATO** (HTTP/código/mensagem) e a instrução: `traduzirErroSync` (403/PERMISSION_DENIED → republicar regras `match /{document=**}` com auth; 429/RESOURCE_EXHAUSTED → cota grátis estourada, reseta ~4h; 401/UNAUTHENTICATED → login anônimo desligado; Failed to fetch → sem internet/bloqueio).
+- Só gasta cota quando CLICADO (não roda sozinho). O doc de teste `__diag_ping` é apagado da nuvem logo depois e qualquer resto local (`db.diagnostico`) é removido na carga e após o teste (não polui backup).
+- **Pendência pro usuário:** clicar no ☁ no aparelho que não sincroniza e mandar o texto — provável COTA (50k leituras + 20k escritas/dia grátis; cada aparelho novo baixa a base toda 1x; reseta ~4h).
 
 ## v5.20.24 — Filtro "pagar" apagado, Excluir sempre visível, backup diário automático e seedData que nunca apaga usuário seu
 
