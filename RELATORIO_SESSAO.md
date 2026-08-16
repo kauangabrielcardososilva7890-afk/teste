@@ -5,9 +5,9 @@
 **Branch fixa da sessão:** `arena/01a00b4d-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/20  
 **Última versão:** **v5.20.26**  
-**Commit:** `12ec1095543d3c6849df5fc1052d562fde022076`  
+**Commit:** `cf103a3f81d469013a1f985531404af9d660fafa`  
 **Zip:** não gerado nesta versão (a pedido do usuário)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/12ec1095543d3c6849df5fc1052d562fde022076/index.html?v=5.20.25`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/cf103a3f81d469013a1f985531404af9d660fafa/index.html?v=5.20.26`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
