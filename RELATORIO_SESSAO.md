@@ -32,7 +32,7 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - **`_rt` não vaza mais no backup:** `exportBackup()` filtra o campo interno de sincronização (`_rt`) via `JSON.parse/stringify` com replacer.
 - **Sync antigo (full-replace, coleção `app_state`) removido de 2 lugares que disparavam à toa** (gastava cota): `buscador_escola_patch.js` (após baixar orçamentos) e `cartuchos_etiquetas_config_patch.js` (`atualizarEEnviarNuvem`). O sync novo já envia tudo no `saveDB`.
 - **Arquivos mortos deletados:** `recuperar_dados.html` e `ler_chaves_leveldb.js` (eram da migração de `.ldb`, que o usuário descartou).
-- Pendências que dependem de decisão do usuário: (a) dados do Buscador Escola (`escolaOrc/escolaIt/escolaExc`) NÃO entram no sync novo — hoje ficam locais por PC (cada PC baixa da NAEN); perguntar se quer sincronizar entre PCs; (b) remover de vez os botões legados "Enviar/Carregar da nuvem" e a área importar/exportar JSON.
+- Pendências que dependem de decisão do usuário: (a) dados do Buscador Escola (`escolaOrc/escolaIt/escolaExc`) NÃO entram no sync novo — **DECIDIDO: manter local por PC (opção b)** — cada PC baixa da NAEN direto (custa ZERO de cota no Firebase e o dado fica sempre fresco). Sem mudança de código; (b) remover de vez os botões legados "Enviar/Carregar da nuvem" e a área importar/exportar JSON — ainda pendente.
 
 ## v5.20.5 — Sync por tela (sem poll, só quando há novidade naquela parte)
 - Usuário pediu: atualizar **só ao navegar de tela** (clicar no menu), e **só redesenhar se houver algo novo naquela tela específica**. 5 PCs previstos.
