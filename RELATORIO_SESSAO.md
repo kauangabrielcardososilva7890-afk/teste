@@ -4,7 +4,7 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00b4d-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/20  
-**Última versão:** **v5.20.24**  
+**Última versão:** **v5.20.25**  
 **Commit:** `b74f0154cfea53255ade4181f66fb81826bf8d24`  
 **Zip:** não gerado nesta versão (a pedido do usuário)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/b74f0154cfea53255ade4181f66fb81826bf8d24/index.html?v=5.20.24`
@@ -27,6 +27,48 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.25 — Usuários fixos + recuperação dos dados "sumidos"
+
+**Motivo:** usuário relatou base vazia (nenhum cliente, nenhum usuário) na janela
+normal, e usuários já excluídos reaparecendo na janela anônima.
+
+### Diagnóstico (a causa NÃO era perda de dados)
+1. **Anônimo:** `localStorage` é isolado e descartado ao fechar. Base sempre nasce
+   zerada, então `seedData` recria os usuários "garantidos" — daí o reaparecimento.
+2. **Janela normal vazia (bug real):** todas as telas filtram por `empresaId`
+   (`db.clientes.filter(c=>c.empresaId===s.empresaId)` em `finalizacao_sistema_patch.js:146`,
+   `db.usuarios.filter(u=>u.empresaId===s.empresaId)` em `ajustes_v5196_patch.js:113`).
+   O `seedData` (app.js:347) só realinhava quem **já tinha** empresaId:
+   `if(r && r.empresaId && r.empresaId !== emp.id)`. Registros importados **sem**
+   empresaId nunca eram adotados, e a **sessão salva** também não era corrigida.
+   Resultado: dados presentes no armazenamento, porém **invisíveis** em todas as telas.
+
+### Correções (`ajustes_v52025_patch.js`)
+- `adotarOrfaos` — todo registro sem `empresaId` adota a empresa real. Registros de
+  outra empresa legítima **não** são tocados. Nada é apagado.
+- `alinharSessao` — a sessão ativa é realinhada à empresa real (sem precisar relogar).
+- `reconciliarUsuarios` — mantém **apenas os 4 usuários oficiais**, preservando
+  senha/nome já personalizados; recria só quem falta; reativa inativos; remove
+  duplicatas por login (case/acento-insensitive).
+- `diagDados()` — comando de diagnóstico no console (F12): mostra domínio, se o
+  navegador está em modo anônimo, chaves e contagem real de registros.
+
+### Usuários oficiais (perfis do sistema: Admin, Dono, Funcionário)
+| Login | Nome | Perfil | Senha |
+|---|---|---|---|
+| `kauan` | Kauan | Admin | 6132 |
+| `denivaldo` | Denivaldo | Dono | 3232 |
+| `katia` | Katia | Funcionário | 4141 |
+| `recepcao` | Recepção | Funcionário | 5151 |
+
+Qualquer outro usuário é removido automaticamente em toda carga.
+
+### Testes
+`test_ajustes_v52025.js` — **58/58 ✔**. Cenário do usuário reproduzido:
+120 clientes + 40 vendas invisíveis (0 visíveis) → **160 registros recuperados**,
+nenhum perdido, senha do kauan preservada. Boot completo em jsdom: `ERROS: NENHUM`.
+
 
 ## v5.20.24 — Excluir cliente COM histórico (2 avisos) + backup fora das Configurações
 
