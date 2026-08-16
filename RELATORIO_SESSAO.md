@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00bb1-teste` (a sessão mudou de branch; a antiga `arena/01a001ed-teste` já foi mergeada na `main` pelo PR #18)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/21  
-**Última versão:** **v5.20.23**  
-**Commit:** `a6483bd`  
-**Zip:** `Sistema-Digicopy-v5.20.23.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/a6483bdb607501a8c14ab5410c679017f140bbbc/index.html?v=5.20.23`
+**Última versão:** **v5.20.24**  
+**Commit:** atualizar após push  
+**Zip:** `Sistema-Digicopy-v5.20.24.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.24`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,35 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.24 — Filtro "pagar" apagado, Excluir sempre visível, backup diário automático e seedData que nunca apaga usuário seu
+
+Respostas às 4 perguntas feitas e confirmadas pelo usuário nesta sessão:
+
+### 1. Financeiro: filtro de tipo APAGADO
+- O filtro **"Receber + Pagar / Só a receber / Só a pagar"** (`neo-fin-tipo`) era o "pagar junto com o filtro" citado desde o item 2 — agora removido da tela (o Financeiro lista tudo junto, sem o seletor). O botão "Pagar" do cabeçalho (removido na v5.20.23) continua fora.
+
+### 2. Backup: excluído o botão ANTIGO das Configurações
+- Removidos do `notinha_patch.js` (renderConfig ativo): o botão "Exportar backup" do cabeçalho e o card "Backup". **Fica só o botão ⬇ da barra lateral** (ao lado do Sair), que funciona em qualquer tela.
+
+### 3. Botões de Excluir SEMPRE visíveis no topo
+- Causa de "não apareceu": na v5.20.23 os botões só surgiam **depois** de marcar a caixinha. Agora seguem o padrão já aceito (Produtos/Contratos): botão vermelho **"Excluir" fixo no topo** (Clientes: ao lado de "Novo cliente"; Financeiro: ao lado de "Receber"). Clicou sem marcar → aviso "Marque na caixinha ☐ da esquerda e clique de novo". Multi-seleção e exclusão real continuam (v5.20.23), com os DOIS avisos para cliente com histórico.
+
+### 4. Backup AUTOMÁTICO 1x ao dia (sem clicar)
+- Novo `ajustes_v52024_patch.js`: ~30s após abrir/logar, se for um dia novo, o sistema exporta o backup sozinho (mesmo formato do botão ⬇, sem o campo interno `_rt`).
+- **No programinha (.exe):** salva direto em **`%APPDATA%\digicopy-erp\backups\digicopy-backup-AAAA-MM-DD.json`** — nova ponte `backupAPI` (`main.js` `registerBackupIPC` `backup:save-daily` + `preload.js`). Sem janela e sem clique.
+- **No navegador (GitHack):** baixa o arquivo (cai em Downloads) — navegador não deixa escolher pasta.
+- Um arquivo por dia; em .exe ANTIGO (sem a ponte) cai no comportamento de download. Toast discreto confirma.
+
+### Empresa única fixa + "meus dados nunca vão deletar"
+- **Criar empresa: impossível** — desde v5.20.23 não existe mais nenhum caminho de UI/código que crie empresa nova. A empresa é UMA fixa: `emp_digicopy`.
+- **DEFEITO REAL corrigido no `seedData`:** antes ele apagava qualquer usuário com login `admin`/`carlos`/`ana`/`financeiro` — se o dono cadastrasse um funcionário "Ana", ela sumia na próxima carga. Agora só remove demo DE VERDADE (id de demo ou login demo criado pelo 'sistema'/sem dono). Usuário criado pela tela (`criadoPor` = quem criou) e legado migrado (`criadoPor: 'migracao'`) **nunca são apagados**.
+- O que pode "apagar" hoje: (a) os botões Excluir (ação sua, com avisos); (b) o sync propaga para os outros PCs só o que VOCÊ apagou (lápide) — **ausência na nuvem nunca apaga o PC**; (c) o `seedData` só mexe em empresa/usuários demo; (d) backup automático diário + botão ⬇ = rede de segurança.
+- Usuário confirmou que o **.exe sai incompleto** — combinado: **adiado** ("deixa pra quando resolvermos tudo"). A lista `build.files` já está correta no código; o instalador em si a gente gera juntos no final.
+- Etiqueta funcionando normalmente — não tocar.
+
+### Testes
+- `test_ajustes_v52024.js` (13 asserts: regra de demo antigo, 1x/dia, nome do arquivo, JSON sem `_rt`) + `test_ajustes_v52023.js` + suítes principais OK. Falha pré-existente de etiquetas continua intocada (área aceita).
 
 ## v5.20.23 — Excluir em lote (Clientes/Financeiro) + backup fora das Config + UMA empresa só garantida
 

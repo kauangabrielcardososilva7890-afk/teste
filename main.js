@@ -42,6 +42,7 @@ app.whenReady().then(() => {
   registerFileIPC();
   registerEscolaIPC();
   registerPrintIPC();
+  registerBackupIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -352,6 +353,24 @@ function registerEscolaIPC(){
   
   // Clear cookies on app quit
   ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
+}
+
+// ──────────────────────────────────────────────
+// BACKUP IPC — backup automático diário em pasta do %APPDATA%
+// (salva direto, sem janela e sem clique; 1 arquivo por dia)
+// ──────────────────────────────────────────────
+function registerBackupIPC(){
+  ipcMain.handle('backup:save-daily', async (_evt, payload) => {
+    try{
+      const dir = path.join(app.getPath('userData'), 'backups');
+      fs.mkdirSync(dir, { recursive: true });
+      const fname = String((payload && payload.filename) || ('digicopy-backup.json')).replace(/[^\w.\-]+/g,'_');
+      const content = typeof (payload && payload.content) === 'string' ? payload.content : JSON.stringify((payload && payload.content) || {}, null, 2);
+      const fpath = path.join(dir, fname);
+      fs.writeFileSync(fpath, content, 'utf8');
+      return { ok:true, path: fpath, dir };
+    }catch(e){ return { ok:false, error: e.message || String(e) }; }
+  });
 }
 
 // ──────────────────────────────────────────────
