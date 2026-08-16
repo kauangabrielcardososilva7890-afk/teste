@@ -128,11 +128,27 @@
     var text = await resp.text();
     var data = null; try{ data = text ? JSON.parse(text) : null; }catch(e){ data = text; }
     if(!resp.ok){
-      var msg = (data && data.error && data.error.message) || ('HTTP '+resp.status);
-      if(resp.status===403) msg = 'Sem permissão no Firestore. Verifique as Regras (allow read, write: if request.auth != null).';
-      throw { status:resp.status, message:msg };
+      var err = data && data.error;
+      var msg = (err && err.message) || ('HTTP '+resp.status);
+      var status = err && err.status ? err.status : (resp.status||0);
+      throw { status:status, code:(err&&err.status)||('HTTP_'+resp.status), message:msg, body:data };
     }
     return data;
+  }
+
+  /* ---------------- último erro (diagnóstico) ---------------- */
+  var ultimoErro = null;
+  function setErr(e){ ultimoErro = e || null; }
+  function errTexto(e){
+    if(!e) return '';
+    var s = [];
+    if(e.code) s.push('código: '+e.code);
+    if(e.status) s.push('HTTP '+e.status);
+    if(e.message) s.push(e.message);
+    var raw = '';
+    try{ if(e.body && e.body.error){ raw = JSON.stringify(e.body.error); } }catch(_){}
+    if(raw) s.push('detalhe: '+raw);
+    return s.join(' | ');
   }
 
   /* ---------------- listar docs com ts > cursor ---------------- */
@@ -359,7 +375,7 @@
           setTimeout(function(){ try{ location.reload(); }catch(e){} }, 500);
         }
       }
-    }catch(e){ /* rede fora etc.: tenta de novo na próxima */ }
+    }catch(e){ setErr(e); /* rede fora etc.: tenta de novo na próxima */ }
     finally{ ocupado = false; }
   }
 
@@ -385,6 +401,7 @@
     }
     setTimeout(function(){ tick(); }, 600);     // bootstrap + 1ª mescla
     setInterval(function(){ tick(); }, POLL_MS); // manutenção automática
+    setTimeout(diagnosticoInicial, 1200);       // testa a nuvem 1x e avisa se der erro
     console.log('[SYNC-RT] sincronização automática ATIVA — mescla '+ARRAY_ENT.length+' entidades + '+OBJ_ENT.length+' objetos.');
   }
 
@@ -392,8 +409,92 @@
   window.__syncRtInternals = {
     ARRAY_ENT:ARRAY_ENT, OBJ_ENT:OBJ_ENT, COLL:COLL, STATE_KEY:STATE_KEY,
     hashStr:hashStr, hashRec:hashRec, tsKey:tsKey, aplicarRemoto:aplicarRemoto,
-    ehDemo:ehDemo, limparDemo:limparDemo, pushMudancas:pushMudancas, pullMudancas:pullMudancas
+    ehDemo:ehDemo, limparDemo:limparDemo, pushMudancas:pushMudancas, pullMudancas:pullMudancas,
+    rtFetch:rtFetch, rtWrite:rtWrite, rtListDesde:rtListDesde, authToken:authToken
   };
+
+  /* ---------------- DIAGNÓSTICO: testa a nuvem passo a passo ---------------- */
+  window.__syncDiagnostico = async function(){
+    var r = { ok:true, passos:[] };
+    function passo(nome, ok, detalhe){
+      r.passos.push({ nome:nome, ok:ok, detalhe:(detalhe==null?'':String(detalhe)) });
+      if(!ok) r.ok = false;
+    }
+    // 1) config
+    var temCfg = !!(cfg && cfg.apiKey && cfg.projectId);
+    passo('Config Firebase (apiKey/projectId)', temCfg, temCfg ? ('projeto: '+cfg.projectId) : 'FIREBASE_CONFIG vazia');
+    if(!temCfg){ return r; }
+    // 2) auth anônima — chamada CRUA p/ pegar o erro exato do Firebase
+    try{
+      var rr = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+encodeURIComponent(API_KEY), {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ returnSecureToken:true })
+      });
+      var jj = null; try{ jj = await rr.json(); }catch(_){ jj = null; }
+      if(rr.ok && jj && jj.idToken){
+        passo('Login anônimo (Authentication)', true, 'token ok');
+      } else {
+        var msgAuth = (jj && jj.error && jj.error.message) || ('HTTP '+rr.status);
+        passo('Login anônimo (Authentication)', false, msgAuth);
+      }
+    }catch(e){ passo('Login anônimo (Authentication)', false, errTexto(e) || String(e)); }
+    // 3) gravar doc de teste
+    var docId = '__diag__' + Date.now();
+    var wrote = false;
+    try{
+      var tsW = await rtWrite(docId, '__diag__', { t: Date.now() }, false);
+      wrote = !!tsW;
+      passo('Gravar documento de teste', wrote, wrote ? ('ts do servidor: '+tsW) : 'não retornou hora do servidor');
+    }catch(e){ passo('Gravar documento de teste', false, errTexto(e)); }
+    // 4) ler de volta
+    if(wrote){
+      try{
+        var nome = BASE + '/' + COLL + '/' + encodeURIComponent(docId);
+        var d = await rtFetch(nome, { method:'GET' });
+        passo('Ler documento de teste', !!(d && d.fields), 'ok');
+      }catch(e){ passo('Ler documento de teste', false, errTexto(e)); }
+    }
+    // 5) listar (runQuery)
+    try{
+      var docs = await rtListDesde(null, 3);
+      passo('Listar coleção (runQuery)', true, docs.length + ' documento(s) visíveis');
+    }catch(e){ passo('Listar coleção (runQuery)', false, errTexto(e)); }
+    // 6) limpar doc de teste
+    try{
+      await rtFetch(BASE + '/' + COLL + '/' + encodeURIComponent(docId), { method:'DELETE' });
+    }catch(e){ /* não é crítico */ }
+
+    var linhas = r.passos.map(function(p){ return (p.ok?'✔':'✘')+' '+p.nome+(p.detalhe?': '+p.detalhe:''); });
+    var texto = 'RESULTADO DO TESTE DA NUVEM:\n\n' + linhas.join('\n');
+    if(!r.ok){
+      var primeiroErro = r.passos.filter(function(p){return !p.ok;})[0];
+      texto += '\n\nO problema está em: ' + (primeiroErro?primeiroErro.nome:'?');
+    } else {
+      texto += '\n\nTUDO OK — a nuvem está respondendo.';
+    }
+    try{ console.log('[SYNC-RT DIAGNÓSTICO]\n'+texto); }catch(_){}
+    return { ok:r.ok, texto:texto, passos:r.passos };
+  };
+
+  function mostrarDiagNaTela(r){
+    try{
+      if(typeof window.lfbAlert === 'function'){ window.lfbAlert(r.texto, 'Teste da nuvem'); return; }
+      if(typeof toast === 'function'){ toast(r.texto, r.ok?'success':'error'); return; }
+      alert(r.texto);
+    }catch(_){}
+  }
+  window.__syncDiagnosticoAlert = async function(){ var r = await window.__syncDiagnostico(); mostrarDiagNaTela(r); return r; };
+
+  // roda 1 vez ao iniciar: se a nuvem falhar, avisa com o erro exato
+  function diagnosticoInicial(){
+    window.__syncDiagnostico().then(function(r){
+      if(!r.ok){
+        mostrarDiagNaTela(r);
+      } else {
+        try{ console.log('[SYNC-RT] nuvem OK no início.'); }catch(_){}
+      }
+    }).catch(function(e){});
+  }
 
   if(window.DIGI_MODO_LEVE) return;
 
