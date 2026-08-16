@@ -284,14 +284,14 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // GARANTE (sempre, idempotente) uma empresa única + os usuários reais:
-  //   • Kauan (Admin)   → login "kauan"    senha "6132"
-  //   • Denivaldo (Dono) → login "denivaldo" senha "3232"
-  // Roda em TODA carga — os logins nunca mais "somem". Nunca sobrescreve
-  // usuários existentes (só adiciona o que falta, preservando senha atual).
+  // AUTORITATIVO (roda em toda carga): garante a empresa única + os 2 usuários
+  // reais com as credenciais corretas, e remove usuários de demonstração.
+  //   • Kauan     → login "kauan"     senha "6132"  perfil Admin
+  //   • Denivaldo → login "denivaldo" senha "3232"  perfil Dono
   db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
   db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
   let mudou = false;
+
   let emp = db.empresas.find(e=>e.id==='emp_digicopy')
          || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
          || db.empresas[0];
@@ -300,26 +300,45 @@ function seedData(force=false){
     db.empresas.push(emp);
     mudou = true;
   }
+  // Só mantém UMA empresa (a real). Empresas demo/órfãs são removidas.
+  if(db.empresas.length > 1){
+    db.empresas = [emp];
+    mudou = true;
+  }
+
   const garantidos = [
     {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
     {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
   ];
+  const demoLogins = ['admin','carlos','ana','financeiro'];
+  const demoIds = ['usr_admin'];
+
+  // Remove usuários de demonstração (de versões antigas).
+  db.usuarios = db.usuarios.filter(u=>{
+    const l = String(u.login||'').toLowerCase();
+    if(demoLogins.includes(l) || demoIds.includes(u.id)){ mudou = true; return false; }
+    return true;
+  });
+
+  // Garante (cria OU corrige) os 2 usuários reais.
   garantidos.forEach(g=>{
-    const existe = db.usuarios.some(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()===g.login);
-    if(!existe){
+    const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
+    if(!u){
       db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
       mudou = true;
+    } else {
+      if(u.id !== g.id){ u.id = g.id; mudou = true; }
+      if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
+      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
+      if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
+      if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
+      if(u.ativo !== true){ u.ativo = true; mudou = true; }
     }
   });
-  // Remove o antigo "admin/admin123" de demonstração (sobrou de versões antigas)
-  // — o usuário real agora é o "kauan". Só remove se o kauan já existe, pra
-  // nunca ficar sem acesso.
-  const temKauan = db.usuarios.some(u=>u.empresaId===emp.id && String(u.login||'').toLowerCase()==='kauan');
-  if(temKauan){
-    const antes = db.usuarios.length;
-    db.usuarios = db.usuarios.filter(u=>!(String(u.login||'').toLowerCase()==='admin' && u.id==='usr_admin'));
-    if(db.usuarios.length !== antes) mudou = true;
-  }
+
+  // Qualquer usuário órfão aponta pra empresa real.
+  db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
+
   if(mudou) saveDB();
 }
 seedData(false);

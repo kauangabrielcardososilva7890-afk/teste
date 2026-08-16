@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.17**  
+**Última versão:** **v5.20.18**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.17.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.18.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.18 — seedData AUTORITATIVO (kauan/denivaldo sempre certos)
+- Causa raiz do "não aparece": o seedData anterior SÓ adicionava kauan/denivaldo se faltassem; no localStorage antigo (GitHack) podia existir um "kauan" com senha errada/órfão, e aí não corrigia (senha errada → não loga; empresaId errado → não lista na tela de Usuários).
+- Agora o seedData **corrige sempre**: força kauan/6132/Admin e denivaldo/3232/Dono (id, empresaId, senha, perfil, nome, ativo), mantém UMA empresa só (`emp_digicopy`), remove usuários demo (admin/carlos/ana/financeiro + `usr_admin`) e aponta qualquer usuário órfão pra empresa real.
+- Ainda: se o usuário trocar a senha do kauan/denivaldo no futuro pela tela, o seed volta a 6132/3232 na próxima carga (comportamento intencional por agora — são credenciais fixas do dono; se quiser trocar de vez, me avisa).
 
 ## v5.20.17 — Logins REAIS garantidos (kauan Admin / denivaldo Dono)
 - **Usuários reais viram o padrão** (não mais admin/admin123):
