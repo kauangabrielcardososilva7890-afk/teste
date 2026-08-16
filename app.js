@@ -373,7 +373,8 @@ function doLoginCNPJ(){
   let emp=db.empresas.find(e=>onlyDigits(e.cnpj)===digits && e.senha===senha);
   // Credencial corporativa única da empresa; dados importados permanecem vinculados à primeira empresa.
   if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
-    emp=db.empresas.find(e=>e.id) || {id:gen('emp'), nome:'DENIVALDO COM. DE ELET. LOCAÇÕES E MANU LTDA', fantasia:'DIGICOPY', cnpj:'08.385.589/0001-03'};
+    emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
+    if(!emp){toast('Empresa não encontrada','error'); return;}
     emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
     db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
@@ -453,23 +454,11 @@ function doLogout(){
     showLogin(); toast('Sessão encerrada','info');
   }
 }
-function openModalEmpresa(){
-  document.getElementById('modal-root').classList.remove('hidden');
-  document.getElementById('modal-title').innerText='Cadastrar nova empresa (CNPJ)';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Razão social</label><input id="ne-razao" placeholder="Empresa LTDA" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome fantasia</label><input id="ne-fantasia" placeholder="DIGICOPY" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">CNPJ</label><input id="ne-cnpj" placeholder="00.000.000/0000-00" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha CNPJ (acesso empresa)</label><input id="ne-senha" type="password" placeholder="Crie senha CNPJ" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[12px] text-amber-900"><b>Atenção:</b> Esta senha CNPJ será solicitada sempre que for criar um novo usuário. Guarde com segurança.</div></div>`;
-  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveNovaEmpresa()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Cadastrar empresa</button>`;
-}
-function saveNovaEmpresa(){
-  const razao=document.getElementById('ne-razao').value.trim(); const fantasia=document.getElementById('ne-fantasia').value.trim()||razao; const cnpj=document.getElementById('ne-cnpj').value.trim(); const senha=document.getElementById('ne-senha').value.trim();
-  if(!razao||!cnpj||!senha) return toast('Preencha todos','error');
-  if(db.empresas.find(e=>onlyDigits(e.cnpj)===onlyDigits(cnpj))) return toast('CNPJ já cadastrado','error');
-  const emp={id:uid('emp'),cnpj, cnpjDigits:onlyDigits(cnpj), senha, nome:razao, fantasia, criadoEm:new Date().toISOString()};
-  db.empresas.push(emp);
-  // cria admin padrão dessa empresa
-  db.usuarios.push({id:uid('usr'),empresaId:emp.id, nome:'Admin '+fantasia, login:'admin', senha:'admin123', perfil:'Admin', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'});
-  saveDB(); closeModal(); toast('Empresa cadastrada! Use CNPJ e senha CNPJ para entrar, depois admin/admin123','success');
-  document.getElementById('login-cnpj').value=cnpj; document.getElementById('login-senha-cnpj').value=senha;
-}
+// REMOVIDO v5.20.23: "Cadastrar nova empresa" (openModalEmpresa/saveNovaEmpresa) criava
+// uma SEGUNDA empresa com id aleatorio (+ usuario admin/admin123) — quebrava a empresa
+// unica e fazia dados parecerem diferentes entre os PCs. O sistema tem UMA empresa so
+// (emp_digicopy). Dados da empresa/notinha se editam nas Configuracoes ("Dados da loja").
+
 function openModalCriarUsuarioPublic(){
   const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
   openModalCriarUsuario(pending.id);
@@ -742,12 +731,10 @@ function confirmarExcluirModulo(nomeTabela){
   const modulo = db.modulosDinamicos[nomeTabela];
   if(!modulo) return;
   const label = modulo.label || formatarNomeTabela(nomeTabela);
-  if(confirm('Tem certeza que deseja excluir o módulo "'+label+'"?\\n\\nIsso removerá '+modulo.dados.length+' registros permanentemente.')){
-    delete db.modulosDinamicos[nomeTabela];
-    saveDB();
-    buildNav();
-    navigateTo('dashboard');
-    toast('Módulo excluído com sucesso','success');
+  // v5.20.23: confirm() nativo é quebrado neste sistema (sempre falso) — usa o popup do sistema.
+  const executar=function(){ delete db.modulosDinamicos[nomeTabela]; saveDB(); buildNav(); navigateTo('dashboard'); toast('Módulo excluído com sucesso','success'); };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema('Tem certeza que deseja excluir o módulo "'+label+'"?\n\nIsso removerá '+modulo.dados.length+' registros permanentemente.','Excluir módulo').then(function(ok){ if(ok) executar(); });
   }
 }
 
