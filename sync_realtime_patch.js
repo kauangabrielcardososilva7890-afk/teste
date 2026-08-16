@@ -36,7 +36,10 @@
   }
   var API_KEY = String(cfg.apiKey).trim();
   var PROJETO = String(cfg.projectId).trim();
-  var BASE = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(PROJETO) + '/databases/(default)/documents';
+  // Caminho de RECURSO (para o campo "name" dos writes) — SEM a URL:
+  var RES  = 'projects/' + encodeURIComponent(PROJETO) + '/databases/(default)/documents';
+  // URL completa (para as chamadas fetch):
+  var BASE = 'https://firestore.googleapis.com/v1/' + RES;
 
   /* ---------------- util puro ---------------- */
   function hashStr(s){
@@ -169,7 +172,7 @@
 
   /* ---------------- escrever 1 registro (commit + hora do servidor) ---------------- */
   async function rtWrite(docId, entidade, dados, tomb){
-    var nome = BASE + '/' + COLL + '/' + encodeURIComponent(docId);
+    var nome = RES + '/' + COLL + '/' + encodeURIComponent(docId);
     var fields = { e:{ stringValue: entidade }, t:{ booleanValue: !!tomb } };
     if(!tomb && dados !== undefined && dados !== null){
       var json;

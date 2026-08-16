@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.1**  
+**Última versão:** **v5.20.2**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.1.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.2.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.2 — Causa raiz do sync encontrada (2 bugs)
+- Diagnóstico do usuário revelou:
+  1. **`INVALID_ARGUMENT: Document name lacks "projects"`** — `rtWrite` mandava a URL completa no campo `name` do write. Corrigido: agora usa caminho de recurso (`RES = projects/{proj}/databases/(default)/documents`), não a URL.
+  2. **`HTTP 403` no runQuery** — as regras do Firestore só liberavam `/app_state/{doc}`. A coleção nova `erp_rt` ficava de fora. Corrigido: `copiarRegrasFirebase()` agora gera `match /{document=**}` (libera tudo, exigindo auth). **Usuário precisa republicar as regras** no console (clicar "Copiar regras Firebase" no sistema → colar em Firestore → Regras → Publicar).
 
 ## v5.20.1 — Diagnóstico da nuvem (encontrar o erro exato)
 - Usuário relatou que o sync NÃO funciona em nenhum ambiente (Electron, navegador, celular). Causa mais provável = config do Firebase (regras/auth), não o código.

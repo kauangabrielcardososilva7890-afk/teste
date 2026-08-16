@@ -35,7 +35,7 @@
 
   // Copia as REGRAS DEFINITIVAS do Firestore (etapa de segurança do guia).
   window.copiarRegrasFirebase = async function(){
-    const regras = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /app_state/{doc} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}";
+    const regras = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}";
     try{
       await navigator.clipboard.writeText(regras);
       if(typeof toast==='function') toast('Regras do Firebase copiadas! Cole em Firestore Database → Regras e clique em Publicar.', 'success');
