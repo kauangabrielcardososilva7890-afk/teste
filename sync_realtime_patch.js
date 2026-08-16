@@ -68,6 +68,21 @@
     return m[1] + '.' + frac + m[3];
   }
   function marcarTs(rec, ts){ if(rec && typeof rec==='object' && ts){ try{ rec._rt = ts; }catch(e){} } }
+  // Normaliza o empresaId de um registro para a empresa única do sistema.
+  // As versões antigas usavam id de empresa aleatório; hoje é só "emp_digicopy".
+  // Sem isso, clientes/vendas/os importados de uma sessão antiga entram na
+  // lista mas ficam INVISÍVEIS (a tela filtra por empresaId).
+  function normalizarEmpresa(rec){
+    if(rec && typeof rec==='object' && ('empresaId' in rec)){
+      try{
+        if(db.empresas && db.empresas.length >= 1){
+          var alvo = db.empresas.find(function(e){ return e.id==='emp_digicopy'; }) || db.empresas[0];
+          if(alvo && alvo.id && rec.empresaId !== alvo.id){ rec.empresaId = alvo.id; }
+        }
+      }catch(e){}
+    }
+    return rec;
+  }
 
   /* ---------------- estado persistido ---------------- */
   var state = { cursor:null, snap:{} };
@@ -225,6 +240,7 @@
         return false;
       }
       if(!dados) return false;
+      normalizarEmpresa(dados);
       if(idx < 0){
         marcarTs(dados, ts);
         arr.push(dados);
@@ -271,6 +287,7 @@
       for(var i=0;i<arr.length;i++){
         var rec = arr[i];
         if(!rec || !rec.id) continue;
+        normalizarEmpresa(rec);
         vistos[rec.id] = true;
         var key = ent+'|'+rec.id;
         var h = hashRec(rec);

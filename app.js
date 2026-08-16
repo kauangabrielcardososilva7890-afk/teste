@@ -339,6 +339,15 @@ function seedData(force=false){
   // Qualquer usuário órfão aponta pra empresa real.
   db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
 
+  // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
+  // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
+  // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
+  ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+    if(Array.isArray(db[k])){
+      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+    }
+  });
+
   if(mudou) saveDB();
 }
 seedData(false);
