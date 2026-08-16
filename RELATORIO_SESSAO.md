@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.2**  
+**Última versão:** **v5.20.3**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.2.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.3.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,10 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.3 — Para o "piscar" da tela
+- A tela ficava se redesenhando a cada ~1,5s (o `refreshUI` chamava `navigateTo` a cada pull). Agora o sync continua **em background** (dados sempre atualizados + `saveDB`), mas a UI **só redesenha** quando: (a) o usuário navega pra outra view e volta, (b) a aba do navegador volta a ficar visível (`visibilitychange`) ou (c) a janela recupera o foco (`focus`).
+- Flag `__mudouUI` marca que há mudança pendente; o render acontece sob demanda, sem piscar.
 
 ## v5.20.2 — Causa raiz do sync encontrada (2 bugs)
 - Diagnóstico do usuário revelou:

@@ -354,6 +354,7 @@
   /* ---------------- loop ---------------- */
   var ocupado = false;
   var __dirty = false;
+  var __mudouUI = false;
   var __eraDemo = false;
   var __reloaded = false;
   async function tick(){
@@ -369,7 +370,10 @@
       }
       if(__dirty || !state.cursor){ await pushMudancas(); __dirty = false; }
       var m = await pullMudancas();
-      if(m){ try{ saveDB(); }catch(e){} refreshUI(); }
+      // NÃO re-renderiza mais aqui (isso causava o "piscar" a cada ~1,5s).
+      // Só guarda os dados (saveDB) e marca que a tela está desatualizada;
+      // a UI redesenha quando o usuário voltar pra aba (ver iniciar()).
+      if(m){ try{ saveDB(); }catch(e){} __mudouUI = true; }
       // veio de demo e os dados reais acabaram de chegar: recarrega 1x pra
       // a tela de login mostrar a empresa real
       if(__eraDemo && !__reloaded && db.empresas && db.empresas.length){
@@ -393,9 +397,21 @@
     // rastreia a view atual para redesenhar sem piscar
     if(typeof window.navigateTo === 'function' && !window.navigateTo.__rtTrack){
       var _nav = window.navigateTo;
-      window.navigateTo = function(v){ viewAtual = v; return _nav.apply(this, arguments); };
+      window.navigateTo = function(v){ viewAtual = v; __mudouUI = false; return _nav.apply(this, arguments); };
       window.navigateTo.__rtTrack = true;
     }
+    // A tela NÃO fica se redesenhando sozinha. Ela redesenha:
+    //  - quando o usuário navega para outra view e volta (navigateTo já faz);
+    //  - quando a aba do navegador volta a ficar visível (visibilitychange);
+    //  - quando a janela recupera o foco.
+    function renderSeVisivel(){
+      if(!__mudouUI) return;
+      try{ if(document.hidden) return; }catch(e){}
+      __mudouUI = false;
+      refreshUI();
+    }
+    try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) renderSeVisivel(); }); }catch(e){}
+    try{ window.addEventListener('focus', renderSeVisivel); }catch(e){}
     // push rápido quando o sistema salvar
     if(typeof window.saveDB === 'function' && !window.saveDB.__rtWrapped){
       var _sv = window.saveDB;
