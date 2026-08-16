@@ -902,7 +902,6 @@ function openModal(type,id=null){
   if(type==='leitura') renderModalLeitura(id);
   if(type==='os') renderModalOS(id);
   if(type==='contaReceber') renderModalContaReceber(id);
-  if(type==='contaPagar') renderModalContaPagar(id);
   if(type==='entradaEstoque') renderModalEntrada();
   if(type==='usuario') renderModalUsuario(id);
 }
@@ -968,7 +967,7 @@ function renderClientes(){
   const sel=document.getElementById('filter-parque-cliente'); if(sel) sel.innerHTML='<option value="">Todos clientes</option>'+db.clientes.filter(c=>c.empresaId===sess.empresaId).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
   const colet=document.getElementById('coleta-contrato'); if(colet) colet.innerHTML='<option value="">Selecione o contrato</option>'+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').map(c=>{const cli=db.clientes.find(cl=>cl.id===c.clienteId); return `<option value="${c.id}">${c.numero} - ${cli?.nome}</option>`;}).join('');
 }
-function deleteCliente(id){const sess=getSession(); if(confirm('Inativar cliente?')){const c=db.clientes.find(x=>x.id===id && x.empresaId===sess.empresaId); if(c){c.status='inativo'; logAction('cliente','inativar',id,`Inativado cliente ${c.nome}`); saveDB(); renderClientes(); toast('Cliente inativado','success');}}}
+function deleteCliente(id){const sess=getSession(); const c=db.clientes.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!c) return; const V=(window.AJUSTES_V52023_PURE&&window.AJUSTES_V52023_PURE.vinculosDoCliente)?window.AJUSTES_V52023_PURE.vinculosDoCliente(db,id):[]; if(V.length){ const m='O cliente "'+(c.nome||'')+'" não pode ser excluído porque tem movimentação no sistema:\n\n• '+V.join('\n• '); if(typeof window.lfbAlert==='function') window.lfbAlert(m,'Excluir Cliente'); else toast('Cliente com movimentação não pode ser excluído','error'); return; } const fim=()=>{db.clientes=db.clientes.filter(x=>!(x.id===id && x.empresaId===sess.empresaId)); logAction('cliente','excluir',id,`Excluído cliente ${c.nome||''}`); saveDB(); renderClientes(); renderAuditoria(); toast('Cliente excluído','success');}; if(typeof window.confirmSistema==='function') window.confirmSistema('Excluir o cliente "'+(c.nome||'')+'"? Apaga de vez (não é ocultar).','Excluir Cliente').then(ok=>{ if(ok) fim(); }); else fim();}
 
 function renderProdutos(){
   const sess=getSession(); if(!sess) return;
@@ -1242,8 +1241,7 @@ function renderFinanceiro(){
   const dreEl=document.getElementById('dre-table'); if(dreEl) dreEl.innerHTML=dreRows.map(r=>'<div class="flex justify-between py-2 px-3 rounded-xl '+(r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50')+' text-[13px]"><span>'+r.label+'</span><span class="'+(r.isTotal?'text-white':'')+'">'+fmtMoney(r.valor)+'</span></div>').join('');
 }
 function baixarCR(id){const sess=getSession(); const cr=db.contasReceber.find(c=>c.id===id && c.empresaId===sess.empresaId); if(!cr) return; cr.status='pago'; cr.pagamentoData=new Date().toISOString(); logAction('financeiro','baixar_receber',id,`Baixado título ${fmtMoney(cr.valor)} por ${sess.usuarioNome}`); saveDB(); renderFinanceiro(); renderAuditoria(); toast('Baixa realizada','success');}
-function baixarCP(id){const sess=getSession(); const cp=db.contasPagar.find(c=>c.id===id && c.empresaId===sess.empresaId); if(!cp) return; cp.status='pago'; cp.pagamentoData=new Date().toISOString(); logAction('financeiro','baixar_pagar',id,`Pago ${fmtMoney(cp.valor)} por ${sess.usuarioNome}`); saveDB(); renderFinanceiro(); renderAuditoria(); toast('Pagamento registrado','success');}
-function deleteCR(id){const sess=getSession(); if(confirm('Excluir título?')){db.contasReceber=db.contasReceber.filter(c=>!(c.id===id && c.empresaId===sess.empresaId)); logAction('financeiro','excluir_receber',id,`Excluído por ${sess.usuarioNome}`); saveDB(); renderFinanceiro(); renderAuditoria();}}
+function deleteCR(id){const sess=getSession(); const cr=db.contasReceber.find(c=>c.id===id && c.empresaId===sess.empresaId); if(!cr) return; const fim=()=>{db.contasReceber=db.contasReceber.filter(c=>!(c.id===id && c.empresaId===sess.empresaId)); logAction('financeiro','excluir_receber',id,`Excluído título ${cr.descricao||''} por ${sess.usuarioNome}`); saveDB(); renderFinanceiro(); renderAuditoria(); toast('Título excluído','success');}; if(typeof window.confirmSistema==='function') window.confirmSistema('Excluir título "'+(cr.descricao||'')+'"?','Excluir Título').then(ok=>{ if(ok) fim(); }); else fim();}
 
 function renderFluxoChart(){
   const ctx=document.getElementById('chartFluxo'); if(!ctx) return; if(window.chartFluxoInst) window.chartFluxoInst.destroy();
@@ -1318,22 +1316,6 @@ function saveCR(){
   if(id){Object.assign(db.contasReceber.find(c=>c.id===id && c.empresaId===sess.empresaId),payload); logAction('financeiro','editar_receber',id,`Editado ${payload.descricao} por ${sess.usuarioNome}`);}else{const novo={id:uid('cr'),contratoId:null,leituraId:null,vendaId:null,...payload, criadoEm:new Date().toISOString()}; db.contasReceber.push(novo); logAction('financeiro','criar_receber',novo.id,`Criado título ${fmtMoney(novo.valor)} por ${sess.usuarioNome}`);}
   saveDB(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Título salvo','success');
 }
-function renderModalContaPagar(id){
-  const sess=getSession(); const isEdit=!!id;
-  const cp=isEdit?db.contasPagar.find(x=>x.id===id && x.empresaId===sess.empresaId):{fornecedor:'',descricao:'',categoria:'Suprimentos',valor:0,vencimento:new Date().toISOString().slice(0,10),status:'aberto'};
-  document.getElementById('modal-title').innerText=isEdit?'Editar despesa':'Nova conta a pagar';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Fornecedor</label><input id="f-cp-forn" value="${cp.fornecedor||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Descrição</label><input id="f-cp-desc" value="${cp.descricao||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Categoria</label><select id="f-cp-cat" class="mt-1 w-full h-11 px-3 rounded-xl border"><option>Suprimentos</option><option>Peças</option><option>Infraestrutura</option><option>Salários</option><option>Impostos</option><option>Frete</option><option>Outros</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Valor R$</label><input id="f-cp-valor" type="number" step="0.01" value="${cp.valor||0}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Vencimento</label><input id="f-cp-venc" type="date" value="${(cp.vencimento||'').slice(0,10)}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="f-cp-status" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="aberto">Em aberto</option><option value="pago">Pago</option></select></div></div><div class="rounded-xl bg-[#e8eaf8] border p-3 text-[11px] text-[#0a1e8a]">Criado por <b>${sess.usuarioNome}</b></div></div>`;
-  document.getElementById('f-cp-cat').value=cp.categoria||'Suprimentos'; document.getElementById('f-cp-status').value=cp.status||'aberto';
-  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveCP()" class="h-11 px-6 rounded-xl bg-slate-900 text-white font-semibold">Salvar</button>`;
-  document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'contaPagar',id};
-}
-function saveCP(){
-  const sess=getSession(); const id=window.modalContext?.id;
-  const payload={empresaId:sess.empresaId, fornecedor:document.getElementById('f-cp-forn').value.trim(), descricao:document.getElementById('f-cp-desc').value.trim(), categoria:document.getElementById('f-cp-cat').value, valor:parseFloat(document.getElementById('f-cp-valor').value)||0, vencimento:document.getElementById('f-cp-venc').value, status:document.getElementById('f-cp-status').value, pagamentoData:document.getElementById('f-cp-status').value==='pago'?new Date().toISOString():null, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome};
-  if(!payload.fornecedor) return toast('Informe fornecedor','error');
-  if(id){Object.assign(db.contasPagar.find(c=>c.id===id && c.empresaId===sess.empresaId),payload); logAction('financeiro','editar_pagar',id,`Editado pagar ${payload.descricao}`);}else{const novo={id:uid('cp'),...payload, criadoEm:new Date().toISOString()}; db.contasPagar.push(novo); logAction('financeiro','criar_pagar',novo.id,`Criada despesa ${fmtMoney(novo.valor)} por ${sess.usuarioNome}`);}
-  saveDB(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Despesa salva','success');
-}
 function renderModalEntrada(){
   const sess=getSession();
   const prodOpts=db.produtos.filter(p=>p.empresaId===sess.empresaId).map(p=>`<option value="${p.id}">${p.sku} - ${p.nome} (est: ${p.estoque})</option>`).join('');
@@ -1362,7 +1344,6 @@ window.openModal = function(type,id=null){
   if(type==='leitura' && typeof renderModalLeitura==='function') return renderModalLeitura(id);
   if(type==='os' && typeof renderModalOS==='function') return renderModalOS(id);
   if(type==='contaReceber') return renderModalContaReceber(id);
-  if(type==='contaPagar') return renderModalContaPagar(id);
   if(type==='entradaEstoque') return renderModalEntrada();
   if(type==='usuario') return renderModalUsuario(id);
   if(_origOpenModal) return _origOpenModal(type,id);
@@ -2193,30 +2174,6 @@ function fbImportToErp(rawData){
       result.financeiro++;
     });
   }
-
-  const rawCP = findTable(rawData, ['CONTAS_PAGAR']);
-  if(rawCP && rawCP.length){
-    rawCP.forEach(row => {
-      const legadoCodigo = sStr(row.CODIGO || row.ID || '');
-      const dadosCP = {
-        legadoCodigo,
-        descricao: row.DESCRICAO || row.HISTORICO || `Conta migrada ${row.CODIGO || row.ID || ''}`,
-        valor: parseFloat(row.VALOR || 0) || 0,
-        vencimento: row.VENCIMENTO || row.DATA_VENCIMENTO || new Date().toISOString(),
-        pagamentoData: row.DATA_PAGAMENTO || row.PAGAMENTO_DATA || null,
-        status: (row.STATUS || '').toLowerCase().includes('pag') ? 'pago' : 'aberto',
-        categoria: row.CATEGORIA || row.TIPO || 'Geral'
-      };
-      const existing = (legadoCodigo && db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && c.legadoCodigo === legadoCodigo))
-        || db.contasPagar.find(c => c.empresaId === empId && ehMigracao(c) && !c.legadoCodigo
-            && c.descricao === dadosCP.descricao && Math.abs((c.valor||0)-dadosCP.valor) < 0.005
-            && String(c.vencimento||'').slice(0,10) === String(dadosCP.vencimento||'').slice(0,10));
-      if(existing){ Object.assign(existing, dadosCP); result.financeiro++; return; }
-      db.contasPagar.push(Object.assign({id: uid('cp'), empresaId: empId, origem: 'migracao', criadoPor: 'migracao', criadoPorNome: userName}, dadosCP));
-      result.financeiro++;
-    });
-  }
-
 
   // Mostrar resultado dos módulos mapeados
   const panel = document.getElementById('fb-import-panel');

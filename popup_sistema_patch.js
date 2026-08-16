@@ -68,11 +68,13 @@
     }
     // deletes
     const delMap = {
-      'deleteCliente': (id)=> 'Inativar cliente?',
+      // 'deleteCliente' saiu daqui na v5.20.23: ele já confirma sozinho
+      // (confirmSistema) e agora EXCLUI de verdade, em vez de inativar.
       'deleteProduto': (id)=> 'Excluir produto?',
       'deleteUsuario': (id)=> { const u=(db.usuarios||[]).find(x=>x.id===id); return 'Excluir usuário '+(u?u.nome:'')+'?'; },
       'deleteVenda': (id)=> 'Excluir venda? Estoque será estornado.',
-      'deleteCR': (id)=> 'Excluir título?',
+      // 'deleteCR' saiu daqui na v5.20.23: agora ele já confirma sozinho
+      // (confirmSistema) — deixar aqui faria pedir confirmação duas vezes.
       'deleteVDA': (id)=> 'Excluir venda?',
     };
     Object.entries(delMap).forEach(([name, gen])=>{

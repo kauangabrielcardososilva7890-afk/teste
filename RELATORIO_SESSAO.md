@@ -1,13 +1,13 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-14  
+**Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a001ed-teste`  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.22**  
+**Branch fixa da sessão:** `arena/01a00b4d-teste`  
+**PR:** atualizar após push  
+**Última versão:** **v5.20.23**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.22.zip` (link raw no PR #18)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
+**Zip:** não gerado nesta versão (a pedido do usuário)  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.23`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,34 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.23 — Excluir com MULTI-SELEÇÃO (Clientes e Financeiro) + "contas a pagar" deletado
+
+**Pedido:** botão de excluir com multi-seleção nos menus **Clientes** e **Financeiro** (igual já existia em produtos/contratos/vendas), sem tirar nada do que já funcionava; e no Financeiro **DELETAR** (não ocultar) a função de *pagar* e o filtro de tipo.
+
+### 1. Clientes — excluir vários de uma vez
+- Coluna de **caixinha de seleção** por linha + **"marcar todos"** no cabeçalho + botão vermelho **"Excluir"** — mesmo padrão dos outros menus (`name="cliente-check-lote"` + `excluirClientesUnificado()`).
+- **DELETA de verdade** (o antigo `deleteCliente` só marcava `status='inativo'`).
+- **Trava quem tem movimentação**: contrato, notinha, chamado, leitura, impressora no parque ou título no financeiro. O aviso diz o nome do cliente e o motivo ("2 notinha(s), 1 título(s)..."). Se você marcar 10 e 3 tiverem vínculo, exclui os 7 e avisa quais sobraram — não trava tudo por causa de um.
+- A lixeira/`deleteCliente` de 1 em 1 também foi corrigida (estava quebrada pelo `confirm()` nativo) e segue a mesma regra.
+- **Nada foi removido da tela**: busca por campo (Nome/Código/Fantasia/CPF/Telefone/Cidade/Bairro), botão **Todos**, filtro de status, ordenação clicando na coluna, **Importar clientes**, duplo clique e o lápis continuam iguais.
+
+### 2. Financeiro — excluir vários de uma vez
+- Mesma coisa: caixinha por linha + "marcar todos" + botão **"Excluir"** (`name="fin-check-lote"` + `excluirTitulosUnificado()`), apagando o título de `db.contasReceber` de vez.
+- `deleteCR` (1 em 1) também corrigido — usava `confirm()` nativo, que está desativado, e por isso nunca excluía.
+
+### 3. "Contas a pagar" DELETADO (não ocultado)
+Removido do **código-fonte**, não escondido com CSS:
+- `app.js`: apagados `renderModalContaPagar`, `saveCP`, `baixarCP`, a rota `'contaPagar'` dos **dois** `openModal` e o bloco de importação da tabela `CONTAS_PAGAR` do sistema antigo.
+- `notinha_patch.js`: fora o botão **"Pagar"**, o card **"A pagar"**, a coluna **"Tipo"**, as linhas de contas a pagar e o **filtro "Receber + Pagar / Só a receber / Só a pagar"** (o da imagem). O `historicoLancamento` agora só lê contas a receber.
+- Os cards viraram **A receber • Em aberto • Já recebido** (o "Saldo previsto" não fazia mais sentido sem despesas).
+- **Mantidos**: busca, filtro **Status** (todos/em aberto/pagos), **ordenação** (vencimento/valor/descrição), "Mostrar mais", duplo clique e o olho 👁 do histórico.
+- O array `db.contasPagar` continua existindo no banco/sync **de propósito**: apagá-lo quebraria a lista de entidades do `sync_realtime_patch.js` e os importadores do sistema antigo. Ele só não tem mais tela nem como criar/pagar.
+
+### Arquivos
+- Novo: `ajustes_v52023_patch.js` (regra de vínculo + as duas funções de excluir) e `test_ajustes_v52023.js` (30 verificações).
+- Editados: `app.js`, `notinha_patch.js`, `finalizacao_sistema_patch.js`, `popup_sistema_patch.js`, `index.html`, `package.json`.
+- Testado: `npm run check` OK, `test_ajustes_v52023.js` OK e a suíte inteira sem regressão (as 4 falhas de `test_ajustes_v5188`, `test_cartuchos_etiquetas_config`, `test_correcoes_relatorio` e `test_vendas_chamados_reparo` **já falhavam antes** desta versão). Também rodado um teste de tela (jsdom) confirmando checkbox, "marcar todos", exclusão real e o bloqueio por vínculo.
 
 ## v5.20.22 — Botão "Importar clientes" recolocado (p/ testar o sync)
 - O botão de importar tinha sido removido a pedido do usuário ("tira as opções de importar"), mas ele precisa dele p/ testar a sincronização dos clientes. Recolocado no cabeçalho da tela Clientes (`finalizacao_sistema_patch.js`) com `<input type=file id=clientes-json-input>` + status.
