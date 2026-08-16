@@ -157,8 +157,10 @@ window.importarClientesJsonFinal=async function(){
   }
   const r=importarClientesDeObjetos(db,arquivos,s.empresaId);
   salvar(); if(typeof renderClientes==='function') renderClientes();
-  const st=document.getElementById('clientes-import-status'); if(st) st.innerHTML=`Importados: <b>${r.importados}</b> • Atualizados: <b>${r.atualizados}</b> • Ignorados: <b>${r.ignorados}</b> • Próximo código: <b>${r.ultimoCodigo+1}</b>`;
-  toastMsg('Clientes importados/atualizados','success');
+  const st=document.getElementById('clientes-import-status'); if(st){ st.style.display='block'; st.innerHTML=`✅ <b>${r.importados}</b> importados • <b>${r.atualizados}</b> atualizados • <b>${r.ignorados}</b> ignorados • Próximo código: <b>${r.ultimoCodigo+1}</b>`; }
+  const msg=`Importação concluída:\n\n• Importados: ${r.importados}\n• Atualizados: ${r.atualizados}\n• Ignorados: ${r.ignorados}\n\nTotal de clientes agora: ${r.total}`;
+  if(typeof window.lfbAlert==='function') window.lfbAlert(msg,'Clientes importados');
+  else toastMsg(msg,'success');
 };
 const oldRenderClientes=window.renderClientes;
 window.renderClientes=function(){ const r=oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; setTimeout(()=>{ inserirImportadorClientes(); atualizarNomeSistema(); },80); return r; };
