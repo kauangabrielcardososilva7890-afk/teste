@@ -120,6 +120,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
           <p class="text-[13.5px] font-semibold leading-tight truncate" id="user-name">Usuário</p>
           <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
         </div>
+        <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
         <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
       </div>
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
@@ -191,9 +192,9 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <script src="./lz.js?v=4.9.69"></script>
 <script src="./logo_data.js?v=4.9.69"></script>
-<script src="./app.js?v=4.9.69"></script>
+<script src="./app.js?v=5.20.23"></script>
 <script src="./vendas_patch.js?v=4.9.69"></script>
-<script src="./evolucao_patch.js?v=4.9.69"></script>
+<script src="./evolucao_patch.js?v=5.20.23"></script>
 <script src="./notinha_patch.js?v=5.4.0"></script>
 <script src="./locacao_patch.js?v=4.9.69"></script>
 <script src="./sync_client.js?v=4.9.69"></script>
@@ -285,6 +286,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./ajustes_v5197_patch.js?v=5.19.7"></script>
 <script src="./ajustes_v51916_patch.js?v=5.19.16"></script>
 <script src="./ajustes_v51920_patch.js?v=5.19.20"></script>
+<script src="./ajustes_v52023_patch.js?v=5.20.23"></script>
 <script src="./sync_realtime_patch.js?v=5.20.5"></script>
 </body>
 </html>
