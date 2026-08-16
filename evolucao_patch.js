@@ -81,62 +81,6 @@ async function buscarCNPJAutomatico(cnpjRaw){
   };
 })();
 
-// Empresas para PDF notinha - CRUD separado, usado no cabeçalho da notinha
-function renderEmpresas(){
-  const sess=getSession(); if(!sess) return;
-  const tbody=document.getElementById('tbody-empresas');
-  if(!tbody) return;
-  const list=db.empresas.filter(e=>e.id===sess.empresaId || true); // mostra todas empresas do CNPJ logado + outras? Mostrar todas para demo
-  tbody.innerHTML=list.map(emp=>`
-    <tr class="hover:bg-slate-50">
-      <td class="px-5 py-3"><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${emp.cnpj}</p><p class="font-semibold text-[13px]">${emp.nome}</p><p class="text-[11px] text-slate-500">${emp.fantasia||''}</p></td>
-      <td class="px-5 py-3"><p class="text-[12px]">${emp.logradouro||''} ${emp.numero||''} ${emp.bairro||''}</p><p class="text-[11px] text-slate-500">${emp.municipio||''}/${emp.uf||''} - ${emp.cep||''}</p></td>
-      <td class="px-5 py-3"><p class="text-[12px]">${emp.telefone||''}</p><p class="text-[11px] text-slate-500">${emp.email||''}</p></td>
-      <td class="px-5 py-3"><span class="px-2 py-1 rounded-full bg-[#e8eaf8] text-[#0a1e8a] text-[11px] font-bold">${emp.id===sess.empresaId?'Empresa Logada':''}</span></td>
-      <td class="px-5 py-3"><div class="flex gap-1"><button onclick="editarEmpresa('${emp.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="usarEmpresaNotinha('${emp.id}')" class="h-8 px-3 rounded-lg bg-[#0a1e8a] text-white text-[11px] font-bold">Usar na Notinha</button></div></td>
-    </tr>
-  `).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhuma empresa</td></tr>';
-}
-function editarEmpresa(id){
-  const emp=db.empresas.find(e=>e.id===id);
-  if(!emp) return;
-  document.getElementById('modal-root').classList.remove('hidden');
-  document.getElementById('modal-title').innerText='Editar empresa para PDF notinha';
-  document.getElementById('modal-body').innerHTML=`
-    <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">CNPJ</label><input id="emp-cnpj" value="${emp.cnpj||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha CNPJ</label><input id="emp-senha" type="password" value="${emp.senha||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Razão social</label><input id="emp-nome" value="${emp.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Fantasia</label><input id="emp-fantasia" value="${emp.fantasia||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Logradouro</label><input id="emp-log" value="${emp.logradouro||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Número</label><input id="emp-num" value="${emp.numero||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
-      <div class="grid grid-cols-3 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Bairro</label><input id="emp-bairro" value="${emp.bairro||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Município</label><input id="emp-mun" value="${emp.municipio||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">UF</label><input id="emp-uf" value="${emp.uf||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
-      <div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">CEP</label><input id="emp-cep" value="${emp.cep||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Telefone</label><input id="emp-tel" value="${emp.telefone||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div>
-    </div>`;
-  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveEmpresaEdit('${emp.id}')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button>`;
-  window.modalContext={type:'empresa',id};
-}
-function saveEmpresaEdit(id){
-  const emp=db.empresas.find(e=>e.id===id);
-  if(!emp) return;
-  emp.cnpj=document.getElementById('emp-cnpj').value.trim();
-  emp.cnpjDigits=onlyDigits(emp.cnpj);
-  emp.senha=document.getElementById('emp-senha').value.trim();
-  emp.nome=document.getElementById('emp-nome').value.trim();
-  emp.fantasia=document.getElementById('emp-fantasia').value.trim();
-  emp.logradouro=document.getElementById('emp-log').value.trim();
-  emp.numero=document.getElementById('emp-num').value.trim();
-  emp.bairro=document.getElementById('emp-bairro').value.trim();
-  emp.municipio=document.getElementById('emp-mun').value.trim();
-  emp.uf=document.getElementById('emp-uf').value.trim();
-  emp.cep=document.getElementById('emp-cep').value.trim();
-  emp.telefone=document.getElementById('emp-tel').value.trim();
-  saveDB(); renderEmpresas(); closeModal(); toast('Empresa atualizada para notinha','success');
-}
-function usarEmpresaNotinha(id){
-  const emp=db.empresas.find(e=>e.id===id);
-  if(!emp) return;
-  localStorage.setItem('digicopy_empresa_notinha', JSON.stringify(emp));
-  toast(`Empresa ${emp.fantasia||emp.nome} selecionada para PDF notinha`,'success');
-}
 
 // Patch para impressão notinha usar empresa selecionada da tela Empresas
 (function(){
@@ -348,56 +292,5 @@ window.addEventListener('message',e=>{
   }
 });
 
-// Garantir Empresas view existe
-function ensureEmpresasView(){
-  if(!document.getElementById('view-empresas')){
-    const main=document.querySelector('.flex-1.p-4');
-    if(main){
-      const sec=document.createElement('section');
-      sec.id='view-empresas';
-      sec.className='view hidden space-y-4';
-      sec.innerHTML=`
-        <div class="flex justify-between gap-3 flex-wrap"><div><h3 class="font-bold text-[18px]">Empresas para PDF Notinha</h3><p class="text-[13px] text-slate-500 mt-1">Dados da empresa emitente que vão no cabeçalho da notinha de vendas/serviços. Seção "Outros" citada no Loom.</p></div><button onclick="openModalEmpresa()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova empresa</button></div>
-        <div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">CNPJ / Razão / Fantasia</th><th class="px-5 py-3">Endereço</th><th class="px-5 py-3">Contato</th><th class="px-5 py-3">Uso</th><th></th></tr></thead><tbody id="tbody-empresas" class="divide-y"></tbody></table></div>
-        <div class="rounded-xl bg-amber-50 border border-amber-200 p-4 text-[12px] text-amber-900"><b>Dica:</b> Selecione uma empresa como padrão para PDF notinha clicando em "Usar na Notinha". Essa empresa será usada no cabeçalho da impressão da venda/orçamento.</div>
-      `;
-      main.appendChild(sec);
-      // adiciona nav
-      const navGest=document.getElementById('nav-gest');
-      if(navGest && !document.querySelector('[data-nav="empresas"]')){
-        const btn=document.createElement('button');
-        btn.setAttribute('data-nav','empresas');
-        btn.setAttribute('onclick',"navigateTo('empresas')");
-        btn.className="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white";
-        btn.innerHTML='<i class="ph ph-buildings text-[19px]"></i><span>Empresas (PDF)</span>';
-        navGest.appendChild(btn);
-      }
-    }
-  }
-}
-ensureEmpresasView();
-
-// Sobrescreve buildNav para incluir empresas
-const origBuildNav = window.buildNav;
-window.buildNav = function(){
-  if(origBuildNav) origBuildNav();
-  ensureEmpresasView();
-  const navGest=document.getElementById('nav-gest');
-  if(navGest && !document.querySelector('[data-nav="empresas"]')){
-    const btn=document.createElement('button');
-    btn.setAttribute('data-nav','empresas');
-    btn.setAttribute('onclick',"navigateTo('empresas')");
-    btn.className="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white";
-    btn.innerHTML='<i class="ph ph-buildings text-[19px]"></i><span>Empresas (PDF)</span>';
-    navGest.appendChild(btn);
-  }
-};
-
-// Atualiza navigateTo para incluir empresas
-const origNavigateTo = window.navigateTo;
-window.navigateTo = function(view){
-  if(view==='empresas'){ document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden')); document.getElementById('view-empresas').classList.remove('hidden'); document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')}); const act=document.querySelector('[data-nav="empresas"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')} if(typeof setPageHeader==='function') setPageHeader('Empresas (PDF Notinha)','Cadastro de empresas emitentes para cabeçalho da notinha'); else {const _pt=document.getElementById('page-title'); if(_pt) _pt.innerText='Empresas (PDF Notinha)';} renderEmpresas(); window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return; }
-  if(origNavigateTo) origNavigateTo(view);
-};
 
 console.log('PATCH evolucao v3.2 - empresas PDF, CNPJ busca, chamados branco/verde filtros avançados, vendas detalhada, orçamentos PDF');

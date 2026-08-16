@@ -1,13 +1,13 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-14  
+**Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a001ed-teste`  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.22**  
-**Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.22.zip` (link raw no PR #18)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
+**Branch fixa da sessão:** `arena/01a00bb1-teste` (a sessão mudou de branch; a antiga `arena/01a001ed-teste` já foi mergeada na `main` pelo PR #18)  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/21  
+**Última versão:** **v5.20.25**  
+**Commit:** `30a5422`  
+**Zip:** `Sistema-Digicopy-v5.20.25.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/30a5422e3b5c7a3b751b1b511f54383f98fc301d/index.html?v=5.20.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,73 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.25 — "Teste da nuvem" de volta (sync parou em silêncio)
+- Sintoma do usuário: "não está sincronizando" após a v5.20.24. Verificado: `sync_realtime_patch.js`/`firebase_*` **intocados** desde a versão que funcionava (diff vazio) — o motor é o mesmo; falha é ambiental e agora invisível (o diagnóstico automático foi removido na v5.20.15).
+- **Recolocado o Teste da nuvem sob demanda:** botão **"☁ teste nuvem"** no rodapé do cartão do usuário (barra lateral, ao lado do relógio). Passos: **1** config Firebase → **2** login anônimo → **3** gravar → **4** ler → **5** "este aparelho já sincronizou alguma vez" + contagens locais + último backup. Mostra o **ERRO EXATO** (HTTP/código/mensagem) e a instrução: `traduzirErroSync` (403/PERMISSION_DENIED → republicar regras `match /{document=**}` com auth; 429/RESOURCE_EXHAUSTED → cota grátis estourada, reseta ~4h; 401/UNAUTHENTICATED → login anônimo desligado; Failed to fetch → sem internet/bloqueio).
+- Só gasta cota quando CLICADO (não roda sozinho). O doc de teste `__diag_ping` é apagado da nuvem logo depois e qualquer resto local (`db.diagnostico`) é removido na carga e após o teste (não polui backup).
+- **Pendência pro usuário:** clicar no ☁ no aparelho que não sincroniza e mandar o texto — provável COTA (50k leituras + 20k escritas/dia grátis; cada aparelho novo baixa a base toda 1x; reseta ~4h).
+
+## v5.20.24 — Filtro "pagar" apagado, Excluir sempre visível, backup diário automático e seedData que nunca apaga usuário seu
+
+Respostas às 4 perguntas feitas e confirmadas pelo usuário nesta sessão:
+
+### 1. Financeiro: filtro de tipo APAGADO
+- O filtro **"Receber + Pagar / Só a receber / Só a pagar"** (`neo-fin-tipo`) era o "pagar junto com o filtro" citado desde o item 2 — agora removido da tela (o Financeiro lista tudo junto, sem o seletor). O botão "Pagar" do cabeçalho (removido na v5.20.23) continua fora.
+
+### 2. Backup: excluído o botão ANTIGO das Configurações
+- Removidos do `notinha_patch.js` (renderConfig ativo): o botão "Exportar backup" do cabeçalho e o card "Backup". **Fica só o botão ⬇ da barra lateral** (ao lado do Sair), que funciona em qualquer tela.
+
+### 3. Botões de Excluir SEMPRE visíveis no topo
+- Causa de "não apareceu": na v5.20.23 os botões só surgiam **depois** de marcar a caixinha. Agora seguem o padrão já aceito (Produtos/Contratos): botão vermelho **"Excluir" fixo no topo** (Clientes: ao lado de "Novo cliente"; Financeiro: ao lado de "Receber"). Clicou sem marcar → aviso "Marque na caixinha ☐ da esquerda e clique de novo". Multi-seleção e exclusão real continuam (v5.20.23), com os DOIS avisos para cliente com histórico.
+
+### 4. Backup AUTOMÁTICO 1x ao dia (sem clicar)
+- Novo `ajustes_v52024_patch.js`: ~30s após abrir/logar, se for um dia novo, o sistema exporta o backup sozinho (mesmo formato do botão ⬇, sem o campo interno `_rt`).
+- **No programinha (.exe):** salva direto em **`%APPDATA%\digicopy-erp\backups\digicopy-backup-AAAA-MM-DD.json`** — nova ponte `backupAPI` (`main.js` `registerBackupIPC` `backup:save-daily` + `preload.js`). Sem janela e sem clique.
+- **No navegador (GitHack):** baixa o arquivo (cai em Downloads) — navegador não deixa escolher pasta.
+- Um arquivo por dia; em .exe ANTIGO (sem a ponte) cai no comportamento de download. Toast discreto confirma.
+
+### Empresa única fixa + "meus dados nunca vão deletar"
+- **Criar empresa: impossível** — desde v5.20.23 não existe mais nenhum caminho de UI/código que crie empresa nova. A empresa é UMA fixa: `emp_digicopy`.
+- **DEFEITO REAL corrigido no `seedData`:** antes ele apagava qualquer usuário com login `admin`/`carlos`/`ana`/`financeiro` — se o dono cadastrasse um funcionário "Ana", ela sumia na próxima carga. Agora só remove demo DE VERDADE (id de demo ou login demo criado pelo 'sistema'/sem dono). Usuário criado pela tela (`criadoPor` = quem criou) e legado migrado (`criadoPor: 'migracao'`) **nunca são apagados**.
+- O que pode "apagar" hoje: (a) os botões Excluir (ação sua, com avisos); (b) o sync propaga para os outros PCs só o que VOCÊ apagou (lápide) — **ausência na nuvem nunca apaga o PC**; (c) o `seedData` só mexe em empresa/usuários demo; (d) backup automático diário + botão ⬇ = rede de segurança.
+- Usuário confirmou que o **.exe sai incompleto** — combinado: **adiado** ("deixa pra quando resolvermos tudo"). A lista `build.files` já está correta no código; o instalador em si a gente gera juntos no final.
+- Etiqueta funcionando normalmente — não tocar.
+
+### Testes
+- `test_ajustes_v52024.js` (13 asserts: regra de demo antigo, 1x/dia, nome do arquivo, JSON sem `_rt`) + `test_ajustes_v52023.js` + suítes principais OK. Falha pré-existente de etiquetas continua intocada (área aceita).
+
+## v5.20.23 — Excluir em lote (Clientes/Financeiro) + backup fora das Config + UMA empresa só garantida
+
+**Reaplicados nesta branch os itens 1–4 aceitos pelo usuário** (o repo estava na v5.20.22, sem eles — tinham sido feitos em outra conversa) **e respondidas as 2 perguntas dele.**
+
+### 1. Excluir em lote — Clientes e Financeiro (de verdade)
+- Novo `ajustes_v52023_patch.js` (carregado por último, antes do sync): envolve `renderClientes` e `renderFinanceiro` e injeta **caixinha de seleção** em cada linha + caixinha "marcar todas" no cabeçalho + botão vermelho **"Excluir selecionados (N)"** (aparece só quando tem algo marcado).
+- **Exclui de verdade**: remove do banco e o sync propaga as lápides pros outros PCs sozinho.
+- **Cliente sem histórico**: 1 aviso. **Cliente COM histórico**: **DOIS avisos** (o 1º lista o que existe: "3 vendas, 1 contrato, 2 chamados…"; o 2º é o último aviso "não dá pra desfazer") e apaga **o histórico junto** — vendas/notinhas, contratos, chamados, leituras, impressoras do contrato (parque) e lançamentos financeiros ligados ao cliente. Impressora que estava "locado" só naquele contrato volta pra "disponivel".
+
+### 2. Tirado o "Pagar" do Financeiro
+- O botão **"Pagar"** do cabeçalho da tela Financeiro **foi removido** (não tem mais botão de pagar junto do cabeçalho/filtro). O de "Receber" continua. O filtro "Só a pagar" continua pra **ver** os lançamentos antigos; só não cria mais por ali. Se ainda usa contas a pagar, avisar que volta.
+
+### 4. Backup fora das Configurações
+- Botão de **exportar backup (⬇)** adicionado no **cartão do usuário na barra lateral** (ao lado do botão Sair), visível em TODAS as telas. O de Configurações continua existindo.
+
+### 5. Pendente (combinado: só quando o usuário mandar)
+- Botão **"Importar clientes" continua na tela Clientes**. Remover DEPOIS que ele terminar de importar os dados dele — é a instrução pendente pro próximo chat.
+
+### Pergunta 1 — "tem alguma coisa que cria mais de uma empresa?"
+**Tinha, e foi achada e removida de verdade.** A tela **"Empresas (PDF)"** (menu lateral, do `evolucao_patch.js`) tinha o botão **"+ Nova empresa"** que salvava uma empresa DE VERDADE no banco (`db.empresas`) com **id aleatório** e ainda criava um usuário demo `admin/admin123`. Era isso que podia criar 2ª empresa. Removidos de verdade: a tela, o item de menu, o `openModalEmpresa`/`saveNovaEmpresa` (app.js) e o fallback do `doLoginCNPJ` que também podia criar empresa (`gen('emp')`).
+- **Garantias de empresa única que já existiam e continuam:** `seedData` roda em toda carga e devolve o banco pra UMA empresa (`emp_digicopy`), apaga empresas extras e normaliza o `empresaId` de TODOS os dados pra ela; o sync faz o mesmo na hora de enviar/receber (`normalizarEmpresa`). Ou seja: **todos os usuários/PCs veem os mesmos dados**, independente de quem cadastrou.
+- Dados da empresa que vão na notinha se editam em **Configurações → "Dados da loja"** (não precisava da tela removida).
+
+### Pergunta 2 — "mais alguma outra coisa que é defeito?" (achados e correções)
+- **`npm test` estava quebrado**: a cadeia apontava pra `test_login_buscador_ui_final.js`, que **não existe no repo**. Trocado pelo novo `test_ajustes_v52023.js` (16 asserts, passando). Resta 1 falha PRÉ-EXISTENTE e intocada: `test_cartuchos_etiquetas_config.js` ("capacidade padrão é máxima compacta na folha") — já falhava antes, é da área de etiquetas (aceita/fechada), não mexer sem pedido.
+- **`build.files` do Electron desatualizado**: faltavam TODOS os patches modernos (v5.17+) e o `sync_realtime_patch.js` — o `.exe` sairia incompleto. Agora a lista é gerada dos `<script>` do `index.html`. Idem `check`.
+- **`confirmarExcluirModulo` usava `confirm()` nativo** (quebrado → botão não fazia nada): migrado pra `confirmSistema`.
+- Código morto legado que já era inacessível e continua sem ponto de entrada (não atrapalha; remoção total = refactor futuro): `renderBanco`, `renderMigrados`, `renderRelatorios`, deletes antigos individuais do app.js (substituídos pelos novos em lote).
+
+- Testes: `node --check` em tudo OK; suítes principais OK (inclui `test_finalizacao_sistema` e a nova `test_ajustes_v52023`).
+- Cache-bust: `app.js`/`evolucao_patch.js`/novo patch sobem com `?v=5.20.23` no index.html.
 
 ## v5.20.22 — Botão "Importar clientes" recolocado (p/ testar o sync)
 - O botão de importar tinha sido removido a pedido do usuário ("tira as opções de importar"), mas ele precisa dele p/ testar a sincronização dos clientes. Recolocado no cabeçalho da tela Clientes (`finalizacao_sistema_patch.js`) com `<input type=file id=clientes-json-input>` + status.

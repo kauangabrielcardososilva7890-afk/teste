@@ -35,3 +35,9 @@ contextBridge.exposeInMainWorld('printAPI', {
   cleanPrintSilent: () => ipcRenderer.invoke('print:clean-silent'),
   isElectron: true
 });
+
+// API de backup automático — salva 1x ao dia em %APPDATA%\digicopy-erp\backups
+contextBridge.exposeInMainWorld('backupAPI', {
+  saveDaily: (filename, content) => ipcRenderer.invoke('backup:save-daily', { filename, content }),
+  isElectron: true
+});
