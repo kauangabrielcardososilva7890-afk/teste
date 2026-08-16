@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## Diagnóstico de migração (após v5.19.25 — ainda não resolvido)
+- v5.19.25 NÃO trouxe os dados: as chaves legadas chutadas (`digicopy_erp_v20`/`v10`/`digicopy_erp`/`digicopy_backup`) estão erradas. **Causa raiz: não sabemos o nome real da chave** que a versão antiga usava.
+- Novo arquivo `ler_chaves_leveldb.js`: lê os `.ldb/.log/.old` e lista os textos (nomes de chave) em texto puro (os VALUES ficam comprimidos em Snappy, mas as CHAVES são texto puro). Usuário roda `node ler_chaves_leveldb.js "C:\Users\User\AppData\Roaming\digicopy-erp\Local Storage\leveldb"` e cola a saída.
+- Assim que soubermos o nome exato da chave, `loadDB` lê `localStorage.getItem(chave)` (o Chromium descomprime sozinho) e migra. Commit `133cc2e`.
+- DevTools está DESLIGADO no `main.js:28` (`closeDevTools`), por isso o diagnóstico é por script Node, não por console.
+
 ## v5.19.25
 - **Recuperação de dados antigos (salvos localmente):** o `loadDB` agora também lê as chaves LEGADAS (`digicopy_erp_v20`, `digicopy_erp_v10`, `digicopy_erp`, `digicopy_backup`) que a versão antiga usava e a atual estava apagando sem ler. Com os arquivos `.ldb` antigos na pasta certa, os dados voltam sozinhos.
 
