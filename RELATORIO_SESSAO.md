@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.6**  
+**Última versão:** **v5.20.7**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.6.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.7.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.7 — Removidos os botões legados de nuvem (Enviar/Carregar)
+- **Deletado o painel morto "Migração e nuvem"** do `sync_client.js`: `cloudMigrationHtml()`, `openCloudMigration()`, `nuvemInfo()`, `copiarRegrasFirebase()`, `verificarBaseNaNuvem()` e os wrappers `enviarDadosLocaisParaNuvem`/`carregarDadosDaNuvem` (que ficavam só no código, sem aparecer na tela). Os botões "Enviar base de teste"/"Carregar base teste"/"Testar conexão" etc. não existem mais.
+- **Botão de cartuchos/etiquetas** "Atualizar e enviar nuvem" → **"Atualizar"** (a nuvem agora é automática; aquele botão não envia mais manualmente).
+- O motor legado `syncEnviarParaNuvem`/`syncCarregarDaNuvem` (full-replace, coleção `app_state`) segue no código mas **inerte** (nenhum botão chama) — remoção total dele fica pra uma limpeza futura, pois `interface_patch`, `ajustes_v5191`, `ajustes_v5186`, `performance_patch` e `login_dados_automaticos` ainda o referenciam na ordem de carga.
+- **Ainda pendente (perguntar):** remover a área "Importar arquivos" (menu Configurações → Importar arquivos → JSON/DBeaver) e o botão "Exportar JSON atual". O backup continua disponível em Configurações → "Exportar backup JSON".
 
 ## v5.20.6 — Revisão de robustez + limpeza (enquanto aguarda a cota)
 - **`_rt` não vaza mais no backup:** `exportBackup()` filtra o campo interno de sincronização (`_rt`) via `JSON.parse/stringify` com replacer.
