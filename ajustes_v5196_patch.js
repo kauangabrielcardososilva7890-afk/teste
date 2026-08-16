@@ -88,6 +88,24 @@ window.excluirUsuario = function(id){
   });
 };
 
+// Excluir técnico — qualquer usuário logado pode (técnico é só um nome de
+// lista, não uma conta de acesso).
+window.excluirTecnico = function(id){
+  const s = sess(); if(!s) return;
+  const t = (db.tecnicos || []).find(x => x.id === id);
+  if(!t) return toastMsg('Técnico não encontrado', 'error');
+  const conf = (typeof window.confirmSistema === 'function') ? window.confirmSistema : null;
+  if(!conf){ return toastMsg('Não foi possível confirmar a exclusão.', 'error'); }
+  conf('Excluir o técnico ' + (t.nome || '') + '?\n\nEsta ação não pode ser desfeita.', 'Excluir técnico').then(function(ok){
+    if(!ok) return;
+    db.tecnicos = (db.tecnicos || []).filter(x => x.id !== id);
+    if(typeof logAction === 'function') logAction('tecnico', 'excluir', id, 'Excluído técnico ' + t.nome);
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof renderUsuarios === 'function') renderUsuarios();
+    toastMsg('Técnico excluído', 'success');
+  });
+};
+
 window.renderUsuarios = function(){
   const s = sess(); if(!s) return;
   const view = document.getElementById('view-usuarios'); if(!view) return;
@@ -117,7 +135,7 @@ window.renderUsuarios = function(){
       <td class="text-slate-400">—</td>
       <td><span class="neo-status info">Técnico</span></td>
       <td class="text-slate-400">—</td>
-      <td><button onclick="openModalEditarTecnico('${esc(t.id)}')" class="neo-btn"><i class="ph ph-pencil"></i></button></td>
+      <td><button onclick="openModalEditarTecnico('${esc(t.id)}')" class="neo-btn"><i class="ph ph-pencil"></i></button><button onclick="excluirTecnico('${esc(t.id)}')" class="neo-btn danger"><i class="ph ph-trash"></i></button></td>
     </tr>`;
   }).join('');
 

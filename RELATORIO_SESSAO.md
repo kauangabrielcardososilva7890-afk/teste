@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.19**  
+**Última versão:** **v5.20.20**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.19.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.20.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.20 — Botão de excluir TÉCNICO (qualquer usuário pode)
+- Novo `window.excluirTecnico(id)` no `ajustes_v5196_patch.js`: **qualquer usuário logado** pode excluir um técnico (técnico é só um nome de lista p/ chamados/vendas, não é conta de acesso). Confirma com `confirmSistema`, loga e propaga via saveDB.
+- Botão "🗑" adicionado na linha dos técnicos na tela Usuários (ao lado do lápis).
+- Regras dos USUÁRIOS continuam: excluir usuário só Admin/Dono (e nunca a si mesmo).
 
 ## v5.20.19 — Botão de excluir usuário (só Admin/Dono)
 - Novo `window.excluirUsuario(id)` no `ajustes_v5196_patch.js`: só Admin (Kauan) e Dono (Denivaldo) podem excluir; **não exclui a si mesmo**; **não exclui o último Admin/Dono**; confirma com `confirmSistema`; loga em auditoria e propaga via sync (saveDB).
