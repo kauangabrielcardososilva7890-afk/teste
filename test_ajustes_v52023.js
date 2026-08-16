@@ -40,12 +40,38 @@ db.contratos[0].status = 'excluido';
 ok('contrato excluído não trava mais o cliente', PURO.vinculosDoCliente(db, 'c2').length === 0);
 
 // ═══════════════════════════════════════════════════════════════════════════
-console.log('== V5.20.23: plano de exclusão (libera x bloqueia) ==');
+console.log('== V5.20.23: plano de exclusão (libera x com histórico) ==');
 db = baseDb();
 const plano = PURO.planejarExclusaoClientes(db, ['c1', 'c2', 'c3', 'c4']);
-ok('libera os 2 clientes sem movimentação', plano.libera.length === 2);
-ok('bloqueia os 2 com movimentação', plano.bloqueia.length === 2);
+ok('separa os 2 clientes sem movimentação', plano.libera.length === 2);
+ok('aponta os 2 com movimentação', plano.bloqueia.length === 2);
 ok('o aviso de bloqueio explica o motivo', /contrato|notinha/.test(PURO.textoBloqueio(plano.bloqueia)));
+
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('== V5.20.24: aviso de histórico (1º dos 2 avisos) ==');
+const aviso = PURO.textoHistorico(plano.bloqueia);
+ok('avisa que o cliente tem histórico', /histórico no sistema/.test(aviso));
+ok('lista o que ele tem', /contrato|notinha/.test(aviso));
+ok('avisa que o histórico some junto', /histórico vai sumir junto/.test(aviso));
+ok('termina perguntando se quer continuar', /Deseja continuar\?/.test(aviso));
+
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('== V5.20.24: exclusão em CASCATA (apaga o histórico junto) ==');
+db = baseDb();
+db.os       = [{ id: 'os1', clienteId: 'c3' }];
+db.leituras = [{ id: 'l1',  clienteId: 'c3' }];
+db.parque   = [{ id: 'p1',  clienteId: 'c3' }, { id: 'p2', contratoId: 'ct1' }];
+const fora = PURO.removerClientesEmCascata(db, ['c2', 'c3']);
+ok('apagou os 2 clientes', fora.clientes === 2 && db.clientes.length === 2);
+ok('apagou o contrato junto', fora.contratos === 1 && db.contratos.length === 0);
+ok('apagou a notinha junto', fora.vendas === 1 && db.vendas.length === 0);
+ok('apagou o chamado junto', fora.chamados === 1 && db.os.length === 0);
+ok('apagou a leitura junto', fora.leituras === 1 && db.leituras.length === 0);
+ok('apagou o título do financeiro junto', fora.titulos === 1);
+ok('apagou o parque do cliente E o do contrato dele', fora.parque === 2 && db.parque.length === 0);
+ok('NÃO tocou no título sem cliente', db.contasReceber.length === 1 && db.contasReceber[0].id === 'cr2');
+ok('NÃO tocou nos clientes que não foram marcados', !!db.clientes.find(c => c.id === 'c1'));
+ok('o resumo lista o que foi apagado', /contrato|notinha/.test(PURO.resumoCascata(fora)));
 
 // ═══════════════════════════════════════════════════════════════════════════
 console.log('== V5.20.23: exclusão DELETA (não inativa) ==');
@@ -90,4 +116,18 @@ ok('financeiro tem botão excluir', /excluirTitulosUnificado\(\)/.test(notinha))
 ok('financeiro manteve busca, status e ordenação',
    /neo-search-fin/.test(notinha) && /neo-fin-status/.test(notinha) && /neo-fin-ordem/.test(notinha));
 
-console.log('\nRESULTADO: Testes do v5.20.23 passaram!');
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('== V5.20.24: botão "Exportar backup" apagado das Configurações ==');
+const cfgNotinha = notinha.slice(notinha.indexOf('window.renderConfig'), notinha.indexOf('window.renderConfig') + 3000);
+ok('config (tela atual) sem botão Exportar backup', !/Exportar backup/.test(cfgNotinha));
+ok('config (tela atual) sem chamada exportBackup', !/exportBackup\(\)/.test(cfgNotinha));
+ok('config manteve o botão Salvar', /saveConfig\(\)/.test(cfgNotinha));
+ok('config manteve o cadastro de técnico', /addTecnico\(\)/.test(cfgNotinha));
+
+const cfgApp = app.slice(app.indexOf("getElementById('view-config')"), app.indexOf("getElementById('view-config')") + 4000);
+ok('config (tela clássica) sem Exportar backup JSON', !/Exportar backup JSON/.test(cfgApp));
+
+// a função em si continua viva: Relatórios e a tela de importação ainda usam
+ok('exportBackup continua existindo p/ Relatórios', /function exportBackup\(\)/.test(app));
+
+console.log('\nRESULTADO: Testes do v5.20.23/24 passaram!');

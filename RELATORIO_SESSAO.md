@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00b4d-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/20  
-**Última versão:** **v5.20.23**  
-**Commit:** `414b1de73516319715c4dc3bd3d3b4075ffa9791`  
+**Última versão:** **v5.20.24**  
+**Commit:** atualizar após push  
 **Zip:** não gerado nesta versão (a pedido do usuário)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/414b1de73516319715c4dc3bd3d3b4075ffa9791/index.html?v=5.20.23`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.24`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,27 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.24 — Excluir cliente COM histórico (2 avisos) + backup fora das Configurações
+
+### 1. Cliente com histórico agora PODE ser excluído (com 2 avisos)
+Antes (v5.20.23) o cliente com movimentação era **bloqueado**. Agora, a pedido do usuário:
+- **1º aviso** — lista o histórico do cliente ("Esse cliente tem: 1 contrato(s), 2 notinha(s)...") e explica: **se apagar, o histórico vai sumir junto. Deseja continuar?**
+- Clicou **Sim** → **2º aviso**: **"Tem certeza que deseja fazer isso?"** (avisa que não dá para desfazer).
+- Só depois dos **dois** é que apaga. Cancelar em qualquer um dos dois não mexe em nada.
+- Cliente **sem** histórico continua com **um aviso só** (não enche o saco à toa).
+- A exclusão é em **cascata**: apaga junto contratos, notinhas, chamados, leituras, impressoras do parque (as do cliente **e** as ligadas ao contrato dele) e títulos do financeiro. O toast e a auditoria dizem exatamente o que saiu.
+- Vale para o botão **Excluir** (multi-seleção) **e** para a lixeira de 1 em 1 (`deleteCliente`).
+
+### 2. Configurações — botão "Exportar backup" APAGADO
+- Removido o botão **"Exportar backup"** do cabeçalho de Configurações (`notinha_patch.js`) e o card **"Backup / Exportar backup JSON"** da tela clássica (`app.js`).
+- Mantidos **Salvar** e o cadastro de técnico.
+- A função `exportBackup()` **continua existindo** de propósito: ela ainda é usada em **Relatórios** e na tela de **Importação do Banco Antigo**, que não foram tocadas.
+
+### Testes
+- `test_ajustes_v52023.js`: **50 verificações** OK (inclui cascata, texto dos 2 avisos e ausência do backup na config).
+- Teste de tela (jsdom): confirmada a **ordem** dos 2 avisos, o cancelamento em cada um deles (não apaga nada) e a cascata real.
+- `npm run check` OK; suíte completa sem regressão nova (seguem as mesmas 4 falhas antigas).
 
 ## v5.20.23 — Excluir com MULTI-SELEÇÃO (Clientes e Financeiro) + "contas a pagar" deletado
 

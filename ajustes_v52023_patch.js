@@ -72,6 +72,54 @@ function removerClientes(db, ids){
   db.clientes = (db.clientes || []).filter(function(c){ return ids.indexOf(c.id) === -1; });
   return antes - db.clientes.length;
 }
+
+// v5.20.24 — EXCLUSÃO EM CASCATA: apaga o cliente E todo o histórico dele.
+// Usado depois dos DOIS avisos (o que lista o histórico + o "tem certeza?").
+// Devolve quantos registros saíram de cada lugar, para o log e o aviso final.
+function removerClientesEmCascata(db, ids){
+  var fora = { clientes:0, contratos:0, vendas:0, chamados:0, leituras:0, parque:0, titulos:0 };
+  function some(nome, chave, filtro){
+    var lista = db[nome];
+    if(!Array.isArray(lista)) return 0;
+    var antes = lista.length;
+    db[nome] = lista.filter(function(x){ return !filtro(x); });
+    var n = antes - db[nome].length;
+    fora[chave] += n;
+    return n;
+  }
+  var doCliente = function(x){ return ids.indexOf(x.clienteId) !== -1; };
+
+  // guarda os contratos do cliente antes de apagar, p/ limpar o parque ligado a eles
+  var contratosIds = (db.contratos || [])
+    .filter(doCliente)
+    .map(function(c){ return c.id; });
+
+  some('contratos',     'contratos', doCliente);
+  some('vendas',        'vendas',    doCliente);
+  some('os',            'chamados',  doCliente);
+  some('leituras',      'leituras',  doCliente);
+  some('contasReceber', 'titulos',   doCliente);
+  some('parque',        'parque',    function(x){
+    return doCliente(x) || (x.contratoId && contratosIds.indexOf(x.contratoId) !== -1);
+  });
+
+  fora.clientes = removerClientes(db, ids);
+  return fora;
+}
+
+// Resumo do que será apagado junto ("3 notinha(s), 1 contrato(s)...").
+function resumoCascata(fora){
+  var partes = [];
+  var rotulos = [
+    ['contratos','contrato(s)'], ['vendas','notinha(s)'], ['chamados','chamado(s)'],
+    ['leituras','leitura(s)'],   ['parque','impressora(s) do parque'], ['titulos','título(s) do financeiro']
+  ];
+  for(var i = 0; i < rotulos.length; i++){
+    var k = rotulos[i][0];
+    if(fora[k]) partes.push(fora[k] + ' ' + rotulos[i][1]);
+  }
+  return partes.join(', ');
+}
 function removerTitulos(db, ids){
   var antes = (db.contasReceber || []).length;
   db.contasReceber = (db.contasReceber || []).filter(function(c){ return ids.indexOf(c.id) === -1; });
@@ -86,12 +134,27 @@ function textoBloqueio(bloqueados){
   return 'Estes clientes NÃO podem ser excluídos porque têm movimentação no sistema:\n\n' + linhas.join('\n') + extra;
 }
 
+// v5.20.24 — texto do 1º aviso: mostra o histórico de cada cliente e explica
+// que o histórico some junto.
+function textoHistorico(comHistorico){
+  var linhas = comHistorico.slice(0, 8).map(function(b){
+    return '• ' + (b.cliente.nome || b.cliente.id) + ' — ' + b.vinculos.join(', ');
+  });
+  var extra = comHistorico.length > 8 ? '\n(e mais ' + (comHistorico.length - 8) + ')' : '';
+  var qtd = comHistorico.length === 1 ? 'Esse cliente tem' : 'Esses clientes têm';
+  return qtd + ' histórico no sistema:\n\n' + linhas.join('\n') + extra +
+         '\n\nSe apagar, o histórico vai sumir junto. Deseja continuar?';
+}
+
 var PURO = {
   vinculosDoCliente: vinculosDoCliente,
   planejarExclusaoClientes: planejarExclusaoClientes,
   removerClientes: removerClientes,
+  removerClientesEmCascata: removerClientesEmCascata,
+  resumoCascata: resumoCascata,
   removerTitulos: removerTitulos,
-  textoBloqueio: textoBloqueio
+  textoBloqueio: textoBloqueio,
+  textoHistorico: textoHistorico
 };
 
 if(typeof module !== 'undefined' && module.exports) module.exports = PURO;
@@ -121,34 +184,49 @@ function logar(entidade, acao, id, detalhe){
 // ═════════════════════════════════════════════════════════════════════════
 // 1) CLIENTES — excluir os marcados
 // ═════════════════════════════════════════════════════════════════════════
+// v5.20.24 — cliente com histórico NÃO é mais bloqueado: avisa qual é o
+// histórico, e se confirmar (Sim) vem um SEGUNDO aviso ("tem certeza?").
+// Só depois dos dois é que apaga o cliente e o histórico dele junto.
 window.excluirClientesUnificado = function(){
   if(typeof db === 'undefined') return;
   var ids = marcados('cliente-check-lote');
   if(!ids.length){ avisar('Marque os clientes na tabela para excluir.', 'Excluir Clientes'); return; }
 
   var plano = planejarExclusaoClientes(db, ids);
+  var comHistorico = plano.bloqueia;              // aqui já não bloqueia, só sinaliza
+  var alvos = plano.libera.concat(comHistorico.map(function(b){ return b.cliente; }));
+  if(!alvos.length) return;
 
-  if(!plano.libera.length){ avisar(textoBloqueio(plano.bloqueia), 'Excluir Clientes'); return; }
+  var ids2  = alvos.map(function(c){ return c.id; });
+  var nomes = alvos.map(function(c){ return c.nome || c.id; });
 
-  var msg = 'Deseja EXCLUIR ' + plano.libera.length + ' cliente(s)? Apaga de vez (não é ocultar).';
-  if(plano.bloqueia.length){
-    msg += '\n\nObs.: ' + plano.bloqueia.length + ' cliente(s) serão IGNORADOS por terem movimentação (contrato, notinha, chamado, leitura ou financeiro).';
-  }
-
-  confirmar(msg, 'Excluir Clientes').then(function(ok){
-    if(!ok) return;
-    var alvos = plano.libera;
-    var ids2 = alvos.map(function(c){ return c.id; });
-    var nomes = alvos.map(function(c){ return c.nome || c.id; });
-    var qtd = removerClientes(db, ids2);
-    ids2.forEach(function(id, i){ logar('cliente', 'excluir', id, 'Excluído cliente ' + nomes[i]); });
+  function apagar(){
+    var fora = removerClientesEmCascata(db, ids2);
+    var resumo = resumoCascata(fora);
+    ids2.forEach(function(id, i){
+      logar('cliente', 'excluir', id, 'Excluído cliente ' + nomes[i] + (resumo ? ' (com histórico: ' + resumo + ')' : ''));
+    });
     if(typeof saveDB === 'function') saveDB();      // salva + propaga no sync
     if(typeof renderClientes === 'function') renderClientes();
+    if(typeof renderFinanceiro === 'function') renderFinanceiro();
     if(typeof renderAuditoria === 'function') renderAuditoria();
-    if(typeof toast === 'function') toast(qtd + ' cliente(s) excluído(s)', 'success');
-    if(plano.bloqueia.length){
-      setTimeout(function(){ avisar(textoBloqueio(plano.bloqueia), 'Clientes não excluídos'); }, 350);
+    if(typeof toast === 'function'){
+      toast(fora.clientes + ' cliente(s) excluído(s)' + (resumo ? ' • também apagado: ' + resumo : ''), 'success');
     }
+  }
+
+  // Sem histórico: uma confirmação só.
+  if(!comHistorico.length){
+    confirmar('Deseja EXCLUIR ' + alvos.length + ' cliente(s)? Apaga de vez (não é ocultar).', 'Excluir Clientes')
+      .then(function(ok){ if(ok) apagar(); });
+    return;
+  }
+
+  // Com histórico: 1º aviso (o que vai sumir junto) → 2º aviso (tem certeza?).
+  confirmar(textoHistorico(comHistorico), 'Excluir Clientes').then(function(ok){
+    if(!ok) return;
+    confirmar('Tem certeza que deseja fazer isso?\n\nO cliente e todo o histórico dele serão apagados de vez. Não dá para desfazer.', 'Confirmar exclusão')
+      .then(function(certeza){ if(certeza) apagar(); });
   });
 };
 
