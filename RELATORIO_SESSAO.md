@@ -3,11 +3,11 @@
 **Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00bb1-teste` (a sessão mudou de branch; a antiga `arena/01a001ed-teste` já foi mergeada na `main` pelo PR #18)  
-**PR:** atualizar após push  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/21  
 **Última versão:** **v5.20.23**  
-**Commit:** atualizar após push  
+**Commit:** `a6483bd`  
 **Zip:** `Sistema-Digicopy-v5.20.23.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.23`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/a6483bdb607501a8c14ab5410c679017f140bbbc/index.html?v=5.20.23`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
