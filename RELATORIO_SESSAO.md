@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.12**  
+**Última versão:** **v5.20.13**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.12.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.13.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.13 — Botão "Exportar backup" agora VISÍVEL de verdade
+- Causa raiz: havia **duas telas de Configurações** brigando. O `app.js` montava uma com o card "Backup" ("Exportar backup JSON"), mas o `notinha_patch.js` SOBRESCREVIA essa tela inteira com outra (que só tinha "Exportar backup local" pequeno no meio de um card). Por isso o botão que prometi "voltar" nunca aparecia.
+- Correção: no `notinha_patch.js` (renderConfig ATIVO), os botões agora ficam no CABEÇALHO da tela: **"Exportar backup"** + **"Limpar todos os dados"** + "Salvar" — impossíveis de não ver.
+- O `limpeza_dados_patch.js` continua com a injeção antiga (h4 "backup") só como fallback, mas agora o botão de limpar já está direto no renderConfig ativo.
 
 ## v5.20.12 — Deletado de vez TODOS os itens escondidos do menu
 - **Removidos direto no `index.html` (fonte), não mais escondidos:** submenu "Início" (Área inicial / Pesquisa rápida), "Notinhas antigas", "Novo orçamento", "Explorar Migrados", "Nova despesa" (duplicada), "Relatórios" (stub).
