@@ -3,11 +3,11 @@
 **Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00b4d-teste`  
-**PR:** atualizar após push  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/20  
 **Última versão:** **v5.20.23**  
-**Commit:** atualizar após push  
+**Commit:** `4ca3c55ffeeea50356637bfc5fc47cf6eb9bf997`  
 **Zip:** não gerado nesta versão (a pedido do usuário)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.20.23`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/4ca3c55ffeeea50356637bfc5fc47cf6eb9bf997/index.html?v=5.20.23`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
