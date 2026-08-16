@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.25**  
-**Commit:** `818a50b`  
-**Zip:** `Sistema-Digicopy-v5.19.25.zip` (link raw no PR #18)  
+**Última versão:** **v5.20.0**  
+**Commit:** atualizar após push  
+**Zip:** `Sistema-Digicopy-v5.20.0.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,20 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.0 — Sincronização AUTOMÁTICA com MESCLAGEM (novo motor)
+- Novo `sync_realtime_patch.js` (carregado por último no `index.html`), coleção Firestore `erp_rt` (1 doc por registro), SEPARADA do `app_state` antigo.
+- **Automático** (sem botão): sobe local em ~450ms após salvar; puxa remoto a cada ~1,5s (loop com `ocupado` + `__dirty` p/ não diffs vazios).
+- **Junta, não substitui**: mescla por `id` do registro. Dois PCs cadastrando ao mesmo tempo → os DOIS aparecem. Edição do MESMO registro → ganha a hora do SERVIDOR (campo `ts` via `setToServerValue:REQUEST_TIME`, nunca o relógio do PC). Exclusão propaga via lápide (`t:true`).
+- `tsKey()` normaliza fração p/ 9 dígitos (nanossegundos) e compara como string — corrige o bug de `Date.parse` truncar milissegundos.
+- Auth anônima reaproveita a chave `digicopy_firebase_auth_v1` (não cria token novo).
+- **Bootstrap PC novo (demo):** se `ehDemo()` (única empresa = CNPJ 12.345.678/0001-90) e a nuvem TEM dados → `limparDemo()` + pull + `location.reload()` 1x (pra tela de login mostrar a empresa real).
+- Desliga o auto-carregar ANTIGO (`sessionStorage.setItem('digicopy_auto_load_try_v4939','1')`) pra não conflitar.
+- `saveDB` e `navigateTo` são embrulhados (push rápido + re-render da view atual; não re-renderiza se usuário digitando ou sem login).
+- Entidades array: empresas, usuarios, clientes, produtos, equipamentos, contratos, parque, leituras, os, vendas, contasReceber, contasPagar, tecnicos, notificacoes. Objetos: config, modulosDinamicos. `logs` fica local (auditoria por PC).
+- Teste puro `test_sync_realtime.js` (21 asserts): mescla A+B, last-write-wins, lápide, config, demo, tsKey fracionário.
+- **Ainda NÃO testado com 2 PCs reais.** Os botões antigos "Enviar/Carregar da nuvem" (full-replace, coleção `app_state`) continuam como fallback legado — provável remoção depois.
+- **Importante:** precisa do Firestore com regras `allow read, write: if request.auth != null` + login Anônimo ativo (o que o usuário já fez = não expira em 30 dias).
 
 ## Diagnóstico de migração (após v5.19.25 — ainda não resolvido)
 - v5.19.25 NÃO trouxe os dados: as chaves legadas chutadas (`digicopy_erp_v20`/`v10`/`digicopy_erp`/`digicopy_backup`) estão erradas. **Causa raiz: não sabemos o nome real da chave** que a versão antiga usava.
