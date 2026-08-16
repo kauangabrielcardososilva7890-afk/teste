@@ -314,9 +314,15 @@ function seedData(force=false){
   const demoIds = ['usr_admin'];
 
   // Remove usuários de demonstração (de versões antigas).
+  // v5.20.24 — NUNCA apaga usuário cadastrado pela tela: só remove demo de verdade
+  // (id de demo, ou login de demo criado pelo 'sistema'/sem dono). Antes bastava o
+  // login bater (admin/carlos/ana/financeiro) e o usuário era apagado — se o dono
+  // cadastrasse um funcionário "ana", ele sumia na próxima carga. Mesma regra da
+  // função pura ehUsuarioDemoAntigo (ajustes_v52024_patch.js).
   db.usuarios = db.usuarios.filter(u=>{
     const l = String(u.login||'').toLowerCase();
-    if(demoLogins.includes(l) || demoIds.includes(u.id)){ mudou = true; return false; }
+    const ehDemoAntigo = demoIds.includes(u.id) || (demoLogins.includes(l) && (!u.criadoPor || u.criadoPor==='sistema'));
+    if(ehDemoAntigo){ mudou = true; return false; }
     return true;
   });
 

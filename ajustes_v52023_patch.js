@@ -124,16 +124,11 @@ function marcarTodos(qual, on){
   atualizarBotaoExcluir();
 }
 function atualizarBotaoExcluir(){
-  const nCli = document.querySelectorAll('.cli-del-check:checked').length;
-  const bCli = document.getElementById('btn-excluir-clientes');
-  if(bCli){ bCli.style.display = nCli? '':'none'; bCli.innerHTML = '<i class="ph ph-trash"></i>Excluir selecionados ('+nCli+')'; }
-  const nFin = document.querySelectorAll('.fin-del-check:checked').length;
-  const bFin = document.getElementById('btn-excluir-fin');
-  if(bFin){ bFin.style.display = nFin? '':'none'; bFin.innerHTML = '<i class="ph ph-trash"></i>Excluir selecionados ('+nFin+')'; }
+  // só mantém o "marcar todas" em dia — o botão Excluir é fixo no topo (v5.20.24)
   const all = document.getElementById('cli-check-all');
-  if(all){ const total = document.querySelectorAll('.cli-del-check').length; all.checked = (total>0 && nCli===total); }
+  if(all){ const total = document.querySelectorAll('.cli-del-check').length; const n = document.querySelectorAll('.cli-del-check:checked').length; all.checked = (total>0 && n===total); }
   const allF = document.getElementById('fin-check-all');
-  if(allF){ const totalF = document.querySelectorAll('.fin-del-check').length; allF.checked = (totalF>0 && nFin===totalF); }
+  if(allF){ const totalF = document.querySelectorAll('.fin-del-check').length; const nF = document.querySelectorAll('.fin-del-check:checked').length; allF.checked = (totalF>0 && nF===totalF); }
 }
 window.v52023MarcarTodos = marcarTodos;
 window.v52023AtualizarBotaoExcluir = atualizarBotaoExcluir;
@@ -156,15 +151,15 @@ function injetarExclusaoClientes(){
     td.innerHTML = '<input type="checkbox" class="cli-del-check" value="'+id+'" onchange="v52023AtualizarBotaoExcluir()">';
     tr.prepend(td);
   });
-  const barra = view.querySelector('.p-4.border-b');
-  if(barra && !document.getElementById('btn-excluir-clientes')){
+  // Botão Excluir SEMPRE visível no topo (v5.20.24 — padrão Produtos/Contratos):
+  // clicou sem marcar nada → aviso pra selecionar na caixinha.
+  const actions = view.querySelector('.neo-head .neo-actions');
+  if(actions && !actions.querySelector('.btn-del-lote')){
     const btn = document.createElement('button');
-    btn.id = 'btn-excluir-clientes';
-    btn.className = 'neo-btn danger';
-    btn.style.display = 'none';
+    btn.className = 'neo-btn danger btn-del-lote';
+    btn.innerHTML = '<i class="ph ph-trash"></i>Excluir';
     btn.onclick = ()=>window.excluirClientesSelecionados();
-    const contador = barra.querySelector('.ml-auto');
-    barra.insertBefore(btn, contador||null);
+    actions.appendChild(btn);
   }
 }
 
@@ -188,14 +183,14 @@ function injetarExclusaoFinanceiro(){
     td.innerHTML = '<input type="checkbox" class="fin-del-check" data-tipo="'+m[1]+'" value="'+m[2]+'" onchange="v52023AtualizarBotaoExcluir()">';
     tr.prepend(td);
   });
-  const barra = view.querySelector('.px-4.pb-3.border-b') || view.querySelector('.px-4.pb-3');
-  if(barra && !document.getElementById('btn-excluir-fin')){
+  // Botão Excluir SEMPRE visível no topo, ao lado do "Receber" (v5.20.24).
+  const actions = view.querySelector('.neo-head .neo-actions');
+  if(actions && !actions.querySelector('.btn-del-lote')){
     const btn = document.createElement('button');
-    btn.id = 'btn-excluir-fin';
-    btn.className = 'neo-btn danger';
-    btn.style.display = 'none';
+    btn.className = 'neo-btn danger btn-del-lote';
+    btn.innerHTML = '<i class="ph ph-trash"></i>Excluir';
     btn.onclick = ()=>window.excluirFinanceiroSelecionados();
-    barra.appendChild(btn);
+    actions.appendChild(btn);
   }
 }
 
@@ -215,7 +210,7 @@ if(typeof window.renderFinanceiro === 'function' && !window.renderFinanceiro.__v
 window.excluirClientesSelecionados = function(){
   const sess = (typeof getSession==='function') ? getSession() : null; if(!sess) return;
   const ids = Array.from(document.querySelectorAll('.cli-del-check:checked')).map(c=>c.value).filter(Boolean);
-  if(!ids.length){ aviso('Marque pelo menos um cliente na caixinha da esquerda.','Excluir clientes'); return; }
+  if(!ids.length){ aviso('Marque pelo menos um cliente na caixinha ☐ da esquerda e clique em Excluir de novo.','Excluir clientes'); return; }
   const nomes = ids.map(id=>{ const c=(db.clientes||[]).find(x=>x.id===id); return c ? (c.nome||id) : id; });
   const listaNomes = nomes.slice(0,5).join(', ') + (nomes.length>5 ? ' e mais '+(nomes.length-5) : '');
   const resumo = resumoHistorico(db, ids);
@@ -255,7 +250,7 @@ window.excluirClientesSelecionados = function(){
 window.excluirFinanceiroSelecionados = function(){
   const sess = (typeof getSession==='function') ? getSession() : null; if(!sess) return;
   const alvos = Array.from(document.querySelectorAll('.fin-del-check:checked')).map(c=>({ tipo:c.dataset.tipo||'cr', id:c.value })).filter(a=>a.id);
-  if(!alvos.length){ aviso('Marque pelo menos um lançamento na caixinha da esquerda.','Excluir lançamentos'); return; }
+  if(!alvos.length){ aviso('Marque pelo menos um lançamento na caixinha ☐ da esquerda e clique em Excluir de novo.','Excluir lançamentos'); return; }
   confirma('Excluir '+alvos.length+' lançamento(s) do Financeiro?\n\nIsso apaga de verdade e não tem volta.','Excluir lançamentos')
     .then(ok=>{
       if(!ok) return;
