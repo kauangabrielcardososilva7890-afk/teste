@@ -45,16 +45,6 @@ function clientesDeveListar(busca,campo,status){
   // fica pré-selecionado por padrão e NÃO dispara a listagem sozinho.
   return !!txt(busca) || (status&&status!=='ativos');
 }
-function removerElementosFinais(){
-  const termos=/migrad|importar arquivos|backup|migraç|recarregar dados demo|limpar dados|exportar backup|sistema virgem|alinhamento do banco|carregar nuvem|enviar.*nuvem|publicar.*nuvem|dados migrados|explorar migrados|notinhas antigas|relat[oó]rios|nova despesa|contas a pagar/i;
-  document.querySelectorAll('button,a,span.dynamic-menu-heading,#nav-dinamico,#nav-dinamico-label').forEach(el=>{
-    const id=el.id||''; const nav=el.getAttribute&&el.getAttribute('data-nav')||''; const text=(el.innerText||el.textContent||'').trim();
-    if(id==='nav-dinamico'||id==='nav-dinamico-label'||nav.startsWith('mod_')||termos.test(text)) el.remove();
-  });
-  document.querySelectorAll('[data-dynamic-category]').forEach(el=>el.remove());
-  ['alinhamento-banco-card','alinhamento-exemplos-aviso','virgem-cfg-card'].forEach(id=>document.getElementById(id)?.remove());
-  document.querySelectorAll('.module-menu button').forEach(b=>{ const t=b.innerText||''; if(termos.test(t)) b.remove(); });
-}
 function instalarBuscadorMenuFinal(){
   const nav=document.getElementById('nav-gest'); if(nav&&!nav.querySelector('[data-nav="buscador-escola"]')){
     const btn=document.createElement('button'); btn.dataset.nav='buscador-escola'; btn.onclick=()=>navigateTo('buscador-escola'); btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white'; btn.innerHTML='<i class="ph ph-magnifying-glass text-[19px]"></i><span>Buscador Escola</span>';
@@ -82,7 +72,7 @@ window.navigateTo=function(view){
     if(window.__abaHistFinal.length>20) window.__abaHistFinal.shift();
   }
   const r=oldNavigate?oldNavigate.apply(this,arguments):undefined;
-  setTimeout(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },120);
+  setTimeout(()=>{ instalarBuscadorMenuFinal(); },120);
   return r;
 };
 window.voltarAbaAnteriorFinal=function(){
@@ -151,8 +141,8 @@ const oldVosHtml=window.vosGerarHtmlNotinha;
 if(typeof oldVosHtml==='function') window.vosGerarHtmlNotinha=function(id,opts){ let html=oldVosHtml.apply(this,arguments); const loja=(db.config||{}).loja||{}; if(html&&loja.fantasia){ const cab=`<p class="emp-nome">${esc(loja.fantasia)}</p><p class="emp-info">${esc(loja.razaoSocial||loja.nome||'')}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}</p><p class="emp-info">${esc(loja.endereco||[loja.rua,loja.numero,loja.bairro,loja.cidade&&loja.uf?loja.cidade+'/'+loja.uf:loja.cidade,loja.cep].filter(Boolean).join(' • '))}</p><p class="emp-info">${loja.telefone?'Tel. '+esc(loja.telefone)+' • ':''}WhatsApp: <b>${esc(loja.whatsapp||'')}</b>${loja.email?' • '+esc(loja.email):''}</p>`; html=html.replace(/<p class="emp-nome">[\s\S]*?<\/p>\s*<p class="emp-info">[\s\S]*?<\/p>\s*<p class="emp-info">[\s\S]*?<\/p>/,cab); } return html; };
 
 const oldBuildNav=window.buildNav;
-window.buildNav=function(){ const r=oldBuildNav?oldBuildNav.apply(this,arguments):undefined; setTimeout(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },80); return r; };
-setInterval(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },2000);
-setTimeout(()=>{ instalarBuscadorMenuFinal(); removerElementosFinais(); },600);
+window.buildNav=function(){ const r=oldBuildNav?oldBuildNav.apply(this,arguments):undefined; setTimeout(()=>{ instalarBuscadorMenuFinal(); },80); return r; };
+setInterval(()=>{ instalarBuscadorMenuFinal(); },2000);
+setTimeout(()=>{ instalarBuscadorMenuFinal(); },600);
 console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();

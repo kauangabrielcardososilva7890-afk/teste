@@ -34,31 +34,16 @@ function removerAvisoProvisorio(){
 setTimeout(removerAvisoProvisorio,100);
 setTimeout(removerAvisoProvisorio,1000);
 
-// 2) Menu: esconder tabelas migradas individuais.
+// 2) Menu: as tabelas migradas foram REMOVIDAS do sistema (não há mais
+//    módulos dinâmicos nem "Dados migrados"). Nada a esconder/adicionar.
 function instalarCssMenuLimpo(){
-  if(typeof document==='undefined'||document.getElementById('css-migrados-limpo')) return;
-  const st=document.createElement('style'); st.id='css-migrados-limpo';
-  st.textContent=`
-    [data-dynamic-category], .dynamic-menu-heading, #nav-dinamico, #nav-dinamico-label { display:none!important; }
-    [data-nav^="mod_"] { display:none!important; }
-    [data-nav="migrados"] { display:none!important; }
-  `;
-  document.head.appendChild(st);
+  // sem CSS de esconder nada (não existe mais menu de migrados)
 }
 function garantirBotaoDadosMigrados(){
-  const destino=document.getElementById('nav-gest')||document.querySelector('nav');
-  if(!destino || destino.querySelector('[data-nav="migrados"]')) return;
-  const total=Object.values(db.modulosDinamicos||{}).filter(m=>Array.isArray(m&&m.dados)&&m.dados.length).length;
-  if(!total) return;
-  const btn=document.createElement('button'); btn.dataset.nav='migrados';
-  btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
-  btn.innerHTML=`<i class="ph ph-database text-[19px]"></i><span>Dados migrados</span><span class="ml-auto text-[11px] bg-purple-400 text-purple-950 font-bold px-2 py-0.5 rounded-full">${total}</span>`;
-  btn.onclick=()=>{ if(typeof navigateTo==='function') navigateTo('migrados'); };
-  destino.appendChild(btn);
+  // sem botão "Dados migrados" (funcionalidade removida)
 }
 function limparMenusMigrados(){
   instalarCssMenuLimpo();
-  document.querySelectorAll('[data-dynamic-category],#nav-dinamico,#nav-dinamico-label').forEach(e=>e.remove());
   garantirBotaoDadosMigrados();
 }
 const oldBuildNav=window.buildNav;
