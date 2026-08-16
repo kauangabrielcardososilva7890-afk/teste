@@ -241,8 +241,12 @@
   }
 
   /* ---------------- PUSH: sobe só o que mudou localmente ---------------- */
+  // Retorna true se ALGUMA escrita falhou (pra tentar de novo na próxima rodada).
+  // Isso corrige o caso em que a cota (429) bloqueava 1 envio e o dado ficava
+  // preso no PC pra sempre.
   async function pushMudancas(){
-    if(typeof db === 'undefined') return;
+    if(typeof db === 'undefined') return false;
+    var falhou = false;
     // arrays
     for(var a=0;a<ARRAY_ENT.length;a++){
       var ent = ARRAY_ENT[a];
@@ -260,7 +264,7 @@
           var ts = await rtWrite(rec.id, ent, rec, false);
           if(ts){ marcarTs(rec, ts); }
           state.snap[key] = h;
-        }catch(e){ /* tenta na próxima rodada */ }
+        }catch(e){ falhou = true; }
       }
       // exclusões: ids no snapshot que sumiram do array
       for(var key in state.snap){
@@ -271,7 +275,7 @@
         if(kEnt !== ent) continue;
         var kId = key.slice(sep+1);
         if(vistos[kId]) continue;
-        try{ await rtWrite(kId, ent, null, true); state.snap[key] = '~'; }catch(e){}
+        try{ await rtWrite(kId, ent, null, true); state.snap[key] = '~'; }catch(e){ falhou = true; }
       }
     }
     // objetos
@@ -286,8 +290,9 @@
         var ots = await rtWrite(oe, oe, obj, false);
         if(ots){ marcarTs(obj, ots); }
         state.snap[okey] = oh;
-      }catch(e){}
+      }catch(e){ falhou = true; }
     }
+    return falhou;
   }
 
   /* ---------------- PULL: baixa o que mudou na nuvem e mescla ---------------- */
@@ -379,11 +384,19 @@
     try{
       if(ehDemo()){
         if(await nuvemTemDados()){
+          // PC novo (demo) com nuvem já populada: troca a demo pelos dados reais
           limparDemo(); __eraDemo = true;
           try{ saveDB(); }catch(e){}
+        } else {
+          // demo + nuvem vazia: NÃO envia a demo (evita poluir a nuvem com
+          // empresa/clientes de mentira). Fica só aguardando um PC real publicar.
+          return;
         }
       }
-      if(__dirty || !state.cursor){ await pushMudancas(); __dirty = false; }
+      // Tenta subir o que mudou. pushMudancas é idempotente (só grava o que
+      // difere do snapshot) e RE-tenta sozinho o que falhou antes (ex.: cota).
+      await pushMudancas();
+      __dirty = false;
       var mudou = await pullMudancas();
       if(mudou.size){ try{ saveDB(); }catch(e){} }
       if(__eraDemo && !__reloaded && db.empresas && db.empresas.length){

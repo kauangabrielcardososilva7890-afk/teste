@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.7**  
+**Última versão:** **v5.20.8**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.7.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.8.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.8 — Causa raiz de "clientes não vão pra nuvem"
+- **Bug 1 (retry):** quando um envio falhava (ex.: cota 429), o `catch` engolia o erro e o `tick` só empurrava se `__dirty || !state.cursor`. Depois do 1º cursor setado, um envio falho **nunca era re-tentado** → o cliente ficava preso no PC. Corrigido: `pushMudancas` agora retorna `falhou`, e o `tick` **sempre tenta** empurrar (idempotente — só grava o que difere do snapshot), re-tentando o que falhou.
+- **Bug 2 (poluição de demo):** os dados de demonstração (empresa fake + 6 clientes de mentira) estavam sendo **enviados pra nuvem**. Agora, se `ehDemo()` e a nuvem está vazia, o sistema **NÃO envia** a demo (só aguarda um PC real publicar). Demo nunca mais vai pra nuvem.
+- **Pendente:** confirmar com o usuário se os clientes que ele quer salvar estão cadastrados na **empresa real (CNPJ dele)** ou na **demo (admin/admin123)** — porque só dados da empresa real sincronizam (a demo é local, por design).
 
 ## v5.20.7 — Removidos os botões legados de nuvem (Enviar/Carregar)
 - **Deletado o painel morto "Migração e nuvem"** do `sync_client.js`: `cloudMigrationHtml()`, `openCloudMigration()`, `nuvemInfo()`, `copiarRegrasFirebase()`, `verificarBaseNaNuvem()` e os wrappers `enviarDadosLocaisParaNuvem`/`carregarDadosDaNuvem` (que ficavam só no código, sem aparecer na tela). Os botões "Enviar base de teste"/"Carregar base teste"/"Testar conexão" etc. não existem mais.
