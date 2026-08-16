@@ -192,6 +192,36 @@
     return ts;
   }
 
+  /* ---------------- listar TODOS os docs (paginação até o fim) ---------------- */
+  async function rtListAll(){
+    var out = [];
+    var cursor = null;
+    for(var i=0;i<200;i++){
+      var docs = await rtListDesde(cursor);
+      if(!docs || !docs.length) break;
+      out = out.concat(docs);
+      if(docs.length < PAGE_SIZE) break;
+      var last = docs[docs.length-1];
+      var f = (last && last.fields) || {};
+      cursor = (f.ts && f.ts.timestampValue) || null;
+      if(!cursor) break;
+    }
+    return out;
+  }
+
+  /* ---------------- apagar TODOS os documentos da coleção erp_rt ---------------- */
+  window.__syncLimparNuvem = async function(){
+    var docs = await rtListAll();
+    var nomes = docs.map(function(d){ return d.name; }).filter(Boolean);
+    // apaga em lotes de 200 (limite do commit)
+    for(var i=0;i<nomes.length;i+=200){
+      var lote = nomes.slice(i, i+200);
+      var writes = lote.map(function(n){ return { delete: n }; });
+      await rtFetch(BASE + ':commit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ writes: writes }) });
+    }
+    return nomes.length;
+  };
+
   /* ---------------- MESCLA (pura; muta db) ---------------- */
   function aplicarRemoto(ent, id, dados, tomb, ts){
     if(ARRAY_ENT.indexOf(ent) >= 0){

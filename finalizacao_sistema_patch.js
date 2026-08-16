@@ -52,7 +52,7 @@ function removerElementosFinais(){
     if(id==='nav-dinamico'||id==='nav-dinamico-label'||nav.startsWith('mod_')||termos.test(text)) el.remove();
   });
   document.querySelectorAll('[data-dynamic-category]').forEach(el=>el.remove());
-  ['alinhamento-banco-card','alinhamento-exemplos-aviso','virgem-cfg-card','clientes-import-card'].forEach(id=>document.getElementById(id)?.remove());
+  ['alinhamento-banco-card','alinhamento-exemplos-aviso','virgem-cfg-card'].forEach(id=>document.getElementById(id)?.remove());
   document.querySelectorAll('.module-menu button').forEach(b=>{ const t=b.innerText||''; if(termos.test(t)) b.remove(); });
 }
 function instalarBuscadorMenuFinal(){

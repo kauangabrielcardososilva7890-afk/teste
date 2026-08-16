@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.9**  
+**Última versão:** **v5.20.10**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.9.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.10.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.10 — "Começar do zero" seguro + importador de clientes reativado
+- **Novo `limpeza_dados_patch.js`:** botão "🗑️ Limpar todos os dados" no card Backup das Configurações. É **manual** (só roda ao clicar, NUNCA automático — não repete o bug do "sistema virgem" que apagava a cada atualização). Pedido em 2 confirmações (`confirmSistema`).
+- A limpeza: (1) limpa a **nuvem** (`__syncLimparNuvem` apaga a coleção `erp_rt`), (2) zera a empresa p/ id fixo `emp_digicopy` + mantém usuários reais (remove só `carlos`/`ana`/`financeiro` da demo, garante `admin`), (3) zera clientes/produtos/vendas/os/financeiro/tecnicos/modulosDinamicos/config/buscador, (4) limpa o estado do sync, (5) salva e recarrega.
+- **`sync_realtime_patch.js`:** adicionado `rtListAll()` + `window.__syncLimparNuvem()` (lista e apaga todos os docs de `erp_rt` em lotes de 200).
+- **Importador de clientes REATIVADO:** o card "Importar clientes reais" (em `sistema_clientes_loja_patch.js`, função `importarClientesJsonFinal`) estava sendo REMOVIDO pelo `finalizacao_sistema_patch.js` (estava na lista `['...','clientes-import-card']`). Removido da lista → o card volta a aparecer na aba Clientes, e lê `CLIENTES.json`/`CLIENTES_FINAL.json` (ignora `CLIENTES_USUARIOS*`).
+- Fluxo pro usuário: baixar → limpar tudo → importar CLIENTES.json na aba Clientes → os clientes sincronizam entre os 5 PCs.
 
 ## v5.20.9 — Removida a DEMONSTRAÇÃO (dados fake) + login simples sem CNPJ
 - **`seedData` em `app.js` não cria mais os dados fake** (empresa CNPJ 12.345.678/0001-90, 6 clientes de mentira, produtos, equipamentos, contratos, leituras, OS, vendas, contas + usuários carlos/ana/financeiro). Agora só garante **empresa única + admin** (`emp_digicopy` / `usr_admin`, login `admin`/`admin123`).
