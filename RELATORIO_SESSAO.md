@@ -3,7 +3,7 @@
 **Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
-**PR:** será criado a partir de `arena/01a00cfb-teste`  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
 **Última versão:** **v5.20.26**  
 **Commit:** `79420a3`  
 **Zip:** `Sistema-Digicopy-v5.20.26.zip`  
