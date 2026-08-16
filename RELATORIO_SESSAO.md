@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.3**  
+**Última versão:** **v5.20.4**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.3.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.4.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.4 — Corta o consumo de cota do Firebase (era o que estourava)
+- Erro `RESOURCE_EXHAUSTED / Quota exceeded` (HTTP 429): o poll de **1,5s** estourava a cota grátis (~50k leituras/dia) do Firestore. "Gravar" já funcionava (regras OK).
+- Correções: poll de fundo **1,5s → 6s**; ao voltar pra aba/foco (`visibilitychange`/`focus`) faz **pull imediato + redesenho** (sensação instantânea sem consultar o tempo todo); **removido o diagnóstico automático** no startup (escrevia/lia doc de teste a cada load — era on-demand só).
+- Cota grátis reseta todo dia (meia-noite horário do Pacífico ≈ 4h da manhã no Brasil). Se precisar de mais, opção: plano Blaze (pay-as-you-go, com franquia generosa).
 
 ## v5.20.3 — Para o "piscar" da tela
 - A tela ficava se redesenhando a cada ~1,5s (o `refreshUI` chamava `navigateTo` a cada pull). Agora o sync continua **em background** (dados sempre atualizados + `saveDB`), mas a UI **só redesenha** quando: (a) o usuário navega pra outra view e volta, (b) a aba do navegador volta a ficar visível (`visibilitychange`) ou (c) a janela recupera o foco (`focus`).

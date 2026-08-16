@@ -25,7 +25,7 @@
   var COLL      = 'erp_rt';
   var AUTH_KEY  = 'digicopy_firebase_auth_v1';   // reaproveita o token anônimo
   var STATE_KEY = 'digicopy_rt_state_v1';
-  var POLL_MS   = 1500;
+  var POLL_MS   = 6000;   // consulta de fundo a cada 6s (era 1,5s — estourava a cota)
   var PAGE_SIZE = 500;
   var TAM_MAX_REC = 850000; // ~850 KB por registro (limite Firestore 1 MiB)
 
@@ -404,11 +404,12 @@
     //  - quando o usuário navega para outra view e volta (navigateTo já faz);
     //  - quando a aba do navegador volta a ficar visível (visibilitychange);
     //  - quando a janela recupera o foco.
+    // Ao voltar pra aba/foco, também PUXA na hora (pra já estar em dia) antes
+    // de redesenhar — assim a atualização parece instantânea sem ficar
+    // consultando a nuvem o tempo todo.
     function renderSeVisivel(){
-      if(!__mudouUI) return;
       try{ if(document.hidden) return; }catch(e){}
-      __mudouUI = false;
-      refreshUI();
+      tick().then(function(){ refreshUI(); });   // puxa + redesenha (sem loop)
     }
     try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) renderSeVisivel(); }); }catch(e){}
     try{ window.addEventListener('focus', renderSeVisivel); }catch(e){}
@@ -420,7 +421,6 @@
     }
     setTimeout(function(){ tick(); }, 600);     // bootstrap + 1ª mescla
     setInterval(function(){ tick(); }, POLL_MS); // manutenção automática
-    setTimeout(diagnosticoInicial, 1200);       // testa a nuvem 1x e avisa se der erro
     console.log('[SYNC-RT] sincronização automática ATIVA — mescla '+ARRAY_ENT.length+' entidades + '+OBJ_ENT.length+' objetos.');
   }
 
