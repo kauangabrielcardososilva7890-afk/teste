@@ -240,16 +240,9 @@ window.addEventListener('click', function(ev){
 }, true);
 
 // ═════════════════════════════════════════════════════════════════════════
-// Item 3 — logo padrão (logo.png) + remove o upload de logo da v5.18.8
+// Item 3 — logo padrão (logo.png). O upload de logo da v5.18.8 foi REMOVIDO.
 // ═════════════════════════════════════════════════════════════════════════
-function removerUploadLogo(){
-  var inp = document.getElementById('loja-logo-input');
-  if(inp){
-    var bloco = inp.closest('.flex');
-    if(bloco && bloco.parentNode) bloco.remove();
-  }
-}
-// restaura a logo original (ignora logo customizada da loja)
+// restaura a logo original (não existe mais logo customizada da loja)
 window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL || window.DIGICOPY_LOGO || './logo.png';
 if(!window.__DIGICOPY_LOGO_ORIGINAL) window.__DIGICOPY_LOGO_ORIGINAL = window.DIGICOPY_LOGO;
 
@@ -257,11 +250,11 @@ const _renderConfig5189 = window.renderConfig;
 if(typeof _renderConfig5189 === 'function'){
   window.renderConfig = function(){
     const r = _renderConfig5189.apply(this, arguments);
-    setTimeout(function(){ removerUploadLogo(); window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL || './logo.png'; }, 250);
+    setTimeout(function(){ window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL || './logo.png'; }, 250);
     return r;
   };
 }
-setTimeout(function(){ removerUploadLogo(); window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL || './logo.png'; }, 1500);
+setTimeout(function(){ window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL || './logo.png'; }, 1500);
 
 console.log('[DIGICOPY] ajustes_v5189_patch.js');
 })();

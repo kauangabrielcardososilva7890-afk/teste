@@ -435,17 +435,6 @@ function setPageHeader(title, subtitle){
 }
 
 function navigateTo(view){
-  if(view==='banco'){
-    const bancoView=ensureView('banco');
-    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-    bancoView.classList.remove('hidden');
-    document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
-    const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    renderBanco();
-    // Garante que a view fique visível mesmo se outro código esconder depois
-    setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
-    window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
-  }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
 
   const target=document.getElementById('view-'+view);

@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.10**  
+**Última versão:** **v5.20.11**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.10.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.11.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.11 — Deletado de VERDADE (não escondido): logo + "Importar arquivos"
+- **Upload de "Logo da loja" REMOVIDO de verdade.** O `ajustes_v5188_patch.js` injetava o upload de logo no card "Dados da loja", e o `ajustes_v5189_patch.js` apenas o ESCONDIA via `removerUploadLogo()` (DOM). Agora o upload foi apagado da fonte (`ajustes_v5188_patch.js` só reaplica a logo padrão; `ajustes_v5189_patch.js` sem o hack de remover).
+- **"Importar arquivos" REMOVIDO de verdade** (menu Configurações → Importar arquivos, que navegava pra view `banco` com upload JSON/DBeaver/Firebird): apagado o botão do menu (`index.html`), a `<section id="view-banco">`, e o branch `if(view==='banco')` do `navigateTo` (`app.js`). A função `renderBanco` + handlers viraram código morto (inacessível).
+- **Fica honesto p/ o usuário:** ainda existem itens ESCONDIDOS via `removerElementosFinais()` em `finalizacao_sistema_patch.js` (regex): "Relatórios" (no submenu Config), "Explorar Migrados"/módulos dinâmicos (`mod_*`), "Notinhas antigas", "nova despesa", "contas a pagar", "sistema virgem", "alinhamento do banco", "exportar backup". E o código morto de migração (renderBanco/Firebird) segue no fonte. Perguntar o que remover de vez.
 
 ## v5.20.10 — "Começar do zero" seguro + importador de clientes reativado
 - **Novo `limpeza_dados_patch.js`:** botão "🗑️ Limpar todos os dados" no card Backup das Configurações. É **manual** (só roda ao clicar, NUNCA automático — não repete o bug do "sistema virgem" que apagava a cada atualização). Pedido em 2 confirmações (`confirmSistema`).
