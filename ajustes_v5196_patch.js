@@ -62,6 +62,32 @@ function tecnicosLista(){
   return Array.isArray(db.tecnicos) ? db.tecnicos : [];
 }
 
+// Excluir usuário — só Admin (Kauan) e Dono (Denivaldo). Com proteções:
+// não exclui a si mesmo; não exclui o último Admin/Dono.
+window.excluirUsuario = function(id){
+  const s = sess(); if(!s) return;
+  if(!temPermissaoTotal(s)) return toastMsg('Somente Admin ou Dono podem excluir usuários.', 'error');
+  const u = (db.usuarios || []).find(x => x.id === id && x.empresaId === s.empresaId);
+  if(!u) return toastMsg('Usuário não encontrado', 'error');
+  if(u.id === s.usuarioId) return toastMsg('Você não pode excluir a si mesmo.', 'error');
+  const perfil = perfilEfetivo(u);
+  if(perfil === 'Admin' || perfil === 'Dono'){
+    const outrosAdminDono = (db.usuarios || []).some(x => x.id !== u.id && x.empresaId === s.empresaId && (perfilEfetivo(x) === 'Admin' || perfilEfetivo(x) === 'Dono'));
+    if(!outrosAdminDono) return toastMsg('Não é possível excluir o único Admin/Dono do sistema.', 'error');
+  }
+  const conf = (typeof window.confirmSistema === 'function') ? window.confirmSistema : null;
+  if(!conf){ return toastMsg('Não foi possível confirmar a exclusão.', 'error'); }
+  conf('Excluir o usuário ' + (u.nome || u.login) + ' (' + u.login + ')?\n\nEsta ação não pode ser desfeita.', 'Excluir usuário').then(function(ok){
+    if(!ok) return;
+    db.usuarios = (db.usuarios || []).filter(x => x.id !== id);
+    if(typeof logAction === 'function') logAction('usuario', 'excluir', id, 'Excluído usuário ' + u.login);
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof renderUsuarios === 'function') renderUsuarios();
+    if(typeof renderAuditoria === 'function') renderAuditoria();
+    toastMsg('Usuário excluído', 'success');
+  });
+};
+
 window.renderUsuarios = function(){
   const s = sess(); if(!s) return;
   const view = document.getElementById('view-usuarios'); if(!view) return;
@@ -74,12 +100,14 @@ window.renderUsuarios = function(){
     const perfil = perfilEfetivo(u);
     const pill = perfil === 'Admin' ? 'primary' : (perfil === 'Dono' ? 'primary' : 'info');
     const btnEdit = pode ? `<button onclick="openModal('usuario','${esc(u.id)}')" class="neo-btn"><i class="ph ph-pencil"></i></button>` : '';
+    // Botão de excluir: só para Admin/Dono, e nunca para si mesmo.
+    const btnDel = (privilegiado && u.id !== s.usuarioId) ? `<button onclick="excluirUsuario('${esc(u.id)}')" class="neo-btn danger"><i class="ph ph-trash"></i></button>` : '';
     return `<tr>
       <td><b>${esc(u.nome || '')}</b></td>
       <td>${esc(u.login || '')}</td>
       <td>${perfil === 'Funcionário' ? '<span class="neo-status info">Funcionário</span>' : `<span class="neo-status primary">${esc(perfil)}</span>`}</td>
       <td><span class="neo-status ${u.ativo ? 'ok' : 'wait'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      <td>${btnEdit}</td>
+      <td>${btnEdit}${btnDel}</td>
     </tr>`;
   }).join('');
 
