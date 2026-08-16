@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.15**  
+**Última versão:** **v5.20.16**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.15.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.16.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,11 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.16 — Login se AUTO-RECRIA (nunca mais some)
+- Causa raiz: o botão "Limpar todos os dados" (já removido) apagou empresa/usuários, e a auto-recriação antiga (`seedData`) só rodava quando a lista de empresas estava TOTALMENTE vazia — se sobrasse uma empresa "quebrada" (sem usuário ativo), não corrigia.
+- Correção: `seedData` virou uma **garantia idempotente** que roda em TODA carga: garante a empresa `emp_digicopy` + o admin `admin`/`admin123` (só ADICIONA o que falta, nunca sobrescreve usuário/empresa existente). Chamado com `seedData(false)` sempre (antes era só `if(db.empresas.length===0)`).
+- **Usuários com senha personalizada (kauan/denivaldo) NÃO são recriados automaticamente** (o sistema não sabe as senhas) — o usuário recria na tela Usuários, ou me passa as senhas que eu adiciono.
 
 ## v5.20.15 — Sistema limpo p/ teste final (removidas opções de teste/importar/apagar)
 - **Removido o "Simular coleta automática"** (botão na tela Leituras + função `simularLeiturasLote`).

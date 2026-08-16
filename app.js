@@ -284,19 +284,28 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  // Sem dados de demonstração: cria apenas a empresa única e o admin.
-  // (os dados reais vêm do usuário ou da sincronização com a nuvem)
-  if(!force && db.empresas.length>0) return;
-  if(db.empresas.length===0){
-    db.empresas.push({id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+  // GARANTE (sempre, idempotente) uma empresa única + um admin ativo.
+  // Roda em TODA carga — o login nunca mais "some", mesmo que algo apague os
+  // dados. Nunca sobrescreve usuários/empresas existentes (só adiciona o que falta).
+  db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
+  db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
+  let mudou = false;
+  let emp = db.empresas.find(e=>e.id==='emp_digicopy')
+         || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
+         || db.empresas[0];
+  if(!emp){
+    emp = {id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
+    db.empresas.push(emp);
+    mudou = true;
   }
-  const emp=db.empresas[0];
-  if(!(db.usuarios||[]).some(u=>u.empresaId===emp.id && u.ativo)){
+  const temAdmin = db.usuarios.some(u=>u.empresaId===emp.id && u.ativo && String(u.login||'').toLowerCase()==='admin');
+  if(!temAdmin){
     db.usuarios.push({id:'usr_admin',empresaId:emp.id,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+    mudou = true;
   }
-  saveDB();
+  if(mudou) saveDB();
 }
-if(db.empresas.length===0) seedData(false);
+seedData(false);
 
 // LOGIN LOGIC
 function formatarLoginCNPJ(input){
