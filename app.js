@@ -14,7 +14,7 @@ const defaultData={
   clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
-  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras LTDA',cnpj:'12.345.678/0001-90',fone:'(11) 3333-4444',email:'contato@digicopy.com.br'}}
+  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
 };
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
@@ -284,79 +284,17 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  if(!force && db.empresas.length>0 && db.clientes.length>0) return;
-  const gen=p=>uid(p);
-  const empresaId=gen('emp');
-  const empresas=[{id:empresaId,cnpj:'12.345.678/0001-90',cnpjDigits:onlyDigits('12.345.678/0001-90'),senha:'123456',nome:'DIGICOPY Cartuchos e Impressoras LTDA',fantasia:'DIGICOPY',criadoEm:new Date().toISOString()}];
-  const usuarios=[
-    {id:gen('usr'),empresaId, nome:'Administrador', login:'admin', senha:'admin123', perfil:'Admin', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Carlos Mendes', login:'carlos', senha:'123456', perfil:'Técnico', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Ana Souza', login:'ana', senha:'123456', perfil:'Comercial', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Financeiro', login:'financeiro', senha:'123456', perfil:'Financeiro', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-  ];
-  const clientes=[
-    {id:gen('cli'),empresaId,nome:'Construtora Horizonte LTDA',documento:'45.123.678/0001-12',tipo:'PJ',email:'financeiro@horizonte.com.br',telefone:'(11) 99123-4567',endereco:'Av. Paulista, 1000 - Bela Vista',cidade:'São Paulo',estado:'SP',cep:'01310-100',status:'ativo',mensalidade:2490,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cli'),empresaId,nome:'Escola Saber & Arte',documento:'08.765.432/0001-99',tipo:'PJ',email:'secretaria@saberarte.edu.br',telefone:'(11) 98888-1122',endereco:'R. das Flores, 234 - Jardim',cidade:'Osasco',estado:'SP',cep:'06010-120',status:'ativo',mensalidade:1890,criadoEm:new Date().toISOString(),criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('cli'),empresaId,nome:'Clínica Vida Mais',documento:'22.111.333/0001-44',tipo:'PJ',email:'adm@vidamaisclinica.com.br',telefone:'(11) 97777-3344',endereco:'R. Domingos, 45 - Centro',cidade:'Barueri',estado:'SP',cep:'06401-000',status:'inadimplente',mensalidade:3200,criadoEm:new Date().toISOString(),criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('cli'),empresaId,nome:'Advocacia Martins & Associados',documento:'33.222.111/0001-55',tipo:'PJ',email:'contato@martinsadv.com.br',telefone:'(11) 96666-7788',endereco:'Al. Santos, 700 - Jardins',cidade:'São Paulo',estado:'SP',cep:'01419-001',status:'ativo',mensalidade:1650,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cli'),empresaId,nome:'Metalúrgica Brasmetal',documento:'18.234.567/0001-33',tipo:'PJ',email:'compras@brasmetal.ind.br',telefone:'(11) 95555-0001',endereco:'Rod. Anhanguera, Km 20',cidade:'Cajamar',estado:'SP',cep:'07750-000',status:'ativo',mensalidade:4750,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const produtos=[
-    {id:gen('prd'),empresaId,sku:'TON-BRO-1230',nome:'Toner Brother TN-3442 Compatível Alto Rendimento',categoria:'Suprimento',fabricante:'Premium',estoque:47,estoqueMin:10,custo:89,preco:149,local:'A1-02',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'CIL-HP-19A',nome:'Cilindro HP 19A Original',categoria:'Peça',fabricante:'HP',estoque:8,estoqueMin:5,custo:210,preco:340,local:'B2-04',status:'ativo',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'IMP-BRO-5652',nome:'Brother DCP-L5652DN Laser Mono',categoria:'Impressora',fabricante:'Brother',estoque:3,estoqueMin:1,custo:1850,preco:2690,local:'C1-01',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'IMP-KYO-M2040',nome:'Kyocera ECOSYS M2040dn',categoria:'Impressora',fabricante:'Kyocera',estoque:5,estoqueMin:2,custo:1950,preco:2990,local:'C1-02',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'SERV-INST',nome:'Serviço Instalação e Configuração',categoria:'Serviço',fabricante:'DIGICOPY',estoque:999,estoqueMin:0,custo:0,preco:180,local:'-',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'FUSOR-BRO',nome:'Fusor Brother L5502',categoria:'Peça',fabricante:'Brother',estoque:2,estoqueMin:2,custo:420,preco:680,local:'B1-01',status:'ativo',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome,criadoEm:new Date().toISOString()},
-  ];
-  const equips=[
-    {id:gen('eq'),empresaId,modelo:'Brother DCP-L5652DN',fabricante:'Brother',tipo:'Laser Mono A4',patrimonio:'DIG-00123',serie:'U63231A8N123456',contadorPB:128450,contadorCor:0,status:'locado',valorCompra:2400,dataAquisicao:'2024-03-12',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Kyocera M2040dn',fabricante:'Kyocera',tipo:'Laser Mono A4',patrimonio:'DIG-00124',serie:'KVX882991023',contadorPB:45210,contadorCor:0,status:'locado',valorCompra:2200,dataAquisicao:'2024-06-01',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'HP Color M454dw',fabricante:'HP',tipo:'Laser Color A4',patrimonio:'DIG-00130',serie:'PHCDN8S001',contadorPB:22300,contadorCor:18900,status:'locado',valorCompra:3100,dataAquisicao:'2023-11-20',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Brother MFC-L8900CDW',fabricante:'Brother',tipo:'Laser Color A4',patrimonio:'DIG-00131',serie:'U64559K0N998877',contadorPB:12300,contadorCor:22100,status:'disponivel',valorCompra:4200,dataAquisicao:'2024-08-10',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Kyocera M5521cdw',fabricante:'Kyocera',tipo:'Laser Color A4',patrimonio:'DIG-00132',serie:'KYO998877665',contadorPB:5400,contadorCor:8100,status:'manutencao',valorCompra:3800,dataAquisicao:'2024-09-05',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('eq'),empresaId,modelo:'Epson EcoTank L3250',fabricante:'Epson',tipo:'Jato Color',patrimonio:'DIG-00133',serie:'EPL325000112',contadorPB:3200,contadorCor:5400,status:'disponivel',valorCompra:1100,dataAquisicao:'2025-01-10',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const contratos=[
-    {id:gen('ctr'),empresaId,numero:'CT-2024-0142',clienteId:clientes[0].id,dataInicio:'2024-02-15',dataFim:'2026-02-14',duracaoMeses:24,diaVencimento:10,franquiaPB:5000,franquiaCor:0,valorFranquia:890,valorExcedentePB:0.08,valorExcedenteCor:0.45,valorMensalFixo:890,status:'ativo',equipamentos:[equips[0].id],observacoes:'Atendimento 24h',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2024-0188',clienteId:clientes[1].id,dataInicio:'2024-05-01',dataFim:'2026-05-01',duracaoMeses:24,diaVencimento:15,franquiaPB:3000,franquiaCor:500,valorFranquia:1250,valorExcedentePB:0.09,valorExcedenteCor:0.55,valorMensalFixo:1250,status:'ativo',equipamentos:[equips[1].id,equips[2].id],observacoes:'Inclui toner e manutenção',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2023-0099',clienteId:clientes[2].id,dataInicio:'2023-08-10',dataFim:'2025-12-09',duracaoMeses:24,diaVencimento:5,franquiaPB:10000,franquiaCor:2000,valorFranquia:3200,valorExcedentePB:0.07,valorExcedenteCor:0.42,valorMensalFixo:3200,status:'ativo',equipamentos:[equips[1].id],observacoes:'',criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2025-0011',clienteId:clientes[4].id,dataInicio:'2025-02-01',dataFim:'2027-02-01',duracaoMeses:24,diaVencimento:20,franquiaPB:15000,franquiaCor:0,valorFranquia:4750,valorExcedentePB:0.06,valorExcedenteCor:0,valorMensalFixo:4750,status:'pendente',equipamentos:[],observacoes:'Aguardando instalação',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-  ];
-  const parque=[
-    {id:gen('prk'),empresaId,contratoId:contratos[0].id,clienteId:clientes[0].id,equipamentoId:equips[0].id,setor:'Administrativo - Térreo',enderecoInstalacao:'Av. Paulista, 1000 - SP',dataInstalacao:'2024-02-16',contadorInicialPB:120000,contadorInicialCor:0,status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('prk'),empresaId,contratoId:contratos[1].id,clienteId:clientes[1].id,equipamentoId:equips[1].id,setor:'Secretaria',enderecoInstalacao:'R. das Flores, 234 - Osasco',dataInstalacao:'2024-05-02',contadorInicialPB:40000,contadorInicialCor:0,status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('prk'),empresaId,contratoId:contratos[1].id,clienteId:clientes[1].id,equipamentoId:equips[2].id,setor:'Coordenação Pedagógica',enderecoInstalacao:'R. das Flores, 234 - Osasco',dataInstalacao:'2024-05-02',contadorInicialPB:20000,contadorInicialCor:15000,status:'ativo',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const leituras=[
-    {id:gen('lei'),empresaId,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,contratoId:parque[0].contratoId,clienteId:parque[0].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*30).toISOString(),contadorPB:127000,contadorCor:0,contadorPBAnterior:120000,contadorCorAnterior:0,consumoPB:7000,consumoCor:0,faturar:true,status:'faturado',valorExcedente:160,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,contratoId:parque[0].contratoId,clienteId:parque[0].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*2).toISOString(),contadorPB:128450,contadorCor:0,contadorPBAnterior:127000,contadorCorAnterior:0,consumoPB:1450,consumoCor:0,faturar:false,status:'pendente',valorExcedente:0,criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[1].id,equipamentoId:parque[1].equipamentoId,contratoId:parque[1].contratoId,clienteId:parque[1].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*5).toISOString(),contadorPB:45210,contadorCor:0,contadorPBAnterior:44000,contadorCorAnterior:0,consumoPB:1210,consumoCor:0,faturar:true,status:'pendente',valorExcedente:0,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[2].id,equipamentoId:parque[2].equipamentoId,contratoId:parque[2].contratoId,clienteId:parque[2].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*3).toISOString(),contadorPB:22300,contadorCor:18900,contadorPBAnterior:21800,contadorCorAnterior:18200,consumoPB:500,consumoCor:700,faturar:true,status:'pendente',valorExcedente:110,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-  ];
-  const os=[
-    {id:gen('os'),empresaId,numero:'OS-2026-0142',clienteId:clientes[0].id,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,tipo:'corretiva',prioridade:'alta',descricao:'Impressora atolando papel bandeja 1, limpeza do rolo',tecnico:'t1',status:'aberto',dataAbertura:new Date(Date.now()-1000*60*60*5).toISOString(),dataFechamento:null,solucao:'',custoPecas:0,tempoAtendimento:0,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0140',clienteId:clientes[2].id,parqueId:parque[1].id,equipamentoId:parque[1].equipamentoId,tipo:'suprimento',prioridade:'media',descricao:'Troca de toner, cliente solicitou reserva',tecnico:'t2',status:'em_atendimento',dataAbertura:new Date(Date.now()-1000*60*60*24).toISOString(),dataFechamento:null,solucao:'',custoPecas:0,tempoAtendimento:0,criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0138',clienteId:clientes[1].id,parqueId:parque[2].id,equipamentoId:parque[2].equipamentoId,tipo:'preventiva',prioridade:'baixa',descricao:'Preventiva trimestral, limpeza geral e calibração de cores',tecnico:'t3',status:'aguardando_peca',dataAbertura:new Date(Date.now()-1000*60*60*24*3).toISOString(),dataFechamento:null,solucao:'',custoPecas:120,tempoAtendimento:90,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0120',clienteId:clientes[3].id,parqueId:null,equipamentoId:null,tipo:'instalacao',prioridade:'media',descricao:'Instalação nova impressora Color setor jurídico',tecnico:'t1',status:'concluido',dataAbertura:new Date(Date.now()-1000*60*60*24*10).toISOString(),dataFechamento:new Date(Date.now()-1000*60*60*24*8).toISOString(),solucao:'Instalada Brother MFC-L8900CDW, drivers configurados',custoPecas:0,tempoAtendimento:120,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-  ];
-  const vendas=[
-    {id:gen('vda'),empresaId,numero:'VD-2026-0081',clienteId:clientes[3].id,data:new Date(Date.now()-1000*60*60*24*2).toISOString(),itens:[{produtoId:produtos[0].id,qtd:3,preco:149,subtotal:447},{produtoId:produtos[4].id,qtd:1,preco:180,subtotal:180}],desconto:0,total:627,formaPagamento:'Boleto 30d',status:'faturado',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const cr=[
-    {id:gen('cr'),empresaId,origem:'contrato',clienteId:clientes[0].id,descricao:'Mensalidade contrato CT-2024-0142 + excedente 2000 PB',valor:1050,vencimento:new Date(Date.now()+1000*60*60*24*5).toISOString(),pagamentoData:null,status:'aberto',contratoId:contratos[0].id,leituraId:leituras[0].id,vendaId:null,criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome},
-    {id:gen('cr'),empresaId,origem:'contrato',clienteId:clientes[1].id,descricao:'Mensalidade CT-2024-0188 - Ref 07/2026',valor:1250,vencimento:new Date(Date.now()-1000*60*60*24*2).toISOString(),pagamentoData:null,status:'vencido',contratoId:contratos[1].id,leituraId:null,vendaId:null,criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome},
-    {id:gen('cr'),empresaId,origem:'venda',clienteId:clientes[3].id,descricao:'Venda VD-2026-0081 - Toners',valor:627,vencimento:new Date(Date.now()+1000*60*60*24*12).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:vendas[0].id,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const cp=[
-    {id:gen('cp'),empresaId,fornecedor:'Brother do Brasil - Distribuidor',descricao:'Compra 10x Toner TN-3442',categoria:'Suprimentos',valor:890,vencimento:new Date(Date.now()+1000*60*60*24*7).toISOString(),pagamentoData:null,status:'aberto',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cp'),empresaId,fornecedor:'Galpão Logístico Cajamar',descricao:'Aluguel galpão estoque',categoria:'Infraestrutura',valor:3500,vencimento:new Date(Date.now()-1000*60*60*24*1).toISOString(),pagamentoData:new Date().toISOString(),status:'pago',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const logs=[
-    {id:gen('log'),dataHora:new Date().toISOString(),empresaId,usuarioId:usuarios[0].id,usuarioNome:usuarios[0].nome,usuarioLogin:usuarios[0].login,entidade:'sistema',acao:'seed',entidadeId:'-',detalhes:'Dados iniciais carregados'}
-  ];
-  db={...defaultData,empresas,usuarios,clientes,produtos,equipamentos:equips,contratos,parque,leituras,os,vendas,contasReceber:cr,contasPagar:cp,tecnicos:defaultData.tecnicos,config:defaultData.config,logs};
-  saveDB(); toast('Dados demo CNPJ 12.345.678/0001-90 carregados','success');
+  // Sem dados de demonstração: cria apenas a empresa única e o admin.
+  // (os dados reais vêm do usuário ou da sincronização com a nuvem)
+  if(!force && db.empresas.length>0) return;
+  if(db.empresas.length===0){
+    db.empresas.push({id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+  }
+  const emp=db.empresas[0];
+  if(!(db.usuarios||[]).some(u=>u.empresaId===emp.id && u.ativo)){
+    db.usuarios.push({id:'usr_admin',empresaId:emp.id,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+  }
+  saveDB();
 }
 if(db.empresas.length===0) seedData(false);
 

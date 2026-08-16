@@ -42,9 +42,9 @@ function loginCompativel(user, typed){
 function senhaCompativel(user, senha){ return txt(user&&user.senha)===txt(senha); }
 function escolherEmpresaPadrao(dbRef){
   dbRef.empresas=dbRef.empresas||[];
-  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas[0];
+  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0];
   if(!emp){
-    emp={id:uidSafe('emp'),cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
+    emp={id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
     dbRef.empresas.push(emp);
   }
   if(!emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
@@ -70,7 +70,8 @@ function importarFuncionariosLegados(dbRef, empId){
   });
   // Se não veio FUNCIONARIOS ainda, mantém pelo menos um admin para conseguir entrar.
   if(!dbRef.usuarios.some(u=>u.empresaId===empId&&u.ativo)){
-    dbRef.usuarios.push({id:uidSafe('usr'),empresaId:empId,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+    const jaTemAdmin = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_admin');
+    dbRef.usuarios.push({id: jaTemAdmin?uidSafe('usr'):'usr_admin',empresaId:empId,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
     alterou++;
   }
   return alterou;

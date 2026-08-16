@@ -327,28 +327,6 @@
     return mudou;
   }
 
-  /* ---------------- bootstrap: limpa demo antes da 1ª carga ---------------- */
-  function ehDemo(){
-    try{
-      return (db.empresas.length === 1) && db.empresas[0] &&
-        (db.empresas[0].cnpjDigits === '12345678000190' || db.empresas[0].cnpj === '12.345.678/0001-90');
-    }catch(e){ return false; }
-  }
-  function limparDemo(){
-    ARRAY_ENT.forEach(function(k){ if(Array.isArray(db[k])) db[k] = []; });
-    db.modulosDinamicos = {};
-    db.config = { empresa:{} };
-    try{ db.logs = []; }catch(e){}
-    state.snap = {};
-    state.cursor = null;
-  }
-
-  /* ---------------- nuvem tem dados? (checagem leve) ---------------- */
-  async function nuvemTemDados(){
-    try{ var docs = await rtListDesde(null, 1); return !!(docs && docs.length); }
-    catch(e){ return false; }
-  }
-
   /* ---------------- mapeia cada tela às entidades que ela mostra ---------------- */
   var VIEW_ENTS = {
     clientes: ['clientes'],
@@ -376,22 +354,15 @@
   /* ---------------- loop ---------------- */
   var ocupado = false;
   var __dirty = false;
-  var __eraDemo = false;
-  var __reloaded = false;
   async function tick(){
     if(ocupado) return;
     ocupado = true;
     try{
-      if(ehDemo()){
-        if(await nuvemTemDados()){
-          // PC novo (demo) com nuvem já populada: troca a demo pelos dados reais
-          limparDemo(); __eraDemo = true;
-          try{ saveDB(); }catch(e){}
-        } else {
-          // demo + nuvem vazia: NÃO envia a demo (evita poluir a nuvem com
-          // empresa/clientes de mentira). Fica só aguardando um PC real publicar.
-          return;
-        }
+      // PC NOVO (nunca sincronizou): puxa PRIMEIRO, pra trazer os dados reais
+      // antes de enviar qualquer coisa local. Isso evita que um PC vazio
+      // sobrescreva a empresa real com uma empresa recém-criada em branco.
+      if(!state.cursor){
+        await pullMudancas();
       }
       // Tenta subir o que mudou. pushMudancas é idempotente (só grava o que
       // difere do snapshot) e RE-tenta sozinho o que falhou antes (ex.: cota).
@@ -399,12 +370,6 @@
       __dirty = false;
       var mudou = await pullMudancas();
       if(mudou.size){ try{ saveDB(); }catch(e){} }
-      if(__eraDemo && !__reloaded && db.empresas && db.empresas.length){
-        if(typeof getSession === 'function' && !getSession()){
-          __reloaded = true;
-          setTimeout(function(){ try{ location.reload(); }catch(e){} }, 500);
-        }
-      }
     }catch(e){ setErr(e); }
     finally{ ocupado = false; }
   }
@@ -459,7 +424,7 @@
   window.__syncRtInternals = {
     ARRAY_ENT:ARRAY_ENT, OBJ_ENT:OBJ_ENT, COLL:COLL, STATE_KEY:STATE_KEY,
     hashStr:hashStr, hashRec:hashRec, tsKey:tsKey, aplicarRemoto:aplicarRemoto,
-    ehDemo:ehDemo, limparDemo:limparDemo, pushMudancas:pushMudancas, pullMudancas:pullMudancas,
+    pushMudancas:pushMudancas, pullMudancas:pullMudancas,
     viewRelevante:viewRelevante, VIEW_ENTS:VIEW_ENTS,
     rtFetch:rtFetch, rtWrite:rtWrite, rtListDesde:rtListDesde, authToken:authToken
   };

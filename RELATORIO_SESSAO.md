@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.8**  
+**Última versão:** **v5.20.9**  
 **Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.8.zip` (link raw no PR #18)  
+**Zip:** `Sistema-Digicopy-v5.20.9.zip` (link raw no PR #18)  
 **GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
@@ -27,6 +27,15 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.9 — Removida a DEMONSTRAÇÃO (dados fake) + login simples sem CNPJ
+- **`seedData` em `app.js` não cria mais os dados fake** (empresa CNPJ 12.345.678/0001-90, 6 clientes de mentira, produtos, equipamentos, contratos, leituras, OS, vendas, contas + usuários carlos/ana/financeiro). Agora só garante **empresa única + admin** (`emp_digicopy` / `usr_admin`, login `admin`/`admin123`).
+- **Login já era sem CNPJ** (o patch `login_dados_automaticos` escondia/removia a etapa de CNPJ) — mantido.
+- **Ids fixos** pra empresa única e admin: `escolherEmpresaPadrao` e o fallback de admin do `login_dados_automaticos_patch.js` agora usam `emp_digicopy`/`usr_admin` (antes eram aleatórios → cada PC criava empresa diferente e duplicava na nuvem).
+- **`defaultData.config.empresa`** limpo (sem CNPJ/telefone/email fake).
+- **Sync:** removida a lógica `ehDemo()`/`limparDemo()` (conceito de demo acabou — nada mais bloqueia a sincronização). Adicionado **pull-primeiro** em PC novo (`!state.cursor`) pra não sobrescrever a empresa real com a empresa vazia recém-criada.
+- Teste atualizado (23 ok, sem a seção de demo).
+- **Importante p/ o usuário:** os dados antigos (demo + clientes) que já estão no `localStorage` do PC dele continuam lá — não são apagados sozinhos. Pra começar limpo, ele precisa limpar o localStorage (ou eu faço uma limpeza dos registros fake conhecidos, se ele pedir).
 
 ## v5.20.8 — Causa raiz de "clientes não vão pra nuvem"
 - **Bug 1 (retry):** quando um envio falhava (ex.: cota 429), o `catch` engolia o erro e o `tick` só empurrava se `__dirty || !state.cursor`. Depois do 1º cursor setado, um envio falho **nunca era re-tentado** → o cliente ficava preso no PC. Corrigido: `pushMudancas` agora retorna `falhou`, e o `tick` **sempre tenta** empurrar (idempotente — só grava o que difere do snapshot), re-tentando o que falhou.

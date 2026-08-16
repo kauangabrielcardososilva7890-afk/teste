@@ -77,16 +77,7 @@ db.config = { empresa:{ nome:'A' }, _rt:'2026-08-16T10:00:00.000Z' };
 ok(I.aplicarRemoto('config','config',{ empresa:{ nome:'B' } }, false, '2026-08-16T11:00:00.000Z') === true, 'config remoto mais novo aplica');
 ok(db.config.empresa.nome === 'B', 'config = B');
 
-// ===== 6. demo detection =====
-resetDb();
-db.empresas = [{ id:'e1', cnpjDigits:'12345678000190' }];
-ok(I.ehDemo() === true, 'detecta demo');
-db.empresas = [{ id:'e2', cnpjDigits:'99999999999999' }];
-ok(I.ehDemo() === false, 'não é demo com empresa real');
-I.limparDemo();
-ok(db.empresas.length === 0 && db.clientes.length === 0, 'limparDemo zera entidades');
-
-// ===== 7. tsNum comparação numérica (fracionário de tamanhos diferentes) =====
+// ===== 6. tsKey comparação numérica (fracionário de tamanhos diferentes) =====
 ok(I.tsKey('2026-08-16T10:00:00.9Z')  >  I.tsKey('2026-08-16T10:00:00.10Z'), '0.9s > 0.10s (numérico, não string)');
 ok(I.tsKey('2026-08-16T10:00:00.123Z') < I.tsKey('2026-08-16T10:00:00.1234Z'), '0.123 < 0.1234');
 
