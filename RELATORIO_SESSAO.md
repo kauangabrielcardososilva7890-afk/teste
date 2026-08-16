@@ -2,12 +2,12 @@
 
 **Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a00bb1-teste` (a sessão mudou de branch; a antiga `arena/01a001ed-teste` já foi mergeada na `main` pelo PR #18)  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/21  
-**Última versão:** **v5.20.25**  
-**Commit:** `30a5422`  
-**Zip:** `Sistema-Digicopy-v5.20.25.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/30a5422e3b5c7a3b751b1b511f54383f98fc301d/index.html?v=5.20.25`
+**Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
+**PR:** será criado a partir de `arena/01a00cfb-teste`  
+**Última versão:** **v5.20.26**  
+**Commit:** `79420a3`  
+**Zip:** `Sistema-Digicopy-v5.20.26.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/79420a3/index.html?v=5.20.26`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.26 — botão Teste nuvem realmente visível
+- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar`, mas o próprio layout atual esconde permanentemente `#sidebar` com `display:none!important`. Por isso o HTML/teste dizia que ele existia, porém o usuário não conseguia vê-lo.
+- O botão **Teste nuvem** foi movido para a **barra superior realmente usada pelo sistema**, imediatamente antes de **Sair**.
+- O teste automatizado agora verifica que o botão está dentro de `.modern-topnav` e que não ficou preso na sidebar oculta.
+- Cache do script atualizado para `v5.20.26`; lógica de diagnóstico e motor de sync preservados.
+- Testes: `node test_ajustes_v52025.js` e `npm run check` OK. A única falha da suíte completa continua sendo a falha antiga aceita de etiquetas.
 
 ## v5.20.25 — "Teste da nuvem" de volta (sync parou em silêncio)
 - Sintoma do usuário: "não está sincronizando" após a v5.20.24. Verificado: `sync_realtime_patch.js`/`firebase_*` **intocados** desde a versão que funcionava (diff vazio) — o motor é o mesmo; falha é ambiental e agora invisível (o diagnóstico automático foi removido na v5.20.15).
