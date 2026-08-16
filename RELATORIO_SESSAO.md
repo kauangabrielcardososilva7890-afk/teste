@@ -4,9 +4,9 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a001ed-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.19.24**  
+**Última versão:** **v5.19.25**  
 **Commit:** atualizar após push  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.24`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -26,6 +26,9 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.19.25
+- **Recuperação de dados antigos (salvos localmente):** o `loadDB` agora também lê as chaves LEGADAS (`digicopy_erp_v20`, `digicopy_erp_v10`, `digicopy_erp`, `digicopy_backup`) que a versão antiga usava e a atual estava apagando sem ler. Com os arquivos `.ldb` antigos na pasta certa, os dados voltam sozinhos.
 
 ## v5.19.24
 - **Chamados — validação em UM aviso só:** agora junta tudo que falta num único aviso ("Preencha o que falta: X, Y, Z"). O que já foi preenchido sai do aviso. Campos que faltam ficam destacados em vermelho (igual produtos). Inclui também a "Data de atendimento" ao finalizar (que a validação antiga exigia).

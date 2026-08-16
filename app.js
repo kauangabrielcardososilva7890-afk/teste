@@ -120,7 +120,30 @@ function loadDB(){
       }
     }
   }catch(eInc){ /* manifesto ilegível: cai no formato antigo */ }
-  // 2) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
+  // 2) Chaves LEGADAS (versões antigas que salvavam só local):
+  //    digicopy_erp_v20 / v10 / digicopy_erp — a versão atual apagava esses
+  //    dados sem ler. Recuperamos aqui, antes de cair no demo.
+  const LEGACY_KEYS=['digicopy_erp_v20','digicopy_erp_v10','digicopy_erp','digicopy_backup'];
+  for(let i=0;i<LEGACY_KEYS.length;i++){
+    const lraw=localStorage.getItem(LEGACY_KEYS[i]);
+    if(!lraw) continue;
+    try{
+      let obj=null;
+      try{ obj=JSON.parse(lraw); }catch(eP){ obj=null; }
+      if(!obj){ try{ obj=JSON.parse(storageDecode(lraw)); }catch(eD){ obj=null; } }
+      // pode estar aninhado em .data / .tabelas
+      if(obj && !obj.clientes && !obj.produtos && !obj.vendas && !obj.os){
+        const inner=obj.data || obj.tabelas || obj.backup || obj.db;
+        if(inner && typeof inner==='object' && !Array.isArray(inner)) obj=inner;
+      }
+      if(obj && (Array.isArray(obj.clientes) || Array.isArray(obj.produtos) || Array.isArray(obj.vendas) || Array.isArray(obj.os))){
+        // só aceita se tiver conteúdo real (não é a base demo vazia)
+        const total=(obj.clientes||[]).length+(obj.produtos||[]).length+(obj.vendas||[]).length+(obj.os||[]).length;
+        if(total>0) return normalizeDbShape(obj);
+      }
+    }catch(eL){ /* chave ilegível: tenta a próxima */ }
+  }
+  // 3) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
