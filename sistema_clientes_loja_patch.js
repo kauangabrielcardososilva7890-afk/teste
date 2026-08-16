@@ -140,28 +140,8 @@ window.salvarDadosLojaFinal=function(){
 const oldRenderConfig=window.renderConfig;
 window.renderConfig=function(){ const r=oldRenderConfig?oldRenderConfig.apply(this,arguments):undefined; setTimeout(()=>{ renderDadosLojaCard(); atualizarNomeSistema(); },120); return r; };
 
-function inserirImportadorClientes(){
-  const view=document.getElementById('view-clientes'); if(!view||document.getElementById('clientes-import-card')) return;
-  const div=document.createElement('div'); div.id='clientes-import-card'; div.className='max-w-[980px] mx-auto rounded-[16px] bg-blue-50 border border-blue-200 p-4 text-[12px] text-blue-900';
-  div.innerHTML=`<div class="flex flex-col md:flex-row md:items-center gap-3"><div class="flex-1"><b>Importar clientes reais</b><p class="mt-1">Use preferencialmente <b>CLIENTES.json</b> e <b>CLIENTES_FINAL.json</b>. Arquivos de usuários/restrição são ignorados neste importador.</p></div><input id="clientes-json-input" type="file" accept=".json,application/json" multiple class="text-[12px]"><button onclick="importarClientesJsonFinal()" class="neo-btn primary">Importar clientes</button></div><div id="clientes-import-status" class="mt-2 text-[12px]"></div>`;
-  view.prepend(div);
-}
-window.importarClientesJsonFinal=async function(){
-  const s=sess(); if(!s) return;
-  const input=document.getElementById('clientes-json-input'); const files=Array.from(input?.files||[]);
-  if(!files.length) return toastMsg('Selecione CLIENTES.json e/ou CLIENTES_FINAL.json','error');
-  const arquivos=[];
-  for(const f of files){
-    try{ arquivos.push({nome:f.name,json:JSON.parse(await f.text())}); }
-    catch(e){ toastMsg('Erro lendo '+f.name+': '+e.message,'error'); }
-  }
-  const r=importarClientesDeObjetos(db,arquivos,s.empresaId);
-  salvar(); if(typeof renderClientes==='function') renderClientes();
-  const st=document.getElementById('clientes-import-status'); if(st) st.innerHTML=`Importados: <b>${r.importados}</b> • Atualizados: <b>${r.atualizados}</b> • Ignorados: <b>${r.ignorados}</b> • Próximo código: <b>${r.ultimoCodigo+1}</b>`;
-  toastMsg('Clientes importados/atualizados','success');
-};
 const oldRenderClientes=window.renderClientes;
-window.renderClientes=function(){ const r=oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; setTimeout(()=>{ inserirImportadorClientes(); atualizarNomeSistema(); },80); return r; };
+window.renderClientes=function(){ const r=oldRenderClientes?oldRenderClientes.apply(this,arguments):undefined; setTimeout(()=>{ atualizarNomeSistema(); },80); return r; };
 
 console.log('[DIGICOPY] sistema_clientes_loja_patch.js v4.9.58 carregado');
 })();

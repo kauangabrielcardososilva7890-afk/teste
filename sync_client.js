@@ -28,25 +28,6 @@
     return {ok:false, firebaseAusente:true};
   };
 
-  window.nuvemInfo = function(){
-    const cfg = window.FIREBASE_CONFIG || {};
-    alert('Nuvem do sistema: GOOGLE FIREBASE (Firestore)\n\nProjeto: ' + (cfg.projectId || 'não configurado') + '\nBanco: São Paulo (southamerica-east1)\n\nO envio é automático e incremental — use "Enviar para nuvem" e "Carregar da nuvem" nos menus.');
-  };
-
-  // Copia as REGRAS DEFINITIVAS do Firestore (etapa de segurança do guia).
-  window.copiarRegrasFirebase = async function(){
-    const regras = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /app_state/{doc} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}";
-    try{
-      await navigator.clipboard.writeText(regras);
-      if(typeof toast==='function') toast('Regras do Firebase copiadas! Cole em Firestore Database → Regras e clique em Publicar.', 'success');
-    }catch{
-      const box=document.getElementById('supabase-schema-sql-box');
-      if(box){ box.classList.remove('hidden'); box.value=regras; box.select(); }
-      if(typeof toast==='function') toast('As regras apareceram na caixa para copiar manualmente.', 'info');
-    }
-  };
-
-
   const CLOUD_STATE_KEY = 'digicopy_erp_state_v1'; // legado (blob único) — só leitura de compatibilidade
   const CLOUD_META_KEY = 'digicopy_erp_v2_meta';
   const CLOUD_PART_PREFIX = 'digicopy_erp_v2__';
@@ -455,79 +436,6 @@
       if(typeof toast==='function') toast('Erro ao carregar da nuvem: '+msg, 'error');
       return {ok:false, erros:[msg]};
     }
-  };
-
-  window.enviarDadosLocaisParaNuvem = function(){ return window.syncEnviarParaNuvem({confirmar:true}); };
-  window.carregarDadosDaNuvem = function(){ return window.syncCarregarDaNuvem({confirmar:true}); };
-
-  window.verificarBaseNaNuvem = async function(){
-    setCloudSyncStatus('<span class="text-slate-500">Verificando dados compartilhados na nuvem...</span>');
-    try{
-      const metaRows = await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-      if(metaRows && metaRows.length){
-        const meta=metaRows[0].data;
-        setCloudSyncStatus(`<span class="text-emerald-700 font-bold">✅ Nuvem PUBLICADA: ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros. Última atualização: ${new Date(meta.atualizadoEm||metaRows[0].updated_at).toLocaleString('pt-BR')}.</span><div class="text-[12px] text-emerald-700 mt-1">Tudo certo — outros PCs podem clicar em "Carregar da nuvem".</div>`);
-        return;
-      }
-      // Sem meta: mostra o retrato completo (partes soltas? blob antigo?)
-      const partes = await supabaseRequest(`app_state?select=key&key=like.${encodeURIComponent(CLOUD_PART_PREFIX)}*&limit=1000`, {method:'GET'});
-      const rows = await supabaseRequest(`app_state?select=updated_at&key=eq.${encodeURIComponent(CLOUD_STATE_KEY)}&limit=1`, {method:'GET'});
-      const nPartes=(partes||[]).length;
-      const temBlob=!!(rows && rows.length);
-      if(nPartes){
-        setCloudSyncStatus(`<span class="text-amber-700 font-bold">⚠️ Nuvem com envio INCOMPLETO: ${nPartes} partes soltas, sem a confirmação de publicação. Base antiga (backup): ${temBlob?'existe de '+new Date(rows[0].updated_at).toLocaleString('pt-BR'):'não existe'}.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-1">Nenhum PC novo consegue carregar 100% ainda. <b>Solução:</b> no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b> e aguarde a mensagem "PUBLICADO E VERIFICADO".</div>`);
-      }else if(temBlob){
-        setCloudSyncStatus(`<span class="text-amber-700 font-bold">⚠️ Existe apenas um backup ANTIGO na nuvem (de ${new Date(rows[0].updated_at).toLocaleString('pt-BR')}) — ele NÃO tem a base completa.</span><div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-1">Para publicar a base completa: no computador onde a importação foi feita, clique em <b>Enviar para nuvem</b>.</div>`);
-      }else{
-        setCloudSyncStatus('<span class="text-amber-700 font-bold">Conectado, mas ainda não há dados enviados para a nuvem.</span>');
-      }
-    }catch(err){
-      const msg=err?.message||String(err);
-      setCloudSyncStatus(`<span class="text-red-700 font-bold">Erro ao verificar: ${escapeHtml(msg)}</span>`);
-    }
-  };
-
-  function cloudMigrationHtml(){
-    const projId = (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.projectId) || 'Google Firebase';
-    return `
-      <div class="neo-shell">
-        <div class="neo-panel neo-float-in">
-          <div class="neo-head">
-            <div>
-              <h3>Migração e nuvem</h3>
-              <p>Google Firebase (Firestore) configurado para guardar os dados e sincronizar os computadores</p>
-            </div>
-            <div class="neo-actions">
-              <button onclick="testarNuvem()" class="neo-btn primary"><i class="ph ph-plugs-connected"></i>Testar conexão</button>
-              <button onclick="copiarRegrasFirebase()" class="neo-btn"><i class="ph ph-copy"></i>Copiar regras Firebase</button>
-              <button onclick="nuvemInfo()" class="neo-btn"><i class="ph ph-info"></i>Dados</button>
-              <button onclick="verificarBaseNaNuvem()" class="neo-btn"><i class="ph ph-database"></i>Ver base teste</button>
-            </div>
-          </div>
-          <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="neo-card"><p class="neo-label">Projeto (Google Firebase)</p><b class="text-[#0a1e8a] break-all">${projId}</b></div>
-            <div class="neo-card"><p class="neo-label">Status</p><div id="cloud-connection-status" class="text-[13px] text-slate-600">Clique em testar conexão.</div></div>
-            <div class="neo-card"><p class="neo-label">Banco</p><p class="text-[13px] text-slate-600">Firestore (Google) em São Paulo.</p></div>
-          </div>
-          <div class="px-4 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div class="neo-card lg:col-span-2"><p class="neo-label">Sincronização de teste</p><div id="cloud-sync-status" class="text-[13px] text-slate-600">Área temporária para testar sincronização.</div></div>
-            <div class="neo-card flex flex-col gap-2"><button onclick="enviarDadosLocaisParaNuvem()" class="neo-btn primary justify-center"><i class="ph ph-cloud-arrow-up"></i>Enviar base de teste</button><button onclick="carregarDadosDaNuvem()" class="neo-btn justify-center"><i class="ph ph-cloud-arrow-down"></i>Carregar base teste</button></div>
-          </div>
-          <div class="p-4 pt-0 grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div class="neo-card"><b>1. Regras</b><p class="text-[12px] text-slate-500 mt-1">Clique em Copiar regras Firebase e cole em Firestore Database → Regras → Publicar.</p></div>
-            <div class="neo-card"><b>2. Importação</b><p class="text-[12px] text-slate-500 mt-1">Tabelas detectadas: CLIENTES, PRODUTOS, VENDAS, ITENS_VENDA, LOCACAO, LEITURAS, EQUIPAMENTOS e financeiro.</p></div>
-            <div class="neo-card"><b>3. Sistema online</b><p class="text-[12px] text-slate-500 mt-1">Dados sincronizados pela nuvem Google.</p></div>
-            <div class="neo-card"><b>4. Tempo real</b><p class="text-[12px] text-slate-500 mt-1">Atualizar telas entre computadores.</p></div>
-          </div>
-          <div class="p-4 pt-0"><textarea id="supabase-schema-sql-box" class="neo-input hidden w-full !h-[180px] font-mono text-[11px] py-2"></textarea></div>
-        </div>
-      </div>`;
-  }
-
-  // renderBanco agora está no app.js com integração Firebird + Supabase
-  // Mantendo apenas openCloudMigration para compatibilidade
-  window.openCloudMigration = function(){
-    if(typeof navigateTo === 'function') navigateTo('banco');
   };
 
   // ═══════════════════════════════════════════════════════════════════

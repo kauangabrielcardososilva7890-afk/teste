@@ -65,17 +65,10 @@ function patchHtmlImpressao(html){
   return html;
 }
 function destacarChamadoModal(){
-  const body=document.getElementById('modal-body'); if(!body||body.dataset.chamadoFaixas==='1') return;
-  const title=(document.getElementById('modal-title')?.innerText||''); if(!/chamado|ordem/i.test(title)) return;
-  body.dataset.chamadoFaixas='1';
-  const labels=[...body.querySelectorAll('label,p')];
-  labels.forEach(el=>{
-    const t=fold(el.innerText||el.textContent||'');
-    if(/motivo|defeito|serviço executado|servicos|observa|contador|itens usados|peças|pecas/.test(t)){
-      const faixa=document.createElement('div'); faixa.className='faixa-chamado-final'; faixa.textContent=(el.innerText||el.textContent||'Seção').replace('*','').trim();
-      el.parentNode.insertBefore(faixa,el);
-    }
-  });
+  // DESATIVADO (v5.19.23): as faixas azuis agora são feitas só pelo
+  // ajustes_v5186_patch.js. Esta função antiga adicionava faixa SEM esconder
+  // o título, duplicando os nomes (ex.: "MOTIVO/DEFEITO" duas vezes).
+  return;
 }
 window.AJUSTES_POS_FINAL_PURE={isProdutoImpressoraLocacao,patchHtmlImpressao};
 

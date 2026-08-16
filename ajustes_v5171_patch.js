@@ -88,17 +88,9 @@ window.__lcMontarChamadoUI = function(contrato){
     pintar();
   }
 
-  // 2.1 color SEMPRE visível no painel geral (criar já mostra)
+  // 2.1 color: DESATIVADO (v5.19.21) — o bloco de color já vem no htmlContadores
+  // (v5175). Manter aqui duplicava o contador color no chamado avulso.
   const geral = document.getElementById('ko-painel-geral') || body;
-  if(!document.getElementById('lc-cont-color-atu')){
-    const wrap = document.createElement('div');
-    wrap.innerHTML = htmlColorBlock();
-    geral.appendChild(wrap.firstChild);
-  } else if(!document.getElementById('lc-color-block') && document.getElementById('ko-painel-geral')){
-    // move para geral se ficou em detalhes
-    const el = document.getElementById('lc-cont-color-atu').closest('.grid') || document.getElementById('lc-cont-color-atu').parentElement;
-    if(el && !geral.contains(el)) geral.appendChild(el);
-  }
 
   if(!document.getElementById('lc-data-atend')){
     const d=document.createElement('div');

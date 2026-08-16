@@ -14,7 +14,7 @@ const defaultData={
   clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
-  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras LTDA',cnpj:'12.345.678/0001-90',fone:'(11) 3333-4444',email:'contato@digicopy.com.br'}}
+  config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
 };
 
 // Armazenamento: base grande vai COMPRIMIDA (prefixo "LZ1:") — cabe dezenas de
@@ -120,7 +120,30 @@ function loadDB(){
       }
     }
   }catch(eInc){ /* manifesto ilegível: cai no formato antigo */ }
-  // 2) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
+  // 2) Chaves LEGADAS (versões antigas que salvavam só local):
+  //    digicopy_erp_v20 / v10 / digicopy_erp — a versão atual apagava esses
+  //    dados sem ler. Recuperamos aqui, antes de cair no demo.
+  const LEGACY_KEYS=['digicopy_erp_v20','digicopy_erp_v10','digicopy_erp','digicopy_backup'];
+  for(let i=0;i<LEGACY_KEYS.length;i++){
+    const lraw=localStorage.getItem(LEGACY_KEYS[i]);
+    if(!lraw) continue;
+    try{
+      let obj=null;
+      try{ obj=JSON.parse(lraw); }catch(eP){ obj=null; }
+      if(!obj){ try{ obj=JSON.parse(storageDecode(lraw)); }catch(eD){ obj=null; } }
+      // pode estar aninhado em .data / .tabelas
+      if(obj && !obj.clientes && !obj.produtos && !obj.vendas && !obj.os){
+        const inner=obj.data || obj.tabelas || obj.backup || obj.db;
+        if(inner && typeof inner==='object' && !Array.isArray(inner)) obj=inner;
+      }
+      if(obj && (Array.isArray(obj.clientes) || Array.isArray(obj.produtos) || Array.isArray(obj.vendas) || Array.isArray(obj.os))){
+        // só aceita se tiver conteúdo real (não é a base demo vazia)
+        const total=(obj.clientes||[]).length+(obj.produtos||[]).length+(obj.vendas||[]).length+(obj.os||[]).length;
+        if(total>0) return normalizeDbShape(obj);
+      }
+    }catch(eL){ /* chave ilegível: tenta a próxima */ }
+  }
+  // 3) Chave única antiga (pré v4.4.0) — o primeiro saveDB() já migra sozinho
   const raw=localStorage.getItem(DB_KEY);
   if(!raw) return structuredClone(defaultData);
   try{
@@ -261,81 +284,73 @@ function logAction(entidade, acao, entidadeId, detalhes=''){
 
 // SEED INICIAL
 function seedData(force=false){
-  if(!force && db.empresas.length>0 && db.clientes.length>0) return;
-  const gen=p=>uid(p);
-  const empresaId=gen('emp');
-  const empresas=[{id:empresaId,cnpj:'12.345.678/0001-90',cnpjDigits:onlyDigits('12.345.678/0001-90'),senha:'123456',nome:'DIGICOPY Cartuchos e Impressoras LTDA',fantasia:'DIGICOPY',criadoEm:new Date().toISOString()}];
-  const usuarios=[
-    {id:gen('usr'),empresaId, nome:'Administrador', login:'admin', senha:'admin123', perfil:'Admin', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Carlos Mendes', login:'carlos', senha:'123456', perfil:'Técnico', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Ana Souza', login:'ana', senha:'123456', perfil:'Comercial', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
-    {id:gen('usr'),empresaId, nome:'Financeiro', login:'financeiro', senha:'123456', perfil:'Financeiro', ativo:true, criadoEm:new Date().toISOString(), criadoPor:'sistema'},
+  // AUTORITATIVO (roda em toda carga): garante a empresa única + os 2 usuários
+  // reais com as credenciais corretas, e remove usuários de demonstração.
+  //   • Kauan     → login "kauan"     senha "6132"  perfil Admin
+  //   • Denivaldo → login "denivaldo" senha "3232"  perfil Dono
+  db.empresas = Array.isArray(db.empresas) ? db.empresas : [];
+  db.usuarios = Array.isArray(db.usuarios) ? db.usuarios : [];
+  let mudou = false;
+
+  let emp = db.empresas.find(e=>e.id==='emp_digicopy')
+         || db.empresas.find(e=>/digicopy/i.test(String(e.fantasia||e.nome||'')))
+         || db.empresas[0];
+  if(!emp){
+    emp = {id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
+    db.empresas.push(emp);
+    mudou = true;
+  }
+  // Só mantém UMA empresa (a real). Empresas demo/órfãs são removidas.
+  if(db.empresas.length > 1){
+    db.empresas = [emp];
+    mudou = true;
+  }
+
+  const garantidos = [
+    {id:'usr_kauan',    login:'kauan',     nome:'Kauan',     perfil:'Admin', senha:'6132'},
+    {id:'usr_denivaldo',login:'denivaldo', nome:'Denivaldo', perfil:'Dono',  senha:'3232'}
   ];
-  const clientes=[
-    {id:gen('cli'),empresaId,nome:'Construtora Horizonte LTDA',documento:'45.123.678/0001-12',tipo:'PJ',email:'financeiro@horizonte.com.br',telefone:'(11) 99123-4567',endereco:'Av. Paulista, 1000 - Bela Vista',cidade:'São Paulo',estado:'SP',cep:'01310-100',status:'ativo',mensalidade:2490,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cli'),empresaId,nome:'Escola Saber & Arte',documento:'08.765.432/0001-99',tipo:'PJ',email:'secretaria@saberarte.edu.br',telefone:'(11) 98888-1122',endereco:'R. das Flores, 234 - Jardim',cidade:'Osasco',estado:'SP',cep:'06010-120',status:'ativo',mensalidade:1890,criadoEm:new Date().toISOString(),criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('cli'),empresaId,nome:'Clínica Vida Mais',documento:'22.111.333/0001-44',tipo:'PJ',email:'adm@vidamaisclinica.com.br',telefone:'(11) 97777-3344',endereco:'R. Domingos, 45 - Centro',cidade:'Barueri',estado:'SP',cep:'06401-000',status:'inadimplente',mensalidade:3200,criadoEm:new Date().toISOString(),criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('cli'),empresaId,nome:'Advocacia Martins & Associados',documento:'33.222.111/0001-55',tipo:'PJ',email:'contato@martinsadv.com.br',telefone:'(11) 96666-7788',endereco:'Al. Santos, 700 - Jardins',cidade:'São Paulo',estado:'SP',cep:'01419-001',status:'ativo',mensalidade:1650,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cli'),empresaId,nome:'Metalúrgica Brasmetal',documento:'18.234.567/0001-33',tipo:'PJ',email:'compras@brasmetal.ind.br',telefone:'(11) 95555-0001',endereco:'Rod. Anhanguera, Km 20',cidade:'Cajamar',estado:'SP',cep:'07750-000',status:'ativo',mensalidade:4750,criadoEm:new Date().toISOString(),criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const produtos=[
-    {id:gen('prd'),empresaId,sku:'TON-BRO-1230',nome:'Toner Brother TN-3442 Compatível Alto Rendimento',categoria:'Suprimento',fabricante:'Premium',estoque:47,estoqueMin:10,custo:89,preco:149,local:'A1-02',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'CIL-HP-19A',nome:'Cilindro HP 19A Original',categoria:'Peça',fabricante:'HP',estoque:8,estoqueMin:5,custo:210,preco:340,local:'B2-04',status:'ativo',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'IMP-BRO-5652',nome:'Brother DCP-L5652DN Laser Mono',categoria:'Impressora',fabricante:'Brother',estoque:3,estoqueMin:1,custo:1850,preco:2690,local:'C1-01',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'IMP-KYO-M2040',nome:'Kyocera ECOSYS M2040dn',categoria:'Impressora',fabricante:'Kyocera',estoque:5,estoqueMin:2,custo:1950,preco:2990,local:'C1-02',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'SERV-INST',nome:'Serviço Instalação e Configuração',categoria:'Serviço',fabricante:'DIGICOPY',estoque:999,estoqueMin:0,custo:0,preco:180,local:'-',status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('prd'),empresaId,sku:'FUSOR-BRO',nome:'Fusor Brother L5502',categoria:'Peça',fabricante:'Brother',estoque:2,estoqueMin:2,custo:420,preco:680,local:'B1-01',status:'ativo',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome,criadoEm:new Date().toISOString()},
-  ];
-  const equips=[
-    {id:gen('eq'),empresaId,modelo:'Brother DCP-L5652DN',fabricante:'Brother',tipo:'Laser Mono A4',patrimonio:'DIG-00123',serie:'U63231A8N123456',contadorPB:128450,contadorCor:0,status:'locado',valorCompra:2400,dataAquisicao:'2024-03-12',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Kyocera M2040dn',fabricante:'Kyocera',tipo:'Laser Mono A4',patrimonio:'DIG-00124',serie:'KVX882991023',contadorPB:45210,contadorCor:0,status:'locado',valorCompra:2200,dataAquisicao:'2024-06-01',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'HP Color M454dw',fabricante:'HP',tipo:'Laser Color A4',patrimonio:'DIG-00130',serie:'PHCDN8S001',contadorPB:22300,contadorCor:18900,status:'locado',valorCompra:3100,dataAquisicao:'2023-11-20',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Brother MFC-L8900CDW',fabricante:'Brother',tipo:'Laser Color A4',patrimonio:'DIG-00131',serie:'U64559K0N998877',contadorPB:12300,contadorCor:22100,status:'disponivel',valorCompra:4200,dataAquisicao:'2024-08-10',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('eq'),empresaId,modelo:'Kyocera M5521cdw',fabricante:'Kyocera',tipo:'Laser Color A4',patrimonio:'DIG-00132',serie:'KYO998877665',contadorPB:5400,contadorCor:8100,status:'manutencao',valorCompra:3800,dataAquisicao:'2024-09-05',criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('eq'),empresaId,modelo:'Epson EcoTank L3250',fabricante:'Epson',tipo:'Jato Color',patrimonio:'DIG-00133',serie:'EPL325000112',contadorPB:3200,contadorCor:5400,status:'disponivel',valorCompra:1100,dataAquisicao:'2025-01-10',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const contratos=[
-    {id:gen('ctr'),empresaId,numero:'CT-2024-0142',clienteId:clientes[0].id,dataInicio:'2024-02-15',dataFim:'2026-02-14',duracaoMeses:24,diaVencimento:10,franquiaPB:5000,franquiaCor:0,valorFranquia:890,valorExcedentePB:0.08,valorExcedenteCor:0.45,valorMensalFixo:890,status:'ativo',equipamentos:[equips[0].id],observacoes:'Atendimento 24h',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2024-0188',clienteId:clientes[1].id,dataInicio:'2024-05-01',dataFim:'2026-05-01',duracaoMeses:24,diaVencimento:15,franquiaPB:3000,franquiaCor:500,valorFranquia:1250,valorExcedentePB:0.09,valorExcedenteCor:0.55,valorMensalFixo:1250,status:'ativo',equipamentos:[equips[1].id,equips[2].id],observacoes:'Inclui toner e manutenção',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2023-0099',clienteId:clientes[2].id,dataInicio:'2023-08-10',dataFim:'2025-12-09',duracaoMeses:24,diaVencimento:5,franquiaPB:10000,franquiaCor:2000,valorFranquia:3200,valorExcedentePB:0.07,valorExcedenteCor:0.42,valorMensalFixo:3200,status:'ativo',equipamentos:[equips[1].id],observacoes:'',criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome,criadoEm:new Date().toISOString()},
-    {id:gen('ctr'),empresaId,numero:'CT-2025-0011',clienteId:clientes[4].id,dataInicio:'2025-02-01',dataFim:'2027-02-01',duracaoMeses:24,diaVencimento:20,franquiaPB:15000,franquiaCor:0,valorFranquia:4750,valorExcedentePB:0.06,valorExcedenteCor:0,valorMensalFixo:4750,status:'pendente',equipamentos:[],observacoes:'Aguardando instalação',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome,criadoEm:new Date().toISOString()},
-  ];
-  const parque=[
-    {id:gen('prk'),empresaId,contratoId:contratos[0].id,clienteId:clientes[0].id,equipamentoId:equips[0].id,setor:'Administrativo - Térreo',enderecoInstalacao:'Av. Paulista, 1000 - SP',dataInstalacao:'2024-02-16',contadorInicialPB:120000,contadorInicialCor:0,status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('prk'),empresaId,contratoId:contratos[1].id,clienteId:clientes[1].id,equipamentoId:equips[1].id,setor:'Secretaria',enderecoInstalacao:'R. das Flores, 234 - Osasco',dataInstalacao:'2024-05-02',contadorInicialPB:40000,contadorInicialCor:0,status:'ativo',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('prk'),empresaId,contratoId:contratos[1].id,clienteId:clientes[1].id,equipamentoId:equips[2].id,setor:'Coordenação Pedagógica',enderecoInstalacao:'R. das Flores, 234 - Osasco',dataInstalacao:'2024-05-02',contadorInicialPB:20000,contadorInicialCor:15000,status:'ativo',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const leituras=[
-    {id:gen('lei'),empresaId,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,contratoId:parque[0].contratoId,clienteId:parque[0].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*30).toISOString(),contadorPB:127000,contadorCor:0,contadorPBAnterior:120000,contadorCorAnterior:0,consumoPB:7000,consumoCor:0,faturar:true,status:'faturado',valorExcedente:160,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,contratoId:parque[0].contratoId,clienteId:parque[0].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*2).toISOString(),contadorPB:128450,contadorCor:0,contadorPBAnterior:127000,contadorCorAnterior:0,consumoPB:1450,consumoCor:0,faturar:false,status:'pendente',valorExcedente:0,criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[1].id,equipamentoId:parque[1].equipamentoId,contratoId:parque[1].contratoId,clienteId:parque[1].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*5).toISOString(),contadorPB:45210,contadorCor:0,contadorPBAnterior:44000,contadorCorAnterior:0,consumoPB:1210,consumoCor:0,faturar:true,status:'pendente',valorExcedente:0,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('lei'),empresaId,parqueId:parque[2].id,equipamentoId:parque[2].equipamentoId,contratoId:parque[2].contratoId,clienteId:parque[2].clienteId,dataLeitura:new Date(Date.now()-1000*60*60*24*3).toISOString(),contadorPB:22300,contadorCor:18900,contadorPBAnterior:21800,contadorCorAnterior:18200,consumoPB:500,consumoCor:700,faturar:true,status:'pendente',valorExcedente:110,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-  ];
-  const os=[
-    {id:gen('os'),empresaId,numero:'OS-2026-0142',clienteId:clientes[0].id,parqueId:parque[0].id,equipamentoId:parque[0].equipamentoId,tipo:'corretiva',prioridade:'alta',descricao:'Impressora atolando papel bandeja 1, limpeza do rolo',tecnico:'t1',status:'aberto',dataAbertura:new Date(Date.now()-1000*60*60*5).toISOString(),dataFechamento:null,solucao:'',custoPecas:0,tempoAtendimento:0,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0140',clienteId:clientes[2].id,parqueId:parque[1].id,equipamentoId:parque[1].equipamentoId,tipo:'suprimento',prioridade:'media',descricao:'Troca de toner, cliente solicitou reserva',tecnico:'t2',status:'em_atendimento',dataAbertura:new Date(Date.now()-1000*60*60*24).toISOString(),dataFechamento:null,solucao:'',custoPecas:0,tempoAtendimento:0,criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0138',clienteId:clientes[1].id,parqueId:parque[2].id,equipamentoId:parque[2].equipamentoId,tipo:'preventiva',prioridade:'baixa',descricao:'Preventiva trimestral, limpeza geral e calibração de cores',tecnico:'t3',status:'aguardando_peca',dataAbertura:new Date(Date.now()-1000*60*60*24*3).toISOString(),dataFechamento:null,solucao:'',custoPecas:120,tempoAtendimento:90,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-    {id:gen('os'),empresaId,numero:'OS-2026-0120',clienteId:clientes[3].id,parqueId:null,equipamentoId:null,tipo:'instalacao',prioridade:'media',descricao:'Instalação nova impressora Color setor jurídico',tecnico:'t1',status:'concluido',dataAbertura:new Date(Date.now()-1000*60*60*24*10).toISOString(),dataFechamento:new Date(Date.now()-1000*60*60*24*8).toISOString(),solucao:'Instalada Brother MFC-L8900CDW, drivers configurados',custoPecas:0,tempoAtendimento:120,criadoPor:usuarios[1].id,criadoPorNome:usuarios[1].nome},
-  ];
-  const vendas=[
-    {id:gen('vda'),empresaId,numero:'VD-2026-0081',clienteId:clientes[3].id,data:new Date(Date.now()-1000*60*60*24*2).toISOString(),itens:[{produtoId:produtos[0].id,qtd:3,preco:149,subtotal:447},{produtoId:produtos[4].id,qtd:1,preco:180,subtotal:180}],desconto:0,total:627,formaPagamento:'Boleto 30d',status:'faturado',criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const cr=[
-    {id:gen('cr'),empresaId,origem:'contrato',clienteId:clientes[0].id,descricao:'Mensalidade contrato CT-2024-0142 + excedente 2000 PB',valor:1050,vencimento:new Date(Date.now()+1000*60*60*24*5).toISOString(),pagamentoData:null,status:'aberto',contratoId:contratos[0].id,leituraId:leituras[0].id,vendaId:null,criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome},
-    {id:gen('cr'),empresaId,origem:'contrato',clienteId:clientes[1].id,descricao:'Mensalidade CT-2024-0188 - Ref 07/2026',valor:1250,vencimento:new Date(Date.now()-1000*60*60*24*2).toISOString(),pagamentoData:null,status:'vencido',contratoId:contratos[1].id,leituraId:null,vendaId:null,criadoPor:usuarios[3].id,criadoPorNome:usuarios[3].nome},
-    {id:gen('cr'),empresaId,origem:'venda',clienteId:clientes[3].id,descricao:'Venda VD-2026-0081 - Toners',valor:627,vencimento:new Date(Date.now()+1000*60*60*24*12).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:vendas[0].id,criadoPor:usuarios[2].id,criadoPorNome:usuarios[2].nome},
-  ];
-  const cp=[
-    {id:gen('cp'),empresaId,fornecedor:'Brother do Brasil - Distribuidor',descricao:'Compra 10x Toner TN-3442',categoria:'Suprimentos',valor:890,vencimento:new Date(Date.now()+1000*60*60*24*7).toISOString(),pagamentoData:null,status:'aberto',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-    {id:gen('cp'),empresaId,fornecedor:'Galpão Logístico Cajamar',descricao:'Aluguel galpão estoque',categoria:'Infraestrutura',valor:3500,vencimento:new Date(Date.now()-1000*60*60*24*1).toISOString(),pagamentoData:new Date().toISOString(),status:'pago',criadoPor:usuarios[0].id,criadoPorNome:usuarios[0].nome},
-  ];
-  const logs=[
-    {id:gen('log'),dataHora:new Date().toISOString(),empresaId,usuarioId:usuarios[0].id,usuarioNome:usuarios[0].nome,usuarioLogin:usuarios[0].login,entidade:'sistema',acao:'seed',entidadeId:'-',detalhes:'Dados iniciais carregados'}
-  ];
-  db={...defaultData,empresas,usuarios,clientes,produtos,equipamentos:equips,contratos,parque,leituras,os,vendas,contasReceber:cr,contasPagar:cp,tecnicos:defaultData.tecnicos,config:defaultData.config,logs};
-  saveDB(); toast('Dados demo CNPJ 12.345.678/0001-90 carregados','success');
+  const demoLogins = ['admin','carlos','ana','financeiro'];
+  const demoIds = ['usr_admin'];
+
+  // Remove usuários de demonstração (de versões antigas).
+  db.usuarios = db.usuarios.filter(u=>{
+    const l = String(u.login||'').toLowerCase();
+    if(demoLogins.includes(l) || demoIds.includes(u.id)){ mudou = true; return false; }
+    return true;
+  });
+
+  // Garante (cria OU corrige) os 2 usuários reais.
+  garantidos.forEach(g=>{
+    const u = db.usuarios.find(x=>String(x.login||'').toLowerCase()===g.login);
+    if(!u){
+      db.usuarios.push({id:g.id,empresaId:emp.id,nome:g.nome,login:g.login,senha:g.senha,perfil:g.perfil,ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+      mudou = true;
+    } else {
+      if(u.id !== g.id){ u.id = g.id; mudou = true; }
+      if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
+      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
+      if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
+      if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
+      if(u.ativo !== true){ u.ativo = true; mudou = true; }
+    }
+  });
+
+  // Qualquer usuário órfão aponta pra empresa real.
+  db.usuarios.forEach(u=>{ if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; } });
+
+  // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
+  // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
+  // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
+  ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+    if(Array.isArray(db[k])){
+      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+    }
+  });
+
+  if(mudou) saveDB();
 }
-if(db.empresas.length===0) seedData(false);
+seedData(false);
 
 // LOGIN LOGIC
 function formatarLoginCNPJ(input){
@@ -474,17 +489,6 @@ function setPageHeader(title, subtitle){
 }
 
 function navigateTo(view){
-  if(view==='banco'){
-    const bancoView=ensureView('banco');
-    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-    bancoView.classList.remove('hidden');
-    document.querySelectorAll('[data-nav]').forEach(b=>{b.classList.remove('bg-white/[0.12]','text-white','border','border-white/10'); b.classList.add('text-white/60')});
-    const act=document.querySelector('[data-nav="banco"]'); if(act){act.classList.add('bg-white/[0.12]','text-white','border','border-white/10'); act.classList.remove('text-white/60')}
-    renderBanco();
-    // Garante que a view fique visível mesmo se outro código esconder depois
-    setTimeout(function(){ const el=document.getElementById('view-banco'); if(el){ el.classList.remove('hidden'); el.style.display='block'; el.style.visibility='visible'; } }, 50);
-    window.scrollTo({top:0,behavior:'smooth'}); if(window.innerWidth<1024) toggleSidebar(true); return;
-  }
   document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
 
   const target=document.getElementById('view-'+view);
@@ -870,7 +874,7 @@ function initTemplates(){
 
   document.getElementById('view-parque').innerHTML=`<div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold text-[16px]">Parque instalado por cliente</h3><div class="flex gap-2"><select id="filter-parque-cliente" onchange="renderParque()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos clientes</option></select><input id="search-parque" oninput="renderParque()" placeholder="Setor, patrimônio..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div id="grid-parque" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>`;
 
-  document.getElementById('view-leituras').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 space-y-4"><div class="flex gap-2 flex-wrap"><button onclick="openModal('leitura')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold">+ Lançar leitura</button><button onclick="simularLeiturasLote()" class="h-10 px-4 rounded-xl bg-white border text-[13px]">Simular coleta automática</button><button onclick="gerarFaturasPendentes()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Gerar faturas pendentes</button></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[720px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-4 py-3">Data / Equip / Cliente / Por</th><th class="px-4 py-3">Contadores</th><th class="px-4 py-3">Consumo</th><th class="px-4 py-3">Franquia vs Exced.</th><th class="px-4 py-3">Valor extra</th><th class="px-4 py-3">Status</th><th></th></tr></thead><tbody id="tbody-leituras" class="divide-y"></tbody></table></div></div></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px]">Coleta rápida por contrato</h4><div class="mt-4 space-y-3"><select id="coleta-contrato" onchange="loadColetaForm()" class="w-full h-11 px-3 rounded-xl bg-slate-50 border text-[13.5px]"><option value="">Selecione o contrato</option></select><div id="coleta-form" class="space-y-3"></div></div></div><div class="rounded-[16px] bg-amber-50 border border-amber-200 p-5"><h4 class="font-bold text-[13px] text-amber-900">Divergências</h4><div id="list-divergencias" class="mt-3 space-y-2 text-[12.5px]"></div></div></div></div>`;
+  document.getElementById('view-leituras').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-12 gap-4"><div class="lg:col-span-8 space-y-4"><div class="flex gap-2 flex-wrap"><button onclick="openModal('leitura')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold">+ Lançar leitura</button><button onclick="gerarFaturasPendentes()" class="h-10 px-4 rounded-xl bg-slate-900 text-white text-[13px]">Gerar faturas pendentes</button></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[720px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-4 py-3">Data / Equip / Cliente / Por</th><th class="px-4 py-3">Contadores</th><th class="px-4 py-3">Consumo</th><th class="px-4 py-3">Franquia vs Exced.</th><th class="px-4 py-3">Valor extra</th><th class="px-4 py-3">Status</th><th></th></tr></thead><tbody id="tbody-leituras" class="divide-y"></tbody></table></div></div></div><div class="lg:col-span-4 space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px]">Coleta rápida por contrato</h4><div class="mt-4 space-y-3"><select id="coleta-contrato" onchange="loadColetaForm()" class="w-full h-11 px-3 rounded-xl bg-slate-50 border text-[13.5px]"><option value="">Selecione o contrato</option></select><div id="coleta-form" class="space-y-3"></div></div></div><div class="rounded-[16px] bg-amber-50 border border-amber-200 p-5"><h4 class="font-bold text-[13px] text-amber-900">Divergências</h4><div id="list-divergencias" class="mt-3 space-y-2 text-[12.5px]"></div></div></div></div>`;
 
   document.getElementById('view-manutencao').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('os')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Abrir chamado</button><button onclick="toggleOsView()" id="btn-os-kanban" class="h-11 px-4 rounded-xl bg-white border text-[13px]">Kanban</button></div><div class="flex gap-2"><select id="filter-os-status" onchange="renderOs()" class="h-11 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_peca">Aguard. peça</option><option value="concluido">Concluído</option></select><input id="search-os" oninput="renderOs()" placeholder="Buscar OS..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="os-kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div><div id="os-list" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">OS / Cliente / Criado por</th><th class="px-5 py-3">Tipo / Prioridade</th><th class="px-5 py-3">Técnico</th><th class="px-5 py-3">SLA</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-os" class="divide-y"></tbody></table></div>`;
 
@@ -882,7 +886,7 @@ function initTemplates(){
 
   document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
-  document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários do CNPJ</h3><p class="text-[13px] text-slate-500 mt-1">Criação de login exige senha CNPJ para autorização. Auditoria rastreia quem criou cada registro.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">1º - CNPJ + Senha CNPJ:</b> valida empresa.</p><p><b class="text-white">2º - Usuário + Senha Usuário:</b> acesso pessoal.</p><p><b class="text-white">Criar usuário:</b> precisa informar senha CNPJ para autorizar.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
+  document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
   document.getElementById('view-auditoria').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Auditoria - Logs do sistema</h3><p class="text-[13px] text-slate-500 mt-1">Mostra quem fez cada ação (venda, leitura, contrato, OS, etc.) por usuário logado.</p></div><div class="flex gap-2"><select id="filter-aud-entidade" onchange="renderAuditoria()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todas entidades</option><option value="cliente">Clientes</option><option value="produto">Produtos</option><option value="equipamento">Equipamentos</option><option value="contrato">Contratos</option><option value="leitura">Leituras</option><option value="os">OS</option><option value="venda">Vendas</option><option value="financeiro">Financeiro</option><option value="auth">Login/Logout</option><option value="usuario">Usuários</option></select><input id="search-auditoria" oninput="renderAuditoria()" placeholder="Buscar usuário, ação..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Data/Hora</th><th class="px-5 py-3">Usuário / Perfil / CNPJ</th><th class="px-5 py-3">Entidade / Ação</th><th class="px-5 py-3">ID</th><th class="px-5 py-3">Detalhes</th></tr></thead><tbody id="tbody-auditoria" class="divide-y"></tbody></table></div></div>`;
 }
@@ -929,16 +933,13 @@ function saveCliente(){
 function renderModalUsuario(id){
   const sess=getSession(); const isEdit=!!id;
   const u=isEdit?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):{nome:'',login:'',senha:'',perfil:'Comercial',ativo:true};
-  document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário (requer senha CNPJ)';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${u.senha||''}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div><div class="rounded-xl bg-amber-50 border border-amber-200 p-4"><label class="text-[11px] font-bold uppercase text-amber-900">Autorização - Senha CNPJ obrigatória *</label><input id="u-senha-cnpj" type="password" placeholder="Digite a senha CNPJ da empresa para autorizar criação" class="mt-2 w-full h-11 px-3 rounded-xl border border-amber-300 bg-white"><p class="text-[11px] text-amber-800 mt-2">Para criar/editar login, informe a senha CNPJ da empresa <b>${sess.cnpj}</b> - requisito de segurança solicitado.</p></div></div>`;
+  document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${u.senha||''}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
 function saveUsuario(){
   const sess=getSession(); const id=window.modalContext?.id;
-  const empresa=db.empresas.find(e=>e.id===sess.empresaId);
-  const senhaCnpjInput=document.getElementById('u-senha-cnpj').value.trim();
-  if(senhaCnpjInput!==empresa.senha) return toast('Senha CNPJ incorreta - autorização negada','error');
   const payload={empresaId:sess.empresaId, nome:document.getElementById('u-nome').value.trim(), login:document.getElementById('u-login').value.trim().toLowerCase(), senha:document.getElementById('u-senha').value.trim(), perfil:document.getElementById('u-perfil').value, ativo:document.getElementById('u-ativo').value==='true'};
   if(!payload.nome||!payload.login||!payload.senha) return toast('Preencha nome, login e senha','error');
   if(!id && db.usuarios.find(u=>u.empresaId===sess.empresaId && u.login===payload.login)) return toast('Login já existe neste CNPJ','error');
@@ -949,7 +950,7 @@ function saveUsuario(){
   }else{
     const novo={id:uid('usr'),...payload, criadoEm:new Date().toISOString(), criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome};
     db.usuarios.push(novo);
-    logAction('usuario','criar',novo.id,`Criado usuário ${novo.login} perfil ${novo.perfil} autorizado com senha CNPJ`);
+    logAction('usuario','criar',novo.id,`Criado usuário ${novo.login} perfil ${novo.perfil}`);
   }
   saveDB(); renderUsuarios(); renderAuditoria(); closeModal(); toast('Usuário salvo','success');
 }
@@ -1274,14 +1275,13 @@ function renderConfig(){
 function saveConfig(){const sess=getSession(); const emp=db.empresas.find(e=>e.id===sess.empresaId); if(emp){emp.nome=document.getElementById('cfg-emp-nome').value; emp.cnpj=document.getElementById('cfg-emp-cnpj').value; emp.cnpjDigits=onlyDigits(emp.cnpj);} db.config.empresa.nome=document.getElementById('cfg-emp-nome').value; db.config.empresa.cnpj=document.getElementById('cfg-emp-cnpj').value; db.config.empresa.fone=document.getElementById('cfg-emp-fone').value; db.config.empresa.email=document.getElementById('cfg-emp-email').value; saveDB(); toast('Config salva','success');}
 function addTecnico(){const nome=document.getElementById('new-tecnico-nome').value.trim(); if(!nome) return toast('Informe nome','error'); db.tecnicos.push({id:uid('tec'),nome,especialidade:'Geral',osConcluidas:0}); saveDB(); renderConfig(); toast('Técnico adicionado','success');}
 function removeTecnico(id){db.tecnicos=db.tecnicos.filter(t=>t.id!==id); saveDB(); renderConfig();}
-function exportBackup(){const dataStr=JSON.stringify(db,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`digicopy-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();}
+function exportBackup(){const clean=JSON.parse(JSON.stringify(db,(k,v)=>k==='_rt'?undefined:v)); const dataStr=JSON.stringify(clean,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`digicopy-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();}
 function exportClientes(){exportBackup();}
 function clearAllData(){toast('Função desativada por segurança. Use Exportar backup para salvar seus dados.','error');}
 function handleGlobalSearch(q){if(!q) return; const low=q.toLowerCase(); const sess=getSession(); if(!sess) return; const cli=db.clientes.find(c=>c.empresaId===sess.empresaId && (c.nome.toLowerCase().includes(low)||c.documento.includes(low))); const ctr=db.contratos.find(c=>c.empresaId===sess.empresaId && c.numero.toLowerCase().includes(low)); const eq=db.equipamentos.find(e=>e.empresaId===sess.empresaId && (e.patrimonio.toLowerCase().includes(low)||e.serie.toLowerCase().includes(low))); if(cli){navigateTo('clientes'); document.getElementById('search-clientes').value=q; renderClientes();} else if(ctr){navigateTo('contratos'); document.getElementById('search-contratos').value=q; renderContratos();} else if(eq){navigateTo('impressoras'); document.getElementById('search-equip').value=q; renderEquipamentos();}}
 function openQuickReading(){navigateTo('leituras'); openModal('leitura');}
 function openQuickOS(){navigateTo('manutencao'); openModal('os');}
 function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras.filter(l=>l.empresaId===sess.empresaId && l.status==='pendente'); if(!pend.length) return toast('Nenhuma pendente','info'); pend.forEach(l=>{const contrato=db.contratos.find(c=>c.id===l.contratoId); const valorTotal=(contrato?.valorMensalFixo||0)+l.valorExcedente; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'contrato',clienteId:l.clienteId,descricao:`Fatura ${contrato?.numero} • ${fmtDate(l.dataLeitura)} • ${l.consumoPB} PB`,valor:valorTotal,vencimento:new Date(new Date().setDate((contrato?.diaVencimento||10))).toISOString(),pagamentoData:null,status:'aberto',contratoId:l.contratoId,leituraId:l.id,vendaId:null, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); l.status='faturado'; logAction('leitura','faturar',l.id,`Faturado por ${sess.usuarioNome} total ${fmtMoney(valorTotal)}`);}); saveDB(); renderLeituras(); renderFinanceiro(); renderAuditoria(); toast(`${pend.length} faturas geradas por ${sess.usuarioNome}`,'success');}
-function simularLeiturasLote(){const sess=getSession(); const parques=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').slice(0,3); parques.forEach(p=>{const eq=db.equipamentos.find(e=>e.id===p.equipamentoId); const incPB=Math.floor(Math.random()*2500)+500; const incCor=eq.tipo.includes('Color')?Math.floor(Math.random()*800)+100:0; const ultima=db.leituras.filter(l=>l.parqueId===p.id).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura))[0]; const basePB=ultima?ultima.contadorPB:eq.contadorPB; const baseCor=ultima?ultima.contadorCor:eq.contadorCor; const pb=basePB+incPB; const cor=baseCor+incCor; const contrato=db.contratos.find(c=>c.id===p.contratoId); const consPB=incPB; const consCor=incCor; const valor=Math.max(0,consPB-(contrato?.franquiaPB||0))*(contrato?.valorExcedentePB||0)+Math.max(0,consCor-(contrato?.franquiaCor||0))*(contrato?.valorExcedenteCor||0); db.leituras.push({id:uid('lei'),empresaId:sess.empresaId,parqueId:p.id,equipamentoId:p.equipamentoId,contratoId:p.contratoId,clienteId:p.clienteId,dataLeitura:new Date().toISOString(),contadorPB:pb,contadorCor:cor,contadorPBAnterior:basePB,contadorCorAnterior:baseCor,consumoPB:consPB,consumoCor:consCor,valorExcedente:valor,faturar:valor>0,status:'pendente',criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome}); eq.contadorPB=pb; eq.contadorCor=cor;}); logAction('leitura','simular_lote','-',`Simulado 3 leituras por ${sess.usuarioNome}`); saveDB(); renderLeituras(); renderEquipamentos(); renderParque(); renderAuditoria(); toast('Coleta automática • 3 leituras','success');}
 
 // INICIALIZAÇÃO
 (function(){

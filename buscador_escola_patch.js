@@ -20,7 +20,7 @@ function int(v,d=0){const x=parseInt(String(v??'').replace(/\D+/g,''),10);return
 function now(){return new Date().toISOString()}
 function fData(v){return typeof fmtDate==='function'?fmtDate(v):t(v).slice(0,10)}
 function fTime(v){return typeof fmtDateTime==='function'?fmtDateTime(v):t(v)}
-function uid(p){return typeof uid==='function'?uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
+function uid(p){return typeof window.uid==='function'?window.uid(p):`${p}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`}
 function msg(m,c){if(typeof toast==='function')toast(m,c||'info')}
 function save(){if(typeof saveDB==='function')saveDB()}
 function wait(ms){return new Promise(r=>setTimeout(r,ms||0))}
@@ -51,22 +51,24 @@ async function sync(opt={}){
   window.__esSync=false; // Reset always before starting
   window.__esSync=true;
   window.__esLogs=[];
-  function log(m){window.__esLogs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m);render()}
+  // log apenas acumula — NÃO redesenha a tela (evita piscar)
+  function log(m){window.__esLogs.push('['+new Date().toLocaleTimeString('pt-BR')+'] '+m)}
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
-    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];log('Base limpa')}
+    const incremental = opt.incremental !== false && !opt.limpar;
+    const knownIds = new Set((db.escolaOrc||[]).map(o=>String(o.id)));
+    if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];knownIds.clear();log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
     const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
-    if(login.data){log('Resposta login: '+JSON.stringify(login.data).substring(0,200))}
     if(!login.ok){window.__esSt={msg:'Falha no login: '+(login.error||''),pct:0};render();return login}
-    log('Autenticado via sessão (cookies). Baixando orçamentos...');
-    let tot=0,totIt=0,err=0,pg=1;const ids=[];
+    log(incremental?'Modo ATUALIZAR: só baixa itens de orçamentos novos.':'Modo BAIXAR TUDO: baixa itens de todos.');
+    let tot=0,totIt=0,err=0,novos=0,pg=1;const ids=[];
     while(pg<=120){
-      window.__esSt={msg:`Página ${pg}...`,pct:Math.min(95,10+pg)};if(pg%2===1)render();
+      window.__esSt={msg:`Página ${pg} — listando orçamentos...`,pct:Math.min(95,10+pg)};
       const u=new URL(API_BASE+'/budget-proposal/summary-by-supplier-profile');
       u.searchParams.set('filter.supplierStatus','$eq:NAEN');u.searchParams.set('page',String(pg));u.searchParams.set('limit','100');
       const r=await api('GET',u.toString(),null,'');
@@ -79,6 +81,11 @@ async function sync(opt={}){
         const o=normOrc(raw),st=store(),old=st.orc.find(x=>String(x.id)===String(o.id));
         if(old)Object.assign(old,o);else st.orc.push(o);
         ids.push(o.id);tot++;
+        const isNew=!knownIds.has(String(o.id));
+        // ATUALIZAR: orçamento já baixado antes → pula os itens (economiza MUITO tempo)
+        if(incremental && !isNew){ continue; }
+        novos++;
+        window.__esSt={msg:`Baixando itens do orçamento ${o.numero||o.id}...`,pct:Math.min(95,10+pg)};
         for(let ip=1;ip<=50;ip++){
           const p=new URL(API_BASE+'/budget-item/by-subprogram/'+encodeURIComponent(o.idSubprogram||'')+'/by-school/'+encodeURIComponent(o.idSchool||'')+'/by-budget/'+encodeURIComponent(o.idBudget||o.id||''));
           p.searchParams.set('page',String(ip));p.searchParams.set('limit','100');
@@ -89,17 +96,19 @@ async function sync(opt={}){
           items.forEach(r=>st2.it.push(normIt(r,o.id)));totIt+=items.length;
           if(items.length<100)break;await wait(0);
         }
-        if(tot%25===0){save();await wait(0)}
+        if(novos%5===0){save();await wait(0)}
       }
       pg++;save();await wait(0);
     }
     const idsSet=new Set(ids.map(String));
     db.escolaOrc=(db.escolaOrc||[]).filter(o=>idsSet.has(String(o.id)));
+    db.escolaIt=(db.escolaIt||[]).filter(i=>idsSet.has(String(i.oid)));
+    // Limpeza automática: orçamento que saiu da NAEN some sozinho dos Excluídos
+    db.escolaExc=(db.escolaExc||[]).filter(e=>idsSet.has(String(e.oid)));
     db.config=db.config||{};db.config.escolaSync={at:now(),orc:tot,it:totIt,err};
-    window.__esSt={msg:`✅ ${tot} orçamentos, ${totIt} itens`,pct:100};save();render();
-    // Envia dados para a nuvem
-    if(typeof syncEnviarParaNuvem==='function'){try{await syncEnviarParaNuvem({confirmar:false,forcar:true,automatico:true})}catch(e){}}
-    return{ok:true,tot,totIt,err};
+    window.__esSt={msg:`✅ ${tot} orçamentos (${novos} novos), ${totIt} itens baixados`,pct:100};save();
+    render(); // renderiza UMA vez no final, com a contagem pronta
+    return{ok:true,tot,totIt,novos,err};
   }catch(e){window.__esSt={msg:'Erro: '+e.message,pct:0};render();return{ok:false,error:e.message}}
   finally{window.__esSync=false}
 }
@@ -112,7 +121,8 @@ function search(term,reg){
     const hit=its.filter(i=>!q||norm(i.tipo).includes(q));
     if(q&&!hit.length)return;
     const tot=its.length,ext=Math.max(0,tot-hit.length),only=!!q&&tot>0&&ext===0;
-    (hit.length?hit:[{tipo:'',desc:'(sem itens)',qtd:0,vlr:0,id:''}]).forEach(i=>out.push({...o,ipo:i.tipo,ides:i.desc,iqtd:i.qtd,ivlr:i.vlr,tot,found:hit.length,ext,only,hasExt:ext>0}));
+    // agrupa os itens do MESMO orçamento num único resultado
+    out.push({...o,itens:(hit.length?hit:[{tipo:'',desc:'(sem itens)',qtd:0,vlr:0,id:''}]),tot,found:hit.length,ext,only,hasExt:ext>0});
   });
   out.sort((a,b)=>{
   // 1. APENAS pesquisado primeiro
@@ -138,6 +148,9 @@ function badge(r){
 }
 function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:'#'}
 function card(r){
+  const itens = (r.itens||[]);
+  // exibe todos os itens encontrados (mesmo orçamento) num cartão só
+  const produtos = itens.map(i=>`<b>${esc(i.tipo||'')}</b> — ${esc(i.desc||'')}`).join('<br>');
   return`<div class="rounded-[14px] border bg-white p-4 shadow-sm hover:shadow-md transition">
 <div class="flex flex-wrap justify-between gap-3"><div><div class="flex items-center gap-2"><b class="px-2 py-1 rounded-lg bg-[#0a1e8a] text-white font-mono text-[11px]">${esc(r.numero||r.id)}</b>${badge(r)}</div>
 <h4 class="mt-1 font-bold text-[14px]">${esc(r.escola)}</h4><p class="text-[11px] text-slate-500">${esc(r.municipio||'-')} • ${r.dist===999?'N/A':r.dist+' km'}</p></div>
@@ -146,7 +159,7 @@ function card(r){
 ${r.only?'<div class="mt-2 rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-[11px] text-emerald-800 font-bold">✅ APENAS o produto pesquisado.</div>':''}
 ${r.hasExt?`<div class="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 font-bold">⚠️ ${r.ext} produto(s) extras.</div>`:''}
 <div class="mt-2 grid grid-cols-4 gap-2 text-[11px]"><div class="rounded-lg bg-slate-50 p-2"><span class="text-[9px] uppercase font-bold text-slate-400">Achados/Total</span><br><b>${r.found}/${r.tot}</b></div>
-<div class="rounded-lg bg-slate-50 p-2 col-span-3"><span class="text-[9px] uppercase font-bold text-slate-400">Produto</span><br><b>${esc(r.ipo||'')}</b> — ${esc(r.ides||'')}</div></div></div>`;
+<div class="rounded-lg bg-slate-50 p-2 col-span-3"><span class="text-[9px] uppercase font-bold text-slate-400">${itens.length>1?('Produtos ('+itens.length+')'):'Produto'}</span><br>${produtos}</div></div></div>`;
 }
 
 function proxTxt(c){
@@ -192,25 +205,58 @@ ${window.__esExc?
   `<h4 class="font-bold text-[14px] mb-3">Excluídos</h4>${st.exc.length?st.exc.slice().reverse().map(e=>`<div class="rounded-xl border bg-white p-3 text-[12px] flex justify-between gap-3"><span><b>${esc(e.oid)}</b> — ${esc(e.mot)} • ${fData(e.dt)}</span><button onclick="esRest('${esc(e.oid)}')" class="h-8 px-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[11px]">Restaurar</button></div>`).join(''):'<p class="text-slate-400 text-[13px]">Nenhum.</p>'}`
   :
   `<div class="flex justify-between text-[12px] text-slate-500 mb-2"><span>${ini}-${Math.min(fim,res.length)} de ${res.length}</span><span>Enter/lupa</span></div>
-  <div class="space-y-3">${rows.map(card).join('')||'<div class="text-center text-slate-400 py-16">Busque ou aguarde atualização.</div>'}</div>
+  <div class="space-y-3">${rows.length?rows.map(card).join(''):(term?'<div class="text-center text-slate-500 py-16"><i class="ph ph-magnifying-glass text-[40px] block opacity-30 mb-3"></i>Nada encontrado para "${esc(term)}".</div>':'<div class="text-center text-slate-400 py-16">Busque ou aguarde atualização.</div>')}</div>
   ${res.length>fim?'<div class="text-center mt-3"><button onclick="esMais()" class="h-10 px-6 rounded-lg bg-[#0a1e8a] text-white font-bold text-[13px]">Mais</button></div>':''}`
 }</div></div></div>`;
 }
 
-window.esSync=function(){window.__esSync=false;return sync({})};
+window.esSync=function(){window.__esSync=false;return sync({incremental:true})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esClearLog=function(){window.__esLogs=[];render()};
 window.esSearch=function(){window.__esTerm=t(document.getElementById('es-term')?.value);window.__esReg=t(document.getElementById('es-reg')?.value)||'1';const iv=t(document.getElementById('es-int')?.value)||'1-10';const p=iv.includes('-')?iv.split('-'):[iv,iv];window.__esIni=Math.max(1,int(p[0],1));window.__esFim=Math.max(window.__esIni,int(p[1],window.__esIni));render()};
 window.esMais=function(){window.__esFim=(window.__esFim||10)+10;render()};
 window.esExcel=function(){const rows=window.__esRes||search(window.__esTerm||'',window.__esReg||'1');const trs=rows.map(r=>`<tr><td>${esc(r.numero)}</td><td>${esc(r.escola)}</td><td>${esc(r.municipio)}</td><td>${r.dist===999?'N/A':r.dist}</td><td>${esc(r.only?'SIM':'')}</td><td>${r.ext||0}</td><td>${esc(r.ipo||'')}</td><td>${esc(r.ides)}</td></tr>`).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>table{border-collapse:collapse;font-family:Arial}th{background:#0a1e8a;color:#fff;padding:6px}td{border:1px solid #ddd;padding:5px}</style></head><body><table><thead><tr><th>Código</th><th>Escola</th><th>Município</th><th>Distância</th><th>Só pesquisado</th><th>Extras</th><th>Tipo</th><th>Descrição</th></tr></thead><tbody>${trs}</tbody></table></body></html>`;const b=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'});const a=document.createElement('a'),u=URL.createObjectURL(b);a.href=u;a.download='buscador_'+new Date().toISOString().slice(0,10)+'.xls';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1000)};
-window.esExc=function(id){const m=prompt('Motivo:','Não interessa / longe');if(m===null)return;const st=store();if(!st.exc.find(e=>String(e.oid)===String(id)))st.exc.push({uid:uid('exc'),oid:String(id),mot:m||'Descartado',dt:now()});save();render('Excluído.')};
-window.esRest=function(id){db.escolaExc=(db.escolaExc||[]).filter(e=>String(e.oid)!==String(id));save();render('Restaurado.')};
+window.esExc=function(id){
+  const confirmar = typeof window.confirmSistema==='function' ? window.confirmSistema : null;
+  const pedirMotivo = function(){ window.__esExcPendingId=id; esExcMotivo(); };
+  if(confirmar){
+    confirmar('Deseja realmente excluir este orçamento?', 'Excluir').then(function(ok){ if(ok) pedirMotivo(); });
+  } else {
+    pedirMotivo();
+  }
+};
+window.esExcMotivo=function(){
+  const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
+  document.getElementById('modal-title').innerText='Motivo da exclusão';
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-3"><p class="text-[12px] text-slate-500">Escreva o motivo para excluir este orçamento.</p><input id="es-exc-motivo" placeholder="Ex.: Não interessa / longe" class="w-full h-11 px-3 rounded-xl border"></div>`;
+  document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="esExcConfirmar()" class="neo-btn primary">Excluir</button>`;
+};
+window.esExcConfirmar=function(){
+  const id=window.__esExcPendingId;
+  const m=t(document.getElementById('es-exc-motivo')?.value)||'Descartado';
+  const st=store();
+  if(!st.exc.find(e=>String(e.oid)===String(id))) st.exc.push({uid:uid('exc'),oid:String(id),mot:m,dt:now()});
+  save();
+  if(typeof closeModal==='function') closeModal();
+  render('Excluído.');
+};
+window.esRest=function(id){
+  const executar=function(){
+    db.escolaExc=(db.escolaExc||[]).filter(e=>String(e.oid)!==String(id));
+    save(); render('Restaurado.');
+  };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema('Deseja voltar este orçamento para a busca?', 'Restaurar').then(function(ok){ if(ok) executar(); });
+  } else {
+    executar();
+  }
+};
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio})},60000);
+  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
+  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();

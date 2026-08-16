@@ -27,3 +27,11 @@ contextBridge.exposeInMainWorld('fileAPI', {
 contextBridge.exposeInMainWorld('caixaEscolarAPI', {
   request: (req) => ipcRenderer.invoke('escola:request', req)
 });
+
+// API de impressão limpa — imprime sem cabeçalho/rodapé do navegador
+// (sem contador de páginas nem URL "about:blank")
+contextBridge.exposeInMainWorld('printAPI', {
+  cleanPrint: () => ipcRenderer.invoke('print:clean'),
+  cleanPrintSilent: () => ipcRenderer.invoke('print:clean-silent'),
+  isElectron: true
+});

@@ -151,16 +151,16 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 </header>
 <div class="modern-topnav">
       <div class="module-row">
-        <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button><div class="module-menu"><button onclick="navigateTo('dashboard')"><i class="ph ph-monitor"></i>Área inicial<small>Home</small></button><button onclick="handleGlobalSearch(document.getElementById('top-command-search')?.value||'')"><i class="ph ph-magnifying-glass"></i>Pesquisa rápida</button></div></div>
-        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="abrirNotinhasAntigas()"><i class="ph ph-archive"></i>Notinhas antigas<small>sistema anterior</small></button><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-clipboard-text"></i>Novo orçamento</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
         <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
-        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários</button><button onclick="navigateTo('migrados')"><i class="ph ph-archive"></i>Explorar Migrados</button></div></div>
-        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button><button onclick="openModal('contaPagar')"><i class="ph ph-arrow-circle-up"></i>Nova despesa</button></div></div>
+        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button></div></div>
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
-        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button><button onclick="navigateTo('relatorios')"><i class="ph ph-chart-line-up"></i>Relatórios</button><button onclick="navigateTo('banco')"><i class="ph ph-folder-open"></i>Importar arquivos<small>backup / migração</small></button></div></div>
-        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span><input id="top-command-search" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)" class="command-search !w-[185px]" placeholder="Busca geral: cliente, venda, série..."><button onclick="handleGlobalSearch(document.getElementById('top-command-search').value)" class="quick !h-8 !px-2" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>
+        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
       <section id="view-dashboard" class="view space-y-6"></section>
@@ -177,7 +177,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-config" class="view hidden space-y-4"></section>
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
-      <section id="view-banco" class="view hidden space-y-4"></section>
     </div>
     <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-session">Empresa - Usuário</span></footer>
   </main>
@@ -271,5 +270,21 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./ajustes_v5180_patch.js?v=5.18.0"></script>
 <script src="./ajustes_v5181_patch.js?v=5.18.1"></script>
 <script src="./ajustes_v5182_patch.js?v=5.18.2"></script>
+<script src="./ajustes_v5183_patch.js?v=5.18.3"></script>
+<script src="./ajustes_v5184_patch.js?v=5.18.4"></script>
+<script src="./ajustes_v5185_patch.js?v=5.18.5"></script>
+<script src="./ajustes_v5186_patch.js?v=5.18.6"></script>
+<script src="./ajustes_v5187_patch.js?v=5.18.7"></script>
+<script src="./ajustes_v5188_patch.js?v=5.18.8"></script>
+<script src="./ajustes_v5189_patch.js?v=5.18.9"></script>
+<script src="./ajustes_v5190_patch.js?v=5.19.0"></script>
+<script src="./ajustes_v5191_patch.js?v=5.19.1"></script>
+<script src="./ajustes_v5192_patch.js?v=5.19.2"></script>
+<script src="./ajustes_v5193_patch.js?v=5.19.3"></script>
+<script src="./ajustes_v5196_patch.js?v=5.19.6"></script>
+<script src="./ajustes_v5197_patch.js?v=5.19.7"></script>
+<script src="./ajustes_v51916_patch.js?v=5.19.16"></script>
+<script src="./ajustes_v51920_patch.js?v=5.19.20"></script>
+<script src="./sync_realtime_patch.js?v=5.20.5"></script>
 </body>
 </html>

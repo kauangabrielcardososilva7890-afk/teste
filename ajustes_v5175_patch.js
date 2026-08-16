@@ -245,7 +245,7 @@ window.abrirChamadoAvulsoForm=function(id){
     const o=id&&(db.os||[]).find(x=>x.id===id);
     window.__chamadoPecasTemp=(o&&o.pecas||[]).map(it=>({...it}));
     const grid=document.getElementById('ca-cont-atu')&&document.getElementById('ca-cont-atu').closest('.grid');
-    if(grid&&!document.getElementById('ca-aviso-cont')){
+    if(grid&&!document.getElementById('ca-cont-color-ant')){
       const wrap=document.createElement('div');
       wrap.innerHTML=htmlContadores('ca', o||{}, true);
       // keep avulso color visible (fora de contrato)

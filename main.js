@@ -41,9 +41,55 @@ app.whenReady().then(() => {
   registerFirebirdIPC();
   registerFileIPC();
   registerEscolaIPC();
+  registerPrintIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
+});
+
+// Imprime sem cabeçalho/rodapé do navegador (sem contador de páginas nem URL)
+function registerPrintIPC(){
+  ipcMain.handle('print:clean', (evt) => {
+    return new Promise((resolve) => {
+      try{
+        evt.sender.print({ printBackground: true, header: '', footer: '' }, (success) => resolve(!!success));
+      }catch(e){ resolve(false); }
+    });
+  });
+  ipcMain.handle('print:clean-silent', (evt) => {
+    return new Promise((resolve) => {
+      try{
+        evt.sender.print({ silent: true, printBackground: true, header: '', footer: '' }, (success) => resolve(!!success));
+      }catch(e){ resolve(false); }
+    });
+  });
+}
+
+// Dá preload às janelas de impressão (window.open) + intercepta Ctrl+P em todas
+app.on('web-contents-created', (_event, contents) => {
+  try{
+    contents.setWindowOpenHandler(() => ({
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          preload: path.join(__dirname, 'preload.js')
+        }
+      }
+    }));
+  }catch(e){}
+  // Ctrl+P em qualquer janela (inclusive a janela de impressão aberta):
+  // imprime LIMPO, sem cabeçalho/rodapé (sem URL nem contador de páginas).
+  try{
+    contents.on('before-input-event', (event, input) => {
+      const k = String(input.key || '').toLowerCase();
+      if((input.control || input.meta) && k === 'p'){
+        event.preventDefault();
+        try{ contents.print({ printBackground: true, header: '', footer: '' }, () => {}); }catch(e){}
+      }
+    });
+  }catch(e){}
 });
 
 app.on('window-all-closed', () => {

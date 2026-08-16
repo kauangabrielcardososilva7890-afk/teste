@@ -42,9 +42,9 @@ function loginCompativel(user, typed){
 function senhaCompativel(user, senha){ return txt(user&&user.senha)===txt(senha); }
 function escolherEmpresaPadrao(dbRef){
   dbRef.empresas=dbRef.empresas||[];
-  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas[0];
+  let emp=dbRef.empresas.find(e=>/digicopy/i.test(txt(e.fantasia||e.nome))) || dbRef.empresas.find(e=>e.id==='emp_digicopy') || dbRef.empresas[0];
   if(!emp){
-    emp={id:uidSafe('emp'),cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
+    emp={id:'emp_digicopy',cnpj:'',cnpjDigits:'',senha:'',nome:'DIGICOPY Cartuchos e Impressoras',fantasia:'DIGICOPY',criadoEm:new Date().toISOString(),criadoPor:'sistema'};
     dbRef.empresas.push(emp);
   }
   if(!emp.cnpjDigits) emp.cnpjDigits=onlyDigitsSafe(emp.cnpj||'');
@@ -68,9 +68,10 @@ function importarFuncionariosLegados(dbRef, empId){
     else { dbRef.usuarios.push({id:uidSafe('usr'),criadoEm:new Date().toISOString(),criadoPor:'migracao',...dados}); }
     alterou++;
   });
-  // Se não veio FUNCIONARIOS ainda, mantém pelo menos um admin para conseguir entrar.
-  if(!dbRef.usuarios.some(u=>u.empresaId===empId&&u.ativo)){
-    dbRef.usuarios.push({id:uidSafe('usr'),empresaId:empId,nome:'Administrador',login:'admin',senha:'admin123',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
+  // Se não veio FUNCIONARIOS ainda, garante o usuário real (kauan) como admin.
+  if(!dbRef.usuarios.some(u=>u.empresaId===empId && u.ativo)){
+    const jaTemKauan = dbRef.usuarios.some(u=>u.empresaId===empId && u.id==='usr_kauan');
+    dbRef.usuarios.push({id: jaTemKauan?uidSafe('usr'):'usr_kauan',empresaId:empId,nome:'Kauan',login:'kauan',senha:'6132',perfil:'Admin',ativo:true,criadoEm:new Date().toISOString(),criadoPor:'sistema'});
     alterou++;
   }
   return alterou;
@@ -122,7 +123,6 @@ function estilizarLogin(){
     #login-step-user{display:block!important;pointer-events:auto!important;position:relative!important;z-index:5!important;}
     #login-step-user input,#login-step-user button,#login-direto-form{pointer-events:auto!important;}
     #login-empresa-cnpj{display:none!important;}
-    .modern-topnav .module:first-child .module-menu{display:none!important;}
     .modern-topnav .module-menu button{white-space:nowrap;}
   `;
   if(!st.parentNode) document.head.appendChild(st);
@@ -156,10 +156,8 @@ function deletaTextoLogin(){
 setTimeout(deletaTextoLogin, 100);
 setTimeout(deletaTextoLogin, 800);
 function limparTopoMenus(){
-  if(typeof document==='undefined') return;
-  const inicio=[...document.querySelectorAll('.modern-topnav .module')].find(m=>/^\s*Início/i.test(m.querySelector('button')?.textContent||''));
-  if(inicio){ const menu=inicio.querySelector('.module-menu'); if(menu) menu.remove(); const b=inicio.querySelector('button'); if(b) b.onclick=()=>navigateTo('dashboard'); }
-  [...document.querySelectorAll('.modern-topnav .module-menu button')].forEach(b=>{ if(/Notinhas antigas|Novo orçamento/i.test(b.textContent||'')) b.remove(); });
+  // Os itens legados do menu superior (Área inicial, Pesquisa rápida, Notinhas
+  // antigas, Novo orçamento) foram REMOVIDOS direto no index.html. Nada a limpar.
 }
 
 const oldShowLogin=window.showLogin;
