@@ -7,7 +7,7 @@
 **Última versão:** **v5.20.30**  
 **Commit:** `7287fff`  
 **Zip:** `Sistema-Digicopy-v5.20.30.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/7287fff28676059beed4c5463094169321d9a6bc/index.html?v=5.20.30`
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/7287fff5eb78922bc07446d83227a5f2201c9aa2/index.html?v=5.20.30`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
