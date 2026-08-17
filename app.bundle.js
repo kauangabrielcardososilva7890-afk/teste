@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 97 | sha256: 6978776f1b825d85
+ * scripts: 97 | sha256: b3f3d90f324acdb5
  */
 
 /* ===== lz.js ===== */
@@ -28148,10 +28148,12 @@ function storeAuth(data){
   const info=Object.assign({},data.device,{activation:data.activation||(data.recovered?'recovery':'unknown')});
   localStorage.setItem(TOKEN_KEY, data.token);
   localStorage.setItem(DEVICE_KEY, JSON.stringify(info));
+  try{setTimeout(applyAdminVisibility,0);}catch(e){}
   setTimeout(()=>{try{if(window.DIGICOPY_CLOUD_SYNC)window.DIGICOPY_CLOUD_SYNC.tick('autorizado');}catch(e){}},150);
 }
 function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
+  try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
 async function api(path, options){
   const opts=Object.assign({},options||{});
@@ -28170,7 +28172,7 @@ async function api(path, options){
 }
 
 window.DIGICOPY_CLOUD_PURE={esc};
-window.DIGICOPY_CLOUD={API,token,deviceInfo,api};
+window.DIGICOPY_CLOUD={API,token,deviceInfo,api,forgetAuth};
 
 // Desliga definitivamente os gatilhos da nuvem antiga. Algumas versões ainda
 // agendavam uma carga Firebase 4,5s após abrir, mesmo com o sync legado inativo.
@@ -28189,9 +28191,13 @@ function systemAdmin(){
   try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
 }
 function applyAdminVisibility(){
-  const allowed=systemAdmin();
-  ['btn-nuvem','btn-backup-top'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=allowed?'':'none';});
+  const admin=systemAdmin(),needsAuthorization=!token();
+  const cloud=document.getElementById('btn-nuvem');
+  const backup=document.getElementById('btn-backup-top');
+  if(cloud)cloud.style.display=(admin||needsAuthorization)?'':'none';
+  if(backup)backup.style.display=admin?'':'none';
 }
+window.DIGICOPY_CLOUD.refreshVisibility=applyAdminVisibility;
 try{
   const originalShowApp=window.showApp;
   if(typeof originalShowApp==='function'&&!originalShowApp.__cloudAdminVisibility){
@@ -28351,7 +28357,7 @@ async function renderConnected(body){
 }
 
 window.abrirCloudflareNuvem=async function(){
-  if(!systemAdmin()){if(typeof window.lfbAlert==='function')window.lfbAlert('Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
+  if(!systemAdmin()&&token()){if(typeof window.lfbAlert==='function')window.lfbAlert('Este computador já está autorizado. Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
   const root=modalShell(),body=root.querySelector('#dc-body');
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);
@@ -28621,7 +28627,9 @@ async function tick(reason){
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
-    if(e&&e.status===401){/* painel solicitará nova autorização */}
+    if(e&&e.status===401){
+      try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
+    }
     return false;
   }finally{busy=false;scheduleHeartbeat();}
 }

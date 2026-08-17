@@ -10,8 +10,10 @@ ok('token individual fica em chave local própria',/digicopy_cloud_device_token_
 ok('segredo não é salvo no localStorage',!/setItem\([^\n]*secret/i.test(code));
 ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test(code)&&/\/v1\/invites/.test(code)&&/\/v1\/enroll/.test(code)&&/\/v1\/recover/.test(code));
 ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuvem/.test(html));
-ok('Nuvem e Backup são visíveis só para perfil Admin',/function systemAdmin/.test(code)&&/\['btn-nuvem','btn-backup-top'\]/.test(code));
-ok('acesso direto ao painel também é bloqueado',/Somente o administrador pode abrir/.test(code));
+ok('Nuvem aparece antes de autorizar e depois fica só para Admin',/needsAuthorization=!token\(\)/.test(code)&&/admin\|\|needsAuthorization/.test(code));
+ok('Backup fica sempre só para Admin',/backup\.style\.display=admin/.test(code));
+ok('acesso direto pós-autorização é bloqueado para não-Admin',/!systemAdmin\(\)&&token\(\)/.test(code));
+ok('token revogado libera nova autorização',/forgetAuth/.test(code)&&/refreshVisibility/.test(code));
 ok('exportação também valida Admin',/Somente o administrador pode exportar/.test(code));
 ok('painel compara clientes locais e nuvem',/CLIENTES NESTE PC/.test(code)&&/CLIENTES NA NUVEM/.test(code));
 ok('admin mantém somente aparelhos e excluídos',/dc-list-deleted/.test(code)&&/dc-list-devices/.test(code));

@@ -256,7 +256,9 @@ async function tick(reason){
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
-    if(e&&e.status===401){/* painel solicitará nova autorização */}
+    if(e&&e.status===401){
+      try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
+    }
     return false;
   }finally{busy=false;scheduleHeartbeat();}
 }
