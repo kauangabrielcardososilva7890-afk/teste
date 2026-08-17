@@ -14,6 +14,7 @@ ok('admin lista excluídos e aparelhos',/dc-list-deleted/.test(code)&&/dc-list-d
 ok('admin analisa e une clientes repetidos',/dc-dedupe-clients/.test(code)&&/mergeDuplicateClients/.test(code));
 ok('admin revisa origem de aparelhos bloqueados',/dc-review-blocked/.test(code)&&/review\/revoked-records/.test(code));
 ok('reset exige frase e duas confirmações',/dc-reset-cloud/.test(code)&&/APAGAR NUVEM/.test(code)&&/ok1/.test(code)&&/ok2/.test(code));
+ok('reset e publicação são botões separados',/Apagar e deixar a nuvem vazia/.test(code)&&/Publicar este PC na nuvem/.test(code));
 ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
 ok('novo painel é carregado por último',/cloudflare_sync_patch\.js/.test(html));
 ok('Firebase automático não é mais carregado',!/<script[^>]+sync_realtime_patch\.js/.test(html));

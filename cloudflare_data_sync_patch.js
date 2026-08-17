@@ -27,7 +27,7 @@ const DEFINITIONS={
 
 function parse(raw,fallback){try{const x=JSON.parse(raw);return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}}
 function loadState(){
-  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0};
+  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0,paused:false};
   try{s=Object.assign(s,parse(localStorage.getItem(STATE_KEY),{}));}catch(e){}
   s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};s.blockedDeletes=s.blockedDeletes||{};
   return s;
@@ -231,7 +231,7 @@ function indicator(ok,text){
   const icon=btn.querySelector('i');if(icon)icon.style.color=ok?'#16a34a':'#dc2626';
 }
 async function tick(reason){
-  if(busy||!authorized()||!leader())return false;
+  if(state.paused||busy||!authorized()||!leader())return false;
   busy=true;lastTick=Date.now();
   try{
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
@@ -331,17 +331,23 @@ async function mergeDuplicateClients(){
   return {removed:removeIds.size,groups:analysis.groupsCount,references};
 }
 
-async function resetCloudAndRepublish(){
+async function resetCloudOnly(){
   if(busy)throw new Error('Aguarde a sincronização atual terminar.');
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,cloudGeneration:result.generation};
+  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,paused:true,cloudGeneration:result.generation};
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
-  persist();
-  const synced=await tick('republicacao-completa');
-  return {result,synced};
+  persist();indicator(false,'Nuvem vazia • sincronização pausada');
+  return {result,paused:true};
+}
+async function publishLocalToCloud(){
+  if(!state.paused)throw new Error('A sincronização não está pausada.');
+  state.paused=false;state.initialPull=true;persist();
+  const synced=await tick('publicacao-manual-completa');
+  if(!synced){state.paused=true;persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
+  return true;
 }
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
@@ -356,9 +362,9 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudAndRepublish,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{

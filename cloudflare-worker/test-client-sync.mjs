@@ -81,6 +81,22 @@ console.log('  ✔ exclusão propagou e preservou o conteúdo no D1');
 await request('/v1/restore',{method:'POST',token:tokenA,body:JSON.stringify({entity:'clientes',recordId:'cli_1',mutationId:'restore_client_test'})});
 assert.equal(await b.engine.tick('recebe-restauracao'),true);
 assert.equal(dbB.clientes[0].nome,'Cliente Editado no B');
+assert.equal(await a.engine.tick('recebe-restauracao-a'),true);
+assert.equal(dbA.clientes[0].nome,'Cliente Editado no B');
 console.log('  ✔ restauração administrativa devolveu o cliente');
+
+await request('/v1/devices/revoke',{method:'POST',token:tokenA,body:JSON.stringify({deviceId:enroll.device.id})});
+await request('/v1/devices/revoke',{method:'POST',token:tokenA,body:JSON.stringify({deviceId:recovered.device.id})});
+const reset=await a.engine.resetCloudOnly();
+assert.equal(reset.paused,true);
+let emptyStatus=await request('/v1/status',{token:tokenA});
+assert.equal(emptyStatus.totals.records,0);
+assert.equal(await a.engine.tick('nao-pode-auto-publicar'),false);
+emptyStatus=await request('/v1/status',{token:tokenA});
+assert.equal(emptyStatus.totals.records,0);
+assert.equal(await a.engine.publishLocalToCloud(),true);
+const republished=await request('/v1/status',{token:tokenA});
+assert.equal(republished.totals.byEntity.clientes.active,1);
+console.log('  ✔ reset deixa nuvem vazia/pausada e só republica após ação explícita');
 
 console.log('\nRESULTADO: sincronização real entre dois PCs simulados passou!');

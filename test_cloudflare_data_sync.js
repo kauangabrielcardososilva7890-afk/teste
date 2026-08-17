@@ -11,7 +11,8 @@ ok('sincroniza todas as entidades principais',S.definitions.clientes==='array'&&
 ok('limpa metadados antigos',!('_rt' in S.clean({id:'1',_rt:'x'})));
 ok('hash é estável com ordem diferente',S.hash({b:2,a:1})===S.hash({a:1,b:2}));
 ok('possui fila local durável',/digicopy_cf_sync_outbox_v1/.test(code));
-ok('reset cria snapshot e republica',/antes_zerar_nuvem/.test(code)&&/resetCloudAndRepublish/.test(code)&&/republicacao-completa/.test(code));
+ok('reset cria snapshot e pausa sem republicar',/antes_zerar_nuvem/.test(code)&&/resetCloudOnly/.test(code)&&/paused:true/.test(code));
+ok('publicação após reset é ação separada',/publishLocalToCloud/.test(code)&&/publicacao-manual-completa/.test(code));
 ok('lote conservador evita excesso de subrequisições',/PUSH_BATCH=10/.test(code));
 ok('calcula total pendente além do lote atual',/function pendingEstimate/.test(code));
 const dup=S.duplicateClientGroups([{id:'a',codigo:'001',documento:''},{id:'b',codigo:'1',documento:''},{id:'c',codigo:'2',documento:'12345678900'},{id:'d',codigo:'9',documento:'123.456.789-00'}]);
