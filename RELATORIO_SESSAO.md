@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.20.26**  
-**Commit:** `79420a3`  
-**Zip:** `Sistema-Digicopy-v5.20.26.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/79420a3/index.html?v=5.20.26`
+**Última versão:** **v5.20.27**  
+**Commit:** `b80915f`  
+**Zip:** `Sistema-Digicopy-v5.20.27.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/b80915f/index.html?v=5.20.27`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.27 — consumo oculto de cota encontrado e removido
+- Auditoria encontrou um segundo sincronizador automático legado em `sync_client.js`, ainda consultando `app_state` a cada **75 segundos**, embora o relatório anterior o considerasse inerte.
+- Em 5 aparelhos, só esse timer podia fazer cerca de **5.760 consultas por dia**, concorrendo com o `sync_realtime_patch.js`. O patch `limpar_nuvem_patch.js` ainda forçava esse legado a permanecer ligado.
+- O automático legado e seus disparadores foram desativados. As funções manuais antigas ficam apenas por compatibilidade; o único motor automático agora é o incremental `sync_realtime_patch.js` (`erp_rt`), sem `setInterval`.
+- Novo `test_sync_quota_guard.js` impede a volta do timer, do force-enable e de polling no motor incremental.
+- `npm run check` e teste de proteção de cota: OK.
 
 ## v5.20.26 — botão Teste nuvem realmente visível
 - **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar`, mas o próprio layout atual esconde permanentemente `#sidebar` com `display:none!important`. Por isso o HTML/teste dizia que ele existia, porém o usuário não conseguia vê-lo.
