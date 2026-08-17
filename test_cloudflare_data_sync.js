@@ -1,7 +1,7 @@
 const fs=require('fs');
 function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
 const code=fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
-const html=fs.readFileSync('index.html','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const window={DIGICOPY_CLOUD:{token:()=>''}};
 new Function('window','localStorage','document',code)(window,{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},undefined);
 const S=window.DIGICOPY_CLOUD_SYNC;
@@ -23,5 +23,5 @@ ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,180}scan
 ok('bloqueia exclusão em massa inesperada',/missing\.length>=10/.test(code)&&/blockedDeletes/.test(code));
 ok('usa cursor incremental',/\/v1\/changes\?cursor=/.test(code));
 ok('usa backoff e não setInterval',/Math\.pow/.test(code)&&!/setInterval\s*\(/.test(code));
-ok('script carregado depois do painel',html.indexOf('cloudflare_data_sync_patch.js')>html.indexOf('cloudflare_sync_patch.js'));
+ok('script carregado depois do painel',manifest.indexOf('cloudflare_data_sync_patch.js')>manifest.indexOf('cloudflare_sync_patch.js'));
 console.log('\nRESULTADO: motor Cloudflare passou!');

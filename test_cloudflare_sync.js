@@ -2,6 +2,7 @@ const fs=require('fs');
 function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
 const code=fs.readFileSync('cloudflare_sync_patch.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 console.log('== CLOUDFLARE SYNC UI ==');
 ok('usa endpoint workers.dev correto',/digicopy-sync-api\.kauangabrielcardososilva7890\.workers\.dev/.test(code));
@@ -16,10 +17,10 @@ ok('admin revisa origem de aparelhos bloqueados',/dc-review-blocked/.test(code)&
 ok('reset exige frase e duas confirmações',/dc-reset-cloud/.test(code)&&/APAGAR NUVEM/.test(code)&&/ok1/.test(code)&&/ok2/.test(code));
 ok('reset e publicação são botões separados',/Apagar e deixar a nuvem vazia/.test(code)&&/Publicar este PC na nuvem/.test(code));
 ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
-ok('novo painel é carregado por último',/cloudflare_sync_patch\.js/.test(html));
-ok('Firebase automático não é mais carregado',!/<script[^>]+sync_realtime_patch\.js/.test(html));
+ok('novo painel é carregado por último',manifest.includes('cloudflare_sync_patch.js'));
+ok('Firebase automático não é mais carregado',!manifest.includes('sync_realtime_patch.js'));
 ok('gatilho antigo de carga automática é travado',/digicopy_auto_load_try_v4939/.test(code) && /syncCarregarDaNuvem=async function\(\)/.test(code));
 ok('limpeza de testes exige dois avisos',/dc-clear-tests/.test(code)&&/ok1/.test(code)&&/ok2/.test(code));
-ok('diagnóstico Firebase antigo não é carregado',!/<script[^>]+ajustes_v52025_patch\.js/.test(html));
-ok('arquivo entra no build Electron',pkg.build.files.includes('cloudflare_sync_patch.js'));
+ok('diagnóstico Firebase antigo não é carregado',!manifest.includes('ajustes_v52025_patch.js'));
+ok('arquivo entra no build Electron',pkg.build.files.includes('app.bundle.js') && manifest.includes('cloudflare_sync_patch.js'));
 console.log('\nRESULTADO: interface Cloudflare passou!');
