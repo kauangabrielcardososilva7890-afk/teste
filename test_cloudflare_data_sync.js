@@ -11,6 +11,8 @@ ok('sincroniza todas as entidades principais',S.definitions.clientes==='array'&&
 ok('limpa metadados antigos',!('_rt' in S.clean({id:'1',_rt:'x'})));
 ok('hash é estável com ordem diferente',S.hash({b:2,a:1})===S.hash({a:1,b:2}));
 ok('possui fila local durável',/digicopy_cf_sync_outbox_v1/.test(code));
+ok('lote conservador evita excesso de subrequisições',/PUSH_BATCH=10/.test(code));
+ok('calcula total pendente além do lote atual',/function pendingEstimate/.test(code));
 ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,180}scanLocal\(\)/.test(code));
 ok('bloqueia exclusão em massa inesperada',/missing\.length>=10/.test(code)&&/blockedDeletes/.test(code));
 ok('usa cursor incremental',/\/v1\/changes\?cursor=/.test(code));

@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.2.0';
+const API_VERSION = '0.2.1';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -499,12 +499,20 @@ async function handleRestore(request, env) {
 
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
-  const [devices, records, deleted, changes] = await env.DB.batch([
+  const [devices, records, deleted, changes, grouped] = await env.DB.batch([
     env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NULL'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NOT NULL'),
-    env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes')
+    env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes'),
+    env.DB.prepare(`SELECT entity,
+      SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS active,
+      SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS deleted
+      FROM records GROUP BY entity ORDER BY entity`)
   ]);
+  const byEntity = {};
+  for (const row of (grouped.results || [])) {
+    byEntity[row.entity] = { active: Number(row.active) || 0, deleted: Number(row.deleted) || 0 };
+  }
   return json({
     ok: true,
     device,
@@ -512,7 +520,8 @@ async function handleStatus(request, env) {
       devices: Number(devices.results[0].total),
       records: Number(records.results[0].total),
       deleted: Number(deleted.results[0].total),
-      cursor: Number(changes.results[0].total)
+      cursor: Number(changes.results[0].total),
+      byEntity
     }
   });
 }

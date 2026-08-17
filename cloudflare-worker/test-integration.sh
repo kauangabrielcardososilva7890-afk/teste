@@ -122,7 +122,9 @@ printf '  ✔ exclusão preserva conteúdo e administrador consegue restaurar\n'
 curl -fsS "$API/v1/status" -H "authorization: Bearer $ADMIN" >"$TMP/status.json"
 python3 - "$TMP/status.json" <<'PY'
 import json,sys
-j=json.load(open(sys.argv[1])); assert j['totals']=={'devices':2,'records':1,'deleted':0,'cursor':3}
+j=json.load(open(sys.argv[1])); t=j['totals']
+assert (t['devices'],t['records'],t['deleted'],t['cursor'])==(2,1,0,3)
+assert t['byEntity']['clientes']=={'active':1,'deleted':0}
 PY
 printf '  ✔ diagnóstico contabiliza aparelhos e registros\n'
 

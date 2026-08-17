@@ -14,7 +14,7 @@ const CONFLICT_KEY='digicopy_cf_sync_conflicts_v1';
 const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
 const MAX_OUTBOX=100;
-const PUSH_BATCH=25;
+const PUSH_BATCH=10;
 const HEARTBEAT_MS=60000;
 
 const DEFINITIONS={
@@ -236,7 +236,16 @@ function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
   scanLocal(entity);schedule(100);return true;
 }
-function info(){return {authorized:authorized(),busy,cursor:Number(state.cursor)||0,outbox:outbox.length,lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function pendingEstimate(){
+  const pending=pendingKeys();let total=pending.size;
+  for(const entity of Object.keys(DEFINITIONS)){
+    const entries=entriesFor(entity,DEFINITIONS[entity]),present=new Set();
+    for(const entry of entries){const k=key(entity,entry.id);present.add(k);if(!pending.has(k)&&state.hashes[k]!==hash(entry.data))total++;}
+    for(const k of Object.keys(state.known)){if(k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k))total++;}
+  }
+  return total;
+}
+function info(){return {authorized:authorized(),busy,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
 window.DIGICOPY_CLOUD_SYNC={tick,info,approveMassDelete,hash,clean,definitions:DEFINITIONS};
 
