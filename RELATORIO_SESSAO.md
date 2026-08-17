@@ -4,10 +4,33 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.2**  
-**Commit:** `72a5994`  
-**Zip:** `Sistema-Digicopy-v5.21.2.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/72a5994df04c140a03299512a60f68b40ed5f98e/index.html?v=5.21.2`
+**Última versão:** **v5.21.3**  
+**Commit:** (esta sessão)  
+**Zip:** gerar no PC do usuário com `npm run build:win`  
+**GitHack:** atualizar após o commit desta sessão  
+
+---
+
+## v5.21.3 — zerar nuvem e publicar este PC (evitar duplicar)
+
+Pedido: os dados deste PC devem ficar; o que está na nuvem pode ser apagado; depois publicar só este PC.
+
+- Recolocado o botão **Zerar dados da nuvem** só para Admin.
+- Dois avisos antes de apagar. A API continua exigindo aparelho admin único e a frase interna `APAGAR NUVEM`.
+- Depois do reset a sincronização fica **pausada**. Nada sobe sozinho.
+- O próximo passo é **Publicar este PC na nuvem**.
+- Os dados deste computador não são apagados. Outros aparelhos precisam estar bloqueados antes do reset.
+
+Passo a passo operacional:
+
+1. Backup neste PC (botão Backup, só Admin).
+2. Não abrir os outros PCs / celular.
+3. Nuvem → Ver aparelhos → Bloquear todos, menos este.
+4. Zerar dados da nuvem.
+5. Conferir: Clientes na nuvem = 0 e texto PAUSADA.
+6. Publicar este PC na nuvem.
+7. Esperar Clientes neste PC = Clientes na nuvem e Pendentes = 0.
+8. Só então gerar código para autorizar os outros aparelhos.
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
