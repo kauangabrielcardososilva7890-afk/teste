@@ -134,7 +134,8 @@ async function handleHealth(env) {
     version: API_VERSION,
     database,
     schemaVersion,
-    ready: database === 'ok' && schemaVersion === '2',
+    setupConfigured: !!env.SETUP_SECRET,
+    ready: database === 'ok' && schemaVersion === '2' && !!env.SETUP_SECRET,
     message: database === 'ok'
       ? (schemaVersion ? 'API e banco D1 disponíveis.' : 'Banco vinculado; migração pendente.')
       : 'API disponível; banco D1 ainda não vinculado.'
