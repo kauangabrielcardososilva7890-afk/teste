@@ -1,0 +1,20 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('indexeddb_persistence_patch.js','utf8');
+const html=fs.readFileSync('index.html','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+console.log('== INDEXEDDB PERSISTENCE ==');
+ok('abre banco dedicado',/indexedDB\.open\(IDB_NAME,1\)/.test(code));
+ok('possui store de snapshot',/createObjectStore\(STORE/.test(code));
+ok('migra base atual na primeira abertura',/migracao-localStorage/.test(code));
+ok('restaura snapshot mais novo',/Number\(saved\.savedAt\)>localTs/.test(code));
+ok('envolve saveDB e saveDBAgora',/window\.saveDB=function/.test(code)&&/window\.saveDBAgora=function/.test(code));
+ok('limpeza remove só chaves DIGICOPY',/deleteDatabase\(IDB_NAME\)/.test(code)&&/\^digicopy\/i.test\(k\)/.test(code));
+ok('limpeza não regrava durante reload',/if\(clearing\|\|/.test(code));
+ok('sync aguarda restauração',/DIGICOPY_DB_READY/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
+ok('aviso antigo só aparece se IndexedDB falhar',/!window\.__indexedDbPersistAtivo/.test(app));
+ok('carrega antes do sync Cloudflare',html.indexOf('indexeddb_persistence_patch.js')<html.indexOf('cloudflare_data_sync_patch.js'));
+ok('Backup está visível no topo',/id="btn-backup-top"[^>]*exportBackup/.test(html));
+ok('arquivo entra no Electron',pkg.build.files.includes('indexeddb_persistence_patch.js'));
+console.log('\nRESULTADO: persistência IndexedDB passou!');

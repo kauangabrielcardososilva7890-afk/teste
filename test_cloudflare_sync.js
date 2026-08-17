@@ -12,6 +12,7 @@ ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuv
 ok('novo painel é carregado por último',/cloudflare_sync_patch\.js/.test(html));
 ok('Firebase automático não é mais carregado',!/<script[^>]+sync_realtime_patch\.js/.test(html));
 ok('gatilho antigo de carga automática é travado',/digicopy_auto_load_try_v4939/.test(code) && /syncCarregarDaNuvem=async function\(\)/.test(code));
+ok('limpeza de testes exige dois avisos',/dc-clear-tests/.test(code)&&/ok1/.test(code)&&/ok2/.test(code));
 ok('diagnóstico Firebase antigo não é carregado',!/<script[^>]+ajustes_v52025_patch\.js/.test(html));
 ok('arquivo entra no build Electron',pkg.build.files.includes('cloudflare_sync_patch.js'));
 console.log('\nRESULTADO: interface Cloudflare passou!');

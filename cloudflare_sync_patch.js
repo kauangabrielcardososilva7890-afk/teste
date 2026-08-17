@@ -88,7 +88,7 @@ async function renderDisconnected(body){
   catch(e){ body.innerHTML=message(e.message,'error'); return; }
   if(!health.ready){ body.innerHTML=message('A API ainda não está pronta. Banco: '+health.database+' • esquema: '+(health.schemaVersion||'pendente')+' • segurança: '+(health.setupConfigured?'ok':'pendente'),'error'); return; }
   body.innerHTML=message('Nuvem pronta. Este computador ainda não foi autorizado. Nenhum dado local será enviado antes da autorização.','info')+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-code" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Tenho um código</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div>';
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-code" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Tenho um código</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div><div style="border-top:1px solid #e2e8f0;margin-top:20px;padding-top:14px"><button id="dc-clear-tests" style="padding:8px 11px;border:1px solid #fecaca;background:#fff7f7;color:#b91c1c;border-radius:9px;font-size:11px;font-weight:800">Limpar dados de teste deste navegador</button><p style="font-size:10.5px;color:#94a3b8;margin-top:5px">Não apaga arquivos JSON salvos no computador nem dados da Cloudflare.</p></div>';
   const form=body.querySelector('#dc-form');
   function first(){
     form.innerHTML='<h3 style="font-size:15px;font-weight:900">Ativar o computador principal</h3><p style="font-size:12px;color:#64748b;margin-top:4px">Faça isto apenas no computador principal do serviço.</p>'+field('Nome deste computador','dc-name','text','Ex.: PC PRINCIPAL - DIGICOPY')+field('Segredo de ativação','dc-secret','password','SETUP_SECRET da Cloudflare')+'<div style="display:flex;gap:8px;margin-top:15px">'+button('Ativar como administrador','dc-submit',true)+'</div><div id="dc-result" style="margin-top:12px"></div>';
@@ -120,6 +120,15 @@ async function renderDisconnected(body){
   body.querySelector('#dc-tab-first').onclick=first;
   body.querySelector('#dc-tab-code').onclick=code;
   body.querySelector('#dc-tab-recover').onclick=recover;
+  body.querySelector('#dc-clear-tests').onclick=async()=>{
+    if(!window.DIGICOPY_INDEXED_DB){return;}
+    const ok1=typeof window.confirmSistema==='function'?await window.confirmSistema('Você confirmou que só precisa manter o arquivo JSON dos clientes? Isto apaga os dados de teste apenas deste navegador.','Limpar dados de teste'):false;
+    if(!ok1)return;
+    const ok2=await window.confirmSistema('Último aviso: clientes/produtos que estão abertos nesta tela serão removidos. O arquivo JSON salvo no computador não será apagado. Continuar?','Último aviso');
+    if(!ok2)return;
+    try{await window.DIGICOPY_INDEXED_DB.clearLocalData();location.reload();}
+    catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Não foi possível limpar');}
+  };
   first();
 }
 

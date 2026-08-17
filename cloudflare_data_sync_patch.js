@@ -206,6 +206,7 @@ async function tick(reason){
   if(busy||!authorized()||!leader())return false;
   busy=true;lastTick=Date.now();
   try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
     await pullAll();
     let totalSent=0;
     for(let round=0;round<50;round++){

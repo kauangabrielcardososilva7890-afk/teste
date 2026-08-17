@@ -204,9 +204,9 @@ function __finalizarSaveQ(q){
   });
   try{ localStorage.setItem(DB_MANIFEST_KEY, JSON.stringify({v:2, ts:new Date().toISOString(), partes:q.partes})); }catch(eMan){}
   window.__dbPersistidoOk=!q.falhouQuota;
-  if(q.falhouQuota && !window.__avisouQuota){
+  if(q.falhouQuota && !window.__indexedDbPersistAtivo && !window.__avisouQuota){
     window.__avisouQuota=true;
-    if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio: os dados estão abertos, mas podem NÃO ficar salvos ao fechar. Avise o suporte antes de sair.','error');
+    if(typeof toast==='function') toast('⚠️ Espaço do navegador cheio e o armazenamento ampliado não iniciou. Não feche antes de exportar um backup.','error');
   }
   agendarSnapshotLegado();
 }
