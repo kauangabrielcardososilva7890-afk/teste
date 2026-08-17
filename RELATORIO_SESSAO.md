@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.20.31**  
-**Commit:** `c229168`  
-**Zip:** `Sistema-Digicopy-v5.20.31.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/c229168890abe73a5c63273d086b34b0dbc225f2/index.html?v=5.20.31`
+**Última versão:** **v5.20.32**  
+**Commit:** `cff9a1b`  
+**Zip:** `Sistema-Digicopy-v5.20.32.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/cff9a1b5fcc9f3038ead8c35554c02e0cd89d836/index.html?v=5.20.32`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.32 — contagem confiável durante envio inicial
+- Painel agora separa **Clientes neste PC**, **Clientes na nuvem**, total de registros e **Pendentes neste PC**; o antigo “Fila 100” era só o limite do lote, não o restante total.
+- API `/v1/status` retorna contagem ativa/excluída agrupada por entidade.
+- Lote por requisição reduzido de 25 para 10 para manter margem segura de subrequisições no Worker gratuito.
+- Usuário informou 1.919 clientes; a captura com 412 registros não representava conclusão. Não importar nada até as duas contagens de clientes coincidirem e pendentes chegar a zero.
 
 ## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
 - Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
