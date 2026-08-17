@@ -12,6 +12,7 @@ ok('restaura snapshot mais novo',/Number\(saved\.savedAt\)>localTs/.test(code));
 ok('envolve saveDB e saveDBAgora',/window\.saveDB=function/.test(code)&&/window\.saveDBAgora=function/.test(code));
 ok('limpeza remove só chaves DIGICOPY',/deleteDatabase\(IDB_NAME\)/.test(code)&&/\^digicopy\/i.test\(k\)/.test(code));
 ok('limpeza não regrava durante reload',/if\(clearing\|\|/.test(code));
+ok('guarda snapshot antes de operações críticas',/writeRecoverySnapshot/.test(code)&&/recovery_/.test(code));
 ok('sync aguarda restauração',/DIGICOPY_DB_READY/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
 ok('aviso antigo só aparece se IndexedDB falhar',/!window\.__indexedDbPersistAtivo/.test(app));
 ok('carrega antes do sync Cloudflare',html.indexOf('indexeddb_persistence_patch.js')<html.indexOf('cloudflare_data_sync_patch.js'));

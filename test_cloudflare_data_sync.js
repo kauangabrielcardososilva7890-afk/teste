@@ -13,6 +13,9 @@ ok('hash é estável com ordem diferente',S.hash({b:2,a:1})===S.hash({a:1,b:2}))
 ok('possui fila local durável',/digicopy_cf_sync_outbox_v1/.test(code));
 ok('lote conservador evita excesso de subrequisições',/PUSH_BATCH=10/.test(code));
 ok('calcula total pendente além do lote atual',/function pendingEstimate/.test(code));
+const dup=S.duplicateClientGroups([{id:'a',codigo:'001',documento:''},{id:'b',codigo:'1',documento:''},{id:'c',codigo:'2',documento:'12345678900'},{id:'d',codigo:'9',documento:'123.456.789-00'}]);
+ok('detecta repetidos por código ou documento',dup.length===2&&dup.reduce((n,g)=>n+g.length-1,0)===2);
+ok('novo aparelho não publica histórico local',/reconcileFirstAuthorizedDevice/.test(code)&&/antes_primeira_nuvem/.test(code));
 ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,180}scanLocal\(\)/.test(code));
 ok('bloqueia exclusão em massa inesperada',/missing\.length>=10/.test(code)&&/blockedDeletes/.test(code));
 ok('usa cursor incremental',/\/v1\/changes\?cursor=/.test(code));

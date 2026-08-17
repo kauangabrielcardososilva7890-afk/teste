@@ -55,6 +55,13 @@ async function boot(){
     console.error('[DIGICOPY][IndexedDB] indisponível',e);return false;
   }
 }
+async function writeRecoverySnapshot(name,data){
+  try{
+    const copy=typeof structuredClone==='function'?structuredClone(data):JSON.parse(JSON.stringify(data));
+    await put({key:'recovery_'+String(name||Date.now()),savedAt:Date.now(),reason:'recovery',data:copy});
+    return true;
+  }catch(e){lastError=e&&e.message?e.message:String(e);return false;}
+}
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
   try{if(database){database.close();database=null;}}catch(e){}
@@ -67,7 +74,7 @@ async function clearLocalData(){
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
 }
-window.DIGICOPY_INDEXED_DB={writeNow,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,lastSavedAt,lastError,database:IDB_NAME})};
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,lastSavedAt,lastError,database:IDB_NAME})};
 window.DIGICOPY_DB_READY=boot();
 
 // Espelha toda chamada de salvamento. Preserva os wrappers anteriores.

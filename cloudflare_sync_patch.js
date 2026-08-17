@@ -150,7 +150,7 @@ async function renderConnected(body){
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
     '<div style="display:flex;gap:8px;margin-bottom:14px">'+button('Sincronizar agora','dc-sync-now',true)+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Analisar clientes repetidos','dc-dedupe-clients',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');setBusy(btn,true,'Sincronizando...');
@@ -171,6 +171,18 @@ async function renderConnected(body){
   };
   if(isAdmin){
     const adminResult=body.querySelector('#dc-admin-result');
+    body.querySelector('#dc-dedupe-clients').onclick=async()=>{
+      if(!window.DIGICOPY_CLOUD_SYNC){adminResult.innerHTML=message('Motor de sincronização não carregado.','error');return;}
+      const analysis=window.DIGICOPY_CLOUD_SYNC.analyzeDuplicateClients();
+      if(!analysis.extraCount){adminResult.innerHTML=message('Nenhum cliente repetido por código ou CPF/CNPJ foi encontrado.','ok');return;}
+      adminResult.innerHTML=message('Encontrados '+analysis.extraCount+' clientes extras em '+analysis.groupsCount+' grupos. Será criado um snapshot de recuperação; contratos, vendas e chamados serão apontados para o cadastro mantido.','info')+button('Unir '+analysis.extraCount+' repetidos com segurança','dc-confirm-dedupe',true);
+      adminResult.querySelector('#dc-confirm-dedupe').onclick=async()=>{
+        const ok=await window.confirmSistema('Unir '+analysis.extraCount+' clientes repetidos? A versão mais completa será mantida e os cadastros removidos ficarão recuperáveis na nuvem.','Unir clientes repetidos');if(!ok)return;
+        const btn=adminResult.querySelector('#dc-confirm-dedupe');setBusy(btn,true,'Unindo...');
+        try{const result=await window.DIGICOPY_CLOUD_SYNC.mergeDuplicateClients();await window.DIGICOPY_CLOUD_SYNC.tick('deduplicacao');if(typeof window.lfbAlert==='function')await window.lfbAlert('Clientes extras removidos: '+result.removed+'\nReferências atualizadas: '+result.references,'Clientes unidos');await renderConnected(body);}
+        catch(e){adminResult.innerHTML=message(e.message,'error');}
+      };
+    };
     body.querySelector('#dc-list-devices').onclick=async()=>{
       adminResult.innerHTML=message('Carregando aparelhos...','info');
       try{

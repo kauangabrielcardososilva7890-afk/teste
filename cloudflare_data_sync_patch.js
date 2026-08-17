@@ -97,6 +97,34 @@ function applyRemote(change){
   return changed;
 }
 
+function localKeysSnapshot(){
+  const set=new Set();
+  for(const entity of Object.keys(DEFINITIONS))for(const entry of entriesFor(entity,DEFINITIONS[entity]))set.add(key(entity,entry.id));
+  return set;
+}
+async function reconcileFirstAuthorizedDevice(beforeKeys){
+  if(!beforeKeys||typeof db==='undefined'||!db)return 0;
+  let removed=0;
+  for(const entity of Object.keys(DEFINITIONS)){
+    const mode=DEFINITIONS[entity];
+    if(mode==='array'&&Array.isArray(db[entity])){
+      db[entity]=db[entity].filter(item=>{
+        if(!item||!item.id)return true;
+        const k=key(entity,String(item.id));
+        if(beforeKeys.has(k)&&!state.known[k]){removed++;return false;}
+        return true;
+      });
+    }else if(mode==='map'&&db[entity]&&typeof db[entity]==='object'){
+      for(const id of Object.keys(db[entity])){const k=key(entity,id);if(beforeKeys.has(k)&&!state.known[k]){delete db[entity][id];removed++;}}
+    }else if(mode==='root'){
+      const k=key(entity,'__root__');
+      if(beforeKeys.has(k)&&!state.known[k])state.hashes[k]=hash(db[entity]);
+    }
+  }
+  if(removed){applying=true;try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}finally{applying=false;}}
+  return removed;
+}
+
 async function pullAll(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
@@ -207,7 +235,12 @@ async function tick(reason){
   busy=true;lastTick=Date.now();
   try{
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
+    const firstAuthorizedPull=!state.initialPull;
+    const localBefore=firstAuthorizedPull&&info&&info.role!=='admin'?localKeysSnapshot():null;
+    if(localBefore&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
     await pullAll();
+    if(localBefore)await reconcileFirstAuthorizedDevice(localBefore);
     let totalSent=0;
     for(let round=0;round<50;round++){
       scanLocal();
@@ -232,6 +265,70 @@ function scheduleHeartbeat(){
   const wait=failures?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):HEARTBEAT_MS;
   timer=setTimeout(()=>{if(!document.hidden)tick('heartbeat');else scheduleHeartbeat();},wait);
 }
+function duplicateClientGroups(clients){
+  const list=Array.isArray(clients)?clients:[],parent=list.map((_,i)=>i),seen=new Map();
+  const root=i=>parent[i]===i?i:(parent[i]=root(parent[i]));
+  const join=(a,b)=>{a=root(a);b=root(b);if(a!==b)parent[b]=a;};
+  list.forEach((c,i)=>{
+    const ids=[];
+    const code=String(c&&c.codigo!=null?c.codigo:'').replace(/\D/g,'').replace(/^0+/,'');
+    const doc=String(c&&c.documento!=null?c.documento:'').replace(/\D/g,'');
+    if(code&&code!=='0')ids.push('codigo:'+code);
+    if(doc.length>=8)ids.push('documento:'+doc);
+    ids.forEach(id=>{if(seen.has(id))join(i,seen.get(id));else seen.set(id,i);});
+  });
+  const groups=new Map();list.forEach((c,i)=>{const r=root(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(c);});
+  return [...groups.values()].filter(g=>g.length>1);
+}
+function countClientRefs(clientId){
+  let count=0,visited=new Set();
+  function walk(value,depth){
+    if(!value||typeof value!=='object'||depth>7||visited.has(value))return;visited.add(value);
+    if(Array.isArray(value)){value.forEach(x=>walk(x,depth+1));return;}
+    for(const k of Object.keys(value)){
+      if(/^(cliente_?id|id_?cliente)$/i.test(k)&&String(value[k])===String(clientId))count++;
+      else walk(value[k],depth+1);
+    }
+  }
+  if(typeof db!=='undefined')for(const k of Object.keys(db)){if(k!=='clientes')walk(db[k],0);}
+  return count;
+}
+function replaceClientRefs(fromId,toId){
+  let changed=0,visited=new Set();
+  function walk(value,depth){
+    if(!value||typeof value!=='object'||depth>7||visited.has(value))return;visited.add(value);
+    if(Array.isArray(value)){value.forEach(x=>walk(x,depth+1));return;}
+    for(const k of Object.keys(value)){
+      if(/^(cliente_?id|id_?cliente)$/i.test(k)&&String(value[k])===String(fromId)){value[k]=toId;changed++;}
+      else walk(value[k],depth+1);
+    }
+  }
+  for(const k of Object.keys(db)){if(k!=='clientes')walk(db[k],0);}
+  return changed;
+}
+function analyzeDuplicateClients(){
+  const groups=duplicateClientGroups(typeof db!=='undefined'?db.clientes:[]);
+  return {groups,groupsCount:groups.length,extraCount:groups.reduce((n,g)=>n+g.length-1,0)};
+}
+async function mergeDuplicateClients(){
+  const analysis=analyzeDuplicateClients();if(!analysis.extraCount)return {removed:0,groups:0,references:0};
+  if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_unir_clientes',db);
+  const removeIds=new Set();let references=0;
+  for(const group of analysis.groups){
+    const ranked=group.map((c,index)=>({c,index,refs:countClientRefs(c.id),filled:Object.values(c||{}).filter(v=>v!==null&&v!==undefined&&v!=='').length})).sort((a,b)=>b.refs-a.refs||b.filled-a.filled||a.index-b.index);
+    const canonical=ranked[0].c;
+    for(const item of ranked.slice(1)){
+      const duplicate=item.c;
+      for(const k of Object.keys(duplicate||{}))if((canonical[k]===null||canonical[k]===undefined||canonical[k]==='')&&duplicate[k]!==undefined)canonical[k]=duplicate[k];
+      references+=replaceClientRefs(duplicate.id,canonical.id);removeIds.add(String(duplicate.id));
+    }
+  }
+  db.clientes=db.clientes.filter(c=>!removeIds.has(String(c.id)));
+  applying=true;try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}finally{applying=false;}
+  schedule(200);
+  return {removed:removeIds.size,groups:analysis.groupsCount,references};
+}
+
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
   scanLocal(entity);schedule(100);return true;
@@ -247,7 +344,7 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,approveMassDelete,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{

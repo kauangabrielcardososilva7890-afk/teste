@@ -17,10 +17,10 @@ async function request(path,{token,headers={},...options}={}){
   if(!response.ok)throw Object.assign(new Error(data.message||'HTTP '+response.status),{status:response.status,data});
   return data;
 }
-async function makeEngine(db,deviceToken){
+async function makeEngine(db,deviceToken,role){
   const storage=new MemoryStorage();
   storage.setItem('device-token',deviceToken);
-  const window={DIGICOPY_CLOUD:{token:()=>storage.getItem('device-token'),api:(path,options)=>request(path,{...(options||{}),token:storage.getItem('device-token')})}};
+  const window={DIGICOPY_CLOUD:{token:()=>storage.getItem('device-token'),deviceInfo:()=>({id:'test_'+role,role}),api:(path,options)=>request(path,{...(options||{}),token:storage.getItem('device-token')})}};
   let saves=0;
   const run=new Function('window','localStorage','document','db','saveDB','saveDBAgora',engineCode+'\nreturn window.DIGICOPY_CLOUD_SYNC;');
   const engine=run(window,storage,undefined,db,()=>{saves++;},()=>{saves++;});
@@ -39,18 +39,20 @@ const dbA={
   produtos:[],equipamentos:[],contratos:[],parque:[],leituras:[],os:[],vendas:[],
   contasReceber:[],contasPagar:[],logs:[],tecnicos:[],notificacoes:[],config:{empresa:{nome:'DIGICOPY'}},modulosDinamicos:{}
 };
-const a=await makeEngine(dbA,tokenA);
+const a=await makeEngine(dbA,tokenA,'admin');
 assert.equal(await a.engine.tick('teste-inicial'),true);
 let cloud=await request('/v1/changes?cursor=0',{token:tokenA});
 assert.ok(cloud.changes.some(x=>x.entity==='clientes'&&x.data.nome==='Cliente Original'));
 console.log('  ✔ PC A publicou somente registros locais versionados');
 
-const dbB={empresas:[],usuarios:[],clientes:[],produtos:[],equipamentos:[],contratos:[],parque:[],leituras:[],os:[],vendas:[],contasReceber:[],contasPagar:[],logs:[],tecnicos:[],notificacoes:[],config:{},modulosDinamicos:{}};
-const b=await makeEngine(dbB,tokenB);
+const dbB={empresas:[],usuarios:[],clientes:[{id:'stale_1',codigo:'999',nome:'Cliente antigo só do navegador'}],produtos:[],equipamentos:[],contratos:[],parque:[],leituras:[],os:[],vendas:[],contasReceber:[],contasPagar:[],logs:[],tecnicos:[],notificacoes:[],config:{},modulosDinamicos:{}};
+const b=await makeEngine(dbB,tokenB,'device');
 assert.equal(await b.engine.tick('primeira-carga'),true);
 assert.equal(dbB.clientes.length,1);
 assert.equal(dbB.clientes[0].nome,'Cliente Original');
-console.log('  ✔ PC B vazio baixou primeiro e não apagou o PC A');
+cloud=await request('/v1/changes?cursor=0',{token:tokenA});
+assert.ok(!cloud.changes.some(x=>x.recordId==='stale_1'));
+console.log('  ✔ PC B baixou primeiro e não publicou seu histórico local antigo');
 
 dbB.clientes[0].nome='Cliente Editado no B';
 assert.equal(await b.engine.tick('edicao-b'),true);
