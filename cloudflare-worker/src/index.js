@@ -134,7 +134,7 @@ async function handleHealth(env) {
     version: API_VERSION,
     database,
     schemaVersion,
-    ready: database === 'ok' && schemaVersion === '1',
+    ready: database === 'ok' && schemaVersion === '2',
     message: database === 'ok'
       ? (schemaVersion ? 'API e banco D1 disponíveis.' : 'Banco vinculado; migração pendente.')
       : 'API disponível; banco D1 ainda não vinculado.'
@@ -161,10 +161,16 @@ async function handleSetup(request, env) {
   const token = randomToken('dcp_');
   const tokenHash = await sha256(token);
   const now = Date.now();
-  await env.DB.prepare(
-    `INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at)
-     VALUES (?, ?, ?, 'admin', ?, ?)`
-  ).bind(id, name, tokenHash, now, now).run();
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at)
+       VALUES (?, ?, ?, 'admin', ?, ?)`
+    ).bind(id, name, tokenHash, now, now),
+    env.DB.prepare(
+      `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
+       VALUES ('initial_setup', ?, ?, ?, ?)`
+    ).bind(id, id, JSON.stringify({ name }), now)
+  ]);
 
   return json({
     ok: true,
@@ -178,15 +184,16 @@ async function handleCreateInvite(request, env) {
   const admin = await requireAdmin(request, env);
   const body = await readBody(request);
   const minutes = Math.min(60, Math.max(5, Number(body.minutes) || 15));
+  const role = body.role === 'admin' ? 'admin' : 'device';
   const code = randomToken('join_');
   const codeHash = await sha256(code);
   const now = Date.now();
   const expiresAt = now + minutes * 60_000;
   await env.DB.prepare(
-    `INSERT INTO enrollment_codes(code_hash, created_by, expires_at, uses_left, created_at)
-     VALUES (?, ?, ?, 1, ?)`
-  ).bind(codeHash, admin.id, expiresAt, now).run();
-  return json({ ok: true, code, expiresAt, uses: 1 }, 201);
+    `INSERT INTO enrollment_codes(code_hash, created_by, expires_at, uses_left, created_at, role)
+     VALUES (?, ?, ?, 1, ?, ?)`
+  ).bind(codeHash, admin.id, expiresAt, now, role).run();
+  return json({ ok: true, code, expiresAt, uses: 1, role }, 201);
 }
 
 async function handleEnroll(request, env) {
@@ -198,6 +205,13 @@ async function handleEnroll(request, env) {
   }
   const codeHash = await sha256(code);
   const now = Date.now();
+  const invitation = await env.DB.prepare(
+    `SELECT role, created_by FROM enrollment_codes
+     WHERE code_hash = ? AND uses_left > 0 AND expires_at > ? LIMIT 1`
+  ).bind(codeHash, now).first();
+  if (!invitation) {
+    throw new ApiError(403, 'INVALID_ENROLL_CODE', 'Código inválido, expirado ou já utilizado.');
+  }
   const claim = await env.DB.prepare(
     `UPDATE enrollment_codes SET uses_left = uses_left - 1
      WHERE code_hash = ? AND uses_left > 0 AND expires_at > ?`
@@ -206,6 +220,7 @@ async function handleEnroll(request, env) {
     throw new ApiError(403, 'INVALID_ENROLL_CODE', 'Código inválido, expirado ou já utilizado.');
   }
 
+  const role = invitation.role === 'admin' ? 'admin' : 'device';
   const id = crypto.randomUUID();
   const token = randomToken('dcp_');
   const tokenHash = await sha256(token);
@@ -213,15 +228,62 @@ async function handleEnroll(request, env) {
     await env.DB.batch([
       env.DB.prepare(
         `INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at)
-         VALUES (?, ?, ?, 'device', ?, ?)`
-      ).bind(id, name, tokenHash, now, now),
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(id, name, tokenHash, role, now, now),
       env.DB.prepare('DELETE FROM enrollment_codes WHERE code_hash = ? OR expires_at <= ?')
-        .bind(codeHash, now)
+        .bind(codeHash, now),
+      env.DB.prepare(
+        `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
+         VALUES ('device_enrolled', ?, ?, ?, ?)`
+      ).bind(id, invitation.created_by, JSON.stringify({ name, role }), now)
     ]);
   } catch (error) {
     throw new ApiError(500, 'ENROLL_FAILED', 'Não foi possível autorizar o aparelho. Gere outro código.');
   }
-  return json({ ok: true, device: { id, name, role: 'device' }, token }, 201);
+  return json({ ok: true, device: { id, name, role }, token }, 201);
+}
+
+async function handleRecovery(request, env) {
+  if (!env.SETUP_SECRET) {
+    throw new ApiError(503, 'RECOVERY_NOT_CONFIGURED', 'Segredo de recuperação não configurado.');
+  }
+  const supplied = request.headers.get('x-setup-secret');
+  if (!(await sameSecret(supplied, env.SETUP_SECRET))) {
+    throw new ApiError(403, 'INVALID_SETUP_SECRET', 'Segredo de recuperação incorreto.');
+  }
+  const body = await readBody(request);
+  const name = cleanText(body.deviceName, 80);
+  if (!name) throw new ApiError(400, 'DEVICE_NAME_REQUIRED', 'Informe o nome do aparelho.');
+
+  const id = crypto.randomUUID();
+  const token = randomToken('dcp_');
+  const tokenHash = await sha256(token);
+  const now = Date.now();
+  const recent = await env.DB.prepare(
+    `SELECT created_at FROM device_events
+     WHERE event_type = 'admin_recovery' ORDER BY id DESC LIMIT 1`
+  ).first();
+  if (recent && now - Number(recent.created_at) < 600_000) {
+    throw new ApiError(429, 'RECOVERY_COOLDOWN', 'Aguarde 10 minutos antes de outra recuperação.');
+  }
+
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at)
+       VALUES (?, ?, ?, 'admin', ?, ?)`
+    ).bind(id, name, tokenHash, now, now),
+    env.DB.prepare(
+      `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
+       VALUES ('admin_recovery', ?, NULL, ?, ?)`
+    ).bind(id, JSON.stringify({ name }), now)
+  ]);
+  return json({
+    ok: true,
+    recovered: true,
+    device: { id, name, role: 'admin' },
+    token,
+    warning: 'Recuperação concluída. Troque o SETUP_SECRET se ela não foi planejada.'
+  }, 201);
 }
 
 function parseDataJson(value) {
@@ -417,6 +479,7 @@ async function route(request, env) {
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   if (request.method === 'POST' && url.pathname === '/v1/setup') return handleSetup(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/invites') return handleCreateInvite(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env);

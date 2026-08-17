@@ -33,7 +33,8 @@ npx wrangler d1 migrations apply DB --remote
 
 - `GET /health` — integridade da API e versão do esquema
 - `POST /v1/setup` — cadastra o primeiro aparelho admin
-- `POST /v1/invites` — admin gera convite temporário
+- `POST /v1/recover` — recupera acesso admin sem alterar dados de negócio
+- `POST /v1/invites` — admin gera convite temporário para aparelho ou outro admin
 - `POST /v1/enroll` — autoriza outro aparelho
 - `POST /v1/changes` — envia lote incremental idempotente
 - `GET /v1/changes?cursor=N` — recebe somente novidades

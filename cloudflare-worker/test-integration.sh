@@ -18,7 +18,7 @@ printf '== DIGICOPY CLOUD API: INTEGRAÇÃO D1 ==\n'
 curl -fsS "$API/health" >"$TMP/health.json"
 python3 - "$TMP/health.json" <<'PY'
 import json,sys
-j=json.load(open(sys.argv[1])); assert j['ready'] is True and j['schemaVersion']=='1'
+j=json.load(open(sys.argv[1])); assert j['ready'] is True and j['schemaVersion']=='2'
 PY
 printf '  ✔ API, D1 e esquema prontos\n'
 
@@ -102,4 +102,18 @@ import json,sys
 j=json.load(open(sys.argv[1])); assert j['totals']=={'devices':2,'records':1,'cursor':1}
 PY
 printf '  ✔ diagnóstico contabiliza aparelhos e registros\n'
+
+code=$(request_code "$TMP/recover.json" -X POST "$API/v1/recover" \
+  -H 'content-type: application/json' -H "x-setup-secret: $SETUP_SECRET" \
+  --data '{"deviceName":"PC Recuperação"}')
+test "$code" = 201
+python3 - "$TMP/recover.json" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); assert j['recovered'] is True and j['device']['role']=='admin'
+PY
+code=$(request_code "$TMP/recover2.json" -X POST "$API/v1/recover" \
+  -H 'content-type: application/json' -H "x-setup-secret: $SETUP_SECRET" \
+  --data '{"deviceName":"Recuperação repetida"}')
+test "$code" = 429
+printf '  ✔ recuperação cria admin sem apagar dados e possui intervalo de segurança\n'
 printf '\nRESULTADO: integração completa da API passou!\n'
