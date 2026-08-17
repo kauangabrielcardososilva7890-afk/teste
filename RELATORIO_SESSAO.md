@@ -4,10 +4,21 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.3**  
-**Commit:** `5cd91e4`  
+**Última versão:** **v5.21.4**  
+**Commit:** (após push)  
 **Zip:** gerar no PC do usuário com `npm run build:win`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/5cd91e44b3065732ad168ae2b07ce56e3708acf7/index.html?v=5.21.3`  
+**GitHack:** atualizar após o commit  
+
+---
+
+## v5.21.4 — 1919 clientes existiam e não apareciam na tela
+
+Causa: o painel Nuvem conta `db.clientes.length`. A tela de Clientes filtrava `empresaId === sessão`. Cadastro antigo sem empresa, ou restaurado do IndexedDB depois do `seedData`, ficava invisível.
+
+- `seedData` agora preenche empresa também quando o campo está vazio.
+- Depois do IndexedDB restaurar a base, o `seedData` roda de novo.
+- A lista de clientes aceita cadastro sem `empresaId` e religa na empresa única.
+- Continua: lista só aparece ao pesquisar ou clicar **Todos**.  
 
 ---
 

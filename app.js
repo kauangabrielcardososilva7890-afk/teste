@@ -350,7 +350,7 @@ function seedData(force=false){
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
   ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
-      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+      db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
   });
 

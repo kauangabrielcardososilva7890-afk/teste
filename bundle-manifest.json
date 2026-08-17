@@ -95,5 +95,6 @@
   "ajustes_v52024_patch.js",
   "indexeddb_persistence_patch.js",
   "cloudflare_sync_patch.js",
-  "cloudflare_data_sync_patch.js"
+  "cloudflare_data_sync_patch.js",
+  "ajustes_v5214_clientes_visiveis_patch.js"
 ]

@@ -52,7 +52,8 @@ const tests=[
   "test_offline_assets.js",
   "test_confirm_compat.js",
   "test_app_bundle.js",
-  "test_electron_security.js"
+  "test_electron_security.js",
+  "test_ajustes_v5214.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

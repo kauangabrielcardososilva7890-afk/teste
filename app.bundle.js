@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 97 | sha256: bb9b057b1b6032eb
+ * scripts: 98 | sha256: 9aceb1dfe2397697
  */
 
 /* ===== lz.js ===== */
@@ -510,7 +510,7 @@ function seedData(force=false){
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
   ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
-      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+      db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
   });
 
@@ -18698,7 +18698,8 @@ window.renderClientes=function(){
   const view=document.getElementById('view-clientes')||(typeof ensureView==='function'?ensureView('clientes'):null); if(!view) return;
   const busca=window.__clientesBuscaFinal||'', campo=window.__clientesCampoFinal||'nome', status=window.__clientesStatusFinal||'ativos', sort=window.__clientesSortFinal||{col:'codigo',dir:'asc'};
   const deveListar=window.__clientesTodosFinal || clientesDeveListar(busca,campo,status);
-  let list=(db.clientes||[]).filter(c=>c.empresaId===s.empresaId);
+  let list=(db.clientes||[]).filter(c=>!c.empresaId||c.empresaId===s.empresaId);
+  if(!list.length&&(db.clientes||[]).length){ (db.clientes||[]).forEach(c=>{if(c&&!c.empresaId)c.empresaId=s.empresaId;}); list=(db.clientes||[]).filter(c=>!c.empresaId||c.empresaId===s.empresaId); }
   if(status==='ativos') list=list.filter(c=>c.status!=='inativo'&&c.status!=='oculto');
   else if(status==='inadimplente') list=list.filter(c=>c.status==='inadimplente');
   else if(status==='ocultos') list=list.filter(c=>c.status==='inativo'||c.status==='oculto');
@@ -28090,6 +28091,7 @@ async function boot(){
       entityHashes={};await writeNow('migracao-localStorage');
       console.log('[DIGICOPY][IndexedDB] base atual migrada com sucesso');
     }
+    if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function')showApp();
     else if(typeof showLogin==='function')showLogin();
     return true;
@@ -28769,6 +28771,95 @@ try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
 if(authorized())schedule(1200);else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
+})();
+
+;
+
+/* ===== ajustes_v5214_clientes_visiveis_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.21.4 — clientes visíveis na tela
+// A nuvem/contagem usa db.clientes.length. A tela filtrava empresaId e
+// sumia com cadastro antigo sem empresa ou com empresa antiga.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+const ENTIDADES=['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'];
+
+function empresaUnica(){
+  if(typeof db==='undefined'||!db)return 'emp_digicopy';
+  const emp=(db.empresas||[]).find(e=>e&&e.id==='emp_digicopy')
+    ||(db.empresas||[]).find(e=>/digicopy/i.test(String((e&&e.fantasia)||(e&&e.nome)||'')))
+    ||(db.empresas||[])[0];
+  return (emp&&emp.id)||'emp_digicopy';
+}
+
+function normalizarEmpresaClientes(){
+  if(typeof db==='undefined'||!db)return 0;
+  const empId=empresaUnica();
+  let mudou=0;
+  ENTIDADES.forEach(k=>{
+    if(!Array.isArray(db[k]))return;
+    db[k].forEach(r=>{
+      if(!r||typeof r!=='object')return;
+      if(!r.empresaId||r.empresaId!==empId){r.empresaId=empId;mudou++;}
+    });
+  });
+  try{
+    const sess=typeof getSession==='function'?getSession():null;
+    if(sess&&sess.empresaId!==empId){
+      sess.empresaId=empId;
+      if(typeof setSession==='function')setSession(sess);
+    }
+  }catch(e){}
+  if(mudou&&typeof saveDB==='function')saveDB();
+  return mudou;
+}
+
+function pertenceEmpresa(c,empId){
+  if(!c)return false;
+  return !c.empresaId||c.empresaId===empId;
+}
+
+window.CLIENTES_VISIVEIS_PURE={empresaUnica,normalizarEmpresaClientes,pertenceEmpresa};
+
+if(typeof document==='undefined')return;
+
+const oldSeed=window.seedData;
+if(typeof oldSeed==='function'&&!oldSeed.__v5214){
+  window.seedData=function(){
+    const r=oldSeed.apply(this,arguments);
+    normalizarEmpresaClientes();
+    return r;
+  };
+  window.seedData.__v5214=true;
+}
+
+if(typeof window.renderClientes==='function'&&!window.renderClientes.__v5214){
+  const oldRender=window.renderClientes;
+  window.renderClientes=function(){
+    normalizarEmpresaClientes();
+    return oldRender.apply(this,arguments);
+  };
+  window.renderClientes.__v5214=true;
+}
+
+function aposBasePronta(){
+  try{
+    normalizarEmpresaClientes();
+    if(typeof seedData==='function')seedData(false);
+    if(typeof getSession==='function'&&getSession()&&typeof showApp==='function'){
+      const view=document.querySelector('.view:not(.hidden)');
+      if(view&&view.id==='view-clientes'&&typeof renderClientes==='function')renderClientes();
+    }
+  }catch(e){}
+}
+
+const ready=window.DIGICOPY_DB_READY;
+if(ready&&typeof ready.then==='function')ready.then(aposBasePronta).catch(function(){setTimeout(aposBasePronta,400);});
+else setTimeout(aposBasePronta,400);
+
+console.log('[DIGICOPY] v5.21.4 clientes visíveis');
 })();
 
 ;

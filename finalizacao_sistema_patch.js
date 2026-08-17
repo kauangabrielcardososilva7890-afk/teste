@@ -143,7 +143,8 @@ window.renderClientes=function(){
   const view=document.getElementById('view-clientes')||(typeof ensureView==='function'?ensureView('clientes'):null); if(!view) return;
   const busca=window.__clientesBuscaFinal||'', campo=window.__clientesCampoFinal||'nome', status=window.__clientesStatusFinal||'ativos', sort=window.__clientesSortFinal||{col:'codigo',dir:'asc'};
   const deveListar=window.__clientesTodosFinal || clientesDeveListar(busca,campo,status);
-  let list=(db.clientes||[]).filter(c=>c.empresaId===s.empresaId);
+  let list=(db.clientes||[]).filter(c=>!c.empresaId||c.empresaId===s.empresaId);
+  if(!list.length&&(db.clientes||[]).length){ (db.clientes||[]).forEach(c=>{if(c&&!c.empresaId)c.empresaId=s.empresaId;}); list=(db.clientes||[]).filter(c=>!c.empresaId||c.empresaId===s.empresaId); }
   if(status==='ativos') list=list.filter(c=>c.status!=='inativo'&&c.status!=='oculto');
   else if(status==='inadimplente') list=list.filter(c=>c.status==='inadimplente');
   else if(status==='ocultos') list=list.filter(c=>c.status==='inativo'||c.status==='oculto');
