@@ -25,7 +25,8 @@ contextBridge.exposeInMainWorld('fileAPI', {
 
 // API Buscador Escola — evita bloqueio de CORS no Electron
 contextBridge.exposeInMainWorld('caixaEscolarAPI', {
-  request: (req) => ipcRenderer.invoke('escola:request', req)
+  request: (req) => ipcRenderer.invoke('escola:request', req),
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url)
 });
 
 // API de impressão limpa — imprime sem cabeçalho/rodapé do navegador

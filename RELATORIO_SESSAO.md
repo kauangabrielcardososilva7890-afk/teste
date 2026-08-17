@@ -4,10 +4,16 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.5**  
-**Commit:** `050d4ad`  
+**Última versão:** **v5.21.6**  
+**Commit:** (após push)  
 **Zip:** gerar no PC do usuário com `npm run build:win`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/050d4ad2939229a0cee64c75fe698c5f45d81d32/index.html?v=5.21.5`
+**GitHack:** atualizar após o commit
+
+---
+
+## v5.21.6 — Abrir orçamento da Caixa Escolar no navegador padrão
+
+O botão **Abrir** do Buscador Escola não funcionava no `.exe` porque o Electron bloqueava janela externa. Agora abre no navegador padrão do Windows, só no site da Caixa Escolar.
 
 ---
 

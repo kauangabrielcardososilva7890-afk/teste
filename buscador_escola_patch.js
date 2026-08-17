@@ -146,7 +146,7 @@ function badge(r){
   if(r.norte)return'<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">NORTE</span>';
   return'<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">MG</span>';
 }
-function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:'#'}
+function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:''}
 function card(r){
   const itens = (r.itens||[]);
   // exibe todos os itens encontrados (mesmo orçamento) num cartão só
@@ -154,7 +154,7 @@ function card(r){
   return`<div class="rounded-[14px] border bg-white p-4 shadow-sm hover:shadow-md transition">
 <div class="flex flex-wrap justify-between gap-3"><div><div class="flex items-center gap-2"><b class="px-2 py-1 rounded-lg bg-[#0a1e8a] text-white font-mono text-[11px]">${esc(r.numero||r.id)}</b>${badge(r)}</div>
 <h4 class="mt-1 font-bold text-[14px]">${esc(r.escola)}</h4><p class="text-[11px] text-slate-500">${esc(r.municipio||'-')} • ${r.dist===999?'N/A':r.dist+' km'}</p></div>
-<div class="flex gap-2"><a href="${esc(link(r))}" target="_blank" class="h-8 px-3 rounded-lg bg-white border text-[11px] font-bold flex items-center gap-1 hover:bg-slate-50"><i class="ph ph-arrow-square-out"></i>Abrir</a>
+<div class="flex gap-2"><button type="button" onclick="esAbrir('${esc(link(r))}')" class="h-8 px-3 rounded-lg bg-white border text-[11px] font-bold flex items-center gap-1 hover:bg-slate-50"><i class="ph ph-arrow-square-out"></i>Abrir</button>
 <button onclick="esExc('${esc(r.id)}')" class="h-8 px-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold flex items-center gap-1 hover:bg-red-100"><i class="ph ph-x-circle"></i></button></div></div>
 ${r.only?'<div class="mt-2 rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-[11px] text-emerald-800 font-bold">✅ APENAS o produto pesquisado.</div>':''}
 ${r.hasExt?`<div class="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 font-bold">⚠️ ${r.ext} produto(s) extras.</div>`:''}
@@ -210,6 +210,18 @@ ${window.__esExc?
 }</div></div></div>`;
 }
 
+window.esAbrir=async function(url){
+  const dest=t(url);
+  if(!dest||dest==='#'){msg('Este orçamento não tem link.','error');return;}
+  try{
+    if(window.caixaEscolarAPI&&typeof window.caixaEscolarAPI.openExternal==='function'){
+      const r=await window.caixaEscolarAPI.openExternal(dest);
+      if(r&&r.ok){msg('Aberto no navegador padrão.','success');return;}
+      if(r&&r.error){msg(r.error,'error');return;}
+    }
+  }catch(e){}
+  try{window.open(dest,'_blank','noopener');}catch(e){msg('Não foi possível abrir o orçamento.','error');}
+};
 window.esSync=function(){window.__esSync=false;return sync({incremental:true})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esClearLog=function(){window.__esLogs=[];render()};

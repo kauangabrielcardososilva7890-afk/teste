@@ -1,6 +1,6 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -30,7 +30,9 @@ function createWindow () {
   win.loadFile('index.html');
   try{
     win.webContents.on('will-navigate', (event, url) => {
-      if(!String(url||'').startsWith('file://')) event.preventDefault();
+      if(String(url||'').startsWith('file://')) return;
+      event.preventDefault();
+      if(isAllowedExternalUrl(url)) shell.openExternal(url).catch(()=>{});
     });
   }catch(e){}
   try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
@@ -51,6 +53,7 @@ app.whenReady().then(() => {
   registerEscolaIPC();
   registerPrintIPC();
   registerBackupIPC();
+  registerOpenExternalIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -318,6 +321,28 @@ function mapFbType(typeNum){
     261:'BLOB'
   };
   return map[typeNum] || `TYPE_${typeNum}`;
+}
+
+function isAllowedExternalUrl(raw){
+  try{
+    const u = new URL(String(raw||''));
+    if(u.protocol !== 'https:') return false;
+    const host = String(u.hostname||'').toLowerCase();
+    return host === 'caixaescolar.educacao.mg.gov.br' || host === 'www.caixaescolar.educacao.mg.gov.br';
+  }catch(e){ return false; }
+}
+
+function registerOpenExternalIPC(){
+  ipcMain.handle('shell:open-external', async (_evt, raw) => {
+    const url = String(raw||'');
+    if(!isAllowedExternalUrl(url)) return { ok:false, error:'URL não permitida.' };
+    try{
+      await shell.openExternal(url);
+      return { ok:true };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
 }
 
 // ──────────────────────────────────────────────
