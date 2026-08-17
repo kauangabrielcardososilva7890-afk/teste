@@ -22,6 +22,8 @@ migration-export.json
 
 # Logs / temporários
 *.log
+.wrangler/
+.dev.vars
 .DS_Store
 Thumbs.db
 .env
