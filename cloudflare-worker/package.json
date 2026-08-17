@@ -1,0 +1,18 @@
+{
+  "name": "digicopy-cloud-api",
+  "version": "0.4.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test-pure.mjs",
+    "test:client": "node test-client-sync.mjs",
+    "check": "node --check src/index.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply DB --local",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "devDependencies": {
+    "wrangler": "4.123.0"
+  }
+}

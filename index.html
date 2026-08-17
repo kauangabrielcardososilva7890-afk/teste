@@ -5,13 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema Digicopy</title>
 <link rel="icon" href="./logo_2.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{digiblue:{50:'#e8eaf8',100:'#c9ceef',500:'#0a1e8a',600:'#091a7a',700:'#08166b',800:'#07125c',900:'#060e4d'}}}}}
-</script>
+<link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
+<link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1">
+<script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
 <style>
 :root{--digi:#0a1e8a;--digi-dark:#08176e;--digi-light:#e8eaf8}
 .bg-indigo-600{background:var(--digi) !important} .hover\:bg-indigo-700:hover{background:var(--digi-dark) !important}
@@ -120,6 +116,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
           <p class="text-[13.5px] font-semibold leading-tight truncate" id="user-name">Usuário</p>
           <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
         </div>
+        <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
         <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
       </div>
       <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
@@ -160,6 +157,8 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button id="btn-backup-top" type="button" onclick="exportBackup()" title="Baixar uma cópia de segurança de todos os dados"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -189,102 +188,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./lz.js?v=4.9.69"></script>
-<script src="./logo_data.js?v=4.9.69"></script>
-<script src="./app.js?v=4.9.69"></script>
-<script src="./vendas_patch.js?v=4.9.69"></script>
-<script src="./evolucao_patch.js?v=4.9.69"></script>
-<script src="./notinha_patch.js?v=5.4.0"></script>
-<script src="./locacao_patch.js?v=4.9.69"></script>
-<script src="./sync_client.js?v=4.9.69"></script>
-<script src="./vendas_os_patch.js?v=4.9.69"></script>
-<script src="./performance_patch.js?v=4.9.69"></script>
-<script src="./pix_patch.js?v=4.9.69"></script>
-<script src="./notificacoes_patch.js?v=4.9.69"></script>
-<script src="./vendas_extra_patch.js?v=4.9.69"></script>
-<script src="./migrados_print_patch.js?v=4.9.69"></script>
-<script src="./clientes_patch.js?v=4.9.69"></script>
-<script src="./interface_patch.js?v=4.9.69"></script>
-<script src="./firebase_config.js?v=4.9.69"></script>
-<script src="./firebase_client.js?v=4.9.69"></script>
-<script src="./vendas_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./login_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./render_gate_patch.js?v=4.9.69"></script>
-<script src="./locacao_contratos_patch.js?v=4.9.69"></script>
-<script src="./fluxos_operacionais_patch.js?v=4.9.69"></script>
-<script src="./contratos_refino_patch.js?v=4.9.69"></script>
-<script src="./contratos_final_patch.js?v=4.9.69"></script>
-<script src="./contratos_visitas_vinculo_patch.js?v=4.9.69"></script>
-<script src="./contratos_rtf_template_patch.js?v=4.9.69"></script>
-<script src="./otimizacao_profunda_patch.js?v=4.9.69"></script>
-<script src="./automacoes_triggers_patch.js?v=4.9.69"></script>
-<script src="./automacoes_financeiro_estoque_patch.js?v=4.9.69"></script>
-<script src="./automacoes_locacao_visitas_patch.js?v=4.9.69"></script>
-<script src="./automacoes_contratos_caixa_fiscal_patch.js?v=4.9.69"></script>
-<script src="./automacoes_fiscal_cartuchos_patch.js?v=4.9.69"></script>
-<script src="./automacoes_vendas_compras_cadastros_patch.js?v=4.9.69"></script>
-<script src="./automacoes_orcamentos_clientes_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_pix_contadores_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_vendas_fiscal_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_compras_recebimentos_contadores_patch.js?v=4.9.69"></script>
-<script src="./automacoes_caixa_chat_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_finais_locacao_auxiliares_patch.js?v=4.9.69"></script>
-<script src="./automacoes_procedures_operacionais_patch.js?v=4.9.69"></script>
-<script src="./chamados_avulsos_aberto_patch.js?v=5.17.0"></script>
-<script src="./cadastros_nomes_patch.js?v=4.9.69"></script>
-<script src="./pix_comprovante_manual_patch.js?v=4.9.69"></script>
-<script src="./desktop_otimizacao_patch.js?v=4.9.69"></script>
-<script src="./correcoes_uso_diario_patch.js?v=4.9.69"></script>
-<script src="./login_dados_automaticos_patch.js?v=5.4.0"></script>
-<script src="./ajustes_relatorio_pai_patch.js?v=4.9.69"></script>
-<script src="./contratos_leituras_definitivo_patch.js?v=4.9.69"></script>
-<script src="./fluxo_contrato_leitura_corrigido_patch.js?v=5.17.0"></script>
-<script src="./leitura_busca_fluxo_patch.js?v=4.9.69"></script>
-<script src="./leitura_detalhada_departamentos_patch.js?v=4.9.69"></script>
-<script src="./leitura_impressao_compacta_produtos_patch.js?v=4.9.69"></script>
-<script src="./cartuchos_etiquetas_config_patch.js?v=4.9.69"></script>
-<script src="./sistema_clientes_loja_patch.js?v=4.9.69"></script>
-<script src="./finalizacao_sistema_patch.js?v=4.9.69"></script>
-<script src="./ajustes_pos_final_patch.js?v=4.9.70"></script>
-<script src="./limpar_nuvem_patch.js?v=4.9.88"></script>
-<script src="./buscador_escola_patch.js?v=4.9.88"></script>
-<script src="./estoque_alert_patch.js?v=5.3.1"></script>
-<script src="./popup_sistema_patch.js?v=5.3.4"></script>
-<script src="./etiqueta_busca_patch.js?v=5.15.1"></script>
-<script src="./delete_hidden_patch.js?v=5.3.7"></script>
-<script src="./patch_relatorio.js?v=5.0.4"></script>
-<script src="./patch_vendas_financeiro.js?v=5.0.4"></script>
-<script src="./patch_chamados.js?v=5.0.4"></script>
-<script src="./navegacao_voltar_patch.js?v=5.4.2"></script>
-<script src="./vendas_notinhas_fix_patch.js?v=5.15.2"></script>
-<script src="./locacao_chamados_fix_patch.js?v=5.17.0"></script>
-<script src="./historico_sort_patch.js?v=5.17.0"></script>
-<script src="./ajustes_v5171_patch.js?v=5.17.3"></script>
-<script src="./ajustes_v5172_patch.js?v=5.17.3"></script>
-<script src="./ajustes_v5174_patch.js?v=5.17.4"></script>
-<script src="./ajustes_v5175_patch.js?v=5.17.5"></script>
-<script src="./ajustes_v5176_patch.js?v=5.17.6"></script>
-<script src="./ajustes_v5177_patch.js?v=5.17.7"></script>
-<script src="./ajustes_v5178_patch.js?v=5.17.8"></script>
-<script src="./ajustes_v5179_patch.js?v=5.17.9"></script>
-<script src="./ajustes_v5180_patch.js?v=5.18.0"></script>
-<script src="./ajustes_v5181_patch.js?v=5.18.1"></script>
-<script src="./ajustes_v5182_patch.js?v=5.18.2"></script>
-<script src="./ajustes_v5183_patch.js?v=5.18.3"></script>
-<script src="./ajustes_v5184_patch.js?v=5.18.4"></script>
-<script src="./ajustes_v5185_patch.js?v=5.18.5"></script>
-<script src="./ajustes_v5186_patch.js?v=5.18.6"></script>
-<script src="./ajustes_v5187_patch.js?v=5.18.7"></script>
-<script src="./ajustes_v5188_patch.js?v=5.18.8"></script>
-<script src="./ajustes_v5189_patch.js?v=5.18.9"></script>
-<script src="./ajustes_v5190_patch.js?v=5.19.0"></script>
-<script src="./ajustes_v5191_patch.js?v=5.19.1"></script>
-<script src="./ajustes_v5192_patch.js?v=5.19.2"></script>
-<script src="./ajustes_v5193_patch.js?v=5.19.3"></script>
-<script src="./ajustes_v5196_patch.js?v=5.19.6"></script>
-<script src="./ajustes_v5197_patch.js?v=5.19.7"></script>
-<script src="./ajustes_v51916_patch.js?v=5.19.16"></script>
-<script src="./ajustes_v51920_patch.js?v=5.19.20"></script>
-<script src="./sync_realtime_patch.js?v=5.20.5"></script>
+<script src="./app.bundle.js?v=5.21.2"></script>
 </body>
 </html>

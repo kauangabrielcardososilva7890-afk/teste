@@ -1,13 +1,13 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-14  
+**Data:** 2026-08-16  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a001ed-teste`  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/15  
-**Última versão:** **v5.20.22**  
-**Commit:** atualizar após push  
-**Zip:** `Sistema-Digicopy-v5.20.22.zip` (link raw no PR #18)  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/HASH/index.html?v=5.19.25`
+**Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
+**Última versão:** **v5.21.2**  
+**Commit:** `72a5994`  
+**Zip:** `Sistema-Digicopy-v5.21.2.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/72a5994df04c140a03299512a60f68b40ed5f98e/index.html?v=5.21.2`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,173 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.21.2 — autorização possível antes de esconder Nuvem
+- Regra corrigida: PC sem token mostra **Nuvem** para qualquer perfil, permitindo colar código. Após autorização, Nuvem some para não-Admin; Backup é sempre só Admin.
+- Acesso direto pós-autorização também é negado para não-Admin. Token revogado é removido pelo sync e o botão reaparece para nova autorização.
+- Runtime DOM validou três estados: Kauan vê ambos; Denivaldo antes de autorizar vê Nuvem mas não Backup; Denivaldo após token não vê nenhum.
+
+## v5.21.1 — acabamento de permissões e operação
+- Botões **Nuvem** e **Backup** aparecem somente para perfil de sistema `Admin`; `Dono`/Funcionário não veem. A chamada direta e `exportBackup()` também validam perfil.
+- Sync incremental continua silencioso para todos os perfis/aparelhos autorizados.
+- Interface da nuvem ficou só com operação normal: publicar/sincronizar, autorizar, listar/bloquear aparelhos, listar/restaurar excluídos. Botões temporários de limpar testes, dedupe, revisão e reset saíram da UI.
+- `Ver aparelhos e dados enviados` mostra por PC: perfil, bloqueio, registros atuais cuja última atualização veio dele, total de alterações e último acesso.
+- Runtime DOM confirmou: Kauan vê Nuvem/Backup; Denivaldo não vê; login, 14 views e painel sem erro.
+- API 0.4.1 inclui contagens por aparelho. Suíte final: **52 passaram, 1 falha aceita, 0 novas**.
+
+## v5.21.0 — auditoria consolidada e otimização estrutural
+- **Bundle único:** 101 scripts separados foram auditados; quatro runtimes legados (Firebase config/transporte, sync antigo e force-sync) saíram da execução. Os 97 scripts ativos agora são gerados em `app.bundle.js` por manifesto ordenado e hash. `npm run check` falha se o bundle estiver desatualizado.
+- **Electron enxuto:** `build.files` caiu da lista manual de ~100 entradas para 8 padrões: HTML, bundle, main/preload, logos/ícone e vendor. Evita `.exe` incompleto quando um patch novo não entra na lista.
+- **IndexedDB v2 incremental:** cria stores `entities`/`meta`, migra snapshot v1 automaticamente, usa hashes do manifesto e grava somente entidades alteradas. Teste runtime com fake IndexedDB confirmou migração e apenas 1 entidade escrita após editar vendas.
+- **Runtime DOM:** bundle carregado por HTTP em DOM completo, login Kauan executado, 14 views navegadas e painel Nuvem aberto; zero erros de runtime (limitações esperadas do simulador ignoradas). Foi endurecido fallback `innerText/textContent` encontrado pelo teste.
+- **Suíte consolidada:** novo runner não para na falha aceita de etiquetas. Resultado: **51 suítes passaram, 1 falha aceita, 0 falhas novas**. Testes novos cobrem bundle, offline, confirmações, Cloudflare, IndexedDB e segurança Electron.
+- **Segurança Electron:** sandbox/webSecurity ligados na principal e popups, conteúdo inseguro bloqueado, navegação HTTP externa negada e `window.open` com preload restrito a impressão local.
+- **Limpeza runtime:** Firebase/sync legado não entram mais no bundle; Cloudflare segue como único motor.
+- **Limitação do ambiente:** instalação do Electron/geração do instalador Windows não rodou porque o download do binário falhou por certificado/reset TLS. Não é erro de código; build real precisa ser executado em ambiente com download liberado.
+
+## v5.20.42 — reset da nuvem realmente manual
+- “Zerar dados da nuvem” cria snapshot, apaga negócio/histórico/tombstones e deixa `paused:true`. Nenhum save/foco/timer republica.
+- “Publicar este PC na nuvem” é ação separada, com confirmação. Teste real local confirmou: nuvem 0 após reset e só voltou a ter registros após publicação explícita.
+
+## v5.20.40 — interface offline + confirmações legadas funcionais
+- v5.20.38: recuperação de admin marcada por tipo; admin recuperado também cria snapshot, baixa nuvem primeiro e não publica histórico velho. Teste PC C admin passou.
+- v5.20.39: Tailwind, Phosphor Icons (woff2/CSS) e Chart.js empacotados em `assets/vendor`; Google Fonts removida; notinha sem `@import` externo; assets incluídos no Electron. Interface não depende mais de CDNs no `.exe`.
+- v5.20.40: `popup_sistema_patch` não força mais `confirm()` a `false`. Wrappers confirmados liberam exatamente uma chamada síncrona interna; bypass expira no mesmo ciclo. Fluxos legados não migrados usam diálogo nativo como fallback em vez de cancelar silenciosamente.
+- Testes `test_offline_assets.js` e `test_confirm_compat.js` + sintaxe completa: OK.
+
+## v5.20.37 — limpeza de origem concluída, 1.919 clientes íntegros
+- Produção: 50 duplicados seguros unidos; sete clientes realmente extras removidos pela origem histórica em aparelhos bloqueados; dois cadastros de origem bloqueada foram preservados porque substituíram originais na deduplicação.
+- A revisão passou a usar o primeiro evento imutável do registro, não `updated_by`; remoção revalida origem e bloqueia cadastros que tenham original unido/excluído.
+- Estado final confirmado: **1.919 clientes no PC = 1.919 na nuvem, pendentes 0, registros ativos 1.934, aparelhos ativos 1**.
+- Excluídos 66 são tombstones recuperáveis de todas as entidades. O aumento de 57→66 incluiu sete ativos removidos e duas ordens para IDs já ausentes; ativos caíram exatamente sete (1.941→1.934), sem perda adicional.
+- Teste D1 cobre registro criado em aparelho bloqueado, posteriormente atualizado pelo admin, classificação de versão substituta, bloqueio e limpeza seletiva.
+
+## v5.20.34 — impedir histórico velho + reparar 57 clientes duplicados
+- Produção confirmou falha: segundo navegador tinha 57 clientes locais antigos com IDs diferentes; nuvem passou de 1.919 para 1.976 clientes. Não era retry duplicado, eram IDs distintos.
+- Primeiro sync de aparelho não-admin agora cria snapshot IndexedDB, baixa a nuvem e remove/quarentena registros locais anteriores ausentes da nuvem; teste real confirmou que cliente velho do PC B não foi publicado.
+- Admin ganhou **Analisar clientes repetidos**: agrupa por código normalizado ou CPF/CNPJ, mantém cadastro mais referenciado/completo, preenche campos vazios, troca `clienteId`/`idCliente` em históricos, cria snapshot e exclui extras de forma recuperável.
+- Usuário deve executar no PC admin; resultado esperado: remover 57 extras e voltar a 1.919 clientes ativos em PC/nuvem.
+
+## v5.20.33 — administração de aparelhos e excluídos
+- Admin lista aparelhos autorizados, perfil e bloqueio; não pode bloquear o próprio aparelho. Bloquear revoga token sem apagar negócio.
+- Admin lista até 100 registros excluídos com entidade/nome e restaura individualmente; restauração entra no log incremental e chega aos demais PCs.
+- API testada: dois aparelhos, listagem, bloqueio do segundo e token revogado recebendo 401; dados preservados.
+
+## v5.20.32 — contagem confiável durante envio inicial
+- Painel agora separa **Clientes neste PC**, **Clientes na nuvem**, total de registros e **Pendentes neste PC**; o antigo “Fila 100” era só o limite do lote, não o restante total.
+- API `/v1/status` retorna contagem ativa/excluída agrupada por entidade.
+- Lote por requisição reduzido de 25 para 10 para manter margem segura de subrequisições no Worker gratuito.
+- Usuário informou 1.919 clientes; a captura com 412 registros não representava conclusão. Não importar nada até as duas contagens de clientes coincidirem e pendentes chegar a zero.
+
+## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
+- Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
+- Aviso de espaço antigo só aparece se o IndexedDB também não iniciar; o sync aguarda `DIGICOPY_DB_READY` para nunca publicar base parcial durante restauração.
+- Botão **Backup** agora visível na barra superior (antes estava preso na sidebar oculta).
+- Painel Nuvem desconectado oferece **Limpar dados de teste deste navegador** com dois avisos; remove apenas chaves DIGICOPY e IndexedDB local, não JSON baixado nem D1.
+- Usuário confirmou que só o JSON externo dos clientes precisa ser preservado; produtos/demais dados atuais são testes.
+
+## v5.20.30 — sincronização Cloudflare local-first funcionando
+- Novo `cloudflare_data_sync_patch.js`: baixa primeiro, envia só alterações, cursor incremental, fila local durável, idempotência, versão por registro, conflito preservado e backoff.
+- Sincroniza empresa, usuários, clientes, produtos, equipamentos, contratos, parque, leituras, chamados, vendas, financeiro, logs, técnicos, notificações, configuração e módulos dinâmicos.
+- Em repouso autorizado: uma consulta por minuto somente com a aba visível; 5 PCs ≈ 7.200 solicitações/dia, abaixo das 100 mil/dia do Worker. Sem `setInterval`; foco/save agenda atualização e falhas aumentam o intervalo até 5 min.
+- Nuvem vazia/ausência de registro nunca apaga o PC. Exclusão só nasce de registro previamente conhecido; exclusão inesperada de >=10 e >30% da entidade é bloqueada até confirmação no painel.
+- Servidor mantém o conteúdo excluído; admin lista e restaura. API grava registro + evento em lote atômico.
+- Teste real local com Worker+D1: PC A publicou cliente; PC B vazio baixou; edição B→A; exclusão A→B; conteúdo preservado; restauração voltou no B — tudo OK.
+- Painel Nuvem mostra fila, registros, excluídos, sincronização manual e aprovação de exclusão em massa.
+
+## v5.20.29 — aviso Firebase antigo eliminado
+- Corrigido o popup `Não foi possível carregar a nuvem / Quota exceeded`: era a rotina antiga `autoCarregarNuvemSeVazio`, que ainda chamava o carregamento Firebase 4,5s após abrir.
+- O patch Cloudflare agora marca a carga antiga como concluída e neutraliza todas as funções automáticas/manuais do sync legado.
+- Teste de regressão confirma que Firebase automático, diagnóstico antigo e gatilho de carga não estão ativos.
+
+## v5.20.28 — Cloudflare D1 pronta + autorização de aparelhos
+- Worker `digicopy-sync-api` implantado pelo GitHub e D1 `digicopy-erp` vinculado; `/health` confirma API 0.2.0, esquema 2, segredo configurado e `ready:true`.
+- API incremental versionada: aparelhos com token individual em hash, primeiro admin, convite de uso único, segundo admin, recuperação sem apagar negócio, lote idempotente, cursor e bloqueio de conflito por versão.
+- Migrações D1 automáticas antes de cada deploy; testes locais completos com dois aparelhos simulados passaram.
+- Novo `cloudflare_sync_patch.js`: botão **Nuvem** visível, ativação principal, ingresso por código, recuperação e geração de convite. O segredo nunca é salvo localmente.
+- Firebase automático e diagnóstico antigo saíram do carregamento. A sincronização de dados Cloudflare ainda será habilitada na próxima etapa; **não importar clientes ainda**.
+- Teste Playwright real foi preparado em `e2e/`; download local do Chromium foi bloqueado por reset TLS do sandbox. Workflow GitHub não pôde ser enviado porque o token do GitHub App não possui permissão `workflows`; testes estáticos e sintaxe passaram.
+
+## v5.20.27 — consumo oculto de cota encontrado e removido
+- Auditoria encontrou um segundo sincronizador automático legado em `sync_client.js`, ainda consultando `app_state` a cada **75 segundos**, embora o relatório anterior o considerasse inerte.
+- Em 5 aparelhos, só esse timer podia fazer cerca de **5.760 consultas por dia**, concorrendo com o `sync_realtime_patch.js`. O patch `limpar_nuvem_patch.js` ainda forçava esse legado a permanecer ligado.
+- O automático legado e seus disparadores foram desativados. As funções manuais antigas ficam apenas por compatibilidade; o único motor automático agora é o incremental `sync_realtime_patch.js` (`erp_rt`), sem `setInterval`.
+- Novo `test_sync_quota_guard.js` impede a volta do timer, do force-enable e de polling no motor incremental.
+- `npm run check` e teste de proteção de cota: OK.
+
+## v5.20.26 — botão Teste nuvem realmente visível
+- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar`, mas o próprio layout atual esconde permanentemente `#sidebar` com `display:none!important`. Por isso o HTML/teste dizia que ele existia, porém o usuário não conseguia vê-lo.
+- O botão **Teste nuvem** foi movido para a **barra superior realmente usada pelo sistema**, imediatamente antes de **Sair**.
+- O teste automatizado agora verifica que o botão está dentro de `.modern-topnav` e que não ficou preso na sidebar oculta.
+- Cache do script atualizado para `v5.20.26`; lógica de diagnóstico e motor de sync preservados.
+- Testes: `node test_ajustes_v52025.js` e `npm run check` OK. A única falha da suíte completa continua sendo a falha antiga aceita de etiquetas.
+
+## v5.20.25 — "Teste da nuvem" de volta (sync parou em silêncio)
+- Sintoma do usuário: "não está sincronizando" após a v5.20.24. Verificado: `sync_realtime_patch.js`/`firebase_*` **intocados** desde a versão que funcionava (diff vazio) — o motor é o mesmo; falha é ambiental e agora invisível (o diagnóstico automático foi removido na v5.20.15).
+- **Recolocado o Teste da nuvem sob demanda:** botão **"☁ teste nuvem"** no rodapé do cartão do usuário (barra lateral, ao lado do relógio). Passos: **1** config Firebase → **2** login anônimo → **3** gravar → **4** ler → **5** "este aparelho já sincronizou alguma vez" + contagens locais + último backup. Mostra o **ERRO EXATO** (HTTP/código/mensagem) e a instrução: `traduzirErroSync` (403/PERMISSION_DENIED → republicar regras `match /{document=**}` com auth; 429/RESOURCE_EXHAUSTED → cota grátis estourada, reseta ~4h; 401/UNAUTHENTICATED → login anônimo desligado; Failed to fetch → sem internet/bloqueio).
+- Só gasta cota quando CLICADO (não roda sozinho). O doc de teste `__diag_ping` é apagado da nuvem logo depois e qualquer resto local (`db.diagnostico`) é removido na carga e após o teste (não polui backup).
+- **Pendência pro usuário:** clicar no ☁ no aparelho que não sincroniza e mandar o texto — provável COTA (50k leituras + 20k escritas/dia grátis; cada aparelho novo baixa a base toda 1x; reseta ~4h).
+
+## v5.20.24 — Filtro "pagar" apagado, Excluir sempre visível, backup diário automático e seedData que nunca apaga usuário seu
+
+Respostas às 4 perguntas feitas e confirmadas pelo usuário nesta sessão:
+
+### 1. Financeiro: filtro de tipo APAGADO
+- O filtro **"Receber + Pagar / Só a receber / Só a pagar"** (`neo-fin-tipo`) era o "pagar junto com o filtro" citado desde o item 2 — agora removido da tela (o Financeiro lista tudo junto, sem o seletor). O botão "Pagar" do cabeçalho (removido na v5.20.23) continua fora.
+
+### 2. Backup: excluído o botão ANTIGO das Configurações
+- Removidos do `notinha_patch.js` (renderConfig ativo): o botão "Exportar backup" do cabeçalho e o card "Backup". **Fica só o botão ⬇ da barra lateral** (ao lado do Sair), que funciona em qualquer tela.
+
+### 3. Botões de Excluir SEMPRE visíveis no topo
+- Causa de "não apareceu": na v5.20.23 os botões só surgiam **depois** de marcar a caixinha. Agora seguem o padrão já aceito (Produtos/Contratos): botão vermelho **"Excluir" fixo no topo** (Clientes: ao lado de "Novo cliente"; Financeiro: ao lado de "Receber"). Clicou sem marcar → aviso "Marque na caixinha ☐ da esquerda e clique de novo". Multi-seleção e exclusão real continuam (v5.20.23), com os DOIS avisos para cliente com histórico.
+
+### 4. Backup AUTOMÁTICO 1x ao dia (sem clicar)
+- Novo `ajustes_v52024_patch.js`: ~30s após abrir/logar, se for um dia novo, o sistema exporta o backup sozinho (mesmo formato do botão ⬇, sem o campo interno `_rt`).
+- **No programinha (.exe):** salva direto em **`%APPDATA%\digicopy-erp\backups\digicopy-backup-AAAA-MM-DD.json`** — nova ponte `backupAPI` (`main.js` `registerBackupIPC` `backup:save-daily` + `preload.js`). Sem janela e sem clique.
+- **No navegador (GitHack):** baixa o arquivo (cai em Downloads) — navegador não deixa escolher pasta.
+- Um arquivo por dia; em .exe ANTIGO (sem a ponte) cai no comportamento de download. Toast discreto confirma.
+
+### Empresa única fixa + "meus dados nunca vão deletar"
+- **Criar empresa: impossível** — desde v5.20.23 não existe mais nenhum caminho de UI/código que crie empresa nova. A empresa é UMA fixa: `emp_digicopy`.
+- **DEFEITO REAL corrigido no `seedData`:** antes ele apagava qualquer usuário com login `admin`/`carlos`/`ana`/`financeiro` — se o dono cadastrasse um funcionário "Ana", ela sumia na próxima carga. Agora só remove demo DE VERDADE (id de demo ou login demo criado pelo 'sistema'/sem dono). Usuário criado pela tela (`criadoPor` = quem criou) e legado migrado (`criadoPor: 'migracao'`) **nunca são apagados**.
+- O que pode "apagar" hoje: (a) os botões Excluir (ação sua, com avisos); (b) o sync propaga para os outros PCs só o que VOCÊ apagou (lápide) — **ausência na nuvem nunca apaga o PC**; (c) o `seedData` só mexe em empresa/usuários demo; (d) backup automático diário + botão ⬇ = rede de segurança.
+- Usuário confirmou que o **.exe sai incompleto** — combinado: **adiado** ("deixa pra quando resolvermos tudo"). A lista `build.files` já está correta no código; o instalador em si a gente gera juntos no final.
+- Etiqueta funcionando normalmente — não tocar.
+
+### Testes
+- `test_ajustes_v52024.js` (13 asserts: regra de demo antigo, 1x/dia, nome do arquivo, JSON sem `_rt`) + `test_ajustes_v52023.js` + suítes principais OK. Falha pré-existente de etiquetas continua intocada (área aceita).
+
+## v5.20.23 — Excluir em lote (Clientes/Financeiro) + backup fora das Config + UMA empresa só garantida
+
+**Reaplicados nesta branch os itens 1–4 aceitos pelo usuário** (o repo estava na v5.20.22, sem eles — tinham sido feitos em outra conversa) **e respondidas as 2 perguntas dele.**
+
+### 1. Excluir em lote — Clientes e Financeiro (de verdade)
+- Novo `ajustes_v52023_patch.js` (carregado por último, antes do sync): envolve `renderClientes` e `renderFinanceiro` e injeta **caixinha de seleção** em cada linha + caixinha "marcar todas" no cabeçalho + botão vermelho **"Excluir selecionados (N)"** (aparece só quando tem algo marcado).
+- **Exclui de verdade**: remove do banco e o sync propaga as lápides pros outros PCs sozinho.
+- **Cliente sem histórico**: 1 aviso. **Cliente COM histórico**: **DOIS avisos** (o 1º lista o que existe: "3 vendas, 1 contrato, 2 chamados…"; o 2º é o último aviso "não dá pra desfazer") e apaga **o histórico junto** — vendas/notinhas, contratos, chamados, leituras, impressoras do contrato (parque) e lançamentos financeiros ligados ao cliente. Impressora que estava "locado" só naquele contrato volta pra "disponivel".
+
+### 2. Tirado o "Pagar" do Financeiro
+- O botão **"Pagar"** do cabeçalho da tela Financeiro **foi removido** (não tem mais botão de pagar junto do cabeçalho/filtro). O de "Receber" continua. O filtro "Só a pagar" continua pra **ver** os lançamentos antigos; só não cria mais por ali. Se ainda usa contas a pagar, avisar que volta.
+
+### 4. Backup fora das Configurações
+- Botão de **exportar backup (⬇)** adicionado no **cartão do usuário na barra lateral** (ao lado do botão Sair), visível em TODAS as telas. O de Configurações continua existindo.
+
+### 5. Pendente (combinado: só quando o usuário mandar)
+- Botão **"Importar clientes" continua na tela Clientes**. Remover DEPOIS que ele terminar de importar os dados dele — é a instrução pendente pro próximo chat.
+
+### Pergunta 1 — "tem alguma coisa que cria mais de uma empresa?"
+**Tinha, e foi achada e removida de verdade.** A tela **"Empresas (PDF)"** (menu lateral, do `evolucao_patch.js`) tinha o botão **"+ Nova empresa"** que salvava uma empresa DE VERDADE no banco (`db.empresas`) com **id aleatório** e ainda criava um usuário demo `admin/admin123`. Era isso que podia criar 2ª empresa. Removidos de verdade: a tela, o item de menu, o `openModalEmpresa`/`saveNovaEmpresa` (app.js) e o fallback do `doLoginCNPJ` que também podia criar empresa (`gen('emp')`).
+- **Garantias de empresa única que já existiam e continuam:** `seedData` roda em toda carga e devolve o banco pra UMA empresa (`emp_digicopy`), apaga empresas extras e normaliza o `empresaId` de TODOS os dados pra ela; o sync faz o mesmo na hora de enviar/receber (`normalizarEmpresa`). Ou seja: **todos os usuários/PCs veem os mesmos dados**, independente de quem cadastrou.
+- Dados da empresa que vão na notinha se editam em **Configurações → "Dados da loja"** (não precisava da tela removida).
+
+### Pergunta 2 — "mais alguma outra coisa que é defeito?" (achados e correções)
+- **`npm test` estava quebrado**: a cadeia apontava pra `test_login_buscador_ui_final.js`, que **não existe no repo**. Trocado pelo novo `test_ajustes_v52023.js` (16 asserts, passando). Resta 1 falha PRÉ-EXISTENTE e intocada: `test_cartuchos_etiquetas_config.js` ("capacidade padrão é máxima compacta na folha") — já falhava antes, é da área de etiquetas (aceita/fechada), não mexer sem pedido.
+- **`build.files` do Electron desatualizado**: faltavam TODOS os patches modernos (v5.17+) e o `sync_realtime_patch.js` — o `.exe` sairia incompleto. Agora a lista é gerada dos `<script>` do `index.html`. Idem `check`.
+- **`confirmarExcluirModulo` usava `confirm()` nativo** (quebrado → botão não fazia nada): migrado pra `confirmSistema`.
+- Código morto legado que já era inacessível e continua sem ponto de entrada (não atrapalha; remoção total = refactor futuro): `renderBanco`, `renderMigrados`, `renderRelatorios`, deletes antigos individuais do app.js (substituídos pelos novos em lote).
+
+- Testes: `node --check` em tudo OK; suítes principais OK (inclui `test_finalizacao_sistema` e a nova `test_ajustes_v52023`).
+- Cache-bust: `app.js`/`evolucao_patch.js`/novo patch sobem com `?v=5.20.23` no index.html.
 
 ## v5.20.22 — Botão "Importar clientes" recolocado (p/ testar o sync)
 - O botão de importar tinha sido removido a pedido do usuário ("tira as opções de importar"), mas ele precisa dele p/ testar a sincronização dos clientes. Recolocado no cabeçalho da tela Clientes (`finalizacao_sistema_patch.js`) com `<input type=file id=clientes-json-input>` + status.

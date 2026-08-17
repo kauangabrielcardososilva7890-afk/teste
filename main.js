@@ -16,6 +16,9 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
       devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
@@ -25,6 +28,11 @@ function createWindow () {
   });
 
   win.loadFile('index.html');
+  try{
+    win.webContents.on('will-navigate', (event, url) => {
+      if(!String(url||'').startsWith('file://')) event.preventDefault();
+    });
+  }catch(e){}
   try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
   try{ win.webContents.on('before-input-event', (event, input) => {
     const k=String(input.key||'').toLowerCase();
@@ -42,6 +50,7 @@ app.whenReady().then(() => {
   registerFileIPC();
   registerEscolaIPC();
   registerPrintIPC();
+  registerBackupIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -68,16 +77,25 @@ function registerPrintIPC(){
 // Dá preload às janelas de impressão (window.open) + intercepta Ctrl+P em todas
 app.on('web-contents-created', (_event, contents) => {
   try{
-    contents.setWindowOpenHandler(() => ({
-      action: 'allow',
-      overrideBrowserWindowOptions: {
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          preload: path.join(__dirname, 'preload.js')
+    contents.setWindowOpenHandler((details) => {
+      const url = String((details && details.url) || '');
+      // Janelas internas de impressão usam about:blank. URLs externas não
+      // recebem preload nem acesso às pontes IPC do sistema.
+      if(url !== 'about:blank' && !url.startsWith('file://')) return { action:'deny' };
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: true,
+            webSecurity: true,
+            allowRunningInsecureContent: false,
+            preload: path.join(__dirname, 'preload.js')
+          }
         }
-      }
-    }));
+      };
+    });
   }catch(e){}
   // Ctrl+P em qualquer janela (inclusive a janela de impressão aberta):
   // imprime LIMPO, sem cabeçalho/rodapé (sem URL nem contador de páginas).
@@ -352,6 +370,24 @@ function registerEscolaIPC(){
   
   // Clear cookies on app quit
   ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
+}
+
+// ──────────────────────────────────────────────
+// BACKUP IPC — backup automático diário em pasta do %APPDATA%
+// (salva direto, sem janela e sem clique; 1 arquivo por dia)
+// ──────────────────────────────────────────────
+function registerBackupIPC(){
+  ipcMain.handle('backup:save-daily', async (_evt, payload) => {
+    try{
+      const dir = path.join(app.getPath('userData'), 'backups');
+      fs.mkdirSync(dir, { recursive: true });
+      const fname = String((payload && payload.filename) || ('digicopy-backup.json')).replace(/[^\w.\-]+/g,'_');
+      const content = typeof (payload && payload.content) === 'string' ? payload.content : JSON.stringify((payload && payload.content) || {}, null, 2);
+      const fpath = path.join(dir, fname);
+      fs.writeFileSync(fpath, content, 'utf8');
+      return { ok:true, path: fpath, dir };
+    }catch(e){ return { ok:false, error: e.message || String(e) }; }
+  });
 }
 
 // ──────────────────────────────────────────────

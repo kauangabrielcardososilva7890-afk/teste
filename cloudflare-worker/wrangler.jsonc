@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "digicopy-sync-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-16",
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "digicopy-erp",
+      "database_id": "b6c32346-d6d5-475a-b9c3-40782b525bae"
+    }
+  ]
+}

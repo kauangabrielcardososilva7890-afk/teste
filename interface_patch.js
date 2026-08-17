@@ -160,7 +160,8 @@ window.renderClientes = function(){
     const span = document.getElementById('app-title-version');
     if(span) span.innerText = 'DIGICOPY ERP' + (v ? (' ' + v) : '');
     const t = document.getElementById('page-title');
-    if(t && (!t.innerText.trim() || /DIGICOPY/i.test(t.innerText))) t.innerText = 'Início';
+    const atual = t ? String(t.innerText || t.textContent || '').trim() : '';
+    if(t && (!atual || /DIGICOPY/i.test(atual))) t.textContent = 'Início';
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', tituloApp);
   else tituloApp();

@@ -1,0 +1,25 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('indexeddb_persistence_patch.js','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
+const html=fs.readFileSync('index.html','utf8');
+const app=fs.readFileSync('app.js','utf8');
+const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+console.log('== INDEXEDDB PERSISTENCE V2 ==');
+ok('abre banco na versão 2',/indexedDB\.open\(IDB_NAME,2\)/.test(code));
+ok('possui stores snapshots, entities e meta',/createObjectStore\(SNAPSHOTS/.test(code)&&/createObjectStore\(ENTITIES/.test(code)&&/createObjectStore\(META/.test(code));
+ok('migra snapshot v1 automaticamente',/migracao-snapshot-v1/.test(code));
+ok('restaura entidades incrementais mais novas',/incTs>localTs/.test(code));
+ok('usa hashes do manifesto local',/function signature/.test(code)&&/info\.subs/.test(code));
+ok('grava apenas entidades alteradas',/changed\.forEach\(campo=>store\.put/.test(code));
+ok('remove somente entidades que sumiram',/removed\.forEach\(campo=>store\.delete/.test(code));
+ok('envolve saveDB e saveDBAgora',/window\.saveDB=function/.test(code)&&/window\.saveDBAgora=function/.test(code));
+ok('limpeza remove só chaves DIGICOPY',/deleteDatabase\(IDB_NAME\)/.test(code)&&/\^digicopy\/i.test\(k\)/.test(code));
+ok('limpeza não regrava durante reload',/if\(clearing\|\|/.test(code));
+ok('guarda snapshot antes de operações críticas',/writeRecoverySnapshot/.test(code)&&/recovery_/.test(code));
+ok('sync aguarda restauração',/DIGICOPY_DB_READY/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
+ok('aviso antigo só aparece se IndexedDB falhar',/!window\.__indexedDbPersistAtivo/.test(app));
+ok('carrega antes do sync Cloudflare',manifest.indexOf('indexeddb_persistence_patch.js')<manifest.indexOf('cloudflare_data_sync_patch.js'));
+ok('Backup está visível no topo',/id="btn-backup-top"[^>]*exportBackup/.test(html));
+ok('arquivo entra no bundle Electron',pkg.build.files.includes('app.bundle.js')&&manifest.includes('indexeddb_persistence_patch.js'));
+console.log('\nRESULTADO: persistência IndexedDB incremental passou!');
