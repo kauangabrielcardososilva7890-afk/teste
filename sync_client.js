@@ -439,88 +439,22 @@
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // SINCRONIZAÇÃO AUTOMÁTICA (build 3.10) — busca e envia sem apertar botão
+  // SINCRONIZAÇÃO AUTOMÁTICA LEGADA DESATIVADA (v5.20.27)
   // ═══════════════════════════════════════════════════════════════════
+  // Este arquivo mantém apenas as funções manuais de compatibilidade acima.
+  // O automático antigo consultava app_state a cada 75 segundos e concorria
+  // com sync_realtime_patch.js (erp_rt), gastando cota mesmo sem alterações.
+  // O único motor automático é o sync_realtime_patch.js, carregado por último.
   const SYNC_AUTO_LS='digicopy_erp_autosync';
   window.__syncAplicando = false;
   window.__ultimaMudancaLocal = 0;
-  window.syncAutoLigado = function(){ try{ return localStorage.getItem(SYNC_AUTO_LS)!=='0'; }catch(e){ return true; } };
-  window.syncAutoDefinir = function(on){
-    try{ localStorage.setItem(SYNC_AUTO_LS, on?'1':'0'); }catch(e){}
-    if(typeof toast==='function') toast(on?'☁️ Sincronização automática LIGADA neste PC':'Sincronização automática desligada neste PC','info');
-    if(on) setTimeout(()=>{ try{ window.syncAutoChecar('ligar'); }catch(e){} }, 1500);
+  window.syncAutoLigado = function(){ return false; };
+  window.syncAutoDefinir = function(){
+    try{ localStorage.setItem(SYNC_AUTO_LS, '0'); }catch(e){}
+    if(typeof toast==='function') toast('A sincronização incremental já está ativa','info');
   };
-  // Rastreia alterações locais embrulhando o saveDB global (as operações de sync
-  // usam a trava __syncAplicando para não se marcarem como "alteração do usuário")
-  try{
-    const _saveSemRastreio = window.saveDB;
-    if(typeof _saveSemRastreio==='function' && !window.__saveDBRastreado){
-      window.saveDB = function(){
-        _saveSemRastreio.apply(this, arguments);
-        if(!window.__syncAplicando){
-          window.__ultimaMudancaLocal = Date.now();
-          try{ localStorage.setItem('digicopy_erp_dirty_local', new Date().toISOString()); }catch(e){}
-        }
-      };
-      window.__saveDBRastreado = true;
-    }
-  }catch(eWrap){}
-
-  let __autoBusy=false, __autoAvisos=0;
-  window.syncAutoChecar = async function(motivo){
-    if(!window.syncAutoLigado()) return {ok:false, desligado:true};
-    if(__autoBusy) return {ok:false, ocupado:true};
-    if(typeof db==='undefined' || !db) return {ok:false};
-    // Nunca atrapalha quem está usando: nem com janela aberta nem logo após uma ação
-    const mr=document.getElementById('modal-root');
-    if(mr && !mr.classList.contains('hidden')) return {ok:false, modalAberto:true};
-    const agora=Date.now();
-    if(window.__ultimaMudancaLocal && (agora-window.__ultimaMudancaLocal)<45000) return {ok:false, emUso:true};
-    __autoBusy=true;
-    try{
-      const metaRows=await supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-      if(!metaRows || !metaRows.length) return {ok:false, vazio:true};
-      const meta=metaRows[0].data||{};
-      const cloudMs=Date.parse(meta.atualizadoEm || metaRows[0].updated_at || 0) || 0;
-      if(!cloudMs) return {ok:false};
-      const haveMs=Date.parse((db.meta && db.meta.origemNuvemAtualizadoEm) || 0) || 0;
-      const envioMs=Date.parse((db.meta && db.meta.ultimoEnvioEm) || 0) || 0;
-      const sujo=window.__ultimaMudancaLocal>0;
-      if(cloudMs > haveMs+1000){
-        // Nuvem mais nova. PC que NUNCA sincronizou: traz direto (com backup local).
-        // PC já sincronizado com alterações locais pendentes: não sobrescreve — avisa.
-        const nuncaSincronizei = (haveMs===0 && envioMs===0);
-        if(sujo && !nuncaSincronizei){
-          if(__autoAvisos<2){
-            __autoAvisos++;
-            setCloudSyncStatus('<span class="text-amber-700 font-bold">☁️ A nuvem tem uma versão mais nova, mas ESTE PC tem alterações que ainda não foram enviadas. Resolva aqui em Configurações → Sincronização (Enviar ou Carregar).</span>');
-          }
-          return {ok:false, conflito:true};
-        }
-        if(nuncaSincronizei){ try{ const bk={quando:new Date().toISOString(), vendas:(db.vendas||[]).filter(v=>v.criadoPor!=='migracao').slice(-300), logs:(db.logs||[]).slice(0,200)}; const t=JSON.stringify(bk); localStorage.setItem('digicopy_erp_backup_pre_sync', (window.LZUTF16?('LZ1:'+window.LZUTF16.compress(t)):t)); }catch(eB){} }
-        setCloudSyncStatus('<span class="text-slate-500">☁️ Sincronização automática: chegaram dados novos da nuvem, atualizando este PC...</span>');
-        if(typeof toast==='function') toast('☁️ Chegaram dados novos da nuvem — atualizando este PC','info');
-        return await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
-      }
-      // Nuvem em dia: se mexi aqui depois do último envio e estou parado há 60s, envia sozinho
-      if(sujo && window.__ultimaMudancaLocal > envioMs+2000 && (agora-window.__ultimaMudancaLocal)>60000){
-        setCloudSyncStatus('<span class="text-slate-500">☁️ Sincronização automática: enviando suas alterações para a nuvem...</span>');
-        const r=await window.syncEnviarParaNuvem({confirmar:false, automatico:true});
-        if(r && r.ok && typeof toast==='function') toast('☁️ Alterações enviadas automaticamente','success');
-        return r;
-      }
-      return {ok:true, semMudanca:true, motivo};
-    }catch(err){
-      return {ok:false, erros:[(err&&err.message)||String(err)]};
-    }finally{
-      __autoBusy=false;
-    }
+  window.syncAutoChecar = async function(){
+    return {ok:false, desligado:true, legado:true};
   };
 
-  // Disparadores: 4s após abrir e a cada 75s (verificação silenciosa pela data/hora)
-  function __agendarAutoSync(){ setTimeout(()=>{ try{ window.syncAutoChecar('abertura'); }catch(e){} }, 4000); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', __agendarAutoSync);
-  else __agendarAutoSync();
-  setInterval(()=>{ try{ window.syncAutoChecar('timer'); }catch(e){} }, 75000);
-  if(typeof window.addEventListener==='function') window.addEventListener('online', ()=>{ try{ window.syncAutoChecar('online'); }catch(e){} });
 })();
