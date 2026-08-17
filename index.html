@@ -161,7 +161,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
-        <div class="module"><button id="btn-teste-nuvem" type="button" onclick="__syncDiagnosticoAlert()" title="Testar conexão e sincronização com a nuvem"><i class="ph ph-cloud-check"></i>Teste nuvem</button></div>
+        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
       </div></div>
     <div class="flex-1 p-4 lg:p-8">
@@ -289,7 +289,6 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <script src="./ajustes_v51920_patch.js?v=5.19.20"></script>
 <script src="./ajustes_v52023_patch.js?v=5.20.24"></script>
 <script src="./ajustes_v52024_patch.js?v=5.20.24"></script>
-<script src="./ajustes_v52025_patch.js?v=5.20.26"></script>
-<script src="./sync_realtime_patch.js?v=5.20.5"></script>
+<script src="./cloudflare_sync_patch.js?v=5.20.28"></script>
 </body>
 </html>

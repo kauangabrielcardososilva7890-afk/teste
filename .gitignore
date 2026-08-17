@@ -4,6 +4,8 @@ dist/
 build/
 out/
 coverage/
+playwright-report/
+test-results/
 
 # Electron / instaladores gerados
 *.exe
