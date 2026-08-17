@@ -44,6 +44,17 @@ async function api(path, options){
 window.DIGICOPY_CLOUD_PURE={esc};
 window.DIGICOPY_CLOUD={API,token,deviceInfo,api};
 
+// Desliga definitivamente os gatilhos da nuvem antiga. Algumas versões ainda
+// agendavam uma carga Firebase 4,5s após abrir, mesmo com o sync legado inativo.
+try{
+  sessionStorage.setItem('digicopy_auto_load_try_v4939','1');
+  localStorage.setItem('digicopy_erp_autosync','0');
+}catch(e){}
+window.syncAutoLigado=function(){ return false; };
+window.syncAutoChecar=async function(){ return {ok:false,desligado:true,cloudflare:true}; };
+window.syncCarregarDaNuvem=async function(){ return {ok:false,desligado:true,cloudflare:true}; };
+window.syncEnviarParaNuvem=async function(){ return {ok:false,desligado:true,cloudflare:true}; };
+
 if(typeof document==='undefined') return;
 
 function modalShell(){
