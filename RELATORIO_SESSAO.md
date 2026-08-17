@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.20.30**  
-**Commit:** `7287fff`  
-**Zip:** `Sistema-Digicopy-v5.20.30.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/7287fff5eb78922bc07446d83227a5f2201c9aa2/index.html?v=5.20.30`
+**Última versão:** **v5.20.31**  
+**Commit:** `c229168`  
+**Zip:** `Sistema-Digicopy-v5.20.31.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/c229168890abe73a5c63273d086b34b0dbc225f2/index.html?v=5.20.31`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
+- Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
+- Aviso de espaço antigo só aparece se o IndexedDB também não iniciar; o sync aguarda `DIGICOPY_DB_READY` para nunca publicar base parcial durante restauração.
+- Botão **Backup** agora visível na barra superior (antes estava preso na sidebar oculta).
+- Painel Nuvem desconectado oferece **Limpar dados de teste deste navegador** com dois avisos; remove apenas chaves DIGICOPY e IndexedDB local, não JSON baixado nem D1.
+- Usuário confirmou que só o JSON externo dos clientes precisa ser preservado; produtos/demais dados atuais são testes.
 
 ## v5.20.30 — sincronização Cloudflare local-first funcionando
 - Novo `cloudflare_data_sync_patch.js`: baixa primeiro, envia só alterações, cursor incremental, fila local durável, idempotência, versão por registro, conflito preservado e backoff.
