@@ -186,11 +186,37 @@ code=$(request_code "$TMP/recover.json" -X POST "$API/v1/recover" \
 test "$code" = 201
 python3 - "$TMP/recover.json" <<'PY'
 import json,sys
-j=json.load(open(sys.argv[1])); assert j['recovered'] is True and j['device']['role']=='admin'
+j=json.load(open(sys.argv[1])); assert j['recovered'] is True and j['device']['role']=='admin' and j['activation']=='recovery'
 PY
+RECOVERY_ID=$(json_value "$TMP/recover.json" "['device']['id']")
 code=$(request_code "$TMP/recover2.json" -X POST "$API/v1/recover" \
   -H 'content-type: application/json' -H "x-setup-secret: $SETUP_SECRET" \
   --data '{"deviceName":"Recuperação repetida"}')
 test "$code" = 429
 printf '  ✔ recuperação cria admin sem apagar dados e possui intervalo de segurança\n'
+
+code=$(request_code "$TMP/reset-many.json" -X POST "$API/v1/admin/reset-cloud" \
+  -H 'content-type: application/json' -H "authorization: Bearer $ADMIN" \
+  --data '{"confirmation":"APAGAR NUVEM"}')
+test "$code" = 409
+python3 - "$RECOVERY_ID" >"$TMP/revoke-recovery.json" <<'PY'
+import json,sys
+print(json.dumps({'deviceId':sys.argv[1]}))
+PY
+curl -fsS -X POST "$API/v1/devices/revoke" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/revoke-recovery.json" >/dev/null
+code=$(request_code "$TMP/reset-wrong.json" -X POST "$API/v1/admin/reset-cloud" \
+  -H 'content-type: application/json' -H "authorization: Bearer $ADMIN" \
+  --data '{"confirmation":"errado"}')
+test "$code" = 400
+curl -fsS -X POST "$API/v1/admin/reset-cloud" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data '{"confirmation":"APAGAR NUVEM"}' >"$TMP/reset-ok.json"
+curl -fsS "$API/v1/status" -H "authorization: Bearer $ADMIN" >"$TMP/status-reset.json"
+python3 - "$TMP/reset-ok.json" "$TMP/status-reset.json" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1])); s=json.load(open(sys.argv[2]))
+assert r['reset'] is True and r['kept']['devices']==1
+assert s['totals']['records']==0 and s['totals']['deleted']==0 and s['totals']['cursor']==0
+PY
+printf '  ✔ reset exige frase/admin único, zera negócio e mantém segurança\n'
 printf '\nRESULTADO: integração completa da API passou!\n'

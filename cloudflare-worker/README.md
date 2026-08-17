@@ -44,6 +44,7 @@ npx wrangler d1 migrations apply DB --remote
 - `POST /v1/devices/revoke` — admin bloqueia um aparelho sem apagar dados
 - `GET /v1/review/revoked-records` — lista registros ativos originados em aparelhos bloqueados
 - `POST /v1/review/remove-revoked` — remove seleção validando novamente a origem bloqueada
+- `POST /v1/admin/reset-cloud` — zera somente dados de negócio, exigindo admin único e frase exata
 - `GET /v1/status` — diagnóstico autenticado
 
 Nenhuma rota substitui a base inteira.

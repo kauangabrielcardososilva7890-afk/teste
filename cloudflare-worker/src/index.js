@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.3.4';
+const API_VERSION = '0.4.0';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -618,6 +618,49 @@ async function handleRevokeDevice(request, env) {
   return json({ ok: true, revoked: true, deviceId, revokedAt: now });
 }
 
+async function handleResetCloud(request, env) {
+  const admin = await requireAdmin(request, env);
+  const body = await readBody(request);
+  if (body.confirmation !== 'APAGAR NUVEM') {
+    throw new ApiError(400, 'RESET_CONFIRMATION_REQUIRED', 'Digite APAGAR NUVEM para confirmar.');
+  }
+  const active = await env.DB.prepare(
+    'SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'
+  ).first();
+  if (Number(active && active.total) !== 1) {
+    throw new ApiError(409, 'RESET_REQUIRES_SINGLE_DEVICE', 'Bloqueie os outros aparelhos antes de zerar a nuvem.');
+  }
+  const [recordCount, changeCount] = await env.DB.batch([
+    env.DB.prepare('SELECT COUNT(*) AS total FROM records'),
+    env.DB.prepare('SELECT COUNT(*) AS total FROM changes')
+  ]);
+  const now = Date.now();
+  const generation = crypto.randomUUID();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM enrollment_codes'),
+    env.DB.prepare('DELETE FROM changes'),
+    env.DB.prepare('DELETE FROM records'),
+    env.DB.prepare(
+      `INSERT INTO system_meta(key, value, updated_at) VALUES ('cloud_generation', ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+    ).bind(generation, now),
+    env.DB.prepare(
+      `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
+       VALUES ('cloud_business_reset', ?, ?, ?, ?)`
+    ).bind(admin.id, admin.id, JSON.stringify({ generation }), now)
+  ]);
+  return json({
+    ok: true,
+    reset: true,
+    generation,
+    removed: {
+      records: Number(recordCount.results[0].total) || 0,
+      changes: Number(changeCount.results[0].total) || 0
+    },
+    kept: { devices: 1, security: true }
+  });
+}
+
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
   const [devices, records, deleted, changes, grouped] = await env.DB.batch([
@@ -664,6 +707,7 @@ async function route(request, env) {
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }

@@ -331,6 +331,18 @@ async function mergeDuplicateClients(){
   return {removed:removeIds.size,groups:analysis.groupsCount,references};
 }
 
+async function resetCloudAndRepublish(){
+  if(busy)throw new Error('Aguarde a sincronização atual terminar.');
+  const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
+  if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
+  const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
+  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,cloudGeneration:result.generation};
+  outbox=[];failures=0;lastError='';
+  try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
+  persist();
+  const synced=await tick('republicacao-completa');
+  return {result,synced};
+}
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
   scanLocal(entity);schedule(100);return true;
@@ -346,7 +358,7 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudAndRepublish,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{
