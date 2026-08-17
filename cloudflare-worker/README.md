@@ -40,6 +40,8 @@ npx wrangler d1 migrations apply DB --remote
 - `GET /v1/changes?cursor=N` — recebe somente novidades
 - `GET /v1/deleted` — admin lista exclusões recuperáveis
 - `POST /v1/restore` — admin restaura sem recriar manualmente
+- `GET /v1/devices` — admin lista aparelhos e último acesso
+- `POST /v1/devices/revoke` — admin bloqueia um aparelho sem apagar dados
 - `GET /v1/status` — diagnóstico autenticado
 
 Nenhuma rota substitui a base inteira.

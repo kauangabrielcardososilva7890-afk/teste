@@ -150,6 +150,7 @@ async function renderConnected(body){
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
     '<div style="display:flex;gap:8px;margin-bottom:14px">'+button('Sincronizar agora','dc-sync-now',true)+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');setBusy(btn,true,'Sincronizando...');
@@ -168,6 +169,34 @@ async function renderConnected(body){
     catch(e){result.innerHTML=message(e.message,'error');}
     setBusy(btn,false);
   };
+  if(isAdmin){
+    const adminResult=body.querySelector('#dc-admin-result');
+    body.querySelector('#dc-list-devices').onclick=async()=>{
+      adminResult.innerHTML=message('Carregando aparelhos...','info');
+      try{
+        const data=await api('/v1/devices',{method:'GET'});
+        adminResult.innerHTML=(data.devices||[]).map(x=>'<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')+'</div>').join('')||message('Nenhum aparelho encontrado.','info');
+        adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
+          const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');
+          if(!ok)return;
+          try{await api('/v1/devices/revoke',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id})});body.querySelector('#dc-list-devices').click();}
+          catch(e){adminResult.innerHTML=message(e.message,'error');}
+        });
+      }catch(e){adminResult.innerHTML=message(e.message,'error');}
+    };
+    body.querySelector('#dc-list-deleted').onclick=async()=>{
+      adminResult.innerHTML=message('Carregando itens excluídos...','info');
+      try{
+        const data=await api('/v1/deleted?limit=100',{method:'GET'});
+        adminResult.innerHTML=(data.records||[]).map(x=>{const label=(x.data&&(x.data.nome||x.data.descricao||x.data.numero||x.data.login))||x.recordId;return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #fecaca;background:#fffafa;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(label)+'</b><small style="display:block;color:#64748b">'+esc(x.entity)+' • versão '+esc(x.version)+'</small></div><button class="dc-restore" data-entity="'+esc(x.entity)+'" data-id="'+esc(x.recordId)+'" style="padding:6px 9px;border-radius:8px;background:#166534;color:white;font-weight:800">Restaurar</button></div>';}).join('')||message('Nenhum item excluído.','ok');
+        adminResult.querySelectorAll('.dc-restore').forEach(btn=>btn.onclick=async()=>{
+          const ok=await window.confirmSistema('Restaurar este registro de '+btn.dataset.entity+'?','Restaurar registro');if(!ok)return;
+          try{await api('/v1/restore',{method:'POST',body:JSON.stringify({entity:btn.dataset.entity,recordId:btn.dataset.id})});if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('restauracao');await renderConnected(body);}
+          catch(e){adminResult.innerHTML=message(e.message,'error');}
+        });
+      }catch(e){adminResult.innerHTML=message(e.message,'error');}
+    };
+  }
   body.querySelector('#dc-forget').onclick=async()=>{
     const ok=typeof window.confirmSistema==='function'?await window.confirmSistema('Remover a autorização salva somente deste navegador? Os dados locais não serão apagados.','Remover autorização'):false;
     if(ok){forgetAuth();renderDisconnected(body);}

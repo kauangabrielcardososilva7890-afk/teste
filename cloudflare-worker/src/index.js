@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.2.1';
+const API_VERSION = '0.3.0';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -497,6 +497,38 @@ async function handleRestore(request, env) {
   return json({ ok: true, restored: true, ...result });
 }
 
+async function handleDevices(request, env) {
+  const admin = await requireAdmin(request, env);
+  const rows = await env.DB.prepare(
+    `SELECT id, name, role, created_at AS createdAt, last_seen_at AS lastSeenAt,
+            revoked_at AS revokedAt
+     FROM devices ORDER BY revoked_at IS NOT NULL, created_at ASC`
+  ).all();
+  return json({ ok: true, currentDeviceId: admin.id, devices: rows.results || [] });
+}
+
+async function handleRevokeDevice(request, env) {
+  const admin = await requireAdmin(request, env);
+  const body = await readBody(request);
+  const deviceId = cleanText(body.deviceId, 80);
+  if (!deviceId) throw new ApiError(400, 'DEVICE_ID_REQUIRED', 'Informe o aparelho.');
+  if (deviceId === admin.id) {
+    throw new ApiError(400, 'CANNOT_REVOKE_SELF', 'Este computador não pode bloquear a própria autorização.');
+  }
+  const now = Date.now();
+  const result = await env.DB.prepare(
+    'UPDATE devices SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL'
+  ).bind(now, deviceId).run();
+  if (!result.meta || Number(result.meta.changes) !== 1) {
+    throw new ApiError(404, 'DEVICE_NOT_FOUND', 'Aparelho não encontrado ou já bloqueado.');
+  }
+  await env.DB.prepare(
+    `INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at)
+     VALUES ('device_revoked', ?, ?, NULL, ?)`
+  ).bind(deviceId, admin.id, now).run();
+  return json({ ok: true, revoked: true, deviceId, revokedAt: now });
+}
+
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
   const [devices, records, deleted, changes, grouped] = await env.DB.batch([
@@ -539,6 +571,8 @@ async function route(request, env) {
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }

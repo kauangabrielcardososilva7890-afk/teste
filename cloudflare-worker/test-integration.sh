@@ -56,6 +56,7 @@ code=$(request_code "$TMP/enroll.json" -X POST "$API/v1/enroll" \
   -H 'content-type: application/json' --data @"$TMP/enroll-body.json")
 test "$code" = 201
 DEVICE=$(json_value "$TMP/enroll.json" "['token']")
+DEVICE_ID=$(json_value "$TMP/enroll.json" "['device']['id']")
 code=$(request_code "$TMP/reuse.json" -X POST "$API/v1/enroll" \
   -H 'content-type: application/json' --data @"$TMP/enroll-body.json")
 test "$code" = 403
@@ -127,6 +128,22 @@ assert (t['devices'],t['records'],t['deleted'],t['cursor'])==(2,1,0,3)
 assert t['byEntity']['clientes']=={'active':1,'deleted':0}
 PY
 printf '  ✔ diagnóstico contabiliza aparelhos e registros\n'
+
+curl -fsS "$API/v1/devices" -H "authorization: Bearer $ADMIN" >"$TMP/devices.json"
+python3 - "$TMP/devices.json" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); assert len(j['devices'])==2
+assert {d['role'] for d in j['devices']}=={'admin','device'}
+PY
+python3 - "$DEVICE_ID" >"$TMP/revoke.json" <<'PY'
+import json,sys
+print(json.dumps({'deviceId':sys.argv[1]}))
+PY
+curl -fsS -X POST "$API/v1/devices/revoke" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/revoke.json" >"$TMP/revoke-result.json"
+code=$(request_code "$TMP/revoked-status.json" "$API/v1/status" -H "authorization: Bearer $DEVICE")
+test "$code" = 401
+printf '  ✔ admin lista e bloqueia outro aparelho sem apagar registros\n'
 
 code=$(request_code "$TMP/recover.json" -X POST "$API/v1/recover" \
   -H 'content-type: application/json' -H "x-setup-secret: $SETUP_SECRET" \

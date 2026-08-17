@@ -10,6 +10,8 @@ ok('segredo não é salvo no localStorage',!/setItem\([^\n]*secret/i.test(code))
 ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test(code)&&/\/v1\/invites/.test(code)&&/\/v1\/enroll/.test(code)&&/\/v1\/recover/.test(code));
 ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuvem/.test(html));
 ok('painel compara clientes locais e nuvem',/CLIENTES NESTE PC/.test(code)&&/CLIENTES NA NUVEM/.test(code));
+ok('admin lista excluídos e aparelhos',/dc-list-deleted/.test(code)&&/dc-list-devices/.test(code));
+ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
 ok('novo painel é carregado por último',/cloudflare_sync_patch\.js/.test(html));
 ok('Firebase automático não é mais carregado',!/<script[^>]+sync_realtime_patch\.js/.test(html));
 ok('gatilho antigo de carga automática é travado',/digicopy_auto_load_try_v4939/.test(code) && /syncCarregarDaNuvem=async function\(\)/.test(code));
