@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.3.1';
+const API_VERSION = '0.3.2';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -504,9 +504,14 @@ async function handleRevokedDeviceRecords(request, env) {
   if (!entity || !ENTITY_RE.test(entity)) throw new ApiError(400, 'INVALID_ENTITY', 'Entidade inválida.');
   const rows = await env.DB.prepare(
     `SELECT r.*, d.name AS source_device
-     FROM records r JOIN devices d ON d.id = r.updated_by
+     FROM records r
+     JOIN changes first_change ON first_change.seq = (
+       SELECT MIN(c2.seq) FROM changes c2
+       WHERE c2.entity = r.entity AND c2.record_id = r.record_id
+     )
+     JOIN devices d ON d.id = first_change.device_id
      WHERE r.entity = ? AND r.deleted_at IS NULL AND d.revoked_at IS NOT NULL
-     ORDER BY r.updated_at ASC LIMIT 200`
+     ORDER BY first_change.seq ASC LIMIT 200`
   ).bind(entity).all();
   return json({ ok: true, entity, records: (rows.results || []).map(row => ({
     ...publicRecord(row), sourceDevice: row.source_device
@@ -524,7 +529,12 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
   const results = [];
   for (const recordId of ids) {
     const current = await env.DB.prepare(
-      `SELECT r.* FROM records r JOIN devices d ON d.id = r.updated_by
+      `SELECT r.* FROM records r
+       JOIN changes first_change ON first_change.seq = (
+         SELECT MIN(c2.seq) FROM changes c2
+         WHERE c2.entity = r.entity AND c2.record_id = r.record_id
+       )
+       JOIN devices d ON d.id = first_change.device_id
        WHERE r.entity = ? AND r.record_id = ? AND r.deleted_at IS NULL
          AND d.revoked_at IS NOT NULL LIMIT 1`
     ).bind(entity, recordId).first();

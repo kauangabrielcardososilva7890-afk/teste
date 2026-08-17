@@ -140,6 +140,11 @@ cat >"$TMP/device-extra.json" <<'JSON'
 JSON
 curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' \
   -H "authorization: Bearer $DEVICE" --data @"$TMP/device-extra.json" >"$TMP/device-extra-result.json"
+cat >"$TMP/admin-touches-extra.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_admin_touches_extra","entity":"clientes","recordId":"cli_from_test_device","operation":"upsert","baseVersion":1,"data":{"id":"cli_from_test_device","nome":"Cliente do teste atualizado pelo admin"}}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/admin-touches-extra.json" >"$TMP/admin-touches-result.json"
 python3 - "$DEVICE_ID" >"$TMP/revoke.json" <<'PY'
 import json,sys
 print(json.dumps({'deviceId':sys.argv[1]}))
