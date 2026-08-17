@@ -341,6 +341,10 @@ async function applyMutation(env, device, mutation) {
     if (new TextEncoder().encode(dataJson).byteLength > 700_000) {
       throw new ApiError(413, 'RECORD_TOO_LARGE', 'Registro maior que o permitido.');
     }
+  } else if (current && current.data_json) {
+    // Exclusão reversível: mantém a última versão no D1. A listagem normal não
+    // a considera ativa, mas um administrador poderá restaurá-la.
+    dataJson = current.data_json;
   }
 
   const now = Date.now();
@@ -456,11 +460,49 @@ async function handleChanges(request, env) {
   return json({ ok: true, cursor, nextCursor, hasMore, changes });
 }
 
+async function handleDeleted(request, env) {
+  await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const limit = Math.min(200, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '100', 10) || 100));
+  const rows = await env.DB.prepare(
+    `SELECT * FROM records WHERE deleted_at IS NOT NULL
+     ORDER BY deleted_at DESC LIMIT ?`
+  ).bind(limit).all();
+  return json({ ok: true, records: (rows.results || []).map(publicRecord) });
+}
+
+async function handleRestore(request, env) {
+  const admin = await requireAdmin(request, env);
+  const body = await readBody(request);
+  const entity = cleanText(body.entity, 64);
+  const recordId = cleanText(body.recordId, 160);
+  if (!entity || !ENTITY_RE.test(entity) || !recordId) {
+    throw new ApiError(400, 'INVALID_RECORD', 'Registro inválido.');
+  }
+  const current = await env.DB.prepare(
+    'SELECT * FROM records WHERE entity = ? AND record_id = ? LIMIT 1'
+  ).bind(entity, recordId).first();
+  if (!current || current.deleted_at == null || !current.data_json) {
+    throw new ApiError(404, 'DELETED_RECORD_NOT_FOUND', 'Registro excluído não encontrado.');
+  }
+  const result = await applyMutation(env, admin, {
+    mutationId: cleanText(body.mutationId, 120) || ('restore_' + crypto.randomUUID()),
+    entity,
+    recordId,
+    operation: 'upsert',
+    baseVersion: Number(current.version),
+    data: parseDataJson(current.data_json)
+  });
+  if (!result.ok) return json({ ok: false, ...result }, 409);
+  return json({ ok: true, restored: true, ...result });
+}
+
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
-  const [devices, records, changes] = await env.DB.batch([
+  const [devices, records, deleted, changes] = await env.DB.batch([
     env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NULL'),
+    env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NOT NULL'),
     env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes')
   ]);
   return json({
@@ -469,6 +511,7 @@ async function handleStatus(request, env) {
     totals: {
       devices: Number(devices.results[0].total),
       records: Number(records.results[0].total),
+      deleted: Number(deleted.results[0].total),
       cursor: Number(changes.results[0].total)
     }
   });
@@ -485,6 +528,8 @@ async function route(request, env) {
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }

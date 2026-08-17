@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node test-pure.mjs",
+    "test:client": "node test-client-sync.mjs",
     "check": "node --check src/index.js",
     "dev": "wrangler dev",
     "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",

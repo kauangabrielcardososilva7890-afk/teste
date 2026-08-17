@@ -96,10 +96,33 @@ assert r['conflict'] is True and r['current']['data']['nome']=='Cliente Teste'
 PY
 printf '  ✔ versão antiga não sobrescreve dado mais novo\n'
 
+cat >"$TMP/delete.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_test_delete","entity":"clientes","recordId":"cli_1","operation":"delete","baseVersion":1}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/delete.json" >"$TMP/delete-result.json"
+curl -fsS "$API/v1/deleted" -H "authorization: Bearer $ADMIN" >"$TMP/deleted.json"
+python3 - "$TMP/delete-result.json" "$TMP/deleted.json" <<'PY'
+import json,sys
+delres=json.load(open(sys.argv[1])); deleted=json.load(open(sys.argv[2]))
+assert delres['results'][0]['version']==2
+assert deleted['records'][0]['data']['nome']=='Cliente Teste'
+PY
+cat >"$TMP/restore.json" <<'JSON'
+{"mutationId":"mut_test_restore","entity":"clientes","recordId":"cli_1"}
+JSON
+curl -fsS -X POST "$API/v1/restore" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/restore.json" >"$TMP/restore-result.json"
+python3 - "$TMP/restore-result.json" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); assert j['restored'] is True and j['version']==3
+PY
+printf '  ✔ exclusão preserva conteúdo e administrador consegue restaurar\n'
+
 curl -fsS "$API/v1/status" -H "authorization: Bearer $ADMIN" >"$TMP/status.json"
 python3 - "$TMP/status.json" <<'PY'
 import json,sys
-j=json.load(open(sys.argv[1])); assert j['totals']=={'devices':2,'records':1,'cursor':1}
+j=json.load(open(sys.argv[1])); assert j['totals']=={'devices':2,'records':1,'deleted':0,'cursor':3}
 PY
 printf '  ✔ diagnóstico contabiliza aparelhos e registros\n'
 

@@ -6,6 +6,7 @@ function ok(name, cond){
 const legacy = fs.readFileSync('sync_client.js','utf8');
 const force = fs.readFileSync('limpar_nuvem_patch.js','utf8');
 const cloud = fs.readFileSync('cloudflare_sync_patch.js','utf8');
+const cloudData = fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
 const html = fs.readFileSync('index.html','utf8');
 console.log('== PROTEÇÃO DE COTA DO SYNC ==');
 ok('legado não consulta a cada 75 segundos', !/setInterval\s*\(/.test(legacy));
@@ -13,7 +14,9 @@ ok('legado automático retorna desligado', /syncAutoLigado\s*=\s*function\(\)\s*
 ok('compatibilidade não força sync legado ligado', !/syncAutoLigado\s*=\s*function[\s\S]*return true/.test(force));
 ok('compatibilidade grava flag legado desligada', /digicopy_erp_autosync[\s\S]*['"]0['"]/.test(force));
 ok('painel Cloudflare não faz polling escondido', !/setInterval\s*\(/.test(cloud));
-ok('Cloudflare está carregada', /cloudflare_sync_patch\.js/.test(html));
+ok('motor Cloudflare não usa setInterval', !/setInterval\s*\(/.test(cloudData));
+ok('repouso faz uma consulta incremental por ciclo', /if\(totalSent>0\)await pullAll\(\)/.test(cloudData));
+ok('Cloudflare está carregada', /cloudflare_sync_patch\.js/.test(html) && /cloudflare_data_sync_patch\.js/.test(html));
 ok('Firebase automático não está carregado', !/<script[^>]+sync_realtime_patch\.js/.test(html));
 if(process.exitCode) process.exit(process.exitCode);
 console.log('\nRESULTADO: proteção de cota passou!');

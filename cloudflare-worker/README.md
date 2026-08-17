@@ -38,6 +38,8 @@ npx wrangler d1 migrations apply DB --remote
 - `POST /v1/enroll` — autoriza outro aparelho
 - `POST /v1/changes` — envia lote incremental idempotente
 - `GET /v1/changes?cursor=N` — recebe somente novidades
+- `GET /v1/deleted` — admin lista exclusões recuperáveis
+- `POST /v1/restore` — admin restaura sem recriar manualmente
 - `GET /v1/status` — diagnóstico autenticado
 
 Nenhuma rota substitui a base inteira.
