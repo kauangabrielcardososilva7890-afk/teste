@@ -4,10 +4,24 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.4**  
-**Commit:** `f3fe11c`  
+**Última versão:** **v5.21.5**  
+**Commit:** (após push)  
 **Zip:** gerar no PC do usuário com `npm run build:win`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/f3fe11c4ae41f52b1c80876e02bdecc322c2015c/index.html?v=5.21.4`  
+**GitHack:** atualizar após o commit
+
+---
+
+## v5.21.5 — dados da loja + busca inteligente de CNPJ
+
+Onde ficam os dados da empresa:
+- Menu **Configurações**
+- Card **Dados da loja para relatórios e notinhas**
+- Salva em `db.config.loja` e na empresa única.
+
+Busca de CNPJ:
+- Na loja: botão **Buscar CNPJ** ao lado do campo.
+- No cliente: o botão **Buscar** do cadastro continua, agora com fallback ReceitaWS se a BrasilAPI falhar.
+- Preenche razão, fantasia, rua, número, bairro, cidade, UF, CEP, telefone e e-mail.  
 
 ---
 

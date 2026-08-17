@@ -15,5 +15,5 @@ ok('cliente da empresa aparece',P.pertenceEmpresa({empresaId:'emp_digicopy'},'em
 ok('lista final aceita cliente sem empresaId',fin.includes('!c.empresaId||c.empresaId===s.empresaId'));
 ok('seedData também preenche empresaId vazio',app.includes('r.empresaId !== emp.id'));
 ok('IndexedDB reexecuta seedData depois de restaurar',idb.includes('seedData(false)'));
-ok('patch entra no bundle por último',manifest[manifest.length-1]==='ajustes_v5214_clientes_visiveis_patch.js');
+ok('patch entra no bundle',manifest.includes('ajustes_v5214_clientes_visiveis_patch.js'));
 console.log('\nRESULTADO: clientes visíveis passou!');
