@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.3.2';
+const API_VERSION = '0.3.3';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -497,6 +497,31 @@ async function handleRestore(request, env) {
   return json({ ok: true, restored: true, ...result });
 }
 
+function clientIdentityTokens(dataJson) {
+  const data = parseDataJson(dataJson) || {};
+  const tokens = [];
+  const code = String(data.codigo == null ? '' : data.codigo).replace(/\D/g, '').replace(/^0+/, '');
+  const doc = String(data.documento == null ? '' : data.documento).replace(/\D/g, '');
+  if (code && code !== '0') tokens.push('codigo:' + code);
+  if (doc.length >= 8) tokens.push('documento:' + doc);
+  return tokens;
+}
+
+async function deletedActiveOriginTokens(env, entity) {
+  const rows = await env.DB.prepare(
+    `SELECT r.data_json FROM records r
+     JOIN changes first_change ON first_change.seq = (
+       SELECT MIN(c2.seq) FROM changes c2
+       WHERE c2.entity = r.entity AND c2.record_id = r.record_id
+     )
+     JOIN devices d ON d.id = first_change.device_id
+     WHERE r.entity = ? AND r.deleted_at IS NOT NULL AND d.revoked_at IS NULL`
+  ).bind(entity).all();
+  const tokens = new Set();
+  for (const row of (rows.results || [])) for (const token of clientIdentityTokens(row.data_json)) tokens.add(token);
+  return tokens;
+}
+
 async function handleRevokedDeviceRecords(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
@@ -513,9 +538,15 @@ async function handleRevokedDeviceRecords(request, env) {
      WHERE r.entity = ? AND r.deleted_at IS NULL AND d.revoked_at IS NOT NULL
      ORDER BY first_change.seq ASC LIMIT 200`
   ).bind(entity).all();
-  return json({ ok: true, entity, records: (rows.results || []).map(row => ({
-    ...publicRecord(row), sourceDevice: row.source_device
-  })) });
+  const protectedTokens = entity === 'clientes' ? await deletedActiveOriginTokens(env, entity) : new Set();
+  const records = [], kept = [];
+  for (const row of (rows.results || [])) {
+    const item = { ...publicRecord(row), sourceDevice: row.source_device };
+    const isReplacement = clientIdentityTokens(row.data_json).some(token => protectedTokens.has(token));
+    if (isReplacement) kept.push({ ...item, reason: 'substituiu cadastro original durante a união' });
+    else records.push(item);
+  }
+  return json({ ok: true, entity, records, kept, totalFromBlocked: records.length + kept.length });
 }
 
 async function handleRemoveRevokedDeviceRecords(request, env) {
@@ -526,6 +557,7 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
   if (!entity || !ENTITY_RE.test(entity) || !ids.length || ids.length > 100) {
     throw new ApiError(400, 'INVALID_REVIEW_BATCH', 'Seleção inválida para limpeza.');
   }
+  const protectedTokens = entity === 'clientes' ? await deletedActiveOriginTokens(env, entity) : new Set();
   const results = [];
   for (const recordId of ids) {
     const current = await env.DB.prepare(
@@ -538,7 +570,11 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
        WHERE r.entity = ? AND r.record_id = ? AND r.deleted_at IS NULL
          AND d.revoked_at IS NOT NULL LIMIT 1`
     ).bind(entity, recordId).first();
-    if (!current) { results.push({ recordId, ok: false, skipped: true }); continue; }
+    if (!current) { results.push({ recordId, ok: false, skipped: true, reason: 'origem não autorizada' }); continue; }
+    if (clientIdentityTokens(current.data_json).some(token => protectedTokens.has(token))) {
+      results.push({ recordId, ok: false, skipped: true, reason: 'cadastro mantido substitui original unido' });
+      continue;
+    }
     const result = await applyMutation(env, admin, {
       mutationId: 'cleanup_' + crypto.randomUUID(), entity, recordId,
       operation: 'delete', baseVersion: Number(current.version)

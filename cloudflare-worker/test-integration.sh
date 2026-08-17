@@ -145,6 +145,18 @@ cat >"$TMP/admin-touches-extra.json" <<'JSON'
 JSON
 curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' \
   -H "authorization: Bearer $ADMIN" --data @"$TMP/admin-touches-extra.json" >"$TMP/admin-touches-result.json"
+cat >"$TMP/protected-pair.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_original_777","entity":"clientes","recordId":"cli_original_777","operation":"upsert","baseVersion":0,"data":{"id":"cli_original_777","codigo":"777","nome":"Original depois unido"}}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' -H "authorization: Bearer $ADMIN" --data @"$TMP/protected-pair.json" >/dev/null
+cat >"$TMP/blocked-duplicate.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_duplicate_777","entity":"clientes","recordId":"cli_duplicate_777","operation":"upsert","baseVersion":0,"data":{"id":"cli_duplicate_777","codigo":"777","nome":"Cadastro mantido do aparelho bloqueado"}}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' -H "authorization: Bearer $DEVICE" --data @"$TMP/blocked-duplicate.json" >/dev/null
+cat >"$TMP/delete-original.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_delete_original_777","entity":"clientes","recordId":"cli_original_777","operation":"delete","baseVersion":1}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' -H "authorization: Bearer $ADMIN" --data @"$TMP/delete-original.json" >/dev/null
 python3 - "$DEVICE_ID" >"$TMP/revoke.json" <<'PY'
 import json,sys
 print(json.dumps({'deviceId':sys.argv[1]}))
@@ -154,8 +166,9 @@ curl -fsS -X POST "$API/v1/devices/revoke" -H 'content-type: application/json' \
 curl -fsS "$API/v1/review/revoked-records?entity=clientes" -H "authorization: Bearer $ADMIN" >"$TMP/review.json"
 python3 - "$TMP/review.json" >"$TMP/remove-review.json" <<'PY'
 import json,sys
-j=json.load(open(sys.argv[1])); assert len(j['records'])==1
-print(json.dumps({'entity':'clientes','recordIds':[j['records'][0]['recordId']]}))
+j=json.load(open(sys.argv[1])); assert len(j['records'])==1 and len(j['kept'])==1
+assert j['kept'][0]['recordId']=='cli_duplicate_777'
+print(json.dumps({'entity':'clientes','recordIds':[j['records'][0]['recordId'],j['kept'][0]['recordId']]}))
 PY
 curl -fsS -X POST "$API/v1/review/remove-revoked" -H 'content-type: application/json' \
   -H "authorization: Bearer $ADMIN" --data @"$TMP/remove-review.json" >"$TMP/remove-review-result.json"

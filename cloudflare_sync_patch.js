@@ -174,9 +174,10 @@ async function renderConnected(body){
     body.querySelector('#dc-review-blocked').onclick=async()=>{
       adminResult.innerHTML=message('Localizando clientes enviados pelos aparelhos bloqueados...','info');
       try{
-        const data=await api('/v1/review/revoked-records?entity=clientes',{method:'GET'}),records=data.records||[];
-        if(!records.length){adminResult.innerHTML=message('Nenhum cliente ativo veio dos aparelhos bloqueados.','ok');return;}
-        adminResult.innerHTML=message('Encontrados '+records.length+' clientes ativos enviados pelos aparelhos bloqueados. Confira a quantidade antes de remover.','info')+records.map(x=>{const label=(x.data&&(x.data.nome||x.data.fantasia||x.data.codigo))||x.recordId;return '<div style="padding:7px 9px;border:1px solid #e2e8f0;border-radius:8px;margin-top:5px"><b>'+esc(label)+'</b><small style="display:block;color:#64748b">Origem: '+esc(x.sourceDevice)+'</small></div>';}).join('')+button('Remover estes '+records.length+' clientes extras','dc-remove-blocked',true);
+        const data=await api('/v1/review/revoked-records?entity=clientes',{method:'GET'}),records=data.records||[],kept=data.kept||[];
+        if(!records.length&&!kept.length){adminResult.innerHTML=message('Nenhum cliente ativo veio dos aparelhos bloqueados.','ok');return;}
+        const keptHtml=kept.length?message(kept.length+' cadastros serão mantidos: eles substituíram versões originais durante a união.','ok')+kept.map(x=>{const label=(x.data&&(x.data.nome||x.data.fantasia||x.data.codigo))||x.recordId;return '<div style="padding:7px 9px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;margin-top:5px"><b>'+esc(label)+'</b><small style="display:block;color:#166534">MANTER • '+esc(x.reason)+'</small></div>';}).join(''):'';
+        adminResult.innerHTML=message('Encontrados '+records.length+' clientes extras seguros para remover.','info')+records.map(x=>{const label=(x.data&&(x.data.nome||x.data.fantasia||x.data.codigo))||x.recordId;return '<div style="padding:7px 9px;border:1px solid #e2e8f0;border-radius:8px;margin-top:5px"><b>'+esc(label)+'</b><small style="display:block;color:#64748b">Origem: '+esc(x.sourceDevice)+'</small></div>';}).join('')+keptHtml+(records.length?button('Remover estes '+records.length+' clientes extras','dc-remove-blocked',true):'');
         adminResult.querySelector('#dc-remove-blocked').onclick=async()=>{
           const ok=await window.confirmSistema('Remover os '+records.length+' clientes enviados pelos aparelhos bloqueados? Eles continuarão recuperáveis em Excluídos.','Remover dados dos testes');if(!ok)return;
           const btn=adminResult.querySelector('#dc-remove-blocked');setBusy(btn,true,'Removendo...');
