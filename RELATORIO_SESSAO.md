@@ -4,10 +4,10 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.20.27**  
-**Commit:** `b80915f`  
-**Zip:** `Sistema-Digicopy-v5.20.27.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/b80915f/index.html?v=5.20.27`
+**Última versão:** **v5.20.28**  
+**Commit:** `4a0cd85`  
+**Zip:** `Sistema-Digicopy-v5.20.28.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/4a0cd85/index.html?v=5.20.28`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,14 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.20.28 — Cloudflare D1 pronta + autorização de aparelhos
+- Worker `digicopy-sync-api` implantado pelo GitHub e D1 `digicopy-erp` vinculado; `/health` confirma API 0.2.0, esquema 2, segredo configurado e `ready:true`.
+- API incremental versionada: aparelhos com token individual em hash, primeiro admin, convite de uso único, segundo admin, recuperação sem apagar negócio, lote idempotente, cursor e bloqueio de conflito por versão.
+- Migrações D1 automáticas antes de cada deploy; testes locais completos com dois aparelhos simulados passaram.
+- Novo `cloudflare_sync_patch.js`: botão **Nuvem** visível, ativação principal, ingresso por código, recuperação e geração de convite. O segredo nunca é salvo localmente.
+- Firebase automático e diagnóstico antigo saíram do carregamento. A sincronização de dados Cloudflare ainda será habilitada na próxima etapa; **não importar clientes ainda**.
+- Teste Playwright real foi preparado em `e2e/`; download local do Chromium foi bloqueado por reset TLS do sandbox. Workflow GitHub não pôde ser enviado porque o token do GitHub App não possui permissão `workflows`; testes estáticos e sintaxe passaram.
 
 ## v5.20.27 — consumo oculto de cota encontrado e removido
 - Auditoria encontrou um segundo sincronizador automático legado em `sync_client.js`, ainda consultando `app_state` a cada **75 segundos**, embora o relatório anterior o considerasse inerte.
