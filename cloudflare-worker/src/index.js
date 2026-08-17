@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.0';
+const API_VERSION = '0.4.1';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -589,9 +589,11 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
 async function handleDevices(request, env) {
   const admin = await requireAdmin(request, env);
   const rows = await env.DB.prepare(
-    `SELECT id, name, role, created_at AS createdAt, last_seen_at AS lastSeenAt,
-            revoked_at AS revokedAt
-     FROM devices ORDER BY revoked_at IS NOT NULL, created_at ASC`
+    `SELECT d.id, d.name, d.role, d.created_at AS createdAt,
+            d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
+            (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
+            (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
+     FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
   ).all();
   return json({ ok: true, currentDeviceId: admin.id, devices: rows.results || [] });
 }

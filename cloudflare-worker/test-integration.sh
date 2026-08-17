@@ -134,6 +134,7 @@ python3 - "$TMP/devices.json" <<'PY'
 import json,sys
 j=json.load(open(sys.argv[1])); assert len(j['devices'])==2
 assert {d['role'] for d in j['devices']}=={'admin','device'}
+assert all('activeRecords' in d and 'totalChanges' in d and 'lastSeenAt' in d for d in j['devices'])
 PY
 cat >"$TMP/device-extra.json" <<'JSON'
 {"mutations":[{"mutationId":"mut_device_extra","entity":"clientes","recordId":"cli_from_test_device","operation":"upsert","baseVersion":0,"data":{"id":"cli_from_test_device","nome":"Cliente só do aparelho de teste"}}]}

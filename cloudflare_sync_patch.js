@@ -59,6 +59,27 @@ window.syncEnviarParaNuvem=async function(){ return {ok:false,desligado:true,clo
 
 if(typeof document==='undefined') return;
 
+function systemAdmin(){
+  try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
+}
+function applyAdminVisibility(){
+  const allowed=systemAdmin();
+  ['btn-nuvem','btn-backup-top'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=allowed?'':'none';});
+}
+try{
+  const originalShowApp=window.showApp;
+  if(typeof originalShowApp==='function'&&!originalShowApp.__cloudAdminVisibility){
+    window.showApp=function(){const r=originalShowApp.apply(this,arguments);setTimeout(applyAdminVisibility,0);return r;};
+    window.showApp.__cloudAdminVisibility=true;
+  }
+  const originalExport=window.exportBackup;
+  if(typeof originalExport==='function'&&!originalExport.__adminOnly){
+    window.exportBackup=function(){if(!systemAdmin()){if(typeof window.lfbAlert==='function')window.lfbAlert('Somente o administrador pode exportar o backup.','Acesso restrito');return;}return originalExport.apply(this,arguments);};
+    window.exportBackup.__adminOnly=true;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyAdminVisibility);else applyAdminVisibility();
+}catch(e){}
+
 function modalShell(){
   let root=document.getElementById('digicopy-cloud-modal');
   if(root) return root;
@@ -89,7 +110,7 @@ async function renderDisconnected(body){
   catch(e){ body.innerHTML=message(e.message,'error'); return; }
   if(!health.ready){ body.innerHTML=message('A API ainda não está pronta. Banco: '+health.database+' • esquema: '+(health.schemaVersion||'pendente')+' • segurança: '+(health.setupConfigured?'ok':'pendente'),'error'); return; }
   body.innerHTML=message('Nuvem pronta. Este computador ainda não foi autorizado. Nenhum dado local será enviado antes da autorização.','info')+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-code" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Tenho um código</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div><div style="border-top:1px solid #e2e8f0;margin-top:20px;padding-top:14px"><button id="dc-clear-tests" style="padding:8px 11px;border:1px solid #fecaca;background:#fff7f7;color:#b91c1c;border-radius:9px;font-size:11px;font-weight:800">Limpar dados de teste deste navegador</button><p style="font-size:10.5px;color:#94a3b8;margin-top:5px">Não apaga arquivos JSON salvos no computador nem dados da Cloudflare.</p></div>';
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-code" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Tenho um código</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div>';
   const form=body.querySelector('#dc-form');
   function first(){
     form.innerHTML='<h3 style="font-size:15px;font-weight:900">Ativar o computador principal</h3><p style="font-size:12px;color:#64748b;margin-top:4px">Faça isto apenas no computador principal do serviço.</p>'+field('Nome deste computador','dc-name','text','Ex.: PC PRINCIPAL - DIGICOPY')+field('Segredo de ativação','dc-secret','password','SETUP_SECRET da Cloudflare')+'<div style="display:flex;gap:8px;margin-top:15px">'+button('Ativar como administrador','dc-submit',true)+'</div><div id="dc-result" style="margin-top:12px"></div>';
@@ -121,15 +142,6 @@ async function renderDisconnected(body){
   body.querySelector('#dc-tab-first').onclick=first;
   body.querySelector('#dc-tab-code').onclick=code;
   body.querySelector('#dc-tab-recover').onclick=recover;
-  body.querySelector('#dc-clear-tests').onclick=async()=>{
-    if(!window.DIGICOPY_INDEXED_DB){return;}
-    const ok1=typeof window.confirmSistema==='function'?await window.confirmSistema('Você confirmou que só precisa manter o arquivo JSON dos clientes? Isto apaga os dados de teste apenas deste navegador.','Limpar dados de teste'):false;
-    if(!ok1)return;
-    const ok2=await window.confirmSistema('Último aviso: clientes/produtos que estão abertos nesta tela serão removidos. O arquivo JSON salvo no computador não será apagado. Continuar?','Último aviso');
-    if(!ok2)return;
-    try{await window.DIGICOPY_INDEXED_DB.clearLocalData();location.reload();}
-    catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Não foi possível limpar');}
-  };
   first();
 }
 
@@ -152,7 +164,7 @@ async function renderConnected(body){
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
     '<div style="display:flex;gap:8px;margin-bottom:14px">'+button(sync.paused?'Publicar este PC na nuvem':'Sincronizar agora','dc-sync-now',true)+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Analisar clientes repetidos','dc-dedupe-clients',false)+button('Revisar dados dos aparelhos bloqueados','dc-review-blocked',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');
@@ -180,50 +192,11 @@ async function renderConnected(body){
   };
   if(isAdmin){
     const adminResult=body.querySelector('#dc-admin-result');
-    body.querySelector('#dc-reset-cloud').onclick=()=>{
-      adminResult.innerHTML=message('Isto apaga registros ativos, histórico incremental e excluídos da Cloudflare. Não apaga este PC, o backup, aparelhos ou segurança. A sincronização ficará PAUSADA e nada será reenviado sozinho.','error')+field('Digite APAGAR NUVEM','dc-reset-confirm','text','APAGAR NUVEM')+'<div style="margin-top:10px">'+button('Apagar e deixar a nuvem vazia','dc-reset-execute',true)+'</div>';
-      adminResult.querySelector('#dc-reset-execute').onclick=async()=>{
-        const typed=adminResult.querySelector('#dc-reset-confirm').value.trim();
-        if(typed!=='APAGAR NUVEM'){adminResult.insertAdjacentHTML('beforeend',message('Digite exatamente APAGAR NUVEM.','error'));return;}
-        const ok1=await window.confirmSistema('Apagar TODOS os dados de negócio da Cloudflare? Os dados deste PC e o backup serão mantidos.','Zerar nuvem');if(!ok1)return;
-        const ok2=await window.confirmSistema('Último aviso: a nuvem ficará vazia e a sincronização será pausada. Só haverá novo envio quando você clicar em Publicar este PC. Continuar?','Confirmação final');if(!ok2)return;
-        const btn=adminResult.querySelector('#dc-reset-execute');setBusy(btn,true,'Zerando nuvem...');
-        try{await window.DIGICOPY_CLOUD_SYNC.resetCloudOnly();await renderConnected(body);}
-        catch(e){adminResult.innerHTML=message(e.message,'error')+'<div style="margin-top:8px">'+button('Atualizar painel','dc-reset-refresh',false)+'</div>';const r=adminResult.querySelector('#dc-reset-refresh');if(r)r.onclick=()=>renderConnected(body);}
-      };
-    };
-    body.querySelector('#dc-review-blocked').onclick=async()=>{
-      adminResult.innerHTML=message('Localizando clientes enviados pelos aparelhos bloqueados...','info');
-      try{
-        const data=await api('/v1/review/revoked-records?entity=clientes',{method:'GET'}),records=data.records||[],kept=data.kept||[];
-        if(!records.length&&!kept.length){adminResult.innerHTML=message('Nenhum cliente ativo veio dos aparelhos bloqueados.','ok');return;}
-        const keptHtml=kept.length?message(kept.length+' cadastros serão mantidos: eles substituíram versões originais durante a união.','ok')+kept.map(x=>{const label=(x.data&&(x.data.nome||x.data.fantasia||x.data.codigo))||x.recordId;return '<div style="padding:7px 9px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;margin-top:5px"><b>'+esc(label)+'</b><small style="display:block;color:#166534">MANTER • '+esc(x.reason)+'</small></div>';}).join(''):'';
-        adminResult.innerHTML=message('Encontrados '+records.length+' clientes extras seguros para remover.','info')+records.map(x=>{const label=(x.data&&(x.data.nome||x.data.fantasia||x.data.codigo))||x.recordId;return '<div style="padding:7px 9px;border:1px solid #e2e8f0;border-radius:8px;margin-top:5px"><b>'+esc(label)+'</b><small style="display:block;color:#64748b">Origem: '+esc(x.sourceDevice)+'</small></div>';}).join('')+keptHtml+(records.length?button('Remover estes '+records.length+' clientes extras','dc-remove-blocked',true):'');
-        adminResult.querySelector('#dc-remove-blocked').onclick=async()=>{
-          const ok=await window.confirmSistema('Remover os '+records.length+' clientes enviados pelos aparelhos bloqueados? Eles continuarão recuperáveis em Excluídos.','Remover dados dos testes');if(!ok)return;
-          const btn=adminResult.querySelector('#dc-remove-blocked');setBusy(btn,true,'Removendo...');
-          try{await api('/v1/review/remove-revoked',{method:'POST',body:JSON.stringify({entity:'clientes',recordIds:records.map(x=>x.recordId)})});if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('limpeza-aparelhos-bloqueados');await renderConnected(body);}
-          catch(e){adminResult.innerHTML=message(e.message,'error');}
-        };
-      }catch(e){adminResult.innerHTML=message(e.message,'error');}
-    };
-    body.querySelector('#dc-dedupe-clients').onclick=async()=>{
-      if(!window.DIGICOPY_CLOUD_SYNC){adminResult.innerHTML=message('Motor de sincronização não carregado.','error');return;}
-      const analysis=window.DIGICOPY_CLOUD_SYNC.analyzeDuplicateClients();
-      if(!analysis.extraCount){adminResult.innerHTML=message('Nenhum cliente repetido por código ou CPF/CNPJ foi encontrado.','ok');return;}
-      adminResult.innerHTML=message('Encontrados '+analysis.extraCount+' clientes extras em '+analysis.groupsCount+' grupos. Será criado um snapshot de recuperação; contratos, vendas e chamados serão apontados para o cadastro mantido.','info')+button('Unir '+analysis.extraCount+' repetidos com segurança','dc-confirm-dedupe',true);
-      adminResult.querySelector('#dc-confirm-dedupe').onclick=async()=>{
-        const ok=await window.confirmSistema('Unir '+analysis.extraCount+' clientes repetidos? A versão mais completa será mantida e os cadastros removidos ficarão recuperáveis na nuvem.','Unir clientes repetidos');if(!ok)return;
-        const btn=adminResult.querySelector('#dc-confirm-dedupe');setBusy(btn,true,'Unindo...');
-        try{const result=await window.DIGICOPY_CLOUD_SYNC.mergeDuplicateClients();await window.DIGICOPY_CLOUD_SYNC.tick('deduplicacao');if(typeof window.lfbAlert==='function')await window.lfbAlert('Clientes extras removidos: '+result.removed+'\nReferências atualizadas: '+result.references,'Clientes unidos');await renderConnected(body);}
-        catch(e){adminResult.innerHTML=message(e.message,'error');}
-      };
-    };
     body.querySelector('#dc-list-devices').onclick=async()=>{
       adminResult.innerHTML=message('Carregando aparelhos...','info');
       try{
         const data=await api('/v1/devices',{method:'GET'});
-        adminResult.innerHTML=(data.devices||[]).map(x=>'<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')+'</div>').join('')||message('Nenhum aparelho encontrado.','info');
+        adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
         adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');
           if(!ok)return;
@@ -252,6 +225,7 @@ async function renderConnected(body){
 }
 
 window.abrirCloudflareNuvem=async function(){
+  if(!systemAdmin()){if(typeof window.lfbAlert==='function')window.lfbAlert('Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
   const root=modalShell(),body=root.querySelector('#dc-body');
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);
