@@ -1,5 +1,14 @@
 // PATCH todos os popups no estilo do sistema (igual login incorreto) - REMOVE popups antigos
 (function(){
+  // Preserva o confirm real como compatibilidade para fluxos legados ainda
+  // síncronos. Antes este patch sempre retornava false e vários botões
+  // cancelavam silenciosamente mesmo após o usuário confirmar no modal.
+  const nativeConfirm = (typeof window.confirm === 'function') ? window.confirm.bind(window) : null;
+  window.__confirmSistemaBypass = 0;
+  function allowLegacyConfirmOnce(){
+    window.__confirmSistemaBypass = 1;
+    setTimeout(()=>{ window.__confirmSistemaBypass = 0; }, 0);
+  }
   function showModal(msg, title, isConfirm){
     return new Promise(resolve=>{
       const tid='aviso-system-modal-'+Date.now();
@@ -35,9 +44,12 @@
   // REMOVE completamente alert/confirm nativos (não chama orig)
   window.alert = function(msg){ showModal(String(msg), 'Aviso', false); };
   window.confirm = function(msg){
-    // para compatibilidade, mostra modal e retorna false (ação será refeita via wrappers abaixo)
-    showModal(String(msg), 'Confirmar', true);
-    return false;
+    // Wrappers assíncronos já perguntaram no popup do sistema: a chamada
+    // síncrona interna recebe um "sim" único, sem mostrar um segundo aviso.
+    if(window.__confirmSistemaBypass > 0){ window.__confirmSistemaBypass--; return true; }
+    // Funções antigas ainda não migradas continuam operacionais com o diálogo
+    // nativo, em vez de falhar silenciosamente. Serão migradas gradualmente.
+    return nativeConfirm ? nativeConfirm(String(msg)) : false;
   };
 
   // Wrappers para ações que usavam confirm() - agora usam confirmSistema corretamente
@@ -46,7 +58,7 @@
     if(!orig) return;
     window[fnName] = function(...args){
       const msg = typeof msgGen==='function' ? msgGen(...args) : msgGen;
-      confirmSistema(msg, 'Confirmar').then(ok=>{ if(ok) orig.apply(this, args); });
+      confirmSistema(msg, 'Confirmar').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig.apply(this, args); } });
     };
   }
 
@@ -80,7 +92,7 @@
         const orig = window[name];
         window[name] = function(...args){
           const msg = typeof gen==='function'? gen(...args) : gen;
-          confirmSistema(msg, 'Excluir').then(ok=>{ if(ok) orig.apply(this,args); });
+          confirmSistema(msg, 'Excluir').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig.apply(this,args); } });
         };
       }
     });
@@ -88,13 +100,13 @@
     if(window.estornarVendaParaEditar){
       const orig = window.estornarVendaParaEditar;
       window.estornarVendaParaEditar = function(id){
-        confirmSistema('Estornar esta notinha para permitir edição?', 'Estornar').then(ok=>{ if(ok) orig(id); });
+        confirmSistema('Estornar esta notinha para permitir edição?', 'Estornar').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig(id); } });
       };
     }
     if(window.estornarVenda){
       const orig = window.estornarVenda;
       window["estornarVenda"] = function(id){
-        confirmSistema('Estornar esta venda? Ela voltará como orçamento.', 'Estornar').then(ok=>{ if(ok) orig(id); });
+        confirmSistema('Estornar esta venda? Ela voltará como orçamento.', 'Estornar').then(ok=>{ if(ok){ allowLegacyConfirmOnce(); orig(id); } });
       };
     }
   }, 800);
