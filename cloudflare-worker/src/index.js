@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.3.3';
+const API_VERSION = '0.3.4';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -175,6 +175,7 @@ async function handleSetup(request, env) {
 
   return json({
     ok: true,
+    activation: 'initial',
     device: { id, name, role: 'admin' },
     token,
     warning: 'Este token é exibido uma única vez. Guarde-o somente no aparelho autorizado.'
@@ -241,7 +242,7 @@ async function handleEnroll(request, env) {
   } catch (error) {
     throw new ApiError(500, 'ENROLL_FAILED', 'Não foi possível autorizar o aparelho. Gere outro código.');
   }
-  return json({ ok: true, device: { id, name, role }, token }, 201);
+  return json({ ok: true, activation: 'invite', device: { id, name, role }, token }, 201);
 }
 
 async function handleRecovery(request, env) {
@@ -281,6 +282,7 @@ async function handleRecovery(request, env) {
   return json({
     ok: true,
     recovered: true,
+    activation: 'recovery',
     device: { id, name, role: 'admin' },
     token,
     warning: 'Recuperação concluída. Troque o SETUP_SECRET se ela não foi planejada.'

@@ -237,7 +237,9 @@ async function tick(reason){
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
     const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
     const firstAuthorizedPull=!state.initialPull;
-    const localBefore=firstAuthorizedPull&&info&&info.role!=='admin'?localKeysSnapshot():null;
+    // Só o primeiro setup da nuvem pode publicar uma base local preexistente.
+    // Convite e recuperação (mesmo admin) baixam a nuvem e isolam histórico velho.
+    const localBefore=firstAuthorizedPull&&info&&info.activation!=='initial'?localKeysSnapshot():null;
     if(localBefore&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
     await pullAll();
     if(localBefore)await reconcileFirstAuthorizedDevice(localBefore);

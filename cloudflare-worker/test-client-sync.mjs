@@ -17,10 +17,10 @@ async function request(path,{token,headers={},...options}={}){
   if(!response.ok)throw Object.assign(new Error(data.message||'HTTP '+response.status),{status:response.status,data});
   return data;
 }
-async function makeEngine(db,deviceToken,role){
+async function makeEngine(db,deviceToken,role,activation){
   const storage=new MemoryStorage();
   storage.setItem('device-token',deviceToken);
-  const window={DIGICOPY_CLOUD:{token:()=>storage.getItem('device-token'),deviceInfo:()=>({id:'test_'+role,role}),api:(path,options)=>request(path,{...(options||{}),token:storage.getItem('device-token')})}};
+  const window={DIGICOPY_CLOUD:{token:()=>storage.getItem('device-token'),deviceInfo:()=>({id:'test_'+role,role,activation:activation||(role==='admin'?'initial':'invite')}),api:(path,options)=>request(path,{...(options||{}),token:storage.getItem('device-token')})}};
   let saves=0;
   const run=new Function('window','localStorage','document','db','saveDB','saveDBAgora',engineCode+'\nreturn window.DIGICOPY_CLOUD_SYNC;');
   const engine=run(window,storage,undefined,db,()=>{saves++;},()=>{saves++;});
@@ -53,6 +53,16 @@ assert.equal(dbB.clientes[0].nome,'Cliente Original');
 cloud=await request('/v1/changes?cursor=0',{token:tokenA});
 assert.ok(!cloud.changes.some(x=>x.recordId==='stale_1'));
 console.log('  ✔ PC B baixou primeiro e não publicou seu histórico local antigo');
+
+const recovered=await request('/v1/recover',{method:'POST',headers:{'x-setup-secret':SECRET},body:JSON.stringify({deviceName:'PC Admin Recuperado'})});
+const dbC={empresas:[],usuarios:[],clientes:[{id:'stale_admin',codigo:'998',nome:'Histórico velho no admin recuperado'}],produtos:[],equipamentos:[],contratos:[],parque:[],leituras:[],os:[],vendas:[],contasReceber:[],contasPagar:[],logs:[],tecnicos:[],notificacoes:[],config:{},modulosDinamicos:{}};
+const c=await makeEngine(dbC,recovered.token,'admin','recovery');
+assert.equal(await c.engine.tick('admin-recuperado'),true);
+assert.equal(dbC.clientes.length,1);
+assert.equal(dbC.clientes[0].id,'cli_1');
+cloud=await request('/v1/changes?cursor=0',{token:tokenA});
+assert.ok(!cloud.changes.some(x=>x.recordId==='stale_admin'));
+console.log('  ✔ administrador recuperado também baixa primeiro e isola histórico velho');
 
 dbB.clientes[0].nome='Cliente Editado no B';
 assert.equal(await b.engine.tick('edicao-b'),true);

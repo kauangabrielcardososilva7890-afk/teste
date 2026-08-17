@@ -16,6 +16,7 @@ ok('calcula total pendente além do lote atual',/function pendingEstimate/.test(
 const dup=S.duplicateClientGroups([{id:'a',codigo:'001',documento:''},{id:'b',codigo:'1',documento:''},{id:'c',codigo:'2',documento:'12345678900'},{id:'d',codigo:'9',documento:'123.456.789-00'}]);
 ok('detecta repetidos por código ou documento',dup.length===2&&dup.reduce((n,g)=>n+g.length-1,0)===2);
 ok('novo aparelho não publica histórico local',/reconcileFirstAuthorizedDevice/.test(code)&&/antes_primeira_nuvem/.test(code));
+ok('admin recuperado também baixa primeiro',/info\.activation!==\'initial\'/.test(code));
 ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,180}scanLocal\(\)/.test(code));
 ok('bloqueia exclusão em massa inesperada',/missing\.length>=10/.test(code)&&/blockedDeletes/.test(code));
 ok('usa cursor incremental',/\/v1\/changes\?cursor=/.test(code));

@@ -19,8 +19,9 @@ function token(){ try{return localStorage.getItem(TOKEN_KEY)||'';}catch(e){retur
 function deviceInfo(){ try{return JSON.parse(localStorage.getItem(DEVICE_KEY)||'null');}catch(e){return null;} }
 function storeAuth(data){
   if(!data || !data.token || !data.device) throw new Error('Resposta de ativação incompleta.');
+  const info=Object.assign({},data.device,{activation:data.activation||(data.recovered?'recovery':'unknown')});
   localStorage.setItem(TOKEN_KEY, data.token);
-  localStorage.setItem(DEVICE_KEY, JSON.stringify(data.device));
+  localStorage.setItem(DEVICE_KEY, JSON.stringify(info));
   setTimeout(()=>{try{if(window.DIGICOPY_CLOUD_SYNC)window.DIGICOPY_CLOUD_SYNC.tick('autorizado');}catch(e){}},150);
 }
 function forgetAuth(){
