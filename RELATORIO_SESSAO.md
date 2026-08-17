@@ -5,9 +5,9 @@
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
 **Última versão:** **v5.21.4**  
-**Commit:** (após push)  
+**Commit:** `f3fe11c`  
 **Zip:** gerar no PC do usuário com `npm run build:win`  
-**GitHack:** atualizar após o commit  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/f3fe11c4ae41f52b1c80876e02bdecc322c2015c/index.html?v=5.21.4`  
 
 ---
 
