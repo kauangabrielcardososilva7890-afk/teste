@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.3.0';
+const API_VERSION = '0.3.1';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -497,6 +497,47 @@ async function handleRestore(request, env) {
   return json({ ok: true, restored: true, ...result });
 }
 
+async function handleRevokedDeviceRecords(request, env) {
+  await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const entity = cleanText(url.searchParams.get('entity') || 'clientes', 64);
+  if (!entity || !ENTITY_RE.test(entity)) throw new ApiError(400, 'INVALID_ENTITY', 'Entidade inválida.');
+  const rows = await env.DB.prepare(
+    `SELECT r.*, d.name AS source_device
+     FROM records r JOIN devices d ON d.id = r.updated_by
+     WHERE r.entity = ? AND r.deleted_at IS NULL AND d.revoked_at IS NOT NULL
+     ORDER BY r.updated_at ASC LIMIT 200`
+  ).bind(entity).all();
+  return json({ ok: true, entity, records: (rows.results || []).map(row => ({
+    ...publicRecord(row), sourceDevice: row.source_device
+  })) });
+}
+
+async function handleRemoveRevokedDeviceRecords(request, env) {
+  const admin = await requireAdmin(request, env);
+  const body = await readBody(request);
+  const entity = cleanText(body.entity || 'clientes', 64);
+  const ids = Array.isArray(body.recordIds) ? [...new Set(body.recordIds.map(x => cleanText(x, 160)).filter(Boolean))] : [];
+  if (!entity || !ENTITY_RE.test(entity) || !ids.length || ids.length > 100) {
+    throw new ApiError(400, 'INVALID_REVIEW_BATCH', 'Seleção inválida para limpeza.');
+  }
+  const results = [];
+  for (const recordId of ids) {
+    const current = await env.DB.prepare(
+      `SELECT r.* FROM records r JOIN devices d ON d.id = r.updated_by
+       WHERE r.entity = ? AND r.record_id = ? AND r.deleted_at IS NULL
+         AND d.revoked_at IS NOT NULL LIMIT 1`
+    ).bind(entity, recordId).first();
+    if (!current) { results.push({ recordId, ok: false, skipped: true }); continue; }
+    const result = await applyMutation(env, admin, {
+      mutationId: 'cleanup_' + crypto.randomUUID(), entity, recordId,
+      operation: 'delete', baseVersion: Number(current.version)
+    });
+    results.push({ recordId, ...result });
+  }
+  return json({ ok: results.every(x => x.ok || x.skipped), removed: results.filter(x => x.ok).length, results });
+}
+
 async function handleDevices(request, env) {
   const admin = await requireAdmin(request, env);
   const rows = await env.DB.prepare(
@@ -571,6 +612,8 @@ async function route(request, env) {
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);

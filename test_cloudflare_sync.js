@@ -12,6 +12,7 @@ ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuv
 ok('painel compara clientes locais e nuvem',/CLIENTES NESTE PC/.test(code)&&/CLIENTES NA NUVEM/.test(code));
 ok('admin lista excluídos e aparelhos',/dc-list-deleted/.test(code)&&/dc-list-devices/.test(code));
 ok('admin analisa e une clientes repetidos',/dc-dedupe-clients/.test(code)&&/mergeDuplicateClients/.test(code));
+ok('admin revisa origem de aparelhos bloqueados',/dc-review-blocked/.test(code)&&/review\/revoked-records/.test(code));
 ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
 ok('novo painel é carregado por último',/cloudflare_sync_patch\.js/.test(html));
 ok('Firebase automático não é mais carregado',!/<script[^>]+sync_realtime_patch\.js/.test(html));

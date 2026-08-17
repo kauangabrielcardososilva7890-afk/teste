@@ -135,15 +135,32 @@ import json,sys
 j=json.load(open(sys.argv[1])); assert len(j['devices'])==2
 assert {d['role'] for d in j['devices']}=={'admin','device'}
 PY
+cat >"$TMP/device-extra.json" <<'JSON'
+{"mutations":[{"mutationId":"mut_device_extra","entity":"clientes","recordId":"cli_from_test_device","operation":"upsert","baseVersion":0,"data":{"id":"cli_from_test_device","nome":"Cliente só do aparelho de teste"}}]}
+JSON
+curl -fsS -X POST "$API/v1/changes" -H 'content-type: application/json' \
+  -H "authorization: Bearer $DEVICE" --data @"$TMP/device-extra.json" >"$TMP/device-extra-result.json"
 python3 - "$DEVICE_ID" >"$TMP/revoke.json" <<'PY'
 import json,sys
 print(json.dumps({'deviceId':sys.argv[1]}))
 PY
 curl -fsS -X POST "$API/v1/devices/revoke" -H 'content-type: application/json' \
   -H "authorization: Bearer $ADMIN" --data @"$TMP/revoke.json" >"$TMP/revoke-result.json"
+curl -fsS "$API/v1/review/revoked-records?entity=clientes" -H "authorization: Bearer $ADMIN" >"$TMP/review.json"
+python3 - "$TMP/review.json" >"$TMP/remove-review.json" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); assert len(j['records'])==1
+print(json.dumps({'entity':'clientes','recordIds':[j['records'][0]['recordId']]}))
+PY
+curl -fsS -X POST "$API/v1/review/remove-revoked" -H 'content-type: application/json' \
+  -H "authorization: Bearer $ADMIN" --data @"$TMP/remove-review.json" >"$TMP/remove-review-result.json"
+python3 - "$TMP/remove-review-result.json" <<'PY'
+import json,sys
+j=json.load(open(sys.argv[1])); assert j['removed']==1
+PY
 code=$(request_code "$TMP/revoked-status.json" "$API/v1/status" -H "authorization: Bearer $DEVICE")
 test "$code" = 401
-printf '  ✔ admin lista e bloqueia outro aparelho sem apagar registros\n'
+printf '  ✔ admin bloqueia aparelho e remove só registros de origem bloqueada\n'
 
 code=$(request_code "$TMP/recover.json" -X POST "$API/v1/recover" \
   -H 'content-type: application/json' -H "x-setup-secret: $SETUP_SECRET" \
