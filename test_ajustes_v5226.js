@@ -1,0 +1,22 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
+const ui=fs.readFileSync('cloudflare_sync_patch.js','utf8');
+const window={DIGICOPY_CLOUD:{token:()=>''}};
+new Function('window','localStorage','document',code)(window,{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},undefined);
+const S=window.DIGICOPY_CLOUD_SYNC;
+console.log('== NUVEM NA REINSTALAÇÃO ==');
+ok('guarda decideReinstallGuard',typeof S.decideReinstallGuard==='function');
+const empty=S.decideReinstallGuard({activation:'initial',cloudHasData:false,localCount:1919,extraCount:0});
+ok('desinstalar/instalar com nuvem vazia não manda sozinho',empty.pause&&!empty.isolate&&empty.reason==='nuvem-vazia-publicar-manual');
+const same=S.decideReinstallGuard({activation:'initial',cloudHasData:true,localCount:1919,extraCount:0});
+ok('mesmo ID na nuvem segue sem pausar',!same.pause&&!same.hold&&same.reason==='ok');
+const leftover=S.decideReinstallGuard({activation:'recovery',cloudHasData:true,localCount:1976,extraCount:57});
+ok('57 sobras ficam retidas',leftover.pause&&leftover.hold&&!leftover.isolate);
+const invite=S.decideReinstallGuard({activation:'invite',cloudHasData:true,localCount:80,extraCount:57});
+ok('segundo PC ainda isola e não publica sobra',invite.isolate&&!invite.pause&&!invite.hold);
+ok('scan pula chave retida',code.includes('held.has(k)'));
+ok('publicar exige nuvem vazia',code.includes('Object.keys(state.known).length>0')&&code.includes('Zere a nuvem primeiro'));
+ok('painel fala como lançar sem duplicar',ui.includes('Zerar dados da nuvem e depois Publicar este PC'));
+ok('botão recusa nuvem cheia',ui.includes('cloudClients>0')&&ui.includes('Não publiquei'));
+console.log('\nRESULTADO: reinstalação não duplica na nuvem!');

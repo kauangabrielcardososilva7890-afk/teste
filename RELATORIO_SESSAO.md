@@ -4,12 +4,27 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.5** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.6** (em construção — produção em uso continua **5.21.6**)  
 **Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.6 — reinstalação não duplica na nuvem
+
+Pedido: se desinstalar e instalar, o PC ainda tem dados e não pode mandar isso sozinho para a nuvem (duplica). Depois, um jeito de lançar na mão.
+
+- Depois de autorizar de novo: baixa a nuvem primeiro.
+- Nuvem vazia + dados neste PC → sincronização **pausada**. Só sobe no **Publicar este PC**.
+- Nuvem já tem dados + sobra local (ID diferente) → **não envia**. Aviso no painel.
+- Para lançar este PC como fonte: **Zerar dados da nuvem** → **Publicar este PC**.
+- PC convidado continua isolando histórico velho (não publica sobra).
+- Mesmos IDs (os 1919) só atualizam, não criam outro cadastro.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.6`
 
 ---
 

@@ -164,7 +164,10 @@ async function renderConnected(body){
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado',blockedDeletes:{}};
   const blocked=Object.keys(sync.blockedDeletes||{});
-  const syncMessage=sync.paused?'Nuvem vazia e sincronização PAUSADA. Nada será enviado automaticamente até você publicar este PC.':(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
+  const held=Number(sync.heldLocalOnly)||0;
+  const syncMessage=sync.paused?(sync.pauseReason==='sobra-local-nao-enviar'
+    ?('Este PC tem '+(held||'alguns')+' registros locais que a nuvem não tem. Não enviei sozinho para não duplicar. Para lançar este PC: Zerar dados da nuvem e depois Publicar este PC.')
+    :'Nuvem vazia e sincronização PAUSADA. Nada será enviado automaticamente até você publicar este PC.'):(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
   const blockedHtml=blocked.length?'<div style="margin:12px 0">'+message('Proteção ativada: uma exclusão grande foi bloqueada. Confirme somente se você realmente apagou esses dados.','error')+blocked.map(entity=>'<button class="dc-approve-delete" data-entity="'+esc(entity)+'" style="margin:7px 7px 0 0;padding:8px 11px;border-radius:9px;background:#b91c1c;color:white;font-weight:800">Confirmar exclusões de '+esc(entity)+' ('+sync.blockedDeletes[entity].length+')</button>').join('')+'</div>':'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
@@ -175,6 +178,10 @@ async function renderConnected(body){
   body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');
     if(sync.paused){
+      if(cloudClients>0){
+        if(typeof window.lfbAlert==='function')window.lfbAlert('A nuvem já tem dados. Zere a nuvem primeiro e só então clique em Publicar este PC. Assim não duplica.','Não publiquei');
+        return;
+      }
       const ok=await window.confirmSistema('Publicar agora todos os dados deste PC na nuvem vazia?','Publicar este PC');if(!ok)return;
       setBusy(btn,true,'Publicando...');
       try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();await renderConnected(body);}catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Publicação pendente');await renderConnected(body);}
