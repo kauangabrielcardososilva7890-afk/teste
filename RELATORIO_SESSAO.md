@@ -4,12 +4,26 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.8** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `ab3a6ff` v5.22.8 assina NF-e com A1  
+**Última versão:** **v5.22.9** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.9 — atalho NF-e no histórico
+
+Pedido: atalho no histórico das notinhas e das leituras; o que estiver selecionado vai para a NF; pré-visualizar antes de emitir.
+
+- Botão **Pré-visualizar NF-e** na lista de notinhas e na lista de leituras
+- Usa a notinha/leitura selecionada
+- Também no histórico aberto (modal)
+- Só mostra a prévia. Assinar continua no passo seguinte
+- Não grava e não envia à SEFAZ
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.9`
 
 ---
 
