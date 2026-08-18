@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 101 | sha256: 477906559ead06a2
+ * scripts: 101 | sha256: 4d0a3e6ea84ec4d6
  */
 
 /* ===== lz.js ===== */
@@ -18889,7 +18889,7 @@ console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 /* ===== buscador_escola_patch.js ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.88 — Buscador Escola
-// • Login da Caixa Escolar fica só neste PC, fora do código e da nuvem
+// • Login da Caixa Escolar fica na nuvem (fora do código). Digita uma vez.
 // • Layout no padrão do Sistema Digicopy
 // • Autoatualização a cada 1 hora
 // • Busca por termo, região e intervalo
@@ -18923,6 +18923,76 @@ const GPS={janauba:[-15.8025,-43.3089],jaiba:[-15.3433,-43.6686],'montes claros'
 function dist(m){const c=GPS[norm(m)];if(!c)return 999;const R=6371,rad=x=>x*Math.PI/180,dLat=rad(c[0]+15.8025),dLng=rad(c[1]+43.3089),a=Math.sin(dLat/2)**2+Math.cos(rad(-15.8025))*Math.cos(rad(c[0]))*Math.sin(dLng/2)**2;return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*10)/10}
 
 function store(){db.escolaOrc= db.escolaOrc||[];db.escolaIt=db.escolaIt||[];db.escolaExc=db.escolaExc||[];return{orc:db.escolaOrc,it:db.escolaIt,exc:db.escolaExc}}
+function loginDaNuvem(){
+  try{
+    const a=(typeof db!=='undefined' && db.config && db.config.escolaAuth)||null;
+    if(a&&t(a.usuario)&&t(a.senha)) return {usuario:t(a.usuario),senha:String(a.senha)};
+  }catch(e){}
+  return null;
+}
+function loginDoNavegador(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(ESCOLA_LOGIN_KEY)||'null');
+    if(raw&&t(raw.usuario)&&t(raw.senha)) return {usuario:t(raw.usuario),senha:String(raw.senha)};
+  }catch(e){}
+  return null;
+}
+async function credenciaisEscola(){
+  const nuvem=loginDaNuvem();
+  if(nuvem) return nuvem;
+  try{
+    if(window.caixaEscolarAPI&&typeof window.caixaEscolarAPI.loginStatus==='function'){
+      const st=await window.caixaEscolarAPI.loginStatus();
+      if(st&&st.saved&&t(st.usuario)&&t(st.senha)) return {usuario:t(st.usuario),senha:String(st.senha)};
+    }
+  }catch(e){}
+  return loginDoNavegador();
+}
+async function salvarCredenciaisEscola(usuario,senha){
+  const dados={usuario:t(usuario),senha:String(senha||'')};
+  if(!dados.usuario||!dados.senha) return {ok:false,error:'Informe CNPJ e senha.'};
+  try{
+    if(typeof db!=='undefined'){
+      db.config=db.config||{};
+      db.config.escolaAuth={usuario:dados.usuario,senha:dados.senha,atualizadoEm:new Date().toISOString()};
+      if(typeof saveDB==='function') saveDB();
+    }
+  }catch(e){ return {ok:false,error:'Não foi possível gravar na nuvem.'}; }
+  return {ok:true};
+}
+function pedirLoginEscola(aviso){
+  return new Promise(function(resolve){
+    let root=document.getElementById('escola-login-modal');
+    if(root) root.remove();
+    root=document.createElement('div');
+    root.id='escola-login-modal';
+    root.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px';
+    root.innerHTML='<div style="width:min(460px,96vw);background:white;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.35);padding:18px">'+
+      '<b style="font-size:16px">Login da Caixa Escolar</b>'+
+      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salva na nuvem. Os outros PCs autorizados usam o mesmo login. Não fica no código.</p>'+
+      (aviso?'<p style="font-size:12px;color:#991b1b;margin:0 0 10px">'+esc(aviso)+'</p>':'')+
+      '<label style="display:block;font-size:11px;font-weight:800;color:#475569">CNPJ</label>'+
+      '<input id="es-login-user" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 10px">'+
+      '<label style="display:block;font-size:11px;font-weight:800;color:#475569">Senha</label>'+
+      '<input id="es-login-pass" type="password" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 14px">'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px">'+
+      '<button id="es-login-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800">Cancelar</button>'+
+      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar na nuvem</button>'+
+      '</div></div>';
+    document.body.appendChild(root);
+    function fechar(v){ root.remove(); resolve(v); }
+    root.querySelector('#es-login-cancel').onclick=function(){ fechar(false); };
+    root.querySelector('#es-login-ok').onclick=async function(){
+      const u=t(document.getElementById('es-login-user')?.value);
+      const s=String(document.getElementById('es-login-pass')?.value||'');
+      const r=await salvarCredenciaisEscola(u,s);
+      if(!r.ok){ msg(r.error||'Não salvou.','error'); return; }
+      msg('Login salvo na nuvem.','success');
+      fechar(true);
+    };
+    root.addEventListener('click',function(ev){ if(ev.target===root) fechar(false); });
+  });
+}
 
 function normOrc(r){
   const m=t(r.countyName||r.county_name||r.municipio||'');
@@ -18946,8 +19016,8 @@ async function sync(opt={}){
   try{
     const cred=await credenciaisEscola();
     if(!cred){
-      window.__esSt={msg:'Cadastre o login da Caixa Escolar neste computador.',pct:0};
-      if(!opt.auto) await pedirLoginEscola('Ainda não tem login salvo neste PC.');
+      window.__esSt={msg:'Cadastre o login da Caixa Escolar (vai para a nuvem).',pct:0};
+      if(!opt.auto) await pedirLoginEscola('Ainda não tem login na nuvem.');
       const cred2=await credenciaisEscola();
       if(!cred2){ render(); return {ok:false,error:'sem-login'}; }
     }
@@ -19075,7 +19145,7 @@ function render(msg){
 
   v.innerHTML=`<div class="neo-shell"><div class="neo-panel">
 <div class="neo-head"><div><h3>Buscador Escola</h3><p>Caixa Escolar MG • Atualização automática a cada 1 hora</p></div>
-<div class="neo-actions"><button onclick="esLoginLocal()" class="neo-btn"><i class="ph ph-key"></i>Login neste PC</button>
+<div class="neo-actions"><button onclick="esLoginLocal()" class="neo-btn"><i class="ph ph-key"></i>Login na nuvem</button>
 <button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
 <button onclick="esExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div>
 

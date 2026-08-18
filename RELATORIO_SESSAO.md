@@ -4,12 +4,33 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.3** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `48e4ae1`  
+**Última versão:** **v5.22.4** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.4 — login do Buscador na nuvem
+
+Pedido: a senha da Caixa Escolar pode ficar na nuvem.
+
+- Continua **fora do código**
+- Salva na configuração e sobe na Cloudflare
+- Digita uma vez; os outros PCs autorizados usam
+- Botão **Login na nuvem** no Buscador Escola
+- Sem login, a atualização automática não roda
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.4`
+
+---
+
+## v5.22.3 — Firebase antigo apagado
+
+- Apagados os arquivos da nuvem Google. Continua só Cloudflare.
+- Login da Caixa Escolar saiu do código.
 
 ---
 
