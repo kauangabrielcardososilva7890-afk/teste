@@ -61,7 +61,8 @@ const tests=[
   "test_ajustes_v5226.js",
   "test_ajustes_v5227.js",
   "test_ajustes_v5228.js",
-  "test_ajustes_v5229.js"
+  "test_ajustes_v5229.js",
+  "test_ajustes_v52210.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

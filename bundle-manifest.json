@@ -102,5 +102,6 @@
   "ajustes_v5221_nfe_emissao_patch.js",
   "ajustes_v5227_nuvem_acompanhamento_patch.js",
   "ajustes_v5228_nfe_assinatura_patch.js",
-  "ajustes_v5229_nfe_atalho_historico_patch.js"
+  "ajustes_v5229_nfe_atalho_historico_patch.js",
+  "ajustes_v52210_historico_checkbox_nfe_patch.js"
 ]

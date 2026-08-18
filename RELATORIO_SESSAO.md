@@ -4,8 +4,8 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.9** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `f152cb4` v5.22.9 atalho NF-e no histórico  
+**Última versão:** **v5.22.10** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (este) v5.22.10 caixa no histórico de leituras + NF-e com uma só  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
@@ -262,6 +262,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ## v5.20.32 — contagem confiável durante envio inicial
 - Painel agora separa **Clientes neste PC**, **Clientes na nuvem**, total de registros e **Pendentes neste PC**; o antigo “Fila 100” era só o limite do lote, não o restante total.
+- API `/v1/status` retorna contagem ativa/excluída agrupada por entidade.
+- Lote por requisição reduzido de 25 para 10 para manter margem segura de subrequisições no Worker gratuito.
+- Usuário informou 1.919 clientes; a captura com 412 registros não representava conclusão. Não importar nada até as duas contagens de clientes coincidirem e pendentes chegar a zero.
+
+## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
+- Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
+- Aviso de espaço antigo só aparece se o Intes neste PC**; o antigo “Fila 100” era só o limite do lote, não o restante total.
 - API `/v1/status` retorna contagem ativa/excluída agrupada por entidade.
 - Lote por requisição reduzido de 25 para 10 para manter margem segura de subrequisições no Worker gratuito.
 - Usuário informou 1.919 clientes; a captura com 412 registros não representava conclusão. Não importar nada até as duas contagens de clientes coincidirem e pendentes chegar a zero.
