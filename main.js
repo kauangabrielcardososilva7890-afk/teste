@@ -376,6 +376,20 @@ function registerNfeCertIPC(){
       return { ok:true, installed:false };
     }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
+  ipcMain.handle('nfe:sign-xml', async (_evt, payload) => {
+    const senha = String((payload&&payload.senha)!=null?payload.senha:'');
+    const xml = String((payload&&payload.xml)||'');
+    try{
+      if(!xml) return { ok:false, error:'XML vazio.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Carregue o certificado A1 neste computador.' };
+      const sign = require('./nfe_assinatura.js');
+      const r = sign.assinarNfeXml(xml, fs.readFileSync(p), senha);
+      return { ok:true, xmlAssinado:r.xmlAssinado, chave:r.chave, certificado:r.certificado };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
 }
 
 function registerOpenExternalIPC(){

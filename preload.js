@@ -50,5 +50,6 @@ contextBridge.exposeInMainWorld('nfeCertAPI', {
   status: () => ipcRenderer.invoke('nfe:cert-status'),
   importar: () => ipcRenderer.invoke('nfe:cert-import'),
   remover: () => ipcRenderer.invoke('nfe:cert-remove'),
+  assinar: (xml, senha) => ipcRenderer.invoke('nfe:sign-xml', { xml, senha }),
   isElectron: true
 });

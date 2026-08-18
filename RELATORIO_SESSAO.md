@@ -4,12 +4,26 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.7** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `d31e903` v5.22.7 acompanhamento dos PCs  
+**Última versão:** **v5.22.8** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.8 — assinar NF-e com A1
+
+Pedido: voltar para a NF-e.
+
+- Conferência ok → botão **Assinar com A1**
+- Senha pedida só na hora. Não grava. Não sobe na nuvem.
+- Assina o XML neste PC. **Ainda não envia para a SEFAZ.**
+- Dá para copiar ou baixar o XML assinado.
+- Venda, leitura e estoque continuam iguais.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.8`
 
 ---
 

@@ -100,5 +100,6 @@
   "ajustes_v5215_cnpj_inteligente_patch.js",
   "ajustes_v5220_nfe_config_patch.js",
   "ajustes_v5221_nfe_emissao_patch.js",
-  "ajustes_v5227_nuvem_acompanhamento_patch.js"
+  "ajustes_v5227_nuvem_acompanhamento_patch.js",
+  "ajustes_v5228_nfe_assinatura_patch.js"
 ]
