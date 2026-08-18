@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 101 | sha256: f87e665bbc4e70e2
+ * scripts: 101 | sha256: d2a31adf8d78bba3
  */
 
 /* ===== lz.js ===== */
@@ -29690,62 +29690,49 @@ function mostrarConferencia(doc,origemLabel){
     '<p><b>Cliente</b> '+(doc.dest.xNome||'-')+' • '+(doc.dest.doc||'-')+'</p>'+
     '<table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:12px"><thead><tr style="text-align:left;background:#f8fafc"><th style="padding:6px;border-bottom:1px solid #e2e8f0">Item</th><th>NCM</th><th>CFOP</th><th>Valor</th></tr></thead><tbody>'+itens+'</tbody></table>'+
     '<p style="margin-top:12px;font-weight:800">Total: R$ '+money2(doc.totais.vNF)+'</p>'+
-    (ok?'<p style="margin-top:10px;font-size:12px;color:#64748b">Rascunho salvo nesta venda/leitura. Próximo passo: assinar com o A1 e mandar para homologação.</p>':'')+
+    (ok?'<p style="margin-top:10px;font-size:12px;color:#64748b">Nada foi alterado na venda, na leitura ou na nuvem. Próximo passo: assinar com o A1 e mandar para homologação.</p>':'')+
     '</div></div>';
   document.body.appendChild(root);
   root.querySelector('#nfe-conf-x').onclick=function(){ root.remove(); };
   root.addEventListener('click',function(ev){ if(ev.target===root) root.remove(); });
 }
-function gravarRascunho(alvo,doc){
-  if(!alvo) return;
-  alvo.nfe={
-    status:doc.ok?'rascunho':'incompleta',
-    ambiente:doc.ambiente,
-    serie:doc.serie,
-    numero:doc.numero,
-    chave:doc.chave||'',
-    total:doc.totais.vNF,
-    erros:doc.erros.slice(),
-    xml:doc.ok?montarXml(doc):'',
-    atualizadoEm:new Date().toISOString()
-  };
-  if(typeof saveDB==='function') saveDB();
-}
 window.conferirNfe=async function(tipo,id){
-  garantirFiscalSimples();
-  const cert=await temA1NestePc();
-  const fiscal=fiscalAtual();
-  const loja=lojaAtual();
-  let origem='venda', alvo=null, cliente=null, label='Venda';
-  if(tipo==='leitura'){
-    origem='leitura';
-    alvo=((db.leituras||[]).find(x=>x.id===id))||null;
-    if(!alvo){ if(typeof toast==='function') toast('Leitura não encontrada','error'); return; }
-    const contrato=(db.contratos||[]).find(c=>c.id===alvo.contratoId);
-    cliente=clienteDe(alvo.clienteId||(contrato&&contrato.clienteId));
-    label='Leitura '+(alvo.numero||'');
-  }else{
-    alvo=((db.vendas||[]).find(x=>x.id===id))||null;
-    if(!alvo){ if(typeof toast==='function') toast('Venda não encontrada','error'); return; }
-    cliente=clienteDe(alvo.clienteId);
-    label='Venda '+(alvo.numero||'');
+  try{
+    const cert=await temA1NestePc();
+    const fiscal=fiscalAtual();
+    const loja=lojaAtual();
+    let origem='venda', alvo=null, cliente=null, label='Venda';
+    if(tipo==='leitura'){
+      origem='leitura';
+      alvo=((db.leituras||[]).find(x=>x.id===id))||null;
+      if(!alvo){ if(typeof toast==='function') toast('Leitura não encontrada','error'); return; }
+      const contrato=(db.contratos||[]).find(c=>c.id===alvo.contratoId);
+      cliente=clienteDe(alvo.clienteId||(contrato&&contrato.clienteId));
+      label='Leitura '+(alvo.numero||'');
+    }else{
+      alvo=((db.vendas||[]).find(x=>x.id===id))||null;
+      if(!alvo){ if(typeof toast==='function') toast('Venda não encontrada','error'); return; }
+      cliente=clienteDe(alvo.clienteId);
+      label='Venda '+(alvo.numero||'');
+    }
+    const existentes=[].concat(db.vendas||[],db.leituras||[]);
+    const doc=montarDocumento({
+      origem,
+      venda:origem==='venda'?alvo:null,
+      leitura:origem==='leitura'?alvo:null,
+      cliente,
+      loja,
+      fiscal,
+      produtos:db.produtos||[],
+      existentes,
+      certificadoLocal:cert,
+      data:alvo.data||alvo.dataLeitura||alvo.criadoEm,
+      numero:proximoNumeroNfe(existentes,fiscal.serie)
+    });
+    mostrarConferencia(doc,label);
+  }catch(e){
+    if(typeof toast==='function') toast('Não foi possível conferir a NF-e. Venda e leitura continuam iguais.','error');
   }
-  const existentes=[].concat(db.vendas||[],db.leituras||[]);
-  const doc=montarDocumento({
-    origem,
-    venda:origem==='venda'?alvo:null,
-    leitura:origem==='leitura'?alvo:null,
-    cliente,
-    loja,
-    fiscal,
-    produtos:db.produtos||[],
-    existentes,
-    certificadoLocal:cert,
-    data:alvo.data||alvo.dataLeitura||alvo.criadoEm,
-    numero:(alvo.nfe&&alvo.nfe.numero)||proximoNumeroNfe(existentes,fiscal.serie)
-  });
-  gravarRascunho(alvo,doc);
-  mostrarConferencia(doc,label);
 };
 function injetarBotao(footer,tipo,id){
   if(!footer||!id||footer.querySelector('[data-nfe-emit]')) return;
@@ -29764,10 +29751,12 @@ function wrap(nome,tipo,pegarId){
   const orig=window[nome];
   if(typeof orig!=='function'||orig.__v5221) return;
   window[nome]=function(){
-    const id=pegarId?pegarId.apply(null,arguments):arguments[0];
     const r=orig.apply(this,arguments);
-    setTimeout(function(){ injetarBotao(document.getElementById('modal-footer'),tipo,id); },80);
-    setTimeout(function(){ injetarBotao(document.getElementById('modal-footer'),tipo,id); },240);
+    try{
+      const id=pegarId?pegarId.apply(null,arguments):arguments[0];
+      setTimeout(function(){ try{ injetarBotao(document.getElementById('modal-footer'),tipo,id); }catch(e){} },80);
+      setTimeout(function(){ try{ injetarBotao(document.getElementById('modal-footer'),tipo,id); }catch(e){} },240);
+    }catch(e){}
     return r;
   };
   window[nome].__v5221=true;
@@ -29800,14 +29789,16 @@ const oldRenderConfig=window.renderConfig;
 if(typeof oldRenderConfig==='function'&&!oldRenderConfig.__v5221){
   window.renderConfig=function(){
     const r=oldRenderConfig.apply(this,arguments);
-    setTimeout(atualizarCardNfe,260);
-    setTimeout(atualizarCardNfe,560);
+    try{
+      setTimeout(function(){ try{ atualizarCardNfe(); }catch(e){} },260);
+      setTimeout(function(){ try{ atualizarCardNfe(); }catch(e){} },560);
+    }catch(e){}
     return r;
   };
   window.renderConfig.__v5221=true;
 }
-setTimeout(function(){ garantirFiscalSimples(); atualizarCardNfe(); },900);
-console.log('[DIGICOPY] v5.22.1 conferência NF-e venda/leitura');
+setTimeout(function(){ try{ atualizarCardNfe(); }catch(e){} },900);
+console.log('[DIGICOPY] v5.22.1 conferência NF-e isolada');
 })();
 
 ;

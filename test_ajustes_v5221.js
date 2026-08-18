@@ -30,4 +30,7 @@ ok('leitura monta item',docL.itens.length===1&&docL.totais.vNF>0);
 ok('sem IE da loja aponta o erro',P.validarEmitente(P.emitenteDe(loja,{})).includes('Inscrição Estadual da loja'));
 ok('patch entra no bundle',manifest.includes('ajustes_v5221_nfe_emissao_patch.js'));
 ok('botão de conferência existe no código',code.includes('Conferir NF-e')&&code.includes('conferirNfe'));
+ok('conferência não grava no banco',!/saveDB\(/.test(code));
+ok('não grava fiscal sozinho ao abrir',!/garantirFiscalSimples\(\);\s*atualizarCardNfe/.test(code));
+ok('envolve tela original antes de injetar botão',/const r=orig\.apply\(this,arguments\)/.test(code));
 console.log('\nRESULTADO: conferência NF-e passou!');
