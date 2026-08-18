@@ -5,7 +5,7 @@
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
 **Última versão:** **v5.22.4** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** (após push)  
+**Commit:** `84296b6`  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
