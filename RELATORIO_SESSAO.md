@@ -4,10 +4,24 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.6**  
+**Última versão:** **v5.22.0** (em construção — produção em uso continua **5.21.6**)  
 **Commit:** (após push)  
-**Zip:** gerar no PC do usuário com `npm run build:win`  
-**GitHack:** atualizar após o commit
+**Zip:** gerar só quando o usuário pedir para atualizar  
+**Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
+
+Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.0 — preparação NF-e (ainda não emite)
+
+Pedido: integrar NF-e. Usuário já tem A1. Continua usando 5.21.6 no dia a dia.
+
+- Card **Configurações → NF-e — preparação**
+- Campos: IE, regime (CRT), série, ambiente (homologação/produção)
+- Botão **Carregar A1 (.pfx)** copia o certificado para `%APPDATA%\\digicopy-erp\\certs\\nfe-a1.pfx`
+- Senha do A1 **não é salva** e **não vai para a nuvem**
+- Emissão SEFAZ ainda não ligada
 
 ---
 

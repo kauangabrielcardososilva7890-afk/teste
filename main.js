@@ -54,6 +54,7 @@ app.whenReady().then(() => {
   registerPrintIPC();
   registerBackupIPC();
   registerOpenExternalIPC();
+  registerNfeCertIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -330,6 +331,50 @@ function isAllowedExternalUrl(raw){
     const host = String(u.hostname||'').toLowerCase();
     return host === 'caixaescolar.educacao.mg.gov.br' || host === 'www.caixaescolar.educacao.mg.gov.br';
   }catch(e){ return false; }
+}
+
+function nfeCertDir(){
+  return path.join(app.getPath('userData'), 'certs');
+}
+function nfeCertPath(){
+  return path.join(nfeCertDir(), 'nfe-a1.pfx');
+}
+function registerNfeCertIPC(){
+  ipcMain.handle('nfe:cert-status', async () => {
+    try{
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:true, installed:false };
+      const st = fs.statSync(p);
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs, path:p };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-import', async () => {
+    try{
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Selecionar certificado A1 (.pfx)',
+        filters: [
+          { name: 'Certificado A1', extensions: ['pfx', 'p12'] },
+          { name: 'Todos os arquivos', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+      if(result.canceled || !result.filePaths.length) return { ok:false, canceled:true };
+      const src = result.filePaths[0];
+      const ext = path.extname(src).toLowerCase();
+      if(ext !== '.pfx' && ext !== '.p12') return { ok:false, error:'Selecione um arquivo .pfx ou .p12.' };
+      fs.mkdirSync(nfeCertDir(), { recursive: true });
+      fs.copyFileSync(src, nfeCertPath());
+      const st = fs.statSync(nfeCertPath());
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-remove', async () => {
+    try{
+      const p = nfeCertPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, installed:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
 }
 
 function registerOpenExternalIPC(){

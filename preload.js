@@ -42,3 +42,10 @@ contextBridge.exposeInMainWorld('backupAPI', {
   saveDaily: (filename, content) => ipcRenderer.invoke('backup:save-daily', { filename, content }),
   isElectron: true
 });
+
+contextBridge.exposeInMainWorld('nfeCertAPI', {
+  status: () => ipcRenderer.invoke('nfe:cert-status'),
+  importar: () => ipcRenderer.invoke('nfe:cert-import'),
+  remover: () => ipcRenderer.invoke('nfe:cert-remove'),
+  isElectron: true
+});
