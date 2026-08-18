@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.1';
+const API_VERSION = '0.4.2';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -307,6 +307,14 @@ function publicRecord(row) {
   };
 }
 
+function activityLabel(dataJson, recordId, entity) {
+  if (entity === 'config') return 'Configuração';
+  const data = parseDataJson(dataJson) || {};
+  const raw = data.nome || data.fantasia || data.numero || data.login || data.descricao || data.sku || data.modelo || '';
+  const text = String(raw).trim();
+  return text ? text.slice(0, 80) : String(recordId || '');
+}
+
 async function applyMutation(env, device, mutation) {
   const mutationId = cleanText(mutation && mutation.mutationId, 120);
   const entity = cleanText(mutation && mutation.entity, 64);
@@ -588,14 +596,74 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
 
 async function handleDevices(request, env) {
   const admin = await requireAdmin(request, env);
-  const rows = await env.DB.prepare(
-    `SELECT d.id, d.name, d.role, d.created_at AS createdAt,
-            d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
-            (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
-            (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
-     FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
-  ).all();
-  return json({ ok: true, currentDeviceId: admin.id, devices: rows.results || [] });
+  const [rows, lasts, grouped] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT d.id, d.name, d.role, d.created_at AS createdAt,
+              d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
+              (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
+              (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
+       FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
+    ),
+    env.DB.prepare(
+      `SELECT c.device_id AS deviceId, c.entity AS lastEntity, c.operation AS lastOperation,
+              c.created_at AS lastChangeAt
+         FROM changes c
+         INNER JOIN (SELECT device_id, MAX(seq) AS seq FROM changes GROUP BY device_id) x
+           ON x.device_id = c.device_id AND x.seq = c.seq`
+    ),
+    env.DB.prepare(
+      `SELECT updated_by AS deviceId, entity, COUNT(*) AS active
+         FROM records WHERE deleted_at IS NULL AND updated_by IS NOT NULL
+         GROUP BY updated_by, entity`
+    )
+  ]);
+  const lastMap = {};
+  for (const row of (lasts.results || [])) lastMap[row.deviceId] = row;
+  const entityMap = {};
+  for (const row of (grouped.results || [])) {
+    if (!entityMap[row.deviceId]) entityMap[row.deviceId] = {};
+    entityMap[row.deviceId][row.entity] = Number(row.active) || 0;
+  }
+  const devices = (rows.results || []).map(device => {
+    const last = lastMap[device.id] || {};
+    return {
+      ...device,
+      lastChangeAt: last.lastChangeAt == null ? null : Number(last.lastChangeAt),
+      lastEntity: last.lastEntity || null,
+      lastOperation: last.lastOperation || null,
+      byEntity: entityMap[device.id] || {}
+    };
+  });
+  return json({ ok: true, currentDeviceId: admin.id, devices });
+}
+
+async function handleActivity(request, env) {
+  await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const limit = Math.min(80, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '40', 10) || 40));
+  const deviceId = cleanText(url.searchParams.get('deviceId') || '', 80);
+  const query = deviceId
+    ? await env.DB.prepare(
+      `SELECT c.seq, c.entity, c.record_id, c.operation, c.created_at, c.device_id, c.data_json, d.name AS device_name
+         FROM changes c LEFT JOIN devices d ON d.id = c.device_id
+        WHERE c.device_id = ? ORDER BY c.seq DESC LIMIT ?`
+    ).bind(deviceId, limit).all()
+    : await env.DB.prepare(
+      `SELECT c.seq, c.entity, c.record_id, c.operation, c.created_at, c.device_id, c.data_json, d.name AS device_name
+         FROM changes c LEFT JOIN devices d ON d.id = c.device_id
+        ORDER BY c.seq DESC LIMIT ?`
+    ).bind(limit).all();
+  const events = (query.results || []).map(row => ({
+    seq: Number(row.seq),
+    entity: row.entity,
+    recordId: row.record_id,
+    operation: row.operation,
+    createdAt: Number(row.created_at),
+    deviceId: row.device_id,
+    deviceName: row.device_name || 'Aparelho',
+    label: activityLabel(row.data_json, row.record_id, row.entity)
+  }));
+  return json({ ok: true, events });
 }
 
 async function handleRevokeDevice(request, env) {
@@ -708,6 +776,7 @@ async function route(request, env) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
@@ -728,4 +797,4 @@ export default {
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord };
+export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel };

@@ -4,12 +4,25 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.6** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `8ccd8cf` v5.22.6 reinstalação não duplica na nuvem  
+**Última versão:** **v5.22.7** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.7 — acompanhar dados dos outros PCs
+
+Pedido: só o login Admin abre a nuvem; precisa ver o que os outros computadores mandaram.
+
+- Botão **Acompanhar dados dos PCs** no painel Nuvem (só Admin)
+- Por aparelho: último acesso, último envio, quantos registros de cada tipo
+- Lista dos movimentos recentes (quem enviou/excluiu o quê)
+- Não mostra senha. Os outros logins continuam sem ver Nuvem.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.7`
 
 ---
 

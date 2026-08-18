@@ -34,4 +34,9 @@ assert.deepEqual(record, {
   updatedAt:123, deletedAt:null, updatedBy:'dev_1'
 });
 console.log('  ✔ serialização pública de registro');
+
+assert.equal(__test.activityLabel('{"nome":"Cliente Loja"}','cli_1'), 'Cliente Loja');
+assert.equal(__test.activityLabel('{"senha":"x"}','cli_9'), 'cli_9');
+assert.ok(__test.activityLabel('{"nome":"'+('A'.repeat(90))+'"}','id').length<=80);
+console.log('  ✔ rótulo de acompanhamento sem vazar senha');
 console.log('\nRESULTADO: funções puras da API passaram!');
