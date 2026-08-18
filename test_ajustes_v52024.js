@@ -35,10 +35,11 @@ ok('nome do arquivo do backup', P.nomeBackupDiario(hoje) === 'digicopy-backup-20
 
 // jsonBackupLimpo: tira _rt, mantém o resto
 {
-  const db = { empresas:[{id:'emp_digicopy'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x' } };
+  const db = { empresas:[{id:'emp_digicopy'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
   const j = JSON.parse(P.jsonBackupLimpo(db));
   ok('_rt removido dos registros', j.clientes[0]._rt === undefined && j.config._rt === undefined);
   ok('conteúdo preservado', j.clientes[0].nome === 'A' && j.config.loja.fantasia === 'DIGICOPY' && j.empresas.length === 1);
+  ok('senha do Buscador não vai no backup', j.config.escolaAuth === undefined);
 }
 
 ConsoleLogOk();

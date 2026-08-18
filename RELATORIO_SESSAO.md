@@ -4,12 +4,21 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.4** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `84296b6`  
+**Última versão:** **v5.22.5** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (após push)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.5 — backup sem senha + página GitHack do login
+
+- Backup (manual e diário) **não leva** a senha da Caixa Escolar.
+- Página só para cadastrar o login, sem baixar `.zip`:
+  `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/escola_login.html`
+- CNPJ: com ou sem pontuação. Senha: igual a do site.
 
 ---
 
