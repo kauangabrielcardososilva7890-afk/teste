@@ -55,6 +55,7 @@ app.whenReady().then(() => {
   registerBackupIPC();
   registerOpenExternalIPC();
   registerNfeCertIPC();
+  registerEscolaLoginIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -440,6 +441,38 @@ function registerEscolaIPC(){
   
   // Clear cookies on app quit
   ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
+}
+
+function escolaLoginPath(){
+  return path.join(app.getPath('userData'), 'escola-login.json');
+}
+function registerEscolaLoginIPC(){
+  ipcMain.handle('escola:login-status', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(!fs.existsSync(p)) return { ok:true, saved:false };
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8')||'{}');
+      const usuario = String(raw.usuario||'').trim();
+      const senha = String(raw.senha||'');
+      return { ok:true, saved:!!(usuario&&senha), usuario, senha };
+    }catch(e){ return { ok:false, saved:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-save', async (_evt, dados) => {
+    try{
+      const usuario = String((dados&&dados.usuario)||'').trim();
+      const senha = String((dados&&dados.senha)||'');
+      if(!usuario || !senha) return { ok:false, error:'Informe usuário e senha.' };
+      fs.writeFileSync(escolaLoginPath(), JSON.stringify({ usuario, senha, atualizadoEm:new Date().toISOString() }), 'utf8');
+      return { ok:true, saved:true, usuario };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-clear', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, saved:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
 }
 
 // ──────────────────────────────────────────────

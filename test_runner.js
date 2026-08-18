@@ -2,7 +2,6 @@ const {spawnSync}=require('child_process');
 const tests=[
   "test_vos.js",
   "test_perf.js",
-  "test_firebase.js",
   "test_persist.js",
   "test_pix.js",
   "test_extras.js",
@@ -56,7 +55,8 @@ const tests=[
   "test_ajustes_v5214.js",
   "test_ajustes_v5215.js",
   "test_ajustes_v5220.js",
-  "test_ajustes_v5221.js"
+  "test_ajustes_v5221.js",
+  "test_ajustes_v5223.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 101 | sha256: d2a31adf8d78bba3
+ * scripts: 101 | sha256: 477906559ead06a2
  */
 
 /* ===== lz.js ===== */
@@ -18889,7 +18889,7 @@ console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 /* ===== buscador_escola_patch.js ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.88 — Buscador Escola
-// • Credenciais no código (sem campo de senha)
+// • Login da Caixa Escolar fica só neste PC, fora do código e da nuvem
 // • Layout no padrão do Sistema Digicopy
 // • Autoatualização a cada 1 hora
 // • Busca por termo, região e intervalo
@@ -18899,8 +18899,7 @@ console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 'use strict';
 
 const API_BASE='https://api.caixaescolar.educacao.mg.gov.br';
-const USUARIO='08.385.589/0001-03';
-const SENHA='15901536De.';
+const ESCOLA_LOGIN_KEY='digicopy_escola_login_v1';
 
 function t(v){return String(v??'').trim()}
 function esc(v){if(typeof escapeHtml==='function')return escapeHtml(v);return t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -18945,11 +18944,19 @@ async function sync(opt={}){
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
+    const cred=await credenciaisEscola();
+    if(!cred){
+      window.__esSt={msg:'Cadastre o login da Caixa Escolar neste computador.',pct:0};
+      if(!opt.auto) await pedirLoginEscola('Ainda não tem login salvo neste PC.');
+      const cred2=await credenciaisEscola();
+      if(!cred2){ render(); return {ok:false,error:'sem-login'}; }
+    }
+    const loginAtual=await credenciaisEscola();
     const incremental = opt.incremental !== false && !opt.limpar;
     const knownIds = new Set((db.escolaOrc||[]).map(o=>String(o.id)));
     if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];knownIds.clear();log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
-    const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
+    const loginBody={txCpfCnpj:String(loginAtual.usuario||'').replace(/\D/g,''),txPassword:loginAtual.senha};
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
@@ -19068,7 +19075,8 @@ function render(msg){
 
   v.innerHTML=`<div class="neo-shell"><div class="neo-panel">
 <div class="neo-head"><div><h3>Buscador Escola</h3><p>Caixa Escolar MG • Atualização automática a cada 1 hora</p></div>
-<div class="neo-actions"><button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
+<div class="neo-actions"><button onclick="esLoginLocal()" class="neo-btn"><i class="ph ph-key"></i>Login neste PC</button>
+<button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
 <button onclick="esExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div>
 
 <div class="p-4 border-b bg-white"><div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -19111,6 +19119,7 @@ window.esAbrir=async function(url){
   }catch(e){}
   try{window.open(dest,'_blank','noopener');}catch(e){msg('Não foi possível abrir o orçamento.','error');}
 };
+window.esLoginLocal=async function(){ await pedirLoginEscola(); render(); };
 window.esSync=function(){window.__esSync=false;return sync({incremental:true})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esClearLog=function(){window.__esLogs=[];render()};
