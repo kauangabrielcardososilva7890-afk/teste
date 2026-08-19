@@ -4,12 +4,32 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.10** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `49e2941` v5.22.10 caixa no histórico de leituras + NF-e com uma só  
+**Última versão:** **v5.22.11** (em construção — produção em uso continua **5.21.6**)  
+**Commit:** (este) v5.22.11 uma logo só na impressão  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.11 — uma logo só na impressão
+
+Pedido: a notinha saía com a logo duplicada, comendo espaço. Acontecia no geral, não só em venda.
+
+- Tira a logo extra do topo
+- Se o documento já tem a logo da loja, não coloca outra
+- Vale para notinha, leitura, chamado e relatório
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.11`
+
+---
+
+## v5.22.10 — caixa no histórico de leituras + NF-e nas duas listas
+
+Pedido: o atalho tem que ficar nas duas telas (histórico de leituras do cliente e Vendas e Notinhas). A lista de leituras ganha caixa e exclusão (faturada não sai). NF-e só com uma marcada.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.10`
 
 ---
 

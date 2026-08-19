@@ -301,6 +301,8 @@ window.imprimirChamadoPDF = function(osId){
 // logo em relatórios (menos rtf/etiqueta)
 function injetarLogoNoDoc(html){
   if(!html || /DIGICOPY_LOGO|class="logo-rel"/.test(html)) return html;
+  if(/class=["']logo["']/.test(html)) return html;
+  if(/<img[^>]*(logo\.png|logo_2\.png|data:image|alt=["']logo["'])/i.test(html)) return html;
   const img=`<img class="logo-rel" src="${logoSrc()}" style="height:52px;width:auto;display:block;margin-bottom:8px" alt="logo">`;
   return html.replace(/<body[^>]*>/i, m=>m+img);
 }
