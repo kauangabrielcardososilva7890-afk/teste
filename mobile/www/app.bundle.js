@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 107 | sha256: 00b92a6a63a84543
+ * scripts: 109 | sha256: b415d6006379c19b
  */
 
 /* ===== lz.js ===== */
@@ -30800,6 +30800,658 @@ else ligar();
 setTimeout(ligar,600);
 
 console.log('[DIGICOPY] v5.22.12 celular autoriza e puxa a nuvem');
+})();
+
+;
+
+/* ===== ajustes_v52213_financeiro_receber_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.13 — Financeiro: só Contas e caixas; Receber junto da lixeira
+// • Some o submenu Novo recebimento
+// • Receber ao lado do Excluir (caixinha)
+// • Com título marcado: baixa com as formas da venda, SEM A prazo
+// • Pix no financeiro dá baixa de verdade (pago)
+// • Sem marca: novo lançamento (cliente com lupa/Enter, sem status,
+//   descrição, repetir mês a mês)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var FORMAS_BAIXA = ['Dinheiro','Pix','Cartão de crédito','Cartão de débito','Cheque','Conta','Grátis'];
+
+function addMeses(iso, n){
+  var s = String(iso||'').slice(0,10);
+  var p = s.split('-').map(Number);
+  var y = p[0]||new Date().getFullYear();
+  var m = p[1]||(new Date().getMonth()+1);
+  var d = p[2]||new Date().getDate();
+  var dt = new Date(y, (m-1)+n, 1);
+  var last = new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate();
+  dt.setDate(Math.min(d, last));
+  var mm = String(dt.getMonth()+1).padStart(2,'0');
+  var dd = String(dt.getDate()).padStart(2,'0');
+  return dt.getFullYear()+'-'+mm+'-'+dd;
+}
+
+function montarRepeticoes(base, qtd){
+  var n = Math.max(1, parseInt(qtd,10)||1);
+  if(n>60) n=60;
+  var out=[];
+  for(var i=0;i<n;i++){
+    out.push({
+      descricao: base.descricao,
+      valor: base.valor,
+      clienteId: base.clienteId,
+      vencimento: addMeses(base.vencimento, i)
+    });
+  }
+  return out;
+}
+
+function aplicarBaixaTitulo(cr, forma, agora){
+  if(!cr) return cr;
+  cr.formaPagamento = forma;
+  cr.pagamentoData = agora;
+  cr.status = 'pago';
+  cr.baixaForma = forma;
+  return cr;
+}
+
+window.FINANCEIRO_RECEBER_PURE = {
+  FORMAS_BAIXA: FORMAS_BAIXA.slice(),
+  addMeses: addMeses,
+  montarRepeticoes: montarRepeticoes,
+  aplicarBaixaTitulo: aplicarBaixaTitulo
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function hoje(){ return new Date().toISOString().slice(0,10); }
+
+function tirarSubmenuRecebimento(){
+  var menu = document.getElementById('menu-financeiro');
+  if(!menu) return;
+  menu.querySelectorAll('button').forEach(function(b){
+    var oc = b.getAttribute('onclick')||'';
+    var tx = (b.textContent||'');
+    if(/contaReceber/.test(oc) || /novo recebimento/i.test(tx)) b.remove();
+  });
+  var soContas = menu.querySelector('button');
+  if(soContas && /contas/i.test(soContas.textContent||'')){
+    soContas.innerHTML = '<i class="ph ph-bank"></i>Contas e caixas';
+  }
+}
+
+function marcadosFinanceiro(){
+  return Array.from(document.querySelectorAll('.fin-del-check:checked')).map(function(c){
+    return { tipo: c.dataset.tipo||'cr', id: c.value };
+  }).filter(function(a){ return a.id; });
+}
+
+function ajustarBotaoReceber(){
+  var view = document.getElementById('view-financeiro'); if(!view) return;
+  var actions = view.querySelector('.neo-head .neo-actions'); if(!actions) return;
+  actions.querySelectorAll('button').forEach(function(b){
+    var oc = b.getAttribute('onclick')||'';
+    if(/contaReceber/.test(oc) || b.dataset.finReceber) b.remove();
+  });
+  var rec = document.createElement('button');
+  rec.className = 'neo-btn primary';
+  rec.dataset.finReceber = '1';
+  rec.innerHTML = '<i class="ph ph-arrow-circle-down"></i>Receber';
+  rec.onclick = function(){ window.finAcaoReceber(); };
+  var excluir = actions.querySelector('.btn-del-lote');
+  if(excluir) actions.insertBefore(rec, excluir);
+  else actions.appendChild(rec);
+}
+
+window.finAcaoReceber = function(){
+  var s = sess(); if(!s) return;
+  var alvos = marcadosFinanceiro().filter(function(a){ return a.tipo==='cr'; });
+  if(!alvos.length){ abrirNovoLancamento(); return; }
+  var abertos = [];
+  alvos.forEach(function(a){
+    var cr = (db.contasReceber||[]).find(function(x){ return x && x.id===a.id; });
+    if(cr && cr.status!=='pago') abertos.push(cr);
+  });
+  if(!abertos.length){
+    aviso('Marque pelo menos um título a receber em aberto. Títulos já pagos não entram na baixa.','Receber');
+    return;
+  }
+  abrirBaixaFormas(abertos);
+};
+
+function abrirBaixaFormas(titulos){
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[720px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  var total = titulos.reduce(function(s,c){ return s+(Number(c.valor)||0); },0);
+  document.getElementById('modal-title').innerText = 'Baixa — '+titulos.length+' título(s)';
+  document.getElementById('modal-body').innerHTML =
+    '<div class="space-y-3 text-[13px]">'+
+    '<p class="text-slate-600">Total a baixar: <b class="text-[#0a1e8a]">'+(typeof fmtMoney==='function'?fmtMoney(total):total)+'</b></p>'+
+    '<p class="text-[12px] text-slate-500">Mesmas formas da venda, <b>sem A prazo</b>. Pix aqui dá baixa de verdade.</p>'+
+    '<div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="fin-formas">'+
+    FORMAS_BAIXA.map(function(fx,i){
+      return '<button type="button" data-forma="'+esc(fx)+'" onclick="window.finEscolherFormaBaixa(\''+esc(fx)+'\')" class="fin-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold '+(i===0?'border-[#0a1e8a] bg-[#0a1e8a]/5 text-[#0a1e8a]':'border-slate-200 bg-white')+'">'+esc(fx)+'</button>';
+    }).join('')+
+    '</div><input type="hidden" id="fin-forma-baixa" value="'+esc(FORMAS_BAIXA[0])+'">'+
+    '<div id="fin-forma-msg" class="rounded-xl border p-3 bg-emerald-50/60 border-emerald-200 text-[12.5px] text-emerald-900">Baixa em <b>Dinheiro</b>: o título fica pago.</div>'+
+    '</div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.finConfirmarBaixa()" class="h-11 px-6 rounded-xl bg-emerald-600 text-white font-bold">Confirmar baixa</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  window.__finBaixaIds = titulos.map(function(t){ return t.id; });
+};
+
+window.finEscolherFormaBaixa = function(fx){
+  var el = document.getElementById('fin-forma-baixa'); if(el) el.value = fx;
+  document.querySelectorAll('.fin-forma').forEach(function(b){
+    var on = b.dataset.forma===fx;
+    b.className = 'fin-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold '+(on?'border-[#0a1e8a] bg-[#0a1e8a]/5 text-[#0a1e8a]':'border-slate-200 bg-white');
+  });
+  var msg = document.getElementById('fin-forma-msg');
+  if(msg){
+    if(fx==='Pix') msg.innerHTML = 'Baixa em <b>Pix</b>: o título fica <b>pago de verdade</b> (diferente da venda, que deixa o Pix em aberto).';
+    else if(fx==='Grátis') msg.innerHTML = 'Baixa <b>Grátis</b>: o título é quitado sem cobrança.';
+    else msg.innerHTML = 'Baixa em <b>'+esc(fx)+'</b>: o título fica pago.';
+  }
+};
+
+window.finConfirmarBaixa = function(){
+  var s = sess(); if(!s) return;
+  var forma = (document.getElementById('fin-forma-baixa')||{}).value || 'Dinheiro';
+  if(FORMAS_BAIXA.indexOf(forma)<0){ aviso('Escolha uma forma de baixa.','Receber'); return; }
+  var ids = window.__finBaixaIds||[];
+  var agora = new Date().toISOString();
+  var n=0;
+  ids.forEach(function(id){
+    var cr = (db.contasReceber||[]).find(function(x){ return x && x.id===id; });
+    if(!cr || cr.status==='pago') return;
+    aplicarBaixaTitulo(cr, forma, agora);
+    n++;
+  });
+  if(typeof logAction==='function') logAction('financeiro','baixar_receber',ids.join(','), n+' título(s) baixado(s) em '+forma+' por '+s.usuarioNome);
+  if(typeof saveDB==='function') saveDB();
+  if(typeof closeModal==='function') closeModal();
+  if(typeof renderFinanceiro==='function') renderFinanceiro();
+  if(typeof renderAuditoria==='function') renderAuditoria();
+  if(typeof toast==='function') toast(n+' título(s) baixado(s) em '+forma,'success');
+};
+
+function abrirNovoLancamento(){
+  var s = sess(); if(!s) return;
+  window.__finNovoCli = null;
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[720px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = 'Novo lançamento a receber';
+  document.getElementById('modal-body').innerHTML =
+    '<div class="space-y-3 text-[13px]">'+
+    '<div><label class="neo-label">Cliente</label>'+
+    '<div class="flex gap-2"><input id="fin-cli-termo" class="neo-input flex-1" placeholder="Nome, código ou documento — Enter ou lupa" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.finBuscarCliente();}">'+
+    '<button type="button" onclick="window.finBuscarCliente()" class="neo-btn primary" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div>'+
+    '<div id="fin-cli-lista" class="neo-suggest hidden"></div>'+
+    '<div id="fin-cli-sel" class="hidden mt-2 rounded-xl bg-[#f1f6ff] border border-[#dbeafe] p-3 text-[13px]"></div></div>'+
+    '<div><label class="neo-label">Descrição</label><input id="fin-novo-desc" class="neo-input w-full" placeholder="Ex.: aluguel, mensalidade..."></div>'+
+    '<div class="grid grid-cols-2 gap-3">'+
+    '<div><label class="neo-label">Valor R$</label><input id="fin-novo-valor" type="number" step="0.01" min="0" class="neo-input w-full"></div>'+
+    '<div><label class="neo-label">1º vencimento</label><input id="fin-novo-venc" type="date" value="'+hoje()+'" class="neo-input w-full"></div>'+
+    '</div>'+
+    '<div><label class="neo-label">Repetir</label>'+
+    '<div class="flex items-center gap-2"><input id="fin-novo-rep" type="number" min="1" max="60" value="1" class="neo-input !w-[90px]" onchange="window.finPreviewRepetir()">'+
+    '<span class="text-[12px] text-slate-500">vezes, vencimento pulando 1 mês. Dá para editar a data depois.</span></div>'+
+    '<div id="fin-rep-prev" class="mt-2 text-[12px] text-slate-600"></div></div>'+
+    '</div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.finSalvarNovoLancamento()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  window.finPreviewRepetir();
+}
+
+window.finBuscarCliente = function(){
+  var s = sess(); if(!s) return;
+  var q = String(document.getElementById('fin-cli-termo')&&document.getElementById('fin-cli-termo').value||'').toLowerCase().trim();
+  var el = document.getElementById('fin-cli-lista'); if(!el) return;
+  var list = (db.clientes||[]).filter(function(c){
+    if(!c || c.status==='inativo') return false;
+    if(c.empresaId && s.empresaId && c.empresaId!==s.empresaId) return false;
+    if(!q) return false;
+    return [c.nome,c.fantasia,c.documento,c.codigo,c.telefone].some(function(x){ return String(x||'').toLowerCase().includes(q); });
+  }).slice(0,15);
+  if(!q){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  el.classList.remove('hidden');
+  el.innerHTML = list.map(function(c){
+    return '<button type="button" onclick="window.finEscolherCliente(\''+esc(c.id)+'\')"><b>#'+esc(c.codigo||'-')+'</b> '+esc(c.nome||'')+'<br><span class="text-slate-500 text-[11px]">'+esc(c.documento||'')+'</span></button>';
+  }).join('') || '<div class="p-3 text-slate-500 text-[12px]">Nenhum cliente. Ajuste a pesquisa e clique na lupa.</div>';
+};
+
+window.finEscolherCliente = function(id){
+  var c = (db.clientes||[]).find(function(x){ return x.id===id; });
+  if(!c) return;
+  window.__finNovoCli = c;
+  var lista = document.getElementById('fin-cli-lista'); if(lista) lista.classList.add('hidden');
+  var termo = document.getElementById('fin-cli-termo'); if(termo) termo.value = c.nome||'';
+  var box = document.getElementById('fin-cli-sel');
+  if(box){ box.classList.remove('hidden'); box.innerHTML = '<b>'+esc(c.nome||'')+'</b><br><span class="text-slate-500">Cód. '+esc(c.codigo||'-')+' • '+esc(c.documento||'')+'</span>'; }
+};
+
+window.finPreviewRepetir = function(){
+  var n = Math.max(1, parseInt((document.getElementById('fin-novo-rep')||{}).value,10)||1);
+  var venc = (document.getElementById('fin-novo-venc')||{}).value || hoje();
+  var el = document.getElementById('fin-rep-prev'); if(!el) return;
+  if(n<=1){ el.textContent = 'Um lançamento no vencimento informado.'; return; }
+  var datas=[];
+  for(var i=0;i<Math.min(n,6);i++) datas.push(addMeses(venc,i).split('-').reverse().join('/'));
+  el.textContent = n+' lançamentos: '+datas.join(', ')+(n>6?'…':'');
+};
+
+window.finSalvarNovoLancamento = function(){
+  var s = sess(); if(!s) return;
+  var cli = window.__finNovoCli;
+  if(!cli){ aviso('Escolha o cliente (lupa ou Enter).','Novo lançamento'); return; }
+  var desc = String((document.getElementById('fin-novo-desc')||{}).value||'').trim();
+  var valor = parseFloat((document.getElementById('fin-novo-valor')||{}).value);
+  var venc = (document.getElementById('fin-novo-venc')||{}).value || hoje();
+  var qtd = (document.getElementById('fin-novo-rep')||{}).value;
+  if(!desc){ aviso('Informe a descrição.','Novo lançamento'); return; }
+  if(!valor || valor<=0){ aviso('Informe o valor.','Novo lançamento'); return; }
+  var itens = montarRepeticoes({ descricao:desc, valor:valor, clienteId:cli.id, vencimento:venc }, qtd);
+  itens.forEach(function(it){
+    var novo = {
+      id: (typeof uid==='function'?uid('cr'):('cr_'+Date.now()+Math.random().toString(36).slice(2,7))),
+      empresaId: s.empresaId,
+      origem: 'avulso',
+      clienteId: it.clienteId,
+      descricao: it.descricao,
+      valor: it.valor,
+      vencimento: it.vencimento,
+      pagamentoData: null,
+      status: 'aberto',
+      contratoId: null,
+      leituraId: null,
+      vendaId: null,
+      criadoPor: s.usuarioId,
+      criadoPorNome: s.usuarioNome,
+      criadoEm: new Date().toISOString()
+    };
+    db.contasReceber = db.contasReceber||[];
+    db.contasReceber.push(novo);
+  });
+  if(typeof logAction==='function') logAction('financeiro','criar_receber','', itens.length+' lançamento(s) "'+desc+'" por '+s.usuarioNome);
+  if(typeof saveDB==='function') saveDB();
+  if(typeof closeModal==='function') closeModal();
+  if(typeof renderFinanceiro==='function') renderFinanceiro();
+  if(typeof renderAuditoria==='function') renderAuditoria();
+  if(typeof toast==='function') toast(itens.length+' lançamento(s) criado(s)','success');
+};
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52213){
+  var oldF = window.renderFinanceiro;
+  var wrapF = function(){
+    var r = oldF.apply(this, arguments);
+    try{ tirarSubmenuRecebimento(); ajustarBotaoReceber(); }catch(e){}
+    return r;
+  };
+  wrapF.__v52213 = true;
+  window.renderFinanceiro = wrapF;
+}
+
+setTimeout(tirarSubmenuRecebimento, 200);
+setTimeout(tirarSubmenuRecebimento, 1200);
+try{
+  new MutationObserver(function(){ tirarSubmenuRecebimento(); }).observe(document.body, { childList:true, subtree:true });
+}catch(e){}
+
+console.log('[DIGICOPY] v5.22.13 financeiro: Contas e caixas + Receber/baixa');
+})();
+
+;
+
+/* ===== ajustes_v52213_menus_atalhos_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.13 — Ordem/nome dos menus + atalhos do Início
+// • Só ordem e nome (menu e submenu). Limite de caracteres.
+// • Chamados some da Locação; fica só em Atendimento
+// • Atalhos do Início editáveis (ordem, nome, quais botões)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var LIMITE_MENU = 18;
+var LIMITE_SUB = 24;
+
+function limitarNome(s, max){
+  var t = String(s==null?'':s).replace(/\s+/g,' ').trim();
+  max = max||LIMITE_MENU;
+  if(t.length>max) t = t.slice(0,max).trim();
+  return t;
+}
+
+function menusPadrao(){
+  return [
+    {id:'inicio', icon:'ph-house', label:'Início', click:'navigateTo(\'dashboard\')'},
+    {id:'atendimento', icon:'ph-cash-register', label:'Atendimento', click:'navigateTo(\'vendas\')', items:[
+      {id:'nova-venda', icon:'ph-shopping-cart-simple', label:'Nova venda', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
+      {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Consultar notinhas', click:'navigateTo(\'vendas\')'},
+      {id:'abrir-chamado', icon:'ph-wrench', label:'Abrir chamado', click:'openQuickOS()'}
+    ]},
+    {id:'locacao', icon:'ph-printer', label:'Locação', click:'navigateTo(\'contratos\')', menuId:'menu-outsourcing', items:[
+      {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
+      {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
+    ]},
+    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'toast(\'Módulo fiscal em preparação\',\'info\')', items:[
+      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'toast(\'Em breve: emissão de nota fiscal\',\'info\')'},
+      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'toast(\'Em breve: perfil tributário\',\'info\')'},
+      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'toast(\'Em breve: NCM e configurações fiscais\',\'info\')'}
+    ]},
+    {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
+      {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},
+      {id:'novo-cliente', icon:'ph-user-plus', label:'Novo cliente', click:'openModal(\'cliente\')'}
+    ]},
+    {id:'financeiro', icon:'ph-bank', label:'Financeiro', click:'navigateTo(\'financeiro\')', menuId:'menu-financeiro', items:[
+      {id:'contas-caixas', icon:'ph-bank', label:'Contas e caixas', click:'navigateTo(\'financeiro\')'}
+    ]},
+    {id:'buscador', icon:'ph-magnifying-glass', label:'Buscador Escola', click:'navigateTo(\'buscador-escola\')', wrapId:'topmod-buscador-escola-fixo'},
+    {id:'config', icon:'ph-gear', label:'Configurações', click:'navigateTo(\'config\')', menuId:'menu-config', items:[
+      {id:'prefs', icon:'ph-sliders', label:'Preferências', click:'navigateTo(\'config\')'},
+      {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
+      {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
+    ]},
+    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'exportBackup()', btnId:'btn-backup-top', title:'Baixar uma cópia de segurança de todos os dados'},
+    {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
+    {id:'sair', icon:'ph-sign-out', label:'Sair', click:'doLogout()', title:'Sair do sistema'}
+  ];
+}
+
+function catalogoAtalhos(){
+  return [
+    {id:'nova-notinha', icon:'ph-plus', label:'Nova notinha', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
+    {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Notinhas', click:'navigateTo(\'vendas\')'},
+    {id:'clientes', icon:'ph-users', label:'Clientes', click:'navigateTo(\'clientes\')'},
+    {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
+    {id:'chamados', icon:'ph-wrench', label:'Chamados', click:'openQuickOS()'},
+    {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'},
+    {id:'financeiro', icon:'ph-bank', label:'Financeiro', click:'navigateTo(\'financeiro\')'},
+    {id:'estoque', icon:'ph-package', label:'Estoque', click:'navigateTo(\'produtos\')'},
+    {id:'config', icon:'ph-gear', label:'Configurações', click:'navigateTo(\'config\')'}
+  ];
+}
+
+function atalhosPadrao(){
+  return [
+    {id:'nova-notinha', icon:'ph-plus', label:'Nova notinha'},
+    {id:'clientes', icon:'ph-users', label:'Clientes'},
+    {id:'contratos', icon:'ph-file-text', label:'Contratos'},
+    {id:'chamados', icon:'ph-wrench', label:'Chamados'}
+  ];
+}
+
+function moverItem(lista, de, para){
+  var arr = (lista||[]).slice();
+  if(de<0||para<0||de>=arr.length||para>=arr.length||de===para) return arr;
+  var item = arr.splice(de,1)[0];
+  arr.splice(para,0,item);
+  return arr;
+}
+
+function aplicarNomesSalvos(padrao, salvo){
+  if(!salvo || !Array.isArray(salvo.ordem)) return padrao;
+  var mapa = {};
+  padrao.forEach(function(m){ mapa[m.id]=m; });
+  var out=[];
+  salvo.ordem.forEach(function(id){
+    var base = mapa[id];
+    if(!base) return;
+    var copy = Object.assign({}, base);
+    var custom = (salvo.nomes||{})[id];
+    if(custom) copy.label = limitarNome(custom, LIMITE_MENU);
+    if(base.items){
+      var subSalvo = (salvo.sub||{})[id]||{};
+      copy.items = base.items.map(function(it){
+        var c2 = Object.assign({}, it);
+        if(subSalvo[it.id]) c2.label = limitarNome(subSalvo[it.id], LIMITE_SUB);
+        return c2;
+      });
+    }
+    out.push(copy);
+    delete mapa[id];
+  });
+  Object.keys(mapa).forEach(function(id){ out.push(mapa[id]); });
+  return out;
+}
+
+window.MENUS_ATALHOS_PURE = {
+  LIMITE_MENU: LIMITE_MENU,
+  LIMITE_SUB: LIMITE_SUB,
+  limitarNome: limitarNome,
+  menusPadrao: menusPadrao,
+  catalogoAtalhos: catalogoAtalhos,
+  atalhosPadrao: atalhosPadrao,
+  moverItem: moverItem,
+  aplicarNomesSalvos: aplicarNomesSalvos
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function cfg(){ if(typeof db==='undefined') return {}; db.config = db.config||{}; return db.config; }
+function gravar(){ if(typeof saveDB==='function') saveDB(); }
+
+function menusAtivos(){
+  return aplicarNomesSalvos(menusPadrao(), cfg().uiMenus||null);
+}
+
+function atalhosAtivos(){
+  var salvo = cfg().uiAtalhos;
+  var cat = {};
+  catalogoAtalhos().forEach(function(a){ cat[a.id]=a; });
+  if(!salvo || !Array.isArray(salvo) || !salvo.length) return atalhosPadrao().map(function(a){ return Object.assign({}, cat[a.id]||a); });
+  return salvo.map(function(a){
+    var base = cat[a.id];
+    if(!base) return null;
+    return { id: base.id, icon: base.icon, label: limitarNome(a.label||base.label, LIMITE_SUB), click: base.click };
+  }).filter(Boolean);
+}
+
+function htmlModulo(m){
+  var btnId = m.btnId ? ' id="'+m.btnId+'"' : '';
+  var wrapId = m.wrapId ? ' id="'+m.wrapId+'"' : '';
+  var title = m.title ? ' title="'+esc(m.title)+'"' : '';
+  var type = (m.btnId==='btn-backup-top'||m.btnId==='btn-nuvem') ? ' type="button"' : '';
+  var menuId = m.menuId ? ' id="'+m.menuId+'"' : '';
+  var sub = '';
+  if(m.items && m.items.length){
+    sub = '<div'+menuId+' class="module-menu">'+m.items.map(function(it){
+      return '<button onclick="'+it.click+'"><i class="ph '+it.icon+'"></i>'+esc(it.label)+'</button>';
+    }).join('')+'</div>';
+  }
+  return '<div class="module"'+wrapId+'><button'+btnId+type+title+' onclick="'+m.click+'"><i class="ph '+m.icon+'"></i>'+esc(itLabel(m.label))+'</button>'+sub+'</div>';
+}
+function itLabel(s){ return limitarNome(s, LIMITE_MENU); }
+
+function pintarMenus(){
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  var status = row.querySelector('.ml-auto');
+  var html = menusAtivos().map(htmlModulo).join('');
+  html += '<div class="module"><button type="button" title="Editar ordem e nome dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
+  if(status) html += status.outerHTML;
+  row.innerHTML = html;
+  try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+  tirarChamadosLocacao();
+}
+
+function tirarChamadosLocacao(){
+  var menu = document.getElementById('menu-outsourcing');
+  if(!menu) return;
+  var loc = menusAtivos().find(function(m){ return m.id==='locacao'; });
+  if(!loc) return;
+  var html = (loc.items||[]).map(function(it){
+    return '<button onclick="'+it.click+'"><i class="ph '+it.icon+'"></i>'+esc(it.label)+'</button>';
+  }).join('');
+  if(/chamado/i.test(menu.textContent||'') || menu.querySelectorAll('button').length !== (loc.items||[]).length){
+    menu.innerHTML = html;
+  }
+}
+
+window.abrirEditorMenus = function(){
+  var atuais = menusAtivos();
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[760px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = 'Ordem e nomes dos menus';
+  document.getElementById('modal-body').innerHTML =
+    '<p class="text-[12px] text-slate-500 mb-3">Só ordem e nome. Limite: '+LIMITE_MENU+' letras no menu, '+LIMITE_SUB+' no submenu.</p>'+
+    '<div id="ui-menus-ed" class="space-y-2">'+atuais.map(function(m,i){
+      var subs = (m.items||[]).map(function(it){
+        return '<div class="flex items-center gap-2 pl-8 mt-1"><i class="ph '+it.icon+' text-[#0a1e8a]"></i>'+
+          '<input data-sub="'+esc(m.id)+'" data-sid="'+esc(it.id)+'" maxlength="'+LIMITE_SUB+'" value="'+esc(it.label)+'" class="neo-input flex-1 !h-9"></div>';
+      }).join('');
+      return '<div class="rounded-xl border p-2" data-mid="'+esc(m.id)+'">'+
+        '<div class="flex items-center gap-2">'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiMenuMover(this,-1)">↑</button>'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiMenuMover(this,1)">↓</button>'+
+        '<i class="ph '+m.icon+' text-[#0a1e8a]"></i>'+
+        '<input data-menu="'+esc(m.id)+'" maxlength="'+LIMITE_MENU+'" value="'+esc(m.label)+'" class="neo-input flex-1 !h-9">'+
+        '</div>'+subs+'</div>';
+    }).join('')+'</div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.salvarEditorMenus()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  window.__uiMenusRascunho = atuais.map(function(m){ return m.id; });
+};
+
+window.uiMenuMover = function(i, dir){
+  var body = document.getElementById('ui-menus-ed'); if(!body) return;
+  var cards = Array.from(body.children);
+  var j = i+dir;
+  if(j<0||j>=cards.length) return;
+  if(dir<0) body.insertBefore(cards[i], cards[j]);
+  else body.insertBefore(cards[j], cards[i]);
+  window.abrirEditorMenus = window.abrirEditorMenus;
+};
+
+window.salvarEditorMenus = function(){
+  var body = document.getElementById('ui-menus-ed'); if(!body) return;
+  var ordem=[], nomes={}, sub={};
+  Array.from(body.children).forEach(function(card){
+    var id = card.getAttribute('data-mid');
+    if(!id) return;
+    ordem.push(id);
+    var inp = card.querySelector('input[data-menu]');
+    nomes[id] = limitarNome(inp&&inp.value, LIMITE_MENU) || id;
+    sub[id] = {};
+    card.querySelectorAll('input[data-sub]').forEach(function(s){
+      sub[id][s.getAttribute('data-sid')] = limitarNome(s.value, LIMITE_SUB);
+    });
+  });
+  cfg().uiMenus = { ordem:ordem, nomes:nomes, sub:sub };
+  gravar();
+  if(typeof closeModal==='function') closeModal();
+  pintarMenus();
+  if(typeof toast==='function') toast('Menus atualizados','success');
+};
+
+function pintarAtalhos(){
+  var view = document.getElementById('view-dashboard'); if(!view) return;
+  var host = document.getElementById('ui-atalhos-inicio');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'ui-atalhos-inicio';
+    host.className = 'px-1 pb-3';
+    view.insertBefore(host, view.firstChild);
+  }
+  var list = atalhosAtivos();
+  host.innerHTML = '<div class="flex flex-wrap gap-2 items-center">'+
+    list.map(function(a){
+      return '<button onclick="'+a.click+'" class="h-10 px-4 rounded-xl bg-white border text-[12.5px] font-bold text-slate-700 hover:bg-[#0a1e8a] hover:text-white flex items-center gap-2"><i class="ph '+a.icon+'"></i>'+esc(limitarNome(a.label,LIMITE_SUB))+'</button>';
+    }).join('')+
+    '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white border text-[12px] font-bold text-[#0a1e8a]"><i class="ph ph-pencil-simple"></i> Atalhos</button>'+
+    '</div>';
+}
+
+window.abrirEditorAtalhos = function(){
+  var cat = catalogoAtalhos();
+  var atuais = atalhosAtivos();
+  var ids = {};
+  atuais.forEach(function(a){ ids[a.id]=a; });
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[680px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = 'Atalhos do Início';
+  document.getElementById('modal-body').innerHTML =
+    '<p class="text-[12px] text-slate-500 mb-3">Marque os botões, mude o nome e a ordem. Limite: '+LIMITE_SUB+' letras.</p>'+
+    '<div id="ui-atalhos-ed" class="space-y-2">'+cat.map(function(a,i){
+      var on = !!ids[a.id];
+      var nome = on ? ids[a.id].label : a.label;
+      return '<div class="flex items-center gap-2 rounded-xl border p-2" data-aid="'+esc(a.id)+'">'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiAtalhoMover(this,-1)">↑</button>'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiAtalhoMover(this,1)">↓</button>'+
+        '<input type="checkbox" '+(on?'checked':'')+' class="w-4 h-4">'+
+        '<i class="ph '+a.icon+' text-[#0a1e8a]"></i>'+
+        '<input maxlength="'+LIMITE_SUB+'" value="'+esc(nome)+'" class="neo-input flex-1 !h-9">'+
+        '</div>';
+    }).join('')+'</div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.salvarEditorAtalhos()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+};
+
+window.uiAtalhoMover = function(btn, dir){
+  var row = btn.closest('[data-aid]'); if(!row) return;
+  var parent = row.parentElement;
+  var cards = Array.from(parent.children);
+  var i = cards.indexOf(row);
+  var j = i+dir;
+  if(j<0||j>=cards.length) return;
+  if(dir<0) parent.insertBefore(row, cards[j]);
+  else parent.insertBefore(cards[j], row);
+};
+
+window.salvarEditorAtalhos = function(){
+  var body = document.getElementById('ui-atalhos-ed'); if(!body) return;
+  var out=[];
+  Array.from(body.children).forEach(function(row){
+    var ck = row.querySelector('input[type="checkbox"]');
+    if(!ck || !ck.checked) return;
+    var id = row.getAttribute('data-aid');
+    var nome = limitarNome((row.querySelector('input[maxlength]')||{}).value, LIMITE_SUB);
+    out.push({ id:id, label:nome });
+  });
+  if(!out.length){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Deixe pelo menos um atalho.','Atalhos');
+    return;
+  }
+  cfg().uiAtalhos = out;
+  gravar();
+  if(typeof closeModal==='function') closeModal();
+  pintarAtalhos();
+  if(typeof toast==='function') toast('Atalhos atualizados','success');
+};
+
+if(typeof window.renderDashboard==='function' && !window.renderDashboard.__v52213atalhos){
+  var oldD = window.renderDashboard;
+  window.renderDashboard = function(){
+    var r = oldD.apply(this, arguments);
+    setTimeout(pintarAtalhos, 40);
+    return r;
+  };
+  window.renderDashboard.__v52213atalhos = true;
+}
+
+setTimeout(pintarMenus, 400);
+setTimeout(pintarMenus, 1400);
+setTimeout(tirarChamadosLocacao, 900);
+setTimeout(tirarChamadosLocacao, 1800);
+try{
+  new MutationObserver(function(){ tirarChamadosLocacao(); }).observe(document.body, { childList:true, subtree:true });
+}catch(e){}
+
+console.log('[DIGICOPY] v5.22.13 menus editáveis + atalhos do Início');
 })();
 
 ;

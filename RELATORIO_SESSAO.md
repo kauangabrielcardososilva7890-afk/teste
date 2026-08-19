@@ -1,15 +1,28 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-18  
+**Data:** 2026-08-19  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.12** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** `03dadb4` v5.22.12 celular autoriza e puxa a nuvem  
+**Última versão:** **v5.22.13** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
-**Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
+**Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.13 — financeiro, menus e atalhos
+
+Pedido: apagar o menu Recebimento; financeiro só **Contas e caixas**; Receber junto da lixeira; baixa como vendas sem A prazo; Pix no financeiro baixa de verdade; sem marca = novo lançamento (cliente com lupa, sem status, repetir mês a mês); editar ordem/nome dos menus; Chamados só em Atendimento; atalhos do Início editáveis. APK quieto.
+
+- Submenu **Novo recebimento** saiu. Financeiro fica com **Contas e caixas**.
+- **Receber** fica ao lado do **Excluir**. Com caixinha marcada: escolhe a forma (sem A prazo) e o título fica pago. Pix aqui **paga**. Sem marca: cria lançamento (cliente lupa/Enter, descrição, valor, vencimento, repetir).
+- Botão **Menus** na barra: ordem e nome (limite 18/24 letras). Configurações pode ir para o lado do Início.
+- Chamados saiu da Locação. Continua em Atendimento.
+- No Início: atalhos editáveis (ordem, nome, quais botões).
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.13`
 
 ---
 

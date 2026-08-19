@@ -105,5 +105,7 @@
   "ajustes_v5229_nfe_atalho_historico_patch.js",
   "ajustes_v52210_historico_checkbox_nfe_patch.js",
   "ajustes_v52211_logo_impressao_unica_patch.js",
-  "ajustes_v52212_celular_nuvem_patch.js"
+  "ajustes_v52212_celular_nuvem_patch.js",
+  "ajustes_v52213_financeiro_receber_patch.js",
+  "ajustes_v52213_menus_atalhos_patch.js"
 ]

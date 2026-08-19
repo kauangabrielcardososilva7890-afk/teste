@@ -36,7 +36,7 @@ copyDir(path.join(root,'assets','vendor'), path.join(dest,'assets','vendor'));
 
 let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 html=html.replace(
-  '<script src="./app.bundle.js?v=5.22.12"></script>',
+  /<script src="\.\/app\.bundle\.js\?v=[^"]+"><\/script>/,
   '<script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="'+MOBILE_VER+'";</script>\n<script src="./app.bundle.js?v='+MOBILE_VER+'"></script>'
 );
 html=html.replace('Sistema Digicopy</span>','Sistema Digicopy '+MOBILE_VER+'</span>');
