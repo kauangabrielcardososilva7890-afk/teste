@@ -13,6 +13,19 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## Celular 1.0 — APK do sistema (separado do PC)
+
+Pedido: versões separadas; celular começa no **1.0**; é o sistema, não um app de teste.
+
+- Pasta `mobile/` — app **1.0** (`versionCode` 1)
+- PC continua **5.22.12** / dia a dia **5.21.6**
+- NF-e não emite no celular
+- Abrir no Android Studio: pasta `mobile/android`
+- Gerar APK: Build → Build Bundle(s) / APK(s) → Build APK(s)
+- Depois: Nuvem → código do PC Admin → dados descem
+
+---
+
 ## v5.22.12 — celular autoriza e puxa a nuvem
 
 Pedido: importar para o celular primeiro; NF-e só no PC.
