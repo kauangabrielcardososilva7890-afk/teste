@@ -13,6 +13,20 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.12 — celular autoriza e puxa a nuvem
+
+Pedido: importar para o celular primeiro; NF-e só no PC.
+
+- No celular, Nuvem abre em **Tenho um código**, nome padrão **Celular**
+- Dados da nuvem descem. Sobra local não sobe sozinha
+- NF-e neste aparelho não emite
+- Menu por toque. Dá para instalar o ícone no telefone (Chrome → Adicionar à tela inicial)
+- Arquivo `.apk` assinado daqui não sai: falta o Android SDK neste ambiente
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.12`
+
+---
+
 ## v5.22.11 — uma logo só na impressão
 
 Pedido: a notinha saía com a logo duplicada, comendo espaço. Acontecia no geral, não só em venda.
