@@ -5,7 +5,7 @@
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
 **Última versão:** **v5.22.12** (em construção — produção em uso continua **5.21.6**)  
-**Commit:** (este) v5.22.12 celular autoriza e puxa a nuvem  
+**Commit:** `03dadb4` v5.22.12 celular autoriza e puxa a nuvem  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até a NF-e ficar pronta.
 
