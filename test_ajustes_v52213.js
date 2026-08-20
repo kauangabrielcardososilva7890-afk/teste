@@ -47,7 +47,7 @@ ok('atalhos padrão', M.atalhosPadrao().length>=3);
 
 ok('patch financeiro no bundle', manifest.includes('ajustes_v52213_financeiro_receber_patch.js'));
 ok('patch menus no bundle', manifest.includes('ajustes_v52213_menus_atalhos_patch.js'));
-ok('versão 5.22.13', pkg.version==='5.22.13' && html.includes('app.bundle.js?v=5.22.13'));
+ok('patches 5.22.13 no bundle', manifest.includes('ajustes_v52213_financeiro_receber_patch.js') && manifest.includes('ajustes_v52213_menus_atalhos_patch.js'));
 ok('APK quieto', !/mobile/.test(fin+men));
 
 console.log('\nRESULTADO: v5.22.13 passou!');

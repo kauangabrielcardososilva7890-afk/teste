@@ -107,5 +107,7 @@
   "ajustes_v52211_logo_impressao_unica_patch.js",
   "ajustes_v52212_celular_nuvem_patch.js",
   "ajustes_v52213_financeiro_receber_patch.js",
-  "ajustes_v52213_menus_atalhos_patch.js"
+  "ajustes_v52213_menus_atalhos_patch.js",
+  "ajustes_v52214_ordenacao_patch.js",
+  "ajustes_v52214_recargas_patch.js"
 ]

@@ -74,7 +74,8 @@ function tirarSubmenuRecebimento(){
   });
   var soContas = menu.querySelector('button');
   if(soContas && /contas/i.test(soContas.textContent||'')){
-    soContas.innerHTML = '<i class="ph ph-bank"></i>Contas e caixas';
+    var want = '<i class="ph ph-bank"></i>Contas e caixas';
+    if(soContas.innerHTML !== want) soContas.innerHTML = want;
   }
 }
 
@@ -87,9 +88,10 @@ function marcadosFinanceiro(){
 function ajustarBotaoReceber(){
   var view = document.getElementById('view-financeiro'); if(!view) return;
   var actions = view.querySelector('.neo-head .neo-actions'); if(!actions) return;
+  if(actions.querySelector('[data-fin-receber]')) return;
   actions.querySelectorAll('button').forEach(function(b){
     var oc = b.getAttribute('onclick')||'';
-    if(/contaReceber/.test(oc) || b.dataset.finReceber) b.remove();
+    if(/contaReceber/.test(oc)) b.remove();
   });
   var rec = document.createElement('button');
   rec.className = 'neo-btn primary';
@@ -295,9 +297,6 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 
 setTimeout(tirarSubmenuRecebimento, 200);
 setTimeout(tirarSubmenuRecebimento, 1200);
-try{
-  new MutationObserver(function(){ tirarSubmenuRecebimento(); }).observe(document.body, { childList:true, subtree:true });
-}catch(e){}
 
 console.log('[DIGICOPY] v5.22.13 financeiro: Contas e caixas + Receber/baixa');
 })();

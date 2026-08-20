@@ -6,7 +6,7 @@ console.log('== APP CELULAR 1.0 ==');
 const pkg=JSON.parse(fs.readFileSync('mobile/package.json','utf8'));
 const pc=JSON.parse(fs.readFileSync('package.json','utf8'));
 ok('celular é 1.0.0',pkg.version==='1.0.0');
-ok('PC continua 5.22.13',pc.version==='5.22.13');
+ok('PC continua 5.22.x',/^5\.22\./.test(pc.version));
 ok('appId do celular separado',fs.readFileSync('mobile/capacitor.config.json','utf8').includes('br.com.digicopy.erp'));
 const r=spawnSync(process.execPath,['sync-www.js'],{cwd:'mobile',encoding:'utf8'});
 if(r.status!==0){console.error(r.stdout+r.stderr);process.exit(1);}

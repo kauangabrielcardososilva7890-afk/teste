@@ -4,11 +4,23 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.13** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.14** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.14 — página travada, recargas, ordenação
+
+Pedido: a página ficava carregando e não dava para testar configurações; Recarga de toner na venda puxava qualquer produto; filtros dos títulos só iam num sentido (e apareciam duas setas).
+
+- Tirei o `MutationObserver` do financeiro/menus que reescrevia o HTML em loop (CPU 100%).
+- Recargas: aba em Estoque + submenu Recargas. Cadastro próprio, **sem estoque**. Na venda, tipo Recarga de toner puxa só dessa lista.
+- Clique no título: A→Z e Z→A. Uma seta só (não empilha mais duas).
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.14`
 
 ---
 

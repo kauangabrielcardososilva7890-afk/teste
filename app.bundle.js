@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 109 | sha256: b415d6006379c19b
+ * scripts: 111 | sha256: bb8950c5aaa501c8
  */
 
 /* ===== lz.js ===== */
@@ -171,7 +171,7 @@ const PENDING_CNPJ_KEY='digicopy_pending_cnpj_v42_demo_apresentacao';
 const defaultData={
   empresas:[],
   usuarios:[],
-  clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
+  clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
@@ -203,7 +203,7 @@ function storageDecode(raw){
   return raw;
 }
 function normalizeDbShape(parsed){
-  ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+  ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
@@ -508,7 +508,7 @@ function seedData(force=false){
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
       db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
@@ -22005,7 +22005,8 @@ console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 ;
 
 /* ===== historico_sort_patch.js ===== */
-// PATCH v5.17.0 — Ordenar históricos clicando no nome da coluna
+// PATCH v5.17.0 / v5.22.14 — Ordenar históricos clicando no nome da coluna
+// v5.22.14: não empilha seta extra em tabelas que já ordenam no título
 (function(){
 'use strict';
 
@@ -22022,12 +22023,25 @@ function cmp(a,b){
   return String(a).localeCompare(String(b),'pt-BR',{numeric:true,sensitivity:'base'});
 }
 
+function thJaOrdena(th){
+  if(!th) return false;
+  if(th.getAttribute('onclick')) return true;
+  const t=String(th.textContent||'');
+  if(/[▲▼↕]/.test(t)) return true;
+  if(th.querySelector('.hs-arrow')) return true;
+  return false;
+}
+
 function bindTable(table){
   if(!table || table.__hsSort) return;
   const thead=table.tHead || table.querySelector('thead');
   if(!thead) return;
   const ths=Array.from(thead.querySelectorAll('th'));
   if(!ths.length) return;
+  if(ths.some(thJaOrdena)){
+    table.__hsSort='skip';
+    return;
+  }
   table.__hsSort=true;
   ths.forEach((th, idx)=>{
     const label=(th.textContent||'').trim();
@@ -22035,7 +22049,7 @@ function bindTable(table){
     th.style.cursor='pointer';
     th.title='Clique para ordenar';
     th.addEventListener('click', function(ev){
-      ev.stopPropagation();
+      ev.stopImmediatePropagation();
       const tbody=table.tBodies[0]; if(!tbody) return;
       const rows=Array.from(tbody.rows);
       if(rows.length<2) return;
@@ -22064,7 +22078,7 @@ try{
   mo.observe(document.body,{childList:true,subtree:true});
 }catch(e){}
 setTimeout(scan,400);
-console.log('[DIGICOPY] historico_sort_patch.js v5.17.0');
+console.log('[DIGICOPY] historico_sort_patch.js v5.22.14 — uma seta só, dois sentidos');
 })();
 
 ;
@@ -28526,7 +28540,7 @@ const PUSH_BATCH=10;
 const HEARTBEAT_MS=60000;
 
 const DEFINITIONS={
-  empresas:'array', usuarios:'array', clientes:'array', produtos:'array',
+  empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
   os:'array', vendas:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
@@ -30881,7 +30895,8 @@ function tirarSubmenuRecebimento(){
   });
   var soContas = menu.querySelector('button');
   if(soContas && /contas/i.test(soContas.textContent||'')){
-    soContas.innerHTML = '<i class="ph ph-bank"></i>Contas e caixas';
+    var want = '<i class="ph ph-bank"></i>Contas e caixas';
+    if(soContas.innerHTML !== want) soContas.innerHTML = want;
   }
 }
 
@@ -30894,9 +30909,10 @@ function marcadosFinanceiro(){
 function ajustarBotaoReceber(){
   var view = document.getElementById('view-financeiro'); if(!view) return;
   var actions = view.querySelector('.neo-head .neo-actions'); if(!actions) return;
+  if(actions.querySelector('[data-fin-receber]')) return;
   actions.querySelectorAll('button').forEach(function(b){
     var oc = b.getAttribute('onclick')||'';
-    if(/contaReceber/.test(oc) || b.dataset.finReceber) b.remove();
+    if(/contaReceber/.test(oc)) b.remove();
   });
   var rec = document.createElement('button');
   rec.className = 'neo-btn primary';
@@ -31102,9 +31118,6 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 
 setTimeout(tirarSubmenuRecebimento, 200);
 setTimeout(tirarSubmenuRecebimento, 1200);
-try{
-  new MutationObserver(function(){ tirarSubmenuRecebimento(); }).observe(document.body, { childList:true, subtree:true });
-}catch(e){}
 
 console.log('[DIGICOPY] v5.22.13 financeiro: Contas e caixas + Receber/baixa');
 })();
@@ -31150,7 +31163,8 @@ function menusPadrao(){
     ]},
     {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
       {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},
-      {id:'novo-cliente', icon:'ph-user-plus', label:'Novo cliente', click:'openModal(\'cliente\')'}
+      {id:'novo-cliente', icon:'ph-user-plus', label:'Novo cliente', click:'openModal(\'cliente\')'},
+      {id:'recargas', icon:'ph-drop', label:'Recargas', click:'if(typeof window.abrirAbaRecargas===\'function\') window.abrirAbaRecargas(); else navigateTo(\'produtos\')'}
     ]},
     {id:'financeiro', icon:'ph-bank', label:'Financeiro', click:'navigateTo(\'financeiro\')', menuId:'menu-financeiro', items:[
       {id:'contas-caixas', icon:'ph-bank', label:'Contas e caixas', click:'navigateTo(\'financeiro\')'}
@@ -31447,11 +31461,417 @@ setTimeout(pintarMenus, 400);
 setTimeout(pintarMenus, 1400);
 setTimeout(tirarChamadosLocacao, 900);
 setTimeout(tirarChamadosLocacao, 1800);
-try{
-  new MutationObserver(function(){ tirarChamadosLocacao(); }).observe(document.body, { childList:true, subtree:true });
-}catch(e){}
 
 console.log('[DIGICOPY] v5.22.13 menus editáveis + atalhos do Início');
+})();
+
+;
+
+/* ===== ajustes_v52214_ordenacao_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.14 — Ordenação dos títulos: um sentido não trava; sem duas setas
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function proximaDir(atualCol, atualDir, col){
+  if(atualCol===col && atualDir==='asc') return 'desc';
+  return 'asc';
+}
+
+window.ORDENACAO_TITULO_PURE = { proximaDir: proximaDir };
+
+if(typeof document==='undefined') return;
+
+function aplicarDirVisual(root, dir){
+  if(!root) return;
+  root.querySelectorAll('thead th').forEach(function(th){
+    th.querySelectorAll('.hs-arrow').forEach(function(a){ a.remove(); });
+    var html = th.innerHTML;
+    if(dir==='desc') th.innerHTML = html.replace(/ ▲/g,' ▼');
+    else th.innerHTML = html.replace(/ ▼/g,' ▲');
+  });
+  if(dir!=='desc') return;
+  var tb = root.querySelector('tbody');
+  if(!tb || tb.rows.length<2) return;
+  Array.from(tb.rows).reverse().forEach(function(r){ tb.appendChild(r); });
+}
+
+function wrapSort(nome, pegarEstado, seletor){
+  var orig = window[nome];
+  if(typeof orig!=='function' || orig.__v52214sort) return;
+  window[nome] = function(col){
+    var st = pegarEstado();
+    if(!st) return orig.apply(this, arguments);
+    st.dir = proximaDir(st.sort||st.col, st.dir||'asc', col);
+    var r = orig.apply(this, arguments);
+    var sel = typeof seletor==='function' ? seletor.apply(this, arguments) : seletor;
+    setTimeout(function(){
+      var root = sel ? document.querySelector(sel) : null;
+      aplicarDirVisual(root, st.dir);
+    }, 0);
+    return r;
+  };
+  window[nome].__v52214sort = true;
+}
+
+function kauan(){ return window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {}); }
+
+wrapSort('produtosSortOperacional', function(){
+  var st = kauan();
+  st.prod = st.prod || { sort:'codigo', dir:'asc' };
+  return st.prod;
+}, '#view-produtos');
+
+wrapSort('contratosSortOperacional', function(){
+  var st = kauan();
+  st.ctr = st.ctr || { sort:'codigo', dir:'asc' };
+  return st.ctr;
+}, '#view-contratos');
+
+wrapSort('chamadosSortOperacional', function(){
+  var st = kauan();
+  st.chamados = st.chamados || { sort:'codigo', dir:'asc' };
+  return st.chamados;
+}, '#modal-body');
+
+wrapSort('contratosFinalSort', function(){
+  return window.__CONTRATOS_FINAL_STATE__ || (window.__CONTRATOS_FINAL_STATE__ = { sort:'codigo', dir:'asc' });
+}, '#view-contratos');
+
+wrapSort('contratosSortRefino', function(){
+  var st = window.__CONTRATOS_REFINO_STATE__ || window.__KAUAN_STATE__ || {};
+  return st;
+}, '#view-contratos');
+
+wrapSort('chamadosSortRefino', function(){
+  var st = window.__CONTRATOS_REFINO_STATE__ || window.__KAUAN_STATE__ || {};
+  return st;
+}, '#modal-body');
+
+console.log('[DIGICOPY] v5.22.14 ordenação: A→Z e Z→A, uma seta');
+})();
+
+;
+
+/* ===== ajustes_v52214_recargas_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.14 — Recargas fora de produtos: aba, submenu, venda puxa daqui, sem estoque
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function soNumeros(v){ return String(v==null?'':v).replace(/\D/g,''); }
+function proximoCodigoRecarga(lista, empresaId){
+  var max=0;
+  (lista||[]).forEach(function(r){
+    if(!r) return;
+    if(empresaId && r.empresaId && r.empresaId!==empresaId) return;
+    var n=parseInt(soNumeros(r.codigo),10)||0;
+    if(n>max) max=n;
+  });
+  return String(max+1);
+}
+function ehTipoRecarga(tipo){ return /recarga/i.test(String(tipo||'')); }
+function recargaPodeVenderSemEstoque(){ return true; }
+function filtrarRecargas(lista, empresaId, q){
+  var low=String(q||'').toLowerCase().trim();
+  return (lista||[]).filter(function(r){
+    if(!r || r.status==='inativo' || r.status==='excluido') return false;
+    if(empresaId && r.empresaId && r.empresaId!==empresaId) return false;
+    if(!low) return true;
+    return [r.codigo, r.nome, r.marca].some(function(x){ return String(x||'').toLowerCase().includes(low); });
+  });
+}
+
+window.RECARGAS_PURE = {
+  soNumeros: soNumeros,
+  proximoCodigoRecarga: proximoCodigoRecarga,
+  ehTipoRecarga: ehTipoRecarga,
+  recargaPodeVenderSemEstoque: recargaPodeVenderSemEstoque,
+  filtrarRecargas: filtrarRecargas
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function store(){ if(typeof db==='undefined') return []; db.recargas = db.recargas||[]; return db.recargas; }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):(Number(v)||0); }
+
+window.__estoqueAba = window.__estoqueAba || 'produtos';
+window.__recargasSort = window.__recargasSort || { col:'codigo', dir:'asc' };
+window.__recargasBusca = window.__recargasBusca || '';
+
+function htmlAbas(){
+  var rec = window.__estoqueAba==='recargas';
+  return '<div id="estoque-abas-v52214" class="flex border-b gap-4 mb-1 font-bold text-[13.5px] text-slate-500">'+
+    '<button type="button" onclick="window.abrirAbaProdutos()" class="pb-2 border-b-2 '+(rec?'border-transparent hover:text-slate-800':'border-[#0a1e8a] text-[#0a1e8a]')+'">Produtos</button>'+
+    '<button type="button" onclick="window.abrirAbaRecargas()" class="pb-2 border-b-2 '+(rec?'border-[#0a1e8a] text-[#0a1e8a]':'border-transparent hover:text-slate-800')+'">Recargas</button>'+
+    '</div>';
+}
+
+window.abrirAbaProdutos = function(){
+  window.__estoqueAba = 'produtos';
+  if(typeof navigateTo==='function') navigateTo('produtos');
+  else if(typeof renderProdutos==='function') renderProdutos();
+};
+window.abrirAbaRecargas = function(){
+  window.__estoqueAba = 'recargas';
+  if(typeof navigateTo==='function') navigateTo('produtos');
+  else window.renderRecargas();
+};
+
+window.aplicarBuscaRecargas = function(){
+  var el = document.getElementById('search-recargas');
+  window.__recargasBusca = el ? el.value : '';
+  window.renderRecargas();
+};
+window.recargasSort = function(col){
+  var st = window.__recargasSort;
+  if(st.col===col) st.dir = st.dir==='asc'?'desc':'asc';
+  else { st.col=col; st.dir='asc'; }
+  window.renderRecargas();
+};
+
+window.renderRecargas = function(){
+  var s = sess(); if(!s) return;
+  var view = document.getElementById('view-produtos'); if(!view) return;
+  var q = window.__recargasBusca||'';
+  var st = window.__recargasSort;
+  var list = filtrarRecargas(store(), s.empresaId, q);
+  list = list.slice().sort(function(a,b){
+    var A = a[st.col]==null?'':a[st.col];
+    var B = b[st.col]==null?'':b[st.col];
+    if(st.col==='preco' || st.col==='codigo'){
+      var an=Number(soNumeros(A))||Number(A)||0;
+      var bn=Number(soNumeros(B))||Number(B)||0;
+      if(st.col==='preco'){ an=Number(A)||0; bn=Number(B)||0; }
+      return st.dir==='asc'?an-bn:bn-an;
+    }
+    var c=String(A).localeCompare(String(B),'pt-BR',{numeric:true,sensitivity:'base'});
+    return st.dir==='asc'?c:-c;
+  });
+  var seta = function(col){ return st.col===col ? (st.dir==='asc'?' ▲':' ▼') : ''; };
+  var th = function(col,label){ return '<th onclick="recargasSort(\''+col+'\')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">'+label+seta(col)+'</th>'; };
+  view.innerHTML = htmlAbas()+
+    '<div class="space-y-4">'+
+    '<div class="flex flex-wrap gap-3 justify-between items-center">'+
+    '<div class="flex gap-2"><button onclick="window.abrirModalRecarga()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Nova recarga</button></div>'+
+    '<div class="flex gap-2 items-center"><input id="search-recargas" value="'+esc(q)+'" placeholder="Código ou descrição..." class="h-10 px-4 rounded-xl bg-white border text-[13.5px] w-[270px]">'+
+    '<button type="button" onclick="window.aplicarBuscaRecargas()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button></div></div>'+
+    '<div class="rounded-[14px] bg-blue-50 border border-blue-200 p-3 text-[12.5px] text-blue-900">Recarga não controla estoque — quantidade infinita. A venda Recarga de toner puxa só desta lista.</div>'+
+    '<div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[680px]">'+
+    '<table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr>'+
+    th('codigo','Código')+th('nome','Descrição')+th('marca','Marca')+th('preco','Valor venda')+'<th class="px-4 py-2.5 text-right">Ações</th></tr></thead><tbody class="divide-y">'+
+    (list.map(function(r){
+      return '<tr ondblclick="window.abrirModalRecarga(\''+esc(r.id)+'\')" class="hover:bg-slate-50 cursor-pointer">'+
+        '<td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">'+esc(r.codigo||'')+'</td>'+
+        '<td class="px-4 py-2.5 font-semibold">'+esc(r.nome||'')+'</td>'+
+        '<td class="px-4 py-2.5">'+esc(r.marca||'-')+'</td>'+
+        '<td class="px-4 py-2.5 font-bold text-emerald-700">'+money(r.preco||0)+'</td>'+
+        '<td class="px-4 py-2.5 text-right"><div class="flex justify-end gap-1">'+
+        '<button onclick="event.stopPropagation();window.abrirModalRecarga(\''+esc(r.id)+'\')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button>'+
+        '<button onclick="event.stopPropagation();window.excluirRecarga(\''+esc(r.id)+'\')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button>'+
+        '</div></td></tr>';
+    }).join('') || '<tr><td colspan="5" class="px-5 py-14 text-center text-slate-500">Nenhuma recarga. Cadastre para puxar na venda.</td></tr>')+
+    '</tbody></table></div></div></div>';
+  var inp = document.getElementById('search-recargas');
+  if(inp){
+    inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.aplicarBuscaRecargas(); } };
+  }
+};
+
+window.abrirModalRecarga = function(id){
+  var s = sess(); if(!s) return;
+  var isEdit = !!id;
+  var r = isEdit ? store().find(function(x){ return x.id===id && (!x.empresaId || x.empresaId===s.empresaId); }) : {
+    codigo: proximoCodigoRecarga(store(), s.empresaId), nome:'', marca:'', preco:0
+  };
+  if(!r){ aviso('Recarga não encontrada','Recargas'); return; }
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[640px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = isEdit ? 'Alterar recarga — '+r.codigo : 'Nova recarga';
+  document.getElementById('modal-body').innerHTML =
+    '<div class="space-y-3 text-[13px]">'+
+    '<div class="grid grid-cols-1 md:grid-cols-3 gap-3">'+
+    '<div><label class="block font-bold text-slate-600 mb-1">Código (só número)</label><input id="rc-cod" value="'+esc(r.codigo||'')+'" inputmode="numeric" class="w-full h-10 px-3 rounded-xl border font-mono"></div>'+
+    '<div class="md:col-span-2"><label class="block font-bold text-slate-600 mb-1">Descrição *</label><input id="rc-nome" value="'+esc(r.nome||'')+'" class="w-full h-10 px-3 rounded-xl border font-semibold" placeholder="Ex.: Recarga HP 85A"></div></div>'+
+    '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'+
+    '<div><label class="block font-bold text-slate-600 mb-1">Marca</label><input id="rc-marca" value="'+esc(r.marca||'')+'" class="w-full h-10 px-3 rounded-xl border"></div>'+
+    '<div><label class="block font-bold text-slate-600 mb-1">Valor venda R$</label><input id="rc-preco" type="number" step="0.01" value="'+(r.preco||0)+'" class="w-full h-10 px-3 rounded-xl border font-bold text-[#0a1e8a]"></div></div>'+
+    '<p class="text-[12px] text-slate-500">Sem estoque. Sempre disponível na venda Recarga de toner.</p></div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.salvarRecarga(\''+(isEdit?esc(r.id):'')+'\')" class="h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  var cod = document.getElementById('rc-cod');
+  if(cod){
+    cod.addEventListener('input', function(){ this.value = soNumeros(this.value); });
+  }
+};
+
+window.salvarRecarga = function(id){
+  var s = sess(); if(!s) return;
+  var nome = String((document.getElementById('rc-nome')||{}).value||'').trim();
+  if(!nome){ aviso('Informe a descrição da recarga.','Recargas'); return; }
+  var codigo = soNumeros((document.getElementById('rc-cod')||{}).value) || proximoCodigoRecarga(store(), s.empresaId);
+  var payload = {
+    empresaId: s.empresaId,
+    codigo: codigo,
+    nome: nome,
+    marca: String((document.getElementById('rc-marca')||{}).value||'').trim(),
+    preco: parseFloat((document.getElementById('rc-preco')||{}).value)||0,
+    status: 'ativo',
+    semEstoque: true
+  };
+  if(id){
+    var ex = store().find(function(x){ return x.id===id; });
+    if(!ex){ aviso('Recarga não encontrada','Recargas'); return; }
+    Object.assign(ex, payload, { atualizadoEm: new Date().toISOString(), atualizadoPorNome: s.usuarioNome });
+    if(typeof logAction==='function') logAction('recarga','editar',id,'Recarga '+payload.nome+' alterada por '+s.usuarioNome);
+  } else {
+    var novo = Object.assign({
+      id: (typeof uid==='function'?uid('rcg'):('rcg_'+Date.now())),
+      criadoEm: new Date().toISOString(),
+      criadoPor: s.usuarioId,
+      criadoPorNome: s.usuarioNome
+    }, payload);
+    store().push(novo);
+    if(typeof logAction==='function') logAction('recarga','criar',novo.id,'Recarga '+payload.nome+' cadastrada por '+s.usuarioNome);
+  }
+  if(typeof saveDB==='function') saveDB();
+  if(typeof closeModal==='function') closeModal();
+  window.renderRecargas();
+  if(typeof toast==='function') toast('Recarga salva','success');
+};
+
+window.excluirRecarga = function(id){
+  var s = sess(); if(!s) return;
+  var r = store().find(function(x){ return x.id===id; });
+  if(!r) return;
+  var msg = 'Excluir a recarga '+ (r.codigo||'') +' — '+(r.nome||'')+'?';
+  var okFn = function(){
+    db.recargas = store().filter(function(x){ return x.id!==id; });
+    if(typeof logAction==='function') logAction('recarga','excluir',id,'Recarga excluída por '+s.usuarioNome);
+    if(typeof saveDB==='function') saveDB();
+    window.renderRecargas();
+    if(typeof toast==='function') toast('Recarga excluída','success');
+  };
+  if(typeof window.confirmSistema==='function') window.confirmSistema(msg,'Excluir recarga').then(function(ok){ if(ok) okFn(); });
+  else okFn();
+};
+
+if(typeof window.renderProdutos==='function' && !window.renderProdutos.__v52214rec){
+  var oldRP = window.renderProdutos;
+  window.renderProdutos = function(){
+    if(window.__estoqueAba==='recargas'){
+      window.renderRecargas();
+      return;
+    }
+    var r = oldRP.apply(this, arguments);
+    try{
+      var view = document.getElementById('view-produtos');
+      if(view && !view.querySelector('#estoque-abas-v52214')){
+        var wrap = document.createElement('div');
+        wrap.innerHTML = htmlAbas();
+        view.insertBefore(wrap.firstChild, view.firstChild);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.renderProdutos.__v52214rec = true;
+}
+
+function ehRecargaNaVenda(){
+  return ehTipoRecarga((document.getElementById('vos-item-tipo')||{}).value);
+}
+
+function pintarBuscaRecargas(q){
+  var s = sess(); var el = document.getElementById('vos-prod-results'); if(!el) return;
+  var low = String(q||'').toLowerCase().trim();
+  if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  var list = filtrarRecargas(store(), s&&s.empresaId, low).slice(0,10);
+  el.innerHTML = list.map(function(r){
+    return '<button type="button" onclick="window.vosVendaSelectRecarga(\''+esc(r.id)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'+
+      '<b>'+esc(r.nome||'')+'</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">Recarga</span><br>'+
+      '<span class="text-slate-500 text-[11px]">cód. '+esc(r.codigo||'')+' • sem estoque • <b class="text-[#0a1e8a]">'+money(r.preco||0)+'</b></span></button>';
+  }).join('') || '<p class="px-3 py-2 text-slate-400">Nenhuma recarga. Cadastre em Cadastros → Recargas.</p>';
+  el.classList.remove('hidden');
+}
+
+window.vosVendaSelectRecarga = function(id){
+  var r = store().find(function(x){ return x.id===id; }); if(!r) return;
+  var f = window.__vosForm; if(f){ f.recargaSel = r; f.produtoSel = null; }
+  var busca = document.getElementById('vos-prod-search'); if(busca) busca.value = r.nome||'';
+  var vu = document.getElementById('vos-item-vunit'); if(vu) vu.value = r.preco||0;
+  var res = document.getElementById('vos-prod-results'); if(res) res.classList.add('hidden');
+  if(typeof window.vosItemCalcTotal==='function') window.vosItemCalcTotal();
+};
+
+if(typeof window.vosVendaSearchProd==='function' && !window.vosVendaSearchProd.__v52214rec){
+  var oldSearch = window.vosVendaSearchProd;
+  window.vosVendaSearchProd = function(q){
+    if(ehRecargaNaVenda()){ pintarBuscaRecargas(q); return; }
+    return oldSearch.apply(this, arguments);
+  };
+  window.vosVendaSearchProd.__v52214rec = true;
+}
+
+if(typeof window.vosOnTipoItem==='function' && !window.vosOnTipoItem.__v52214rec){
+  var oldTipo = window.vosOnTipoItem;
+  window.vosOnTipoItem = function(){
+    var r = oldTipo.apply(this, arguments);
+    var busca = document.getElementById('vos-prod-search');
+    var f = window.__vosForm;
+    if(ehRecargaNaVenda()){
+      if(f){ f.produtoSel = null; }
+      if(busca) busca.placeholder = 'Busque a recarga cadastrada (não puxa produto)...';
+      var res = document.getElementById('vos-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
+    } else if(busca){
+      if(f) f.recargaSel = null;
+      busca.placeholder = 'Digite para buscar ou escreva a descrição manual...';
+    }
+    return r;
+  };
+  window.vosOnTipoItem.__v52214rec = true;
+}
+
+if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52214rec){
+  var oldAdd = window.vosAddItem;
+  window.vosAddItem = function(){
+    var f = window.__vosForm;
+    if(ehRecargaNaVenda() && f && f.recargaSel){
+      f.produtoSel = {
+        id: f.recargaSel.id,
+        nome: f.recargaSel.nome,
+        sku: f.recargaSel.codigo,
+        preco: f.recargaSel.preco,
+        categoria: 'Recarga',
+        estoque: 999999
+      };
+    }
+    var r = oldAdd.apply(this, arguments);
+    if(f) f.recargaSel = null;
+    return r;
+  };
+  window.vosAddItem.__v52214rec = true;
+}
+
+if(typeof window.MENUS_ATALHOS_PURE==='object' && window.MENUS_ATALHOS_PURE.catalogoAtalhos && !window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214){
+  var oldCat = window.MENUS_ATALHOS_PURE.catalogoAtalhos;
+  window.MENUS_ATALHOS_PURE.catalogoAtalhos = function(){
+    var list = oldCat();
+    if(!list.some(function(a){ return a.id==='recargas'; })){
+      list.push({id:'recargas', icon:'ph-drop', label:'Recargas', click:'if(typeof window.abrirAbaRecargas===\'function\') window.abrirAbaRecargas(); else navigateTo(\'produtos\')'});
+    }
+    return list;
+  };
+  window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214 = true;
+}
+
+console.log('[DIGICOPY] v5.22.14 recargas: aba + submenu + venda sem estoque');
 })();
 
 ;

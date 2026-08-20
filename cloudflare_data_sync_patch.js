@@ -18,7 +18,7 @@ const PUSH_BATCH=10;
 const HEARTBEAT_MS=60000;
 
 const DEFINITIONS={
-  empresas:'array', usuarios:'array', clientes:'array', produtos:'array',
+  empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
   os:'array', vendas:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
