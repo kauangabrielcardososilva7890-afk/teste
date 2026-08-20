@@ -239,9 +239,10 @@ window.salvarEditorMenus = function(){
   cfg().uiMenus = { ordem:ordem, nomes:nomes, sub:sub };
   gravar();
   if(typeof closeModal==='function') closeModal();
-  pintarMenus();
+  if(typeof window.pintarMenus==='function') window.pintarMenus(); else pintarMenus();
   if(typeof toast==='function') toast('Menus atualizados','success');
 };
+window.pintarMenus = pintarMenus;
 
 function pintarAtalhos(){
   var view = document.getElementById('view-dashboard'); if(!view) return;
@@ -316,22 +317,23 @@ window.salvarEditorAtalhos = function(){
   cfg().uiAtalhos = out;
   gravar();
   if(typeof closeModal==='function') closeModal();
-  pintarAtalhos();
+  if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); else pintarAtalhos();
   if(typeof toast==='function') toast('Atalhos atualizados','success');
 };
+window.pintarAtalhos = pintarAtalhos;
 
 if(typeof window.renderDashboard==='function' && !window.renderDashboard.__v52213atalhos){
   var oldD = window.renderDashboard;
   window.renderDashboard = function(){
     var r = oldD.apply(this, arguments);
-    setTimeout(pintarAtalhos, 40);
+    setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); }, 40);
     return r;
   };
   window.renderDashboard.__v52213atalhos = true;
 }
 
-setTimeout(pintarMenus, 400);
-setTimeout(pintarMenus, 1400);
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 400);
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 1400);
 setTimeout(tirarChamadosLocacao, 900);
 setTimeout(tirarChamadosLocacao, 1800);
 

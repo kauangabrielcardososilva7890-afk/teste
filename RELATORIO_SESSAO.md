@@ -4,11 +4,25 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.15** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.16** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.16 — submenus, ocultos e atalhos na faixa azul
+
+Pedido: mover submenus; menus ocultos só o Admin vê; atalho duplicou (faixa branca + faixa azul); atalhos na parte azul, escolhendo submenu e não só o menu pai.
+
+- Editor de **Menus**: setas nos submenus. Corrigidas as setas do menu (antes o `↑↓` não andava).
+- Caixa **Oculto** em menu e submenu. Quem não é Admin não vê o item. Admin continua vendo (mais claro) e é o único que abre o editor.
+- **Sair** não some.
+- Some a faixa branca de atalhos no Início. Os botões ficam na faixa azul. O lápis **Atalhos** também.
+- No editor de atalhos a lista é por submenu (Nova venda, Recargas, etc.), agrupada pelo menu pai.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.16`
 
 ---
 
