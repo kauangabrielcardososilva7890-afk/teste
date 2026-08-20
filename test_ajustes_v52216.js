@@ -60,7 +60,7 @@ ok('hooks no 5.22.13', /window\.pintarMenus/.test(men) && /window\.pintarAtalhos
 ok('uiMenuMover usa o botão', /closest\('\[data-mid\]'\)/.test(sub));
 
 ok('patch no bundle', manifest.includes('ajustes_v52216_menus_submenus_patch.js'));
-ok('versão 5.22.16', pkg.version==='5.22.16' && html.includes('app.bundle.js?v=5.22.16'));
+ok('versão 5.22.x', /^5\.22\./.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile/.test(sub));
 
 console.log('\nRESULTADO: v5.22.16 passou!');

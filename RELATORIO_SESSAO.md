@@ -12,6 +12,18 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.17 — arrastar menus, Nuvem/Backup, rodapé, recibo, cert na nuvem
+
+- Editor de Menus: **arrastar** menu e submenu. Setas dos submenus corrigidas.
+- **Backup** só Admin. **Nuvem**: Admin sempre; se o PC ainda não autorizou, o outro usuário vê para colar o código.
+- Impressão/PDF: saiu o rodapé cinza da loja (o que caía na outra metade da folha), inclusive vendas.
+- Financeiro: botão **Imprimir** junto de Receber/Excluir. Só o mesmo cliente. Recibo normal lista parcelas/vendas; recibo com descrição mostra os códigos **e** o texto.
+- NF-e: dá para enviar o certificado **público** (.p7b/.cer) para a nuvem. **.pfx A1 não sobe**. Senha não é pedida nem gravada. Sem .pfx neste PC a nota não assina.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.17`
+
+---
+
 ## v5.22.16 — submenus, ocultos e atalhos na faixa azul
 
 Pedido: mover submenus; menus ocultos só o Admin vê; atalho duplicou (faixa branca + faixa azul); atalhos na parte azul, escolhendo submenu e não só o menu pai.

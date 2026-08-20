@@ -110,5 +110,9 @@
   "ajustes_v52213_menus_atalhos_patch.js",
   "ajustes_v52214_ordenacao_patch.js",
   "ajustes_v52214_recargas_patch.js",
-  "ajustes_v52216_menus_submenus_patch.js"
+  "ajustes_v52216_menus_submenus_patch.js",
+  "ajustes_v52217_menus_arrastar_visibilidade_patch.js",
+  "ajustes_v52217_print_sem_rodape_patch.js",
+  "ajustes_v52217_financeiro_recibo_patch.js",
+  "ajustes_v52217_cert_nuvem_patch.js"
 ]
