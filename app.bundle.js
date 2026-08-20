@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 111 | sha256: bb8950c5aaa501c8
+ * scripts: 111 | sha256: e80b4b069b484f54
  */
 
 /* ===== lz.js ===== */
@@ -6623,6 +6623,7 @@ window.syncCarregarDaNuvem = async function(opts={}){
       : '';
     upStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem. Recarregando...</span>${avisoParcial}`);
     if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+    if(opts.automatico === true) return {ok:true, rapido:true, faltando, semReload:true};
     setTimeout(()=>location.reload(), 900);
     return {ok:true, rapido:true, faltando};
   }catch(err){
@@ -17391,15 +17392,9 @@ window.doLoginUser=function(){
 function totalLocal(){ return ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar'].reduce((s,k)=>s+((db[k]||[]).length||0),0); }
 function temBancoMigrado(){ return Object.values(db.modulosDinamicos||{}).some(m=>Array.isArray(m&&m.dados)&&m.dados.length>0) || totalLocal()>1000; }
 async function autoCarregarNuvemSeVazio(){
-  if(window.DIGI_MODO_LEVE) return;
-  if(sessionStorage.getItem('digicopy_auto_load_try_v4939')) return;
-  if(temBancoMigrado()) return;
-  if(typeof window.syncCarregarDaNuvem!=='function') return;
-  sessionStorage.setItem('digicopy_auto_load_try_v4939','1');
-  try{
-    if(typeof toast==='function') toast('Tentando carregar dados da nuvem automaticamente...','info');
-    await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
-  }catch(e){ console.warn('[DIGICOPY] carga automática da nuvem falhou', e); }
+  // v5.22.15: não puxa nuvem sozinho na abertura (Firebase morto; Cloudflare
+  // sincroniza depois do login). No GitHack isso cobria a tela e recarregava em loop.
+  return;
 }
 
 const oldBuildNav=window.buildNav;
@@ -17411,8 +17406,8 @@ if(typeof oldBuildNav==='function'&&!oldBuildNav.__loginDiretoMenus){
 window.LOGIN_DIRETO_LEGADO_PURE={ fold, loginCompativel, senhaCompativel, perfilFunc, importarFuncionariosLegados, escolherEmpresaPadrao, unirAdminDemoComOriginal };
 
 if(typeof document!=='undefined'){
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); });
-  else { estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); });
+  else { estilizarLogin(); }
   setInterval(limparTopoMenus,3000);
 }
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
@@ -19557,10 +19552,6 @@ console.log('[DIGICOPY] buscador_escola v1.0 carregado');
   // Roda na carga e observa
   setTimeout(deletarOcultos, 300);
   setTimeout(deletarOcultos, 1500);
-  try{
-    const obs=new MutationObserver(()=> deletarOcultos());
-    obs.observe(document.body, {childList:true, subtree:true});
-  }catch(e){}
   // Também sobrescreve funções que criam esses elementos para não recriarem
   const origGarantir = window.garantirBotaoDadosMigrados;
   if(origGarantir) window.garantirBotaoDadosMigrados = function(){ /* deletado - não recria */ };
@@ -26246,24 +26237,12 @@ const _syncLoad = window.syncCarregarDaNuvem;
 if(typeof _syncLoad === 'function'){
   window.syncCarregarDaNuvem = async function(){
     const automatico = arguments[0] && arguments[0].automatico === true;
-    if(automatico) cloudLoading('Buscando seus dados na nuvem...');
-    const r = await _syncLoad.apply(this, arguments);
     if(automatico){
-      if(r && r.ok){
-        // Vai recarregar a página — mantém o aviso até a recarga acontecer.
-      } else if(r && r.vazio){
-        cloudHide(); // nuvem sem dados ainda = instalação nova, deixa entrar
-      } else if(r && r.cancelado){
-        cloudHide(); // proteção/cancelamento: deixa entrar normalmente
-      } else {
-        const msg = (r && r.erros && r.erros.length) ? r.erros[0] : 'Erro ao carregar os dados da nuvem.';
-        cloudError(msg);
-        const retry = document.getElementById('cloud-overlay-retry');
-        const close = document.getElementById('cloud-overlay-close');
-        if(retry) retry.onclick = function(){ window.syncCarregarDaNuvem({confirmar:false, automatico:true}); };
-        if(close) close.onclick = cloudHide;
-      }
+      const r = await _syncLoad.apply(this, arguments);
+      cloudHide();
+      return r;
     }
+    const r = await _syncLoad.apply(this, arguments);
     return r;
   };
 }

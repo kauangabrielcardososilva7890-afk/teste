@@ -329,6 +329,7 @@ window.syncCarregarDaNuvem = async function(opts={}){
       : '';
     upStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem. Recarregando...</span>${avisoParcial}`);
     if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+    if(opts.automatico === true) return {ok:true, rapido:true, faltando, semReload:true};
     setTimeout(()=>location.reload(), 900);
     return {ok:true, rapido:true, faltando};
   }catch(err){
