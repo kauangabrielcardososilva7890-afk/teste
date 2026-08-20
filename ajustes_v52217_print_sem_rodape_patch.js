@@ -30,7 +30,11 @@ if(typeof oldOpen==='function' && !oldOpen.__v52217rodape){
       if(w && w.document && w.document.write){
         var ow=w.document.write.bind(w.document);
         w.document.write=function(html){
-          if(typeof html==='string') html=tirarRodapeLoja(html);
+          if(typeof html==='string'){
+            html=tirarRodapeLoja(html);
+            if(html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+            html=tirarRodapeLoja(html);
+          }
           return ow(html);
         };
       }
@@ -43,7 +47,9 @@ if(typeof oldOpen==='function' && !oldOpen.__v52217rodape){
 if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52217rodape){
   var oldVos=window.vosGerarHtmlNotinha;
   window.vosGerarHtmlNotinha=function(){
-    return tirarRodapeLoja(oldVos.apply(this, arguments));
+    var html=tirarRodapeLoja(oldVos.apply(this, arguments));
+    if(typeof html==='string' && html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+    return tirarRodapeLoja(html);
   };
   window.vosGerarHtmlNotinha.__v52217rodape=true;
 }

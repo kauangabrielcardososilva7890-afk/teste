@@ -50,7 +50,7 @@ ok('não pede senha', !/senha/i.test(cer) || /NÃO pede senha|não pede senha/.t
 ok('não sobe pfx', /Não envie o A1/.test(cer));
 
 ok('patches no bundle', manifest.includes('ajustes_v52217_menus_arrastar_visibilidade_patch.js') && manifest.includes('ajustes_v52217_print_sem_rodape_patch.js') && manifest.includes('ajustes_v52217_financeiro_recibo_patch.js') && manifest.includes('ajustes_v52217_cert_nuvem_patch.js'));
-ok('versão 5.22.17', pkg.version==='5.22.17' && html.includes('app.bundle.js?v=5.22.17'));
+ok('versão 5.22.x', /^5\.22\./.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile/.test(men+prn+rec+cer));
 
 console.log('\nRESULTADO: v5.22.17 passou!');

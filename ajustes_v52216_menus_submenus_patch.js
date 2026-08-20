@@ -83,6 +83,7 @@ function aplicarLayout(padrao, salvo){
 function menusParaUsuario(menus, isAdmin){
   var out=[];
   (menus||[]).forEach(function(m){
+    if(!isAdmin && (m.id==='backup' || m.id==='nuvem')) return;
     if(!isAdmin && m.oculto && !BLOQUEIO_OCULTAR[m.id]) return;
     var copy = clonarMenu(m);
     if(!isAdmin && copy.items){
@@ -221,9 +222,7 @@ window.pintarMenus = function(){
   var admin = sessAdmin();
   var vis = menusParaUsuario(menusAtivos(), admin);
   var html = vis.map(htmlModulo).join('');
-  if(admin){
-    html += '<div class="module"><button type="button" title="Editar ordem, nome e visibilidade dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
-  }
+  html += '<div class="module"><button type="button" title="Editar ordem, nome e visibilidade dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
   if(status) html += status.outerHTML;
   row.innerHTML = html;
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
@@ -254,11 +253,10 @@ window.uiSubMenuMover = function(btn, dir){
 };
 
 window.abrirEditorMenus = function(){
-  if(!sessAdmin()){
-    if(typeof toast==='function') toast('Só o Admin altera os menus','error');
-    return;
-  }
   var atuais = menusAtivos();
+  if(!sessAdmin()){
+    atuais = atuais.filter(function(m){ return m.id!=='backup' && m.id!=='nuvem'; });
+  }
   var box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[760px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
   document.getElementById('modal-title').innerText = 'Ordem, nomes e visibilidade';
@@ -292,7 +290,6 @@ window.abrirEditorMenus = function(){
 };
 
 window.salvarEditorMenus = function(){
-  if(!sessAdmin()) return;
   var body = document.getElementById('ui-menus-ed'); if(!body) return;
   var ordem=[], nomes={}, sub={}, subOrdem={}, ocultos={}, ocultosSub={};
   Array.from(body.children).forEach(function(card){
@@ -361,17 +358,11 @@ window.pintarAtalhos = function(){
     }
     return '<button onclick="'+a.click+'" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph '+a.icon+' text-[16px]"></i> '+label+'</button>';
   }).join('');
-  if(admin){
-    html += '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Atalhos</button>';
-  }
+  html += '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Atalhos</button>';
   host.innerHTML = html;
 };
 
 window.abrirEditorAtalhos = function(){
-  if(!sessAdmin()){
-    if(typeof toast==='function') toast('Só o Admin altera os atalhos','error');
-    return;
-  }
   var cat = catalogoAtalhos();
   var atuais = atalhosAtivos();
   var ids = {};
@@ -425,7 +416,6 @@ window.uiAtalhoMover = function(btn, dir){
 };
 
 window.salvarEditorAtalhos = function(){
-  if(!sessAdmin()) return;
   var body = document.getElementById('ui-atalhos-ed'); if(!body) return;
   var out=[];
   Array.from(body.querySelectorAll('[data-aid]')).forEach(function(row){

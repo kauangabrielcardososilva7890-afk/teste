@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 116 | sha256: 200bbd83f43bd82a
+ * scripts: 118 | sha256: ae310c782640e223
  */
 
 /* ===== lz.js ===== */
@@ -31943,6 +31943,7 @@ function aplicarLayout(padrao, salvo){
 function menusParaUsuario(menus, isAdmin){
   var out=[];
   (menus||[]).forEach(function(m){
+    if(!isAdmin && (m.id==='backup' || m.id==='nuvem')) return;
     if(!isAdmin && m.oculto && !BLOQUEIO_OCULTAR[m.id]) return;
     var copy = clonarMenu(m);
     if(!isAdmin && copy.items){
@@ -32081,9 +32082,7 @@ window.pintarMenus = function(){
   var admin = sessAdmin();
   var vis = menusParaUsuario(menusAtivos(), admin);
   var html = vis.map(htmlModulo).join('');
-  if(admin){
-    html += '<div class="module"><button type="button" title="Editar ordem, nome e visibilidade dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
-  }
+  html += '<div class="module"><button type="button" title="Editar ordem, nome e visibilidade dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
   if(status) html += status.outerHTML;
   row.innerHTML = html;
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
@@ -32114,11 +32113,10 @@ window.uiSubMenuMover = function(btn, dir){
 };
 
 window.abrirEditorMenus = function(){
-  if(!sessAdmin()){
-    if(typeof toast==='function') toast('Só o Admin altera os menus','error');
-    return;
-  }
   var atuais = menusAtivos();
+  if(!sessAdmin()){
+    atuais = atuais.filter(function(m){ return m.id!=='backup' && m.id!=='nuvem'; });
+  }
   var box = document.getElementById('modal-box');
   if(box) box.className = 'w-full max-w-[760px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
   document.getElementById('modal-title').innerText = 'Ordem, nomes e visibilidade';
@@ -32152,7 +32150,6 @@ window.abrirEditorMenus = function(){
 };
 
 window.salvarEditorMenus = function(){
-  if(!sessAdmin()) return;
   var body = document.getElementById('ui-menus-ed'); if(!body) return;
   var ordem=[], nomes={}, sub={}, subOrdem={}, ocultos={}, ocultosSub={};
   Array.from(body.children).forEach(function(card){
@@ -32221,17 +32218,11 @@ window.pintarAtalhos = function(){
     }
     return '<button onclick="'+a.click+'" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph '+a.icon+' text-[16px]"></i> '+label+'</button>';
   }).join('');
-  if(admin){
-    html += '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Atalhos</button>';
-  }
+  html += '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Atalhos</button>';
   host.innerHTML = html;
 };
 
 window.abrirEditorAtalhos = function(){
-  if(!sessAdmin()){
-    if(typeof toast==='function') toast('Só o Admin altera os atalhos','error');
-    return;
-  }
   var cat = catalogoAtalhos();
   var atuais = atalhosAtivos();
   var ids = {};
@@ -32285,7 +32276,6 @@ window.uiAtalhoMover = function(btn, dir){
 };
 
 window.salvarEditorAtalhos = function(){
-  if(!sessAdmin()) return;
   var body = document.getElementById('ui-atalhos-ed'); if(!body) return;
   var out=[];
   Array.from(body.querySelectorAll('[data-aid]')).forEach(function(row){
@@ -32368,12 +32358,7 @@ function aplicarVisibilidadeBarra(){
     nuvem.style.display=nuvemOk?'':'none';
     if(mn) mn.style.display=nuvemOk?'':'none';
   }
-  document.querySelectorAll('.module').forEach(function(mod){
-    var btn=mod.querySelector('button');
-    if(!btn) return;
-    var tx=(btn.textContent||'').replace(/\s+/g,' ').trim();
-    if(/^Menus$/i.test(tx)) mod.style.display=admin?'':'none';
-  });
+
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
 }
 
@@ -32461,6 +32446,28 @@ if(typeof window.uiSubMenuMover==='function' && !window.uiSubMenuMover.__v52217)
   window.uiSubMenuMover.__v52217=true;
 }
 
+if(typeof window.salvarEditorMenus==='function' && !window.salvarEditorMenus.__v52218keep){
+  var oldSalvar=window.salvarEditorMenus;
+  window.salvarEditorMenus=function(){
+    var prev=(typeof db!=='undefined' && db.config && db.config.uiMenus) || null;
+    var admin=sessAdmin();
+    var r=oldSalvar.apply(this, arguments);
+    if(!admin && prev && prev.ordem && db.config && db.config.uiMenus && Array.isArray(db.config.uiMenus.ordem)){
+      ['backup','nuvem'].forEach(function(id){
+        var cur=db.config.uiMenus.ordem;
+        if(prev.ordem.indexOf(id)>=0 && cur.indexOf(id)<0){
+          var idx=Math.min(prev.ordem.indexOf(id), cur.length);
+          cur.splice(idx,0,id);
+        }
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof window.pintarMenus==='function') window.pintarMenus();
+    }
+    return r;
+  };
+  window.salvarEditorMenus.__v52218keep=true;
+}
+
 setTimeout(aplicarVisibilidadeBarra, 200);
 setTimeout(aplicarVisibilidadeBarra, 800);
 setTimeout(aplicarVisibilidadeBarra, 1800);
@@ -32508,7 +32515,11 @@ if(typeof oldOpen==='function' && !oldOpen.__v52217rodape){
       if(w && w.document && w.document.write){
         var ow=w.document.write.bind(w.document);
         w.document.write=function(html){
-          if(typeof html==='string') html=tirarRodapeLoja(html);
+          if(typeof html==='string'){
+            html=tirarRodapeLoja(html);
+            if(html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+            html=tirarRodapeLoja(html);
+          }
           return ow(html);
         };
       }
@@ -32521,7 +32532,9 @@ if(typeof oldOpen==='function' && !oldOpen.__v52217rodape){
 if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52217rodape){
   var oldVos=window.vosGerarHtmlNotinha;
   window.vosGerarHtmlNotinha=function(){
-    return tirarRodapeLoja(oldVos.apply(this, arguments));
+    var html=tirarRodapeLoja(oldVos.apply(this, arguments));
+    if(typeof html==='string' && html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+    return tirarRodapeLoja(html);
   };
   window.vosGerarHtmlNotinha.__v52217rodape=true;
 }
@@ -32877,6 +32890,313 @@ if(typeof window.renderConfig==='function' && !window.renderConfig.__v52217cert)
 setTimeout(garantirBloco, 900);
 
 console.log('[DIGICOPY] v5.22.17 certificado público na nuvem');
+})();
+
+;
+
+/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.18 — PIX baixa na hora; comprovante só no A prazo; imprimir só depois de faturar
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function ehFaturada(v){
+  var st=String((v&&v.status)||'').toLowerCase();
+  return st==='faturado'||st==='finalizada'||st==='concluido'||st==='pago';
+}
+
+window.VENDA_PRINT_PIX_PURE = { ehFaturada: ehFaturada };
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+
+if(window.PIX_MANUAL_PURE){
+  window.PIX_MANUAL_PURE.reabrirTituloPix=function(){ return 0; };
+}
+
+if(typeof window.vosEscolherForma==='function' && !window.vosEscolherForma.__v52218){
+  var oldForma=window.vosEscolherForma;
+  window.vosEscolherForma=function(fx){
+    var r=oldForma.apply(this, arguments);
+    var vista=document.getElementById('vos-vista-box');
+    if(fx==='Pix' && vista){
+      vista.className='rounded-[14px] border p-4 bg-emerald-50/50 border-emerald-200';
+      vista.innerHTML='<p class="text-[13px] text-emerald-900" id="vos-vista-msg"><i class="ph ph-check-circle"></i> Venda à vista em <b>Pix</b>: será faturada e <b>baixada no financeiro</b> na hora, igual Dinheiro.</p>';
+    }
+    var extra=document.getElementById('vos-pix-prazo');
+    if(extra) extra.remove();
+    if(fx==='Prazo'){
+      var prazo=document.getElementById('vos-prazo-box');
+      if(prazo && typeof window.pixRenderPainelFaturamento==='function'){
+        var hold=document.createElement('div');
+        hold.id='vos-pix-prazo';
+        hold.className='mt-3';
+        prazo.appendChild(hold);
+        var fake=document.createElement('div');
+        fake.id='vos-vista-box-tmp';
+        var oldId=vista&&vista.id;
+        if(vista) vista.id='vos-vista-box-hidden';
+        hold.id='vos-vista-box';
+        try{ window.pixRenderPainelFaturamento(); }catch(e){}
+        hold.id='vos-pix-prazo';
+        if(vista) vista.id=oldId||'vos-vista-box';
+      }
+    }
+    return r;
+  };
+  window.vosEscolherForma.__v52218=true;
+}
+
+function esconderImprimirAntesDeFaturar(){
+  var footer=document.getElementById('modal-footer');
+  if(footer && document.getElementById('vos-itens-body')){
+    var f=window.__vosForm;
+    var v=f&&f.vendaId&&(db.vendas||[]).find(function(x){ return x.id===f.vendaId; });
+    var ok=ehFaturada(v);
+    footer.querySelectorAll('button').forEach(function(b){
+      var t=(b.textContent||'').toLowerCase();
+      var oc=(b.getAttribute('onclick')||'').toLowerCase();
+      if(/imprimir/.test(t) || /imprimirnotinha|vosimprimir/.test(oc)){
+        b.style.display=ok?'':'none';
+        if(ok) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
+      }
+    });
+  }
+  var view=document.getElementById('view-vendas');
+  if(view){
+    view.querySelectorAll('.neo-actions button').forEach(function(b){
+      var t=(b.textContent||'').toLowerCase();
+      if(!/imprimir/.test(t)) return;
+      b.onclick=function(){
+        var id=window.neoVendaSelecionada;
+        if(!id){ aviso('Selecione uma notinha faturada.','Imprimir'); return; }
+        var v=(db.vendas||[]).find(function(x){ return x.id===id; });
+        if(!ehFaturada(v)){ aviso('Só imprime depois de faturar a venda.','Imprimir'); return; }
+        if(typeof imprimirNotinha==='function') imprimirNotinha(id);
+      };
+    });
+  }
+}
+
+if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52218){
+  var oldImp=window.imprimirNotinha;
+  window.imprimirNotinha=function(vendaId){
+    var v=(db.vendas||[]).find(function(x){ return x.id===vendaId; });
+    if(v && !ehFaturada(v)){
+      aviso('Só imprime depois de faturar a venda.','Imprimir');
+      return;
+    }
+    return oldImp.apply(this, arguments);
+  };
+  window.imprimirNotinha.__v52218=true;
+}
+
+if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
+  var oldNV=window.novaVenda;
+  window.novaVenda=function(){
+    var r=oldNV.apply(this, arguments);
+    setTimeout(esconderImprimirAntesDeFaturar, 80);
+    return r;
+  };
+  window.novaVenda.__v52218print=true;
+}
+if(typeof window.lockVendaFaturadaUI==='function' && !window.lockVendaFaturadaUI.__v52218){
+  var oldLock=window.lockVendaFaturadaUI;
+  window.lockVendaFaturadaUI=function(id){
+    var r=oldLock.apply(this, arguments);
+    setTimeout(function(){
+      var footer=document.getElementById('modal-footer'); if(!footer) return;
+      if(footer.querySelector('[data-print-fat]')) return;
+      var b=document.createElement('button');
+      b.setAttribute('data-print-fat','1');
+      b.className='h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2';
+      b.innerHTML='<i class="ph ph-printer"></i> Imprimir/PDF';
+      b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(id); };
+      footer.appendChild(b);
+    }, 40);
+    return r;
+  };
+  window.lockVendaFaturadaUI.__v52218=true;
+}
+if(typeof window.renderVendas==='function' && !window.renderVendas.__v52218print){
+  var oldRV=window.renderVendas;
+  window.renderVendas=function(){
+    var r=oldRV.apply(this, arguments);
+    setTimeout(esconderImprimirAntesDeFaturar, 40);
+    return r;
+  };
+  window.renderVendas.__v52218print=true;
+}
+setTimeout(esconderImprimirAntesDeFaturar, 600);
+
+console.log('[DIGICOPY] v5.22.18 PIX baixa na hora; comprovante no A prazo; imprimir só faturada');
+})();
+
+;
+
+/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.18 — Etiqueta na recarga: sem botão cadastrar, duplicata bloqueada,
+// preenche cliente sozinha, some no estorno se não restar venda ativa
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function normEtq(v){ return String(v==null?'':v).replace(/\s+/g,'').toUpperCase(); }
+function ehRecargaTipo(tipo){ return /recarga/i.test(String(tipo||'')); }
+function vendasAtivasComEtiqueta(etq, ignorarVendaId){
+  var k=normEtq(etq); if(!k) return [];
+  return (typeof db!=='undefined' && db.vendas||[]).filter(function(v){
+    if(!v || v.id===ignorarVendaId) return false;
+    var st=String(v.status||'').toLowerCase();
+    if(st==='estornada'||st==='estornado'||st==='cancelada'||st==='cancelado') return false;
+    return (v.itens||[]).some(function(it){ return normEtq(it.numCartucho||it.identificacao)===k; });
+  });
+}
+function etiquetaEmUso(etq, ignorarVendaId){
+  return vendasAtivasComEtiqueta(etq, ignorarVendaId).length>0;
+}
+
+window.ETIQUETA_RECARGA_VENDA_PURE = {
+  normEtq: normEtq,
+  ehRecargaTipo: ehRecargaTipo,
+  vendasAtivasComEtiqueta: vendasAtivasComEtiqueta,
+  etiquetaEmUso: etiquetaEmUso
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+function storeEtq(){
+  if(typeof db==='undefined') return [];
+  db.recargasEtiquetas=db.recargasEtiquetas||[];
+  return db.recargasEtiquetas;
+}
+
+function tirarBotaoCadastrar(){
+  var btn=document.getElementById('vos-btn-cadastrar-etiqueta');
+  if(btn){ btn.remove(); }
+}
+
+if(typeof window.vosCadastrarEtiquetaRecarga==='function'){
+  window.vosCadastrarEtiquetaRecarga=function(){ tirarBotaoCadastrar(); };
+}
+
+if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52218etq){
+  var oldAdd=window.vosAddItem;
+  window.vosAddItem=function(){
+    var tipo=(document.getElementById('vos-item-tipo')||{}).value;
+    if(ehRecargaTipo(tipo)){
+      var etq=String((document.getElementById('vos-item-cartucho')||{}).value||'').trim();
+      if(etq){
+        var f=window.__vosForm;
+        var noForm=(f&&f.itens||[]).some(function(it){ return normEtq(it.numCartucho||it.identificacao)===normEtq(etq); });
+        var vendaId=f&&f.vendaId;
+        if(noForm || etiquetaEmUso(etq, vendaId)){
+          aviso('Já existe um cartucho de recarga com essa etiqueta. Não dá para lançar a mesma etiqueta de novo.','Etiqueta repetida');
+          return;
+        }
+      }
+    }
+    return oldAdd.apply(this, arguments);
+  };
+  window.vosAddItem.__v52218etq=true;
+}
+
+if(typeof window.vosVendaSearchProd==='function' && !window.vosVendaSearchProd.__v52218prod){
+  var oldSearch=window.vosVendaSearchProd;
+  window.vosVendaSearchProd=function(q){
+    var tipo=(document.getElementById('vos-item-tipo')||{}).value;
+    if(!ehRecargaTipo(tipo)){
+      var r=oldSearch.apply(this, arguments);
+      var el=document.getElementById('vos-prod-results');
+      if(el){
+        el.querySelectorAll('button').forEach(function(b){
+          if(/recarga/i.test(b.textContent||'')) b.remove();
+        });
+      }
+      return r;
+    }
+    return oldSearch.apply(this, arguments);
+  };
+  window.vosVendaSearchProd.__v52218prod=true;
+}
+
+if(typeof window.vosBuscarEtiquetaNaVenda==='function' && !window.vosBuscarEtiquetaNaVenda.__v52218){
+  var oldBusca=window.vosBuscarEtiquetaNaVenda;
+  window.vosBuscarEtiquetaNaVenda=function(){
+    tirarBotaoCadastrar();
+    var etq=String((document.getElementById('vos-item-cartucho')||{}).value||'').trim();
+    var rec=(storeEtq()||[]).find(function(r){ return normEtq(r.etiqueta)===normEtq(etq); });
+    var f=window.__vosForm;
+    var temCli=f&&f.cliente;
+    if(!temCli && rec && rec.clienteId && typeof window.vosVendaSelectCliente==='function'){
+      window.vosVendaSelectCliente(rec.clienteId);
+    } else if(!temCli){
+      var vendas=vendasAtivasComEtiqueta(etq);
+      if(vendas.length && vendas[0].clienteId && typeof window.vosVendaSelectCliente==='function'){
+        window.vosVendaSelectCliente(vendas[0].clienteId);
+      }
+    }
+    var cli=window.__vosForm&&window.__vosForm.cliente;
+    if(rec && cli && rec.clienteId && rec.clienteId!==cli.id){
+      var nome=rec.clienteNome||'outro cliente';
+      var msg='O cartucho dessa etiqueta não é deste cliente ('+nome+'). Deseja lançar mesmo assim?';
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Etiqueta de outro cliente').then(function(ok){
+          if(!ok) return;
+          oldBusca.apply(window, arguments);
+          tirarBotaoCadastrar();
+        });
+        return;
+      }
+    }
+    var r=oldBusca.apply(this, arguments);
+    tirarBotaoCadastrar();
+    var btn=document.getElementById('vos-btn-cadastrar-etiqueta'); if(btn) btn.classList.add('hidden');
+    return r;
+  };
+  window.vosBuscarEtiquetaNaVenda.__v52218=true;
+}
+
+if(typeof window.estornarNotinha==='function' && !window.estornarNotinha.__v52218etq){
+  var oldEst=window.estornarNotinha;
+  window.estornarNotinha=window.estornarVenda=function(id){
+    var v=(db.vendas||[]).find(function(x){ return x.id===id; });
+    var etiquetas=[];
+    if(v) (v.itens||[]).forEach(function(it){
+      if(ehRecargaTipo(it.tipo)){
+        var e=normEtq(it.numCartucho||it.identificacao);
+        if(e && etiquetas.indexOf(e)<0) etiquetas.push(e);
+      }
+    });
+    var r=oldEst.apply(this, arguments);
+    setTimeout(function(){
+      etiquetas.forEach(function(e){
+        if(etiquetaEmUso(e, id)) return;
+        db.recargasEtiquetas=(db.recargasEtiquetas||[]).filter(function(x){ return normEtq(x.etiqueta)!==e; });
+      });
+      if(typeof saveDB==='function') saveDB();
+    }, 80);
+    return r;
+  };
+  window.estornarNotinha.__v52218etq=true;
+}
+
+if(typeof window.vosOnTipoItem==='function' && !window.vosOnTipoItem.__v52218etq){
+  var oldTipo=window.vosOnTipoItem;
+  window.vosOnTipoItem=function(){
+    var r=oldTipo.apply(this, arguments);
+    tirarBotaoCadastrar();
+    return r;
+  };
+  window.vosOnTipoItem.__v52218etq=true;
+}
+setTimeout(tirarBotaoCadastrar, 800);
+
+console.log('[DIGICOPY] v5.22.18 etiqueta recarga: cadastro no faturar, sem duplicar, some no estorno');
 })();
 
 ;

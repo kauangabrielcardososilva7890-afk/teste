@@ -114,5 +114,7 @@
   "ajustes_v52217_menus_arrastar_visibilidade_patch.js",
   "ajustes_v52217_print_sem_rodape_patch.js",
   "ajustes_v52217_financeiro_recibo_patch.js",
-  "ajustes_v52217_cert_nuvem_patch.js"
+  "ajustes_v52217_cert_nuvem_patch.js",
+  "ajustes_v52218_pix_prazo_print_venda_patch.js",
+  "ajustes_v52218_etiqueta_recarga_venda_patch.js"
 ]

@@ -4,11 +4,25 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.16** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.18** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.18 — menus para todos, rodapé de verdade, PIX/prazo, etiqueta
+
+- Editor de **Menus/Atalhos** abre em qualquer login. Nuvem e Backup não aparecem (nem no atalho) se não for Admin.
+- Rodapé da loja na impressão: o sistema recolocava depois; agora não recoloca.
+- PIX na venda: **baixa na hora**, sem comprovante. Comprovante PIX só quando a forma é **A prazo**.
+- Imprimir venda: some até faturar. Depois do faturar o botão volta.
+- Recarga não aparece na busca de **Produto**.
+- Some **Cadastrar esta etiqueta**. Cadastra ao faturar. Etiqueta repetida não lança. Sem cliente, preenche o da etiqueta. Estorno some o cadastro se não restar venda ativa com ela.
+- NF-e: parada até existir A1 `.pfx`. Os `.p7b/.cer` não assinam.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.18`
 
 ---
 

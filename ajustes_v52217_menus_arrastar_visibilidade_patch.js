@@ -49,12 +49,7 @@ function aplicarVisibilidadeBarra(){
     nuvem.style.display=nuvemOk?'':'none';
     if(mn) mn.style.display=nuvemOk?'':'none';
   }
-  document.querySelectorAll('.module').forEach(function(mod){
-    var btn=mod.querySelector('button');
-    if(!btn) return;
-    var tx=(btn.textContent||'').replace(/\s+/g,' ').trim();
-    if(/^Menus$/i.test(tx)) mod.style.display=admin?'':'none';
-  });
+
   try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
 }
 
@@ -140,6 +135,28 @@ if(typeof window.uiSubMenuMover==='function' && !window.uiSubMenuMover.__v52217)
     else parent.insertBefore(cards[j], row);
   };
   window.uiSubMenuMover.__v52217=true;
+}
+
+if(typeof window.salvarEditorMenus==='function' && !window.salvarEditorMenus.__v52218keep){
+  var oldSalvar=window.salvarEditorMenus;
+  window.salvarEditorMenus=function(){
+    var prev=(typeof db!=='undefined' && db.config && db.config.uiMenus) || null;
+    var admin=sessAdmin();
+    var r=oldSalvar.apply(this, arguments);
+    if(!admin && prev && prev.ordem && db.config && db.config.uiMenus && Array.isArray(db.config.uiMenus.ordem)){
+      ['backup','nuvem'].forEach(function(id){
+        var cur=db.config.uiMenus.ordem;
+        if(prev.ordem.indexOf(id)>=0 && cur.indexOf(id)<0){
+          var idx=Math.min(prev.ordem.indexOf(id), cur.length);
+          cur.splice(idx,0,id);
+        }
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof window.pintarMenus==='function') window.pintarMenus();
+    }
+    return r;
+  };
+  window.salvarEditorMenus.__v52218keep=true;
 }
 
 setTimeout(aplicarVisibilidadeBarra, 200);

@@ -55,7 +55,7 @@ ok('mover submenu na lista', moved[0]==='c' && moved[1]==='a');
 ok('seta de submenu no patch', /uiSubMenuMover/.test(sub));
 ok('atalhos na faixa azul', /ui-atalhos-azul/.test(sub) && /ui-atalhos-inicio/.test(sub));
 ok('some a faixa branca', /branco\.remove/.test(sub) || /ui-atalhos-inicio[\s\S]{0,80}remove/.test(sub));
-ok('editor só Admin', /Só o Admin altera os menus/.test(sub));
+ok('editor de menus existe', /abrirEditorMenus/.test(sub));
 ok('hooks no 5.22.13', /window\.pintarMenus/.test(men) && /window\.pintarAtalhos/.test(men));
 ok('uiMenuMover usa o botão', /closest\('\[data-mid\]'\)/.test(sub));
 
