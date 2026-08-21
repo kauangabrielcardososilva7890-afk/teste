@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 127 | sha256: 6d74622b2df9ec58
+ * scripts: 129 | sha256: e4fae7401bc7b159
  */
 
 /* ===== lz.js ===== */
@@ -34413,6 +34413,212 @@ if(window.IMPORT_PRODUTOS_PURE && typeof window.IMPORT_PRODUTOS_PURE.mapearProdu
 }
 
 console.log('[DIGICOPY] v5.22.22 NCM no produto');
+})();
+
+;
+
+/* ===== ajustes_v52223_cat_letra_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.23 — Letras P/S/I/C/E do cadastro antigo viram os nomes
+// • Some só a opção que é letra. Chip, Original, etc. ficam.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var LETRAS = {
+  p: 'Produto',
+  s: 'Serviço',
+  i: 'Insumo',
+  c: 'Cartucho',
+  e: 'Equipamento'
+};
+
+function ehLetraFiltro(v){
+  var t = String(v==null?'':v).trim();
+  return t.length===1 && !!LETRAS[t.toLowerCase()];
+}
+function letraParaNome(v){
+  var t = String(v==null?'':v).trim();
+  if(t.length===1 && LETRAS[t.toLowerCase()]) return LETRAS[t.toLowerCase()];
+  return t;
+}
+
+window.CAT_LETRA_PURE = {
+  LETRAS: LETRAS,
+  ehLetraFiltro: ehLetraFiltro,
+  letraParaNome: letraParaNome
+};
+
+if(typeof document==='undefined') return;
+
+function wrapUnifica(obj, nome){
+  if(!obj || typeof obj[nome]!=='function' || obj[nome].__v52223letra) return;
+  var old = obj[nome];
+  obj[nome] = function(v){
+    if(ehLetraFiltro(v)) return letraParaNome(v);
+    return old.apply(this, arguments);
+  };
+  obj[nome].__v52223letra = true;
+}
+wrapUnifica(window.FILTROS_BUSCA_PURE, 'unificaCat');
+wrapUnifica(window.FLUXOS_PURE, 'categoriaUnificada');
+
+function limparOpcoesLetra(){
+  ['filter-prod-cat','vos-prod-cat','kp-prd-cat'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if(!sel) return;
+    var atual = String(sel.value||'');
+    Array.from(sel.options).forEach(function(o){
+      if(ehLetraFiltro(o.value) || ehLetraFiltro(o.textContent)) o.remove();
+    });
+    if(ehLetraFiltro(atual)){
+      var nome = letraParaNome(atual);
+      var tem = Array.from(sel.options).some(function(o){ return o.value===nome; });
+      if(!tem){
+        var opt = document.createElement('option');
+        opt.value = nome; opt.textContent = nome;
+        sel.appendChild(opt);
+      }
+      sel.value = nome;
+    }
+  });
+}
+
+function migrarCategoriasLetra(){
+  if(typeof db==='undefined' || !Array.isArray(db.produtos)) return 0;
+  var n = 0;
+  db.produtos.forEach(function(p){
+    if(!p || !ehLetraFiltro(p.categoria)) return;
+    p.categoria = letraParaNome(p.categoria);
+    n++;
+  });
+  if(n && typeof saveDB==='function') saveDB();
+  return n;
+}
+
+function aplicar(){
+  try{
+    migrarCategoriasLetra();
+    limparOpcoesLetra();
+  }catch(e){}
+}
+
+['renderProdutos','novaVenda','openModal'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52223letra) return;
+  var old = window[nome];
+  window[nome] = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(aplicar, 40);
+    return r;
+  };
+  window[nome].__v52223letra = true;
+});
+
+setTimeout(aplicar, 500);
+setTimeout(aplicar, 1600);
+console.log('[DIGICOPY] v5.22.23 letras P/S/I/C/E viram nomes');
+})();
+
+;
+
+/* ===== ajustes_v52223_menus_arraste_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.23 — Menus: apaga as setas e o bloco segue o mouse
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function apagarSetas(root){
+  if(!root) return 0;
+  var n = 0;
+  Array.from(root.querySelectorAll('button')).forEach(function(b){
+    var t = String(b.textContent||'').replace(/\s+/g,'').trim();
+    if(t==='↑' || t==='↓'){ b.remove(); n++; }
+  });
+  return n;
+}
+
+window.MENUS_ARRASTE_PURE = { apagarSetas: apagarSetas };
+
+if(typeof document==='undefined') return;
+
+function ligarSegueMouse(lista, seletor){
+  if(!lista) return;
+  var drag=null, ghost=null, offY=0;
+  function itens(){
+    return Array.from(lista.children).filter(function(el){
+      return el && el.getAttribute && el.matches && el.matches(seletor);
+    });
+  }
+  itens().forEach(function(el){
+    if(el.__v52223drag) return;
+    el.__v52223drag = true;
+    el.removeAttribute('draggable');
+    el.style.cursor = 'grab';
+    el.addEventListener('pointerdown', function(e){
+      if(e.button!==0) return;
+      var t = e.target;
+      if(t && /INPUT|TEXTAREA|SELECT|LABEL|BUTTON/.test(t.tagName)) return;
+      e.preventDefault();
+      drag = el;
+      var r = el.getBoundingClientRect();
+      offY = e.clientY - r.top;
+      ghost = el.cloneNode(true);
+      ghost.style.cssText = 'position:fixed;left:'+r.left+'px;width:'+r.width+'px;top:'+(e.clientY-offY)+'px;z-index:200000;pointer-events:none;opacity:.95;box-shadow:0 16px 36px rgba(15,23,42,.28);background:#fff';
+      document.body.appendChild(ghost);
+      el.style.opacity = '.3';
+      try{ el.setPointerCapture(e.pointerId); }catch(x){}
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!drag || drag!==el) return;
+      if(ghost) ghost.style.top = (e.clientY - offY)+'px';
+      var outros = itens().filter(function(x){ return x!==drag; });
+      var alvo = null;
+      outros.forEach(function(o){
+        var b = o.getBoundingClientRect();
+        if(e.clientY >= b.top && e.clientY <= b.bottom) alvo = o;
+      });
+      if(!alvo) return;
+      var mid = alvo.getBoundingClientRect().top + alvo.offsetHeight/2;
+      if(e.clientY < mid){
+        if(drag.nextSibling!==alvo) lista.insertBefore(drag, alvo);
+      }else{
+        if(alvo.nextSibling!==drag) lista.insertBefore(drag, alvo.nextSibling);
+      }
+    });
+    function solta(){
+      if(ghost){ ghost.remove(); ghost=null; }
+      if(drag){ drag.style.opacity='1'; drag=null; }
+    }
+    el.addEventListener('pointerup', solta);
+    el.addEventListener('pointercancel', solta);
+  });
+}
+
+function prepararEditor(){
+  var ed = document.getElementById('ui-menus-ed');
+  if(!ed) return;
+  apagarSetas(ed);
+  ed.querySelectorAll('[draggable]').forEach(function(el){ el.removeAttribute('draggable'); });
+  ligarSegueMouse(ed, '[data-mid]');
+  ed.querySelectorAll('[data-subs]').forEach(function(box){
+    ligarSegueMouse(box, '[data-sid]');
+  });
+}
+
+if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52223drag){
+  var old = window.abrirEditorMenus;
+  window.abrirEditorMenus = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(prepararEditor, 20);
+    setTimeout(prepararEditor, 80);
+    setTimeout(prepararEditor, 220);
+    return r;
+  };
+  window.abrirEditorMenus.__v52223drag = true;
+}
+
+console.log('[DIGICOPY] v5.22.23 menus seguem o mouse, sem seta');
 })();
 
 ;

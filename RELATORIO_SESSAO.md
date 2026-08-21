@@ -12,6 +12,17 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.23 — letras P/S/I/C/E viram nomes + menus seguem o mouse
+
+- Some só o filtro que é letra: P→Produto, S→Serviço, I→Insumo, C→Cartucho, E→Equipamento. Chip, Original e o resto ficam.
+- Editor de menus: seta é apagada. O bloco segue o cursor e troca de lugar na hora.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.23`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.23`
+
+---
+
 ## v5.22.22 — menus só arrastar + NCM no envio
 
 - Editor de menus: some as setas. Só pegar e arrastar. Continua valendo só neste PC.

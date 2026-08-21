@@ -24,6 +24,6 @@ ok('liga pelo sku no NCM', N.ncmDoProduto({CODIGO:'88'}, N.mapaNcm([{COD_PRODUTO
 ok('página recebe NCM.json', /arq-ncm/.test(env) && /NCM\.json/.test(env));
 
 ok('patches no bundle', manifest.includes('ajustes_v52222_menus_arrastar_patch.js') && manifest.includes('ajustes_v52222_ncm_import_patch.js'));
-ok('versão 5.22.22', pkg.version==='5.22.22' && html.includes('app.bundle.js?v=5.22.22'));
+ok('versão 5.22.22+', /^5\.22\.(2[2-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(men+ncm+env));
 console.log('\nRESULTADO: v5.22.22 passou!');
