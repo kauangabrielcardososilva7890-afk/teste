@@ -5,7 +5,7 @@ const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 console.log('== APP BUNDLE ==');
-ok('manifesto possui todos os 120 scripts na ordem',manifest.length===120&&new Set(manifest).size===120);
+ok('manifesto possui todos os 121 scripts na ordem',manifest.length===121&&new Set(manifest).size===121);
 ok('Firebase e sync antigo não entram no runtime',!['sync_client.js','firebase_config.js','firebase_client.js','limpar_nuvem_patch.js'].some(file=>manifest.includes(file)));
 ok('todos os arquivos do manifesto existem',manifest.every(fs.existsSync));
 ok('IndexedDB precede painel e motor de sync',manifest.indexOf('indexeddb_persistence_patch.js')<manifest.indexOf('cloudflare_sync_patch.js')&&manifest.indexOf('cloudflare_sync_patch.js')<manifest.indexOf('cloudflare_data_sync_patch.js'));
