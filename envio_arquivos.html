@@ -69,6 +69,13 @@
     return data;
   }
   function txt(v){ return String(v==null?'':v).trim(); }
+  function ehDel(row){
+    if(!row || typeof row!=='object') return false;
+    var d=row.DEL!=null?row.DEL:row.del;
+    if(d===true || d===1) return true;
+    var t=txt(d).toUpperCase();
+    return t==='S' || t==='SIM' || t==='1' || t==='TRUE';
+  }
   function linhasDeJson(raw){
     if(Array.isArray(raw)) return raw;
     if(!raw || typeof raw !== 'object') return [];
