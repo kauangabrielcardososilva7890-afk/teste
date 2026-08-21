@@ -47,7 +47,7 @@ ok('main assina com pfxB64', /pfxB64/.test(main) && /pfxB64/.test(preload));
 ok('some botão local', /nfe-cert-import/.test(cer) && /display = 'none'/.test(cer));
 
 ok('patches no bundle', manifest.includes('ajustes_v52221_menus_dispositivo_patch.js') && manifest.includes('ajustes_v52221_cert_nuvem_a1_patch.js'));
-ok('versão 5.22.21', pkg.version==='5.22.21' && html.includes('app.bundle.js?v=5.22.21'));
+ok('versão 5.22.21+', /^5\.22\.(2[1-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', ![men,nfe,imp,cer,htmlEnv].some(s=>/mobile\//.test(s)));
 
 console.log('\nRESULTADO: v5.22.21 passou!');

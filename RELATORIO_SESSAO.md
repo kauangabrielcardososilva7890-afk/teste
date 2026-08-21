@@ -4,11 +4,22 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.21** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.22** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.22 — menus só arrastar + NCM no envio
+
+- Editor de menus: some as setas. Só pegar e arrastar. Continua valendo só neste PC.
+- Página de envio aceita **NCM.json**. Liga no produto pelo campo NCM do próprio produto ou pelo código da tabela NCM do sistema antigo.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.22`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.22`
 
 ---
 

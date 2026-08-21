@@ -52,6 +52,7 @@ function mapearProduto(row, cats){
     custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
     preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
     local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    ncm: txt(row && (row.NCM || row.PR_NCM || row.ncm)).replace(/\D/g,'').slice(0,8),
     status: 'ativo'
   };
 }

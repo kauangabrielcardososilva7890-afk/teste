@@ -123,5 +123,7 @@
   "ajustes_v52221_menus_dispositivo_patch.js",
   "ajustes_v52221_nfe_permissao_patch.js",
   "ajustes_v52221_import_produtos_patch.js",
-  "ajustes_v52221_cert_nuvem_a1_patch.js"
+  "ajustes_v52221_cert_nuvem_a1_patch.js",
+  "ajustes_v52222_menus_arrastar_patch.js",
+  "ajustes_v52222_ncm_import_patch.js"
 ]

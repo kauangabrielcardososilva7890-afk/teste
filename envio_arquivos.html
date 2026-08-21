@@ -38,11 +38,13 @@
   </div>
   <div class="card">
     <h2>Produtos</h2>
-    <p>Envie <b>PRODUTOS</b> e, se tiver, <b>PRODUTOS_CATEGORIA</b>. Mesmo código/SKU não duplica nesta importação.</p>
+    <p>Envie <b>PRODUTOS</b> e, se tiver, <b>PRODUTOS_CATEGORIA</b> e <b>NCM</b>. Mesmo código/SKU não duplica nesta importação. O NCM entra no produto quando o JSON de produtos já tem o campo ou quando a tabela NCM bate no código.</p>
     <label>PRODUTOS.json</label>
     <input id="arq-prod" type="file" accept=".json,application/json">
     <label>PRODUTOS_CATEGORIA.json (opcional)</label>
     <input id="arq-cat" type="file" accept=".json,application/json">
+    <label>NCM.json (opcional)</label>
+    <input id="arq-ncm" type="file" accept=".json,application/json">
     <button type="button" id="btn-prod">Enviar produtos</button>
   </div>
 </div>
@@ -96,7 +98,33 @@
     if(cod && cats && cats[cod]) return cats[cod];
     return txt(row && (row.CATEGORIA||row.TIPO||row.GRUPO_NOME)) || 'Produto';
   }
-  function mapearProduto(row,cats){
+  function soNcm(v){ return txt(v).replace(/\D/g,'').slice(0,8); }
+  function ncmDaLinha(row){
+    return soNcm(row && (row.NCM||row.PR_NCM||row.NC_NCM||row.CODIGO_NCM||row.ncm));
+  }
+  function mapaNcm(rows){
+    var porCodigo={}, porSku={};
+    (rows||[]).forEach(function(r){
+      var ncm=ncmDaLinha(r);
+      var cod=txt(r && (r.NC_CODIGO||r.CODIGO||r.ID));
+      var sku=txt(r && (r.COD_PRODUTO||r.CODIGO_PRODUTO||r.SKU||r.PR_CODIGO));
+      if(cod && ncm) porCodigo[cod]=ncm;
+      if(sku && ncm) porSku[sku]=ncm;
+    });
+    return {porCodigo:porCodigo, porSku:porSku};
+  }
+  function ncmDoProduto(row,catalogo){
+    var direto=ncmDaLinha(row);
+    if(direto.length===8) return direto;
+    catalogo=catalogo||{porCodigo:{},porSku:{}};
+    var ref=txt(row && (row.COD_NCM||row.PR_COD_NCM||row.NCM_ID||row.NC_CODIGO));
+    if(ref && catalogo.porCodigo[ref]) return catalogo.porCodigo[ref];
+    var sku=skuDe(row);
+    if(sku && catalogo.porSku[sku]) return catalogo.porSku[sku];
+    if(sku && catalogo.porCodigo[sku]) return catalogo.porCodigo[sku];
+    return direto;
+  }
+  function mapearProduto(row,cats,catalogo){
     return {
       sku:skuDe(row), nome:nomeDe(row), categoria:categoriaDe(row,cats),
       fabricante:txt(row && (row.FABRICANTE||row.MARCA||row.fabricante)),
@@ -104,7 +132,9 @@
       estoqueMin:parseInt(row && (row.ESTOQUE_MINIMO||row.ESTOQUE_MIN),10)||0,
       custo:parseFloat(row && (row.CUSTO||row.PRECO_CUSTO))||0,
       preco:parseFloat(row && (row.PRECO||row.VALOR||row.PRECO_VENDA))||0,
-      local:txt(row && (row.LOCALIZACAO||row.LOCAL)), status:'ativo'
+      local:txt(row && (row.LOCALIZACAO||row.LOCAL)),
+      ncm:ncmDoProduto(row,catalogo),
+      status:'ativo'
     };
   }
   function lerArquivo(file){
@@ -193,16 +223,20 @@
   document.getElementById('btn-prod').onclick=async function(){
     var fp=document.getElementById('arq-prod').files[0];
     var fc=document.getElementById('arq-cat').files[0];
-    if(!fp){ show('err','Escolha o JSON de PRODUTOS.'); return; }
+    var fn=document.getElementById('arq-ncm').files[0];
+    if(!fp && !fn){ show('err','Escolha o JSON de PRODUTOS ou o de NCM.'); return; }
     if(!token()){ show('err','Este navegador ainda não está autorizado na nuvem. Abra o sistema no mesmo GitHack, clique em Nuvem e autorize. Depois volte aqui.'); return; }
     var btn=document.getElementById('btn-prod');
     btn.disabled=true; btn.textContent='Lendo...';
     try{
-      var rawP=JSON.parse(await lerArquivo(fp));
-      var rawC=fc ? JSON.parse(await lerArquivo(fc)) : [];
-      var cats=mapaCategorias(linhasDeJson(rawC));
-      var novos=linhasDeJson(rawP).map(function(r){ return mapearProduto(r,cats); }).filter(function(p){ return p.sku && p.nome; });
-      if(!novos.length) throw new Error('Nenhum produto válido nesse JSON.');
+      var catalogo=fn ? mapaNcm(linhasDeJson(JSON.parse(await lerArquivo(fn)))) : {porCodigo:{},porSku:{}};
+      var cats=fc ? mapaCategorias(linhasDeJson(JSON.parse(await lerArquivo(fc)))) : {};
+      var novos=[];
+      if(fp){
+        var rawP=JSON.parse(await lerArquivo(fp));
+        novos=linhasDeJson(rawP).map(function(r){ return mapearProduto(r,cats,catalogo); }).filter(function(p){ return p.sku && p.nome; });
+        if(!novos.length) throw new Error('Nenhum produto válido nesse JSON.');
+      }
       show('', 'Conferindo a nuvem...');
       var atual=await puxarTudo();
       var porSku={};
@@ -210,7 +244,15 @@
         var p=atual.produtos[id].data||{};
         if(p.sku) porSku[String(p.sku)]={ id:id, version:atual.produtos[id].version, data:p };
       });
-      var criados=0, atualizados=0;
+      if(!fp){
+        Object.keys(porSku).forEach(function(sku){
+          var hit=porSku[sku];
+          var ncm=ncmDoProduto(hit.data, catalogo);
+          if(ncm && ncm!==soNcm(hit.data.ncm)) novos.push(Object.assign({},hit.data,{sku:sku,nome:hit.data.nome||sku,ncm:ncm}));
+        });
+        if(!novos.length) throw new Error('Não achei vínculo do NCM com os produtos da nuvem. Mande também o PRODUTOS.json ou um pedaço do NCM.json pra eu ver os campos.');
+      }
+      var criados=0, atualizados=0, comNcm=0;
       for(var i=0;i<novos.length;i++){
         btn.textContent='Enviando '+(i+1)+'/'+novos.length;
         var n=novos[i];
@@ -226,15 +268,17 @@
           porSku[String(n.sku)]={id:id,version:0,data:rec};
         }
         rec.id=id;
+        if(soNcm(rec.ncm).length===8) comNcm++;
         await enviarMut({
           mutationId:'prd_'+Date.now()+'_'+i+'_'+Math.random().toString(36).slice(2,7),
           entity:'produtos', recordId:id, operation:'upsert',
           baseVersion:ver, data:rec
         });
       }
-      show('ok','Produtos na nuvem: '+criados+' novos, '+atualizados+' atualizados (mesmo SKU não duplicou).');
+      show('ok','Produtos na nuvem: '+criados+' novos, '+atualizados+' atualizados. Com NCM: '+comNcm+'.');
       document.getElementById('arq-prod').value='';
       document.getElementById('arq-cat').value='';
+      document.getElementById('arq-ncm').value='';
     }catch(e){ show('err',e.message||String(e)); }
     finally{ btn.disabled=false; btn.textContent='Enviar produtos'; }
   };
