@@ -4,11 +4,23 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.22** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.24** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.24 — letra no filtro não vira regra
+
+- Some só a opção que é letra no select (P/S/I/C/E). Entra Produto / Serviço / Insumo / Cartucho / Equipamento.
+- Chip, Original e o resto ficam.
+- Produto que já veio com letra nesta importação troca o nome **uma vez**. Depois para. Não envolve `unificaCat`.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.24`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.24`
 
 ---
 

@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.22.23 — Letras P/S/I/C/E do cadastro antigo viram os nomes
-// • Some só a opção que é letra. Chip, Original, etc. ficam.
+// v5.22.23 — Letras P/S/I/C/E no select: some a opção letra, entra o nome
+// • Chip, Original e o resto ficam.
+// • Não vira regra de categoria. Conversão de dado fica na 5.22.24 (uma vez).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -31,18 +32,6 @@ window.CAT_LETRA_PURE = {
 
 if(typeof document==='undefined') return;
 
-function wrapUnifica(obj, nome){
-  if(!obj || typeof obj[nome]!=='function' || obj[nome].__v52223letra) return;
-  var old = obj[nome];
-  obj[nome] = function(v){
-    if(ehLetraFiltro(v)) return letraParaNome(v);
-    return old.apply(this, arguments);
-  };
-  obj[nome].__v52223letra = true;
-}
-wrapUnifica(window.FILTROS_BUSCA_PURE, 'unificaCat');
-wrapUnifica(window.FLUXOS_PURE, 'categoriaUnificada');
-
 function limparOpcoesLetra(){
   ['filter-prod-cat','vos-prod-cat','kp-prd-cat'].forEach(function(id){
     var sel = document.getElementById(id);
@@ -64,23 +53,8 @@ function limparOpcoesLetra(){
   });
 }
 
-function migrarCategoriasLetra(){
-  if(typeof db==='undefined' || !Array.isArray(db.produtos)) return 0;
-  var n = 0;
-  db.produtos.forEach(function(p){
-    if(!p || !ehLetraFiltro(p.categoria)) return;
-    p.categoria = letraParaNome(p.categoria);
-    n++;
-  });
-  if(n && typeof saveDB==='function') saveDB();
-  return n;
-}
-
 function aplicar(){
-  try{
-    migrarCategoriasLetra();
-    limparOpcoesLetra();
-  }catch(e){}
+  try{ limparOpcoesLetra(); }catch(e){}
 }
 
 ['renderProdutos','novaVenda','openModal'].forEach(function(nome){
@@ -96,5 +70,5 @@ function aplicar(){
 
 setTimeout(aplicar, 500);
 setTimeout(aplicar, 1600);
-console.log('[DIGICOPY] v5.22.23 letras P/S/I/C/E viram nomes');
+console.log('[DIGICOPY] v5.22.23 letras só no select (sem regra de categoria)');
 })();
