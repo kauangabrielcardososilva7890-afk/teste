@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 130 | sha256: 49036d2899cac8a1
+ * scripts: 131 | sha256: f7cdc02ba5f7494a
  */
 
 /* ===== lz.js ===== */
@@ -34677,6 +34677,42 @@ if(typeof window.renderProdutos==='function' && !window.renderProdutos.__v52224l
 setTimeout(tentar, 600);
 setTimeout(tentar, 1800);
 console.log('[DIGICOPY] v5.22.24 letra no produto: uma vez, sem regra');
+})();
+
+;
+
+/* ===== ajustes_v52225_import_pula_del_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.25 — Nesta importação, produto com DEL = S não entra
+// • Só DEL. OCULTAR não decide.
+// • Não vira regra do cadastro novo.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function ehDel(row){
+  if(!row || typeof row!=='object') return false;
+  var d = row.DEL!=null ? row.DEL : row.del;
+  if(d===true || d===1) return true;
+  var t = txt(d).toUpperCase();
+  return t==='S' || t==='SIM' || t==='1' || t==='TRUE';
+}
+function linhasSemDel(rows){
+  return (rows||[]).filter(function(r){ return !ehDel(r); });
+}
+
+window.IMPORT_DEL_PURE = {
+  ehDel: ehDel,
+  linhasSemDel: linhasSemDel
+};
+
+if(window.IMPORT_PRODUTOS_PURE && !window.IMPORT_PRODUTOS_PURE.ehDel){
+  window.IMPORT_PRODUTOS_PURE.ehDel = ehDel;
+  window.IMPORT_PRODUTOS_PURE.linhasSemDel = linhasSemDel;
+}
+
+console.log('[DIGICOPY] v5.22.25 importação pula DEL=S');
 })();
 
 ;

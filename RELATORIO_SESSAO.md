@@ -12,6 +12,17 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.25 — importação pula DEL = S
+
+- Nesta importação, produto com `DEL = S` não sobe. `OCULTAR` sozinho não decide.
+- NCM do produto continua vindo de `PR_NCM`. `NCM.json` é opcional.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.25`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.25`
+
+---
+
 ## v5.22.24 — letra no filtro não vira regra
 
 - Some só a opção que é letra no select (P/S/I/C/E). Entra Produto / Serviço / Insumo / Cartucho / Equipamento.

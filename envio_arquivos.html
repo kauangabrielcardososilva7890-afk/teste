@@ -38,7 +38,7 @@
   </div>
   <div class="card">
     <h2>Produtos</h2>
-    <p>Envie <b>PRODUTOS</b> e, se tiver, <b>PRODUTOS_CATEGORIA</b> e <b>NCM</b>. Mesmo código/SKU não duplica nesta importação. O NCM entra no produto quando o JSON de produtos já tem o campo ou quando a tabela NCM bate no código.</p>
+    <p>Envie <b>PRODUTOS</b> e, se tiver, <b>PRODUTOS_CATEGORIA</b> e <b>NCM</b>. Mesmo código/SKU não duplica nesta importação. O NCM entra no produto quando o JSON de produtos já tem o campo ou quando a tabela NCM bate no código. Produto com <b>DEL = S</b> não entra.</p>
     <label>PRODUTOS.json</label>
     <input id="arq-prod" type="file" accept=".json,application/json">
     <label>PRODUTOS_CATEGORIA.json (opcional)</label>
@@ -232,10 +232,13 @@
       var catalogo=fn ? mapaNcm(linhasDeJson(JSON.parse(await lerArquivo(fn)))) : {porCodigo:{},porSku:{}};
       var cats=fc ? mapaCategorias(linhasDeJson(JSON.parse(await lerArquivo(fc)))) : {};
       var novos=[];
+      var pulados=0;
       if(fp){
         var rawP=JSON.parse(await lerArquivo(fp));
-        novos=linhasDeJson(rawP).map(function(r){ return mapearProduto(r,cats,catalogo); }).filter(function(p){ return p.sku && p.nome; });
-        if(!novos.length) throw new Error('Nenhum produto válido nesse JSON.');
+        var brutas=linhasDeJson(rawP);
+        pulados=brutas.filter(ehDel).length;
+        novos=brutas.filter(function(r){ return !ehDel(r); }).map(function(r){ return mapearProduto(r,cats,catalogo); }).filter(function(p){ return p.sku && p.nome; });
+        if(!novos.length) throw new Error(pulados ? ('Nenhum produto ativo. '+pulados+' com DEL=S foram pulados.') : 'Nenhum produto válido nesse JSON.');
       }
       show('', 'Conferindo a nuvem...');
       var atual=await puxarTudo();
@@ -275,7 +278,7 @@
           baseVersion:ver, data:rec
         });
       }
-      show('ok','Produtos na nuvem: '+criados+' novos, '+atualizados+' atualizados. Com NCM: '+comNcm+'.');
+      show('ok','Produtos na nuvem: '+criados+' novos, '+atualizados+' atualizados. Com NCM: '+comNcm+'. Pulados DEL=S: '+pulados+'.');
       document.getElementById('arq-prod').value='';
       document.getElementById('arq-cat').value='';
       document.getElementById('arq-ncm').value='';
