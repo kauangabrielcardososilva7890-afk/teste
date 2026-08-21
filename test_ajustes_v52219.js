@@ -31,7 +31,7 @@ ok('worker tem /pix', wrk.includes("url.pathname === '/pix'") && wrk.includes('f
 ok('pix_pagar no exe', fs.readFileSync('package.json','utf8').includes('pix_pagar.html'));
 
 ok('patches no bundle', manifest.includes('ajustes_v52219_filtros_busca_patch.js') && manifest.includes('ajustes_v52219_pix_link_publico_patch.js'));
-ok('versão 5.22.19+', pkg.version>='5.22.19' && /app\.bundle\.js\?v=5\.22\.(19|20)/.test(html));
+ok('versão 5.22.19+', pkg.version>='5.22.19' && /app\.bundle\.js\?v=5\.22\.(19|2\d)/.test(html));
 ok('APK quieto', !/mobile/.test(fil+pix));
 ok('etiqueta mesma caixa', /vos-item-cartucho/.test(fil) && /escreve e segue/.test(fil));
 

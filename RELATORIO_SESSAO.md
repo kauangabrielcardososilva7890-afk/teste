@@ -4,11 +4,24 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.20** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.21** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.21 — envio de arquivos, NF por usuário, menus só neste PC
+
+- Página à parte para enviar **A1 .pfx** e JSON de **PRODUTOS** (+ **PRODUTOS_CATEGORIA**). Mesmo SKU não duplica nesta importação. Senha do A1 não é pedida nessa página.
+- Some **Carregar A1** das Configurações. O teste usa o A1 da nuvem. Ainda **não emite** na SEFAZ.
+- Usuários: caixa **Emitir NF**. Só Admin/Dono marca. Só quem estiver marcado confere/assina.
+- Editor de menus saiu da faixa azul. Fica em **Configurações → Menus deste computador**. Vale só neste aparelho.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.21`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.21`
 
 ---
 

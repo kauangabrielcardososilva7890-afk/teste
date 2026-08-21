@@ -26,7 +26,7 @@ const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 console.log('== NF-E ASSINATURA A1 ==');
 ok('não grava senha',!/localStorage|saveDB|escolaAuth/.test(xml)&&!/writeFileSync\([^)]*senha/.test(main));
 ok('IPC assina sem persistir senha',/nfe:sign-xml/.test(main)&&!/nfe-a1-senha/.test(main));
-ok('preload expõe assinar',/assinar:\s*\(xml,\s*senha\)/.test(preload));
+ok('preload expõe assinar',/assinar:\s*\(xml,\s*senha/.test(preload));
 ok('não envia SEFAZ',!/NFeAutorizacao4|hnfe\.fazenda/.test(xml)&&!/NFeAutorizacao4/.test(main));
 ok('botão só depois da conferência ok',/Assinar com A1/.test(xml)&&/__nfeUltimoDoc/.test(xml));
 ok('patch no bundle',manifest.includes('ajustes_v5228_nfe_assinatura_patch.js'));

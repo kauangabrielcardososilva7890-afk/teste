@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- Página pública de pagamento Pix. Só o que o cliente vê.
+     O código Pix vem na URL (?c=...). Nada é enviado a servidor nosso. -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Pagamento Pix — DIGICOPY</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;background:#eef1f8;color:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:430px;width:100%;overflow:hidden}
+  .topo{background:#0a1e8a;color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px}
+  .topo img{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:10px;padding:3px}
+  .topo h1{font-size:17px;line-height:1.2}
+  .topo p{font-size:11.5px;opacity:.75;margin-top:2px}
+  .corpo{padding:22px;text-align:center}
+  #qr{width:230px;height:230px;margin:8px auto 4px;display:block;border:1px solid #dfe3ee;border-radius:14px;padding:6px}
+  .passo{font-size:13px;color:#444;line-height:1.5}
+  .passo b{color:#0a1e8a}
+  #codigo{width:100%;margin-top:14px;border:1px solid #c9ceef;border-radius:12px;padding:10px;font-size:10.5px;font-family:monospace;word-break:break-all;background:#f7f8fd;color:#333;resize:none;text-align:left}
+  #btn{width:100%;margin-top:10px;height:48px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:700;font-size:14.5px;cursor:pointer}
+  #btn:active{transform:scale(.98)}
+  #btn.ok{background:#0d9463}
+  .dica{margin-top:12px;font-size:11px;color:#888;line-height:1.5}
+  .erro{padding:34px 22px;text-align:center;font-size:14px;color:#a33}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="topo">
+    <img id="logo" src="./logo.png" alt="DIGICOPY" onerror="this.style.display='none'">
+    <div><h1>Pagamento via Pix</h1><p>Rápido, seguro e na hora</p></div>
+  </div>
+  <div class="corpo" id="area">
+    <p class="passo">1️⃣ Abra o aplicativo do seu banco<br>2️⃣ Escolha <b>Pix → Ler QR Code</b> e aponte para a imagem<br>3️⃣ Confira os dados e confirme</p>
+    <img id="qr" alt="QR Code Pix">
+    <p class="passo" style="margin-top:10px">Não conseguiu escanear? Toque em <b>copiar código</b> e cole no seu banco em <b>Pix → Pix Copia e Cola</b>:</p>
+    <textarea id="codigo" rows="5" readonly onclick="this.select()"></textarea>
+    <button id="btn">📋 Copiar código Pix</button>
+    <p class="dica">Pagamento identificado pela DIGICOPY. Qualquer dúvida, fale com a loja antes de pagar.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+  var codigo = params.get('c') || '';
+  if(!codigo || codigo.indexOf('000201')!==0 || codigo.length>1024 || codigo.indexOf('br.gov.bcb.pix')<0){
+    document.getElementById('area').innerHTML = '<p class="erro">⚠️ Link de pagamento inválido ou incompleto.<br>Peça a notinha atualizada para a loja.</p>';
+    return;
+  }
+  var t = document.getElementById('codigo');
+  t.value = codigo;
+  var img = document.getElementById('qr');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=6&data=' + encodeURIComponent(codigo);
+  img.onerror = function(){
+    img.outerHTML = '<p class="passo" style="padding:20px 0">Sem internet para desenhar o QR agora —<br>use o <b>código copia e cola</b> abaixo 👇</p>';
+  };
+  var btn = document.getElementById('btn');
+  function concluiu(){
+    btn.textContent = '✅ Copiado! Agora cole no app do banco';
+    btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent='📋 Copiar código Pix'; btn.classList.remove('ok'); }, 3200);
+  }
+  btn.onclick = function(){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(codigo).then(concluiu).catch(function(){ t.focus(); t.select(); try{ document.execCommand('copy'); }catch(e){} concluiu(); });
+    } else { t.focus(); t.select(); try{ document.execCommand('copy'); }catch(e){} concluiu(); }
+  };
+})();
+</script>
+</body>
+</html>

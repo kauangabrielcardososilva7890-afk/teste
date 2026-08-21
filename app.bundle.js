@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 121 | sha256: f42f62d9b71ea3c7
+ * scripts: 125 | sha256: 566cd6a1fa97b512
  */
 
 /* ===== lz.js ===== */
@@ -33776,6 +33776,532 @@ setTimeout(consertarTudo, 500);
 setTimeout(consertarTudo, 1600);
 
 console.log('[DIGICOPY] v5.22.20 lupa alinhada no campo');
+})();
+
+;
+
+/* ===== ajustes_v52221_menus_dispositivo_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Menus só deste dispositivo + editor nas Configurações
+// • Layout não sobe na nuvem e não muda os outros PCs
+// • Some o botão Menus da faixa azul
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var KEY_MENUS = 'digicopy_ui_menus_dispositivo_v1';
+var KEY_ATALHOS = 'digicopy_ui_atalhos_dispositivo_v1';
+
+function lerJson(chave){
+  try{
+    var raw = localStorage.getItem(chave);
+    if(!raw) return null;
+    var o = JSON.parse(raw);
+    return o && typeof o === 'object' ? o : null;
+  }catch(e){ return null; }
+}
+function gravarJson(chave, valor){
+  try{ localStorage.setItem(chave, JSON.stringify(valor)); return true; }
+  catch(e){ return false; }
+}
+function migrarSeVazio(){
+  if(typeof db === 'undefined' || !db || !db.config) return;
+  if(!lerJson(KEY_MENUS) && db.config.uiMenus) gravarJson(KEY_MENUS, db.config.uiMenus);
+  if(!lerJson(KEY_ATALHOS) && db.config.uiAtalhos) gravarJson(KEY_ATALHOS, db.config.uiAtalhos);
+}
+function tirarDaNuvem(){
+  if(typeof db === 'undefined' || !db || !db.config) return false;
+  var mudou = false;
+  if(db.config.uiMenus){ delete db.config.uiMenus; mudou = true; }
+  if(db.config.uiAtalhos){ delete db.config.uiAtalhos; mudou = true; }
+  return mudou;
+}
+
+window.MENUS_DISPOSITIVO_PURE = {
+  KEY_MENUS: KEY_MENUS,
+  KEY_ATALHOS: KEY_ATALHOS,
+  lerJson: lerJson,
+  gravarJson: gravarJson
+};
+
+if(typeof document === 'undefined') return;
+
+function comLayoutLocal(fn){
+  if(typeof db === 'undefined') return fn();
+  db.config = db.config || {};
+  migrarSeVazio();
+  var prevM = db.config.uiMenus;
+  var prevA = db.config.uiAtalhos;
+  var localM = lerJson(KEY_MENUS);
+  var localA = lerJson(KEY_ATALHOS);
+  if(localM) db.config.uiMenus = localM;
+  if(localA) db.config.uiAtalhos = localA;
+  try{ return fn(); }
+  finally{
+    if(prevM === undefined) delete db.config.uiMenus; else db.config.uiMenus = prevM;
+    if(prevA === undefined) delete db.config.uiAtalhos; else db.config.uiAtalhos = prevA;
+  }
+}
+
+function tirarBotaoMenus(){
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  Array.from(row.querySelectorAll('.module')).forEach(function(mod){
+    var b = mod.querySelector('button');
+    if(!b) return;
+    var t = String(b.textContent || '').replace(/\s+/g,' ').trim();
+    if(t === 'Menus' || /Editar ordem/.test(b.getAttribute('title')||'')){
+      mod.remove();
+    }
+  });
+}
+
+if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v52221dev){
+  var oldPintar = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = comLayoutLocal(function(){ return oldPintar.apply(this, arguments); }.bind(this));
+    tirarBotaoMenus();
+    return r;
+  };
+  window.pintarMenus.__v52221dev = true;
+}
+
+if(typeof window.pintarAtalhos === 'function' && !window.pintarAtalhos.__v52221dev){
+  var oldAtalhos = window.pintarAtalhos;
+  window.pintarAtalhos = function(){
+    return comLayoutLocal(function(){ return oldAtalhos.apply(this, arguments); }.bind(this));
+  };
+  window.pintarAtalhos.__v52221dev = true;
+}
+
+if(typeof window.abrirEditorMenus === 'function' && !window.abrirEditorMenus.__v52221dev){
+  var oldAbrir = window.abrirEditorMenus;
+  window.abrirEditorMenus = function(){
+    return comLayoutLocal(function(){ return oldAbrir.apply(this, arguments); }.bind(this));
+  };
+  window.abrirEditorMenus.__v52221dev = true;
+}
+
+if(typeof window.abrirEditorAtalhos === 'function' && !window.abrirEditorAtalhos.__v52221dev){
+  var oldAbrirA = window.abrirEditorAtalhos;
+  window.abrirEditorAtalhos = function(){
+    return comLayoutLocal(function(){ return oldAbrirA.apply(this, arguments); }.bind(this));
+  };
+  window.abrirEditorAtalhos.__v52221dev = true;
+}
+
+if(typeof window.salvarEditorMenus === 'function' && !window.salvarEditorMenus.__v52221dev){
+  var oldSalvar = window.salvarEditorMenus;
+  window.salvarEditorMenus = function(){
+    var r = oldSalvar.apply(this, arguments);
+    if(typeof db !== 'undefined' && db.config && db.config.uiMenus){
+      gravarJson(KEY_MENUS, db.config.uiMenus);
+    }
+    if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+    if(typeof window.pintarMenus === 'function') window.pintarMenus();
+    return r;
+  };
+  window.salvarEditorMenus.__v52221dev = true;
+}
+
+if(typeof window.salvarEditorAtalhos === 'function' && !window.salvarEditorAtalhos.__v52221dev){
+  var oldSalvarA = window.salvarEditorAtalhos;
+  window.salvarEditorAtalhos = function(){
+    var r = oldSalvarA.apply(this, arguments);
+    if(typeof db !== 'undefined' && db.config && db.config.uiAtalhos){
+      gravarJson(KEY_ATALHOS, db.config.uiAtalhos);
+    }
+    if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+    if(typeof window.pintarAtalhos === 'function') window.pintarAtalhos();
+    return r;
+  };
+  window.salvarEditorAtalhos.__v52221dev = true;
+}
+
+function cardMenusConfig(){
+  var grid = document.querySelector('#view-config .grid') || document.getElementById('view-config');
+  if(!grid || document.getElementById('ui-menus-dispositivo-card')) return;
+  var card = document.createElement('div');
+  card.id = 'ui-menus-dispositivo-card';
+  card.className = 'rounded-[16px] bg-white border p-6';
+  card.innerHTML = '<h4 class="font-bold text-[14px]"><i class="ph ph-squares-four"></i> Menus deste computador</h4>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Ordem e nome valem só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p>'+
+    '<button type="button" id="ui-menus-dispositivo-btn" class="mt-4 h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]">Editar menus</button>';
+  grid.appendChild(card);
+  document.getElementById('ui-menus-dispositivo-btn').onclick = function(){
+    if(typeof window.abrirEditorMenus === 'function') window.abrirEditorMenus();
+  };
+}
+
+if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52221menus){
+  var oldCfg = window.renderConfig;
+  window.renderConfig = function(){
+    var r = oldCfg.apply(this, arguments);
+    setTimeout(cardMenusConfig, 220);
+    setTimeout(cardMenusConfig, 600);
+    return r;
+  };
+  window.renderConfig.__v52221menus = true;
+}
+
+setTimeout(function(){
+  migrarSeVazio();
+  if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+  if(typeof window.pintarMenus === 'function') window.pintarMenus();
+  cardMenusConfig();
+}, 700);
+
+console.log('[DIGICOPY] v5.22.21 menus só deste dispositivo');
+})();
+
+;
+
+/* ===== ajustes_v52221_nfe_permissao_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Caixa “pode emitir NF” em Usuários
+// • Só Admin ou Dono edita a caixa
+// • Só quem estiver marcado confere/assina
+// • Ainda não envia para a SEFAZ
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function perfilDe(u){
+  if(typeof window.AJUSTES_V5196_PURE === 'object' && window.AJUSTES_V5196_PURE.perfilEfetivo){
+    return window.AJUSTES_V5196_PURE.perfilEfetivo(u);
+  }
+  var p = txt(u && u.perfil);
+  if(p === 'Admin' || p === 'Dono') return p;
+  return 'Funcionário';
+}
+function ehAdminOuDono(u){
+  var p = perfilDe(u);
+  return p === 'Admin' || p === 'Dono';
+}
+function podeEmitirNfe(u){ return !!(u && u.podeEmitirNfe); }
+function podeEditarCaixaNfe(s){ return ehAdminOuDono(s); }
+
+window.NFE_PERMISSAO_PURE = {
+  perfilDe: perfilDe,
+  ehAdminOuDono: ehAdminOuDono,
+  podeEmitirNfe: podeEmitirNfe,
+  podeEditarCaixaNfe: podeEditarCaixaNfe
+};
+
+if(typeof document === 'undefined') return;
+
+function sess(){ return typeof getSession === 'function' ? getSession() : null; }
+function usuarioSessao(){
+  var s = sess();
+  if(!s || typeof db === 'undefined') return null;
+  return (db.usuarios||[]).find(function(u){ return u && u.id === s.usuarioId; }) || {
+    id: s.usuarioId, login: s.login, perfil: s.perfil, podeEmitirNfe: false
+  };
+}
+function avisar(msg){
+  if(typeof window.lfbAlert === 'function') window.lfbAlert(msg, 'NF-e');
+  else if(typeof toast === 'function') toast(msg, 'error');
+}
+
+window.usuarioPodeEmitirNfe = function(){
+  return podeEmitirNfe(usuarioSessao());
+};
+
+window.alternarPodeEmitirNfe = function(id, marcado){
+  var s = sess();
+  if(!podeEditarCaixaNfe(s)){
+    avisar('Somente Admin ou Dono altera quem emite NF.');
+    if(typeof renderUsuarios === 'function') renderUsuarios();
+    return;
+  }
+  var u = (db.usuarios||[]).find(function(x){ return x && x.id === id; });
+  if(!u) return;
+  u.podeEmitirNfe = !!marcado;
+  u.atualizadoEm = new Date().toISOString();
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof toast === 'function') toast(u.podeEmitirNfe ? 'Pode emitir NF' : 'Não emite NF', 'success');
+};
+
+if(typeof window.renderUsuarios === 'function' && !window.renderUsuarios.__v52221nfe){
+  var oldRU = window.renderUsuarios;
+  window.renderUsuarios = function(){
+    var r = oldRU.apply(this, arguments);
+    setTimeout(injetarCaixas, 30);
+    return r;
+  };
+  window.renderUsuarios.__v52221nfe = true;
+}
+
+function injetarCaixas(){
+  var view = document.getElementById('view-usuarios');
+  if(!view) return;
+  var s = sess();
+  var edita = podeEditarCaixaNfe(s);
+  var table = view.querySelector('table');
+  if(!table) return;
+  var thead = table.querySelector('thead tr');
+  if(thead && !thead.querySelector('[data-nfe-col]')){
+    var th = document.createElement('th');
+    th.setAttribute('data-nfe-col','1');
+    th.textContent = 'Emitir NF';
+    var last = thead.lastElementChild;
+    if(last) thead.insertBefore(th, last);
+    else thead.appendChild(th);
+  }
+  var usuarios = (typeof db !== 'undefined' && db.usuarios) ? db.usuarios : [];
+  var rows = table.querySelectorAll('tbody tr');
+  rows.forEach(function(tr){
+    if(tr.querySelector('[data-nfe-cell]')) return;
+    var loginCell = tr.children[1];
+    var login = fold(loginCell && loginCell.textContent);
+    if(!login || login === '—') return;
+    var u = usuarios.find(function(x){ return fold(x.login) === login; });
+    if(!u) return;
+    var td = document.createElement('td');
+    td.setAttribute('data-nfe-cell','1');
+    var ck = document.createElement('input');
+    ck.type = 'checkbox';
+    ck.className = 'w-4 h-4';
+    ck.checked = !!u.podeEmitirNfe;
+    ck.disabled = !edita;
+    ck.title = edita ? 'Marque quem pode emitir NF' : 'Somente Admin ou Dono altera';
+    ck.onchange = function(){ window.alternarPodeEmitirNfe(u.id, ck.checked); };
+    td.appendChild(ck);
+    var acoes = tr.lastElementChild;
+    if(acoes) tr.insertBefore(td, acoes);
+    else tr.appendChild(td);
+  });
+}
+
+if(typeof window.conferirNfe === 'function' && !window.conferirNfe.__v52221perm){
+  var oldConf = window.conferirNfe;
+  window.conferirNfe = async function(){
+    if(!window.usuarioPodeEmitirNfe()){
+      avisar('Este usuário não está autorizado a emitir NF. Peça para Admin ou Dono marcar a caixa em Usuários.');
+      return;
+    }
+    return oldConf.apply(this, arguments);
+  };
+  window.conferirNfe.__v52221perm = true;
+}
+
+setTimeout(injetarCaixas, 800);
+console.log('[DIGICOPY] v5.22.21 permissão de emitir NF');
+})();
+
+;
+
+/* ===== ajustes_v52221_import_produtos_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Importação pontual PRODUTOS + PRODUTOS_CATEGORIA
+// • Dedupe só nesta importação, por código/SKU
+// • Não vira regra automática da nuvem
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function linhasDeJson(raw){
+  if(Array.isArray(raw)) return raw;
+  if(!raw || typeof raw !== 'object') return [];
+  if(Array.isArray(raw.data)) return raw.data;
+  if(Array.isArray(raw.dados)) return raw.dados;
+  var keys = Object.keys(raw);
+  for(var i=0;i<keys.length;i++){
+    var k = keys[i];
+    var v = raw[k];
+    if(Array.isArray(v) && v.length && typeof v[0] === 'object') return v;
+    if(v && typeof v === 'object' && Array.isArray(v.data)) return v.data;
+  }
+  return [];
+}
+function skuDe(row){
+  return txt(row && (row.CODIGO || row.SKU || row.COD_PRODUTO || row.CODIGO_PRODUTO || row.codigo || row.sku));
+}
+function nomeDe(row){
+  return txt(row && (row.DESCRICAO || row.NOME || row.PRODUTO || row.nome || row.descricao));
+}
+function mapaCategorias(rows){
+  var mapa = {};
+  (rows||[]).forEach(function(r){
+    var c = txt(r.PRC_CODIGO || r.CODIGO || r.ID || r.COD_CATEGORIA);
+    var n = txt(r.PRC_DESCRICAO || r.DESCRICAO || r.NOME || r.CATEGORIA);
+    if(c && n) mapa[c] = n;
+  });
+  return mapa;
+}
+function categoriaDe(row, cats){
+  var cod = txt(row && (row.COD_CATEGORIA || row.CATEGORIA_ID || row.PRC_CODIGO || row.GRUPO));
+  if(cod && cats && cats[cod]) return cats[cod];
+  return txt(row && (row.CATEGORIA || row.TIPO || row.GRUPO_NOME)) || 'Produto';
+}
+function mapearProduto(row, cats){
+  return {
+    sku: skuDe(row),
+    nome: nomeDe(row),
+    categoria: categoriaDe(row, cats),
+    fabricante: txt(row && (row.FABRICANTE || row.MARCA || row.fabricante)),
+    estoque: parseInt(row && (row.ESTOQUE || row.QTD || row.QUANTIDADE), 10) || 0,
+    estoqueMin: parseInt(row && (row.ESTOQUE_MINIMO || row.ESTOQUE_MIN), 10) || 0,
+    custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
+    preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
+    local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    status: 'ativo'
+  };
+}
+function dedupePorSku(existentes, novos){
+  var seen = {};
+  (existentes||[]).forEach(function(p){
+    var k = txt(p && p.sku);
+    if(k) seen[k] = p;
+  });
+  var out = [];
+  (novos||[]).forEach(function(n){
+    if(!n || !n.sku || !n.nome) return;
+    var k = String(n.sku);
+    if(seen[k]) out.push({ tipo:'upd', atual: seen[k], novo: n });
+    else { seen[k] = n; out.push({ tipo:'new', novo: n }); }
+  });
+  return out;
+}
+
+window.IMPORT_PRODUTOS_PURE = {
+  linhasDeJson: linhasDeJson,
+  skuDe: skuDe,
+  nomeDe: nomeDe,
+  mapaCategorias: mapaCategorias,
+  mapearProduto: mapearProduto,
+  dedupePorSku: dedupePorSku
+};
+
+console.log('[DIGICOPY] v5.22.21 importação pontual de produtos');
+})();
+
+;
+
+/* ===== ajustes_v52221_cert_nuvem_a1_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
+// • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var MAX_BYTES = 400 * 1024;
+var TIPOS_A1 = ['pfx','p12'];
+
+function extDe(nome){
+  var m = String(nome||'').toLowerCase().match(/\.([a-z0-9]+)$/);
+  return m ? m[1] : '';
+}
+function podeEnviarA1(nome, bytes){
+  var ext = extDe(nome);
+  if(TIPOS_A1.indexOf(ext) < 0) return { ok:false, motivo:'tipo' };
+  if(bytes > MAX_BYTES) return { ok:false, motivo:'tamanho' };
+  if(!(bytes > 0)) return { ok:false, motivo:'vazio' };
+  return { ok:true, ext:ext };
+}
+function a1DaConfig(cfg){
+  var f = cfg && cfg.fiscal;
+  var a = f && f.a1Nuvem;
+  if(!a || !a.data) return null;
+  return a;
+}
+function pfxB64De(a1){
+  if(!a1 || !a1.data) return '';
+  return String(a1.data).replace(/^data:[^;]+;base64,/, '');
+}
+
+window.CERT_A1_NUVEM_PURE = {
+  MAX_BYTES: MAX_BYTES,
+  TIPOS_A1: TIPOS_A1.slice(),
+  extDe: extDe,
+  podeEnviarA1: podeEnviarA1,
+  a1DaConfig: a1DaConfig,
+  pfxB64De: pfxB64De
+};
+
+if(typeof document === 'undefined') return;
+
+function toastMsg(m,t){ if(typeof toast === 'function') toast(m, t||'info'); }
+function fiscal(){
+  if(typeof db === 'undefined') return {};
+  db.config = db.config || {};
+  db.config.fiscal = db.config.fiscal || {};
+  return db.config.fiscal;
+}
+function temA1Nuvem(){ return !!a1DaConfig({ fiscal: fiscal() }); }
+
+function esconderCarregarLocal(){
+  ['nfe-cert-import','nfe-cert-remove'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  var st = document.getElementById('nfe-cert-status');
+  if(!st) return;
+  var a1 = a1DaConfig({ fiscal: fiscal() });
+  if(a1){
+    var quando = a1.enviadoEm ? new Date(a1.enviadoEm).toLocaleString('pt-BR') : '';
+    st.textContent = 'A1 na nuvem'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
+  }else{
+    st.textContent = 'Nenhum A1 na nuvem. Envie o .pfx pela página de envio de arquivos.';
+  }
+}
+
+async function apagarA1LocalSeHouver(){
+  var api = window.nfeCertAPI;
+  if(!api || typeof api.remover !== 'function') return;
+  if(!temA1Nuvem()) return;
+  try{ await api.remover(); }catch(e){}
+}
+
+function ajustarCard(){
+  esconderCarregarLocal();
+  var p = document.querySelector('#nfe-config-card p');
+  if(p && !p.dataset.v52221a1){
+    p.dataset.v52221a1 = '1';
+    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
+  }
+  var pub = document.getElementById('nfe-certs-nuvem');
+  if(pub) pub.style.display = 'none';
+}
+
+if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52221a1){
+  var old = window.renderConfig;
+  window.renderConfig = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(ajustarCard, 240);
+    setTimeout(ajustarCard, 700);
+    setTimeout(apagarA1LocalSeHouver, 800);
+    return r;
+  };
+  window.renderConfig.__v52221a1 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarDocumento === 'function' && !window.NFE_EMISSAO_PURE.montarDocumento.__v52221a1){
+  var oldDoc = window.NFE_EMISSAO_PURE.montarDocumento;
+  window.NFE_EMISSAO_PURE.montarDocumento = function(opts){
+    opts = Object.assign({}, opts||{});
+    if(temA1Nuvem()) opts.certificadoLocal = true;
+    return oldDoc.call(this, opts);
+  };
+  window.NFE_EMISSAO_PURE.montarDocumento.__v52221a1 = true;
+}
+
+if(window.nfeCertAPI && typeof window.nfeCertAPI.assinar === 'function' && !window.nfeCertAPI.__v52221a1){
+  var oldAssinar = window.nfeCertAPI.assinar;
+  window.nfeCertAPI.assinar = function(xml, senha){
+    var a1 = a1DaConfig({ fiscal: fiscal() });
+    return oldAssinar(xml, senha, a1 ? a1.data : '');
+  };
+  window.nfeCertAPI.__v52221a1 = true;
+}
+
+setTimeout(ajustarCard, 900);
+setTimeout(apagarA1LocalSeHouver, 1200);
+console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
 })();
 
 ;

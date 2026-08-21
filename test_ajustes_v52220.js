@@ -11,6 +11,6 @@ ok('pure ok', ctx.window.LUPA_ALINHA_PURE && ctx.window.LUPA_ALINHA_PURE.ok===tr
 ok('monta linha filtro', /data-filtro-row/.test(src) && /absolute/.test(src));
 ok('não usa flex no pai da lupa absoluta', /tiraFlexQuebrado/.test(src));
 ok('no bundle', manifest.includes('ajustes_v52220_lupa_alinha_patch.js'));
-ok('versão 5.22.20', pkg.version==='5.22.20' && html.includes('app.bundle.js?v=5.22.20'));
+ok('versão 5.22.20+', /^5\.22\.(2\d)$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile/.test(src));
 console.log('\nRESULTADO: v5.22.20 passou!');

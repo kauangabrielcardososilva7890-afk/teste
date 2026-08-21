@@ -119,5 +119,9 @@
   "ajustes_v52218_etiqueta_recarga_venda_patch.js",
   "ajustes_v52219_filtros_busca_patch.js",
   "ajustes_v52219_pix_link_publico_patch.js",
-  "ajustes_v52220_lupa_alinha_patch.js"
+  "ajustes_v52220_lupa_alinha_patch.js",
+  "ajustes_v52221_menus_dispositivo_patch.js",
+  "ajustes_v52221_nfe_permissao_patch.js",
+  "ajustes_v52221_import_produtos_patch.js",
+  "ajustes_v52221_cert_nuvem_a1_patch.js"
 ]

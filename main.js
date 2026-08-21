@@ -381,10 +381,17 @@ function registerNfeCertIPC(){
     const xml = String((payload&&payload.xml)||'');
     try{
       if(!xml) return { ok:false, error:'XML vazio.' };
-      const p = nfeCertPath();
-      if(!fs.existsSync(p)) return { ok:false, error:'Carregue o certificado A1 neste computador.' };
+      let pfxBuf = null;
+      const rawB64 = String((payload&&payload.pfxB64)||'').replace(/^data:[^;]+;base64,/, '');
+      if(rawB64){
+        pfxBuf = Buffer.from(rawB64, 'base64');
+      }else{
+        const p = nfeCertPath();
+        if(!fs.existsSync(p)) return { ok:false, error:'Envie o certificado A1 pela página de arquivos. Senha só na hora de assinar.' };
+        pfxBuf = fs.readFileSync(p);
+      }
       const sign = require('./nfe_assinatura.js');
-      const r = sign.assinarNfeXml(xml, fs.readFileSync(p), senha);
+      const r = sign.assinarNfeXml(xml, pfxBuf, senha);
       return { ok:true, xmlAssinado:r.xmlAssinado, chave:r.chave, certificado:r.certificado };
     }catch(e){
       return { ok:false, error:e.message||String(e) };
