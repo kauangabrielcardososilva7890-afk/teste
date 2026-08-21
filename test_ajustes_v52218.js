@@ -40,7 +40,7 @@ ok('não-admin não perde backup/nuvem', /backup','nuvem/.test(vis) || /'backup'
 ok('rodapé marca para não recolocar', /<!-- rodape-loja-final -->/.test(prn));
 
 ok('patches no bundle', manifest.includes('ajustes_v52218_pix_prazo_print_venda_patch.js') && manifest.includes('ajustes_v52218_etiqueta_recarga_venda_patch.js'));
-ok('versão 5.22.18', pkg.version==='5.22.18' && html.includes('app.bundle.js?v=5.22.18'));
+ok('versão 5.22.18 no código base', pkg.version>='5.22.18' && (html.includes('app.bundle.js?v=5.22.18')||html.includes('app.bundle.js?v=5.22.19')));
 ok('APK quieto', !/mobile/.test(pix+etq));
 
 console.log('\nRESULTADO: v5.22.18 passou!');

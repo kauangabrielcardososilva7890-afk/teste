@@ -109,6 +109,61 @@ async function requireAdmin(request, env) {
   return device;
 }
 
+function handlePix(url) {
+  const codigo = url.searchParams.get('c') || '';
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagamento Pix — DIGICOPY</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eef1f8;color:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:430px;width:100%;overflow:hidden}
+.topo{background:#0a1e8a;color:#fff;padding:18px 22px}
+.topo h1{font-size:17px}
+.corpo{padding:22px;text-align:center}
+#qr{width:230px;height:230px;margin:8px auto 4px;display:block;border:1px solid #dfe3ee;border-radius:14px;padding:6px}
+.passo{font-size:13px;color:#444;line-height:1.5}
+#codigo{width:100%;margin-top:14px;border:1px solid #c9ceef;border-radius:12px;padding:10px;font-size:10.5px;font-family:monospace;word-break:break-all;background:#f7f8fd;resize:none}
+#btn{width:100%;margin-top:10px;height:48px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:700;font-size:14.5px;cursor:pointer}
+.dica{margin-top:12px;font-size:11px;color:#888}
+.erro{padding:34px 22px;text-align:center;font-size:14px;color:#a33}
+</style></head><body>
+<div class="card"><div class="topo"><h1>Pagamento via Pix</h1><p style="font-size:11.5px;opacity:.75;margin-top:2px">Rápido, seguro e na hora</p></div>
+<div class="corpo" id="area">
+<p class="passo">1 Abra o aplicativo do seu banco<br>2 Escolha <b>Pix → Ler QR Code</b><br>3 Confira e confirme</p>
+<img id="qr" alt="QR Code Pix">
+<p class="passo" style="margin-top:10px">Ou copie o código e cole no banco:</p>
+<textarea id="codigo" rows="5" readonly onclick="this.select()"></textarea>
+<button id="btn">Copiar código Pix</button>
+<p class="dica">Pagamento identificado pela DIGICOPY.</p>
+</div></div>
+<script>
+(function(){
+  var codigo=${JSON.stringify(codigo)};
+  if(!codigo || codigo.indexOf('000201')!==0 || codigo.length>1024 || codigo.indexOf('br.gov.bcb.pix')<0){
+    document.getElementById('area').innerHTML='<p class="erro">Link de pagamento inválido ou incompleto.<br>Peça a notinha atualizada para a loja.</p>';
+    return;
+  }
+  document.getElementById('codigo').value=codigo;
+  document.getElementById('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=6&data='+encodeURIComponent(codigo);
+  var btn=document.getElementById('btn');
+  btn.onclick=function(){
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(codigo);
+    btn.textContent='Copiado! Cole no app do banco';
+  };
+})();
+</script></body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      'access-control-allow-origin': '*'
+    }
+  });
+}
+
 async function handleHealth(env) {
   let database = 'not-bound';
   let schemaVersion = null;
@@ -764,6 +819,7 @@ async function route(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
+  if (request.method === 'GET' && url.pathname === '/pix') return handlePix(url);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   if (request.method === 'POST' && url.pathname === '/v1/setup') return handleSetup(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);

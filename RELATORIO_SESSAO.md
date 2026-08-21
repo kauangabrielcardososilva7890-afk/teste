@@ -12,6 +12,17 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.19 — filtro auxiliar na busca de cliente/item + PIX sem GitHack
+
+- Em todo lugar que escolhe **cliente**: select ao lado da caixa, iguais ao menu Clientes (Nome, Código, Fantasia, CPF/CNPJ…). Auxiliar da busca. Enter ou lupa.
+- Item **Produto**: filtro de categoria (Todas categorias por padrão). **Recarga** saiu da lista — recarga fica no tipo Recarga de toner.
+- Item **Recarga de toner**: filtro da recarga + caixa da etiqueta (a mesma de etiqueta nova; se não achar, escreve e segue). Regras da 5.22.18 continuam (cadastra no faturar, não duplica, preenche cliente, some no estorno).
+- Link do PIX no PDF/comprovante **não usa GitHack**. Vai para a página pública da nuvem. Repositório privado não apaga isso. No `.exe` o `pix_pagar.html` também entra no instalador.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.19`
+
+---
+
 ## v5.22.18 — menus para todos, rodapé de verdade, PIX/prazo, etiqueta
 
 - Editor de **Menus/Atalhos** abre em qualquer login. Nuvem e Backup não aparecem (nem no atalho) se não for Admin.
