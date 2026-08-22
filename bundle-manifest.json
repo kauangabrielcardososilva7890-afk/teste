@@ -138,5 +138,6 @@
   "ajustes_v52233_escuro_login_nuvem_patch.js",
   "ajustes_v52234_config_aviso_salvou_patch.js",
   "ajustes_v52234_ncm_produto_existente_patch.js",
-  "ajustes_v52235_codigo_sem_sku_patch.js"
+  "ajustes_v52235_codigo_sem_sku_patch.js",
+  "ajustes_v52236_codigo_cliente_exato_patch.js"
 ]

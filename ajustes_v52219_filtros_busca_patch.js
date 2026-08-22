@@ -60,7 +60,11 @@ function filtraClientes(list, q, campo){
     if(k && k!=='todos'){
       if(k==='email') return testa(c.email) || testa(c.email2);
       if(k==='documento'||k==='cep'||k==='telefone'||k==='whatsapp') return testa(c[k], true);
-      if(k==='codigo') return String(c.codigo||'').indexOf(num||termo)>=0;
+      if(k==='codigo'){
+        var alvo=(num||termo).replace(/^0+/,'')||String(num||termo);
+        function normCod(v){ var d=soDigitos(v); return d?(d.replace(/^0+/,'')||'0'):''; }
+        return !!(alvo && (normCod(c.codigo)===alvo || normCod(c.codigoAntigo)===alvo));
+      }
       return testa(c[k]);
     }
     return testa(c.nome)||testa(c.fantasia)||testa(c.documento,true)||testa(c.telefone,true)||
