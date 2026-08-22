@@ -17,6 +17,6 @@ ok('CNAE 7 dígitos', P.soCnae('47.44-0/01')==='4744001');
 ok('não pede senha', !/senhaA1|type=\"password\"/.test(src));
 ok('ainda não SEFAZ', /não emite na SEFAZ/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52229_nfe_ie_im_cnae_patch.js'));
-ok('versão 5.22.29', pkg.version==='5.22.29' && html.includes('app.bundle.js?v=5.22.29'));
+ok('versão 5.22.29+', /^5\.22\.(29|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.29 passou!');

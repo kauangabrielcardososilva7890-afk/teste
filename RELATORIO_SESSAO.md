@@ -4,11 +4,32 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.29** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.30** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.30 — modo escuro só neste aparelho
+
+- Em **Configurações** liga/desliga o modo escuro. Vale só neste computador. Não sobe na nuvem.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.30`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.30`
+
+---
+
+## v5.22.29 — IE, Inscrição Municipal e CNAE fiscal
+
+- Em **Configurações → NF-e** entram os 3 dados da loja: Inscrição Estadual, Inscrição Municipal e CNAE fiscal.
+- Conferência avisa se faltar. Entram no XML se preenchidos. Ainda **não** emite na SEFAZ.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.29`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.29`
 
 ---
 
