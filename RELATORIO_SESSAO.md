@@ -4,7 +4,7 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.30** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.31** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
@@ -314,6 +314,18 @@ Pedido: se desinstalar e instalar, o PC ainda tem dados e não pode mandar isso 
 - Nuvem vazia + dados neste PC → sincronização **pausada**. Só sobe no **Publicar este PC**.
 - Nuvem já tem dados + sobra local (ID diferente) → **não envia**. Aviso no painel.
 - Para lançar este PC como fonte: **Zerar dados da nuvem** → **Publicar este PC**.
+- PC convidado continua isolando histórico velho (não publica sobra).
+- Mesmos IDs (os 1919) só atualizam, não criam outro cadastro.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.6`
+
+---
+
+## v5.22.5 — backup sem senha + página GitHack do login
+
+- Backup (manual e diário) **não leva** a senha da Caixa Escolar.
+- Página só para cadastrar o login, sem baixar `.zip`:
+  `https://raw.githack.com/kauangabrielcardosomo fonte: **Zerar dados da nuvem** → **Publicar este PC**.
 - PC convidado continua isolando histórico velho (não publica sobra).
 - Mesmos IDs (os 1919) só atualizam, não criam outro cadastro.
 
