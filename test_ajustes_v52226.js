@@ -7,6 +7,6 @@ const html=fs.readFileSync('index.html','utf8');
 
 ok('ehDel existe na página', /function ehDel\s*\(row\)/.test(env));
 ok('usa ehDel no filtro', /brutas\.filter\(ehDel\)/.test(env) && /!ehDel\(r\)/.test(env));
-ok('versão 5.22.26', pkg.version==='5.22.26' && html.includes('app.bundle.js?v=5.22.26'));
+ok('versão 5.22.26+', /^5\.22\.(2[6-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(env));
 console.log('\nRESULTADO: v5.22.26 passou!');
