@@ -135,5 +135,7 @@
   "ajustes_v52228_a1_nuvem_lupa_ncm_patch.js",
   "ajustes_v52229_nfe_ie_im_cnae_patch.js",
   "ajustes_v52230_modo_escuro_dispositivo_patch.js",
-  "ajustes_v52233_escuro_login_nuvem_patch.js"
+  "ajustes_v52233_escuro_login_nuvem_patch.js",
+  "ajustes_v52234_config_aviso_salvou_patch.js",
+  "ajustes_v52234_ncm_produto_existente_patch.js"
 ]

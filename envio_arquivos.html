@@ -38,7 +38,7 @@
   </div>
   <div class="card">
     <h2>Produtos</h2>
-    <p>Envie <b>PRODUTOS</b> e, se tiver, <b>PRODUTOS_CATEGORIA</b> e <b>NCM</b>. Mesmo código/SKU não duplica nesta importação. O NCM entra no produto quando o JSON de produtos já tem o campo ou quando a tabela NCM bate no código. Produto com <b>DEL = S</b> não entra.</p>
+    <p>Envie de novo o <b>PRODUTOS.json</b> (o NCM já vem no <b>PR_NCM</b>). Produto com o mesmo código <b>não duplica</b>: só grava o NCM no cadastro que já está na nuvem. Estoque e preço não mudam. Produto com <b>DEL = S</b> não entra. <b>PRODUTOS_CATEGORIA</b> e <b>NCM.json</b> são opcionais.</p>
     <label>PRODUTOS.json</label>
     <input id="arq-prod" type="file" accept=".json,application/json">
     <label>PRODUTOS_CATEGORIA.json (opcional)</label>
@@ -106,6 +106,16 @@
     return txt(row && (row.CATEGORIA||row.TIPO||row.GRUPO_NOME)) || 'Produto';
   }
   function soNcm(v){ return txt(v).replace(/\D/g,'').slice(0,8); }
+  function fundirNcm(existente,ncm){
+    existente=existente&&typeof existente==='object'?existente:{};
+    ncm=soNcm(ncm);
+    if(ncm.length!==8) return {mudou:false,rec:existente};
+    if(soNcm(existente.ncm)===ncm) return {mudou:false,rec:existente};
+    var rec={};
+    Object.keys(existente).forEach(function(k){ rec[k]=existente[k]; });
+    rec.ncm=ncm;
+    return {mudou:true,rec:rec};
+  }
   function ncmDaLinha(row){
     return soNcm(row && (row.NCM||row.PR_NCM||row.NC_NCM||row.CODIGO_NCM||row.ncm));
   }
@@ -262,18 +272,21 @@
         });
         if(!novos.length) throw new Error('Não achei vínculo do NCM com os produtos da nuvem. Mande também o PRODUTOS.json ou um pedaço do NCM.json pra eu ver os campos.');
       }
-      var criados=0, atualizados=0, comNcm=0;
+      var criados=0, atualizados=0, iguais=0, comNcm=0;
       for(var i=0;i<novos.length;i++){
         btn.textContent='Enviando '+(i+1)+'/'+novos.length;
         var n=novos[i];
         var hit=porSku[String(n.sku)];
         var rec, id, ver;
         if(hit){
-          rec=Object.assign({},hit.data,n,{atualizadoEm:new Date().toISOString(),criadoPor:hit.data.criadoPor||'migracao'});
+          var f=fundirNcm(hit.data, n.ncm);
+          if(!f.mudou){ iguais++; continue; }
+          rec=Object.assign({},f.rec,{atualizadoEm:new Date().toISOString()});
           id=hit.id; ver=hit.version||0; atualizados++;
         }else{
           id=uid('prd');
           rec=Object.assign({id:id,empresaId:'emp_digicopy',criadoEm:new Date().toISOString(),criadoPor:'migracao',criadoPorNome:'importacao'},n);
+          delete rec.estoque; delete rec.estoqueMin; delete rec.custo; delete rec.preco;
           ver=0; criados++;
           porSku[String(n.sku)]={id:id,version:0,data:rec};
         }
@@ -285,7 +298,7 @@
           baseVersion:ver, data:rec
         });
       }
-      show('ok','Produtos na nuvem: '+criados+' novos, '+atualizados+' atualizados. Com NCM: '+comNcm+'. Pulados DEL=S: '+pulados+'.');
+      show('ok','NCM gravado em '+atualizados+' produto(s) que já existiam. Já iguais: '+iguais+'. Novos: '+criados+'. Com NCM neste lote: '+comNcm+'. Pulados DEL=S: '+pulados+'.');
       document.getElementById('arq-prod').value='';
       document.getElementById('arq-cat').value='';
       document.getElementById('arq-ncm').value='';
