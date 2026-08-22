@@ -19,6 +19,6 @@ ok('origem 6 existe', N.origemPorCodigo('6').indexOf('CAMEX')>=0);
 ok('NCM só dígito', N.soNcm('8443.99.32')==='84439932');
 ok('busca Enter/lupa no patch', /key==='Enter'/.test(ncm) && /buscarNcmProduto/.test(ncm));
 ok('patches no bundle', manifest.includes('ajustes_v52227_lupa_filtro_cli_patch.js') && manifest.includes('ajustes_v52227_ncm_origem_patch.js'));
-ok('versão 5.22.27', pkg.version==='5.22.27' && html.includes('app.bundle.js?v=5.22.27'));
+ok('versão 5.22.27+', /^5\.22\.(2[7-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(lupa+ncm));
 console.log('\nRESULTADO: v5.22.27 passou!');

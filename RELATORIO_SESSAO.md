@@ -4,11 +4,34 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.27** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.28** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.28 — A1 da nuvem vale + lupa NCM no centro da caixa
+
+- Conferência e assinatura usam o A1 que já está na nuvem. Senha só na hora. Ainda **não** emite na SEFAZ.
+- Lupa do NCM fica no meio da caixa de texto (não no meio do rótulo).
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.28`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.28`
+
+---
+
+## v5.22.27 — lupa do filtro de cliente + NCM/origem NF
+
+- Some a lupa enfeite em cima do select de cliente. A lupa de pesquisar fica.
+- Origem do produto na NF: códigos oficiais **0 a 8**.
+- Campo NCM pesquisável (Enter ou lupa). Não muda origem sozinho.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.27`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.27`
 
 ---
 
