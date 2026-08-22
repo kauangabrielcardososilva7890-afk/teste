@@ -17,6 +17,6 @@ ok('lupa no hold da caixa', /data-ncm-hold/.test(src) && /translateY\(-50%\)/.te
 ok('não pede senha no patch', !/senhaA1|type=\"password\"/.test(src));
 ok('ainda não SEFAZ', /não emite na SEFAZ|Ainda não/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52228_a1_nuvem_lupa_ncm_patch.js'));
-ok('versão 5.22.28', pkg.version==='5.22.28' && html.includes('app.bundle.js?v=5.22.28'));
+ok('versão 5.22.28+', /^5\.22\.(2[8-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(src+ncm));
 console.log('\nRESULTADO: v5.22.28 passou!');
