@@ -4,11 +4,31 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.36** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.37** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.37 — vendas/OS, filtros de contrato e orçamentos
+
+- Vendas: nomes Itens / Ordem de serviço e rótulos (tipo, descrição, QTD, V. UNIT, DESC, TOTAL, série, modelo, contador) em azul.
+- Série: lupa + Enter, igual etiqueta. Traz cliente, modelo e patrimônio da última venda.
+- Some Valor serviço e Desconto OS. Garantia: escolhe ou escreve os dias (seta volta para a lista). Técnico responsável obrigatório na OS.
+- Produto zerado: pergunta se quer mudar o estoque. Sim abre o cadastro do **produto** na aba Estoque. Salvar ou sair volta na mesma venda, com o que já estava escrito.
+- Impressão da OS e do orçamento: aviso das EPSON (15 dias úteis). Sem a frase de cobrir oferta. Sem validade 60 dias.
+- Contratos: filtros da lista (Todos, Nome, Equipamento, Patrimônio, Serial, Departamento, Chamados Abertos, Cod Locação, Cod Cliente, Endereço Impressora, Vencidos, Vencer 30 dias, Leituras lançar hoje, Cod Leitura, Não faturados esse mês, Faturados esse mês, Não faturados mês passado, Mês fixo, Franquia individual). Sem Cód controle, franquia global, fatura por cartucho, propostas, nosso código/pasta, não lançados esse mês, fecha dia.
+- Menu **Orçamentos** (Atendimento). Cadastro separado do Digicopy — **não** é o Buscador Escola. Lista: código, data, cliente, valor. Novo / excluir / estornar com caixa. Filtros da 2ª imagem, sem período; botão Todos à parte.
+- Orçamento pega a busca e os itens da venda. Não entra no financeiro. Precisa de estoque para lançar, mas não baixa. Fechado = cliente aprovou e gerou venda salva.
+- Impressão meia folha com link público (`digicopy-pix.pages.dev/orcamento.html`). Cliente aprova ou recusa. Aprovar gera venda **salva** (não faturada), avisa no sistema e abre WhatsApp da loja.
+- Estornar orçamento: cancela. Se já gerou venda salva, apaga essa venda. Se a venda já foi faturada, bloqueia até estornar a venda.
+- Worker ganhou GET/POST `/orcamento` (ainda precisa implantar). Enviar `public-pix/orcamento.html` no Pages.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.37`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.37`
 
 ---
 

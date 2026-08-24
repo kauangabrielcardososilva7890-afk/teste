@@ -20,7 +20,7 @@ const HEARTBEAT_MS=60000;
 const DEFINITIONS={
   empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
-  os:'array', vendas:'array', contasReceber:'array', contasPagar:'array',
+  os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
   config:'root', modulosDinamicos:'map'
 };

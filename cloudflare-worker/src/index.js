@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.2';
+const API_VERSION = '0.4.3';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -815,11 +815,154 @@ async function handleStatus(request, env) {
   });
 }
 
+function avisoEpson() {
+  return 'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
+}
+
+async function findOrcamentoByToken(env, token) {
+  const code = cleanText(token, 120);
+  if (!code || code.length < 8) return null;
+  const rows = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos' AND deleted_at IS NULL`
+  ).all();
+  for (const row of (rows.results || [])) {
+    const data = parseDataJson(row.data_json) || {};
+    if (String(data.token || '') === code) return { row, data };
+  }
+  return null;
+}
+
+function publicOrcamentoPayload(data) {
+  return {
+    ok: true,
+    numero: data.numero || '',
+    clienteNome: data.clienteNome || data.clienteFantasia || '',
+    data: String(data.data || data.criadoEm || '').slice(0, 10),
+    itens: Array.isArray(data.itens) ? data.itens.map(it => ({
+      descricao: it.descricao || '',
+      qtd: it.qtd,
+      preco: it.preco,
+      subtotal: it.subtotal
+    })) : [],
+    total: Number(data.total) || 0,
+    status: data.status || 'aberto',
+    whatsapp: data.lojaWhatsapp || '',
+    aviso: avisoEpson()
+  };
+}
+
+async function handleOrcamentoGet(url, env) {
+  if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
+  const found = await findOrcamentoByToken(env, url.searchParams.get('c'));
+  if (!found) return json({ ok: false, error: 'NOT_FOUND', message: 'Orçamento não encontrado.' }, 404);
+  return json(publicOrcamentoPayload(found.data));
+}
+
+async function handleOrcamentoPost(request, env) {
+  if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
+  const body = await readBody(request);
+  const acao = body.acao === 'recusar' ? 'recusar' : (body.acao === 'aprovar' ? 'aprovar' : '');
+  if (!acao) throw new ApiError(400, 'INVALID_ACTION', 'Informe aprovar ou recusar.');
+  const found = await findOrcamentoByToken(env, body.c);
+  if (!found) throw new ApiError(404, 'NOT_FOUND', 'Orçamento não encontrado.');
+  const data = found.data;
+  const device = { id: 'public-orcamento' };
+  if (acao === 'recusar') {
+    if (data.status === 'aprovado') {
+      throw new ApiError(409, 'ALREADY_APPROVED', 'Este orçamento já foi autorizado.');
+    }
+    data.status = 'recusado';
+    data.recusadoEm = new Date().toISOString();
+    const result = await applyMutation(env, device, {
+      mutationId: 'orc_rec_' + crypto.randomUUID(),
+      entity: 'orcamentos',
+      recordId: found.row.record_id,
+      operation: 'upsert',
+      baseVersion: Number(found.row.version),
+      data
+    });
+    if (!result.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
+    return json({ ok: true, status: 'recusado' });
+  }
+  if (data.status === 'aprovado' && data.vendaNumero) {
+    return json({ ok: true, status: 'aprovado', vendaNumero: data.vendaNumero, mensagem: data.mensagemWhats || '' });
+  }
+  const vendaNumero = String(data.vendaNumero || ('V' + Date.now().toString(36).toUpperCase()));
+  const vendaId = crypto.randomUUID();
+  const venda = {
+    id: vendaId,
+    empresaId: data.empresaId || '',
+    numero: vendaNumero,
+    clienteId: data.clienteId || null,
+    data: new Date().toISOString(),
+    itens: Array.isArray(data.itens) ? data.itens : [],
+    desconto: 0,
+    total: Number(data.total) || 0,
+    observacao: 'Gerada do orçamento ' + (data.numero || ''),
+    status: 'aguardar',
+    origemOrcamentoId: data.id || found.row.record_id,
+    criadoPor: data.criadoPor || 'cliente',
+    criadoPorNome: data.criadoPorNome || 'Cliente',
+    criadoEm: new Date().toISOString()
+  };
+  const mensagem = 'Olá, sou ' + String(data.clienteNome || 'cliente')
+    + '. Foi autorizado o orçamento do COD ' + String(data.numero || '')
+    + ' e gerou a venda salva ' + vendaNumero
+    + '. Por favor, vá atualizando para mim sobre o andamento.';
+  data.status = 'aprovado';
+  data.vendaId = vendaId;
+  data.vendaNumero = vendaNumero;
+  data.aprovadoEm = new Date().toISOString();
+  data.aprovadoOrigem = 'cliente';
+  data.mensagemWhats = mensagem;
+  const ntf = {
+    id: crypto.randomUUID(),
+    empresaId: data.empresaId || '',
+    tipo: 'orcamento_aprovado',
+    titulo: 'Orçamento autorizado',
+    texto: String(data.clienteNome || 'Cliente') + ' autorizou o orçamento ' + String(data.numero || '')
+      + ' e gerou a venda salva ' + vendaNumero,
+    orcamentoId: data.id || found.row.record_id,
+    vendaId,
+    lida: false,
+    criadoEm: new Date().toISOString()
+  };
+  const vendaRes = await applyMutation(env, device, {
+    mutationId: 'orc_vda_' + crypto.randomUUID(),
+    entity: 'vendas',
+    recordId: vendaId,
+    operation: 'upsert',
+    baseVersion: 0,
+    data: venda
+  });
+  if (!vendaRes.ok) throw new ApiError(409, 'CONFLICT', 'Não foi possível gerar a venda.');
+  await applyMutation(env, device, {
+    mutationId: 'orc_ntf_' + crypto.randomUUID(),
+    entity: 'notificacoes',
+    recordId: ntf.id,
+    operation: 'upsert',
+    baseVersion: 0,
+    data: ntf
+  });
+  const orcRes = await applyMutation(env, device, {
+    mutationId: 'orc_ok_' + crypto.randomUUID(),
+    entity: 'orcamentos',
+    recordId: found.row.record_id,
+    operation: 'upsert',
+    baseVersion: Number(found.row.version),
+    data
+  });
+  if (!orcRes.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
+  return json({ ok: true, status: 'aprovado', vendaNumero, mensagem });
+}
+
 async function route(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
   if (request.method === 'GET' && url.pathname === '/pix') return handlePix(url);
+  if (request.method === 'GET' && url.pathname === '/orcamento') return handleOrcamentoGet(url, env);
+  if (request.method === 'POST' && url.pathname === '/orcamento') return handleOrcamentoPost(request, env);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   if (request.method === 'POST' && url.pathname === '/v1/setup') return handleSetup(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);

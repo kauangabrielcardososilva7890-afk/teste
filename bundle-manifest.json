@@ -139,5 +139,10 @@
   "ajustes_v52234_config_aviso_salvou_patch.js",
   "ajustes_v52234_ncm_produto_existente_patch.js",
   "ajustes_v52235_codigo_sem_sku_patch.js",
-  "ajustes_v52236_codigo_cliente_exato_patch.js"
+  "ajustes_v52236_codigo_cliente_exato_patch.js",
+  "ajustes_v52237_vendas_os_visual_patch.js",
+  "ajustes_v52237_estoque_zero_volta_patch.js",
+  "ajustes_v52237_contratos_filtros_patch.js",
+  "ajustes_v52237_orcamentos_menu_patch.js",
+  "ajustes_v52237_orcamentos_aprovacao_patch.js"
 ]

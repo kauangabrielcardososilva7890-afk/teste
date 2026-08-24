@@ -2,8 +2,6 @@ const fs=require('fs');
 function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
 
 const src=fs.readFileSync('ajustes_v52236_codigo_cliente_exato_patch.js','utf8');
-const html=fs.readFileSync('index.html','utf8');
-const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 
 const ctx={window:{},document:undefined};
@@ -15,6 +13,5 @@ ok('48 não pega 480 nem 1048', P.filtraCodigoExato(list,'48','codigo').map(c=>c
 ok('outros campos não filtra aqui', P.filtraCodigoExato(list,'48','nome')===null);
 ok('048 = 48', P.codigoIgual('048','48')===true && P.codigoIgual(480,'48')===false);
 ok('patch no bundle', manifest.includes('ajustes_v52236_codigo_cliente_exato_patch.js'));
-ok('versão 5.22.36', pkg.version==='5.22.36' && html.includes('app.bundle.js?v=5.22.36'));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.36 passou!');
