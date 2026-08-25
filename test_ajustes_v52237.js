@@ -53,6 +53,6 @@ ok('página pública aprovar/recusar', /Autorizar orçamento/.test(pag) && /Recu
 ok('worker GET/POST /orcamento', /pathname === '\/orcamento'/.test(worker) && /handleOrcamentoPost/.test(worker));
 ok('nuvem tem orcamentos', /orcamentos:'array'/.test(fs.readFileSync('cloudflare_data_sync_patch.js','utf8')));
 ok('patches no bundle', ['ajustes_v52237_vendas_os_visual_patch.js','ajustes_v52237_estoque_zero_volta_patch.js','ajustes_v52237_contratos_filtros_patch.js','ajustes_v52237_orcamentos_menu_patch.js','ajustes_v52237_orcamentos_aprovacao_patch.js'].every(function(f){return manifest.includes(f);}));
-ok('versão 5.22.37', pkg.version==='5.22.37' && html.includes('app.bundle.js?v=5.22.37'));
+ok('versão 5.22.37 no patch', /v5.22.37/.test(vis));
 ok('APK quieto', ![vis,est,ctr,orc,apr].some(function(s){return /mobile\//.test(s);}));
 console.log('\nRESULTADO: v5.22.37 passou!');

@@ -144,5 +144,7 @@
   "ajustes_v52237_estoque_zero_volta_patch.js",
   "ajustes_v52237_contratos_filtros_patch.js",
   "ajustes_v52237_orcamentos_menu_patch.js",
-  "ajustes_v52237_orcamentos_aprovacao_patch.js"
+  "ajustes_v52237_orcamentos_aprovacao_patch.js",
+  "ajustes_v52238_orcamentos_ajustes_patch.js",
+  "ajustes_v52238_vendas_os_ajustes_patch.js"
 ]

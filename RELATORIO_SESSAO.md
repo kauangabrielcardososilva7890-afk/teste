@@ -4,11 +4,23 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.37** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.38** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.38 — orçamento separado do Pix + ajustes de venda
+
+- Orçamentos: filtro de produto e, em Recarga de toner, filtro + etiqueta. Aviso de salvo. Sair pergunta se deseja salvar.
+- Link de aprovação é **outra página**, não a do Pix. Dados vão na URL. Cliente escolhe autorizar ou recusar. Recusar também abre WhatsApp.
+- Vendas: lupa da série ao lado da caixa. OS com dados sai na impressão. Aviso EPSON só na OS. Técnico começa vazio. * nos obrigatórios. Salvar só precisa do cliente. Botão Salvar não pergunta.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.38`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
 
 ---
 
