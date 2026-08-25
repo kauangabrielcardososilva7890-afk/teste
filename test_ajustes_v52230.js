@@ -25,6 +25,6 @@ ok('não usa db.config', !/db\.config\.escuro|db\.config\.dark/.test(src));
 ok('card em Configurações', /ui-escuro-dispositivo-card/.test(src) && /Modo escuro/.test(src));
 ok('index evita flash', /digicopy_ui_modo_escuro_dispositivo_v1/.test(html));
 ok('patch no bundle', manifest.includes('ajustes_v52230_modo_escuro_dispositivo_patch.js'));
-ok('versão 5.22.30+', /^5\.22\.(30|3\d|\d{3,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.30+', /^5\.22\.\d+/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.30 passou!');

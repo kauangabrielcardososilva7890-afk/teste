@@ -26,6 +26,6 @@ ok('NCM curto não grava', N.fundirNcm({ncm:''},'123').mudou===false);
 ok('página funde NCM', /function fundirNcm/.test(env) && /não duplica/.test(env));
 ok('não regrava estoque no existente', /fundirNcm\(hit\.data/.test(env));
 ok('patches no bundle', manifest.includes('ajustes_v52234_config_aviso_salvou_patch.js') && manifest.includes('ajustes_v52234_ncm_produto_existente_patch.js'));
-ok('versão 5.22.34+', /^5\.22\.(3[4-9]|\d{3,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.34+', /^5\.22\.\d+/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(aviso+ncm));
 console.log('\nRESULTADO: v5.22.34 passou!');

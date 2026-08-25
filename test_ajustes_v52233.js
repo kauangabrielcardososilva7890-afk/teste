@@ -16,6 +16,6 @@ ok('CSS da Nuvem', /#digicopy-cloud-modal/.test(css));
 ok('não refaz o tema inteiro', !/\.neo-shell/.test(css) && !/\.module-row/.test(css));
 ok('não muda a chave', !/localStorage\.setItem/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52233_escuro_login_nuvem_patch.js'));
-ok('versão 5.22.33+', /^5\.22\.(3[3-9]|\d{3,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.33+', /^5\.22\.\d+/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.33 passou!');

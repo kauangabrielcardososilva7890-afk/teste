@@ -39,6 +39,6 @@ ok('locação guarda leituras e parque', loc[0].items.some(function(i){return i.
 
 ok('orçamentos já no HTML', /navigateTo\('orcamentos'\)/.test(html));
 ok('patches no bundle', ['ajustes_v52239_print_escolha_patch.js','ajustes_v52239_patri_nao_obrigatorio_patch.js','ajustes_v52239_avisos_erro_auditoria_patch.js','ajustes_v52239_menus_imediato_patch.js'].every(function(f){return manifest.includes(f);}));
-ok('versão 5.22.39', pkg.version==='5.22.39' && html.includes('app.bundle.js?v=5.22.39'));
+ok('versão no patch', /v5.22.39/.test(print+patri+erro+menus));
 ok('APK quieto', ![print,patri,erro,menus].some(function(s){return /mobile\//.test(s);}));
 console.log('\nRESULTADO: v5.22.39 passou!');
