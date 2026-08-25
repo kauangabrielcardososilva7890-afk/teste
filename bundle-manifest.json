@@ -151,5 +151,6 @@
   "ajustes_v52239_patri_nao_obrigatorio_patch.js",
   "ajustes_v52239_avisos_erro_auditoria_patch.js",
   "ajustes_v52239_menus_imediato_patch.js",
-  "ajustes_v52240_orcamento_pages_patch.js"
+  "ajustes_v52240_orcamento_pages_patch.js",
+  "ajustes_v52241_venda_salvar_fechar_patch.js"
 ]

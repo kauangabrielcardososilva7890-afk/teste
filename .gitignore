@@ -16,6 +16,9 @@ test-results/
 *.deb
 *.rpm
 
+# Zips de versão antiga / upload (não entram no git)
+*.zip
+
 # Backups/exportações locais
 backups/
 exports/

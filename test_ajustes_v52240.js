@@ -22,6 +22,6 @@ ok('leva os dados na URL', /\?d=/.test(link));
 ok('não é o Pix', link.indexOf('digicopy-pix.pages.dev')<0);
 ok('não é GitHack', link.indexOf('githack')<0);
 ok('patch no bundle', manifest.includes('ajustes_v52240_orcamento_pages_patch.js'));
-ok('versão 5.22.40', pkg.version==='5.22.40' && html.includes('app.bundle.js?v=5.22.40'));
+ok('versão no patch', /v5.22.40/.test(src));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.40 passou!');
