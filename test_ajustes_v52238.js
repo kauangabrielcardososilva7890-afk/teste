@@ -25,6 +25,6 @@ ok('página pede escolher autorizar ou recusar', /Autorizar/.test(pag) && /Recus
 ok('OS com dado conta na impressão', V.osTemDado({modelo:'HP',numeroSerie:'1'})===true);
 ok('técnico Selecione é vazio', V.ehVazioTec('Selecione')===true && V.ehVazioTec('João')===false);
 ok('patches no bundle', manifest.includes('ajustes_v52238_orcamentos_ajustes_patch.js') && manifest.includes('ajustes_v52238_vendas_os_ajustes_patch.js'));
-ok('versão 5.22.38', pkg.version==='5.22.38' && html.includes('app.bundle.js?v=5.22.38'));
+ok('versão no patch', /v5.22.38/.test(orc) && /v5.22.38/.test(ven));
 ok('APK quieto', !/mobile\//.test(orc+ven));
 console.log('\nRESULTADO: v5.22.38 passou!');

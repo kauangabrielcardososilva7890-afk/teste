@@ -12,6 +12,21 @@ Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-e
 
 ---
 
+## v5.22.39 — impressão com escolha, patrimônio opcional, menus na hora, aviso de erro
+
+- Imprimir venda: primeiro escolhe **Vendas** ou **Ordem de serviço**, depois **1 via** ou **2 vias**.
+- Vendas: sem aviso EPSON. 2 vias = duas meias folhas (uma folha inteira se os itens couberem).
+- OS: aviso EPSON sempre. 2 vias = duas folhas separadas.
+- Patrimônio da OS **não** é obrigatório (saiu o *).
+- Se der erro: aviso na tela. Detalhe técnico só na **Auditoria**.
+- Menus não piscam mais. Locação volta a ter Máquinas nos clientes e Leituras. Backup/Nuvem continuam por permissão.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.39`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
+
+---
+
 ## v5.22.38 — orçamento separado do Pix + ajustes de venda
 
 - Orçamentos: filtro de produto e, em Recarga de toner, filtro + etiqueta. Aviso de salvo. Sair pergunta se deseja salvar.

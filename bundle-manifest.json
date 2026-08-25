@@ -146,5 +146,9 @@
   "ajustes_v52237_orcamentos_menu_patch.js",
   "ajustes_v52237_orcamentos_aprovacao_patch.js",
   "ajustes_v52238_orcamentos_ajustes_patch.js",
-  "ajustes_v52238_vendas_os_ajustes_patch.js"
+  "ajustes_v52238_vendas_os_ajustes_patch.js",
+  "ajustes_v52239_print_escolha_patch.js",
+  "ajustes_v52239_patri_nao_obrigatorio_patch.js",
+  "ajustes_v52239_avisos_erro_auditoria_patch.js",
+  "ajustes_v52239_menus_imediato_patch.js"
 ]
