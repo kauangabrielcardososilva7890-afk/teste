@@ -24,7 +24,7 @@ F.aplicarBaixaTitulo(cr,'Pix','2026-08-19T12:00:00.000Z');
 ok('Pix baixa de verdade', cr.status==='pago' && cr.formaPagamento==='Pix' && cr.pagamentoData);
 
 ok('some Novo recebimento do menu HTML', !/Novo recebimento/i.test(html));
-ok('Contas e caixas no HTML', /Contas e caixa/i.test(html));
+ok('Contas e caixas no patch 5.22.13', /Contas e caixa/i.test(fin+men));
 ok('Receber junto da lixeira', /finAcaoReceber/.test(fin) && /btn-del-lote/.test(fin));
 ok('sem status no novo lançamento', !/f-cr-status/.test(fin) && /fin-novo-desc/.test(fin));
 ok('cliente lupa/Enter', /finBuscarCliente/.test(fin) && /Enter/.test(fin));

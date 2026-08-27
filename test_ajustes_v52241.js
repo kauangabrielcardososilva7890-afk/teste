@@ -18,7 +18,7 @@ ok('com cliente grava', P.precisaCliente({cliente:{id:'1'}})===true);
 ok('salvar fecha', /gravarEFechar/.test(src) && /closeModal\(true\)/.test(src));
 ok('fechar salva sem pergunta', /telaVenda/.test(src) && !/Deseja salvar esta venda/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52241_venda_salvar_fechar_patch.js'));
-ok('versão 5.22.41', pkg.version==='5.22.41' && html.includes('app.bundle.js?v=5.22.41'));
+ok('versão no patch', /v5.22.41/.test(src) && /^5\.22\.\d+/.test(pkg.version));
 ok('zip ignorado', /\*\.zip/.test(gitignore));
 ok('APK quieto', !/mobile\//.test(src));
 console.log('\nRESULTADO: v5.22.41 passou!');

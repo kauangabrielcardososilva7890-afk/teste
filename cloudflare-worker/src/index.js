@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.3';
+const API_VERSION = '0.4.4';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -855,6 +855,10 @@ async function handleOrcamentoGet(url, env) {
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   const found = await findOrcamentoByToken(env, url.searchParams.get('c'));
   if (!found) return json({ ok: false, error: 'NOT_FOUND', message: 'Orçamento não encontrado.' }, 404);
+  const st = String(found.data.status || 'aberto');
+  if (st === 'aprovado' || st === 'recusado') {
+    return json({ ok: false, error: 'USED', status: st, message: 'Este link não vale mais.' }, 410);
+  }
   return json(publicOrcamentoPayload(found.data));
 }
 
@@ -867,6 +871,9 @@ async function handleOrcamentoPost(request, env) {
   if (!found) throw new ApiError(404, 'NOT_FOUND', 'Orçamento não encontrado.');
   const data = found.data;
   const device = { id: 'public-orcamento' };
+  if (data.status === 'aprovado' || data.status === 'recusado') {
+    throw new ApiError(409, 'ALREADY_DECIDED', 'Este link não vale mais.');
+  }
   if (acao === 'recusar') {
     if (data.status === 'aprovado') {
       throw new ApiError(409, 'ALREADY_APPROVED', 'Este orçamento já foi autorizado.');
@@ -883,9 +890,6 @@ async function handleOrcamentoPost(request, env) {
     });
     if (!result.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
     return json({ ok: true, status: 'recusado' });
-  }
-  if (data.status === 'aprovado' && data.vendaNumero) {
-    return json({ ok: true, status: 'aprovado', vendaNumero: data.vendaNumero, mensagem: data.mensagemWhats || '' });
   }
   const vendaNumero = String(data.vendaNumero || ('V' + Date.now().toString(36).toUpperCase()));
   const vendaId = crypto.randomUUID();

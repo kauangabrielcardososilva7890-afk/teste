@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- Página PÚBLICA do orçamento — NÃO é pagamento Pix.
-     Os dados vêm na URL (?d=...). Cliente escolhe autorizar ou recusar. -->
+     Token (?c=) consulta o worker. Dados (?d=) só se o worker não estiver no ar.
+     Depois de autorizar ou recusar o link não vale mais. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -27,6 +28,10 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
 .aviso{margin-top:16px;padding:12px;border:1.5px solid #0a1e8a;background:#eef2ff;border-radius:12px;font-size:12px;line-height:1.45;color:#0a1e8a;white-space:pre-wrap}
 .erro,.msg{padding:28px 8px;text-align:center;font-size:15px;line-height:1.5}
 .erro{color:#a33}
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.ask{background:#fff;border-radius:16px;max-width:360px;width:100%;padding:20px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.ask p{font-size:16px;font-weight:800;text-align:center;margin-bottom:14px}
+.ask .row{display:flex;gap:8px}
 </style>
 </head>
 <body>
@@ -54,10 +59,28 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
       return JSON.parse(decodeURIComponent(escape(atob(b))));
     }catch(e){ return null; }
   }
+  function chaveUsado(tok){ return 'digicopy_orc_usado_'+String(tok||''); }
+  function marcarUsado(tok){ if(!tok) return; try{ localStorage.setItem(chaveUsado(tok),'1'); }catch(e){} }
+  function jaUsado(tok){ if(!tok) return false; try{ return localStorage.getItem(chaveUsado(tok))==='1'; }catch(e){ return false; } }
+  function telaUsado(){ area.innerHTML='<p class="erro">Este link não vale mais. Peça o orçamento atualizado para a loja.</p>'; }
   function whats(tel, texto){
     var n=soTel(tel);
     var url='https://wa.me/'+(n||'')+'?text='+encodeURIComponent(texto);
     location.href=url;
+  }
+  function jaDecidido(j){
+    if(!j) return false;
+    if(j.error==='USED' || j.error==='ALREADY_DECIDED' || j.error==='ALREADY_APPROVED') return true;
+    var st=String(j.status||'');
+    return st==='aprovado' || st==='recusado';
+  }
+  function confirmar(msg, cb){
+    var mask=document.createElement('div');
+    mask.className='mask';
+    mask.innerHTML='<div class="ask"><p>'+esc(msg)+'</p><div class="row"><button class="no" id="ask-no">Não</button><button class="ok" id="ask-ok">Sim</button></div></div>';
+    document.body.appendChild(mask);
+    document.getElementById('ask-no').onclick=function(){ mask.remove(); };
+    document.getElementById('ask-ok').onclick=function(){ mask.remove(); cb(); };
   }
   function tela(d){
     var itens=(d.it||d.itens||[]).map(function(it){
@@ -68,37 +91,56 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
       +'<div class="tot">'+money(d.tot||d.total)+'</div>'
       +'<div class="btns"><button class="ok" id="btn-ok">Autorizar</button><button class="no" id="btn-no">Recusar</button></div>'
       +'<div class="aviso">'+esc(d.aviso||AVISO)+'</div>';
-    document.getElementById('btn-ok').onclick=function(){ decidir('aprovar', d); };
-    document.getElementById('btn-no').onclick=function(){ decidir('recusar', d); };
+    document.getElementById('btn-ok').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('aprovar', d); }); };
+    document.getElementById('btn-no').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('recusar', d); }); };
   }
   function decidir(acao, d){
     var nome=d.c||d.clienteNome||'cliente';
     var cod=d.n||d.numero||'';
     var tel=d.w||d.whatsapp||'';
+    var tok=d.t||d.token||params.get('c')||'';
     var msgOk='Olá, sou '+nome+'. Foi autorizado o orçamento do COD '+cod+'. Por favor, vá atualizando para mim sobre o andamento.';
     var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
     var msg=acao==='aprovar'?msgOk:msgNo;
     area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado. Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
-    var corpo={c:d.t||d.token||'', acao:acao, numero:cod, clienteNome:nome, mensagem:msg};
-    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)}).catch(function(){});
-    setTimeout(function(){ whats(tel, msg); }, 400);
+    var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg};
+    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
+      .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
+      .then(function(res){
+        if(res && res.j && jaDecidido(res.j) && !res.okHttp){ telaUsado(); return; }
+        marcarUsado(tok);
+        setTimeout(function(){ whats(tel, msg); }, 400);
+      })
+      .catch(function(){
+        marcarUsado(tok);
+        setTimeout(function(){ whats(tel, msg); }, 400);
+      });
   }
   var d=decod(params.get('d'));
-  if(d && (d.n||d.numero)){ tela(d); return; }
-  var token=params.get('c')||'';
-  if(!token){
-    area.innerHTML='<p class="erro">Link de orçamento inválido. Peça o orçamento atualizado para a loja.</p>';
+  var token=params.get('c')||(d&&(d.t||d.token))||'';
+  if(token && jaUsado(token)){ telaUsado(); return; }
+  if(token){
+    fetch(API+'/orcamento?c='+encodeURIComponent(token))
+      .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
+      .then(function(res){
+        var j=res&&res.j;
+        if(j && (j.error==='USED' || j.error==='ALREADY_DECIDED' || j.status==='aprovado' || j.status==='recusado')){
+          marcarUsado(token);
+          telaUsado();
+          return;
+        }
+        if(j && j.ok){ tela(Object.assign({}, d||{}, j, {t:token, n:j.numero|| (d&&d.n), c:j.clienteNome||(d&&d.c), w:j.whatsapp||(d&&d.w)})); return; }
+        if(d && (d.n||d.numero)){ tela(d); return; }
+        area.innerHTML='<p class="erro">Orçamento não encontrado. Peça o link atualizado para a loja.</p>';
+      })
+      .catch(function(){
+        if(d && (d.n||d.numero)) tela(d);
+        else area.innerHTML='<p class="erro">Não foi possível abrir este orçamento. Peça o link atualizado para a loja.</p>';
+      });
     return;
   }
-  fetch(API+'/orcamento?c='+encodeURIComponent(token))
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      if(j && j.ok) tela(j);
-      else area.innerHTML='<p class="erro">Orçamento não encontrado. Peça o link atualizado para a loja.</p>';
-    })
-    .catch(function(){
-      area.innerHTML='<p class="erro">Não foi possível abrir este orçamento. Peça o link atualizado para a loja.</p>';
-    });
+  if(d && (d.n||d.numero)){ tela(d); return; }
+  area.innerHTML='<p class="erro">Link de orçamento inválido. Peça o orçamento atualizado para a loja.</p>';
 })();
 </script>
 </body>

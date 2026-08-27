@@ -1,14 +1,27 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-19  
+**Data:** 2026-08-27  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.41** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.42** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar só quando o usuário pedir para atualizar  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.42 — orçamento status, contratos sort/remanejo, financeiro, menu/versão/Boleto
+
+- Orçamento: status Autorizado / Não autorizado / Aberto na lista e na tela. Sem botão Faturar.
+- Site do cliente: “Tem certeza?” antes de autorizar/recusar. Depois da decisão o link não vale mais (precisa do worker implantado).
+- Contratos: clique no título A→Z e Z→A, uma seta, sem piscar.
+- Impressora no contrato: primeiro o serial; se já está em outro cliente, pergunta se remaneja; Ativas vs Remanejadas (histórico congelado).
+- Financeiro: some os cards de saldo. Filtros Nome, Cód. Venda, Cód. Parcela, Cód. Cliente, Por Valor, Cód. Caixa, Cód. Pix, Cód. Leitura. Lupa/Enter. Padrão Hoje. Abertos / Todos. De/Até não vale em Hoje e Todos. Menu único, sem submenu Contas e caixas.
+- Menu da faixa aberta em azul. Rodapé com a versão. Forma **Boleto** na venda e na baixa (baixa automática).
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.42`
 
 ---
 

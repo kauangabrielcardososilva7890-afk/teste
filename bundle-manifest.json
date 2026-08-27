@@ -152,5 +152,11 @@
   "ajustes_v52239_avisos_erro_auditoria_patch.js",
   "ajustes_v52239_menus_imediato_patch.js",
   "ajustes_v52240_orcamento_pages_patch.js",
-  "ajustes_v52241_venda_salvar_fechar_patch.js"
+  "ajustes_v52241_venda_salvar_fechar_patch.js",
+  "ajustes_v52242_orcamentos_status_patch.js",
+  "ajustes_v52242_contratos_sort_patch.js",
+  "ajustes_v52242_impressora_remanejar_patch.js",
+  "ajustes_v52242_financeiro_filtros_patch.js",
+  "ajustes_v52242_financeiro_menu_patch.js",
+  "ajustes_v52242_menu_versao_boleto_patch.js"
 ]
