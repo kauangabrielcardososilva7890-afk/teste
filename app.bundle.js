@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 160 | sha256: 70b53309960b040e
+ * scripts: 166 | sha256: a8436d728716a223
  */
 
 /* ===== lz.js ===== */
@@ -39144,6 +39144,936 @@ if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento
 }
 
 console.log('[DIGICOPY] v5.22.42 menu azul, versão rodapé, Boleto');
+})();
+
+;
+
+/* ===== ajustes_v52243_orcamentos_status_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Orçamentos: Status Autorizado / Não autorizado na lista e na
+//            tela. Sem botão Faturar. FECHADO vira Autorizado.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function rotuloStatus(o){
+  var st = txt(o && o.status).toLowerCase();
+  if(st==='aprovado' || (o && o.vendaId)) return 'Autorizado';
+  if(st==='recusado') return 'Não autorizado';
+  if(st==='estornado') return 'Estornado';
+  if(st==='excluido') return 'Excluído';
+  return 'Aberto';
+}
+function classeStatus(rotulo){
+  if(rotulo==='Autorizado') return 'neo-status ok';
+  if(rotulo==='Não autorizado') return 'neo-status wait';
+  if(rotulo==='Estornado') return 'neo-status info';
+  return 'neo-status info';
+}
+
+window.ORCAMENTOS_STATUS_V52243_PURE = { rotuloStatus: rotuloStatus, classeStatus: classeStatus };
+
+if(typeof document==='undefined') return;
+
+function badge(o){
+  var r = rotuloStatus(o);
+  return '<span class="'+classeStatus(r)+'">'+esc(r)+'</span>';
+}
+function idDaLinha(tr){
+  var oc = (tr && tr.getAttribute('onclick'))||'';
+  var m = oc.match(/abrirOrcamento\('([^']+)'\)/);
+  if(m) return m[1];
+  var btn = tr && tr.querySelector('button[onclick*="abrirOrcamento"]');
+  var oc2 = (btn && btn.getAttribute('onclick'))||'';
+  var m2 = oc2.match(/abrirOrcamento\('([^']+)'\)/);
+  return m2 ? m2[1] : '';
+}
+function pintarLista(){
+  var view = document.getElementById('view-orcamentos');
+  if(!view) return;
+  view.querySelectorAll('button').forEach(function(b){
+    if(/^\s*faturar\s*$/i.test(b.textContent||'')) b.remove();
+  });
+  var thead = view.querySelector('thead tr');
+  if(thead && !/Status/.test(thead.textContent||'')){
+    var th = document.createElement('th');
+    th.textContent = 'Status';
+    th.setAttribute('data-orc-status-th','1');
+    thead.insertBefore(th, thead.lastElementChild);
+  }
+  var list = (typeof db!=='undefined' && db.orcamentos)||[];
+  view.querySelectorAll('tbody tr').forEach(function(tr){
+    var id = idDaLinha(tr);
+    if(!id) return;
+    var o = list.find(function(x){ return x && x.id===id; });
+    var td = tr.querySelector('[data-orc-status]');
+    if(!td){
+      td = document.createElement('td');
+      td.setAttribute('data-orc-status','1');
+      tr.insertBefore(td, tr.lastElementChild);
+    }
+    td.innerHTML = badge(o||{status:'aberto'});
+    tr.querySelectorAll('.text-emerald-700').forEach(function(el){
+      if(/fechado/i.test(el.textContent||'')) el.remove();
+    });
+  });
+}
+
+if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52243status){
+  var oldR = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    var r = oldR.apply(this, arguments);
+    try{ pintarLista(); }catch(e){}
+    return r;
+  };
+  window.renderOrcamentos.__v52243status = true;
+}
+
+if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v52243status){
+  var oldA = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(existente){
+    var r = oldA.apply(this, arguments);
+    try{
+      var o = existente;
+      if(!o && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id && typeof db!=='undefined'){
+        o = (db.orcamentos||[]).find(function(x){ return x.id===window.__ORC_ST.form.id; });
+      }
+      var body = document.getElementById('modal-body');
+      var foot = document.getElementById('modal-footer');
+      if(foot){
+        foot.querySelectorAll('button').forEach(function(b){
+          if(/faturar/i.test(b.textContent||'')) b.remove();
+        });
+      }
+      var box = document.getElementById('orc-status-box');
+      if(body && !box){
+        box = document.createElement('div');
+        box.id = 'orc-status-box';
+        box.className = 'rounded-xl border p-3 flex items-center justify-between bg-slate-50';
+        body.insertBefore(box, body.firstChild);
+      }
+      if(box){
+        box.innerHTML = '<span class="text-[11px] font-bold uppercase text-[#0a1e8a]">Status</span>'+badge(o||{status:'aberto'});
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirTelaOrcamento.__v52243status = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 orçamentos: status Autorizado / Não autorizado');
+})();
+
+;
+
+/* ===== ajustes_v52243_contratos_sort_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Sort dos contratos pelos títulos: 1º A→Z, 2º Z→A, uma seta.
+//            Ordena as linhas pelo texto da coluna. Não inverte tbody
+//            (isso piscava e desfazia o 2º clique).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var COL = { codigo:1, cliente:2, inicio:3, fim:4, impressoras:5, chamados:6, valor:7, status:8 };
+
+function proximaDir(atualCol, atualDir, col){
+  if(atualCol===col && atualDir==='asc') return 'desc';
+  return 'asc';
+}
+function cmpVal(a,b){
+  var A = String(a==null?'':a).trim();
+  var B = String(b==null?'':b).trim();
+  var AN = Number(String(A).replace(/[R$\s.]/g,'').replace(',','.'));
+  var BN = Number(String(B).replace(/[R$\s.]/g,'').replace(',','.'));
+  var numA = A!=='' && isFinite(AN) && /^-?[0-9.,]+$/.test(A.replace(/\s/g,'').replace('R$',''));
+  var numB = B!=='' && isFinite(BN) && /^-?[0-9.,]+$/.test(B.replace(/\s/g,'').replace('R$',''));
+  if(numA && numB) return AN-BN;
+  return A.localeCompare(B, 'pt-BR', { numeric:true, sensitivity:'base' });
+}
+function ordenarLista(lista, getter, dir){
+  var arr = (lista||[]).slice();
+  arr.sort(function(a,b){
+    var r = cmpVal(getter(a), getter(b));
+    return dir==='desc' ? -r : r;
+  });
+  return arr;
+}
+
+window.CONTRATOS_SORT_V52243_PURE = { proximaDir: proximaDir, cmpVal: cmpVal, ordenarLista: ordenarLista, COL: COL };
+
+if(typeof document==='undefined') return;
+
+function stFinal(){
+  return window.__CONTRATOS_FINAL_STATE__ || (window.__CONTRATOS_FINAL_STATE__ = { busca:'', status:'', sort:'codigo', dir:'asc' });
+}
+function stRefino(){
+  return window.__KAUAN_REFINO_STATE__ || (window.__KAUAN_REFINO_STATE__ = { contratoSort:'codigo', contratoDir:'asc' });
+}
+
+function pintarSetas(root, col, dir){
+  if(!root) return;
+  root.querySelectorAll('thead th').forEach(function(th){
+    var html = th.innerHTML.replace(/\s*[▲▼]/g,'');
+    var oc = th.getAttribute('onclick')||'';
+    var m = oc.match(/contratos(?:FinalSort|SortRefino)\('([^']+)'\)/);
+    if(m && m[1]===col) html += dir==='desc' ? ' ▼' : ' ▲';
+    th.innerHTML = html;
+  });
+}
+
+function ordenarTbody(){
+  var st = stFinal();
+  var view = document.getElementById('view-contratos');
+  if(!view || view.classList.contains('hidden')) return;
+  var tb = view.querySelector('tbody');
+  if(!tb || tb.rows.length<2){ pintarSetas(view, st.sort||'codigo', st.dir||'asc'); return; }
+  var idx = COL[st.sort] != null ? COL[st.sort] : 1;
+  var rows = Array.from(tb.rows).filter(function(r){ return r.cells && r.cells.length>2; });
+  rows.sort(function(a,b){
+    var ta = a.cells[idx] ? a.cells[idx].innerText : '';
+    var tb2 = b.cells[idx] ? b.cells[idx].innerText : '';
+    var r = cmpVal(ta, tb2);
+    return (st.dir||'asc')==='desc' ? -r : r;
+  });
+  rows.forEach(function(row){ tb.appendChild(row); });
+  pintarSetas(view, st.sort||'codigo', st.dir||'asc');
+}
+
+window.contratosFinalSort = function(col){
+  var st = stFinal();
+  st.dir = proximaDir(st.sort, st.dir||'asc', col);
+  st.sort = col;
+  var rf = stRefino();
+  rf.contratoSort = col;
+  rf.contratoDir = st.dir;
+  if(typeof window.renderContratos==='function') window.renderContratos();
+};
+window.contratosFinalSort.__v52214sort = true;
+window.contratosFinalSort.__v52242sort = true;
+window.contratosFinalSort.__v52243sort = true;
+
+window.contratosSortRefino = function(col){
+  window.contratosFinalSort(col);
+};
+window.contratosSortRefino.__v52214sort = true;
+window.contratosSortRefino.__v52242sort = true;
+window.contratosSortRefino.__v52243sort = true;
+
+if(typeof window.renderContratos==='function' && !window.renderContratos.__v52243sort){
+  var oldR = window.renderContratos;
+  window.renderContratos = function(){
+    var r = oldR.apply(this, arguments);
+    try{ ordenarTbody(); }catch(e){}
+    return r;
+  };
+  window.renderContratos.__v52243sort = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 contratos: sort A→Z / Z→A sem piscar');
+})();
+
+;
+
+/* ===== ajustes_v52243_impressora_remanejar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Impressora no contrato (tela do contrato):
+//            novo cadastro começa só no serial; aviso de remanejo só no
+//            salvar; Ativas vs Remanejadas (histórico congelado).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function acharEquipPorSerial(dbRef, serie, empId){
+  var k = up(serie);
+  if(!k) return null;
+  return ((dbRef&&dbRef.equipamentos)||[]).find(function(e){
+    if(!e) return false;
+    if(empId && e.empresaId && e.empresaId!==empId) return false;
+    return up(e.serie)===k || up(e.patrimonio)===k;
+  })||null;
+}
+function parquesDoEquip(dbRef, eqId){
+  return ((dbRef&&dbRef.parque)||[]).filter(function(p){ return p && p.equipamentoId===eqId; });
+}
+function parqueAtivoOutroCliente(dbRef, eq, clienteId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
+  })||null;
+}
+function snapshotFrozen(eq, p){
+  return {
+    modelo: (eq&&eq.modelo)||'',
+    serie: (eq&&eq.serie)||'',
+    patrimonio: (eq&&eq.patrimonio)||'',
+    setor: (p&&p.setor)||'',
+    localInstalacao: (p&&(p.localInstalacao||p.enderecoInstalacao))||'',
+    contadorPB: n(eq&&eq.contadorPB),
+    contadorCor: n(eq&&eq.contadorCor),
+    congeladoEm: new Date().toISOString()
+  };
+}
+function msgRemanejar(nomeCliente, contador){
+  return 'impressora cadastrada em '+(nomeCliente||'outro cliente')+' com o contador '+(contador==null?'-':contador)+', deseja remanejar essa impressora pra esse cadastro?';
+}
+
+window.IMPRESSORA_REMANEJAR_V52243_PURE = {
+  acharEquipPorSerial: acharEquipPorSerial,
+  parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  snapshotFrozen: snapshotFrozen,
+  msgRemanejar: msgRemanejar
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,'Impressora'); if(typeof toast==='function') toast(m,'info'); }
+function nomeCli(id){
+  if(typeof db==='undefined') return '';
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; });
+  return (c&&c.nome)||'outro cliente';
+}
+
+function esconderDepoisSerial(){
+  var ids = ['kr-imp-modelo','kr-imp-patr','kr-imp-serie','kr-imp-dept','kr-imp-local'];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    var box = el.closest('.grid') || el.parentElement;
+    if(box){ box.classList.add('v52243-depois-serial'); box.style.display='none'; }
+  });
+  document.querySelectorAll('#modal-body .border.rounded-xl.p-3').forEach(function(el){
+    el.classList.add('v52243-depois-serial');
+    el.style.display='none';
+  });
+}
+function mostrarDepoisSerial(){
+  document.querySelectorAll('.v52243-depois-serial').forEach(function(el){
+    el.style.display='';
+    el.classList.remove('v52243-depois-serial');
+  });
+}
+
+function passoSerialNovo(){
+  if(!window.__impPassoSerial) return;
+  if(document.getElementById('kr-imp-avancar')) return;
+  if(!document.getElementById('kr-imp-busca')) return;
+  esconderDepoisSerial();
+  var foot = document.getElementById('modal-footer');
+  if(!foot) return;
+  var salvar = null;
+  foot.querySelectorAll('button').forEach(function(b){
+    if(/salvar/i.test(b.textContent||'')) salvar = b;
+  });
+  if(salvar) salvar.style.display='none';
+  var btn = document.createElement('button');
+  btn.id='kr-imp-avancar';
+  btn.type='button';
+  btn.className='h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold';
+  btn.textContent='Avançar';
+  btn.onclick=function(){
+    var chave = txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    if(!chave){ aviso('Informe o serial.'); return; }
+    if(typeof window.reconhecerImpressoraContrato==='function') window.reconhecerImpressoraContrato();
+    mostrarDepoisSerial();
+    btn.remove();
+    if(salvar) salvar.style.display='';
+    window.__impPassoSerial = false;
+  };
+  foot.appendChild(btn);
+}
+
+if(typeof window.abrirModalEquipamentoContrato==='function' && !window.abrirModalEquipamentoContrato.__v52243rem){
+  var oldAbrir = window.abrirModalEquipamentoContrato;
+  window.abrirModalEquipamentoContrato = function(contratoId, parqueId){
+    if(parqueId && typeof db!=='undefined'){
+      var p = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(p && p.status==='remanejada'){
+        aviso('Impressora remanejada. Histórico congelado — não edita.');
+        return;
+      }
+    }
+    window.__impPassoSerial = !parqueId;
+    var r = oldAbrir.apply(this, arguments);
+    try{
+      if(!parqueId){
+        setTimeout(passoSerialNovo, 0);
+        setTimeout(passoSerialNovo, 80);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirModalEquipamentoContrato.__v52243rem = true;
+}
+
+if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpressoraContrato.__v52243rem){
+  var oldSal = window.salvarImpressoraContrato;
+  window.salvarImpressoraContrato = function(contratoId, parqueId){
+    var s = typeof getSession==='function'?getSession():null;
+    if(!s || typeof db==='undefined') return oldSal.apply(this, arguments);
+    var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+    if(!c) return oldSal.apply(this, arguments);
+    if(parqueId){
+      var pe = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(pe && pe.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+    }
+    var serie = txt(document.getElementById('kr-imp-serie')&&document.getElementById('kr-imp-serie').value)
+      || txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    var eq = acharEquipPorSerial(db, serie, s.empresaId);
+    var outro = parqueAtivoOutroCliente(db, eq, c.clienteId);
+    var run = function(){
+      if(outro){
+        outro.status = 'remanejada';
+        outro.frozen = snapshotFrozen(eq, outro);
+        outro.remanejadoEm = new Date().toISOString();
+        outro.remanejadoParaContratoId = c.id;
+        outro.remanejadoParaClienteId = c.clienteId;
+      }
+      var r = oldSal.apply(window, [contratoId, parqueId]);
+      if(!parqueId) aviso('impressora cadastrada com sucesso');
+      return r;
+    };
+    if(outro && !parqueId){
+      var cont = n((eq&&eq.contadorPB) || (outro.medidores&&outro.medidores.pretoA4&&outro.medidores.pretoA4.contadorAnterior));
+      var msg = msgRemanejar(nomeCli(outro.clienteId), cont);
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Remanejar impressora').then(function(ok){ if(ok) run(); });
+        return;
+      }
+      return;
+    }
+    return run();
+  };
+  window.salvarImpressoraContrato.__v52243rem = true;
+}
+
+function htmlLista(c, lista, titulo, editar){
+  return '<div class="border rounded-xl overflow-hidden mt-3"><div class="bg-slate-50 px-4 py-3 border-b"><b>'+esc(titulo)+'</b></div>'
+    +'<div class="overflow-auto max-h-[280px]"><table class="w-full text-left text-[12.5px]"><thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-slate-500"><tr>'
+    +'<th class="px-4 py-2.5">Patrimônio</th><th class="px-4 py-2.5">Modelo</th><th class="px-4 py-2.5">Serial</th><th class="px-4 py-2.5">Departamento / Local</th><th class="px-4 py-2.5">Status</th>'
+    +(editar?'<th class="px-4 py-2.5 text-right">Editar</th>':'')+'</tr></thead><tbody class="divide-y">'
+    +(lista.map(function(p){
+      var e = ((typeof db!=='undefined'&&db.equipamentos)||[]).find(function(x){ return x.id===p.equipamentoId; })||{};
+      var fr = p.frozen||{};
+      var pat = editar ? (e.patrimonio||p.patrimonio||'-') : (fr.patrimonio||e.patrimonio||'-');
+      var mod = editar ? (e.modelo||'') : (fr.modelo||e.modelo||'');
+      var ser = editar ? (e.serie||'') : (fr.serie||e.serie||'');
+      var set = editar ? (p.setor||'Geral') : (fr.setor||p.setor||'Geral');
+      var loc = editar ? (p.localInstalacao||'') : (fr.localInstalacao||p.localInstalacao||'');
+      var trOpen = editar ? 'ondblclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="hover:bg-slate-50 cursor-pointer"' : 'class="bg-slate-50 text-slate-500"';
+      return '<tr '+trOpen+'><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">'+esc(pat)+'</td><td class="px-4 py-2.5 font-semibold">'+esc(mod)+'</td><td class="px-4 py-2.5 font-mono">'+esc(ser)+'</td><td class="px-4 py-2.5">'+esc(set)+'<br><span class="text-[11px] text-slate-500">'+esc(loc)+'</span></td><td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold uppercase">'+esc(p.status||'ativo')+'</span></td>'
+        +(editar?'<td class="px-4 py-2.5 text-right"><button onclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="w-8 h-8 rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td>':'')
+        +'</tr>';
+    }).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhuma</td></tr>')
+    +'</tbody></table></div></div>';
+}
+
+function pintarListas(contratoId){
+  if(typeof db==='undefined') return;
+  var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+  if(!c) return;
+  var body = document.getElementById('modal-body');
+  if(!body) return;
+  var todas = (db.parque||[]).filter(function(p){
+    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  });
+  var ativas = todas.filter(function(p){ return p.status==='ativo'; });
+  var rem = todas.filter(function(p){ return p.status==='remanejada'; });
+  var html = htmlLista(c, ativas, 'Impressoras ativas', true) + htmlLista(c, rem, 'Impressoras remanejadas (histórico, sem editar)', false);
+  var old = document.getElementById('v52243-listas-imp') || document.getElementById('v52242-listas-imp');
+  if(old){ old.id='v52243-listas-imp'; old.innerHTML = html; return; }
+  var wrap = document.createElement('div');
+  wrap.id = 'v52243-listas-imp';
+  wrap.innerHTML = html;
+  var cand = null;
+  body.querySelectorAll('.border.rounded-xl.overflow-hidden').forEach(function(el){
+    if(/impressora/i.test(el.textContent||'')) cand = el;
+  });
+  if(cand) cand.replaceWith(wrap);
+  else body.appendChild(wrap);
+}
+
+if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52243rem){
+  var oldOpen = window.openContratoCompleto;
+  window.openContratoCompleto = function(contratoId){
+    var r = oldOpen.apply(this, arguments);
+    try{
+      setTimeout(function(){ pintarListas(contratoId); }, 0);
+      setTimeout(function(){ pintarListas(contratoId); }, 80);
+    }catch(e){}
+    return r;
+  };
+  window.openContratoCompleto.__v52243rem = true;
+}
+
+if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato==='function' && !window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52243){
+  var oldP = window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato;
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato = function(dbRef, contrato, opts){
+    var list = oldP(dbRef, contrato, opts)||[];
+    if(opts && opts.todos) return list;
+    return list.filter(function(p){ return p && p.status!=='remanejada'; });
+  };
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52243 = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 impressora: remanejo + ativas/remanejadas');
+})();
+
+;
+
+/* ===== ajustes_v52243_financeiro_filtros_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Financeiro: some saldos; filtros da lista; lupa/Enter;
+//            padrão Hoje; Abertos / Todos; De/Até só em Abertos.
+//            Código = busca exata. Por valor = valor igual.
+//            Cód. Caixa = código do lançamento. Faturada entra (criadoEm).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CAMPOS = [
+  ['nome','Nome'],
+  ['cod_venda','Cód. Venda'],
+  ['cod_parcela','Cód. Parcela'],
+  ['cod_cliente','Cód. Cliente'],
+  ['por_valor','Por Valor'],
+  ['cod_caixa','Cód. Caixa'],
+  ['cod_pix','Cód. Pix'],
+  ['cod_leitura','Cód. Leitura']
+];
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function codigoNorm(v){
+  var d=String(v==null?'':v).replace(/\D/g,'');
+  if(!d) return '';
+  return d.replace(/^0+/,'')||'0';
+}
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function valorIgual(a,b){ return Math.abs(n(a)-n(b))<0.005; }
+function diaDe(v){ return String(v||'').slice(0,10); }
+function hoje(){ return new Date().toISOString().slice(0,10); }
+function datasDoLanc(c){
+  return [c.criadoEm, c.data, c.vencimento, c.pagamentoData, c.baixaEm, c.faturadoEm].map(diaDe).filter(Boolean);
+}
+function bateHoje(c, h){
+  var ds = datasDoLanc(c);
+  if(!ds.length) return true;
+  return ds.indexOf(h)>=0;
+}
+function noIntervalo(c, de, ate){
+  if(!de && !ate) return true;
+  var ds = datasDoLanc(c);
+  if(!ds.length) return false;
+  return ds.some(function(d){
+    if(de && d<de) return false;
+    if(ate && d>ate) return false;
+    return true;
+  });
+}
+function estaPago(c){ return /pago|baixad|quitad/i.test(String(c&&c.status||'')); }
+
+function filtraLancamentos(list, opts){
+  opts = opts||{};
+  var campo = opts.campo||'nome';
+  var q = txt(opts.q);
+  var modo = opts.modo||'hoje';
+  var de = txt(opts.de);
+  var ate = txt(opts.ate);
+  var h = opts.hoje||hoje();
+  var cliDe = opts.clienteDe||function(){ return {}; };
+  return (list||[]).filter(function(item){
+    var c = item.ref||item;
+    if(!c) return false;
+    if(modo==='hoje' && !bateHoje(c,h)) return false;
+    if(modo==='abertos' && estaPago(c)) return false;
+    if(modo==='abertos' && (de||ate) && !noIntervalo(c,de,ate)) return false;
+    if(!q) return true;
+    var cli = cliDe(c)||{};
+    if(campo==='nome'){
+      var nome = String(cli.nome||c.clienteNomeAntigo||c.fornecedor||'').toLowerCase();
+      return nome.indexOf(q.toLowerCase())>=0;
+    }
+    if(campo==='cod_venda') return codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q) || codigoNorm(c.vendaId||'')===codigoNorm(q);
+    if(campo==='cod_parcela') return codigoNorm(c.numeroParcela||c.parcela||c.nroParcela||'')===codigoNorm(q);
+    if(campo==='cod_cliente') return codigoNorm(cli.codigo||cli.codigoAntigo||c.codClienteAntigo||'')===codigoNorm(q);
+    if(campo==='por_valor') return valorIgual(c.valor, q);
+    if(campo==='cod_caixa') return codigoNorm(c.codigo||c.legadoCodigo||c.id||'')===codigoNorm(q);
+    if(campo==='cod_pix') return codigoNorm(c.pixId||c.txid||c.codigoPix||'')===codigoNorm(q) || String(c.pixId||c.txid||c.codigoPix||'').toLowerCase()===q.toLowerCase();
+    if(campo==='cod_leitura') return codigoNorm(c.leituraNumero||c.leituraId||c.codLeitura||'')===codigoNorm(q);
+    return true;
+  });
+}
+
+window.FINANCEIRO_V52243_PURE = {
+  CAMPOS: CAMPOS,
+  codigoNorm: codigoNorm,
+  valorIgual: valorIgual,
+  filtraLancamentos: filtraLancamentos,
+  bateHoje: bateHoje,
+  noIntervalo: noIntervalo
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return typeof escapeHtml==='function'?escapeHtml(s):String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+n(v).toFixed(2)); }
+function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):(v||'-'); }
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+function lerCampos(){
+  ST.campo = (document.getElementById('neo-fin-campo')||{}).value || ST.campo || 'nome';
+  ST.q = (document.getElementById('neo-search-fin')||{}).value || ST.q || '';
+  ST.de = (document.getElementById('neo-fin-de')||{}).value || ST.de || '';
+  ST.ate = (document.getElementById('neo-fin-ate')||{}).value || ST.ate || '';
+  ST.tipo = (document.getElementById('neo-fin-tipo')||{}).value || ST.tipo || 'todos';
+  ST.ordem = (document.getElementById('neo-fin-ordem')||{}).value || ST.ordem || 'venc-asc';
+}
+
+window.finBuscarV52243 = function(){
+  lerCampos();
+  window.renderFinanceiro();
+};
+window.finModoV52243 = function(modo){
+  ST.modo = modo||'hoje';
+  if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
+  window.renderFinanceiro();
+};
+
+if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFaturamento.__v52243fin){
+  var oldFat = window.vosConcluirFaturamento;
+  window.vosConcluirFaturamento = function(vendaId){
+    var r = oldFat.apply(this, arguments);
+    try{
+      if(typeof db==='undefined') return r;
+      var agora = new Date().toISOString();
+      (db.contasReceber||[]).forEach(function(c){
+        if(c && c.vendaId===vendaId && !c.criadoEm) c.criadoEm = agora;
+      });
+      if(typeof saveDB==='function') saveDB();
+    }catch(e){}
+    return r;
+  };
+  window.vosConcluirFaturamento.__v52243fin = true;
+}
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52243fin){
+  var oldF = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var sess = typeof getSession==='function'?getSession():null;
+    if(!sess || typeof db==='undefined') return oldF.apply(this, arguments);
+    var view = document.getElementById('view-financeiro') || (typeof ensureView==='function'?ensureView('financeiro'):null);
+    if(!view) return oldF.apply(this, arguments);
+    lerCampos();
+    var nomeCli = function(c){
+      var cli = (db.clientes||[]).find(function(x){ return x.id===c.clienteId; });
+      return cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||'');
+    };
+    var receber = (db.contasReceber||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var pagar = (db.contasPagar||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var all = receber.map(function(c){ return {ref:c,_tipo:'Receber'}; }).concat(pagar.map(function(c){ return {ref:c,_tipo:'Pagar'}; }));
+    if(ST.tipo==='Receber') all=all.filter(function(x){ return x._tipo==='Receber'; });
+    if(ST.tipo==='Pagar') all=all.filter(function(x){ return x._tipo==='Pagar'; });
+    all = filtraLancamentos(all, {
+      campo:ST.campo, q:ST.q, modo:ST.modo, de:ST.de, ate:ST.ate, hoje:hoje(),
+      clienteDe:function(c){ return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{}; }
+    });
+    var ordFns = {
+      'venc-asc':function(a,b){ return String(a.ref.vencimento||'').localeCompare(String(b.ref.vencimento||'')); },
+      'venc-desc':function(a,b){ return String(b.ref.vencimento||'').localeCompare(String(a.ref.vencimento||'')); },
+      'valor-desc':function(a,b){ return n(b.ref.valor)-n(a.ref.valor); },
+      'valor-asc':function(a,b){ return n(a.ref.valor)-n(b.ref.valor); },
+      'desc':function(a,b){ return String(a.ref.descricao||'').localeCompare(String(b.ref.descricao||''),'pt-BR',{sensitivity:'base'}); }
+    };
+    all.sort(ordFns[ST.ordem]||ordFns['venc-asc']);
+    var lim = window.__finLim||400;
+    var mostrar = all.slice(0,lim);
+    var btnModo = function(id,label){
+      return '<button type="button" onclick="window.finModoV52243(\''+id+'\')" class="neo-tab '+(ST.modo===id?'active':'')+'">'+label+'</button>';
+    };
+    var statusPill = window.statusPillFin || function(st){ return '<span class="neo-status '+(st==='pago'?'ok':'wait')+'">'+esc(st||'aberto')+'</span>'; };
+    var datasAbertos = ST.modo==='abertos';
+    view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
+      +'<div class="neo-head"><div><h3>Financeiro</h3><p>Contas a receber e a pagar — duplo clique abre o histórico</p></div>'
+      +'<div class="neo-actions">'
+      +'<button onclick="window.finAcaoReceber&&window.finAcaoReceber()" class="neo-btn primary" data-fin-receber="1"><i class="ph ph-arrow-circle-down"></i>Receber</button>'
+      +(typeof window.finImprimirRecibo==='function'?'<button onclick="window.finImprimirRecibo()" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button>':'')
+      +'<button onclick="window.excluirFinanceiroSelecionados&&window.excluirFinanceiroSelecionados()" class="neo-btn danger btn-del-lote"><i class="ph ph-trash"></i>Excluir</button>'
+      +'</div></div>'
+      +'<div class="p-4 border-b bg-white space-y-3">'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +btnModo('hoje','Hoje')+btnModo('abertos','Abertos')+btnModo('todos','Todos')
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +'<select id="neo-fin-campo" class="neo-select !h-10 min-w-[160px]">'
+      +CAMPOS.map(function(it){ return '<option value="'+it[0]+'"'+(ST.campo===it[0]?' selected':'')+'>'+it[1]+'</option>'; }).join('')
+      +'</select>'
+      +'<input id="neo-search-fin" value="'+esc(ST.q)+'" class="neo-input min-w-[240px] flex-1 max-w-[420px]" placeholder="Buscar… (Enter ou lupa)">'
+      +'<button type="button" onclick="window.finBuscarV52243()" class="h-10 w-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button>'
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +(datasAbertos
+        ? '<label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-fin-de" type="date" value="'+esc(ST.de)+'" class="neo-input !w-[150px] !h-9">'
+          +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
+        : '<input id="neo-fin-de" type="hidden" value=""><input id="neo-fin-ate" type="hidden" value="">')
+      +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
+      +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
+      +'</div></div>'
+      +'<div class="overflow-auto max-h-[calc(100vh-360px)]"><table class="neo-table"><thead><tr><th class="w-8"><input type="checkbox" id="fin-check-all" title="Marcar todos" onchange="window.v52023MarcarTodos&&v52023MarcarTodos(\'fin\',this.checked)"></th><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>'
+      +(mostrar.map(function(x){
+        var c=x.ref; var nome=nomeCli(c); var tipo=x._tipo==='Receber'?'cr':'cp';
+        return '<tr class="cursor-pointer" ondblclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')"><td><input type="checkbox" class="fin-del-check" data-tipo="'+tipo+'" value="'+c.id+'" onclick="event.stopPropagation()" onchange="window.v52023AtualizarBotaoExcluir&&v52023AtualizarBotaoExcluir()"></td><td>'+x._tipo+'</td><td>'+esc(c.descricao||'')+(c.legadoCodigo?' <span class="text-[10px] text-slate-400">#'+esc(c.legadoCodigo)+'</span>':'')+'</td><td>'+esc(nome)+'</td><td><b class="'+(x._tipo==='Pagar'?'text-red-600':'')+'">'+money(c.valor||0)+'</b></td><td>'+dataBR(c.vencimento)+'</td><td>'+statusPill(c.status)+'</td><td><button onclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhum lançamento encontrado</td></tr>')
+      +'</tbody></table></div>'
+      +(all.length>mostrar.length?'<div class="p-3 border-t text-center"><button onclick="window.__finLim='+(lim+300)+'; renderFinanceiro()" class="neo-btn">Mostrar mais</button></div>':'')
+      +'</div></div>';
+    var inp = document.getElementById('neo-search-fin');
+    if(inp){
+      inp.oninput = null;
+      inp.removeAttribute('oninput');
+      inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
+    }
+    ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem','neo-fin-de','neo-fin-ate'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52243(); };
+    });
+  };
+  window.renderFinanceiro.__v52243fin = true;
+  window.renderFinanceiro.__v52242fin = true;
+  window.renderFinanceiro.__v52213 = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 financeiro: filtros, lupa, hoje, faturadas');
+})();
+
+;
+
+/* ===== ajustes_v52243_financeiro_menu_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Menu Financeiro único: some o submenu "Contas e caixas".
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function semSubmenuFinanceiro(list){
+  return (list||[]).map(function(m){
+    if(!m || m.id!=='financeiro') return m;
+    var c = Object.assign({}, m);
+    c.items = [];
+    return c;
+  });
+}
+
+window.FINANCEIRO_MENU_V52243_PURE = { semSubmenuFinanceiro: semSubmenuFinanceiro };
+
+if(typeof document==='undefined') return;
+
+if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.menusPadrao==='function' && !window.MENUS_ATALHOS_PURE.menusPadrao.__v52243fin){
+  var old = window.MENUS_ATALHOS_PURE.menusPadrao;
+  window.MENUS_ATALHOS_PURE.menusPadrao = function(){
+    return semSubmenuFinanceiro(old.apply(this, arguments)||[]);
+  };
+  window.MENUS_ATALHOS_PURE.menusPadrao.__v52243fin = true;
+}
+
+function tirar(){
+  var menu = document.getElementById('menu-financeiro');
+  if(!menu) return;
+  menu.innerHTML = '';
+  if(menu.parentNode) menu.remove();
+}
+
+setTimeout(tirar, 200);
+setTimeout(tirar, 800);
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243fin){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    tirar();
+    return r;
+  };
+  window.pintarMenus.__v52243fin = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 financeiro: menu único');
+})();
+
+;
+
+/* ===== ajustes_v52243_menu_versao_boleto_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Menu da faixa aberta em azul; versão no rodapé; forma Boleto
+//            (baixa automática, igual Pix/Dinheiro).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.43';
+
+function viewsDoModulo(onclickHtml){
+  var s = String(onclickHtml||'');
+  var out = [];
+  var re = /navigateTo\('([^']+)'\)/g;
+  var m;
+  while((m=re.exec(s))) out.push(m[1]);
+  if(/novaVenda|openQuickOS|orcamentos/.test(s)) out.push('vendas','orcamentos','manutencao');
+  if(/contratos|parque|leituras|impressoras/.test(s)) out.push('contratos','parque','leituras','impressoras');
+  if(/clientes/.test(s)) out.push('clientes','produtos','impressoras');
+  if(/financeiro/.test(s)) out.push('financeiro');
+  if(/config|usuarios|auditoria/.test(s)) out.push('config','usuarios','auditoria');
+  if(/buscador-escola/.test(s)) out.push('buscador-escola');
+  if(/dashboard/.test(s)) out.push('dashboard');
+  return out;
+}
+function moduloAberto(view, onclickHtml){
+  return viewsDoModulo(onclickHtml).indexOf(view)>=0;
+}
+
+window.MENU_VERSAO_BOLETO_V52243_PURE = {
+  VERSAO: VERSAO,
+  viewsDoModulo: viewsDoModulo,
+  moduloAberto: moduloAberto
+};
+
+if(typeof document==='undefined') return;
+
+function garantirCss(){
+  if(document.getElementById('v52243-menu-css')) return;
+  var st = document.createElement('style');
+  st.id = 'v52243-menu-css';
+  st.textContent = '.module.mod-sel>button{background:#0a1e8a!important;color:#fff!important}.module.mod-sel>button i{color:#fff!important}';
+  document.head.appendChild(st);
+}
+
+function pintarMenuAberto(view){
+  garantirCss();
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  row.querySelectorAll('.module').forEach(function(mod){
+    var html = mod.innerHTML||'';
+    var on = moduloAberto(view, html);
+    if(on) mod.classList.add('mod-sel');
+    else mod.classList.remove('mod-sel');
+  });
+}
+
+function pintarRodape(){
+  var foot = document.querySelector('footer span:not(#footer-session)');
+  if(foot){
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+  }
+  var top = document.getElementById('app-title-version');
+  if(top && !/v5\.22\./.test(top.textContent||'')){
+    top.textContent = 'Sistema Digicopy v'+VERSAO;
+  }
+}
+
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52243menu){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(view){
+    var r = oldN.apply(this, arguments);
+    try{ pintarMenuAberto(view); pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52243menu = true;
+}
+
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243sel){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    try{
+      var vis = document.querySelector('.view:not(.hidden)');
+      var id = vis && vis.id && vis.id.replace(/^view-/,'');
+      if(id) pintarMenuAberto(id);
+      pintarRodape();
+    }catch(e){}
+    return r;
+  };
+  window.pintarMenus.__v52243sel = true;
+}
+
+setTimeout(pintarRodape, 200);
+
+function garantirBoleto(arr){
+  if(!arr || typeof arr.indexOf!=='function') return arr;
+  if(arr.indexOf('Boleto')<0) arr.push('Boleto');
+  return arr;
+}
+
+if(typeof window.FINANCEIRO_RECEBER_PURE==='object' && window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA){
+  garantirBoleto(window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA);
+}
+
+function injetarBotaoBoleto(hostId, cls, escolher){
+  var box = document.getElementById(hostId);
+  if(!box) return;
+  if(/Boleto/.test(box.textContent||'')) return;
+  var b = document.createElement('button');
+  b.type='button';
+  b.setAttribute('data-forma','Boleto');
+  b.className=cls;
+  b.textContent='Boleto';
+  b.onclick=function(){ if(typeof window[escolher]==='function') window[escolher]('Boleto'); };
+  box.appendChild(b);
+}
+
+if(typeof window.finAcaoReceber==='function' && !window.finAcaoReceber.__v52243bol){
+  var oldRec = window.finAcaoReceber;
+  window.finAcaoReceber = function(){
+    var r = oldRec.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('fin-formas','fin-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','finEscolherFormaBaixa'); }, 30);
+    return r;
+  };
+  window.finAcaoReceber.__v52243bol = true;
+}
+
+if(typeof window.finConfirmarBaixa==='function' && !window.finConfirmarBaixa.__v52243bol){
+  var oldBaixa = window.finConfirmarBaixa;
+  window.finConfirmarBaixa = function(){
+    var el = document.getElementById('fin-forma-baixa');
+    if(el && el.value==='Boleto'){
+      var ids = window.__finBaixaIds||[];
+      var agora = new Date().toISOString();
+      var n=0;
+      ids.forEach(function(id){
+        var cr = (typeof db!=='undefined' && (db.contasReceber||[])).find(function(x){ return x && x.id===id; });
+        if(!cr || cr.status==='pago') return;
+        if(window.FINANCEIRO_RECEBER_PURE && window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo)
+          window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo(cr, 'Boleto', agora);
+        else { cr.status='pago'; cr.formaPagamento='Boleto'; cr.pagamentoData=agora; cr.baixaForma='Boleto'; }
+        n++;
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof closeModal==='function') closeModal();
+      if(typeof renderFinanceiro==='function') renderFinanceiro();
+      if(typeof toast==='function') toast(n+' título(s) baixado(s) em Boleto','success');
+      return;
+    }
+    return oldBaixa.apply(this, arguments);
+  };
+  window.finConfirmarBaixa.__v52243bol = true;
+}
+
+if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento.__v52243bol){
+  var oldFat = window.vosAbrirRecebimento;
+  window.vosAbrirRecebimento = function(){
+    var r = oldFat.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('vos-formas','vos-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','vosEscolherForma'); }, 30);
+    return r;
+  };
+  window.vosAbrirRecebimento.__v52243bol = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 menu azul, versão rodapé, Boleto');
 })();
 
 ;
