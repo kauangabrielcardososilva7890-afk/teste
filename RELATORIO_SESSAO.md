@@ -4,11 +4,24 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.48** (em construção — produção em uso continua **5.21.6**)  
-**Zip:** gerar a cada versão para testar. Não commitar zip.  
-**Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
+**Última versão:** **v5.22.49**  
+**Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.49. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.49 — atualizações do relatório no .exe e no celular
+
+Causa: o rodapé vinha do `index.html` (por isso a versão mudava) e o link do cliente ia para o Pages velho (`digicopy-orcament.pages.dev`), sem “Tem certeza?”, sem invalidar o link e sem autorizar/recusar de verdade.
+
+- Link do orçamento abre a página nova no GitHack (`orcamento_pagar.html?v=5.22.49&c=token&d=...`): **Tem certeza?**, depois o link não vale mais, Autorizar / Recusar.
+- O patch do relatório entra **no bundle e sozinho no .exe** (depois do bundle), para a atualização não depender só do `app.bundle.js`.
+- No sistema: salvar venda grava e fecha; some Sair; faturar não imprime; apagar leitura devolve contador; De/Até visíveis; códigos no histórico.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.49`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
 
 ---
 
