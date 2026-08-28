@@ -24,6 +24,7 @@ function createWindow () {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
+      v8CacheOptions: 'none',
       devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
@@ -35,12 +36,17 @@ function createWindow () {
   try{
     const marker = path.join(app.getPath('userData'), 'app-version.txt');
     const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
-    if(APP_VERSION && prev !== APP_VERSION){
-      win.webContents.session.clearCache().catch(()=>{});
-      try{ fs.writeFileSync(marker, APP_VERSION, 'utf8'); }catch(e){}
+    if(!prev || (APP_VERSION && prev !== APP_VERSION)){
+      const ud = app.getPath('userData');
+      ['Cache','Code Cache','GPUCache','Service Worker'].forEach(function(nome){
+        try{ fs.rmSync(path.join(ud, nome), { recursive:true, force:true }); }catch(e){}
+      });
+      try{ win.webContents.session.clearCache(); }catch(e){}
+      try{ if(win.webContents.session.clearCodeCaches) win.webContents.session.clearCodeCaches({ urls: [] }); }catch(e){}
+      try{ fs.writeFileSync(marker, APP_VERSION||'', 'utf8'); }catch(e){}
     }
   }catch(e){}
-  win.loadFile(path.join(__dirname, 'index.html'), APP_VERSION ? { query: { v: APP_VERSION } } : undefined);
+  win.loadFile(path.join(__dirname, 'index.html'));
   try{
     win.webContents.on('will-navigate', (event, url) => {
       if(String(url||'').startsWith('file://')) return;

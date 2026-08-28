@@ -4,11 +4,21 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.47** (em construção — produção em uso continua **5.21.6**)  
+**Última versão:** **v5.22.48** (em construção — produção em uso continua **5.21.6**)  
 **Zip:** gerar a cada versão para testar. Não commitar zip.  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.48 — .exe sem cache velho
+
+- Desliga o cache V8 do Electron.
+- Na versão nova apaga Cache / Code Cache / GPUCache.
+- Gera o instalador sem asar.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.48`
 
 ---
 
