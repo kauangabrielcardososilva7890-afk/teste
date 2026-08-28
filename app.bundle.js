@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 166 | sha256: a8436d728716a223
+ * scripts: 168 | sha256: f8719e3cc39ed817
  */
 
 /* ===== lz.js ===== */
@@ -40074,6 +40074,274 @@ if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento
 }
 
 console.log('[DIGICOPY] v5.22.43 menu azul, versão rodapé, Boleto');
+})();
+
+;
+
+/* ===== ajustes_v52244_orcamentos_autorizar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.44 — Link do cliente: Autorizar gera venda salva; Recusar some o
+//            orçamento. O sistema consulta a nuvem mesmo quando o GET
+//            responde USED.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+function vendaIdDe(o){ return 'vda_orc_' + String(o && o.id || ''); }
+
+function acharVenda(o){
+  if(!o || typeof db==='undefined') return null;
+  return (db.vendas||[]).find(function(v){
+    return v && (v.id===o.vendaId || v.origemOrcamentoId===o.id || v.id===vendaIdDe(o));
+  })||null;
+}
+
+function aplicarAprovado(o, j){
+  if(!o || typeof db==='undefined') return null;
+  if(j && j.vendaId) o.vendaId = o.vendaId || j.vendaId;
+  if(j && j.vendaNumero) o.vendaNumero = j.vendaNumero;
+  if(!o.vendaId) o.vendaId = vendaIdDe(o);
+  var ja = acharVenda(o);
+  if(ja){
+    o.status='aprovado';
+    o.vendaId=ja.id;
+    o.vendaNumero=ja.numero||o.vendaNumero;
+    return ja;
+  }
+  if(typeof window.aprovarOrcamentoInterno==='function'){
+    var venda = window.aprovarOrcamentoInterno(o.id, 'cliente');
+    if(venda && o.vendaId && venda.id!==o.vendaId && !(db.vendas||[]).some(function(v){ return v.id===o.vendaId && v!==venda; })){
+      venda.id = o.vendaId;
+    }
+    return venda;
+  }
+  o.status='aprovado';
+  return null;
+}
+
+function aplicarRecusado(o){
+  if(!o) return;
+  o.status='excluido';
+  o.recusadoEm = o.recusadoEm || new Date().toISOString();
+  if(typeof saveDB==='function') saveDB();
+}
+
+function aplicarDecisao(o, j){
+  if(!o || !j) return;
+  var st = txt(j.status).toLowerCase();
+  if(j.excluido) st = 'recusado';
+  if(j.error==='USED' && !st) st = 'recusado';
+  if(st==='aprovado'){
+    aplicarAprovado(o, j);
+    if(typeof saveDB==='function') saveDB();
+  } else if(st==='recusado' || st==='excluido'){
+    aplicarRecusado(o);
+  }
+}
+
+window.ORCAMENTOS_AUTORIZAR_V52244_PURE = {
+  vendaIdDe: vendaIdDe,
+  aplicarDecisao: function(o, j){
+    var c = Object.assign({}, o||{});
+    var st = txt(j && j.status).toLowerCase();
+    if(j && j.excluido) st='recusado';
+    if(st==='aprovado'){ c.status='aprovado'; c.vendaId=c.vendaId||(j&&j.vendaId)||vendaIdDe(c); }
+    if(st==='recusado') c.status='excluido';
+    return c;
+  }
+};
+
+if(typeof document==='undefined') return;
+
+function puxarAprovacoes(){
+  if(typeof db==='undefined') return;
+  (db.orcamentos||[]).filter(function(o){
+    if(!o || !o.token || o.status==='excluido' || o.status==='estornado') return false;
+    if(o.status==='aprovado' && acharVenda(o)) return false;
+    return true;
+  }).slice(0,15).forEach(function(o){
+    if(o.status==='aprovado' && o.vendaId && acharVenda(o)) return;
+    fetch(API+'/orcamento?c='+encodeURIComponent(o.token))
+      .then(function(r){ return r.json().then(function(j){ return j; }); })
+      .then(function(j){
+        if(!j) return;
+        aplicarDecisao(o, j);
+        if(typeof window.renderOrcamentos==='function') window.renderOrcamentos();
+        if(typeof window.renderVendas==='function') window.renderVendas();
+      }).catch(function(){});
+  });
+}
+
+window.puxarAprovacoesOrcamento = puxarAprovacoes;
+
+if(typeof window.DIGICOPY_CLOUD_SYNC==='object' && window.DIGICOPY_CLOUD_SYNC.tick && !window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc){
+  var oldT=window.DIGICOPY_CLOUD_SYNC.tick;
+  window.DIGICOPY_CLOUD_SYNC.tick=function(){
+    var p=oldT.apply(this, arguments);
+    Promise.resolve(p).then(function(){ setTimeout(puxarAprovacoes, 300); }).catch(function(){});
+    return p;
+  };
+  window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc=true;
+}
+
+if(typeof window.salvarOrcamentoTela==='function' && !window.salvarOrcamentoTela.__v52244sync){
+  var oldSal=window.salvarOrcamentoTela;
+  window.salvarOrcamentoTela=function(){
+    var r=oldSal.apply(this, arguments);
+    try{
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
+        window.DIGICOPY_CLOUD_SYNC.tick();
+      }
+    }catch(e){}
+    return r;
+  };
+  window.salvarOrcamentoTela.__v52244sync=true;
+}
+
+if(typeof window.imprimirOrcamento==='function' && !window.imprimirOrcamento.__v52244sync){
+  var oldImp=window.imprimirOrcamento;
+  window.imprimirOrcamento=function(){
+    try{
+      if(typeof window.salvarOrcamentoTela==='function') window.salvarOrcamentoTela();
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
+        window.DIGICOPY_CLOUD_SYNC.tick();
+      }
+    }catch(e){}
+    return oldImp.apply(this, arguments);
+  };
+  window.imprimirOrcamento.__v52244sync=true;
+}
+
+if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52244orc){
+  var oldR=window.renderOrcamentos;
+  window.renderOrcamentos=function(){
+    var r=oldR.apply(this, arguments);
+    try{
+      var agora=Date.now();
+      if(!window.__orcPuxarEm || agora-window.__orcPuxarEm>8000){
+        window.__orcPuxarEm=agora;
+        puxarAprovacoes();
+      }
+    }catch(e){}
+    return r;
+  };
+  window.renderOrcamentos.__v52244orc=true;
+}
+
+setTimeout(puxarAprovacoes, 2500);
+setInterval(puxarAprovacoes, 20000);
+
+console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
+})();
+
+;
+
+/* ===== ajustes_v52244_financeiro_datas_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.44 — Financeiro: De / Até sempre visíveis. Não filtram em Hoje.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+window.FINANCEIRO_DATAS_V52244_PURE = {
+  datasVisiveis: true,
+  aplicaDatas: function(modo){ return modo!=='hoje'; }
+};
+
+if(typeof document==='undefined') return;
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+window.finModoV52243 = function(modo){
+  ST.modo = modo||'hoje';
+  if(modo==='hoje'){ ST.de=''; ST.ate=''; }
+  if(typeof window.renderFinanceiro==='function') window.renderFinanceiro();
+};
+window.finModoV52244 = window.finModoV52243;
+
+function garantirDatas(){
+  var de = document.getElementById('neo-fin-de');
+  var ate = document.getElementById('neo-fin-ate');
+  if(!de || !ate) return;
+  if(de.type==='hidden'){
+    de.type='date';
+    de.className='neo-input !w-[150px] !h-9';
+  }
+  if(ate.type==='hidden'){
+    ate.type='date';
+    ate.className='neo-input !w-[150px] !h-9';
+  }
+  de.value = ST.de||de.value||'';
+  ate.value = ST.ate||ate.value||'';
+  if(!document.getElementById('neo-fin-de-lab')){
+    var labDe=document.createElement('label');
+    labDe.id='neo-fin-de-lab';
+    labDe.className='text-[11px] font-bold text-slate-500 uppercase';
+    labDe.textContent='De';
+    de.parentNode.insertBefore(labDe, de);
+  }
+  if(!document.getElementById('neo-fin-ate-lab')){
+    var labAte=document.createElement('label');
+    labAte.id='neo-fin-ate-lab';
+    labAte.className='text-[11px] font-bold text-slate-500 uppercase';
+    labAte.textContent='Até';
+    ate.parentNode.insertBefore(labAte, ate);
+  }
+  var trava = ST.modo==='hoje';
+  de.disabled = trava;
+  ate.disabled = trava;
+  de.onchange = function(){ ST.de=de.value||''; if(typeof window.finBuscarV52243==='function') window.finBuscarV52243(); else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro(); };
+  ate.onchange = function(){ ST.ate=ate.value||''; if(typeof window.finBuscarV52243==='function') window.finBuscarV52243(); else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro(); };
+}
+
+if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraLancamentos==='function' && !window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52244){
+  var oldF = window.FINANCEIRO_V52243_PURE.filtraLancamentos;
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos = function(list, opts){
+    var out = oldF(list, opts)||[];
+    opts = opts||{};
+    if(opts.modo==='hoje') return out;
+    var de = txt(opts.de), ate = txt(opts.ate);
+    if(!de && !ate) return out;
+    return out.filter(function(item){
+      var c = item.ref||item;
+      return window.FINANCEIRO_V52243_PURE.noIntervalo(c, de, ate);
+    });
+  };
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52244 = true;
+}
+
+function pintarRodape(){
+  var foot = document.querySelector('footer span:not(#footer-session)');
+  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v5.22.44';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52244ver = true;
+}
+setTimeout(pintarRodape, 200);
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52244datas){
+  var oldR = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var r = oldR.apply(this, arguments);
+    try{ garantirDatas(); }catch(e){}
+    return r;
+  };
+  window.renderFinanceiro.__v52244datas = true;
+}
+
+console.log('[DIGICOPY] v5.22.44 financeiro: De/Até visíveis');
 })();
 
 ;

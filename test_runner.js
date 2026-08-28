@@ -94,6 +94,7 @@ const tests=[
   "test_ajustes_v52241.js",
   "test_ajustes_v52242.js",
   "test_ajustes_v52243.js",
+  "test_ajustes_v52244.js",
   "test_mobile_apk.js"
 ];
 let failed=0, passed=0, xfailed=0;

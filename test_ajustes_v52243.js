@@ -66,9 +66,9 @@ ok('módulo financeiro marca a tela', G.moduloAberto('financeiro',"navigateTo('f
 ok('página pede tem certeza', /Tem certeza\?/.test(pag));
 ok('Boleto na venda e na baixa', /vosAbrirRecebimento/.test(geral) && /finConfirmarBaixa/.test(geral) && /Boleto/.test(geral));
 ok('sem submenu Contas e caixas no HTML', !/Contas e caixas/.test(html));
-ok('versão no rodapé', /v5\.22\.43/.test(html));
+ok('versão no rodapé', /v5\.22\.\d+/.test(html));
 ok('patches no bundle', ['ajustes_v52243_orcamentos_status_patch.js','ajustes_v52243_contratos_sort_patch.js','ajustes_v52243_impressora_remanejar_patch.js','ajustes_v52243_financeiro_filtros_patch.js','ajustes_v52243_financeiro_menu_patch.js','ajustes_v52243_menu_versao_boleto_patch.js'].every(function(f){ return manifest.includes(f); }));
-ok('versão no patch', /v5.22.43/.test(orc) && /v5.22.43/.test(fin) && pkg.version==='5.22.43' && html.includes('app.bundle.js?v=5.22.43'));
+ok('versão no patch', /v5.22.43/.test(orc) && /v5.22.43/.test(fin) && /^5\.22\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=5\.22\.\d+/.test(html));
 ok('APK quieto', !/mobile\//.test(orc+sort+rem+fin+menu+geral));
 ok('sem nome pessoal novo', !/kauan/i.test((orc+rem+fin+menu+geral).replace(/__KAUAN_REFINO_STATE__/g,'')));
 console.log('\nRESULTADO: v5.22.43 passou!');

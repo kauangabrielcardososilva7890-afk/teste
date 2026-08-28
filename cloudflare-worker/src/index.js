@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.4';
+const API_VERSION = '0.4.5';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -823,7 +823,7 @@ async function findOrcamentoByToken(env, token) {
   const code = cleanText(token, 120);
   if (!code || code.length < 8) return null;
   const rows = await env.DB.prepare(
-    `SELECT * FROM records WHERE entity = 'orcamentos' AND deleted_at IS NULL`
+    `SELECT * FROM records WHERE entity = 'orcamentos'`
   ).all();
   for (const row of (rows.results || [])) {
     const data = parseDataJson(row.data_json) || {};
@@ -856,8 +856,17 @@ async function handleOrcamentoGet(url, env) {
   const found = await findOrcamentoByToken(env, url.searchParams.get('c'));
   if (!found) return json({ ok: false, error: 'NOT_FOUND', message: 'Orçamento não encontrado.' }, 404);
   const st = String(found.data.status || 'aberto');
-  if (st === 'aprovado' || st === 'recusado') {
-    return json({ ok: false, error: 'USED', status: st, message: 'Este link não vale mais.' }, 410);
+  const deleted = found.row.deleted_at != null || st === 'excluido';
+  if (deleted || st === 'aprovado' || st === 'recusado') {
+    const status = st === 'aprovado' ? 'aprovado' : 'recusado';
+    return json({
+      ok: false,
+      error: 'USED',
+      status,
+      vendaId: found.data.vendaId || null,
+      vendaNumero: found.data.vendaNumero || '',
+      message: 'Este link não vale mais.'
+    }, 410);
   }
   return json(publicOrcamentoPayload(found.data));
 }
@@ -889,10 +898,17 @@ async function handleOrcamentoPost(request, env) {
       data
     });
     if (!result.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
-    return json({ ok: true, status: 'recusado' });
+    await applyMutation(env, device, {
+      mutationId: 'orc_del_' + crypto.randomUUID(),
+      entity: 'orcamentos',
+      recordId: found.row.record_id,
+      operation: 'delete',
+      baseVersion: Number(result.version)
+    });
+    return json({ ok: true, status: 'recusado', excluido: true });
   }
   const vendaNumero = String(data.vendaNumero || ('V' + Date.now().toString(36).toUpperCase()));
-  const vendaId = crypto.randomUUID();
+  const vendaId = 'vda_orc_' + String(data.id || found.row.record_id);
   const venda = {
     id: vendaId,
     empresaId: data.empresaId || '',

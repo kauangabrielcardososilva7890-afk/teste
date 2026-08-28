@@ -164,5 +164,7 @@
   "ajustes_v52243_impressora_remanejar_patch.js",
   "ajustes_v52243_financeiro_filtros_patch.js",
   "ajustes_v52243_financeiro_menu_patch.js",
-  "ajustes_v52243_menu_versao_boleto_patch.js"
+  "ajustes_v52243_menu_versao_boleto_patch.js",
+  "ajustes_v52244_orcamentos_autorizar_patch.js",
+  "ajustes_v52244_financeiro_datas_patch.js"
 ]
