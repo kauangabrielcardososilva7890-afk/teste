@@ -407,6 +407,47 @@ async function publishLocalToCloud(){
   if(!synced){state.paused=true;state.pauseReason='nuvem-vazia-publicar-manual';persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
   return true;
 }
+function planNaoAutorizarLocal(localKeys, known){
+  const extras=[];
+  (localKeys||[]).forEach(k=>{ if(k && !(known&&known[k])) extras.push(k); });
+  return extras;
+}
+async function discardLocalKeepCloud(){
+  if(busy)throw new Error('Aguarde a sincronização atual terminar.');
+  if(!authorized())throw new Error('Este computador não está autorizado na nuvem.');
+  const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
+  busy=true;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_nao_autorizar_local',db);
+    const savedOutbox=outbox.slice();
+    const savedState=JSON.parse(JSON.stringify(state));
+    outbox=[];
+    state.heldLocalOnly=[];
+    state.cursor=0;
+    state.versions={};
+    state.hashes={};
+    state.known={};
+    state.blockedDeletes={};
+    persist();
+    await pullAll();
+    if(!Object.keys(state.known).length){
+      outbox=savedOutbox;
+      state=Object.assign(loadState(),savedState);
+      persist();
+      throw new Error('A nuvem está vazia. Nada foi apagado neste PC nem na nuvem.');
+    }
+    const snap=localKeysSnapshot();
+    const extras=planNaoAutorizarLocal([...snap], state.known);
+    const removed=await reconcileFirstAuthorizedDevice(snap);
+    outbox=outbox.filter(x=>x&&x.key&&state.known[x.key]);
+    state.heldLocalOnly=[];
+    state.paused=false;
+    state.pauseReason='';
+    persist();
+    return {removed:Number(removed)||extras.length, extras:extras.length, cloudUntouched:true};
+  }finally{busy=false;}
+}
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
   scanLocal(entity);schedule(100);return true;

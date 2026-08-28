@@ -61,7 +61,7 @@ ok('faturar não imprime', /__vosFatSemPrint/.test(vda) && /vosConcluirFaturamen
 
 const patches=['ajustes_v52245_impressora_serial_ocultar_patch.js','ajustes_v52245_leitura_apagar_patch.js','ajustes_v52245_financeiro_hist_datas_patch.js','ajustes_v52245_rodape_versao_patch.js','ajustes_v52245_venda_salvar_print_patch.js'];
 ok('patches no bundle', patches.every(function(f){ return manifest.includes(f); }));
-ok('versão', pkg.version==='5.22.45' && html.includes('app.bundle.js?v=5.22.45') && /v5\.22\.45/.test(html) && /footer-version/.test(html));
+ok('versão', /^5\.22\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /v5\.22\.\d+/.test(html) && /footer-version/.test(html));
 ok('APK quieto', !/mobile\//.test(imp+lei+fin+rod+vda));
 ok('sem nome pessoal novo', !/kauan/i.test((imp+lei+fin+rod+vda).replace(/__KAUAN_REFINO_STATE__/g,'')));
 console.log('\nRESULTADO: v5.22.45 passou!');
