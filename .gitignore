@@ -18,6 +18,7 @@ test-results/
 
 # Zips de versão antiga / upload (não entram no git)
 *.zip
+!Sistema-Digicopy-v5.22.46.zip
 
 # Backups/exportações locais
 backups/
