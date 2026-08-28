@@ -31,6 +31,6 @@ ok('venda id estável no worker', /vda_orc_/.test(worker));
 ok('consulta USED no app', /error==='USED'/.test(orc) && /puxarAprovacoes/.test(orc));
 ok('De/Até deixam de ser hidden', /type='date'/.test(fin) && /neo-fin-de-lab/.test(fin));
 ok('patches no bundle', manifest.includes('ajustes_v52244_orcamentos_autorizar_patch.js') && manifest.includes('ajustes_v52244_financeiro_datas_patch.js'));
-ok('versão', pkg.version==='5.22.44' && html.includes('app.bundle.js?v=5.22.44') && /v5\.22\.44/.test(html));
+ok('versão', /^5\.22\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /v5\.22\.\d+/.test(html));
 ok('APK quieto', !/mobile\//.test(orc+fin));
 console.log('\nRESULTADO: v5.22.44 passou!');

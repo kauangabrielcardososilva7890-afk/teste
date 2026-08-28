@@ -1,14 +1,29 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-27  
+**Data:** 2026-08-28  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.44** (em construção — produção em uso continua **5.21.6**)  
-**Zip:** gerar só quando o usuário pedir para atualizar  
+**Última versão:** **v5.22.45** (em construção — produção em uso continua **5.21.6**)  
+**Zip:** gerar a cada versão para testar. Não commitar zip.  
 **Produção atual do usuário:** 5.21.6 — não instalar 5.22 até pedir. APK parado nesta etapa.
 
 Os dados da 5.21.6 sobem para a versão nova: mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.45 — serial/ocultar, leitura, financeiro, rodapé, venda
+
+- Impressora: pesquisa só o serial e abre a tela completa; se já existe em outro cliente, preenche sozinho; aviso de remanejo só no Salvar. Nova sem outro contrato: só sucesso. Caixa Ocultar no editar (status `oculta` nas Remanejadas, chave para desocultar). Oculta não impede cadastro em outro cliente (vira remanejada).
+- Apagar leitura: aviso do sistema e o contador volta ao valor de antes do lançamento.
+- Histórico financeiro: código da venda, da leitura e do chamado.
+- De / Até sempre visíveis. Em Hoje não filtram.
+- Versão sozinha no meio do rodapé.
+- Venda: Salvar grava e fecha. Some o botão Sair (fica o X). Faturar não abre a tela de imprimir.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.45`
+
+1.2 / 1.3 / 1.4 no link do cliente ainda dependem de reenviar `public-orcamento/index.html` no Pages e implantar o worker 0.4.5. O app já puxa a decisão (USED).
 
 ---
 

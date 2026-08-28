@@ -166,5 +166,10 @@
   "ajustes_v52243_financeiro_menu_patch.js",
   "ajustes_v52243_menu_versao_boleto_patch.js",
   "ajustes_v52244_orcamentos_autorizar_patch.js",
-  "ajustes_v52244_financeiro_datas_patch.js"
+  "ajustes_v52244_financeiro_datas_patch.js",
+  "ajustes_v52245_impressora_serial_ocultar_patch.js",
+  "ajustes_v52245_leitura_apagar_patch.js",
+  "ajustes_v52245_financeiro_hist_datas_patch.js",
+  "ajustes_v52245_rodape_versao_patch.js",
+  "ajustes_v52245_venda_salvar_print_patch.js"
 ]
