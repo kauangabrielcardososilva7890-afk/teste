@@ -18,8 +18,15 @@ ok('calcula total pendente além do lote atual',/function pendingEstimate/.test(
 const dup=S.duplicateClientGroups([{id:'a',codigo:'001',documento:''},{id:'b',codigo:'1',documento:''},{id:'c',codigo:'2',documento:'12345678900'},{id:'d',codigo:'9',documento:'123.456.789-00'}]);
 ok('detecta repetidos por código ou documento',dup.length===2&&dup.reduce((n,g)=>n+g.length-1,0)===2);
 ok('novo aparelho não publica histórico local',/reconcileFirstAuthorizedDevice/.test(code)&&/antes_primeira_nuvem/.test(code));
-ok('admin recuperado também baixa primeiro',/info\.activation!==\'initial\'/.test(code));
-ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,180}scanLocal\(\)/.test(code));
+ok('reinstalação decide se pausa, isola ou segura sobra',typeof S.decideReinstallGuard==='function');
+const gEmpty=S.decideReinstallGuard({activation:'initial',cloudHasData:false,localCount:1919,extraCount:0});
+ok('nuvem vazia + dados neste PC exige publicar na mão',gEmpty.pause===true&&gEmpty.isolate===false&&gEmpty.reason==='nuvem-vazia-publicar-manual');
+const gHold=S.decideReinstallGuard({activation:'recovery',cloudHasData:true,localCount:2000,extraCount:57});
+ok('sobra local não sobe sozinha',gHold.pause===true&&gHold.hold===true&&gHold.isolate===false);
+const gInvite=S.decideReinstallGuard({activation:'invite',cloudHasData:true,localCount:57,extraCount:57});
+ok('PC convidado isola histórico velho e não pausa',gInvite.isolate===true&&gInvite.pause===false);
+ok('publicar recusa se a nuvem já tem dados',/Zere a nuvem primeiro/.test(code));
+ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,2000}scanLocal\(\)/.test(code));
 ok('bloqueia exclusão em massa inesperada',/missing\.length>=10/.test(code)&&/blockedDeletes/.test(code));
 ok('usa cursor incremental',/\/v1\/changes\?cursor=/.test(code));
 ok('usa backoff e não setInterval',/Math\.pow/.test(code)&&!/setInterval\s*\(/.test(code));

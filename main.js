@@ -1,10 +1,15 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow = null;
+const APP_VERSION = (function(){
+  try{ return String(require('./package.json').version||''); }catch(e){ return ''; }
+})();
+
+try{ app.commandLine.appendSwitch('disable-http-cache'); }catch(e){}
 
 function createWindow () {
   try{ Menu.setApplicationMenu(null); }catch(e){}
@@ -19,18 +24,34 @@ function createWindow () {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
+      v8CacheOptions: 'none',
       devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'Sistema Digicopy'
+    title: APP_VERSION ? ('Sistema Digicopy v'+APP_VERSION) : 'Sistema Digicopy'
   });
 
-  win.loadFile('index.html');
+  try{
+    const marker = path.join(app.getPath('userData'), 'app-version.txt');
+    const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
+    if(!prev || (APP_VERSION && prev !== APP_VERSION)){
+      const ud = app.getPath('userData');
+      ['Cache','Code Cache','GPUCache','Service Worker'].forEach(function(nome){
+        try{ fs.rmSync(path.join(ud, nome), { recursive:true, force:true }); }catch(e){}
+      });
+      try{ win.webContents.session.clearCache(); }catch(e){}
+      try{ if(win.webContents.session.clearCodeCaches) win.webContents.session.clearCodeCaches({ urls: [] }); }catch(e){}
+      try{ fs.writeFileSync(marker, APP_VERSION||'', 'utf8'); }catch(e){}
+    }
+  }catch(e){}
+  win.loadFile(path.join(__dirname, 'index.html'));
   try{
     win.webContents.on('will-navigate', (event, url) => {
-      if(!String(url||'').startsWith('file://')) event.preventDefault();
+      if(String(url||'').startsWith('file://')) return;
+      event.preventDefault();
+      if(isAllowedExternalUrl(url)) shell.openExternal(url).catch(()=>{});
     });
   }catch(e){}
   try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
@@ -51,6 +72,9 @@ app.whenReady().then(() => {
   registerEscolaIPC();
   registerPrintIPC();
   registerBackupIPC();
+  registerOpenExternalIPC();
+  registerNfeCertIPC();
+  registerEscolaLoginIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -320,6 +344,93 @@ function mapFbType(typeNum){
   return map[typeNum] || `TYPE_${typeNum}`;
 }
 
+function isAllowedExternalUrl(raw){
+  try{
+    const u = new URL(String(raw||''));
+    if(u.protocol !== 'https:') return false;
+    const host = String(u.hostname||'').toLowerCase();
+    return host === 'caixaescolar.educacao.mg.gov.br' || host === 'www.caixaescolar.educacao.mg.gov.br';
+  }catch(e){ return false; }
+}
+
+function nfeCertDir(){
+  return path.join(app.getPath('userData'), 'certs');
+}
+function nfeCertPath(){
+  return path.join(nfeCertDir(), 'nfe-a1.pfx');
+}
+function registerNfeCertIPC(){
+  ipcMain.handle('nfe:cert-status', async () => {
+    try{
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:true, installed:false };
+      const st = fs.statSync(p);
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs, path:p };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-import', async () => {
+    try{
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Selecionar certificado A1 (.pfx)',
+        filters: [
+          { name: 'Certificado A1', extensions: ['pfx', 'p12'] },
+          { name: 'Todos os arquivos', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+      if(result.canceled || !result.filePaths.length) return { ok:false, canceled:true };
+      const src = result.filePaths[0];
+      const ext = path.extname(src).toLowerCase();
+      if(ext !== '.pfx' && ext !== '.p12') return { ok:false, error:'Selecione um arquivo .pfx ou .p12.' };
+      fs.mkdirSync(nfeCertDir(), { recursive: true });
+      fs.copyFileSync(src, nfeCertPath());
+      const st = fs.statSync(nfeCertPath());
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-remove', async () => {
+    try{
+      const p = nfeCertPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, installed:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:sign-xml', async (_evt, payload) => {
+    const senha = String((payload&&payload.senha)!=null?payload.senha:'');
+    const xml = String((payload&&payload.xml)||'');
+    try{
+      if(!xml) return { ok:false, error:'XML vazio.' };
+      let pfxBuf = null;
+      const rawB64 = String((payload&&payload.pfxB64)||'').replace(/^data:[^;]+;base64,/, '');
+      if(rawB64){
+        pfxBuf = Buffer.from(rawB64, 'base64');
+      }else{
+        const p = nfeCertPath();
+        if(!fs.existsSync(p)) return { ok:false, error:'Envie o certificado A1 pela página de arquivos. Senha só na hora de assinar.' };
+        pfxBuf = fs.readFileSync(p);
+      }
+      const sign = require('./nfe_assinatura.js');
+      const r = sign.assinarNfeXml(xml, pfxBuf, senha);
+      return { ok:true, xmlAssinado:r.xmlAssinado, chave:r.chave, certificado:r.certificado };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
+}
+
+function registerOpenExternalIPC(){
+  ipcMain.handle('shell:open-external', async (_evt, raw) => {
+    const url = String(raw||'');
+    if(!isAllowedExternalUrl(url)) return { ok:false, error:'URL não permitida.' };
+    try{
+      await shell.openExternal(url);
+      return { ok:true };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
+}
+
 // ──────────────────────────────────────────────
 // BUSCADOR ESCOLA IPC — chamada HTTP sem CORS no Electron
 // Mantém cookies/sessão entre requisições (como requests.Session do Python)
@@ -370,6 +481,38 @@ function registerEscolaIPC(){
   
   // Clear cookies on app quit
   ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
+}
+
+function escolaLoginPath(){
+  return path.join(app.getPath('userData'), 'escola-login.json');
+}
+function registerEscolaLoginIPC(){
+  ipcMain.handle('escola:login-status', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(!fs.existsSync(p)) return { ok:true, saved:false };
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8')||'{}');
+      const usuario = String(raw.usuario||'').trim();
+      const senha = String(raw.senha||'');
+      return { ok:true, saved:!!(usuario&&senha), usuario, senha };
+    }catch(e){ return { ok:false, saved:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-save', async (_evt, dados) => {
+    try{
+      const usuario = String((dados&&dados.usuario)||'').trim();
+      const senha = String((dados&&dados.senha)||'');
+      if(!usuario || !senha) return { ok:false, error:'Informe usuário e senha.' };
+      fs.writeFileSync(escolaLoginPath(), JSON.stringify({ usuario, senha, atualizadoEm:new Date().toISOString() }), 'utf8');
+      return { ok:true, saved:true, usuario };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-clear', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, saved:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
 }
 
 // ──────────────────────────────────────────────

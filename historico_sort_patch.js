@@ -1,4 +1,5 @@
-// PATCH v5.17.0 — Ordenar históricos clicando no nome da coluna
+// PATCH v5.17.0 / v5.22.14 — Ordenar históricos clicando no nome da coluna
+// v5.22.14: não empilha seta extra em tabelas que já ordenam no título
 (function(){
 'use strict';
 
@@ -15,12 +16,25 @@ function cmp(a,b){
   return String(a).localeCompare(String(b),'pt-BR',{numeric:true,sensitivity:'base'});
 }
 
+function thJaOrdena(th){
+  if(!th) return false;
+  if(th.getAttribute('onclick')) return true;
+  const t=String(th.textContent||'');
+  if(/[▲▼↕]/.test(t)) return true;
+  if(th.querySelector('.hs-arrow')) return true;
+  return false;
+}
+
 function bindTable(table){
   if(!table || table.__hsSort) return;
   const thead=table.tHead || table.querySelector('thead');
   if(!thead) return;
   const ths=Array.from(thead.querySelectorAll('th'));
   if(!ths.length) return;
+  if(ths.some(thJaOrdena)){
+    table.__hsSort='skip';
+    return;
+  }
   table.__hsSort=true;
   ths.forEach((th, idx)=>{
     const label=(th.textContent||'').trim();
@@ -28,7 +42,7 @@ function bindTable(table){
     th.style.cursor='pointer';
     th.title='Clique para ordenar';
     th.addEventListener('click', function(ev){
-      ev.stopPropagation();
+      ev.stopImmediatePropagation();
       const tbody=table.tBodies[0]; if(!tbody) return;
       const rows=Array.from(tbody.rows);
       if(rows.length<2) return;
@@ -57,5 +71,5 @@ try{
   mo.observe(document.body,{childList:true,subtree:true});
 }catch(e){}
 setTimeout(scan,400);
-console.log('[DIGICOPY] historico_sort_patch.js v5.17.0');
+console.log('[DIGICOPY] historico_sort_patch.js v5.22.14 — uma seta só, dois sentidos');
 })();

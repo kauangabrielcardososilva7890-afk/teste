@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- Página pública do orçamento. O cliente aprova ou recusa.
+     O token vem em ?c=... A loja é avisada pela nuvem. -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Orçamento — DIGICOPY</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eef1f8;color:#111;min-height:100vh;padding:16px}
+.card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:560px;margin:12px auto;overflow:hidden}
+.topo{background:#0a1e8a;color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px}
+.topo img{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:10px;padding:3px}
+.corpo{padding:20px 22px}
+h1{font-size:18px}
+.meta{font-size:13px;color:#444;margin:8px 0 14px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;padding:8px 6px;border-bottom:2px solid #e2e8f0}
+td{padding:8px 6px;border-bottom:1px solid #f1f5f9}
+.tot{text-align:right;font-size:20px;font-weight:800;color:#0a1e8a;margin:12px 0}
+.btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weight:800;font-size:14.5px;cursor:pointer}
+.ok{background:#15803d;color:#fff}
+.no{background:#fff;color:#b91c1c;border:1.5px solid #fecaca}
+.aviso{margin-top:16px;padding:12px;border:1.5px solid #0a1e8a;background:#eef2ff;border-radius:12px;font-size:12px;line-height:1.45;color:#0a1e8a;white-space:pre-wrap}
+.erro{padding:34px 22px;text-align:center;color:#a33}
+.msg{padding:18px;text-align:center;font-size:15px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="topo">
+    <img src="./logo.png" alt="DIGICOPY" onerror="this.style.display='none'">
+    <div><h1>Orçamento DIGICOPY</h1><p style="font-size:11.5px;opacity:.75;margin-top:2px">Aprove ou recuse esta proposta</p></div>
+  </div>
+  <div class="corpo" id="area">Carregando…</div>
+</div>
+<script>
+(function(){
+  var API='https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var token=new URLSearchParams(location.search).get('c')||'';
+  var area=document.getElementById('area');
+  if(!token || token.length<8){
+    area.innerHTML='<p class="erro">Link inválido. Peça o orçamento atualizado para a loja.</p>';
+    return;
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function money(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+  function soTel(v){ return String(v||'').replace(/\D/g,''); }
+  function pintar(d){
+    if(!d || !d.ok){
+      area.innerHTML='<p class="erro">'+(d && d.message ? esc(d.message) : 'Orçamento não encontrado.')+'</p>';
+      return;
+    }
+    if(d.status==='aprovado'){
+      area.innerHTML='<p class="msg">Este orçamento já foi autorizado. Obrigado!</p>';
+      return;
+    }
+    if(d.status==='recusado'){
+      area.innerHTML='<p class="msg">Este orçamento foi recusado.</p>';
+      return;
+    }
+    var itens=(d.itens||[]).map(function(it){
+      return '<tr><td>'+esc(it.descricao||'')+'</td><td>'+esc(it.qtd)+'</td><td>'+money(it.preco)+'</td><td><b>'+money(it.subtotal)+'</b></td></tr>';
+    }).join('');
+    area.innerHTML='<p class="meta"><b>Código '+esc(d.numero||'')+'</b><br>Cliente: '+esc(d.clienteNome||'')+'<br>Emissão: '+esc(d.data||'')+'</p>'
+      +'<table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody></table>'
+      +'<div class="tot">'+money(d.total)+'</div>'
+      +'<div class="btns"><button class="ok" id="btn-ok">Autorizar orçamento</button><button class="no" id="btn-no">Recusar</button></div>'
+      +'<div class="aviso">'+(d.aviso||'')+'</div>';
+    document.getElementById('btn-ok').onclick=function(){ agir('aprovar', d); };
+    document.getElementById('btn-no').onclick=function(){ agir('recusar', d); };
+  }
+  function agir(acao, d){
+    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({c:token,acao:acao})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j || !j.ok){
+          area.innerHTML='<p class="erro">'+(j && j.message ? esc(j.message) : 'Não foi possível registrar agora. Fale com a loja.')+'</p>';
+          return;
+        }
+        if(acao==='recusar'){
+          area.innerHTML='<p class="msg">Orçamento recusado. A loja foi avisada.</p>';
+          return;
+        }
+        var tel=soTel(d.whatsapp||'');
+        var msg=j.mensagem || ('Olá, sou '+(d.clienteNome||'')+', foi autorizado o orçamento do COD '+(d.numero||'')+' e gerou a venda salva '+(j.vendaNumero||'')+', vá atualizando para mim sobre o andamento.');
+        area.innerHTML='<p class="msg"><b>Orçamento autorizado.</b><br>Venda salva '+(j.vendaNumero||'')+' gerada.<br>Em seguida abriremos o WhatsApp da loja para você enviar o aviso.</p>';
+        if(tel){
+          setTimeout(function(){ location.href='https://wa.me/'+tel+'?text='+encodeURIComponent(msg); }, 700);
+        }
+      })
+      .catch(function(){
+        area.innerHTML='<p class="erro">Sem conexão com a nuvem agora. Tente de novo ou fale com a loja.</p>';
+      });
+  }
+  fetch(API+'/orcamento?c='+encodeURIComponent(token))
+    .then(function(r){ return r.json(); })
+    .then(pintar)
+    .catch(function(){
+      area.innerHTML='<p class="erro">Não foi possível abrir o orçamento. Confira o link ou peça outro para a loja.</p>';
+    });
+})();
+</script>
+</body>
+</html>

@@ -358,24 +358,12 @@ const _syncLoad = window.syncCarregarDaNuvem;
 if(typeof _syncLoad === 'function'){
   window.syncCarregarDaNuvem = async function(){
     const automatico = arguments[0] && arguments[0].automatico === true;
-    if(automatico) cloudLoading('Buscando seus dados na nuvem...');
-    const r = await _syncLoad.apply(this, arguments);
     if(automatico){
-      if(r && r.ok){
-        // Vai recarregar a página — mantém o aviso até a recarga acontecer.
-      } else if(r && r.vazio){
-        cloudHide(); // nuvem sem dados ainda = instalação nova, deixa entrar
-      } else if(r && r.cancelado){
-        cloudHide(); // proteção/cancelamento: deixa entrar normalmente
-      } else {
-        const msg = (r && r.erros && r.erros.length) ? r.erros[0] : 'Erro ao carregar os dados da nuvem.';
-        cloudError(msg);
-        const retry = document.getElementById('cloud-overlay-retry');
-        const close = document.getElementById('cloud-overlay-close');
-        if(retry) retry.onclick = function(){ window.syncCarregarDaNuvem({confirmar:false, automatico:true}); };
-        if(close) close.onclick = cloudHide;
-      }
+      const r = await _syncLoad.apply(this, arguments);
+      cloudHide();
+      return r;
     }
+    const r = await _syncLoad.apply(this, arguments);
     return r;
   };
 }

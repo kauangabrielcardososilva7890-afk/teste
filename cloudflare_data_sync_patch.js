@@ -18,18 +18,20 @@ const PUSH_BATCH=10;
 const HEARTBEAT_MS=60000;
 
 const DEFINITIONS={
-  empresas:'array', usuarios:'array', clientes:'array', produtos:'array',
+  empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
-  os:'array', vendas:'array', contasReceber:'array', contasPagar:'array',
+  os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
   config:'root', modulosDinamicos:'map'
 };
 
 function parse(raw,fallback){try{const x=JSON.parse(raw);return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}}
 function loadState(){
-  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0,paused:false};
+  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0,paused:false,heldLocalOnly:[],pauseReason:''};
   try{s=Object.assign(s,parse(localStorage.getItem(STATE_KEY),{}));}catch(e){}
   s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};s.blockedDeletes=s.blockedDeletes||{};
+  s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
+  s.pauseReason=s.pauseReason||'';
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -102,6 +104,36 @@ function localKeysSnapshot(){
   for(const entity of Object.keys(DEFINITIONS))for(const entry of entriesFor(entity,DEFINITIONS[entity]))set.add(key(entity,entry.id));
   return set;
 }
+function localBusinessCount(){
+  if(typeof db==='undefined'||!db)return 0;
+  let n=0;
+  ['clientes','produtos','vendas','contratos','leituras','os','equipamentos','parque'].forEach(k=>{
+    if(Array.isArray(db[k]))n+=db[k].length;
+  });
+  return n;
+}
+function listLocalOnlyKeys(beforeKeys){
+  const extras=[];
+  if(!beforeKeys)return extras;
+  beforeKeys.forEach(k=>{if(!state.known[k])extras.push(k);});
+  return extras;
+}
+function decideReinstallGuard(opts){
+  const activation=opts&&opts.activation;
+  const cloudHasData=!!(opts&&opts.cloudHasData);
+  const localCount=Number(opts&&opts.localCount)||0;
+  const extraCount=Number(opts&&opts.extraCount)||0;
+  if(activation==='invite'){
+    return {pause:false,isolate:extraCount>0,hold:false,reason:extraCount?'convidado-isola-local':'convidado-ok'};
+  }
+  if(!cloudHasData&&localCount>0){
+    return {pause:true,isolate:false,hold:false,reason:'nuvem-vazia-publicar-manual'};
+  }
+  if(cloudHasData&&extraCount>0){
+    return {pause:true,isolate:false,hold:true,reason:'sobra-local-nao-enviar'};
+  }
+  return {pause:false,isolate:false,hold:false,reason:'ok'};
+}
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
   let removed=0;
@@ -149,13 +181,14 @@ function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return 
 function scanLocal(approvedEntity){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
+  const held=new Set(state.heldLocalOnly||[]);
   for(const entity of Object.keys(DEFINITIONS)){
     if(outbox.length>=MAX_OUTBOX)break;
     const mode=DEFINITIONS[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
     for(const entry of entries){
       if(outbox.length>=MAX_OUTBOX)break;
       const k=key(entity,entry.id),h=hash(entry.data);
-      if(state.hashes[k]===h||pending.has(k))continue;
+      if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
@@ -237,12 +270,32 @@ async function tick(reason){
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
     const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
     const firstAuthorizedPull=!state.initialPull;
-    // Só o primeiro setup da nuvem pode publicar uma base local preexistente.
-    // Convite e recuperação (mesmo admin) baixam a nuvem e isolam histórico velho.
-    const localBefore=firstAuthorizedPull&&info&&info.activation!=='initial'?localKeysSnapshot():null;
-    if(localBefore&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
+    const activation=info&&info.activation;
+    // Reinstalação / recuperação: não envia sobra local sozinho (duplicaria).
+    // Só o PC convidado isola histórico velho. Nuvem vazia + dados neste PC
+    // fica pausada até clicar em Publicar este PC.
+    const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
+    if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
     await pullAll();
-    if(localBefore)await reconcileFirstAuthorizedDevice(localBefore);
+    if(firstAuthorizedPull){
+      const extras=listLocalOnlyKeys(localBefore);
+      const decision=decideReinstallGuard({
+        activation,
+        cloudHasData:Object.keys(state.known).length>0,
+        localCount:localBusinessCount(),
+        extraCount:extras.length
+      });
+      if(decision.isolate)await reconcileFirstAuthorizedDevice(localBefore);
+      state.heldLocalOnly=decision.hold?extras:[];
+      state.pauseReason=decision.pause?decision.reason:'';
+      if(decision.pause){
+        state.paused=true;state.initialPull=true;persist();
+        indicator(false,decision.reason==='nuvem-vazia-publicar-manual'
+          ?'Nuvem vazia • clique em Publicar este PC'
+          :'Sobra local retida • não enviei para não duplicar');
+        return true;
+      }
+    }
     let totalSent=0;
     for(let round=0;round<50;round++){
       scanLocal();
@@ -338,7 +391,7 @@ async function resetCloudOnly(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,paused:true,cloudGeneration:result.generation};
+  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'nuvem-vazia-publicar-manual',cloudGeneration:result.generation};
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
   persist();indicator(false,'Nuvem vazia • sincronização pausada');
@@ -346,10 +399,54 @@ async function resetCloudOnly(){
 }
 async function publishLocalToCloud(){
   if(!state.paused)throw new Error('A sincronização não está pausada.');
-  state.paused=false;state.initialPull=true;persist();
+  if(Object.keys(state.known).length>0){
+    throw new Error('A nuvem já tem dados. Zere a nuvem primeiro e só então publique este PC, para não duplicar.');
+  }
+  state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;persist();
   const synced=await tick('publicacao-manual-completa');
-  if(!synced){state.paused=true;persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
+  if(!synced){state.paused=true;state.pauseReason='nuvem-vazia-publicar-manual';persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
   return true;
+}
+function planNaoAutorizarLocal(localKeys, known){
+  const extras=[];
+  (localKeys||[]).forEach(k=>{ if(k && !(known&&known[k])) extras.push(k); });
+  return extras;
+}
+async function discardLocalKeepCloud(){
+  if(busy)throw new Error('Aguarde a sincronização atual terminar.');
+  if(!authorized())throw new Error('Este computador não está autorizado na nuvem.');
+  const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
+  busy=true;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_nao_autorizar_local',db);
+    const savedOutbox=outbox.slice();
+    const savedState=JSON.parse(JSON.stringify(state));
+    outbox=[];
+    state.heldLocalOnly=[];
+    state.cursor=0;
+    state.versions={};
+    state.hashes={};
+    state.known={};
+    state.blockedDeletes={};
+    persist();
+    await pullAll();
+    if(!Object.keys(state.known).length){
+      outbox=savedOutbox;
+      state=Object.assign(loadState(),savedState);
+      persist();
+      throw new Error('A nuvem está vazia. Nada foi apagado neste PC nem na nuvem.');
+    }
+    const snap=localKeysSnapshot();
+    const extras=planNaoAutorizarLocal([...snap], state.known);
+    const removed=await reconcileFirstAuthorizedDevice(snap);
+    outbox=outbox.filter(x=>x&&x.key&&state.known[x.key]);
+    state.heldLocalOnly=[];
+    state.paused=false;
+    state.pauseReason='';
+    persist();
+    return {removed:Number(removed)||extras.length, extras:extras.length, cloudUntouched:true};
+  }finally{busy=false;}
 }
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
@@ -364,9 +461,9 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{

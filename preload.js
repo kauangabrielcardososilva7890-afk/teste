@@ -25,7 +25,11 @@ contextBridge.exposeInMainWorld('fileAPI', {
 
 // API Buscador Escola — evita bloqueio de CORS no Electron
 contextBridge.exposeInMainWorld('caixaEscolarAPI', {
-  request: (req) => ipcRenderer.invoke('escola:request', req)
+  request: (req) => ipcRenderer.invoke('escola:request', req),
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+  loginStatus: () => ipcRenderer.invoke('escola:login-status'),
+  loginSave: (dados) => ipcRenderer.invoke('escola:login-save', dados),
+  loginClear: () => ipcRenderer.invoke('escola:login-clear')
 });
 
 // API de impressão limpa — imprime sem cabeçalho/rodapé do navegador
@@ -39,5 +43,13 @@ contextBridge.exposeInMainWorld('printAPI', {
 // API de backup automático — salva 1x ao dia em %APPDATA%\digicopy-erp\backups
 contextBridge.exposeInMainWorld('backupAPI', {
   saveDaily: (filename, content) => ipcRenderer.invoke('backup:save-daily', { filename, content }),
+  isElectron: true
+});
+
+contextBridge.exposeInMainWorld('nfeCertAPI', {
+  status: () => ipcRenderer.invoke('nfe:cert-status'),
+  importar: () => ipcRenderer.invoke('nfe:cert-import'),
+  remover: () => ipcRenderer.invoke('nfe:cert-remove'),
+  assinar: (xml, senha, pfxB64) => ipcRenderer.invoke('nfe:sign-xml', { xml, senha, pfxB64 }),
   isElectron: true
 });

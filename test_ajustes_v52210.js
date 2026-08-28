@@ -1,0 +1,24 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('ajustes_v52210_historico_checkbox_nfe_patch.js','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
+const ctx={window:{},document:undefined};
+new Function('window','document',code)(ctx.window,ctx.document);
+const P=ctx.window.NFE_LISTA_CHECKBOX;
+console.log('== HISTÓRICO CHECKBOX + NF-E ==');
+ok('exporta helpers',!!P&&typeof P.umSoParaNfe==='function'&&typeof P.leituraBloqueada==='function');
+ok('zero marcado pede uma',P.umSoParaNfe([]).ok===false);
+ok('duas marcadas recusa',P.umSoParaNfe(['a','b']).ok===false&&/uma/i.test(P.umSoParaNfe(['a','b']).motivo));
+ok('uma marcada segue',P.umSoParaNfe(['lei1']).ok===true&&P.umSoParaNfe(['lei1']).id==='lei1');
+ok('faturada bloqueia exclusão',P.leituraBloqueada({status:'faturado'})===true);
+ok('aberta pode excluir',P.leituraBloqueada({status:'aberta'})===false);
+ok('histórico de leituras ganha caixa e excluir',/leitura-check-lote/.test(code)&&/btn-excluir-leitura-hist/.test(code));
+ok('NF-e nas duas listas',/btn-nfe-venda-lista/.test(code)&&/btn-nfe-leitura-hist/.test(code));
+ok('não emite direto',!/Assinar com A1/.test(code));
+ok('não envia SEFAZ',!/NFeAutorizacao4|hnfe\.fazenda/.test(code));
+ok('prévia não grava venda',!/db\.vendas\.push/.test(code));
+ok('usa lfbAlert/confirmSistema',/lfbAlert/.test(code)&&/confirmSistema/.test(code));
+ok('não usa window.confirm nativo',!/window\.confirm\(/.test(code));
+ok('tira atalho do lugar errado',/btn-nfe-leitura-lista/.test(code)&&/remove\(/.test(code));
+ok('patch no bundle',manifest.includes('ajustes_v52210_historico_checkbox_nfe_patch.js'));
+console.log('\nRESULTADO: histórico checkbox + NF-e passou!');

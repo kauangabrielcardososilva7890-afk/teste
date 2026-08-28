@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.1';
+const API_VERSION = '0.4.5';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -107,6 +107,61 @@ async function requireAdmin(request, env) {
     throw new ApiError(403, 'ADMIN_REQUIRED', 'Somente o aparelho administrador pode realizar esta ação.');
   }
   return device;
+}
+
+function handlePix(url) {
+  const codigo = url.searchParams.get('c') || '';
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagamento Pix — DIGICOPY</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#eef1f8;color:#111;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:430px;width:100%;overflow:hidden}
+.topo{background:#0a1e8a;color:#fff;padding:18px 22px}
+.topo h1{font-size:17px}
+.corpo{padding:22px;text-align:center}
+#qr{width:230px;height:230px;margin:8px auto 4px;display:block;border:1px solid #dfe3ee;border-radius:14px;padding:6px}
+.passo{font-size:13px;color:#444;line-height:1.5}
+#codigo{width:100%;margin-top:14px;border:1px solid #c9ceef;border-radius:12px;padding:10px;font-size:10.5px;font-family:monospace;word-break:break-all;background:#f7f8fd;resize:none}
+#btn{width:100%;margin-top:10px;height:48px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:700;font-size:14.5px;cursor:pointer}
+.dica{margin-top:12px;font-size:11px;color:#888}
+.erro{padding:34px 22px;text-align:center;font-size:14px;color:#a33}
+</style></head><body>
+<div class="card"><div class="topo"><h1>Pagamento via Pix</h1><p style="font-size:11.5px;opacity:.75;margin-top:2px">Rápido, seguro e na hora</p></div>
+<div class="corpo" id="area">
+<p class="passo">1 Abra o aplicativo do seu banco<br>2 Escolha <b>Pix → Ler QR Code</b><br>3 Confira e confirme</p>
+<img id="qr" alt="QR Code Pix">
+<p class="passo" style="margin-top:10px">Ou copie o código e cole no banco:</p>
+<textarea id="codigo" rows="5" readonly onclick="this.select()"></textarea>
+<button id="btn">Copiar código Pix</button>
+<p class="dica">Pagamento identificado pela DIGICOPY.</p>
+</div></div>
+<script>
+(function(){
+  var codigo=${JSON.stringify(codigo)};
+  if(!codigo || codigo.indexOf('000201')!==0 || codigo.length>1024 || codigo.indexOf('br.gov.bcb.pix')<0){
+    document.getElementById('area').innerHTML='<p class="erro">Link de pagamento inválido ou incompleto.<br>Peça a notinha atualizada para a loja.</p>';
+    return;
+  }
+  document.getElementById('codigo').value=codigo;
+  document.getElementById('qr').src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=6&data='+encodeURIComponent(codigo);
+  var btn=document.getElementById('btn');
+  btn.onclick=function(){
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(codigo);
+    btn.textContent='Copiado! Cole no app do banco';
+  };
+})();
+</script></body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      'access-control-allow-origin': '*'
+    }
+  });
 }
 
 async function handleHealth(env) {
@@ -305,6 +360,14 @@ function publicRecord(row) {
     deletedAt: row.deleted_at == null ? null : Number(row.deleted_at),
     updatedBy: row.updated_by
   };
+}
+
+function activityLabel(dataJson, recordId, entity) {
+  if (entity === 'config') return 'Configuração';
+  const data = parseDataJson(dataJson) || {};
+  const raw = data.nome || data.fantasia || data.numero || data.login || data.descricao || data.sku || data.modelo || '';
+  const text = String(raw).trim();
+  return text ? text.slice(0, 80) : String(recordId || '');
 }
 
 async function applyMutation(env, device, mutation) {
@@ -588,14 +651,74 @@ async function handleRemoveRevokedDeviceRecords(request, env) {
 
 async function handleDevices(request, env) {
   const admin = await requireAdmin(request, env);
-  const rows = await env.DB.prepare(
-    `SELECT d.id, d.name, d.role, d.created_at AS createdAt,
-            d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
-            (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
-            (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
-     FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
-  ).all();
-  return json({ ok: true, currentDeviceId: admin.id, devices: rows.results || [] });
+  const [rows, lasts, grouped] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT d.id, d.name, d.role, d.created_at AS createdAt,
+              d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
+              (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
+              (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
+       FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
+    ),
+    env.DB.prepare(
+      `SELECT c.device_id AS deviceId, c.entity AS lastEntity, c.operation AS lastOperation,
+              c.created_at AS lastChangeAt
+         FROM changes c
+         INNER JOIN (SELECT device_id, MAX(seq) AS seq FROM changes GROUP BY device_id) x
+           ON x.device_id = c.device_id AND x.seq = c.seq`
+    ),
+    env.DB.prepare(
+      `SELECT updated_by AS deviceId, entity, COUNT(*) AS active
+         FROM records WHERE deleted_at IS NULL AND updated_by IS NOT NULL
+         GROUP BY updated_by, entity`
+    )
+  ]);
+  const lastMap = {};
+  for (const row of (lasts.results || [])) lastMap[row.deviceId] = row;
+  const entityMap = {};
+  for (const row of (grouped.results || [])) {
+    if (!entityMap[row.deviceId]) entityMap[row.deviceId] = {};
+    entityMap[row.deviceId][row.entity] = Number(row.active) || 0;
+  }
+  const devices = (rows.results || []).map(device => {
+    const last = lastMap[device.id] || {};
+    return {
+      ...device,
+      lastChangeAt: last.lastChangeAt == null ? null : Number(last.lastChangeAt),
+      lastEntity: last.lastEntity || null,
+      lastOperation: last.lastOperation || null,
+      byEntity: entityMap[device.id] || {}
+    };
+  });
+  return json({ ok: true, currentDeviceId: admin.id, devices });
+}
+
+async function handleActivity(request, env) {
+  await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const limit = Math.min(80, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '40', 10) || 40));
+  const deviceId = cleanText(url.searchParams.get('deviceId') || '', 80);
+  const query = deviceId
+    ? await env.DB.prepare(
+      `SELECT c.seq, c.entity, c.record_id, c.operation, c.created_at, c.device_id, c.data_json, d.name AS device_name
+         FROM changes c LEFT JOIN devices d ON d.id = c.device_id
+        WHERE c.device_id = ? ORDER BY c.seq DESC LIMIT ?`
+    ).bind(deviceId, limit).all()
+    : await env.DB.prepare(
+      `SELECT c.seq, c.entity, c.record_id, c.operation, c.created_at, c.device_id, c.data_json, d.name AS device_name
+         FROM changes c LEFT JOIN devices d ON d.id = c.device_id
+        ORDER BY c.seq DESC LIMIT ?`
+    ).bind(limit).all();
+  const events = (query.results || []).map(row => ({
+    seq: Number(row.seq),
+    entity: row.entity,
+    recordId: row.record_id,
+    operation: row.operation,
+    createdAt: Number(row.created_at),
+    deviceId: row.device_id,
+    deviceName: row.device_name || 'Aparelho',
+    label: activityLabel(row.data_json, row.record_id, row.entity)
+  }));
+  return json({ ok: true, events });
 }
 
 async function handleRevokeDevice(request, env) {
@@ -692,10 +815,174 @@ async function handleStatus(request, env) {
   });
 }
 
+function avisoEpson() {
+  return 'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
+}
+
+async function findOrcamentoByToken(env, token) {
+  const code = cleanText(token, 120);
+  if (!code || code.length < 8) return null;
+  const rows = await env.DB.prepare(
+    `SELECT * FROM records WHERE entity = 'orcamentos'`
+  ).all();
+  for (const row of (rows.results || [])) {
+    const data = parseDataJson(row.data_json) || {};
+    if (String(data.token || '') === code) return { row, data };
+  }
+  return null;
+}
+
+function publicOrcamentoPayload(data) {
+  return {
+    ok: true,
+    numero: data.numero || '',
+    clienteNome: data.clienteNome || data.clienteFantasia || '',
+    data: String(data.data || data.criadoEm || '').slice(0, 10),
+    itens: Array.isArray(data.itens) ? data.itens.map(it => ({
+      descricao: it.descricao || '',
+      qtd: it.qtd,
+      preco: it.preco,
+      subtotal: it.subtotal
+    })) : [],
+    total: Number(data.total) || 0,
+    status: data.status || 'aberto',
+    whatsapp: data.lojaWhatsapp || '',
+    aviso: avisoEpson()
+  };
+}
+
+async function handleOrcamentoGet(url, env) {
+  if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
+  const found = await findOrcamentoByToken(env, url.searchParams.get('c'));
+  if (!found) return json({ ok: false, error: 'NOT_FOUND', message: 'Orçamento não encontrado.' }, 404);
+  const st = String(found.data.status || 'aberto');
+  const deleted = found.row.deleted_at != null || st === 'excluido';
+  if (deleted || st === 'aprovado' || st === 'recusado') {
+    const status = st === 'aprovado' ? 'aprovado' : 'recusado';
+    return json({
+      ok: false,
+      error: 'USED',
+      status,
+      vendaId: found.data.vendaId || null,
+      vendaNumero: found.data.vendaNumero || '',
+      message: 'Este link não vale mais.'
+    }, 410);
+  }
+  return json(publicOrcamentoPayload(found.data));
+}
+
+async function handleOrcamentoPost(request, env) {
+  if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
+  const body = await readBody(request);
+  const acao = body.acao === 'recusar' ? 'recusar' : (body.acao === 'aprovar' ? 'aprovar' : '');
+  if (!acao) throw new ApiError(400, 'INVALID_ACTION', 'Informe aprovar ou recusar.');
+  const found = await findOrcamentoByToken(env, body.c);
+  if (!found) throw new ApiError(404, 'NOT_FOUND', 'Orçamento não encontrado.');
+  const data = found.data;
+  const device = { id: 'public-orcamento' };
+  if (data.status === 'aprovado' || data.status === 'recusado') {
+    throw new ApiError(409, 'ALREADY_DECIDED', 'Este link não vale mais.');
+  }
+  if (acao === 'recusar') {
+    if (data.status === 'aprovado') {
+      throw new ApiError(409, 'ALREADY_APPROVED', 'Este orçamento já foi autorizado.');
+    }
+    data.status = 'recusado';
+    data.recusadoEm = new Date().toISOString();
+    const result = await applyMutation(env, device, {
+      mutationId: 'orc_rec_' + crypto.randomUUID(),
+      entity: 'orcamentos',
+      recordId: found.row.record_id,
+      operation: 'upsert',
+      baseVersion: Number(found.row.version),
+      data
+    });
+    if (!result.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
+    await applyMutation(env, device, {
+      mutationId: 'orc_del_' + crypto.randomUUID(),
+      entity: 'orcamentos',
+      recordId: found.row.record_id,
+      operation: 'delete',
+      baseVersion: Number(result.version)
+    });
+    return json({ ok: true, status: 'recusado', excluido: true });
+  }
+  const vendaNumero = String(data.vendaNumero || ('V' + Date.now().toString(36).toUpperCase()));
+  const vendaId = 'vda_orc_' + String(data.id || found.row.record_id);
+  const venda = {
+    id: vendaId,
+    empresaId: data.empresaId || '',
+    numero: vendaNumero,
+    clienteId: data.clienteId || null,
+    data: new Date().toISOString(),
+    itens: Array.isArray(data.itens) ? data.itens : [],
+    desconto: 0,
+    total: Number(data.total) || 0,
+    observacao: 'Gerada do orçamento ' + (data.numero || ''),
+    status: 'aguardar',
+    origemOrcamentoId: data.id || found.row.record_id,
+    criadoPor: data.criadoPor || 'cliente',
+    criadoPorNome: data.criadoPorNome || 'Cliente',
+    criadoEm: new Date().toISOString()
+  };
+  const mensagem = 'Olá, sou ' + String(data.clienteNome || 'cliente')
+    + '. Foi autorizado o orçamento do COD ' + String(data.numero || '')
+    + ' e gerou a venda salva ' + vendaNumero
+    + '. Por favor, vá atualizando para mim sobre o andamento.';
+  data.status = 'aprovado';
+  data.vendaId = vendaId;
+  data.vendaNumero = vendaNumero;
+  data.aprovadoEm = new Date().toISOString();
+  data.aprovadoOrigem = 'cliente';
+  data.mensagemWhats = mensagem;
+  const ntf = {
+    id: crypto.randomUUID(),
+    empresaId: data.empresaId || '',
+    tipo: 'orcamento_aprovado',
+    titulo: 'Orçamento autorizado',
+    texto: String(data.clienteNome || 'Cliente') + ' autorizou o orçamento ' + String(data.numero || '')
+      + ' e gerou a venda salva ' + vendaNumero,
+    orcamentoId: data.id || found.row.record_id,
+    vendaId,
+    lida: false,
+    criadoEm: new Date().toISOString()
+  };
+  const vendaRes = await applyMutation(env, device, {
+    mutationId: 'orc_vda_' + crypto.randomUUID(),
+    entity: 'vendas',
+    recordId: vendaId,
+    operation: 'upsert',
+    baseVersion: 0,
+    data: venda
+  });
+  if (!vendaRes.ok) throw new ApiError(409, 'CONFLICT', 'Não foi possível gerar a venda.');
+  await applyMutation(env, device, {
+    mutationId: 'orc_ntf_' + crypto.randomUUID(),
+    entity: 'notificacoes',
+    recordId: ntf.id,
+    operation: 'upsert',
+    baseVersion: 0,
+    data: ntf
+  });
+  const orcRes = await applyMutation(env, device, {
+    mutationId: 'orc_ok_' + crypto.randomUUID(),
+    entity: 'orcamentos',
+    recordId: found.row.record_id,
+    operation: 'upsert',
+    baseVersion: Number(found.row.version),
+    data
+  });
+  if (!orcRes.ok) throw new ApiError(409, 'CONFLICT', 'Tente novamente.');
+  return json({ ok: true, status: 'aprovado', vendaNumero, mensagem });
+}
+
 async function route(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
+  if (request.method === 'GET' && url.pathname === '/pix') return handlePix(url);
+  if (request.method === 'GET' && url.pathname === '/orcamento') return handleOrcamentoGet(url, env);
+  if (request.method === 'POST' && url.pathname === '/orcamento') return handleOrcamentoPost(request, env);
   if (!env.DB) throw new ApiError(503, 'DATABASE_NOT_BOUND', 'Banco D1 não vinculado.');
   if (request.method === 'POST' && url.pathname === '/v1/setup') return handleSetup(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);
@@ -708,6 +995,7 @@ async function route(request, env) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
@@ -728,4 +1016,4 @@ export default {
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord };
+export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel };
