@@ -5,6 +5,11 @@ const path = require('path');
 const fs = require('fs');
 
 let mainWindow = null;
+const APP_VERSION = (function(){
+  try{ return String(require('./package.json').version||''); }catch(e){ return ''; }
+})();
+
+try{ app.commandLine.appendSwitch('disable-http-cache'); }catch(e){}
 
 function createWindow () {
   try{ Menu.setApplicationMenu(null); }catch(e){}
@@ -24,10 +29,18 @@ function createWindow () {
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'Sistema Digicopy'
+    title: APP_VERSION ? ('Sistema Digicopy v'+APP_VERSION) : 'Sistema Digicopy'
   });
 
-  win.loadFile('index.html');
+  try{
+    const marker = path.join(app.getPath('userData'), 'app-version.txt');
+    const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
+    if(APP_VERSION && prev !== APP_VERSION){
+      win.webContents.session.clearCache().catch(()=>{});
+      try{ fs.writeFileSync(marker, APP_VERSION, 'utf8'); }catch(e){}
+    }
+  }catch(e){}
+  win.loadFile(path.join(__dirname, 'index.html'), APP_VERSION ? { query: { v: APP_VERSION } } : undefined);
   try{
     win.webContents.on('will-navigate', (event, url) => {
       if(String(url||'').startsWith('file://')) return;

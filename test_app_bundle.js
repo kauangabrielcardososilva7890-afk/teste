@@ -11,7 +11,7 @@ ok('todos os arquivos do manifesto existem',manifest.every(fs.existsSync));
 ok('IndexedDB precede painel e motor de sync',manifest.indexOf('indexeddb_persistence_patch.js')<manifest.indexOf('cloudflare_sync_patch.js')&&manifest.indexOf('cloudflare_sync_patch.js')<manifest.indexOf('cloudflare_data_sync_patch.js'));
 ok('index carrega um único bundle da aplicação',(html.match(/<script[^>]+src="\.\/app\.bundle\.js/g)||[]).length===1);
 ok('index não faz 97 requisições antigas',!manifest.some(file=>html.includes('src="./'+file)));
-ok('Electron inclui bundle e não depende da lista manual antiga',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.length<=12);
+ok('Electron inclui bundle e não depende da lista manual antiga',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.includes('package.json')&&pkg.build.files.length<=16);
 cp.execFileSync(process.execPath,['build_bundle.js','--check'],{stdio:'pipe'});
 ok('bundle corresponde exatamente às fontes','ok');
 console.log('\nRESULTADO: bundle consolidado passou!');

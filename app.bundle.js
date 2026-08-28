@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 174 | sha256: 8b245d0da1cfdde9
+ * scripts: 175 | sha256: c234acb8ae7f7f8a
  */
 
 /* ===== lz.js ===== */
@@ -41236,6 +41236,39 @@ try{
 }catch(e){}
 
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
+})();
+
+;
+
+/* ===== ajustes_v52247_exe_atualiza_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.47 — .exe passa a usar pasta (sem asar) + limpa cache na versão nova
+//            para a atualização aparecer depois de gerar o instalador.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+window.EXE_ATUALIZA_V52247_PURE = {
+  VERSAO: '5.22.47',
+  asar: false,
+  limpaCacheNaVersao: true
+};
+if(typeof document==='undefined') return;
+function pintar(){
+  var ver=document.getElementById('footer-version');
+  if(ver) ver.textContent='v5.22.47';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52247ver){
+  var oldN=window.navigateTo;
+  window.navigateTo=function(){
+    var r=oldN.apply(this, arguments);
+    try{ pintar(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52247ver=true;
+}
+setTimeout(pintar, 200);
+setTimeout(pintar, 900);
+console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
 })();
 
 ;

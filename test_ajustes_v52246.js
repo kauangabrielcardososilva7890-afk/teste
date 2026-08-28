@@ -24,7 +24,7 @@ ok('depois despausa e sincroniza', /paused=false/.test(motor) && /nao-autorizar-
 ok('dois avisos do sistema', (ui.match(/confirmSistema/g)||[]).length>=2);
 ok('botão no painel', /dc-nao-autorizar-local/.test(ui) && /Não autorizar dados deste PC/.test(ui));
 ok('patch no bundle', manifest.includes('ajustes_v52246_nuvem_nao_autorizar_patch.js'));
-ok('versão', pkg.version==='5.22.46' && html.includes('app.bundle.js?v=5.22.46') && /v5\.22\.46/.test(html));
+ok('versão', /^5\.22\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /v5\.22\.\d+/.test(html));
 ok('APK quieto', !/mobile\//.test(ui));
 ok('sem nome pessoal novo', !/kauan/i.test(ui.replace(/__KAUAN_REFINO_STATE__/g,'')));
 console.log('\nRESULTADO: v5.22.46 passou!');
