@@ -3,10 +3,33 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.58**  
+**Última versão:** **v5.22.59**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.58. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.59. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.59 — remoção da opção 'Serviço' do tipo de item, restauração de todos os filtros de busca e versão v5.22.59
+
+- **Correção no Select de Tipo de Item em Orçamentos:**
+  - Removida a opção inexistente **Serviço** do dropdown de tipo de item.
+  - O seletor conta exclusivamente com os tipos oficiais do sistema: **Produto** e **Recarga de toner**.
+- **Restauração Completa dos Filtros de Pesquisa no Modal:**
+  - **Filtro de Busca de Clientes:** Reintegrado o seletor `orc-cli-campo` com todos os campos de pesquisa rápida (*Pesquisar em tudo, Nome, Fantasia, Código, CPF/CNPJ, RG/IE, Endereço, Telefone, WhatsApp, Cidade, Bairro, Contato, E-mail, Observação, CEP, UF*).
+  - **Filtro de Categorias de Produtos:** Quando selecionado o tipo *Produto*, exibe o dropdown de categorias (`orc-prod-cat`: *Todas categorias, Produto, Serviço, Cartucho, Cartucho Vazio, Insumo, Equipamento, Impressoras, Chip, Compatível, Informática, Original, Outros*) ao lado do campo de busca e botão de lupa.
+  - **Filtro de Busca de Recargas:** Quando selecionado o tipo *Recarga de toner*, exibe o dropdown de campos de recarga (`orc-rec-campo`: *Pesquisar recarga, Código, Descrição, Marca*).
+  - **Etiqueta e Lupa de Recarga:** Exibe o campo de etiqueta da recarga (`orc-item-cartucho`) com botão de lupa (`orc-etq-lupa`), permitindo buscar etiquetas existentes ou digitar e adicionar etiquetas novas.
+- **Sincronização Visual da Versão v5.22.59:**
+  - Versão **v5.22.59** propagada no título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 187 scripts compilados no `app.bundle.js` (`sha256: 6a3b54d9808d84d7`).
+  - Suíte consolidada com **111 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.59`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 
