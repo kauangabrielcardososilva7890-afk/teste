@@ -156,10 +156,26 @@
     if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
   }
 
+  // Garante que todos os orçamentos tenham token para acompanhamento remoto
+  function garantirTokensOrcamentos(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(!o) return;
+      if(!o.token){
+        o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }
+
   // Consulta ativamente a API do Cloudflare Worker para buscar aprovações remotas
   function verificarAprovacoesNuvem(){
     var _db = getDb();
     if(!_db || !_db.orcamentos) return;
+    garantirTokensOrcamentos();
 
     var pendentes = _db.orcamentos.filter(function(o){
       if(!o || !o.token) return false;
@@ -176,8 +192,8 @@
         .then(function(r){ return r.json(); })
         .then(function(res){
           if(!res) return;
-          var st = txt(res.status).toLowerCase();
-          if(st === 'aprovado' || (res.ok && res.status === 'aprovado')){
+          var st = txt(res.status || (res.data && res.data.status)).toLowerCase();
+          if(st === 'aprovado' || (res.ok && res.status === 'aprovado') || res.vendaId){
             if(o.status !== 'aprovado' || !o.vendaId || !(_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })){
               gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
             }
@@ -195,7 +211,8 @@
     VERSAO: VERSAO,
     gerarVendaSalvaDeOrcamento: gerarVendaSalvaDeOrcamento,
     recusarOrcamento: recusarOrcamento,
-    verificarAprovacoesNuvem: verificarAprovacoesNuvem
+    verificarAprovacoesNuvem: verificarAprovacoesNuvem,
+    garantirTokensOrcamentos: garantirTokensOrcamentos
   };
 
   if(typeof window !== 'undefined'){
