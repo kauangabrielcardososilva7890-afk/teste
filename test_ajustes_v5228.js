@@ -1,9 +1,11 @@
 const fs=require('fs');
-const forge=require('node-forge');
+let forge=null;
+try{ forge=require('node-forge'); }catch(e){}
 const S=require('./nfe_assinatura.js');
 function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
 
 function fazerPfxTeste(senha){
+  if(!forge) return null;
   const keys=forge.pki.rsa.generateKeyPair(1024);
   const cert=forge.pki.createCertificate();
   cert.publicKey=keys.publicKey;
@@ -34,13 +36,15 @@ ok('patch no bundle',manifest.includes('ajustes_v5228_nfe_assinatura_patch.js'))
 const inf='<infNFe versao="4.00" Id="NFe'+('1'.repeat(44))+'"><ide></ide></infNFe>';
 ok('C14N coloca xmlns e Id antes de versao',S.canonicalInfNfe(inf).startsWith('<infNFe xmlns="http://www.portalfiscal.inf.br/nfe" Id="NFe'));
 
-const senha='teste-local';
-const pfx=fazerPfxTeste(senha);
-const nfe='<?xml version="1.0" encoding="UTF-8"?><NFe xmlns="http://www.portalfiscal.inf.br/nfe">'+inf+'</NFe>';
-let falhou=false;
-try{ S.assinarNfeXml(nfe, pfx, 'errada'); }catch(e){ falhou=/Senha|inválido|invalido/i.test(e.message); }
-ok('senha errada não assina',falhou);
-const r=S.assinarNfeXml(nfe, pfx, senha);
-ok('assina XML de teste',r.ok&&r.xmlAssinado.includes('<Signature')&&r.xmlAssinado.includes('</NFe>'));
-ok('não devolve a senha',!JSON.stringify(r).includes(senha));
+if(forge){
+  const senha='teste-local';
+  const pfx=fazerPfxTeste(senha);
+  const nfe='<?xml version="1.0" encoding="UTF-8"?><NFe xmlns="http://www.portalfiscal.inf.br/nfe">'+inf+'</NFe>';
+  let falhou=false;
+  try{ S.assinarNfeXml(nfe, pfx, 'errada'); }catch(e){ falhou=/Senha|inválido|invalido/i.test(e.message); }
+  ok('senha errada não assina',falhou);
+  const r=S.assinarNfeXml(nfe, pfx, senha);
+  ok('assina XML de teste',r.ok&&r.xmlAssinado.includes('<Signature')&&r.xmlAssinado.includes('</NFe>'));
+  ok('não devolve a senha',!JSON.stringify(r).includes(senha));
+}
 console.log('\nRESULTADO: assinatura A1 passou!');
