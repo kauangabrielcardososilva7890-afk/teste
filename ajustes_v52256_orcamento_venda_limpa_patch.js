@@ -217,6 +217,159 @@
     window.ORCAMENTO_APROVACAO_V52256_PURE = ORCAMENTO_APROVACAO_V52256_PURE;
     window.aprovarOrcamentoInterno = gerarVendaSalvaDeOrcamento;
 
+    // Escuta em tempo real decisões locais e de abas
+    try{
+      if(typeof BroadcastChannel !== 'undefined'){
+        var bc = new BroadcastChannel('digicopy_orcamentos');
+        bc.onmessage = function(ev){
+          var msg = ev && ev.data;
+          if(!msg) return;
+          var _db = getDb();
+          var o = (_db.orcamentos || []).find(function(x){
+            return x && ((msg.token && x.token === msg.token) || (msg.numero && String(x.numero) === String(msg.numero)));
+          });
+          if(!o) return;
+          if(msg.acao === 'aprovar'){
+            gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+          } else if(msg.acao === 'recusar'){
+            recusarOrcamento(o.id);
+          }
+        };
+      }
+      window.addEventListener('storage', function(ev){
+        if(ev && ev.key && ev.key.indexOf('digicopy_orc_decisao_') === 0){
+          try{
+            var data = JSON.parse(ev.newValue || '{}');
+            var tok = ev.key.replace('digicopy_orc_decisao_', '');
+            var _db = getDb();
+            var o = (_db.orcamentos || []).find(function(x){
+              return x && (x.token === tok || (data.numero && String(x.numero) === String(data.numero)));
+            });
+            if(!o) return;
+            if(data.acao === 'aprovar'){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            } else if(data.acao === 'recusar'){
+              recusarOrcamento(o.id);
+            }
+          }catch(e){}
+        }
+      });
+    }catch(e){}
+
+    // Ações manuais disponíveis
+    window.aprovarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja autorizar o orçamento ' + (o.numero || '') + ' e gerar a venda salva no sistema?', 'Autorizar Orçamento').then(function(ok){
+          if(!ok) return;
+          gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+      }
+    };
+
+    window.recusarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja marcar o orçamento ' + (o.numero || '') + ' como Não autorizado?', 'Recusar Orçamento').then(function(ok){
+          if(!ok) return;
+          recusarOrcamento(id);
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        recusarOrcamento(id);
+      }
+    };
+
+    // Atualiza status visual e botões no modal de orçamento
+    if(typeof window.abrirTelaOrcamento === 'function' && !window.abrirTelaOrcamento.__v52256modal){
+      var oldAbrir = window.abrirTelaOrcamento;
+      window.abrirTelaOrcamento = function(existente){
+        var res = oldAbrir.apply(this, arguments);
+        try{
+          if(existente && existente.id){
+            var _db = getDb();
+            var o = (_db.orcamentos || []).find(function(x){ return x && x.id === existente.id; }) || existente;
+            var body = document.getElementById('modal-body');
+            var footer = document.getElementById('modal-footer');
+            if(body){
+              var st = txt(o.status).toLowerCase();
+              var banner = document.createElement('div');
+              banner.className = 'mb-3 p-3 rounded-xl flex items-center justify-between border';
+              
+              if(st === 'aprovado' || o.vendaId){
+                banner.className += ' bg-emerald-50 border-emerald-200 text-emerald-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-check-circle-fill text-xl text-emerald-600"></i><div><p class="font-bold text-[13px]">Orçamento AUTORIZADO</p><p class="text-[11px] text-emerald-700">Venda salva nº ' + (o.vendaNumero || '') + ' gerada com sucesso</p></div></div>'
+                  + '<button type="button" onclick="closeModal(); if(typeof navigateTo===\'function\') navigateTo(\'vendas\');" class="h-8 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 hover:bg-emerald-700"><i class="ph ph-shopping-bag"></i> Abrir Venda</button>';
+              } else if(st === 'recusado'){
+                banner.className += ' bg-rose-50 border-rose-200 text-rose-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-x-circle-fill text-xl text-rose-600"></i><div><p class="font-bold text-[13px]">Orçamento NÃO AUTORIZADO</p><p class="text-[11px] text-rose-700">O cliente recusou este orçamento</p></div></div>';
+              } else {
+                banner.className += ' bg-blue-50 border-blue-200 text-blue-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-clock-bold text-xl text-blue-600"></i><div><p class="font-bold text-[13px]">Orçamento ABERTO</p><p class="text-[11px] text-blue-700">Aguardando decisão do cliente pelo link ou autorização direta</p></div></div>'
+                  + '<div class="flex items-center gap-1.5">'
+                  + '<button type="button" onclick="window.copiarLinkOrcamentoModal(\'' + o.id + '\')" class="h-8 px-2.5 rounded-lg bg-white border border-blue-300 text-blue-800 font-bold text-xs flex items-center gap-1 hover:bg-blue-100/50"><i class="ph ph-copy"></i> Copiar Link</button>'
+                  + '<button type="button" onclick="window.aprovarOrcamentoManual(\'' + o.id + '\'); closeModal();" class="h-8 px-2.5 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 hover:bg-emerald-700"><i class="ph ph-check-bold"></i> Autorizar</button>'
+                  + '<button type="button" onclick="window.recusarOrcamentoManual(\'' + o.id + '\'); closeModal();" class="h-8 px-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs flex items-center gap-1 hover:bg-rose-100"><i class="ph ph-x-bold"></i> Recusar</button>'
+                  + '</div>';
+              }
+              if(body.firstChild){
+                body.insertBefore(banner, body.firstChild);
+              } else {
+                body.appendChild(banner);
+              }
+            }
+          }
+        }catch(e){}
+        return res;
+      };
+      window.abrirTelaOrcamento.__v52256modal = true;
+    }
+
+    // Função para copiar o link oficial do orçamento
+    window.copiarLinkOrcamentoModal = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+      var emp = (_db.config && _db.config.empresa) || {};
+      var link = '';
+      if(window.ORCAMENTOS_PAGES_V52254_PURE && typeof window.ORCAMENTOS_PAGES_V52254_PURE.linkOrcamento === 'function'){
+        link = window.ORCAMENTOS_PAGES_V52254_PURE.linkOrcamento(o, cli, emp);
+      } else {
+        link = 'https://digicopy-orcamentos.pages.dev/?v=' + VERSAO + '&c=' + encodeURIComponent(o.token || '');
+      }
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(link).then(function(){
+            if(typeof toast === 'function') toast('Link do orçamento copiado com sucesso!', 'success');
+          });
+        } else {
+          prompt('Copie o link do orçamento:', link);
+        }
+      }catch(e){
+        prompt('Copie o link do orçamento:', link);
+      }
+    };
+
     // Sincronização central e infalível de versão em todo o sistema
     function sincronizarVersaoVisual(){
       try{

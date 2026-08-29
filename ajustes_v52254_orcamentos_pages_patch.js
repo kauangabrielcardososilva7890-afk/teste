@@ -34,9 +34,10 @@
   }
 
   function linkOrcamento(o, cli, emp){
+    var vAtual = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
     var token = txt(o && o.token);
     var d = b64url(payloadDe(o, cli || {}, emp || {}));
-    var qs = ['v=' + encodeURIComponent(VERSAO)];
+    var qs = ['v=' + encodeURIComponent(vAtual)];
     if(token) qs.push('c=' + encodeURIComponent(token));
     if(d) qs.push('d=' + encodeURIComponent(d));
     return PAGINA_PAGES + '?' + qs.join('&');

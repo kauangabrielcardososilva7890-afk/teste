@@ -103,16 +103,23 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
     var msg=acao==='aprovar'?msgOk:msgNo;
     area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado. Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
+    marcarUsado(tok);
+    try{
+      if(typeof BroadcastChannel!=='undefined'){
+        var bc=new BroadcastChannel('digicopy_orcamentos');
+        bc.postMessage({ acao:acao, token:tok, numero:cod, clienteNome:nome, time:Date.now() });
+      }
+      localStorage.setItem('digicopy_orc_decisao_'+tok, JSON.stringify({ acao:acao, numero:cod, clienteNome:nome, time:Date.now() }));
+    }catch(e){}
+
     var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg, d:params.get('d')||''};
-    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
+    fetch(API+'/orcamento',{method:'POST',headers:{\'content-type\':\'application/json\'},body:JSON.stringify(corpo)})
       .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
       .then(function(res){
         if(res && res.j && jaDecidido(res.j) && !res.okHttp){ telaUsado(); return; }
-        marcarUsado(tok);
         setTimeout(function(){ whats(tel, msg); }, 400);
       })
       .catch(function(){
-        marcarUsado(tok);
         setTimeout(function(){ whats(tel, msg); }, 400);
       });
   }
