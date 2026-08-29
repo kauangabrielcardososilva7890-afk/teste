@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 187 | sha256: 6a3b54d9808d84d7
+ * scripts: 187 | sha256: 903b8c5558431441
  */
 
 /* ===== lz.js ===== */
@@ -44063,7 +44063,6 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       document.getElementById('modal-footer').innerHTML =
         '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
-        +(existente ? '<button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(\''+linkCliente.replace(/'/g, "\\'")+'\'); toast(\'Link do cliente copiado!\',\'success\')" class="h-[46px] px-4 rounded-xl bg-indigo-50 text-[#0a1e8a] border border-indigo-200 font-bold flex items-center gap-1.5"><i class="ph ph-copy"></i> Copiar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
         +'<button type="button" onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>';
 
@@ -44671,7 +44670,6 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       document.getElementById('modal-footer').innerHTML =
         '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
-        +(existente ? '<button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(\''+linkCliente.replace(/'/g, "\\'")+'\'); toast(\'Link do cliente copiado!\',\'success\')" class="h-[46px] px-4 rounded-xl bg-indigo-50 text-[#0a1e8a] border border-indigo-200 font-bold flex items-center gap-1.5"><i class="ph ph-copy"></i> Copiar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
         +'<button type="button" onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>';
 

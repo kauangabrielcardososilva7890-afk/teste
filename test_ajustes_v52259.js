@@ -41,4 +41,16 @@ assert.ok(patchSrc.includes('id="orc-rec-campo"'), 'Deve conter o select de camp
 assert.ok(patchSrc.includes('id="orc-item-cartucho"'), 'Deve conter o campo de etiqueta de recarga');
 assert.ok(patchSrc.includes('id="orc-etq-lupa"'), 'Deve conter o botão de lupa de etiqueta');
 
+// 6. Não deve existir o botão "Copiar link" no rodapé do modal de orçamento
+assert.ok(!patchSrc.includes('Copiar link'), 'Modal de orçamento não deve conter botão Copiar link');
+assert.ok(!patch58Src.includes('Copiar link'), 'Patch 58 não deve conter botão Copiar link');
+
+// 7. Validação da página pública do cliente (public-orcamento/index.html e orcamento_pagar.html)
+const publicHtml = fs.readFileSync('public-orcamento/index.html', 'utf8');
+const pagarHtml = fs.readFileSync('orcamento_pagar.html', 'utf8');
+
+assert.ok(publicHtml.includes('tela(d)'), 'Página pública deve renderizar instantaneamente com dados do payload d');
+assert.ok(publicHtml.includes('AbortController'), 'Página pública deve ter timeout com AbortController para nunca travar');
+assert.ok(pagarHtml.includes('tela(d)'), 'Página fallback deve renderizar instantaneamente com dados do payload d');
+
 console.log('✅ Testes de Ajustes v5.22.59 concluídos com sucesso!');

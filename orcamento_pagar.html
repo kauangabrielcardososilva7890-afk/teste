@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Página PÚBLICA do orçamento — NÃO é pagamento Pix.
-     Token (?c=) consulta o worker. Dados (?d=) com fallback e suporte a Ordem de Serviço.
+     Token (?c=) consulta o worker. Dados (?d=) com renderização imediata e suporte a Ordem de Serviço.
      Depois de autorizar ou recusar o link fica registrado. -->
 <html lang="pt-BR">
 <head>
@@ -48,154 +48,207 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     <h1>Aprovar orçamento</h1>
     <p>Isto não é pagamento. Escolha autorizar ou recusar.</p>
   </div>
-  <div class="corpo" id="area">Carregando…</div>
+  <div class="corpo" id="area">
+    <p style="text-align:center;color:#64748b;font-size:14px;padding:24px 0">Carregando dados do orçamento...</p>
+  </div>
 </div>
 <script>
 (function(){
-  var API='https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
-  var AVISO='Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
-  var area=document.getElementById('area');
-  var params=new URLSearchParams(location.search);
-  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  function money(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-  function soTel(v){ return String(v||'').replace(/\D/g,''); }
-  function decod(raw){
-    if(!raw) return null;
-    try{
-      var b=String(raw).replace(/-/g,'+').replace(/_/g,'/');
-      while(b.length%4) b+='=';
-      return JSON.parse(decodeURIComponent(escape(atob(b))));
-    }catch(e){ return null; }
-  }
-  function chaveUsado(tok){ return 'digicopy_orc_usado_'+String(tok||''); }
-  function marcarUsado(tok){ if(!tok) return; try{ localStorage.setItem(chaveUsado(tok),'1'); }catch(e){} }
-  function jaUsado(tok){ if(!tok) return false; try{ return localStorage.getItem(chaveUsado(tok))==='1'; }catch(e){ return false; } }
-  function telaUsado(){ area.innerHTML='<p class="erro">Este link não vale mais. (USED) Peça o orçamento atualizado para a loja caso precise alterar.</p>'; }
-  function whats(tel, texto){
-    var n=soTel(tel);
-    var url='https://wa.me/'+(n||'')+'?text='+encodeURIComponent(texto);
-    location.href=url;
-  }
-  function confirmar(msg, cb){
-    var mask=document.createElement('div');
-    mask.className='mask';
-    mask.innerHTML='<div class="ask"><p>'+esc(msg)+'</p><div class="row"><button class="no" id="ask-no">Não</button><button class="ok" id="ask-ok">Sim</button></div></div>';
-    document.body.appendChild(mask);
-    document.getElementById('ask-no').onclick=function(){ mask.remove(); };
-    document.getElementById('ask-ok').onclick=function(){ mask.remove(); cb(); };
-  }
+  try {
+    var API='https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+    var AVISO='Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
+    var area=document.getElementById('area');
+    var params=new URLSearchParams(location.search);
 
-  function renderOSHtml(os){
-    if(!os || typeof os!=='object') return '';
-    var m = os.m || os.modelo || '';
-    var s = os.s || os.numeroSerie || os.serie || '';
-    var p = os.p || os.patrimonio || '';
-    var c = os.c || os.contador || '';
-    var t = os.t || os.tipoOS || '';
-    var tec = os.tec || os.tecnico || '';
-    var ent = os.ent || os.responsavelEntrega || '';
-    var g = os.g || os.garantia || '';
-    var sit = os.sit || os.situacao || '';
-    var def = os.def || os.defeito || '';
-    var srv = os.srv || os.servicos || '';
-    var pec = os.pec || os.pecas || '';
-    var ac = os.ac || os.acessorios || '';
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    function money(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function soTel(v){ return String(v||'').replace(/\D/g,''); }
 
-    var temDado = [m,s,p,c,t,tec,ent,g,sit,def,srv,pec,ac].some(function(v){ return String(v||'').trim(); });
-    if(!temDado) return '';
-
-    var grid = '';
-    if(m) grid += '<div class="os-item"><span>Equipamento / Modelo</span><b>'+esc(m)+'</b></div>';
-    if(s) grid += '<div class="os-item"><span>Nº de Série</span><b>'+esc(s)+'</b></div>';
-    if(p) grid += '<div class="os-item"><span>Patrimônio</span><b>'+esc(p)+'</b></div>';
-    if(c) grid += '<div class="os-item"><span>Contador (cópias)</span><b>'+esc(c)+'</b></div>';
-    if(t) grid += '<div class="os-item"><span>Tipo da OS</span><b>'+esc(t)+'</b></div>';
-    if(tec) grid += '<div class="os-item"><span>Técnico</span><b>'+esc(tec)+'</b></div>';
-    if(ent) grid += '<div class="os-item"><span>Resp. Entrega</span><b>'+esc(ent)+'</b></div>';
-    if(g) grid += '<div class="os-item"><span>Garantia</span><b>'+esc(g)+'</b></div>';
-    if(sit) grid += '<div class="os-item"><span>Situação</span><b>'+esc(sit)+'</b></div>';
-    if(ac) grid += '<div class="os-item"><span>Acessórios</span><b>'+esc(ac)+'</b></div>';
-
-    var blocos = '';
-    if(def) blocos += '<div class="os-bloco"><span>Defeito Relatado</span><p>'+esc(def)+'</p></div>';
-    if(srv) blocos += '<div class="os-bloco"><span>Serviços Previstos / Executados</span><p>'+esc(srv)+'</p></div>';
-    if(pec) blocos += '<div class="os-bloco"><span>Peças</span><p>'+esc(pec)+'</p></div>';
-
-    return '<div class="os-card"><div class="os-title">🔧 Ordem de Serviço</div>'
-      +(grid?'<div class="os-grid">'+grid+'</div>':'')
-      +blocos
-      +'</div>';
-  }
-
-  function tela(d){
-    var itens=(d.it||d.itens||[]).map(function(it){
-      return '<tr><td>'+esc(it.d||it.descricao||'')+'</td><td>'+esc(it.q||it.qtd||'')+'</td><td>'+money(it.p||it.preco)+'</td><td><b>'+money(it.s||it.subtotal)+'</b></td></tr>';
-    }).join('');
-    var osHtml = renderOSHtml(d.os);
-
-    area.innerHTML='<p class="meta"><b>Orçamento '+esc(d.n||d.numero||'')+'</b><br>Cliente: '+esc(d.c||d.clienteNome||'')+'<br>Emissão: '+esc(d.dt||d.data||'')+'</p>'
-      +(itens ? '<table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody></table>' : '')
-      +osHtml
-      +'<div class="tot">'+money(d.tot||d.total)+'</div>'
-      +'<div class="btns"><button class="ok" id="btn-ok">Autorizar</button><button class="no" id="btn-no">Recusar</button></div>'
-      +'<div class="aviso">'+esc(d.aviso||AVISO)+'</div>';
-    document.getElementById('btn-ok').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('aprovar', d); }); };
-    document.getElementById('btn-no').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('recusar', d); }); };
-  }
-
-  function decidir(acao, d){
-    var nome=d.c||d.clienteNome||'cliente';
-    var cod=d.n||d.numero||'';
-    var tel=d.w||d.whatsapp||'';
-    var tok=d.t||d.token||params.get('c')||'';
-    var msgOk='Olá, sou '+nome+'. Foi autorizado o orçamento do COD '+cod+'. Por favor, vá atualizando para mim sobre o andamento.';
-    var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
-    var msg=acao==='aprovar'?msgOk:msgNo;
-    area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado! Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
-    marcarUsado(tok);
-    try{
-      if(typeof BroadcastChannel!=='undefined'){
-        var bc=new BroadcastChannel('digicopy_orcamentos');
-        bc.postMessage({ acao:acao, token:tok, numero:cod, clienteNome:nome, time:Date.now() });
-      }
-      localStorage.setItem('digicopy_orc_decisao_'+tok, JSON.stringify({ acao:acao, numero:cod, clienteNome:nome, time:Date.now() }));
-    }catch(e){}
-
-    var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg, d:params.get('d')||''};
-    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
-      .then(function(r){ return r.json(); })
-      .then(function(){
-        setTimeout(function(){ whats(tel, msg); }, 400);
-      })
-      .catch(function(){
-        setTimeout(function(){ whats(tel, msg); }, 400);
-      });
-  }
-
-  var d=decod(params.get('d'));
-  var token=params.get('c')||(d&&(d.t||d.token))||'';
-  if(token && jaUsado(token)){
-    // se tiver payload d, permite abrir mesmo se o dispositivo local marcou antes
-  }
-  if(token){
-    fetch(API+'/orcamento?c='+encodeURIComponent(token))
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        if(j && j.ok){
-          tela(Object.assign({}, d||{}, j, {t:token, n:j.numero||(d&&d.n), c:j.clienteNome||(d&&d.c), w:j.whatsapp||(d&&d.w), os:j.os||(d&&d.os)}));
-          return;
+    function decod(raw){
+      if(!raw) return null;
+      try{
+        var b=String(raw).replace(/-/g,'+').replace(/_/g,'/');
+        while(b.length%4) b+='=';
+        try{
+          return JSON.parse(decodeURIComponent(escape(atob(b))));
+        }catch(e1){
+          return JSON.parse(atob(b));
         }
-        if(d && (d.n||d.numero)){ tela(d); return; }
-        area.innerHTML='<p class="erro">Orçamento não encontrado. Peça o link atualizado para a loja.</p>';
-      })
-      .catch(function(){
-        if(d && (d.n||d.numero)) tela(d);
-        else area.innerHTML='<p class="erro">Não foi possível abrir este orçamento. Peça o link atualizado para a loja.</p>';
-      });
-    return;
+      }catch(e){ return null; }
+    }
+
+    function chaveUsado(tok){ return 'digicopy_orc_usado_'+String(tok||''); }
+    function marcarUsado(tok){ if(!tok) return; try{ localStorage.setItem(chaveUsado(tok),'1'); }catch(e){} }
+    function jaUsado(tok){ if(!tok) return false; try{ return localStorage.getItem(chaveUsado(tok))==='1'; }catch(e){ return false; } }
+    function telaUsado(){ area.innerHTML='<p class="erro">Este link não vale mais. (USED) Peça o orçamento atualizado para a loja caso precise alterar.</p>'; }
+
+    function whats(tel, texto){
+      var n=soTel(tel);
+      var url='https://wa.me/'+(n||'')+'?text='+encodeURIComponent(texto);
+      location.href=url;
+    }
+
+    function confirmar(msg, cb){
+      var mask=document.createElement('div');
+      mask.className='mask';
+      mask.innerHTML='<div class="ask"><p>'+esc(msg)+'</p><div class="row"><button class="no" id="ask-no">Não</button><button class="ok" id="ask-ok">Sim</button></div></div>';
+      document.body.appendChild(mask);
+      document.getElementById('ask-no').onclick=function(){ mask.remove(); };
+      document.getElementById('ask-ok').onclick=function(){ mask.remove(); cb(); };
+    }
+
+    function renderOSHtml(os){
+      if(!os || typeof os!=='object') return '';
+      var m = os.m || os.modelo || '';
+      var s = os.s || os.numeroSerie || os.serie || '';
+      var p = os.p || os.patrimonio || '';
+      var c = os.c || os.contador || '';
+      var t = os.t || os.tipoOS || '';
+      var tec = os.tec || os.tecnico || '';
+      var ent = os.ent || os.responsavelEntrega || '';
+      var g = os.g || os.garantia || '';
+      var sit = os.sit || os.situacao || '';
+      var def = os.def || os.defeito || '';
+      var srv = os.srv || os.servicos || '';
+      var pec = os.pec || os.pecas || '';
+      var ac = os.ac || os.acessorios || '';
+
+      var temDado = [m,s,p,c,t,tec,ent,g,sit,def,srv,pec,ac].some(function(v){ return String(v||'').trim(); });
+      if(!temDado) return '';
+
+      var grid = '';
+      if(m) grid += '<div class="os-item"><span>Equipamento / Modelo</span><b>'+esc(m)+'</b></div>';
+      if(s) grid += '<div class="os-item"><span>Nº de Série</span><b>'+esc(s)+'</b></div>';
+      if(p) grid += '<div class="os-item"><span>Patrimônio</span><b>'+esc(p)+'</b></div>';
+      if(c) grid += '<div class="os-item"><span>Contador (cópias)</span><b>'+esc(c)+'</b></div>';
+      if(t) grid += '<div class="os-item"><span>Tipo da OS</span><b>'+esc(t)+'</b></div>';
+      if(tec) grid += '<div class="os-item"><span>Técnico</span><b>'+esc(tec)+'</b></div>';
+      if(ent) grid += '<div class="os-item"><span>Resp. Entrega</span><b>'+esc(ent)+'</b></div>';
+      if(g) grid += '<div class="os-item"><span>Garantia</span><b>'+esc(g)+'</b></div>';
+      if(sit) grid += '<div class="os-item"><span>Situação</span><b>'+esc(sit)+'</b></div>';
+      if(ac) grid += '<div class="os-item"><span>Acessórios</span><b>'+esc(ac)+'</b></div>';
+
+      var blocos = '';
+      if(def) blocos += '<div class="os-bloco"><span>Defeito Relatado</span><p>'+esc(def)+'</p></div>';
+      if(srv) blocos += '<div class="os-bloco"><span>Serviços Previstos / Executados</span><p>'+esc(srv)+'</p></div>';
+      if(pec) blocos += '<div class="os-bloco"><span>Peças</span><p>'+esc(pec)+'</p></div>';
+
+      return '<div class="os-card"><div class="os-title">🔧 Ordem de Serviço</div>'
+        +(grid?'<div class="os-grid">'+grid+'</div>':'')
+        +blocos
+        +'</div>';
+    }
+
+    var orcAtual = null;
+
+    function tela(d){
+      orcAtual = d;
+      var itens=(d.it||d.itens||[]).map(function(it){
+        return '<tr><td>'+esc(it.d||it.descricao||'')+'</td><td>'+esc(it.q||it.qtd||'')+'</td><td>'+money(it.p||it.preco)+'</td><td><b>'+money(it.s||it.subtotal)+'</b></td></tr>';
+      }).join('');
+      var osHtml = renderOSHtml(d.os);
+
+      area.innerHTML='<p class="meta"><b>Orçamento '+esc(d.n||d.numero||'')+'</b><br>Cliente: '+esc(d.c||d.clienteNome||'')+'<br>Emissão: '+esc(d.dt||d.data||'')+'</p>'
+        +(itens ? '<table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody></table>' : '')
+        +osHtml
+        +'<div class="tot">'+money(d.tot||d.total)+'</div>'
+        +'<div class="btns"><button class="ok" id="btn-ok">Autorizar</button><button class="no" id="btn-no">Recusar</button></div>'
+        +'<div class="aviso">'+esc(d.aviso||AVISO)+'</div>';
+
+      var btnOk = document.getElementById('btn-ok');
+      if(btnOk) btnOk.onclick=function(){ confirmar('Tem certeza?', function(){ decidir('aprovar', d); }); };
+      var btnNo = document.getElementById('btn-no');
+      if(btnNo) btnNo.onclick=function(){ confirmar('Tem certeza?', function(){ decidir('recusar', d); }); };
+    }
+
+    function decidir(acao, d){
+      var nome=d.c||d.clienteNome||'cliente';
+      var cod=d.n||d.numero||'';
+      var tel=d.w||d.whatsapp||'';
+      var tok=d.t||d.token||params.get('c')||'';
+      var msgOk='Olá, sou '+nome+'. Foi autorizado o orçamento do COD '+cod+'. Por favor, vá atualizando para mim sobre o andamento.';
+      var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
+      var msg=acao==='aprovar'?msgOk:msgNo;
+      area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado! Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
+      marcarUsado(tok);
+      try{
+        if(typeof BroadcastChannel!=='undefined'){
+          var bc=new BroadcastChannel('digicopy_orcamentos');
+          bc.postMessage({ acao:acao, token:tok, numero:cod, clienteNome:nome, time:Date.now() });
+        }
+        localStorage.setItem('digicopy_orc_decisao_'+tok, JSON.stringify({ acao:acao, numero:cod, clienteNome:nome, time:Date.now() }));
+      }catch(e){}
+
+      var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg, d:params.get('d')||''};
+      fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
+        .then(function(r){ return r.json(); })
+        .then(function(){
+          setTimeout(function(){ whats(tel, msg); }, 400);
+        })
+        .catch(function(){
+          setTimeout(function(){ whats(tel, msg); }, 400);
+        });
+    }
+
+    var d=decod(params.get('d'));
+    var token=params.get('c')||(d&&(d.t||d.token))||'';
+
+    // RENDERIZAÇÃO INSTANTÂNEA SE O PAYLOAD D EXISTE
+    if(d && (d.n || d.numero || d.tot != null || d.total != null || (d.it && d.it.length))){
+      tela(d);
+      // Consulta opcional em background para verificar se o status já mudou no servidor
+      if(token){
+        var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timeoutId = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 2500);
+        fetch(API+'/orcamento?c='+encodeURIComponent(token), { signal: ctrl ? ctrl.signal : undefined })
+          .then(function(r){ return r.json(); })
+          .then(function(j){
+            clearTimeout(timeoutId);
+            if(j && j.status === 'aprovado' && !orcAtual){
+              area.innerHTML='<p class="msg" style="color:#15803d">Este orçamento já foi autorizado pelo cliente!</p>';
+            }
+          })
+          .catch(function(){ clearTimeout(timeoutId); });
+      }
+      return;
+    }
+
+    // SE NÃO TEM D, BUSCA NO WORKER POR TOKEN COM TIMEOUT
+    if(token){
+      var ctrl2 = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timeoutId2 = setTimeout(function(){
+        if(ctrl2) ctrl2.abort();
+        if(!orcAtual){
+          area.innerHTML='<p class="erro">Tempo de conexão esgotado ao buscar o orçamento. Peça o link atualizado para a loja.</p>';
+        }
+      }, 4000);
+
+      fetch(API+'/orcamento?c='+encodeURIComponent(token), { signal: ctrl2 ? ctrl2.signal : undefined })
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          clearTimeout(timeoutId2);
+          if(j && j.ok){
+            tela(Object.assign({}, j, {t:token, n:j.numero, c:j.clienteNome, w:j.whatsapp, os:j.os}));
+            return;
+          }
+          area.innerHTML='<p class="erro">Orçamento não encontrado. Peça o link atualizado para a loja.</p>';
+        })
+        .catch(function(){
+          clearTimeout(timeoutId2);
+          if(!orcAtual){
+            area.innerHTML='<p class="erro">Não foi possível abrir este orçamento. Peça o link atualizado para a loja.</p>';
+          }
+        });
+      return;
+    }
+
+    // Se nenhum parâmetro foi informado
+    area.innerHTML='<p class="erro">Link de orçamento incompleto ou inválido. Abra o link enviado pela loja para visualizar e autorizar o orçamento.</p>';
+  } catch(errGlobal){
+    console.error('[DIGICOPY ORÇAMENTO] Erro:', errGlobal);
+    var el = document.getElementById('area');
+    if(el) el.innerHTML='<p class="erro">Ocorreu um erro ao carregar este orçamento. Por favor, entre em contato com a loja.</p>';
   }
-  if(d && (d.n||d.numero)){ tela(d); return; }
-  area.innerHTML='<p class="erro">Link de orçamento inválido. Peça o orçamento atualizado para a loja.</p>';
 })();
 </script>
 </body>

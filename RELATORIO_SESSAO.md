@@ -10,7 +10,7 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
 
 ---
 
-## v5.22.59 — remoção da opção 'Serviço' do tipo de item, restauração de todos os filtros de busca e versão v5.22.59
+## v5.22.59 — remoção da opção 'Serviço' do tipo de item, restauração de filtros, eliminação do botão 'Copiar link' e carregamento instantâneo da página do cliente
 
 - **Correção no Select de Tipo de Item em Orçamentos:**
   - Removida a opção inexistente **Serviço** do dropdown de tipo de item.
@@ -20,10 +20,15 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
   - **Filtro de Categorias de Produtos:** Quando selecionado o tipo *Produto*, exibe o dropdown de categorias (`orc-prod-cat`: *Todas categorias, Produto, Serviço, Cartucho, Cartucho Vazio, Insumo, Equipamento, Impressoras, Chip, Compatível, Informática, Original, Outros*) ao lado do campo de busca e botão de lupa.
   - **Filtro de Busca de Recargas:** Quando selecionado o tipo *Recarga de toner*, exibe o dropdown de campos de recarga (`orc-rec-campo`: *Pesquisar recarga, Código, Descrição, Marca*).
   - **Etiqueta e Lupa de Recarga:** Exibe o campo de etiqueta da recarga (`orc-item-cartucho`) com botão de lupa (`orc-etq-lupa`), permitindo buscar etiquetas existentes ou digitar e adicionar etiquetas novas.
+- **Remoção do Botão "Copiar link":**
+  - Removido o botão "Copiar link" do rodapé do modal de orçamentos, mantendo a interface limpa e direta com *Sair, Revalidar link (quando existente), Imprimir e Salvar*.
+- **Carregamento Instantâneo na Página do Cliente (`public-orcamento/index.html` e `orcamento_pagar.html`):**
+  - Resolvido o travamento em *"Carregando..."*: a página agora renderiza **imediatamente** (0ms) a partir do payload `d` da URL, exibindo itens, valores, cliente, OS e botões de decisão sem depender de resposta síncrona do Worker.
+  - Adicionado timeout e tratamento robusto de erros e decodificação UTF-8 com `AbortController`.
 - **Sincronização Visual da Versão v5.22.59:**
   - Versão **v5.22.59** propagada no título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
 - **Bundle e Testes:**
-  - 187 scripts compilados no `app.bundle.js` (`sha256: 6a3b54d9808d84d7`).
+  - 187 scripts compilados no `app.bundle.js` (`sha256: 903b8c5558431441`).
   - Suíte consolidada com **111 testes passando** (0 falhas).
   - APK Mobile mantido intacto.
 
