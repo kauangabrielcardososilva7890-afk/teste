@@ -3,10 +3,33 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.55**  
+**Última versão:** **v5.22.56**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.55. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.56. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.56 — aprovação de orçamento 100% via link do cliente, tela limpa e versão v5.22.56
+
+- **Fluxo Oficial 100% Via Link do Cliente:**
+  - Removidos os botões manuais extras da listagem de orçamentos, deixando a tabela limpa e no visual padrão do sistema.
+  - O fluxo opera 100% pelo link enviado ao cliente (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`).
+  - Ao aprovar ou recusar no link, a página confirma com o cliente, invalida o link, comunica a nuvem e abre o WhatsApp com a mensagem pronta.
+- **Sincronização e Geração de Venda Salva:**
+  - Polling em tempo real a cada 4 segundos no ERP.
+  - Ao detectar a aprovação remota, o ERP altera o status de **ABERTO** para **AUTORIZADO** (`status: 'aprovado'`) e gera a **Venda Salva** (status `aguardar`, pronta para faturar) com itens, valores e cliente.
+  - Orçamentos sem token prévio ganham tokens únicos gerados automaticamente (`garantirTokensOrcamentos`).
+- **Sincronização Visual de Versão v5.22.56:**
+  - Versão **v5.22.56** sincronizada na aba do navegador (`document.title`), cabeçalho superior e no centro do rodapé.
+- **Bundle e Testes:**
+  - 184 scripts compilados no `app.bundle.js` (`sha256: a821da86dfdd010f`).
+  - 108 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.56`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 
