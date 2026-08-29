@@ -3,10 +3,41 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.59**  
+**Última versão:** **v5.22.60**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.59. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.60. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.60 — trava total em orçamentos autorizados, atalho direto para venda salva, exclusão funcional e correção na seleção de cliente
+
+- **Trava Total de Edição em Orçamentos Autorizados:**
+  - Quando um orçamento estiver com status **Autorizado** (`status: 'aprovado'` ou vinculado a uma venda salva):
+    - Todos os campos ficam travados e desabilitados (`disabled` / `readonly`): busca de cliente, filtros, seleção de produtos/recargas, quantidades, preços, descontos, observações e campos da Ordem de Serviço (OS).
+    - Botões de adicionar item e remover item da lista são ocultados.
+    - O botão Salvar é ocultado / bloqueado para impedir sobrescrita de dados já autorizados.
+    - Exibe um aviso/banner destacado: `🔒 Orçamento AUTORIZADO — Edição bloqueada`.
+- **Botão Atalho para Abrir a Venda Salva Gerada:**
+  - Em orçamentos autorizados, exibe o botão em destaque: **`Abrir Venda Salva nº [Número]`** tanto no banner do topo do modal quanto no rodapé e na tabela principal.
+  - Ao clicar, o sistema fecha o modal do orçamento e abre diretamente a Venda Salva no módulo de Vendas.
+- **Exclusão Funcional e Confiável de Orçamentos:**
+  - Implementada função de exclusão direta e em lote (`excluirOrcamentosMarcados`), com caixa de confirmação nativa.
+  - Se o orçamento possuir venda salva gerada pendente (não faturada), a venda vinculada também é removida de forma limpa.
+  - Adicionado botão individual de lixeira em cada linha da listagem de orçamentos e no modal de edição.
+- **Correção Definitiva na Seleção de Cliente:**
+  - Corrigido o manipulador de clique `window.orcSelCliente(id)` e `window.orcLimparCliente()` para atribuir o cliente selecionado diretamente ao formulário do modal (`window.__ORC_ST.form.cliente`).
+  - Eliminado o erro onde o sistema dizia "cliente não selecionado mesmo tendo selecionado o cliente".
+- **Sincronização Visual da Versão v5.22.60:**
+  - Versão **v5.22.60** atualizada no título da aba, cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 188 scripts compilados no `app.bundle.js` (`sha256: cc191dabeb8b62df`).
+  - Suíte consolidada com **112 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.60`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 
