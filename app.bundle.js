@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 188 | sha256: 244197573ed0ad0f
+ * scripts: 188 | sha256: 4c0e34f743056029
  */
 
 /* ===== lz.js ===== */
@@ -35407,7 +35407,39 @@ function aplicarEscuro(on){
   if(meta) meta.setAttribute('content', on ? '#0b1220' : '#0a1e8a');
   var chk = document.getElementById('ui-escuro-chk');
   if(chk) chk.checked = !!on;
+  atualizarBotaoTopnav(on);
 }
+
+function atualizarBotaoTopnav(on){
+  try{
+    var icone = document.getElementById('icone-modo-escuro-top');
+    if(icone){
+      icone.className = on ? 'ph ph-sun text-amber-400' : 'ph ph-moon';
+    }
+    var label = document.getElementById('label-modo-escuro-top');
+    if(label){
+      label.textContent = on ? 'Claro' : 'Escuro';
+    }
+    var btn = document.getElementById('btn-modo-escuro-top');
+    if(btn){
+      btn.title = on ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro';
+    }
+  }catch(e){}
+}
+
+window.toggleModoEscuro = function(){
+  var novo = !lerEscuro();
+  gravarEscuro(novo);
+  aplicarEscuro(novo);
+  if(typeof toast === 'function'){
+    toast(novo ? 'Modo Escuro ativado' : 'Modo Claro ativado', 'info');
+  }
+};
+
+window.aplicarModoEscuro = function(on){
+  gravarEscuro(!!on);
+  aplicarEscuro(!!on);
+};
 
 function garantirCss(){
   if(document.getElementById('digi-escuro-css')) return;
