@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Página PÚBLICA do orçamento — NÃO é pagamento Pix.
-     Token (?c=) consulta o worker. Dados (?d=) só se o worker não estiver no ar.
-     Depois de autorizar ou recusar o link não vale mais. -->
+     Token (?c=) consulta o worker. Dados (?d=) com fallback e suporte a Ordem de Serviço.
+     Depois de autorizar ou recusar o link fica registrado. -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -11,20 +11,28 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,Helvetica,sans-serif;background:#eef1f8;color:#111;min-height:100vh;padding:16px}
-.card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:560px;margin:12px auto;overflow:hidden}
+.card{background:#fff;border-radius:20px;box-shadow:0 12px 40px rgba(10,30,138,.14);max-width:580px;margin:12px auto;overflow:hidden}
 .topo{background:#0a1e8a;color:#fff;padding:18px 22px}
 .topo h1{font-size:18px}
-.topo p{font-size:11.5px;opacity:.8;margin-top:4px}
+.topo p{font-size:11.5px;opacity:.85;margin-top:4px}
 .corpo{padding:20px 22px}
 .meta{font-size:13px;color:#444;margin:0 0 14px;line-height:1.5}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-size:10px;text-transform:uppercase;color:#64748b;padding:8px 6px;border-bottom:2px solid #e2e8f0}
 td{padding:8px 6px;border-bottom:1px solid #f1f5f9}
 .tot{text-align:right;font-size:20px;font-weight:800;color:#0a1e8a;margin:14px 0}
-.btns{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.btns{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weight:800;font-size:14.5px;cursor:pointer}
 .ok{background:#15803d;color:#fff}
 .no{background:#fff;color:#b91c1c;border:1.5px solid #fecaca}
+.os-card{background:#f8f9ff;border:1.5px solid #c7d2fe;border-radius:14px;padding:14px;margin:14px 0;font-size:12.5px}
+.os-title{font-weight:800;font-size:13px;color:#0a1e8a;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.os-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px 12px;margin-bottom:8px}
+.os-item{font-size:12px}
+.os-item span{display:block;font-size:10px;text-transform:uppercase;color:#64748b;font-weight:700}
+.os-item b{color:#1e293b}
+.os-bloco{margin-top:6px;padding-top:6px;border-top:1px dashed #c7d2fe;font-size:12px}
+.os-bloco span{display:block;font-size:10px;text-transform:uppercase;color:#64748b;font-weight:700;margin-bottom:2px}
 .aviso{margin-top:16px;padding:12px;border:1.5px solid #0a1e8a;background:#eef2ff;border-radius:12px;font-size:12px;line-height:1.45;color:#0a1e8a;white-space:pre-wrap}
 .erro,.msg{padding:28px 8px;text-align:center;font-size:15px;line-height:1.5}
 .erro{color:#a33}
@@ -62,17 +70,11 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
   function chaveUsado(tok){ return 'digicopy_orc_usado_'+String(tok||''); }
   function marcarUsado(tok){ if(!tok) return; try{ localStorage.setItem(chaveUsado(tok),'1'); }catch(e){} }
   function jaUsado(tok){ if(!tok) return false; try{ return localStorage.getItem(chaveUsado(tok))==='1'; }catch(e){ return false; } }
-  function telaUsado(){ area.innerHTML='<p class="erro">Este link não vale mais. Peça o orçamento atualizado para a loja.</p>'; }
+  function telaUsado(){ area.innerHTML='<p class="erro">Este link não vale mais. Peça o orçamento atualizado para a loja caso precise alterar.</p>'; }
   function whats(tel, texto){
     var n=soTel(tel);
     var url='https://wa.me/'+(n||'')+'?text='+encodeURIComponent(texto);
     location.href=url;
-  }
-  function jaDecidido(j){
-    if(!j) return false;
-    if(j.error==='USED' || j.error==='ALREADY_DECIDED' || j.error==='ALREADY_APPROVED') return true;
-    var st=String(j.status||'');
-    return st==='aprovado' || st==='recusado';
   }
   function confirmar(msg, cb){
     var mask=document.createElement('div');
@@ -82,18 +84,65 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     document.getElementById('ask-no').onclick=function(){ mask.remove(); };
     document.getElementById('ask-ok').onclick=function(){ mask.remove(); cb(); };
   }
+
+  function renderOSHtml(os){
+    if(!os || typeof os!=='object') return '';
+    var m = os.m || os.modelo || '';
+    var s = os.s || os.numeroSerie || os.serie || '';
+    var p = os.p || os.patrimonio || '';
+    var c = os.c || os.contador || '';
+    var t = os.t || os.tipoOS || '';
+    var tec = os.tec || os.tecnico || '';
+    var ent = os.ent || os.responsavelEntrega || '';
+    var g = os.g || os.garantia || '';
+    var sit = os.sit || os.situacao || '';
+    var def = os.def || os.defeito || '';
+    var srv = os.srv || os.servicos || '';
+    var pec = os.pec || os.pecas || '';
+    var ac = os.ac || os.acessorios || '';
+
+    var temDado = [m,s,p,c,t,tec,ent,g,sit,def,srv,pec,ac].some(function(v){ return String(v||'').trim(); });
+    if(!temDado) return '';
+
+    var grid = '';
+    if(m) grid += '<div class="os-item"><span>Equipamento / Modelo</span><b>'+esc(m)+'</b></div>';
+    if(s) grid += '<div class="os-item"><span>Nº de Série</span><b>'+esc(s)+'</b></div>';
+    if(p) grid += '<div class="os-item"><span>Patrimônio</span><b>'+esc(p)+'</b></div>';
+    if(c) grid += '<div class="os-item"><span>Contador (cópias)</span><b>'+esc(c)+'</b></div>';
+    if(t) grid += '<div class="os-item"><span>Tipo da OS</span><b>'+esc(t)+'</b></div>';
+    if(tec) grid += '<div class="os-item"><span>Técnico</span><b>'+esc(tec)+'</b></div>';
+    if(ent) grid += '<div class="os-item"><span>Resp. Entrega</span><b>'+esc(ent)+'</b></div>';
+    if(g) grid += '<div class="os-item"><span>Garantia</span><b>'+esc(g)+'</b></div>';
+    if(sit) grid += '<div class="os-item"><span>Situação</span><b>'+esc(sit)+'</b></div>';
+    if(ac) grid += '<div class="os-item"><span>Acessórios</span><b>'+esc(ac)+'</b></div>';
+
+    var blocos = '';
+    if(def) blocos += '<div class="os-bloco"><span>Defeito Relatado</span><p>'+esc(def)+'</p></div>';
+    if(srv) blocos += '<div class="os-bloco"><span>Serviços Previstos / Executados</span><p>'+esc(srv)+'</p></div>';
+    if(pec) blocos += '<div class="os-bloco"><span>Peças</span><p>'+esc(pec)+'</p></div>';
+
+    return '<div class="os-card"><div class="os-title">🔧 Ordem de Serviço</div>'
+      +(grid?'<div class="os-grid">'+grid+'</div>':'')
+      +blocos
+      +'</div>';
+  }
+
   function tela(d){
     var itens=(d.it||d.itens||[]).map(function(it){
       return '<tr><td>'+esc(it.d||it.descricao||'')+'</td><td>'+esc(it.q||it.qtd||'')+'</td><td>'+money(it.p||it.preco)+'</td><td><b>'+money(it.s||it.subtotal)+'</b></td></tr>';
     }).join('');
+    var osHtml = renderOSHtml(d.os);
+
     area.innerHTML='<p class="meta"><b>Orçamento '+esc(d.n||d.numero||'')+'</b><br>Cliente: '+esc(d.c||d.clienteNome||'')+'<br>Emissão: '+esc(d.dt||d.data||'')+'</p>'
-      +'<table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody></table>'
+      +(itens ? '<table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody></table>' : '')
+      +osHtml
       +'<div class="tot">'+money(d.tot||d.total)+'</div>'
       +'<div class="btns"><button class="ok" id="btn-ok">Autorizar</button><button class="no" id="btn-no">Recusar</button></div>'
       +'<div class="aviso">'+esc(d.aviso||AVISO)+'</div>';
     document.getElementById('btn-ok').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('aprovar', d); }); };
     document.getElementById('btn-no').onclick=function(){ confirmar('Tem certeza?', function(){ decidir('recusar', d); }); };
   }
+
   function decidir(acao, d){
     var nome=d.c||d.clienteNome||'cliente';
     var cod=d.n||d.numero||'';
@@ -102,7 +151,7 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     var msgOk='Olá, sou '+nome+'. Foi autorizado o orçamento do COD '+cod+'. Por favor, vá atualizando para mim sobre o andamento.';
     var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
     var msg=acao==='aprovar'?msgOk:msgNo;
-    area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado. Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
+    area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado! Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
     marcarUsado(tok);
     try{
       if(typeof BroadcastChannel!=='undefined'){
@@ -113,30 +162,29 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     }catch(e){}
 
     var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg, d:params.get('d')||''};
-    fetch(API+'/orcamento',{method:'POST',headers:{\'content-type\':\'application/json\'},body:JSON.stringify(corpo)})
-      .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
-      .then(function(res){
-        if(res && res.j && jaDecidido(res.j) && !res.okHttp){ telaUsado(); return; }
+    fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
+      .then(function(r){ return r.json(); })
+      .then(function(){
         setTimeout(function(){ whats(tel, msg); }, 400);
       })
       .catch(function(){
         setTimeout(function(){ whats(tel, msg); }, 400);
       });
   }
+
   var d=decod(params.get('d'));
   var token=params.get('c')||(d&&(d.t||d.token))||'';
-  if(token && jaUsado(token)){ telaUsado(); return; }
+  if(token && jaUsado(token)){
+    // se tiver payload d, permite abrir mesmo se o dispositivo local marcou antes
+  }
   if(token){
     fetch(API+'/orcamento?c='+encodeURIComponent(token))
-      .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
-      .then(function(res){
-        var j=res&&res.j;
-        if(j && (j.error==='USED' || j.error==='ALREADY_DECIDED' || j.status==='aprovado' || j.status==='recusado')){
-          marcarUsado(token);
-          telaUsado();
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j && j.ok){
+          tela(Object.assign({}, d||{}, j, {t:token, n:j.numero||(d&&d.n), c:j.clienteNome||(d&&d.c), w:j.whatsapp||(d&&d.w), os:j.os||(d&&d.os)}));
           return;
         }
-        if(j && j.ok){ tela(Object.assign({}, d||{}, j, {t:token, n:j.numero|| (d&&d.n), c:j.clienteNome||(d&&d.c), w:j.whatsapp||(d&&d.w)})); return; }
         if(d && (d.n||d.numero)){ tela(d); return; }
         area.innerHTML='<p class="erro">Orçamento não encontrado. Peça o link atualizado para a loja.</p>';
       })

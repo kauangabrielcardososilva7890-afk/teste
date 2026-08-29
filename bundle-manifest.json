@@ -183,5 +183,6 @@
   "ajustes_v52254_orcamentos_pages_patch.js",
   "ajustes_v52255_orcamento_aprovacao_venda_patch.js",
   "ajustes_v52256_orcamento_venda_limpa_patch.js",
-  "ajustes_v52257_orcamento_sync_total_patch.js"
+  "ajustes_v52257_orcamento_sync_total_patch.js",
+  "ajustes_v52258_orcamento_os_revalidar_patch.js"
 ]

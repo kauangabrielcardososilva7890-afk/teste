@@ -3,10 +3,42 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.57**  
+**Última versão:** **v5.22.58**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.57. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.58. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.58 — orçamentos com Ordem de Serviço (OS), revalidação de link, preservação de status e venda salva
+
+- **Orçamentos com Ordem de Serviço Opcional (OS):**
+  - Implementado layout idêntico à OS de Vendas no modal de orçamentos, organizado em duas abas limpas: **Itens** e **Ordem de Serviço (Opcional)**.
+  - Na aba de OS, todos os campos começam vazios por padrão (sem obrigatoriedade de preenchimento): *Número de série, Modelo do equipamento, Tipo da OS, Patrimônio, Contador / cópias, Acessórios, Técnico responsável, Responsável entrega, Garantia, Situação da OS, Defeito apresentado, Serviços executados / previstos e Peças utilizadas / orçadas*.
+  - Desativada a busca inteligente/automática por número de série em orçamentos anteriores para dar total liberdade de digitação.
+  - Os dados preenchidos na OS são exibidos de forma clara e profissional na página web de aprovação do cliente (`public-orcamento/index.html` e fallback `orcamento_pagar.html`).
+  - Ao ser autorizado pelo cliente ou no ERP, os dados da OS são passados integralmente para a venda salva gerada (`db.vendas`) e espelhados em `db.os`.
+- **Preservação de Status e Visibilidade dos Orçamentos:**
+  - Orçamentos autorizados e não autorizados **nunca mais somem da lista**.
+  - Exibição de badge com status em tempo real: **Autorizado** (verde/ok), **Não autorizado** (amarelo/wait) e **Aberto** (azul/info).
+  - Ícone indicador `🔧 OS` na tabela para identificar visualmente orçamentos que possuem dados de Ordem de Serviço.
+- **Botão "Revalidar link" com Confirmação e Revogação Segura de Venda:**
+  - Adicionado botão de ação rápida **Revalidar link** tanto na tabela de orçamentos quanto no rodapé do modal de edição.
+  - Ao clicar, exibe mensagem de confirmação do sistema:
+    - *O link voltará a ficar ativo (status Aberto);*
+    - *Qualquer venda salva pendente gerada por ele será automaticamente estornada e cancelada do sistema;*
+    - *Um novo token limpo é gerado para o orçamento, permitindo novo envio e decisão do cliente.*
+  - Se a venda gerada já tiver sido faturada/finalizada no financeiro, o sistema bloqueia a revalidação e instrui o estorno prévio no módulo de Vendas.
+- **Sincronização Visual Global da Versão v5.22.58:**
+  - Atualização automática em todos os pontos: título da aba do navegador (`document.title`), cabeçalho do ERP (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 186 scripts compilados no `app.bundle.js` (`sha256: 495806b44ef495df`).
+  - Suíte consolidada com **110 testes passando** (0 falhas).
+  - APK Mobile mantido intacto conforme diretrizes.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.58`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 

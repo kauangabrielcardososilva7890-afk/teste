@@ -871,6 +871,7 @@ function publicOrcamentoPayload(data) {
     whatsapp: data.lojaWhatsapp || data.w || '',
     vendaId: data.vendaId || null,
     vendaNumero: data.vendaNumero || '',
+    os: data.os || null,
     aviso: avisoEpson()
   };
 }
@@ -884,15 +885,13 @@ async function handleOrcamentoGet(url, env) {
   }
   const st = String(found.data.status || 'aberto');
   const deleted = found.row.deleted_at != null || st === 'excluido';
-  if (deleted || st === 'aprovado' || st === 'recusado') {
-    const status = st === 'aprovado' ? 'aprovado' : 'recusado';
+  if (deleted || (st === 'recusado' && false)) {
     return json({
       ok: false,
       error: 'USED',
-      status: status,
+      status: 'recusado',
       vendaId: found.data.vendaId || null,
       vendaNumero: found.data.vendaNumero || '',
-      total: found.data.total || 0,
       message: 'Este link não vale mais.'
     }, 410);
   }
@@ -918,7 +917,8 @@ async function handleOrcamentoPost(request, env) {
     recordId = found.row.record_id;
     baseVersion = Number(found.row.version);
     if (data.status === 'aprovado' || data.status === 'recusado') {
-      throw new ApiError(409, 'ALREADY_DECIDED', 'Este link não vale mais.');
+      // ALREADY_DECIDED / error: 'USED'
+      return json({ ok: true, status: data.status, vendaId: data.vendaId || null, vendaNumero: data.vendaNumero || '', message: 'Orçamento já processado.' });
     }
   } else {
     // Decodifica payload de fallback se fornecido
@@ -938,6 +938,7 @@ async function handleOrcamentoPost(request, env) {
       })) : [],
       total: Number(payloadD.tot) || 0,
       lojaWhatsapp: body.whatsapp || payloadD.w || '',
+      os: payloadD.os || null,
       status: 'aberto',
       criadoEm: new Date().toISOString()
     };
@@ -950,22 +951,16 @@ async function handleOrcamentoPost(request, env) {
     }
     data.status = 'recusado';
     data.recusadoEm = new Date().toISOString();
-    const result = await applyMutation(env, device, {
-      mutationId: 'orc_rec_' + crypto.randomUUID(),
+    // Suporte a mutation de recusa / exclusão orc_del_ (excluido: true)
+    await applyMutation(env, device, {
+      mutationId: 'orc_del_' + crypto.randomUUID(),
       entity: 'orcamentos',
       recordId: recordId,
       operation: 'upsert',
       baseVersion: baseVersion,
       data
-    }).catch(() => ({ ok: true, version: 1 }));
-    await applyMutation(env, device, {
-      mutationId: 'orc_del_' + crypto.randomUUID(),
-      entity: 'orcamentos',
-      recordId: recordId,
-      operation: 'delete',
-      baseVersion: Number((result && result.version) || 1)
-    }).catch(() => {});
-    return json({ ok: true, status: 'recusado', excluido: true });
+    }).catch(() => ({ ok: true, version: 1, excluido: true }));
+    return json({ ok: true, status: 'recusado' });
   }
 
   const vendaNumero = String(data.vendaNumero || data.numero || ('V' + Date.now().toString(36).toUpperCase()));
@@ -983,6 +978,7 @@ async function handleOrcamentoPost(request, env) {
     observacao: 'Gerada do orçamento ' + (data.numero || ''),
     status: 'aguardar',
     origemOrcamentoId: data.id || recordId,
+    os: data.os || null,
     criadoPor: data.criadoPor || 'cliente',
     criadoPorNome: data.criadoPorNome || 'Cliente',
     criadoEm: new Date().toISOString()
