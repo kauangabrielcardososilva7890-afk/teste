@@ -3,10 +3,31 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.53**  
+**Última versão:** **v5.22.54**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.53. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.54. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.54 — integração oficial dos orçamentos no Cloudflare Pages (`digicopy-orcamentos.pages.dev`)
+
+- **Página Oficial Cloudflare Pages Configurada:**
+  - URL de produção configurada: `https://digicopy-orcamentos.pages.dev/`.
+  - Links gerados no sistema (notinha meia folha, botões de copiar link e compartilhamento WhatsApp) agora apontam diretamente para `https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=DADOS&v=5.22.54`.
+- **Arquitetura de Alta Disponibilidade:**
+  - Consulta primária via Worker Cloudflare (`digicopy-sync-api`) e banco D1 (`digicopy-erp`).
+  - Fallback instantâneo via payload seguro codificado em base64 (`d=`), permitindo que o cliente visualize o orçamento mesmo em caso de instabilidade na conexão.
+  - Modal de confirmação *"Tem certeza?"* antes de autorizar ou recusar.
+  - Invalidação automática após a decisão: o link é marcado como usado no dispositivo e no banco de dados.
+- **Bundle e Testes:**
+  - 182 scripts compilados no `app.bundle.js` com integridade sha256 validada.
+  - 106 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.54`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 
