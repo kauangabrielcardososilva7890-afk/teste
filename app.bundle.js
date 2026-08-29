@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 183 | sha256: 296d20888b0584f5
+ * scripts: 183 | sha256: e0219274549ae93f
  */
 
 /* ===== lz.js ===== */
@@ -42577,69 +42577,6 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         recusarOrcamento(id);
       }
     };
-
-    // Injeta botões de ação e status na listagem de orçamentos
-    if(typeof window.renderOrcamentos === 'function' && !window.renderOrcamentos.__v52255btn){
-      var oldR = window.renderOrcamentos;
-      window.renderOrcamentos = function(){
-        var r = oldR.apply(this, arguments);
-        try{
-          var view = document.getElementById('view-orcamentos');
-          if(view){
-            var _db = getDb();
-            var list = _db.orcamentos || [];
-            view.querySelectorAll('tbody tr').forEach(function(tr){
-              var oc = tr.getAttribute('onclick') || '';
-              var m = oc.match(/abrirOrcamento\('([^']+)'\)/) || (tr.innerHTML.match(/abrirOrcamento\('([^']+)'\)/));
-              var id = m ? m[1] : '';
-              if(!id) return;
-              var o = list.find(function(x){ return x && x.id === id; });
-              if(!o) return;
-
-              var tdAcoes = tr.lastElementChild;
-              if(tdAcoes && !tdAcoes.querySelector('.btn-orc-autorizar')){
-                var st = txt(o.status).toLowerCase();
-                var wrap = document.createElement('div');
-                wrap.className = 'flex items-center gap-1 justify-end';
-
-                if(st !== 'aprovado' && st !== 'recusado' && !o.vendaId){
-                  var bOk = document.createElement('button');
-                  bOk.className = 'btn-orc-autorizar h-7 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm';
-                  bOk.title = 'Autorizar Orçamento';
-                  bOk.innerHTML = '<i class="ph ph-check-bold"></i> Autorizar';
-                  bOk.onclick = function(e){ e.stopPropagation(); window.aprovarOrcamentoManual(o.id); };
-                  wrap.appendChild(bOk);
-
-                  var bNo = document.createElement('button');
-                  bNo.className = 'btn-orc-recusar h-7 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-[11px] flex items-center gap-1';
-                  bNo.title = 'Recusar Orçamento';
-                  bNo.innerHTML = '<i class="ph ph-x-bold"></i> Recusar';
-                  bNo.onclick = function(e){ e.stopPropagation(); window.recusarOrcamentoManual(o.id); };
-                  wrap.appendChild(bNo);
-                } else if(st === 'aprovado' || o.vendaId){
-                  var bVda = document.createElement('button');
-                  bVda.className = 'h-7 px-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-[11px] flex items-center gap-1';
-                  bVda.innerHTML = '<i class="ph ph-shopping-bag"></i> Venda ' + (o.vendaNumero || '');
-                  bVda.onclick = function(e){
-                    e.stopPropagation();
-                    if(typeof navigateTo === 'function') navigateTo('vendas');
-                  };
-                  wrap.appendChild(bVda);
-                }
-
-                if(tdAcoes.firstChild){
-                  tdAcoes.insertBefore(wrap, tdAcoes.firstChild);
-                } else {
-                  tdAcoes.appendChild(wrap);
-                }
-              }
-            });
-          }
-        }catch(e){}
-        return r;
-      };
-      window.renderOrcamentos.__v52255btn = true;
-    }
 
     // Sincronização central e infalível de versão em todo o sistema
     function sincronizarVersaoVisual(){
