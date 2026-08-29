@@ -20,11 +20,14 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
 - **Botões de Ação Direta no ERP:**
   - Na listagem de orçamentos e no modal de edição foram incluídos os botões rápidos **Autorizar** e **Recusar** manual, permitindo ao atendente autorizar com 1 clique caso o cliente confirme pelo WhatsApp ou pessoalmente.
   - Orçamentos já autorizados exibem o botão direto **Venda [Número]** para abrir a venda gerada.
+- **Sincronização Visual de Versão em Toda a Interface:**
+  - Inicialização global de `window.DIGICOPY_APP_VERSION = '5.22.55'` no topo do `index.html` e no início do bundle.
+  - Atualização dinâmica no título da aba do navegador (`document.title`), na barra superior (`#app-title-version`) e no rodapé central (`#footer-version`), garantindo que em qualquer menu ou troca de tela a versão exibida seja sempre **v5.22.55**.
 - **Correção no Worker e D1:**
   - Criado o dispositivo de sistema `public-orcamento` para contornar a chave estrangeira em SQLite D1.
   - Aceita payload de fallback `d=` para garantir persistência mesmo se o orçamento local ainda não tivesse subido na nuvem.
 - **Bundle e Testes:**
-  - 183 scripts compilados no `app.bundle.js` (`sha256: 4632b074ed32baf3`).
+  - 183 scripts compilados no `app.bundle.js` (`sha256: 296d20888b0584f5`).
   - 107 suítes de testes passando com 100% de sucesso.
 - **APK Mobile:** Preservado e intocado.
 

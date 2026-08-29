@@ -4,7 +4,7 @@
 
   var VERSAO = '5.22.54';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';

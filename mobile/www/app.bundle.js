@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 183 | sha256: df1ff79e2d321209
+ * scripts: 183 | sha256: 296d20888b0584f5
  */
 
 /* ===== lz.js ===== */
@@ -42189,7 +42189,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.54';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
