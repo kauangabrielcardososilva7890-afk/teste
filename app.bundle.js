@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 183 | sha256: 4632b074ed32baf3
+ * scripts: 183 | sha256: df1ff79e2d321209
  */
 
 /* ===== lz.js ===== */
@@ -39094,9 +39094,10 @@ function pintarMenuAberto(view){
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer span:not(#footer-session)');
   if(foot && !/v5\.22\./.test(foot.textContent||'')){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
   }
 }
 
@@ -42285,16 +42286,17 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       window.gerarHtmlOrcamento.__v52254pages = true;
     }
 
-    // Sincroniza rodapé e cabeçalho com a versão 5.22.54 garantida
+    // Sincroniza rodapé e cabeçalho com a versão garantida
     function sincronizarRodape(){
       try{
         if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
         }
       }catch(e){}
     }
@@ -42639,15 +42641,40 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       window.renderOrcamentos.__v52255btn = true;
     }
 
+    // Sincronização central e infalível de versão em todo o sistema
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+        var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
+        if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
+          footSpan.textContent = 'Sistema Digicopy • Banco na Nuvem';
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarVersaoVisual;
+    sincronizarVersaoVisual();
+    setTimeout(sincronizarVersaoVisual, 50);
+    setTimeout(sincronizarVersaoVisual, 300);
+    setTimeout(sincronizarVersaoVisual, 1000);
+
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
     setInterval(verificarAprovacoesNuvem, 4000);
     setTimeout(verificarAprovacoesNuvem, 1000);
 
-    // Dispara checagem imediata ao navegar para Orçamentos ou Vendas
+    // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
     if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52255sync){
       var oldN = window.navigateTo;
       window.navigateTo = function(v){
         var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual(); }catch(e){}
         if(v === 'orcamentos' || v === 'vendas'){
           setTimeout(verificarAprovacoesNuvem, 100);
         }
@@ -42656,7 +42683,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       window.navigateTo.__v52255sync = true;
     }
 
-    console.log('[DIGICOPY] v' + VERSAO + ': Aprovação de orçamentos com conversão para Venda Salva ativada!');
+    console.log('[DIGICOPY] v' + VERSAO + ': Versão ' + VERSAO + ' sincronizada + aprovação de orçamentos com conversão para Venda Salva ativada!');
   }
 
   if(typeof module !== 'undefined' && module.exports){
