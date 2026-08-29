@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 188 | sha256: 4c0e34f743056029
+ * scripts: 188 | sha256: 38bb30b848244310
  */
 
 /* ===== lz.js ===== */
@@ -35423,6 +35423,14 @@ function atualizarBotaoTopnav(on){
     var btn = document.getElementById('btn-modo-escuro-top');
     if(btn){
       btn.title = on ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro';
+    }
+    var iconeLogin = document.getElementById('icone-modo-escuro-login');
+    if(iconeLogin){
+      iconeLogin.className = on ? 'ph ph-sun text-amber-400' : 'ph ph-moon';
+    }
+    var labelLogin = document.getElementById('label-modo-escuro-login');
+    if(labelLogin){
+      labelLogin.textContent = on ? 'Claro' : 'Escuro';
     }
   }catch(e){}
 }

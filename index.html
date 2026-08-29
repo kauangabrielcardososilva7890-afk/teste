@@ -90,7 +90,10 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   </div>
   <!-- RIGHT PANEL - FORMS -->
   <div class="flex-1 bg-white flex flex-col">
-    <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo_2.png?v=5.3.5" class="h-9 w-auto"></div>
+    <div class="h-[60px] px-6 flex items-center justify-between border-b border-slate-100 bg-white">
+      <div class="flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-7 w-auto"><span class="font-bold text-[13px] text-[#0a1e8a]">Sistema Digicopy v5.22.60</span></div>
+      <button id="btn-modo-escuro-login" type="button" onclick="if(window.toggleModoEscuro) window.toggleModoEscuro();" class="h-8 px-3 rounded-lg border flex items-center gap-1.5 text-[11.5px] font-bold text-slate-700 hover:bg-slate-50" title="Alternar Modo Escuro / Claro"><i class="ph ph-moon" id="icone-modo-escuro-login"></i> <span id="label-modo-escuro-login">Tema</span></button>
+    </div>
     <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
       <div class="w-full max-w-[400px]">
         <!-- LOGIN DIRETO - SEM CNPJ -->

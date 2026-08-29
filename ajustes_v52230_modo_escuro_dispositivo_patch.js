@@ -54,6 +54,14 @@ function atualizarBotaoTopnav(on){
     if(btn){
       btn.title = on ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro';
     }
+    var iconeLogin = document.getElementById('icone-modo-escuro-login');
+    if(iconeLogin){
+      iconeLogin.className = on ? 'ph ph-sun text-amber-400' : 'ph ph-moon';
+    }
+    var labelLogin = document.getElementById('label-modo-escuro-login');
+    if(labelLogin){
+      labelLogin.textContent = on ? 'Claro' : 'Escuro';
+    }
   }catch(e){}
 }
 
