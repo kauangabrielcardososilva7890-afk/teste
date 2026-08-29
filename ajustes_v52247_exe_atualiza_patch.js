@@ -11,8 +11,9 @@ window.EXE_ATUALIZA_V52247_PURE = {
 };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.47';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.47';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52247ver){
   var oldN=window.navigateTo;

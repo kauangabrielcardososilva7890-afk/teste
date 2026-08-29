@@ -19,10 +19,11 @@ if(window.__v52250_bundle_loaded) return;
 window.__v52250_bundle_loaded = true;
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var ver = document.getElementById('footer-version');
-  if(ver && ver.textContent !== 'v' + VERSAO) ver.textContent = 'v' + VERSAO;
+  if(ver && ver.textContent !== 'v' + curV) ver.textContent = 'v' + curV;
   var appVer = document.getElementById('app-title-version');
-  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + VERSAO) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
+  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + curV) appVer.textContent = 'Sistema Digicopy v' + curV;
 }
 
 pintarRodape();

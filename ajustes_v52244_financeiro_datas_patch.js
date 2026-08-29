@@ -74,8 +74,9 @@ if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraL
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.44';
   var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v5.22.44';
+  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v' + curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
   var oldN = window.navigateTo;

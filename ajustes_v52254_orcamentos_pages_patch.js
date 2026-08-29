@@ -3,6 +3,10 @@
   'use strict';
 
   var VERSAO = '5.22.54';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
   var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
 
@@ -97,7 +101,7 @@
       window.gerarHtmlOrcamento.__v52254pages = true;
     }
 
-    // Sincroniza rodapé com a versão 5.22.54
+    // Sincroniza rodapé e cabeçalho com a versão 5.22.54 garantida
     function sincronizarRodape(){
       try{
         if(typeof document === 'undefined') return;
@@ -105,12 +109,29 @@
         if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
         var tv = document.getElementById('app-title-version');
         if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
       }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarRodape;
+
+    // Hook no navigateTo para manter a versão 5.22.54 em qualquer troca de tela / menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52254nav){
+      var oldNav = window.navigateTo;
+      window.navigateTo = function(view){
+        var r = oldNav.apply(this, arguments);
+        try{ sincronizarRodape(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52254nav = true;
     }
 
     sincronizarRodape();
     setTimeout(sincronizarRodape, 100);
     setTimeout(sincronizarRodape, 500);
+    setTimeout(sincronizarRodape, 1500);
 
     console.log('[DIGICOPY] v' + VERSAO + ': Orçamento integrado no Cloudflare Pages (https://digicopy-orcamentos.pages.dev/)');
   }

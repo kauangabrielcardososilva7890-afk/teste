@@ -31,12 +31,13 @@
     function sincronizarVersao(){
       try{
         if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
         }
       }catch(e){}
     }

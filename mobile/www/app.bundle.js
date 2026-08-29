@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 182 | sha256: 9c0bfabe5662b442
+ * scripts: 182 | sha256: a6d96e1251c34a40
  */
 
 /* ===== lz.js ===== */
@@ -40021,13 +40021,14 @@ function pintarMenuAberto(view){
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer span:not(#footer-session)');
   if(foot){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
   }
   var top = document.getElementById('app-title-version');
   if(top && !/v5\.22\./.test(top.textContent||'')){
-    top.textContent = 'Sistema Digicopy v'+VERSAO;
+    top.textContent = 'Sistema Digicopy v'+curV;
   }
 }
 
@@ -40372,8 +40373,9 @@ if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraL
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.44';
   var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v5.22.44';
+  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v' + curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
   var oldN = window.navigateTo;
@@ -41009,6 +41011,7 @@ window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
 if(typeof document==='undefined') return;
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer');
   if(!foot) return;
   foot.className = 'h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60';
@@ -41022,7 +41025,7 @@ function pintarRodape(){
     if(sess) foot.insertBefore(ver, sess);
     else foot.appendChild(ver);
   }
-  ver.textContent = 'v'+VERSAO;
+  ver.textContent = 'v'+curV;
   if(left){
     left.textContent = 'Sistema Digicopy • Banco na Nuvem';
     left.classList.add('text-left');
@@ -41174,8 +41177,9 @@ if(typeof document==='undefined') return;
 function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Nuvem'); if(typeof toast==='function') toast(m,'info'); }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.46';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.46';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52246ver){
   var oldN=window.navigateTo;
@@ -41262,8 +41266,9 @@ window.EXE_ATUALIZA_V52247_PURE = {
 };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.47';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.47';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52247ver){
   var oldN=window.navigateTo;
@@ -41290,8 +41295,9 @@ console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
 window.EXE_CACHE_V52248_PURE = { VERSAO:'5.22.48', v8Cache:'none' };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.48';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.48';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52248ver){
   var oldN=window.navigateTo;
@@ -41654,10 +41660,11 @@ if(window.__v52250_bundle_loaded) return;
 window.__v52250_bundle_loaded = true;
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var ver = document.getElementById('footer-version');
-  if(ver && ver.textContent !== 'v' + VERSAO) ver.textContent = 'v' + VERSAO;
+  if(ver && ver.textContent !== 'v' + curV) ver.textContent = 'v' + curV;
   var appVer = document.getElementById('app-title-version');
-  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + VERSAO) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
+  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + curV) appVer.textContent = 'Sistema Digicopy v' + curV;
 }
 
 pintarRodape();
@@ -41713,12 +41720,13 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     function sincronizarVersao(){
       try{
         if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
         }
       }catch(e){}
     }
@@ -41843,12 +41851,13 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     function sincronizarVersao(){
       try{
         if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
         }
       }catch(e){}
     }
@@ -41987,12 +41996,13 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     function sincronizarVersaoVisual(){
       try{
         if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
         }
       }catch(e){}
     }
@@ -42177,6 +42187,10 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
   'use strict';
 
   var VERSAO = '5.22.54';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
   var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
 
@@ -42271,7 +42285,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       window.gerarHtmlOrcamento.__v52254pages = true;
     }
 
-    // Sincroniza rodapé com a versão 5.22.54
+    // Sincroniza rodapé e cabeçalho com a versão 5.22.54 garantida
     function sincronizarRodape(){
       try{
         if(typeof document === 'undefined') return;
@@ -42279,12 +42293,29 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
         var tv = document.getElementById('app-title-version');
         if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
       }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarRodape;
+
+    // Hook no navigateTo para manter a versão 5.22.54 em qualquer troca de tela / menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52254nav){
+      var oldNav = window.navigateTo;
+      window.navigateTo = function(view){
+        var r = oldNav.apply(this, arguments);
+        try{ sincronizarRodape(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52254nav = true;
     }
 
     sincronizarRodape();
     setTimeout(sincronizarRodape, 100);
     setTimeout(sincronizarRodape, 500);
+    setTimeout(sincronizarRodape, 1500);
 
     console.log('[DIGICOPY] v' + VERSAO + ': Orçamento integrado no Cloudflare Pages (https://digicopy-orcamentos.pages.dev/)');
   }
