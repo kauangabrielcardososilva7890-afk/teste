@@ -10,5 +10,7 @@ ok('webSecurity ligado',(main.match(/webSecurity:\s*true/g)||[]).length>=2);
 ok('conteúdo inseguro bloqueado',/allowRunningInsecureContent:\s*false/.test(main));
 ok('navegação HTTP externa bloqueada',/will-navigate/.test(main)&&/startsWith\('file:\/\/'\)/.test(main));
 ok('window.open externo não recebe preload',/url !== 'about:blank'/.test(main)&&/action:'deny'/.test(main));
+ok('orçamento da caixa escolar abre no navegador padrão',/openExternal/.test(main)&&/caixaescolar\.educacao\.mg\.gov\.br/.test(main));
 ok('preload usa contextBridge',/contextBridge\.exposeInMainWorld/.test(preload));
+ok('preload expõe abertura externa do buscador',/openExternal/.test(preload));
 console.log('\nRESULTADO: segurança Electron passou!');

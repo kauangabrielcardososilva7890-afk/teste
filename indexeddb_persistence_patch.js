@@ -91,6 +91,7 @@ async function boot(){
       entityHashes={};await writeNow('migracao-localStorage');
       console.log('[DIGICOPY][IndexedDB] base atual migrada com sucesso');
     }
+    if(typeof seedData==='function')seedData(false);
     if(typeof getSession==='function'&&getSession()&&typeof showApp==='function')showApp();
     else if(typeof showLogin==='function')showLogin();
     return true;

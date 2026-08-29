@@ -37,12 +37,30 @@ function nomeBackupDiario(d){
 
 // JSON do backup SEM o campo interno de sincronização (_rt) — igual exportBackup.
 function jsonBackupLimpo(db){
-  return JSON.stringify(JSON.parse(JSON.stringify(db, (k,v)=>k==='_rt'?undefined:v)), null, 2);
+  const o=JSON.parse(JSON.stringify(db, (k,v)=>k==='_rt'?undefined:v));
+  try{ if(o&&o.config&&o.config.escolaAuth) delete o.config.escolaAuth; }catch(e){}
+  return JSON.stringify(o, null, 2);
 }
 
 window.AJUSTES_V52024_PURE = { ehUsuarioDemoAntigo, jaRodouHoje, nomeBackupDiario, jsonBackupLimpo };
 
 if(typeof document === 'undefined') return; // modo teste (node)
+
+const oldExportBackup=window.exportBackup;
+if(typeof oldExportBackup==='function'&&!oldExportBackup.__semSenhaEscola){
+  window.exportBackup=function(){
+    if(typeof db==='undefined') return oldExportBackup.apply(this,arguments);
+    const dataStr=jsonBackupLimpo(db);
+    const blob=new Blob([dataStr],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='digicopy-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 2000);
+  };
+  window.exportBackup.__semSenhaEscola=true;
+}
 
 /* ---------------- 1. Financeiro SEM o filtro de tipo ---------------- */
 function removerFiltroTipoFin(){

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.88 — Buscador Escola
-// • Credenciais no código (sem campo de senha)
+// • Login da Caixa Escolar fica na nuvem (fora do código). Digita uma vez.
 // • Layout no padrão do Sistema Digicopy
 // • Autoatualização a cada 1 hora
 // • Busca por termo, região e intervalo
@@ -10,8 +10,7 @@
 'use strict';
 
 const API_BASE='https://api.caixaescolar.educacao.mg.gov.br';
-const USUARIO='08.385.589/0001-03';
-const SENHA='15901536De.';
+const ESCOLA_LOGIN_KEY='digicopy_escola_login_v1';
 
 function t(v){return String(v??'').trim()}
 function esc(v){if(typeof escapeHtml==='function')return escapeHtml(v);return t(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -35,6 +34,76 @@ const GPS={janauba:[-15.8025,-43.3089],jaiba:[-15.3433,-43.6686],'montes claros'
 function dist(m){const c=GPS[norm(m)];if(!c)return 999;const R=6371,rad=x=>x*Math.PI/180,dLat=rad(c[0]+15.8025),dLng=rad(c[1]+43.3089),a=Math.sin(dLat/2)**2+Math.cos(rad(-15.8025))*Math.cos(rad(c[0]))*Math.sin(dLng/2)**2;return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*10)/10}
 
 function store(){db.escolaOrc= db.escolaOrc||[];db.escolaIt=db.escolaIt||[];db.escolaExc=db.escolaExc||[];return{orc:db.escolaOrc,it:db.escolaIt,exc:db.escolaExc}}
+function loginDaNuvem(){
+  try{
+    const a=(typeof db!=='undefined' && db.config && db.config.escolaAuth)||null;
+    if(a&&t(a.usuario)&&t(a.senha)) return {usuario:t(a.usuario),senha:String(a.senha)};
+  }catch(e){}
+  return null;
+}
+function loginDoNavegador(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(ESCOLA_LOGIN_KEY)||'null');
+    if(raw&&t(raw.usuario)&&t(raw.senha)) return {usuario:t(raw.usuario),senha:String(raw.senha)};
+  }catch(e){}
+  return null;
+}
+async function credenciaisEscola(){
+  const nuvem=loginDaNuvem();
+  if(nuvem) return nuvem;
+  try{
+    if(window.caixaEscolarAPI&&typeof window.caixaEscolarAPI.loginStatus==='function'){
+      const st=await window.caixaEscolarAPI.loginStatus();
+      if(st&&st.saved&&t(st.usuario)&&t(st.senha)) return {usuario:t(st.usuario),senha:String(st.senha)};
+    }
+  }catch(e){}
+  return loginDoNavegador();
+}
+async function salvarCredenciaisEscola(usuario,senha){
+  const dados={usuario:t(usuario),senha:String(senha||'')};
+  if(!dados.usuario||!dados.senha) return {ok:false,error:'Informe CNPJ e senha.'};
+  try{
+    if(typeof db!=='undefined'){
+      db.config=db.config||{};
+      db.config.escolaAuth={usuario:dados.usuario,senha:dados.senha,atualizadoEm:new Date().toISOString()};
+      if(typeof saveDB==='function') saveDB();
+    }
+  }catch(e){ return {ok:false,error:'Não foi possível gravar na nuvem.'}; }
+  return {ok:true};
+}
+function pedirLoginEscola(aviso){
+  return new Promise(function(resolve){
+    let root=document.getElementById('escola-login-modal');
+    if(root) root.remove();
+    root=document.createElement('div');
+    root.id='escola-login-modal';
+    root.style.cssText='position:fixed;inset:0;z-index:100060;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px';
+    root.innerHTML='<div style="width:min(460px,96vw);background:white;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.35);padding:18px">'+
+      '<b style="font-size:16px">Login da Caixa Escolar</b>'+
+      '<p style="font-size:12px;color:#64748b;margin:8px 0 12px">Salva na nuvem. Os outros PCs autorizados usam o mesmo login. Não fica no código.</p>'+
+      (aviso?'<p style="font-size:12px;color:#991b1b;margin:0 0 10px">'+esc(aviso)+'</p>':'')+
+      '<label style="display:block;font-size:11px;font-weight:800;color:#475569">CNPJ</label>'+
+      '<input id="es-login-user" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 10px">'+
+      '<label style="display:block;font-size:11px;font-weight:800;color:#475569">Senha</label>'+
+      '<input id="es-login-pass" type="password" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;margin:4px 0 14px">'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px">'+
+      '<button id="es-login-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800">Cancelar</button>'+
+      '<button id="es-login-ok" style="height:38px;padding:0 14px;border-radius:10px;background:#0a1e8a;color:white;font-weight:800">Salvar na nuvem</button>'+
+      '</div></div>';
+    document.body.appendChild(root);
+    function fechar(v){ root.remove(); resolve(v); }
+    root.querySelector('#es-login-cancel').onclick=function(){ fechar(false); };
+    root.querySelector('#es-login-ok').onclick=async function(){
+      const u=t(document.getElementById('es-login-user')?.value);
+      const s=String(document.getElementById('es-login-pass')?.value||'');
+      const r=await salvarCredenciaisEscola(u,s);
+      if(!r.ok){ msg(r.error||'Não salvou.','error'); return; }
+      msg('Login salvo na nuvem.','success');
+      fechar(true);
+    };
+    root.addEventListener('click',function(ev){ if(ev.target===root) fechar(false); });
+  });
+}
 
 function normOrc(r){
   const m=t(r.countyName||r.county_name||r.municipio||'');
@@ -56,11 +125,19 @@ async function sync(opt={}){
   log('Iniciando sincronização...');
   window.__esSt={msg:'Autenticando...',pct:5};render();
   try{
+    const cred=await credenciaisEscola();
+    if(!cred){
+      window.__esSt={msg:'Cadastre o login da Caixa Escolar (vai para a nuvem).',pct:0};
+      if(!opt.auto) await pedirLoginEscola('Ainda não tem login na nuvem.');
+      const cred2=await credenciaisEscola();
+      if(!cred2){ render(); return {ok:false,error:'sem-login'}; }
+    }
+    const loginAtual=await credenciaisEscola();
     const incremental = opt.incremental !== false && !opt.limpar;
     const knownIds = new Set((db.escolaOrc||[]).map(o=>String(o.id)));
     if(opt.limpar){db.escolaOrc=[];db.escolaIt=[];knownIds.clear();log('Base limpa')}
     const loginUrl=API_BASE+'/auth/login';
-    const loginBody={txCpfCnpj:USUARIO.replace(/\D/g,''),txPassword:SENHA};
+    const loginBody={txCpfCnpj:String(loginAtual.usuario||'').replace(/\D/g,''),txPassword:loginAtual.senha};
     log('Login: '+loginBody.txCpfCnpj);
     const login=await api('POST',loginUrl,loginBody);
     log('Login: '+(login.ok?'OK':'FALHOU - '+(login.error||'')));
@@ -146,7 +223,7 @@ function badge(r){
   if(r.norte)return'<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">NORTE</span>';
   return'<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">MG</span>';
 }
-function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:'#'}
+function link(r){return r.numero?`https://caixaescolar.educacao.mg.gov.br/compras/orcamentos?budgetOrder=${encodeURIComponent(r.numero)}&status=NAEN`:''}
 function card(r){
   const itens = (r.itens||[]);
   // exibe todos os itens encontrados (mesmo orçamento) num cartão só
@@ -154,7 +231,7 @@ function card(r){
   return`<div class="rounded-[14px] border bg-white p-4 shadow-sm hover:shadow-md transition">
 <div class="flex flex-wrap justify-between gap-3"><div><div class="flex items-center gap-2"><b class="px-2 py-1 rounded-lg bg-[#0a1e8a] text-white font-mono text-[11px]">${esc(r.numero||r.id)}</b>${badge(r)}</div>
 <h4 class="mt-1 font-bold text-[14px]">${esc(r.escola)}</h4><p class="text-[11px] text-slate-500">${esc(r.municipio||'-')} • ${r.dist===999?'N/A':r.dist+' km'}</p></div>
-<div class="flex gap-2"><a href="${esc(link(r))}" target="_blank" class="h-8 px-3 rounded-lg bg-white border text-[11px] font-bold flex items-center gap-1 hover:bg-slate-50"><i class="ph ph-arrow-square-out"></i>Abrir</a>
+<div class="flex gap-2"><button type="button" onclick="esAbrir('${esc(link(r))}')" class="h-8 px-3 rounded-lg bg-white border text-[11px] font-bold flex items-center gap-1 hover:bg-slate-50"><i class="ph ph-arrow-square-out"></i>Abrir</button>
 <button onclick="esExc('${esc(r.id)}')" class="h-8 px-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold flex items-center gap-1 hover:bg-red-100"><i class="ph ph-x-circle"></i></button></div></div>
 ${r.only?'<div class="mt-2 rounded-lg bg-emerald-50 border border-emerald-200 p-2 text-[11px] text-emerald-800 font-bold">✅ APENAS o produto pesquisado.</div>':''}
 ${r.hasExt?`<div class="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-[11px] text-amber-900 font-bold">⚠️ ${r.ext} produto(s) extras.</div>`:''}
@@ -179,7 +256,8 @@ function render(msg){
 
   v.innerHTML=`<div class="neo-shell"><div class="neo-panel">
 <div class="neo-head"><div><h3>Buscador Escola</h3><p>Caixa Escolar MG • Atualização automática a cada 1 hora</p></div>
-<div class="neo-actions"><button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
+<div class="neo-actions"><button onclick="esLoginLocal()" class="neo-btn"><i class="ph ph-key"></i>Login na nuvem</button>
+<button onclick="esExcTog()" class="neo-btn"><i class="ph ph-prohibit"></i>Excluídos</button>
 <button onclick="esExcel()" class="neo-btn"><i class="ph ph-file-xls"></i>Excel</button></div></div>
 
 <div class="p-4 border-b bg-white"><div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
@@ -210,6 +288,19 @@ ${window.__esExc?
 }</div></div></div>`;
 }
 
+window.esAbrir=async function(url){
+  const dest=t(url);
+  if(!dest||dest==='#'){msg('Este orçamento não tem link.','error');return;}
+  try{
+    if(window.caixaEscolarAPI&&typeof window.caixaEscolarAPI.openExternal==='function'){
+      const r=await window.caixaEscolarAPI.openExternal(dest);
+      if(r&&r.ok){msg('Aberto no navegador padrão.','success');return;}
+      if(r&&r.error){msg(r.error,'error');return;}
+    }
+  }catch(e){}
+  try{window.open(dest,'_blank','noopener');}catch(e){msg('Não foi possível abrir o orçamento.','error');}
+};
+window.esLoginLocal=async function(){ await pedirLoginEscola(); render(); };
 window.esSync=function(){window.__esSync=false;return sync({incremental:true})};
 window.esSyncTudo=function(){window.__esSync=false;if(confirm('Baixar tudo limpa e recarrega. Continuar?'))return sync({limpar:true})};
 window.esClearLog=function(){window.__esLogs=[];render()};

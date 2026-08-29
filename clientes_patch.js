@@ -59,7 +59,13 @@ const CLI_PURE = (function(){
       if(campo && campo!=='todos'){
         if(campo==='email') return testa(c.email) || testa(c.email2);
         if(campo==='documento' || campo==='cep' || campo==='telefone' || campo==='whatsapp') return testa(c[campo], true);
-        if(campo==='codigo') return String(c.codigo||'').includes(termoNum||termo);
+        if(campo==='codigo'){
+          const busca = (termoNum||termo);
+          const norm = v => { const d=soDigitos(v); return d ? (d.replace(/^0+/,'')||'0') : ''; };
+          const alvo = norm(busca);
+          if(!alvo) return false;
+          return norm(c.codigo)===alvo || norm(c.codigoAntigo)===alvo;
+        }
         return testa(c[campo]);
       }
       return testa(c.nome)||testa(c.fantasia)||testa(c.documento,true)||testa(c.telefone,true)||

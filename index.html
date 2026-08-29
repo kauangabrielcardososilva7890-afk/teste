@@ -2,8 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Digicopy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1e8a">
+<script>
+window.DIGICOPY_APP_VERSION = '5.22.60';
+try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')document.documentElement.classList.add('digi-escuro');}catch(e){}
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Digicopy">
+<title>Sistema Digicopy v5.22.60</title>
+<link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./logo_2.png">
 <link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
 <link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1">
@@ -82,7 +90,10 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   </div>
   <!-- RIGHT PANEL - FORMS -->
   <div class="flex-1 bg-white flex flex-col">
-    <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo_2.png?v=5.3.5" class="h-9 w-auto"></div>
+    <div class="h-[60px] px-6 flex items-center justify-between border-b border-slate-100 bg-white">
+      <div class="flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-7 w-auto"><span class="font-bold text-[13px] text-[#0a1e8a]">Sistema Digicopy v5.22.60</span></div>
+      <button id="btn-modo-escuro-login" type="button" onclick="if(window.toggleModoEscuro) window.toggleModoEscuro();" class="h-8 px-3 rounded-lg border flex items-center gap-1.5 text-[11.5px] font-bold text-slate-700 hover:bg-slate-50" title="Alternar Modo Escuro / Claro"><i class="ph ph-moon" id="icone-modo-escuro-login"></i> <span id="label-modo-escuro-login">Tema</span></button>
+    </div>
     <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
       <div class="w-full max-w-[400px]">
         <!-- LOGIN DIRETO - SEM CNPJ -->
@@ -149,14 +160,15 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <div class="modern-topnav">
       <div class="module-row">
         <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button></div>
-        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="navigateTo('orcamentos')"><i class="ph ph-clipboard-text"></i>Orçamentos</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
         <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
         <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
         <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div>
-        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button><div id="menu-financeiro" class="module-menu"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Contas e caixa</button><button onclick="openModal('contaReceber')"><i class="ph ph-arrow-circle-down"></i>Novo recebimento</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button></div>
 
         <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
         <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button id="btn-modo-escuro-top" type="button" onclick="if(window.toggleModoEscuro) window.toggleModoEscuro();" title="Alternar Modo Escuro / Claro"><i class="ph ph-moon" id="icone-modo-escuro-top"></i><span id="label-modo-escuro-top">Tema</span></button></div>
         <div class="module"><button id="btn-backup-top" type="button" onclick="exportBackup()" title="Baixar uma cópia de segurança de todos os dados"><i class="ph ph-download-simple"></i>Backup</button></div>
         <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
         <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
@@ -177,7 +189,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 flex items-center justify-between text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-session">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v5.22.60</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
@@ -188,6 +200,18 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
-<script src="./app.bundle.js?v=5.21.2"></script>
+<script src="./app.bundle.js?v=5.22.60"></script>
+<script src="./ajustes_v52249_relatorio_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52250_exe_bundle_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52251_exe_resiliencia_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52252_resolucao_loop_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52253_login_tela_branca_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52254_orcamentos_pages_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52255_orcamento_aprovacao_venda_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52256_orcamento_venda_limpa_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52257_orcamento_sync_total_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52258_orcamento_os_revalidar_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52259_orcamento_filtros_item_patch.js?v=5.22.60"></script>
+<script src="./ajustes_v52260_orcamento_trava_venda_atalho_patch.js?v=5.22.60"></script>
 </body>
 </html>

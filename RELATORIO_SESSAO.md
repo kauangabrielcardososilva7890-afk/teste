@@ -1,13 +1,884 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-16  
+**Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.2**  
-**Commit:** `72a5994`  
-**Zip:** `Sistema-Digicopy-v5.21.2.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/72a5994df04c140a03299512a60f68b40ed5f98e/index.html?v=5.21.2`
+**Branch fixa da sessão:** `arena/01a04e20-teste`  
+**Última versão:** **v5.22.60**  
+**Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
+
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.60. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.60 — trava total em orçamentos autorizados, atalho direto para venda salva, exclusão funcional e correção na seleção de cliente
+
+- **Trava Total de Edição em Orçamentos Autorizados:**
+  - Quando um orçamento estiver com status **Autorizado** (`status: 'aprovado'` ou vinculado a uma venda salva):
+    - Todos os campos ficam travados e desabilitados (`disabled` / `readonly`): busca de cliente, filtros, seleção de produtos/recargas, quantidades, preços, descontos, observações e campos da Ordem de Serviço (OS).
+    - Botões de adicionar item e remover item da lista são ocultados.
+    - O botão Salvar é ocultado / bloqueado para impedir sobrescrita de dados já autorizados.
+    - Exibe um aviso/banner destacado: `🔒 Orçamento AUTORIZADO — Edição bloqueada`.
+- **Botão Atalho para Abrir a Venda Salva Gerada:**
+  - Em orçamentos autorizados, exibe o botão em destaque: **`Abrir Venda Salva nº [Número]`** tanto no banner do topo do modal quanto no rodapé e na tabela principal.
+  - Ao clicar, o sistema fecha o modal do orçamento e abre diretamente a Venda Salva no módulo de Vendas.
+- **Exclusão Funcional e Confiável de Orçamentos:**
+  - Implementada função de exclusão direta e em lote (`excluirOrcamentosMarcados`), com caixa de confirmação nativa.
+  - Se o orçamento possuir venda salva gerada pendente (não faturada), a venda vinculada também é removida de forma limpa.
+  - Adicionado botão individual de lixeira em cada linha da listagem de orçamentos e no modal de edição.
+- **Correção Definitiva na Seleção de Cliente:**
+  - Corrigido o manipulador de clique `window.orcSelCliente(id)` e `window.orcLimparCliente()` para atribuir o cliente selecionado diretamente ao formulário do modal (`window.__ORC_ST.form.cliente`).
+  - Eliminado o erro onde o sistema dizia "cliente não selecionado mesmo tendo selecionado o cliente".
+- **Sincronização Visual da Versão v5.22.60:**
+  - Versão **v5.22.60** atualizada no título da aba, cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 188 scripts compilados no `app.bundle.js` (`sha256: cc191dabeb8b62df`).
+  - Suíte consolidada com **112 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.60`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.59 — remoção da opção 'Serviço' do tipo de item, restauração de filtros, eliminação do botão 'Copiar link' e carregamento instantâneo da página do cliente
+
+- **Correção no Select de Tipo de Item em Orçamentos:**
+  - Removida a opção inexistente **Serviço** do dropdown de tipo de item.
+  - O seletor conta exclusivamente com os tipos oficiais do sistema: **Produto** e **Recarga de toner**.
+- **Restauração Completa dos Filtros de Pesquisa no Modal:**
+  - **Filtro de Busca de Clientes:** Reintegrado o seletor `orc-cli-campo` com todos os campos de pesquisa rápida (*Pesquisar em tudo, Nome, Fantasia, Código, CPF/CNPJ, RG/IE, Endereço, Telefone, WhatsApp, Cidade, Bairro, Contato, E-mail, Observação, CEP, UF*).
+  - **Filtro de Categorias de Produtos:** Quando selecionado o tipo *Produto*, exibe o dropdown de categorias (`orc-prod-cat`: *Todas categorias, Produto, Serviço, Cartucho, Cartucho Vazio, Insumo, Equipamento, Impressoras, Chip, Compatível, Informática, Original, Outros*) ao lado do campo de busca e botão de lupa.
+  - **Filtro de Busca de Recargas:** Quando selecionado o tipo *Recarga de toner*, exibe o dropdown de campos de recarga (`orc-rec-campo`: *Pesquisar recarga, Código, Descrição, Marca*).
+  - **Etiqueta e Lupa de Recarga:** Exibe o campo de etiqueta da recarga (`orc-item-cartucho`) com botão de lupa (`orc-etq-lupa`), permitindo buscar etiquetas existentes ou digitar e adicionar etiquetas novas.
+- **Remoção do Botão "Copiar link":**
+  - Removido o botão "Copiar link" do rodapé do modal de orçamentos, mantendo a interface limpa e direta com *Sair, Revalidar link (quando existente), Imprimir e Salvar*.
+- **Carregamento Instantâneo na Página do Cliente (`public-orcamento/index.html` e `orcamento_pagar.html`):**
+  - Resolvido o travamento em *"Carregando..."*: a página agora renderiza **imediatamente** (0ms) a partir do payload `d` da URL, exibindo itens, valores, cliente, OS e botões de decisão sem depender de resposta síncrona do Worker.
+  - Adicionado timeout e tratamento robusto de erros e decodificação UTF-8 com `AbortController`.
+- **Sincronização Visual da Versão v5.22.59:**
+  - Versão **v5.22.59** propagada no título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 187 scripts compilados no `app.bundle.js` (`sha256: 903b8c5558431441`).
+  - Suíte consolidada com **111 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.59`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.58 — orçamentos com Ordem de Serviço (OS), revalidação de link, preservação de status e venda salva
+
+- **Orçamentos com Ordem de Serviço Opcional (OS):**
+  - Implementado layout idêntico à OS de Vendas no modal de orçamentos, organizado em duas abas limpas: **Itens** e **Ordem de Serviço (Opcional)**.
+  - Na aba de OS, todos os campos começam vazios por padrão (sem obrigatoriedade de preenchimento): *Número de série, Modelo do equipamento, Tipo da OS, Patrimônio, Contador / cópias, Acessórios, Técnico responsável, Responsável entrega, Garantia, Situação da OS, Defeito apresentado, Serviços executados / previstos e Peças utilizadas / orçadas*.
+  - Desativada a busca inteligente/automática por número de série em orçamentos anteriores para dar total liberdade de digitação.
+  - Os dados preenchidos na OS são exibidos de forma clara e profissional na página web de aprovação do cliente (`public-orcamento/index.html` e fallback `orcamento_pagar.html`).
+  - Ao ser autorizado pelo cliente ou no ERP, os dados da OS são passados integralmente para a venda salva gerada (`db.vendas`) e espelhados em `db.os`.
+- **Preservação de Status e Visibilidade dos Orçamentos:**
+  - Orçamentos autorizados e não autorizados **nunca mais somem da lista**.
+  - Exibição de badge com status em tempo real: **Autorizado** (verde/ok), **Não autorizado** (amarelo/wait) e **Aberto** (azul/info).
+  - Ícone indicador `🔧 OS` na tabela para identificar visualmente orçamentos que possuem dados de Ordem de Serviço.
+- **Botão "Revalidar link" com Confirmação e Revogação Segura de Venda:**
+  - Adicionado botão de ação rápida **Revalidar link** tanto na tabela de orçamentos quanto no rodapé do modal de edição.
+  - Ao clicar, exibe mensagem de confirmação do sistema:
+    - *O link voltará a ficar ativo (status Aberto);*
+    - *Qualquer venda salva pendente gerada por ele será automaticamente estornada e cancelada do sistema;*
+    - *Um novo token limpo é gerado para o orçamento, permitindo novo envio e decisão do cliente.*
+  - Se a venda gerada já tiver sido faturada/finalizada no financeiro, o sistema bloqueia a revalidação e instrui o estorno prévio no módulo de Vendas.
+- **Sincronização Visual Global da Versão v5.22.58:**
+  - Atualização automática em todos os pontos: título da aba do navegador (`document.title`), cabeçalho do ERP (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 186 scripts compilados no `app.bundle.js` (`sha256: 495806b44ef495df`).
+  - Suíte consolidada com **110 testes passando** (0 falhas).
+  - APK Mobile mantido intacto conforme diretrizes.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.58`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.57 — sincronização total de aprovação/rejeição de orçamentos, venda salva e versão v5.22.57
+
+- **Sincronização Total de Aprovação e Rejeição:**
+  - Garantido que quando o cliente aprova o orçamento no link público (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`), o status no ERP transiciona de **Aberto** para **Autorizado** (`status: 'aprovado'`) e gera a **Venda Salva** (`db.vendas` com status `aguardar`, itens, cliente e valores).
+  - Quando o cliente rejeita o orçamento, o status no ERP transiciona para **Não autorizado** (`status: 'recusado'`).
+  - Implementada sincronização bidirecional e polling resiliente via Cloudflare D1/Worker (`/orcamento/status`) e localStorage fallback.
+- **Autorização e Rejeição Manual no ERP:**
+  - Métodos manuais `window.autorizarOrcamentoDirect(id)` e `window.recusarOrcamentoDirect(id)` disponíveis para aprovação direta quando o cliente confirma por WhatsApp ou pessoalmente.
+  - Ao autorizar manualmente, a venda salva é gerada instantaneamente no banco local e os dados são sincronizados.
+- **Sincronização Visual de Versão v5.22.57:**
+  - Versão **v5.22.57** propagada em todos os pontos: título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 185 scripts compilados no `app.bundle.js` (`sha256: 0e6771d221edaed9`).
+  - 109 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.57`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.56 — aprovação de orçamento 100% via link do cliente, tela limpa e versão v5.22.56
+
+- **Fluxo Oficial 100% Via Link do Cliente:**
+  - Removidos os botões manuais extras da listagem de orçamentos, deixando a tabela limpa e no visual padrão do sistema.
+  - O fluxo opera 100% pelo link enviado ao cliente (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`).
+  - Ao aprovar ou recusar no link, a página confirma com o cliente, invalida o link, comunica a nuvem e abre o WhatsApp com a mensagem pronta.
+- **Sincronização e Geração de Venda Salva:**
+  - Polling em tempo real a cada 4 segundos no ERP.
+  - Ao detectar a aprovação remota, o ERP altera o status de **ABERTO** para **AUTORIZADO** (`status: 'aprovado'`) e gera a **Venda Salva** (status `aguardar`, pronta para faturar) com itens, valores e cliente.
+  - Orçamentos sem token prévio ganham tokens únicos gerados automaticamente (`garantirTokensOrcamentos`).
+- **Sincronização Visual de Versão v5.22.56:**
+  - Versão **v5.22.56** sincronizada na aba do navegador (`document.title`), cabeçalho superior e no centro do rodapé.
+- **Bundle e Testes:**
+  - 184 scripts compilados no `app.bundle.js` (`sha256: a821da86dfdd010f`).
+  - 108 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.56`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.55 — autorização de orçamento gerando venda salva e sincronização de status completa
+
+- **Conversão Automática em Venda Salva no Sistema:**
+  - Quando o cliente autoriza o orçamento no Cloudflare Pages (`https://digicopy-orcamentos.pages.dev/`), o sistema puxa a aprovação da nuvem e gera automaticamente a **Venda Salva** (status `aguardar`, pronta para faturar) com os mesmos itens, cliente e valores.
+  - O orçamento muda imediatamente de **Aberto** para **Autorizado** (`status: 'aprovado'`), vinculando o `vendaId` e exibindo o número da venda gerada.
+- **Tratamento de Recusa:**
+  - Quando o cliente recusa o orçamento no Pages, o status muda de **Aberto** para **Não autorizado** (`status: 'recusado'`).
+- **Botões de Ação Direta no ERP:**
+  - Na listagem de orçamentos e no modal de edição foram incluídos os botões rápidos **Autorizar** e **Recusar** manual, permitindo ao atendente autorizar com 1 clique caso o cliente confirme pelo WhatsApp ou pessoalmente.
+  - Orçamentos já autorizados exibem o botão direto **Venda [Número]** para abrir a venda gerada.
+- **Sincronização Visual de Versão em Toda a Interface:**
+  - Inicialização global de `window.DIGICOPY_APP_VERSION = '5.22.55'` no topo do `index.html` e no início do bundle.
+  - Atualização dinâmica no título da aba do navegador (`document.title`), na barra superior (`#app-title-version`) e no rodapé central (`#footer-version`), garantindo que em qualquer menu ou troca de tela a versão exibida seja sempre **v5.22.55**.
+- **Correção no Worker e D1:**
+  - Criado o dispositivo de sistema `public-orcamento` para contornar a chave estrangeira em SQLite D1.
+  - Aceita payload de fallback `d=` para garantir persistência mesmo se o orçamento local ainda não tivesse subido na nuvem.
+- **Bundle e Testes:**
+  - 183 scripts compilados no `app.bundle.js` (`sha256: 296d20888b0584f5`).
+  - 107 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.55`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.54 — integração oficial dos orçamentos no Cloudflare Pages (`digicopy-orcamentos.pages.dev`)
+
+- **Página Oficial Cloudflare Pages Configurada:**
+  - URL de produção configurada: `https://digicopy-orcamentos.pages.dev/`.
+  - Links gerados no sistema (notinha meia folha, botões de copiar link e compartilhamento WhatsApp) agora apontam diretamente para `https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=DADOS&v=5.22.54`.
+- **Arquitetura de Alta Disponibilidade:**
+  - Consulta primária via Worker Cloudflare (`digicopy-sync-api`) e banco D1 (`digicopy-erp`).
+  - Fallback instantâneo via payload seguro codificado em base64 (`d=`), permitindo que o cliente visualize o orçamento mesmo em caso de instabilidade na conexão.
+  - Modal de confirmação *"Tem certeza?"* antes de autorizar ou recusar.
+  - Invalidação automática após a decisão: o link é marcado como usado no dispositivo e no banco de dados.
+- **Bundle e Testes:**
+  - 182 scripts compilados no `app.bundle.js` com integridade sha256 validada.
+  - 106 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.54`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.53 — correção definitiva da inicialização, login instantâneo e proteção total anti-tela branca
+
+- **Causa raiz da tela branca / carregamento infinito eliminada:**
+  1. Exportação explícita de `window.db` logo após a carga do banco em `app.js`, impedindo erros de `ReferenceError: db is not defined` em IIFEs e patches modulares.
+  2. Proteções com null-check defensivo em substituições de nós e manipulação de elementos DOM nos patches `ajustes_v52238_vendas_os_ajustes_patch.js`, `ajustes_v52235_codigo_sem_sku_patch.js`, `ajustes_v52221_cert_nuvem_a1_patch.js`, `leitura_impressao_compacta_produtos_patch.js` e `finalizacao_sistema_patch.js`.
+  3. Remoção e ocultação de qualquer overlay de carregamento preso (`cloud-load-overlay`).
+- **Login Instantâneo e Resiliente:** Novo patch `ajustes_v52253_login_tela_branca_patch.js` traz autenticação direta infalível, transição limpa entre `#login-screen` e `#app-shell`, e sincronização de dados do usuário e empresa.
+- **Guarda Global Anti-Tela Branca:** Monitoramento de erros e exceções não tratadas que recupera automaticamente a interface para a tela de login ou a tela principal.
+- **Bundle e Testes:** 181 scripts compilados com integridade validada; 105 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.53`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.52 — resolução definitiva de loop de carregamento infinito e boot ultrarrápido
+
+- **Causa raiz do carregamento infinito identificada e eliminada:** Múltiplas instâncias de `MutationObserver` em patches anteriores (`ajustes_v52246_nuvem_nao_autorizar_patch.js`, `ajustes_v52249_relatorio_patch.js` e `ajustes_v52250_exe_bundle_patch.js`) observavam recursivamente mutações no `document.documentElement` e disparavam atualizações contínuas no `footer-version` e elementos da DOM em um loop microtask infinito (`Maximum call stack size exceeded`), travando a CPU e impedindo o término do carregamento da página no Electron / Chromium.
+- **Eliminação completa dos observers concorrentes:** Removidos todos os `MutationObserver` globais redundantes e substituídos por chamadas diretas e seguras atreladas aos eventos de ciclo de vida (`navigateTo`, `DOMContentLoaded` e gatilhos de renderização).
+- **Boot instantâneo e leveza no .exe:** O novo patch `ajustes_v52252_resolucao_loop_patch.js` garante que a inicialização do login ocorra em menos de 100ms sem polling desnecessário e sem consumo excessivo de CPU em computadores fracos.
+- **Bundle unificado e manifesto sincronizado:** 180 scripts compilados no `app.bundle.js` com integridade sha256 validada.
+- **Suíte de testes:** 104 testes passando 100% integrados no runner.
+- **APK Mobile:** Mantido inalterado e preservado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.52`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.51 — correção da tela branca no .exe e resiliência total de inicialização
+
+- **Causa raiz da tela branca identificada e corrigida:** Durante a inicialização limpa (quando não havia sessão anterior ativa ou após logout), a leitura `sess.usuarioNome` no bloco imediato de `app.js` gerava uma exceção não tratada (`TypeError: Cannot read properties of null`), interrompendo a execução do JavaScript e travando a renderização da interface.
+- **Null safety em todo o fluxo de inicialização:** Corrigida a inicialização de sessão para verificar se o objeto `sess` é nulo antes de acessar `usuarioNome` ou `login` tanto em `app.js` quanto nos patches auxiliares.
+- **Guardas anti-tela branca e recuperação automática:** Novo patch `ajustes_v52251_exe_resiliencia_patch.js` monitora o ciclo de vida do DOM e garante a correta exibição da tela de login ou da tela principal com recuperação automática em caso de atraso na renderização.
+- **Ciclo de vida suave no Electron (`main.js`):** Limpeza segura de cache via APIs do Electron (`win.webContents.session.clearCache` e `clearStorageData`) sem risco de bloqueio de arquivos concorrentes pelo sistema de arquivos do Windows, somado a temporizador de segurança garantindo que a janela principal seja sempre exibida.
+- **Suíte de testes:** 103 testes passando 100% integrados no runner.
+- **APK Mobile:** Mantido inalterado e preservado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.51`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.50 — correção definitiva do bundle e empacotamento no .exe
+
+- **Correção de empacotamento:** todos os patches entram diretamente no `app.bundle.js` e são validados pelo manifesto e pelo build.
+- **Cache automático do .exe:** ao abrir a versão 5.22.50, o Electron limpa automaticamente `Cache`, `Code Cache` e `GPUCache` na pasta de dados do Windows.
+- **Rodapé e versão:** sincronizado para v5.22.50 em todos os componentes e rodapé.
+- **Testes:** 102 suítes consolidadas passando com 100% de aprovação.
+- **APK Mobile:** mantido pausado e isolado nesta etapa conforme solicitado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.50`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.49 — atualizações do relatório no .exe e no celular
+
+Causa: o rodapé vinha do `index.html` (por isso a versão mudava) e o link do cliente ia para o Pages velho (`digicopy-orcament.pages.dev`), sem “Tem certeza?”, sem invalidar o link e sem autorizar/recusar de verdade.
+
+- Link do orçamento abre a página nova no GitHack (`orcamento_pagar.html?v=5.22.49&c=token&d=...`): **Tem certeza?**, depois o link não vale mais, Autorizar / Recusar.
+- O patch do relatório entra **no bundle e sozinho no .exe** (depois do bundle), para a atualização não depender só do `app.bundle.js`.
+- No sistema: salvar venda grava e fecha; some Sair; faturar não imprime; apagar leitura devolve contador; De/Até visíveis; códigos no histórico.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.49`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.48 — .exe sem cache velho
+
+- Desliga o cache V8 do Electron.
+- Na versão nova apaga Cache / Code Cache / GPUCache.
+- Gera o instalador sem asar.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.48`
+
+---
+
+## v5.22.47 — .exe passa a trazer a versão nova
+
+- O instalador não usa mais `app.asar` (os arquivos ficam visíveis em `resources/app`).
+- Ao abrir uma versão nova, o cache do Chromium é limpo.
+- `npm run build:win` apaga a pasta `dist` antiga antes de gerar.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.47`
+
+---
+
+## v5.22.46 — não autorizar dados atuais deste PC
+
+- Botão na Nuvem: **Não autorizar dados deste PC**.
+- A nuvem **não apaga**. Este PC passa a usar o que já está na nuvem. O que só existia aqui some DESTE computador e **não sobe**.
+- O que você lançar depois sincroniza normal.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.46`
+
+---
+
+## v5.22.45 — serial/ocultar, leitura, financeiro, rodapé, venda
+
+- Impressora: pesquisa só o serial e abre a tela completa; se já existe em outro cliente, preenche sozinho; aviso de remanejo só no Salvar. Nova sem outro contrato: só sucesso. Caixa Ocultar no editar (status `oculta` nas Remanejadas, chave para desocultar). Oculta não impede cadastro em outro cliente (vira remanejada).
+- Apagar leitura: aviso do sistema e o contador volta ao valor de antes do lançamento.
+- Histórico financeiro: código da venda, da leitura e do chamado.
+- De / Até sempre visíveis. Em Hoje não filtram.
+- Versão sozinha no meio do rodapé.
+- Venda: Salvar grava e fecha. Some o botão Sair (fica o X). Faturar não abre a tela de imprimir.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.45`
+
+1.2 / 1.3 / 1.4 no link do cliente ainda dependem de reenviar `public-orcamento/index.html` no Pages e implantar o worker 0.4.5. O app já puxa a decisão (USED).
+
+---
+
+## v5.22.44 — autorizar orçamento gera venda; recusar some; datas no financeiro
+
+- Autorizar no link do cliente gera **venda salva**. Recusar **apaga** o orçamento da lista.
+- Financeiro: De / Até sempre visíveis (em Hoje ficam desligados).
+- Continua zip no PR para testar. Produção 5.21.6 até pedir.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.44`
+
+---
+
+## v5.22.43 — refaz o pedido 1–4 na tela certa
+
+- Orçamento: Status Autorizado / Não autorizado na lista e na tela. Sem Faturar.
+- Contratos: clique no título A→Z e Z→A, uma seta, sem inverter a tabela (não pisca).
+- Impressora no contrato: novo cadastro começa no serial; se já está em outro cliente, pergunta se remaneja só no salvar; Ativas vs Remanejadas (histórico congelado, fora de leitura/chamado).
+- Financeiro: some saldo; filtros da lista; lupa/Enter; padrão Hoje; Abertos / Todos; De/Até só em Abertos; faturada ganha data e aparece. Menu único.
+- Menu da faixa aberta em azul. Rodapé v5.22.43. Forma **Boleto** (baixa automática).
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.43`
+
+---
+
+## v5.22.42 — orçamento status, contratos sort/remanejo, financeiro, menu/versão/Boleto
+
+- Orçamento: status Autorizado / Não autorizado / Aberto na lista e na tela. Sem botão Faturar.
+- Site do cliente: “Tem certeza?” antes de autorizar/recusar. Depois da decisão o link não vale mais (precisa do worker implantado).
+- Contratos: clique no título A→Z e Z→A, uma seta, sem piscar.
+- Impressora no contrato: primeiro o serial; se já está em outro cliente, pergunta se remaneja; Ativas vs Remanejadas (histórico congelado).
+- Financeiro: some os cards de saldo. Filtros Nome, Cód. Venda, Cód. Parcela, Cód. Cliente, Por Valor, Cód. Caixa, Cód. Pix, Cód. Leitura. Lupa/Enter. Padrão Hoje. Abertos / Todos. De/Até não vale em Hoje e Todos. Menu único, sem submenu Contas e caixas.
+- Menu da faixa aberta em azul. Rodapé com a versão. Forma **Boleto** na venda e na baixa (baixa automática).
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.42`
+
+---
+
+## v5.22.41 — salvar venda fecha; fechar salva; zips saíram
+
+- Botão **Salvar** grava a venda e fecha a tela. Sem pergunta.
+- **Sair/Fechar** também grava (precisa do cliente) e fecha. Sem pergunta.
+- Apagados os `.zip` antigos do repositório.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.41`
+
+---
+
+## v5.22.40 — orçamento no Pages separado
+
+- Link de autorizar/recusar aponta para `https://digicopy-orcament.pages.dev/` (não é Pix, não é GitHack).
+- Autorizar nesse site **ainda não cria a venda sozinho** (worker `/orcamento` não está no ar). WhatsApp abre.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.40`
+
+Página do cliente: `https://digicopy-orcament.pages.dev/`
+
+---
+
+## v5.22.39 — impressão com escolha, patrimônio opcional, menus na hora, aviso de erro
+
+- Imprimir venda: primeiro escolhe **Vendas** ou **Ordem de serviço**, depois **1 via** ou **2 vias**.
+- Vendas: sem aviso EPSON. 2 vias = duas meias folhas (uma folha inteira se os itens couberem).
+- OS: aviso EPSON sempre. 2 vias = duas folhas separadas.
+- Patrimônio da OS **não** é obrigatório (saiu o *).
+- Se der erro: aviso na tela. Detalhe técnico só na **Auditoria**.
+- Menus não piscam mais. Locação volta a ter Máquinas nos clientes e Leituras. Backup/Nuvem continuam por permissão.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.39`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.38 — orçamento separado do Pix + ajustes de venda
+
+- Orçamentos: filtro de produto e, em Recarga de toner, filtro + etiqueta. Aviso de salvo. Sair pergunta se deseja salvar.
+- Link de aprovação é **outra página**, não a do Pix. Dados vão na URL. Cliente escolhe autorizar ou recusar. Recusar também abre WhatsApp.
+- Vendas: lupa da série ao lado da caixa. OS com dados sai na impressão. Aviso EPSON só na OS. Técnico começa vazio. * nos obrigatórios. Salvar só precisa do cliente. Botão Salvar não pergunta.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.38`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.37 — vendas/OS, filtros de contrato e orçamentos
+
+- Vendas: nomes Itens / Ordem de serviço e rótulos (tipo, descrição, QTD, V. UNIT, DESC, TOTAL, série, modelo, contador) em azul.
+- Série: lupa + Enter, igual etiqueta. Traz cliente, modelo e patrimônio da última venda.
+- Some Valor serviço e Desconto OS. Garantia: escolhe ou escreve os dias (seta volta para a lista). Técnico responsável obrigatório na OS.
+- Produto zerado: pergunta se quer mudar o estoque. Sim abre o cadastro do **produto** na aba Estoque. Salvar ou sair volta na mesma venda, com o que já estava escrito.
+- Impressão da OS e do orçamento: aviso das EPSON (15 dias úteis). Sem a frase de cobrir oferta. Sem validade 60 dias.
+- Contratos: filtros da lista (Todos, Nome, Equipamento, Patrimônio, Serial, Departamento, Chamados Abertos, Cod Locação, Cod Cliente, Endereço Impressora, Vencidos, Vencer 30 dias, Leituras lançar hoje, Cod Leitura, Não faturados esse mês, Faturados esse mês, Não faturados mês passado, Mês fixo, Franquia individual). Sem Cód controle, franquia global, fatura por cartucho, propostas, nosso código/pasta, não lançados esse mês, fecha dia.
+- Menu **Orçamentos** (Atendimento). Cadastro separado do Digicopy — **não** é o Buscador Escola. Lista: código, data, cliente, valor. Novo / excluir / estornar com caixa. Filtros da 2ª imagem, sem período; botão Todos à parte.
+- Orçamento pega a busca e os itens da venda. Não entra no financeiro. Precisa de estoque para lançar, mas não baixa. Fechado = cliente aprovou e gerou venda salva.
+- Impressão meia folha com link público (`digicopy-pix.pages.dev/orcamento.html`). Cliente aprova ou recusa. Aprovar gera venda **salva** (não faturada), avisa no sistema e abre WhatsApp da loja.
+- Estornar orçamento: cancela. Se já gerou venda salva, apaga essa venda. Se a venda já foi faturada, bloqueia até estornar a venda.
+- Worker ganhou GET/POST `/orcamento` (ainda precisa implantar). Enviar `public-pix/orcamento.html` no Pages.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.37`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.37`
+
+---
+
+## v5.22.34 — aviso de salvo + NCM no produto que já existe
+
+- Qualquer **Salvar** em Configurações abre o aviso do sistema.
+- Na página de envio, o mesmo `PRODUTOS.json` não duplica: só grava o NCM no cadastro que já está. Estoque e preço não mudam. `DEL = S` continua pulado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.34`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.34`
+
+---
+
+## v5.22.32 — volta o modo escuro da 5.22.30
+
+- Apagado o visual da 5.22.31. O escuro volta a ser o da 5.22.30.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.32`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.32`
+
+---
+
+## v5.22.30 — modo escuro só neste aparelho
+
+- Em **Configurações** liga/desliga o modo escuro. Vale só neste computador. Não sobe na nuvem.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.30`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.30`
+
+---
+
+## v5.22.29 — IE, Inscrição Municipal e CNAE fiscal
+
+- Em **Configurações → NF-e** entram os 3 dados da loja: Inscrição Estadual, Inscrição Municipal e CNAE fiscal.
+- Conferência avisa se faltar. Entram no XML se preenchidos. Ainda **não** emite na SEFAZ.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.29`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.29`
+
+---
+
+## v5.22.28 — A1 da nuvem vale + lupa NCM no centro da caixa
+
+- Conferência e assinatura usam o A1 que já está na nuvem. Senha só na hora. Ainda **não** emite na SEFAZ.
+- Lupa do NCM fica no meio da caixa de texto (não no meio do rótulo).
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.28`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.28`
+
+---
+
+## v5.22.27 — lupa do filtro de cliente + NCM/origem NF
+
+- Some a lupa enfeite em cima do select de cliente. A lupa de pesquisar fica.
+- Origem do produto na NF: códigos oficiais **0 a 8**.
+- Campo NCM pesquisável (Enter ou lupa). Não muda origem sozinho.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.27`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.27`
+
+---
+
+## v5.22.26 — ehDel na página de envio
+
+- A página chamava `ehDel` e a função não estava no arquivo. Agora está. Pula `DEL = S`.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.26`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.26`
+
+---
+
+## v5.22.25 — importação pula DEL = S
+
+- Nesta importação, produto com `DEL = S` não sobe. `OCULTAR` sozinho não decide.
+- NCM do produto continua vindo de `PR_NCM`. `NCM.json` é opcional.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.25`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.25`
+
+---
+
+## v5.22.24 — letra no filtro não vira regra
+
+- Some só a opção que é letra no select (P/S/I/C/E). Entra Produto / Serviço / Insumo / Cartucho / Equipamento.
+- Chip, Original e o resto ficam.
+- Produto que já veio com letra nesta importação troca o nome **uma vez**. Depois para. Não envolve `unificaCat`.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.24`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.24`
+
+---
+
+## v5.22.23 — letras P/S/I/C/E viram nomes + menus seguem o mouse
+
+- Some só o filtro que é letra: P→Produto, S→Serviço, I→Insumo, C→Cartucho, E→Equipamento. Chip, Original e o resto ficam.
+- Editor de menus: seta é apagada. O bloco segue o cursor e troca de lugar na hora.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.23`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.23`
+
+---
+
+## v5.22.22 — menus só arrastar + NCM no envio
+
+- Editor de menus: some as setas. Só pegar e arrastar. Continua valendo só neste PC.
+- Página de envio aceita **NCM.json**. Liga no produto pelo campo NCM do próprio produto ou pelo código da tabela NCM do sistema antigo.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.22`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.22`
+
+---
+
+## v5.22.21 — envio de arquivos, NF por usuário, menus só neste PC
+
+- Página à parte para enviar **A1 .pfx** e JSON de **PRODUTOS** (+ **PRODUTOS_CATEGORIA**). Mesmo SKU não duplica nesta importação. Senha do A1 não é pedida nessa página.
+- Some **Carregar A1** das Configurações. O teste usa o A1 da nuvem. Ainda **não emite** na SEFAZ.
+- Usuários: caixa **Emitir NF**. Só Admin/Dono marca. Só quem estiver marcado confere/assina.
+- Editor de menus saiu da faixa azul. Fica em **Configurações → Menus deste computador**. Vale só neste aparelho.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.21`
+
+GitHack envio: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/envio_arquivos.html?v=5.22.21`
+
+---
+
+## v5.22.20 — lupa no lugar
+
+- O filtro auxiliar tinha empurrado várias lupas para fora do campo. A lupa volta para dentro da caixa de busca (canto direito).
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.20`
+
+---
+
+## v5.22.19 — filtro auxiliar na busca de cliente/item + PIX sem GitHack
+
+- Em todo lugar que escolhe **cliente**: select ao lado da caixa, iguais ao menu Clientes (Nome, Código, Fantasia, CPF/CNPJ…). Auxiliar da busca. Enter ou lupa.
+- Item **Produto**: filtro de categoria (Todas categorias por padrão). **Recarga** saiu da lista — recarga fica no tipo Recarga de toner.
+- Item **Recarga de toner**: filtro da recarga + caixa da etiqueta (a mesma de etiqueta nova; se não achar, escreve e segue). Regras da 5.22.18 continuam (cadastra no faturar, não duplica, preenche cliente, some no estorno).
+- Link do PIX no PDF/comprovante **não usa GitHack**. Vai para a página pública da nuvem. Repositório privado não apaga isso. No `.exe` o `pix_pagar.html` também entra no instalador.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.19`
+
+---
+
+## v5.22.18 — menus para todos, rodapé de verdade, PIX/prazo, etiqueta
+
+- Editor de **Menus/Atalhos** abre em qualquer login. Nuvem e Backup não aparecem (nem no atalho) se não for Admin.
+- Rodapé da loja na impressão: o sistema recolocava depois; agora não recoloca.
+- PIX na venda: **baixa na hora**, sem comprovante. Comprovante PIX só quando a forma é **A prazo**.
+- Imprimir venda: some até faturar. Depois do faturar o botão volta.
+- Recarga não aparece na busca de **Produto**.
+- Some **Cadastrar esta etiqueta**. Cadastra ao faturar. Etiqueta repetida não lança. Sem cliente, preenche o da etiqueta. Estorno some o cadastro se não restar venda ativa com ela.
+- NF-e: parada até existir A1 `.pfx`. Os `.p7b/.cer` não assinam.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.18`
+
+---
+
+## v5.22.17 — arrastar menus, Nuvem/Backup, rodapé, recibo, cert na nuvem
+
+- Editor de Menus: **arrastar** menu e submenu. Setas dos submenus corrigidas.
+- **Backup** só Admin. **Nuvem**: Admin sempre; se o PC ainda não autorizou, o outro usuário vê para colar o código.
+- Impressão/PDF: saiu o rodapé cinza da loja (o que caía na outra metade da folha), inclusive vendas.
+- Financeiro: botão **Imprimir** junto de Receber/Excluir. Só o mesmo cliente. Recibo normal lista parcelas/vendas; recibo com descrição mostra os códigos **e** o texto.
+- NF-e: dá para enviar o certificado **público** (.p7b/.cer) para a nuvem. **.pfx A1 não sobe**. Senha não é pedida nem gravada. Sem .pfx neste PC a nota não assina.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.17`
+
+---
+
+## v5.22.16 — submenus, ocultos e atalhos na faixa azul
+
+Pedido: mover submenus; menus ocultos só o Admin vê; atalho duplicou (faixa branca + faixa azul); atalhos na parte azul, escolhendo submenu e não só o menu pai.
+
+- Editor de **Menus**: setas nos submenus. Corrigidas as setas do menu (antes o `↑↓` não andava).
+- Caixa **Oculto** em menu e submenu. Quem não é Admin não vê o item. Admin continua vendo (mais claro) e é o único que abre o editor.
+- **Sair** não some.
+- Some a faixa branca de atalhos no Início. Os botões ficam na faixa azul. O lápis **Atalhos** também.
+- No editor de atalhos a lista é por submenu (Nova venda, Recargas, etc.), agrupada pelo menu pai.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.16`
+
+---
+
+## v5.22.15 — teste de etiqueta + site que não entra
+
+- Teste de etiquetas atualizado para o layout que já funciona (7×18 = 126 por folha). Não mexi na impressão.
+- No GitHack a abertura tentava puxar nuvem sozinha, cobria a tela com “Carregando dados da nuvem...” e recarregava. Isso saiu. Login abre direto. Nuvem continua só depois de entrar, pelo botão Nuvem.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.15`
+
+---
+
+## v5.22.14 — página travada, recargas, ordenação
+
+Pedido: a página ficava carregando e não dava para testar configurações; Recarga de toner na venda puxava qualquer produto; filtros dos títulos só iam num sentido (e apareciam duas setas).
+
+- Tirei o `MutationObserver` do financeiro/menus que reescrevia o HTML em loop (CPU 100%).
+- Recargas: aba em Estoque + submenu Recargas. Cadastro próprio, **sem estoque**. Na venda, tipo Recarga de toner puxa só dessa lista.
+- Clique no título: A→Z e Z→A. Uma seta só (não empilha mais duas).
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.14`
+
+---
+
+## v5.22.13 — financeiro, menus e atalhos
+
+Pedido: apagar o menu Recebimento; financeiro só **Contas e caixas**; Receber junto da lixeira; baixa como vendas sem A prazo; Pix no financeiro baixa de verdade; sem marca = novo lançamento (cliente com lupa, sem status, repetir mês a mês); editar ordem/nome dos menus; Chamados só em Atendimento; atalhos do Início editáveis. APK quieto.
+
+- Submenu **Novo recebimento** saiu. Financeiro fica com **Contas e caixas**.
+- **Receber** fica ao lado do **Excluir**. Com caixinha marcada: escolhe a forma (sem A prazo) e o título fica pago. Pix aqui **paga**. Sem marca: cria lançamento (cliente lupa/Enter, descrição, valor, vencimento, repetir).
+- Botão **Menus** na barra: ordem e nome (limite 18/24 letras). Configurações pode ir para o lado do Início.
+- Chamados saiu da Locação. Continua em Atendimento.
+- No Início: atalhos editáveis (ordem, nome, quais botões).
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.13`
+
+---
+
+## Celular 1.0 — APK do sistema (separado do PC)
+
+Pedido: versões separadas; celular começa no **1.0**; é o sistema, não um app de teste.
+
+- Pasta `mobile/` — app **1.0** (`versionCode` 1)
+- PC continua **5.22.12** / dia a dia **5.21.6**
+- NF-e não emite no celular
+- Abrir no Android Studio: pasta `mobile/android`
+- Gerar APK: Build → Build Bundle(s) / APK(s) → Build APK(s)
+- Depois: Nuvem → código do PC Admin → dados descem
+
+---
+
+## v5.22.12 — celular autoriza e puxa a nuvem
+
+Pedido: importar para o celular primeiro; NF-e só no PC.
+
+- No celular, Nuvem abre em **Tenho um código**, nome padrão **Celular**
+- Dados da nuvem descem. Sobra local não sobe sozinha
+- NF-e neste aparelho não emite
+- Menu por toque. Dá para instalar o ícone no telefone (Chrome → Adicionar à tela inicial)
+- Arquivo `.apk` assinado daqui não sai: falta o Android SDK neste ambiente
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.12`
+
+---
+
+## v5.22.11 — uma logo só na impressão
+
+Pedido: a notinha saía com a logo duplicada, comendo espaço. Acontecia no geral, não só em venda.
+
+- Tira a logo extra do topo
+- Se o documento já tem a logo da loja, não coloca outra
+- Vale para notinha, leitura, chamado e relatório
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.11`
+
+---
+
+## v5.22.10 — caixa no histórico de leituras + NF-e nas duas listas
+
+Pedido: o atalho tem que ficar nas duas telas (histórico de leituras do cliente e Vendas e Notinhas). A lista de leituras ganha caixa e exclusão (faturada não sai). NF-e só com uma marcada.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.10`
+
+---
+
+## v5.22.9 — atalho NF-e no histórico
+
+Pedido: atalho no histórico das notinhas e das leituras; o que estiver selecionado vai para a NF; pré-visualizar antes de emitir.
+
+- Botão **Pré-visualizar NF-e** na lista de notinhas e na lista de leituras
+- Usa a notinha/leitura selecionada
+- Também no histórico aberto (modal)
+- Só mostra a prévia. Assinar continua no passo seguinte
+- Não grava e não envia à SEFAZ
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.9`
+
+---
+
+## v5.22.8 — assinar NF-e com A1
+
+Pedido: voltar para a NF-e.
+
+- Conferência ok → botão **Assinar com A1**
+- Senha pedida só na hora. Não grava. Não sobe na nuvem.
+- Assina o XML neste PC. **Ainda não envia para a SEFAZ.**
+- Dá para copiar ou baixar o XML assinado.
+- Venda, leitura e estoque continuam iguais.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.8`
+
+---
+
+## v5.22.7 — acompanhar dados dos outros PCs
+
+Pedido: só o login Admin abre a nuvem; precisa ver o que os outros computadores mandaram.
+
+- Botão **Acompanhar dados dos PCs** no painel Nuvem (só Admin)
+- Por aparelho: último acesso, último envio, quantos registros de cada tipo
+- Lista dos movimentos recentes (quem enviou/excluiu o quê)
+- Não mostra senha. Os outros logins continuam sem ver Nuvem.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.7`
+
+---
+
+## v5.22.6 — reinstalação não duplica na nuvem
+
+Pedido: se desinstalar e instalar, o PC ainda tem dados e não pode mandar isso sozinho para a nuvem (duplica). Depois, um jeito de lançar na mão.
+
+- Depois de autorizar de novo: baixa a nuvem primeiro.
+- Nuvem vazia + dados neste PC → sincronização **pausada**. Só sobe no **Publicar este PC**.
+- Nuvem já tem dados + sobra local (ID diferente) → **não envia**. Aviso no painel.
+- Para lançar este PC como fonte: **Zerar dados da nuvem** → **Publicar este PC**.
+- PC convidado continua isolando histórico velho (não publica sobra).
+- Mesmos IDs (os 1919) só atualizam, não criam outro cadastro.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.6`
+
+---
+
+## v5.22.5 — backup sem senha + página GitHack do login
+
+- Backup (manual e diário) **não leva** a senha da Caixa Escolar.
+- Página só para cadastrar o login, sem baixar `.zip`:
+  `https://raw.githack.com/kauangabrielcardosomo fonte: **Zerar dados da nuvem** → **Publicar este PC**.
+- PC convidado continua isolando histórico velho (não publica sobra).
+- Mesmos IDs (os 1919) só atualizam, não criam outro cadastro.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.6`
+
+---
+
+## v5.22.5 — backup sem senha + página GitHack do login
+
+- Backup (manual e diário) **não leva** a senha da Caixa Escolar.
+- Página só para cadastrar o login, sem baixar `.zip`:
+  `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/escola_login.html`
+- CNPJ: com ou sem pontuação. Senha: igual a do site.
+
+---
+
+## v5.22.4 — login do Buscador na nuvem
+
+Pedido: a senha da Caixa Escolar pode ficar na nuvem.
+
+- Continua **fora do código**
+- Salva na configuração e sobe na Cloudflare
+- Digita uma vez; os outros PCs autorizados usam
+- Botão **Login na nuvem** no Buscador Escola
+- Sem login, a atualização automática não roda
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.4`
+
+---
+
+## v5.22.3 — Firebase antigo apagado
+
+- Apagados os arquivos da nuvem Google. Continua só Cloudflare.
+- Login da Caixa Escolar saiu do código.
+
+---
+
+## v5.22.2 — NF-e isolada, sem mexer no resto
+
+Pedido: a parte de NF não pode dar problema.
+
+- Continua **sem instalar** na 5.21.6. O `.exe` atual não carrega esse código.
+- Conferir NF-e **não grava** venda, leitura, estoque nem nuvem.
+- Se a conferência falhar, a tela original abre do mesmo jeito.
+- Ainda **não envia** nota para a SEFAZ.
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.2`
+
+---
+
+## v5.22.1 — conferência NF-e da venda e da leitura
+
+Pedido: só um computador emite; o A1 já está instalado nesse PC; qualquer pessoa que mexer nesse PC pode emitir; venda e leitura.
+
+- Regime gravado: **Simples Nacional (CRT 1)**, não é MEI, desde 01/07/2007
+- Sem trava na nuvem. Sem A1 neste PC = não monta nota
+- Botão **Conferir NF-e** no histórico da venda e na leitura
+- Monta XML modelo 55 e mostra o que falta (IE, NCM, endereço, certificado)
+- **Ainda não envia para a SEFAZ** e ainda não assina com a senha do A1
+
+GitHack: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.1`
+
+---
+
+## v5.22.0 — preparação NF-e (ainda não emite)
+
+Pedido: integrar NF-e. Usuário já tem A1. Continua usando 5.21.6 no dia a dia.
+
+- Card **Configurações → NF-e — preparação**
+- Campos: IE, regime (CRT), série, ambiente (homologação/produção)
+- Botão **Carregar A1 (.pfx)** copia o certificado para `%APPDATA%\\digicopy-erp\\certs\\nfe-a1.pfx`
+- Senha do A1 **não é salva** e **não vai para a nuvem**
+- Emissão SEFAZ ainda não ligada
+
+---
+
+## v5.21.6 — Abrir orçamento da Caixa Escolar no navegador padrão
+
+O botão **Abrir** do Buscador Escola não funcionava no `.exe` porque o Electron bloqueava janela externa. Agora abre no navegador padrão do Windows, só no site da Caixa Escolar.
+
+---
+
+## v5.21.5 — dados da loja + busca inteligente de CNPJ
+
+Onde ficam os dados da empresa:
+- Menu **Configurações**
+- Card **Dados da loja para relatórios e notinhas**
+- Salva em `db.config.loja` e na empresa única.
+
+Busca de CNPJ:
+- Na loja: botão **Buscar CNPJ** ao lado do campo.
+- No cliente: o botão **Buscar** do cadastro continua, agora com fallback ReceitaWS se a BrasilAPI falhar.
+- Preenche razão, fantasia, rua, número, bairro, cidade, UF, CEP, telefone e e-mail.  
+
+---
+
+## v5.21.4 — 1919 clientes existiam e não apareciam na tela
+
+Causa: o painel Nuvem conta `db.clientes.length`. A tela de Clientes filtrava `empresaId === sessão`. Cadastro antigo sem empresa, ou restaurado do IndexedDB depois do `seedData`, ficava invisível.
+
+- `seedData` agora preenche empresa também quando o campo está vazio.
+- Depois do IndexedDB restaurar a base, o `seedData` roda de novo.
+- A lista de clientes aceita cadastro sem `empresaId` e religa na empresa única.
+- Continua: lista só aparece ao pesquisar ou clicar **Todos**.  
+
+---
+
+## v5.21.3 — zerar nuvem e publicar este PC (evitar duplicar)
+
+Pedido: os dados deste PC devem ficar; o que está na nuvem pode ser apagado; depois publicar só este PC.
+
+- Recolocado o botão **Zerar dados da nuvem** só para Admin.
+- Dois avisos antes de apagar. A API continua exigindo aparelho admin único e a frase interna `APAGAR NUVEM`.
+- Depois do reset a sincronização fica **pausada**. Nada sobe sozinho.
+- O próximo passo é **Publicar este PC na nuvem**.
+- Os dados deste computador não são apagados. Outros aparelhos precisam estar bloqueados antes do reset.
+
+Passo a passo operacional:
+
+1. Backup neste PC (botão Backup, só Admin).
+2. Não abrir os outros PCs / celular.
+3. Nuvem → Ver aparelhos → Bloquear todos, menos este.
+4. Zerar dados da nuvem.
+5. Conferir: Clientes na nuvem = 0 e texto PAUSADA.
+6. Publicar este PC na nuvem.
+7. Esperar Clientes neste PC = Clientes na nuvem e Pendentes = 0.
+8. Só então gerar código para autorizar os outros aparelhos.
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -87,6 +958,13 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
 - Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
+- Aviso de espaço antigo só aparece se o Intes neste PC**; o antigo “Fila 100” era só o limite do lote, não o restante total.
+- API `/v1/status` retorna contagem ativa/excluída agrupada por entidade.
+- Lote por requisição reduzido de 25 para 10 para manter margem segura de subrequisições no Worker gratuito.
+- Usuário informou 1.919 clientes; a captura com 412 registros não representava conclusão. Não importar nada até as duas contagens de clientes coincidirem e pendentes chegar a zero.
+
+## v5.20.31 — armazenamento ampliado + limpeza segura dos testes
+- Confirmado em uso: `localStorage` lotou. Novo `indexeddb_persistence_patch.js` mantém snapshot completo em IndexedDB, restaura antes do sync e espelha `saveDB`/`saveDBAgora`.
 - Aviso de espaço antigo só aparece se o IndexedDB também não iniciar; o sync aguarda `DIGICOPY_DB_READY` para nunca publicar base parcial durante restauração.
 - Botão **Backup** agora visível na barra superior (antes estava preso na sidebar oculta).
 - Painel Nuvem desconectado oferece **Limpar dados de teste deste navegador** com dois avisos; remove apenas chaves DIGICOPY e IndexedDB local, não JSON baixado nem D1.
@@ -122,435 +1000,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - `npm run check` e teste de proteção de cota: OK.
 
 ## v5.20.26 — botão Teste nuvem realmente visível
-- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar`, mas o próprio layout atual esconde permanentemente `#sidebar` com `display:none!important`. Por isso o HTML/teste dizia que ele existia, porém o usuário não conseguia vê-lo.
-- O botão **Teste nuvem** foi movido para a **barra superior realmente usada pelo sistema**, imediatamente antes de **Sair**.
-- O teste automatizado agora verifica que o botão está dentro de `.modern-topnav` e que não ficou preso na sidebar oculta.
-- Cache do script atualizado para `v5.20.26`; lógica de diagnóstico e motor de sync preservados.
-- Testes: `node test_ajustes_v52025.js` e `npm run check` OK. A única falha da suíte completa continua sendo a falha antiga aceita de etiquetas.
-
-## v5.20.25 — "Teste da nuvem" de volta (sync parou em silêncio)
-- Sintoma do usuário: "não está sincronizando" após a v5.20.24. Verificado: `sync_realtime_patch.js`/`firebase_*` **intocados** desde a versão que funcionava (diff vazio) — o motor é o mesmo; falha é ambiental e agora invisível (o diagnóstico automático foi removido na v5.20.15).
-- **Recolocado o Teste da nuvem sob demanda:** botão **"☁ teste nuvem"** no rodapé do cartão do usuário (barra lateral, ao lado do relógio). Passos: **1** config Firebase → **2** login anônimo → **3** gravar → **4** ler → **5** "este aparelho já sincronizou alguma vez" + contagens locais + último backup. Mostra o **ERRO EXATO** (HTTP/código/mensagem) e a instrução: `traduzirErroSync` (403/PERMISSION_DENIED → republicar regras `match /{document=**}` com auth; 429/RESOURCE_EXHAUSTED → cota grátis estourada, reseta ~4h; 401/UNAUTHENTICATED → login anônimo desligado; Failed to fetch → sem internet/bloqueio).
-- Só gasta cota quando CLICADO (não roda sozinho). O doc de teste `__diag_ping` é apagado da nuvem logo depois e qualquer resto local (`db.diagnostico`) é removido na carga e após o teste (não polui backup).
-- **Pendência pro usuário:** clicar no ☁ no aparelho que não sincroniza e mandar o texto — provável COTA (50k leituras + 20k escritas/dia grátis; cada aparelho novo baixa a base toda 1x; reseta ~4h).
-
-## v5.20.24 — Filtro "pagar" apagado, Excluir sempre visível, backup diário automático e seedData que nunca apaga usuário seu
-
-Respostas às 4 perguntas feitas e confirmadas pelo usuário nesta sessão:
-
-### 1. Financeiro: filtro de tipo APAGADO
-- O filtro **"Receber + Pagar / Só a receber / Só a pagar"** (`neo-fin-tipo`) era o "pagar junto com o filtro" citado desde o item 2 — agora removido da tela (o Financeiro lista tudo junto, sem o seletor). O botão "Pagar" do cabeçalho (removido na v5.20.23) continua fora.
-
-### 2. Backup: excluído o botão ANTIGO das Configurações
-- Removidos do `notinha_patch.js` (renderConfig ativo): o botão "Exportar backup" do cabeçalho e o card "Backup". **Fica só o botão ⬇ da barra lateral** (ao lado do Sair), que funciona em qualquer tela.
-
-### 3. Botões de Excluir SEMPRE visíveis no topo
-- Causa de "não apareceu": na v5.20.23 os botões só surgiam **depois** de marcar a caixinha. Agora seguem o padrão já aceito (Produtos/Contratos): botão vermelho **"Excluir" fixo no topo** (Clientes: ao lado de "Novo cliente"; Financeiro: ao lado de "Receber"). Clicou sem marcar → aviso "Marque na caixinha ☐ da esquerda e clique de novo". Multi-seleção e exclusão real continuam (v5.20.23), com os DOIS avisos para cliente com histórico.
-
-### 4. Backup AUTOMÁTICO 1x ao dia (sem clicar)
-- Novo `ajustes_v52024_patch.js`: ~30s após abrir/logar, se for um dia novo, o sistema exporta o backup sozinho (mesmo formato do botão ⬇, sem o campo interno `_rt`).
-- **No programinha (.exe):** salva direto em **`%APPDATA%\digicopy-erp\backups\digicopy-backup-AAAA-MM-DD.json`** — nova ponte `backupAPI` (`main.js` `registerBackupIPC` `backup:save-daily` + `preload.js`). Sem janela e sem clique.
-- **No navegador (GitHack):** baixa o arquivo (cai em Downloads) — navegador não deixa escolher pasta.
-- Um arquivo por dia; em .exe ANTIGO (sem a ponte) cai no comportamento de download. Toast discreto confirma.
-
-### Empresa única fixa + "meus dados nunca vão deletar"
-- **Criar empresa: impossível** — desde v5.20.23 não existe mais nenhum caminho de UI/código que crie empresa nova. A empresa é UMA fixa: `emp_digicopy`.
-- **DEFEITO REAL corrigido no `seedData`:** antes ele apagava qualquer usuário com login `admin`/`carlos`/`ana`/`financeiro` — se o dono cadastrasse um funcionário "Ana", ela sumia na próxima carga. Agora só remove demo DE VERDADE (id de demo ou login demo criado pelo 'sistema'/sem dono). Usuário criado pela tela (`criadoPor` = quem criou) e legado migrado (`criadoPor: 'migracao'`) **nunca são apagados**.
-- O que pode "apagar" hoje: (a) os botões Excluir (ação sua, com avisos); (b) o sync propaga para os outros PCs só o que VOCÊ apagou (lápide) — **ausência na nuvem nunca apaga o PC**; (c) o `seedData` só mexe em empresa/usuários demo; (d) backup automático diário + botão ⬇ = rede de segurança.
-- Usuário confirmou que o **.exe sai incompleto** — combinado: **adiado** ("deixa pra quando resolvermos tudo"). A lista `build.files` já está correta no código; o instalador em si a gente gera juntos no final.
-- Etiqueta funcionando normalmente — não tocar.
-
-### Testes
-- `test_ajustes_v52024.js` (13 asserts: regra de demo antigo, 1x/dia, nome do arquivo, JSON sem `_rt`) + `test_ajustes_v52023.js` + suítes principais OK. Falha pré-existente de etiquetas continua intocada (área aceita).
-
-## v5.20.23 — Excluir em lote (Clientes/Financeiro) + backup fora das Config + UMA empresa só garantida
-
-**Reaplicados nesta branch os itens 1–4 aceitos pelo usuário** (o repo estava na v5.20.22, sem eles — tinham sido feitos em outra conversa) **e respondidas as 2 perguntas dele.**
-
-### 1. Excluir em lote — Clientes e Financeiro (de verdade)
-- Novo `ajustes_v52023_patch.js` (carregado por último, antes do sync): envolve `renderClientes` e `renderFinanceiro` e injeta **caixinha de seleção** em cada linha + caixinha "marcar todas" no cabeçalho + botão vermelho **"Excluir selecionados (N)"** (aparece só quando tem algo marcado).
-- **Exclui de verdade**: remove do banco e o sync propaga as lápides pros outros PCs sozinho.
-- **Cliente sem histórico**: 1 aviso. **Cliente COM histórico**: **DOIS avisos** (o 1º lista o que existe: "3 vendas, 1 contrato, 2 chamados…"; o 2º é o último aviso "não dá pra desfazer") e apaga **o histórico junto** — vendas/notinhas, contratos, chamados, leituras, impressoras do contrato (parque) e lançamentos financeiros ligados ao cliente. Impressora que estava "locado" só naquele contrato volta pra "disponivel".
-
-### 2. Tirado o "Pagar" do Financeiro
-- O botão **"Pagar"** do cabeçalho da tela Financeiro **foi removido** (não tem mais botão de pagar junto do cabeçalho/filtro). O de "Receber" continua. O filtro "Só a pagar" continua pra **ver** os lançamentos antigos; só não cria mais por ali. Se ainda usa contas a pagar, avisar que volta.
-
-### 4. Backup fora das Configurações
-- Botão de **exportar backup (⬇)** adicionado no **cartão do usuário na barra lateral** (ao lado do botão Sair), visível em TODAS as telas. O de Configurações continua existindo.
-
-### 5. Pendente (combinado: só quando o usuário mandar)
-- Botão **"Importar clientes" continua na tela Clientes**. Remover DEPOIS que ele terminar de importar os dados dele — é a instrução pendente pro próximo chat.
-
-### Pergunta 1 — "tem alguma coisa que cria mais de uma empresa?"
-**Tinha, e foi achada e removida de verdade.** A tela **"Empresas (PDF)"** (menu lateral, do `evolucao_patch.js`) tinha o botão **"+ Nova empresa"** que salvava uma empresa DE VERDADE no banco (`db.empresas`) com **id aleatório** e ainda criava um usuário demo `admin/admin123`. Era isso que podia criar 2ª empresa. Removidos de verdade: a tela, o item de menu, o `openModalEmpresa`/`saveNovaEmpresa` (app.js) e o fallback do `doLoginCNPJ` que também podia criar empresa (`gen('emp')`).
-- **Garantias de empresa única que já existiam e continuam:** `seedData` roda em toda carga e devolve o banco pra UMA empresa (`emp_digicopy`), apaga empresas extras e normaliza o `empresaId` de TODOS os dados pra ela; o sync faz o mesmo na hora de enviar/receber (`normalizarEmpresa`). Ou seja: **todos os usuários/PCs veem os mesmos dados**, independente de quem cadastrou.
-- Dados da empresa que vão na notinha se editam em **Configurações → "Dados da loja"** (não precisava da tela removida).
-
-### Pergunta 2 — "mais alguma outra coisa que é defeito?" (achados e correções)
-- **`npm test` estava quebrado**: a cadeia apontava pra `test_login_buscador_ui_final.js`, que **não existe no repo**. Trocado pelo novo `test_ajustes_v52023.js` (16 asserts, passando). Resta 1 falha PRÉ-EXISTENTE e intocada: `test_cartuchos_etiquetas_config.js` ("capacidade padrão é máxima compacta na folha") — já falhava antes, é da área de etiquetas (aceita/fechada), não mexer sem pedido.
-- **`build.files` do Electron desatualizado**: faltavam TODOS os patches modernos (v5.17+) e o `sync_realtime_patch.js` — o `.exe` sairia incompleto. Agora a lista é gerada dos `<script>` do `index.html`. Idem `check`.
-- **`confirmarExcluirModulo` usava `confirm()` nativo** (quebrado → botão não fazia nada): migrado pra `confirmSistema`.
-- Código morto legado que já era inacessível e continua sem ponto de entrada (não atrapalha; remoção total = refactor futuro): `renderBanco`, `renderMigrados`, `renderRelatorios`, deletes antigos individuais do app.js (substituídos pelos novos em lote).
-
-- Testes: `node --check` em tudo OK; suítes principais OK (inclui `test_finalizacao_sistema` e a nova `test_ajustes_v52023`).
-- Cache-bust: `app.js`/`evolucao_patch.js`/novo patch sobem com `?v=5.20.23` no index.html.
-
-## v5.20.22 — Botão "Importar clientes" recolocado (p/ testar o sync)
-- O botão de importar tinha sido removido a pedido do usuário ("tira as opções de importar"), mas ele precisa dele p/ testar a sincronização dos clientes. Recolocado no cabeçalho da tela Clientes (`finalizacao_sistema_patch.js`) com `<input type=file id=clientes-json-input>` + status.
-- `importarClientesJsonFinal` recriado, usando a função pura `SISTEMA_CLIENTES_LOJA_PURE.importarClientesDeObjetos` (que continuou existindo no `sistema_clientes_loja_patch.js`).
-
-## v5.20.21 — Sync: clientes NÃO apareciam (causa = empresaId antigo)
-- **Sync confirmado funcionando pelo usuário** (PC + celular). MAS só os clientes não apareciam.
-- **Causa raiz:** os clientes importados numa sessão antiga ficaram com `empresaId` ALEATÓRIO (a versão antiga gerava id de empresa aleatório). As telas filtram por `empresaId === emp_digicopy`, então eles entravam na base mas ficavam INVISÍVEIS.
-- **Correção:** `normalizarEmpresa(rec)` no `sync_realtime_patch.js` força `empresaId = emp_digicopy` tanto no PULL (aplicarRemoto) quanto no PUSH (pushMudancas). E o `seedData` (app.js) normaliza o `empresaId` de todos os dados de negócio na carga.
-- Observação: usuários/empresa "sincronizados" no teste eram na verdade criados pelo `seedData` local (não provavam sync); o teste real de sync é justamente os clientes — que agora devem aparecer.
-
-## v5.20.20 — Botão de excluir TÉCNICO (qualquer usuário pode)
-- Novo `window.excluirTecnico(id)` no `ajustes_v5196_patch.js`: **qualquer usuário logado** pode excluir um técnico (técnico é só um nome de lista p/ chamados/vendas, não é conta de acesso). Confirma com `confirmSistema`, loga e propaga via saveDB.
-- Botão "🗑" adicionado na linha dos técnicos na tela Usuários (ao lado do lápis).
-- Regras dos USUÁRIOS continuam: excluir usuário só Admin/Dono (e nunca a si mesmo).
-
-## v5.20.19 — Botão de excluir usuário (só Admin/Dono)
-- Novo `window.excluirUsuario(id)` no `ajustes_v5196_patch.js`: só Admin (Kauan) e Dono (Denivaldo) podem excluir; **não exclui a si mesmo**; **não exclui o último Admin/Dono**; confirma com `confirmSistema`; loga em auditoria e propaga via sync (saveDB).
-- Botão "🗑" (lixeira) na coluna Ações da tela Usuários, visível **apenas para Admin/Dono**, e nunca na própria linha.
-
-## v5.20.18 — seedData AUTORITATIVO (kauan/denivaldo sempre certos)
-- Causa raiz do "não aparece": o seedData anterior SÓ adicionava kauan/denivaldo se faltassem; no localStorage antigo (GitHack) podia existir um "kauan" com senha errada/órfão, e aí não corrigia (senha errada → não loga; empresaId errado → não lista na tela de Usuários).
-- Agora o seedData **corrige sempre**: força kauan/6132/Admin e denivaldo/3232/Dono (id, empresaId, senha, perfil, nome, ativo), mantém UMA empresa só (`emp_digicopy`), remove usuários demo (admin/carlos/ana/financeiro + `usr_admin`) e aponta qualquer usuário órfão pra empresa real.
-- Ainda: se o usuário trocar a senha do kauan/denivaldo no futuro pela tela, o seed volta a 6132/3232 na próxima carga (comportamento intencional por agora — são credenciais fixas do dono; se quiser trocar de vez, me avisa).
-
-## v5.20.17 — Logins REAIS garantidos (kauan Admin / denivaldo Dono)
-- **Usuários reais viram o padrão** (não mais admin/admin123):
-  - `kauan` / `6132` → perfil **Admin**
-  - `denivaldo` / `3232` → perfil **Dono**
-- `seedData` garante esses dois (idempotente) e **remove o antigo `admin/admin123`** (id `usr_admin`) quando o kauan existe — nunca fica sem acesso.
-- Fallback do `login_dados_automaticos_patch.js` (`importarFuncionariosLegados`) trocado de admin/admin123 → kauan/6132.
-- A hierarquia (`perfilEfetivo` em ajustes_v5196) já tratava kauan=Admin e denivaldo=Dono por nome de login, então está coerente.
-- IMPORTANTE p/ o usuário: os dados dos clientes que ele importou continuam na nuvem; os outros usuários (carlos/ana/financeiro da demo) não voltam — só kauan e denivaldo são garantidos. Se quiser mais usuários (funcionários), cria na tela Usuários.
-
-## v5.20.16 — Login se AUTO-RECRIA (nunca mais some)
-- Causa raiz: o botão "Limpar todos os dados" (já removido) apagou empresa/usuários, e a auto-recriação antiga (`seedData`) só rodava quando a lista de empresas estava TOTALMENTE vazia — se sobrasse uma empresa "quebrada" (sem usuário ativo), não corrigia.
-- Correção: `seedData` virou uma **garantia idempotente** que roda em TODA carga: garante a empresa `emp_digicopy` + o admin `admin`/`admin123` (só ADICIONA o que falta, nunca sobrescreve usuário/empresa existente). Chamado com `seedData(false)` sempre (antes era só `if(db.empresas.length===0)`).
-- **Usuários com senha personalizada (kauan/denivaldo) NÃO são recriados automaticamente** (o sistema não sabe as senhas) — o usuário recria na tela Usuários, ou me passa as senhas que eu adiciono.
-
-## v5.20.15 — Sistema limpo p/ teste final (removidas opções de teste/importar/apagar)
-- **Removido o "Simular coleta automática"** (botão na tela Leituras + função `simularLeiturasLote`).
-- **Removido o diagnóstico "Teste da nuvem"** (`__syncDiagnostico`, `__syncDiagnosticoAlert`, `diagnosticoInicial`, `mostrarDiagNaTela`, `errTexto`/`setErr`/`ultimoErro`) do `sync_realtime_patch.js`. O sync segue funcionando em silêncio.
-- **Removido o "Importar clientes"** (botão no `finalizacao_sistema_patch.js` + injeção `inserirImportadorClientes`/`importarClientesJsonFinal` no `sistema_clientes_loja_patch.js`). As funções puras `importarClientesDeObjetos`/`mapClienteRow` permanecem como código morto (reutilizáveis), sem UI.
-- **Removido o "Limpar todos os dados"** (botão no `notinha_patch.js` + arquivo `limpeza_dados_patch.js` DELETADO e sua `<script>` removida do index.html).
-- **Mantido:** "Exportar backup" (Configurações) e "Gerar faturas pendentes" (Leituras) — são funcionalidades reais, não teste.
-- Objetivo: versão limpa para o teste de sincronização de amanhã, sem botões de teste/importação/limpeza.
-
-## v5.20.14 — Importador de clientes visível na tela FINAL de Clientes
-- Causa raiz (igual ao botão de backup): o `finalizacao_sistema_patch.js` (último a carregar) SOBRESCREVE `renderClientes` inteiro, matando o card "Importar clientes" do `sistema_clientes_loja_patch.js` (que rodava antes e era substituído).
-- Correção: botão **"Importar clientes"** adicionado direto no cabeçalho (`neo-actions`) da tela final de Clientes, com `<input type=file id=clientes-json-input>` escondido e status `#clientes-import-status`.
-- `importarClientesJsonFinal` agora mostra o resultado num `lfbAlert` (importados/atualizados/ignorados + total). Lê `CLIENTES.json`/`CLIENTES_FINAL.json` e ignora `CLIENTES_USUARIOS*`.
-
-## v5.20.13 — Botão "Exportar backup" agora VISÍVEL de verdade
-- Causa raiz: havia **duas telas de Configurações** brigando. O `app.js` montava uma com o card "Backup" ("Exportar backup JSON"), mas o `notinha_patch.js` SOBRESCREVIA essa tela inteira com outra (que só tinha "Exportar backup local" pequeno no meio de um card). Por isso o botão que prometi "voltar" nunca aparecia.
-- Correção: no `notinha_patch.js` (renderConfig ATIVO), os botões agora ficam no CABEÇALHO da tela: **"Exportar backup"** + **"Limpar todos os dados"** + "Salvar" — impossíveis de não ver.
-- O `limpeza_dados_patch.js` continua com a injeção antiga (h4 "backup") só como fallback, mas agora o botão de limpar já está direto no renderConfig ativo.
-
-## v5.20.12 — Deletado de vez TODOS os itens escondidos do menu
-- **Removidos direto no `index.html` (fonte), não mais escondidos:** submenu "Início" (Área inicial / Pesquisa rápida), "Notinhas antigas", "Novo orçamento", "Explorar Migrados", "Nova despesa" (duplicada), "Relatórios" (stub).
-- **Removido o código que ESCONDIA:** `removerElementosFinais()` (finalizacao_sistema_patch) e o CSS `display:none` de menu (`.modern-topnav .module:first-child .module-menu`, e o `instalarCssMenuLimpo`/`garantirBotaoDadosMigrados` em correcoes_uso_diario). `limparTopoMenus` neutralizado (não há mais o que limpar).
-- **Efeito colateral bom:** o botão "Exportar backup JSON" (Configurações) volta a aparecer — o regex antigo de "backup" o escondia por engano.
-- **Restam como código MORTO (sem ponto de entrada na UI, não aparecem):** `renderRelatorios`/`gerarRelatorio`, `renderMigrados`/`abrirNotinhasAntigas`, `renderBanco` + handlers Firebird. Não interferem; remoção total deles fica pra um refactor futuro se quiser.
-- **Aviso do GitHack (banner "endereço PROVISÓRIO", `rawgh-banner`)** continua existindo em `app.js` (só aparece em raw.githack.com) — é aviso útil, não menu escondido; perguntar se quer remover.
-
-## v5.20.11 — Deletado de VERDADE (não escondido): logo + "Importar arquivos"
-- **Upload de "Logo da loja" REMOVIDO de verdade.** O `ajustes_v5188_patch.js` injetava o upload de logo no card "Dados da loja", e o `ajustes_v5189_patch.js` apenas o ESCONDIA via `removerUploadLogo()` (DOM). Agora o upload foi apagado da fonte (`ajustes_v5188_patch.js` só reaplica a logo padrão; `ajustes_v5189_patch.js` sem o hack de remover).
-- **"Importar arquivos" REMOVIDO de verdade** (menu Configurações → Importar arquivos, que navegava pra view `banco` com upload JSON/DBeaver/Firebird): apagado o botão do menu (`index.html`), a `<section id="view-banco">`, e o branch `if(view==='banco')` do `navigateTo` (`app.js`). A função `renderBanco` + handlers viraram código morto (inacessível).
-- **Fica honesto p/ o usuário:** ainda existem itens ESCONDIDOS via `removerElementosFinais()` em `finalizacao_sistema_patch.js` (regex): "Relatórios" (no submenu Config), "Explorar Migrados"/módulos dinâmicos (`mod_*`), "Notinhas antigas", "nova despesa", "contas a pagar", "sistema virgem", "alinhamento do banco", "exportar backup". E o código morto de migração (renderBanco/Firebird) segue no fonte. Perguntar o que remover de vez.
-
-## v5.20.10 — "Começar do zero" seguro + importador de clientes reativado
-- **Novo `limpeza_dados_patch.js`:** botão "🗑️ Limpar todos os dados" no card Backup das Configurações. É **manual** (só roda ao clicar, NUNCA automático — não repete o bug do "sistema virgem" que apagava a cada atualização). Pedido em 2 confirmações (`confirmSistema`).
-- A limpeza: (1) limpa a **nuvem** (`__syncLimparNuvem` apaga a coleção `erp_rt`), (2) zera a empresa p/ id fixo `emp_digicopy` + mantém usuários reais (remove só `carlos`/`ana`/`financeiro` da demo, garante `admin`), (3) zera clientes/produtos/vendas/os/financeiro/tecnicos/modulosDinamicos/config/buscador, (4) limpa o estado do sync, (5) salva e recarrega.
-- **`sync_realtime_patch.js`:** adicionado `rtListAll()` + `window.__syncLimparNuvem()` (lista e apaga todos os docs de `erp_rt` em lotes de 200).
-- **Importador de clientes REATIVADO:** o card "Importar clientes reais" (em `sistema_clientes_loja_patch.js`, função `importarClientesJsonFinal`) estava sendo REMOVIDO pelo `finalizacao_sistema_patch.js` (estava na lista `['...','clientes-import-card']`). Removido da lista → o card volta a aparecer na aba Clientes, e lê `CLIENTES.json`/`CLIENTES_FINAL.json` (ignora `CLIENTES_USUARIOS*`).
-- Fluxo pro usuário: baixar → limpar tudo → importar CLIENTES.json na aba Clientes → os clientes sincronizam entre os 5 PCs.
-
-## v5.20.9 — Removida a DEMONSTRAÇÃO (dados fake) + login simples sem CNPJ
-- **`seedData` em `app.js` não cria mais os dados fake** (empresa CNPJ 12.345.678/0001-90, 6 clientes de mentira, produtos, equipamentos, contratos, leituras, OS, vendas, contas + usuários carlos/ana/financeiro). Agora só garante **empresa única + admin** (`emp_digicopy` / `usr_admin`, login `admin`/`admin123`).
-- **Login já era sem CNPJ** (o patch `login_dados_automaticos` escondia/removia a etapa de CNPJ) — mantido.
-- **Ids fixos** pra empresa única e admin: `escolherEmpresaPadrao` e o fallback de admin do `login_dados_automaticos_patch.js` agora usam `emp_digicopy`/`usr_admin` (antes eram aleatórios → cada PC criava empresa diferente e duplicava na nuvem).
-- **`defaultData.config.empresa`** limpo (sem CNPJ/telefone/email fake).
-- **Sync:** removida a lógica `ehDemo()`/`limparDemo()` (conceito de demo acabou — nada mais bloqueia a sincronização). Adicionado **pull-primeiro** em PC novo (`!state.cursor`) pra não sobrescrever a empresa real com a empresa vazia recém-criada.
-- Teste atualizado (23 ok, sem a seção de demo).
-- **Importante p/ o usuário:** os dados antigos (demo + clientes) que já estão no `localStorage` do PC dele continuam lá — não são apagados sozinhos. Pra começar limpo, ele precisa limpar o localStorage (ou eu faço uma limpeza dos registros fake conhecidos, se ele pedir).
-
-## v5.20.8 — Causa raiz de "clientes não vão pra nuvem"
-- **Bug 1 (retry):** quando um envio falhava (ex.: cota 429), o `catch` engolia o erro e o `tick` só empurrava se `__dirty || !state.cursor`. Depois do 1º cursor setado, um envio falho **nunca era re-tentado** → o cliente ficava preso no PC. Corrigido: `pushMudancas` agora retorna `falhou`, e o `tick` **sempre tenta** empurrar (idempotente — só grava o que difere do snapshot), re-tentando o que falhou.
-- **Bug 2 (poluição de demo):** os dados de demonstração (empresa fake + 6 clientes de mentira) estavam sendo **enviados pra nuvem**. Agora, se `ehDemo()` e a nuvem está vazia, o sistema **NÃO envia** a demo (só aguarda um PC real publicar). Demo nunca mais vai pra nuvem.
-- **Pendente:** confirmar com o usuário se os clientes que ele quer salvar estão cadastrados na **empresa real (CNPJ dele)** ou na **demo (admin/admin123)** — porque só dados da empresa real sincronizam (a demo é local, por design).
-
-## v5.20.7 — Removidos os botões legados de nuvem (Enviar/Carregar)
-- **Deletado o painel morto "Migração e nuvem"** do `sync_client.js`: `cloudMigrationHtml()`, `openCloudMigration()`, `nuvemInfo()`, `copiarRegrasFirebase()`, `verificarBaseNaNuvem()` e os wrappers `enviarDadosLocaisParaNuvem`/`carregarDadosDaNuvem` (que ficavam só no código, sem aparecer na tela). Os botões "Enviar base de teste"/"Carregar base teste"/"Testar conexão" etc. não existem mais.
-- **Botão de cartuchos/etiquetas** "Atualizar e enviar nuvem" → **"Atualizar"** (a nuvem agora é automática; aquele botão não envia mais manualmente).
-- O motor legado `syncEnviarParaNuvem`/`syncCarregarDaNuvem` (full-replace, coleção `app_state`) segue no código mas **inerte** (nenhum botão chama) — remoção total dele fica pra uma limpeza futura, pois `interface_patch`, `ajustes_v5191`, `ajustes_v5186`, `performance_patch` e `login_dados_automaticos` ainda o referenciam na ordem de carga.
-- **Ainda pendente (perguntar):** remover a área "Importar arquivos" (menu Configurações → Importar arquivos → JSON/DBeaver) e o botão "Exportar JSON atual". O backup continua disponível em Configurações → "Exportar backup JSON".
-
-## v5.20.6 — Revisão de robustez + limpeza (enquanto aguarda a cota)
-- **`_rt` não vaza mais no backup:** `exportBackup()` filtra o campo interno de sincronização (`_rt`) via `JSON.parse/stringify` com replacer.
-- **Sync antigo (full-replace, coleção `app_state`) removido de 2 lugares que disparavam à toa** (gastava cota): `buscador_escola_patch.js` (após baixar orçamentos) e `cartuchos_etiquetas_config_patch.js` (`atualizarEEnviarNuvem`). O sync novo já envia tudo no `saveDB`.
-- **Arquivos mortos deletados:** `recuperar_dados.html` e `ler_chaves_leveldb.js` (eram da migração de `.ldb`, que o usuário descartou).
-- Pendências que dependem de decisão do usuário: (a) dados do Buscador Escola (`escolaOrc/escolaIt/escolaExc`) NÃO entram no sync novo — **DECIDIDO: manter local por PC (opção b)** — cada PC baixa da NAEN direto (custa ZERO de cota no Firebase e o dado fica sempre fresco). Sem mudança de código; (b) remover de vez os botões legados "Enviar/Carregar da nuvem" e a área importar/exportar JSON — ainda pendente.
-
-## v5.20.5 — Sync por tela (sem poll, só quando há novidade naquela parte)
-- Usuário pediu: atualizar **só ao navegar de tela** (clicar no menu), e **só redesenhar se houver algo novo naquela tela específica**. 5 PCs previstos.
-- **Removido o `setInterval` (poll)** de vez — nada de consultar em segundo plano (economiza cota, acaba o piscar).
-- Ao `navigateTo(view)`: renderiza com os dados atuais → puxa o que mudou (`pullMudancas` agora retorna um **Set de entidades** mudadas) → re-renderiza a view **só se** `viewRelevante(view, mudou)`.
-- `VIEW_ENTS` mapeia view→entidades (clientes→clientes, vendas→vendas, financeiro→contasReceber+contasPagar, etc.). Views sem mapeamento (dashboard, relatorios, auditoria) recarregam se QUALQUER coisa mudou.
-- `visibilitychange`/`focus` fazem só um pull silencioso (mantém `db` em dia), sem redesenhar.
-- Push continua disparando no `saveDB` (agendaPush). Bootstrap continua uma vez no load.
-- Teste atualizado: 26 asserts (inclui `viewRelevante`).
-
-## v5.20.4 — Corta o consumo de cota do Firebase (era o que estourava)
-- Erro `RESOURCE_EXHAUSTED / Quota exceeded` (HTTP 429): o poll de **1,5s** estourava a cota grátis (~50k leituras/dia) do Firestore. "Gravar" já funcionava (regras OK).
-- Correções: poll de fundo **1,5s → 6s**; ao voltar pra aba/foco (`visibilitychange`/`focus`) faz **pull imediato + redesenho** (sensação instantânea sem consultar o tempo todo); **removido o diagnóstico automático** no startup (escrevia/lia doc de teste a cada load — era on-demand só).
-- Cota grátis reseta todo dia (meia-noite horário do Pacífico ≈ 4h da manhã no Brasil). Se precisar de mais, opção: plano Blaze (pay-as-you-go, com franquia generosa).
-
-## v5.20.3 — Para o "piscar" da tela
-- A tela ficava se redesenhando a cada ~1,5s (o `refreshUI` chamava `navigateTo` a cada pull). Agora o sync continua **em background** (dados sempre atualizados + `saveDB`), mas a UI **só redesenha** quando: (a) o usuário navega pra outra view e volta, (b) a aba do navegador volta a ficar visível (`visibilitychange`) ou (c) a janela recupera o foco (`focus`).
-- Flag `__mudouUI` marca que há mudança pendente; o render acontece sob demanda, sem piscar.
-
-## v5.20.2 — Causa raiz do sync encontrada (2 bugs)
-- Diagnóstico do usuário revelou:
-  1. **`INVALID_ARGUMENT: Document name lacks "projects"`** — `rtWrite` mandava a URL completa no campo `name` do write. Corrigido: agora usa caminho de recurso (`RES = projects/{proj}/databases/(default)/documents`), não a URL.
-  2. **`HTTP 403` no runQuery** — as regras do Firestore só liberavam `/app_state/{doc}`. A coleção nova `erp_rt` ficava de fora. Corrigido: `copiarRegrasFirebase()` agora gera `match /{document=**}` (libera tudo, exigindo auth). **Usuário precisa republicar as regras** no console (clicar "Copiar regras Firebase" no sistema → colar em Firestore → Regras → Publicar).
-
-## v5.20.1 — Diagnóstico da nuvem (encontrar o erro exato)
-- Usuário relatou que o sync NÃO funciona em nenhum ambiente (Electron, navegador, celular). Causa mais provável = config do Firebase (regras/auth), não o código.
-- Adicionado `window.__syncDiagnostico()` (e `__syncDiagnosticoAlert()`): testa passo a passo **config → login anônimo (chamada crua, com o erro exato do Firebase) → gravar doc → ler → listar** e mostra tudo num `lfbAlert`. Roda sozinho ~1,2s após iniciar e avisa se algo falhar.
-- `rtFetch` agora lança o erro com `code`/`status`/`message`/`body` (resposta crua do Firebase) e o loop guarda `ultimoErro`.
-- Pendência: usuário rodar e colar o texto do alerta "Teste da nuvem" pra eu ver o erro exato.
-
-## v5.20.0 — Sincronização AUTOMÁTICA com MESCLAGEM (novo motor)
-- Novo `sync_realtime_patch.js` (carregado por último no `index.html`), coleção Firestore `erp_rt` (1 doc por registro), SEPARADA do `app_state` antigo.
-- **Automático** (sem botão): sobe local em ~450ms após salvar; puxa remoto a cada ~1,5s (loop com `ocupado` + `__dirty` p/ não diffs vazios).
-- **Junta, não substitui**: mescla por `id` do registro. Dois PCs cadastrando ao mesmo tempo → os DOIS aparecem. Edição do MESMO registro → ganha a hora do SERVIDOR (campo `ts` via `setToServerValue:REQUEST_TIME`, nunca o relógio do PC). Exclusão propaga via lápide (`t:true`).
-- `tsKey()` normaliza fração p/ 9 dígitos (nanossegundos) e compara como string — corrige o bug de `Date.parse` truncar milissegundos.
-- Auth anônima reaproveita a chave `digicopy_firebase_auth_v1` (não cria token novo).
-- **Bootstrap PC novo (demo):** se `ehDemo()` (única empresa = CNPJ 12.345.678/0001-90) e a nuvem TEM dados → `limparDemo()` + pull + `location.reload()` 1x (pra tela de login mostrar a empresa real).
-- Desliga o auto-carregar ANTIGO (`sessionStorage.setItem('digicopy_auto_load_try_v4939','1')`) pra não conflitar.
-- `saveDB` e `navigateTo` são embrulhados (push rápido + re-render da view atual; não re-renderiza se usuário digitando ou sem login).
-- Entidades array: empresas, usuarios, clientes, produtos, equipamentos, contratos, parque, leituras, os, vendas, contasReceber, contasPagar, tecnicos, notificacoes. Objetos: config, modulosDinamicos. `logs` fica local (auditoria por PC).
-- Teste puro `test_sync_realtime.js` (21 asserts): mescla A+B, last-write-wins, lápide, config, demo, tsKey fracionário.
-- **Ainda NÃO testado com 2 PCs reais.** Os botões antigos "Enviar/Carregar da nuvem" (full-replace, coleção `app_state`) continuam como fallback legado — provável remoção depois.
-- **Importante:** precisa do Firestore com regras `allow read, write: if request.auth != null` + login Anônimo ativo (o que o usuário já fez = não expira em 30 dias).
-
-## Diagnóstico de migração (após v5.19.25 — ainda não resolvido)
-- v5.19.25 NÃO trouxe os dados: as chaves legadas chutadas (`digicopy_erp_v20`/`v10`/`digicopy_erp`/`digicopy_backup`) estão erradas. **Causa raiz: não sabemos o nome real da chave** que a versão antiga usava.
-- Novo arquivo `ler_chaves_leveldb.js`: lê os `.ldb/.log/.old` e lista os textos (nomes de chave) em texto puro (os VALUES ficam comprimidos em Snappy, mas as CHAVES são texto puro). Usuário roda `node ler_chaves_leveldb.js "C:\Users\User\AppData\Roaming\digicopy-erp\Local Storage\leveldb"` e cola a saída.
-- Assim que soubermos o nome exato da chave, `loadDB` lê `localStorage.getItem(chave)` (o Chromium descomprime sozinho) e migra. Commit `133cc2e`.
-- DevTools está DESLIGADO no `main.js:28` (`closeDevTools`), por isso o diagnóstico é por script Node, não por console.
-
-## v5.19.25
-- **Recuperação de dados antigos (salvos localmente):** o `loadDB` agora também lê as chaves LEGADAS (`digicopy_erp_v20`, `digicopy_erp_v10`, `digicopy_erp`, `digicopy_backup`) que a versão antiga usava e a atual estava apagando sem ler. Com os arquivos `.ldb` antigos na pasta certa, os dados voltam sozinhos.
-
-## v5.19.24
-- **Chamados — validação em UM aviso só:** agora junta tudo que falta num único aviso ("Preencha o que falta: X, Y, Z"). O que já foi preenchido sai do aviso. Campos que faltam ficam destacados em vermelho (igual produtos). Inclui também a "Data de atendimento" ao finalizar (que a validação antiga exigia).
-
-## v5.19.23
-- **Chamados — duplicação de tudo (causa raiz):**
-  - `ajustes_pos_final_patch.js` tinha uma função antiga (`destacarChamadoModal`) que adicionava faixa azul SEM esconder o título → nomes duplicados. Desativada (as faixas agora ficam só no `ajustes_v5186`).
-  - `locacao_chamados_fix_patch.js` injetava "Contador Color" e "Produtos/peças" no chamado avulso, colidindo com o `ajustes_v5175` → duplicação. Desativado no avulso.
-  - Corrigido o guard do `ajustes_v5175` (antes usava um id que nunca existia, permitindo injetar de novo).
-
-## v5.19.22
-- **Chamados — duplicação do contador/color (causa raiz):** três patches antigos (v5171, v5172, v5174) injetavam o bloco "Contador Color" de novo por cima do bloco que o v5175 já cria. Removidas essas injeções na origem — agora só o v5175 desenha contador preto + color (uma vez só).
-
-## v5.19.21
-- **Chamados** — corrigida a duplicação de nomes nas seções: a faixa azul agora SUBSTITUI o título original (que é escondido), em vez de ficar o nome repetido (faixa + título).
-
-## v5.19.20
-- **Chamados (validação obrigatória):**
-  - Ao salvar: exige motivo/defeito, modelo e serial (e cliente no chamado fora de contrato).
-  - A validação de contador ao finalizar NÃO foi duplicada (já existia em `validarFinalizar`).
-- Arquivo novo: `ajustes_v51920_patch.js`.
-
-## v5.19.19
-- **3** — Botão "Excluir" de contratos agora fica ao lado de "Novo contrato" (na tela correta).
-- **4** — Chamados: removida a caixa de seleção duplicada (reusa a que já existia para "finalizar selecionados").
-- **5** — Produtos: adicionado botão "Mostrar todos".
-
-## v5.19.18
-- **1** — Removida a caixa "Busca geral" + lupa do topo.
-- **3** — Botão "Excluir" de contratos agora fica junto do "Novo contrato" (não isolado).
-- **4** — Chamados (fora de contrato): adicionado botão "Excluir" com seleção múltipla.
-- **5** — Produtos: por padrão não lista nada (só ao pesquisar).
-- **6** — Removido o botão "Entrada estoque".
-- **7** — Adicionado botão "Estoque baixo" (mostra produtos abaixo do mínimo).
-
-## v5.19.17
-- **Excluir produto/contrato** — botão "Excluir" ÚNICO no topo (ao lado de "Novo"), com seleção múltipla. Removidas as lixeiras individuais de cada linha.
-
-## v5.19.16
-- **Venda faturada** — agora abre na tela PRINCIPAL (cadastro), travada (readonly), em vez da tela de histórico.
-- **Excluir produto** — corrigido (o `confirm()` nativo estava quebrado) + seleção múltipla (checkbox + botão "Excluir" igual vendas).
-- **Excluir contrato** — corrigido + seleção múltipla (igual vendas).
-- Arquivo novo: `ajustes_v51916_patch.js`.
-
-## v5.19.15
-- **Buscador Escola — correção do botão Excluir**: a função local `uid()` tinha o mesmo nome da global e entrava em loop infinito ao gerar o id da exclusão (travava o botão). Corrigido para usar `window.uid`.
-
-## v5.19.14
-- **Buscador Escola — Excluir/Restaurar**:
-  - Excluir agora pede confirmação ("Deseja realmente excluir?") e depois um campo para escrever o **motivo** (sem usar `prompt`, que não funciona no Electron).
-  - Restaurar pede confirmação ("Deseja voltar?").
-  - Limpeza automática: orçamento excluído que sair da NAEN some sozinho da aba Excluídos.
-
-## v5.19.13
-- **Buscador Escola** — orçamento com vários itens pesquisados aparece em UM cartão só (itens listados juntos). Sem resultados, mostra "Nada encontrado para ...".
-
-## v5.19.12
-- **Buscador Escola** — tela não pisca mais durante a sincronização: o log acumula sem redesenhar; a contagem (orçamentos + itens) só é mostrada no final, quando o processo termina.
-
-## v5.19.11
-- **Buscador Escola — Atualizar agora é incremental**: o botão "Atualizar" (e o automático de 1h) só baixa os itens dos orçamentos **novos**; os já baixados são pulados (economiza muito tempo). "Baixar Tudo" continua limpando e baixando tudo. Progresso mais claro ("Página X", "Baixando itens do orçamento Y").
-
-## v5.19.10
-- **Buscador Escola** — credenciais (CNPJ + senha) mantidas no código (usuário vai deixar o repositório privado). Removido o botão "Login API" adicionado temporariamente.
-
-## v5.19.9
-- **Segurança (Buscador Escola)** — senha da Caixa Escolar removida do código-fonte. Adicionado botão "Login API" onde o CNPJ + senha são digitados uma vez e salvos no banco (local + nuvem), não no código.
-
-## v5.19.8
-- **Auditoria** — corrigido: antes escondia para TODO MUNDO (o ocultamento "grudava"). Agora alterna corretamente (mostra para Admin/Dono, esconde para os demais) e não age antes do login.
-- **Senha CNPJ deletada de verdade** (não só ocultada) do app.js: título do modal "Novo usuário", campo de senha CNPJ, validação no saveUsuario e textos "Como funciona" da tela de usuários.
-
-## v5.19.7
-- **Auditoria** — agora só **Admin** e **Dono** veem a auditoria. Para os demais, o item some do menu lateral e do submenu Configurações, e a navegação é bloqueada.
-- Arquivo novo: `ajustes_v5197_patch.js`.
-
-## v5.19.6
-- **Usuários e permissões** (hierarquia):
-  - **0** — Removida toda a exigência de "senha CNPJ" na criação/edição de usuário.
-  - **1/2** — Cada um edita só o próprio usuário. Editar os outros: só **Admin (Kauan)** e **Dono (Denivaldo)**.
-  - **3** — Ao criar, perfil é sempre **Funcionário** (Admin/Dono ocultos). Troca de perfil só aparece para Admin/Dono editando outro usuário.
-  - **4** — "Cadastrar para escolher em vendas/chamados" virou **"Novo técnico"** (só nome). Técnicos aparecem na listagem junto com usuários, com menos info e editar só o nome.
-  - **5** — Quem não tem permissão não vê o botão de editar.
-  - **6** — Campos abertos de "técnico" (chamados e vendas) viraram lista de seleção com os técnicos criados.
-- Perfis agora: **Admin**, **Dono**, **Funcionário** (Comercial/Financeiro/Técnico passam a ser Funcionário).
-- Arquivo novo: `ajustes_v5196_patch.js`.
-
-## v5.19.5
-- **Menu Cadastros** — Removido o item "Usuários" duplicado do submenu "Cadastros" (o acesso correto continua em Configurações → "Usuários e permissões").
-
-## v5.19.4
-- **Aba Clientes:** filtro **"Nome"** pré-selecionado por padrão (sem disparar a listagem — continua vazio até pesquisar ou clicar em "Todos").
-
-## v5.19.3
-- **Aba Clientes:**
-  - **1** — "Tudo" saiu da caixa (select) e virou botão **"Todos"** separado (igual leituras/chamados), que lista todos os clientes.
-  - **2** — Padrão continua sem listar nada; só aparece cliente ao pesquisar ou clicar em "Todos".
-  - **3** — Ordenação padrão por **código crescente** (do primeiro ao último).
-  - **4** — Ao alterar um cliente, se modificar qualquer informação e sair (Cancelar/X/fora/ESC), aparece "Deseja salvar as alterações antes de sair?" — só se realmente mudou algo.
-- Arquivo novo: `ajustes_v5193_patch.js` + edição em `finalizacao_sistema_patch.js`.
-
-## v5.19.2
-- **Corrigido de vez o "Informe o motivo do chamado"** ao salvar/sair: a causa era que o formulário do chamado usa campos de um nome (`ko-*`/`ca-*`) e o salvar lia outro (`kr-os-*`), então achava o motivo vazio mesmo com texto. Agora, antes de salvar, o que está digitado é copiado para os campos que o salvar lê (motivo, modelo, patrimônio, serial, local, contadores, serviços, observação, técnico, impressora e "finalizado?").
-- Arquivo novo: `ajustes_v5192_patch.js`.
-
-## v5.19.1
-- **Otimização / correção de interferência:**
-  - Corrigido o bug da sincronização manual: "Enviar para nuvem" e "Carregar da nuvem" cancelavam sem fazer nada porque `window.confirm` foi desativado pelo sistema de popups (retorna false). Agora usam `confirmSistema` (assíncrono).
-  - Logo padrão (logo.png) reaplicada por segurança após o carregamento (evita qualquer sobrescrita por logo customizada antiga).
-  - Guard de performance nos observadores: não fazem trabalho quando não há modal de chamado aberto.
-- Arquivo novo: `ajustes_v5191_patch.js`.
-
-## v5.19.0
-- **4 (Ctrl+P)** — No programa (.exe), o Ctrl+P agora é interceptado no `main.js` (evento `web-contents-created`) e imprime LIMPO (sem URL nem contador de páginas). No navegador (GitHack), o Ctrl+P é a janela do próprio navegador — aparece um aviso lembrando de desmarcar "Cabeçalhos e rodapés".
-- Arquivo novo: `ajustes_v5190_patch.js` + edições em `main.js` e `preload.js`.
-
-## v5.18.9
-- **1** — Corrigido o erro "Informe o motivo do chamado" ao imprimir (a validação lia o campo errado; agora detecta o formulário certo — contrato `kr-os-*`/`ko-*` e avulso `ca-*`).
-- **2** — Imprimir agora valida os campos obrigatórios (motivo; e cliente no chamado fora de contrato) e bloqueia se faltar.
-- **3** — Logo volta a ser a padrão (logo.png; removido upload de logo da v5.18.8). Cabeçalho do PDF agora mostra os dados completos da loja (nome fantasia, razão social, CNPJ, telefone, e-mail, endereço) vindos de "Dados da loja para relatórios e notinhas".
-- **4** — Impressão sem "about:blank" (título/URL limpos via history.replaceState). No .exe (Electron), impressão limpa (sem contador de páginas/URL) via printAPI (`print:clean` em main.js/preload.js). No navegador, o contador de páginas é opção do diálogo de impressão ("Cabeçalhos e rodapés").
-- Arquivo novo: `ajustes_v5189_patch.js` + edições em `main.js` e `preload.js`.
-
-## v5.18.8
-- **Dados da loja + logo** — Adicionado upload de LOGO no card "Dados da loja para relatórios e notinhas" (salvo em `db.config.loja.logo`, base64).
-- A logo configurada passa a ser usada nos **chamados (dentro e fora de contrato)**, **leituras** e **notinhas de vendas** (via `window.DIGICOPY_LOGO`, reaplicado com a logo da loja).
-- Leitura (notinha compacta): cabeçalho agora lê nome fantasia, razão social, CNPJ, telefone, e-mail e endereço do card "Dados da loja".
-- Arquivo novo: `ajustes_v5188_patch.js` + edição em `leitura_impressao_compacta_produtos_patch.js`.
-
-## v5.18.7
-- **3** — Ao imprimir o PDF do chamado, os dados digitados nas caixas (motivo, serviços, observação, contador, modelo/patrimônio/serial/local) são puxados automaticamente, mesmo sem salvar. Não altera o que está salvo.
-- **5.1** — "Bem-vindo, Fulano!" agora é um aviso no CANTO da tela (some sozinho), sem popup.
-- Arquivo novo: `ajustes_v5187_patch.js`.
-
-## v5.18.6
-- **1.2 / 4.1** — Refatorado para um **MutationObserver** que garante, em qualquer timing/formulário, que o chamado DENTRO do contrato tenha: (a) área de peças "igual vendas" (busca/lupa, qtd, valor, desconto, valor final, Adicionar item) e (b) faixas azuis de seção. Idempotente.
-- **3** — PDF: caixa **Impressora** com Modelo, Patrimônio, Serial e Local (busca do equipamento quando o chamado não tiver os campos).
-- **5** — Aviso de tela cheia "Carregando dados da nuvem..." antes da recarga automática; em erro, aviso "Não foi possível carregar a nuvem" com botões "Tentar novamente" / "Continuar mesmo assim".
-- **5.1** — Aviso "Bem-vindo, Fulano!" com botão único (OK) após o login (o toast antigo era engolido pelo filtro anti-spam do v5.17.1).
-- Arquivo novo: `ajustes_v5186_patch.js`.
-
-## v5.18.5
-- **4/1.2** — Correção definitiva da duplicação de peças: o patch v5.17.1 já removia o `#lc-pecas-wrap` (as 5 linhas), deixando o **rótulo** "Produtos / peças utilizadas" + textarea escondido pra trás. Agora removemos o bloco INTEIRO (via `#lc-pecas`), em qualquer timing (MutationObserver) e nos dois formulários (avulso + contrato).
-- **3** — PDF do chamado: devolvida a caixa **Impressora** (modelo • patrimônio • serial • local), mantendo Cliente + Atendimento lado a lado.
-- Arquivo novo: `ajustes_v5185_patch.js`.
-
-## v5.18.4
-- **3** — PDF do chamado: caixas "Dados do Cliente" (nome, doc., telefone, endereço) e "Dados de Atendimento" (técnico, motivo/defeito, cadastro, atendimento) **lado a lado**. "Data do atendimento" subiu para a caixa de atendimento; contadores continuam no rodapé em branco até finalizar.
-- Arquivo novo: `ajustes_v5184_patch.js`.
-
-## v5.18.3
-- **4** — Removida a seção duplicada "Produtos / peças utilizadas" (a antiga de 5 linhas) que aparecia no chamado **fora de contrato** junto da nova "Produtos / Peças usadas" (igual vendas).
-- **4.1** — Faixas azuis de seção (Motivo/Defeito, Contadores, Serviços, Observação, Peças) agora também no chamado **dentro do contrato**, igual ao de fora.
-- **1.2** — Reforço para a área de peças do chamado de contrato ficar igual à do de fora (busca/lupa, qtd, valor, desconto, valor final, Adicionar item).
-- **2.3** — Ao fechar o "Novo lançamento de contador" (leitura) com contador digitado, pergunta "Deseja lançar essa impressora na leitura?" (Sim = salva o lançamento; Não = volta sem lançar).
-- Arquivo novo: `ajustes_v5183_patch.js`.
-
-## v5.18.2
-- PDF peças: só **Descrição, Quantidade, Valor**.
-- Cadastro do item no chamado = vendas: busca (lupa/Enter), qtd, valor, desconto, valor final, Adicionar item.
-- 1.2.1 e 1.2.2 **não** nesta versão.
-
-## v5.18.1
-- Peças no chamado: qtd, valor, desconto, valor final (igual vendas). Contrato e avulso.
-- PDF: colunas Valor / Desc. / Valor final + total (só preenchido se finalizado).
-- Finalizar chamado com peças: cria venda **faturada** e abre a tela normal de venda (estorno etc.), ligada ao chamado.
-- Excluir venda de chamado: aviso e apaga o chamado junto (depois de estornar, se faturada).
-
-## v5.18.0
-- Contador no PDF **só tem número se o chamado estiver finalizado** (checkbox ou status). Aberto = linha em branco.
-- Assinaturas + dados da loja **no fim da folha A4** (`height:277mm` + `margin-top:auto`), uma página.
-
-## v5.17.9
-- Avulso: ao escolher cliente some a lista; botão **Limpar** para trocar.
-- PDF contrato: color se modalidade Color A4/A3 ativa (parque certo).
-- Contadores do PDF sem número se o chamado não estiver finalizado.
-- Rodapé da loja **dentro** da 1ª folha (não empurra 2ª página). Sem `min-height` estourando.
-
-## v5.17.8
-- Tirar peça: captura mousedown/click (não fecha chamado; aviso “Deseja remover esse item?”).
-- PDF: assinaturas no **rodapé da folha A4** (`min-height:273mm` + `margin-top:auto`).
-
-## v5.17.7
-
-### 2.1
-- Contador antigo do **último chamado** só no **chamado de contrato**.
-- Avulso não usa essa regra.
-
-### 4.1 (ambos)
-- Busca de peça **só lupa ou Enter** (oninput antigo ignorado).
-- Lupa no HTML + observer se o form recriar o input.
-- **Tirar** item: aviso `Deseja remover esse item?`
-
-### 4.2 PDF
-- Contadores **em branco** (só linha) se o chamado **não** estiver finalizado.
-- Finalizado: preenche preto/color.
-- Assinaturas mais afastadas do rodapé (`margin-top: 88px`).
-
-Arquivo novo: `ajustes_v5177_patch.js`.
-
----
-
-## Pendente de teste
-
-- Lupa visível e busca sem letra a letra nos dois forms.
-- Remover peça com popup.
-- PDF em aberto vs finalizado + espaço das assinaturas.
+- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar` que ficava colapsada.
+
+## v5.22.60 — Correção Definitiva de Orçamentos, Vendas Únicas, Impressão com OS e Busca Inteligente
+- **Criação Única de Venda:** Orçamentos autorizados geram a venda salva no ERP exatamente uma única vez (`vendaGeradaUmaVez`). Se a venda for excluída pelo operador, o sistema rastreia no log de exclusão e NUNCA mais recria a venda automaticamente nem por polling de nuvem.
+- **Desativação de Intervalos Legados Concorrentes:** Neutralizados 5 loops legados de polling de orçamentos em patches antigos (`v52244`, `v52255`, `v52256`, `v52257`, `v52258`) que tentavam recriar vendas a partir de orçamentos antigos ou deletados.
+- **Impressão Standalone sem Salvar Forçado:** O clique no botão "Imprimir" não executa mais `salvarOrcamentoTela()`, evitando duplicar orçamentos ou sobrescrever dados ao apenas visualizar/imprimir.
+- **Ordem de Serviço (OS) Completa na Impressão e Link:** Impressão de orçamentos e página do cliente (`digicopy-orcamentos.pages.dev`) agora exibem todos os campos da Ordem de Serviço (Modelo, Número de Série, Patrimônio, Técnico, Defeito, Serviços, Peças, Garantia e Acessórios).
+- **Seleção e Busca Inteligente de Cliente:** Busca por digitação em tempo real (`oninput` debounce), clique imediato na lista de sugestões, suporte ao pressionamento de Enter e resolução por código/documento/nome na hora de salvar o orçamento.
+- **Sincronização e Empacotamento .exe:** Manifesto de build e configuração do Electron Builder atualizados com inclusão de todos os patches e ativos de orçamento público.

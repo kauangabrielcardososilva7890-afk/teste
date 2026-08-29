@@ -24,10 +24,6 @@
   // Roda na carga e observa
   setTimeout(deletarOcultos, 300);
   setTimeout(deletarOcultos, 1500);
-  try{
-    const obs=new MutationObserver(()=> deletarOcultos());
-    obs.observe(document.body, {childList:true, subtree:true});
-  }catch(e){}
   // Também sobrescreve funções que criam esses elementos para não recriarem
   const origGarantir = window.garantirBotaoDadosMigrados;
   if(origGarantir) window.garantirBotaoDadosMigrados = function(){ /* deletado - não recria */ };

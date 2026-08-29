@@ -691,6 +691,7 @@ function vosGravarVenda(silencioso){
   }
   return venda;
 }
+window.vosGravarVenda = vosGravarVenda;
 window.vosSalvarVenda = function(){ vosGravarVenda(false); };
 window.vosImprimirAtual = function(){
   const f = window.__vosForm;

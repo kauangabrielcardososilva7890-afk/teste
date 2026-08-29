@@ -16,6 +16,15 @@ test-results/
 *.deb
 *.rpm
 
+# Zips de versão antiga / upload (não entram no git)
+*.zip
+!Sistema-Digicopy-v5.22.46.zip
+!Sistema-Digicopy-v5.22.47.zip
+!Sistema-Digicopy-completo-v5.22.47.zip
+!Sistema-Digicopy-completo-v5.22.48.zip
+!Sistema-Digicopy-completo-v5.22.49.zip
+!Sistema-Digicopy-completo-v5.22.50.zip
+
 # Backups/exportações locais
 backups/
 exports/

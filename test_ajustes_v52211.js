@@ -1,0 +1,21 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('ajustes_v52211_logo_impressao_unica_patch.js','utf8');
+const v5171=fs.readFileSync('ajustes_v5171_patch.js','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
+const ctx={window:{},document:undefined};
+new Function('window','document',code)(ctx.window,ctx.document);
+const P=ctx.window.LOGO_IMPRESSAO_PURE;
+const extra='<img class="logo-rel" src="x" alt="logo">';
+const notinha='<body>'+extra+'<div class="cab"><div class="logo"><img src="data:image/png;base64,AAA"></div></div></body>';
+console.log('== LOGO ÚNICA NA IMPRESSÃO ==');
+ok('exporta limpeza',!!P&&typeof P.limparLogoImpressao==='function');
+ok('reconhece logo da notinha',P.jaTemLogoPropria(notinha)===true);
+ok('tira logo extra da notinha',!/logo-rel/.test(P.limparLogoImpressao(notinha))&&/class="logo"/.test(P.limparLogoImpressao(notinha)));
+ok('não mexe se só tem a extra',/logo-rel/.test(P.limparLogoImpressao('<body>'+extra+'</body>')));
+ok('não mexe em RTF',P.limparLogoImpressao('{\\rtf1 logo-rel }').indexOf('logo-rel')>=0);
+ok('v5171 não injeta se já tem img/logo',/class=\["'\]logo\["'\]/.test(v5171)&&/data:image/.test(v5171));
+ok('vale para notinha e outros impressos',/imprimirNotinha/.test(code)&&/imprimirLeituraContrato/.test(code)&&/imprimirChamadoPDF/.test(code));
+ok('não grava banco',!/saveDB\(/.test(code));
+ok('patch no bundle',manifest.includes('ajustes_v52211_logo_impressao_unica_patch.js'));
+console.log('\nRESULTADO: logo única na impressão passou!');

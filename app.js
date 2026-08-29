@@ -11,7 +11,7 @@ const PENDING_CNPJ_KEY='digicopy_pending_cnpj_v42_demo_apresentacao';
 const defaultData={
   empresas:[],
   usuarios:[],
-  clientes:[], produtos:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
+  clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
@@ -43,7 +43,7 @@ function storageDecode(raw){
   return raw;
 }
 function normalizeDbShape(parsed){
-  ['empresas','usuarios','clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+  ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
@@ -247,6 +247,7 @@ if(typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
+if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -348,9 +349,9 @@ function seedData(force=false){
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
-      db[k].forEach(function(r){ if(r && r.empresaId && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
+      db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
   });
 
@@ -985,7 +986,7 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
@@ -1281,7 +1282,7 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   // permitir Enter nos logins
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){

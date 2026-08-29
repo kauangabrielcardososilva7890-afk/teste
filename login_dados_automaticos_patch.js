@@ -182,15 +182,9 @@ window.doLoginUser=function(){
 function totalLocal(){ return ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar'].reduce((s,k)=>s+((db[k]||[]).length||0),0); }
 function temBancoMigrado(){ return Object.values(db.modulosDinamicos||{}).some(m=>Array.isArray(m&&m.dados)&&m.dados.length>0) || totalLocal()>1000; }
 async function autoCarregarNuvemSeVazio(){
-  if(window.DIGI_MODO_LEVE) return;
-  if(sessionStorage.getItem('digicopy_auto_load_try_v4939')) return;
-  if(temBancoMigrado()) return;
-  if(typeof window.syncCarregarDaNuvem!=='function') return;
-  sessionStorage.setItem('digicopy_auto_load_try_v4939','1');
-  try{
-    if(typeof toast==='function') toast('Tentando carregar dados da nuvem automaticamente...','info');
-    await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
-  }catch(e){ console.warn('[DIGICOPY] carga automática da nuvem falhou', e); }
+  // v5.22.15: não puxa nuvem sozinho na abertura (Firebase morto; Cloudflare
+  // sincroniza depois do login). No GitHack isso cobria a tela e recarregava em loop.
+  return;
 }
 
 const oldBuildNav=window.buildNav;
@@ -202,8 +196,8 @@ if(typeof oldBuildNav==='function'&&!oldBuildNav.__loginDiretoMenus){
 window.LOGIN_DIRETO_LEGADO_PURE={ fold, loginCompativel, senhaCompativel, perfilFunc, importarFuncionariosLegados, escolherEmpresaPadrao, unirAdminDemoComOriginal };
 
 if(typeof document!=='undefined'){
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); });
-  else { estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); });
+  else { estilizarLogin(); }
   setInterval(limparTopoMenus,3000);
 }
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
