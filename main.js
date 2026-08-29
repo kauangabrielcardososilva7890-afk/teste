@@ -18,6 +18,7 @@ function createWindow () {
     width: 1400,
     height: 900,
     autoHideMenuBar: true,
+    backgroundColor: '#ffffff',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -42,6 +43,7 @@ function createWindow () {
         try{ fs.rmSync(path.join(ud, nome), { recursive:true, force:true }); }catch(e){}
       });
       try{ win.webContents.session.clearCache(); }catch(e){}
+      try{ win.webContents.session.clearStorageData({ storages: ['cachestorage', 'serviceworkers', 'shadercache'] }); }catch(e){}
       try{ if(win.webContents.session.clearCodeCaches) win.webContents.session.clearCodeCaches({ urls: [] }); }catch(e){}
       try{ fs.writeFileSync(marker, APP_VERSION||'', 'utf8'); }catch(e){}
     }
@@ -61,7 +63,13 @@ function createWindow () {
     if(k==='f12') event.preventDefault();
   }); }catch(e){}
   win.webContents.on('context-menu', e => e.preventDefault());
-  win.once('ready-to-show', () => win.show());
+  win.once('ready-to-show', () => {
+    try{ if(win && !win.isDestroyed()) win.show(); }catch(e){}
+  });
+  // Fallback de exibição da janela: garante que a janela apareça mesmo se ready-to-show atrasar
+  setTimeout(() => {
+    try{ if(win && !win.isDestroyed() && !win.isVisible()) win.show(); }catch(e){}
+  }, 1500);
   return win;
 }
 

@@ -10,9 +10,9 @@ ok('Firebase e sync antigo não entram no runtime',!['sync_client.js','firebase_
 ok('todos os arquivos do manifesto existem',manifest.every(fs.existsSync));
 ok('IndexedDB precede painel e motor de sync',manifest.indexOf('indexeddb_persistence_patch.js')<manifest.indexOf('cloudflare_sync_patch.js')&&manifest.indexOf('cloudflare_sync_patch.js')<manifest.indexOf('cloudflare_data_sync_patch.js'));
 ok('index carrega um único bundle da aplicação',(html.match(/<script[^>]+src="\.\/app\.bundle\.js/g)||[]).length===1);
-const extraRuntime=['ajustes_v52249_relatorio_patch.js','ajustes_v52250_exe_bundle_patch.js'];
+const extraRuntime=['ajustes_v52249_relatorio_patch.js','ajustes_v52250_exe_bundle_patch.js','ajustes_v52251_exe_resiliencia_patch.js'];
 ok('index não faz 97 requisições antigas',!manifest.filter(file=>extraRuntime.indexOf(file)<0).some(file=>html.includes('src="./'+file)));
-ok('Electron inclui bundle e patches do runtime',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.includes('package.json')&&pkg.build.files.includes('ajustes_v52250_exe_bundle_patch.js')&&pkg.build.files.length<=18);
+ok('Electron inclui bundle e patches do runtime',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.includes('package.json')&&pkg.build.files.includes('ajustes_v52251_exe_resiliencia_patch.js')&&pkg.build.files.length<=19);
 cp.execFileSync(process.execPath,['build_bundle.js','--check'],{stdio:'pipe'});
 ok('bundle corresponde exatamente às fontes','ok');
 console.log('\nRESULTADO: bundle consolidado passou!');
