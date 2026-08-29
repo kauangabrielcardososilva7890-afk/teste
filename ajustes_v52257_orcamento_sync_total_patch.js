@@ -324,9 +324,7 @@
     setTimeout(sincronizarVersaoVisual, 300);
     setTimeout(sincronizarVersaoVisual, 1000);
 
-    // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 3000);
-    setTimeout(verificarAprovacoesNuvem, 1000);
+    // Polling contínuo legado desativado em favor do sincronizador v5.22.60
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
     if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52257sync){

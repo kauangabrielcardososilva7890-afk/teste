@@ -124,12 +124,6 @@ if(typeof window.salvarOrcamentoTela==='function' && !window.salvarOrcamentoTela
 if(typeof window.imprimirOrcamento==='function' && !window.imprimirOrcamento.__v52244sync){
   var oldImp=window.imprimirOrcamento;
   window.imprimirOrcamento=function(){
-    try{
-      if(typeof window.salvarOrcamentoTela==='function') window.salvarOrcamentoTela();
-      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
-        window.DIGICOPY_CLOUD_SYNC.tick();
-      }
-    }catch(e){}
     return oldImp.apply(this, arguments);
   };
   window.imprimirOrcamento.__v52244sync=true;
@@ -138,21 +132,12 @@ if(typeof window.imprimirOrcamento==='function' && !window.imprimirOrcamento.__v
 if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52244orc){
   var oldR=window.renderOrcamentos;
   window.renderOrcamentos=function(){
-    var r=oldR.apply(this, arguments);
-    try{
-      var agora=Date.now();
-      if(!window.__orcPuxarEm || agora-window.__orcPuxarEm>8000){
-        window.__orcPuxarEm=agora;
-        puxarAprovacoes();
-      }
-    }catch(e){}
-    return r;
+    return oldR.apply(this, arguments);
   };
   window.renderOrcamentos.__v52244orc=true;
 }
 
-setTimeout(puxarAprovacoes, 2500);
-setInterval(puxarAprovacoes, 20000);
+// Polling legado desativado em favor do sincronizador v5.22.60
 
 console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
 })();

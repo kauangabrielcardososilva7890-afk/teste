@@ -1000,4 +1000,12 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - `npm run check` e teste de proteção de cota: OK.
 
 ## v5.20.26 — botão Teste nuvem realmente visível
-- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#side
+- **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#sidebar` que ficava colapsada.
+
+## v5.22.60 — Correção Definitiva de Orçamentos, Vendas Únicas, Impressão com OS e Busca Inteligente
+- **Criação Única de Venda:** Orçamentos autorizados geram a venda salva no ERP exatamente uma única vez (`vendaGeradaUmaVez`). Se a venda for excluída pelo operador, o sistema rastreia no log de exclusão e NUNCA mais recria a venda automaticamente nem por polling de nuvem.
+- **Desativação de Intervalos Legados Concorrentes:** Neutralizados 5 loops legados de polling de orçamentos em patches antigos (`v52244`, `v52255`, `v52256`, `v52257`, `v52258`) que tentavam recriar vendas a partir de orçamentos antigos ou deletados.
+- **Impressão Standalone sem Salvar Forçado:** O clique no botão "Imprimir" não executa mais `salvarOrcamentoTela()`, evitando duplicar orçamentos ou sobrescrever dados ao apenas visualizar/imprimir.
+- **Ordem de Serviço (OS) Completa na Impressão e Link:** Impressão de orçamentos e página do cliente (`digicopy-orcamentos.pages.dev`) agora exibem todos os campos da Ordem de Serviço (Modelo, Número de Série, Patrimônio, Técnico, Defeito, Serviços, Peças, Garantia e Acessórios).
+- **Seleção e Busca Inteligente de Cliente:** Busca por digitação em tempo real (`oninput` debounce), clique imediato na lista de sugestões, suporte ao pressionamento de Enter e resolução por código/documento/nome na hora de salvar o orçamento.
+- **Sincronização e Empacotamento .exe:** Manifesto de build e configuração do Electron Builder atualizados com inclusão de todos os patches e ativos de orçamento público.
