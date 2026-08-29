@@ -24,14 +24,17 @@
   if(typeof window !== 'undefined'){
     window.EXE_RESILIENCIA_V52251_PURE = EXE_RESILIENCIA_V52251_PURE;
 
+    if(window.__v52251_resiliencia_loaded) return;
+    window.__v52251_resiliencia_loaded = true;
+
     // Atualiza versão no DOM
     function sincronizarVersao(){
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv) fv.textContent = 'v' + VERSAO;
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
         var tv = document.getElementById('app-title-version');
-        if(tv) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
         if(document.title && !document.title.includes(VERSAO)){
           document.title = 'Sistema Digicopy v' + VERSAO;
         }
@@ -94,6 +97,17 @@
       });
     }
 
+    // Hook no navigateTo para sincronizar versão sem MutationObserver
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52251nav){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var r = oldN.apply(this, arguments);
+        try{ sincronizarVersao(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52251nav = true;
+    }
+
     // Executa sincronização e guardas
     if(typeof document !== 'undefined'){
       if(document.readyState === 'loading' && typeof document.addEventListener === 'function'){
@@ -106,9 +120,9 @@
     }
 
     if(typeof setTimeout === 'function'){
-      setTimeout(assegurarInicializacao, 100);
-      setTimeout(assegurarInicializacao, 500);
-      setTimeout(assegurarInicializacao, 1500);
+      setTimeout(assegurarInicializacao, 50);
+      setTimeout(assegurarInicializacao, 300);
+      setTimeout(assegurarInicializacao, 1000);
     }
 
     console.log('[DIGICOPY] v' + VERSAO + ': Resiliência de boot e guarda anti-tela branca carregados.');

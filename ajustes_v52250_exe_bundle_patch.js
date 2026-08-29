@@ -15,18 +15,19 @@ window.EXE_BUNDLE_V52250_PURE = {
 };
 
 if(typeof document === 'undefined') return;
+if(window.__v52250_bundle_loaded) return;
+window.__v52250_bundle_loaded = true;
 
 function pintarRodape(){
   var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v' + VERSAO;
+  if(ver && ver.textContent !== 'v' + VERSAO) ver.textContent = 'v' + VERSAO;
   var appVer = document.getElementById('app-title-version');
-  if(appVer) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
+  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + VERSAO) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
 }
 
 pintarRodape();
 setTimeout(pintarRodape, 100);
 setTimeout(pintarRodape, 600);
-setTimeout(pintarRodape, 1500);
 
 if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
   var oldN = window.navigateTo;
@@ -36,14 +37,6 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
     return r;
   };
   window.navigateTo.__v52250ver = true;
-}
-
-if(typeof MutationObserver === 'function' && document.documentElement && !window.__v52250obs){
-  window.__v52250obs = true;
-  var obs = new MutationObserver(function(){
-    try{ pintarRodape(); }catch(e){}
-  });
-  obs.observe(document.documentElement, { childList: true, subtree: true });
 }
 
 console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');

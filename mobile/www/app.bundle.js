@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 178 | sha256: fbbf40ac33d78366
+ * scripts: 180 | sha256: 57b13aad41e032b1
  */
 
 /* ===== lz.js ===== */
@@ -1145,7 +1145,7 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
@@ -1441,7 +1441,7 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   // permitir Enter nos logins
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
@@ -35941,6 +35941,7 @@ if(typeof window.vosBuscarSerial==='function' && !window.vosBuscarSerial.__v5223
       var s=txt(serial).toLowerCase();
       if(!s || typeof getSession!=='function' || typeof db==='undefined') return r;
       var sess=getSession();
+      if(!sess) return r;
       var hist=(db.vendas||[]).filter(function(v){
         return v && v.empresaId===sess.empresaId && v.os && txt(v.os.numeroSerie||v.os.serie).toLowerCase()===s;
       }).sort(function(a,b){ return new Date(b.data||0)-new Date(a.data||0); });
@@ -41230,11 +41231,6 @@ if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuv
   window.abrirCloudflareNuvem.__v52246nao=true;
 }
 
-try{
-  var obs=new MutationObserver(function(){ injetarBotao(); });
-  obs.observe(document.documentElement,{childList:true,subtree:true});
-}catch(e){}
-
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
 
@@ -41305,17 +41301,12 @@ console.log('[DIGICOPY] v5.22.48 exe: sem cache V8');
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
 //            no .exe e no link do cliente.
-//            1.2 Tem certeza?  1.3 link não vale mais  1.4 autorizar=venda /
-//            recusar some. O Pages antigo não tinha isso; o link passa a
-//            abrir a página nova (GitHack, com token + dados + versão).
-//            Este arquivo também entra SOZINHO no instalador (depois do
-//            bundle), para a atualização não depender só do app.bundle.js.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -41362,6 +41353,8 @@ window.RELATORIO_V52249_PURE = {
 };
 
 if(typeof document==='undefined') return;
+if(window.__v52249_relatorio_loaded) return;
+window.__v52249_relatorio_loaded = true;
 
 function aplicarLinkOrcamento(){
   if(window.ORCAMENTOS_V52238_PURE){
@@ -41508,6 +41501,20 @@ function aplicarLeitura(){
   };
 }
 
+function refsDoLancamento(c, dbRef){
+  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
+  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
+  return [];
+}
+function htmlRefs(refs){
+  if(!refs || !refs.length) return '';
+  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
+  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
+    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
+  }).join(' • ')+'</p>';
+}
+
+
 function garantirDatas(){
   var view = document.getElementById('view-financeiro');
   if(!view) return;
@@ -41552,20 +41559,8 @@ function garantirDatas(){
   ligar(ate,'ate');
 }
 
-function refsDoLancamento(c, dbRef){
-  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
-  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
-  return [];
-}
-function htmlRefs(refs){
-  if(!refs || !refs.length) return '';
-  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
-  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
-    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
-  }).join(' • ')+'</p>';
-}
-
 function aplicarFinanceiro(){
+
   if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52249datas){
     var oldR = window.renderFinanceiro;
     window.renderFinanceiro = function(){
@@ -41600,17 +41595,11 @@ function aplicarFinanceiro(){
   }
 }
 
-function pintarRodape(){
-  var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
-}
-
 function aplicarTudo(){
   aplicarLinkOrcamento();
   aplicarVenda();
   aplicarLeitura();
   aplicarFinanceiro();
-  pintarRodape();
 }
 
 aplicarTudo();
@@ -41624,13 +41613,6 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
     return r;
   };
   window.navigateTo.__v52249ver = true;
-}
-if(typeof MutationObserver==='function' && document.documentElement && !window.__v52249obs){
-  window.__v52249obs = true;
-  var obs = new MutationObserver(function(){
-    try{ tirarBotaoSair(); garantirDatas(); pintarRodape(); }catch(e){}
-  });
-  obs.observe(document.documentElement, { childList:true, subtree:true });
 }
 
 console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
@@ -41656,18 +41638,19 @@ window.EXE_BUNDLE_V52250_PURE = {
 };
 
 if(typeof document === 'undefined') return;
+if(window.__v52250_bundle_loaded) return;
+window.__v52250_bundle_loaded = true;
 
 function pintarRodape(){
   var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v' + VERSAO;
+  if(ver && ver.textContent !== 'v' + VERSAO) ver.textContent = 'v' + VERSAO;
   var appVer = document.getElementById('app-title-version');
-  if(appVer) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
+  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + VERSAO) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
 }
 
 pintarRodape();
 setTimeout(pintarRodape, 100);
 setTimeout(pintarRodape, 600);
-setTimeout(pintarRodape, 1500);
 
 if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
   var oldN = window.navigateTo;
@@ -41679,15 +41662,244 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
   window.navigateTo.__v52250ver = true;
 }
 
-if(typeof MutationObserver === 'function' && document.documentElement && !window.__v52250obs){
-  window.__v52250obs = true;
-  var obs = new MutationObserver(function(){
-    try{ pintarRodape(); }catch(e){}
-  });
-  obs.observe(document.documentElement, { childList: true, subtree: true });
-}
-
 console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');
+})();
+
+;
+
+/* ===== ajustes_v52251_exe_resiliencia_patch.js ===== */
+// PATCH v5.22.51 — Resiliência de inicialização do .exe, guardas anti-tela branca e sincronização de versão
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.51';
+
+  var EXE_RESILIENCIA_V52251_PURE = {
+    VERSAO: VERSAO,
+    antiTelaBranca: true,
+    recuperacaoAutomatica: true,
+    verificarSessaoSegura: function(sess){
+      if(!sess) return { logado: false, nome: '-', login: '-' };
+      return {
+        logado: true,
+        nome: String(sess.usuarioNome || sess.login || '-'),
+        login: String(sess.login || '-')
+      };
+    },
+    sincronizarVersaoVisual: function(v){
+      return 'v' + (v || VERSAO);
+    }
+  };
+
+  if(typeof window !== 'undefined'){
+    window.EXE_RESILIENCIA_V52251_PURE = EXE_RESILIENCIA_V52251_PURE;
+
+    if(window.__v52251_resiliencia_loaded) return;
+    window.__v52251_resiliencia_loaded = true;
+
+    // Atualiza versão no DOM
+    function sincronizarVersao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+      }catch(e){}
+    }
+
+    // Guarda global anti-tela branca: se o DOM travar na inicialização, recupera login ou app
+    function assegurarInicializacao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        var loginScreen = document.getElementById('login-screen');
+        var appShell = document.getElementById('app-shell');
+
+        if(!sess){
+          if(loginScreen){
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+          }
+          if(appShell){
+            appShell.classList.add('hidden');
+          }
+          if(typeof estilizarLogin === 'function') estilizarLogin();
+          if(typeof renderLoginDireto === 'function' && typeof prepararEmpresaLogin === 'function'){
+            renderLoginDireto(prepararEmpresaLogin());
+          }
+        }else{
+          if(loginScreen){
+            loginScreen.classList.add('hidden');
+          }
+          if(appShell){
+            appShell.classList.remove('hidden');
+          }
+          if(typeof renderDashboard === 'function') renderDashboard();
+          if(typeof pintarMenus === 'function') pintarMenus();
+        }
+      }catch(err){
+        console.warn('[DIGICOPY] Recuperação de inicialização:', err);
+      }
+      sincronizarVersao();
+    }
+
+    // Handler global para capturar erros e evitar tela branca silenciosa
+    if(typeof window.addEventListener === 'function'){
+      window.addEventListener('error', function(event){
+        console.error('[DIGICOPY Error Guard]', event && event.message, event && event.filename, event && event.lineno);
+        // Se não há nada visível no login nem no app shell, recupera
+        setTimeout(function(){
+          try{
+            if(typeof document === 'undefined') return;
+            var login = document.getElementById('login-screen');
+            var app = document.getElementById('app-shell');
+            var ambosOcultos = (!login || login.classList.contains('hidden') || login.style.display === 'none') &&
+                               (!app || app.classList.contains('hidden') || app.style.display === 'none');
+            if(ambosOcultos){
+              assegurarInicializacao();
+            }
+          }catch(e){}
+        }, 300);
+      });
+    }
+
+    // Hook no navigateTo para sincronizar versão sem MutationObserver
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52251nav){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var r = oldN.apply(this, arguments);
+        try{ sincronizarVersao(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52251nav = true;
+    }
+
+    // Executa sincronização e guardas
+    if(typeof document !== 'undefined'){
+      if(document.readyState === 'loading' && typeof document.addEventListener === 'function'){
+        document.addEventListener('DOMContentLoaded', function(){
+          assegurarInicializacao();
+        });
+      }else{
+        assegurarInicializacao();
+      }
+    }
+
+    if(typeof setTimeout === 'function'){
+      setTimeout(assegurarInicializacao, 50);
+      setTimeout(assegurarInicializacao, 300);
+      setTimeout(assegurarInicializacao, 1000);
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Resiliência de boot e guarda anti-tela branca carregados.');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { EXE_RESILIENCIA_V52251_PURE: EXE_RESILIENCIA_V52251_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52252_resolucao_loop_patch.js ===== */
+// PATCH v5.22.52 — Resolução definitiva de loops de MutationObserver, boot instantâneo e versão 5.22.52
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.52';
+
+  var RESOLUCAO_LOOP_V52252_PURE = {
+    VERSAO: VERSAO,
+    semLoopObserver: true,
+    bootInstantaneo: true,
+    sincronizarVersaoVisual: function(v){
+      return 'v' + (v || VERSAO);
+    }
+  };
+
+  if(typeof window !== 'undefined'){
+    window.RESOLUCAO_LOOP_V52252_PURE = RESOLUCAO_LOOP_V52252_PURE;
+
+    if(window.__v52252_loop_fix_loaded) return;
+    window.__v52252_loop_fix_loaded = true;
+
+    // Atualiza versão no DOM apenas se o texto for diferente (evita disparar mutações)
+    function sincronizarVersao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+      }catch(e){}
+    }
+
+    // Inicialização direta e leve
+    function inicializarDireto(){
+      try{
+        if(typeof document === 'undefined') return;
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        var loginScreen = document.getElementById('login-screen');
+        var appShell = document.getElementById('app-shell');
+
+        if(!sess){
+          if(loginScreen){
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+          }
+          if(appShell){
+            appShell.classList.add('hidden');
+          }
+          if(typeof estilizarLogin === 'function') estilizarLogin();
+          if(typeof renderLoginDireto === 'function' && typeof prepararEmpresaLogin === 'function'){
+            renderLoginDireto(prepararEmpresaLogin());
+          }
+        }else{
+          if(loginScreen){
+            loginScreen.classList.add('hidden');
+          }
+          if(appShell){
+            appShell.classList.remove('hidden');
+          }
+          if(typeof renderDashboard === 'function') renderDashboard();
+          if(typeof pintarMenus === 'function') pintarMenus();
+        }
+      }catch(err){
+        console.warn('[DIGICOPY] Inicialização 5.22.52:', err);
+      }
+      sincronizarVersao();
+    }
+
+    // Hook no navigateTo
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52252nav){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var r = oldN.apply(this, arguments);
+        try{ sincronizarVersao(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52252nav = true;
+    }
+
+    inicializarDireto();
+    if(typeof setTimeout === 'function'){
+      setTimeout(inicializarDireto, 50);
+      setTimeout(inicializarDireto, 300);
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Resolução de loops e inicialização instantânea ativas.');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { RESOLUCAO_LOOP_V52252_PURE: RESOLUCAO_LOOP_V52252_PURE };
+  }
 })();
 
 ;

@@ -93,10 +93,5 @@ if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuv
   window.abrirCloudflareNuvem.__v52246nao=true;
 }
 
-try{
-  var obs=new MutationObserver(function(){ injetarBotao(); });
-  obs.observe(document.documentElement,{childList:true,subtree:true});
-}catch(e){}
-
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
