@@ -1,13 +1,26 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-28  
+**Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a010fa-teste`  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.49**  
+**Branch fixa da sessão:** `arena/01a04e20-teste`  
+**Última versão:** **v5.22.50**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.49. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.50. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.50 — correção definitiva do bundle e empacotamento no .exe
+
+- **Correção de empacotamento:** todos os patches entram diretamente no `app.bundle.js` e são validados pelo manifesto e pelo build.
+- **Cache automático do .exe:** ao abrir a versão 5.22.50, o Electron limpa automaticamente `Cache`, `Code Cache` e `GPUCache` na pasta de dados do Windows.
+- **Rodapé e versão:** sincronizado para v5.22.50 em todos os componentes e rodapé.
+- **Testes:** 102 suítes consolidadas passando com 100% de aprovação.
+- **APK Mobile:** mantido pausado e isolado nesta etapa conforme solicitado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.50`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
 
 ---
 

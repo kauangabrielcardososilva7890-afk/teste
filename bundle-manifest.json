@@ -175,5 +175,6 @@
   "ajustes_v52246_nuvem_nao_autorizar_patch.js",
   "ajustes_v52247_exe_atualiza_patch.js",
   "ajustes_v52248_exe_cache_patch.js",
-  "ajustes_v52249_relatorio_patch.js"
+  "ajustes_v52249_relatorio_patch.js",
+  "ajustes_v52250_exe_bundle_patch.js"
 ]

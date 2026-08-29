@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 111 | sha256: bb8950c5aaa501c8
+ * scripts: 178 | sha256: fbbf40ac33d78366
  */
 
 /* ===== lz.js ===== */
@@ -171,7 +171,7 @@ const PENDING_CNPJ_KEY='digicopy_pending_cnpj_v42_demo_apresentacao';
 const defaultData={
   empresas:[],
   usuarios:[],
-  clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], contasReceber:[], contasPagar:[], logs:[],
+  clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
   tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
@@ -203,7 +203,7 @@ function storageDecode(raw){
   return raw;
 }
 function normalizeDbShape(parsed){
-  ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','logs'].forEach(k=>{
+  ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
@@ -508,7 +508,7 @@ function seedData(force=false){
   // Normaliza o empresaId de TODOS os dados de negócio pra empresa única.
   // (clientes/produtos/vendas/os/contratos/leituras/financeiro importados de
   // uma sessão antiga tinham empresaId aleatório → ficavam invisíveis).
-  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar','notificacoes'].forEach(function(k){
+  ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'].forEach(function(k){
     if(Array.isArray(db[k])){
       db[k].forEach(function(r){ if(r && r.empresaId !== emp.id){ r.empresaId = emp.id; mudou = true; } });
     }
@@ -5457,6 +5457,7 @@ function vosGravarVenda(silencioso){
   }
   return venda;
 }
+window.vosGravarVenda = vosGravarVenda;
 window.vosSalvarVenda = function(){ vosGravarVenda(false); };
 window.vosImprimirAtual = function(){
   const f = window.__vosForm;
@@ -6623,6 +6624,7 @@ window.syncCarregarDaNuvem = async function(opts={}){
       : '';
     upStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem. Recarregando...</span>${avisoParcial}`);
     if(typeof toast==='function') toast('Dados carregados da nuvem','success');
+    if(opts.automatico === true) return {ok:true, rapido:true, faltando, semReload:true};
     setTimeout(()=>location.reload(), 900);
     return {ok:true, rapido:true, faltando};
   }catch(err){
@@ -7449,7 +7451,13 @@ const CLI_PURE = (function(){
       if(campo && campo!=='todos'){
         if(campo==='email') return testa(c.email) || testa(c.email2);
         if(campo==='documento' || campo==='cep' || campo==='telefone' || campo==='whatsapp') return testa(c[campo], true);
-        if(campo==='codigo') return String(c.codigo||'').includes(termoNum||termo);
+        if(campo==='codigo'){
+          const busca = (termoNum||termo);
+          const norm = v => { const d=soDigitos(v); return d ? (d.replace(/^0+/,'')||'0') : ''; };
+          const alvo = norm(busca);
+          if(!alvo) return false;
+          return norm(c.codigo)===alvo || norm(c.codigoAntigo)===alvo;
+        }
         return testa(c[campo]);
       }
       return testa(c.nome)||testa(c.fantasia)||testa(c.documento,true)||testa(c.telefone,true)||
@@ -17391,15 +17399,9 @@ window.doLoginUser=function(){
 function totalLocal(){ return ['clientes','produtos','equipamentos','contratos','parque','leituras','os','vendas','contasReceber','contasPagar'].reduce((s,k)=>s+((db[k]||[]).length||0),0); }
 function temBancoMigrado(){ return Object.values(db.modulosDinamicos||{}).some(m=>Array.isArray(m&&m.dados)&&m.dados.length>0) || totalLocal()>1000; }
 async function autoCarregarNuvemSeVazio(){
-  if(window.DIGI_MODO_LEVE) return;
-  if(sessionStorage.getItem('digicopy_auto_load_try_v4939')) return;
-  if(temBancoMigrado()) return;
-  if(typeof window.syncCarregarDaNuvem!=='function') return;
-  sessionStorage.setItem('digicopy_auto_load_try_v4939','1');
-  try{
-    if(typeof toast==='function') toast('Tentando carregar dados da nuvem automaticamente...','info');
-    await window.syncCarregarDaNuvem({confirmar:false, automatico:true});
-  }catch(e){ console.warn('[DIGICOPY] carga automática da nuvem falhou', e); }
+  // v5.22.15: não puxa nuvem sozinho na abertura (Firebase morto; Cloudflare
+  // sincroniza depois do login). No GitHack isso cobria a tela e recarregava em loop.
+  return;
 }
 
 const oldBuildNav=window.buildNav;
@@ -17411,8 +17413,8 @@ if(typeof oldBuildNav==='function'&&!oldBuildNav.__loginDiretoMenus){
 window.LOGIN_DIRETO_LEGADO_PURE={ fold, loginCompativel, senhaCompativel, perfilFunc, importarFuncionariosLegados, escolherEmpresaPadrao, unirAdminDemoComOriginal };
 
 if(typeof document!=='undefined'){
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); });
-  else { estilizarLogin(); setTimeout(autoCarregarNuvemSeVazio,4500); setTimeout(autoCarregarNuvemSeVazio,10000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); });
+  else { estilizarLogin(); }
   setInterval(limparTopoMenus,3000);
 }
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
@@ -19557,10 +19559,6 @@ console.log('[DIGICOPY] buscador_escola v1.0 carregado');
   // Roda na carga e observa
   setTimeout(deletarOcultos, 300);
   setTimeout(deletarOcultos, 1500);
-  try{
-    const obs=new MutationObserver(()=> deletarOcultos());
-    obs.observe(document.body, {childList:true, subtree:true});
-  }catch(e){}
   // Também sobrescreve funções que criam esses elementos para não recriarem
   const origGarantir = window.garantirBotaoDadosMigrados;
   if(origGarantir) window.garantirBotaoDadosMigrados = function(){ /* deletado - não recria */ };
@@ -26246,24 +26244,12 @@ const _syncLoad = window.syncCarregarDaNuvem;
 if(typeof _syncLoad === 'function'){
   window.syncCarregarDaNuvem = async function(){
     const automatico = arguments[0] && arguments[0].automatico === true;
-    if(automatico) cloudLoading('Buscando seus dados na nuvem...');
-    const r = await _syncLoad.apply(this, arguments);
     if(automatico){
-      if(r && r.ok){
-        // Vai recarregar a página — mantém o aviso até a recarga acontecer.
-      } else if(r && r.vazio){
-        cloudHide(); // nuvem sem dados ainda = instalação nova, deixa entrar
-      } else if(r && r.cancelado){
-        cloudHide(); // proteção/cancelamento: deixa entrar normalmente
-      } else {
-        const msg = (r && r.erros && r.erros.length) ? r.erros[0] : 'Erro ao carregar os dados da nuvem.';
-        cloudError(msg);
-        const retry = document.getElementById('cloud-overlay-retry');
-        const close = document.getElementById('cloud-overlay-close');
-        if(retry) retry.onclick = function(){ window.syncCarregarDaNuvem({confirmar:false, automatico:true}); };
-        if(close) close.onclick = cloudHide;
-      }
+      const r = await _syncLoad.apply(this, arguments);
+      cloudHide();
+      return r;
     }
+    const r = await _syncLoad.apply(this, arguments);
     return r;
   };
 }
@@ -28542,7 +28528,7 @@ const HEARTBEAT_MS=60000;
 const DEFINITIONS={
   empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
-  os:'array', vendas:'array', contasReceber:'array', contasPagar:'array',
+  os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
   config:'root', modulosDinamicos:'map'
 };
@@ -28928,6 +28914,47 @@ async function publishLocalToCloud(){
   const synced=await tick('publicacao-manual-completa');
   if(!synced){state.paused=true;state.pauseReason='nuvem-vazia-publicar-manual';persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
   return true;
+}
+function planNaoAutorizarLocal(localKeys, known){
+  const extras=[];
+  (localKeys||[]).forEach(k=>{ if(k && !(known&&known[k])) extras.push(k); });
+  return extras;
+}
+async function discardLocalKeepCloud(){
+  if(busy)throw new Error('Aguarde a sincronização atual terminar.');
+  if(!authorized())throw new Error('Este computador não está autorizado na nuvem.');
+  const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
+  busy=true;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_nao_autorizar_local',db);
+    const savedOutbox=outbox.slice();
+    const savedState=JSON.parse(JSON.stringify(state));
+    outbox=[];
+    state.heldLocalOnly=[];
+    state.cursor=0;
+    state.versions={};
+    state.hashes={};
+    state.known={};
+    state.blockedDeletes={};
+    persist();
+    await pullAll();
+    if(!Object.keys(state.known).length){
+      outbox=savedOutbox;
+      state=Object.assign(loadState(),savedState);
+      persist();
+      throw new Error('A nuvem está vazia. Nada foi apagado neste PC nem na nuvem.');
+    }
+    const snap=localKeysSnapshot();
+    const extras=planNaoAutorizarLocal([...snap], state.known);
+    const removed=await reconcileFirstAuthorizedDevice(snap);
+    outbox=outbox.filter(x=>x&&x.key&&state.known[x.key]);
+    state.heldLocalOnly=[];
+    state.paused=false;
+    state.pauseReason='';
+    persist();
+    return {removed:Number(removed)||extras.length, extras:extras.length, cloudUntouched:true};
+  }finally{busy=false;}
 }
 function approveMassDelete(entity){
   if(!state.blockedDeletes[entity])return false;
@@ -31366,9 +31393,10 @@ window.salvarEditorMenus = function(){
   cfg().uiMenus = { ordem:ordem, nomes:nomes, sub:sub };
   gravar();
   if(typeof closeModal==='function') closeModal();
-  pintarMenus();
+  if(typeof window.pintarMenus==='function') window.pintarMenus(); else pintarMenus();
   if(typeof toast==='function') toast('Menus atualizados','success');
 };
+window.pintarMenus = pintarMenus;
 
 function pintarAtalhos(){
   var view = document.getElementById('view-dashboard'); if(!view) return;
@@ -31443,22 +31471,23 @@ window.salvarEditorAtalhos = function(){
   cfg().uiAtalhos = out;
   gravar();
   if(typeof closeModal==='function') closeModal();
-  pintarAtalhos();
+  if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); else pintarAtalhos();
   if(typeof toast==='function') toast('Atalhos atualizados','success');
 };
+window.pintarAtalhos = pintarAtalhos;
 
 if(typeof window.renderDashboard==='function' && !window.renderDashboard.__v52213atalhos){
   var oldD = window.renderDashboard;
   window.renderDashboard = function(){
     var r = oldD.apply(this, arguments);
-    setTimeout(pintarAtalhos, 40);
+    setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); }, 40);
     return r;
   };
   window.renderDashboard.__v52213atalhos = true;
 }
 
-setTimeout(pintarMenus, 400);
-setTimeout(pintarMenus, 1400);
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 400);
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 1400);
 setTimeout(tirarChamadosLocacao, 900);
 setTimeout(tirarChamadosLocacao, 1800);
 
@@ -31872,6 +31901,9793 @@ if(typeof window.MENUS_ATALHOS_PURE==='object' && window.MENUS_ATALHOS_PURE.cata
 }
 
 console.log('[DIGICOPY] v5.22.14 recargas: aba + submenu + venda sem estoque');
+})();
+
+;
+
+/* ===== ajustes_v52216_menus_submenus_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.16 — Submenus móveis, menus ocultos só no Admin, atalhos na faixa azul
+// • Setas sobem/descem submenu dentro do menu
+// • Ocultar menu/submenu: quem não é Admin não vê
+// • Atalhos ficam na faixa azul do Início (some a faixa branca duplicada)
+// • Catálogo de atalhos usa os submenus, não só o menu pai
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var BLOQUEIO_OCULTAR = {sair:true};
+var LIMITE_MENU = 18;
+var LIMITE_SUB = 24;
+
+function limitarNome(s, max){
+  var t = String(s==null?'':s).replace(/\s+/g,' ').trim();
+  max = max||LIMITE_MENU;
+  if(t.length>max) t = t.slice(0,max).trim();
+  return t;
+}
+
+function ehCargoAdmin(perfil, login){
+  var p = String(perfil==null?'':perfil).trim();
+  if(p==='Admin') return true;
+  return String(login==null?'':login).trim().toLowerCase()==='kauan';
+}
+
+function clonarMenu(m){
+  var copy = Object.assign({}, m);
+  if(m.items) copy.items = m.items.map(function(it){ return Object.assign({}, it); });
+  return copy;
+}
+
+function aplicarLayout(padrao, salvo){
+  var lista = (padrao||[]).map(clonarMenu);
+  if(!salvo || !Array.isArray(salvo.ordem)){
+    lista.forEach(function(m){ m.oculto=false; (m.items||[]).forEach(function(it){ it.oculto=false; }); });
+    return lista;
+  }
+  var mapa = {};
+  lista.forEach(function(m){ mapa[m.id]=m; });
+  var out=[];
+  salvo.ordem.forEach(function(id){
+    var base = mapa[id];
+    if(!base) return;
+    var copy = clonarMenu(base);
+    var custom = (salvo.nomes||{})[id];
+    if(custom) copy.label = limitarNome(custom, LIMITE_MENU);
+    copy.oculto = !!(salvo.ocultos||{})[id];
+    if(base.items){
+      var subSalvo = (salvo.sub||{})[id]||{};
+      var ocSub = (salvo.ocultosSub||{})[id]||{};
+      var items = base.items.map(function(it){
+        var c2 = Object.assign({}, it);
+        if(subSalvo[it.id]) c2.label = limitarNome(subSalvo[it.id], LIMITE_SUB);
+        c2.oculto = !!ocSub[it.id];
+        return c2;
+      });
+      var subOrdem = (salvo.subOrdem||{})[id];
+      if(Array.isArray(subOrdem) && subOrdem.length){
+        var imap = {};
+        items.forEach(function(it){ imap[it.id]=it; });
+        var ordered=[];
+        subOrdem.forEach(function(sid){ if(imap[sid]){ ordered.push(imap[sid]); delete imap[sid]; } });
+        Object.keys(imap).forEach(function(sid){ ordered.push(imap[sid]); });
+        copy.items = ordered;
+      } else copy.items = items;
+    }
+    out.push(copy);
+    delete mapa[id];
+  });
+  Object.keys(mapa).forEach(function(id){
+    var rest = clonarMenu(mapa[id]);
+    rest.oculto = !!(salvo.ocultos||{})[id];
+    (rest.items||[]).forEach(function(it){
+      it.oculto = !!((salvo.ocultosSub||{})[id]||{})[it.id];
+    });
+    out.push(rest);
+  });
+  return out;
+}
+
+function menusParaUsuario(menus, isAdmin){
+  var out=[];
+  (menus||[]).forEach(function(m){
+    if(!isAdmin && (m.id==='backup' || m.id==='nuvem')) return;
+    if(!isAdmin && m.oculto && !BLOQUEIO_OCULTAR[m.id]) return;
+    var copy = clonarMenu(m);
+    if(!isAdmin && copy.items){
+      copy.items = copy.items.filter(function(it){ return !it.oculto; });
+    }
+    out.push(copy);
+  });
+  return out;
+}
+
+function catalogoDeSubmenus(padrao){
+  var out=[];
+  var visto={};
+  function add(item){
+    if(!item || !item.id || visto[item.id]) return;
+    visto[item.id]=true;
+    out.push(item);
+  }
+  (padrao||[]).forEach(function(m){
+    if(m.items && m.items.length){
+      m.items.forEach(function(it){
+        add({id:it.id, icon:it.icon, label:it.label, click:it.click, menuId:m.id, menuLabel:m.label});
+      });
+    } else if(!BLOQUEIO_OCULTAR[m.id] && m.id!=='inicio' && m.id!=='backup' && m.id!=='nuvem'){
+      add({id:m.id, icon:m.icon, label:m.label, click:m.click, menuId:m.id, menuLabel:m.label});
+    }
+  });
+  add({id:'nova-notinha', icon:'ph-plus', label:'Nova notinha', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')', menuId:'atendimento', menuLabel:'Atendimento'});
+  add({id:'chamados', icon:'ph-wrench', label:'Chamados', click:'openQuickOS()', menuId:'atendimento', menuLabel:'Atendimento'});
+  add({id:'estoque', icon:'ph-package', label:'Estoque', click:'navigateTo(\'produtos\')', menuId:'cadastros', menuLabel:'Cadastros'});
+  return out;
+}
+
+function atalhoOcultoPara(a, salvo, isAdmin){
+  if(isAdmin || !a) return false;
+  var ocultos = (salvo&&salvo.ocultos)||{};
+  var ocultosSub = (salvo&&salvo.ocultosSub)||{};
+  var menuId = a.menuId;
+  if(menuId && ocultos[menuId]) return true;
+  if(menuId && a.id && ocultosSub[menuId] && ocultosSub[menuId][a.id]) return true;
+  if(a.id==='nova-notinha' && (ocultos.atendimento || (ocultosSub.atendimento||{})['nova-venda'])) return true;
+  if(a.id==='chamados' && (ocultos.atendimento || (ocultosSub.atendimento||{})['abrir-chamado'])) return true;
+  return false;
+}
+
+function moverNoPai(lista, de, para){
+  var arr = (lista||[]).slice();
+  if(de<0||para<0||de>=arr.length||para>=arr.length||de===para) return arr;
+  var item = arr.splice(de,1)[0];
+  arr.splice(para,0,item);
+  return arr;
+}
+
+window.MENUS_SUBMENUS_PURE = {
+  LIMITE_MENU: LIMITE_MENU,
+  LIMITE_SUB: LIMITE_SUB,
+  BLOQUEIO_OCULTAR: BLOQUEIO_OCULTAR,
+  ehCargoAdmin: ehCargoAdmin,
+  aplicarLayout: aplicarLayout,
+  menusParaUsuario: menusParaUsuario,
+  catalogoDeSubmenus: catalogoDeSubmenus,
+  atalhoOcultoPara: atalhoOcultoPara,
+  moverNoPai: moverNoPai,
+  limitarNome: limitarNome
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function cfg(){ if(typeof db==='undefined') return {}; db.config = db.config||{}; return db.config; }
+function gravar(){ if(typeof saveDB==='function') saveDB(); }
+function base(){ return window.MENUS_ATALHOS_PURE||{}; }
+function padraoMenus(){ return typeof base().menusPadrao==='function' ? base().menusPadrao() : []; }
+
+function sessAdmin(){
+  try{
+    var s = typeof getSession==='function' ? getSession() : null;
+    return ehCargoAdmin(s&&s.perfil, s&&s.login);
+  }catch(e){ return false; }
+}
+
+function menusAtivos(){
+  return aplicarLayout(padraoMenus(), cfg().uiMenus||null);
+}
+
+function catalogoAtalhos(){
+  var cat = catalogoDeSubmenus(padraoMenus());
+  var nomes = ((cfg().uiMenus||{}).sub)||{};
+  cat.forEach(function(a){
+    var sub = nomes[a.menuId]||{};
+    if(sub[a.id]) a.label = limitarNome(sub[a.id], LIMITE_SUB);
+  });
+  return cat;
+}
+
+function atalhosAtivos(){
+  var salvoA = cfg().uiAtalhos;
+  var cat = {};
+  catalogoAtalhos().forEach(function(a){ cat[a.id]=a; });
+  var admin = sessAdmin();
+  var uiMenus = cfg().uiMenus||null;
+  var list;
+  if(!salvoA || !Array.isArray(salvoA) || !salvoA.length){
+    list = (typeof base().atalhosPadrao==='function' ? base().atalhosPadrao() : []).map(function(a){ return Object.assign({}, cat[a.id]||a); });
+  } else {
+    list = salvoA.map(function(a){
+      var found = cat[a.id];
+      if(!found) return null;
+      return { id: found.id, icon: found.icon, label: limitarNome(a.label||found.label, LIMITE_SUB), click: found.click, menuId: found.menuId, menuLabel: found.menuLabel };
+    }).filter(Boolean);
+  }
+  return list.filter(function(a){ return !atalhoOcultoPara(a, uiMenus, admin); });
+}
+
+function htmlModulo(m){
+  var btnId = m.btnId ? ' id="'+m.btnId+'"' : '';
+  var wrapId = m.wrapId ? ' id="'+m.wrapId+'"' : '';
+  var title = m.title ? ' title="'+esc(m.title)+'"' : '';
+  var type = (m.btnId==='btn-backup-top'||m.btnId==='btn-nuvem') ? ' type="button"' : '';
+  var menuId = m.menuId ? ' id="'+m.menuId+'"' : '';
+  var fade = m.oculto ? ' style="opacity:.55"' : '';
+  var sub = '';
+  if(m.items && m.items.length){
+    sub = '<div'+menuId+' class="module-menu">'+m.items.map(function(it){
+      var f2 = it.oculto ? ' style="opacity:.55"' : '';
+      return '<button onclick="'+it.click+'"'+f2+'><i class="ph '+it.icon+'"></i>'+esc(it.label)+'</button>';
+    }).join('')+'</div>';
+  }
+  return '<div class="module"'+wrapId+fade+'><button'+btnId+type+title+' onclick="'+m.click+'"><i class="ph '+m.icon+'"></i>'+esc(limitarNome(m.label, LIMITE_MENU))+'</button>'+sub+'</div>';
+}
+
+window.pintarMenus = function(){
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  var status = row.querySelector('.ml-auto');
+  var admin = sessAdmin();
+  var vis = menusParaUsuario(menusAtivos(), admin);
+  var html = vis.map(htmlModulo).join('');
+  html += '<div class="module"><button type="button" title="Editar ordem, nome e visibilidade dos menus" onclick="window.abrirEditorMenus()"><i class="ph ph-arrows-out-cardinal"></i>Menus</button></div>';
+  if(status) html += status.outerHTML;
+  row.innerHTML = html;
+  try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+};
+
+window.uiMenuMover = function(btn, dir){
+  var row = btn && btn.closest ? btn.closest('[data-mid]') : null;
+  if(!row) return;
+  var parent = row.parentElement;
+  var cards = Array.from(parent.children);
+  var i = cards.indexOf(row);
+  var j = i+dir;
+  if(j<0||j>=cards.length) return;
+  if(dir<0) parent.insertBefore(row, cards[j]);
+  else parent.insertBefore(cards[j], row);
+};
+
+window.uiSubMenuMover = function(btn, dir){
+  var row = btn && btn.closest ? btn.closest('[data-sid]') : null;
+  if(!row) return;
+  var parent = row.parentElement;
+  var cards = Array.from(parent.children);
+  var i = cards.indexOf(row);
+  var j = i+dir;
+  if(j<0||j>=cards.length) return;
+  if(dir<0) parent.insertBefore(row, cards[j]);
+  else parent.insertBefore(cards[j], row);
+};
+
+window.abrirEditorMenus = function(){
+  var atuais = menusAtivos();
+  if(!sessAdmin()){
+    atuais = atuais.filter(function(m){ return m.id!=='backup' && m.id!=='nuvem'; });
+  }
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[760px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = 'Ordem, nomes e visibilidade';
+  document.getElementById('modal-body').innerHTML =
+    '<p class="text-[12px] text-slate-500 mb-3">Mova menu e submenu. Marque <b>Oculto</b> para esconder de quem não é Admin. Limite: '+LIMITE_MENU+' letras no menu, '+LIMITE_SUB+' no submenu.</p>'+
+    '<div id="ui-menus-ed" class="space-y-2">'+atuais.map(function(m){
+      var trava = !!BLOQUEIO_OCULTAR[m.id];
+      var subs = (m.items||[]).map(function(it){
+        return '<div class="flex items-center gap-2 pl-6 mt-1" data-sid="'+esc(it.id)+'">'+
+          '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiSubMenuMover(this,-1)">↑</button>'+
+          '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiSubMenuMover(this,1)">↓</button>'+
+          '<i class="ph '+it.icon+' text-[#0a1e8a]"></i>'+
+          '<input data-sub="'+esc(m.id)+'" data-sid="'+esc(it.id)+'" maxlength="'+LIMITE_SUB+'" value="'+esc(it.label)+'" class="neo-input flex-1 !h-9">'+
+          '<label class="text-[11px] font-bold text-slate-500 flex items-center gap-1 whitespace-nowrap"><input type="checkbox" data-oc-sub '+(it.oculto?'checked':'')+'> Oculto</label>'+
+          '</div>';
+      }).join('');
+      return '<div class="rounded-xl border p-2" data-mid="'+esc(m.id)+'">'+
+        '<div class="flex items-center gap-2">'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiMenuMover(this,-1)">↑</button>'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiMenuMover(this,1)">↓</button>'+
+        '<i class="ph '+m.icon+' text-[#0a1e8a]"></i>'+
+        '<input data-menu="'+esc(m.id)+'" maxlength="'+LIMITE_MENU+'" value="'+esc(m.label)+'" class="neo-input flex-1 !h-9">'+
+        (trava?'<span class="text-[11px] text-slate-400">sempre visível</span>':
+          '<label class="text-[11px] font-bold text-slate-500 flex items-center gap-1 whitespace-nowrap"><input type="checkbox" data-oc-menu '+(m.oculto?'checked':'')+'> Oculto</label>')+
+        '</div>'+(subs?'<div data-subs>'+subs+'</div>':'')+'</div>';
+    }).join('')+'</div>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.salvarEditorMenus()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+};
+
+window.salvarEditorMenus = function(){
+  var body = document.getElementById('ui-menus-ed'); if(!body) return;
+  var ordem=[], nomes={}, sub={}, subOrdem={}, ocultos={}, ocultosSub={};
+  Array.from(body.children).forEach(function(card){
+    var id = card.getAttribute('data-mid');
+    if(!id) return;
+    ordem.push(id);
+    var inp = card.querySelector('input[data-menu]');
+    nomes[id] = limitarNome(inp&&inp.value, LIMITE_MENU) || id;
+    var ck = card.querySelector('input[data-oc-menu]');
+    if(ck && ck.checked && !BLOQUEIO_OCULTAR[id]) ocultos[id]=true;
+    sub[id] = {};
+    subOrdem[id] = [];
+    ocultosSub[id] = {};
+    var box = card.querySelector('[data-subs]');
+    Array.from((box?box.children:[])).forEach(function(row){
+      if(!row.getAttribute || !row.getAttribute('data-sid')) return;
+      var sid = row.getAttribute('data-sid');
+      if(!sid) return;
+      subOrdem[id].push(sid);
+      var s = row.querySelector('input[data-sub]');
+      sub[id][sid] = limitarNome(s&&s.value, LIMITE_SUB);
+      var cks = row.querySelector('input[data-oc-sub]');
+      if(cks && cks.checked) ocultosSub[id][sid]=true;
+    });
+  });
+  cfg().uiMenus = { ordem:ordem, nomes:nomes, sub:sub, subOrdem:subOrdem, ocultos:ocultos, ocultosSub:ocultosSub };
+  gravar();
+  if(typeof closeModal==='function') closeModal();
+  window.pintarMenus();
+  window.pintarAtalhos();
+  if(typeof toast==='function') toast('Menus atualizados','success');
+};
+
+function acharFaixaAzul(view){
+  var els = view.querySelectorAll('div');
+  for(var i=0;i<els.length;i++){
+    var c = String(els[i].className||'');
+    if(c.indexOf('from-[#0a1e8a]')>=0 && c.indexOf('to-[#142ecc]')>=0) return els[i];
+  }
+  return null;
+}
+
+window.pintarAtalhos = function(){
+  var view = document.getElementById('view-dashboard'); if(!view) return;
+  var branco = document.getElementById('ui-atalhos-inicio');
+  if(branco) branco.remove();
+  var host = document.getElementById('ui-atalhos-azul');
+  if(!host){
+    var banner = acharFaixaAzul(view);
+    if(!banner) return;
+    var wraps = banner.querySelectorAll('.flex.flex-wrap');
+    host = wraps.length ? wraps[wraps.length-1] : null;
+    if(!host){
+      host = document.createElement('div');
+      host.className = 'flex flex-wrap gap-2';
+      banner.appendChild(host);
+    }
+    host.id = 'ui-atalhos-azul';
+  }
+  var list = atalhosAtivos();
+  var admin = sessAdmin();
+  var html = list.map(function(a, idx){
+    var label = esc(limitarNome(a.label, LIMITE_SUB));
+    if(idx===0){
+      return '<button onclick="'+a.click+'" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph '+a.icon+' text-[16px]"></i> '+label+'</button>';
+    }
+    return '<button onclick="'+a.click+'" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph '+a.icon+' text-[16px]"></i> '+label+'</button>';
+  }).join('');
+  html += '<button type="button" onclick="window.abrirEditorAtalhos()" class="h-10 px-3 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Atalhos</button>';
+  host.innerHTML = html;
+};
+
+window.abrirEditorAtalhos = function(){
+  var cat = catalogoAtalhos();
+  var atuais = atalhosAtivos();
+  var ids = {};
+  atuais.forEach(function(a){ ids[a.id]=a; });
+  var grupos = [];
+  var mapaG = {};
+  cat.forEach(function(a){
+    var g = a.menuLabel || 'Outros';
+    if(!mapaG[g]){ mapaG[g]=[]; grupos.push(g); }
+    mapaG[g].push(a);
+  });
+  var box = document.getElementById('modal-box');
+  if(box) box.className = 'w-full max-w-[680px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText = 'Atalhos do Início';
+  var corpo = '<p class="text-[12px] text-slate-500 mb-3">Escolha os <b>submenus</b> que aparecem na faixa azul. Ordem, nome e quais botões. Limite: '+LIMITE_SUB+' letras.</p><div id="ui-atalhos-ed" class="space-y-3">';
+  grupos.forEach(function(g){
+    corpo += '<p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mt-2">'+esc(g)+'</p>';
+    mapaG[g].forEach(function(a){
+      var on = !!ids[a.id];
+      var nome = on ? ids[a.id].label : a.label;
+      corpo += '<div class="flex items-center gap-2 rounded-xl border p-2" data-aid="'+esc(a.id)+'">'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiAtalhoMover(this,-1)">↑</button>'+
+        '<button type="button" class="neo-btn !px-2 !h-8" onclick="window.uiAtalhoMover(this,1)">↓</button>'+
+        '<input type="checkbox" '+(on?'checked':'')+' class="w-4 h-4">'+
+        '<i class="ph '+a.icon+' text-[#0a1e8a]"></i>'+
+        '<input maxlength="'+LIMITE_SUB+'" value="'+esc(nome)+'" class="neo-input flex-1 !h-9">'+
+        '</div>';
+    });
+  });
+  corpo += '</div>';
+  document.getElementById('modal-body').innerHTML = corpo;
+  document.getElementById('modal-footer').innerHTML =
+    '<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>'+
+    '<button onclick="window.salvarEditorAtalhos()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+};
+
+window.uiAtalhoMover = function(btn, dir){
+  var row = btn && btn.closest ? btn.closest('[data-aid]') : null; if(!row) return;
+  var parent = document.getElementById('ui-atalhos-ed'); if(!parent) return;
+  var cards = Array.from(parent.querySelectorAll('[data-aid]'));
+  var i = cards.indexOf(row);
+  var j = i+dir;
+  if(j<0||j>=cards.length) return;
+  var alvo = cards[j];
+  if(dir<0) alvo.parentElement.insertBefore(row, alvo);
+  else {
+    if(alvo.nextSibling) alvo.parentElement.insertBefore(row, alvo.nextSibling);
+    else alvo.parentElement.appendChild(row);
+  }
+};
+
+window.salvarEditorAtalhos = function(){
+  var body = document.getElementById('ui-atalhos-ed'); if(!body) return;
+  var out=[];
+  Array.from(body.querySelectorAll('[data-aid]')).forEach(function(row){
+    var ck = row.querySelector('input[type="checkbox"]');
+    if(!ck || !ck.checked) return;
+    var id = row.getAttribute('data-aid');
+    var nome = limitarNome((row.querySelector('input[maxlength]')||{}).value, LIMITE_SUB);
+    out.push({ id:id, label:nome });
+  });
+  if(!out.length){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Deixe pelo menos um atalho.','Atalhos');
+    return;
+  }
+  cfg().uiAtalhos = out;
+  gravar();
+  if(typeof closeModal==='function') closeModal();
+  window.pintarAtalhos();
+  if(typeof toast==='function') toast('Atalhos atualizados','success');
+};
+
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 500);
+setTimeout(function(){ if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 1600);
+setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); }, 80);
+setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pintarAtalhos(); }, 600);
+
+console.log('[DIGICOPY] v5.22.16 submenus móveis + ocultos só Admin + atalhos na faixa azul');
+})();
+
+;
+
+/* ===== ajustes_v52217_menus_arrastar_visibilidade_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.17 — Menus arrastáveis + Nuvem/Backup só no Admin
+// • Editor: arrastar menu e submenu (além das setas)
+// • Backup: só Admin
+// • Nuvem: Admin sempre; quem ainda não autorizou o PC também vê (colar código)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function ehAdmin(perfil, login){
+  if(String(perfil||'').trim()==='Admin') return true;
+  return String(login||'').trim().toLowerCase()==='kauan';
+}
+function podeVerBackup(perfil, login){ return ehAdmin(perfil, login); }
+function podeVerNuvem(perfil, login, temToken){
+  if(ehAdmin(perfil, login)) return true;
+  return !temToken;
+}
+
+window.MENUS_ARRASTAR_PURE = {
+  ehAdmin: ehAdmin,
+  podeVerBackup: podeVerBackup,
+  podeVerNuvem: podeVerNuvem
+};
+
+if(typeof document==='undefined') return;
+
+function sess(){ return typeof getSession==='function' ? getSession() : null; }
+function sessAdmin(){ var s=sess(); return ehAdmin(s&&s.perfil, s&&s.login); }
+function temTokenNuvem(){
+  try{ return !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token==='function' && window.DIGICOPY_CLOUD.token()); }
+  catch(e){ return false; }
+}
+
+function aplicarVisibilidadeBarra(){
+  var s=sess();
+  var admin=ehAdmin(s&&s.perfil, s&&s.login);
+  var nuvemOk=podeVerNuvem(s&&s.perfil, s&&s.login, temTokenNuvem());
+  var backup=document.getElementById('btn-backup-top');
+  var nuvem=document.getElementById('btn-nuvem');
+  if(backup){
+    var mb=backup.closest('.module');
+    var show=podeVerBackup(s&&s.perfil, s&&s.login);
+    backup.style.display=show?'':'none';
+    if(mb) mb.style.display=show?'':'none';
+  }
+  if(nuvem){
+    var mn=nuvem.closest('.module');
+    nuvem.style.display=nuvemOk?'':'none';
+    if(mn) mn.style.display=nuvemOk?'':'none';
+  }
+
+  try{ if(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.refreshVisibility==='function') window.DIGICOPY_CLOUD.refreshVisibility(); }catch(e){}
+}
+
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52217vis){
+  var oldPintar=window.pintarMenus;
+  window.pintarMenus=function(){
+    var r=oldPintar.apply(this, arguments);
+    aplicarVisibilidadeBarra();
+    return r;
+  };
+  window.pintarMenus.__v52217vis=true;
+}
+
+function ligarArraste(lista){
+  if(!lista) return;
+  var drag=null;
+  Array.from(lista.children).forEach(function(el){
+    if(!el || !el.getAttribute) return;
+    if(!(el.getAttribute('data-mid')||el.getAttribute('data-subrow'))) return;
+    el.setAttribute('draggable','true');
+    el.style.cursor='grab';
+    el.addEventListener('dragstart', function(e){
+      if(e.target && (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA' || e.target.tagName==='LABEL')){
+        e.preventDefault(); return;
+      }
+      drag=el;
+      el.style.opacity='.55';
+      try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain','ok'); }catch(x){}
+    });
+    el.addEventListener('dragend', function(){ el.style.opacity='1'; drag=null; });
+    el.addEventListener('dragover', function(e){ e.preventDefault(); });
+    el.addEventListener('drop', function(e){
+      e.preventDefault(); e.stopPropagation();
+      if(!drag || drag===el) return;
+      if(drag.parentElement!==el.parentElement) return;
+      var parent=el.parentElement;
+      var items=Array.from(parent.children);
+      var a=items.indexOf(drag), b=items.indexOf(el);
+      if(a<0||b<0) return;
+      if(a<b) parent.insertBefore(drag, el.nextSibling);
+      else parent.insertBefore(drag, el);
+    });
+  });
+}
+
+if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52217drag){
+  var oldAbrir=window.abrirEditorMenus;
+  window.abrirEditorMenus=function(){
+    var r=oldAbrir.apply(this, arguments);
+    setTimeout(function(){
+      var ed=document.getElementById('ui-menus-ed'); if(!ed) return;
+      var p=ed.querySelector('p')||ed.previousElementSibling;
+      ligarArraste(ed);
+      ed.querySelectorAll('[data-subs]').forEach(function(box){
+        Array.from(box.children).forEach(function(row){
+          if(row.getAttribute && row.getAttribute('data-sid') && !row.getAttribute('data-subrow')){
+            row.setAttribute('data-subrow', row.getAttribute('data-sid'));
+          }
+        });
+        ligarArraste(box);
+      });
+      var hint=document.createElement('p');
+      hint.className='text-[12px] text-slate-500 mb-2';
+      hint.textContent='Arraste o bloco para mudar a ordem (menu e submenu).';
+      ed.parentElement.insertBefore(hint, ed);
+    }, 30);
+    return r;
+  };
+  window.abrirEditorMenus.__v52217drag=true;
+}
+
+if(typeof window.uiSubMenuMover==='function' && !window.uiSubMenuMover.__v52217){
+  window.uiSubMenuMover=function(btn, dir){
+    var row=btn && btn.closest ? (btn.closest('[data-subrow]')||btn.closest('[data-sid]')) : null;
+    if(!row) return;
+    if(row.tagName==='INPUT') row=row.parentElement;
+    var parent=row.parentElement;
+    var cards=Array.from(parent.children).filter(function(el){ return el && el.getAttribute && (el.getAttribute('data-subrow')||el.getAttribute('data-sid')); });
+    var i=cards.indexOf(row);
+    var j=i+dir;
+    if(j<0||j>=cards.length) return;
+    if(dir<0) parent.insertBefore(row, cards[j]);
+    else parent.insertBefore(cards[j], row);
+  };
+  window.uiSubMenuMover.__v52217=true;
+}
+
+if(typeof window.salvarEditorMenus==='function' && !window.salvarEditorMenus.__v52218keep){
+  var oldSalvar=window.salvarEditorMenus;
+  window.salvarEditorMenus=function(){
+    var prev=(typeof db!=='undefined' && db.config && db.config.uiMenus) || null;
+    var admin=sessAdmin();
+    var r=oldSalvar.apply(this, arguments);
+    if(!admin && prev && prev.ordem && db.config && db.config.uiMenus && Array.isArray(db.config.uiMenus.ordem)){
+      ['backup','nuvem'].forEach(function(id){
+        var cur=db.config.uiMenus.ordem;
+        if(prev.ordem.indexOf(id)>=0 && cur.indexOf(id)<0){
+          var idx=Math.min(prev.ordem.indexOf(id), cur.length);
+          cur.splice(idx,0,id);
+        }
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof window.pintarMenus==='function') window.pintarMenus();
+    }
+    return r;
+  };
+  window.salvarEditorMenus.__v52218keep=true;
+}
+
+setTimeout(aplicarVisibilidadeBarra, 200);
+setTimeout(aplicarVisibilidadeBarra, 800);
+setTimeout(aplicarVisibilidadeBarra, 1800);
+if(typeof window.showApp==='function' && !window.showApp.__v52217vis){
+  var oldShow=window.showApp;
+  window.showApp=function(){ var r=oldShow.apply(this, arguments); setTimeout(aplicarVisibilidadeBarra, 80); return r; };
+  window.showApp.__v52217vis=true;
+}
+
+console.log('[DIGICOPY] v5.22.17 menus arrastáveis + Nuvem/Backup só Admin');
+})();
+
+;
+
+/* ===== ajustes_v52217_print_sem_rodape_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.17 — Tira o rodapé da loja em toda impressão/PDF
+// (o bloco cinza com razão, CNPJ e endereço que caía na outra metade da folha)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function tirarRodapeLoja(html){
+  if(!html || typeof html!=='string') return html;
+  return html.replace(/<div[^>]*rodape-loja-final[^>]*>[\s\S]*?<\/div>/gi,'');
+}
+
+window.PRINT_SEM_RODAPE_PURE = { tirarRodapeLoja: tirarRodapeLoja };
+
+if(typeof document==='undefined') return;
+
+if(window.AJUSTES_POS_FINAL_PURE && typeof window.AJUSTES_POS_FINAL_PURE.patchHtmlImpressao==='function' && !window.AJUSTES_POS_FINAL_PURE.patchHtmlImpressao.__v52217){
+  var oldPatch=window.AJUSTES_POS_FINAL_PURE.patchHtmlImpressao;
+  window.AJUSTES_POS_FINAL_PURE.patchHtmlImpressao=function(html){
+    return tirarRodapeLoja(oldPatch.apply(this, arguments));
+  };
+  window.AJUSTES_POS_FINAL_PURE.patchHtmlImpressao.__v52217=true;
+}
+
+var oldOpen=window.open;
+if(typeof oldOpen==='function' && !oldOpen.__v52217rodape){
+  window.open=function(){
+    var w=oldOpen.apply(window, arguments);
+    try{
+      if(w && w.document && w.document.write){
+        var ow=w.document.write.bind(w.document);
+        w.document.write=function(html){
+          if(typeof html==='string'){
+            html=tirarRodapeLoja(html);
+            if(html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+            html=tirarRodapeLoja(html);
+          }
+          return ow(html);
+        };
+      }
+    }catch(e){}
+    return w;
+  };
+  window.open.__v52217rodape=true;
+}
+
+if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52217rodape){
+  var oldVos=window.vosGerarHtmlNotinha;
+  window.vosGerarHtmlNotinha=function(){
+    var html=tirarRodapeLoja(oldVos.apply(this, arguments));
+    if(typeof html==='string' && html.indexOf('rodape-loja-final')<0) html=html.replace(/<\/body>/i,'<!-- rodape-loja-final --></body>');
+    return tirarRodapeLoja(html);
+  };
+  window.vosGerarHtmlNotinha.__v52217rodape=true;
+}
+
+console.log('[DIGICOPY] v5.22.17 impressão sem rodapé da loja na outra metade');
+})();
+
+;
+
+/* ===== ajustes_v52217_financeiro_recibo_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.17 — Imprimir recibo no financeiro (ao lado de Receber/Excluir)
+// • Só títulos do mesmo cliente
+// • Recibo normal lista parcelas/vendas
+// • Recibo com descrição mostra os selecionados E o texto
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function idsCliente(titulos){
+  var ids=[];
+  (titulos||[]).forEach(function(t){
+    var id=String((t&&t.clienteId)||'');
+    if(id && ids.indexOf(id)<0) ids.push(id);
+  });
+  return ids;
+}
+function podeImprimirMesmoCliente(titulos){
+  if(!titulos || !titulos.length) return {ok:false, motivo:'vazio'};
+  var ids=idsCliente(titulos);
+  if(ids.length!==1) return {ok:false, motivo:'varios-clientes'};
+  return {ok:true, clienteId:ids[0]};
+}
+function codigoParcela(cr){
+  if(!cr) return '';
+  var c=cr.legadoCodigo||cr.codigoAntigo||cr.codParcela||cr.codigo||'';
+  c=String(c).trim();
+  if(c) return c;
+  var n=String(cr.numero||'').replace(/\D/g,'');
+  return n;
+}
+function codigoVendaDe(cr, vendas){
+  if(!cr || !cr.vendaId) return '';
+  var v=(vendas||[]).find(function(x){ return x && x.id===cr.vendaId; });
+  if(!v) return String(cr.numeroVenda||'').replace(/^VD-/,'');
+  return String(v.numero||'').replace(/^VD-/,'');
+}
+function textoCorrespondente(titulos, descricaoLivre, vendas){
+  var parc=[], vend=[];
+  (titulos||[]).forEach(function(cr){
+    var p=codigoParcela(cr);
+    if(p && parc.indexOf(p)<0) parc.push(p);
+    var n=codigoVendaDe(cr, vendas);
+    if(n && vend.indexOf(n)<0) vend.push(n);
+  });
+  var partes=[];
+  if(parc.length) partes.push('PARCELAS: '+parc.join(','));
+  if(vend.length) partes.push('VENDAS '+vend.join(','));
+  var base=partes.join(', ');
+  var extra=String(descricaoLivre||'').replace(/\s+/g,' ').trim();
+  if(extra && base) return base+'\n'+extra;
+  if(extra) return extra;
+  return base;
+}
+
+window.FINANCEIRO_RECIBO_PURE = {
+  idsCliente: idsCliente,
+  podeImprimirMesmoCliente: podeImprimirMesmoCliente,
+  codigoParcela: codigoParcela,
+  codigoVendaDe: codigoVendaDe,
+  textoCorrespondente: textoCorrespondente
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(Number(v)||0):(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+function titulosMarcados(){
+  var ids=Array.from(document.querySelectorAll('.fin-del-check:checked')).map(function(c){
+    return { tipo:c.dataset.tipo||'cr', id:c.value };
+  }).filter(function(a){ return a.id && a.tipo==='cr'; });
+  var out=[];
+  ids.forEach(function(a){
+    var cr=(db.contasReceber||[]).find(function(x){ return x && x.id===a.id; });
+    if(cr) out.push(cr);
+  });
+  return out;
+}
+
+function proximoNumeroRecibo(){
+  db.config=db.config||{}; db.config.seq=db.config.seq||{};
+  var n=parseInt(db.config.seq.recibo,10)||0;
+  n=n+1;
+  db.config.seq.recibo=n;
+  return n;
+}
+
+function dadosLoja(){
+  var s=sess();
+  var emp=(db.empresas||[]).find(function(e){ return s&&e.id===s.empresaId; })||(db.empresas||[])[0]||{};
+  var l=(db.config&&db.config.loja)||{};
+  var d=Object.assign({}, emp, l);
+  return {
+    fantasia:d.fantasia||'DIGICOPY',
+    razao:d.razaoSocial||d.nome||'',
+    cnpj:d.cnpj||'',
+    tel:d.telefone||d.fone||'',
+    whats:d.whatsapp||'(38) 9109-8698',
+    email:d.email||'',
+    end:[d.rua||d.logradouro, d.numero, d.bairro, d.cidade||d.municipio, d.uf||d.estado, d.cep].filter(Boolean).join(' • ')
+  };
+}
+
+function htmlRecibo(titulos, descricaoLivre){
+  var s=sess();
+  var loja=dadosLoja();
+  var cli=(db.clientes||[]).find(function(c){ return c && c.id===titulos[0].clienteId; })||{};
+  var total=titulos.reduce(function(acc,t){ return acc+(Number(t.valor)||0); },0);
+  var num=proximoNumeroRecibo();
+  var corr=textoCorrespondente(titulos, descricaoLivre, db.vendas||[]);
+  var corrHtml=esc(corr).replace(/\n/g,'<br>');
+  var hoje=new Date().toLocaleDateString('pt-BR');
+  var logo=window.DIGICOPY_LOGO?'<img src="'+window.DIGICOPY_LOGO+'" style="width:100%;height:100%;object-fit:contain">':'DIGICOPY';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo '+num+'</title><style>'+
+    '@page{size:A4 portrait;margin:10mm}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px}'+
+    '.pag{padding:8mm 10mm}.cab{display:flex;gap:10px;align-items:flex-start;border-bottom:2px solid #0a1e8a;padding-bottom:8px}'+
+    '.logo{width:28mm;height:18mm;background:#0a1e8a;color:#fff;display:grid;place-items:center;font-weight:800}'+
+    '.emp{flex:1}.emp h1{margin:0;font-size:18px;letter-spacing:.04em}.emp p{margin:2px 0 0;font-size:11px}'+
+    '.lado{text-align:right;font-size:10px;line-height:1.35}.faixa{display:flex;align-items:center;gap:8px;margin:10px 0}'+
+    '.faixa b.t{font-size:22px;border:2px solid #111;padding:4px 10px}.faixa span{border:1px solid #111;padding:4px 8px;font-size:13px}'+
+    '.corpo{border:2px solid #111;padding:10px 12px;line-height:1.7}.linha{border-bottom:1px dotted #333;min-height:18px;display:inline-block;min-width:46%}'+
+    '.no-print{margin:8px;text-align:center}.no-print button{padding:8px 16px;background:#0a1e8a;color:#fff;border:0;border-radius:8px;font-weight:700}'+
+    '@media print{.no-print{display:none!important}}'+
+    '</style></head><body><div class="no-print"><button onclick="window.print()">Imprimir</button></div><div class="pag">'+
+    '<div class="cab"><div class="logo">'+logo+'</div><div class="emp"><h1>'+esc(loja.fantasia)+'</h1>'+
+    '<p>'+esc(loja.razao)+'</p>'+
+    '<p>'+(loja.tel?'☎ '+esc(loja.tel)+' ':'')+(loja.whats?'WhatsApp '+esc(loja.whats):'')+'</p></div>'+
+    '<div class="lado">'+esc(loja.cnpj)+'<br>'+esc(loja.end)+'<br>'+esc(loja.email)+'</div></div>'+
+    '<div class="faixa"><b class="t">RECIBO</b><span>Nº <b>'+num+'</b></span><span>Valor: <b>'+esc(money(total))+'</b></span></div>'+
+    '<div class="corpo">Recebi (emos) de <b>'+esc(cli.nome||'-')+'</b>, Pago em: ____________<br>'+
+    'Correspondente a <b>'+corrHtml+'</b><br><br>'+
+    'e para clareza firmo (amos) o presente. &nbsp;&nbsp; Este recibo foi entregue em <b>'+hoje+'</b></div>'+
+    '</div><script>window.onload=function(){setTimeout(function(){window.print()},300)};<\/script></body></html>';
+}
+
+function abrirOpcoesImpressao(titulos){
+  var box=document.getElementById('modal-box');
+  if(box) box.className='w-full max-w-[640px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[92vh] flex flex-col';
+  document.getElementById('modal-title').innerText='Imprimir recibo';
+  var prev=textoCorrespondente(titulos,'', db.vendas||[]);
+  document.getElementById('modal-body').innerHTML=
+    '<p class="text-[13px] text-slate-600 mb-3">'+titulos.length+' título(s) do mesmo cliente. Total <b>'+esc(money(titulos.reduce(function(s,t){return s+(Number(t.valor)||0);},0)))+'</b></p>'+
+    '<p class="text-[12px] text-slate-500 mb-2">Selecionados: <b>'+esc(prev||'-')+'</b></p>'+
+    '<div class="flex flex-col gap-2">'+
+    '<button type="button" onclick="window.finImprimirRecibo(false)" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-bold">Imprimir recibo</button>'+
+    '<button type="button" onclick="document.getElementById(\'fin-rec-desc-box\').classList.remove(\'hidden\')" class="h-11 rounded-xl bg-white border font-bold">Recibo com descrição</button>'+
+    '</div>'+
+    '<div id="fin-rec-desc-box" class="hidden mt-3">'+
+    '<label class="text-[11px] font-bold uppercase text-slate-500">Descrição do recibo</label>'+
+    '<textarea id="fin-rec-desc" class="mt-1 w-full h-24 p-3 rounded-xl border text-[13px]" placeholder="Ex.: teste de descrição"></textarea>'+
+    '<p class="text-[11px] text-slate-500 mt-1">O recibo mostra os códigos selecionados e esta descrição.</p>'+
+    '<button type="button" onclick="window.finImprimirRecibo(true)" class="mt-2 h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold">Imprimir com descrição</button>'+
+    '</div>';
+  document.getElementById('modal-footer').innerHTML='<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border font-bold">Cancelar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  window.__finReciboTitulos=titulos;
+}
+
+window.finAcaoImprimir=function(){
+  var titulos=titulosMarcados();
+  if(!titulos.length){ aviso('Marque pelo menos um título do mesmo cliente.','Imprimir recibo'); return; }
+  var chk=podeImprimirMesmoCliente(titulos);
+  if(!chk.ok){
+    aviso('Não dá para imprimir títulos de clientes diferentes. Marque só um cliente (todas as parcelas dele).','Imprimir recibo');
+    return;
+  }
+  abrirOpcoesImpressao(titulos);
+};
+
+window.finImprimirRecibo=function(comDesc){
+  var titulos=window.__finReciboTitulos||[];
+  if(!titulos.length) return;
+  var desc='';
+  if(comDesc) desc=String((document.getElementById('fin-rec-desc')||{}).value||'');
+  var html=htmlRecibo(titulos, desc);
+  if(typeof saveDB==='function') saveDB();
+  if(typeof closeModal==='function') closeModal();
+  var w=window.open('','_blank');
+  if(!w){ aviso('O bloqueador de pop-up impediu a impressão.','Imprimir'); return; }
+  w.document.write(html); w.document.close();
+};
+
+function ajustarBotaoImprimir(){
+  var view=document.getElementById('view-financeiro'); if(!view) return;
+  var actions=view.querySelector('.neo-head .neo-actions'); if(!actions) return;
+  if(actions.querySelector('[data-fin-imprimir]')) return;
+  var btn=document.createElement('button');
+  btn.className='neo-btn';
+  btn.dataset.finImprimir='1';
+  btn.innerHTML='<i class="ph ph-printer"></i>Imprimir';
+  btn.onclick=function(){ window.finAcaoImprimir(); };
+  var rec=actions.querySelector('[data-fin-receber]');
+  var excluir=actions.querySelector('.btn-del-lote');
+  if(rec&&rec.nextSibling) actions.insertBefore(btn, rec.nextSibling);
+  else if(excluir) actions.insertBefore(btn, excluir);
+  else actions.appendChild(btn);
+}
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52217recibo){
+  var oldF=window.renderFinanceiro;
+  window.renderFinanceiro=function(){
+    var r=oldF.apply(this, arguments);
+    try{ ajustarBotaoImprimir(); }catch(e){}
+    return r;
+  };
+  window.renderFinanceiro.__v52217recibo=true;
+}
+setTimeout(ajustarBotaoImprimir, 400);
+setTimeout(ajustarBotaoImprimir, 1400);
+
+console.log('[DIGICOPY] v5.22.17 recibo no financeiro');
+})();
+
+;
+
+/* ===== ajustes_v52217_cert_nuvem_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.17 — Certificado público na nuvem (não é o A1 .pfx)
+// • Sobe .p7b / .cer / .crt (arquivo da foto: Troca de Informações Pessoais)
+// • NÃO sobe .pfx e NÃO pede senha
+// • Isso NÃO assina NF-e — assinar continua com A1 neste PC
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var TIPOS_OK=['p7b','p7c','cer','crt','der','pem'];
+var TIPOS_BLOQUEIO=['pfx','p12'];
+var MAX_BYTES=256*1024;
+
+function extDe(nome){
+  var m=String(nome||'').toLowerCase().match(/\.([a-z0-9]+)$/);
+  return m?m[1]:'';
+}
+function podeEnviarCert(nome, bytes){
+  var ext=extDe(nome);
+  if(TIPOS_BLOQUEIO.indexOf(ext)>=0) return {ok:false, motivo:'pfx'};
+  if(TIPOS_OK.indexOf(ext)<0 && ext) return {ok:false, motivo:'tipo'};
+  if(bytes>MAX_BYTES) return {ok:false, motivo:'tamanho'};
+  return {ok:true, ext:ext||'cer'};
+}
+
+window.CERT_NUVEM_PURE = {
+  TIPOS_OK: TIPOS_OK.slice(),
+  TIPOS_BLOQUEIO: TIPOS_BLOQUEIO.slice(),
+  podeEnviarCert: podeEnviarCert,
+  extDe: extDe
+};
+
+if(typeof document==='undefined') return;
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function esc(v){ return txt(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toastMsg(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+
+function listaCerts(){
+  if(typeof db==='undefined') return [];
+  db.config=db.config||{}; db.config.fiscal=db.config.fiscal||{};
+  if(!Array.isArray(db.config.fiscal.certsNuvem)) db.config.fiscal.certsNuvem=[];
+  return db.config.fiscal.certsNuvem;
+}
+
+function pintarLista(){
+  var el=document.getElementById('nfe-certs-nuvem-lista'); if(!el) return;
+  var list=listaCerts();
+  if(!list.length){ el.innerHTML='<p class="text-[12px] text-slate-500">Nenhum certificado público na nuvem ainda.</p>'; return; }
+  el.innerHTML=list.map(function(c,i){
+    return '<div class="flex items-center justify-between gap-2 rounded-lg border bg-white p-2 text-[12px]">'+
+      '<span><b>'+esc(c.nome)+'</b><br><span class="text-slate-500">'+(c.tipo||'')+' • '+Math.round((c.bytes||0)/1024)+' KB'+(c.enviadoEm?' • '+new Date(c.enviadoEm).toLocaleString('pt-BR'):'')+'</span></span>'+
+      '<button type="button" class="neo-btn !h-8 !px-2" onclick="window.nfeRemoverCertNuvem('+i+')">Remover</button></div>';
+  }).join('');
+}
+
+function garantirBloco(){
+  var card=document.getElementById('nfe-config-card'); if(!card) return;
+  if(document.getElementById('nfe-certs-nuvem')) return;
+  var box=document.createElement('div');
+  box.id='nfe-certs-nuvem';
+  box.className='mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3';
+  box.innerHTML='<p class="font-bold text-[13px]">Certificado na nuvem (público)</p>'+
+    '<p class="text-[12px] text-amber-900 mt-1">Pode enviar o arquivo de <b>Troca de Informações Pessoais</b> (.p7b / .cer), uns 9 KB. Ele sobe na nuvem com a configuração.<br>'+
+    '<b>Não envie o A1 .pfx.</b> .pfx tem chave privada e senha — continua só neste PC, senha só na hora de assinar. Sem o .pfx a NF-e não assina.</p>'+
+    '<div class="mt-2 flex flex-wrap gap-2 items-center">'+
+    '<input id="nfe-cert-nuvem-file" type="file" accept=".p7b,.p7c,.cer,.crt,.der,.pem,application/x-pkcs7-certificates,application/pkix-cert" class="text-[12px]">'+
+    '<button type="button" id="nfe-cert-nuvem-enviar" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]">Enviar para a nuvem</button>'+
+    '</div><div id="nfe-certs-nuvem-lista" class="mt-2 space-y-1"></div>';
+  card.appendChild(box);
+  document.getElementById('nfe-cert-nuvem-enviar').onclick=function(){ window.nfeEnviarCertNuvem(); };
+  pintarLista();
+}
+
+window.nfeEnviarCertNuvem=function(){
+  var inp=document.getElementById('nfe-cert-nuvem-file');
+  var file=inp && inp.files && inp.files[0];
+  if(!file){ toastMsg('Escolha o arquivo do certificado.','error'); return; }
+  var chk=podeEnviarCert(file.name, file.size);
+  if(!chk.ok){
+    if(chk.motivo==='pfx') toastMsg('O .pfx A1 não vai para a nuvem. Use o arquivo de Troca de Informações Pessoais (.p7b/.cer).','error');
+    else if(chk.motivo==='tamanho') toastMsg('Arquivo grande demais.','error');
+    else toastMsg('Tipo não aceito. Use .p7b ou .cer.','error');
+    return;
+  }
+  var reader=new FileReader();
+  reader.onload=function(){
+    var data=String(reader.result||'');
+    var list=listaCerts();
+    list.push({
+      nome:file.name,
+      tipo:chk.ext,
+      bytes:file.size,
+      data:data,
+      enviadoEm:new Date().toISOString()
+    });
+    if(typeof saveDB==='function') saveDB();
+    if(inp) inp.value='';
+    pintarLista();
+    toastMsg('Certificado público ficou na configuração (sobe na nuvem no próximo sync). Não assina NF-e.','success');
+  };
+  reader.readAsDataURL(file);
+};
+
+window.nfeRemoverCertNuvem=function(i){
+  var list=listaCerts();
+  if(i<0||i>=list.length) return;
+  list.splice(i,1);
+  if(typeof saveDB==='function') saveDB();
+  pintarLista();
+  toastMsg('Removido da nuvem local. Sobe a exclusão no sync.','success');
+};
+
+if(typeof window.renderConfig==='function' && !window.renderConfig.__v52217cert){
+  var old=window.renderConfig;
+  window.renderConfig=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(garantirBloco, 280);
+    setTimeout(garantirBloco, 700);
+    return r;
+  };
+  window.renderConfig.__v52217cert=true;
+}
+setTimeout(garantirBloco, 900);
+
+console.log('[DIGICOPY] v5.22.17 certificado público na nuvem');
+})();
+
+;
+
+/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.18 — PIX baixa na hora; comprovante só no A prazo; imprimir só depois de faturar
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function ehFaturada(v){
+  var st=String((v&&v.status)||'').toLowerCase();
+  return st==='faturado'||st==='finalizada'||st==='concluido'||st==='pago';
+}
+
+window.VENDA_PRINT_PIX_PURE = { ehFaturada: ehFaturada };
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+
+if(window.PIX_MANUAL_PURE){
+  window.PIX_MANUAL_PURE.reabrirTituloPix=function(){ return 0; };
+}
+
+if(typeof window.vosEscolherForma==='function' && !window.vosEscolherForma.__v52218){
+  var oldForma=window.vosEscolherForma;
+  window.vosEscolherForma=function(fx){
+    var r=oldForma.apply(this, arguments);
+    var vista=document.getElementById('vos-vista-box');
+    if(fx==='Pix' && vista){
+      vista.className='rounded-[14px] border p-4 bg-emerald-50/50 border-emerald-200';
+      vista.innerHTML='<p class="text-[13px] text-emerald-900" id="vos-vista-msg"><i class="ph ph-check-circle"></i> Venda à vista em <b>Pix</b>: será faturada e <b>baixada no financeiro</b> na hora, igual Dinheiro.</p>';
+    }
+    var extra=document.getElementById('vos-pix-prazo');
+    if(extra) extra.remove();
+    if(fx==='Prazo'){
+      var prazo=document.getElementById('vos-prazo-box');
+      if(prazo && typeof window.pixRenderPainelFaturamento==='function'){
+        var hold=document.createElement('div');
+        hold.id='vos-pix-prazo';
+        hold.className='mt-3';
+        prazo.appendChild(hold);
+        var fake=document.createElement('div');
+        fake.id='vos-vista-box-tmp';
+        var oldId=vista&&vista.id;
+        if(vista) vista.id='vos-vista-box-hidden';
+        hold.id='vos-vista-box';
+        try{ window.pixRenderPainelFaturamento(); }catch(e){}
+        hold.id='vos-pix-prazo';
+        if(vista) vista.id=oldId||'vos-vista-box';
+      }
+    }
+    return r;
+  };
+  window.vosEscolherForma.__v52218=true;
+}
+
+function esconderImprimirAntesDeFaturar(){
+  var footer=document.getElementById('modal-footer');
+  if(footer && document.getElementById('vos-itens-body')){
+    var f=window.__vosForm;
+    var v=f&&f.vendaId&&(db.vendas||[]).find(function(x){ return x.id===f.vendaId; });
+    var ok=ehFaturada(v);
+    footer.querySelectorAll('button').forEach(function(b){
+      var t=(b.textContent||'').toLowerCase();
+      var oc=(b.getAttribute('onclick')||'').toLowerCase();
+      if(/imprimir/.test(t) || /imprimirnotinha|vosimprimir/.test(oc)){
+        b.style.display=ok?'':'none';
+        if(ok) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
+      }
+    });
+  }
+  var view=document.getElementById('view-vendas');
+  if(view){
+    view.querySelectorAll('.neo-actions button').forEach(function(b){
+      var t=(b.textContent||'').toLowerCase();
+      if(!/imprimir/.test(t)) return;
+      b.onclick=function(){
+        var id=window.neoVendaSelecionada;
+        if(!id){ aviso('Selecione uma notinha faturada.','Imprimir'); return; }
+        var v=(db.vendas||[]).find(function(x){ return x.id===id; });
+        if(!ehFaturada(v)){ aviso('Só imprime depois de faturar a venda.','Imprimir'); return; }
+        if(typeof imprimirNotinha==='function') imprimirNotinha(id);
+      };
+    });
+  }
+}
+
+if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52218){
+  var oldImp=window.imprimirNotinha;
+  window.imprimirNotinha=function(vendaId){
+    var v=(db.vendas||[]).find(function(x){ return x.id===vendaId; });
+    if(v && !ehFaturada(v)){
+      aviso('Só imprime depois de faturar a venda.','Imprimir');
+      return;
+    }
+    return oldImp.apply(this, arguments);
+  };
+  window.imprimirNotinha.__v52218=true;
+}
+
+if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
+  var oldNV=window.novaVenda;
+  window.novaVenda=function(){
+    var r=oldNV.apply(this, arguments);
+    setTimeout(esconderImprimirAntesDeFaturar, 80);
+    return r;
+  };
+  window.novaVenda.__v52218print=true;
+}
+if(typeof window.lockVendaFaturadaUI==='function' && !window.lockVendaFaturadaUI.__v52218){
+  var oldLock=window.lockVendaFaturadaUI;
+  window.lockVendaFaturadaUI=function(id){
+    var r=oldLock.apply(this, arguments);
+    setTimeout(function(){
+      var footer=document.getElementById('modal-footer'); if(!footer) return;
+      if(footer.querySelector('[data-print-fat]')) return;
+      var b=document.createElement('button');
+      b.setAttribute('data-print-fat','1');
+      b.className='h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2';
+      b.innerHTML='<i class="ph ph-printer"></i> Imprimir/PDF';
+      b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(id); };
+      footer.appendChild(b);
+    }, 40);
+    return r;
+  };
+  window.lockVendaFaturadaUI.__v52218=true;
+}
+if(typeof window.renderVendas==='function' && !window.renderVendas.__v52218print){
+  var oldRV=window.renderVendas;
+  window.renderVendas=function(){
+    var r=oldRV.apply(this, arguments);
+    setTimeout(esconderImprimirAntesDeFaturar, 40);
+    return r;
+  };
+  window.renderVendas.__v52218print=true;
+}
+setTimeout(esconderImprimirAntesDeFaturar, 600);
+
+console.log('[DIGICOPY] v5.22.18 PIX baixa na hora; comprovante no A prazo; imprimir só faturada');
+})();
+
+;
+
+/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.18 — Etiqueta na recarga: sem botão cadastrar, duplicata bloqueada,
+// preenche cliente sozinha, some no estorno se não restar venda ativa
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function normEtq(v){ return String(v==null?'':v).replace(/\s+/g,'').toUpperCase(); }
+function ehRecargaTipo(tipo){ return /recarga/i.test(String(tipo||'')); }
+function vendasAtivasComEtiqueta(etq, ignorarVendaId){
+  var k=normEtq(etq); if(!k) return [];
+  return (typeof db!=='undefined' && db.vendas||[]).filter(function(v){
+    if(!v || v.id===ignorarVendaId) return false;
+    var st=String(v.status||'').toLowerCase();
+    if(st==='estornada'||st==='estornado'||st==='cancelada'||st==='cancelado') return false;
+    return (v.itens||[]).some(function(it){ return normEtq(it.numCartucho||it.identificacao)===k; });
+  });
+}
+function etiquetaEmUso(etq, ignorarVendaId){
+  return vendasAtivasComEtiqueta(etq, ignorarVendaId).length>0;
+}
+
+window.ETIQUETA_RECARGA_VENDA_PURE = {
+  normEtq: normEtq,
+  ehRecargaTipo: ehRecargaTipo,
+  vendasAtivasComEtiqueta: vendasAtivasComEtiqueta,
+  etiquetaEmUso: etiquetaEmUso
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Aviso'); if(typeof toast==='function') toast(m,'info'); }
+function storeEtq(){
+  if(typeof db==='undefined') return [];
+  db.recargasEtiquetas=db.recargasEtiquetas||[];
+  return db.recargasEtiquetas;
+}
+
+function tirarBotaoCadastrar(){
+  var btn=document.getElementById('vos-btn-cadastrar-etiqueta');
+  if(btn){ btn.remove(); }
+}
+
+if(typeof window.vosCadastrarEtiquetaRecarga==='function'){
+  window.vosCadastrarEtiquetaRecarga=function(){ tirarBotaoCadastrar(); };
+}
+
+if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52218etq){
+  var oldAdd=window.vosAddItem;
+  window.vosAddItem=function(){
+    var tipo=(document.getElementById('vos-item-tipo')||{}).value;
+    if(ehRecargaTipo(tipo)){
+      var etq=String((document.getElementById('vos-item-cartucho')||{}).value||'').trim();
+      if(etq){
+        var f=window.__vosForm;
+        var noForm=(f&&f.itens||[]).some(function(it){ return normEtq(it.numCartucho||it.identificacao)===normEtq(etq); });
+        var vendaId=f&&f.vendaId;
+        if(noForm || etiquetaEmUso(etq, vendaId)){
+          aviso('Já existe um cartucho de recarga com essa etiqueta. Não dá para lançar a mesma etiqueta de novo.','Etiqueta repetida');
+          return;
+        }
+      }
+    }
+    return oldAdd.apply(this, arguments);
+  };
+  window.vosAddItem.__v52218etq=true;
+}
+
+if(typeof window.vosVendaSearchProd==='function' && !window.vosVendaSearchProd.__v52218prod){
+  var oldSearch=window.vosVendaSearchProd;
+  window.vosVendaSearchProd=function(q){
+    var tipo=(document.getElementById('vos-item-tipo')||{}).value;
+    if(!ehRecargaTipo(tipo)){
+      var r=oldSearch.apply(this, arguments);
+      var el=document.getElementById('vos-prod-results');
+      if(el){
+        el.querySelectorAll('button').forEach(function(b){
+          if(/recarga/i.test(b.textContent||'')) b.remove();
+        });
+      }
+      return r;
+    }
+    return oldSearch.apply(this, arguments);
+  };
+  window.vosVendaSearchProd.__v52218prod=true;
+}
+
+if(typeof window.vosBuscarEtiquetaNaVenda==='function' && !window.vosBuscarEtiquetaNaVenda.__v52218){
+  var oldBusca=window.vosBuscarEtiquetaNaVenda;
+  window.vosBuscarEtiquetaNaVenda=function(){
+    tirarBotaoCadastrar();
+    var etq=String((document.getElementById('vos-item-cartucho')||{}).value||'').trim();
+    var rec=(storeEtq()||[]).find(function(r){ return normEtq(r.etiqueta)===normEtq(etq); });
+    var f=window.__vosForm;
+    var temCli=f&&f.cliente;
+    if(!temCli && rec && rec.clienteId && typeof window.vosVendaSelectCliente==='function'){
+      window.vosVendaSelectCliente(rec.clienteId);
+    } else if(!temCli){
+      var vendas=vendasAtivasComEtiqueta(etq);
+      if(vendas.length && vendas[0].clienteId && typeof window.vosVendaSelectCliente==='function'){
+        window.vosVendaSelectCliente(vendas[0].clienteId);
+      }
+    }
+    var cli=window.__vosForm&&window.__vosForm.cliente;
+    if(rec && cli && rec.clienteId && rec.clienteId!==cli.id){
+      var nome=rec.clienteNome||'outro cliente';
+      var msg='O cartucho dessa etiqueta não é deste cliente ('+nome+'). Deseja lançar mesmo assim?';
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Etiqueta de outro cliente').then(function(ok){
+          if(!ok) return;
+          oldBusca.apply(window, arguments);
+          tirarBotaoCadastrar();
+        });
+        return;
+      }
+    }
+    var r=oldBusca.apply(this, arguments);
+    tirarBotaoCadastrar();
+    var btn=document.getElementById('vos-btn-cadastrar-etiqueta'); if(btn) btn.classList.add('hidden');
+    return r;
+  };
+  window.vosBuscarEtiquetaNaVenda.__v52218=true;
+}
+
+if(typeof window.estornarNotinha==='function' && !window.estornarNotinha.__v52218etq){
+  var oldEst=window.estornarNotinha;
+  window.estornarNotinha=window.estornarVenda=function(id){
+    var v=(db.vendas||[]).find(function(x){ return x.id===id; });
+    var etiquetas=[];
+    if(v) (v.itens||[]).forEach(function(it){
+      if(ehRecargaTipo(it.tipo)){
+        var e=normEtq(it.numCartucho||it.identificacao);
+        if(e && etiquetas.indexOf(e)<0) etiquetas.push(e);
+      }
+    });
+    var r=oldEst.apply(this, arguments);
+    setTimeout(function(){
+      etiquetas.forEach(function(e){
+        if(etiquetaEmUso(e, id)) return;
+        db.recargasEtiquetas=(db.recargasEtiquetas||[]).filter(function(x){ return normEtq(x.etiqueta)!==e; });
+      });
+      if(typeof saveDB==='function') saveDB();
+    }, 80);
+    return r;
+  };
+  window.estornarNotinha.__v52218etq=true;
+}
+
+if(typeof window.vosOnTipoItem==='function' && !window.vosOnTipoItem.__v52218etq){
+  var oldTipo=window.vosOnTipoItem;
+  window.vosOnTipoItem=function(){
+    var r=oldTipo.apply(this, arguments);
+    tirarBotaoCadastrar();
+    return r;
+  };
+  window.vosOnTipoItem.__v52218etq=true;
+}
+setTimeout(tirarBotaoCadastrar, 800);
+
+console.log('[DIGICOPY] v5.22.18 etiqueta recarga: cadastro no faturar, sem duplicar, some no estorno');
+})();
+
+;
+
+/* ===== ajustes_v52219_filtros_busca_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.19 — Filtro auxiliar ao lado da busca (cliente / produto / recarga)
+// • Cliente: mesmos campos do menu Clientes, em todo lugar que escolhe cliente
+// • Produto: categoria (Todas por padrão), sem Recarga
+// • Recarga de toner: busca da recarga + caixa da etiqueta (se não achar, escreve e segue)
+// • Busca só Enter / lupa
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CAMPOS_CLIENTE = [
+  ['todos','Pesquisar em tudo'],['nome','Nome'],['fantasia','Fantasia'],
+  ['codigo','Código'],['documento','CPF/CNPJ'],['rgIE','RG/IE'],
+  ['endereco','Endereço'],['telefone','Telefone'],['whatsapp','WhatsApp'],
+  ['cidade','Cidade'],['bairro','Bairro'],['contato','Contato'],
+  ['email','E-mail'],['observacao','Observação'],['cep','CEP'],['estado','UF']
+];
+var CATS_PRODUTO = [
+  'Produto','Serviço','Cartucho','Cartucho Vazio','Insumo','Equipamento',
+  'Impressoras','Chip','Compatível','Informática','Original','Outros'
+];
+var CAMPOS_RECARGA = [
+  ['todos','Pesquisar recarga'],['codigo','Código'],['nome','Descrição'],['marca','Marca']
+];
+
+function fold(t){
+  return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function soDigitos(t){ return String(t||'').replace(/\D/g,''); }
+function ehRecargaCat(cat){ return /recarga/i.test(String(cat||'')); }
+function unificaCat(cat){
+  var n = fold(cat);
+  if(!n) return 'Produto';
+  if(n.indexOf('serv')>=0) return 'Serviço';
+  if(n.indexOf('cartucho')>=0 && n.indexOf('vaz')>=0) return 'Cartucho Vazio';
+  if(n.indexOf('cart')>=0) return 'Cartucho';
+  if(n.indexOf('insum')>=0 || n.indexOf('peca')>=0 || n.indexOf('peça')>=0 || n.indexOf('toner')>=0) return 'Insumo';
+  if(n.indexOf('equip')>=0) return 'Equipamento';
+  if(n.indexOf('impress')>=0) return 'Impressoras';
+  if(n.indexOf('chip')>=0) return 'Chip';
+  if(n.indexOf('compat')>=0) return 'Compatível';
+  if(n.indexOf('info')>=0) return 'Informática';
+  if(n.indexOf('orig')>=0) return 'Original';
+  if(n.indexOf('recarga')>=0) return 'Recarga';
+  return String(cat||'Produto');
+}
+function filtraClientes(list, q, campo){
+  if(typeof window!=='undefined' && window.CLI_PURE && typeof window.CLI_PURE.filtraClientes==='function'){
+    return window.CLI_PURE.filtraClientes(list, q, campo||'todos');
+  }
+  var termo = fold(q).trim();
+  if(!termo) return list||[];
+  var num = soDigitos(q);
+  return (list||[]).filter(function(c){
+    if(!c) return false;
+    var k = campo||'todos';
+    function testa(v, extraNum){
+      return fold(v).indexOf(termo)>=0 || (!!num && num.length>=3 && extraNum && soDigitos(v).indexOf(num)>=0);
+    }
+    if(k && k!=='todos'){
+      if(k==='email') return testa(c.email) || testa(c.email2);
+      if(k==='documento'||k==='cep'||k==='telefone'||k==='whatsapp') return testa(c[k], true);
+      if(k==='codigo'){
+        var alvo=(num||termo).replace(/^0+/,'')||String(num||termo);
+        function normCod(v){ var d=soDigitos(v); return d?(d.replace(/^0+/,'')||'0'):''; }
+        return !!(alvo && (normCod(c.codigo)===alvo || normCod(c.codigoAntigo)===alvo));
+      }
+      return testa(c[k]);
+    }
+    return testa(c.nome)||testa(c.fantasia)||testa(c.documento,true)||testa(c.telefone,true)||
+      testa(c.cidade)||testa(c.bairro)||testa(c.endereco)||String(c.codigo||'').indexOf(num||termo)>=0||
+      testa(c.contato)||testa(c.email)||testa(c.cep,true)||testa(c.whatsapp,true);
+  });
+}
+function filtraProdutos(list, q, cat){
+  var termo = fold(q).trim();
+  var catN = String(cat||'').trim();
+  return (list||[]).filter(function(p){
+    if(!p || p.status==='inativo' || p.status==='excluido') return false;
+    if(ehRecargaCat(p.categoria) || ehRecargaCat(p.tipo) || ehRecargaCat(p.nome)) return false;
+    if(catN && unificaCat(p.categoria)!==catN && String(p.categoria||'')!==catN) return false;
+    if(!termo) return true;
+    return [p.nome, p.sku, p.codigo, p.fabricante, p.local, p.ncm, p.categoria]
+      .some(function(x){ return fold(x).indexOf(termo)>=0; });
+  });
+}
+function filtraRecargas(list, q, campo){
+  var termo = fold(q).trim();
+  var k = campo||'todos';
+  return (list||[]).filter(function(r){
+    if(!r || r.status==='inativo' || r.status==='excluido') return false;
+    if(!termo) return true;
+    if(k==='codigo') return String(r.codigo||'').toLowerCase().indexOf(termo)>=0 || soDigitos(r.codigo).indexOf(soDigitos(q))>=0;
+    if(k==='nome') return fold(r.nome).indexOf(termo)>=0;
+    if(k==='marca') return fold(r.marca).indexOf(termo)>=0;
+    return [r.codigo, r.nome, r.marca].some(function(x){ return fold(x).indexOf(termo)>=0; });
+  });
+}
+
+window.FILTROS_BUSCA_PURE = {
+  CAMPOS_CLIENTE: CAMPOS_CLIENTE,
+  CATS_PRODUTO: CATS_PRODUTO,
+  CAMPOS_RECARGA: CAMPOS_RECARGA,
+  ehRecargaCat: ehRecargaCat,
+  unificaCat: unificaCat,
+  filtraClientes: filtraClientes,
+  filtraProdutos: filtraProdutos,
+  filtraRecargas: filtraRecargas
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):(Number(v)||0); }
+
+function htmlOpts(list, sel){
+  return list.map(function(it){
+    var k = Array.isArray(it)?it[0]:it;
+    var r = Array.isArray(it)?it[1]:it;
+    return '<option value="'+esc(k)+'"'+(String(sel||'')===String(k)?' selected':'')+'>'+esc(r)+'</option>';
+  }).join('');
+}
+function mkSelect(id, opts, sel, cls){
+  var s = document.createElement('select');
+  s.id = id;
+  s.className = cls || 'h-10 px-2 rounded-xl border bg-white text-[12px] min-w-[148px] shrink-0';
+  s.innerHTML = htmlOpts(opts, sel);
+  s.setAttribute('data-filtro-aux','1');
+  return s;
+}
+function insertBeforeInput(input, sel){
+  if(!input || !sel || document.getElementById(sel.id)) return;
+  var pai = input.parentNode;
+  if(!pai) return;
+  if(pai.classList && !/flex/.test(pai.className||'')){
+    pai.classList.add('flex','flex-wrap','items-center','gap-2');
+  }
+  pai.insertBefore(sel, input);
+}
+
+var CLI_INPUTS = [
+  ['vos-cli-search','vos-cli-campo'],
+  ['fin-cli-termo','fin-cli-campo'],
+  ['ctr-cli-busca','ctr-cli-campo'],
+  ['ctr-cli-busca-simples','ctr-cli-campo-simples'],
+  ['ctrd-cli-busca','ctrd-cli-campo'],
+  ['ca-busca-cliente','ca-cli-campo'],
+  ['nv-cliente-search','nv-cli-campo'],
+  ['cv-cliente-search','cv-cli-campo'],
+  ['neo-cli-search','neo-cli-campo']
+];
+
+function camposClienteAtivos(){
+  if(window.CLI_PURE && window.CLI_PURE.CAMPOS_BUSCA) return window.CLI_PURE.CAMPOS_BUSCA;
+  return CAMPOS_CLIENTE;
+}
+
+function injetarFiltrosCliente(){
+  CLI_INPUTS.forEach(function(par){
+    var inp = document.getElementById(par[0]);
+    if(!inp || document.getElementById(par[1])) return;
+    insertBeforeInput(inp, mkSelect(par[1], camposClienteAtivos(), 'todos'));
+  });
+}
+
+function tipoItemVenda(){
+  return String((document.getElementById('vos-item-tipo')||{}).value||'');
+}
+function ehRecargaVenda(){ return /recarga/i.test(tipoItemVenda()); }
+
+function injetarFiltrosItem(){
+  var prod = document.getElementById('vos-prod-search');
+  if(!prod) return;
+  var rec = ehRecargaVenda();
+  var cat = document.getElementById('vos-prod-cat');
+  var recCampo = document.getElementById('vos-rec-campo');
+  if(!cat){
+    cat = mkSelect('vos-prod-cat', [['','Todas categorias']].concat(CATS_PRODUTO.map(function(c){return [c,c];})), '');
+    insertBeforeInput(prod, cat);
+  }
+  if(!recCampo){
+    recCampo = mkSelect('vos-rec-campo', CAMPOS_RECARGA, 'todos');
+    insertBeforeInput(prod, recCampo);
+  }
+  cat.style.display = rec ? 'none' : '';
+  recCampo.style.display = rec ? '' : 'none';
+  prod.placeholder = rec ? 'Busque a recarga (Enter ou lupa)...' : 'Digite para buscar ou escreva a descrição...';
+
+  var cart = document.getElementById('vos-item-cartucho');
+  if(cart){
+    var wrap = cart.closest('label') || cart.parentNode;
+    if(wrap) wrap.classList.toggle('hidden', !rec && !/Toner/i.test(tipoItemVenda()));
+    if(rec && !document.getElementById('vos-etq-lupa')){
+      cart.insertAdjacentHTML('afterend',
+        '<button id="vos-etq-lupa" type="button" onclick="window.buscarEtiquetaFiltroVenda()" class="mt-1 h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>');
+      cart.onkeydown = function(e){
+        if(e.key==='Enter'){ e.preventDefault(); window.buscarEtiquetaFiltroVenda(); }
+      };
+      cart.placeholder = 'Nº da etiqueta — se não achar, escreve e segue';
+    }
+  }
+}
+
+window.buscarEtiquetaFiltroVenda = function(){
+  if(typeof window.vosBuscarEtiquetaNaVenda==='function'){
+    window.vosBuscarEtiquetaNaVenda();
+    return;
+  }
+  var etq = String((document.getElementById('vos-item-cartucho')||{}).value||'').trim();
+  if(!etq) return;
+  var rec = ((typeof db!=='undefined' && db.recargasEtiquetas)||[]).find(function(r){
+    return String(r.etiqueta||'').replace(/\s+/g,'').toUpperCase()===etq.replace(/\s+/g,'').toUpperCase();
+  });
+  if(!rec && typeof toast==='function') toast('Etiqueta nova: escreva e adicione o item. Cadastra ao faturar.','info');
+};
+
+function clientesEmpresa(){
+  var s = sess();
+  return ((typeof db!=='undefined' && db.clientes)||[]).filter(function(c){
+    if(!c || c.status==='inativo') return false;
+    if(s && s.empresaId && c.empresaId && c.empresaId!==s.empresaId) return false;
+    return true;
+  });
+}
+function campoDeInput(inputId){
+  var par = CLI_INPUTS.find(function(p){ return p[0]===inputId; });
+  return par ? (document.getElementById(par[1])||{}).value || 'todos' : 'todos';
+}
+
+function pintarListaCliente(el, list, onclickNome){
+  if(!el) return;
+  el.classList.remove('hidden');
+  el.innerHTML = list.map(function(c){
+    return '<button type="button" onclick="'+onclickNome+'(\''+esc(c.id)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'+
+      '<b class="text-[#0a1e8a]">#'+esc(c.codigo||'-')+'</b> <b>'+esc(c.nome||'')+'</b><br>'+
+      '<span class="text-slate-500 text-[11px]">'+esc(c.documento||'')+' • '+esc(c.telefone||'')+'</span></button>';
+  }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente com esse filtro.</p>';
+}
+
+if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCliente.__v52219){
+  window.vosVendaSearchCliente = function(q){
+    var el = document.getElementById('vos-cli-results'); if(!el) return;
+    if(!String(q||'').trim()){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    var list = filtraClientes(clientesEmpresa(), q, campoDeInput('vos-cli-search')).slice(0,15);
+    pintarListaCliente(el, list, 'vosVendaSelectCliente');
+  };
+  window.vosVendaSearchCliente.__v52219 = true;
+}
+
+if(typeof window.finBuscarCliente==='function' && !window.finBuscarCliente.__v52219){
+  var oldFin = window.finBuscarCliente;
+  window.finBuscarCliente = function(){
+    var q = String((document.getElementById('fin-cli-termo')||{}).value||'');
+    var el = document.getElementById('fin-cli-lista'); if(!el) return oldFin.apply(this, arguments);
+    if(!q.trim()){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    var list = filtraClientes(clientesEmpresa(), q, campoDeInput('fin-cli-termo')).slice(0,15);
+    el.classList.remove('hidden');
+    el.innerHTML = list.map(function(c){
+      return '<button type="button" onclick="window.finEscolherCliente(\''+esc(c.id)+'\')"><b>#'+esc(c.codigo||'-')+'</b> '+esc(c.nome||'')+'<br><span class="text-slate-500 text-[11px]">'+esc(c.documento||'')+'</span></button>';
+    }).join('') || '<div class="p-3 text-slate-500 text-[12px]">Nenhum cliente. Ajuste o filtro e clique na lupa.</div>';
+  };
+  window.finBuscarCliente.__v52219 = true;
+}
+
+function wrapBuscaContrato(fnName, inputId, boxId, selFn){
+  if(typeof window[fnName]!=='function' || window[fnName].__v52219) return;
+  window[fnName] = function(){
+    var q = String((document.getElementById(inputId)||{}).value||'');
+    var box = document.getElementById(boxId); if(!box) return;
+    var list = filtraClientes(clientesEmpresa(), q, campoDeInput(inputId)).slice(0,20);
+    box.classList.remove('hidden');
+    box.innerHTML = list.map(function(c){
+      return '<button class="w-full text-left px-3 py-2 border-b hover:bg-blue-50" onclick="'+selFn+'(\''+esc(c.id)+'\')"><b>#'+esc(c.codigo||'')+' — '+esc(c.nome||'')+'</b><br><span class="text-[11px] text-slate-500">'+esc(c.documento||'')+' • '+esc(c.telefone||'')+'</span></button>';
+    }).join('') || '<p class="p-3 text-slate-400">Nenhum cliente encontrado.</p>';
+  };
+  window[fnName].__v52219 = true;
+}
+wrapBuscaContrato('buscarClienteContratoModal','ctr-cli-busca','ctr-cli-result','selecionarClienteContrato');
+wrapBuscaContrato('buscarClienteContratoDefinitivo','ctr-cli-busca-simples','ctr-cli-result-simples','selecionarClienteContratoDefinitivo');
+wrapBuscaContrato('buscarClienteContratoLeitura','ctrd-cli-busca','ctrd-cli-result','selecionarClienteContratoLeitura');
+
+function wrapBuscaLivre(fnName, inputId, resultsId, selFn){
+  if(typeof window[fnName]!=='function' || window[fnName].__v52219) return;
+  var old = window[fnName];
+  window[fnName] = function(q){
+    var termo = q==null ? String((document.getElementById(inputId)||{}).value||'') : q;
+    var el = document.getElementById(resultsId);
+    if(!el) return old.apply(this, arguments);
+    if(!String(termo||'').trim()){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    var list = filtraClientes(clientesEmpresa(), termo, campoDeInput(inputId)).slice(0,15);
+    pintarListaCliente(el, list, selFn);
+  };
+  window[fnName].__v52219 = true;
+}
+wrapBuscaLivre('searchClientesVenda','nv-cliente-search','nv-cli-results','selectClienteVenda');
+wrapBuscaLivre('neoSearchClienteVenda','neo-cli-search','neo-cli-results','neoSelectClienteVenda');
+wrapBuscaLivre('cvSearchCliente','cv-cliente-search','cv-cliente-results','cvSelectCliente');
+
+if(typeof window.buscarClientesChamadoAvulso==='function' && !window.buscarClientesChamadoAvulso.__v52219){
+  window.buscarClientesChamadoAvulso = function(){
+    var q = String((document.getElementById('ca-busca-cliente')||{}).value||'');
+    var out = document.getElementById('ca-clientes-result'); if(!out) return;
+    var list = filtraClientes(clientesEmpresa(), q, campoDeInput('ca-busca-cliente')).slice(0,30);
+    out.innerHTML = list.map(function(c){
+      return '<button type="button" onclick="selecionarClienteChamadoAvulso(\''+esc(c.id)+'\')" class="w-full text-left p-2 hover:bg-blue-50 border-b last:border-0"><b>'+esc(c.codigo||'')+'</b> '+esc(c.nome||'')+'<br><span class="text-[11px] text-slate-500">'+esc(c.documento||'')+' • '+esc(c.telefone||'')+'</span></button>';
+    }).join('') || '<p class="p-3 text-center text-slate-400">Nenhum cliente encontrado</p>';
+  };
+  window.buscarClientesChamadoAvulso.__v52219 = true;
+}
+
+if(typeof window.vosVendaSearchProd==='function' && !window.vosVendaSearchProd.__v52219){
+  var oldSearch = window.vosVendaSearchProd;
+  window.vosVendaSearchProd = function(q){
+    var el = document.getElementById('vos-prod-results'); if(!el) return oldSearch.apply(this, arguments);
+    var s = sess();
+    if(ehRecargaVenda()){
+      var campo = (document.getElementById('vos-rec-campo')||{}).value || 'todos';
+      var recs = (typeof db!=='undefined' && db.recargas)||[];
+      if(s && s.empresaId) recs = recs.filter(function(r){ return !r.empresaId || r.empresaId===s.empresaId; });
+      if(!String(q||'').trim()){ el.classList.add('hidden'); el.innerHTML=''; return; }
+      var list = filtraRecargas(recs, q, campo).slice(0,10);
+      el.innerHTML = list.map(function(r){
+        return '<button type="button" onclick="window.vosVendaSelectRecarga(\''+esc(r.id)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'+
+          '<b>'+esc(r.nome||'')+'</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">Recarga</span><br>'+
+          '<span class="text-slate-500 text-[11px]">cód. '+esc(r.codigo||'')+' • sem estoque • <b class="text-[#0a1e8a]">'+money(r.preco||0)+'</b></span></button>';
+      }).join('') || '<p class="px-3 py-2 text-slate-400">Nenhuma recarga. Cadastre em Estoque → Recargas. Se for etiqueta nova, escreva na caixa da etiqueta.</p>';
+      el.classList.remove('hidden');
+      return;
+    }
+    if(!String(q||'').trim()){ el.classList.add('hidden'); return; }
+    var cat = (document.getElementById('vos-prod-cat')||{}).value || '';
+    var prods = ((typeof db!=='undefined' && db.produtos)||[]).filter(function(p){
+      return !s || !s.empresaId || !p.empresaId || p.empresaId===s.empresaId;
+    });
+    var listP = filtraProdutos(prods, q, cat).slice(0,10);
+    el.innerHTML = listP.map(function(p){
+      return '<button onclick="vosVendaSelectProd(\''+esc(p.id)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'+
+        '<b>'+esc(p.nome||'')+'</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">'+esc(p.categoria||'')+'</span><br>'+
+        '<span class="text-slate-500 text-[11px]">'+esc(p.sku||'')+' • estoque '+(p.estoque||0)+' • <b class="text-[#0a1e8a]">'+money(p.preco||0)+'</b></span></button>';
+    }).join('') || '<p class="px-3 py-2 text-slate-400">Sem produto — a descrição digitada será usada</p>';
+    el.classList.remove('hidden');
+  };
+  window.vosVendaSearchProd.__v52219 = true;
+}
+
+if(typeof window.vosOnTipoItem==='function' && !window.vosOnTipoItem.__v52219){
+  var oldTipo = window.vosOnTipoItem;
+  window.vosOnTipoItem = function(){
+    var r = oldTipo.apply(this, arguments);
+    injetarFiltrosItem();
+    var res = document.getElementById('vos-prod-results');
+    if(res){ res.classList.add('hidden'); res.innerHTML=''; }
+    return r;
+  };
+  window.vosOnTipoItem.__v52219 = true;
+}
+
+function tirarRecargaDoFiltroEstoque(){
+  var sel = document.getElementById('filter-prod-cat');
+  if(!sel) return;
+  Array.from(sel.options).forEach(function(o){
+    if(ehRecargaCat(o.value) || ehRecargaCat(o.textContent)) o.remove();
+  });
+}
+
+function aplicarTudo(){
+  try{
+    injetarFiltrosCliente();
+    injetarFiltrosItem();
+    tirarRecargaDoFiltroEstoque();
+  }catch(e){}
+}
+
+['novaVenda','renderModalContrato','openModal','renderFinanceiro','renderProdutos'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52219inj) return;
+  var old = window[nome];
+  var wrap = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(aplicarTudo, 60);
+    return r;
+  };
+  wrap.__v52219inj = true;
+  window[nome] = wrap;
+});
+
+setTimeout(aplicarTudo, 400);
+setTimeout(aplicarTudo, 1400);
+
+console.log('[DIGICOPY] v5.22.19 filtros auxiliares: cliente, produto (sem recarga) e recarga+etiqueta');
+})();
+
+;
+
+/* ===== ajustes_v52219_pix_link_publico_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.19 — Link do comprovante/página Pix não depende do GitHack
+// O PDF usa a URL pública da nuvem. Se o repositório ficar privado, o cliente
+// ainda abre a página de pagamento. No .exe a página local continua existindo.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var PIX_PUBLICO = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/pix';
+
+function pixUrlPublico(payload){
+  return PIX_PUBLICO + '?c=' + encodeURIComponent(String(payload||''));
+}
+
+window.PIX_LINK_PUBLICO_PURE = {
+  PIX_PUBLICO: PIX_PUBLICO,
+  pixUrlPublico: pixUrlPublico
+};
+
+if(typeof document==='undefined') return;
+
+window.PIX_PAGAR_PUBLICO = PIX_PUBLICO;
+window.pixPagamentoUrl = function(payload){
+  return pixUrlPublico(payload);
+};
+
+console.log('[DIGICOPY] v5.22.19 PIX: página de pagamento na nuvem, sem GitHack');
+})();
+
+;
+
+/* ===== ajustes_v52220_lupa_alinha_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.20 — Lupa no lugar certo (o filtro auxiliar não pode empurrar o botão)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function alinhaLupaNoCampo(input){
+  if(!input) return;
+  var lupa = null;
+  var id = input.id||'';
+  if(id==='vos-cli-search') lupa = document.getElementById('vos-cli-lupa');
+  if(id==='vos-prod-search') lupa = document.getElementById('vos-prod-lupa');
+  if(id==='vos-item-cartucho') lupa = document.getElementById('vos-etq-lupa');
+  if(!lupa){
+    var p = input.parentNode;
+    if(p) lupa = p.querySelector('button.absolute, [id$="-lupa"]');
+  }
+  if(!lupa) return;
+  lupa.className = 'absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-2.5 rounded-lg bg-[#0a1e8a] text-white z-10 shrink-0';
+  lupa.style.position = 'absolute';
+  lupa.style.right = '6px';
+  lupa.style.top = '50%';
+  lupa.style.transform = 'translateY(-50%)';
+  lupa.style.margin = '0';
+  if(!/\bpr-/.test(input.className||'')) input.className = (input.className||'')+' pr-12';
+}
+
+function tiraFlexQuebrado(el){
+  if(!el || !el.classList) return;
+  el.classList.remove('flex','flex-wrap','items-center','gap-2');
+}
+
+function montaLinha(input, sel){
+  if(!input || !sel) return;
+  var rowExistente = input.closest && input.closest('[data-filtro-row]');
+  if(rowExistente){
+    if(sel.parentNode !== rowExistente){
+      var hold = rowExistente.querySelector('.relative.flex-1') || rowExistente.lastChild;
+      rowExistente.insertBefore(sel, hold);
+    }
+    alinhaLupaNoCampo(input);
+    return;
+  }
+  if(sel.parentNode && sel.parentNode.getAttribute && sel.parentNode.getAttribute('data-filtro-row')==='1'){
+    alinhaLupaNoCampo(input);
+    return;
+  }
+  var pai = input.parentNode;
+  if(!pai) return;
+
+  var row = document.createElement('div');
+  row.setAttribute('data-filtro-row','1');
+  row.className = 'flex items-center gap-2 w-full min-w-0';
+
+  var hold = document.createElement('div');
+  hold.className = 'relative flex-1 min-w-0';
+
+  var avo = pai.parentNode;
+  if(!avo) return;
+
+  // select + caixa do input (lupa fica DENTRO da caixa, absoluta)
+  if(sel.parentNode) sel.parentNode.removeChild(sel);
+  sel.className = 'h-10 px-2 rounded-xl border bg-white text-[12px] w-[168px] shrink-0';
+
+  var lupa = null;
+  if(input.id==='vos-cli-search') lupa = document.getElementById('vos-cli-lupa');
+  if(input.id==='vos-prod-search') lupa = document.getElementById('vos-prod-lupa');
+  if(input.id==='vos-item-cartucho') lupa = document.getElementById('vos-etq-lupa');
+  if(!lupa && pai.querySelector){
+    lupa = Array.prototype.find.call(pai.querySelectorAll('button'), function(b){
+      return /lupa|magnifying/i.test(b.id||'') || (b.querySelector && b.querySelector('.ph-magnifying-glass'));
+    });
+  }
+
+  var resultados = null;
+  if(input.id==='vos-cli-search') resultados = document.getElementById('vos-cli-results');
+  if(input.id==='vos-prod-search') resultados = document.getElementById('vos-prod-results');
+
+  pai.insertBefore(row, input);
+  row.appendChild(sel);
+  row.appendChild(hold);
+  hold.appendChild(input);
+  if(lupa) hold.appendChild(lupa);
+  if(resultados && resultados.parentNode){
+    // resultados embaixo da linha, largura cheia
+    if(row.parentNode) row.parentNode.insertBefore(resultados, row.nextSibling);
+  }
+
+  tiraFlexQuebrado(pai);
+  if(pai.classList && !pai.classList.contains('relative') && pai.tagName==='LABEL'){
+    /* label fica bloco; a linha flex é o row */
+  }
+  alinhaLupaNoCampo(input);
+}
+
+function consertarTudo(){
+  [
+    ['vos-cli-search','vos-cli-campo'],
+    ['vos-prod-search','vos-prod-cat'],
+    ['vos-prod-search','vos-rec-campo'],
+    ['fin-cli-termo','fin-cli-campo'],
+    ['ctr-cli-busca','ctr-cli-campo'],
+    ['ctr-cli-busca-simples','ctr-cli-campo-simples'],
+    ['ctrd-cli-busca','ctrd-cli-campo'],
+    ['ca-busca-cliente','ca-cli-campo'],
+    ['nv-cliente-search','nv-cli-campo'],
+    ['cv-cliente-search','cv-cli-campo'],
+    ['neo-cli-search','neo-cli-campo']
+  ].forEach(function(par){
+    var inp = document.getElementById(par[0]);
+    var sel = document.getElementById(par[1]);
+    if(inp && sel) montaLinha(inp, sel);
+    else if(inp) alinhaLupaNoCampo(inp);
+  });
+
+  // lupas que ficaram soltas no meio da tela
+  document.querySelectorAll('#vos-cli-lupa,#vos-prod-lupa,#vos-etq-lupa').forEach(function(b){
+    var inp = b.id==='vos-cli-lupa' ? document.getElementById('vos-cli-search')
+      : b.id==='vos-prod-lupa' ? document.getElementById('vos-prod-search')
+      : document.getElementById('vos-item-cartucho');
+    if(inp && b.parentNode !== inp.parentNode){
+      inp.parentNode.appendChild(b);
+    }
+    alinhaLupaNoCampo(inp);
+  });
+}
+
+if(typeof document==='undefined'){
+  window.LUPA_ALINHA_PURE = { ok:true };
+  return;
+}
+
+window.LUPA_ALINHA_PURE = { ok:true };
+
+['novaVenda','renderModalContrato','openModal','renderFinanceiro'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52220lupa) return;
+  var old = window[nome];
+  var wrap = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(consertarTudo, 80);
+    setTimeout(consertarTudo, 220);
+    return r;
+  };
+  wrap.__v52220lupa = true;
+  window[nome] = wrap;
+});
+
+setTimeout(consertarTudo, 500);
+setTimeout(consertarTudo, 1600);
+
+console.log('[DIGICOPY] v5.22.20 lupa alinhada no campo');
+})();
+
+;
+
+/* ===== ajustes_v52221_menus_dispositivo_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Menus só deste dispositivo + editor nas Configurações
+// • Layout não sobe na nuvem e não muda os outros PCs
+// • Some o botão Menus da faixa azul
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var KEY_MENUS = 'digicopy_ui_menus_dispositivo_v1';
+var KEY_ATALHOS = 'digicopy_ui_atalhos_dispositivo_v1';
+
+function lerJson(chave){
+  try{
+    var raw = localStorage.getItem(chave);
+    if(!raw) return null;
+    var o = JSON.parse(raw);
+    return o && typeof o === 'object' ? o : null;
+  }catch(e){ return null; }
+}
+function gravarJson(chave, valor){
+  try{ localStorage.setItem(chave, JSON.stringify(valor)); return true; }
+  catch(e){ return false; }
+}
+function migrarSeVazio(){
+  if(typeof db === 'undefined' || !db || !db.config) return;
+  if(!lerJson(KEY_MENUS) && db.config.uiMenus) gravarJson(KEY_MENUS, db.config.uiMenus);
+  if(!lerJson(KEY_ATALHOS) && db.config.uiAtalhos) gravarJson(KEY_ATALHOS, db.config.uiAtalhos);
+}
+function tirarDaNuvem(){
+  if(typeof db === 'undefined' || !db || !db.config) return false;
+  var mudou = false;
+  if(db.config.uiMenus){ delete db.config.uiMenus; mudou = true; }
+  if(db.config.uiAtalhos){ delete db.config.uiAtalhos; mudou = true; }
+  return mudou;
+}
+
+window.MENUS_DISPOSITIVO_PURE = {
+  KEY_MENUS: KEY_MENUS,
+  KEY_ATALHOS: KEY_ATALHOS,
+  lerJson: lerJson,
+  gravarJson: gravarJson
+};
+
+if(typeof document === 'undefined') return;
+
+function comLayoutLocal(fn){
+  if(typeof db === 'undefined') return fn();
+  db.config = db.config || {};
+  migrarSeVazio();
+  var prevM = db.config.uiMenus;
+  var prevA = db.config.uiAtalhos;
+  var localM = lerJson(KEY_MENUS);
+  var localA = lerJson(KEY_ATALHOS);
+  if(localM) db.config.uiMenus = localM;
+  if(localA) db.config.uiAtalhos = localA;
+  try{ return fn(); }
+  finally{
+    if(prevM === undefined) delete db.config.uiMenus; else db.config.uiMenus = prevM;
+    if(prevA === undefined) delete db.config.uiAtalhos; else db.config.uiAtalhos = prevA;
+  }
+}
+
+function tirarBotaoMenus(){
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  Array.from(row.querySelectorAll('.module')).forEach(function(mod){
+    var b = mod.querySelector('button');
+    if(!b) return;
+    var t = String(b.textContent || '').replace(/\s+/g,' ').trim();
+    if(t === 'Menus' || /Editar ordem/.test(b.getAttribute('title')||'')){
+      mod.remove();
+    }
+  });
+}
+
+if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v52221dev){
+  var oldPintar = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = comLayoutLocal(function(){ return oldPintar.apply(this, arguments); }.bind(this));
+    tirarBotaoMenus();
+    return r;
+  };
+  window.pintarMenus.__v52221dev = true;
+}
+
+if(typeof window.pintarAtalhos === 'function' && !window.pintarAtalhos.__v52221dev){
+  var oldAtalhos = window.pintarAtalhos;
+  window.pintarAtalhos = function(){
+    return comLayoutLocal(function(){ return oldAtalhos.apply(this, arguments); }.bind(this));
+  };
+  window.pintarAtalhos.__v52221dev = true;
+}
+
+if(typeof window.abrirEditorMenus === 'function' && !window.abrirEditorMenus.__v52221dev){
+  var oldAbrir = window.abrirEditorMenus;
+  window.abrirEditorMenus = function(){
+    return comLayoutLocal(function(){ return oldAbrir.apply(this, arguments); }.bind(this));
+  };
+  window.abrirEditorMenus.__v52221dev = true;
+}
+
+if(typeof window.abrirEditorAtalhos === 'function' && !window.abrirEditorAtalhos.__v52221dev){
+  var oldAbrirA = window.abrirEditorAtalhos;
+  window.abrirEditorAtalhos = function(){
+    return comLayoutLocal(function(){ return oldAbrirA.apply(this, arguments); }.bind(this));
+  };
+  window.abrirEditorAtalhos.__v52221dev = true;
+}
+
+if(typeof window.salvarEditorMenus === 'function' && !window.salvarEditorMenus.__v52221dev){
+  var oldSalvar = window.salvarEditorMenus;
+  window.salvarEditorMenus = function(){
+    var r = oldSalvar.apply(this, arguments);
+    if(typeof db !== 'undefined' && db.config && db.config.uiMenus){
+      gravarJson(KEY_MENUS, db.config.uiMenus);
+    }
+    if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+    if(typeof window.pintarMenus === 'function') window.pintarMenus();
+    return r;
+  };
+  window.salvarEditorMenus.__v52221dev = true;
+}
+
+if(typeof window.salvarEditorAtalhos === 'function' && !window.salvarEditorAtalhos.__v52221dev){
+  var oldSalvarA = window.salvarEditorAtalhos;
+  window.salvarEditorAtalhos = function(){
+    var r = oldSalvarA.apply(this, arguments);
+    if(typeof db !== 'undefined' && db.config && db.config.uiAtalhos){
+      gravarJson(KEY_ATALHOS, db.config.uiAtalhos);
+    }
+    if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+    if(typeof window.pintarAtalhos === 'function') window.pintarAtalhos();
+    return r;
+  };
+  window.salvarEditorAtalhos.__v52221dev = true;
+}
+
+function cardMenusConfig(){
+  var grid = document.querySelector('#view-config .grid') || document.getElementById('view-config');
+  if(!grid || document.getElementById('ui-menus-dispositivo-card')) return;
+  var card = document.createElement('div');
+  card.id = 'ui-menus-dispositivo-card';
+  card.className = 'rounded-[16px] bg-white border p-6';
+  card.innerHTML = '<h4 class="font-bold text-[14px]"><i class="ph ph-squares-four"></i> Menus deste computador</h4>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Ordem e nome valem só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p>'+
+    '<button type="button" id="ui-menus-dispositivo-btn" class="mt-4 h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]">Editar menus</button>';
+  grid.appendChild(card);
+  document.getElementById('ui-menus-dispositivo-btn').onclick = function(){
+    if(typeof window.abrirEditorMenus === 'function') window.abrirEditorMenus();
+  };
+}
+
+if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52221menus){
+  var oldCfg = window.renderConfig;
+  window.renderConfig = function(){
+    var r = oldCfg.apply(this, arguments);
+    setTimeout(cardMenusConfig, 220);
+    setTimeout(cardMenusConfig, 600);
+    return r;
+  };
+  window.renderConfig.__v52221menus = true;
+}
+
+setTimeout(function(){
+  migrarSeVazio();
+  if(tirarDaNuvem() && typeof saveDB === 'function') saveDB();
+  if(typeof window.pintarMenus === 'function') window.pintarMenus();
+  cardMenusConfig();
+}, 700);
+
+console.log('[DIGICOPY] v5.22.21 menus só deste dispositivo');
+})();
+
+;
+
+/* ===== ajustes_v52221_nfe_permissao_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Caixa “pode emitir NF” em Usuários
+// • Só Admin ou Dono edita a caixa
+// • Só quem estiver marcado confere/assina
+// • Ainda não envia para a SEFAZ
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function perfilDe(u){
+  if(typeof window.AJUSTES_V5196_PURE === 'object' && window.AJUSTES_V5196_PURE.perfilEfetivo){
+    return window.AJUSTES_V5196_PURE.perfilEfetivo(u);
+  }
+  var p = txt(u && u.perfil);
+  if(p === 'Admin' || p === 'Dono') return p;
+  return 'Funcionário';
+}
+function ehAdminOuDono(u){
+  var p = perfilDe(u);
+  return p === 'Admin' || p === 'Dono';
+}
+function podeEmitirNfe(u){ return !!(u && u.podeEmitirNfe); }
+function podeEditarCaixaNfe(s){ return ehAdminOuDono(s); }
+
+window.NFE_PERMISSAO_PURE = {
+  perfilDe: perfilDe,
+  ehAdminOuDono: ehAdminOuDono,
+  podeEmitirNfe: podeEmitirNfe,
+  podeEditarCaixaNfe: podeEditarCaixaNfe
+};
+
+if(typeof document === 'undefined') return;
+
+function sess(){ return typeof getSession === 'function' ? getSession() : null; }
+function usuarioSessao(){
+  var s = sess();
+  if(!s || typeof db === 'undefined') return null;
+  return (db.usuarios||[]).find(function(u){ return u && u.id === s.usuarioId; }) || {
+    id: s.usuarioId, login: s.login, perfil: s.perfil, podeEmitirNfe: false
+  };
+}
+function avisar(msg){
+  if(typeof window.lfbAlert === 'function') window.lfbAlert(msg, 'NF-e');
+  else if(typeof toast === 'function') toast(msg, 'error');
+}
+
+window.usuarioPodeEmitirNfe = function(){
+  return podeEmitirNfe(usuarioSessao());
+};
+
+window.alternarPodeEmitirNfe = function(id, marcado){
+  var s = sess();
+  if(!podeEditarCaixaNfe(s)){
+    avisar('Somente Admin ou Dono altera quem emite NF.');
+    if(typeof renderUsuarios === 'function') renderUsuarios();
+    return;
+  }
+  var u = (db.usuarios||[]).find(function(x){ return x && x.id === id; });
+  if(!u) return;
+  u.podeEmitirNfe = !!marcado;
+  u.atualizadoEm = new Date().toISOString();
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof toast === 'function') toast(u.podeEmitirNfe ? 'Pode emitir NF' : 'Não emite NF', 'success');
+};
+
+if(typeof window.renderUsuarios === 'function' && !window.renderUsuarios.__v52221nfe){
+  var oldRU = window.renderUsuarios;
+  window.renderUsuarios = function(){
+    var r = oldRU.apply(this, arguments);
+    setTimeout(injetarCaixas, 30);
+    return r;
+  };
+  window.renderUsuarios.__v52221nfe = true;
+}
+
+function injetarCaixas(){
+  var view = document.getElementById('view-usuarios');
+  if(!view) return;
+  var s = sess();
+  var edita = podeEditarCaixaNfe(s);
+  var table = view.querySelector('table');
+  if(!table) return;
+  var thead = table.querySelector('thead tr');
+  if(thead && !thead.querySelector('[data-nfe-col]')){
+    var th = document.createElement('th');
+    th.setAttribute('data-nfe-col','1');
+    th.textContent = 'Emitir NF';
+    var last = thead.lastElementChild;
+    if(last) thead.insertBefore(th, last);
+    else thead.appendChild(th);
+  }
+  var usuarios = (typeof db !== 'undefined' && db.usuarios) ? db.usuarios : [];
+  var rows = table.querySelectorAll('tbody tr');
+  rows.forEach(function(tr){
+    if(tr.querySelector('[data-nfe-cell]')) return;
+    var loginCell = tr.children[1];
+    var login = fold(loginCell && loginCell.textContent);
+    if(!login || login === '—') return;
+    var u = usuarios.find(function(x){ return fold(x.login) === login; });
+    if(!u) return;
+    var td = document.createElement('td');
+    td.setAttribute('data-nfe-cell','1');
+    var ck = document.createElement('input');
+    ck.type = 'checkbox';
+    ck.className = 'w-4 h-4';
+    ck.checked = !!u.podeEmitirNfe;
+    ck.disabled = !edita;
+    ck.title = edita ? 'Marque quem pode emitir NF' : 'Somente Admin ou Dono altera';
+    ck.onchange = function(){ window.alternarPodeEmitirNfe(u.id, ck.checked); };
+    td.appendChild(ck);
+    var acoes = tr.lastElementChild;
+    if(acoes) tr.insertBefore(td, acoes);
+    else tr.appendChild(td);
+  });
+}
+
+if(typeof window.conferirNfe === 'function' && !window.conferirNfe.__v52221perm){
+  var oldConf = window.conferirNfe;
+  window.conferirNfe = async function(){
+    if(!window.usuarioPodeEmitirNfe()){
+      avisar('Este usuário não está autorizado a emitir NF. Peça para Admin ou Dono marcar a caixa em Usuários.');
+      return;
+    }
+    return oldConf.apply(this, arguments);
+  };
+  window.conferirNfe.__v52221perm = true;
+}
+
+setTimeout(injetarCaixas, 800);
+console.log('[DIGICOPY] v5.22.21 permissão de emitir NF');
+})();
+
+;
+
+/* ===== ajustes_v52221_import_produtos_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — Importação pontual PRODUTOS + PRODUTOS_CATEGORIA
+// • Dedupe só nesta importação, por código/SKU
+// • Não vira regra automática da nuvem
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function linhasDeJson(raw){
+  if(Array.isArray(raw)) return raw;
+  if(!raw || typeof raw !== 'object') return [];
+  if(Array.isArray(raw.data)) return raw.data;
+  if(Array.isArray(raw.dados)) return raw.dados;
+  var keys = Object.keys(raw);
+  for(var i=0;i<keys.length;i++){
+    var k = keys[i];
+    var v = raw[k];
+    if(Array.isArray(v) && v.length && typeof v[0] === 'object') return v;
+    if(v && typeof v === 'object' && Array.isArray(v.data)) return v.data;
+  }
+  return [];
+}
+function skuDe(row){
+  return txt(row && (row.CODIGO || row.SKU || row.COD_PRODUTO || row.CODIGO_PRODUTO || row.codigo || row.sku));
+}
+function nomeDe(row){
+  return txt(row && (row.DESCRICAO || row.NOME || row.PRODUTO || row.nome || row.descricao));
+}
+function mapaCategorias(rows){
+  var mapa = {};
+  (rows||[]).forEach(function(r){
+    var c = txt(r.PRC_CODIGO || r.CODIGO || r.ID || r.COD_CATEGORIA);
+    var n = txt(r.PRC_DESCRICAO || r.DESCRICAO || r.NOME || r.CATEGORIA);
+    if(c && n) mapa[c] = n;
+  });
+  return mapa;
+}
+function categoriaDe(row, cats){
+  var cod = txt(row && (row.COD_CATEGORIA || row.CATEGORIA_ID || row.PRC_CODIGO || row.GRUPO));
+  if(cod && cats && cats[cod]) return cats[cod];
+  return txt(row && (row.CATEGORIA || row.TIPO || row.GRUPO_NOME)) || 'Produto';
+}
+function mapearProduto(row, cats){
+  return {
+    sku: skuDe(row),
+    nome: nomeDe(row),
+    categoria: categoriaDe(row, cats),
+    fabricante: txt(row && (row.FABRICANTE || row.MARCA || row.fabricante)),
+    estoque: parseInt(row && (row.ESTOQUE || row.QTD || row.QUANTIDADE), 10) || 0,
+    estoqueMin: parseInt(row && (row.ESTOQUE_MINIMO || row.ESTOQUE_MIN), 10) || 0,
+    custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
+    preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
+    local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    ncm: txt(row && (row.NCM || row.PR_NCM || row.ncm)).replace(/\D/g,'').slice(0,8),
+    status: 'ativo'
+  };
+}
+function dedupePorSku(existentes, novos){
+  var seen = {};
+  (existentes||[]).forEach(function(p){
+    var k = txt(p && p.sku);
+    if(k) seen[k] = p;
+  });
+  var out = [];
+  (novos||[]).forEach(function(n){
+    if(!n || !n.sku || !n.nome) return;
+    var k = String(n.sku);
+    if(seen[k]) out.push({ tipo:'upd', atual: seen[k], novo: n });
+    else { seen[k] = n; out.push({ tipo:'new', novo: n }); }
+  });
+  return out;
+}
+
+window.IMPORT_PRODUTOS_PURE = {
+  linhasDeJson: linhasDeJson,
+  skuDe: skuDe,
+  nomeDe: nomeDe,
+  mapaCategorias: mapaCategorias,
+  mapearProduto: mapearProduto,
+  dedupePorSku: dedupePorSku
+};
+
+console.log('[DIGICOPY] v5.22.21 importação pontual de produtos');
+})();
+
+;
+
+/* ===== ajustes_v52221_cert_nuvem_a1_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
+// • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var MAX_BYTES = 400 * 1024;
+var TIPOS_A1 = ['pfx','p12'];
+
+function extDe(nome){
+  var m = String(nome||'').toLowerCase().match(/\.([a-z0-9]+)$/);
+  return m ? m[1] : '';
+}
+function podeEnviarA1(nome, bytes){
+  var ext = extDe(nome);
+  if(TIPOS_A1.indexOf(ext) < 0) return { ok:false, motivo:'tipo' };
+  if(bytes > MAX_BYTES) return { ok:false, motivo:'tamanho' };
+  if(!(bytes > 0)) return { ok:false, motivo:'vazio' };
+  return { ok:true, ext:ext };
+}
+function a1DaConfig(cfg){
+  var f = cfg && cfg.fiscal;
+  var a = f && f.a1Nuvem;
+  if(!a || !a.data) return null;
+  return a;
+}
+function pfxB64De(a1){
+  if(!a1 || !a1.data) return '';
+  return String(a1.data).replace(/^data:[^;]+;base64,/, '');
+}
+
+window.CERT_A1_NUVEM_PURE = {
+  MAX_BYTES: MAX_BYTES,
+  TIPOS_A1: TIPOS_A1.slice(),
+  extDe: extDe,
+  podeEnviarA1: podeEnviarA1,
+  a1DaConfig: a1DaConfig,
+  pfxB64De: pfxB64De
+};
+
+if(typeof document === 'undefined') return;
+
+function toastMsg(m,t){ if(typeof toast === 'function') toast(m, t||'info'); }
+function fiscal(){
+  if(typeof db === 'undefined') return {};
+  db.config = db.config || {};
+  db.config.fiscal = db.config.fiscal || {};
+  return db.config.fiscal;
+}
+function temA1Nuvem(){ return !!a1DaConfig({ fiscal: fiscal() }); }
+
+function esconderCarregarLocal(){
+  ['nfe-cert-import','nfe-cert-remove'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  var st = document.getElementById('nfe-cert-status');
+  if(!st) return;
+  var a1 = a1DaConfig({ fiscal: fiscal() });
+  if(a1){
+    var quando = a1.enviadoEm ? new Date(a1.enviadoEm).toLocaleString('pt-BR') : '';
+    st.textContent = 'A1 na nuvem'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
+  }else{
+    st.textContent = 'Nenhum A1 na nuvem. Envie o .pfx pela página de envio de arquivos.';
+  }
+}
+
+async function apagarA1LocalSeHouver(){
+  var api = window.nfeCertAPI;
+  if(!api || typeof api.remover !== 'function') return;
+  if(!temA1Nuvem()) return;
+  try{ await api.remover(); }catch(e){}
+}
+
+function ajustarCard(){
+  esconderCarregarLocal();
+  var p = document.querySelector('#nfe-config-card p');
+  if(p && !p.dataset.v52221a1){
+    p.dataset.v52221a1 = '1';
+    p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
+  }
+  var pub = document.getElementById('nfe-certs-nuvem');
+  if(pub) pub.style.display = 'none';
+}
+
+if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52221a1){
+  var old = window.renderConfig;
+  window.renderConfig = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(ajustarCard, 240);
+    setTimeout(ajustarCard, 700);
+    setTimeout(apagarA1LocalSeHouver, 800);
+    return r;
+  };
+  window.renderConfig.__v52221a1 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarDocumento === 'function' && !window.NFE_EMISSAO_PURE.montarDocumento.__v52221a1){
+  var oldDoc = window.NFE_EMISSAO_PURE.montarDocumento;
+  window.NFE_EMISSAO_PURE.montarDocumento = function(opts){
+    opts = Object.assign({}, opts||{});
+    if(temA1Nuvem()) opts.certificadoLocal = true;
+    return oldDoc.call(this, opts);
+  };
+  window.NFE_EMISSAO_PURE.montarDocumento.__v52221a1 = true;
+}
+
+if(window.nfeCertAPI && typeof window.nfeCertAPI.assinar === 'function' && !window.nfeCertAPI.__v52221a1){
+  var oldAssinar = window.nfeCertAPI.assinar;
+  window.nfeCertAPI.assinar = function(xml, senha){
+    var a1 = a1DaConfig({ fiscal: fiscal() });
+    return oldAssinar(xml, senha, a1 ? a1.data : '');
+  };
+  window.nfeCertAPI.__v52221a1 = true;
+}
+
+setTimeout(ajustarCard, 900);
+setTimeout(apagarA1LocalSeHouver, 1200);
+console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
+})();
+
+;
+
+/* ===== ajustes_v52222_menus_arrastar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.22 — Editor de menus: só arrastar, sem setas
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function esconderSetas(){
+  var ed = document.getElementById('ui-menus-ed');
+  if(!ed) return 0;
+  var n = 0;
+  ed.querySelectorAll('button').forEach(function(b){
+    var t = String(b.textContent||'').replace(/\s+/g,'').trim();
+    if(t==='↑' || t==='↓'){ b.style.display='none'; n++; }
+  });
+  return n;
+}
+
+window.MENUS_ARRASTAR_SO_PURE = { esconderSetas: esconderSetas };
+
+if(typeof document==='undefined') return;
+
+function depoisDeAbrir(){
+  setTimeout(esconderSetas, 20);
+  setTimeout(esconderSetas, 80);
+  setTimeout(esconderSetas, 200);
+}
+
+if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52222drag){
+  var old = window.abrirEditorMenus;
+  window.abrirEditorMenus = function(){
+    var r = old.apply(this, arguments);
+    depoisDeAbrir();
+    return r;
+  };
+  window.abrirEditorMenus.__v52222drag = true;
+}
+
+console.log('[DIGICOPY] v5.22.22 menus só arrastar');
+})();
+
+;
+
+/* ===== ajustes_v52222_ncm_import_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.22 — Liga NCM no produto (tabela NCM do sistema antigo + campo no produto)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function soNcm(v){ return txt(v).replace(/\D/g,'').slice(0,8); }
+function ncmDaLinha(row){
+  return soNcm(row && (row.NCM || row.PR_NCM || row.NC_NCM || row.CODIGO_NCM || row.ncm));
+}
+function refNcmDaLinha(row){
+  return txt(row && (row.COD_NCM || row.PR_COD_NCM || row.NCM_ID || row.NC_CODIGO || row.CODIGO_NCM_TAB));
+}
+function skuDaLinha(row){
+  return txt(row && (row.COD_PRODUTO || row.CODIGO_PRODUTO || row.SKU || row.PR_CODIGO || row.CODIGO));
+}
+function mapaNcm(rows){
+  var porCodigo = {};
+  var porSku = {};
+  (rows||[]).forEach(function(r){
+    var ncm = ncmDaLinha(r);
+    var cod = txt(r && (r.NC_CODIGO || r.CODIGO || r.ID));
+    var sku = skuDaLinha(r);
+    if(cod && ncm) porCodigo[cod] = ncm;
+    if(sku && ncm && sku !== cod) porSku[sku] = ncm;
+  });
+  return { porCodigo: porCodigo, porSku: porSku };
+}
+function ncmDoProduto(rowProd, catalogo){
+  var direto = ncmDaLinha(rowProd);
+  if(direto.length===8) return direto;
+  catalogo = catalogo || { porCodigo:{}, porSku:{} };
+  var ref = refNcmDaLinha(rowProd);
+  if(ref && catalogo.porCodigo[ref]) return catalogo.porCodigo[ref];
+  var sku = skuDaLinha(rowProd);
+  if(sku && catalogo.porSku[sku]) return catalogo.porSku[sku];
+  if(sku && catalogo.porCodigo[sku]) return catalogo.porCodigo[sku];
+  return direto;
+}
+
+window.NCM_IMPORT_PURE = {
+  soNcm: soNcm,
+  ncmDaLinha: ncmDaLinha,
+  refNcmDaLinha: refNcmDaLinha,
+  mapaNcm: mapaNcm,
+  ncmDoProduto: ncmDoProduto
+};
+
+if(window.IMPORT_PRODUTOS_PURE && typeof window.IMPORT_PRODUTOS_PURE.mapearProduto==='function' && !window.IMPORT_PRODUTOS_PURE.mapearProduto.__v52222ncm){
+  var oldMap = window.IMPORT_PRODUTOS_PURE.mapearProduto;
+  window.IMPORT_PRODUTOS_PURE.mapearProduto = function(row, cats, catalogo){
+    var p = oldMap(row, cats);
+    p.ncm = ncmDoProduto(row, catalogo);
+    return p;
+  };
+  window.IMPORT_PRODUTOS_PURE.mapearProduto.__v52222ncm = true;
+  window.IMPORT_PRODUTOS_PURE.ncmDoProduto = ncmDoProduto;
+  window.IMPORT_PRODUTOS_PURE.mapaNcm = mapaNcm;
+}
+
+console.log('[DIGICOPY] v5.22.22 NCM no produto');
+})();
+
+;
+
+/* ===== ajustes_v52223_cat_letra_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.23 — Letras P/S/I/C/E no select: some a opção letra, entra o nome
+// • Chip, Original e o resto ficam.
+// • Não vira regra de categoria. Conversão de dado fica na 5.22.24 (uma vez).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var LETRAS = {
+  p: 'Produto',
+  s: 'Serviço',
+  i: 'Insumo',
+  c: 'Cartucho',
+  e: 'Equipamento'
+};
+
+function ehLetraFiltro(v){
+  var t = String(v==null?'':v).trim();
+  return t.length===1 && !!LETRAS[t.toLowerCase()];
+}
+function letraParaNome(v){
+  var t = String(v==null?'':v).trim();
+  if(t.length===1 && LETRAS[t.toLowerCase()]) return LETRAS[t.toLowerCase()];
+  return t;
+}
+
+window.CAT_LETRA_PURE = {
+  LETRAS: LETRAS,
+  ehLetraFiltro: ehLetraFiltro,
+  letraParaNome: letraParaNome
+};
+
+if(typeof document==='undefined') return;
+
+function limparOpcoesLetra(){
+  ['filter-prod-cat','vos-prod-cat','kp-prd-cat'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if(!sel) return;
+    var atual = String(sel.value||'');
+    Array.from(sel.options).forEach(function(o){
+      if(ehLetraFiltro(o.value) || ehLetraFiltro(o.textContent)) o.remove();
+    });
+    if(ehLetraFiltro(atual)){
+      var nome = letraParaNome(atual);
+      var tem = Array.from(sel.options).some(function(o){ return o.value===nome; });
+      if(!tem){
+        var opt = document.createElement('option');
+        opt.value = nome; opt.textContent = nome;
+        sel.appendChild(opt);
+      }
+      sel.value = nome;
+    }
+  });
+}
+
+function aplicar(){
+  try{ limparOpcoesLetra(); }catch(e){}
+}
+
+['renderProdutos','novaVenda','openModal'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52223letra) return;
+  var old = window[nome];
+  window[nome] = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(aplicar, 40);
+    return r;
+  };
+  window[nome].__v52223letra = true;
+});
+
+setTimeout(aplicar, 500);
+setTimeout(aplicar, 1600);
+console.log('[DIGICOPY] v5.22.23 letras só no select (sem regra de categoria)');
+})();
+
+;
+
+/* ===== ajustes_v52223_menus_arraste_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.23 — Menus: apaga as setas e o bloco segue o mouse
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function apagarSetas(root){
+  if(!root) return 0;
+  var n = 0;
+  Array.from(root.querySelectorAll('button')).forEach(function(b){
+    var t = String(b.textContent||'').replace(/\s+/g,'').trim();
+    if(t==='↑' || t==='↓'){ b.remove(); n++; }
+  });
+  return n;
+}
+
+window.MENUS_ARRASTE_PURE = { apagarSetas: apagarSetas };
+
+if(typeof document==='undefined') return;
+
+function ligarSegueMouse(lista, seletor){
+  if(!lista) return;
+  var drag=null, ghost=null, offY=0;
+  function itens(){
+    return Array.from(lista.children).filter(function(el){
+      return el && el.getAttribute && el.matches && el.matches(seletor);
+    });
+  }
+  itens().forEach(function(el){
+    if(el.__v52223drag) return;
+    el.__v52223drag = true;
+    el.removeAttribute('draggable');
+    el.style.cursor = 'grab';
+    el.addEventListener('pointerdown', function(e){
+      if(e.button!==0) return;
+      var t = e.target;
+      if(t && /INPUT|TEXTAREA|SELECT|LABEL|BUTTON/.test(t.tagName)) return;
+      e.preventDefault();
+      drag = el;
+      var r = el.getBoundingClientRect();
+      offY = e.clientY - r.top;
+      ghost = el.cloneNode(true);
+      ghost.style.cssText = 'position:fixed;left:'+r.left+'px;width:'+r.width+'px;top:'+(e.clientY-offY)+'px;z-index:200000;pointer-events:none;opacity:.95;box-shadow:0 16px 36px rgba(15,23,42,.28);background:#fff';
+      document.body.appendChild(ghost);
+      el.style.opacity = '.3';
+      try{ el.setPointerCapture(e.pointerId); }catch(x){}
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!drag || drag!==el) return;
+      if(ghost) ghost.style.top = (e.clientY - offY)+'px';
+      var outros = itens().filter(function(x){ return x!==drag; });
+      var alvo = null;
+      outros.forEach(function(o){
+        var b = o.getBoundingClientRect();
+        if(e.clientY >= b.top && e.clientY <= b.bottom) alvo = o;
+      });
+      if(!alvo) return;
+      var mid = alvo.getBoundingClientRect().top + alvo.offsetHeight/2;
+      if(e.clientY < mid){
+        if(drag.nextSibling!==alvo) lista.insertBefore(drag, alvo);
+      }else{
+        if(alvo.nextSibling!==drag) lista.insertBefore(drag, alvo.nextSibling);
+      }
+    });
+    function solta(){
+      if(ghost){ ghost.remove(); ghost=null; }
+      if(drag){ drag.style.opacity='1'; drag=null; }
+    }
+    el.addEventListener('pointerup', solta);
+    el.addEventListener('pointercancel', solta);
+  });
+}
+
+function prepararEditor(){
+  var ed = document.getElementById('ui-menus-ed');
+  if(!ed) return;
+  apagarSetas(ed);
+  ed.querySelectorAll('[draggable]').forEach(function(el){ el.removeAttribute('draggable'); });
+  ligarSegueMouse(ed, '[data-mid]');
+  ed.querySelectorAll('[data-subs]').forEach(function(box){
+    ligarSegueMouse(box, '[data-sid]');
+  });
+}
+
+if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52223drag){
+  var old = window.abrirEditorMenus;
+  window.abrirEditorMenus = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(prepararEditor, 20);
+    setTimeout(prepararEditor, 80);
+    setTimeout(prepararEditor, 220);
+    return r;
+  };
+  window.abrirEditorMenus.__v52223drag = true;
+}
+
+console.log('[DIGICOPY] v5.22.23 menus seguem o mouse, sem seta');
+})();
+
+;
+
+/* ===== ajustes_v52224_cat_letra_uma_vez_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.24 — Correção pontual: P/S/I/C/E só no dado já importado, uma vez
+// • Não envolve unificaCat / categoriaUnificada (não vira regra).
+// • Chip, Original e o resto não mexem.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var FLAG = 'correcaoCatLetraUmaVez';
+
+function letraApi(){
+  return (typeof window!=='undefined' && window.CAT_LETRA_PURE) ? window.CAT_LETRA_PURE : null;
+}
+function ehLetraFiltro(v){
+  var api = letraApi();
+  if(api && typeof api.ehLetraFiltro==='function') return api.ehLetraFiltro(v);
+  var t = String(v==null?'':v).trim();
+  return t.length===1 && /[psice]/i.test(t);
+}
+function letraParaNome(v){
+  var api = letraApi();
+  if(api && typeof api.letraParaNome==='function') return api.letraParaNome(v);
+  return String(v==null?'':v).trim();
+}
+
+function corrigirProdutosUmaVez(produtos){
+  var n = 0;
+  (produtos||[]).forEach(function(p){
+    if(!p || !ehLetraFiltro(p.categoria)) return;
+    p.categoria = letraParaNome(p.categoria);
+    n++;
+  });
+  return n;
+}
+
+function jaFez(){
+  return !!(typeof db!=='undefined' && db.config && db.config[FLAG]);
+}
+
+function marcar(n){
+  if(typeof db==='undefined') return;
+  db.config = db.config || {};
+  db.config[FLAG] = { em: new Date().toISOString(), n: n };
+}
+
+function aplicarUmaVez(){
+  if(typeof db==='undefined' || !Array.isArray(db.produtos)) return 0;
+  if(!db.produtos.length) return 0;
+  if(jaFez()) return 0;
+  var n = corrigirProdutosUmaVez(db.produtos);
+  marcar(n);
+  if(typeof saveDB==='function') saveDB();
+  return n;
+}
+
+window.CAT_LETRA_UMA_VEZ_PURE = {
+  FLAG: FLAG,
+  corrigirProdutosUmaVez: corrigirProdutosUmaVez,
+  ehLetraFiltro: ehLetraFiltro
+};
+
+if(typeof document==='undefined') return;
+
+function tentar(){
+  try{ aplicarUmaVez(); }catch(e){}
+}
+
+if(typeof window.renderProdutos==='function' && !window.renderProdutos.__v52224letra){
+  var old = window.renderProdutos;
+  window.renderProdutos = function(){
+    tentar();
+    return old.apply(this, arguments);
+  };
+  window.renderProdutos.__v52224letra = true;
+}
+
+setTimeout(tentar, 600);
+setTimeout(tentar, 1800);
+console.log('[DIGICOPY] v5.22.24 letra no produto: uma vez, sem regra');
+})();
+
+;
+
+/* ===== ajustes_v52225_import_pula_del_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.25 — Nesta importação, produto com DEL = S não entra
+// • Só DEL. OCULTAR não decide.
+// • Não vira regra do cadastro novo.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function ehDel(row){
+  if(!row || typeof row!=='object') return false;
+  var d = row.DEL!=null ? row.DEL : row.del;
+  if(d===true || d===1) return true;
+  var t = txt(d).toUpperCase();
+  return t==='S' || t==='SIM' || t==='1' || t==='TRUE';
+}
+function linhasSemDel(rows){
+  return (rows||[]).filter(function(r){ return !ehDel(r); });
+}
+
+window.IMPORT_DEL_PURE = {
+  ehDel: ehDel,
+  linhasSemDel: linhasSemDel
+};
+
+if(window.IMPORT_PRODUTOS_PURE && !window.IMPORT_PRODUTOS_PURE.ehDel){
+  window.IMPORT_PRODUTOS_PURE.ehDel = ehDel;
+  window.IMPORT_PRODUTOS_PURE.linhasSemDel = linhasSemDel;
+}
+
+console.log('[DIGICOPY] v5.22.25 importação pula DEL=S');
+})();
+
+;
+
+/* ===== ajustes_v52227_lupa_filtro_cli_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.27 — Some a lupa enfeite em cima do filtro de cliente
+// • A lupa de pesquisar (botão) fica. Some só o ícone absoluto que cobria o select.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function ehEnfeite(el){
+  if(!el || el.tagName!=='I') return false;
+  if(!/ph-magnifying-glass/.test(el.className||'')) return false;
+  if(/absolute/.test(el.className||'') || (el.style && el.style.position==='absolute')) return true;
+  return false;
+}
+function tiraLupaEnfeite(){
+  var ids = ['vos-cli-campo','fin-cli-campo','ctr-cli-campo','ctr-cli-campo-simples','ctrd-cli-campo','ca-cli-campo','nv-cli-campo','cv-cli-campo','neo-cli-campo'];
+  ids.forEach(function(id){
+    var sel = document.getElementById(id);
+    if(!sel) return;
+    var row = sel.closest && sel.closest('[data-filtro-row]');
+    var pai = (row && row.parentNode) || sel.parentNode;
+    if(!pai || !pai.querySelectorAll) return;
+    Array.prototype.slice.call(pai.querySelectorAll('i.ph-magnifying-glass, i.ph.ph-magnifying-glass')).forEach(function(ic){
+      if(ehEnfeite(ic)) ic.remove();
+    });
+  });
+  document.querySelectorAll('#vos-cli-search, #nv-cliente-search, #fin-cli-termo, #cv-cliente-search, #neo-cli-search, #ca-busca-cliente, #ctr-cli-busca, #ctr-cli-busca-simples, #ctrd-cli-busca').forEach(function(inp){
+    var p = inp && inp.parentNode;
+    if(!p || !p.querySelectorAll) return;
+    var temFiltro = p.querySelector('select[data-filtro-aux], select[id$="-campo"], [data-filtro-row]')
+      || (p.parentNode && p.parentNode.querySelector && p.parentNode.querySelector('select[data-filtro-aux], select[id$="-campo"]'));
+    if(!temFiltro) return;
+    Array.prototype.slice.call(p.querySelectorAll('i.ph-magnifying-glass, i.ph.ph-magnifying-glass')).forEach(function(ic){
+      if(ehEnfeite(ic)) ic.remove();
+    });
+    if(p.parentNode && p.parentNode.querySelectorAll){
+      Array.prototype.slice.call(p.parentNode.querySelectorAll(':scope > i.ph-magnifying-glass, :scope > i.ph.ph-magnifying-glass')).forEach(function(ic){
+        if(ehEnfeite(ic)) ic.remove();
+      });
+    }
+  });
+}
+
+window.LUPA_FILTRO_CLI_PURE = { ehEnfeite: ehEnfeite };
+
+if(typeof document==='undefined') return;
+
+['novaVenda','openModal','renderFinanceiro','renderModalContrato'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52227lupa) return;
+  var old = window[nome];
+  window[nome] = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(tiraLupaEnfeite, 90);
+    setTimeout(tiraLupaEnfeite, 280);
+    return r;
+  };
+  window[nome].__v52227lupa = true;
+});
+
+setTimeout(tiraLupaEnfeite, 600);
+setTimeout(tiraLupaEnfeite, 1800);
+console.log('[DIGICOPY] v5.22.27 lupa enfeite do filtro de cliente removida');
+})();
+
+;
+
+/* ===== ajustes_v52227_ncm_origem_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.27 — NCM pesquisável (Enter/lupa) + origem ICMS 0 a 8
+// • Origem oficial da NF-e. Não inventa origem a partir do NCM.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var ORIGENS = [
+  '0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8',
+  '1 - Estrangeira - Importação direta, exceto a indicada no código 6',
+  '2 - Estrangeira - Adquirida no mercado interno, exceto a indicada no código 7',
+  '3 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 40% e inferior ou igual a 70%',
+  '4 - Nacional, cuja produção tenha sido feita em conformidade com os processos produtivos básicos',
+  '5 - Nacional, mercadoria ou bem com Conteúdo de Importação inferior ou igual a 40%',
+  '6 - Estrangeira - Importação direta, sem similar nacional, constante em lista da CAMEX e gás natural',
+  '7 - Estrangeira - Adquirida no mercado interno, sem similar nacional, constante em lista da CAMEX e gás natural',
+  '8 - Nacional, mercadoria ou bem com Conteúdo de Importação superior a 70%'
+];
+
+function soNcm(v){ return String(v==null?'':v).replace(/\D/g,'').slice(0,8); }
+function fold(t){
+  return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function codigoOrigem(v){
+  var d = String(v==null?'':v).replace(/\D/g,'');
+  return d.charAt(0)||'0';
+}
+function origemPorCodigo(cod){
+  var n = String(cod==null?'':cod).replace(/\D/g,'').charAt(0);
+  if(n==='' || n<'0' || n>'8') n = '0';
+  return ORIGENS[parseInt(n,10)] || ORIGENS[0];
+}
+function htmlOptsOrigem(sel){
+  var n = codigoOrigem(sel);
+  return ORIGENS.map(function(o){
+    var k = o.charAt(0);
+    return '<option value="'+o.replace(/"/g,'&quot;')+'"'+(k===n?' selected':'')+'>'+o+'</option>';
+  }).join('');
+}
+function catalogoNcm(){
+  var out = [];
+  var seen = {};
+  var cfg = (typeof db!=='undefined' && db.config && db.config.ncmCatalogo) || [];
+  (cfg||[]).forEach(function(r){
+    var c = soNcm(r && (r.ncm||r.NC_NCM||r.NCM));
+    if(c.length!==8 || seen[c]) return;
+    seen[c] = true;
+    out.push({ ncm:c, desc:String((r&& (r.desc||r.NC_DESCRICAO||r.DESCRICAO))||'') });
+  });
+  if(typeof db!=='undefined' && Array.isArray(db.produtos)){
+    db.produtos.forEach(function(p){
+      var c = soNcm(p && p.ncm);
+      if(c.length!==8 || seen[c]) return;
+      seen[c] = true;
+      out.push({ ncm:c, desc:String((p&&p.nome)||'') });
+    });
+  }
+  return out;
+}
+function buscaNcm(q){
+  var termo = fold(q).trim();
+  var num = soNcm(q);
+  var list = catalogoNcm();
+  if(!termo && !num) return list.slice(0,20);
+  return list.filter(function(r){
+    if(num && r.ncm.indexOf(num)>=0) return true;
+    return termo && fold(r.desc).indexOf(termo)>=0;
+  }).slice(0,20);
+}
+
+window.NCM_ORIGEM_PURE = {
+  ORIGENS: ORIGENS.slice(),
+  soNcm: soNcm,
+  codigoOrigem: codigoOrigem,
+  origemPorCodigo: origemPorCodigo,
+  htmlOptsOrigem: htmlOptsOrigem,
+  buscaNcm: buscaNcm
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function pintarOrigem(selId, valor){
+  var sel = document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = htmlOptsOrigem(valor || sel.value);
+}
+
+function garantirBuscaNcm(inputId, boxId){
+  var inp = document.getElementById(inputId);
+  if(!inp || document.getElementById(boxId)) return;
+  var wrap = inp.parentNode;
+  if(!wrap) return;
+  if(wrap.classList) wrap.classList.add('relative');
+  inp.setAttribute('autocomplete','off');
+  inp.onkeydown = function(e){
+    if(e.key==='Enter'){ e.preventDefault(); window.buscarNcmProduto(inputId, boxId); }
+  };
+  if(!document.getElementById(inputId+'-lupa')){
+    inp.insertAdjacentHTML('afterend',
+      '<button id="'+inputId+'-lupa" type="button" onclick="window.buscarNcmProduto(\''+inputId+'\',\''+boxId+'\')" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-2.5 rounded-lg bg-[#0a1e8a] text-white" title="Pesquisar NCM"><i class="ph ph-magnifying-glass"></i></button>'+
+      '<div id="'+boxId+'" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>');
+    if(!/\bpr-/.test(inp.className||'')) inp.className = (inp.className||'')+' pr-12';
+  }
+}
+
+window.buscarNcmProduto = function(inputId, boxId){
+  var inp = document.getElementById(inputId);
+  var box = document.getElementById(boxId);
+  if(!inp || !box) return;
+  var q = inp.value||'';
+  var list = buscaNcm(q);
+  box.classList.remove('hidden');
+  box.innerHTML = list.map(function(r){
+    return '<button type="button" onclick="window.escolherNcmProduto(\''+esc(inputId)+'\',\''+esc(boxId)+'\',\''+esc(r.ncm)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0"><b class="font-mono">'+esc(r.ncm)+'</b> <span class="text-slate-500">'+esc(r.desc||'')+'</span></button>';
+  }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum NCM. Digite o código ou a descrição e Enter.</p>';
+};
+
+window.escolherNcmProduto = function(inputId, boxId, ncm){
+  var inp = document.getElementById(inputId);
+  var box = document.getElementById(boxId);
+  if(inp) inp.value = ncm;
+  if(box){ box.classList.add('hidden'); box.innerHTML=''; }
+  if(typeof window.normalizarNCMProdutoOperacional==='function') window.normalizarNCMProdutoOperacional();
+};
+
+function aplicar(){
+  try{
+    pintarOrigem('kp-prd-origem');
+    pintarOrigem('p-origem');
+    garantirBuscaNcm('kp-prd-ncm','kp-prd-ncm-res');
+    garantirBuscaNcm('p-ncm','p-ncm-res');
+  }catch(e){}
+}
+
+if(typeof window.renderModalProduto==='function' && !window.renderModalProduto.__v52227ncm){
+  var old = window.renderModalProduto;
+  window.renderModalProduto = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(aplicar, 50);
+    setTimeout(aplicar, 200);
+    return r;
+  };
+  window.renderModalProduto.__v52227ncm = true;
+}
+if(typeof window.openModal==='function' && !window.openModal.__v52227ncm){
+  var oldOpen = window.openModal;
+  window.openModal = function(type){
+    var r = oldOpen.apply(this, arguments);
+    if(type==='produto') setTimeout(aplicar, 80);
+    return r;
+  };
+  window.openModal.__v52227ncm = true;
+}
+
+console.log('[DIGICOPY] v5.22.27 NCM pesquisável e origem 0-8');
+})();
+
+;
+
+/* ===== ajustes_v52228_a1_nuvem_lupa_ncm_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.28 — A1 da nuvem vale na conferência/assinatura + lupa NCM no meio da caixa
+// • Senha só na hora. Ainda não envia à SEFAZ.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function a1DaConfig(){
+  if(typeof db==='undefined' || !db.config || !db.config.fiscal) return null;
+  var a = db.config.fiscal.a1Nuvem;
+  return (a && a.data) ? a : null;
+}
+function temA1Nuvem(){ return !!a1DaConfig(); }
+
+window.A1_NUVEM_USO_PURE = {
+  temA1Nuvem: function(cfg){
+    var a = cfg && cfg.fiscal && cfg.fiscal.a1Nuvem;
+    return !!(a && a.data);
+  }
+};
+
+if(typeof document==='undefined') return;
+
+function fiscal(){
+  if(typeof db==='undefined') return {};
+  db.config = db.config || {};
+  db.config.fiscal = db.config.fiscal || {};
+  return db.config.fiscal;
+}
+
+function pintarStatus(){
+  var st = document.getElementById('nfe-cert-status');
+  var a1 = a1DaConfig();
+  if(st){
+    if(a1){
+      var quando = a1.enviadoEm ? new Date(a1.enviadoEm).toLocaleString('pt-BR') : '';
+      st.textContent = 'Usando A1 da nuvem'+(a1.nome?' • '+a1.nome:'')+(quando?' • '+quando:'')+'. Senha só na hora de assinar. Ainda não emite na SEFAZ.';
+    }else{
+      st.textContent = 'Nenhum A1 na nuvem neste aparelho. Envie o .pfx na página de envio e sincronize (Nuvem).';
+    }
+  }
+  ['nfe-cert-import','nfe-cert-remove'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+}
+
+function centralizaLupaNcm(inputId, boxId){
+  var inp = document.getElementById(inputId);
+  if(!inp) return;
+  var lupa = document.getElementById(inputId+'-lupa');
+  var box = document.getElementById(boxId);
+  var hold = inp.closest && inp.closest('[data-ncm-hold]');
+  if(!hold){
+    hold = document.createElement('div');
+    hold.setAttribute('data-ncm-hold','1');
+    hold.className = 'relative';
+    hold.style.position = 'relative';
+    hold.style.display = 'block';
+    var pai = inp.parentNode;
+    if(!pai) return;
+    pai.insertBefore(hold, inp);
+    hold.appendChild(inp);
+  }
+  if(lupa && lupa.parentNode !== hold) hold.appendChild(lupa);
+  if(box && box.parentNode !== hold) hold.appendChild(box);
+  if(lupa){
+    lupa.style.position = 'absolute';
+    lupa.style.right = '6px';
+    lupa.style.top = '50%';
+    lupa.style.transform = 'translateY(-50%)';
+    lupa.style.height = '32px';
+    lupa.style.width = '32px';
+    lupa.style.padding = '0';
+    lupa.style.margin = '0';
+    lupa.style.display = 'inline-flex';
+    lupa.style.alignItems = 'center';
+    lupa.style.justifyContent = 'center';
+    lupa.style.border = '0';
+    lupa.style.borderRadius = '8px';
+    lupa.style.background = '#0a1e8a';
+    lupa.style.color = '#fff';
+    lupa.style.zIndex = '2';
+  }
+  if(inp.className && !/\bpr-12\b/.test(inp.className)) inp.className += ' pr-12';
+}
+
+function aplicarLupa(){
+  try{
+    centralizaLupaNcm('kp-prd-ncm','kp-prd-ncm-res');
+    centralizaLupaNcm('p-ncm','p-ncm-res');
+  }catch(e){}
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarDocumento==='function' && !window.NFE_EMISSAO_PURE.montarDocumento.__v52228a1){
+  var oldDoc = window.NFE_EMISSAO_PURE.montarDocumento;
+  window.NFE_EMISSAO_PURE.montarDocumento = function(opts){
+    opts = Object.assign({}, opts||{});
+    if(temA1Nuvem()) opts.certificadoLocal = true;
+    var doc = oldDoc.call(this, opts);
+    if(doc && Array.isArray(doc.erros)){
+      doc.erros = doc.erros.filter(function(e){
+        return !/Certificado A1 só neste computador/i.test(String(e||''));
+      });
+      if(!temA1Nuvem() && !opts.certificadoLocal){
+        doc.erros.unshift('Falta o A1 na nuvem. Envie o .pfx na página de envio e sincronize.');
+      }
+      doc.ok = doc.erros.length===0;
+    }
+    return doc;
+  };
+  window.NFE_EMISSAO_PURE.montarDocumento.__v52228a1 = true;
+}
+
+function wrapAssinar(){
+  var api = window.nfeCertAPI;
+  if(!api || typeof api.assinar!=='function' || api.__v52228a1) return;
+  var old = api.assinar;
+  api.assinar = function(xml, senha, pfx){
+    var a1 = a1DaConfig();
+    return old.call(this, xml, senha, pfx || (a1 && a1.data) || '');
+  };
+  api.__v52228a1 = true;
+}
+
+if(typeof window.conferirNfe==='function' && !window.conferirNfe.__v52228a1){
+  var oldConf = window.conferirNfe;
+  window.conferirNfe = async function(){
+    wrapAssinar();
+    if(!temA1Nuvem() && window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
+      try{ await window.DIGICOPY_CLOUD_SYNC.tick('a1-nuvem'); }catch(e){}
+    }
+    return oldConf.apply(this, arguments);
+  };
+  window.conferirNfe.__v52228a1 = true;
+}
+
+if(typeof window.renderConfig==='function' && !window.renderConfig.__v52228a1){
+  var oldCfg = window.renderConfig;
+  window.renderConfig = function(){
+    var r = oldCfg.apply(this, arguments);
+    setTimeout(pintarStatus, 260);
+    setTimeout(pintarStatus, 700);
+    return r;
+  };
+  window.renderConfig.__v52228a1 = true;
+}
+
+if(typeof window.renderModalProduto==='function' && !window.renderModalProduto.__v52228ncm){
+  var oldMod = window.renderModalProduto;
+  window.renderModalProduto = function(){
+    var r = oldMod.apply(this, arguments);
+    setTimeout(aplicarLupa, 70);
+    setTimeout(aplicarLupa, 240);
+    return r;
+  };
+  window.renderModalProduto.__v52228ncm = true;
+}
+if(typeof window.openModal==='function' && !window.openModal.__v52228ncm){
+  var oldOpen = window.openModal;
+  window.openModal = function(type){
+    var r = oldOpen.apply(this, arguments);
+    if(type==='produto'){ setTimeout(aplicarLupa, 90); setTimeout(aplicarLupa, 260); }
+    return r;
+  };
+  window.openModal.__v52228ncm = true;
+}
+
+wrapAssinar();
+setTimeout(wrapAssinar, 800);
+setTimeout(pintarStatus, 900);
+setTimeout(aplicarLupa, 900);
+console.log('[DIGICOPY] v5.22.28 A1 da nuvem + lupa NCM no centro da caixa');
+})();
+
+;
+
+/* ===== ajustes_v52229_nfe_ie_im_cnae_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.29 — Dados fiscais da loja: IE, Inscrição Municipal e CNAE
+// • Grava em db.config.fiscal. Ainda não emite na SEFAZ.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function soDigitos(v){ return String(v==null?'':v).replace(/\D/g,''); }
+function soCnae(v){ return soDigitos(v).slice(0,7); }
+
+function lerFiscal(f){
+  f = f || {};
+  return {
+    ie: txt(f.ie),
+    im: txt(f.im || f.inscricaoMunicipal),
+    cnae: soCnae(f.cnae || f.cnaeFiscal)
+  };
+}
+function faltaDados(f){
+  var d = lerFiscal(f);
+  var e = [];
+  if(!soDigitos(d.ie)) e.push('Inscrição Estadual da loja');
+  if(!txt(d.im)) e.push('Inscrição Municipal da loja');
+  if(soCnae(d.cnae).length!==7) e.push('CNAE fiscal da loja (7 números)');
+  return e;
+}
+
+window.NFE_IE_IM_CNAE_PURE = {
+  lerFiscal: lerFiscal,
+  faltaDados: faltaDados,
+  soCnae: soCnae
+};
+
+if(typeof document==='undefined') return;
+
+function fiscalDb(){
+  if(typeof db==='undefined') return {};
+  db.config = db.config || {};
+  db.config.fiscal = db.config.fiscal || {};
+  return db.config.fiscal;
+}
+function esc(v){
+  if(typeof escapeHtml==='function') return escapeHtml(v);
+  return txt(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+}
+
+function injetarCampos(){
+  var ie = document.getElementById('nfe-ie');
+  if(!ie || document.getElementById('nfe-im')) return;
+  var f = lerFiscal(fiscalDb());
+  var labIM = document.createElement('label');
+  labIM.className = 'text-[11px] font-bold uppercase text-slate-500';
+  labIM.innerHTML = 'Inscrição Municipal<input id="nfe-im" value="'+esc(f.im)+'" class="mt-1 w-full h-10 px-3 rounded-xl border">';
+  var labCnae = document.createElement('label');
+  labCnae.className = 'text-[11px] font-bold uppercase text-slate-500';
+  labCnae.innerHTML = 'CNAE fiscal<input id="nfe-cnae" value="'+esc(f.cnae)+'" class="mt-1 w-full h-10 px-3 rounded-xl border" placeholder="0000000" maxlength="9">';
+  var pai = ie.parentNode && ie.parentNode.parentNode;
+  if(pai){
+    pai.appendChild(labIM);
+    pai.appendChild(labCnae);
+  }else{
+    ie.parentNode.insertAdjacentElement('afterend', labIM);
+    labIM.insertAdjacentElement('afterend', labCnae);
+  }
+}
+
+function wrapSalvar(){
+  var btn = document.getElementById('nfe-salvar');
+  if(!btn || btn.__v52229) return;
+  var old = btn.onclick;
+  btn.onclick = function(ev){
+    var im = document.getElementById('nfe-im');
+    var cnae = document.getElementById('nfe-cnae');
+    var ie = document.getElementById('nfe-ie');
+    var f = fiscalDb();
+    f.ie = txt(ie && ie.value);
+    f.im = txt(im && im.value);
+    f.cnae = soCnae(cnae && cnae.value);
+    f.atualizadoEm = new Date().toISOString();
+    if(typeof saveDB==='function') saveDB();
+    if(typeof old==='function') return old.call(this, ev);
+    if(typeof toast==='function') toast('Dados fiscais salvos. Emissão ainda não está ligada.','success');
+  };
+  btn.__v52229 = true;
+}
+
+if(window.NFE_CONFIG_PURE && typeof window.NFE_CONFIG_PURE.fiscalAtual==='function' && !window.NFE_CONFIG_PURE.fiscalAtual.__v52229){
+  var oldF = window.NFE_CONFIG_PURE.fiscalAtual;
+  window.NFE_CONFIG_PURE.fiscalAtual = function(){
+    var base = oldF.apply(this, arguments) || {};
+    var extra = lerFiscal(typeof db!=='undefined' && db.config && db.config.fiscal);
+    return Object.assign({}, base, extra);
+  };
+  window.NFE_CONFIG_PURE.fiscalAtual.__v52229 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.fiscalPadrao==='function' && !window.NFE_EMISSAO_PURE.fiscalPadrao.__v52229){
+  var oldPad = window.NFE_EMISSAO_PURE.fiscalPadrao;
+  window.NFE_EMISSAO_PURE.fiscalPadrao = function(f){
+    var base = oldPad.apply(this, arguments) || {};
+    var extra = lerFiscal(f);
+    return Object.assign({}, base, extra);
+  };
+  window.NFE_EMISSAO_PURE.fiscalPadrao.__v52229 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.emitenteDe==='function' && !window.NFE_EMISSAO_PURE.emitenteDe.__v52229){
+  var oldEm = window.NFE_EMISSAO_PURE.emitenteDe;
+  window.NFE_EMISSAO_PURE.emitenteDe = function(loja, fiscal){
+    var em = oldEm.apply(this, arguments) || {};
+    var extra = lerFiscal(fiscal);
+    em.ie = soDigitos(extra.ie || em.ie);
+    em.im = txt(extra.im);
+    em.cnae = soCnae(extra.cnae);
+    return em;
+  };
+  window.NFE_EMISSAO_PURE.emitenteDe.__v52229 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarDocumento==='function' && !window.NFE_EMISSAO_PURE.montarDocumento.__v52229){
+  var oldDoc = window.NFE_EMISSAO_PURE.montarDocumento;
+  window.NFE_EMISSAO_PURE.montarDocumento = function(opts){
+    var doc = oldDoc.apply(this, arguments);
+    var extra = faltaDados((opts&&opts.fiscal) || (typeof db!=='undefined' && db.config && db.config.fiscal) || {});
+    if(doc && Array.isArray(doc.erros)){
+      extra.forEach(function(m){
+        if(doc.erros.indexOf(m)<0) doc.erros.push(m);
+      });
+      doc.ok = doc.erros.length===0;
+    }
+    if(doc && doc.emit){
+      var f = lerFiscal((opts&&opts.fiscal)||{});
+      doc.emit.im = f.im;
+      doc.emit.cnae = f.cnae;
+    }
+    return doc;
+  };
+  window.NFE_EMISSAO_PURE.montarDocumento.__v52229 = true;
+}
+
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarXml==='function' && !window.NFE_EMISSAO_PURE.montarXml.__v52229){
+  var oldXml = window.NFE_EMISSAO_PURE.montarXml;
+  window.NFE_EMISSAO_PURE.montarXml = function(doc){
+    var xml = oldXml.apply(this, arguments);
+    var em = doc && doc.emit || {};
+    var extra = '';
+    if(txt(em.im)) extra += '<IM>'+txt(em.im).replace(/[<>&]/g,'')+'</IM>';
+    if(soCnae(em.cnae).length===7) extra += '<CNAE>'+soCnae(em.cnae)+'</CNAE>';
+    if(extra && /<\/IE><CRT>/.test(xml)) xml = xml.replace('</IE><CRT>', '</IE>'+extra+'<CRT>');
+    return xml;
+  };
+  window.NFE_EMISSAO_PURE.montarXml.__v52229 = true;
+}
+
+function aplicar(){
+  try{
+    injetarCampos();
+    wrapSalvar();
+  }catch(e){}
+}
+
+if(typeof window.renderConfig==='function' && !window.renderConfig.__v52229){
+  var oldCfg = window.renderConfig;
+  window.renderConfig = function(){
+    var r = oldCfg.apply(this, arguments);
+    setTimeout(aplicar, 240);
+    setTimeout(aplicar, 700);
+    return r;
+  };
+  window.renderConfig.__v52229 = true;
+}
+
+setTimeout(aplicar, 900);
+console.log('[DIGICOPY] v5.22.29 IE, Inscrição Municipal e CNAE');
+})();
+
+;
+
+/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.30 — Modo escuro só neste aparelho
+// • Liga/desliga em Configurações. Não sobe na nuvem. Não muda outros PCs.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var KEY = 'digicopy_ui_modo_escuro_dispositivo_v1';
+
+function lerEscuro(){
+  try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; }
+}
+function gravarEscuro(on){
+  try{ localStorage.setItem(KEY, on ? '1' : '0'); return true; }
+  catch(e){ return false; }
+}
+
+window.MODO_ESCURO_PURE = {
+  KEY: KEY,
+  lerEscuro: lerEscuro,
+  gravarEscuro: gravarEscuro
+};
+
+if(typeof document === 'undefined') return;
+
+function aplicarEscuro(on){
+  var html = document.documentElement;
+  var body = document.body;
+  if(on){
+    html.classList.add('digi-escuro');
+    if(body) body.classList.add('digi-escuro');
+  }else{
+    html.classList.remove('digi-escuro');
+    if(body) body.classList.remove('digi-escuro');
+  }
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', on ? '#0b1220' : '#0a1e8a');
+  var chk = document.getElementById('ui-escuro-chk');
+  if(chk) chk.checked = !!on;
+}
+
+function garantirCss(){
+  if(document.getElementById('digi-escuro-css')) return;
+  var s = document.createElement('style');
+  s.id = 'digi-escuro-css';
+  s.textContent = [
+    'html.digi-escuro,html.digi-escuro body{background:#0b1220!important;color:#e5e7eb!important}',
+    'html.digi-escuro ::-webkit-scrollbar-thumb{background:#334155}',
+    'html.digi-escuro header.app-titlebar .h-\\[26px\\],html.digi-escuro .app-titlebar>div:first-child{background:#0a1e8a!important}',
+    'html.digi-escuro .modern-topnav,html.digi-escuro .module-row,html.digi-escuro .command-row{background:#111827!important;border-color:#1f2937!important;box-shadow:none!important}',
+    'html.digi-escuro .module-row{background:linear-gradient(180deg,#111827,#0f172a)!important}',
+    'html.digi-escuro .module>button,html.digi-escuro .module-menu button,html.digi-escuro .command-row .quick{color:#e5e7eb!important}',
+    'html.digi-escuro .module>button:hover,html.digi-escuro .module-menu button:hover{background:#1e293b!important;color:#fff!important}',
+    'html.digi-escuro .module-menu,html.digi-escuro .neo-suggest{background:#111827!important;border-color:#334155!important}',
+    'html.digi-escuro .command-row .quick{background:#1e293b!important;border-color:#334155!important}',
+    'html.digi-escuro .ml-auto.text-slate-500,html.digi-escuro .text-slate-500,html.digi-escuro .text-slate-400,html.digi-escuro .text-slate-600{color:#94a3b8!important}',
+    'html.digi-escuro footer,html.digi-escuro .statusbar{background:#0f172a!important;border-color:#1f2937!important;color:#94a3b8!important}',
+    'html.digi-escuro .neo-shell,html.digi-escuro .workspace-pad,html.digi-escuro .clean-home,html.digi-escuro .desktop-home{background:#0b1220!important}',
+    'html.digi-escuro .neo-panel,html.digi-escuro .neo-card,html.digi-escuro .rounded-\\[16px\\].bg-white,html.digi-escuro .rounded-\\[14px\\].bg-white,html.digi-escuro .bg-white,html.digi-escuro .bg-white\\/60,html.digi-escuro .bg-white\\/94{background:#111827!important;border-color:#334155!important;color:#e5e7eb!important}',
+    'html.digi-escuro .neo-table th{background:#0f172a!important;color:#94a3b8!important;border-color:#334155!important}',
+    'html.digi-escuro .neo-table td,html.digi-escuro table td,html.digi-escuro table th{border-color:#1f2937!important;color:#e5e7eb!important}',
+    'html.digi-escuro .neo-table tbody tr:hover,html.digi-escuro table tbody tr:hover{background:#1e293b!important}',
+    'html.digi-escuro .neo-selected,html.digi-escuro tr.neo-selected{background:#1e3a5f!important}',
+    'html.digi-escuro .neo-input,html.digi-escuro .neo-select,html.digi-escuro input,html.digi-escuro select,html.digi-escuro textarea{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}',
+    'html.digi-escuro input::placeholder,html.digi-escuro textarea::placeholder{color:#64748b!important}',
+    'html.digi-escuro .neo-btn{background:#1e293b!important;border-color:#334155!important;color:#e5e7eb!important}',
+    'html.digi-escuro .neo-btn.primary,html.digi-escuro .neo-tab.active,html.digi-escuro button.bg-\\[\\#0a1e8a\\]{background:#0a1e8a!important;border-color:#1d4ed8!important;color:#fff!important}',
+    'html.digi-escuro .neo-tab{background:#1e293b!important;border-color:#334155!important;color:#cbd5e1!important}',
+    'html.digi-escuro #modal-box,html.digi-escuro #modal-body,html.digi-escuro #modal-footer{background:#111827!important;color:#e5e7eb!important;border-color:#334155!important}',
+    'html.digi-escuro #modal-box .border-b,html.digi-escuro #modal-box .border-t{border-color:#334155!important}',
+    'html.digi-escuro #modal-box h3,html.digi-escuro #modal-title{color:#f1f5f9!important}',
+    'html.digi-escuro .bg-slate-50,html.digi-escuro .bg-slate-50\\/80,html.digi-escuro .bg-slate-100,html.digi-escuro .bg-\\[\\#f8f9ff\\],html.digi-escuro .bg-\\[\\#f8fbff\\],html.digi-escuro .bg-\\[\\#f4f5f9\\],html.digi-escuro .bg-\\[\\#f7f7f7\\]{background:#0f172a!important}',
+    'html.digi-escuro .border,html.digi-escuro .border-slate-100,html.digi-escuro .border-slate-200,html.digi-escuro .border-b,html.digi-escuro .border-t{border-color:#334155!important}',
+    'html.digi-escuro .text-slate-800,html.digi-escuro .text-slate-700,html.digi-escuro .text-slate-900,html.digi-escuro b{color:#e5e7eb}',
+    'html.digi-escuro .login-bg{background:radial-gradient(1200px 600px at 20% 10%,#1e3a8a 0%,#0a1e8a 35%,#020617 100%)}',
+    'html.digi-escuro #login-screen .bg-white,html.digi-escuro #login-step-user{background:#111827!important;color:#e5e7eb!important}',
+    'html.digi-escuro #login-screen h2,html.digi-escuro #login-screen label{color:#e5e7eb!important}',
+    'html.digi-escuro .bg-emerald-50,html.digi-escuro .bg-amber-50,html.digi-escuro .bg-blue-50,html.digi-escuro .bg-red-50{background:#1e293b!important}',
+    'html.digi-escuro .neo-head{background:linear-gradient(135deg,#0a1e8a,#1e3a8a)!important}',
+    'html.digi-escuro #nfe-conf-modal>div,html.digi-escuro #nfe-senha-modal>div,html.digi-escuro #nfe-xml-modal>div{background:#111827!important;color:#e5e7eb!important}'
+  ].join('\n');
+  document.head.appendChild(s);
+}
+
+function cardEscuro(){
+  var grid = document.querySelector('#view-config .grid') || document.getElementById('view-config');
+  if(!grid || document.getElementById('ui-escuro-dispositivo-card')) return;
+  var card = document.createElement('div');
+  card.id = 'ui-escuro-dispositivo-card';
+  card.className = 'rounded-[16px] bg-white border p-6';
+  var on = lerEscuro();
+  card.innerHTML = '<h4 class="font-bold text-[14px]"><i class="ph ph-moon"></i> Aparência deste computador</h4>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Modo escuro vale só neste aparelho. Não muda os outros PCs e não sobe na nuvem.</p>'+
+    '<label class="mt-4 h-10 px-3 rounded-xl border bg-white flex items-center gap-2 font-semibold text-[13px] w-fit cursor-pointer">'+
+    '<input id="ui-escuro-chk" type="checkbox"'+(on?' checked':'')+'> Modo escuro</label>';
+  grid.appendChild(card);
+  var chk = document.getElementById('ui-escuro-chk');
+  if(chk){
+    chk.onchange = function(){
+      var liga = !!chk.checked;
+      gravarEscuro(liga);
+      aplicarEscuro(liga);
+    };
+  }
+}
+
+garantirCss();
+aplicarEscuro(lerEscuro());
+
+if(typeof window.renderConfig === 'function' && !window.renderConfig.__v52230escuro){
+  var old = window.renderConfig;
+  window.renderConfig = function(){
+    var r = old.apply(this, arguments);
+    setTimeout(cardEscuro, 220);
+    setTimeout(cardEscuro, 600);
+    return r;
+  };
+  window.renderConfig.__v52230escuro = true;
+}
+
+setTimeout(cardEscuro, 800);
+console.log('[DIGICOPY] v5.22.30 modo escuro só neste aparelho');
+})();
+
+;
+
+/* ===== ajustes_v52233_escuro_login_nuvem_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.33 — Modo escuro no login e no painel Nuvem
+// • Só essas duas telas. Não mexe no resto do visual da 5.22.30.
+// • Continua só neste aparelho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function cssLoginNuvem(){
+  return [
+    'html.digi-escuro #login-screen{background:#0b1220!important}',
+    'html.digi-escuro #login-screen .flex-1.bg-white,html.digi-escuro #login-screen>.flex-1{background:#111827!important;color:#e5e7eb!important}',
+    'html.digi-escuro #login-screen h2,html.digi-escuro #login-screen label,html.digi-escuro #login-screen p,html.digi-escuro #login-screen .font-bold{color:#e5e7eb!important}',
+    'html.digi-escuro #login-screen .text-slate-500,html.digi-escuro #login-screen .text-slate-400{color:#94a3b8!important}',
+    'html.digi-escuro #login-screen [class*="bg-[#eef2ff]"],html.digi-escuro #login-screen [class*="bg-[#e8eaf8]"]{background:#1e293b!important;border-color:#334155!important}',
+    'html.digi-escuro #login-screen input{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}',
+    'html.digi-escuro #login-screen input:focus{background:#0f172a!important}',
+    'html.digi-escuro #login-screen button.hover\\:bg-slate-100:hover{background:#1e293b!important}',
+
+    'html.digi-escuro #digicopy-cloud-modal>div{background:#111827!important;color:#e5e7eb!important}',
+    'html.digi-escuro #digicopy-cloud-modal #dc-body{background:#111827!important;color:#e5e7eb!important}',
+    'html.digi-escuro #digicopy-cloud-modal h3,html.digi-escuro #digicopy-cloud-modal h4,html.digi-escuro #digicopy-cloud-modal b{color:#e5e7eb!important}',
+    'html.digi-escuro #digicopy-cloud-modal p,html.digi-escuro #digicopy-cloud-modal small,html.digi-escuro #digicopy-cloud-modal label{color:#94a3b8!important}',
+    'html.digi-escuro #digicopy-cloud-modal input,html.digi-escuro #digicopy-cloud-modal select,html.digi-escuro #digicopy-cloud-modal textarea{background:#0f172a!important;border-color:#334155!important;color:#e5e7eb!important}',
+    'html.digi-escuro #digicopy-cloud-modal [style*="background:white"],html.digi-escuro #digicopy-cloud-modal [style*="background:#fff"],html.digi-escuro #digicopy-cloud-modal [style*="background:#f8fafc"],html.digi-escuro #digicopy-cloud-modal [style*="background:#f1f5f9"],html.digi-escuro #digicopy-cloud-modal [style*="background:#e8eaf8"],html.digi-escuro #digicopy-cloud-modal [style*="background:#fffafa"]{background:#1e293b!important;color:#e5e7eb!important;border-color:#334155!important}',
+    'html.digi-escuro #digicopy-cloud-modal [style*="color:#475569"],html.digi-escuro #digicopy-cloud-modal [style*="color:#64748b"],html.digi-escuro #digicopy-cloud-modal [style*="color:#334155"]{color:#94a3b8!important}',
+    'html.digi-escuro #digicopy-cloud-modal button[style*="background:white"],html.digi-escuro #digicopy-cloud-modal button[style*="background:#f8fafc"],html.digi-escuro #digicopy-cloud-modal button[style*="background:#f1f5f9"]{background:#1e293b!important;color:#e5e7eb!important;border-color:#334155!important}',
+    'html.digi-escuro #digicopy-cloud-modal button[style*="background:#0a1e8a"]{background:#0a1e8a!important;color:#fff!important}'
+  ].join('\n');
+}
+
+window.ESCURO_LOGIN_NUVEM_PURE = { cssLoginNuvem: cssLoginNuvem };
+
+if(typeof document === 'undefined') return;
+
+function aplicar(){
+  var s = document.getElementById('digi-escuro-login-nuvem-css');
+  if(!s){
+    s = document.createElement('style');
+    s.id = 'digi-escuro-login-nuvem-css';
+    document.head.appendChild(s);
+  }
+  s.textContent = cssLoginNuvem();
+}
+
+aplicar();
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aplicar);
+setTimeout(aplicar, 80);
+console.log('[DIGICOPY] v5.22.33 escuro no login e na Nuvem');
+})();
+
+;
+
+/* ===== ajustes_v52234_config_aviso_salvou_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.34 — Aviso de salvo nas Configurações
+// • Qualquer botão Salvar do menu Configurações abre o aviso do sistema.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function ehBotaoSalvar(el){
+  if(!el || el.tagName!=='BUTTON') return false;
+  var t=String(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+  return t.indexOf('salvar')>=0;
+}
+
+window.CONFIG_AVISO_SALVOU_PURE = { ehBotaoSalvar: ehBotaoSalvar };
+
+if(typeof document==='undefined') return;
+
+function avisoSalvou(){
+  if(window.__cfgAvisoSalvouLock) return;
+  window.__cfgAvisoSalvouLock=1;
+  setTimeout(function(){ window.__cfgAvisoSalvouLock=0; }, 500);
+  if(typeof window.lfbAlert==='function') window.lfbAlert('Salvo.','Salvo');
+  else if(typeof toast==='function') toast('Salvo.','success');
+}
+
+function wrapFn(nome){
+  var fn=window[nome];
+  if(typeof fn!=='function' || fn.__v52234salvo) return;
+  var old=fn;
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    avisoSalvou();
+    return r;
+  };
+  window[nome].__v52234salvo=true;
+}
+
+function wrapNfe(){
+  var btn=document.getElementById('nfe-salvar');
+  if(!btn || btn.__v52234salvo) return;
+  var old=btn.onclick;
+  btn.onclick=function(ev){
+    var r;
+    if(typeof old==='function') r=old.call(this, ev);
+    avisoSalvou();
+    return r;
+  };
+  btn.__v52234salvo=true;
+}
+
+['saveConfig','salvarDadosLojaFinal','pixSalvarConfig','salvarTemplatesRTF','salvarEditorMenus','salvarEditorAtalhos'].forEach(wrapFn);
+
+if(typeof window.renderConfig==='function' && !window.renderConfig.__v52234salvo){
+  var oldCfg=window.renderConfig;
+  window.renderConfig=function(){
+    var r=oldCfg.apply(this, arguments);
+    setTimeout(function(){ wrapFn('saveConfig'); wrapFn('salvarDadosLojaFinal'); wrapFn('pixSalvarConfig'); wrapFn('salvarTemplatesRTF'); wrapNfe(); }, 280);
+    setTimeout(wrapNfe, 750);
+    return r;
+  };
+  window.renderConfig.__v52234salvo=true;
+}
+
+if(!window.__v52234salvoClick){
+  window.__v52234salvoClick=true;
+  document.addEventListener('click', function(e){
+    var view=document.getElementById('view-config');
+    if(!view || view.classList.contains('hidden')) return;
+    var b=e.target && e.target.closest ? e.target.closest('button') : null;
+    if(!b || !view.contains(b)) return;
+    if(!ehBotaoSalvar(b)) return;
+    setTimeout(avisoSalvou, 0);
+  }, true);
+}
+
+console.log('[DIGICOPY] v5.22.34 aviso de salvo nas Configurações');
+})();
+
+;
+
+/* ===== ajustes_v52234_ncm_produto_existente_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.34 — Reimportação: produto que já existe só ganha o NCM
+// • Não duplica. Não mexe estoque/preço. DEL=S continua pulado.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function soNcm(v){ return String(v==null?'':v).replace(/\D/g,'').slice(0,8); }
+function fundirNcm(existente, ncm){
+  existente = existente && typeof existente==='object' ? existente : {};
+  ncm = soNcm(ncm);
+  if(ncm.length!==8) return { mudou:false, rec:existente };
+  if(soNcm(existente.ncm)===ncm) return { mudou:false, rec:existente };
+  var rec={};
+  Object.keys(existente).forEach(function(k){ rec[k]=existente[k]; });
+  rec.ncm=ncm;
+  return { mudou:true, rec:rec };
+}
+
+window.NCM_PRODUTO_EXISTENTE_PURE = {
+  soNcm: soNcm,
+  fundirNcm: fundirNcm
+};
+
+console.log('[DIGICOPY] v5.22.34 NCM no produto que já existe');
+})();
+
+;
+
+/* ===== ajustes_v52235_codigo_sem_sku_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.35 — Na tela aparece Código, não SKU
+// • Só o texto. O campo interno continua sku.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function textoCodigo(v){
+  return String(v==null?'':v)
+    .replace(/Código\s*\/\s*SKU/gi,'Código')
+    .replace(/Total SKUs/gi,'Total de produtos')
+    .replace(/SKU:/g,'Código:')
+    .replace(/\bSKU\b/g,'Código')
+    .replace(/\bsku\b/g,'código');
+}
+
+window.CODIGO_SEM_SKU_PURE = { textoCodigo: textoCodigo };
+
+if(typeof document==='undefined') return;
+
+function trocarNo(el){
+  if(!el) return;
+  if(el.nodeType===3){
+    if(el.nodeValue && /SKU|sku/.test(el.nodeValue)) el.nodeValue=textoCodigo(el.nodeValue);
+    return;
+  }
+  if(el.getAttribute && el.getAttribute('placeholder') && /SKU|sku/.test(el.getAttribute('placeholder'))){
+    el.setAttribute('placeholder', textoCodigo(el.getAttribute('placeholder')));
+  }
+  if(el.title && /SKU|sku/.test(el.title)) el.title=textoCodigo(el.title);
+  var kids=el.childNodes;
+  for(var i=0;i<kids.length;i++) trocarNo(kids[i]);
+}
+
+function aplicar(){
+  ['view-produtos','view-vendas','view-config','modal-box','modal-body','modal-title'].forEach(function(id){
+    trocarNo(document.getElementById(id));
+  });
+}
+
+function wrap(nome){
+  var fn=window[nome];
+  if(typeof fn!=='function' || fn.__v52235sku) return;
+  var old=fn;
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(aplicar, 40);
+    setTimeout(aplicar, 220);
+    return r;
+  };
+  window[nome].__v52235sku=true;
+}
+
+['renderProdutos','renderVendas','renderConfig','openModal'].forEach(wrap);
+
+if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52235sku){
+  var oldN=window.vosGerarHtmlNotinha;
+  window.vosGerarHtmlNotinha=function(){
+    var html=oldN.apply(this, arguments);
+    return typeof html==='string' ? textoCodigo(html) : html;
+  };
+  window.vosGerarHtmlNotinha.__v52235sku=true;
+}
+
+setTimeout(aplicar, 600);
+console.log('[DIGICOPY] v5.22.35 código no lugar de SKU');
+})();
+
+;
+
+/* ===== ajustes_v52236_codigo_cliente_exato_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.36 — Filtro Código do cliente é exato
+// • 48 acha só 48. Não pega 480, 481, 1048.
+// • 048 e 48 são o mesmo código.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function soDigitos(v){ return String(v==null?'':v).replace(/\D/g,''); }
+function codigoNorm(v){
+  var d=soDigitos(v);
+  if(!d) return '';
+  return d.replace(/^0+/,'') || '0';
+}
+function codigoIgual(cadastro, busca){
+  var alvo=codigoNorm(busca);
+  if(!alvo) return false;
+  return codigoNorm(cadastro)===alvo;
+}
+function filtraCodigoExato(list, q, campo){
+  if(String(campo||'')!=='codigo') return null;
+  var alvo=codigoNorm(q);
+  if(!alvo) return list||[];
+  return (list||[]).filter(function(c){
+    if(!c) return false;
+    return codigoIgual(c.codigo, q) || codigoIgual(c.codigoAntigo, q);
+  });
+}
+
+window.CODIGO_CLIENTE_EXATO_PURE = {
+  codigoNorm: codigoNorm,
+  codigoIgual: codigoIgual,
+  filtraCodigoExato: filtraCodigoExato
+};
+
+if(typeof document==='undefined') return;
+
+function wrap(obj, nome){
+  if(!obj || typeof obj[nome]!=='function' || obj[nome].__v52236) return;
+  var old=obj[nome];
+  obj[nome]=function(list, q, campo){
+    var exato=filtraCodigoExato(list, q, campo);
+    if(exato) return exato;
+    return old.apply(this, arguments);
+  };
+  obj[nome].__v52236=true;
+}
+
+wrap(window.CLI_PURE, 'filtraClientes');
+wrap(window.FILTROS_BUSCA_PURE, 'filtraClientes');
+setTimeout(function(){
+  wrap(window.CLI_PURE, 'filtraClientes');
+  wrap(window.FILTROS_BUSCA_PURE, 'filtraClientes');
+}, 400);
+
+console.log('[DIGICOPY] v5.22.36 código do cliente é exato');
+})();
+
+;
+
+/* ===== ajustes_v52237_vendas_os_visual_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.37 — Vendas / OS: rótulos azuis, série com lupa, garantia escreve,
+//            some valor/desconto OS, técnico obrigatório, aviso EPSON
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var AVISO_EPSON = [
+  'Prezados clientes,',
+  '',
+  'Informamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.',
+  '',
+  'Vale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.',
+  '',
+  'Agradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!'
+].join('\n');
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function azulLabels(root){
+  if(!root) return;
+  root.querySelectorAll('label.text-slate-500, thead.text-slate-500, #vos-tab-itens, #vos-tab-os').forEach(function(el){
+    el.classList.remove('text-slate-500');
+    el.classList.add('text-[#0a1e8a]');
+  });
+  ['vos-tab-itens','vos-tab-os'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b){ b.classList.add('text-[#0a1e8a]','font-extrabold'); }
+  });
+  var th=document.querySelector('#vos-aba-itens thead');
+  if(th){ th.classList.remove('text-slate-500'); th.classList.add('text-[#0a1e8a]'); }
+}
+
+function aplicarGarantiaCombo(){
+  var sel=document.getElementById('vos-os-garantia');
+  if(!sel || sel.getAttribute('data-v52237')) return;
+  sel.setAttribute('data-v52237','1');
+  if(!Array.from(sel.options).some(function(o){ return o.value==='__escrever__'; })){
+    var op=document.createElement('option');
+    op.value='__escrever__';
+    op.textContent='Escrever dias…';
+    sel.appendChild(op);
+  }
+  var wrap=sel.parentNode;
+  if(!wrap) return;
+  wrap.classList.add('relative');
+  if(!document.getElementById('vos-os-garantia-txt')){
+    var inp=document.createElement('input');
+    inp.id='vos-os-garantia-txt';
+    inp.type='text';
+    inp.inputMode='numeric';
+    inp.placeholder='Qtd. de dias';
+    inp.className='hidden mt-1 w-full h-[40px] px-2 pr-9 rounded-xl border bg-white text-[12.5px]';
+    wrap.appendChild(inp);
+    var seta=document.createElement('button');
+    seta.type='button';
+    seta.id='vos-os-garantia-seta';
+    seta.title='Escolher garantia';
+    seta.className='absolute right-1 bottom-1 w-8 h-8 rounded-lg text-[#0a1e8a] grid place-items-center';
+    seta.innerHTML='<i class="ph ph-caret-down"></i>';
+    seta.onclick=function(e){
+      e.preventDefault();
+      inp.classList.add('hidden');
+      sel.classList.remove('hidden');
+      sel.value='30 dias';
+      sel.focus();
+    };
+    wrap.appendChild(seta);
+  }
+  sel.addEventListener('change', function(){
+    var inp=document.getElementById('vos-os-garantia-txt');
+    if(sel.value==='__escrever__'){
+      sel.classList.add('hidden');
+      if(inp){ inp.classList.remove('hidden'); inp.focus(); }
+    }
+  });
+}
+
+function aplicarSerieLupa(){
+  var inp=document.getElementById('vos-os-serie');
+  if(!inp || document.getElementById('vos-os-serie-lupa')) return;
+  inp.removeAttribute('onchange');
+  inp.oninput=null;
+  inp.onchange=null;
+  var lab=inp.closest('label')||inp.parentNode;
+  if(lab){
+    lab.classList.add('relative');
+    inp.insertAdjacentHTML('afterend',
+      '<button id="vos-os-serie-lupa" type="button" class="absolute right-1 bottom-1 w-8 h-[34px] rounded-lg bg-[#0a1e8a] text-white grid place-items-center" title="Buscar série">'
+      +'<i class="ph ph-magnifying-glass"></i></button>');
+  }
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'){ e.preventDefault(); if(typeof window.vosBuscarSerial==='function') window.vosBuscarSerial(inp.value); }
+  };
+  var lupa=document.getElementById('vos-os-serie-lupa');
+  if(lupa) lupa.onclick=function(e){ e.preventDefault(); if(typeof window.vosBuscarSerial==='function') window.vosBuscarSerial(inp.value); };
+}
+
+function esconderValorOS(){
+  ['vos-os-valor','vos-os-desc'].forEach(function(id){
+    var el=document.getElementById(id);
+    var lab=el && el.closest('label');
+    if(lab) lab.classList.add('hidden');
+    if(el){ el.value='0'; }
+  });
+  var linha=document.getElementById('vos-sub-os');
+  if(linha && linha.parentNode) linha.parentNode.classList.add('hidden');
+}
+
+function pintarVenda(){
+  azulLabels(document.getElementById('modal-body'));
+  aplicarGarantiaCombo();
+  aplicarSerieLupa();
+  esconderValorOS();
+  var tecLab=document.querySelector('label[for="vos-os-tec"]') || Array.from(document.querySelectorAll('#vos-aba-os label')).find(function(l){ return /Técnico responsável/i.test(l.textContent||''); });
+  if(tecLab && !/ \*/.test(tecLab.childNodes[0]&&tecLab.childNodes[0].textContent||tecLab.textContent)){
+    /* já tem texto */
+  }
+}
+
+window.V52237_VENDAS_OS_PURE = {
+  AVISO_EPSON: AVISO_EPSON,
+  osCompleta: function(os){
+    if(!os) return false;
+    return !!(txt(os.modelo) && txt(os.numeroSerie) && (txt(os.patrimonio)||txt(os.contador)) && txt(os.tecnico));
+  },
+  garantiaValor: function(sel, txtDias){
+    if(sel==='__escrever__' || !sel){
+      var n=parseInt(String(txtDias||'').replace(/\D/g,''),10);
+      return n>0 ? (n+' dias') : 'Sem garantia';
+    }
+    return sel;
+  }
+};
+
+if(typeof document==='undefined') return;
+
+if(typeof window.vosOsCompleta==='function' && !window.vosOsCompleta.__v52237){
+  var oldComp=window.vosOsCompleta;
+  window.vosOsCompleta=function(os){
+    if(!oldComp(os)) return false;
+    return !!txt(os && os.tecnico);
+  };
+  window.vosOsCompleta.__v52237=true;
+}
+if(window.__vosPure && typeof window.__vosPure.vosOsCompleta==='function' && !window.__vosPure.vosOsCompleta.__v52237){
+  var oldP=window.__vosPure.vosOsCompleta;
+  window.__vosPure.vosOsCompleta=function(os){
+    if(!oldP(os)) return false;
+    return !!txt(os && os.tecnico);
+  };
+  window.__vosPure.vosOsCompleta.__v52237=true;
+}
+
+if(typeof window.vosBuscarSerial==='function' && !window.vosBuscarSerial.__v52237){
+  var oldSer=window.vosBuscarSerial;
+  window.vosBuscarSerial=function(serial){
+    var r=oldSer.apply(this, arguments);
+    try{
+      var s=txt(serial).toLowerCase();
+      if(!s || typeof getSession!=='function' || typeof db==='undefined') return r;
+      var sess=getSession();
+      var hist=(db.vendas||[]).filter(function(v){
+        return v && v.empresaId===sess.empresaId && v.os && txt(v.os.numeroSerie||v.os.serie).toLowerCase()===s;
+      }).sort(function(a,b){ return new Date(b.data||0)-new Date(a.data||0); });
+      var ult=hist[0];
+      if(!ult || !ult.os) return r;
+      var set=function(id,val){ var el=document.getElementById(id); if(el && val) el.value=String(val); };
+      set('vos-os-modelo', ult.os.modelo||ult.os.equipamentoModelo||'');
+      set('vos-os-patri', ult.os.patrimonio||'');
+      if(ult.clienteId && typeof window.vosVendaSelectCliente==='function') window.vosVendaSelectCliente(ult.clienteId);
+    }catch(e){}
+    return r;
+  };
+  window.vosBuscarSerial.__v52237=true;
+}
+
+function wrapColetar(){
+  if(typeof window.vosColetarOS!=='function') return;
+  if(window.vosColetarOS.__v52237) return;
+  var old=window.vosColetarOS;
+  window.vosColetarOS=function(){
+    var os=old.apply(this, arguments)||{};
+    os.valorServico=0;
+    os.desconto=0;
+    var sel=document.getElementById('vos-os-garantia');
+    var inp=document.getElementById('vos-os-garantia-txt');
+    os.garantia=window.V52237_VENDAS_OS_PURE.garantiaValor(sel&&sel.value, inp&&inp.value);
+    return os;
+  };
+  window.vosColetarOS.__v52237=true;
+}
+
+if(typeof window.vosOsRuleHint==='function' && !window.vosOsRuleHint.__v52237){
+  var oldHint=window.vosOsRuleHint;
+  window.vosOsRuleHint=function(){
+    var r=oldHint.apply(this, arguments);
+    var el=document.getElementById('vos-os-rule');
+    if(!el || typeof window.vosColetarOS!=='function') return r;
+    var os=window.vosColetarOS();
+    if(txt(os.modelo)&&txt(os.numeroSerie)&&(txt(os.patrimonio)||txt(os.contador)) && !txt(os.tecnico)){
+      el.className='rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+      el.innerHTML='<i class="ph ph-warning"></i> Para ordem de serviço, escolha o <b>técnico responsável</b>.';
+    }
+    return r;
+  };
+  window.vosOsRuleHint.__v52237=true;
+}
+
+function wrapGravar(){
+  if(typeof window.vosGravarVenda!=='function' || window.vosGravarVenda.__v52237) return;
+  var old=window.vosGravarVenda;
+  window.vosGravarVenda=function(){
+    wrapColetar();
+    var os = document.getElementById('vos-aba-os') && typeof window.vosColetarOS==='function' ? window.vosColetarOS() : null;
+    var tem = os && ['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico'].some(function(k){ return txt(os[k]); });
+    if(tem && !txt(os.tecnico)){
+      if(typeof window.lfbAlert==='function') window.lfbAlert('Para ordem de serviço, escolha o técnico responsável.','Ordem de serviço');
+      else if(typeof toast==='function') toast('Escolha o técnico responsável','error');
+      if(typeof window.vosSetAba==='function') window.vosSetAba('os');
+      return null;
+    }
+    return old.apply(this, arguments);
+  };
+  window.vosGravarVenda.__v52237=true;
+}
+
+if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52237){
+  var oldHtml=window.vosGerarHtmlNotinha;
+  window.vosGerarHtmlNotinha=function(vendaId, opts){
+    var html=oldHtml.apply(this, arguments);
+    if(!html) return html;
+    var aviso='<div class="aviso-epson" style="margin:3mm 0 0;padding:2.5mm 3mm;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:9.5px;line-height:1.35;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'
+      +AVISO_EPSON.replace(/</g,'&lt;')+'</div>';
+    var temOS=/ORDEM DE SERVIÇO|os-div/.test(html);
+    if(temOS){
+      if(html.indexOf('aviso-epson')<0){
+        if(html.indexOf('<p class="audit">')>=0) html=html.replace('<p class="audit">', aviso+'<p class="audit">');
+        else html=html.replace('</div>\n  <div class="corte', aviso+'</div>\n  <div class="corte');
+      }
+    }
+    return html;
+  };
+  window.vosGerarHtmlNotinha.__v52237=true;
+}
+
+['novaVenda','vosCarregarVendaNaTela'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52237vis) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(function(){ wrapColetar(); wrapGravar(); pintarVenda(); }, 40);
+    return r;
+  };
+  window[nome].__v52237vis=true;
+});
+
+setTimeout(function(){ wrapColetar(); wrapGravar(); }, 300);
+
+console.log('[DIGICOPY] v5.22.37 vendas/OS visual, série, garantia, técnico, EPSON');
+})();
+
+;
+
+/* ===== ajustes_v52237_estoque_zero_volta_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.37 — Produto zerado: avisa, abre cadastro na aba Estoque e volta
+//            na mesma venda (nada some). Não adiciona o item sozinho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function ehServico(p){
+  if(!p) return true;
+  var c=String(p.categoria||'')+' '+String(p.tipo||'');
+  return /servi[cç]o|recarga/i.test(c);
+}
+
+function snapVenda(){
+  var f=window.__vosForm;
+  if(!f) return null;
+  var os={};
+  ['vos-os-serie','vos-os-modelo','vos-os-tipo','vos-os-patri','vos-os-contador','vos-os-acess','vos-os-tec','vos-os-entrega','vos-os-garantia','vos-os-garantia-txt','vos-os-situacao','vos-os-defeito','vos-os-servicos','vos-os-pecas'].forEach(function(id){
+    var el=document.getElementById(id); if(el) os[id]=el.value;
+  });
+  var formCopy;
+  try{ formCopy=structuredClone(f); }
+  catch(e){ formCopy={vendaId:f.vendaId,codigo:f.codigo,data:f.data,hora:f.hora,itens:(f.itens||[]).map(function(it){return Object.assign({},it);}),cliente:f.cliente?Object.assign({},f.cliente):null,produtoSel:null}; }
+  return {
+    form: formCopy,
+    os: os,
+    campos: {
+      destino: document.getElementById('vos-destino')&&document.getElementById('vos-destino').value||'',
+      dataSaida: document.getElementById('vos-data-saida')&&document.getElementById('vos-data-saida').value||'',
+      prazo: document.getElementById('vos-prazo-entrega')&&document.getElementById('vos-prazo-entrega').value||'',
+      obs: document.getElementById('vos-obs')&&document.getElementById('vos-obs').value||'',
+      status: document.getElementById('vos-status')&&document.getElementById('vos-status').value||'',
+      desc: document.getElementById('vos-desc-venda')&&document.getElementById('vos-desc-venda').value||'0'
+    },
+    aba: document.getElementById('vos-aba-os') && !document.getElementById('vos-aba-os').classList.contains('hidden') ? 'os' : 'itens'
+  };
+}
+
+function restaurar(snap){
+  if(!snap || typeof window.novaVenda!=='function') return;
+  window.__vosIgnorarSair=true;
+  window.novaVenda();
+  var f=window.__vosForm;
+  if(f && snap.form){
+    f.vendaId=snap.form.vendaId||null;
+    f.codigo=snap.form.codigo||f.codigo;
+    f.data=snap.form.data||f.data;
+    f.hora=snap.form.hora||f.hora;
+    f.itens=(snap.form.itens||[]).map(function(it){ return Object.assign({},it); });
+    if(snap.form.cliente && snap.form.cliente.id && typeof window.vosVendaSelectCliente==='function'){
+      window.vosVendaSelectCliente(snap.form.cliente.id);
+    }
+  }
+  var c=snap.campos||{};
+  function setv(id,v){ var el=document.getElementById(id); if(el && v!=null) el.value=v; }
+  setv('vos-destino', c.destino); setv('vos-data-saida', c.dataSaida);
+  setv('vos-prazo-entrega', c.prazo); setv('vos-obs', c.obs);
+  setv('vos-status', c.status); setv('vos-desc-venda', c.desc);
+  Object.keys(snap.os||{}).forEach(function(id){ setv(id, snap.os[id]); });
+  var elCod=document.getElementById('vos-codigo');
+  if(elCod && f && f.codigo) elCod.textContent=f.codigo;
+  if(typeof window.vosRenderItens==='function') window.vosRenderItens();
+  if(typeof window.vosResumoVenda==='function') window.vosResumoVenda();
+  if(snap.aba==='os' && typeof window.vosSetAba==='function') window.vosSetAba('os');
+  var modal=document.getElementById('modal-root');
+  if(modal) modal.classList.remove('hidden');
+  setTimeout(function(){ window.__vosIgnorarSair=false; }, 80);
+}
+
+function abrirEstoque(p){
+  window.__vosPendenteVoltaVenda={ produtoId:p.id, snap:snapVenda() };
+  window.__vosIgnorarSair=true;
+  if(typeof window.openModal==='function') window.openModal('produto', p.id);
+  setTimeout(function(){
+    if(typeof window.mudarAbaProdutoOperacional==='function') window.mudarAbaProdutoOperacional('estoque');
+    var tab=document.getElementById('kp-tab-prod-estoque');
+    if(tab) tab.click();
+    window.__vosIgnorarSair=false;
+  }, 80);
+}
+
+function perguntarZerado(p){
+  var msg='O produto "'+(p.nome||'')+'" está com estoque zerado. Deseja modificar o estoque?';
+  var tit='Estoque zerado';
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg, tit).then(function(ok){ if(ok) abrirEstoque(p); });
+  } else if(typeof window.lfbAlert==='function'){
+    window.lfbAlert(msg, tit);
+  }
+}
+
+function voltarSePendente(){
+  var pend=window.__vosPendenteVoltaVenda;
+  if(!pend || !pend.snap) return false;
+  window.__vosPendenteVoltaVenda=null;
+  setTimeout(function(){ restaurar(pend.snap); }, 20);
+  return true;
+}
+
+window.V52237_ESTOQUE_ZERO_PURE = {
+  ehServico: ehServico,
+  precisaAviso: function(p, qtd){
+    if(!p || ehServico(p)) return false;
+    return n(p.estoque)<=0 || n(qtd)>n(p.estoque);
+  }
+};
+
+if(typeof document==='undefined') return;
+
+if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52237est){
+  var oldAdd=window.vosAddItem;
+  window.vosAddItem=function(){
+    var f=window.__vosForm;
+    var p=f && f.produtoSel;
+    var qtd=n(document.getElementById('vos-item-qtd')&&document.getElementById('vos-item-qtd').value)||1;
+    if(p && !ehServico(p) && n(p.estoque)<=0){
+      perguntarZerado(p);
+      return;
+    }
+    if(p && !ehServico(p) && qtd>n(p.estoque)){
+      perguntarZerado(p);
+      return;
+    }
+    return oldAdd.apply(this, arguments);
+  };
+  window.vosAddItem.__v52237est=true;
+}
+
+if(typeof window.vosVendaSelectProd==='function' && !window.vosVendaSelectProd.__v52237est){
+  var oldSel=window.vosVendaSelectProd;
+  window.vosVendaSelectProd=function(id){
+    var r=oldSel.apply(this, arguments);
+    var p=(typeof db!=='undefined' && db.produtos||[]).find(function(x){ return x.id===id; });
+    if(p && !ehServico(p) && n(p.estoque)<=0) perguntarZerado(p);
+    return r;
+  };
+  window.vosVendaSelectProd.__v52237est=true;
+}
+
+['salvarProdutoOperacional','saveProduto','salvarProdutoModal'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52237est) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var pend=window.__vosPendenteVoltaVenda;
+    window.__vosIgnorarSair=true;
+    var res=old.apply(this, arguments);
+    if(pend) window.__vosPendenteVoltaVenda=pend;
+    setTimeout(function(){
+      window.__vosIgnorarSair=false;
+      if(pend) voltarSePendente();
+    }, 40);
+    return res;
+  };
+  window[nome].__v52237est=true;
+});
+
+if(typeof window.closeModal==='function' && !window.closeModal.__v52237est){
+  var oldClose=window.closeModal;
+  window.closeModal=function(){
+    if(window.__vosPendenteVoltaVenda && !document.getElementById('vos-itens-body')){
+      var pend=window.__vosPendenteVoltaVenda;
+      var r=oldClose.apply(this, arguments);
+      window.__vosPendenteVoltaVenda=pend;
+      voltarSePendente();
+      return r;
+    }
+    return oldClose.apply(this, arguments);
+  };
+  window.closeModal.__v52237est=true;
+}
+
+console.log('[DIGICOPY] v5.22.37 estoque zerado volta na venda');
+})();
+
+;
+
+/* ===== ajustes_v52237_contratos_filtros_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.37 — Filtros de busca em Locação → Contratos
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var FILTROS = [
+  ['todos','Todos'],
+  ['nome','Nome'],
+  ['equipamento','Equipamento'],
+  ['patrimonio','Patrimônio'],
+  ['serial','Serial'],
+  ['departamento','Departamento'],
+  ['chamados_abertos','Chamados Abertos'],
+  ['cod_locacao','Cod Locação'],
+  ['cod_cliente','Cod Cliente'],
+  ['endereco_impressora','Endereço Impressora'],
+  ['vencidos','Contratos Vencidos'],
+  ['vencer_30','Contratos Vencer 30 Dias'],
+  ['leituras_hoje','Leituras Lançar Hoje'],
+  ['cod_leitura','Cod Leitura'],
+  ['nao_faturados_mes','Não Faturados esse Mês'],
+  ['faturados_mes','Faturados esse Mês'],
+  ['nao_faturados_passado','Não Faturados Mês passado'],
+  ['mes_fixo','Fatura por Mês Fixo'],
+  ['franquia_individual','Fatura Franquia Individual']
+];
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function soDig(v){ return txt(v).replace(/\D/g,''); }
+function codigoNorm(v){ var d=soDig(v); if(!d) return ''; return d.replace(/^0+/,'')||'0'; }
+function ym(d){ if(!d) return ''; var x=new Date(d); if(isNaN(x)) return String(d).slice(0,7); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'); }
+function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function mesAtual(){ return hojeISO().slice(0,7); }
+function mesPassado(){
+  var d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+function maquinas(c){
+  if(!c || typeof db==='undefined') return [];
+  return (db.parque||[]).filter(function(p){
+    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  });
+}
+function eqDe(p){
+  if(!p || typeof db==='undefined') return {};
+  return (db.equipamentos||[]).find(function(e){ return e.id===p.equipamentoId; })||{};
+}
+function clienteDe(c){
+  if(!c || typeof db==='undefined') return {};
+  return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{};
+}
+function chamadosAbertos(c){
+  if(!c || typeof db==='undefined') return 0;
+  return (db.os||[]).filter(function(o){
+    if(!o) return false;
+    if(o.contratoId && o.contratoId===c.id) return !/conclu|cancel|fechad/i.test(o.status||'');
+    return o.clienteId===c.clienteId && !/conclu|cancel|fechad/i.test(o.status||'');
+  }).length;
+}
+function leiturasDo(c){
+  if(!c || typeof db==='undefined') return [];
+  return (db.leituras||[]).filter(function(l){
+    return l && (l.contratoId===c.id || (c.clienteId && l.clienteId===c.clienteId));
+  });
+}
+function leituraFaturada(l){ return /faturad/i.test(String(l&&l.status||'')); }
+function temLeituraMes(c, mes){
+  return leiturasDo(c).some(function(l){ return ym(l.dataLeitura||l.criadoEm||l.dataInicio)===mes; });
+}
+function temFaturadaMes(c, mes){
+  return leiturasDo(c).some(function(l){ return leituraFaturada(l) && ym(l.dataLeitura||l.criadoEm||l.faturadoEm)===mes; });
+}
+function modalidadeDe(c){
+  var out=[];
+  maquinas(c).forEach(function(p){
+    var meds=p.medidores||p.medidoresConfig||{};
+    Object.keys(meds).forEach(function(k){
+      var m=meds[k];
+      if(m && m.ativo!==false && m.modalidade) out.push(String(m.modalidade));
+    });
+    if(p.modalidade) out.push(String(p.modalidade));
+  });
+  return out.join(' ').toLowerCase();
+}
+
+function filtraContratos(list, campo, q){
+  var arr=list||[];
+  var termo=up(q);
+  var mes=mesAtual();
+  var pass=mesPassado();
+  var hoje=hojeISO();
+  function passaTexto(c){
+    if(!termo) return true;
+    var cl=clienteDe(c);
+    var maqs=maquinas(c);
+    if(campo==='nome') return up(cl.nome).indexOf(termo)>=0 || up(cl.fantasia).indexOf(termo)>=0;
+    if(campo==='equipamento') return maqs.some(function(p){ return up(eqDe(p).modelo).indexOf(termo)>=0; });
+    if(campo==='patrimonio') return maqs.some(function(p){ return up(eqDe(p).patrimonio||p.patrimonio).indexOf(termo)>=0; });
+    if(campo==='serial') return maqs.some(function(p){ return up(eqDe(p).serie).indexOf(termo)>=0; });
+    if(campo==='departamento') return maqs.some(function(p){ return up(p.setor||p.departamento).indexOf(termo)>=0; });
+    if(campo==='cod_locacao') return codigoNorm(c.numero)===codigoNorm(q) || codigoNorm(c.codigo)===codigoNorm(q) || codigoNorm(c.codigoAntigo)===codigoNorm(q);
+    if(campo==='cod_cliente') return codigoNorm(cl.codigo)===codigoNorm(q) || codigoNorm(cl.codigoAntigo)===codigoNorm(q);
+    if(campo==='endereco_impressora') return maqs.some(function(p){ return up(p.localInstalacao||p.enderecoInstalacao||p.endereco).indexOf(termo)>=0; });
+    if(campo==='cod_leitura') return leiturasDo(c).some(function(l){ return codigoNorm(l.numero)===codigoNorm(q) || codigoNorm(l.codigoAntigo)===codigoNorm(q); });
+    return true;
+  }
+  return arr.filter(function(c){
+    if(!c || c.status==='excluido') return false;
+    if(campo==='todos' || !campo){
+      if(!termo) return true;
+      var cl=clienteDe(c);
+      var maqs=maquinas(c);
+      return [c.numero,c.codigo,cl.nome,cl.fantasia].some(function(v){ return up(v).indexOf(termo)>=0; })
+        || maqs.some(function(p){ var e=eqDe(p); return up(e.modelo).indexOf(termo)>=0 || up(e.patrimonio).indexOf(termo)>=0; });
+    }
+    if(campo==='chamados_abertos') return chamadosAbertos(c)>0;
+    if(campo==='vencidos'){
+      var fim=String(c.dataFim||'').slice(0,10);
+      return !!fim && fim<hoje && !/encerr|inativ/i.test(c.status||'');
+    }
+    if(campo==='vencer_30'){
+      var f2=String(c.dataFim||'').slice(0,10);
+      if(!f2) return false;
+      var lim=new Date(); lim.setDate(lim.getDate()+30);
+      return f2>=hoje && f2<=lim.toISOString().slice(0,10);
+    }
+    if(campo==='leituras_hoje'){
+      return !temLeituraMes(c, mes) || leiturasDo(c).some(function(l){ return String(l.dataLeitura||l.criadoEm||'').slice(0,10)===hoje; });
+    }
+    if(campo==='nao_faturados_mes') return !temFaturadaMes(c, mes);
+    if(campo==='faturados_mes') return temFaturadaMes(c, mes);
+    if(campo==='nao_faturados_passado') return !temFaturadaMes(c, pass);
+    if(campo==='mes_fixo') return /mes_fixo|mês fixo|mes fixo/.test(modalidadeDe(c));
+    if(campo==='franquia_individual') return /individual/.test(modalidadeDe(c));
+    return passaTexto(c);
+  });
+}
+
+window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContratos, codigoNorm: codigoNorm };
+
+if(typeof document==='undefined') return;
+
+var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'todos', q:'' });
+
+function ehStatus(campo){
+  return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
+}
+
+function injetar(){
+  var view=document.getElementById('view-contratos');
+  if(!view || view.classList.contains('hidden')) return;
+  if(document.getElementById('ctr-filtro-campo')) return;
+  var busca=document.getElementById('search-contratos');
+  if(!busca) return;
+  var sel=document.createElement('select');
+  sel.id='ctr-filtro-campo';
+  sel.className='h-10 px-3 rounded-xl bg-white border text-[13px] min-w-[210px]';
+  sel.innerHTML=FILTROS.map(function(it){
+    return '<option value="'+it[0]+'"'+(STATE.campo===it[0]?' selected':'')+'>'+it[1]+'</option>';
+  }).join('');
+  sel.onchange=function(){
+    STATE.campo=sel.value;
+    if(ehStatus(STATE.campo)){ STATE.q=''; if(busca) busca.value=''; }
+    if(typeof window.contratosFinalBuscar==='function') window.contratosFinalBuscar();
+    else if(typeof window.renderContratos==='function') window.renderContratos();
+  };
+  var pai=busca.parentNode;
+  if(pai) pai.insertBefore(sel, busca);
+}
+
+if(typeof window.renderContratos==='function' && !window.renderContratos.__v52237fil){
+  var old=window.renderContratos;
+  window.renderContratos=function(){
+    var s=typeof getSession==='function'?getSession():null;
+    var campo=(document.getElementById('ctr-filtro-campo')||{}).value || STATE.campo || 'todos';
+    var q=(document.getElementById('search-contratos')||{}).value || STATE.q || '';
+    STATE.campo=campo; STATE.q=q;
+    if(s && typeof db!=='undefined'){
+      var orig=db.contratos;
+      try{
+        db.contratos=filtraContratos((orig||[]).filter(function(c){ return !s.empresaId || c.empresaId===s.empresaId; }), campo, q);
+        var r=old.apply(this, arguments);
+        return r;
+      } finally {
+        db.contratos=orig;
+        setTimeout(injetar, 20);
+      }
+    }
+    var r2=old.apply(this, arguments);
+    setTimeout(injetar, 20);
+    return r2;
+  };
+  window.renderContratos.__v52237fil=true;
+}
+
+if(typeof window.contratosFinalBuscar==='function' && !window.contratosFinalBuscar.__v52237fil){
+  var oldB=window.contratosFinalBuscar;
+  window.contratosFinalBuscar=function(){
+    STATE.q=document.getElementById('search-contratos')&&document.getElementById('search-contratos').value||'';
+    STATE.campo=document.getElementById('ctr-filtro-campo')&&document.getElementById('ctr-filtro-campo').value||'todos';
+    return oldB.apply(this, arguments);
+  };
+  window.contratosFinalBuscar.__v52237fil=true;
+}
+
+setTimeout(injetar, 500);
+console.log('[DIGICOPY] v5.22.37 filtros de contratos');
+})();
+
+;
+
+/* ===== ajustes_v52237_orcamentos_menu_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.37 — Menu Orçamentos (cadastro separado do Digicopy, NÃO é o
+//            Buscador Escola). Lista, novo, excluir, estornar, filtros.
+//            Não gera financeiro. Itens iguais à venda. Precisa estoque
+//            para lançar, mas NÃO baixa estoque.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function hoje(){ return new Date().toISOString().slice(0,10); }
+function store(){
+  if(typeof db==='undefined') return [];
+  if(!Array.isArray(db.orcamentos)) db.orcamentos=[];
+  return db.orcamentos;
+}
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function uidSafe(p){ return typeof uid==='function'?uid(p):(p+'_'+Date.now().toString(36)); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+(n(v).toFixed(2))); }
+function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):(v||'-'); }
+function ehServico(p){ return !p || /servi[cç]o|recarga/i.test(String(p.categoria||'')+' '+String(p.tipo||'')); }
+function tokenNovo(){
+  var b=new Uint8Array(18);
+  if(typeof crypto!=='undefined' && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for(var i=0;i<18;i++) b[i]=Math.floor(Math.random()*256);
+  var s=''; for(var j=0;j<b.length;j++) s+=('0'+b[j].toString(16)).slice(-2);
+  return 'o'+s;
+}
+
+var FILTROS = [
+  ['hoje','Hoje'],
+  ['cod_orc','Cód. Orc.'],
+  ['cliente','Cliente'],
+  ['data','Data'],
+  ['vendedor','Vendedor'],
+  ['cod_cliente','Cód. Cliente'],
+  ['produto','Produto'],
+  ['fechados','Fechados'],
+  ['nao_fechados','Não Fechados']
+];
+
+function codigoNorm(v){ var d=String(v==null?'':v).replace(/\D/g,''); if(!d) return ''; return d.replace(/^0+/,'')||'0'; }
+function clienteDe(o){
+  if(!o || typeof db==='undefined') return {};
+  return (db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+}
+function ehFechado(o){ return !!(o && (o.status==='aprovado' || o.vendaId)); }
+
+function filtraOrcamentos(list, campo, q){
+  var arr=list||[];
+  var termo=txt(q).toLowerCase();
+  var h=hoje();
+  return arr.filter(function(o){
+    if(!o || o.status==='excluido') return false;
+    var cl=clienteDe(o);
+    if(campo==='hoje') return String(o.data||o.criadoEm||'').slice(0,10)===h;
+    if(campo==='fechados') return ehFechado(o);
+    if(campo==='nao_fechados') return !ehFechado(o) && o.status!=='estornado';
+    if(campo==='cod_orc') return !termo || codigoNorm(o.numero)===codigoNorm(q);
+    if(campo==='cod_cliente') return !termo || codigoNorm(cl.codigo)===codigoNorm(q) || codigoNorm(cl.codigoAntigo)===codigoNorm(q);
+    if(campo==='cliente') return !termo || String(cl.nome||'').toLowerCase().indexOf(termo)>=0 || String(cl.fantasia||'').toLowerCase().indexOf(termo)>=0;
+    if(campo==='data') return !termo || String(o.data||'').slice(0,10)===termo || dataBR(o.data).indexOf(txt(q))>=0;
+    if(campo==='vendedor') return !termo || String(o.criadoPorNome||o.vendedorNome||'').toLowerCase().indexOf(termo)>=0;
+    if(campo==='produto') return !termo || (o.itens||[]).some(function(it){ return String(it.descricao||'').toLowerCase().indexOf(termo)>=0; });
+    if(!termo) return true;
+    return String(o.numero||'').toLowerCase().indexOf(termo)>=0
+      || String(cl.nome||'').toLowerCase().indexOf(termo)>=0
+      || String(o.criadoPorNome||'').toLowerCase().indexOf(termo)>=0;
+  });
+}
+
+function proximoNumero(empId){
+  var max=0;
+  store().forEach(function(o){
+    if(empId && o.empresaId && o.empresaId!==empId) return;
+    var nro=parseInt(codigoNorm(o.numero),10)||0;
+    if(nro>max) max=nro;
+  });
+  return String(max+1);
+}
+
+window.ORCAMENTOS_PURE = {
+  FILTROS: FILTROS,
+  filtraOrcamentos: filtraOrcamentos,
+  ehFechado: ehFechado,
+  codigoNorm: codigoNorm,
+  podeEstornar: function(o, venda){
+    if(!o) return {ok:false, motivo:'Orçamento não encontrado'};
+    if(o.status==='excluido') return {ok:false, motivo:'Orçamento já excluído'};
+    if(venda && /faturad|finaliz|pago/i.test(venda.status||'')){
+      return {ok:false, motivo:'A venda gerada já foi faturada. Estorne a venda primeiro.'};
+    }
+    return {ok:true};
+  }
+};
+
+if(typeof document==='undefined') return;
+
+var ST = window.__ORC_ST || (window.__ORC_ST = { campo:'nao_fechados', q:'', sel:null, form:null });
+
+function garantirNuvem(){
+  try{
+    if(window.DIGICOPY_CLOUD_SYNC && window.DIGICOPY_CLOUD_SYNC.definitions)
+      window.DIGICOPY_CLOUD_SYNC.definitions.orcamentos='array';
+  }catch(e){}
+}
+
+function injetarMenu(){
+  function addItem(items){
+    if(!items) return items;
+    if(items.some(function(it){ return it.id==='orcamentos'; })) return items;
+    var copy=items.slice();
+    var i=copy.findIndex(function(it){ return it.id==='notinhas'; });
+    var item={id:'orcamentos', icon:'ph-clipboard-text', label:'Orçamentos', click:"navigateTo('orcamentos')"};
+    if(i>=0) copy.splice(i+1,0,item); else copy.push(item);
+    return copy;
+  }
+  if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.menusPadrao==='function' && !window.MENUS_ATALHOS_PURE.menusPadrao.__v52237orc){
+    var old=window.MENUS_ATALHOS_PURE.menusPadrao;
+    window.MENUS_ATALHOS_PURE.menusPadrao=function(){
+      var list=old.apply(this, arguments)||[];
+      return list.map(function(m){
+        if(m.id!=='atendimento') return m;
+        var c=Object.assign({}, m);
+        c.items=addItem(m.items);
+        return c;
+      });
+    };
+    window.MENUS_ATALHOS_PURE.menusPadrao.__v52237orc=true;
+  }
+  if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.catalogoAtalhos==='function' && !window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52237orc){
+    var oldC=window.MENUS_ATALHOS_PURE.catalogoAtalhos;
+    window.MENUS_ATALHOS_PURE.catalogoAtalhos=function(){
+      var list=oldC.apply(this, arguments)||[];
+      if(!list.some(function(a){ return a.id==='orcamentos'; }))
+        list.splice(2,0,{id:'orcamentos', icon:'ph-clipboard-text', label:'Orçamentos', click:"navigateTo('orcamentos')"});
+      return list;
+    };
+    window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52237orc=true;
+  }
+}
+
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52237orc){
+  var oldNav=window.navigateTo;
+  window.navigateTo=function(view){
+    if(view==='orcamentos'){
+      var el=typeof ensureView==='function'?ensureView('orcamentos'):document.getElementById('view-orcamentos');
+      if(!el){
+        el=document.createElement('section');
+        el.id='view-orcamentos';
+        el.className='view hidden space-y-4';
+        var wrap=document.querySelector('main .flex-1.p-4, main .flex-1');
+        if(wrap) wrap.appendChild(el);
+      }
+    }
+    var r=oldNav.apply(this, arguments);
+    if(view==='orcamentos'){
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.add('hidden'); });
+      var alvo=document.getElementById('view-orcamentos');
+      if(alvo) alvo.classList.remove('hidden');
+      if(typeof setPageHeader==='function') setPageHeader('Orçamentos','Propostas ao cliente — não entram no financeiro');
+      window.renderOrcamentos();
+    }
+    return r;
+  };
+  window.navigateTo.__v52237orc=true;
+}
+
+window.renderOrcamentos=function(){
+  var s=sess(); if(!s) return;
+  garantirNuvem();
+  var view=typeof ensureView==='function'?ensureView('orcamentos'):document.getElementById('view-orcamentos');
+  if(!view) return;
+  var campo=(document.getElementById('orc-filtro-campo')||{}).value || ST.campo || 'nao_fechados';
+  var q=(document.getElementById('orc-busca')||{}).value || ST.q || '';
+  ST.campo=campo; ST.q=q;
+  var base=store().filter(function(o){ return o.empresaId===s.empresaId && o.status!=='excluido'; });
+  var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
+    return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
+  });
+  view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
+    +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
+    +'<div class="neo-actions">'
+    +'<button onclick="window.novoOrcamento()" class="neo-btn primary"><i class="ph ph-plus"></i>Novo</button>'
+    +'<button onclick="window.estornarOrcamentosMarcados()" class="neo-btn"><i class="ph ph-arrow-counter-clockwise"></i>Estornar</button>'
+    +'<button onclick="window.excluirOrcamentosMarcados()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button>'
+    +'</div></div>'
+    +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
+    +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo==='todos'?'primary':'')+'">Todos</button>'
+    +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
+    +FILTROS.map(function(it){ return '<option value="'+it[0]+'"'+(campo===it[0]?' selected':'')+'>'+it[1]+'</option>'; }).join('')
+    +'</select>'
+    +'<input id="orc-busca" value="'+esc(q)+'" placeholder="Buscar… (Enter ou lupa)" class="neo-input flex-1 min-w-[200px]">'
+    +'<button type="button" onclick="window.orcBuscar()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>'
+    +'<span class="text-[12px] text-slate-500">'+list.length+' registro(s)</span>'
+    +'</div>'
+    +'<div class="overflow-auto max-h-[calc(100vh-320px)]"><table class="neo-table"><thead><tr>'
+    +'<th class="w-8"><input type="checkbox" onclick="document.querySelectorAll(\'input[name=orc-check]\').forEach(function(c){c.checked=this.checked}.bind(this))"></th>'
+    +'<th>Código</th><th>Data</th><th>Cliente</th><th>Valor total</th><th></th></tr></thead><tbody>'
+    +(list.map(function(o){
+      var cl=clienteDe(o);
+      var fech=ehFechado(o);
+      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
+        +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
+        +'<td><b class="text-[#0a1e8a]">'+esc(o.numero||'')+'</b>'+(fech?' <span class="text-[10px] text-emerald-700 font-bold">FECHADO</span>':'')+'</td>'
+        +'<td>'+dataBR(o.data)+'</td>'
+        +'<td><b>'+esc(cl.nome||'(sem cliente)')+'</b></td>'
+        +'<td><b>'+money(o.total)+'</b></td>'
+        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
+        +'</tr>';
+    }).join('') || '<tr><td colspan="6" class="text-center text-slate-400 py-12">Nenhum orçamento</td></tr>')
+    +'</tbody></table></div></div></div>';
+  var inp=document.getElementById('orc-busca');
+  if(inp) inp.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.orcBuscar(); } };
+  var sel=document.getElementById('orc-filtro-campo');
+  if(sel) sel.onchange=function(){
+    ST.campo=sel.value;
+    if(/fechados|hoje/.test(sel.value)){ ST.q=''; if(inp) inp.value=''; }
+    window.renderOrcamentos();
+  };
+};
+
+window.orcBuscar=function(){
+  ST.q=document.getElementById('orc-busca')&&document.getElementById('orc-busca').value||'';
+  ST.campo=document.getElementById('orc-filtro-campo')&&document.getElementById('orc-filtro-campo').value||'todos';
+  window.renderOrcamentos();
+};
+window.orcMostrarTodos=function(){ ST.campo='todos'; ST.q=''; window.renderOrcamentos(); };
+
+function idsMarcados(){
+  return Array.from(document.querySelectorAll('input[name="orc-check"]:checked')).map(function(c){ return c.value; });
+}
+
+window.excluirOrcamentosMarcados=function(){
+  var ids=idsMarcados();
+  if(!ids.length && window.neoOrcSel) ids=[window.neoOrcSel];
+  if(!ids.length){ if(window.lfbAlert) window.lfbAlert('Marque um orçamento para excluir.','Excluir'); return; }
+  var msg='Deseja excluir '+ids.length+' orçamento(s)?';
+  var run=function(){
+    ids.forEach(function(id){
+      var o=store().find(function(x){ return x.id===id; });
+      if(o) o.status='excluido';
+    });
+    if(typeof saveDB==='function') saveDB();
+    window.renderOrcamentos();
+    if(typeof toast==='function') toast('Orçamento(s) excluído(s)','success');
+  };
+  if(typeof window.confirmSistema==='function') window.confirmSistema(msg,'Excluir').then(function(ok){ if(ok) run(); });
+};
+
+window.estornarOrcamentosMarcados=function(){
+  var s=sess(); if(!s) return;
+  var ids=idsMarcados();
+  if(!ids.length && window.neoOrcSel) ids=[window.neoOrcSel];
+  if(!ids.length){ if(window.lfbAlert) window.lfbAlert('Marque um orçamento para estornar.','Estornar'); return; }
+  var bloqueados=[];
+  ids.forEach(function(id){
+    var o=store().find(function(x){ return x.id===id; });
+    var v=o && o.vendaId && (db.vendas||[]).find(function(x){ return x.id===o.vendaId; });
+    var r=window.ORCAMENTOS_PURE.podeEstornar(o, v);
+    if(!r.ok) bloqueados.push(r.motivo);
+  });
+  if(bloqueados.length){
+    if(window.lfbAlert) window.lfbAlert(bloqueados[0],'Estornar');
+    return;
+  }
+  var msg='Estornar '+ids.length+' orçamento(s)? Se já tiver gerado venda salva (não faturada), essa venda será excluída.';
+  var run=function(){
+    ids.forEach(function(id){
+      var o=store().find(function(x){ return x.id===id; });
+      if(!o) return;
+      if(o.vendaId){
+        db.vendas=(db.vendas||[]).filter(function(v){ return v.id!==o.vendaId; });
+        o.vendaId=null; o.vendaNumero=null;
+      }
+      o.status='estornado';
+      o.aprovadoEm=null;
+    });
+    if(typeof saveDB==='function') saveDB();
+    window.renderOrcamentos();
+    if(typeof toast==='function') toast('Orçamento estornado','success');
+  };
+  if(typeof window.confirmSistema==='function') window.confirmSistema(msg,'Estornar').then(function(ok){ if(ok) run(); });
+};
+
+function formNovo(existente){
+  var s=sess();
+  var agora=new Date();
+  return {
+    id: existente?existente.id:null,
+    codigo: existente?existente.numero:proximoNumero(s&&s.empresaId),
+    data: existente?(existente.data||'').slice(0,10):agora.toISOString().slice(0,10),
+    hora: agora.toTimeString().slice(0,5),
+    cliente: existente && existente.clienteId ? (db.clientes||[]).find(function(c){ return c.id===existente.clienteId; }) : null,
+    itens: existente ? (existente.itens||[]).map(function(it){ return Object.assign({},it); }) : [],
+    produtoSel: null,
+    token: existente && existente.token ? existente.token : tokenNovo(),
+    obs: existente? (existente.observacao||'') : ''
+  };
+}
+
+window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
+window.abrirOrcamento=function(id){
+  var o=store().find(function(x){ return x.id===id; });
+  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
+  window.abrirTelaOrcamento(o);
+};
+
+window.abrirTelaOrcamento=function(existente){
+  var s=sess(); if(!s) return;
+  ST.form=formNovo(existente);
+  var f=ST.form;
+  var box=document.getElementById('modal-box');
+  if(box) box.className='w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+  document.getElementById('modal-title').innerText=existente?'Orçamento '+f.codigo:'Novo orçamento';
+  document.getElementById('modal-body').innerHTML=
+    '<div class="space-y-3">'
+    +'<div class="grid grid-cols-2 md:grid-cols-4 gap-2">'
+    +'<div class="rounded-xl bg-[#0a1e8a] text-white p-3"><p class="text-[10px] uppercase font-bold text-white/70">Código</p><p class="font-bold text-[15px]" id="orc-codigo">'+esc(f.codigo)+'</p></div>'
+    +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Data</p><p class="font-bold">'+esc(f.data.split('-').reverse().join('/'))+'</p></div>'
+    +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Hora</p><p class="font-bold">'+esc(f.hora)+'</p></div>'
+    +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Vendedor</p><p class="font-bold">'+esc(s.usuarioNome)+'</p></div>'
+    +'</div>'
+    +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
+    +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente *</label>'
+    +'<div class="flex gap-2 mt-1 items-center">'
+    +'<input id="orc-cli-search" placeholder="Busque o cliente (Enter ou lupa)" class="flex-1 h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+    +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button>'
+    +'</div>'
+    +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+    +'<div id="orc-cli-sel" class="'+(f.cliente?'':'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between">'
+    +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente?esc((f.cliente.codigo?'#'+f.cliente.codigo+' — ':'')+(f.cliente.nome||'')):'')+'</p></div>'
+    +'<button type="button" onclick="window.orcLimparCliente()" class="w-8 h-8 rounded-lg bg-red-50 text-red-600"><i class="ph ph-x"></i></button></div>'
+    +'</div>'
+    +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
+    +'<div class="grid grid-cols-12 gap-2 items-end">'
+    +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo<select id="orc-item-tipo" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12px]"><option>Produto</option><option>Recarga de toner</option></select></label>'
+    +'<label class="col-span-10 md:col-span-5 text-[11px] font-bold uppercase text-[#0a1e8a] relative">Descrição ou código do produto/serviço'
+    +'<input id="orc-prod-search" placeholder="Digite e Enter / lupa" class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+    +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div></label>'
+    +'<label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold"></label>'
+    +'</div>'
+    +'<div class="flex justify-end"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+    +'</div>'
+    +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
+    +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
+    +'<tbody id="orc-itens-body" class="divide-y"></tbody></table></div>'
+    +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Observações<textarea id="orc-obs" class="mt-1 w-full h-[52px] p-2 rounded-xl border">'+esc(f.obs)+'</textarea></label>'
+    +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between"><span>TOTAL</span><b id="orc-total">R$ 0,00</b></div>'
+    +'</div>';
+  document.getElementById('modal-footer').innerHTML=
+    '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+    +(existente?'<button onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>':'')
+    +'<button onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>';
+  document.getElementById('modal-root').classList.remove('hidden');
+  window.modalContext={type:'orcamento'};
+  window.orcRenderItens();
+  var cli=document.getElementById('orc-cli-search');
+  if(cli) cli.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.orcBuscarCliente(); } };
+  var pr=document.getElementById('orc-prod-search');
+  if(pr) pr.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.orcBuscarProd(); } };
+  ['orc-item-qtd','orc-item-vunit','orc-item-desc'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.oninput=window.orcCalcItem;
+  });
+  setTimeout(function(){
+    if(window.FILTROS_BUSCA_PURE && typeof document!=='undefined'){
+      var inp=document.getElementById('orc-cli-search');
+      if(inp && !document.getElementById('orc-cli-campo')){
+        var sel=document.createElement('select');
+        sel.id='orc-cli-campo';
+        sel.className='h-10 px-2 rounded-xl border bg-white text-[12px] min-w-[148px]';
+        var campos=(window.CLI_PURE&&window.CLI_PURE.CAMPOS_BUSCA)||window.FILTROS_BUSCA_PURE.CAMPOS_CLIENTE||[['todos','Tudo']];
+        sel.innerHTML=campos.map(function(it){ var k=Array.isArray(it)?it[0]:it; var r=Array.isArray(it)?it[1]:it; return '<option value="'+esc(k)+'">'+esc(r)+'</option>'; }).join('');
+        inp.parentNode.insertBefore(sel, inp);
+      }
+    }
+  }, 30);
+};
+
+window.orcBuscarCliente=function(){
+  var q=txt(document.getElementById('orc-cli-search')&&document.getElementById('orc-cli-search').value);
+  var el=document.getElementById('orc-cli-results'); if(!el) return;
+  if(!q){ el.classList.add('hidden'); return; }
+  var s=sess();
+  var list=(db.clientes||[]).filter(function(c){ return !s||!c.empresaId||c.empresaId===s.empresaId; });
+  var campo=(document.getElementById('orc-cli-campo')||{}).value||'todos';
+  if(window.FILTROS_BUSCA_PURE) list=window.FILTROS_BUSCA_PURE.filtraClientes(list,q,campo);
+  list=list.slice(0,15);
+  el.classList.remove('hidden');
+  el.innerHTML=list.map(function(c){
+    return '<button type="button" onclick="window.orcSelCliente(\''+c.id+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b"><b class="text-[#0a1e8a]">#'+esc(c.codigo||'-')+'</b> <b>'+esc(c.nome||'')+'</b></button>';
+  }).join('')||'<p class="px-3 py-3 text-slate-400">Nenhum cliente</p>';
+};
+window.orcSelCliente=function(id){
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; }); if(!c||!ST.form) return;
+  ST.form.cliente=c;
+  document.getElementById('orc-cli-results').classList.add('hidden');
+  document.getElementById('orc-cli-search').value='';
+  document.getElementById('orc-cli-sel').classList.remove('hidden');
+  document.getElementById('orc-cli-nome').textContent=(c.codigo?'#'+c.codigo+' — ':'')+(c.nome||'');
+};
+window.orcLimparCliente=function(){ if(ST.form) ST.form.cliente=null; document.getElementById('orc-cli-sel').classList.add('hidden'); };
+
+window.orcBuscarProd=function(){
+  var q=txt(document.getElementById('orc-prod-search')&&document.getElementById('orc-prod-search').value);
+  var el=document.getElementById('orc-prod-results'); if(!el) return;
+  if(!q){ el.classList.add('hidden'); return; }
+  var s=sess();
+  var list=(db.produtos||[]).filter(function(p){ return !s||!p.empresaId||p.empresaId===s.empresaId; });
+  if(window.FILTROS_BUSCA_PURE) list=window.FILTROS_BUSCA_PURE.filtraProdutos(list,q,'');
+  else list=list.filter(function(p){ return String(p.nome||'').toLowerCase().indexOf(q.toLowerCase())>=0; });
+  list=list.slice(0,10);
+  el.classList.remove('hidden');
+  el.innerHTML=list.map(function(p){
+    return '<button type="button" onclick="window.orcSelProd(\''+p.id+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b"><b>'+esc(p.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+esc(p.sku||'')+' • estoque '+(p.estoque||0)+' • <b>'+money(p.preco)+'</b></span></button>';
+  }).join('')||'<p class="px-3 py-2 text-slate-400">Sem produto — a descrição digitada será usada</p>';
+};
+window.orcSelProd=function(id){
+  var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
+  ST.form.produtoSel=p;
+  document.getElementById('orc-prod-search').value=p.nome||'';
+  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-prod-results').classList.add('hidden');
+  window.orcCalcItem();
+  if(!ehServico(p) && n(p.estoque)<=0){
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema('O produto "'+(p.nome||'')+'" está com estoque zerado. Deseja modificar o estoque?','Estoque zerado').then(function(ok){
+        if(!ok) return;
+        window.__orcPendenteVolta=ST.form;
+        window.__vosIgnorarSair=true;
+        if(typeof window.openModal==='function') window.openModal('produto', p.id);
+        setTimeout(function(){ if(typeof window.mudarAbaProdutoOperacional==='function') window.mudarAbaProdutoOperacional('estoque'); window.__vosIgnorarSair=false; }, 80);
+      });
+    }
+  }
+};
+window.orcCalcItem=function(){
+  var qtd=n(document.getElementById('orc-item-qtd')&&document.getElementById('orc-item-qtd').value);
+  var vu=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
+  var de=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  var el=document.getElementById('orc-item-total');
+  if(el) el.value=money(Math.max(0,qtd*vu-de));
+};
+window.orcAddItem=function(){
+  var f=ST.form; if(!f) return;
+  var desc=txt(document.getElementById('orc-prod-search')&&document.getElementById('orc-prod-search').value);
+  var p=f.produtoSel;
+  if(!p && !desc){ if(typeof toast==='function') toast('Selecione um produto ou escreva a descrição','error'); return; }
+  var qtd=n(document.getElementById('orc-item-qtd')&&document.getElementById('orc-item-qtd').value)||1;
+  if(p && !ehServico(p)){
+    if(n(p.estoque)<=0 || qtd>n(p.estoque)){
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema('O produto "'+(p.nome||'')+'" está sem estoque suficiente. Deseja modificar o estoque?','Estoque').then(function(ok){
+          if(!ok) return;
+          window.__orcPendenteVolta=f;
+          window.__vosIgnorarSair=true;
+          if(typeof window.openModal==='function') window.openModal('produto', p.id);
+          setTimeout(function(){ if(typeof window.mudarAbaProdutoOperacional==='function') window.mudarAbaProdutoOperacional('estoque'); window.__vosIgnorarSair=false; }, 80);
+        });
+      }
+      return;
+    }
+  }
+  var preco=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
+  var descV=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  f.itens.push({
+    produtoId:p?p.id:null, descricao:p?(p.nome||''):desc, sku:p?(p.sku||''):'',
+    tipo:(document.getElementById('orc-item-tipo')||{}).value||'Produto',
+    qtd:qtd, preco:preco, desconto:descV, subtotal:Math.max(0,qtd*preco-descV)
+  });
+  f.produtoSel=null;
+  document.getElementById('orc-prod-search').value='';
+  document.getElementById('orc-item-qtd').value=1;
+  document.getElementById('orc-item-vunit').value='';
+  document.getElementById('orc-item-desc').value=0;
+  window.orcRenderItens();
+};
+window.orcRenderItens=function(){
+  var f=ST.form; var body=document.getElementById('orc-itens-body'); if(!body||!f) return;
+  body.innerHTML=f.itens.map(function(it,i){
+    return '<tr><td class="px-3 py-2">'+esc(it.tipo||'')+'</td><td class="px-3 py-2"><b>'+esc(it.descricao)+'</b></td><td class="px-3 py-2">'+it.qtd+'</td><td class="px-3 py-2">'+money(it.preco)+'</td><td class="px-3 py-2">'+money(it.desconto)+'</td><td class="px-3 py-2"><b>'+money(it.subtotal)+'</b></td><td class="px-2"><button onclick="window.orcRemoveItem('+i+')" class="w-7 h-7 rounded-lg bg-red-50 text-red-600"><i class="ph ph-trash"></i></button></td></tr>';
+  }).join('')||'<tr><td colspan="7" class="text-center text-slate-400 py-8">Nenhum item lançado</td></tr>';
+  var tot=f.itens.reduce(function(s,i){ return s+(i.subtotal||0); },0);
+  var t=document.getElementById('orc-total'); if(t) t.textContent=money(tot);
+};
+window.orcRemoveItem=function(i){ if(ST.form) ST.form.itens.splice(i,1); window.orcRenderItens(); };
+
+window.salvarOrcamentoTela=function(){
+  var s=sess(); var f=ST.form; if(!s||!f) return;
+  if(!f.cliente){ if(window.lfbAlert) window.lfbAlert('Escolha o cliente.','Orçamento'); return; }
+  if(!f.itens.length){ if(window.lfbAlert) window.lfbAlert('Lance ao menos um item.','Orçamento'); return; }
+  var tot=f.itens.reduce(function(sum,it){ return sum+(it.subtotal||0); },0);
+  var o=f.id ? store().find(function(x){ return x.id===f.id; }) : null;
+  if(!o){
+    o={ id:uidSafe('orc'), empresaId:s.empresaId, numero:f.codigo, token:f.token, criadoEm:new Date().toISOString(), criadoPor:s.usuarioId, criadoPorNome:s.usuarioNome, status:'aberto' };
+    store().push(o);
+    f.id=o.id;
+  }
+  if(ehFechado(o) && o.status==='aprovado'){
+    if(window.lfbAlert) window.lfbAlert('Orçamento já aprovado. Estorne para alterar.','Orçamento');
+    return;
+  }
+  Object.assign(o,{
+    clienteId:f.cliente.id, data:f.data, itens:f.itens.map(function(it){ return Object.assign({},it); }),
+    total:tot, observacao:txt(document.getElementById('orc-obs')&&document.getElementById('orc-obs').value),
+    token:o.token||f.token, status:o.status==='estornado'?'aberto':(o.status||'aberto'),
+    atualizadoEm:new Date().toISOString()
+  });
+  if(typeof saveDB==='function') saveDB();
+  if(typeof toast==='function') toast('Orçamento '+o.numero+' salvo','success');
+  ST.form.id=o.id;
+};
+
+['salvarProdutoOperacional','saveProduto'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52237orc) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var pend=window.__orcPendenteVolta;
+    var r=old.apply(this, arguments);
+    if(pend){
+      setTimeout(function(){
+        window.__orcPendenteVolta=null;
+        ST.form=pend;
+        window.abrirTelaOrcamento({
+          id:pend.id, numero:pend.codigo, data:pend.data, clienteId:pend.cliente&&pend.cliente.id,
+          itens:pend.itens, token:pend.token, observacao:pend.obs
+        });
+      }, 40);
+    }
+    return r;
+  };
+  window[nome].__v52237orc=true;
+});
+
+injetarMenu();
+setTimeout(function(){ injetarMenu(); if(typeof window.pintarMenus==='function') window.pintarMenus(); }, 600);
+garantirNuvem();
+
+console.log('[DIGICOPY] v5.22.37 menu orçamentos (ERP, não buscador)');
+})();
+
+;
+
+/* ===== ajustes_v52237_orcamentos_aprovacao_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.37 — Impressão do orçamento (meia folha) + link público para o
+//            cliente aprovar/recusar. Aprovar gera venda SALVA (não
+//            faturada), WhatsApp da loja e aviso bem visível.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var AVISO_EPSON = (window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.AVISO_EPSON) || [
+  'Prezados clientes,',
+  '',
+  'Informamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.',
+  '',
+  'Vale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.',
+  '',
+  'Agradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!'
+].join('\n');
+
+var PAGES = 'https://digicopy-pix.pages.dev/orcamento.html';
+var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+(n(v).toFixed(2))); }
+function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):(v||'-'); }
+
+function loja(){
+  var emp=null;
+  try{
+    if(typeof db!=='undefined'){
+      emp=(db.config&&db.config.empresa)||{};
+      var s=typeof getSession==='function'?getSession():null;
+      var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
+      if(e) emp=Object.assign({}, emp, e);
+    }
+  }catch(er){}
+  return emp||{};
+}
+function soTel(v){ return String(v||'').replace(/\D/g,''); }
+
+function linkPublico(token){
+  return PAGES+'?c='+encodeURIComponent(token||'');
+}
+
+function mensagemWhats(o, venda, cli){
+  var nome=txt(cli&&cli.nome)||'cliente';
+  var cod=txt(o&&o.numero)||'—';
+  var vd=txt(venda&&venda.numero)||'—';
+  return 'Olá, sou '+nome+'. Foi autorizado o orçamento do COD '+cod+' e gerou a venda salva '+vd+'. Por favor, vá atualizando para mim sobre o andamento.';
+}
+
+function gerarVendaDoOrcamento(o, origem){
+  if(typeof db==='undefined' || !o) return null;
+  if(o.vendaId){
+    var ja=(db.vendas||[]).find(function(v){ return v.id===o.vendaId; });
+    if(ja) return ja;
+  }
+  var s=typeof getSession==='function'?getSession():null;
+  var empId=o.empresaId || (s&&s.empresaId);
+  var numero = typeof window.proximoNumeroSimples==='function'
+    ? window.proximoNumeroSimples('venda', db.vendas, empId)
+    : String(((db.vendas||[]).length)+1);
+  var venda={
+    id: typeof uid==='function'?uid('vda'):('vda_'+Date.now()),
+    empresaId: empId,
+    numero: numero,
+    clienteId: o.clienteId,
+    data: new Date().toISOString(),
+    itens: (o.itens||[]).map(function(it){ return Object.assign({}, it); }),
+    desconto: 0,
+    total: n(o.total),
+    observacao: 'Gerada do orçamento '+o.numero,
+    status: 'aguardar',
+    origemOrcamentoId: o.id,
+    criadoPor: o.criadoPor,
+    criadoPorNome: o.criadoPorNome,
+    criadoEm: new Date().toISOString(),
+    atendenteNome: o.criadoPorNome
+  };
+  (venda.itens||[]).forEach(function(it){
+    var p=it.produtoId && (db.produtos||[]).find(function(x){ return x.id===it.produtoId; });
+    if(p && !/servi[cç]o|recarga/i.test(String(p.categoria||''))) p.estoque=n(p.estoque)-n(it.qtd);
+  });
+  db.vendas=db.vendas||[];
+  db.vendas.push(venda);
+  o.status='aprovado';
+  o.vendaId=venda.id;
+  o.vendaNumero=venda.numero;
+  o.aprovadoEm=new Date().toISOString();
+  o.aprovadoOrigem=origem||'sistema';
+  return venda;
+}
+
+function avisarAprovacao(o, venda, cli){
+  if(typeof db==='undefined') return;
+  db.notificacoes=db.notificacoes||[];
+  db.notificacoes.unshift({
+    id: typeof uid==='function'?uid('ntf'):('ntf_'+Date.now()),
+    empresaId: o.empresaId,
+    tipo: 'orcamento_aprovado',
+    titulo: 'Orçamento autorizado',
+    texto: (cli&&cli.nome||'Cliente')+' autorizou o orçamento '+o.numero+' e gerou a venda salva '+(venda&&venda.numero||''),
+    orcamentoId: o.id,
+    vendaId: venda&&venda.id,
+    lida: false,
+    criadoEm: new Date().toISOString()
+  });
+  pintarBanner(o, venda, cli);
+}
+
+function pintarBanner(o, venda, cli){
+  if(typeof document==='undefined') return;
+  var old=document.getElementById('digi-orc-aviso');
+  if(old) old.remove();
+  var el=document.createElement('div');
+  el.id='digi-orc-aviso';
+  el.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:99999;max-width:640px;width:calc(100% - 24px);background:#052e16;color:#ecfdf5;border:2px solid #4ade80;border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.35);padding:16px 18px;font-family:inherit';
+  el.innerHTML='<div style="display:flex;gap:12px;align-items:flex-start">'
+    +'<div style="font-size:28px;line-height:1">✅</div>'
+    +'<div style="flex:1"><p style="font-weight:800;font-size:16px;margin:0 0 4px">Cliente autorizou o orçamento</p>'
+    +'<p style="margin:0;font-size:13.5px;line-height:1.4">'
+    +esc(cli&&cli.nome||'Cliente')+' autorizou o orçamento <b>'+esc(o.numero||'')+'</b> e gerou a venda salva <b>'+esc(venda&&venda.numero||'')+'</b>.</p></div>'
+    +'<button type="button" style="border:0;background:#14532d;color:#fff;border-radius:10px;height:34px;padding:0 12px;font-weight:700;cursor:pointer" onclick="this.parentElement.parentElement.remove()">OK</button>'
+    +'</div>';
+  document.body.appendChild(el);
+  try{
+    if(window.Notification && Notification.permission==='granted'){
+      new Notification('Orçamento autorizado', { body: (cli&&cli.nome||'Cliente')+' autorizou o COD '+(o.numero||'') });
+    } else if(window.Notification && Notification.permission!=='denied'){
+      Notification.requestPermission();
+    }
+  }catch(e){}
+}
+
+window.ORCAMENTOS_APROVACAO_PURE = {
+  linkPublico: linkPublico,
+  mensagemWhats: mensagemWhats,
+  AVISO_EPSON: AVISO_EPSON,
+  PAGES: PAGES
+};
+
+window.aprovarOrcamentoInterno=function(id, origem){
+  var o=(typeof db!=='undefined' && (db.orcamentos||[])).find(function(x){ return x.id===id; });
+  if(!o) return null;
+  if(o.status==='aprovado' && o.vendaId){
+    return (db.vendas||[]).find(function(v){ return v.id===o.vendaId; })||null;
+  }
+  var venda=gerarVendaDoOrcamento(o, origem);
+  var cli=(db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+  avisarAprovacao(o, venda, cli);
+  if(typeof saveDB==='function') saveDB();
+  return venda;
+};
+
+window.imprimirOrcamento=function(id){
+  if(!id && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id){
+    if(typeof window.salvarOrcamentoTela==='function') window.salvarOrcamentoTela();
+    id=window.__ORC_ST.form.id;
+  }
+  var o=(db.orcamentos||[]).find(function(x){ return x.id===id; });
+  if(!o){ if(typeof toast==='function') toast('Salve o orçamento antes de imprimir','error'); return; }
+  var html=window.gerarHtmlOrcamento(o.id);
+  if(!html) return;
+  var win=window.open('','_blank');
+  if(!win){ if(typeof toast==='function') toast('Bloqueador de pop-up impediu a impressão','error'); return; }
+  win.document.write(html); win.document.close();
+};
+
+window.gerarHtmlOrcamento=function(id){
+  var o=(db.orcamentos||[]).find(function(x){ return x.id===id; });
+  if(!o) return '';
+  var cli=(db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+  var emp=loja();
+  var link=linkPublico(o.token);
+  var logo=window.DIGICOPY_LOGO?'<img src="'+window.DIGICOPY_LOGO+'" style="width:100%;height:100%;object-fit:contain">':'DC';
+  var itens=(o.itens||[]).map(function(it,i){
+    return '<tr><td class="c">'+esc(it.sku||String(i+1))+'</td><td>'+esc(it.descricao||'')+'</td>'
+      +'<td class="c">'+it.qtd+'</td><td class="r">'+money(it.preco)+'</td><td class="r">'+money(it.desconto||0)+'</td><td class="r"><b>'+money(it.subtotal)+'</b></td></tr>';
+  }).join('');
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Orçamento '+esc(o.numero)+'</title><style>'
+    +'@page{size:A4 portrait;margin:0}*{box-sizing:border-box}'
+    +'body{margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#111}'
+    +'.pagina{width:210mm;height:138mm;padding:8mm 12mm;overflow:hidden}'
+    +'.cab{display:flex;justify-content:space-between;gap:6mm;border-bottom:1.5px solid #0a1e8a;padding-bottom:3mm}'
+    +'.logo{width:16mm;height:16mm;border-radius:2.5mm;background:#0a1e8a;color:#fff;font-weight:800;display:grid;place-items:center}'
+    +'.emp-nome{font-weight:800;font-size:14px;margin:0}.emp-info{margin:1px 0 0;font-size:9px;color:#555}'
+    +'.titulo{margin:3mm 0;background:#0a1e8a;color:#fff;text-align:center;font-weight:800;padding:2mm;border-radius:2mm}'
+    +'.cli{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2mm;border:1px solid #ccc;border-radius:2mm;padding:2mm 3mm}'
+    +'.lbl{display:block;font-size:8px;font-weight:700;text-transform:uppercase;color:#777}'
+    +'table.tb{width:100%;border-collapse:collapse;margin-top:2.5mm;font-size:10px}'
+    +'.tb th{background:#eef0f8;font-size:8px;text-transform:uppercase;padding:1.4mm 2mm;border:1px solid #d5d9e8;text-align:left}'
+    +'.tb td{padding:1.4mm 2mm;border:1px solid #e2e5ee}.c{text-align:center}.r{text-align:right}'
+    +'.tot{text-align:right;margin-top:2mm;font-size:14px;font-weight:800;color:#0a1e8a}'
+    +'.link{margin-top:2mm;padding:2mm 3mm;border:1.5px dashed #0a1e8a;border-radius:2mm;font-size:10px}'
+    +'.link a{color:#0a1e8a;font-weight:800;word-break:break-all}'
+    +'.aviso{margin-top:2mm;padding:2mm 2.5mm;border:1.5px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:8.5px;line-height:1.3;color:#0a1e8a;white-space:pre-wrap;font-weight:600}'
+    +'.no-print{margin:6mm;text-align:center}'
+    +'.no-print button{padding:3mm 8mm;border:0;border-radius:2mm;background:#0a1e8a;color:#fff;font-weight:700;cursor:pointer}'
+    +'@media print{.no-print{display:none!important}}'
+    +'</style></head><body>'
+    +'<div class="no-print"><button onclick="window.print()">Imprimir / PDF</button> <button onclick="window.close()" style="background:#fff;color:#333;border:1px solid #aaa">Fechar</button></div>'
+    +'<div class="pagina">'
+    +'<div class="cab"><div style="display:flex;gap:4mm"><div class="logo" style="'+(window.DIGICOPY_LOGO?'background:#fff;padding:0;overflow:hidden;border:1px solid #dfe3ee':'')+'">'+logo+'</div>'
+    +'<div><p class="emp-nome">'+esc(emp.fantasia||emp.nome||'DIGICOPY')+'</p>'
+    +'<p class="emp-info">'+esc([emp.nome, emp.cnpj, emp.telefone||emp.whatsapp].filter(Boolean).join(' • '))+'</p>'
+    +'<p class="emp-info">'+esc([emp.logradouro||emp.rua||emp.endereco, emp.numero, emp.bairro, emp.municipio||emp.cidade, emp.uf].filter(Boolean).join(', '))+'</p></div></div>'
+    +'<div style="text-align:right"><p class="emp-info">Código <b>'+esc(o.numero)+'</b></p><p class="emp-info">Emissão '+dataBR(o.data)+'</p></div></div>'
+    +'<div class="titulo">Orçamento Realizado</div>'
+    +'<div class="cli"><div><span class="lbl">Cliente</span><b>'+esc(cli.nome||'')+'</b></div>'
+    +'<div><span class="lbl">E-mail</span>'+esc(cli.email||'-')+'</div>'
+    +'<div><span class="lbl">Celular</span>'+esc(cli.telefone||cli.whatsapp||'-')+'</div></div>'
+    +'<table class="tb"><thead><tr><th>Cód</th><th>Descrição</th><th class="c">Qtde</th><th class="r">Valor Unitário</th><th class="r">Desconto</th><th class="r">Valor Total</th></tr></thead><tbody>'+itens+'</tbody></table>'
+    +'<div class="tot">Total: '+money(o.total)+'</div>'
+    +'<div class="link">Cliente: <a href="'+esc(link)+'">aprovar ou recusar este orçamento</a><br><span style="font-size:8.5px;color:#555">'+esc(link)+'</span></div>'
+    +'<div class="aviso">'+esc(AVISO_EPSON)+'</div>'
+    +'</div></body></html>';
+};
+
+function aplicarAprovacaoRemota(rec){
+  if(!rec || !rec.id || typeof db==='undefined') return;
+  var o=(db.orcamentos||[]).find(function(x){ return x.id===rec.id || x.token===rec.token; });
+  if(!o) return;
+  if(rec.status==='aprovado' && !o.vendaId){
+    var venda=gerarVendaDoOrcamento(o, 'cliente');
+    var cli=(db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+    avisarAprovacao(o, venda, cli);
+    if(typeof saveDB==='function') saveDB();
+  } else if(rec.status==='recusado' && o.status!=='recusado'){
+    o.status='recusado';
+    if(typeof saveDB==='function') saveDB();
+  }
+}
+
+function puxarAprovacoes(){
+  if(!window.DIGICOPY_CLOUD || !window.DIGICOPY_CLOUD.api) return;
+  (db.orcamentos||[]).filter(function(o){ return o && o.token && o.status==='aberto'; }).slice(0,20).forEach(function(o){
+    fetch(API+'/orcamento?c='+encodeURIComponent(o.token)).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.ok && (j.status==='aprovado'||j.status==='recusado')) aplicarAprovacaoRemota(Object.assign({id:o.id,token:o.token}, j));
+    }).catch(function(){});
+  });
+}
+
+if(typeof window.salvarOrcamentoTela==='function' && !window.salvarOrcamentoTela.__v52237nome){
+  var oldSal=window.salvarOrcamentoTela;
+  window.salvarOrcamentoTela=function(){
+    var r=oldSal.apply(this, arguments);
+    try{
+      var f=window.__ORC_ST && window.__ORC_ST.form;
+      if(f && f.id && typeof db!=='undefined'){
+        var o=(db.orcamentos||[]).find(function(x){ return x.id===f.id; });
+        if(o){
+          var emp=loja();
+          o.clienteNome=f.cliente&&f.cliente.nome||o.clienteNome||'';
+          o.lojaWhatsapp=emp.whatsapp||emp.telefone||o.lojaWhatsapp||'';
+          if(typeof saveDB==='function') saveDB();
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+  window.salvarOrcamentoTela.__v52237nome=true;
+}
+
+if(typeof document==='undefined') return;
+
+if(typeof window.DIGICOPY_CLOUD_SYNC==='object' && window.DIGICOPY_CLOUD_SYNC.tick && !window.DIGICOPY_CLOUD_SYNC.tick.__v52237orc){
+  var oldT=window.DIGICOPY_CLOUD_SYNC.tick;
+  window.DIGICOPY_CLOUD_SYNC.tick=function(){
+    var p=oldT.apply(this, arguments);
+    Promise.resolve(p).then(function(){ setTimeout(puxarAprovacoes, 400); }).catch(function(){});
+    return p;
+  };
+  window.DIGICOPY_CLOUD_SYNC.tick.__v52237orc=true;
+}
+
+setTimeout(puxarAprovacoes, 4000);
+
+console.log('[DIGICOPY] v5.22.37 orçamento impressão + aprovação pública');
+})();
+
+;
+
+/* ===== ajustes_v52238_orcamentos_ajustes_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.38 — Orçamentos: filtro de produto/recarga, avisos, sair pergunta,
+//            link SEPARADO do Pix, autorizar/recusar, WhatsApp nos dois
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+(n(v).toFixed(2))); }
+
+function b64url(obj){
+  var j=JSON.stringify(obj);
+  var b=btoa(unescape(encodeURIComponent(j)));
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+function payloadLink(o, cli, emp){
+  return {
+    t: o && o.token || '',
+    n: o && o.numero || '',
+    c: (cli && (cli.nome||cli.fantasia)) || o && o.clienteNome || '',
+    dt: String(o && (o.data||o.criadoEm) || '').slice(0,10),
+    tot: n(o && o.total),
+    w: (emp && (emp.whatsapp||emp.telefone)) || o && o.lojaWhatsapp || '',
+    it: ((o && o.itens) || []).map(function(it){
+      return { d: it.descricao||'', q: it.qtd, p: it.preco, s: it.subtotal };
+    })
+  };
+}
+
+function linkOrcamento(o, cli, emp){
+  return PAGINA+'?d='+encodeURIComponent(b64url(payloadLink(o, cli, emp)));
+}
+
+function msgRecusa(o, cli){
+  return 'Olá, sou '+(txt(cli&&cli.nome)||'cliente')+'. O orçamento do COD '+(txt(o&&o.numero)||'—')+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
+}
+
+window.ORCAMENTOS_V52238_PURE = {
+  PAGINA: PAGINA,
+  linkOrcamento: linkOrcamento,
+  payloadLink: payloadLink,
+  msgRecusa: msgRecusa,
+  b64url: b64url
+};
+
+if(typeof document==='undefined') return;
+
+function cats(){
+  var P=window.FILTROS_BUSCA_PURE;
+  return (P && P.CATS_PRODUTO) || ['Produto','Serviço','Cartucho','Insumo','Equipamento'];
+}
+function camposRec(){
+  var P=window.FILTROS_BUSCA_PURE;
+  return (P && P.CAMPOS_RECARGA) || [['todos','Pesquisar recarga'],['codigo','Código'],['nome','Descrição']];
+}
+
+function ehRecargaOrc(){
+  return /recarga/i.test(String((document.getElementById('orc-item-tipo')||{}).value||''));
+}
+
+function injetarFiltrosOrc(){
+  var prod=document.getElementById('orc-prod-search');
+  if(!prod) return;
+  var rec=ehRecargaOrc();
+  if(!document.getElementById('orc-prod-cat')){
+    var cat=document.createElement('select');
+    cat.id='orc-prod-cat';
+    cat.className='h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[148px]';
+    cat.innerHTML='<option value="">Todas categorias</option>'+cats().map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+    prod.parentNode.insertBefore(cat, prod);
+  }
+  if(!document.getElementById('orc-rec-campo')){
+    var rc=document.createElement('select');
+    rc.id='orc-rec-campo';
+    rc.className='h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[148px]';
+    rc.innerHTML=camposRec().map(function(it){ return '<option value="'+esc(it[0])+'">'+esc(it[1])+'</option>'; }).join('');
+    prod.parentNode.insertBefore(rc, prod);
+  }
+  var catEl=document.getElementById('orc-prod-cat');
+  var recEl=document.getElementById('orc-rec-campo');
+  if(catEl) catEl.style.display=rec?'none':'';
+  if(recEl) recEl.style.display=rec?'':'none';
+  prod.placeholder=rec?'Busque a recarga (Enter ou lupa)…':'Digite e Enter / lupa';
+
+  var extra=document.getElementById('orc-item-extra');
+  if(!extra){
+    extra=document.createElement('div');
+    extra.id='orc-item-extra';
+    extra.className='hidden grid grid-cols-12 gap-2 items-end';
+    extra.innerHTML='<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Etiqueta'
+      +'<input id="orc-item-cartucho" placeholder="Nº da etiqueta — se não achar, escreve e segue" class="mt-1 w-full h-[38px] px-2 rounded-xl border"></label>';
+    var bloco=prod.closest('.rounded-\\[14px\\]') || prod.parentNode.parentNode;
+    if(bloco) bloco.appendChild(extra);
+  }
+  extra.classList.toggle('hidden', !rec);
+  if(!document.getElementById('orc-prod-lupa')){
+    var lupa=document.createElement('button');
+    lupa.id='orc-prod-lupa';
+    lupa.type='button';
+    lupa.className='h-[40px] px-3 rounded-xl bg-[#0a1e8a] text-white';
+    lupa.innerHTML='<i class="ph ph-magnifying-glass"></i>';
+    lupa.onclick=function(e){ e.preventDefault(); window.orcBuscarProd(); };
+    prod.parentNode.insertBefore(lupa, prod.nextSibling);
+  }
+}
+
+if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v52238){
+  var oldAbrir=window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento=function(){
+    var r=oldAbrir.apply(this, arguments);
+    window.__orcDirty=false;
+    setTimeout(function(){
+      injetarFiltrosOrc();
+      var tipo=document.getElementById('orc-item-tipo');
+      if(tipo && !tipo.__v52238){
+        tipo.__v52238=true;
+        tipo.addEventListener('change', function(){ injetarFiltrosOrc(); });
+      }
+    }, 40);
+    return r;
+  };
+  window.abrirTelaOrcamento.__v52238=true;
+}
+
+if(typeof window.orcBuscarProd==='function' && !window.orcBuscarProd.__v52238){
+  window.orcBuscarProd=function(){
+    var q=txt(document.getElementById('orc-prod-search')&&document.getElementById('orc-prod-search').value);
+    var el=document.getElementById('orc-prod-results'); if(!el) return;
+    if(!q){ el.classList.add('hidden'); return; }
+    var s=typeof getSession==='function'?getSession():null;
+    var P=window.FILTROS_BUSCA_PURE;
+    if(ehRecargaOrc()){
+      var campo=(document.getElementById('orc-rec-campo')||{}).value||'todos';
+      var recs=((typeof db!=='undefined'&&db.recargas)||[]).filter(function(r){
+        return !s||!r.empresaId||r.empresaId===s.empresaId;
+      });
+      var list=P?P.filtraRecargas(recs,q,campo):recs;
+      list=list.slice(0,10);
+      el.classList.remove('hidden');
+      el.innerHTML=list.map(function(r){
+        return '<button type="button" onclick="window.orcSelRecarga(\''+esc(r.id)+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b"><b>'+esc(r.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">cód. '+esc(r.codigo||'')+' • <b>'+money(r.preco||0)+'</b></span></button>';
+      }).join('')||'<p class="px-3 py-2 text-slate-400">Nenhuma recarga. Escreva a descrição e a etiqueta.</p>';
+      return;
+    }
+    var cat=(document.getElementById('orc-prod-cat')||{}).value||'';
+    var prods=((typeof db!=='undefined'&&db.produtos)||[]).filter(function(p){
+      return !s||!p.empresaId||p.empresaId===s.empresaId;
+    });
+    var listP=P?P.filtraProdutos(prods,q,cat):prods.filter(function(p){ return String(p.nome||'').toLowerCase().indexOf(q.toLowerCase())>=0; });
+    listP=listP.slice(0,10);
+    el.classList.remove('hidden');
+    el.innerHTML=listP.map(function(p){
+      return '<button type="button" onclick="window.orcSelProd(\''+p.id+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b"><b>'+esc(p.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+esc(p.sku||'')+' • estoque '+(p.estoque||0)+' • <b>'+money(p.preco)+'</b></span></button>';
+    }).join('')||'<p class="px-3 py-2 text-slate-400">Sem produto — a descrição digitada será usada</p>';
+  };
+  window.orcBuscarProd.__v52238=true;
+}
+
+window.orcSelRecarga=function(id){
+  var r=((typeof db!=='undefined'&&db.recargas)||[]).find(function(x){ return x.id===id; });
+  var f=window.__ORC_ST && window.__ORC_ST.form;
+  if(!r||!f) return;
+  f.produtoSel=null;
+  document.getElementById('orc-prod-search').value=r.nome||'';
+  document.getElementById('orc-item-vunit').value=r.preco||0;
+  document.getElementById('orc-prod-results').classList.add('hidden');
+  if(typeof window.orcCalcItem==='function') window.orcCalcItem();
+  window.__orcDirty=true;
+};
+
+if(typeof window.orcAddItem==='function' && !window.orcAddItem.__v52238dirty){
+  var oldAdd=window.orcAddItem;
+  window.orcAddItem=function(){
+    var r=oldAdd.apply(this, arguments);
+    window.__orcDirty=true;
+    return r;
+  };
+  window.orcAddItem.__v52238dirty=true;
+}
+
+if(typeof window.salvarOrcamentoTela==='function' && !window.salvarOrcamentoTela.__v52238aviso){
+  var oldSal=window.salvarOrcamentoTela;
+  window.salvarOrcamentoTela=function(){
+    var antes=window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id;
+    var r=oldSal.apply(this, arguments);
+    var f=window.__ORC_ST && window.__ORC_ST.form;
+    if(f && f.id){
+      window.__orcDirty=false;
+      var o=(typeof db!=='undefined'&&db.orcamentos||[]).find(function(x){ return x.id===f.id; });
+      if(o && typeof window.lfbAlert==='function') window.lfbAlert('Salvo.','Salvo');
+      var foot=document.getElementById('modal-footer');
+      if(foot && o && foot.innerHTML.indexOf('imprimirOrcamento')<0){
+        foot.insertAdjacentHTML('afterbegin',
+          '<button onclick="window.imprimirOrcamento(\''+o.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>');
+      }
+    }
+    return r;
+  };
+  window.salvarOrcamentoTela.__v52238aviso=true;
+}
+
+if(typeof window.closeModal==='function' && !window.closeModal.__v52238orc){
+  var oldClose=window.closeModal;
+  window.closeModal=function(){
+    if(window.__vosIgnorarSair) return oldClose.apply(this, arguments);
+    if(document.getElementById('orc-itens-body') && window.__ORC_ST && window.__ORC_ST.form && window.__orcDirty!==false){
+      var f=window.__ORC_ST.form;
+      var tem=!!(f.cliente || (f.itens&&f.itens.length));
+      if(tem && typeof window.confirmSistema==='function'){
+        window.confirmSistema('Deseja salvar este orçamento?','Sair do orçamento').then(function(ok){
+          if(ok && typeof window.salvarOrcamentoTela==='function') window.salvarOrcamentoTela();
+          window.__orcDirty=false;
+          oldClose.call(window, true);
+        });
+        return;
+      }
+    }
+    return oldClose.apply(this, arguments);
+  };
+  window.closeModal.__v52238orc=true;
+}
+
+if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento.__v52238link){
+  var oldHtml=window.gerarHtmlOrcamento;
+  window.gerarHtmlOrcamento=function(id){
+    var html=oldHtml.apply(this, arguments);
+    if(!html) return html;
+    var o=(typeof db!=='undefined'&&db.orcamentos||[]).find(function(x){ return x.id===id; });
+    if(!o) return html;
+    var cli=(db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+    var emp=(db.config&&db.config.empresa)||{};
+    var s=typeof getSession==='function'?getSession():null;
+    var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
+    if(e) emp=Object.assign({}, emp, e);
+    var link=linkOrcamento(o, cli, emp);
+    html=html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+    html=html.replace(/href="[^"]*orcamento\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
+    return html;
+  };
+  window.gerarHtmlOrcamento.__v52238link=true;
+}
+
+if(window.ORCAMENTOS_APROVACAO_PURE){
+  window.ORCAMENTOS_APROVACAO_PURE.linkPublico=function(tokenOuO, cli){
+    if(tokenOuO && typeof tokenOuO==='object') return linkOrcamento(tokenOuO, cli||{}, {});
+    return PAGINA+'?d=';
+  };
+  window.ORCAMENTOS_APROVACAO_PURE.PAGES=PAGINA;
+}
+
+console.log('[DIGICOPY] v5.22.38 orçamentos: filtros, avisos, link separado do Pix');
+})();
+
+;
+
+/* ===== ajustes_v52238_vendas_os_ajustes_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.38 — Vendas/OS: lupa da série ao lado da caixa, OS sai na impressão
+//            quando tem dados, aviso EPSON só na OS, técnico vazio, * nos
+//            obrigatórios, salvar só com cliente, Salvar não pergunta
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function ehVazioTec(v){ return !txt(v) || /^selecione$/i.test(txt(v)); }
+
+function osTemDado(os){
+  if(!os) return false;
+  return ['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico','tipoOS']
+    .some(function(k){ return txt(os[k]) && !ehVazioTec(os[k]); });
+}
+
+window.V52238_VENDAS_PURE = {
+  osTemDado: osTemDado,
+  ehVazioTec: ehVazioTec
+};
+
+if(typeof document==='undefined') return;
+
+function serieAoLado(){
+  var inp=document.getElementById('vos-os-serie');
+  if(!inp) return;
+  var lupa=document.getElementById('vos-os-serie-lupa');
+  var lab=inp.closest('label')||inp.parentNode;
+  if(!lab) return;
+  lab.classList.remove('relative');
+  var hold=document.getElementById('vos-os-serie-hold');
+  if(!hold){
+    hold=document.createElement('div');
+    hold.id='vos-os-serie-hold';
+    hold.className='mt-1 flex items-center gap-1';
+    inp.parentNode.insertBefore(hold, inp);
+    hold.appendChild(inp);
+    inp.classList.add('flex-1');
+    inp.classList.remove('mt-1');
+    if(!lupa){
+      lupa=document.createElement('button');
+      lupa.id='vos-os-serie-lupa';
+      lupa.type='button';
+      lupa.title='Buscar série';
+      lupa.innerHTML='<i class="ph ph-magnifying-glass"></i>';
+    }
+    lupa.className='shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center';
+    lupa.onclick=function(e){ e.preventDefault(); if(typeof window.vosBuscarSerial==='function') window.vosBuscarSerial(inp.value); };
+    hold.appendChild(lupa);
+  }
+  inp.onkeydown=function(e){
+    if(e.key==='Enter'){ e.preventDefault(); if(typeof window.vosBuscarSerial==='function') window.vosBuscarSerial(inp.value); }
+  };
+}
+
+function tecnicoVazio(){
+  var el=document.getElementById('vos-os-tec');
+  if(!el) return;
+  var nomes=[];
+  if(typeof db!=='undefined'){
+    (db.tecnicos||[]).forEach(function(t){
+      var n=txt(t.nome||t);
+      if(n && !ehVazioTec(n)) nomes.push(n);
+    });
+  }
+  if(el.tagName==='SELECT'){
+    var atual=el.value;
+    el.innerHTML='<option value=""></option>'+nomes.map(function(n){
+      return '<option value="'+n.replace(/"/g,'&quot;')+'"'+(atual===n?' selected':'')+'>'+n.replace(/</g,'&lt;')+'</option>';
+    }).join('');
+    if(ehVazioTec(atual)) el.value='';
+    return;
+  }
+  var sel=document.createElement('select');
+  sel.id='vos-os-tec';
+  sel.className=el.className||'mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]';
+  sel.innerHTML='<option value=""></option>'+nomes.map(function(n){
+    return '<option value="'+n.replace(/"/g,'&quot;')+'">'+n.replace(/</g,'&lt;')+'</option>';
+  }).join('');
+  var val=el.value;
+  el.parentNode.replaceChild(sel, el);
+  if(!ehVazioTec(val) && nomes.indexOf(val)>=0) sel.value=val;
+  else sel.value='';
+}
+
+function asteriscos(){
+  var mapa={
+    'vos-os-serie':'Número de série *',
+    'vos-os-modelo':'Modelo do equipamento *',
+    'vos-os-patri':'Patrimônio *',
+    'vos-os-contador':'Contador / qtd cópias *',
+    'vos-os-tec':'Técnico responsável *'
+  };
+  Object.keys(mapa).forEach(function(id){
+    var el=document.getElementById(id);
+    var lab=el && el.closest('label');
+    if(!lab || lab.getAttribute('data-v52238ast')) return;
+    lab.setAttribute('data-v52238ast','1');
+    var first=lab.childNodes[0];
+    if(first && first.nodeType===3) first.textContent=mapa[id]+' ';
+  });
+}
+
+function pintar(){
+  serieAoLado();
+  tecnicoVazio();
+  asteriscos();
+}
+
+['novaVenda','vosCarregarVendaNaTela'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52238vis) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(pintar, 50);
+    return r;
+  };
+  window[nome].__v52238vis=true;
+});
+
+if(typeof window.vosColetarOS==='function' && !window.vosColetarOS.__v52238tec){
+  var oldCol=window.vosColetarOS;
+  window.vosColetarOS=function(){
+    var os=oldCol.apply(this, arguments)||{};
+    if(ehVazioTec(os.tecnico)) os.tecnico='';
+    return os;
+  };
+  window.vosColetarOS.__v52238tec=true;
+}
+
+if(typeof window.vosOsCompleta==='function' && !window.vosOsCompleta.__v52238print){
+  var oldComp=window.vosOsCompleta;
+  window.vosOsCompleta=function(os){
+    if(window.__vosPrintando) return osTemDado(os);
+    var ok=oldComp.apply(this, arguments);
+    if(ok && ehVazioTec(os && os.tecnico)) return false;
+    return ok;
+  };
+  window.vosOsCompleta.__v52238print=true;
+}
+
+if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52238print){
+  var oldHtml=window.vosGerarHtmlNotinha;
+  window.vosGerarHtmlNotinha=function(){
+    window.__vosPrintando=true;
+    var html;
+    try{ html=oldHtml.apply(this, arguments); }
+    finally{ window.__vosPrintando=false; }
+    if(!html) return html;
+    var temOS=/class="os-div"|ORDEM DE SERVIÇO/.test(html) && !/pagina meia/.test(html);
+    if(!temOS){
+      html=html.replace(/<div class="aviso-epson"[\s\S]*?<\/div>/g,'');
+    }
+    return html;
+  };
+  window.vosGerarHtmlNotinha.__v52238print=true;
+}
+
+if(typeof window.vosGravarVenda==='function' && !window.vosGravarVenda.__v52238cli){
+  var oldGr=window.vosGravarVenda;
+  window.vosGravarVenda=function(silencioso){
+    var f=window.__vosForm;
+    var fake=false;
+    if(f && f.cliente && !(f.itens||[]).length){
+      f.itens=[{descricao:'', qtd:0, preco:0, subtotal:0, tipo:'Produto', _vazio:1}];
+      fake=true;
+    }
+    var r=oldGr.apply(this, arguments);
+    if(fake && f){
+      f.itens=(f.itens||[]).filter(function(it){ return !it._vazio; });
+      if(r && r.itens) r.itens=r.itens.filter(function(it){ return !it._vazio && (it.qtd||it.descricao); });
+    }
+    return r;
+  };
+  window.vosGravarVenda.__v52238cli=true;
+}
+
+if(typeof window.vosSalvarVenda==='function' && !window.vosSalvarVenda.__v52238ok){
+  window.vosSalvarVenda=function(){
+    window.__vosIgnorarSair=true;
+    window.__vosDirty=false;
+    var v=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null;
+    window.__vosIgnorarSair=false;
+    if(v){
+      window.__vosPersistida=true;
+      if(typeof toast==='function') toast('Venda '+v.numero+' salva','success');
+    }
+  };
+  window.vosSalvarVenda.__v52238ok=true;
+}
+
+setTimeout(pintar, 400);
+console.log('[DIGICOPY] v5.22.38 vendas/OS: série, impressão OS, EPSON só na OS, salvar só cliente');
+})();
+
+;
+
+/* ===== ajustes_v52239_print_escolha_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.39 — Imprimir venda: escolhe Vendas ou OS, depois 1 ou 2 vias
+// • Venda: sem aviso EPSON. 2 vias = duas meias folhas (uma folha se couber)
+// • OS: aviso EPSON sempre. 2 vias = duas folhas separadas
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+function fatiarPagina(html){
+  var s=String(html||'');
+  var start=s.search(/<div class="pagina\b/);
+  if(start<0) return null;
+  var rest=s.slice(start);
+  var m=rest.match(/<\/div>\s*(?=<div class="corte|<script|<\/body>)/);
+  if(!m) return null;
+  var end=start+m.index+6;
+  return {antes:s.slice(0,start), pagina:s.slice(start,end), depois:s.slice(end)};
+}
+
+function avisoEpsonHtml(){
+  var t=(window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.AVISO_EPSON) ||
+    'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
+  return '<div class="aviso-epson" style="margin:3mm 0 0;padding:2.5mm 3mm;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:9.5px;line-height:1.35;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'+
+    String(t).replace(/</g,'&lt;')+'</div>';
+}
+
+function aplicarTipo(html, tipo){
+  var s=String(html||'');
+  if(tipo==='venda'){
+    s=s.replace(/<div class="os-div"[\s\S]*?<\/div>/,'');
+    s=s.replace(/<div class="aviso-epson"[\s\S]*?<\/div>/g,'');
+    s=s.replace(/class="pagina inteira"/g,'class="pagina meia"');
+    return s;
+  }
+  s=s.replace(/class="pagina meia"/g,'class="pagina inteira"');
+  if(s.indexOf('aviso-epson')<0){
+    if(s.indexOf('<p class="audit">')>=0) s=s.replace('<p class="audit">', avisoEpsonHtml()+'<p class="audit">');
+    else s=s.replace('</div>\n  <div class="corte', avisoEpsonHtml()+'</div>\n  <div class="corte');
+  }
+  return s;
+}
+
+function montarVias(html, tipo, vias){
+  var s=aplicarTipo(html, tipo);
+  var n=parseInt(vias,10)||1;
+  if(n<2) return s;
+  var fat=fatiarPagina(s);
+  if(!fat) return s;
+  var a=fat.pagina, b=fat.pagina;
+  if(tipo==='os'){
+    a=a.replace(/class="pagina inteira"/,'class="pagina inteira via-os" style="page-break-after:always"');
+    b=b.replace(/class="pagina inteira"/,'class="pagina inteira via-os"');
+    if(s.indexOf('.via-os')<0){
+      s=s.replace('</style>','@media print{.via-os{page-break-after:always}.via-os:last-of-type{page-break-after:auto}}</style>');
+    }
+    return fat.antes+a+b+fat.depois;
+  }
+  a=a.replace(/class="pagina meia"/,'class="pagina meia via-venda"');
+  b=b.replace(/class="pagina meia"/,'class="pagina meia via-venda"');
+  return fat.antes+a+b+fat.depois;
+}
+
+window.V52239_PRINT_PURE = {
+  fatiarPagina: fatiarPagina,
+  aplicarTipo: aplicarTipo,
+  montarVias: montarVias
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function escolherDois(titulo, aLabel, aVal, bLabel, bVal){
+  return new Promise(function(resolve){
+    var tid='print-escolha-'+Date.now();
+    var div=document.createElement('div');
+    div.id=tid;
+    div.style.cssText='position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)';
+    div.innerHTML='<div style="background:#fff;border-radius:18px;padding:26px 28px;max-width:440px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)">'+
+      '<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0 0 16px">'+esc(titulo)+'</p>'+
+      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+      '<button type="button" data-v="'+esc(aVal)+'" style="flex:1;min-width:140px;height:48px;border-radius:12px;background:#0a1e8a;color:#fff;border:0;font-weight:800;cursor:pointer">'+esc(aLabel)+'</button>'+
+      '<button type="button" data-v="'+esc(bVal)+'" style="flex:1;min-width:140px;height:48px;border-radius:12px;background:#fff;color:#0a1e8a;border:1.5px solid #0a1e8a;font-weight:800;cursor:pointer">'+esc(bLabel)+'</button>'+
+      '</div>'+
+      '<button type="button" data-v="" style="margin-top:14px;height:40px;padding:0 18px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-weight:700;cursor:pointer">Cancelar</button>'+
+      '</div>';
+    function close(val){ div.remove(); resolve(val||''); }
+    div.addEventListener('click', function(e){
+      var b=e.target.closest('button');
+      if(!b) return;
+      close(b.getAttribute('data-v')||'');
+    });
+    document.body.appendChild(div);
+  });
+}
+
+if(typeof window.vosOsCompleta==='function' && !window.vosOsCompleta.__v52239print){
+  var oldComp=window.vosOsCompleta;
+  window.vosOsCompleta=function(os){
+    if(window.__vosForcarOS) return true;
+    if(window.__vosForcarVenda) return false;
+    return oldComp.apply(this, arguments);
+  };
+  window.vosOsCompleta.__v52239print=true;
+}
+
+if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52239print){
+  var oldHtml=window.vosGerarHtmlNotinha;
+  window.vosGerarHtmlNotinha=function(vendaId, opts){
+    var p=window.__vosPrintOpts||{};
+    window.__vosForcarOS = p.tipo==='os';
+    window.__vosForcarVenda = p.tipo==='venda';
+    window.__vosPrintando = true;
+    var criado=false, venda=null;
+    try{
+      if(p.tipo==='os' && typeof db!=='undefined' && vendaId){
+        venda=(db.vendas||[]).find(function(x){ return x && x.id===vendaId; });
+        if(venda && !venda.os){ venda.os={numero:'',modelo:'',numeroSerie:'',patrimonio:'',contador:'',tecnico:''}; criado=true; }
+      }
+    }catch(e){}
+    var html;
+    try{ html=oldHtml.apply(this, arguments); }
+    finally{
+      if(criado && venda) delete venda.os;
+      window.__vosForcarOS=false;
+      window.__vosForcarVenda=false;
+      window.__vosPrintando=false;
+    }
+    if(!html) return html;
+    if(p.tipo) html=montarVias(html, p.tipo, p.vias||1);
+    return html;
+  };
+  window.vosGerarHtmlNotinha.__v52239print=true;
+}
+
+if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52239escolha){
+  var oldImp=window.imprimirNotinha;
+  window.imprimirNotinha=function(vendaId, ja){
+    if(ja && ja.tipo && ja.vias){
+      window.__vosPrintOpts=ja;
+      try{ return oldImp.call(this, vendaId); }
+      finally{ window.__vosPrintOpts=null; }
+    }
+    escolherDois('Como deseja imprimir?', 'Vendas', 'venda', 'Ordem de serviço', 'os').then(function(tipo){
+      if(!tipo) return;
+      escolherDois('Quantas vias?', '1 via', '1', '2 vias', '2').then(function(vias){
+        if(!vias) return;
+        window.imprimirNotinha(vendaId, {tipo:tipo, vias:vias});
+      });
+    });
+  };
+  window.imprimirNotinha.__v52239escolha=true;
+}
+
+console.log('[DIGICOPY] v5.22.39 impressão: escolhe venda/OS e 1 ou 2 vias');
+})();
+
+;
+
+/* ===== ajustes_v52239_patri_nao_obrigatorio_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.39 — Patrimônio da OS não é obrigatório (some o *)
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function ehVazioTec(v){ return !txt(v) || /^selecione$/i.test(txt(v)); }
+
+function osCompletaSemPatri(os){
+  if(!os) return false;
+  return !!(txt(os.modelo) && txt(os.numeroSerie) && !ehVazioTec(os.tecnico));
+}
+
+window.V52239_PATRI_PURE = {
+  osCompletaSemPatri: osCompletaSemPatri
+};
+
+if(typeof document==='undefined') return;
+
+function tirarAstPatri(){
+  var el=document.getElementById('vos-os-patri');
+  var lab=el && el.closest('label');
+  if(!lab) return;
+  var first=lab.childNodes[0];
+  if(first && first.nodeType===3){
+    first.textContent=String(first.textContent||'').replace(/\s*\*\s*$/,'').replace(/Patrimônio \*/i,'Patrimônio');
+    if(!/patrim/i.test(first.textContent)) first.textContent='Patrimônio ';
+    else first.textContent=first.textContent.replace(/\*/g,'').replace(/\s+$/,'')+' ';
+  }
+}
+
+if(typeof window.vosOsCompleta==='function' && !window.vosOsCompleta.__v52239patri){
+  window.vosOsCompleta=function(os){
+    if(window.__vosForcarOS) return true;
+    if(window.__vosForcarVenda) return false;
+    if(window.__vosPrintando){
+      return !!(os && ['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico','tipoOS']
+        .some(function(k){ return txt(os[k]) && !ehVazioTec(os[k]); }));
+    }
+    return osCompletaSemPatri(os);
+  };
+  window.vosOsCompleta.__v52239patri=true;
+}
+
+if(typeof window.vosOsRuleHint==='function' && !window.vosOsRuleHint.__v52239patri){
+  var oldHint=window.vosOsRuleHint;
+  window.vosOsRuleHint=function(){
+    var r=oldHint.apply(this, arguments);
+    var el=document.getElementById('vos-os-rule');
+    if(!el || typeof window.vosColetarOS!=='function') return r;
+    var os=window.vosColetarOS();
+    var algum=['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico'].some(function(k){ return txt(os[k]); });
+    if(algum && txt(os.modelo) && txt(os.numeroSerie) && ehVazioTec(os.tecnico)){
+      el.className='rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+      el.innerHTML='<i class="ph ph-warning"></i> Para ordem de serviço, escolha o <b>técnico responsável</b>.';
+    } else if(algum && osCompletaSemPatri(os)){
+      el.className='rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
+      el.innerHTML='<i class="ph ph-check-circle"></i> Ordem de serviço pronta. Patrimônio é opcional.';
+    }
+    return r;
+  };
+  window.vosOsRuleHint.__v52239patri=true;
+}
+
+['novaVenda','vosCarregarVendaNaTela'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52239patri) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(tirarAstPatri, 80);
+    return r;
+  };
+  window[nome].__v52239patri=true;
+});
+
+setTimeout(tirarAstPatri, 500);
+console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
+})();
+
+;
+
+/* ===== ajustes_v52239_avisos_erro_auditoria_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
+//            O foco é funcionar sem erro; o aviso é só se der problema.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function detalheErro(msg, extra){
+  var d=String(msg==null?'erro':msg);
+  if(extra) d+=' | '+String(extra);
+  if(d.length>800) d=d.slice(0,800);
+  return d;
+}
+
+function ignoraRuido(msg){
+  var t=String(msg||'').toLowerCase();
+  if(!t) return true;
+  if(/resizeobserver|script error\.|canceled|abort|the operation was aborted/.test(t)) return true;
+  return false;
+}
+
+window.V52239_ERRO_PURE = {
+  detalheErro: detalheErro,
+  ignoraRuido: ignoraRuido
+};
+
+if(typeof document==='undefined') return;
+
+var ultimoAviso=0;
+
+function gravarAuditoria(det){
+  try{
+    if(typeof db==='undefined' || !db) return;
+    db.logs=db.logs||[];
+    var sess=typeof getSession==='function'?getSession():null;
+    db.logs.unshift({
+      id: typeof uid==='function'?uid('log'):('log_'+Date.now()),
+      dataHora: new Date().toISOString(),
+      empresaId: sess&&sess.empresaId,
+      usuarioId: sess&&sess.usuarioId,
+      usuarioNome: (sess&&sess.usuarioNome)||'sistema',
+      usuarioLogin: (sess&&sess.login)||'',
+      entidade: 'sistema',
+      acao: 'erro',
+      entidadeId: null,
+      detalhes: det
+    });
+    if(db.logs.length>500) db.logs=db.logs.slice(0,500);
+    try{
+      if(typeof saveDB==='function' && !window.__v52239salvandoErro){
+        window.__v52239salvandoErro=true;
+        saveDB();
+        window.__v52239salvandoErro=false;
+      }
+    }catch(e){ window.__v52239salvandoErro=false; }
+  }catch(e){}
+}
+
+function avisarTela(){
+  var agora=Date.now();
+  if(agora-ultimoAviso<8000) return;
+  ultimoAviso=agora;
+  try{
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Ocorreu um problema. O detalhe foi gravado na auditoria.','Aviso');
+    else if(typeof toast==='function') toast('Ocorreu um problema. Veja a auditoria.','error');
+  }catch(e){}
+}
+
+window.registrarErroSistema=function(msg, extra){
+  var det=detalheErro(msg, extra);
+  if(ignoraRuido(det)) return;
+  gravarAuditoria(det);
+  avisarTela();
+};
+
+window.addEventListener('error', function(ev){
+  var msg=(ev&&ev.message)||'erro';
+  var extra=[ev&&ev.filename, ev&&ev.lineno, ev&&ev.colno].filter(Boolean).join(':');
+  window.registrarErroSistema(msg, extra);
+});
+
+window.addEventListener('unhandledrejection', function(ev){
+  var r=ev&&ev.reason;
+  var msg=r&&(r.message||r);
+  window.registrarErroSistema(msg||'promessa rejeitada', r&&r.stack);
+});
+
+console.log('[DIGICOPY] v5.22.39 avisos de erro na tela, detalhe na auditoria');
+})();
+
+;
+
+/* ===== ajustes_v52239_menus_imediato_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.39 — Menus aparecem na hora (não somem e voltam depois).
+//            Continua oculto só o que é por permissão (Backup/Nuvem) ou
+//            marcado Oculto para quem não é Admin.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function idsMenus(list){
+  return (list||[]).map(function(m){ return m&&m.id; }).filter(Boolean).join(',');
+}
+
+function garantirLocacao(list){
+  return (list||[]).map(function(m){
+    if(!m || m.id!=='locacao') return m;
+    var c=Object.assign({}, m);
+    var items=(m.items||[]).slice();
+    function tem(id){ return items.some(function(it){ return it.id===id; }); }
+    if(!tem('parque')) items.push({id:'parque', icon:'ph-map-pin', label:'Máquinas nos clientes', click:"navigateTo('parque')"});
+    if(!tem('leituras')) items.push({id:'leituras', icon:'ph-speedometer', label:'Leituras', click:"navigateTo('leituras')"});
+    c.items=items;
+    return c;
+  });
+}
+
+window.V52239_MENUS_PURE = {
+  idsMenus: idsMenus,
+  garantirLocacao: garantirLocacao
+};
+
+if(typeof document==='undefined') return;
+
+if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.menusPadrao==='function' && !window.MENUS_ATALHOS_PURE.menusPadrao.__v52239loc){
+  var oldPad=window.MENUS_ATALHOS_PURE.menusPadrao;
+  window.MENUS_ATALHOS_PURE.menusPadrao=function(){
+    return garantirLocacao(oldPad.apply(this, arguments)||[]);
+  };
+  window.MENUS_ATALHOS_PURE.menusPadrao.__v52239loc=true;
+}
+
+function pintarAgora(forcar){
+  if(typeof window.pintarMenus!=='function') return;
+  if(forcar) window.__v52239MenuSess=null;
+  window.pintarMenus();
+}
+
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52239once){
+  var oldP=window.pintarMenus;
+  window.pintarMenus=function(){
+    var row=document.querySelector('.module-row');
+    var sess=typeof getSession==='function'?getSession():null;
+    var key=(sess&&sess.usuarioId)||'anon';
+    if(row && row.getAttribute('data-v52239-ok')==='1' && window.__v52239MenuSess===key){
+      return;
+    }
+    var r=oldP.apply(this, arguments);
+    var row2=document.querySelector('.module-row');
+    if(row2){
+      row2.setAttribute('data-v52239-ok','1');
+      Array.from(row2.querySelectorAll('.module')).forEach(function(mod){
+        var b=mod.querySelector('button');
+        var t=String(b&&b.textContent||'').replace(/\s+/g,' ').trim();
+        if(t==='Menus' || /Editar ordem/.test((b&&b.getAttribute('title'))||'')){
+          mod.remove();
+        }
+      });
+    }
+    window.__v52239MenuSess=key;
+    return r;
+  };
+  window.pintarMenus.__v52239once=true;
+}
+
+if(typeof window.salvarEditorMenus==='function' && !window.salvarEditorMenus.__v52239force){
+  var oldS=window.salvarEditorMenus;
+  window.salvarEditorMenus=function(){
+    window.__v52239MenuSess=null;
+    var row=document.querySelector('.module-row');
+    if(row) row.removeAttribute('data-v52239-ok');
+    return oldS.apply(this, arguments);
+  };
+  window.salvarEditorMenus.__v52239force=true;
+}
+
+if(typeof window.showApp==='function' && !window.showApp.__v52239menus){
+  var oldShow=window.showApp;
+  window.showApp=function(){
+    var r=oldShow.apply(this, arguments);
+    window.__v52239MenuSess=null;
+    var row=document.querySelector('.module-row');
+    if(row) row.removeAttribute('data-v52239-ok');
+    pintarAgora(true);
+    return r;
+  };
+  window.showApp.__v52239menus=true;
+}
+
+pintarAgora(true);
+console.log('[DIGICOPY] v5.22.39 menus na hora, locação completa, sem piscar');
+})();
+
+;
+
+/* ===== ajustes_v52240_orcamento_pages_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.40 — Link público do orçamento no Pages separado do Pix
+//            https://digicopy-orcament.pages.dev/
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var PAGINA = 'https://digicopy-orcament.pages.dev/';
+
+function linkDe(o, cli, emp){
+  var P = window.ORCAMENTOS_V52238_PURE;
+  if(!P || typeof P.payloadLink!=='function' || typeof P.b64url!=='function'){
+    return PAGINA;
+  }
+  return PAGINA+'?d='+encodeURIComponent(P.b64url(P.payloadLink(o, cli, emp)));
+}
+
+window.ORCAMENTOS_V52240_PURE = {
+  PAGINA: PAGINA,
+  linkDe: linkDe
+};
+
+if(typeof document==='undefined') return;
+
+if(window.ORCAMENTOS_V52238_PURE){
+  window.ORCAMENTOS_V52238_PURE.PAGINA = PAGINA;
+  window.ORCAMENTOS_V52238_PURE.linkOrcamento = linkDe;
+}
+if(window.ORCAMENTOS_APROVACAO_PURE){
+  window.ORCAMENTOS_APROVACAO_PURE.PAGES = PAGINA;
+  window.ORCAMENTOS_APROVACAO_PURE.linkPublico = function(tokenOuO, cli){
+    if(tokenOuO && typeof tokenOuO==='object') return linkDe(tokenOuO, cli||{}, {});
+    return PAGINA+'?d=';
+  };
+}
+
+if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento.__v52240pages){
+  var oldHtml=window.gerarHtmlOrcamento;
+  window.gerarHtmlOrcamento=function(id){
+    var html=oldHtml.apply(this, arguments);
+    if(!html) return html;
+    var o=(typeof db!=='undefined'&&db.orcamentos||[]).find(function(x){ return x.id===id; });
+    if(!o) return html;
+    var cli=(db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+    var emp=(db.config&&db.config.empresa)||{};
+    var s=typeof getSession==='function'?getSession():null;
+    var e=s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
+    if(e) emp=Object.assign({}, emp, e);
+    var link=linkDe(o, cli, emp);
+    html=html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
+    html=html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+    html=html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
+    return html;
+  };
+  window.gerarHtmlOrcamento.__v52240pages=true;
+}
+
+console.log('[DIGICOPY] v5.22.40 orçamento no Pages digicopy-orcament.pages.dev');
+})();
+
+;
+
+/* ===== ajustes_v52241_venda_salvar_fechar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.41 — Venda: Salvar grava e fecha. Sair/Fechar também grava.
+//            Sem pergunta. Só precisa do cliente.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+function telaVenda(){
+  return !!(document.getElementById('vos-itens-body') || document.getElementById('vos-cli-search'));
+}
+
+function gravarEFechar(){
+  var f=window.__vosForm;
+  if(!f) return false;
+  if(!f.cliente){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Escolha o cliente.','Venda');
+    else if(typeof toast==='function') toast('Selecione o cliente','error');
+    return false;
+  }
+  window.__vosIgnorarSair=true;
+  var v=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null;
+  if(!v){
+    window.__vosIgnorarSair=false;
+    return false;
+  }
+  window.__vosPersistida=true;
+  window.__vosDirty=false;
+  if(typeof window.lfbAlert==='function') window.lfbAlert('Salvo.','Salvo');
+  else if(typeof toast==='function') toast('Venda '+v.numero+' salva','success');
+  if(typeof closeModal==='function') closeModal(true);
+  window.__vosIgnorarSair=false;
+  if(typeof renderVendas==='function') renderVendas();
+  return true;
+}
+
+window.V52241_VENDA_SALVAR_PURE = {
+  precisaCliente: function(form){ return !!(form && form.cliente); }
+};
+
+if(typeof document==='undefined') return;
+
+window.vosSalvarVenda=function(){
+  gravarEFechar();
+};
+
+if(typeof window.closeModal==='function' && !window.closeModal.__v52241venda){
+  var oldClose=window.closeModal;
+  window.closeModal=function(force){
+    if(window.__vosIgnorarSair || force===true){
+      return oldClose.apply(this, arguments);
+    }
+    if(telaVenda() && window.__vosForm){
+      var f=window.__vosForm;
+      var tem=!!(f.cliente || (f.itens&&f.itens.length));
+      if(tem){
+        window.__vosIgnorarSair=true;
+        if(!f.cliente){
+          window.__vosIgnorarSair=false;
+          if(typeof window.lfbAlert==='function') window.lfbAlert('Escolha o cliente.','Venda');
+          return;
+        }
+        var v=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null;
+        if(!v){
+          window.__vosIgnorarSair=false;
+          return;
+        }
+        window.__vosPersistida=true;
+        window.__vosDirty=false;
+      }
+      window.__vosIgnorarSair=true;
+      var r=oldClose.call(this, true);
+      window.__vosIgnorarSair=false;
+      if(typeof renderVendas==='function') renderVendas();
+      return r;
+    }
+    return oldClose.apply(this, arguments);
+  };
+  window.closeModal.__v52241venda=true;
+}
+
+console.log('[DIGICOPY] v5.22.41 venda: salvar fecha, fechar salva');
+})();
+
+;
+
+/* ===== ajustes_v52242_orcamentos_status_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Orçamentos: status Autorizado / Não autorizado (lista e tela).
+//            Sem botão Faturar. Link público leva token (?c=) + dados (?d=).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function rotuloStatus(o){
+  var st = txt(o && o.status).toLowerCase();
+  if(st==='aprovado' || (o && o.vendaId)) return 'Autorizado';
+  if(st==='recusado') return 'Não autorizado';
+  if(st==='estornado') return 'Estornado';
+  if(st==='excluido') return 'Excluído';
+  return 'Aberto';
+}
+function classeStatus(rotulo){
+  if(rotulo==='Autorizado') return 'neo-status ok';
+  if(rotulo==='Não autorizado') return 'neo-status wait';
+  if(rotulo==='Estornado') return 'neo-status info';
+  return 'neo-status info';
+}
+
+window.ORCAMENTOS_STATUS_V52242_PURE = {
+  rotuloStatus: rotuloStatus,
+  classeStatus: classeStatus
+};
+
+if(typeof document==='undefined') return;
+
+function badge(o){
+  var r = rotuloStatus(o);
+  return '<span class="'+classeStatus(r)+'">'+esc(r)+'</span>';
+}
+
+if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52242status){
+  var oldR = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    var r = oldR.apply(this, arguments);
+    try{
+      var view = document.getElementById('view-orcamentos');
+      if(!view) return r;
+      var thead = view.querySelector('thead tr');
+      if(thead && !/Status/.test(thead.textContent||'')){
+        var ths = thead.querySelectorAll('th');
+        if(ths.length){
+          var th = document.createElement('th');
+          th.textContent = 'Status';
+          thead.insertBefore(th, thead.lastElementChild);
+        }
+      }
+      var s = typeof getSession==='function'?getSession():null;
+      var list = (typeof db!=='undefined' && db.orcamentos)||[];
+      view.querySelectorAll('tbody tr').forEach(function(tr){
+        if(tr.querySelector('[data-orc-status]')) return;
+        var btn = tr.querySelector('button[onclick*="abrirOrcamento"]');
+        var oc = (btn && btn.getAttribute('onclick'))||'';
+        var m = oc.match(/abrirOrcamento\('([^']+)'\)/);
+        if(!m) return;
+        var o = list.find(function(x){ return x && x.id===m[1]; });
+        if(!o) return;
+        var td = document.createElement('td');
+        td.setAttribute('data-orc-status','1');
+        td.innerHTML = badge(o);
+        tr.insertBefore(td, tr.lastElementChild);
+        var cod = tr.children[1];
+        if(cod){
+          var fech = cod.querySelector('.text-emerald-700');
+          if(fech) fech.remove();
+        }
+      });
+    }catch(e){}
+    return r;
+  };
+  window.renderOrcamentos.__v52242status = true;
+}
+
+if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v52242status){
+  var oldA = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(existente){
+    var r = oldA.apply(this, arguments);
+    try{
+      var o = existente;
+      if(!o && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id && typeof db!=='undefined'){
+        o = (db.orcamentos||[]).find(function(x){ return x.id===window.__ORC_ST.form.id; });
+      }
+      var body = document.getElementById('modal-body');
+      if(body && o && !document.getElementById('orc-status-box')){
+        var box = document.createElement('div');
+        box.id = 'orc-status-box';
+        box.className = 'rounded-xl border p-3 flex items-center justify-between bg-slate-50';
+        box.innerHTML = '<span class="text-[11px] font-bold uppercase text-[#0a1e8a]">Status</span>'+badge(o);
+        body.insertBefore(box, body.firstChild);
+      } else if(body && !o && !document.getElementById('orc-status-box')){
+        var boxN = document.createElement('div');
+        boxN.id = 'orc-status-box';
+        boxN.className = 'rounded-xl border p-3 flex items-center justify-between bg-slate-50';
+        boxN.innerHTML = '<span class="text-[11px] font-bold uppercase text-[#0a1e8a]">Status</span><span class="neo-status info">Aberto</span>';
+        body.insertBefore(boxN, body.firstChild);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirTelaOrcamento.__v52242status = true;
+}
+
+if(window.ORCAMENTOS_V52240_PURE && typeof window.ORCAMENTOS_V52240_PURE.linkDe==='function' && !window.ORCAMENTOS_V52240_PURE.linkDe.__v52242c){
+  var oldLink = window.ORCAMENTOS_V52240_PURE.linkDe;
+  window.ORCAMENTOS_V52240_PURE.linkDe = function(o, cli, emp){
+    var link = oldLink(o, cli, emp);
+    var tok = o && o.token;
+    if(tok && link && link.indexOf('?c=')<0){
+      if(link.indexOf('?')>=0) link = link.replace('?', '?c='+encodeURIComponent(tok)+'&');
+      else link += '?c='+encodeURIComponent(tok);
+    }
+    return link;
+  };
+  window.ORCAMENTOS_V52240_PURE.linkDe.__v52242c = true;
+  if(window.ORCAMENTOS_V52238_PURE) window.ORCAMENTOS_V52238_PURE.linkOrcamento = window.ORCAMENTOS_V52240_PURE.linkDe;
+}
+
+console.log('[DIGICOPY] v5.22.42 orçamentos: status autorizado / não');
+})();
+
+;
+
+/* ===== ajustes_v52242_contratos_sort_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Sort dos contratos: 1º clique A→Z, 2º Z→A. Uma seta.
+//            Ordena no dado. NÃO inverte tbody (isso piscava e voltava).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function proximaDir(atualCol, atualDir, col){
+  if(atualCol===col && atualDir==='asc') return 'desc';
+  return 'asc';
+}
+function cmpVal(a,b){
+  var A = String(a==null?'':a).trim();
+  var B = String(b==null?'':b).trim();
+  var AN = Number(String(A).replace(',','.'));
+  var BN = Number(String(B).replace(',','.'));
+  if(A!=='' && B!=='' && isFinite(AN) && isFinite(BN) && /^-?[\d.,]+$/.test(A) && /^-?[\d.,]+$/.test(B)) return AN-BN;
+  return A.localeCompare(B, 'pt-BR', { numeric:true, sensitivity:'base' });
+}
+function ordenarLista(lista, getter, dir){
+  var arr = (lista||[]).slice();
+  arr.sort(function(a,b){
+    var r = cmpVal(getter(a), getter(b));
+    return dir==='desc' ? -r : r;
+  });
+  return arr;
+}
+
+window.CONTRATOS_SORT_V52242_PURE = {
+  proximaDir: proximaDir,
+  cmpVal: cmpVal,
+  ordenarLista: ordenarLista
+};
+
+if(typeof document==='undefined') return;
+
+function stFinal(){
+  return window.__CONTRATOS_FINAL_STATE__ || (window.__CONTRATOS_FINAL_STATE__ = { busca:'', status:'', sort:'codigo', dir:'asc' });
+}
+function stRefino(){
+  return window.__KAUAN_REFINO_STATE__ || (window.__KAUAN_REFINO_STATE__ = { contratoSort:'codigo', contratoDir:'asc' });
+}
+
+function pintarSetas(root, col, dir){
+  if(!root) return;
+  root.querySelectorAll('thead th').forEach(function(th){
+    var html = th.innerHTML.replace(/\s*[▲▼]/g,'');
+    var oc = th.getAttribute('onclick')||'';
+    var m = oc.match(/contratos(?:FinalSort|SortRefino)\('([^']+)'\)/);
+    if(m && m[1]===col) html += dir==='desc' ? ' ▼' : ' ▲';
+    th.innerHTML = html;
+  });
+}
+
+window.contratosFinalSort = function(col){
+  var st = stFinal();
+  st.dir = proximaDir(st.sort, st.dir||'asc', col);
+  st.sort = col;
+  if(typeof window.renderContratos==='function') window.renderContratos();
+};
+window.contratosFinalSort.__v52214sort = true;
+window.contratosFinalSort.__v52242sort = true;
+
+window.contratosSortRefino = function(col){
+  var st = stRefino();
+  st.contratoDir = proximaDir(st.contratoSort, st.contratoDir||'asc', col);
+  st.contratoSort = col;
+  var stF = stFinal();
+  stF.sort = col;
+  stF.dir = st.contratoDir;
+  if(typeof window.renderContratos==='function') window.renderContratos();
+};
+window.contratosSortRefino.__v52214sort = true;
+window.contratosSortRefino.__v52242sort = true;
+
+if(typeof window.renderContratos==='function' && !window.renderContratos.__v52242sort){
+  var oldR = window.renderContratos;
+  window.renderContratos = function(){
+    var r = oldR.apply(this, arguments);
+    try{
+      var st = stFinal();
+      var view = document.getElementById('view-contratos');
+      if(!view) return r;
+      pintarSetas(view, st.sort||'codigo', st.dir||'asc');
+      if((st.dir||'asc')==='desc'){
+        var tb = view.querySelector('tbody');
+        if(tb && tb.rows.length>1){
+          Array.from(tb.rows).reverse().forEach(function(row){ tb.appendChild(row); });
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+  window.renderContratos.__v52242sort = true;
+}
+
+console.log('[DIGICOPY] v5.22.42 contratos: sort A→Z / Z→A sem piscar');
+})();
+
+;
+
+/* ===== ajustes_v52242_impressora_remanejar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Impressora no contrato: serial primeiro; remanejo com aviso;
+//            Ativas vs Remanejadas (histórico congelado, sem editar).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function acharEquipPorSerial(dbRef, serie, empId){
+  var k = up(serie);
+  if(!k) return null;
+  return ((dbRef&&dbRef.equipamentos)||[]).find(function(e){
+    if(!e) return false;
+    if(empId && e.empresaId && e.empresaId!==empId) return false;
+    return up(e.serie)===k || up(e.patrimonio)===k;
+  })||null;
+}
+function parquesDoEquip(dbRef, eqId){
+  return ((dbRef&&dbRef.parque)||[]).filter(function(p){ return p && p.equipamentoId===eqId; });
+}
+function parqueAtivoOutroCliente(dbRef, eq, clienteId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
+  })||null;
+}
+function snapshotFrozen(eq, p){
+  return {
+    modelo: (eq&&eq.modelo)||'',
+    serie: (eq&&eq.serie)||'',
+    patrimonio: (eq&&eq.patrimonio)||'',
+    setor: (p&&p.setor)||'',
+    localInstalacao: (p&&(p.localInstalacao||p.enderecoInstalacao))||'',
+    contadorPB: n(eq&&eq.contadorPB),
+    contadorCor: n(eq&&eq.contadorCor),
+    congeladoEm: new Date().toISOString()
+  };
+}
+function msgRemanejar(nomeCliente, contador){
+  return 'impressora cadastrada em '+(nomeCliente||'outro cliente')+' com o contador '+(contador==null?'-':contador)+', deseja remanejar essa impressora pra esse cadastro?';
+}
+
+window.IMPRESSORA_REMANEJAR_V52242_PURE = {
+  acharEquipPorSerial: acharEquipPorSerial,
+  parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  snapshotFrozen: snapshotFrozen,
+  msgRemanejar: msgRemanejar
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,'Impressora'); if(typeof toast==='function') toast(m,'info'); }
+function nomeCli(id){
+  if(typeof db==='undefined') return '';
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; });
+  return (c&&c.nome)||'outro cliente';
+}
+
+if(typeof window.abrirModalEquipamentoContrato==='function' && !window.abrirModalEquipamentoContrato.__v52242rem){
+  var oldAbrir = window.abrirModalEquipamentoContrato;
+  window.abrirModalEquipamentoContrato = function(contratoId, parqueId){
+    if(parqueId && typeof db!=='undefined'){
+      var p = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(p && p.status==='remanejada'){
+        aviso('Impressora remanejada. Histórico congelado — não edita.');
+        return;
+      }
+    }
+    var r = oldAbrir.apply(this, arguments);
+    try{
+      if(!parqueId){
+        window.__impPassoSerial = true;
+        ['kr-imp-modelo','kr-imp-patr','kr-imp-serie','kr-imp-dept','kr-imp-local'].forEach(function(id){
+          var el=document.getElementById(id); if(el){ el.closest('div') && (el.closest('.grid')||el.parentElement).classList.add('v52242-depois-serial'); }
+        });
+        var med = document.querySelector('#modal-body .border.rounded-xl.p-3');
+        if(med) med.classList.add('v52242-depois-serial');
+        document.querySelectorAll('.v52242-depois-serial').forEach(function(el){ el.style.display='none'; });
+        var foot = document.getElementById('modal-footer');
+        if(foot && !document.getElementById('kr-imp-avancar')){
+          var btn = document.createElement('button');
+          btn.id='kr-imp-avancar';
+          btn.className='h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold';
+          btn.textContent='Avançar';
+          btn.onclick=function(){
+            var chave = txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+            if(!chave){ aviso('Informe o serial.'); return; }
+            if(typeof window.reconhecerImpressoraContrato==='function') window.reconhecerImpressoraContrato();
+            document.querySelectorAll('.v52242-depois-serial').forEach(function(el){ el.style.display=''; });
+            btn.remove();
+            window.__impPassoSerial = false;
+          };
+          foot.appendChild(btn);
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirModalEquipamentoContrato.__v52242rem = true;
+}
+
+if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpressoraContrato.__v52242rem){
+  var oldSal = window.salvarImpressoraContrato;
+  window.salvarImpressoraContrato = function(contratoId, parqueId){
+    var s = typeof getSession==='function'?getSession():null;
+    if(!s || typeof db==='undefined') return oldSal.apply(this, arguments);
+    var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+    if(!c) return oldSal.apply(this, arguments);
+    if(parqueId){
+      var pe = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(pe && pe.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+    }
+    var serie = txt(document.getElementById('kr-imp-serie')&&document.getElementById('kr-imp-serie').value)
+      || txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    var eq = acharEquipPorSerial(db, serie, s.empresaId);
+    var outro = parqueAtivoOutroCliente(db, eq, c.clienteId);
+    if(outro && !parqueId){
+      var cont = n((eq&&eq.contadorPB) || (outro.medidores&&outro.medidores.pretoA4&&outro.medidores.pretoA4.contadorAnterior));
+      var msg = msgRemanejar(nomeCli(outro.clienteId), cont);
+      var run = function(){
+        outro.status = 'remanejada';
+        outro.frozen = snapshotFrozen(eq, outro);
+        outro.remanejadoEm = new Date().toISOString();
+        outro.remanejadoParaContratoId = c.id;
+        outro.remanejadoParaClienteId = c.clienteId;
+        var r = oldSal.apply(window, [contratoId, parqueId]);
+        aviso('impressora cadastrada com sucesso');
+        return r;
+      };
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Remanejar impressora').then(function(ok){ if(ok) run(); });
+        return;
+      }
+      return;
+    }
+    var r = oldSal.apply(this, arguments);
+    if(!parqueId) aviso('impressora cadastrada com sucesso');
+    return r;
+  };
+  window.salvarImpressoraContrato.__v52242rem = true;
+}
+
+function htmlLista(c, lista, titulo, editar){
+  return '<div class="border rounded-xl overflow-hidden mt-3"><div class="bg-slate-50 px-4 py-3 border-b"><b>'+esc(titulo)+'</b></div>'
+    +'<div class="overflow-auto max-h-[280px]"><table class="w-full text-left text-[12.5px]"><thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-slate-500"><tr>'
+    +'<th class="px-4 py-2.5">Patrimônio</th><th class="px-4 py-2.5">Modelo</th><th class="px-4 py-2.5">Serial</th><th class="px-4 py-2.5">Departamento / Local</th><th class="px-4 py-2.5">Status</th>'
+    +(editar?'<th class="px-4 py-2.5 text-right">Editar</th>':'')+'</tr></thead><tbody class="divide-y">'
+    +(lista.map(function(p){
+      var e = ((typeof db!=='undefined'&&db.equipamentos)||[]).find(function(x){ return x.id===p.equipamentoId; })||{};
+      var fr = p.frozen||{};
+      var pat = editar ? (e.patrimonio||p.patrimonio||'-') : (fr.patrimonio||e.patrimonio||'-');
+      var mod = editar ? (e.modelo||'') : (fr.modelo||e.modelo||'');
+      var ser = editar ? (e.serie||'') : (fr.serie||e.serie||'');
+      var set = editar ? (p.setor||'Geral') : (fr.setor||p.setor||'Geral');
+      var loc = editar ? (p.localInstalacao||'') : (fr.localInstalacao||p.localInstalacao||'');
+      var trOpen = editar ? 'ondblclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="hover:bg-slate-50 cursor-pointer"' : 'class="bg-slate-50 text-slate-500"';
+      return '<tr '+trOpen+'><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">'+esc(pat)+'</td><td class="px-4 py-2.5 font-semibold">'+esc(mod)+'</td><td class="px-4 py-2.5 font-mono">'+esc(ser)+'</td><td class="px-4 py-2.5">'+esc(set)+'<br><span class="text-[11px] text-slate-500">'+esc(loc)+'</span></td><td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold uppercase">'+esc(p.status||'ativo')+'</span></td>'
+        +(editar?'<td class="px-4 py-2.5 text-right"><button onclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="w-8 h-8 rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td>':'')
+        +'</tr>';
+    }).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhuma</td></tr>')
+    +'</tbody></table></div></div>';
+}
+
+if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52242rem){
+  var oldOpen = window.openContratoCompleto;
+  window.openContratoCompleto = function(contratoId){
+    var r = oldOpen.apply(this, arguments);
+    try{
+      if(typeof db==='undefined') return r;
+      var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+      if(!c) return r;
+      var body = document.getElementById('modal-body');
+      if(!body) return r;
+      var todas = (db.parque||[]).filter(function(p){
+        return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+      });
+      var ativas = todas.filter(function(p){ return p.status==='ativo'; });
+      var rem = todas.filter(function(p){ return p.status==='remanejada'; });
+      var wrap = document.createElement('div');
+      wrap.id = 'v52242-listas-imp';
+      wrap.innerHTML = htmlLista(c, ativas, 'Impressoras ativas', true) + htmlLista(c, rem, 'Impressoras remanejadas (histórico, sem editar)', false);
+      var oldTab = body.querySelector('.border.rounded-xl.overflow-hidden');
+      if(oldTab && !document.getElementById('v52242-listas-imp')){
+        oldTab.replaceWith(wrap);
+      } else if(!document.getElementById('v52242-listas-imp')){
+        body.appendChild(wrap);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.openContratoCompleto.__v52242rem = true;
+}
+
+if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato==='function' && !window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52242){
+  var oldP = window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato;
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato = function(dbRef, contrato, opts){
+    var list = oldP(dbRef, contrato, opts)||[];
+    if(opts && opts.todos) return list;
+    return list.filter(function(p){ return p && p.status==='ativo'; });
+  };
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52242 = true;
+}
+
+console.log('[DIGICOPY] v5.22.42 impressora: remanejo + ativas/remanejadas');
+})();
+
+;
+
+/* ===== ajustes_v52242_financeiro_filtros_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Financeiro: some saldos; filtros da lista; lupa/Enter;
+//            padrão Hoje; Abertos / Todos; De/Até (não vale em Hoje/Todos).
+//            Código = busca exata. Por valor = valor igual.
+//            Cód. Caixa = código do lançamento financeiro.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CAMPOS = [
+  ['nome','Nome'],
+  ['cod_venda','Cód. Venda'],
+  ['cod_parcela','Cód. Parcela'],
+  ['cod_cliente','Cód. Cliente'],
+  ['por_valor','Por Valor'],
+  ['cod_caixa','Cód. Caixa'],
+  ['cod_pix','Cód. Pix'],
+  ['cod_leitura','Cód. Leitura']
+];
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function codigoNorm(v){
+  var d=String(v==null?'':v).replace(/\D/g,'');
+  if(!d) return '';
+  return d.replace(/^0+/,'')||'0';
+}
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function valorIgual(a,b){ return Math.abs(n(a)-n(b))<0.005; }
+function diaDe(v){ return String(v||'').slice(0,10); }
+function hoje(){ return new Date().toISOString().slice(0,10); }
+function datasDoLanc(c){
+  return [c.criadoEm, c.data, c.vencimento, c.pagamentoData, c.baixaEm].map(diaDe).filter(Boolean);
+}
+function bateHoje(c, h){ return datasDoLanc(c).indexOf(h)>=0; }
+function noIntervalo(c, de, ate){
+  if(!de && !ate) return true;
+  var ds = datasDoLanc(c);
+  if(!ds.length) return false;
+  return ds.some(function(d){
+    if(de && d<de) return false;
+    if(ate && d>ate) return false;
+    return true;
+  });
+}
+
+function filtraLancamentos(list, opts){
+  opts = opts||{};
+  var campo = opts.campo||'nome';
+  var q = txt(opts.q);
+  var modo = opts.modo||'hoje';
+  var de = txt(opts.de);
+  var ate = txt(opts.ate);
+  var h = opts.hoje||hoje();
+  var cliDe = opts.clienteDe||function(){ return {}; };
+  return (list||[]).filter(function(item){
+    var c = item.ref||item;
+    if(!c) return false;
+    if(modo==='hoje' && !bateHoje(c,h)) return false;
+    if(modo==='abertos' && /pago|baixad|quitad/i.test(c.status||'')) return false;
+    if(modo==='abertos' && (de||ate) && !noIntervalo(c,de,ate)) return false;
+    if(modo!=='hoje' && modo!=='todos' && modo!=='abertos' && (de||ate) && !noIntervalo(c,de,ate)) return false;
+    if(!q) return true;
+    var cli = cliDe(c)||{};
+    if(campo==='nome'){
+      var nome = String(cli.nome||c.clienteNomeAntigo||c.fornecedor||'').toLowerCase();
+      return nome.indexOf(q.toLowerCase())>=0;
+    }
+    if(campo==='cod_venda') return codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q) || codigoNorm(c.vendaId||'')===codigoNorm(q);
+    if(campo==='cod_parcela') return codigoNorm(c.numeroParcela||c.parcela||c.nroParcela||'')===codigoNorm(q);
+    if(campo==='cod_cliente') return codigoNorm(cli.codigo||cli.codigoAntigo||c.codClienteAntigo||'')===codigoNorm(q);
+    if(campo==='por_valor') return valorIgual(c.valor, q);
+    if(campo==='cod_caixa') return codigoNorm(c.codigo||c.legadoCodigo||c.id||'')===codigoNorm(q);
+    if(campo==='cod_pix') return codigoNorm(c.pixId||c.txid||c.codigoPix||'')===codigoNorm(q) || String(c.pixId||c.txid||c.codigoPix||'').toLowerCase()===q.toLowerCase();
+    if(campo==='cod_leitura') return codigoNorm(c.leituraNumero||c.leituraId||c.codLeitura||'')===codigoNorm(q);
+    return true;
+  });
+}
+
+window.FINANCEIRO_V52242_PURE = {
+  CAMPOS: CAMPOS,
+  codigoNorm: codigoNorm,
+  valorIgual: valorIgual,
+  filtraLancamentos: filtraLancamentos,
+  bateHoje: bateHoje,
+  noIntervalo: noIntervalo
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return typeof escapeHtml==='function'?escapeHtml(s):String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+n(v).toFixed(2)); }
+function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):(v||'-'); }
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+function lerCampos(){
+  ST.campo = (document.getElementById('neo-fin-campo')||{}).value || ST.campo || 'nome';
+  ST.q = (document.getElementById('neo-search-fin')||{}).value || ST.q || '';
+  ST.de = (document.getElementById('neo-fin-de')||{}).value || ST.de || '';
+  ST.ate = (document.getElementById('neo-fin-ate')||{}).value || ST.ate || '';
+  ST.tipo = (document.getElementById('neo-fin-tipo')||{}).value || ST.tipo || 'todos';
+  ST.ordem = (document.getElementById('neo-fin-ordem')||{}).value || ST.ordem || 'venc-asc';
+}
+
+window.finBuscarV52242 = function(){
+  lerCampos();
+  window.renderFinanceiro();
+};
+window.finModoV52242 = function(modo){
+  ST.modo = modo||'hoje';
+  if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
+  window.renderFinanceiro();
+};
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52242fin){
+  var oldF = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var sess = typeof getSession==='function'?getSession():null;
+    if(!sess || typeof db==='undefined') return oldF.apply(this, arguments);
+    var view = document.getElementById('view-financeiro') || (typeof ensureView==='function'?ensureView('financeiro'):null);
+    if(!view) return oldF.apply(this, arguments);
+    lerCampos();
+    var nomeCli = function(c){
+      var cli = (db.clientes||[]).find(function(x){ return x.id===c.clienteId; });
+      return cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||'');
+    };
+    var receber = (db.contasReceber||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var pagar = (db.contasPagar||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var all = receber.map(function(c){ return {ref:c,_tipo:'Receber'}; }).concat(pagar.map(function(c){ return {ref:c,_tipo:'Pagar'}; }));
+    if(ST.tipo==='Receber') all=all.filter(function(x){ return x._tipo==='Receber'; });
+    if(ST.tipo==='Pagar') all=all.filter(function(x){ return x._tipo==='Pagar'; });
+    all = filtraLancamentos(all, {
+      campo:ST.campo, q:ST.q, modo:ST.modo, de:ST.de, ate:ST.ate, hoje:hoje(),
+      clienteDe:function(c){ return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{}; }
+    });
+    var ordFns = {
+      'venc-asc':function(a,b){ return String(a.ref.vencimento||'').localeCompare(String(b.ref.vencimento||'')); },
+      'venc-desc':function(a,b){ return String(b.ref.vencimento||'').localeCompare(String(a.ref.vencimento||'')); },
+      'valor-desc':function(a,b){ return n(b.ref.valor)-n(a.ref.valor); },
+      'valor-asc':function(a,b){ return n(a.ref.valor)-n(b.ref.valor); },
+      'desc':function(a,b){ return String(a.ref.descricao||'').localeCompare(String(b.ref.descricao||''),'pt-BR',{sensitivity:'base'}); }
+    };
+    all.sort(ordFns[ST.ordem]||ordFns['venc-asc']);
+    var lim = window.__finLim||400;
+    var mostrar = all.slice(0,lim);
+    var btnModo = function(id,label){
+      return '<button type="button" onclick="window.finModoV52242(\''+id+'\')" class="neo-tab '+(ST.modo===id?'active':'')+'">'+label+'</button>';
+    };
+    var statusPill = window.statusPillFin || function(st){ return '<span class="neo-status '+(st==='pago'?'ok':'wait')+'">'+esc(st||'aberto')+'</span>'; };
+    view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
+      +'<div class="neo-head"><div><h3>Financeiro</h3><p>Contas a receber e a pagar — duplo clique abre o histórico</p></div>'
+      +'<div class="neo-actions">'
+      +'<button onclick="window.finAcaoReceber&&window.finAcaoReceber()" class="neo-btn primary" data-fin-receber="1"><i class="ph ph-arrow-circle-down"></i>Receber</button>'
+      +(typeof window.finImprimirRecibo==='function'?'<button onclick="window.finImprimirRecibo()" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button>':'')
+      +'<button onclick="window.excluirFinanceiroSelecionados&&window.excluirFinanceiroSelecionados()" class="neo-btn danger btn-del-lote"><i class="ph ph-trash"></i>Excluir</button>'
+      +'</div></div>'
+      +'<div class="p-4 border-b bg-white space-y-3">'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +btnModo('hoje','Hoje')+btnModo('abertos','Abertos')+btnModo('todos','Todos')
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +'<select id="neo-fin-campo" class="neo-select !h-10 min-w-[160px]">'
+      +CAMPOS.map(function(it){ return '<option value="'+it[0]+'"'+(ST.campo===it[0]?' selected':'')+'>'+it[1]+'</option>'; }).join('')
+      +'</select>'
+      +'<input id="neo-search-fin" value="'+esc(ST.q)+'" class="neo-input min-w-[240px] flex-1 max-w-[420px]" placeholder="Buscar… (Enter ou lupa)">'
+      +'<button type="button" onclick="window.finBuscarV52242()" class="h-10 w-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button>'
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +'<label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-fin-de" type="date" value="'+esc(ST.de)+'" class="neo-input !w-[150px] !h-9">'
+      +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
+      +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
+      +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
+      +'</div></div>'
+      +'<div class="overflow-auto max-h-[calc(100vh-360px)]"><table class="neo-table"><thead><tr><th class="w-8"><input type="checkbox" id="fin-check-all" title="Marcar todos" onchange="window.v52023MarcarTodos&&v52023MarcarTodos(\'fin\',this.checked)"></th><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>'
+      +(mostrar.map(function(x){
+        var c=x.ref; var nome=nomeCli(c); var tipo=x._tipo==='Receber'?'cr':'cp';
+        return '<tr class="cursor-pointer" ondblclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')"><td><input type="checkbox" class="fin-del-check" data-tipo="'+tipo+'" value="'+c.id+'" onclick="event.stopPropagation()" onchange="window.v52023AtualizarBotaoExcluir&&v52023AtualizarBotaoExcluir()"></td><td>'+x._tipo+'</td><td>'+esc(c.descricao||'')+(c.legadoCodigo?' <span class="text-[10px] text-slate-400">#'+esc(c.legadoCodigo)+'</span>':'')+'</td><td>'+esc(nome)+'</td><td><b class="'+(x._tipo==='Pagar'?'text-red-600':'')+'">'+money(c.valor||0)+'</b></td><td>'+dataBR(c.vencimento)+'</td><td>'+statusPill(c.status)+'</td><td><button onclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhum lançamento encontrado</td></tr>')
+      +'</tbody></table></div>'
+      +(all.length>mostrar.length?'<div class="p-3 border-t text-center"><button onclick="window.__finLim='+(lim+300)+'; renderFinanceiro()" class="neo-btn">Mostrar mais</button></div>':'')
+      +'</div></div>';
+    var inp = document.getElementById('neo-search-fin');
+    if(inp){
+      inp.oninput = null;
+      inp.removeAttribute('oninput');
+      inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52242(); } };
+    }
+    ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52242(); };
+    });
+    try{
+      if(typeof oldF.__v52213==='undefined'){ /* noop */ }
+    }catch(e){}
+  };
+  window.renderFinanceiro.__v52242fin = true;
+  window.renderFinanceiro.__v52213 = true;
+}
+
+console.log('[DIGICOPY] v5.22.42 financeiro: filtros, lupa, hoje');
+})();
+
+;
+
+/* ===== ajustes_v52242_financeiro_menu_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Menu Financeiro único: some o submenu "Contas e caixas".
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function semSubmenuFinanceiro(list){
+  return (list||[]).map(function(m){
+    if(!m || m.id!=='financeiro') return m;
+    var c = Object.assign({}, m);
+    c.items = [];
+    return c;
+  });
+}
+
+window.FINANCEIRO_MENU_V52242_PURE = { semSubmenuFinanceiro: semSubmenuFinanceiro };
+
+if(typeof document==='undefined') return;
+
+if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.menusPadrao==='function' && !window.MENUS_ATALHOS_PURE.menusPadrao.__v52242fin){
+  var old = window.MENUS_ATALHOS_PURE.menusPadrao;
+  window.MENUS_ATALHOS_PURE.menusPadrao = function(){
+    return semSubmenuFinanceiro(old.apply(this, arguments)||[]);
+  };
+  window.MENUS_ATALHOS_PURE.menusPadrao.__v52242fin = true;
+}
+
+function tirar(){
+  var menu = document.getElementById('menu-financeiro');
+  if(!menu) return;
+  menu.innerHTML = '';
+  if(menu.parentNode) menu.remove();
+}
+
+setTimeout(tirar, 200);
+setTimeout(tirar, 800);
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52242fin){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    tirar();
+    return r;
+  };
+  window.pintarMenus.__v52242fin = true;
+}
+
+console.log('[DIGICOPY] v5.22.42 financeiro: menu único');
+})();
+
+;
+
+/* ===== ajustes_v52242_menu_versao_boleto_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.42 — Menu da faixa aberta em azul; versão no rodapé; forma Boleto.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.42';
+
+function viewsDoModulo(onclickHtml){
+  var s = String(onclickHtml||'');
+  var out = [];
+  var re = /navigateTo\('([^']+)'\)/g;
+  var m;
+  while((m=re.exec(s))) out.push(m[1]);
+  if(/novaVenda|openQuickOS|orcamentos/.test(s)) out.push('vendas','orcamentos','manutencao');
+  if(/contratos|parque|leituras|impressoras/.test(s)) out.push('contratos','parque','leituras','impressoras');
+  if(/clientes/.test(s)) out.push('clientes');
+  if(/financeiro/.test(s)) out.push('financeiro');
+  if(/config|usuarios|auditoria/.test(s)) out.push('config','usuarios','auditoria');
+  if(/buscador-escola/.test(s)) out.push('buscador-escola');
+  if(/dashboard/.test(s)) out.push('dashboard');
+  return out;
+}
+function moduloAberto(view, onclickHtml){
+  return viewsDoModulo(onclickHtml).indexOf(view)>=0;
+}
+
+window.MENU_VERSAO_BOLETO_V52242_PURE = {
+  VERSAO: VERSAO,
+  viewsDoModulo: viewsDoModulo,
+  moduloAberto: moduloAberto
+};
+
+if(typeof document==='undefined') return;
+
+function garantirCss(){
+  if(document.getElementById('v52242-menu-css')) return;
+  var st = document.createElement('style');
+  st.id = 'v52242-menu-css';
+  st.textContent = '.module.mod-sel>button{background:#0a1e8a!important;color:#fff!important}.module.mod-sel>button i{color:#fff!important}';
+  document.head.appendChild(st);
+}
+
+function pintarMenuAberto(view){
+  garantirCss();
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  row.querySelectorAll('.module').forEach(function(mod){
+    var html = mod.innerHTML||'';
+    var on = moduloAberto(view, html);
+    if(on) mod.classList.add('mod-sel');
+    else mod.classList.remove('mod-sel');
+  });
+}
+
+function pintarRodape(){
+  var foot = document.querySelector('footer span:not(#footer-session)');
+  if(foot && !/v5\.22\./.test(foot.textContent||'')){
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+  }
+}
+
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52242menu){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(view){
+    var r = oldN.apply(this, arguments);
+    try{ pintarMenuAberto(view); pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52242menu = true;
+}
+
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52242sel){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    try{
+      var vis = document.querySelector('.view:not(.hidden)');
+      var id = vis && vis.id && vis.id.replace(/^view-/,'');
+      if(id) pintarMenuAberto(id);
+      pintarRodape();
+    }catch(e){}
+    return r;
+  };
+  window.pintarMenus.__v52242sel = true;
+}
+
+setTimeout(pintarRodape, 200);
+
+function garantirBoleto(arr){
+  if(!arr || typeof arr.indexOf!=='function') return arr;
+  if(arr.indexOf('Boleto')<0) arr.push('Boleto');
+  return arr;
+}
+
+if(typeof window.FINANCEIRO_RECEBER_PURE==='object' && window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA){
+  garantirBoleto(window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA);
+}
+
+function injetarBotaoBoleto(hostId, cls, escolher){
+  var box = document.getElementById(hostId);
+  if(!box) return;
+  if(/Boleto/.test(box.textContent||'')) return;
+  var b = document.createElement('button');
+  b.type='button';
+  b.setAttribute('data-forma','Boleto');
+  b.className=cls;
+  b.textContent='Boleto';
+  b.onclick=function(){ if(typeof window[escolher]==='function') window[escolher]('Boleto'); };
+  box.appendChild(b);
+}
+
+if(typeof window.finAcaoReceber==='function' && !window.finAcaoReceber.__v52242bol){
+  var oldRec = window.finAcaoReceber;
+  window.finAcaoReceber = function(){
+    var r = oldRec.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('fin-formas','fin-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','finEscolherFormaBaixa'); }, 30);
+    return r;
+  };
+  window.finAcaoReceber.__v52242bol = true;
+}
+
+if(typeof window.finConfirmarBaixa==='function' && !window.finConfirmarBaixa.__v52242bol){
+  var oldBaixa = window.finConfirmarBaixa;
+  window.finConfirmarBaixa = function(){
+    var el = document.getElementById('fin-forma-baixa');
+    if(el && el.value==='Boleto'){
+      var s = typeof getSession==='function'?getSession():null;
+      var ids = window.__finBaixaIds||[];
+      var agora = new Date().toISOString();
+      var n=0;
+      ids.forEach(function(id){
+        var cr = (typeof db!=='undefined' && (db.contasReceber||[])).find(function(x){ return x && x.id===id; });
+        if(!cr || cr.status==='pago') return;
+        if(window.FINANCEIRO_RECEBER_PURE && window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo)
+          window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo(cr, 'Boleto', agora);
+        else { cr.status='pago'; cr.formaPagamento='Boleto'; cr.pagamentoData=agora; cr.baixaForma='Boleto'; }
+        n++;
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof closeModal==='function') closeModal();
+      if(typeof renderFinanceiro==='function') renderFinanceiro();
+      if(typeof toast==='function') toast(n+' título(s) baixado(s) em Boleto','success');
+      return;
+    }
+    return oldBaixa.apply(this, arguments);
+  };
+  window.finConfirmarBaixa.__v52242bol = true;
+}
+
+if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento.__v52242bol){
+  var oldFat = window.vosAbrirRecebimento;
+  window.vosAbrirRecebimento = function(){
+    var r = oldFat.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('vos-formas','vos-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','vosEscolherForma'); }, 30);
+    return r;
+  };
+  window.vosAbrirRecebimento.__v52242bol = true;
+}
+
+console.log('[DIGICOPY] v5.22.42 menu azul, versão rodapé, Boleto');
+})();
+
+;
+
+/* ===== ajustes_v52243_orcamentos_status_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Orçamentos: Status Autorizado / Não autorizado na lista e na
+//            tela. Sem botão Faturar. FECHADO vira Autorizado.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function rotuloStatus(o){
+  var st = txt(o && o.status).toLowerCase();
+  if(st==='aprovado' || (o && o.vendaId)) return 'Autorizado';
+  if(st==='recusado') return 'Não autorizado';
+  if(st==='estornado') return 'Estornado';
+  if(st==='excluido') return 'Excluído';
+  return 'Aberto';
+}
+function classeStatus(rotulo){
+  if(rotulo==='Autorizado') return 'neo-status ok';
+  if(rotulo==='Não autorizado') return 'neo-status wait';
+  if(rotulo==='Estornado') return 'neo-status info';
+  return 'neo-status info';
+}
+
+window.ORCAMENTOS_STATUS_V52243_PURE = { rotuloStatus: rotuloStatus, classeStatus: classeStatus };
+
+if(typeof document==='undefined') return;
+
+function badge(o){
+  var r = rotuloStatus(o);
+  return '<span class="'+classeStatus(r)+'">'+esc(r)+'</span>';
+}
+function idDaLinha(tr){
+  var oc = (tr && tr.getAttribute('onclick'))||'';
+  var m = oc.match(/abrirOrcamento\('([^']+)'\)/);
+  if(m) return m[1];
+  var btn = tr && tr.querySelector('button[onclick*="abrirOrcamento"]');
+  var oc2 = (btn && btn.getAttribute('onclick'))||'';
+  var m2 = oc2.match(/abrirOrcamento\('([^']+)'\)/);
+  return m2 ? m2[1] : '';
+}
+function pintarLista(){
+  var view = document.getElementById('view-orcamentos');
+  if(!view) return;
+  view.querySelectorAll('button').forEach(function(b){
+    if(/^\s*faturar\s*$/i.test(b.textContent||'')) b.remove();
+  });
+  var thead = view.querySelector('thead tr');
+  if(thead && !/Status/.test(thead.textContent||'')){
+    var th = document.createElement('th');
+    th.textContent = 'Status';
+    th.setAttribute('data-orc-status-th','1');
+    thead.insertBefore(th, thead.lastElementChild);
+  }
+  var list = (typeof db!=='undefined' && db.orcamentos)||[];
+  view.querySelectorAll('tbody tr').forEach(function(tr){
+    var id = idDaLinha(tr);
+    if(!id) return;
+    var o = list.find(function(x){ return x && x.id===id; });
+    var td = tr.querySelector('[data-orc-status]');
+    if(!td){
+      td = document.createElement('td');
+      td.setAttribute('data-orc-status','1');
+      tr.insertBefore(td, tr.lastElementChild);
+    }
+    td.innerHTML = badge(o||{status:'aberto'});
+    tr.querySelectorAll('.text-emerald-700').forEach(function(el){
+      if(/fechado/i.test(el.textContent||'')) el.remove();
+    });
+  });
+}
+
+if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52243status){
+  var oldR = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    var r = oldR.apply(this, arguments);
+    try{ pintarLista(); }catch(e){}
+    return r;
+  };
+  window.renderOrcamentos.__v52243status = true;
+}
+
+if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v52243status){
+  var oldA = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(existente){
+    var r = oldA.apply(this, arguments);
+    try{
+      var o = existente;
+      if(!o && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id && typeof db!=='undefined'){
+        o = (db.orcamentos||[]).find(function(x){ return x.id===window.__ORC_ST.form.id; });
+      }
+      var body = document.getElementById('modal-body');
+      var foot = document.getElementById('modal-footer');
+      if(foot){
+        foot.querySelectorAll('button').forEach(function(b){
+          if(/faturar/i.test(b.textContent||'')) b.remove();
+        });
+      }
+      var box = document.getElementById('orc-status-box');
+      if(body && !box){
+        box = document.createElement('div');
+        box.id = 'orc-status-box';
+        box.className = 'rounded-xl border p-3 flex items-center justify-between bg-slate-50';
+        body.insertBefore(box, body.firstChild);
+      }
+      if(box){
+        box.innerHTML = '<span class="text-[11px] font-bold uppercase text-[#0a1e8a]">Status</span>'+badge(o||{status:'aberto'});
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirTelaOrcamento.__v52243status = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 orçamentos: status Autorizado / Não autorizado');
+})();
+
+;
+
+/* ===== ajustes_v52243_contratos_sort_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Sort dos contratos pelos títulos: 1º A→Z, 2º Z→A, uma seta.
+//            Ordena as linhas pelo texto da coluna. Não inverte tbody
+//            (isso piscava e desfazia o 2º clique).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var COL = { codigo:1, cliente:2, inicio:3, fim:4, impressoras:5, chamados:6, valor:7, status:8 };
+
+function proximaDir(atualCol, atualDir, col){
+  if(atualCol===col && atualDir==='asc') return 'desc';
+  return 'asc';
+}
+function cmpVal(a,b){
+  var A = String(a==null?'':a).trim();
+  var B = String(b==null?'':b).trim();
+  var AN = Number(String(A).replace(/[R$\s.]/g,'').replace(',','.'));
+  var BN = Number(String(B).replace(/[R$\s.]/g,'').replace(',','.'));
+  var numA = A!=='' && isFinite(AN) && /^-?[0-9.,]+$/.test(A.replace(/\s/g,'').replace('R$',''));
+  var numB = B!=='' && isFinite(BN) && /^-?[0-9.,]+$/.test(B.replace(/\s/g,'').replace('R$',''));
+  if(numA && numB) return AN-BN;
+  return A.localeCompare(B, 'pt-BR', { numeric:true, sensitivity:'base' });
+}
+function ordenarLista(lista, getter, dir){
+  var arr = (lista||[]).slice();
+  arr.sort(function(a,b){
+    var r = cmpVal(getter(a), getter(b));
+    return dir==='desc' ? -r : r;
+  });
+  return arr;
+}
+
+window.CONTRATOS_SORT_V52243_PURE = { proximaDir: proximaDir, cmpVal: cmpVal, ordenarLista: ordenarLista, COL: COL };
+
+if(typeof document==='undefined') return;
+
+function stFinal(){
+  return window.__CONTRATOS_FINAL_STATE__ || (window.__CONTRATOS_FINAL_STATE__ = { busca:'', status:'', sort:'codigo', dir:'asc' });
+}
+function stRefino(){
+  return window.__KAUAN_REFINO_STATE__ || (window.__KAUAN_REFINO_STATE__ = { contratoSort:'codigo', contratoDir:'asc' });
+}
+
+function pintarSetas(root, col, dir){
+  if(!root) return;
+  root.querySelectorAll('thead th').forEach(function(th){
+    var html = th.innerHTML.replace(/\s*[▲▼]/g,'');
+    var oc = th.getAttribute('onclick')||'';
+    var m = oc.match(/contratos(?:FinalSort|SortRefino)\('([^']+)'\)/);
+    if(m && m[1]===col) html += dir==='desc' ? ' ▼' : ' ▲';
+    th.innerHTML = html;
+  });
+}
+
+function ordenarTbody(){
+  var st = stFinal();
+  var view = document.getElementById('view-contratos');
+  if(!view || view.classList.contains('hidden')) return;
+  var tb = view.querySelector('tbody');
+  if(!tb || tb.rows.length<2){ pintarSetas(view, st.sort||'codigo', st.dir||'asc'); return; }
+  var idx = COL[st.sort] != null ? COL[st.sort] : 1;
+  var rows = Array.from(tb.rows).filter(function(r){ return r.cells && r.cells.length>2; });
+  rows.sort(function(a,b){
+    var ta = a.cells[idx] ? a.cells[idx].innerText : '';
+    var tb2 = b.cells[idx] ? b.cells[idx].innerText : '';
+    var r = cmpVal(ta, tb2);
+    return (st.dir||'asc')==='desc' ? -r : r;
+  });
+  rows.forEach(function(row){ tb.appendChild(row); });
+  pintarSetas(view, st.sort||'codigo', st.dir||'asc');
+}
+
+window.contratosFinalSort = function(col){
+  var st = stFinal();
+  st.dir = proximaDir(st.sort, st.dir||'asc', col);
+  st.sort = col;
+  var rf = stRefino();
+  rf.contratoSort = col;
+  rf.contratoDir = st.dir;
+  if(typeof window.renderContratos==='function') window.renderContratos();
+};
+window.contratosFinalSort.__v52214sort = true;
+window.contratosFinalSort.__v52242sort = true;
+window.contratosFinalSort.__v52243sort = true;
+
+window.contratosSortRefino = function(col){
+  window.contratosFinalSort(col);
+};
+window.contratosSortRefino.__v52214sort = true;
+window.contratosSortRefino.__v52242sort = true;
+window.contratosSortRefino.__v52243sort = true;
+
+if(typeof window.renderContratos==='function' && !window.renderContratos.__v52243sort){
+  var oldR = window.renderContratos;
+  window.renderContratos = function(){
+    var r = oldR.apply(this, arguments);
+    try{ ordenarTbody(); }catch(e){}
+    return r;
+  };
+  window.renderContratos.__v52243sort = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 contratos: sort A→Z / Z→A sem piscar');
+})();
+
+;
+
+/* ===== ajustes_v52243_impressora_remanejar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Impressora no contrato (tela do contrato):
+//            novo cadastro começa só no serial; aviso de remanejo só no
+//            salvar; Ativas vs Remanejadas (histórico congelado).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function acharEquipPorSerial(dbRef, serie, empId){
+  var k = up(serie);
+  if(!k) return null;
+  return ((dbRef&&dbRef.equipamentos)||[]).find(function(e){
+    if(!e) return false;
+    if(empId && e.empresaId && e.empresaId!==empId) return false;
+    return up(e.serie)===k || up(e.patrimonio)===k;
+  })||null;
+}
+function parquesDoEquip(dbRef, eqId){
+  return ((dbRef&&dbRef.parque)||[]).filter(function(p){ return p && p.equipamentoId===eqId; });
+}
+function parqueAtivoOutroCliente(dbRef, eq, clienteId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
+  })||null;
+}
+function snapshotFrozen(eq, p){
+  return {
+    modelo: (eq&&eq.modelo)||'',
+    serie: (eq&&eq.serie)||'',
+    patrimonio: (eq&&eq.patrimonio)||'',
+    setor: (p&&p.setor)||'',
+    localInstalacao: (p&&(p.localInstalacao||p.enderecoInstalacao))||'',
+    contadorPB: n(eq&&eq.contadorPB),
+    contadorCor: n(eq&&eq.contadorCor),
+    congeladoEm: new Date().toISOString()
+  };
+}
+function msgRemanejar(nomeCliente, contador){
+  return 'impressora cadastrada em '+(nomeCliente||'outro cliente')+' com o contador '+(contador==null?'-':contador)+', deseja remanejar essa impressora pra esse cadastro?';
+}
+
+window.IMPRESSORA_REMANEJAR_V52243_PURE = {
+  acharEquipPorSerial: acharEquipPorSerial,
+  parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  snapshotFrozen: snapshotFrozen,
+  msgRemanejar: msgRemanejar
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,'Impressora'); if(typeof toast==='function') toast(m,'info'); }
+function nomeCli(id){
+  if(typeof db==='undefined') return '';
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; });
+  return (c&&c.nome)||'outro cliente';
+}
+
+function esconderDepoisSerial(){
+  var ids = ['kr-imp-modelo','kr-imp-patr','kr-imp-serie','kr-imp-dept','kr-imp-local'];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    var box = el.closest('.grid') || el.parentElement;
+    if(box){ box.classList.add('v52243-depois-serial'); box.style.display='none'; }
+  });
+  document.querySelectorAll('#modal-body .border.rounded-xl.p-3').forEach(function(el){
+    el.classList.add('v52243-depois-serial');
+    el.style.display='none';
+  });
+}
+function mostrarDepoisSerial(){
+  document.querySelectorAll('.v52243-depois-serial').forEach(function(el){
+    el.style.display='';
+    el.classList.remove('v52243-depois-serial');
+  });
+}
+
+function passoSerialNovo(){
+  if(!window.__impPassoSerial) return;
+  if(document.getElementById('kr-imp-avancar')) return;
+  if(!document.getElementById('kr-imp-busca')) return;
+  esconderDepoisSerial();
+  var foot = document.getElementById('modal-footer');
+  if(!foot) return;
+  var salvar = null;
+  foot.querySelectorAll('button').forEach(function(b){
+    if(/salvar/i.test(b.textContent||'')) salvar = b;
+  });
+  if(salvar) salvar.style.display='none';
+  var btn = document.createElement('button');
+  btn.id='kr-imp-avancar';
+  btn.type='button';
+  btn.className='h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold';
+  btn.textContent='Avançar';
+  btn.onclick=function(){
+    var chave = txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    if(!chave){ aviso('Informe o serial.'); return; }
+    if(typeof window.reconhecerImpressoraContrato==='function') window.reconhecerImpressoraContrato();
+    mostrarDepoisSerial();
+    btn.remove();
+    if(salvar) salvar.style.display='';
+    window.__impPassoSerial = false;
+  };
+  foot.appendChild(btn);
+}
+
+if(typeof window.abrirModalEquipamentoContrato==='function' && !window.abrirModalEquipamentoContrato.__v52243rem){
+  var oldAbrir = window.abrirModalEquipamentoContrato;
+  window.abrirModalEquipamentoContrato = function(contratoId, parqueId){
+    if(parqueId && typeof db!=='undefined'){
+      var p = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(p && p.status==='remanejada'){
+        aviso('Impressora remanejada. Histórico congelado — não edita.');
+        return;
+      }
+    }
+    window.__impPassoSerial = !parqueId;
+    var r = oldAbrir.apply(this, arguments);
+    try{
+      if(!parqueId){
+        setTimeout(passoSerialNovo, 0);
+        setTimeout(passoSerialNovo, 80);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirModalEquipamentoContrato.__v52243rem = true;
+}
+
+if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpressoraContrato.__v52243rem){
+  var oldSal = window.salvarImpressoraContrato;
+  window.salvarImpressoraContrato = function(contratoId, parqueId){
+    var s = typeof getSession==='function'?getSession():null;
+    if(!s || typeof db==='undefined') return oldSal.apply(this, arguments);
+    var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+    if(!c) return oldSal.apply(this, arguments);
+    if(parqueId){
+      var pe = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(pe && pe.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+    }
+    var serie = txt(document.getElementById('kr-imp-serie')&&document.getElementById('kr-imp-serie').value)
+      || txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    var eq = acharEquipPorSerial(db, serie, s.empresaId);
+    var outro = parqueAtivoOutroCliente(db, eq, c.clienteId);
+    var run = function(){
+      if(outro){
+        outro.status = 'remanejada';
+        outro.frozen = snapshotFrozen(eq, outro);
+        outro.remanejadoEm = new Date().toISOString();
+        outro.remanejadoParaContratoId = c.id;
+        outro.remanejadoParaClienteId = c.clienteId;
+      }
+      var r = oldSal.apply(window, [contratoId, parqueId]);
+      if(!parqueId) aviso('impressora cadastrada com sucesso');
+      return r;
+    };
+    if(outro && !parqueId){
+      var cont = n((eq&&eq.contadorPB) || (outro.medidores&&outro.medidores.pretoA4&&outro.medidores.pretoA4.contadorAnterior));
+      var msg = msgRemanejar(nomeCli(outro.clienteId), cont);
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Remanejar impressora').then(function(ok){ if(ok) run(); });
+        return;
+      }
+      return;
+    }
+    return run();
+  };
+  window.salvarImpressoraContrato.__v52243rem = true;
+}
+
+function htmlLista(c, lista, titulo, editar){
+  return '<div class="border rounded-xl overflow-hidden mt-3"><div class="bg-slate-50 px-4 py-3 border-b"><b>'+esc(titulo)+'</b></div>'
+    +'<div class="overflow-auto max-h-[280px]"><table class="w-full text-left text-[12.5px]"><thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-slate-500"><tr>'
+    +'<th class="px-4 py-2.5">Patrimônio</th><th class="px-4 py-2.5">Modelo</th><th class="px-4 py-2.5">Serial</th><th class="px-4 py-2.5">Departamento / Local</th><th class="px-4 py-2.5">Status</th>'
+    +(editar?'<th class="px-4 py-2.5 text-right">Editar</th>':'')+'</tr></thead><tbody class="divide-y">'
+    +(lista.map(function(p){
+      var e = ((typeof db!=='undefined'&&db.equipamentos)||[]).find(function(x){ return x.id===p.equipamentoId; })||{};
+      var fr = p.frozen||{};
+      var pat = editar ? (e.patrimonio||p.patrimonio||'-') : (fr.patrimonio||e.patrimonio||'-');
+      var mod = editar ? (e.modelo||'') : (fr.modelo||e.modelo||'');
+      var ser = editar ? (e.serie||'') : (fr.serie||e.serie||'');
+      var set = editar ? (p.setor||'Geral') : (fr.setor||p.setor||'Geral');
+      var loc = editar ? (p.localInstalacao||'') : (fr.localInstalacao||p.localInstalacao||'');
+      var trOpen = editar ? 'ondblclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="hover:bg-slate-50 cursor-pointer"' : 'class="bg-slate-50 text-slate-500"';
+      return '<tr '+trOpen+'><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">'+esc(pat)+'</td><td class="px-4 py-2.5 font-semibold">'+esc(mod)+'</td><td class="px-4 py-2.5 font-mono">'+esc(ser)+'</td><td class="px-4 py-2.5">'+esc(set)+'<br><span class="text-[11px] text-slate-500">'+esc(loc)+'</span></td><td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold uppercase">'+esc(p.status||'ativo')+'</span></td>'
+        +(editar?'<td class="px-4 py-2.5 text-right"><button onclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="w-8 h-8 rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td>':'')
+        +'</tr>';
+    }).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhuma</td></tr>')
+    +'</tbody></table></div></div>';
+}
+
+function pintarListas(contratoId){
+  if(typeof db==='undefined') return;
+  var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+  if(!c) return;
+  var body = document.getElementById('modal-body');
+  if(!body) return;
+  var todas = (db.parque||[]).filter(function(p){
+    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  });
+  var ativas = todas.filter(function(p){ return p.status==='ativo'; });
+  var rem = todas.filter(function(p){ return p.status==='remanejada'; });
+  var html = htmlLista(c, ativas, 'Impressoras ativas', true) + htmlLista(c, rem, 'Impressoras remanejadas (histórico, sem editar)', false);
+  var old = document.getElementById('v52243-listas-imp') || document.getElementById('v52242-listas-imp');
+  if(old){ old.id='v52243-listas-imp'; old.innerHTML = html; return; }
+  var wrap = document.createElement('div');
+  wrap.id = 'v52243-listas-imp';
+  wrap.innerHTML = html;
+  var cand = null;
+  body.querySelectorAll('.border.rounded-xl.overflow-hidden').forEach(function(el){
+    if(/impressora/i.test(el.textContent||'')) cand = el;
+  });
+  if(cand) cand.replaceWith(wrap);
+  else body.appendChild(wrap);
+}
+
+if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52243rem){
+  var oldOpen = window.openContratoCompleto;
+  window.openContratoCompleto = function(contratoId){
+    var r = oldOpen.apply(this, arguments);
+    try{
+      setTimeout(function(){ pintarListas(contratoId); }, 0);
+      setTimeout(function(){ pintarListas(contratoId); }, 80);
+    }catch(e){}
+    return r;
+  };
+  window.openContratoCompleto.__v52243rem = true;
+}
+
+if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato==='function' && !window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52243){
+  var oldP = window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato;
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato = function(dbRef, contrato, opts){
+    var list = oldP(dbRef, contrato, opts)||[];
+    if(opts && opts.todos) return list;
+    return list.filter(function(p){ return p && p.status!=='remanejada'; });
+  };
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52243 = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 impressora: remanejo + ativas/remanejadas');
+})();
+
+;
+
+/* ===== ajustes_v52243_financeiro_filtros_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Financeiro: some saldos; filtros da lista; lupa/Enter;
+//            padrão Hoje; Abertos / Todos; De/Até só em Abertos.
+//            Código = busca exata. Por valor = valor igual.
+//            Cód. Caixa = código do lançamento. Faturada entra (criadoEm).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CAMPOS = [
+  ['nome','Nome'],
+  ['cod_venda','Cód. Venda'],
+  ['cod_parcela','Cód. Parcela'],
+  ['cod_cliente','Cód. Cliente'],
+  ['por_valor','Por Valor'],
+  ['cod_caixa','Cód. Caixa'],
+  ['cod_pix','Cód. Pix'],
+  ['cod_leitura','Cód. Leitura']
+];
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function codigoNorm(v){
+  var d=String(v==null?'':v).replace(/\D/g,'');
+  if(!d) return '';
+  return d.replace(/^0+/,'')||'0';
+}
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function valorIgual(a,b){ return Math.abs(n(a)-n(b))<0.005; }
+function diaDe(v){ return String(v||'').slice(0,10); }
+function hoje(){ return new Date().toISOString().slice(0,10); }
+function datasDoLanc(c){
+  return [c.criadoEm, c.data, c.vencimento, c.pagamentoData, c.baixaEm, c.faturadoEm].map(diaDe).filter(Boolean);
+}
+function bateHoje(c, h){
+  var ds = datasDoLanc(c);
+  if(!ds.length) return true;
+  return ds.indexOf(h)>=0;
+}
+function noIntervalo(c, de, ate){
+  if(!de && !ate) return true;
+  var ds = datasDoLanc(c);
+  if(!ds.length) return false;
+  return ds.some(function(d){
+    if(de && d<de) return false;
+    if(ate && d>ate) return false;
+    return true;
+  });
+}
+function estaPago(c){ return /pago|baixad|quitad/i.test(String(c&&c.status||'')); }
+
+function filtraLancamentos(list, opts){
+  opts = opts||{};
+  var campo = opts.campo||'nome';
+  var q = txt(opts.q);
+  var modo = opts.modo||'hoje';
+  var de = txt(opts.de);
+  var ate = txt(opts.ate);
+  var h = opts.hoje||hoje();
+  var cliDe = opts.clienteDe||function(){ return {}; };
+  return (list||[]).filter(function(item){
+    var c = item.ref||item;
+    if(!c) return false;
+    if(modo==='hoje' && !bateHoje(c,h)) return false;
+    if(modo==='abertos' && estaPago(c)) return false;
+    if(modo==='abertos' && (de||ate) && !noIntervalo(c,de,ate)) return false;
+    if(!q) return true;
+    var cli = cliDe(c)||{};
+    if(campo==='nome'){
+      var nome = String(cli.nome||c.clienteNomeAntigo||c.fornecedor||'').toLowerCase();
+      return nome.indexOf(q.toLowerCase())>=0;
+    }
+    if(campo==='cod_venda') return codigoNorm(c.vendaNumero||c.numeroVenda||'')===codigoNorm(q) || codigoNorm(c.vendaId||'')===codigoNorm(q);
+    if(campo==='cod_parcela') return codigoNorm(c.numeroParcela||c.parcela||c.nroParcela||'')===codigoNorm(q);
+    if(campo==='cod_cliente') return codigoNorm(cli.codigo||cli.codigoAntigo||c.codClienteAntigo||'')===codigoNorm(q);
+    if(campo==='por_valor') return valorIgual(c.valor, q);
+    if(campo==='cod_caixa') return codigoNorm(c.codigo||c.legadoCodigo||c.id||'')===codigoNorm(q);
+    if(campo==='cod_pix') return codigoNorm(c.pixId||c.txid||c.codigoPix||'')===codigoNorm(q) || String(c.pixId||c.txid||c.codigoPix||'').toLowerCase()===q.toLowerCase();
+    if(campo==='cod_leitura') return codigoNorm(c.leituraNumero||c.leituraId||c.codLeitura||'')===codigoNorm(q);
+    return true;
+  });
+}
+
+window.FINANCEIRO_V52243_PURE = {
+  CAMPOS: CAMPOS,
+  codigoNorm: codigoNorm,
+  valorIgual: valorIgual,
+  filtraLancamentos: filtraLancamentos,
+  bateHoje: bateHoje,
+  noIntervalo: noIntervalo
+};
+
+if(typeof document==='undefined') return;
+
+function esc(s){ return typeof escapeHtml==='function'?escapeHtml(s):String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function money(v){ return typeof fmtMoney==='function'?fmtMoney(v):('R$ '+n(v).toFixed(2)); }
+function dataBR(v){ return typeof fmtDate==='function'?fmtDate(v):(v||'-'); }
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+function lerCampos(){
+  ST.campo = (document.getElementById('neo-fin-campo')||{}).value || ST.campo || 'nome';
+  ST.q = (document.getElementById('neo-search-fin')||{}).value || ST.q || '';
+  ST.de = (document.getElementById('neo-fin-de')||{}).value || ST.de || '';
+  ST.ate = (document.getElementById('neo-fin-ate')||{}).value || ST.ate || '';
+  ST.tipo = (document.getElementById('neo-fin-tipo')||{}).value || ST.tipo || 'todos';
+  ST.ordem = (document.getElementById('neo-fin-ordem')||{}).value || ST.ordem || 'venc-asc';
+}
+
+window.finBuscarV52243 = function(){
+  lerCampos();
+  window.renderFinanceiro();
+};
+window.finModoV52243 = function(modo){
+  ST.modo = modo||'hoje';
+  if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
+  window.renderFinanceiro();
+};
+
+if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFaturamento.__v52243fin){
+  var oldFat = window.vosConcluirFaturamento;
+  window.vosConcluirFaturamento = function(vendaId){
+    var r = oldFat.apply(this, arguments);
+    try{
+      if(typeof db==='undefined') return r;
+      var agora = new Date().toISOString();
+      (db.contasReceber||[]).forEach(function(c){
+        if(c && c.vendaId===vendaId && !c.criadoEm) c.criadoEm = agora;
+      });
+      if(typeof saveDB==='function') saveDB();
+    }catch(e){}
+    return r;
+  };
+  window.vosConcluirFaturamento.__v52243fin = true;
+}
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52243fin){
+  var oldF = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var sess = typeof getSession==='function'?getSession():null;
+    if(!sess || typeof db==='undefined') return oldF.apply(this, arguments);
+    var view = document.getElementById('view-financeiro') || (typeof ensureView==='function'?ensureView('financeiro'):null);
+    if(!view) return oldF.apply(this, arguments);
+    lerCampos();
+    var nomeCli = function(c){
+      var cli = (db.clientes||[]).find(function(x){ return x.id===c.clienteId; });
+      return cli?cli.nome:(c.clienteNomeAntigo||c.fornecedor||'');
+    };
+    var receber = (db.contasReceber||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var pagar = (db.contasPagar||[]).filter(function(c){ return c && (!c.empresaId||c.empresaId===sess.empresaId); });
+    var all = receber.map(function(c){ return {ref:c,_tipo:'Receber'}; }).concat(pagar.map(function(c){ return {ref:c,_tipo:'Pagar'}; }));
+    if(ST.tipo==='Receber') all=all.filter(function(x){ return x._tipo==='Receber'; });
+    if(ST.tipo==='Pagar') all=all.filter(function(x){ return x._tipo==='Pagar'; });
+    all = filtraLancamentos(all, {
+      campo:ST.campo, q:ST.q, modo:ST.modo, de:ST.de, ate:ST.ate, hoje:hoje(),
+      clienteDe:function(c){ return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{}; }
+    });
+    var ordFns = {
+      'venc-asc':function(a,b){ return String(a.ref.vencimento||'').localeCompare(String(b.ref.vencimento||'')); },
+      'venc-desc':function(a,b){ return String(b.ref.vencimento||'').localeCompare(String(a.ref.vencimento||'')); },
+      'valor-desc':function(a,b){ return n(b.ref.valor)-n(a.ref.valor); },
+      'valor-asc':function(a,b){ return n(a.ref.valor)-n(b.ref.valor); },
+      'desc':function(a,b){ return String(a.ref.descricao||'').localeCompare(String(b.ref.descricao||''),'pt-BR',{sensitivity:'base'}); }
+    };
+    all.sort(ordFns[ST.ordem]||ordFns['venc-asc']);
+    var lim = window.__finLim||400;
+    var mostrar = all.slice(0,lim);
+    var btnModo = function(id,label){
+      return '<button type="button" onclick="window.finModoV52243(\''+id+'\')" class="neo-tab '+(ST.modo===id?'active':'')+'">'+label+'</button>';
+    };
+    var statusPill = window.statusPillFin || function(st){ return '<span class="neo-status '+(st==='pago'?'ok':'wait')+'">'+esc(st||'aberto')+'</span>'; };
+    var datasAbertos = ST.modo==='abertos';
+    view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
+      +'<div class="neo-head"><div><h3>Financeiro</h3><p>Contas a receber e a pagar — duplo clique abre o histórico</p></div>'
+      +'<div class="neo-actions">'
+      +'<button onclick="window.finAcaoReceber&&window.finAcaoReceber()" class="neo-btn primary" data-fin-receber="1"><i class="ph ph-arrow-circle-down"></i>Receber</button>'
+      +(typeof window.finImprimirRecibo==='function'?'<button onclick="window.finImprimirRecibo()" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button>':'')
+      +'<button onclick="window.excluirFinanceiroSelecionados&&window.excluirFinanceiroSelecionados()" class="neo-btn danger btn-del-lote"><i class="ph ph-trash"></i>Excluir</button>'
+      +'</div></div>'
+      +'<div class="p-4 border-b bg-white space-y-3">'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +btnModo('hoje','Hoje')+btnModo('abertos','Abertos')+btnModo('todos','Todos')
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +'<select id="neo-fin-campo" class="neo-select !h-10 min-w-[160px]">'
+      +CAMPOS.map(function(it){ return '<option value="'+it[0]+'"'+(ST.campo===it[0]?' selected':'')+'>'+it[1]+'</option>'; }).join('')
+      +'</select>'
+      +'<input id="neo-search-fin" value="'+esc(ST.q)+'" class="neo-input min-w-[240px] flex-1 max-w-[420px]" placeholder="Buscar… (Enter ou lupa)">'
+      +'<button type="button" onclick="window.finBuscarV52243()" class="h-10 w-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button>'
+      +'</div>'
+      +'<div class="flex flex-wrap items-center justify-center gap-2">'
+      +(datasAbertos
+        ? '<label class="text-[11px] font-bold text-slate-500 uppercase">De</label><input id="neo-fin-de" type="date" value="'+esc(ST.de)+'" class="neo-input !w-[150px] !h-9">'
+          +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
+        : '<input id="neo-fin-de" type="hidden" value=""><input id="neo-fin-ate" type="hidden" value="">')
+      +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
+      +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
+      +'</div></div>'
+      +'<div class="overflow-auto max-h-[calc(100vh-360px)]"><table class="neo-table"><thead><tr><th class="w-8"><input type="checkbox" id="fin-check-all" title="Marcar todos" onchange="window.v52023MarcarTodos&&v52023MarcarTodos(\'fin\',this.checked)"></th><th>Tipo</th><th>Descrição</th><th>Cliente/Fornecedor</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>'
+      +(mostrar.map(function(x){
+        var c=x.ref; var nome=nomeCli(c); var tipo=x._tipo==='Receber'?'cr':'cp';
+        return '<tr class="cursor-pointer" ondblclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')"><td><input type="checkbox" class="fin-del-check" data-tipo="'+tipo+'" value="'+c.id+'" onclick="event.stopPropagation()" onchange="window.v52023AtualizarBotaoExcluir&&v52023AtualizarBotaoExcluir()"></td><td>'+x._tipo+'</td><td>'+esc(c.descricao||'')+(c.legadoCodigo?' <span class="text-[10px] text-slate-400">#'+esc(c.legadoCodigo)+'</span>':'')+'</td><td>'+esc(nome)+'</td><td><b class="'+(x._tipo==='Pagar'?'text-red-600':'')+'">'+money(c.valor||0)+'</b></td><td>'+dataBR(c.vencimento)+'</td><td>'+statusPill(c.status)+'</td><td><button onclick="historicoLancamento(\''+tipo+'\',\''+c.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhum lançamento encontrado</td></tr>')
+      +'</tbody></table></div>'
+      +(all.length>mostrar.length?'<div class="p-3 border-t text-center"><button onclick="window.__finLim='+(lim+300)+'; renderFinanceiro()" class="neo-btn">Mostrar mais</button></div>':'')
+      +'</div></div>';
+    var inp = document.getElementById('neo-search-fin');
+    if(inp){
+      inp.oninput = null;
+      inp.removeAttribute('oninput');
+      inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
+    }
+    ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem','neo-fin-de','neo-fin-ate'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52243(); };
+    });
+  };
+  window.renderFinanceiro.__v52243fin = true;
+  window.renderFinanceiro.__v52242fin = true;
+  window.renderFinanceiro.__v52213 = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 financeiro: filtros, lupa, hoje, faturadas');
+})();
+
+;
+
+/* ===== ajustes_v52243_financeiro_menu_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Menu Financeiro único: some o submenu "Contas e caixas".
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function semSubmenuFinanceiro(list){
+  return (list||[]).map(function(m){
+    if(!m || m.id!=='financeiro') return m;
+    var c = Object.assign({}, m);
+    c.items = [];
+    return c;
+  });
+}
+
+window.FINANCEIRO_MENU_V52243_PURE = { semSubmenuFinanceiro: semSubmenuFinanceiro };
+
+if(typeof document==='undefined') return;
+
+if(window.MENUS_ATALHOS_PURE && typeof window.MENUS_ATALHOS_PURE.menusPadrao==='function' && !window.MENUS_ATALHOS_PURE.menusPadrao.__v52243fin){
+  var old = window.MENUS_ATALHOS_PURE.menusPadrao;
+  window.MENUS_ATALHOS_PURE.menusPadrao = function(){
+    return semSubmenuFinanceiro(old.apply(this, arguments)||[]);
+  };
+  window.MENUS_ATALHOS_PURE.menusPadrao.__v52243fin = true;
+}
+
+function tirar(){
+  var menu = document.getElementById('menu-financeiro');
+  if(!menu) return;
+  menu.innerHTML = '';
+  if(menu.parentNode) menu.remove();
+}
+
+setTimeout(tirar, 200);
+setTimeout(tirar, 800);
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243fin){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    tirar();
+    return r;
+  };
+  window.pintarMenus.__v52243fin = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 financeiro: menu único');
+})();
+
+;
+
+/* ===== ajustes_v52243_menu_versao_boleto_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.43 — Menu da faixa aberta em azul; versão no rodapé; forma Boleto
+//            (baixa automática, igual Pix/Dinheiro).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.43';
+
+function viewsDoModulo(onclickHtml){
+  var s = String(onclickHtml||'');
+  var out = [];
+  var re = /navigateTo\('([^']+)'\)/g;
+  var m;
+  while((m=re.exec(s))) out.push(m[1]);
+  if(/novaVenda|openQuickOS|orcamentos/.test(s)) out.push('vendas','orcamentos','manutencao');
+  if(/contratos|parque|leituras|impressoras/.test(s)) out.push('contratos','parque','leituras','impressoras');
+  if(/clientes/.test(s)) out.push('clientes','produtos','impressoras');
+  if(/financeiro/.test(s)) out.push('financeiro');
+  if(/config|usuarios|auditoria/.test(s)) out.push('config','usuarios','auditoria');
+  if(/buscador-escola/.test(s)) out.push('buscador-escola');
+  if(/dashboard/.test(s)) out.push('dashboard');
+  return out;
+}
+function moduloAberto(view, onclickHtml){
+  return viewsDoModulo(onclickHtml).indexOf(view)>=0;
+}
+
+window.MENU_VERSAO_BOLETO_V52243_PURE = {
+  VERSAO: VERSAO,
+  viewsDoModulo: viewsDoModulo,
+  moduloAberto: moduloAberto
+};
+
+if(typeof document==='undefined') return;
+
+function garantirCss(){
+  if(document.getElementById('v52243-menu-css')) return;
+  var st = document.createElement('style');
+  st.id = 'v52243-menu-css';
+  st.textContent = '.module.mod-sel>button{background:#0a1e8a!important;color:#fff!important}.module.mod-sel>button i{color:#fff!important}';
+  document.head.appendChild(st);
+}
+
+function pintarMenuAberto(view){
+  garantirCss();
+  var row = document.querySelector('.module-row');
+  if(!row) return;
+  row.querySelectorAll('.module').forEach(function(mod){
+    var html = mod.innerHTML||'';
+    var on = moduloAberto(view, html);
+    if(on) mod.classList.add('mod-sel');
+    else mod.classList.remove('mod-sel');
+  });
+}
+
+function pintarRodape(){
+  var foot = document.querySelector('footer span:not(#footer-session)');
+  if(foot){
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+  }
+  var top = document.getElementById('app-title-version');
+  if(top && !/v5\.22\./.test(top.textContent||'')){
+    top.textContent = 'Sistema Digicopy v'+VERSAO;
+  }
+}
+
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52243menu){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(view){
+    var r = oldN.apply(this, arguments);
+    try{ pintarMenuAberto(view); pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52243menu = true;
+}
+
+if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243sel){
+  var oldP = window.pintarMenus;
+  window.pintarMenus = function(){
+    var r = oldP.apply(this, arguments);
+    try{
+      var vis = document.querySelector('.view:not(.hidden)');
+      var id = vis && vis.id && vis.id.replace(/^view-/,'');
+      if(id) pintarMenuAberto(id);
+      pintarRodape();
+    }catch(e){}
+    return r;
+  };
+  window.pintarMenus.__v52243sel = true;
+}
+
+setTimeout(pintarRodape, 200);
+
+function garantirBoleto(arr){
+  if(!arr || typeof arr.indexOf!=='function') return arr;
+  if(arr.indexOf('Boleto')<0) arr.push('Boleto');
+  return arr;
+}
+
+if(typeof window.FINANCEIRO_RECEBER_PURE==='object' && window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA){
+  garantirBoleto(window.FINANCEIRO_RECEBER_PURE.FORMAS_BAIXA);
+}
+
+function injetarBotaoBoleto(hostId, cls, escolher){
+  var box = document.getElementById(hostId);
+  if(!box) return;
+  if(/Boleto/.test(box.textContent||'')) return;
+  var b = document.createElement('button');
+  b.type='button';
+  b.setAttribute('data-forma','Boleto');
+  b.className=cls;
+  b.textContent='Boleto';
+  b.onclick=function(){ if(typeof window[escolher]==='function') window[escolher]('Boleto'); };
+  box.appendChild(b);
+}
+
+if(typeof window.finAcaoReceber==='function' && !window.finAcaoReceber.__v52243bol){
+  var oldRec = window.finAcaoReceber;
+  window.finAcaoReceber = function(){
+    var r = oldRec.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('fin-formas','fin-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','finEscolherFormaBaixa'); }, 30);
+    return r;
+  };
+  window.finAcaoReceber.__v52243bol = true;
+}
+
+if(typeof window.finConfirmarBaixa==='function' && !window.finConfirmarBaixa.__v52243bol){
+  var oldBaixa = window.finConfirmarBaixa;
+  window.finConfirmarBaixa = function(){
+    var el = document.getElementById('fin-forma-baixa');
+    if(el && el.value==='Boleto'){
+      var ids = window.__finBaixaIds||[];
+      var agora = new Date().toISOString();
+      var n=0;
+      ids.forEach(function(id){
+        var cr = (typeof db!=='undefined' && (db.contasReceber||[])).find(function(x){ return x && x.id===id; });
+        if(!cr || cr.status==='pago') return;
+        if(window.FINANCEIRO_RECEBER_PURE && window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo)
+          window.FINANCEIRO_RECEBER_PURE.aplicarBaixaTitulo(cr, 'Boleto', agora);
+        else { cr.status='pago'; cr.formaPagamento='Boleto'; cr.pagamentoData=agora; cr.baixaForma='Boleto'; }
+        n++;
+      });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof closeModal==='function') closeModal();
+      if(typeof renderFinanceiro==='function') renderFinanceiro();
+      if(typeof toast==='function') toast(n+' título(s) baixado(s) em Boleto','success');
+      return;
+    }
+    return oldBaixa.apply(this, arguments);
+  };
+  window.finConfirmarBaixa.__v52243bol = true;
+}
+
+if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento.__v52243bol){
+  var oldFat = window.vosAbrirRecebimento;
+  window.vosAbrirRecebimento = function(){
+    var r = oldFat.apply(this, arguments);
+    setTimeout(function(){ injetarBotaoBoleto('vos-formas','vos-forma h-[44px] rounded-xl border-2 text-[12.5px] font-bold border-slate-200 bg-white','vosEscolherForma'); }, 30);
+    return r;
+  };
+  window.vosAbrirRecebimento.__v52243bol = true;
+}
+
+console.log('[DIGICOPY] v5.22.43 menu azul, versão rodapé, Boleto');
+})();
+
+;
+
+/* ===== ajustes_v52244_orcamentos_autorizar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.44 — Link do cliente: Autorizar gera venda salva; Recusar some o
+//            orçamento. O sistema consulta a nuvem mesmo quando o GET
+//            responde USED.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+function vendaIdDe(o){ return 'vda_orc_' + String(o && o.id || ''); }
+
+function acharVenda(o){
+  if(!o || typeof db==='undefined') return null;
+  return (db.vendas||[]).find(function(v){
+    return v && (v.id===o.vendaId || v.origemOrcamentoId===o.id || v.id===vendaIdDe(o));
+  })||null;
+}
+
+function aplicarAprovado(o, j){
+  if(!o || typeof db==='undefined') return null;
+  if(j && j.vendaId) o.vendaId = o.vendaId || j.vendaId;
+  if(j && j.vendaNumero) o.vendaNumero = j.vendaNumero;
+  if(!o.vendaId) o.vendaId = vendaIdDe(o);
+  var ja = acharVenda(o);
+  if(ja){
+    o.status='aprovado';
+    o.vendaId=ja.id;
+    o.vendaNumero=ja.numero||o.vendaNumero;
+    return ja;
+  }
+  if(typeof window.aprovarOrcamentoInterno==='function'){
+    var venda = window.aprovarOrcamentoInterno(o.id, 'cliente');
+    if(venda && o.vendaId && venda.id!==o.vendaId && !(db.vendas||[]).some(function(v){ return v.id===o.vendaId && v!==venda; })){
+      venda.id = o.vendaId;
+    }
+    return venda;
+  }
+  o.status='aprovado';
+  return null;
+}
+
+function aplicarRecusado(o){
+  if(!o) return;
+  o.status='excluido';
+  o.recusadoEm = o.recusadoEm || new Date().toISOString();
+  if(typeof saveDB==='function') saveDB();
+}
+
+function aplicarDecisao(o, j){
+  if(!o || !j) return;
+  var st = txt(j.status).toLowerCase();
+  if(j.excluido) st = 'recusado';
+  if(j.error==='USED' && !st) st = 'recusado';
+  if(st==='aprovado'){
+    aplicarAprovado(o, j);
+    if(typeof saveDB==='function') saveDB();
+  } else if(st==='recusado' || st==='excluido'){
+    aplicarRecusado(o);
+  }
+}
+
+window.ORCAMENTOS_AUTORIZAR_V52244_PURE = {
+  vendaIdDe: vendaIdDe,
+  aplicarDecisao: function(o, j){
+    var c = Object.assign({}, o||{});
+    var st = txt(j && j.status).toLowerCase();
+    if(j && j.excluido) st='recusado';
+    if(st==='aprovado'){ c.status='aprovado'; c.vendaId=c.vendaId||(j&&j.vendaId)||vendaIdDe(c); }
+    if(st==='recusado') c.status='excluido';
+    return c;
+  }
+};
+
+if(typeof document==='undefined') return;
+
+function puxarAprovacoes(){
+  if(typeof db==='undefined') return;
+  (db.orcamentos||[]).filter(function(o){
+    if(!o || !o.token || o.status==='excluido' || o.status==='estornado') return false;
+    if(o.status==='aprovado' && acharVenda(o)) return false;
+    return true;
+  }).slice(0,15).forEach(function(o){
+    if(o.status==='aprovado' && o.vendaId && acharVenda(o)) return;
+    fetch(API+'/orcamento?c='+encodeURIComponent(o.token))
+      .then(function(r){ return r.json().then(function(j){ return j; }); })
+      .then(function(j){
+        if(!j) return;
+        aplicarDecisao(o, j);
+        if(typeof window.renderOrcamentos==='function') window.renderOrcamentos();
+        if(typeof window.renderVendas==='function') window.renderVendas();
+      }).catch(function(){});
+  });
+}
+
+window.puxarAprovacoesOrcamento = puxarAprovacoes;
+
+if(typeof window.DIGICOPY_CLOUD_SYNC==='object' && window.DIGICOPY_CLOUD_SYNC.tick && !window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc){
+  var oldT=window.DIGICOPY_CLOUD_SYNC.tick;
+  window.DIGICOPY_CLOUD_SYNC.tick=function(){
+    var p=oldT.apply(this, arguments);
+    Promise.resolve(p).then(function(){ setTimeout(puxarAprovacoes, 300); }).catch(function(){});
+    return p;
+  };
+  window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc=true;
+}
+
+if(typeof window.salvarOrcamentoTela==='function' && !window.salvarOrcamentoTela.__v52244sync){
+  var oldSal=window.salvarOrcamentoTela;
+  window.salvarOrcamentoTela=function(){
+    var r=oldSal.apply(this, arguments);
+    try{
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
+        window.DIGICOPY_CLOUD_SYNC.tick();
+      }
+    }catch(e){}
+    return r;
+  };
+  window.salvarOrcamentoTela.__v52244sync=true;
+}
+
+if(typeof window.imprimirOrcamento==='function' && !window.imprimirOrcamento.__v52244sync){
+  var oldImp=window.imprimirOrcamento;
+  window.imprimirOrcamento=function(){
+    try{
+      if(typeof window.salvarOrcamentoTela==='function') window.salvarOrcamentoTela();
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick==='function'){
+        window.DIGICOPY_CLOUD_SYNC.tick();
+      }
+    }catch(e){}
+    return oldImp.apply(this, arguments);
+  };
+  window.imprimirOrcamento.__v52244sync=true;
+}
+
+if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52244orc){
+  var oldR=window.renderOrcamentos;
+  window.renderOrcamentos=function(){
+    var r=oldR.apply(this, arguments);
+    try{
+      var agora=Date.now();
+      if(!window.__orcPuxarEm || agora-window.__orcPuxarEm>8000){
+        window.__orcPuxarEm=agora;
+        puxarAprovacoes();
+      }
+    }catch(e){}
+    return r;
+  };
+  window.renderOrcamentos.__v52244orc=true;
+}
+
+setTimeout(puxarAprovacoes, 2500);
+setInterval(puxarAprovacoes, 20000);
+
+console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
+})();
+
+;
+
+/* ===== ajustes_v52244_financeiro_datas_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.44 — Financeiro: De / Até sempre visíveis. Não filtram em Hoje.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+window.FINANCEIRO_DATAS_V52244_PURE = {
+  datasVisiveis: true,
+  aplicaDatas: function(modo){ return modo!=='hoje'; }
+};
+
+if(typeof document==='undefined') return;
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+window.finModoV52243 = function(modo){
+  ST.modo = modo||'hoje';
+  if(modo==='hoje'){ ST.de=''; ST.ate=''; }
+  if(typeof window.renderFinanceiro==='function') window.renderFinanceiro();
+};
+window.finModoV52244 = window.finModoV52243;
+
+function garantirDatas(){
+  var de = document.getElementById('neo-fin-de');
+  var ate = document.getElementById('neo-fin-ate');
+  if(!de || !ate) return;
+  if(de.type==='hidden'){
+    de.type='date';
+    de.className='neo-input !w-[150px] !h-9';
+  }
+  if(ate.type==='hidden'){
+    ate.type='date';
+    ate.className='neo-input !w-[150px] !h-9';
+  }
+  de.value = ST.de||de.value||'';
+  ate.value = ST.ate||ate.value||'';
+  if(!document.getElementById('neo-fin-de-lab')){
+    var labDe=document.createElement('label');
+    labDe.id='neo-fin-de-lab';
+    labDe.className='text-[11px] font-bold text-slate-500 uppercase';
+    labDe.textContent='De';
+    de.parentNode.insertBefore(labDe, de);
+  }
+  if(!document.getElementById('neo-fin-ate-lab')){
+    var labAte=document.createElement('label');
+    labAte.id='neo-fin-ate-lab';
+    labAte.className='text-[11px] font-bold text-slate-500 uppercase';
+    labAte.textContent='Até';
+    ate.parentNode.insertBefore(labAte, ate);
+  }
+  var trava = ST.modo==='hoje';
+  de.disabled = trava;
+  ate.disabled = trava;
+  de.onchange = function(){ ST.de=de.value||''; if(typeof window.finBuscarV52243==='function') window.finBuscarV52243(); else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro(); };
+  ate.onchange = function(){ ST.ate=ate.value||''; if(typeof window.finBuscarV52243==='function') window.finBuscarV52243(); else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro(); };
+}
+
+if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraLancamentos==='function' && !window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52244){
+  var oldF = window.FINANCEIRO_V52243_PURE.filtraLancamentos;
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos = function(list, opts){
+    var out = oldF(list, opts)||[];
+    opts = opts||{};
+    if(opts.modo==='hoje') return out;
+    var de = txt(opts.de), ate = txt(opts.ate);
+    if(!de && !ate) return out;
+    return out.filter(function(item){
+      var c = item.ref||item;
+      return window.FINANCEIRO_V52243_PURE.noIntervalo(c, de, ate);
+    });
+  };
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52244 = true;
+}
+
+function pintarRodape(){
+  var foot = document.querySelector('footer span:not(#footer-session)');
+  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v5.22.44';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52244ver = true;
+}
+setTimeout(pintarRodape, 200);
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52244datas){
+  var oldR = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var r = oldR.apply(this, arguments);
+    try{ garantirDatas(); }catch(e){}
+    return r;
+  };
+  window.renderFinanceiro.__v52244datas = true;
+}
+
+console.log('[DIGICOPY] v5.22.44 financeiro: De/Até visíveis');
+})();
+
+;
+
+/* ===== ajustes_v52245_impressora_serial_ocultar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.45 — Impressora no contrato:
+//            1) pesquisa só o serial; 2) abre a tela completa (com ou sem
+//            cadastro em outro cliente); 3) se achar, preenche o resto;
+//            4) aviso de remanejo só no SALVAR; 5) nova sem outro contrato
+//            só confirma sucesso; 6) Ocultar / Desocultar (status oculta).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function acharEquipPorSerial(dbRef, serie, empId){
+  var k = up(serie);
+  if(!k) return null;
+  return ((dbRef&&dbRef.equipamentos)||[]).find(function(e){
+    if(!e) return false;
+    if(empId && e.empresaId && e.empresaId!==empId) return false;
+    return up(e.serie)===k || up(e.patrimonio)===k;
+  })||null;
+}
+function parquesDoEquip(dbRef, eqId){
+  return ((dbRef&&dbRef.parque)||[]).filter(function(p){ return p && p.equipamentoId===eqId; });
+}
+function parqueOutroCliente(dbRef, eq, clienteId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    if(!p || !p.clienteId || p.clienteId===clienteId) return false;
+    var st = String(p.status||'ativo');
+    return st==='ativo' || st==='oculta';
+  })||null;
+}
+function snapshotFrozen(eq, p){
+  return {
+    modelo: (eq&&eq.modelo)||'',
+    serie: (eq&&eq.serie)||'',
+    patrimonio: (eq&&eq.patrimonio)||'',
+    setor: (p&&p.setor)||'',
+    localInstalacao: (p&&(p.localInstalacao||p.enderecoInstalacao))||'',
+    contadorPB: n(eq&&eq.contadorPB),
+    contadorCor: n(eq&&eq.contadorCor),
+    congeladoEm: new Date().toISOString()
+  };
+}
+function msgRemanejar(nomeCliente, contador){
+  return 'impressora cadastrada em '+(nomeCliente||'outro cliente')+' com o contador '+(contador==null?'-':contador)+', deseja remanejar essa impressora pra esse cadastro?';
+}
+function msgOcultar(){
+  return 'Deseja remanejar essa impressora? Ela vai para Remanejadas com status oculta.';
+}
+function msgDesocultar(){
+  return 'Deseja desocultar essa impressora? Ela volta ao cadastro normal.';
+}
+
+window.IMPRESSORA_SERIAL_OCULTAR_V52245_PURE = {
+  acharEquipPorSerial: acharEquipPorSerial,
+  parqueOutroCliente: parqueOutroCliente,
+  snapshotFrozen: snapshotFrozen,
+  msgRemanejar: msgRemanejar,
+  msgOcultar: msgOcultar,
+  msgDesocultar: msgDesocultar
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,'Impressora'); if(typeof toast==='function') toast(m,'info'); }
+function nomeCli(id){
+  if(typeof db==='undefined') return '';
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; });
+  return (c&&c.nome)||'outro cliente';
+}
+
+function esconderDepoisSerial(){
+  ['kr-imp-modelo','kr-imp-patr','kr-imp-serie','kr-imp-dept','kr-imp-local'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    var box = el.closest('.grid') || el.parentElement;
+    if(box){ box.classList.add('v52245-depois-serial'); box.style.display='none'; }
+  });
+  document.querySelectorAll('#modal-body .border.rounded-xl.p-3').forEach(function(el){
+    el.classList.add('v52245-depois-serial');
+    el.style.display='none';
+  });
+}
+function mostrarDepoisSerial(){
+  document.querySelectorAll('.v52245-depois-serial, .v52243-depois-serial').forEach(function(el){
+    el.style.display='';
+    el.classList.remove('v52245-depois-serial');
+    el.classList.remove('v52243-depois-serial');
+  });
+}
+
+function injetarOcultar(parqueId){
+  if(!parqueId || document.getElementById('kr-imp-ocultar-box')) return;
+  if(typeof db==='undefined') return;
+  var p = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+  if(!p) return;
+  var body = document.getElementById('modal-body');
+  if(!body) return;
+  var box = document.createElement('label');
+  box.id = 'kr-imp-ocultar-box';
+  box.className = 'flex items-center gap-2 rounded-xl border bg-slate-50 p-3 font-bold text-[13px]';
+  if(p.status==='oculta'){
+    box.innerHTML = '<input id="kr-imp-desocultar" type="checkbox" class="w-4 h-4"> Desocultar esta impressora';
+  } else {
+    box.innerHTML = '<input id="kr-imp-ocultar" type="checkbox" class="w-4 h-4"> Ocultar';
+  }
+  body.appendChild(box);
+}
+
+function passoSerialNovo(){
+  if(!window.__impPassoSerial) return;
+  if(!document.getElementById('kr-imp-busca')) return;
+  esconderDepoisSerial();
+  var foot = document.getElementById('modal-footer');
+  if(!foot) return;
+  var salvar = null;
+  foot.querySelectorAll('button').forEach(function(b){
+    if(/salvar/i.test(b.textContent||'')) salvar = b;
+  });
+  if(salvar) salvar.style.display='none';
+  function avancar(){
+    var chave = txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    if(!chave){ aviso('Informe o serial.'); return; }
+    if(typeof window.reconhecerImpressoraContrato==='function') window.reconhecerImpressoraContrato();
+    mostrarDepoisSerial();
+    var btn = document.getElementById('kr-imp-avancar');
+    if(btn) btn.remove();
+    if(salvar) salvar.style.display='';
+    window.__impPassoSerial = false;
+  }
+  var busca = document.querySelector('#modal-body button[onclick*="reconhecerImpressoraContrato"]');
+  if(busca && !busca.__v52245av){
+    busca.__v52245av = true;
+    busca.addEventListener('click', function(){ setTimeout(avancar, 0); });
+  }
+  var inp = document.getElementById('kr-imp-busca');
+  if(inp && !inp.__v52245av){
+    inp.__v52245av = true;
+    inp.addEventListener('keydown', function(e){
+      if(e.key==='Enter'){ e.preventDefault(); avancar(); }
+    });
+  }
+  if(!document.getElementById('kr-imp-avancar')){
+    var btn = document.createElement('button');
+    btn.id='kr-imp-avancar';
+    btn.type='button';
+    btn.className='h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold';
+    btn.textContent='Avançar';
+    btn.onclick=avancar;
+    foot.appendChild(btn);
+  }
+}
+
+if(typeof window.abrirModalEquipamentoContrato==='function' && !window.abrirModalEquipamentoContrato.__v52245imp){
+  var oldAbrir = window.abrirModalEquipamentoContrato;
+  window.abrirModalEquipamentoContrato = function(contratoId, parqueId){
+    if(parqueId && typeof db!=='undefined'){
+      var p = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(p && p.status==='remanejada'){
+        aviso('Impressora remanejada. Histórico congelado — não edita.');
+        return;
+      }
+    }
+    window.__impPassoSerial = !parqueId;
+    var r = oldAbrir.apply(this, arguments);
+    try{
+      if(!parqueId){
+        setTimeout(passoSerialNovo, 0);
+        setTimeout(passoSerialNovo, 80);
+      } else {
+        setTimeout(function(){ injetarOcultar(parqueId); }, 0);
+        setTimeout(function(){ injetarOcultar(parqueId); }, 80);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.abrirModalEquipamentoContrato.__v52245imp = true;
+}
+
+function marcarRemanejo(outro, eq, contrato){
+  if(!outro) return;
+  outro.status = 'remanejada';
+  outro.frozen = snapshotFrozen(eq, outro);
+  outro.remanejadoEm = new Date().toISOString();
+  outro.remanejadoParaContratoId = contrato.id;
+  outro.remanejadoParaClienteId = contrato.clienteId;
+}
+
+if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpressoraContrato.__v52245imp){
+  var oldSal = window.salvarImpressoraContrato;
+  window.salvarImpressoraContrato = function(contratoId, parqueId){
+    var s = typeof getSession==='function'?getSession():null;
+    if(!s || typeof db==='undefined') return oldSal.apply(this, arguments);
+    var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+    if(!c) return oldSal.apply(this, arguments);
+
+    var pe = parqueId ? (db.parque||[]).find(function(x){ return x.id===parqueId; }) : null;
+    if(pe && pe.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+
+    var querOcultar = !!(document.getElementById('kr-imp-ocultar')&&document.getElementById('kr-imp-ocultar').checked);
+    var querDesocultar = !!(document.getElementById('kr-imp-desocultar')&&document.getElementById('kr-imp-desocultar').checked);
+
+    var serie = txt(document.getElementById('kr-imp-serie')&&document.getElementById('kr-imp-serie').value)
+      || txt(document.getElementById('kr-imp-busca')&&document.getElementById('kr-imp-busca').value);
+    var eq = acharEquipPorSerial(db, serie, s.empresaId);
+    var outro = parqueOutroCliente(db, eq, c.clienteId);
+
+    var gravar = function(depois){
+      var r = oldSal.apply(window, [contratoId, parqueId]);
+      if(typeof depois==='function') depois();
+      return r;
+    };
+
+    if(parqueId && pe && querOcultar){
+      var goOcultar = function(){
+        gravar(function(){
+          var atual = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+          if(atual){
+            atual.status = 'oculta';
+            atual.ocultoEm = new Date().toISOString();
+          }
+          if(typeof saveDB==='function') saveDB();
+        });
+      };
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msgOcultar(),'Ocultar impressora').then(function(ok){ if(ok) goOcultar(); });
+        return;
+      }
+      return;
+    }
+
+    if(parqueId && pe && pe.status==='oculta' && querDesocultar){
+      var goShow = function(){
+        gravar(function(){
+          var atual = (db.parque||[]).find(function(x){ return x.id===parqueId; });
+          if(atual){
+            atual.status = 'ativo';
+            atual.ocultoEm = null;
+            atual.desocultoEm = new Date().toISOString();
+          }
+          if(typeof saveDB==='function') saveDB();
+          if(typeof window.openContratoCompleto==='function') window.openContratoCompleto(contratoId);
+        });
+      };
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msgDesocultar(),'Desocultar impressora').then(function(ok){ if(ok) goShow(); });
+        return;
+      }
+      return;
+    }
+
+    if(outro && !parqueId){
+      var cont = n((eq&&eq.contadorPB) || (outro.medidores&&outro.medidores.pretoA4&&outro.medidores.pretoA4.contadorAnterior));
+      var msg = msgRemanejar(nomeCli(outro.clienteId), cont);
+      var goRem = function(){
+        marcarRemanejo(outro, eq, c);
+        if(typeof saveDB==='function') saveDB();
+        gravar();
+      };
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msg,'Remanejar impressora').then(function(ok){ if(ok) goRem(); });
+        return;
+      }
+      return;
+    }
+
+    return gravar();
+  };
+  window.salvarImpressoraContrato.__v52245imp = true;
+}
+
+function htmlLista(c, lista, titulo, editar){
+  return '<div class="border rounded-xl overflow-hidden mt-3"><div class="bg-slate-50 px-4 py-3 border-b"><b>'+esc(titulo)+'</b></div>'
+    +'<div class="overflow-auto max-h-[280px]"><table class="w-full text-left text-[12.5px]"><thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-slate-500"><tr>'
+    +'<th class="px-4 py-2.5">Patrimônio</th><th class="px-4 py-2.5">Modelo</th><th class="px-4 py-2.5">Serial</th><th class="px-4 py-2.5">Departamento / Local</th><th class="px-4 py-2.5">Status</th>'
+    +(editar?'<th class="px-4 py-2.5 text-right">Editar</th>':'')+'</tr></thead><tbody class="divide-y">'
+    +(lista.map(function(p){
+      var e = ((typeof db!=='undefined'&&db.equipamentos)||[]).find(function(x){ return x.id===p.equipamentoId; })||{};
+      var fr = p.frozen||{};
+      var pode = editar || p.status==='oculta';
+      var pat = pode ? (e.patrimonio||p.patrimonio||'-') : (fr.patrimonio||e.patrimonio||'-');
+      var mod = pode ? (e.modelo||'') : (fr.modelo||e.modelo||'');
+      var ser = pode ? (e.serie||'') : (fr.serie||e.serie||'');
+      var set = pode ? (p.setor||'Geral') : (fr.setor||p.setor||'Geral');
+      var loc = pode ? (p.localInstalacao||'') : (fr.localInstalacao||p.localInstalacao||'');
+      var trOpen = pode ? 'ondblclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="hover:bg-slate-50 cursor-pointer"' : 'class="bg-slate-50 text-slate-500"';
+      return '<tr '+trOpen+'><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">'+esc(pat)+'</td><td class="px-4 py-2.5 font-semibold">'+esc(mod)+'</td><td class="px-4 py-2.5 font-mono">'+esc(ser)+'</td><td class="px-4 py-2.5">'+esc(set)+'<br><span class="text-[11px] text-slate-500">'+esc(loc)+'</span></td><td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-bold uppercase">'+esc(p.status||'ativo')+'</span></td>'
+        +(editar||p.status==='oculta'?'<td class="px-4 py-2.5 text-right"><button onclick="abrirModalEquipamentoContrato(\''+(p.contratoId||c.id)+'\',\''+p.id+'\')" class="w-8 h-8 rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td>':'')
+        +'</tr>';
+    }).join('') || '<tr><td colspan="6" class="p-6 text-center text-slate-400">Nenhuma</td></tr>')
+    +'</tbody></table></div></div>';
+}
+
+function pintarListas(contratoId){
+  if(typeof db==='undefined') return;
+  var c = (db.contratos||[]).find(function(x){ return x.id===contratoId; });
+  if(!c) return;
+  var body = document.getElementById('modal-body');
+  if(!body) return;
+  var todas = (db.parque||[]).filter(function(p){
+    return p && (p.contratoId===c.id || (c.clienteId && p.clienteId===c.clienteId));
+  });
+  var ativas = todas.filter(function(p){ return p.status==='ativo'; });
+  var rem = todas.filter(function(p){ return p.status==='remanejada' || p.status==='oculta'; });
+  var html = htmlLista(c, ativas, 'Impressoras ativas', true) + htmlLista(c, rem, 'Impressoras remanejadas (histórico)', false);
+  var old = document.getElementById('v52245-listas-imp') || document.getElementById('v52243-listas-imp') || document.getElementById('v52242-listas-imp');
+  if(old){ old.id='v52245-listas-imp'; old.innerHTML = html; return; }
+  var wrap = document.createElement('div');
+  wrap.id = 'v52245-listas-imp';
+  wrap.innerHTML = html;
+  var cand = null;
+  body.querySelectorAll('.border.rounded-xl.overflow-hidden').forEach(function(el){
+    if(/impressora/i.test(el.textContent||'')) cand = el;
+  });
+  if(cand) cand.replaceWith(wrap);
+  else body.appendChild(wrap);
+}
+
+if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52245imp){
+  var oldOpen = window.openContratoCompleto;
+  window.openContratoCompleto = function(contratoId){
+    var r = oldOpen.apply(this, arguments);
+    try{
+      setTimeout(function(){ pintarListas(contratoId); }, 0);
+      setTimeout(function(){ pintarListas(contratoId); }, 80);
+    }catch(e){}
+    return r;
+  };
+  window.openContratoCompleto.__v52245imp = true;
+}
+
+if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato==='function' && !window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52245){
+  var oldP = window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato;
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato = function(dbRef, contrato, opts){
+    var list = oldP(dbRef, contrato, opts)||[];
+    if(opts && opts.todos) return list;
+    return list.filter(function(p){ return p && p.status!=='remanejada' && p.status!=='oculta'; });
+  };
+  window.CONTRATOS_REFINO_PURE.parquesDoClienteContrato.__v52245 = true;
+}
+
+console.log('[DIGICOPY] v5.22.45 impressora: serial, remanejo no salvar, ocultar');
+})();
+
+;
+
+/* ===== ajustes_v52245_leitura_apagar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.45 — Apagar leitura: confirma no popup do sistema e devolve o
+//            contador da impressora ao valor de antes do lançamento.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+
+window.LEITURA_APAGAR_V52245_PURE = {
+  contadorDepoisDeApagar: function(eq, leitura){
+    var out = Object.assign({}, eq||{});
+    if(leitura && leitura.contadorPBAnterior!=null && leitura.contadorPBAnterior!==''){
+      out.contadorPB = n(leitura.contadorPBAnterior);
+    }
+    if(leitura && leitura.contadorCorAnterior!=null && leitura.contadorCorAnterior!==''){
+      out.contadorCor = n(leitura.contadorCorAnterior);
+    }
+    return out;
+  },
+  mensagem: 'Deseja apagar essa leitura? Ela fará os contadores voltar ao que estava antes de lançar.'
+};
+
+if(typeof document==='undefined') return;
+
+window.deleteLeituraContrato = function(leiId, contratoId){
+  var msg = window.LEITURA_APAGAR_V52245_PURE.mensagem;
+  var run = function(){
+    if(typeof db==='undefined') return;
+    var l = (db.leituras||[]).find(function(x){ return x && x.id===leiId; });
+    if(l && l.equipamentoId){
+      var eq = (db.equipamentos||[]).find(function(e){ return e && e.id===l.equipamentoId; });
+      if(eq){
+        var next = window.LEITURA_APAGAR_V52245_PURE.contadorDepoisDeApagar(eq, l);
+        eq.contadorPB = next.contadorPB;
+        eq.contadorCor = next.contadorCor;
+      }
+    }
+    db.contasReceber = (db.contasReceber||[]).filter(function(cr){ return !cr || cr.leituraId!==leiId; });
+    db.leituras = (db.leituras||[]).filter(function(x){ return x && x.id!==leiId; });
+    if(typeof saveDB==='function') saveDB();
+    if(typeof abrirLeiturasContrato==='function') abrirLeiturasContrato(contratoId);
+    if(typeof renderFinanceiro==='function') renderFinanceiro();
+    if(typeof toast==='function') toast('Leitura apagada. Contadores voltaram.','success');
+  };
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema(msg,'Apagar leitura').then(function(ok){ if(ok) run(); });
+    return;
+  }
+  run();
+};
+
+console.log('[DIGICOPY] v5.22.45 leitura: apagar devolve contador');
+})();
+
+;
+
+/* ===== ajustes_v52245_financeiro_hist_datas_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.45 — Financeiro: histórico mostra código da venda, da leitura e do
+//            chamado; De / Até sempre visíveis (em Hoje não filtram).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function codigoNorm(v){
+  var d=String(v==null?'':v).replace(/\D/g,'');
+  if(!d) return '';
+  return d.replace(/^0+/,'')||'0';
+}
+function esc(s){
+  return typeof escapeHtml==='function'?escapeHtml(s):String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});
+}
+
+function refsDoLancamento(c, dbRef){
+  dbRef = dbRef || (typeof db!=='undefined'?db:{});
+  var out = [];
+  if(!c) return out;
+  var venda = null;
+  if(c.vendaId){
+    venda = ((dbRef.vendas)||[]).find(function(v){ return v && v.id===c.vendaId; })||null;
+    out.push({tipo:'venda', codigo: txt((venda&&(venda.numero||venda.codigo))||c.vendaNumero||c.numeroVenda||codigoNorm(c.vendaId))});
+  }
+  if(c.leituraId){
+    var l = ((dbRef.leituras)||[]).find(function(x){ return x && x.id===c.leituraId; })||null;
+    out.push({tipo:'leitura', codigo: txt((l&&(l.numero||l.codigo||l.codigoAntigo))||c.leituraNumero||c.codLeitura||codigoNorm(c.leituraId))});
+  }
+  var os = null;
+  if(c.osId || c.chamadoId){
+    var oid = c.osId||c.chamadoId;
+    os = ((dbRef.os)||[]).find(function(x){ return x && x.id===oid; })||null;
+  }
+  if(!os && venda){
+    os = venda.os || ((dbRef.os)||[]).find(function(x){ return x && (x.vendaId===venda.id || x.id===venda.osId); })||null;
+  }
+  if(os){
+    out.push({tipo:'chamado', codigo: txt(os.numero||os.codigo||c.osNumero||'')});
+  }
+  return out.filter(function(r){ return r.codigo; });
+}
+
+function htmlRefs(refs){
+  if(!refs || !refs.length) return '';
+  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
+  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
+    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
+  }).join(' • ')+'</p>';
+}
+
+window.FINANCEIRO_HIST_DATAS_V52245_PURE = {
+  refsDoLancamento: refsDoLancamento,
+  datasSempreVisiveis: true,
+  aplicaDatas: function(modo){ return modo!=='hoje'; }
+};
+
+if(typeof document==='undefined') return;
+
+var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+
+window.finModoV52243 = function(modo){
+  ST.modo = modo||'hoje';
+  if(typeof window.renderFinanceiro==='function') window.renderFinanceiro();
+};
+window.finModoV52244 = window.finModoV52243;
+window.finModoV52245 = window.finModoV52243;
+
+if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraLancamentos==='function' && !window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52245){
+  var oldF = window.FINANCEIRO_V52243_PURE.filtraLancamentos;
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos = function(list, opts){
+    var out = oldF(list, opts)||[];
+    opts = opts||{};
+    if(opts.modo==='hoje') return out;
+    var de = txt(opts.de), ate = txt(opts.ate);
+    if(!de && !ate) return out;
+    return out.filter(function(item){
+      var c = item.ref||item;
+      return window.FINANCEIRO_V52243_PURE.noIntervalo(c, de, ate);
+    });
+  };
+  window.FINANCEIRO_V52243_PURE.filtraLancamentos.__v52245 = true;
+}
+
+function garantirDatas(){
+  var view = document.getElementById('view-financeiro');
+  if(!view) return;
+  var de = document.getElementById('neo-fin-de');
+  var ate = document.getElementById('neo-fin-ate');
+  function ligar(el, qual){
+    if(!el) return;
+    if(el.type==='hidden'){
+      el.type='date';
+      el.className='neo-input !w-[150px] !h-9';
+    }
+    el.disabled = false;
+    el.style.display = '';
+    el.removeAttribute('hidden');
+    if(qual==='de') el.value = ST.de||el.value||'';
+    if(qual==='ate') el.value = ST.ate||el.value||'';
+    el.onchange = function(){
+      if(qual==='de') ST.de = el.value||'';
+      else ST.ate = el.value||'';
+      if(typeof window.finBuscarV52243==='function') window.finBuscarV52243();
+      else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro();
+    };
+  }
+  if(!de || !ate){
+    var host = view.querySelector('.p-4.border-b .flex.flex-wrap.items-center.justify-center.gap-2:last-child')
+      || view.querySelector('.p-4.border-b');
+    if(!host) return;
+    var wrap = document.getElementById('v52245-fin-datas');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id='v52245-fin-datas';
+      wrap.className='flex flex-wrap items-center justify-center gap-2';
+      wrap.innerHTML = '<label class="text-[11px] font-bold text-slate-500 uppercase">De</label>'
+        +'<input id="neo-fin-de" type="date" class="neo-input !w-[150px] !h-9" value="'+esc(ST.de||'')+'">'
+        +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label>'
+        +'<input id="neo-fin-ate" type="date" class="neo-input !w-[150px] !h-9" value="'+esc(ST.ate||'')+'">';
+      host.insertBefore(wrap, host.firstChild);
+    }
+    de = document.getElementById('neo-fin-de');
+    ate = document.getElementById('neo-fin-ate');
+  } else {
+    if(!document.getElementById('neo-fin-de-lab') && de.parentNode){
+      var labDe=document.createElement('label');
+      labDe.id='neo-fin-de-lab';
+      labDe.className='text-[11px] font-bold text-slate-500 uppercase';
+      labDe.textContent='De';
+      de.parentNode.insertBefore(labDe, de);
+    }
+    if(!document.getElementById('neo-fin-ate-lab') && ate.parentNode){
+      var labAte=document.createElement('label');
+      labAte.id='neo-fin-ate-lab';
+      labAte.className='text-[11px] font-bold text-slate-500 uppercase';
+      labAte.textContent='Até';
+      ate.parentNode.insertBefore(labAte, ate);
+    }
+  }
+  ligar(de,'de');
+  ligar(ate,'ate');
+}
+
+if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52245datas){
+  var oldR = window.renderFinanceiro;
+  window.renderFinanceiro = function(){
+    var r = oldR.apply(this, arguments);
+    try{ garantirDatas(); }catch(e){}
+    return r;
+  };
+  window.renderFinanceiro.__v52245datas = true;
+}
+
+if(typeof window.historicoLancamento==='function' && !window.historicoLancamento.__v52245hist){
+  var oldH = window.historicoLancamento;
+  window.historicoLancamento = function(tipo,id){
+    var r = oldH.apply(this, arguments);
+    try{
+      if(typeof db==='undefined') return r;
+      var arr = tipo==='cp'?db.contasPagar:db.contasReceber;
+      var c = (arr||[]).find(function(x){ return x && x.id===id; });
+      var refs = refsDoLancamento(c, db);
+      var body = document.getElementById('modal-body');
+      if(body && refs.length && !document.getElementById('v52245-fin-refs')){
+        var card = body.querySelector('.neo-card');
+        var box = document.createElement('div');
+        box.id='v52245-fin-refs';
+        box.innerHTML = htmlRefs(refs);
+        if(card) card.appendChild(box);
+        else body.insertBefore(box, body.firstChild);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.historicoLancamento.__v52245hist = true;
+}
+
+console.log('[DIGICOPY] v5.22.45 financeiro: códigos no histórico, De/Até visíveis');
+})();
+
+;
+
+/* ===== ajustes_v52245_rodape_versao_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.45 — Versão sozinha no meio do rodapé.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.45';
+
+window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
+
+if(typeof document==='undefined') return;
+
+function pintarRodape(){
+  var foot = document.querySelector('footer');
+  if(!foot) return;
+  foot.className = 'h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60';
+  var left = foot.querySelector('span:not(#footer-session):not(#footer-version)');
+  var sess = document.getElementById('footer-session');
+  var ver = document.getElementById('footer-version');
+  if(!ver){
+    ver = document.createElement('span');
+    ver.id = 'footer-version';
+    ver.className = 'text-center font-bold text-slate-500';
+    if(sess) foot.insertBefore(ver, sess);
+    else foot.appendChild(ver);
+  }
+  ver.textContent = 'v'+VERSAO;
+  if(left){
+    left.textContent = 'Sistema Digicopy • Banco na Nuvem';
+    left.classList.add('text-left');
+  }
+  if(sess) sess.classList.add('text-right');
+}
+
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52245ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52245ver = true;
+}
+setTimeout(pintarRodape, 200);
+setTimeout(pintarRodape, 800);
+
+console.log('[DIGICOPY] v5.22.45 rodapé: versão no meio');
+})();
+
+;
+
+/* ===== ajustes_v52245_venda_salvar_print_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.45 — Venda: Salvar grava e fecha (sem aviso no mesmo modal);
+//            some o botão Sair (fica só o X); faturar não abre impressão.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+window.V52245_VENDA_PURE = {
+  precisaCliente: function(form){ return !!(form && form.cliente); },
+  faturarNaoImprime: true
+};
+
+if(typeof document==='undefined') return;
+
+function telaVenda(){
+  return !!(document.getElementById('vos-itens-body') || document.getElementById('vos-cli-search'));
+}
+
+function tirarBotaoSair(){
+  var foot = document.getElementById('modal-footer');
+  if(!foot || !telaVenda()) return;
+  foot.querySelectorAll('button').forEach(function(b){
+    var t = String(b.textContent||'').trim();
+    if(/^sair$/i.test(t) || /ph-x-circle/.test(b.innerHTML||'') && /sair/i.test(t)){
+      b.remove();
+    }
+  });
+}
+
+function gravarEFechar(){
+  var f=window.__vosForm;
+  if(!f) return false;
+  if(!f.cliente){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Escolha o cliente.','Venda');
+    else if(typeof toast==='function') toast('Selecione o cliente','error');
+    return false;
+  }
+  var gravar = window.vosGravarVenda;
+  if(typeof gravar!=='function'){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Não foi possível gravar a venda.','Venda');
+    return false;
+  }
+  window.__vosIgnorarSair=true;
+  var v=gravar(true);
+  if(!v){
+    window.__vosIgnorarSair=false;
+    return false;
+  }
+  window.__vosPersistida=true;
+  window.__vosDirty=false;
+  if(typeof toast==='function') toast('Venda '+v.numero+' salva','success');
+  if(typeof closeModal==='function') closeModal(true);
+  window.__vosIgnorarSair=false;
+  if(typeof renderVendas==='function') renderVendas();
+  return true;
+}
+
+window.vosSalvarVenda=function(){
+  gravarEFechar();
+};
+
+['novaVenda','vosCarregarVendaNaTela'].forEach(function(nome){
+  if(typeof window[nome]!=='function' || window[nome].__v52245sair) return;
+  var old=window[nome];
+  window[nome]=function(){
+    var r=old.apply(this, arguments);
+    setTimeout(tirarBotaoSair, 0);
+    setTimeout(tirarBotaoSair, 80);
+    return r;
+  };
+  window[nome].__v52245sair=true;
+});
+
+if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52245noprint){
+  var oldImp=window.imprimirNotinha;
+  window.imprimirNotinha=function(){
+    if(window.__vosFatSemPrint) return;
+    return oldImp.apply(this, arguments);
+  };
+  window.imprimirNotinha.__v52245noprint=true;
+}
+
+if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFaturamento.__v52245noprint){
+  var oldFat=window.vosConcluirFaturamento;
+  window.vosConcluirFaturamento=function(){
+    window.__vosFatSemPrint=true;
+    try{ return oldFat.apply(this, arguments); }
+    finally{
+      setTimeout(function(){ window.__vosFatSemPrint=false; }, 800);
+    }
+  };
+  window.vosConcluirFaturamento.__v52245noprint=true;
+}
+
+console.log('[DIGICOPY] v5.22.45 venda: salvar fecha, sem Sair, faturar sem imprimir');
+})();
+
+;
+
+/* ===== ajustes_v52246_nuvem_nao_autorizar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.46 — Nuvem: botão para NÃO autorizar os dados atuais deste PC.
+//            A nuvem não apaga. Este PC passa a usar a nuvem. O que só
+//            existia aqui some daqui e não sobe. O que lançar depois sobe.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function planNaoAutorizarLocal(localKeys, known){
+  var extras=[];
+  (localKeys||[]).forEach(function(k){ if(k && !(known&&known[k])) extras.push(k); });
+  return extras;
+}
+
+window.NUVEM_NAO_AUTORIZAR_V52246_PURE = {
+  planNaoAutorizarLocal: planNaoAutorizarLocal,
+  recusaNuvemVazia: function(knownCount){ return !knownCount; },
+  nuvemIntocada: true,
+  VERSAO: '5.22.46'
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Nuvem'); if(typeof toast==='function') toast(m,'info'); }
+
+function pintarRodape(){
+  var ver=document.getElementById('footer-version');
+  if(ver) ver.textContent='v5.22.46';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52246ver){
+  var oldN=window.navigateTo;
+  window.navigateTo=function(){
+    var r=oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52246ver=true;
+}
+setTimeout(pintarRodape, 200);
+setTimeout(pintarRodape, 900);
+
+async function executar(){
+  if(!window.DIGICOPY_CLOUD_SYNC || typeof window.DIGICOPY_CLOUD_SYNC.discardLocalKeepCloud!=='function'){
+    aviso('Motor de sincronização não carregado.','Nuvem');
+    return;
+  }
+  var ok1=typeof window.confirmSistema==='function'
+    ? await window.confirmSistema('Os dados que só existem NESTE computador vão sair daqui. A nuvem NÃO será apagada. Este PC passa a usar o que já está na nuvem. Continuar?','Não autorizar dados deste PC')
+    : false;
+  if(!ok1) return;
+  var ok2=typeof window.confirmSistema==='function'
+    ? await window.confirmSistema('Último aviso: o que só estava neste PC não sobe depois. O que você lançar daqui pra frente sincroniza normal. Confirma?','Confirmar')
+    : false;
+  if(!ok2) return;
+  try{
+    var r=await window.DIGICOPY_CLOUD_SYNC.discardLocalKeepCloud();
+    if(typeof window.DIGICOPY_CLOUD_SYNC.tick==='function') await window.DIGICOPY_CLOUD_SYNC.tick('nao-autorizar-local');
+    aviso('Pronto. Este PC está com a nuvem. '+((r&&r.removed)||0)+' registro(s) que só existiam aqui saíram deste computador. A nuvem não mudou. O que você lançar agora sobe.','Nuvem');
+    if(typeof window.abrirCloudflareNuvem==='function') window.abrirCloudflareNuvem();
+  }catch(e){
+    aviso((e&&e.message)||String(e),'Não autorizado');
+  }
+}
+
+function injetarBotao(){
+  var modal=document.getElementById('digicopy-cloud-modal');
+  if(!modal) return;
+  var body=modal.querySelector('#dc-body');
+  if(!body || document.getElementById('dc-nao-autorizar-local')) return;
+  if(!body.querySelector('#dc-sync-now') && !body.querySelector('#dc-forget')) return;
+  var box=document.createElement('div');
+  box.style.cssText='border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px';
+  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não autorizar dados deste PC</h3>'
+    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">Este PC passa a usar a nuvem. O que só existe aqui some DESTE computador. A nuvem não apaga nada. O que você lançar depois sobe.</p>'
+    +'<button id="dc-nao-autorizar-local" type="button" style="height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74">Não autorizar dados deste PC</button>';
+  var forgetRow=body.querySelector('#dc-forget');
+  if(forgetRow && forgetRow.parentNode){
+    forgetRow.parentNode.insertBefore(box, forgetRow);
+  } else {
+    body.appendChild(box);
+  }
+  var btn=document.getElementById('dc-nao-autorizar-local');
+  if(btn) btn.onclick=function(){ executar(); };
+}
+
+if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuvem.__v52246nao){
+  var oldA=window.abrirCloudflareNuvem;
+  window.abrirCloudflareNuvem=async function(){
+    var r=await oldA.apply(this, arguments);
+    try{ setTimeout(injetarBotao, 80); setTimeout(injetarBotao, 400); }catch(e){}
+    return r;
+  };
+  window.abrirCloudflareNuvem.__v52246nao=true;
+}
+
+try{
+  var obs=new MutationObserver(function(){ injetarBotao(); });
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+}catch(e){}
+
+console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
+})();
+
+;
+
+/* ===== ajustes_v52247_exe_atualiza_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.47 — .exe passa a usar pasta (sem asar) + limpa cache na versão nova
+//            para a atualização aparecer depois de gerar o instalador.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+window.EXE_ATUALIZA_V52247_PURE = {
+  VERSAO: '5.22.47',
+  asar: false,
+  limpaCacheNaVersao: true
+};
+if(typeof document==='undefined') return;
+function pintar(){
+  var ver=document.getElementById('footer-version');
+  if(ver) ver.textContent='v5.22.47';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52247ver){
+  var oldN=window.navigateTo;
+  window.navigateTo=function(){
+    var r=oldN.apply(this, arguments);
+    try{ pintar(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52247ver=true;
+}
+setTimeout(pintar, 200);
+setTimeout(pintar, 900);
+console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
+})();
+
+;
+
+/* ===== ajustes_v52248_exe_cache_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.48 — .exe: desliga cache V8 e apaga Cache/Code Cache na versão nova
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+window.EXE_CACHE_V52248_PURE = { VERSAO:'5.22.48', v8Cache:'none' };
+if(typeof document==='undefined') return;
+function pintar(){
+  var ver=document.getElementById('footer-version');
+  if(ver) ver.textContent='v5.22.48';
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52248ver){
+  var oldN=window.navigateTo;
+  window.navigateTo=function(){
+    var r=oldN.apply(this, arguments);
+    try{ pintar(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52248ver=true;
+}
+setTimeout(pintar, 200);
+setTimeout(pintar, 900);
+console.log('[DIGICOPY] v5.22.48 exe: sem cache V8');
+})();
+
+;
+
+/* ===== ajustes_v52249_relatorio_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
+//            no .exe e no link do cliente.
+//            1.2 Tem certeza?  1.3 link não vale mais  1.4 autorizar=venda /
+//            recusar some. O Pages antigo não tinha isso; o link passa a
+//            abrir a página nova (GitHack, com token + dados + versão).
+//            Este arquivo também entra SOZINHO no instalador (depois do
+//            bundle), para a atualização não depender só do app.bundle.js.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.49';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function payloadDe(o, cli, emp){
+  var P = window.ORCAMENTOS_V52238_PURE;
+  if(P && typeof P.payloadLink==='function') return P.payloadLink(o, cli, emp);
+  return {
+    t: o && o.token || '',
+    n: o && o.numero || '',
+    c: (cli && (cli.nome||cli.fantasia)) || (o && o.clienteNome) || '',
+    dt: String(o && (o.data||o.criadoEm) || '').slice(0,10),
+    tot: n(o && o.total),
+    w: (emp && (emp.whatsapp||emp.telefone)) || (o && o.lojaWhatsapp) || '',
+    it: ((o && o.itens) || []).map(function(it){
+      return { d: it.descricao||'', q: it.qtd, p: it.preco, s: it.subtotal };
+    })
+  };
+}
+function b64url(obj){
+  var P = window.ORCAMENTOS_V52238_PURE;
+  if(P && typeof P.b64url==='function') return P.b64url(obj);
+  var j=JSON.stringify(obj||{});
+  var b=btoa(unescape(encodeURIComponent(j)));
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function linkOrcamento(o, cli, emp){
+  var token = txt(o && o.token);
+  var d = b64url(payloadDe(o, cli||{}, emp||{}));
+  var qs = ['v='+encodeURIComponent(VERSAO)];
+  if(token) qs.push('c='+encodeURIComponent(token));
+  if(d) qs.push('d='+encodeURIComponent(d));
+  return PAGINA+'?'+qs.join('&');
+}
+
+window.RELATORIO_V52249_PURE = {
+  VERSAO: VERSAO,
+  PAGINA: PAGINA,
+  linkOrcamento: linkOrcamento,
+  temCerteza: true,
+  linkNaoValeDepois: true,
+  autorizarGeraVenda: true
+};
+
+if(typeof document==='undefined') return;
+
+function aplicarLinkOrcamento(){
+  if(window.ORCAMENTOS_V52238_PURE){
+    window.ORCAMENTOS_V52238_PURE.PAGINA = PAGINA;
+    window.ORCAMENTOS_V52238_PURE.linkOrcamento = linkOrcamento;
+  }
+  if(window.ORCAMENTOS_V52240_PURE){
+    window.ORCAMENTOS_V52240_PURE.PAGINA = PAGINA;
+    window.ORCAMENTOS_V52240_PURE.linkDe = linkOrcamento;
+  }
+  if(window.ORCAMENTOS_APROVACAO_PURE){
+    window.ORCAMENTOS_APROVACAO_PURE.PAGES = PAGINA;
+    window.ORCAMENTOS_APROVACAO_PURE.linkPublico = function(tokenOuO, cli){
+      if(tokenOuO && typeof tokenOuO==='object') return linkOrcamento(tokenOuO, cli||{}, {});
+      var qs = ['v='+encodeURIComponent(VERSAO)];
+      if(tokenOuO) qs.push('c='+encodeURIComponent(tokenOuO));
+      return PAGINA+'?'+qs.join('&');
+    };
+  }
+  if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento.__v52249rel){
+    var oldHtml = window.gerarHtmlOrcamento;
+    window.gerarHtmlOrcamento = function(id){
+      var html = oldHtml.apply(this, arguments);
+      if(!html) return html;
+      var o = (typeof db!=='undefined' && db.orcamentos||[]).find(function(x){ return x && x.id===id; });
+      if(!o) return html;
+      var cli = (db.clientes||[]).find(function(c){ return c.id===o.clienteId; })||{};
+      var emp = (db.config && db.config.empresa) || {};
+      var s = typeof getSession==='function' ? getSession() : null;
+      var e = s && (db.empresas||[]).find(function(x){ return x.id===s.empresaId; });
+      if(e) emp = Object.assign({}, emp, e);
+      var link = linkOrcamento(o, cli, emp);
+      html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
+      html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+      html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
+      html = html.replace(/href="[^"]*orcamento_pagar\.html[^"]*"/g, 'href="'+link.replace(/"/g,'&quot;')+'"');
+      return html;
+    };
+    window.gerarHtmlOrcamento.__v52249rel = true;
+  }
+}
+
+function telaVenda(){
+  return !!(document.getElementById('vos-itens-body') || document.getElementById('vos-cli-search'));
+}
+function tirarBotaoSair(){
+  var foot = document.getElementById('modal-footer');
+  if(!foot || !telaVenda()) return;
+  foot.querySelectorAll('button').forEach(function(b){
+    var t = String(b.textContent||'').replace(/\s+/g,' ').trim();
+    if(/^sair$/i.test(t)) b.remove();
+  });
+}
+function gravarVendaEFechar(){
+  var f = window.__vosForm;
+  if(!f) return false;
+  if(!f.cliente){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Escolha o cliente.','Venda');
+    else if(typeof toast==='function') toast('Selecione o cliente','error');
+    return false;
+  }
+  var gravar = window.vosGravarVenda;
+  if(typeof gravar!=='function'){
+    if(typeof window.lfbAlert==='function') window.lfbAlert('Não foi possível gravar a venda.','Venda');
+    return false;
+  }
+  window.__vosIgnorarSair = true;
+  var v = gravar(true);
+  if(!v){
+    window.__vosIgnorarSair = false;
+    return false;
+  }
+  window.__vosPersistida = true;
+  window.__vosDirty = false;
+  if(typeof toast==='function') toast('Venda '+v.numero+' salva','success');
+  if(typeof closeModal==='function') closeModal(true);
+  window.__vosIgnorarSair = false;
+  if(typeof renderVendas==='function') renderVendas();
+  return true;
+}
+function aplicarVenda(){
+  window.vosSalvarVenda = function(){ gravarVendaEFechar(); };
+  if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52249noprint){
+    var oldImp = window.imprimirNotinha;
+    window.imprimirNotinha = function(){
+      if(window.__vosFatSemPrint) return;
+      return oldImp.apply(this, arguments);
+    };
+    window.imprimirNotinha.__v52249noprint = true;
+  }
+  if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFaturamento.__v52249noprint){
+    var oldFat = window.vosConcluirFaturamento;
+    window.vosConcluirFaturamento = function(){
+      window.__vosFatSemPrint = true;
+      try{ return oldFat.apply(this, arguments); }
+      finally{ setTimeout(function(){ window.__vosFatSemPrint = false; }, 800); }
+    };
+    window.vosConcluirFaturamento.__v52249noprint = true;
+  }
+  ['novaVenda','vosCarregarVendaNaTela'].forEach(function(nome){
+    if(typeof window[nome]!=='function' || window[nome].__v52249sair) return;
+    var old = window[nome];
+    window[nome] = function(){
+      var r = old.apply(this, arguments);
+      setTimeout(tirarBotaoSair, 0);
+      setTimeout(tirarBotaoSair, 80);
+      return r;
+    };
+    window[nome].__v52249sair = true;
+  });
+}
+
+function aplicarLeitura(){
+  var L = window.LEITURA_APAGAR_V52245_PURE;
+  window.deleteLeituraContrato = function(leiId, contratoId){
+    var msg = (L && L.mensagem) || 'Deseja apagar essa leitura? Ela fará os contadores voltar ao que estava antes de lançar.';
+    var run = function(){
+      if(typeof db==='undefined') return;
+      var l = (db.leituras||[]).find(function(x){ return x && x.id===leiId; });
+      if(l && l.equipamentoId){
+        var eq = (db.equipamentos||[]).find(function(e){ return e && e.id===l.equipamentoId; });
+        if(eq){
+          var next = L && typeof L.contadorDepoisDeApagar==='function' ? L.contadorDepoisDeApagar(eq, l) : eq;
+          if(l.contadorPBAnterior!=null && l.contadorPBAnterior!=='') eq.contadorPB = n(l.contadorPBAnterior);
+          if(l.contadorCorAnterior!=null && l.contadorCorAnterior!=='') eq.contadorCor = n(l.contadorCorAnterior);
+          if(next && next!==eq){
+            if(next.contadorPB!=null) eq.contadorPB = next.contadorPB;
+            if(next.contadorCor!=null) eq.contadorCor = next.contadorCor;
+          }
+        }
+      }
+      db.contasReceber = (db.contasReceber||[]).filter(function(cr){ return !cr || cr.leituraId!==leiId; });
+      db.leituras = (db.leituras||[]).filter(function(x){ return x && x.id!==leiId; });
+      if(typeof saveDB==='function') saveDB();
+      if(typeof abrirLeiturasContrato==='function') abrirLeiturasContrato(contratoId);
+      if(typeof renderFinanceiro==='function') renderFinanceiro();
+      if(typeof toast==='function') toast('Leitura apagada. Contadores voltaram.','success');
+    };
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema(msg,'Apagar leitura').then(function(ok){ if(ok) run(); });
+      return;
+    }
+    run();
+  };
+}
+
+function garantirDatas(){
+  var view = document.getElementById('view-financeiro');
+  if(!view) return;
+  var ST = window.__FIN_ST || (window.__FIN_ST = { campo:'nome', q:'', modo:'hoje', de:'', ate:'', tipo:'todos', ordem:'venc-asc' });
+  var de = document.getElementById('neo-fin-de');
+  var ate = document.getElementById('neo-fin-ate');
+  if(!de || !ate){
+    var host = view.querySelector('.p-4.border-b') || view;
+    var wrap = document.getElementById('v52249-fin-datas');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id = 'v52249-fin-datas';
+      wrap.className = 'flex flex-wrap items-center justify-center gap-2';
+      wrap.innerHTML = '<label class="text-[11px] font-bold text-slate-500 uppercase">De</label>'
+        +'<input id="neo-fin-de" type="date" class="neo-input !w-[150px] !h-9" value="'+esc(ST.de||'')+'">'
+        +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label>'
+        +'<input id="neo-fin-ate" type="date" class="neo-input !w-[150px] !h-9" value="'+esc(ST.ate||'')+'">';
+      host.appendChild(wrap);
+    }
+    de = document.getElementById('neo-fin-de');
+    ate = document.getElementById('neo-fin-ate');
+  }
+  function ligar(el, qual){
+    if(!el) return;
+    if(el.type==='hidden'){
+      el.type = 'date';
+      el.className = 'neo-input !w-[150px] !h-9';
+    }
+    el.disabled = false;
+    el.style.display = '';
+    el.removeAttribute('hidden');
+    if(qual==='de') el.value = ST.de||el.value||'';
+    if(qual==='ate') el.value = ST.ate||el.value||'';
+    el.onchange = function(){
+      if(qual==='de') ST.de = el.value||'';
+      else ST.ate = el.value||'';
+      if(typeof window.finBuscarV52243==='function') window.finBuscarV52243();
+      else if(typeof window.renderFinanceiro==='function') window.renderFinanceiro();
+    };
+  }
+  ligar(de,'de');
+  ligar(ate,'ate');
+}
+
+function refsDoLancamento(c, dbRef){
+  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
+  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
+  return [];
+}
+function htmlRefs(refs){
+  if(!refs || !refs.length) return '';
+  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
+  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
+    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
+  }).join(' • ')+'</p>';
+}
+
+function aplicarFinanceiro(){
+  if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52249datas){
+    var oldR = window.renderFinanceiro;
+    window.renderFinanceiro = function(){
+      var r = oldR.apply(this, arguments);
+      try{ garantirDatas(); }catch(e){}
+      return r;
+    };
+    window.renderFinanceiro.__v52249datas = true;
+  }
+  if(typeof window.historicoLancamento==='function' && !window.historicoLancamento.__v52249hist){
+    var oldH = window.historicoLancamento;
+    window.historicoLancamento = function(tipo,id){
+      var r = oldH.apply(this, arguments);
+      try{
+        if(typeof db==='undefined') return r;
+        var arr = tipo==='cp'?db.contasPagar:db.contasReceber;
+        var c = (arr||[]).find(function(x){ return x && x.id===id; });
+        var refs = refsDoLancamento(c, db);
+        var body = document.getElementById('modal-body');
+        if(body && refs.length && !document.getElementById('v52249-fin-refs') && !document.getElementById('v52245-fin-refs')){
+          var card = body.querySelector('.neo-card');
+          var box = document.createElement('div');
+          box.id = 'v52249-fin-refs';
+          box.innerHTML = htmlRefs(refs);
+          if(card) card.appendChild(box);
+          else body.insertBefore(box, body.firstChild);
+        }
+      }catch(e){}
+      return r;
+    };
+    window.historicoLancamento.__v52249hist = true;
+  }
+}
+
+function pintarRodape(){
+  var ver = document.getElementById('footer-version');
+  if(ver) ver.textContent = 'v'+VERSAO;
+}
+
+function aplicarTudo(){
+  aplicarLinkOrcamento();
+  aplicarVenda();
+  aplicarLeitura();
+  aplicarFinanceiro();
+  pintarRodape();
+}
+
+aplicarTudo();
+setTimeout(aplicarTudo, 0);
+setTimeout(aplicarTudo, 400);
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ aplicarTudo(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52249ver = true;
+}
+if(typeof MutationObserver==='function' && document.documentElement && !window.__v52249obs){
+  window.__v52249obs = true;
+  var obs = new MutationObserver(function(){
+    try{ tirarBotaoSair(); garantirDatas(); pintarRodape(); }catch(e){}
+  });
+  obs.observe(document.documentElement, { childList:true, subtree:true });
+}
+
+console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
+})();
+
+;
+
+/* ===== ajustes_v52250_exe_bundle_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.50 — Correção definitiva do empacotamento para o .exe:
+//            Garante que o bundle contenha todas as atualizações recentes,
+//            limpa cache de forma forçada na versão nova e sincroniza rodapé.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.50';
+
+window.EXE_BUNDLE_V52250_PURE = {
+  VERSAO: VERSAO,
+  bundleCompleto: true,
+  cacheLimpo: true
+};
+
+if(typeof document === 'undefined') return;
+
+function pintarRodape(){
+  var ver = document.getElementById('footer-version');
+  if(ver) ver.textContent = 'v' + VERSAO;
+  var appVer = document.getElementById('app-title-version');
+  if(appVer) appVer.textContent = 'Sistema Digicopy v' + VERSAO;
+}
+
+pintarRodape();
+setTimeout(pintarRodape, 100);
+setTimeout(pintarRodape, 600);
+setTimeout(pintarRodape, 1500);
+
+if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52250ver = true;
+}
+
+if(typeof MutationObserver === 'function' && document.documentElement && !window.__v52250obs){
+  window.__v52250obs = true;
+  var obs = new MutationObserver(function(){
+    try{ pintarRodape(); }catch(e){}
+  });
+  obs.observe(document.documentElement, { childList: true, subtree: true });
+}
+
+console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');
 })();
 
 ;
