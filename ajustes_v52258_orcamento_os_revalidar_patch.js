@@ -118,7 +118,8 @@
     if(!_db.notificacoes) _db.notificacoes = [];
 
     var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
-    if(!o) return null;
+    if(!o || o.status === 'excluido') return null;
+    if(_db.__orcExcluidos && (_db.__orcExcluidos.includes(orcId) || (o.token && _db.__orcExcluidos.includes(o.token)))) return null;
 
     if(o.vendaId){
       var vendaExistente = _db.vendas.find(function(v){ return v && (v.id === o.vendaId || v.origemOrcamentoId === o.id); });
@@ -368,6 +369,7 @@
     var pendentes = _db.orcamentos.filter(function(o){
       if(!o || !o.token) return false;
       if(o.status === 'recusado' || o.status === 'excluido' || o.status === 'estornado') return false;
+      if(_db.__orcExcluidos && (_db.__orcExcluidos.includes(o.id) || _db.__orcExcluidos.includes(o.token))) return false;
       if(o.status === 'aprovado' && o.vendaId && (_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })) return false;
       return true;
     });
