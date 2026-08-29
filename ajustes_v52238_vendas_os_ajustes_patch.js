@@ -79,7 +79,7 @@ function tecnicoVazio(){
     return '<option value="'+n.replace(/"/g,'&quot;')+'">'+n.replace(/</g,'&lt;')+'</option>';
   }).join('');
   var val=el.value;
-  el.parentNode.replaceChild(sel, el);
+  if(el.parentNode) el.parentNode.replaceChild(sel, el);
   if(!ehVazioTec(val) && nomes.indexOf(val)>=0) sel.value=val;
   else sel.value='';
 }

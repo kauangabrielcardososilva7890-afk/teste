@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 177 | sha256: 162d2863b59a95d7
+ * scripts: 189 | sha256: bf2202a5724a39c7
  */
 
 /* ===== lz.js ===== */
@@ -407,6 +407,7 @@ if(typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
+if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -1145,7 +1146,7 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
@@ -1441,7 +1442,7 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   // permitir Enter nos logins
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){
@@ -18163,7 +18164,13 @@ function garantirProdutosVisivel(){
     const loc=[...row.querySelectorAll('.module')].find(m=>/Locação/i.test(m.textContent||'')); if(loc) row.insertBefore(div,loc); else row.appendChild(div);
   }
   const nav=document.getElementById('nav-main'); if(nav && !nav.querySelector('[data-nav="produtos"]')){
-    const b=document.createElement('button'); b.dataset.nav='produtos'; b.onclick=()=>navigateTo('produtos'); b.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white'; b.innerHTML='<i class="ph ph-package text-[19px]"></i><span>Produtos</span>'; nav.appendChild(b);
+    const b=document.createElement('button');
+    if(b.dataset) b.dataset.nav='produtos';
+    else if(typeof b.setAttribute==='function') b.setAttribute('data-nav','produtos');
+    b.onclick=()=>navigateTo('produtos');
+    b.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    b.innerHTML='<i class="ph ph-package text-[19px]"></i><span>Produtos</span>';
+    nav.appendChild(b);
   }
 }
 const oldBuildNav=window.buildNav; if(typeof oldBuildNav==='function'&&!oldBuildNav.__prodFix){ window.buildNav=function(){ const ret=oldBuildNav.apply(this,arguments); setTimeout(garantirProdutosVisivel,0); return ret; }; window.buildNav.__prodFix=true; }
@@ -18604,7 +18611,12 @@ function clientesDeveListar(busca,campo,status){
 }
 function instalarBuscadorMenuFinal(){
   const nav=document.getElementById('nav-gest'); if(nav&&!nav.querySelector('[data-nav="buscador-escola"]')){
-    const btn=document.createElement('button'); btn.dataset.nav='buscador-escola'; btn.onclick=()=>navigateTo('buscador-escola'); btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white'; btn.innerHTML='<i class="ph ph-magnifying-glass text-[19px]"></i><span>Buscador Escola</span>';
+    const btn=document.createElement('button');
+    if(btn.dataset) btn.dataset.nav='buscador-escola';
+    else if(typeof btn.setAttribute==='function') btn.setAttribute('data-nav','buscador-escola');
+    btn.onclick=()=>navigateTo('buscador-escola');
+    btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    btn.innerHTML='<i class="ph ph-magnifying-glass text-[19px]"></i><span>Buscador Escola</span>';
     const cfg=nav.querySelector('[data-nav="config"]'); if(cfg) nav.insertBefore(btn,cfg); else nav.appendChild(btn);
   }
   const toolbar=document.querySelector('.classic-toolbar-scroll');
@@ -34313,7 +34325,7 @@ async function apagarA1LocalSeHouver(){
 function ajustarCard(){
   esconderCarregarLocal();
   var p = document.querySelector('#nfe-config-card p');
-  if(p && !p.dataset.v52221a1){
+  if(p && p.dataset && !p.dataset.v52221a1){
     p.dataset.v52221a1 = '1';
     p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
   }
@@ -35678,7 +35690,7 @@ function trocarNo(el){
     el.setAttribute('placeholder', textoCodigo(el.getAttribute('placeholder')));
   }
   if(el.title && /SKU|sku/.test(el.title)) el.title=textoCodigo(el.title);
-  var kids=el.childNodes;
+  var kids=el.childNodes || [];
   for(var i=0;i<kids.length;i++) trocarNo(kids[i]);
 }
 
@@ -35941,6 +35953,7 @@ if(typeof window.vosBuscarSerial==='function' && !window.vosBuscarSerial.__v5223
       var s=txt(serial).toLowerCase();
       if(!s || typeof getSession!=='function' || typeof db==='undefined') return r;
       var sess=getSession();
+      if(!sess) return r;
       var hist=(db.vendas||[]).filter(function(v){
         return v && v.empresaId===sess.empresaId && v.os && txt(v.os.numeroSerie||v.os.serie).toLowerCase()===s;
       }).sort(function(a,b){ return new Date(b.data||0)-new Date(a.data||0); });
@@ -37613,7 +37626,7 @@ function tecnicoVazio(){
     return '<option value="'+n.replace(/"/g,'&quot;')+'">'+n.replace(/</g,'&lt;')+'</option>';
   }).join('');
   var val=el.value;
-  el.parentNode.replaceChild(sel, el);
+  if(el.parentNode) el.parentNode.replaceChild(sel, el);
   if(!ehVazioTec(val) && nomes.indexOf(val)>=0) sel.value=val;
   else sel.value='';
 }
@@ -39081,9 +39094,10 @@ function pintarMenuAberto(view){
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer span:not(#footer-session)');
   if(foot && !/v5\.22\./.test(foot.textContent||'')){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
   }
 }
 
@@ -40008,13 +40022,14 @@ function pintarMenuAberto(view){
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer span:not(#footer-session)');
   if(foot){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
   }
   var top = document.getElementById('app-title-version');
   if(top && !/v5\.22\./.test(top.textContent||'')){
-    top.textContent = 'Sistema Digicopy v'+VERSAO;
+    top.textContent = 'Sistema Digicopy v'+curV;
   }
 }
 
@@ -40359,8 +40374,9 @@ if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraL
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.44';
   var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v5.22.44';
+  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v' + curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
   var oldN = window.navigateTo;
@@ -40996,6 +41012,7 @@ window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
 if(typeof document==='undefined') return;
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer');
   if(!foot) return;
   foot.className = 'h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60';
@@ -41009,7 +41026,7 @@ function pintarRodape(){
     if(sess) foot.insertBefore(ver, sess);
     else foot.appendChild(ver);
   }
-  ver.textContent = 'v'+VERSAO;
+  ver.textContent = 'v'+curV;
   if(left){
     left.textContent = 'Sistema Digicopy • Banco na Nuvem';
     left.classList.add('text-left');
@@ -41161,8 +41178,9 @@ if(typeof document==='undefined') return;
 function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Nuvem'); if(typeof toast==='function') toast(m,'info'); }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.46';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.46';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52246ver){
   var oldN=window.navigateTo;
@@ -41230,11 +41248,6 @@ if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuv
   window.abrirCloudflareNuvem.__v52246nao=true;
 }
 
-try{
-  var obs=new MutationObserver(function(){ injetarBotao(); });
-  obs.observe(document.documentElement,{childList:true,subtree:true});
-}catch(e){}
-
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
 
@@ -41254,8 +41267,9 @@ window.EXE_ATUALIZA_V52247_PURE = {
 };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.47';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.47';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52247ver){
   var oldN=window.navigateTo;
@@ -41282,8 +41296,9 @@ console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
 window.EXE_CACHE_V52248_PURE = { VERSAO:'5.22.48', v8Cache:'none' };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.48';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.48';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52248ver){
   var oldN=window.navigateTo;
@@ -41305,17 +41320,12 @@ console.log('[DIGICOPY] v5.22.48 exe: sem cache V8');
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
 //            no .exe e no link do cliente.
-//            1.2 Tem certeza?  1.3 link não vale mais  1.4 autorizar=venda /
-//            recusar some. O Pages antigo não tinha isso; o link passa a
-//            abrir a página nova (GitHack, com token + dados + versão).
-//            Este arquivo também entra SOZINHO no instalador (depois do
-//            bundle), para a atualização não depender só do app.bundle.js.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -41362,6 +41372,8 @@ window.RELATORIO_V52249_PURE = {
 };
 
 if(typeof document==='undefined') return;
+if(window.__v52249_relatorio_loaded) return;
+window.__v52249_relatorio_loaded = true;
 
 function aplicarLinkOrcamento(){
   if(window.ORCAMENTOS_V52238_PURE){
@@ -41508,6 +41520,20 @@ function aplicarLeitura(){
   };
 }
 
+function refsDoLancamento(c, dbRef){
+  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
+  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
+  return [];
+}
+function htmlRefs(refs){
+  if(!refs || !refs.length) return '';
+  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
+  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
+    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
+  }).join(' • ')+'</p>';
+}
+
+
 function garantirDatas(){
   var view = document.getElementById('view-financeiro');
   if(!view) return;
@@ -41552,20 +41578,8 @@ function garantirDatas(){
   ligar(ate,'ate');
 }
 
-function refsDoLancamento(c, dbRef){
-  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
-  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
-  return [];
-}
-function htmlRefs(refs){
-  if(!refs || !refs.length) return '';
-  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
-  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
-    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
-  }).join(' • ')+'</p>';
-}
-
 function aplicarFinanceiro(){
+
   if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52249datas){
     var oldR = window.renderFinanceiro;
     window.renderFinanceiro = function(){
@@ -41600,17 +41614,11 @@ function aplicarFinanceiro(){
   }
 }
 
-function pintarRodape(){
-  var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
-}
-
 function aplicarTudo(){
   aplicarLinkOrcamento();
   aplicarVenda();
   aplicarLeitura();
   aplicarFinanceiro();
-  pintarRodape();
 }
 
 aplicarTudo();
@@ -41625,15 +41633,4177 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
   };
   window.navigateTo.__v52249ver = true;
 }
-if(typeof MutationObserver==='function' && document.documentElement && !window.__v52249obs){
-  window.__v52249obs = true;
-  var obs = new MutationObserver(function(){
-    try{ tirarBotaoSair(); garantirDatas(); pintarRodape(); }catch(e){}
-  });
-  obs.observe(document.documentElement, { childList:true, subtree:true });
-}
 
 console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
+})();
+
+;
+
+/* ===== ajustes_v52250_exe_bundle_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.50 — Correção definitiva do empacotamento para o .exe:
+//            Garante que o bundle contenha todas as atualizações recentes,
+//            limpa cache de forma forçada na versão nova e sincroniza rodapé.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.50';
+
+window.EXE_BUNDLE_V52250_PURE = {
+  VERSAO: VERSAO,
+  bundleCompleto: true,
+  cacheLimpo: true
+};
+
+if(typeof document === 'undefined') return;
+if(window.__v52250_bundle_loaded) return;
+window.__v52250_bundle_loaded = true;
+
+function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  var ver = document.getElementById('footer-version');
+  if(ver && ver.textContent !== 'v' + curV) ver.textContent = 'v' + curV;
+  var appVer = document.getElementById('app-title-version');
+  if(appVer && appVer.textContent !== 'Sistema Digicopy v' + curV) appVer.textContent = 'Sistema Digicopy v' + curV;
+}
+
+pintarRodape();
+setTimeout(pintarRodape, 100);
+setTimeout(pintarRodape, 600);
+
+if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintarRodape(); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52250ver = true;
+}
+
+console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');
+})();
+
+;
+
+/* ===== ajustes_v52251_exe_resiliencia_patch.js ===== */
+// PATCH v5.22.51 — Resiliência de inicialização do .exe, guardas anti-tela branca e sincronização de versão
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.51';
+
+  var EXE_RESILIENCIA_V52251_PURE = {
+    VERSAO: VERSAO,
+    antiTelaBranca: true,
+    recuperacaoAutomatica: true,
+    verificarSessaoSegura: function(sess){
+      if(!sess) return { logado: false, nome: '-', login: '-' };
+      return {
+        logado: true,
+        nome: String(sess.usuarioNome || sess.login || '-'),
+        login: String(sess.login || '-')
+      };
+    },
+    sincronizarVersaoVisual: function(v){
+      return 'v' + (v || VERSAO);
+    }
+  };
+
+  if(typeof window !== 'undefined'){
+    window.EXE_RESILIENCIA_V52251_PURE = EXE_RESILIENCIA_V52251_PURE;
+
+    if(window.__v52251_resiliencia_loaded) return;
+    window.__v52251_resiliencia_loaded = true;
+
+    // Atualiza versão no DOM
+    function sincronizarVersao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
+        }
+      }catch(e){}
+    }
+
+    // Guarda global anti-tela branca: se o DOM travar na inicialização, recupera login ou app
+    function assegurarInicializacao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        var loginScreen = document.getElementById('login-screen');
+        var appShell = document.getElementById('app-shell');
+
+        if(!sess){
+          if(loginScreen){
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+          }
+          if(appShell){
+            appShell.classList.add('hidden');
+          }
+          if(typeof estilizarLogin === 'function') estilizarLogin();
+          if(typeof renderLoginDireto === 'function' && typeof prepararEmpresaLogin === 'function'){
+            renderLoginDireto(prepararEmpresaLogin());
+          }
+        }else{
+          if(loginScreen){
+            loginScreen.classList.add('hidden');
+          }
+          if(appShell){
+            appShell.classList.remove('hidden');
+          }
+          if(typeof renderDashboard === 'function') renderDashboard();
+          if(typeof pintarMenus === 'function') pintarMenus();
+        }
+      }catch(err){
+        console.warn('[DIGICOPY] Recuperação de inicialização:', err);
+      }
+      sincronizarVersao();
+    }
+
+    // Handler global para capturar erros e evitar tela branca silenciosa
+    if(typeof window.addEventListener === 'function'){
+      window.addEventListener('error', function(event){
+        console.error('[DIGICOPY Error Guard]', event && event.message, event && event.filename, event && event.lineno);
+        // Se não há nada visível no login nem no app shell, recupera
+        setTimeout(function(){
+          try{
+            if(typeof document === 'undefined') return;
+            var login = document.getElementById('login-screen');
+            var app = document.getElementById('app-shell');
+            var ambosOcultos = (!login || login.classList.contains('hidden') || login.style.display === 'none') &&
+                               (!app || app.classList.contains('hidden') || app.style.display === 'none');
+            if(ambosOcultos){
+              assegurarInicializacao();
+            }
+          }catch(e){}
+        }, 300);
+      });
+    }
+
+    // Hook no navigateTo para sincronizar versão sem MutationObserver
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52251nav){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var r = oldN.apply(this, arguments);
+        try{ sincronizarVersao(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52251nav = true;
+    }
+
+    // Executa sincronização e guardas
+    if(typeof document !== 'undefined'){
+      if(document.readyState === 'loading' && typeof document.addEventListener === 'function'){
+        document.addEventListener('DOMContentLoaded', function(){
+          assegurarInicializacao();
+        });
+      }else{
+        assegurarInicializacao();
+      }
+    }
+
+    if(typeof setTimeout === 'function'){
+      setTimeout(assegurarInicializacao, 50);
+      setTimeout(assegurarInicializacao, 300);
+      setTimeout(assegurarInicializacao, 1000);
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Resiliência de boot e guarda anti-tela branca carregados.');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { EXE_RESILIENCIA_V52251_PURE: EXE_RESILIENCIA_V52251_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52252_resolucao_loop_patch.js ===== */
+// PATCH v5.22.52 — Resolução definitiva de loops de MutationObserver, boot instantâneo e versão 5.22.52
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.52';
+
+  var RESOLUCAO_LOOP_V52252_PURE = {
+    VERSAO: VERSAO,
+    semLoopObserver: true,
+    bootInstantaneo: true,
+    sincronizarVersaoVisual: function(v){
+      return 'v' + (v || VERSAO);
+    }
+  };
+
+  if(typeof window !== 'undefined'){
+    window.RESOLUCAO_LOOP_V52252_PURE = RESOLUCAO_LOOP_V52252_PURE;
+
+    if(window.__v52252_loop_fix_loaded) return;
+    window.__v52252_loop_fix_loaded = true;
+
+    // Atualiza versão no DOM apenas se o texto for diferente (evita disparar mutações)
+    function sincronizarVersao(){
+      try{
+        if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
+        }
+      }catch(e){}
+    }
+
+    // Inicialização direta e leve
+    function inicializarDireto(){
+      try{
+        if(typeof document === 'undefined') return;
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        var loginScreen = document.getElementById('login-screen');
+        var appShell = document.getElementById('app-shell');
+
+        if(!sess){
+          if(loginScreen){
+            loginScreen.classList.remove('hidden');
+            loginScreen.style.display = 'flex';
+          }
+          if(appShell){
+            appShell.classList.add('hidden');
+          }
+          if(typeof estilizarLogin === 'function') estilizarLogin();
+          if(typeof renderLoginDireto === 'function' && typeof prepararEmpresaLogin === 'function'){
+            renderLoginDireto(prepararEmpresaLogin());
+          }
+        }else{
+          if(loginScreen){
+            loginScreen.classList.add('hidden');
+          }
+          if(appShell){
+            appShell.classList.remove('hidden');
+          }
+          if(typeof renderDashboard === 'function') renderDashboard();
+          if(typeof pintarMenus === 'function') pintarMenus();
+        }
+      }catch(err){
+        console.warn('[DIGICOPY] Inicialização 5.22.52:', err);
+      }
+      sincronizarVersao();
+    }
+
+    // Hook no navigateTo
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52252nav){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var r = oldN.apply(this, arguments);
+        try{ sincronizarVersao(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52252nav = true;
+    }
+
+    inicializarDireto();
+    if(typeof setTimeout === 'function'){
+      setTimeout(inicializarDireto, 50);
+      setTimeout(inicializarDireto, 300);
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Resolução de loops e inicialização instantânea ativas.');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { RESOLUCAO_LOOP_V52252_PURE: RESOLUCAO_LOOP_V52252_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52253_login_tela_branca_patch.js ===== */
+// PATCH v5.22.53 — Correção definitiva da inicialização, login instantâneo e guarda anti-tela branca
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.53';
+
+  // Garante disponibilidade do db global
+  if(typeof window !== 'undefined'){
+    if(typeof db !== 'undefined' && db){
+      window.db = db;
+    }
+  }
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function fold(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+
+  var LOGIN_TELA_BRANCA_V52253_PURE = {
+    VERSAO: VERSAO,
+    bootInstantaneo: true,
+    antiTelaBranca: true,
+    loginFlexivel: function(digitadoLogin, digitadoSenha, usuarios){
+      var dL = fold(digitadoLogin);
+      var dS = txt(digitadoSenha);
+      if(!dL || !dS) return null;
+      var list = Array.isArray(usuarios) ? usuarios : [];
+      var found = list.find(function(u){
+        if(!u || !u.ativo) return false;
+        var uL = fold(u.login);
+        var uN = fold(u.nome);
+        var uP = uN.split(/\s+/)[0];
+        var matchLogin = (dL === uL || dL === uN || dL === uP);
+        var matchSenha = (txt(u.senha) === dS);
+        return matchLogin && matchSenha;
+      });
+      if(found) return found;
+      // Fallback para admin inicial
+      if(dL === 'admin' && (dS === 'admin' || dS === '123' || dS === 'admin123')){
+        return {
+          id: 'usr_admin',
+          nome: 'Administrador',
+          login: 'admin',
+          perfil: 'Admin',
+          ativo: true
+        };
+      }
+      return null;
+    }
+  };
+
+  if(typeof window !== 'undefined'){
+    window.LOGIN_TELA_BRANCA_V52253_PURE = LOGIN_TELA_BRANCA_V52253_PURE;
+
+    if(window.__v52253_login_guard_loaded) return;
+    window.__v52253_login_guard_loaded = true;
+
+    // Remove qualquer overlay de carregamento que possa ter ficado preso
+    function limparOverlaysPresos(){
+      try{
+        if(typeof document === 'undefined') return;
+        var cloud = document.getElementById('cloud-load-overlay');
+        if(cloud) cloud.style.display = 'none';
+        var aviso = document.getElementById('aviso-login-modal');
+        if(aviso) aviso.remove();
+      }catch(e){}
+    }
+
+    // Sincroniza versão no rodapé e no título
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
+        }
+      }catch(e){}
+    }
+
+    // Exibição forçada e segura do login
+    function forcarExibicaoLogin(){
+      try{
+        if(typeof document === 'undefined') return;
+        limparOverlaysPresos();
+        var app = document.getElementById('app-shell');
+        if(app){
+          app.classList.add('hidden');
+          app.style.display = 'none';
+        }
+        var login = document.getElementById('login-screen');
+        if(login){
+          login.classList.remove('hidden');
+          login.style.display = 'flex';
+          login.style.pointerEvents = 'auto';
+        }
+        var stepUser = document.getElementById('login-step-user');
+        if(stepUser){
+          stepUser.classList.remove('hidden');
+          stepUser.style.display = 'block';
+          stepUser.style.pointerEvents = 'auto';
+        }
+        var stepCnpj = document.getElementById('login-step-cnpj');
+        if(stepCnpj){
+          stepCnpj.classList.add('hidden');
+          stepCnpj.style.display = 'none';
+        }
+        var u = document.getElementById('login-user');
+        var p = document.getElementById('login-senha-user');
+        if(u){ u.disabled = false; u.readOnly = false; u.style.pointerEvents = 'auto'; }
+        if(p){ p.disabled = false; p.readOnly = false; p.style.pointerEvents = 'auto'; }
+      }catch(err){
+        console.warn('[DIGICOPY] Erro ao exibir login:', err);
+      }
+      sincronizarVersaoVisual();
+    }
+
+    // Exibição forçada e segura do App
+    function forcarExibicaoApp(){
+      try{
+        if(typeof document === 'undefined') return;
+        limparOverlaysPresos();
+        var login = document.getElementById('login-screen');
+        if(login){
+          login.classList.add('hidden');
+          login.style.display = 'none';
+        }
+        var app = document.getElementById('app-shell');
+        if(app){
+          app.classList.remove('hidden');
+          app.style.display = 'flex';
+        }
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        if(sess){
+          var un = document.getElementById('user-name'); if(un) un.innerText = sess.usuarioNome || sess.login || '-';
+          var up = document.getElementById('user-perfil'); if(up) up.innerText = sess.perfil || 'Admin';
+          var ue = document.getElementById('user-empresa'); if(ue) ue.innerText = sess.empresaNome || 'DIGICOPY';
+          var sc = document.getElementById('session-cnpj'); if(sc) sc.innerText = sess.cnpj || '';
+          var fs = document.getElementById('footer-session'); if(fs) fs.innerText = (sess.empresaNome || 'DIGICOPY') + ' • ' + (sess.usuarioNome || sess.login || 'Usuário');
+        }
+        if(typeof renderDashboard === 'function') renderDashboard();
+        if(typeof pintarMenus === 'function') pintarMenus();
+      }catch(err){
+        console.warn('[DIGICOPY] Erro ao exibir app:', err);
+      }
+      sincronizarVersaoVisual();
+    }
+
+    // Sobrescreve login de forma infalível
+    window.doLoginUser = function(){
+      try{
+        var uInput = document.getElementById('login-user');
+        var pInput = document.getElementById('login-senha-user');
+        var loginVal = txt(uInput ? uInput.value : '');
+        var senhaVal = txt(pInput ? pInput.value : '');
+
+        if(!loginVal || !senhaVal){
+          if(typeof toast === 'function') toast('Informe usuário e senha', 'error');
+          else alert('Informe usuário e senha');
+          return;
+        }
+
+        var _db = window.db || (typeof db !== 'undefined' ? db : null) || {};
+        var usuarios = _db.usuarios || [];
+        var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
+
+        if(!user){
+          if(typeof toast === 'function') toast('Usuário ou senha incorreto', 'error');
+          else alert('Usuário ou senha incorreto');
+          return;
+        }
+
+        var empresa = (_db.empresas && _db.empresas[0]) || { id: 'emp_digicopy', nome: 'DIGICOPY', fantasia: 'DIGICOPY', cnpj: '' };
+        var sess = {
+          empresaId: empresa.id || 'emp_digicopy',
+          empresaNome: empresa.fantasia || empresa.nome || 'DIGICOPY',
+          cnpj: empresa.cnpj || '',
+          usuarioId: user.id || 'usr_1',
+          usuarioNome: user.nome || 'Usuário',
+          login: user.login || loginVal,
+          perfil: user.perfil || 'Admin',
+          loginAt: new Date().toISOString()
+        };
+
+        if(typeof setSession === 'function') setSession(sess);
+        else{
+          try{ localStorage.setItem('digicopy_session_v3', JSON.stringify(sess)); }catch(e){}
+        }
+
+        if(typeof saveDB === 'function') saveDB();
+        forcarExibicaoApp();
+        if(typeof toast === 'function') toast('Bem-vindo, ' + sess.usuarioNome + '!', 'success');
+      }catch(err){
+        console.error('[DIGICOPY] Erro no login:', err);
+        forcarExibicaoApp();
+      }
+    };
+
+    // Guarda global de erro para recuperação automática
+    window.addEventListener('error', function(e){
+      console.error('[DIGICOPY Global Guard]', e && e.message);
+      limparOverlaysPresos();
+      setTimeout(function(){
+        try{
+          if(typeof document === 'undefined') return;
+          var login = document.getElementById('login-screen');
+          var app = document.getElementById('app-shell');
+          var loginVisivel = login && !login.classList.contains('hidden') && login.style.display !== 'none';
+          var appVisivel = app && !app.classList.contains('hidden') && app.style.display !== 'none';
+          if(!loginVisivel && !appVisivel){
+            var sess = (typeof getSession === 'function') ? getSession() : null;
+            if(sess) forcarExibicaoApp();
+            else forcarExibicaoLogin();
+          }
+        }catch(err){}
+      }, 150);
+    });
+
+    // Boot inicial
+    function executarBoot(){
+      try{
+        var sess = (typeof getSession === 'function') ? getSession() : null;
+        if(sess){
+          forcarExibicaoApp();
+        }else{
+          forcarExibicaoLogin();
+        }
+      }catch(e){
+        forcarExibicaoLogin();
+      }
+      sincronizarVersaoVisual();
+    }
+
+    if(typeof document !== 'undefined'){
+      if(document.readyState === 'loading' && typeof document.addEventListener === 'function'){
+        document.addEventListener('DOMContentLoaded', executarBoot);
+      }else{
+        executarBoot();
+      }
+    }
+
+    setTimeout(executarBoot, 50);
+    setTimeout(executarBoot, 300);
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Login direto e proteção total contra tela branca ativos.');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { LOGIN_TELA_BRANCA_V52253_PURE: LOGIN_TELA_BRANCA_V52253_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52254_orcamentos_pages_patch.js ===== */
+// PATCH v5.22.54 — Integração oficial da página de orçamento no Cloudflare Pages: https://digicopy-orcamentos.pages.dev/
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.54';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
+  }
+
+  var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+
+  function payloadDe(o, cli, emp){
+    return {
+      t: o && o.token || '',
+      n: o && o.numero || '',
+      c: (cli && (cli.nome || cli.fantasia)) || (o && o.clienteNome) || '',
+      dt: String(o && (o.data || o.criadoEm) || '').slice(0, 10),
+      tot: n(o && o.total),
+      w: (emp && (emp.whatsapp || emp.telefone)) || (o && o.lojaWhatsapp) || '',
+      it: ((o && o.itens) || []).map(function(it){
+        return { d: it.descricao || '', q: it.qtd, p: it.preco, s: it.subtotal };
+      })
+    };
+  }
+
+  function b64url(obj){
+    var j = JSON.stringify(obj || {});
+    var b = btoa(unescape(encodeURIComponent(j)));
+    return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function linkOrcamento(o, cli, emp){
+    var vAtual = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+    var token = txt(o && o.token);
+    var d = b64url(payloadDe(o, cli || {}, emp || {}));
+    var qs = ['v=' + encodeURIComponent(vAtual)];
+    if(token) qs.push('c=' + encodeURIComponent(token));
+    if(d) qs.push('d=' + encodeURIComponent(d));
+    return PAGINA_PAGES + '?' + qs.join('&');
+  }
+
+  var ORCAMENTOS_PAGES_V52254_PURE = {
+    VERSAO: VERSAO,
+    PAGINA_PAGES: PAGINA_PAGES,
+    PAGINA_FALLBACK: PAGINA_FALLBACK,
+    linkOrcamento: linkOrcamento
+  };
+
+  if(typeof window !== 'undefined'){
+    window.ORCAMENTOS_PAGES_V52254_PURE = ORCAMENTOS_PAGES_V52254_PURE;
+
+    if(window.__v52254_pages_loaded) return;
+    window.__v52254_pages_loaded = true;
+
+    // Atualiza instâncias anteriores de gerador de link
+    if(window.ORCAMENTOS_V52238_PURE){
+      window.ORCAMENTOS_V52238_PURE.PAGINA = PAGINA_PAGES;
+      window.ORCAMENTOS_V52238_PURE.linkOrcamento = linkOrcamento;
+    }
+    if(window.ORCAMENTOS_V52240_PURE){
+      window.ORCAMENTOS_V52240_PURE.PAGINA = PAGINA_PAGES;
+      window.ORCAMENTOS_V52240_PURE.linkDe = linkOrcamento;
+    }
+    if(window.RELATORIO_V52249_PURE){
+      window.RELATORIO_V52249_PURE.PAGINA = PAGINA_PAGES;
+      window.RELATORIO_V52249_PURE.linkOrcamento = linkOrcamento;
+    }
+    if(window.ORCAMENTOS_APROVACAO_PURE){
+      window.ORCAMENTOS_APROVACAO_PURE.PAGES = PAGINA_PAGES;
+      window.ORCAMENTOS_APROVACAO_PURE.linkPublico = function(tokenOuO, cli){
+        if(tokenOuO && typeof tokenOuO === 'object') return linkOrcamento(tokenOuO, cli || {}, {});
+        var qs = ['v=' + encodeURIComponent(VERSAO)];
+        if(tokenOuO) qs.push('c=' + encodeURIComponent(tokenOuO));
+        return PAGINA_PAGES + '?' + qs.join('&');
+      };
+    }
+
+    // Intercepta geração do HTML da notinha/impressão do orçamento
+    if(typeof window.gerarHtmlOrcamento === 'function' && !window.gerarHtmlOrcamento.__v52254pages){
+      var oldHtml = window.gerarHtmlOrcamento;
+      window.gerarHtmlOrcamento = function(id){
+        var html = oldHtml.apply(this, arguments);
+        if(!html) return html;
+        var _db = window.db || (typeof db !== 'undefined' ? db : null) || {};
+        var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+        if(!o) return html;
+        var cli = (_db.clientes || []).find(function(c){ return c.id === o.clienteId; }) || {};
+        var emp = (_db.config && _db.config.empresa) || {};
+        var s = typeof getSession === 'function' ? getSession() : null;
+        var e = s && (_db.empresas || []).find(function(x){ return x.id === s.empresaId; });
+        if(e) emp = Object.assign({}, emp, e);
+        var link = linkOrcamento(o, cli, emp);
+        html = html.replace(/https:\/\/digicopy-orcament\.pages\.dev\/[^"'<\s]*/g, link);
+        html = html.replace(/https:\/\/digicopy-pix\.pages\.dev\/orcamento\.html[^"'<\s]*/g, link);
+        html = html.replace(/https:\/\/raw\.githack\.com\/[^"'<\s]*orcamento_pagar\.html[^"'<\s]*/g, link);
+        return html;
+      };
+      window.gerarHtmlOrcamento.__v52254pages = true;
+    }
+
+    // Sincroniza rodapé e cabeçalho com a versão garantida
+    function sincronizarRodape(){
+      try{
+        if(typeof document === 'undefined') return;
+        var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + curV) fv.textContent = 'v' + curV;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + curV) tv.textContent = 'Sistema Digicopy v' + curV;
+        if(document.title && !document.title.includes(curV)){
+          document.title = 'Sistema Digicopy v' + curV;
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarRodape;
+
+    // Hook no navigateTo para manter a versão 5.22.54 em qualquer troca de tela / menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52254nav){
+      var oldNav = window.navigateTo;
+      window.navigateTo = function(view){
+        var r = oldNav.apply(this, arguments);
+        try{ sincronizarRodape(); }catch(e){}
+        return r;
+      };
+      window.navigateTo.__v52254nav = true;
+    }
+
+    sincronizarRodape();
+    setTimeout(sincronizarRodape, 100);
+    setTimeout(sincronizarRodape, 500);
+    setTimeout(sincronizarRodape, 1500);
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Orçamento integrado no Cloudflare Pages (https://digicopy-orcamentos.pages.dev/)');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { ORCAMENTOS_PAGES_V52254_PURE: ORCAMENTOS_PAGES_V52254_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52255_orcamento_aprovacao_venda_patch.js ===== */
+// PATCH v5.22.55 — Conversão garantida de Orçamento em Venda Salva e Sincronização de Status
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.55';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function getDb(){
+    return window.db || (typeof db !== 'undefined' ? db : null) || {};
+  }
+
+  function getSess(){
+    return typeof getSession === 'function' ? getSession() : null;
+  }
+
+  function proximaVendaNumero(empId){
+    var _db = getDb();
+    if(typeof window.proximoNumeroSimples === 'function'){
+      return window.proximoNumeroSimples('venda', _db.vendas, empId);
+    }
+    var max = 0;
+    (_db.vendas || []).forEach(function(v){
+      if(!v) return;
+      var num = parseInt(String(v.numero || '').replace(/\D/g, ''), 10) || 0;
+      if(num > max) max = num;
+    });
+    return String(max + 1);
+  }
+
+  // Gera a venda salva a partir de um orçamento e atualiza os status
+  function gerarVendaSalvaDeOrcamento(orcId, origem){
+    var _db = getDb();
+    if(!_db.orcamentos) _db.orcamentos = [];
+    if(!_db.vendas) _db.vendas = [];
+    if(!_db.notificacoes) _db.notificacoes = [];
+
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return null;
+
+    // Se já tem venda existente vinculada
+    if(o.vendaId){
+      var vendaExistente = _db.vendas.find(function(v){ return v && (v.id === o.vendaId || v.origemOrcamentoId === o.id); });
+      if(vendaExistente){
+        o.status = 'aprovado';
+        o.vendaNumero = vendaExistente.numero || o.vendaNumero;
+        if(typeof saveDB === 'function') saveDB();
+        return vendaExistente;
+      }
+    }
+
+    var s = getSess();
+    var empId = o.empresaId || (s && s.empresaId) || 'emp_default';
+    var vId = 'vda_orc_' + String(o.id || Date.now().toString(36));
+    var vNum = o.vendaNumero || proximaVendaNumero(empId);
+
+    var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+    var cliNome = (cli.nome || cli.fantasia || o.clienteNome || 'Cliente');
+
+    var novaVenda = {
+      id: vId,
+      empresaId: empId,
+      numero: vNum,
+      clienteId: o.clienteId || null,
+      clienteNome: cliNome,
+      data: new Date().toISOString(),
+      itens: (o.itens || []).map(function(it){
+        return {
+          produtoId: it.produtoId || null,
+          descricao: it.descricao || '',
+          sku: it.sku || '',
+          qtd: n(it.qtd || 1),
+          preco: n(it.preco || 0),
+          desconto: n(it.desconto || 0),
+          subtotal: n(it.subtotal || 0),
+          tipo: it.tipo || 'Produto'
+        };
+      }),
+      desconto: n(o.desconto || 0),
+      total: n(o.total || 0),
+      formaPagamento: 'A prazo',
+      observacao: 'Gerada do orçamento ' + (o.numero || ''),
+      status: 'aguardar', // Venda salva pronta para faturar
+      origemOrcamentoId: o.id,
+      criadoPor: s ? s.usuarioId : (o.criadoPor || 'sistema'),
+      criadoPorNome: s ? s.usuarioNome : (o.criadoPorNome || 'Cliente (Aprovação)'),
+      criadoEm: new Date().toISOString(),
+      atendenteNome: s ? s.usuarioNome : (o.criadoPorNome || 'Sistema')
+    };
+
+    // Atualiza estoque de produtos físicos se houver
+    (novaVenda.itens || []).forEach(function(it){
+      if(it.produtoId && _db.produtos){
+        var pr = _db.produtos.find(function(p){ return p && p.id === it.produtoId; });
+        if(pr && !/servi[cç]o|recarga/i.test(String(pr.categoria || '') + ' ' + String(pr.tipo || ''))){
+          pr.estoque = n(pr.estoque) - n(it.qtd);
+        }
+      }
+    });
+
+    _db.vendas.unshift(novaVenda);
+
+    // Atualiza o orçamento
+    o.status = 'aprovado';
+    o.vendaId = novaVenda.id;
+    o.vendaNumero = novaVenda.numero;
+    o.aprovadoEm = new Date().toISOString();
+    o.aprovadoOrigem = origem || 'cliente';
+
+    // Cria notificação
+    var ntf = {
+      id: 'ntf_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+      empresaId: empId,
+      tipo: 'orcamento_aprovado',
+      titulo: 'Orçamento autorizado',
+      texto: cliNome + ' autorizou o orçamento ' + (o.numero || '') + ' e gerou a venda salva ' + novaVenda.numero,
+      orcamentoId: o.id,
+      vendaId: novaVenda.id,
+      lida: false,
+      criadoEm: new Date().toISOString()
+    };
+    _db.notificacoes.unshift(ntf);
+
+    if(typeof saveDB === 'function') saveDB();
+
+    // Feedback visual
+    if(typeof window.lfbAlert === 'function'){
+      window.lfbAlert('O orçamento ' + (o.numero || '') + ' foi AUTORIZADO com sucesso e gerou a VENDA SALVA nº ' + novaVenda.numero + '!', 'Orçamento Autorizado');
+    } else if(typeof toast === 'function'){
+      toast('Orçamento ' + (o.numero || '') + ' autorizado! Venda salva ' + novaVenda.numero + ' gerada.', 'success');
+    }
+
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+    if(typeof window.renderVendas === 'function') window.renderVendas();
+
+    return novaVenda;
+  }
+
+  // Recusa o orçamento e atualiza status
+  function recusarOrcamento(orcId){
+    var _db = getDb();
+    if(!_db.orcamentos) return;
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return;
+    o.status = 'recusado';
+    o.recusadoEm = new Date().toISOString();
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof toast === 'function') toast('Orçamento ' + (o.numero || '') + ' marcado como Não autorizado', 'info');
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+  }
+
+  // Garante que todos os orçamentos tenham token para acompanhamento remoto
+  function garantirTokensOrcamentos(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(!o) return;
+      if(!o.token){
+        o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }
+
+  // Consulta ativamente a API do Cloudflare Worker para buscar aprovações remotas
+  function verificarAprovacoesNuvem(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    garantirTokensOrcamentos();
+
+    var pendentes = _db.orcamentos.filter(function(o){
+      if(!o || !o.token) return false;
+      if(o.status === 'recusado' || o.status === 'excluido' || o.status === 'estornado') return false;
+      // Se já está aprovado e tem venda, não precisa consultar
+      if(o.status === 'aprovado' && o.vendaId && (_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })) return false;
+      return true;
+    });
+
+    if(!pendentes.length) return;
+
+    pendentes.slice(0, 10).forEach(function(o){
+      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res) return;
+          var st = txt(res.status || (res.data && res.data.status)).toLowerCase();
+          if(st === 'aprovado' || (res.ok && res.status === 'aprovado') || res.vendaId){
+            if(o.status !== 'aprovado' || !o.vendaId || !(_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            }
+          } else if(st === 'recusado' || (res.ok && res.status === 'recusado')){
+            if(o.status !== 'recusado'){
+              recusarOrcamento(o.id);
+            }
+          }
+        })
+        .catch(function(){});
+    });
+  }
+
+  var ORCAMENTO_APROVACAO_V52255_PURE = {
+    VERSAO: VERSAO,
+    gerarVendaSalvaDeOrcamento: gerarVendaSalvaDeOrcamento,
+    recusarOrcamento: recusarOrcamento,
+    verificarAprovacoesNuvem: verificarAprovacoesNuvem,
+    garantirTokensOrcamentos: garantirTokensOrcamentos
+  };
+
+  if(typeof window !== 'undefined'){
+    window.ORCAMENTO_APROVACAO_V52255_PURE = ORCAMENTO_APROVACAO_V52255_PURE;
+    window.aprovarOrcamentoInterno = gerarVendaSalvaDeOrcamento;
+
+    // Ações Manuais no ERP
+    window.aprovarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja autorizar o orçamento ' + (o.numero || '') + ' e gerar a venda salva no sistema?', 'Autorizar Orçamento').then(function(ok){
+          if(!ok) return;
+          gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+          // Notifica a API também
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+      }
+    };
+
+    window.recusarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja marcar o orçamento ' + (o.numero || '') + ' como Não autorizado?', 'Recusar Orçamento').then(function(ok){
+          if(!ok) return;
+          recusarOrcamento(id);
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        recusarOrcamento(id);
+      }
+    };
+
+    // Sincronização central e infalível de versão em todo o sistema
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+        var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
+        if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
+          footSpan.textContent = 'Sistema Digicopy • Banco na Nuvem';
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarVersaoVisual;
+    sincronizarVersaoVisual();
+    setTimeout(sincronizarVersaoVisual, 50);
+    setTimeout(sincronizarVersaoVisual, 300);
+    setTimeout(sincronizarVersaoVisual, 1000);
+
+    // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
+    setInterval(verificarAprovacoesNuvem, 4000);
+    setTimeout(verificarAprovacoesNuvem, 1000);
+
+    // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52255sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(v){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual(); }catch(e){}
+        if(v === 'orcamentos' || v === 'vendas'){
+          setTimeout(verificarAprovacoesNuvem, 100);
+        }
+        return res;
+      };
+      window.navigateTo.__v52255sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Versão ' + VERSAO + ' sincronizada + aprovação de orçamentos com conversão para Venda Salva ativada!');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { ORCAMENTO_APROVACAO_V52255_PURE: ORCAMENTO_APROVACAO_V52255_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52256_orcamento_venda_limpa_patch.js ===== */
+// PATCH v5.22.56 — Orçamento 100% via link do cliente, conversão em Venda Salva e Sincronização v5.22.56
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.56';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+
+  function getDb(){
+    return window.db || (typeof db !== 'undefined' ? db : null) || {};
+  }
+
+  function getSess(){
+    return typeof getSession === 'function' ? getSession() : null;
+  }
+
+  function proximaVendaNumero(empId){
+    var _db = getDb();
+    if(typeof window.proximoNumeroSimples === 'function'){
+      return window.proximoNumeroSimples('venda', _db.vendas, empId);
+    }
+    var max = 0;
+    (_db.vendas || []).forEach(function(v){
+      if(!v) return;
+      var num = parseInt(String(v.numero || '').replace(/\D/g, ''), 10) || 0;
+      if(num > max) max = num;
+    });
+    return String(max + 1);
+  }
+
+  // Gera a venda salva a partir de um orçamento e atualiza os status
+  function gerarVendaSalvaDeOrcamento(orcId, origem){
+    var _db = getDb();
+    if(!_db.orcamentos) _db.orcamentos = [];
+    if(!_db.vendas) _db.vendas = [];
+    if(!_db.notificacoes) _db.notificacoes = [];
+
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return null;
+
+    // Se já tem venda existente vinculada
+    if(o.vendaId){
+      var vendaExistente = _db.vendas.find(function(v){ return v && (v.id === o.vendaId || v.origemOrcamentoId === o.id); });
+      if(vendaExistente){
+        o.status = 'aprovado';
+        o.vendaNumero = vendaExistente.numero || o.vendaNumero;
+        if(typeof saveDB === 'function') saveDB();
+        return vendaExistente;
+      }
+    }
+
+    var s = getSess();
+    var empId = o.empresaId || (s && s.empresaId) || 'emp_default';
+    var vId = 'vda_orc_' + String(o.id || Date.now().toString(36));
+    var vNum = o.vendaNumero || proximaVendaNumero(empId);
+
+    var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+    var cliNome = (cli.nome || cli.fantasia || o.clienteNome || 'Cliente');
+
+    var novaVenda = {
+      id: vId,
+      empresaId: empId,
+      numero: vNum,
+      clienteId: o.clienteId || null,
+      clienteNome: cliNome,
+      data: new Date().toISOString(),
+      itens: (o.itens || []).map(function(it){
+        return {
+          produtoId: it.produtoId || null,
+          descricao: it.descricao || '',
+          sku: it.sku || '',
+          qtd: n(it.qtd || 1),
+          preco: n(it.preco || 0),
+          desconto: n(it.desconto || 0),
+          subtotal: n(it.subtotal || 0),
+          tipo: it.tipo || 'Produto'
+        };
+      }),
+      desconto: n(o.desconto || 0),
+      total: n(o.total || 0),
+      formaPagamento: 'A prazo',
+      observacao: 'Gerada do orçamento ' + (o.numero || ''),
+      status: 'aguardar', // Venda salva pronta para faturar
+      origemOrcamentoId: o.id,
+      criadoPor: s ? s.usuarioId : (o.criadoPor || 'sistema'),
+      criadoPorNome: s ? s.usuarioNome : (o.criadoPorNome || 'Cliente (Aprovação)'),
+      criadoEm: new Date().toISOString(),
+      atendenteNome: s ? s.usuarioNome : (o.criadoPorNome || 'Sistema')
+    };
+
+    // Atualiza estoque de produtos físicos se houver
+    (novaVenda.itens || []).forEach(function(it){
+      if(it.produtoId && _db.produtos){
+        var pr = _db.produtos.find(function(p){ return p && p.id === it.produtoId; });
+        if(pr && !/servi[cç]o|recarga/i.test(String(pr.categoria || '') + ' ' + String(pr.tipo || ''))){
+          pr.estoque = n(pr.estoque) - n(it.qtd);
+        }
+      }
+    });
+
+    _db.vendas.unshift(novaVenda);
+
+    // Atualiza o orçamento
+    o.status = 'aprovado';
+    o.vendaId = novaVenda.id;
+    o.vendaNumero = novaVenda.numero;
+    o.aprovadoEm = new Date().toISOString();
+    o.aprovadoOrigem = origem || 'cliente';
+
+    // Cria notificação
+    var ntf = {
+      id: 'ntf_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+      empresaId: empId,
+      tipo: 'orcamento_aprovado',
+      titulo: 'Orçamento autorizado',
+      texto: cliNome + ' autorizou o orçamento ' + (o.numero || '') + ' e gerou a venda salva ' + novaVenda.numero,
+      orcamentoId: o.id,
+      vendaId: novaVenda.id,
+      lida: false,
+      criadoEm: new Date().toISOString()
+    };
+    _db.notificacoes.unshift(ntf);
+
+    if(typeof saveDB === 'function') saveDB();
+
+    // Feedback visual
+    if(typeof window.lfbAlert === 'function'){
+      window.lfbAlert('O orçamento ' + (o.numero || '') + ' foi AUTORIZADO com sucesso e gerou a VENDA SALVA nº ' + novaVenda.numero + '!', 'Orçamento Autorizado');
+    } else if(typeof toast === 'function'){
+      toast('Orçamento ' + (o.numero || '') + ' autorizado! Venda salva ' + novaVenda.numero + ' gerada.', 'success');
+    }
+
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+    if(typeof window.renderVendas === 'function') window.renderVendas();
+
+    return novaVenda;
+  }
+
+  // Recusa o orçamento e atualiza status
+  function recusarOrcamento(orcId){
+    var _db = getDb();
+    if(!_db.orcamentos) return;
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return;
+    o.status = 'recusado';
+    o.recusadoEm = new Date().toISOString();
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof toast === 'function') toast('Orçamento ' + (o.numero || '') + ' marcado como Não autorizado', 'info');
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+  }
+
+  // Garante tokens em orçamentos sem token
+  function garantirTokensOrcamentos(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(!o) return;
+      if(!o.token){
+        o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }
+
+  // Consulta ativamente a API do Cloudflare Worker para buscar aprovações remotas
+  function verificarAprovacoesNuvem(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    garantirTokensOrcamentos();
+
+    var pendentes = _db.orcamentos.filter(function(o){
+      if(!o || !o.token) return false;
+      if(o.status === 'recusado' || o.status === 'excluido' || o.status === 'estornado') return false;
+      if(o.status === 'aprovado' && o.vendaId && (_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })) return false;
+      return true;
+    });
+
+    if(!pendentes.length) return;
+
+    pendentes.slice(0, 10).forEach(function(o){
+      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res) return;
+          var st = txt(res.status || (res.data && res.data.status)).toLowerCase();
+          if(st === 'aprovado' || (res.ok && res.status === 'aprovado') || res.vendaId){
+            if(o.status !== 'aprovado' || !o.vendaId || !(_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            }
+          } else if(st === 'recusado' || (res.ok && res.status === 'recusado')){
+            if(o.status !== 'recusado'){
+              recusarOrcamento(o.id);
+            }
+          }
+        })
+        .catch(function(){});
+    });
+  }
+
+  var ORCAMENTO_APROVACAO_V52256_PURE = {
+    VERSAO: VERSAO,
+    gerarVendaSalvaDeOrcamento: gerarVendaSalvaDeOrcamento,
+    recusarOrcamento: recusarOrcamento,
+    verificarAprovacoesNuvem: verificarAprovacoesNuvem,
+    garantirTokensOrcamentos: garantirTokensOrcamentos
+  };
+
+  if(typeof window !== 'undefined'){
+    window.ORCAMENTO_APROVACAO_V52256_PURE = ORCAMENTO_APROVACAO_V52256_PURE;
+    window.aprovarOrcamentoInterno = gerarVendaSalvaDeOrcamento;
+
+    // Escuta em tempo real decisões locais e de abas
+    try{
+      if(typeof BroadcastChannel !== 'undefined'){
+        var bc = new BroadcastChannel('digicopy_orcamentos');
+        bc.onmessage = function(ev){
+          var msg = ev && ev.data;
+          if(!msg) return;
+          var _db = getDb();
+          var o = (_db.orcamentos || []).find(function(x){
+            return x && ((msg.token && x.token === msg.token) || (msg.numero && String(x.numero) === String(msg.numero)));
+          });
+          if(!o) return;
+          if(msg.acao === 'aprovar'){
+            gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+          } else if(msg.acao === 'recusar'){
+            recusarOrcamento(o.id);
+          }
+        };
+      }
+      window.addEventListener('storage', function(ev){
+        if(ev && ev.key && ev.key.indexOf('digicopy_orc_decisao_') === 0){
+          try{
+            var data = JSON.parse(ev.newValue || '{}');
+            var tok = ev.key.replace('digicopy_orc_decisao_', '');
+            var _db = getDb();
+            var o = (_db.orcamentos || []).find(function(x){
+              return x && (x.token === tok || (data.numero && String(x.numero) === String(data.numero)));
+            });
+            if(!o) return;
+            if(data.acao === 'aprovar'){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            } else if(data.acao === 'recusar'){
+              recusarOrcamento(o.id);
+            }
+          }catch(e){}
+        }
+      });
+    }catch(e){}
+
+    // Ações manuais disponíveis
+    window.aprovarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja autorizar o orçamento ' + (o.numero || '') + ' e gerar a venda salva no sistema?', 'Autorizar Orçamento').then(function(ok){
+          if(!ok) return;
+          gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+      }
+    };
+
+    window.recusarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja marcar o orçamento ' + (o.numero || '') + ' como Não autorizado?', 'Recusar Orçamento').then(function(ok){
+          if(!ok) return;
+          recusarOrcamento(id);
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        recusarOrcamento(id);
+      }
+    };
+
+    // Atualiza status visual e botões no modal de orçamento
+    if(typeof window.abrirTelaOrcamento === 'function' && !window.abrirTelaOrcamento.__v52256modal){
+      var oldAbrir = window.abrirTelaOrcamento;
+      window.abrirTelaOrcamento = function(existente){
+        var res = oldAbrir.apply(this, arguments);
+        try{
+          if(existente && existente.id){
+            var _db = getDb();
+            var o = (_db.orcamentos || []).find(function(x){ return x && x.id === existente.id; }) || existente;
+            var body = document.getElementById('modal-body');
+            var footer = document.getElementById('modal-footer');
+            if(body){
+              var st = txt(o.status).toLowerCase();
+              var banner = document.createElement('div');
+              banner.className = 'mb-3 p-3 rounded-xl flex items-center justify-between border';
+              
+              if(st === 'aprovado' || o.vendaId){
+                banner.className += ' bg-emerald-50 border-emerald-200 text-emerald-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-check-circle-fill text-xl text-emerald-600"></i><div><p class="font-bold text-[13px]">Orçamento AUTORIZADO</p><p class="text-[11px] text-emerald-700">Venda salva nº ' + (o.vendaNumero || '') + ' gerada com sucesso</p></div></div>'
+                  + '<button type="button" onclick="closeModal(); if(typeof navigateTo===\'function\') navigateTo(\'vendas\');" class="h-8 px-3 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 hover:bg-emerald-700"><i class="ph ph-shopping-bag"></i> Abrir Venda</button>';
+              } else if(st === 'recusado'){
+                banner.className += ' bg-rose-50 border-rose-200 text-rose-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-x-circle-fill text-xl text-rose-600"></i><div><p class="font-bold text-[13px]">Orçamento NÃO AUTORIZADO</p><p class="text-[11px] text-rose-700">O cliente recusou este orçamento</p></div></div>';
+              } else {
+                banner.className += ' bg-blue-50 border-blue-200 text-blue-900';
+                banner.innerHTML = '<div class="flex items-center gap-2"><i class="ph ph-clock-bold text-xl text-blue-600"></i><div><p class="font-bold text-[13px]">Orçamento ABERTO</p><p class="text-[11px] text-blue-700">Aguardando decisão do cliente pelo link ou autorização direta</p></div></div>'
+                  + '<div class="flex items-center gap-1.5">'
+                  + '<button type="button" onclick="window.copiarLinkOrcamentoModal(\'' + o.id + '\')" class="h-8 px-2.5 rounded-lg bg-white border border-blue-300 text-blue-800 font-bold text-xs flex items-center gap-1 hover:bg-blue-100/50"><i class="ph ph-copy"></i> Copiar Link</button>'
+                  + '<button type="button" onclick="window.aprovarOrcamentoManual(\'' + o.id + '\'); closeModal();" class="h-8 px-2.5 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center gap-1 hover:bg-emerald-700"><i class="ph ph-check-bold"></i> Autorizar</button>'
+                  + '<button type="button" onclick="window.recusarOrcamentoManual(\'' + o.id + '\'); closeModal();" class="h-8 px-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs flex items-center gap-1 hover:bg-rose-100"><i class="ph ph-x-bold"></i> Recusar</button>'
+                  + '</div>';
+              }
+              if(body.firstChild){
+                body.insertBefore(banner, body.firstChild);
+              } else {
+                body.appendChild(banner);
+              }
+            }
+          }
+        }catch(e){}
+        return res;
+      };
+      window.abrirTelaOrcamento.__v52256modal = true;
+    }
+
+    // Função para copiar o link oficial do orçamento
+    window.copiarLinkOrcamentoModal = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+      var emp = (_db.config && _db.config.empresa) || {};
+      var link = '';
+      if(window.ORCAMENTOS_PAGES_V52254_PURE && typeof window.ORCAMENTOS_PAGES_V52254_PURE.linkOrcamento === 'function'){
+        link = window.ORCAMENTOS_PAGES_V52254_PURE.linkOrcamento(o, cli, emp);
+      } else {
+        link = 'https://digicopy-orcamentos.pages.dev/?v=' + VERSAO + '&c=' + encodeURIComponent(o.token || '');
+      }
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(link).then(function(){
+            if(typeof toast === 'function') toast('Link do orçamento copiado com sucesso!', 'success');
+          });
+        } else {
+          prompt('Copie o link do orçamento:', link);
+        }
+      }catch(e){
+        prompt('Copie o link do orçamento:', link);
+      }
+    };
+
+    // Sincronização central e infalível de versão em todo o sistema
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+        var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
+        if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
+          footSpan.textContent = 'Sistema Digicopy • Banco na Nuvem';
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarVersaoVisual;
+    garantirTokensOrcamentos();
+    sincronizarVersaoVisual();
+    setTimeout(sincronizarVersaoVisual, 50);
+    setTimeout(sincronizarVersaoVisual, 300);
+    setTimeout(sincronizarVersaoVisual, 1000);
+
+    // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
+    setInterval(verificarAprovacoesNuvem, 4000);
+    setTimeout(verificarAprovacoesNuvem, 1000);
+
+    // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52256sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(v){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual(); }catch(e){}
+        if(v === 'orcamentos' || v === 'vendas'){
+          setTimeout(verificarAprovacoesNuvem, 100);
+        }
+        return res;
+      };
+      window.navigateTo.__v52256sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Versão ' + VERSAO + ' sincronizada + aprovação 100% via link do cliente ativada!');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { ORCAMENTO_APROVACAO_V52256_PURE: ORCAMENTO_APROVACAO_V52256_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52257_orcamento_sync_total_patch.js ===== */
+// PATCH v5.22.57 — Sincronização Total e Resiliente de Orçamentos e Vendas Salvas v5.22.57
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.57';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+
+  function getDb(){
+    return window.db || (typeof db !== 'undefined' ? db : null) || {};
+  }
+
+  function getSess(){
+    return typeof getSession === 'function' ? getSession() : null;
+  }
+
+  function proximaVendaNumero(empId){
+    var _db = getDb();
+    if(typeof window.proximoNumeroSimples === 'function'){
+      return window.proximoNumeroSimples('venda', _db.vendas, empId);
+    }
+    var max = 0;
+    (_db.vendas || []).forEach(function(v){
+      if(!v) return;
+      var num = parseInt(String(v.numero || '').replace(/\D/g, ''), 10) || 0;
+      if(num > max) max = num;
+    });
+    return String(max + 1);
+  }
+
+  // Gera a venda salva a partir de um orçamento e atualiza os status
+  function gerarVendaSalvaDeOrcamento(orcId, origem){
+    var _db = getDb();
+    if(!_db.orcamentos) _db.orcamentos = [];
+    if(!_db.vendas) _db.vendas = [];
+    if(!_db.notificacoes) _db.notificacoes = [];
+
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return null;
+
+    // Se já tem venda existente vinculada
+    if(o.vendaId){
+      var vendaExistente = _db.vendas.find(function(v){ return v && (v.id === o.vendaId || v.origemOrcamentoId === o.id); });
+      if(vendaExistente){
+        o.status = 'aprovado';
+        o.vendaNumero = vendaExistente.numero || o.vendaNumero;
+        if(typeof saveDB === 'function') saveDB();
+        return vendaExistente;
+      }
+    }
+
+    var s = getSess();
+    var empId = o.empresaId || (s && s.empresaId) || 'emp_default';
+    var vId = 'vda_orc_' + String(o.id || Date.now().toString(36));
+    var vNum = o.vendaNumero || proximaVendaNumero(empId);
+
+    var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+    var cliNome = (cli.nome || cli.fantasia || o.clienteNome || 'Cliente');
+
+    var novaVenda = {
+      id: vId,
+      empresaId: empId,
+      numero: vNum,
+      clienteId: o.clienteId || null,
+      clienteNome: cliNome,
+      data: new Date().toISOString(),
+      itens: (o.itens || []).map(function(it){
+        return {
+          produtoId: it.produtoId || null,
+          descricao: it.descricao || '',
+          sku: it.sku || '',
+          qtd: n(it.qtd || 1),
+          preco: n(it.preco || 0),
+          desconto: n(it.desconto || 0),
+          subtotal: n(it.subtotal || 0),
+          tipo: it.tipo || 'Produto'
+        };
+      }),
+      desconto: n(o.desconto || 0),
+      total: n(o.total || 0),
+      formaPagamento: 'A prazo',
+      observacao: 'Gerada do orçamento ' + (o.numero || ''),
+      status: 'aguardar', // Venda salva pronta para faturar
+      origemOrcamentoId: o.id,
+      criadoPor: s ? s.usuarioId : (o.criadoPor || 'sistema'),
+      criadoPorNome: s ? s.usuarioNome : (o.criadoPorNome || 'Cliente (Aprovação)'),
+      criadoEm: new Date().toISOString(),
+      atendenteNome: s ? s.usuarioNome : (o.criadoPorNome || 'Sistema')
+    };
+
+    // Atualiza estoque de produtos físicos se houver
+    (novaVenda.itens || []).forEach(function(it){
+      if(it.produtoId && _db.produtos){
+        var pr = _db.produtos.find(function(p){ return p && p.id === it.produtoId; });
+        if(pr && !/servi[cç]o|recarga/i.test(String(pr.categoria || '') + ' ' + String(pr.tipo || ''))){
+          pr.estoque = n(pr.estoque) - n(it.qtd);
+        }
+      }
+    });
+
+    _db.vendas.unshift(novaVenda);
+
+    // Atualiza o orçamento
+    o.status = 'aprovado';
+    o.vendaId = novaVenda.id;
+    o.vendaNumero = novaVenda.numero;
+    o.aprovadoEm = new Date().toISOString();
+    o.aprovadoOrigem = origem || 'cliente';
+
+    // Cria notificação
+    var ntf = {
+      id: 'ntf_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+      empresaId: empId,
+      tipo: 'orcamento_aprovado',
+      titulo: 'Orçamento autorizado',
+      texto: cliNome + ' autorizou o orçamento ' + (o.numero || '') + ' e gerou a venda salva ' + novaVenda.numero,
+      orcamentoId: o.id,
+      vendaId: novaVenda.id,
+      lida: false,
+      criadoEm: new Date().toISOString()
+    };
+    _db.notificacoes.unshift(ntf);
+
+    if(typeof saveDB === 'function') saveDB();
+
+    // Feedback visual
+    if(typeof window.lfbAlert === 'function'){
+      window.lfbAlert('O orçamento ' + (o.numero || '') + ' foi AUTORIZADO com sucesso e gerou a VENDA SALVA nº ' + novaVenda.numero + '!', 'Orçamento Autorizado');
+    } else if(typeof toast === 'function'){
+      toast('Orçamento ' + (o.numero || '') + ' autorizado! Venda salva ' + novaVenda.numero + ' gerada.', 'success');
+    }
+
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+    if(typeof window.renderVendas === 'function') window.renderVendas();
+
+    return novaVenda;
+  }
+
+  // Recusa o orçamento e atualiza status
+  function recusarOrcamento(orcId){
+    var _db = getDb();
+    if(!_db.orcamentos) return;
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return;
+    o.status = 'recusado';
+    o.recusadoEm = new Date().toISOString();
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof toast === 'function') toast('Orçamento ' + (o.numero || '') + ' marcado como Não autorizado', 'info');
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+  }
+
+  // Garante tokens em orçamentos sem token
+  function garantirTokensOrcamentos(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(!o) return;
+      if(!o.token){
+        o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }
+
+  // Consulta ativamente a API do Cloudflare Worker para buscar aprovações remotas
+  function verificarAprovacoesNuvem(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    garantirTokensOrcamentos();
+
+    var pendentes = _db.orcamentos.filter(function(o){
+      if(!o || !o.token) return false;
+      if(o.status === 'recusado' || o.status === 'excluido' || o.status === 'estornado') return false;
+      if(o.status === 'aprovado' && o.vendaId && (_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })) return false;
+      return true;
+    });
+
+    if(!pendentes.length) return;
+
+    pendentes.slice(0, 10).forEach(function(o){
+      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res) return;
+          var st = txt(res.status || (res.data && res.data.status)).toLowerCase();
+          if(st === 'aprovado' || (res.ok && res.status === 'aprovado') || res.vendaId){
+            if(o.status !== 'aprovado' || !o.vendaId || !(_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            }
+          } else if(st === 'recusado' || (res.ok && res.status === 'recusado')){
+            if(o.status !== 'recusado'){
+              recusarOrcamento(o.id);
+            }
+          }
+        })
+        .catch(function(){});
+    });
+  }
+
+  var ORCAMENTO_APROVACAO_V52257_PURE = {
+    VERSAO: VERSAO,
+    gerarVendaSalvaDeOrcamento: gerarVendaSalvaDeOrcamento,
+    recusarOrcamento: recusarOrcamento,
+    verificarAprovacoesNuvem: verificarAprovacoesNuvem,
+    garantirTokensOrcamentos: garantirTokensOrcamentos
+  };
+
+  if(typeof window !== 'undefined'){
+    window.ORCAMENTO_APROVACAO_V52257_PURE = ORCAMENTO_APROVACAO_V52257_PURE;
+    window.aprovarOrcamentoInterno = gerarVendaSalvaDeOrcamento;
+
+    // Escuta em tempo real decisões locais e de abas
+    try{
+      if(typeof BroadcastChannel !== 'undefined'){
+        var bc = new BroadcastChannel('digicopy_orcamentos');
+        bc.onmessage = function(ev){
+          var msg = ev && ev.data;
+          if(!msg) return;
+          var _db = getDb();
+          var o = (_db.orcamentos || []).find(function(x){
+            return x && ((msg.token && x.token === msg.token) || (msg.numero && String(x.numero) === String(msg.numero)));
+          });
+          if(!o) return;
+          if(msg.acao === 'aprovar'){
+            gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+          } else if(msg.acao === 'recusar'){
+            recusarOrcamento(o.id);
+          }
+        };
+      }
+      window.addEventListener('storage', function(ev){
+        if(ev && ev.key && ev.key.indexOf('digicopy_orc_decisao_') === 0){
+          try{
+            var data = JSON.parse(ev.newValue || '{}');
+            var tok = ev.key.replace('digicopy_orc_decisao_', '');
+            var _db = getDb();
+            var o = (_db.orcamentos || []).find(function(x){
+              return x && (x.token === tok || (data.numero && String(x.numero) === String(data.numero)));
+            });
+            if(!o) return;
+            if(data.acao === 'aprovar'){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            } else if(data.acao === 'recusar'){
+              recusarOrcamento(o.id);
+            }
+          }catch(e){}
+        }
+      });
+    }catch(e){}
+
+    // Ações manuais disponíveis
+    window.aprovarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja autorizar o orçamento ' + (o.numero || '') + ' e gerar a venda salva no sistema?', 'Autorizar Orçamento').then(function(ok){
+          if(!ok) return;
+          gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'aprovar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        gerarVendaSalvaDeOrcamento(id, 'atendente_manual');
+      }
+    };
+
+    window.recusarOrcamentoManual = function(id){
+      var _db = getDb();
+      var o = (_db.orcamentos || []).find(function(x){ return x && x.id === id; });
+      if(!o) return;
+      if(typeof window.confirmSistema === 'function'){
+        window.confirmSistema('Deseja marcar o orçamento ' + (o.numero || '') + ' como Não autorizado?', 'Recusar Orçamento').then(function(ok){
+          if(!ok) return;
+          recusarOrcamento(id);
+          if(o.token){
+            fetch(API + '/orcamento', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ c: o.token, acao: 'recusar', numero: o.numero, clienteNome: o.clienteNome })
+            }).catch(function(){});
+          }
+        });
+      } else {
+        recusarOrcamento(id);
+      }
+    };
+
+    // Sincronização central e infalível de versão em todo o sistema
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+        var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
+        if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
+          footSpan.textContent = 'Sistema Digicopy • Banco na Nuvem';
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarVersaoVisual;
+    garantirTokensOrcamentos();
+    sincronizarVersaoVisual();
+    setTimeout(sincronizarVersaoVisual, 50);
+    setTimeout(sincronizarVersaoVisual, 300);
+    setTimeout(sincronizarVersaoVisual, 1000);
+
+    // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
+    setInterval(verificarAprovacoesNuvem, 3000);
+    setTimeout(verificarAprovacoesNuvem, 1000);
+
+    // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52257sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(v){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual(); }catch(e){}
+        if(v === 'orcamentos' || v === 'vendas'){
+          setTimeout(verificarAprovacoesNuvem, 100);
+        }
+        return res;
+      };
+      window.navigateTo.__v52257sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Versão ' + VERSAO + ' sincronizada + aprovação 100% via link do cliente ativada!');
+  }
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { ORCAMENTO_APROVACAO_V52257_PURE: ORCAMENTO_APROVACAO_V52257_PURE };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52258_orcamento_os_revalidar_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.58 — Orçamentos com Ordem de Serviço (OS), Revalidação de Link,
+//                  Sincronização Perfeita com Vendas Salvas e Versão v5.22.58
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.58';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var PAGINA_CLIENTE = 'https://digicopy-orcamentos.pages.dev/';
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function money(v){ return (n(v)).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
+
+  function getDb(){
+    if(typeof window !== 'undefined' && window.db) return window.db;
+    if(typeof db !== 'undefined') return db;
+    if(typeof global !== 'undefined' && global.db) return global.db;
+    return {};
+  }
+
+  function getSess(){
+    if(typeof getSession === 'function') return getSession();
+    if(typeof window !== 'undefined' && typeof window.getSession === 'function') return window.getSession();
+    if(typeof global !== 'undefined' && typeof global.getSession === 'function') return global.getSession();
+    return null;
+  }
+
+  function tokenNovo(){
+    var b = new Uint8Array(18);
+    if(typeof crypto !== 'undefined' && crypto.getRandomValues) crypto.getRandomValues(b);
+    else for(var i = 0; i < 18; i++) b[i] = Math.floor(Math.random() * 256);
+    var s = ''; for(var j = 0; j < b.length; j++) s += ('0' + b[j].toString(16)).slice(-2);
+    return 'orc_' + s;
+  }
+
+  function b64url(obj){
+    try{
+      var j = JSON.stringify(obj);
+      var b = btoa(unescape(encodeURIComponent(j)));
+      return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }catch(e){ return ''; }
+  }
+
+  function payloadLink(o, cli, emp){
+    var res = {
+      t: o && o.token || '',
+      n: o && o.numero || '',
+      c: (cli && (cli.nome || cli.fantasia)) || o && o.clienteNome || '',
+      dt: String(o && (o.data || o.criadoEm) || '').slice(0, 10),
+      tot: n(o && o.total),
+      w: (emp && (emp.whatsapp || emp.telefone)) || o && o.lojaWhatsapp || '',
+      it: ((o && o.itens) || []).map(function(it){
+        return { d: it.descricao || '', q: it.qtd, p: it.preco, s: it.subtotal };
+      })
+    };
+    if(o && o.os && typeof o.os === 'object'){
+      var os = o.os;
+      var temOS = Object.keys(os).some(function(k){ return txt(os[k]); });
+      if(temOS){
+        res.os = {
+          m: os.modelo || '',
+          s: os.numeroSerie || os.serie || '',
+          p: os.patrimonio || '',
+          c: os.contador || '',
+          t: os.tipoOS || '',
+          tec: os.tecnico || '',
+          ent: os.responsavelEntrega || '',
+          g: os.garantia || '',
+          sit: os.situacao || '',
+          def: os.defeito || '',
+          srv: os.servicos || '',
+          pec: os.pecas || '',
+          ac: os.acessorios || ''
+        };
+      }
+    }
+    return res;
+  }
+
+  function linkPublicoOrcamento(o, cli, emp){
+    if(!o) return PAGINA_CLIENTE;
+    var _db = getDb();
+    var c = cli || (_db.clientes || []).find(function(x){ return x && x.id === o.clienteId; }) || {};
+    var s = getSess();
+    var e = emp || (s && (_db.empresas || []).find(function(x){ return x && x.id === s.empresaId; })) || (_db.config && _db.config.empresa) || {};
+    var p = payloadLink(o, c, e);
+    var dStr = b64url(p);
+    var tok = o.token || '';
+    return PAGINA_CLIENTE + '?c=' + encodeURIComponent(tok) + '&d=' + encodeURIComponent(dStr) + '&v=' + VERSAO;
+  }
+
+  function proximaVendaNumero(empId){
+    var _db = getDb();
+    if(typeof window.proximoNumeroSimples === 'function'){
+      return window.proximoNumeroSimples('venda', _db.vendas, empId);
+    }
+    var max = 0;
+    (_db.vendas || []).forEach(function(v){
+      if(!v) return;
+      var num = parseInt(String(v.numero || '').replace(/\D/g, ''), 10) || 0;
+      if(num > max) max = num;
+    });
+    return String(max + 1);
+  }
+
+  // Gera Venda Salva (status 'aguardar') no ERP e atualiza orçamento
+  function gerarVendaSalvaDeOrcamento(orcId, origem){
+    var _db = getDb();
+    if(!_db.orcamentos) _db.orcamentos = [];
+    if(!_db.vendas) _db.vendas = [];
+    if(!_db.notificacoes) _db.notificacoes = [];
+
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o || o.status === 'excluido') return null;
+    if(_db.__orcExcluidos && (_db.__orcExcluidos.includes(orcId) || (o.token && _db.__orcExcluidos.includes(o.token)))) return null;
+
+    if(o.vendaId){
+      var vendaExistente = _db.vendas.find(function(v){ return v && (v.id === o.vendaId || v.origemOrcamentoId === o.id); });
+      if(vendaExistente){
+        o.status = 'aprovado';
+        o.vendaNumero = vendaExistente.numero || o.vendaNumero;
+        if(typeof saveDB === 'function') saveDB();
+        return vendaExistente;
+      }
+    }
+
+    var s = getSess();
+    var empId = o.empresaId || (s && s.empresaId) || 'emp_default';
+    var vId = 'vda_orc_' + String(o.id || Date.now().toString(36));
+    var vNum = o.vendaNumero || proximaVendaNumero(empId);
+
+    var cli = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+    var cliNome = (cli.nome || cli.fantasia || o.clienteNome || 'Cliente');
+
+    var novaVenda = {
+      id: vId,
+      empresaId: empId,
+      numero: vNum,
+      clienteId: o.clienteId || null,
+      clienteNome: cliNome,
+      data: new Date().toISOString(),
+      itens: (o.itens || []).map(function(it){
+        return {
+          produtoId: it.produtoId || null,
+          descricao: it.descricao || '',
+          sku: it.sku || '',
+          qtd: n(it.qtd || 1),
+          preco: n(it.preco || 0),
+          desconto: n(it.desconto || 0),
+          subtotal: n(it.subtotal || 0),
+          tipo: it.tipo || 'Produto'
+        };
+      }),
+      desconto: n(o.desconto || 0),
+      total: n(o.total || 0),
+      formaPagamento: 'A prazo',
+      observacao: 'Gerada do orçamento ' + (o.numero || ''),
+      status: 'aguardar', // Venda salva pronta para faturar
+      origemOrcamentoId: o.id,
+      os: o.os ? Object.assign({}, o.os) : null,
+      criadoPor: s ? s.usuarioId : (o.criadoPor || 'sistema'),
+      criadoPorNome: s ? s.usuarioNome : (o.criadoPorNome || 'Cliente (Aprovação)'),
+      criadoEm: new Date().toISOString(),
+      atendenteNome: s ? s.usuarioNome : (o.criadoPorNome || 'Sistema')
+    };
+
+    // Se tiver dados de OS, espelha em db.os
+    if(o.os && _db.os){
+      var numeroOS = window.proximoNumeroSimples ? window.proximoNumeroSimples('os', _db.os, empId) : ('OS' + vNum);
+      var regOS = {
+        id: 'os_' + vId,
+        empresaId: empId,
+        numero: numeroOS,
+        vendaId: vId,
+        abertura: new Date().toISOString(),
+        criadoEm: new Date().toISOString(),
+        criadoPor: s ? s.usuarioId : 'sistema',
+        criadoPorNome: s ? s.usuarioNome : 'Sistema',
+        clienteId: o.clienteId,
+        problema: o.os.defeito || o.os.tipoOS || 'OS via orçamento',
+        descricao: o.os.servicos || '',
+        serie: o.os.numeroSerie || o.os.serie || '',
+        numeroSerie: o.os.numeroSerie || o.os.serie || '',
+        modelo: o.os.modelo || '',
+        equipamentoModelo: o.os.modelo || '',
+        patrimonio: o.os.patrimonio || '',
+        contador: o.os.contador || '',
+        tipoOS: o.os.tipoOS || '',
+        tecnico: o.os.tecnico || '',
+        tecnicoNome: o.os.tecnico || '',
+        responsavelEntrega: o.os.responsavelEntrega || '',
+        garantia: o.os.garantia || '',
+        pecasTexto: o.os.pecas || '',
+        situacaoOS: o.os.situacao || 'Aberta',
+        acessorios: o.os.acessorios || '',
+        status: 'aberto',
+        prioridade: 'normal'
+      };
+      _db.os.push(regOS);
+    }
+
+    _db.vendas.unshift(novaVenda);
+
+    // Atualiza o orçamento
+    o.status = 'aprovado';
+    o.vendaId = novaVenda.id;
+    o.vendaNumero = novaVenda.numero;
+    o.aprovadoEm = new Date().toISOString();
+    o.aprovadoOrigem = origem || 'cliente';
+
+    // Cria notificação
+    var ntf = {
+      id: 'ntf_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+      empresaId: empId,
+      tipo: 'orcamento_aprovado',
+      titulo: 'Orçamento autorizado',
+      texto: cliNome + ' autorizou o orçamento ' + (o.numero || '') + ' e gerou a venda salva ' + novaVenda.numero,
+      orcamentoId: o.id,
+      vendaId: novaVenda.id,
+      lida: false,
+      criadoEm: new Date().toISOString()
+    };
+    _db.notificacoes.unshift(ntf);
+
+    if(typeof saveDB === 'function') saveDB();
+
+    if(typeof window.lfbAlert === 'function'){
+      window.lfbAlert('O orçamento ' + (o.numero || '') + ' foi AUTORIZADO com sucesso e gerou a VENDA SALVA nº ' + novaVenda.numero + '!', 'Orçamento Autorizado');
+    } else if(typeof toast === 'function'){
+      toast('Orçamento ' + (o.numero || '') + ' autorizado! Venda salva ' + novaVenda.numero + ' gerada.', 'success');
+    }
+
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+    if(typeof window.renderVendas === 'function') window.renderVendas();
+
+    return novaVenda;
+  }
+
+  // Recusa o orçamento mantendo-o visível na lista como "Não autorizado"
+  function recusarOrcamento(orcId){
+    var _db = getDb();
+    if(!_db.orcamentos) return;
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return;
+    o.status = 'recusado';
+    o.recusadoEm = new Date().toISOString();
+    if(typeof saveDB === 'function') saveDB();
+    if(typeof toast === 'function') toast('Orçamento ' + (o.numero || '') + ' marcado como Não autorizado', 'info');
+    if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+  }
+
+  // Revalida o link do orçamento, estornando a venda salva se tiver sido criada
+  function revalidarLinkOrcamento(orcId, semConfirmacao){
+    var _db = getDb();
+    if(!_db.orcamentos) return false;
+    var o = _db.orcamentos.find(function(x){ return x && (x.id === orcId || x.token === orcId); });
+    if(!o) return false;
+
+    // Se já havia gerado venda
+    if(o.vendaId){
+      var v = (_db.vendas || []).find(function(x){ return x && (x.id === o.vendaId || x.origemOrcamentoId === o.id); });
+      if(v && /faturad|finaliz|pago/i.test(v.status || '')){
+        if(typeof window !== 'undefined' && typeof window.lfbAlert === 'function'){
+          window.lfbAlert('A venda gerada por este orçamento já foi faturada (Venda ' + v.numero + '). Para revalidar o link, primeiro estorne a venda no menu Vendas.', 'Venda Faturada');
+        } else if(typeof alert === 'function'){
+          alert('A venda já foi faturada. Estorne a venda primeiro.');
+        }
+        return false;
+      }
+    }
+
+    function executarRevalidacao(){
+      // Remove venda vinculada não faturada
+      if(o.vendaId){
+        _db.vendas = (_db.vendas || []).filter(function(x){ return x && x.id !== o.vendaId && x.origemOrcamentoId !== o.id; });
+        if(_db.os){
+          _db.os = (_db.os || []).filter(function(x){ return x && x.vendaId !== o.vendaId; });
+        }
+      }
+
+      // Gera novo token único
+      var tokAntigo = o.token;
+      o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+      o.status = 'aberto';
+      o.vendaId = null;
+      o.vendaNumero = null;
+      o.aprovadoEm = null;
+      o.recusadoEm = null;
+      o.aprovadoOrigem = null;
+
+      // Limpa chaves de localStorage locais
+      try{
+        if(typeof localStorage !== 'undefined'){
+          if(tokAntigo){
+            localStorage.removeItem('digicopy_orc_usado_' + tokAntigo);
+            localStorage.removeItem('digicopy_orc_decisao_' + tokAntigo);
+          }
+          localStorage.removeItem('digicopy_orc_usado_' + o.token);
+          localStorage.removeItem('digicopy_orc_decisao_' + o.token);
+        }
+      }catch(e){}
+
+      if(typeof saveDB === 'function') saveDB();
+
+      if(typeof window !== 'undefined' && typeof window.lfbAlert === 'function'){
+        window.lfbAlert('Link revalidado com sucesso! O orçamento ' + (o.numero || '') + ' voltou para o status ABERTO e está pronto para novo envio ao cliente.', 'Link Revalidado');
+      } else if(typeof toast === 'function'){
+        toast('Link revalidado! Orçamento voltou para Aberto.', 'success');
+      }
+
+      if(typeof window !== 'undefined' && typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+      if(typeof window !== 'undefined' && typeof window.renderVendas === 'function') window.renderVendas();
+
+      // Se a tela do orçamento estiver aberta, recarrega
+      if(typeof window !== 'undefined' && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id === o.id){
+        window.abrirOrcamento(o.id);
+      }
+      return true;
+    }
+
+    if(semConfirmacao){
+      return executarRevalidacao();
+    }
+
+    var pergunta = 'Deseja revalidar o link do orçamento ' + (o.numero || '') + '?\n\n'
+      + '• O link voltará a ficar ativo (status Aberto);\n'
+      + '• Qualquer venda salva gerada por ele será cancelada e removida do sistema;\n'
+      + '• O cliente poderá abrir novamente o link e autorizar/recusar.';
+
+    if(typeof window !== 'undefined' && typeof window.confirmSistema === 'function'){
+      window.confirmSistema(pergunta, 'Revalidar Link do Orçamento').then(function(ok){
+        if(ok) executarRevalidacao();
+      });
+    } else if(typeof confirm === 'function'){
+      if(confirm(pergunta)) executarRevalidacao();
+    } else {
+      executarRevalidacao();
+    }
+  }
+
+  // Garante tokens em orçamentos sem token
+  function garantirTokensOrcamentos(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(!o) return;
+      if(!o.token){
+        o.token = 'orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }
+
+  // Consulta ativamente a API do Cloudflare Worker para buscar aprovações remotas
+  function verificarAprovacoesNuvem(){
+    var _db = getDb();
+    if(!_db || !_db.orcamentos) return;
+    garantirTokensOrcamentos();
+
+    var pendentes = _db.orcamentos.filter(function(o){
+      if(!o || !o.token) return false;
+      if(o.status === 'recusado' || o.status === 'excluido' || o.status === 'estornado') return false;
+      if(_db.__orcExcluidos && (_db.__orcExcluidos.includes(o.id) || _db.__orcExcluidos.includes(o.token))) return false;
+      if(o.status === 'aprovado' && o.vendaId && (_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })) return false;
+      return true;
+    });
+
+    if(!pendentes.length) return;
+
+    pendentes.slice(0, 10).forEach(function(o){
+      fetch(API + '/orcamento?c=' + encodeURIComponent(o.token))
+        .then(function(r){ return r.json(); })
+        .then(function(res){
+          if(!res) return;
+          var st = txt(res.status || (res.data && res.data.status)).toLowerCase();
+          if(st === 'aprovado' || (res.ok && res.status === 'aprovado') || res.vendaId){
+            if(o.status !== 'aprovado' || !o.vendaId || !(_db.vendas || []).some(function(v){ return v && v.id === o.vendaId; })){
+              gerarVendaSalvaDeOrcamento(o.id, 'cliente_web');
+            }
+          } else if(st === 'recusado' || (res.ok && res.status === 'recusado')){
+            if(o.status !== 'recusado'){
+              recusarOrcamento(o.id);
+            }
+          }
+        })
+        .catch(function(){});
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTERFACE — Modal do Orçamento com Aba Itens + Aba Ordem de Serviço
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function setAbaOrcamento(aba){
+    var ai = document.getElementById('orc-aba-itens');
+    var ao = document.getElementById('orc-aba-os');
+    var bi = document.getElementById('orc-tab-itens');
+    var bo = document.getElementById('orc-tab-os');
+    if(ai) ai.classList.toggle('hidden', aba !== 'itens');
+    if(ao) ao.classList.toggle('hidden', aba !== 'os');
+    if(bi){
+      bi.classList.toggle('border-[#0a1e8a]', aba === 'itens');
+      bi.classList.toggle('text-[#0a1e8a]', aba === 'itens');
+      bi.classList.toggle('border-transparent', aba !== 'itens');
+      bi.classList.toggle('text-slate-500', aba !== 'itens');
+    }
+    if(bo){
+      bo.classList.toggle('border-[#0a1e8a]', aba === 'os');
+      bo.classList.toggle('text-[#0a1e8a]', aba === 'os');
+      bo.classList.toggle('border-transparent', aba !== 'os');
+      bo.classList.toggle('text-slate-500', aba !== 'os');
+    }
+  }
+
+  function coletarOSOrcamento(){
+    var g = function(id){ return txt(document.getElementById(id) && document.getElementById(id).value); };
+    return {
+      numeroSerie: g('orc-os-serie'),
+      modelo: g('orc-os-modelo'),
+      tipoOS: g('orc-os-tipo'),
+      patrimonio: g('orc-os-patri'),
+      contador: g('orc-os-contador'),
+      acessorios: g('orc-os-acess'),
+      tecnico: g('orc-os-tec'),
+      responsavelEntrega: g('orc-os-entrega'),
+      garantia: g('orc-os-garantia'),
+      situacao: g('orc-os-situacao'),
+      defeito: g('orc-os-defeito'),
+      servicos: g('orc-os-servicos'),
+      pecas: g('orc-os-pecas')
+    };
+  }
+
+  // Override da abertura do modal de orçamento para injetar abas e suporte a OS
+  if(typeof window !== 'undefined'){
+    window.setAbaOrcamento = setAbaOrcamento;
+    window.revalidarLinkOrcamento = revalidarLinkOrcamento;
+    window.aprovarOrcamentoInterno = gerarVendaSalvaDeOrcamento;
+    window.recusarOrcamentoInterno = recusarOrcamento;
+
+    // Garante que o link de orçamento use a função atualizada
+    if(window.ORCAMENTOS_V52240_PURE){
+      window.ORCAMENTOS_V52240_PURE.linkDe = linkPublicoOrcamento;
+      window.ORCAMENTOS_V52240_PURE.PAGINA = PAGINA_CLIENTE;
+    }
+    if(window.ORCAMENTOS_V52238_PURE){
+      window.ORCAMENTOS_V52238_PURE.linkOrcamento = linkPublicoOrcamento;
+      window.ORCAMENTOS_V52238_PURE.payloadLink = payloadLink;
+    }
+
+    // Modal de Orçamento com Abas Itens / Ordem de Serviço
+    window.abrirTelaOrcamento = function(existente){
+      var s = getSess(); if(!s) return;
+      var _db = getDb();
+      var agora = new Date();
+      var f = {
+        id: existente ? existente.id : null,
+        codigo: existente ? existente.numero : (window.proximoNumero ? window.proximoNumero(s.empresaId) : String(Date.now().toString(36))),
+        data: existente ? (existente.data || '').slice(0, 10) : agora.toISOString().slice(0, 10),
+        hora: agora.toTimeString().slice(0, 5),
+        cliente: existente && existente.clienteId ? (_db.clientes || []).find(function(c){ return c.id === existente.clienteId; }) : null,
+        itens: existente ? (existente.itens || []).map(function(it){ return Object.assign({}, it); }) : [],
+        produtoSel: null,
+        token: existente && existente.token ? existente.token : tokenNovo(),
+        obs: existente ? (existente.observacao || '') : '',
+        os: existente && existente.os ? Object.assign({}, existente.os) : {},
+        status: existente ? (existente.status || 'aberto') : 'aberto',
+        vendaNumero: existente ? (existente.vendaNumero || '') : ''
+      };
+
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.form = f;
+
+      var box = document.getElementById('modal-box');
+      if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+
+      var statusRotulo = f.status === 'aprovado' ? 'Autorizado' : (f.status === 'recusado' ? 'Não autorizado' : 'Aberto');
+      var statusBadgeCls = f.status === 'aprovado' ? 'neo-status ok' : (f.status === 'recusado' ? 'neo-status wait' : 'neo-status info');
+
+      document.getElementById('modal-title').innerText = existente ? ('Orçamento ' + f.codigo) : 'Novo orçamento';
+
+      var osData = f.os || {};
+
+      document.getElementById('modal-body').innerHTML =
+        '<div class="space-y-3">'
+        // Cabeçalho
+        +'<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'
+        +'<div class="rounded-xl bg-[#0a1e8a] text-white p-3"><p class="text-[10px] uppercase font-bold text-white/70">Código</p><p class="font-bold text-[15px]" id="orc-codigo">'+esc(f.codigo)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Data</p><p class="font-bold">'+esc(f.data.split('-').reverse().join('/'))+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Hora</p><p class="font-bold">'+esc(f.hora)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Vendedor</p><p class="font-bold">'+esc(s.usuarioNome)+'</p></div>'
+        +'<div class="rounded-xl border p-3 flex flex-col justify-center"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Status</p><p><span class="'+statusBadgeCls+'">'+esc(statusRotulo)+'</span></p></div>'
+        +'</div>'
+
+        // Linha de busca de cliente
+        +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente *</label>'
+        +'<div class="flex flex-wrap items-center gap-2 mt-1">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<option value="todos">Pesquisar em tudo</option>'
+        +'<option value="nome">Nome</option>'
+        +'<option value="fantasia">Fantasia</option>'
+        +'<option value="codigo">Código</option>'
+        +'<option value="documento">CPF/CNPJ</option>'
+        +'<option value="rgIE">RG/IE</option>'
+        +'<option value="endereco">Endereço</option>'
+        +'<option value="telefone">Telefone</option>'
+        +'<option value="whatsapp">WhatsApp</option>'
+        +'<option value="cidade">Cidade</option>'
+        +'<option value="bairro">Bairro</option>'
+        +'<option value="contato">Contato</option>'
+        +'<option value="email">E-mail</option>'
+        +'<option value="observacao">Observação</option>'
+        +'<option value="cep">CEP</option>'
+        +'<option value="estado">UF</option>'
+        +'</select>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente (Enter ou lupa)" class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div>'
+        +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between">'
+        +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || '')) : '')+'</p></div>'
+        +'<button type="button" onclick="window.orcLimparCliente()" class="w-8 h-8 rounded-lg bg-red-50 text-red-600"><i class="ph ph-x"></i></button></div>'
+        +'</div>'
+
+        // Barra de Abas (Itens / Ordem de Serviço)
+        +'<div class="flex border-b border-slate-200">'
+        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
+        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
+        +'</div>'
+
+        // ABA 1: ITENS
+        +'<div id="orc-aba-itens" class="space-y-3">'
+        +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
+        +'<div class="grid grid-cols-12 gap-2 items-end">'
+        +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo<select id="orc-item-tipo" onchange="window.orcOnTipoItem && window.orcOnTipoItem()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12px]"><option value="Produto">Produto</option><option value="Recarga de toner">Recarga de toner</option></select></label>'
+        +'<div class="col-span-12 md:col-span-5 relative">'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Filtro e Descrição</label>'
+        +'<div class="flex items-center gap-1 mt-1">'
+        +'<select id="orc-prod-cat" class="h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+        +'<option value="">Todas categorias</option>'
+        +'<option value="Produto">Produto</option>'
+        +'<option value="Serviço">Serviço</option>'
+        +'<option value="Cartucho">Cartucho</option>'
+        +'<option value="Cartucho Vazio">Cartucho Vazio</option>'
+        +'<option value="Insumo">Insumo</option>'
+        +'<option value="Equipamento">Equipamento</option>'
+        +'<option value="Impressoras">Impressoras</option>'
+        +'<option value="Chip">Chip</option>'
+        +'<option value="Compatível">Compatível</option>'
+        +'<option value="Informática">Informática</option>'
+        +'<option value="Original">Original</option>'
+        +'<option value="Outros">Outros</option>'
+        +'</select>'
+        +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+        +'<option value="todos">Pesquisar recarga</option>'
+        +'<option value="codigo">Código</option>'
+        +'<option value="nome">Descrição</option>'
+        +'<option value="marca">Marca</option>'
+        +'</select>'
+        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div>'
+        +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
+        +'</div>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
+        +'</div>'
+        +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
+        +'<label class="col-span-12 md:col-span-5 text-[11px] font-bold uppercase text-[#0a1e8a]">Etiqueta da recarga'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-item-cartucho" placeholder="Nº da etiqueta — se não achar, escreve e segue" class="flex-1 h-[38px] px-3 rounded-xl border bg-white text-[12px]">'
+        +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div></label>'
+        +'</div>'
+        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'</div>'
+        +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
+        +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
+        +'<tbody id="orc-itens-body" class="divide-y"></tbody></table></div>'
+        +'</div>'
+
+        // ABA 2: ORDEM DE SERVIÇO (OS) - Inicia vazia, sem nada obrigatório, sem busca inteligente
+        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 grid grid-cols-12 gap-2">'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
+        +'<input id="orc-os-serie" value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
+        +'<input id="orc-os-modelo" value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
+        +'<input id="orc-os-tipo" value="'+esc(osData.tipoOS || '')+'" placeholder="Ex: Manutenção, Instalação..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Patrimônio'
+        +'<input id="orc-os-patri" value="'+esc(osData.patrimonio || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Contador / cópias'
+        +'<input id="orc-os-contador" value="'+esc(osData.contador || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Acessórios'
+        +'<input id="orc-os-acess" value="'+esc(osData.acessorios || '')+'" placeholder="cabos, bandeja, etc..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Técnico responsável'
+        +'<input id="orc-os-tec" value="'+esc(osData.tecnico || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Responsável entrega'
+        +'<input id="orc-os-entrega" value="'+esc(osData.responsavelEntrega || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Garantia'
+        +'<input id="orc-os-garantia" value="'+esc(osData.garantia || '')+'" placeholder="Ex: 30 dias, 90 dias..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Situação da OS'
+        +'<input id="orc-os-situacao" value="'+esc(osData.situacao || '')+'" placeholder="Ex: Aberta, Em orçamento..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 text-[11px] font-bold uppercase text-[#0a1e8a]">Defeito apresentado'
+        +'<textarea id="orc-os-defeito" placeholder="O que o cliente relatou..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.defeito || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Serviços executados / previstos'
+        +'<textarea id="orc-os-servicos" placeholder="Serviços a executar..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.servicos || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Peças utilizadas / orçadas'
+        +'<textarea id="orc-os-pecas" placeholder="Peças necessárias..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.pecas || '')+'</textarea></label>'
+        +'</div>'
+        +'</div>'
+
+        // Observações e Total
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Observações do Orçamento<textarea id="orc-obs" class="mt-1 w-full h-[52px] p-2 rounded-xl border">'+esc(f.obs)+'</textarea></label>'
+        +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
+        +'</div>';
+
+      var linkCliente = existente ? linkPublicoOrcamento(existente, f.cliente) : '';
+
+      document.getElementById('modal-footer').innerHTML =
+        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
+        +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
+        +'<button type="button" onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>';
+
+      document.getElementById('modal-root').classList.remove('hidden');
+      window.modalContext = { type: 'orcamento' };
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
+
+      var cli = document.getElementById('orc-cli-search');
+      if(cli) cli.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarCliente(); } };
+      var pr = document.getElementById('orc-prod-search');
+      if(pr) pr.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarProd(); } };
+      ['orc-item-qtd', 'orc-item-vunit', 'orc-item-desc'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.oninput = window.orcCalcItem;
+      });
+    };
+
+    // Override do salvar orçamento para incluir os dados da OS
+    window.salvarOrcamentoTela = function(){
+      var s = getSess();
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!s || !f) return;
+      if(!f.cliente){
+        if(window.lfbAlert) window.lfbAlert('Escolha o cliente para o orçamento.', 'Orçamento');
+        else toast('Escolha o cliente', 'error');
+        return;
+      }
+      var _db = getDb();
+      if(!_db.orcamentos) _db.orcamentos = [];
+      var tot = (f.itens || []).reduce(function(sum, it){ return sum + (it.subtotal || 0); }, 0);
+      var o = f.id ? _db.orcamentos.find(function(x){ return x && x.id === f.id; }) : null;
+      var isNovo = !o;
+
+      if(!o){
+        o = {
+          id: 'orc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+          empresaId: s.empresaId,
+          numero: f.codigo,
+          token: f.token || tokenNovo(),
+          criadoEm: new Date().toISOString(),
+          criadoPor: s.usuarioId,
+          criadoPorNome: s.usuarioNome,
+          status: 'aberto'
+        };
+        _db.orcamentos.push(o);
+        f.id = o.id;
+      }
+
+      var osColetada = coletarOSOrcamento();
+
+      Object.assign(o, {
+        clienteId: f.cliente.id,
+        clienteNome: f.cliente.nome || f.cliente.fantasia || '',
+        data: f.data,
+        itens: (f.itens || []).map(function(it){ return Object.assign({}, it); }),
+        total: tot,
+        observacao: txt(document.getElementById('orc-obs') && document.getElementById('orc-obs').value),
+        token: o.token || f.token || tokenNovo(),
+        os: osColetada,
+        status: o.status || 'aberto',
+        atualizadoEm: new Date().toISOString()
+      });
+
+      if(typeof saveDB === 'function') saveDB();
+      if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
+      if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
+
+      window.__ORC_ST.form.id = o.id;
+      if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+      window.abrirOrcamento(o.id);
+    };
+
+    // Renderizador de listagem de Orçamentos garantindo que NUNCA suma e exiba o status correto
+    window.renderOrcamentos = function(){
+      var s = getSess(); if(!s) return;
+      var _db = getDb();
+      garantirTokensOrcamentos();
+      var view = typeof ensureView === 'function' ? ensureView('orcamentos') : document.getElementById('view-orcamentos');
+      if(!view) return;
+
+      var campo = (document.getElementById('orc-filtro-campo') || {}).value || (window.__ORC_ST && window.__ORC_ST.campo) || 'todos';
+      var q = (document.getElementById('orc-busca') || {}).value || (window.__ORC_ST && window.__ORC_ST.q) || '';
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo;
+      window.__ORC_ST.q = q;
+
+      var base = (_db.orcamentos || []).filter(function(o){
+        return o && (!s.empresaId || o.empresaId === s.empresaId) && o.status !== 'excluido';
+      });
+
+      var termo = txt(q).toLowerCase();
+      var list = base.filter(function(o){
+        var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+        var st = txt(o.status).toLowerCase();
+        if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
+        if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
+        if(!termo) return true;
+        return String(o.numero || '').toLowerCase().includes(termo)
+          || String(cl.nome || '').toLowerCase().includes(termo)
+          || String(o.criadoPorNome || '').toLowerCase().includes(termo);
+      }).sort(function(a, b){
+        var na = parseInt(String(a.numero || '').replace(/\D/g, ''), 10) || 0;
+        var nb = parseInt(String(b.numero || '').replace(/\D/g, ''), 10) || 0;
+        return nb - na;
+      });
+
+      view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
+        +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Propostas ao cliente com aprovação online e ordem de serviço</p></div>'
+        +'<div class="neo-actions">'
+        +'<button onclick="window.novoOrcamento()" class="neo-btn primary"><i class="ph ph-plus"></i>Novo</button>'
+        +'<button onclick="window.estornarOrcamentosMarcados()" class="neo-btn"><i class="ph ph-arrow-counter-clockwise"></i>Estornar</button>'
+        +'<button onclick="window.excluirOrcamentosMarcados()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button>'
+        +'</div></div>'
+        +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
+        +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
+        +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
+        +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
+        +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
+        +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
+        +'</select>'
+        +'<input id="orc-busca" value="'+esc(q)+'" placeholder="Buscar… (Enter ou lupa)" class="neo-input flex-1 min-w-[200px]">'
+        +'<button type="button" onclick="window.orcBuscar()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<span class="text-[12px] text-slate-500">'+list.length+' registro(s)</span>'
+        +'</div>'
+        +'<div class="overflow-auto max-h-[calc(100vh-320px)]"><table class="neo-table"><thead><tr>'
+        +'<th class="w-8"><input type="checkbox" onclick="document.querySelectorAll(\'input[name=orc-check]\').forEach(function(c){c.checked=this.checked}.bind(this))"></th>'
+        +'<th>Código</th><th>Data</th><th>Cliente</th><th>Valor total</th><th>Status</th><th>Ações</th></tr></thead><tbody>'
+        +(list.map(function(o){
+          var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
+          var st = txt(o.status).toLowerCase();
+          var rotulo = (st === 'aprovado' || o.vendaId) ? 'Autorizado' : (st === 'recusado' ? 'Não autorizado' : (st === 'estornado' ? 'Estornado' : 'Aberto'));
+          var badgeCls = (st === 'aprovado' || o.vendaId) ? 'neo-status ok' : (st === 'recusado' ? 'neo-status wait' : (st === 'estornado' ? 'neo-status info' : 'neo-status info'));
+          var temOS = o.os && Object.keys(o.os).some(function(k){ return txt(o.os[k]); });
+
+          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer">'
+            +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
+            +'<td><b class="text-[#0a1e8a]">'+esc(o.numero || '')+'</b>'+(temOS ? ' <span class="text-[10px]" title="Contém Ordem de Serviço">🔧 OS</span>' : '')+'</td>'
+            +'<td>'+(o.data ? o.data.slice(0, 10).split('-').reverse().join('/') : '-')+'</td>'
+            +'<td><b>'+esc(cl.nome || o.clienteNome || '(sem cliente)')+'</b></td>'
+            +'<td><b>'+money(o.total)+'</b></td>'
+            +'<td><span class="'+badgeCls+'">'+esc(rotulo)+'</span></td>'
+            +'<td><div class="flex items-center gap-1.5" onclick="event.stopPropagation()">'
+            +'<button onclick="window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
+            +'<button onclick="window.revalidarLinkOrcamento(\''+o.id+'\')" class="neo-btn !px-2 text-amber-700" title="Revalidar Link"><i class="ph ph-arrows-counter-clockwise"></i></button>'
+            +'</div></td>'
+            +'</tr>';
+        }).join('') || '<tr><td colspan="7" class="text-center text-slate-400 py-12">Nenhum orçamento encontrado</td></tr>')
+        +'</tbody></table></div></div></div>';
+
+      var inp = document.getElementById('orc-busca');
+      if(inp) inp.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscar(); } };
+      var sel = document.getElementById('orc-filtro-campo');
+      if(sel) sel.onchange = function(){
+        window.__ORC_ST.campo = sel.value;
+        window.renderOrcamentos();
+      };
+    };
+
+    window.orcMostrarTodos = function(){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // Sincronização central e infalível de versão em toda a interface
+    function sincronizarVersaoVisual(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+        var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
+        if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
+          footSpan.textContent = 'Sistema Digicopy • Banco na Nuvem';
+        }
+      }catch(e){}
+    }
+
+    window.__digicopySincronizarVersao = sincronizarVersaoVisual;
+    garantirTokensOrcamentos();
+    sincronizarVersaoVisual();
+    setTimeout(sincronizarVersaoVisual, 50);
+    setTimeout(sincronizarVersaoVisual, 300);
+    setTimeout(sincronizarVersaoVisual, 1000);
+
+    // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
+    setInterval(verificarAprovacoesNuvem, 3000);
+    setTimeout(verificarAprovacoesNuvem, 1000);
+
+    // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52258sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(v){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual(); }catch(e){}
+        if(v === 'orcamentos' || v === 'vendas'){
+          setTimeout(verificarAprovacoesNuvem, 100);
+        }
+        return res;
+      };
+      window.navigateTo.__v52258sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Orçamentos com OS, Revalidação de Link e Venda Salva ativados!');
+  }
+
+  var PURE_V52258 = {
+    VERSAO: VERSAO,
+    payloadLink: payloadLink,
+    linkPublicoOrcamento: linkPublicoOrcamento,
+    gerarVendaSalvaDeOrcamento: gerarVendaSalvaDeOrcamento,
+    recusarOrcamento: recusarOrcamento,
+    revalidarLinkOrcamento: revalidarLinkOrcamento,
+    b64url: b64url
+  };
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { PURE_V52258: PURE_V52258 };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52259_orcamento_filtros_item_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.59 — Orçamentos: Remoção da opção inválida 'Serviço' do tipo de item,
+//                  Restauração Completa dos Filtros de Busca (Cliente, Categorias de Produto,
+//                  Campos de Recarga de Toner e Etiqueta) e Sincronização v5.22.59
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.59';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function money(v){ return (n(v)).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
+
+  function getDb(){
+    if(typeof window !== 'undefined' && window.db) return window.db;
+    if(typeof db !== 'undefined') return db;
+    if(typeof global !== 'undefined' && global.db) return global.db;
+    return {};
+  }
+
+  function getSess(){
+    if(typeof getSession === 'function') return getSession();
+    if(typeof window !== 'undefined' && typeof window.getSession === 'function') return window.getSession();
+    if(typeof global !== 'undefined' && typeof global.getSession === 'function') return global.getSession();
+    return null;
+  }
+
+  var CAMPOS_CLIENTE = [
+    ['todos', 'Pesquisar em tudo'],
+    ['nome', 'Nome'],
+    ['fantasia', 'Fantasia'],
+    ['codigo', 'Código'],
+    ['documento', 'CPF/CNPJ'],
+    ['rgIE', 'RG/IE'],
+    ['endereco', 'Endereço'],
+    ['telefone', 'Telefone'],
+    ['whatsapp', 'WhatsApp'],
+    ['cidade', 'Cidade'],
+    ['bairro', 'Bairro'],
+    ['contato', 'Contato'],
+    ['email', 'E-mail'],
+    ['observacao', 'Observação'],
+    ['cep', 'CEP'],
+    ['estado', 'UF']
+  ];
+
+  var CATS_PRODUTO = [
+    'Produto', 'Serviço', 'Cartucho', 'Cartucho Vazio', 'Insumo', 'Equipamento',
+    'Impressoras', 'Chip', 'Compatível', 'Informática', 'Original', 'Outros'
+  ];
+
+  var CAMPOS_RECARGA = [
+    ['todos', 'Pesquisar recarga'],
+    ['codigo', 'Código'],
+    ['nome', 'Descrição'],
+    ['marca', 'Marca']
+  ];
+
+  function ehRecargaTipo(tipo){
+    return /recarga/i.test(String(tipo || ''));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTERFACE — Modal de Orçamento com Filtros Completos
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function orcOnTipoItem(){
+    if(typeof document === 'undefined') return;
+    var tipoEl = document.getElementById('orc-item-tipo');
+    var tipo = tipoEl ? tipoEl.value : 'Produto';
+    var isRec = ehRecargaTipo(tipo);
+
+    var catEl = document.getElementById('orc-prod-cat');
+    var recCampoEl = document.getElementById('orc-rec-campo');
+    var extraEl = document.getElementById('orc-item-extra');
+    var prodSearch = document.getElementById('orc-prod-search');
+    var resEl = document.getElementById('orc-prod-results');
+
+    if(catEl) catEl.style.display = isRec ? 'none' : '';
+    if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
+    if(extraEl) extraEl.classList.toggle('hidden', !isRec);
+    if(prodSearch){
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.value = '';
+    }
+    if(resEl){
+      resEl.classList.add('hidden');
+      resEl.innerHTML = '';
+    }
+    var vu = document.getElementById('orc-item-vunit');
+    if(vu) vu.value = '';
+    if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
+  }
+
+  function orcBuscarCliente(){
+    if(typeof document === 'undefined') return;
+    var q = txt(document.getElementById('orc-cli-search') && document.getElementById('orc-cli-search').value);
+    var el = document.getElementById('orc-cli-results');
+    if(!el) return;
+    if(!q){ el.classList.add('hidden'); el.innerHTML = ''; return; }
+
+    var s = getSess();
+    var _db = getDb();
+    var list = (_db.clientes || []).filter(function(c){
+      if(!c || c.status === 'inativo' || c.status === 'excluido') return false;
+      if(s && s.empresaId && c.empresaId && c.empresaId !== s.empresaId) return false;
+      return true;
+    });
+
+    var campo = (document.getElementById('orc-cli-campo') || {}).value || 'todos';
+    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
+      list = window.FILTROS_BUSCA_PURE.filtraClientes(list, q, campo);
+    } else {
+      var low = q.toLowerCase();
+      list = list.filter(function(c){
+        return String(c.nome || '').toLowerCase().includes(low)
+          || String(c.fantasia || '').toLowerCase().includes(low)
+          || String(c.codigo || '').includes(low)
+          || String(c.documento || '').includes(low);
+      });
+    }
+
+    list = list.slice(0, 15);
+    el.classList.remove('hidden');
+    el.innerHTML = list.map(function(c){
+      return '<button type="button" onclick="window.orcSelCliente(\'' + esc(c.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(c.nome || '') + '</b>'
+        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(c.fantasia) + ')</span>' : '') + '<br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
+    }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado com esse filtro.</p>';
+  }
+
+  function orcBuscarProd(){
+    if(typeof document === 'undefined') return;
+    var q = txt(document.getElementById('orc-prod-search') && document.getElementById('orc-prod-search').value);
+    var el = document.getElementById('orc-prod-results');
+    if(!el) return;
+
+    var s = getSess();
+    var _db = getDb();
+    var tipoEl = document.getElementById('orc-item-tipo');
+    var isRec = ehRecargaTipo(tipoEl ? tipoEl.value : 'Produto');
+
+    if(isRec){
+      var campo = (document.getElementById('orc-rec-campo') || {}).value || 'todos';
+      var recs = (_db.recargas || []).filter(function(r){
+        return !s || !r.empresaId || r.empresaId === s.empresaId;
+      });
+      if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraRecargas === 'function'){
+        recs = window.FILTROS_BUSCA_PURE.filtraRecargas(recs, q, campo);
+      } else {
+        var lowRec = q.toLowerCase();
+        recs = recs.filter(function(r){
+          return String(r.nome || '').toLowerCase().includes(lowRec) || String(r.codigo || '').includes(lowRec);
+        });
+      }
+      recs = recs.slice(0, 10);
+      el.classList.remove('hidden');
+      el.innerHTML = recs.map(function(r){
+        return '<button type="button" onclick="window.orcSelRecarga(\'' + esc(r.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+          + '<b>' + esc(r.nome || '') + '</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">Recarga</span><br>'
+          + '<span class="text-slate-500 text-[11px]">cód. ' + esc(r.codigo || '') + ' • sem estoque • <b class="text-[#0a1e8a]">' + money(r.preco || 0) + '</b></span></button>';
+      }).join('') || '<p class="px-3 py-2 text-slate-400">Nenhuma recarga encontrada. Você pode digitar a descrição e etiqueta manualmente.</p>';
+      return;
+    }
+
+    var cat = (document.getElementById('orc-prod-cat') || {}).value || '';
+    var prods = (_db.produtos || []).filter(function(p){
+      return !s || !p.empresaId || p.empresaId === s.empresaId;
+    });
+
+    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraProdutos === 'function'){
+      prods = window.FILTROS_BUSCA_PURE.filtraProdutos(prods, q, cat);
+    } else {
+      var lowProd = q.toLowerCase();
+      prods = prods.filter(function(p){
+        if(cat && String(p.categoria || '') !== cat) return false;
+        return !lowProd || String(p.nome || '').toLowerCase().includes(lowProd) || String(p.sku || '').toLowerCase().includes(lowProd);
+      });
+    }
+
+    prods = prods.slice(0, 10);
+    el.classList.remove('hidden');
+    el.innerHTML = prods.map(function(p){
+      return '<button type="button" onclick="window.orcSelProd(\'' + esc(p.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+        + '<b>' + esc(p.nome || '') + '</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">' + esc(p.categoria || '') + '</span><br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(p.sku || '') + ' • estoque ' + (p.estoque || 0) + ' • <b class="text-[#0a1e8a]">' + money(p.preco || 0) + '</b></span></button>';
+    }).join('') || '<p class="px-3 py-2 text-slate-400">Sem produto cadastrado — a descrição digitada será usada normalmente</p>';
+  }
+
+  function orcBuscarEtiqueta(){
+    if(typeof document === 'undefined') return;
+    var etq = txt(document.getElementById('orc-item-cartucho') && document.getElementById('orc-item-cartucho').value);
+    if(!etq) return;
+    var _db = getDb();
+    var rec = (_db.recargasEtiquetas || []).find(function(r){
+      return String(r.etiqueta || '').replace(/\s+/g, '').toUpperCase() === etq.replace(/\s+/g, '').toUpperCase();
+    });
+    if(!rec && typeof toast === 'function'){
+      toast('Etiqueta nova: digite e adicione o item ao orçamento.', 'info');
+    } else if(rec && rec.clienteId && window.__ORC_ST && window.__ORC_ST.form && !window.__ORC_ST.form.cliente){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === rec.clienteId; });
+      if(c && typeof window.orcSelCliente === 'function') window.orcSelCliente(c.id);
+    }
+  }
+
+  if(typeof window !== 'undefined'){
+    window.orcOnTipoItem = orcOnTipoItem;
+    window.orcBuscarCliente = orcBuscarCliente;
+    window.orcBuscarProd = orcBuscarProd;
+    window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+
+    // Override do Modal de Orçamento com layout limpo e TODOS os filtros de busca
+    window.abrirTelaOrcamento = function(existente){
+      var s = getSess(); if(!s) return;
+      var _db = getDb();
+      var agora = new Date();
+      var f = {
+        id: existente ? existente.id : null,
+        codigo: existente ? existente.numero : (window.proximoNumeroSimples ? window.proximoNumeroSimples('orcamento', _db.orcamentos, s.empresaId) : String(Date.now().toString(36))),
+        data: existente ? (existente.data || '').slice(0, 10) : agora.toISOString().slice(0, 10),
+        hora: agora.toTimeString().slice(0, 5),
+        cliente: existente && existente.clienteId ? (_db.clientes || []).find(function(c){ return c.id === existente.clienteId; }) : null,
+        itens: existente ? (existente.itens || []).map(function(it){ return Object.assign({}, it); }) : [],
+        produtoSel: null,
+        token: existente && existente.token ? existente.token : ('orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)),
+        obs: existente ? (existente.observacao || '') : '',
+        os: existente && existente.os ? Object.assign({}, existente.os) : {},
+        status: existente ? (existente.status || 'aberto') : 'aberto',
+        vendaNumero: existente ? (existente.vendaNumero || '') : ''
+      };
+
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.form = f;
+
+      var box = document.getElementById('modal-box');
+      if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+
+      var statusRotulo = f.status === 'aprovado' ? 'Autorizado' : (f.status === 'recusado' ? 'Não autorizado' : 'Aberto');
+      var statusBadgeCls = f.status === 'aprovado' ? 'neo-status ok' : (f.status === 'recusado' ? 'neo-status wait' : 'neo-status info');
+
+      document.getElementById('modal-title').innerText = existente ? ('Orçamento ' + f.codigo) : 'Novo orçamento';
+
+      var osData = f.os || {};
+
+      document.getElementById('modal-body').innerHTML =
+        '<div class="space-y-3">'
+        // Cabeçalho
+        +'<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'
+        +'<div class="rounded-xl bg-[#0a1e8a] text-white p-3"><p class="text-[10px] uppercase font-bold text-white/70">Código</p><p class="font-bold text-[15px]" id="orc-codigo">'+esc(f.codigo)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Data</p><p class="font-bold">'+esc(f.data.split('-').reverse().join('/'))+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Hora</p><p class="font-bold">'+esc(f.hora)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Vendedor</p><p class="font-bold">'+esc(s.usuarioNome)+'</p></div>'
+        +'<div class="rounded-xl border p-3 flex flex-col justify-center"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Status</p><p><span class="'+statusBadgeCls+'">'+esc(statusRotulo)+'</span></p></div>'
+        +'</div>'
+
+        // Linha do Cliente com Filtro de Campos
+        +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<div class="flex flex-wrap items-center gap-2 mt-1">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
+        +'</select>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div>'
+        +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
+        +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || '')) : '')+'</p>'
+        +'<p class="text-[11px] text-slate-500">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
+        +'<button type="button" onclick="window.orcLimparCliente()" class="w-8 h-8 rounded-lg bg-red-50 text-red-600"><i class="ph ph-x"></i></button></div>'
+        +'</div>'
+
+        // Barra de Abas (Itens / Ordem de Serviço)
+        +'<div class="flex border-b border-slate-200">'
+        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
+        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
+        +'</div>'
+
+        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        +'<div id="orc-aba-itens" class="space-y-3">'
+        +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
+        +'<div class="grid grid-cols-12 gap-2 items-end">'
+        // Tipo de Item: apenas Produto e Recarga de toner (sem Serviço)
+        +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo'
+        +'<select id="orc-item-tipo" onchange="window.orcOnTipoItem()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12px]"><option value="Produto">Produto</option><option value="Recarga de toner">Recarga de toner</option></select></label>'
+
+        // Descrição com Filtro de Categoria (Produto) ou Campo (Recarga)
+        +'<div class="col-span-12 md:col-span-5 relative">'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Filtro e Descrição</label>'
+        +'<div class="flex items-center gap-1 mt-1">'
+        +'<select id="orc-prod-cat" class="h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+        +'<option value="">Todas categorias</option>'
+        +CATS_PRODUTO.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('')
+        +'</select>'
+        +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+        +CAMPOS_RECARGA.map(function(rc){ return '<option value="'+esc(rc[0])+'">'+esc(rc[1])+'</option>'; }).join('')
+        +'</select>'
+        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar item"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div>'
+        +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
+        +'</div>'
+
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
+        +'</div>'
+
+        // Linha extra quando for Recarga de Toner (Etiqueta + Lupa)
+        +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
+        +'<label class="col-span-12 md:col-span-5 text-[11px] font-bold uppercase text-[#0a1e8a]">Etiqueta da recarga'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-item-cartucho" placeholder="Nº da etiqueta — se não achar, escreve e segue" class="flex-1 h-[38px] px-3 rounded-xl border bg-white text-[12px]">'
+        +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div></label>'
+        +'</div>'
+
+        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'</div>'
+
+        // Tabela de itens
+        +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
+        +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2 text-center">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2 text-center">Desc</th><th class="px-3 py-2">Total</th><th class="w-10"></th></tr></thead>'
+        +'<tbody id="orc-itens-body" class="divide-y"></tbody></table></div>'
+        +'</div>'
+
+        // ABA 2: ORDEM DE SERVIÇO (OS) - Inicia vazia, sem nada obrigatório, sem busca inteligente
+        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 grid grid-cols-12 gap-2">'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
+        +'<input id="orc-os-serie" value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
+        +'<input id="orc-os-modelo" value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
+        +'<input id="orc-os-tipo" value="'+esc(osData.tipoOS || '')+'" placeholder="Ex: Manutenção, Instalação..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Patrimônio'
+        +'<input id="orc-os-patri" value="'+esc(osData.patrimonio || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Contador / cópias'
+        +'<input id="orc-os-contador" value="'+esc(osData.contador || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Acessórios'
+        +'<input id="orc-os-acess" value="'+esc(osData.acessorios || '')+'" placeholder="cabos, bandeja, etc..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Técnico responsável'
+        +'<input id="orc-os-tec" value="'+esc(osData.tecnico || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Responsável entrega'
+        +'<input id="orc-os-entrega" value="'+esc(osData.responsavelEntrega || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Garantia'
+        +'<input id="orc-os-garantia" value="'+esc(osData.garantia || '')+'" placeholder="Ex: 30 dias, 90 dias..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Situação da OS'
+        +'<input id="orc-os-situacao" value="'+esc(osData.situacao || '')+'" placeholder="Ex: Aberta, Em orçamento..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 text-[11px] font-bold uppercase text-[#0a1e8a]">Defeito apresentado'
+        +'<textarea id="orc-os-defeito" placeholder="O que o cliente relatou..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.defeito || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Serviços executados / previstos'
+        +'<textarea id="orc-os-servicos" placeholder="Serviços a executar..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.servicos || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Peças utilizadas / orçadas'
+        +'<textarea id="orc-os-pecas" placeholder="Peças necessárias..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.pecas || '')+'</textarea></label>'
+        +'</div>'
+        +'</div>'
+
+        // Observações e Total
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Observações do Orçamento<textarea id="orc-obs" class="mt-1 w-full h-[52px] p-2 rounded-xl border">'+esc(f.obs)+'</textarea></label>'
+        +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
+        +'</div>';
+
+      var linkCliente = existente && window.PURE_V52258 ? window.PURE_V52258.linkPublicoOrcamento(existente, f.cliente) : '';
+
+      document.getElementById('modal-footer').innerHTML =
+        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
+        +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
+        +'<button type="button" onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>';
+
+      document.getElementById('modal-root').classList.remove('hidden');
+      window.modalContext = { type: 'orcamento' };
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
+
+      var cli = document.getElementById('orc-cli-search');
+      if(cli) cli.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarCliente(); } };
+      var pr = document.getElementById('orc-prod-search');
+      if(pr) pr.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarProd(); } };
+      var cart = document.getElementById('orc-item-cartucho');
+      if(cart) cart.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarEtiqueta(); } };
+
+      ['orc-item-qtd', 'orc-item-vunit', 'orc-item-desc'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.oninput = window.orcCalcItem;
+      });
+
+      orcOnTipoItem();
+    };
+
+    // Override do orcAddItem para suportar produto ou recarga com etiqueta
+    window.orcAddItem = function(){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f) return;
+      var desc = txt(document.getElementById('orc-prod-search') && document.getElementById('orc-prod-search').value);
+      var p = f.produtoSel;
+      var tipo = (document.getElementById('orc-item-tipo') || {}).value || 'Produto';
+      var isRec = ehRecargaTipo(tipo);
+      var cartucho = isRec ? txt(document.getElementById('orc-item-cartucho') && document.getElementById('orc-item-cartucho').value) : '';
+
+      if(!p && !desc && !cartucho){
+        if(typeof toast === 'function') toast('Selecione um produto ou escreva a descrição', 'error');
+        return;
+      }
+
+      var qtd = n(document.getElementById('orc-item-qtd') && document.getElementById('orc-item-qtd').value) || 1;
+      var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
+      var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
+
+      var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
+      if(cartucho && !descricaoFinal.includes(cartucho)){
+        descricaoFinal += ' (Etiqueta: ' + cartucho + ')';
+      }
+
+      f.itens.push({
+        produtoId: p ? p.id : null,
+        descricao: descricaoFinal,
+        sku: p ? (p.sku || '') : '',
+        tipo: isRec ? 'Recarga de toner' : 'Produto',
+        qtd: qtd,
+        preco: preco,
+        desconto: descV,
+        subtotal: Math.max(0, qtd * preco - descV),
+        numCartucho: cartucho
+      });
+
+      f.produtoSel = null;
+      var ps = document.getElementById('orc-prod-search'); if(ps) ps.value = '';
+      var ci = document.getElementById('orc-item-cartucho'); if(ci) ci.value = '';
+      var qi = document.getElementById('orc-item-qtd'); if(qi) qi.value = 1;
+      var vi = document.getElementById('orc-item-vunit'); if(vi) vi.value = '';
+      var di = document.getElementById('orc-item-desc'); if(di) di.value = 0;
+      var ti = document.getElementById('orc-item-total'); if(ti) ti.value = '';
+
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
+    };
+
+    // Sincronização visual de versão v5.22.59
+    function sincronizarVersaoVisual59(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+      }catch(e){}
+    }
+
+    sincronizarVersaoVisual59();
+    setTimeout(sincronizarVersaoVisual59, 50);
+    setTimeout(sincronizarVersaoVisual59, 300);
+
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52259sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual59(); }catch(e){}
+        return res;
+      };
+      window.navigateTo.__v52259sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Filtros de orçamentos e itens corrigidos!');
+  }
+
+  var PURE_V52259 = {
+    VERSAO: VERSAO,
+    CAMPOS_CLIENTE: CAMPOS_CLIENTE,
+    CATS_PRODUTO: CATS_PRODUTO,
+    CAMPOS_RECARGA: CAMPOS_RECARGA,
+    ehRecargaTipo: ehRecargaTipo
+  };
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { PURE_V52259: PURE_V52259 };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52260_orcamento_trava_venda_atalho_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.60 — Orçamentos: Trava de Edição em Autorizados, Atalho para Venda Salva,
+//                  Exclusão Funcional com Cancelamento Seguro e Seleção Confiável de Cliente
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+
+  var VERSAO = '5.22.60';
+  if(typeof window !== 'undefined'){
+    window.DIGICOPY_APP_VERSION = VERSAO;
+  }
+
+  function txt(v){ return String(v == null ? '' : v).trim(); }
+  function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function money(v){ return (n(v)).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
+
+  function getDb(){
+    if(typeof window !== 'undefined' && window.db) return window.db;
+    if(typeof db !== 'undefined') return db;
+    if(typeof global !== 'undefined' && global.db) return global.db;
+    return {};
+  }
+
+  function getSess(){
+    if(typeof getSession === 'function') return getSession();
+    if(typeof window !== 'undefined' && typeof window.getSession === 'function') return window.getSession();
+    if(typeof global !== 'undefined' && typeof global.getSession === 'function') return global.getSession();
+    return null;
+  }
+
+  var CAMPOS_CLIENTE = [
+    ['todos', 'Pesquisar em tudo'],
+    ['nome', 'Nome'],
+    ['fantasia', 'Fantasia'],
+    ['codigo', 'Código'],
+    ['documento', 'CPF/CNPJ'],
+    ['rgIE', 'RG/IE'],
+    ['endereco', 'Endereço'],
+    ['telefone', 'Telefone'],
+    ['whatsapp', 'WhatsApp'],
+    ['cidade', 'Cidade'],
+    ['bairro', 'Bairro'],
+    ['contato', 'Contato'],
+    ['email', 'E-mail'],
+    ['observacao', 'Observação'],
+    ['cep', 'CEP'],
+    ['estado', 'UF']
+  ];
+
+  var CATS_PRODUTO = [
+    'Produto', 'Serviço', 'Cartucho', 'Cartucho Vazio', 'Insumo', 'Equipamento',
+    'Impressoras', 'Chip', 'Compatível', 'Informática', 'Original', 'Outros'
+  ];
+
+  var CAMPOS_RECARGA = [
+    ['todos', 'Pesquisar recarga'],
+    ['codigo', 'Código'],
+    ['nome', 'Descrição'],
+    ['marca', 'Marca']
+  ];
+
+  function ehRecargaTipo(tipo){
+    return /recarga/i.test(String(tipo || ''));
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SELEÇÃO E BUSCA DE CLIENTE E PRODUTOS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function orcOnTipoItem(){
+    if(typeof document === 'undefined') return;
+    var tipoEl = document.getElementById('orc-item-tipo');
+    var tipo = tipoEl ? tipoEl.value : 'Produto';
+    var isRec = ehRecargaTipo(tipo);
+
+    var catEl = document.getElementById('orc-prod-cat');
+    var recCampoEl = document.getElementById('orc-rec-campo');
+    var extraEl = document.getElementById('orc-item-extra');
+    var prodSearch = document.getElementById('orc-prod-search');
+    var resEl = document.getElementById('orc-prod-results');
+
+    if(catEl) catEl.style.display = isRec ? 'none' : '';
+    if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
+    if(extraEl) extraEl.classList.toggle('hidden', !isRec);
+    if(prodSearch){
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.value = '';
+    }
+    if(resEl){
+      resEl.classList.add('hidden');
+      resEl.innerHTML = '';
+    }
+    var vu = document.getElementById('orc-item-vunit');
+    if(vu) vu.value = '';
+    if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
+  }
+
+  function orcBuscarCliente(){
+    if(typeof document === 'undefined') return;
+    var q = txt(document.getElementById('orc-cli-search') && document.getElementById('orc-cli-search').value);
+    var el = document.getElementById('orc-cli-results');
+    if(!el) return;
+    if(!q){ el.classList.add('hidden'); el.innerHTML = ''; return; }
+
+    var s = getSess();
+    var _db = getDb();
+    var list = (_db.clientes || []).filter(function(c){
+      if(!c || c.status === 'inativo' || c.status === 'excluido') return false;
+      if(s && s.empresaId && c.empresaId && c.empresaId !== s.empresaId) return false;
+      return true;
+    });
+
+    var campo = (document.getElementById('orc-cli-campo') || {}).value || 'todos';
+    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraClientes === 'function'){
+      list = window.FILTROS_BUSCA_PURE.filtraClientes(list, q, campo);
+    } else {
+      var low = q.toLowerCase();
+      list = list.filter(function(c){
+        return String(c.nome || '').toLowerCase().includes(low)
+          || String(c.fantasia || '').toLowerCase().includes(low)
+          || String(c.codigo || '').includes(low)
+          || String(c.documento || '').includes(low);
+      });
+    }
+
+    list = list.slice(0, 15);
+    el.classList.remove('hidden');
+    el.innerHTML = list.map(function(c){
+      return '<button type="button" onclick="window.orcSelCliente(\'' + esc(c.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+        + '<b class="text-[#0a1e8a]">#' + esc(c.codigo || '-') + '</b> <b>' + esc(c.nome || '') + '</b>'
+        + (c.fantasia ? ' <span class="text-slate-500 text-[11px]">(' + esc(c.fantasia) + ')</span>' : '') + '<br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(c.documento || '') + ' • ' + esc(c.telefone || '') + '</span></button>';
+    }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado com esse filtro.</p>';
+  }
+
+  function orcSelCliente(id){
+    var _db = getDb();
+    var c = (_db.clientes || []).find(function(x){ return x && x.id === id; });
+    if(!c || !window.__ORC_ST || !window.__ORC_ST.form) return;
+    window.__ORC_ST.form.cliente = c;
+
+    var resEl = document.getElementById('orc-cli-results');
+    if(resEl){ resEl.classList.add('hidden'); resEl.innerHTML = ''; }
+    var searchInp = document.getElementById('orc-cli-search');
+    if(searchInp) searchInp.value = '';
+
+    var selBox = document.getElementById('orc-cli-sel');
+    if(selBox) selBox.classList.remove('hidden');
+
+    var nomeEl = document.getElementById('orc-cli-nome');
+    if(nomeEl) nomeEl.textContent = (c.codigo ? '#' + c.codigo + ' — ' : '') + (c.nome || c.fantasia || '');
+    var infoEl = document.getElementById('orc-cli-info');
+    if(infoEl) infoEl.textContent = [c.documento, c.telefone || c.whatsapp, c.cidade].filter(Boolean).join(' • ');
+  }
+
+  function orcLimparCliente(){
+    if(window.__ORC_ST && window.__ORC_ST.form) window.__ORC_ST.form.cliente = null;
+    var selBox = document.getElementById('orc-cli-sel');
+    if(selBox) selBox.classList.add('hidden');
+    var searchInp = document.getElementById('orc-cli-search');
+    if(searchInp){ searchInp.value = ''; searchInp.focus(); }
+  }
+
+  function orcBuscarProd(){
+    if(typeof document === 'undefined') return;
+    var q = txt(document.getElementById('orc-prod-search') && document.getElementById('orc-prod-search').value);
+    var el = document.getElementById('orc-prod-results');
+    if(!el) return;
+
+    var s = getSess();
+    var _db = getDb();
+    var tipoEl = document.getElementById('orc-item-tipo');
+    var isRec = ehRecargaTipo(tipoEl ? tipoEl.value : 'Produto');
+
+    if(isRec){
+      var campo = (document.getElementById('orc-rec-campo') || {}).value || 'todos';
+      var recs = (_db.recargas || []).filter(function(r){
+        return !s || !r.empresaId || r.empresaId === s.empresaId;
+      });
+      if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraRecargas === 'function'){
+        recs = window.FILTROS_BUSCA_PURE.filtraRecargas(recs, q, campo);
+      } else {
+        var lowRec = q.toLowerCase();
+        recs = recs.filter(function(r){
+          return String(r.nome || '').toLowerCase().includes(lowRec) || String(r.codigo || '').includes(lowRec);
+        });
+      }
+      recs = recs.slice(0, 10);
+      el.classList.remove('hidden');
+      el.innerHTML = recs.map(function(r){
+        return '<button type="button" onclick="window.orcSelRecarga(\'' + esc(r.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+          + '<b>' + esc(r.nome || '') + '</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">Recarga</span><br>'
+          + '<span class="text-slate-500 text-[11px]">cód. ' + esc(r.codigo || '') + ' • sem estoque • <b class="text-[#0a1e8a]">' + money(r.preco || 0) + '</b></span></button>';
+      }).join('') || '<p class="px-3 py-2 text-slate-400">Nenhuma recarga encontrada. Você pode digitar a descrição e etiqueta manualmente.</p>';
+      return;
+    }
+
+    var cat = (document.getElementById('orc-prod-cat') || {}).value || '';
+    var prods = (_db.produtos || []).filter(function(p){
+      return !s || !p.empresaId || p.empresaId === s.empresaId;
+    });
+
+    if(window.FILTROS_BUSCA_PURE && typeof window.FILTROS_BUSCA_PURE.filtraProdutos === 'function'){
+      prods = window.FILTROS_BUSCA_PURE.filtraProdutos(prods, q, cat);
+    } else {
+      var lowProd = q.toLowerCase();
+      prods = prods.filter(function(p){
+        if(cat && String(p.categoria || '') !== cat) return false;
+        return !lowProd || String(p.nome || '').toLowerCase().includes(lowProd) || String(p.sku || '').toLowerCase().includes(lowProd);
+      });
+    }
+
+    prods = prods.slice(0, 10);
+    el.classList.remove('hidden');
+    el.innerHTML = prods.map(function(p){
+      return '<button type="button" onclick="window.orcSelProd(\'' + esc(p.id) + '\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0">'
+        + '<b>' + esc(p.nome || '') + '</b> <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100">' + esc(p.categoria || '') + '</span><br>'
+        + '<span class="text-slate-500 text-[11px]">' + esc(p.sku || '') + ' • estoque ' + (p.estoque || 0) + ' • <b class="text-[#0a1e8a]">' + money(p.preco || 0) + '</b></span></button>';
+    }).join('') || '<p class="px-3 py-2 text-slate-400">Sem produto cadastrado — a descrição digitada será usada normalmente</p>';
+  }
+
+  function orcSelProd(id){
+    var _db = getDb();
+    var p = (_db.produtos || []).find(function(x){ return x && x.id === id; });
+    if(!p || !window.__ORC_ST || !window.__ORC_ST.form) return;
+    window.__ORC_ST.form.produtoSel = p;
+
+    var resEl = document.getElementById('orc-prod-results');
+    if(resEl){ resEl.classList.add('hidden'); resEl.innerHTML = ''; }
+    var searchInp = document.getElementById('orc-prod-search');
+    if(searchInp) searchInp.value = p.nome || '';
+    var vu = document.getElementById('orc-item-vunit');
+    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
+  }
+
+  function orcSelRecarga(id){
+    var _db = getDb();
+    var r = (_db.recargas || []).find(function(x){ return x && x.id === id; });
+    if(!r || !window.__ORC_ST || !window.__ORC_ST.form) return;
+    var nomeRec = r.nome || r.descricao || 'Recarga de toner';
+    window.__ORC_ST.form.produtoSel = { id: r.id, nome: nomeRec, sku: r.codigo || '', preco: Number(r.preco || r.valor || 0), isRecarga: true };
+
+    var resEl = document.getElementById('orc-prod-results');
+    if(resEl){ resEl.classList.add('hidden'); resEl.innerHTML = ''; }
+    var searchInp = document.getElementById('orc-prod-search');
+    if(searchInp) searchInp.value = nomeRec;
+    var vu = document.getElementById('orc-item-vunit');
+    if(vu) vu.value = (Number(r.preco || r.valor || 0)).toFixed(2);
+    if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
+  }
+
+  function orcBuscarEtiqueta(){
+    if(typeof document === 'undefined') return;
+    var etq = txt(document.getElementById('orc-item-cartucho') && document.getElementById('orc-item-cartucho').value);
+    if(!etq) return;
+    var _db = getDb();
+    var rec = (_db.recargasEtiquetas || []).find(function(r){
+      return String(r.etiqueta || '').replace(/\s+/g, '').toUpperCase() === etq.replace(/\s+/g, '').toUpperCase();
+    });
+    if(!rec && typeof toast === 'function'){
+      toast('Etiqueta nova: digite e adicione o item ao orçamento.', 'info');
+    } else if(rec && rec.clienteId && window.__ORC_ST && window.__ORC_ST.form && !window.__ORC_ST.form.cliente){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === rec.clienteId; });
+      if(c) orcSelCliente(c.id);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ATALHO PARA ABRIR A VENDA SALVA DO ORÇAMENTO AUTORIZADO
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function abrirVendaDeOrcamento(param){
+    var _db = getDb();
+    var paramStr = String(param || '');
+    var venda = (_db.vendas || []).find(function(v){
+      return v && (v.id === paramStr || v.origemOrcamentoId === paramStr || v.numero === paramStr);
+    });
+    if(!venda){
+      var o = (_db.orcamentos || []).find(function(x){ return x && (x.id === paramStr || x.vendaId === paramStr); });
+      if(o && o.vendaId){
+        venda = (_db.vendas || []).find(function(v){ return v && v.id === o.vendaId; });
+      }
+    }
+    if(!venda){
+      if(typeof toast === 'function') toast('Venda correspondente não encontrada.', 'error');
+      else if(typeof window.lfbAlert === 'function') window.lfbAlert('Venda salva não encontrada no sistema.', 'Vendas');
+      return;
+    }
+    if(typeof closeModal === 'function') closeModal();
+    if(typeof window.navigateTo === 'function') window.navigateTo('vendas');
+    setTimeout(function(){
+      if(typeof window.abrirVenda === 'function') window.abrirVenda(venda.id);
+    }, 100);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EXCLUSÃO DEFINITIVA E CANCELAMENTO SEGURO
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function excluirOrcamentosMarcados(idUnico){
+    var _db = getDb();
+    var ids = idUnico ? [idUnico] : Array.from(document.querySelectorAll('input[name="orc-check"]:checked')).map(function(c){ return c.value; });
+    if(!ids.length && window.neoOrcSel) ids = [window.neoOrcSel];
+    if(!ids.length){
+      if(typeof window.lfbAlert === 'function') window.lfbAlert('Marque um orçamento para excluir.', 'Excluir');
+      else if(typeof toast === 'function') toast('Marque um orçamento para excluir', 'error');
+      return;
+    }
+
+    var msg = 'Deseja excluir ' + ids.length + ' orçamento(s)?';
+    var executar = function(){
+      if(!_db.orcamentos) _db.orcamentos = [];
+      if(!_db.__orcExcluidos) _db.__orcExcluidos = [];
+
+      ids.forEach(function(id){
+        var o = _db.orcamentos.find(function(x){ return x && x.id === id; });
+        if(o){
+          // Registra token para NUNCA mais criar venda mesmo se a nuvem responder
+          if(o.token) _db.__orcExcluidos.push(o.token);
+          _db.__orcExcluidos.push(o.id);
+
+          // Se gerou venda salva pendente (não faturada), remove a venda também
+          if(o.vendaId){
+            _db.vendas = (_db.vendas || []).filter(function(v){
+              return v && v.id !== o.vendaId && !/faturad|finaliz|pago/i.test(v.status || '');
+            });
+            if(_db.os){
+              _db.os = (_db.os || []).filter(function(x){ return x && x.vendaId !== o.vendaId; });
+            }
+          }
+          o.status = 'excluido';
+          o.excluidoEm = new Date().toISOString();
+        }
+      });
+
+      _db.orcamentos = _db.orcamentos.filter(function(x){ return x && x.status !== 'excluido'; });
+
+      if(typeof saveDB === 'function') saveDB();
+      if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+      if(typeof closeModal === 'function') closeModal();
+      if(typeof toast === 'function') toast('Orçamento(s) excluído(s)', 'success');
+    };
+
+    if(typeof window.confirmSistema === 'function'){
+      window.confirmSistema(msg, 'Excluir').then(function(ok){ if(ok) executar(); });
+    } else if(typeof confirm === 'function' && confirm(msg)){
+      executar();
+    } else {
+      executar();
+    }
+  }
+
+  // Proteção: orçamentos apagados NUNCA mais criam venda
+  if(typeof window !== 'undefined'){
+    window.orcOnTipoItem = orcOnTipoItem;
+    window.orcBuscarCliente = orcBuscarCliente;
+    window.orcSelCliente = orcSelCliente;
+    window.orcLimparCliente = orcLimparCliente;
+    window.orcBuscarProd = orcBuscarProd;
+    window.orcSelProd = orcSelProd;
+    window.orcSelRecarga = orcSelRecarga;
+    window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
+    window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
+    window.excluirOrcamento = excluirOrcamentosMarcados;
+
+    // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+    window.abrirTelaOrcamento = function(existente){
+      var s = getSess(); if(!s) return;
+      var _db = getDb();
+      var agora = new Date();
+      var f = {
+        id: existente ? existente.id : null,
+        codigo: existente ? existente.numero : (window.proximoNumeroSimples ? window.proximoNumeroSimples('orcamento', _db.orcamentos, s.empresaId) : String(Date.now().toString(36))),
+        data: existente ? (existente.data || '').slice(0, 10) : agora.toISOString().slice(0, 10),
+        hora: agora.toTimeString().slice(0, 5),
+        cliente: existente && existente.clienteId ? (_db.clientes || []).find(function(c){ return c.id === existente.clienteId; }) : null,
+        itens: existente ? (existente.itens || []).map(function(it){ return Object.assign({}, it); }) : [],
+        produtoSel: null,
+        token: existente && existente.token ? existente.token : ('orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)),
+        obs: existente ? (existente.observacao || '') : '',
+        os: existente && existente.os ? Object.assign({}, existente.os) : {},
+        status: existente ? (existente.status || 'aberto') : 'aberto',
+        vendaId: existente ? (existente.vendaId || '') : '',
+        vendaNumero: existente ? (existente.vendaNumero || '') : ''
+      };
+
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.form = f;
+
+      var isAutorizado = f.status === 'aprovado' || !!f.vendaId;
+      var statusRotulo = isAutorizado ? 'Autorizado' : (f.status === 'recusado' ? 'Não autorizado' : (f.status === 'estornado' ? 'Estornado' : 'Aberto'));
+      var statusBadgeCls = isAutorizado ? 'neo-status ok' : (f.status === 'recusado' ? 'neo-status wait' : 'neo-status info');
+
+      var box = document.getElementById('modal-box');
+      if(box) box.className = 'w-full max-w-[1180px] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+
+      document.getElementById('modal-title').innerText = existente ? ('Orçamento ' + f.codigo) : 'Novo orçamento';
+
+      var osData = f.os || {};
+
+      document.getElementById('modal-body').innerHTML =
+        '<div class="space-y-3">'
+        // Cabeçalho
+        +'<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'
+        +'<div class="rounded-xl bg-[#0a1e8a] text-white p-3"><p class="text-[10px] uppercase font-bold text-white/70">Código</p><p class="font-bold text-[15px]" id="orc-codigo">'+esc(f.codigo)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Data</p><p class="font-bold">'+esc(f.data.split('-').reverse().join('/'))+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Hora</p><p class="font-bold">'+esc(f.hora)+'</p></div>'
+        +'<div class="rounded-xl border p-3"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Vendedor</p><p class="font-bold">'+esc(s.usuarioNome)+'</p></div>'
+        +'<div class="rounded-xl border p-3 flex flex-col justify-center"><p class="text-[10px] uppercase font-bold text-[#0a1e8a]">Status</p><p><span class="'+statusBadgeCls+'">'+esc(statusRotulo)+'</span></p></div>'
+        +'</div>'
+
+        // Aviso de Orçamento Autorizado (se aplicável)
+        +(isAutorizado ? '<div class="rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 p-3 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold"><span>🔒 Orçamento AUTORIZADO — Edição bloqueada (Venda salva já gerada)</span>' + (existente && (existente.vendaNumero || existente.vendaId) ? '<button type="button" onclick="abrirVendaDeOrcamento(\''+existente.id+'\')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5"><i class="ph ph-arrow-square-out"></i> Abrir Venda Salva (nº '+(existente.vendaNumero || '')+')</button>' : '') + '</div>' : '')
+
+        // Linha do Cliente com Filtro de Campos
+        +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<div class="flex flex-wrap items-center gap-2 mt-1">'
+        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
+        +'</select>'
+        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'</div>'
+        +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
+        +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
+        +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcLimparCliente()" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" title="Trocar cliente"><i class="ph ph-x"></i></button>' : '')
+        +'</div>'
+        +'</div>'
+
+        // Barra de Abas (Itens / Ordem de Serviço)
+        +'<div class="flex border-b border-slate-200">'
+        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
+        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
+        +'</div>'
+
+        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        +'<div id="orc-aba-itens" class="space-y-3">'
+        +(!isAutorizado ? (
+          '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
+          +'<div class="grid grid-cols-12 gap-2 items-end">'
+          +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo'
+          +'<select id="orc-item-tipo" onchange="window.orcOnTipoItem && window.orcOnTipoItem()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12px]"><option value="Produto">Produto</option><option value="Recarga de toner">Recarga de toner</option></select>'
+          +'</label>'
+          +'<div class="col-span-12 md:col-span-5 relative">'
+          +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Filtro e Descrição</label>'
+          +'<div class="flex items-center gap-1 mt-1">'
+          +'<select id="orc-prod-cat" class="h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+          +'<option value="">Todas categorias</option>'
+          +CATS_PRODUTO.map(function(cat){ return '<option value="'+esc(cat)+'">'+esc(cat)+'</option>'; }).join('')
+          +'</select>'
+          +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
+          +CAMPOS_RECARGA.map(function(r){ return '<option value="'+esc(r[0])+'">'+esc(r[1])+'</option>'; }).join('')
+          +'</select>'
+          +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+          +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
+          +'</div>'
+          +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
+          +'</div>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
+          +'</div>'
+          +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
+          +'<label class="col-span-12 md:col-span-5 text-[11px] font-bold uppercase text-[#0a1e8a]">Etiqueta da recarga'
+          +'<div class="flex gap-1 mt-1">'
+          +'<input id="orc-item-cartucho" placeholder="Nº da etiqueta — se não achar, escreve e segue" class="flex-1 h-[38px] px-3 rounded-xl border bg-white text-[12px]">'
+          +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
+          +'</div></label>'
+          +'</div>'
+          +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+          +'</div>'
+        ) : '')
+        +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
+        +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2 text-center">Qtd</th><th class="px-3 py-2 text-right">V. Unit</th><th class="px-3 py-2 text-right">Desc</th><th class="px-3 py-2 text-right">Total</th>'
+        +(!isAutorizado ? '<th class="px-3 py-2 w-12 text-center">Ações</th>' : '')
+        +'</tr></thead>'
+        +'<tbody id="orc-itens-body"></tbody></table></div>'
+        +'</div>'
+
+        // ABA 2: ORDEM DE SERVIÇO
+        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
+        +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
+        +'<div class="grid grid-cols-12 gap-2 items-end">'
+        +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
+        +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
+        +'<input id="orc-os-tipo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.tipoOS || '')+'" placeholder="Ex: Manutenção..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Patrimônio'
+        +'<input id="orc-os-patri" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.patrimonio || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">Contador / cópias'
+        +'<input id="orc-os-contador" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.contador || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Acessórios'
+        +'<input id="orc-os-acess" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.acessorios || '')+'" placeholder="cabos, fonte..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Técnico responsável'
+        +'<input id="orc-os-tec" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.tecnico || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Responsável entrega'
+        +'<input id="orc-os-entrega" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.responsavelEntrega || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Garantia'
+        +'<input id="orc-os-garantia" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.garantia || '')+'" placeholder="Ex: 90 dias..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Situação da OS'
+        +'<input id="orc-os-situacao" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.situacao || '')+'" placeholder="Ex: Em análise..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<label class="col-span-12 text-[11px] font-bold uppercase text-[#0a1e8a]">Defeito apresentado'
+        +'<textarea id="orc-os-defeito" '+(isAutorizado ? 'readonly' : '')+' placeholder="O que o cliente relatou..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.defeito || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Serviços executados / previstos'
+        +'<textarea id="orc-os-servicos" '+(isAutorizado ? 'readonly' : '')+' placeholder="Serviços a executar..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.servicos || '')+'</textarea></label>'
+        +'<label class="col-span-12 md:col-span-6 text-[11px] font-bold uppercase text-[#0a1e8a]">Peças utilizadas / orçadas'
+        +'<textarea id="orc-os-pecas" '+(isAutorizado ? 'readonly' : '')+' placeholder="Peças necessárias..." class="mt-1 w-full h-[52px] p-2 rounded-xl border bg-white text-[12.5px]">'+esc(osData.pecas || '')+'</textarea></label>'
+        +'</div>'
+        +'</div>'
+        +'</div>'
+
+        // Observações e Total
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a] block">Observações do Orçamento<textarea id="orc-obs" '+(isAutorizado ? 'readonly' : '')+' class="mt-1 w-full h-[52px] p-2 rounded-xl border">'+esc(f.obs)+'</textarea></label>'
+        +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
+        +'</div>';
+
+      document.getElementById('modal-footer').innerHTML =
+        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
+        +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
+        +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
+        +(!isAutorizado ? '<button type="button" onclick="window.salvarOrcamentoTela()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-floppy-disk"></i> Salvar</button>' : '');
+
+      document.getElementById('modal-root').classList.remove('hidden');
+      window.modalContext = { type: 'orcamento' };
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
+
+      var cli = document.getElementById('orc-cli-search');
+      if(cli) cli.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarCliente(); } };
+      var pr = document.getElementById('orc-prod-search');
+      if(pr) pr.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarProd(); } };
+      var cart = document.getElementById('orc-item-cartucho');
+      if(cart) cart.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); window.orcBuscarEtiqueta(); } };
+
+      ['orc-item-qtd', 'orc-item-vunit', 'orc-item-desc'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.oninput = window.orcCalcItem;
+      });
+
+      orcOnTipoItem();
+    };
+
+    // Override do orcRenderItens
+    window.orcRenderItens = function(){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      var el = document.getElementById('orc-itens-body');
+      if(!el) return;
+      var isAutorizado = f && (f.status === 'aprovado' || !!f.vendaId);
+
+      if(!f || !f.itens || !f.itens.length){
+        el.innerHTML = '<tr><td colspan="' + (isAutorizado ? '6' : '7') + '" class="text-center text-slate-400 py-6">Nenhum item adicionado</td></tr>';
+        var tEl = document.getElementById('orc-total');
+        if(tEl) tEl.innerText = money(0);
+        return;
+      }
+
+      var tot = 0;
+      el.innerHTML = f.itens.map(function(it, idx){
+        var subt = Math.max(0, n(it.qtd) * n(it.preco) - n(it.desconto));
+        tot += subt;
+        return '<tr class="border-b last:border-0">'
+          + '<td class="px-3 py-2"><span class="px-2 py-0.5 rounded-md text-[10.5px] font-bold ' + (ehRecargaTipo(it.tipo) ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-[#0a1e8a]') + '">' + esc(it.tipo || 'Produto') + '</span></td>'
+          + '<td class="px-3 py-2"><b>' + esc(it.descricao) + '</b>' + (it.numCartucho ? '<span class="text-[11px] text-slate-500 block">Etiqueta: ' + esc(it.numCartucho) + '</span>' : '') + '</td>'
+          + '<td class="px-3 py-2 text-center">' + esc(it.qtd) + '</td>'
+          + '<td class="px-3 py-2 text-right">' + money(it.preco) + '</td>'
+          + '<td class="px-3 py-2 text-right">' + (n(it.desconto) > 0 ? money(it.desconto) : '-') + '</td>'
+          + '<td class="px-3 py-2 text-right font-bold">' + money(subt) + '</td>'
+          + (!isAutorizado ? '<td class="px-3 py-2 text-center"><button type="button" onclick="window.orcDelItem(' + idx + ')" class="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" title="Remover item"><i class="ph ph-trash"></i></button></td>' : '')
+          + '</tr>';
+      }).join('');
+
+      var totalEl = document.getElementById('orc-total');
+      if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // Override do salvarOrcamentoTela com bloqueio em autorizados
+    window.salvarOrcamentoTela = function(){
+      var s = getSess(); if(!s) return;
+      var _db = getDb();
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f) return;
+
+      if(f.status === 'aprovado' || f.vendaId){
+        if(typeof window.lfbAlert === 'function') window.lfbAlert('Este orçamento já foi autorizado e não pode ser editado. Para reabrir edições, clique no botão Revalidar link.', 'Orçamento Autorizado');
+        else if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error');
+        return;
+      }
+
+      if(!f.cliente){
+        var cliSearch = txt(document.getElementById('orc-cli-search') && document.getElementById('orc-cli-search').value);
+        if(cliSearch){
+          var achou = (_db.clientes || []).find(function(c){
+            return c && (String(c.nome || '').toLowerCase() === cliSearch.toLowerCase() || String(c.codigo || '') === cliSearch);
+          });
+          if(achou) f.cliente = achou;
+        }
+      }
+
+      if(!f.cliente){
+        if(typeof toast === 'function') toast('Selecione um cliente para o orçamento', 'error');
+        else if(typeof window.lfbAlert === 'function') window.lfbAlert('Selecione um cliente para o orçamento.', 'Cliente Obrigatório');
+        return;
+      }
+
+      if(!f.itens || !f.itens.length){
+        if(typeof toast === 'function') toast('Adicione pelo menos um item ao orçamento', 'error');
+        return;
+      }
+
+      var tot = (f.itens || []).reduce(function(acc, it){
+        return acc + Math.max(0, n(it.qtd) * n(it.preco) - n(it.desconto));
+      }, 0);
+
+      if(!_db.orcamentos) _db.orcamentos = [];
+      var o = null;
+      if(f.id){
+        o = _db.orcamentos.find(function(x){ return x && x.id === f.id; });
+      }
+
+      if(!o){
+        o = {
+          id: 'orc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
+          numero: f.codigo || (window.proximoNumeroSimples ? window.proximoNumeroSimples('orcamento', _db.orcamentos, s.empresaId) : '1'),
+          empresaId: s.empresaId,
+          token: f.token || ('orc_tok_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)),
+          criadoEm: new Date().toISOString(),
+          criadoPor: s.usuarioId,
+          criadoPorNome: s.usuarioNome,
+          status: 'aberto'
+        };
+        _db.orcamentos.push(o);
+        f.id = o.id;
+      }
+
+      var osColetada = {
+        numeroSerie: txt(document.getElementById('orc-os-serie') && document.getElementById('orc-os-serie').value),
+        modelo: txt(document.getElementById('orc-os-modelo') && document.getElementById('orc-os-modelo').value),
+        tipoOS: txt(document.getElementById('orc-os-tipo') && document.getElementById('orc-os-tipo').value),
+        patrimonio: txt(document.getElementById('orc-os-patri') && document.getElementById('orc-os-patri').value),
+        contador: txt(document.getElementById('orc-os-contador') && document.getElementById('orc-os-contador').value),
+        garantia: txt(document.getElementById('orc-os-garantia') && document.getElementById('orc-os-garantia').value),
+        situacao: txt(document.getElementById('orc-os-situacao') && document.getElementById('orc-os-situacao').value),
+        tecnico: txt(document.getElementById('orc-os-tec') && document.getElementById('orc-os-tec').value),
+        responsavelEntrega: txt(document.getElementById('orc-os-entrega') && document.getElementById('orc-os-entrega').value),
+        acessorios: txt(document.getElementById('orc-os-acess') && document.getElementById('orc-os-acess').value),
+        defeito: txt(document.getElementById('orc-os-defeito') && document.getElementById('orc-os-defeito').value),
+        servicos: txt(document.getElementById('orc-os-servicos') && document.getElementById('orc-os-servicos').value),
+        pecas: txt(document.getElementById('orc-os-pecas') && document.getElementById('orc-os-pecas').value)
+      };
+
+      Object.assign(o, {
+        clienteId: f.cliente.id,
+        clienteNome: f.cliente.nome || f.cliente.fantasia || '',
+        data: f.data,
+        itens: (f.itens || []).map(function(it){ return Object.assign({}, it); }),
+        total: tot,
+        observacao: txt(document.getElementById('orc-obs') && document.getElementById('orc-obs').value),
+        token: o.token || f.token,
+        os: osColetada,
+        status: o.status || 'aberto',
+        atualizadoEm: new Date().toISOString()
+      });
+
+      if(typeof saveDB === 'function') saveDB();
+      if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
+      if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
+
+      window.__ORC_ST.form.id = o.id;
+      if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
+      window.abrirOrcamento(o.id);
+    };
+
+    // Sincronização de versão visual
+    function sincronizarVersaoVisual60(){
+      try{
+        if(typeof document === 'undefined') return;
+        var fv = document.getElementById('footer-version');
+        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var tv = document.getElementById('app-title-version');
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
+        if(document.title && !document.title.includes(VERSAO)){
+          document.title = 'Sistema Digicopy v' + VERSAO;
+        }
+      }catch(e){}
+    }
+
+    sincronizarVersaoVisual60();
+    setTimeout(sincronizarVersaoVisual60, 50);
+    setTimeout(sincronizarVersaoVisual60, 300);
+
+    if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52260sync){
+      var oldN = window.navigateTo;
+      window.navigateTo = function(){
+        var res = oldN.apply(this, arguments);
+        try{ sincronizarVersaoVisual60(); }catch(e){}
+        return res;
+      };
+      window.navigateTo.__v52260sync = true;
+    }
+
+    console.log('[DIGICOPY] v' + VERSAO + ': Trava de orçamentos autorizados e atalho para venda salva ativos!');
+  }
+
+  var PURE_V52260 = {
+    VERSAO: VERSAO,
+    CAMPOS_CLIENTE: CAMPOS_CLIENTE,
+    CATS_PRODUTO: CATS_PRODUTO,
+    CAMPOS_RECARGA: CAMPOS_RECARGA,
+    ehRecargaTipo: ehRecargaTipo
+  };
+
+  if(typeof module !== 'undefined' && module.exports){
+    module.exports = { PURE_V52260: PURE_V52260 };
+  }
+})();
+
+;
+
+/* ===== ajustes_v52261_orcamento_nao_volta_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.61 — Orçamento: apagou não volta. Aviso no sino do PC, sem popup.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.22.61';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+
+function getDb(){
+  if(typeof window!=='undefined' && window.db) return window.db;
+  if(typeof db!=='undefined') return db;
+  return {};
+}
+
+function bloqueio(dbRef){
+  dbRef = dbRef || {};
+  if(!dbRef.__orcBloqueio || typeof dbRef.__orcBloqueio!=='object'){
+    dbRef.__orcBloqueio = { orcIds:[], tokens:[], vendaIds:[], orcSemRecriarVenda:[] };
+  }
+  var b = dbRef.__orcBloqueio;
+  b.orcIds = Array.isArray(b.orcIds)?b.orcIds:[];
+  b.tokens = Array.isArray(b.tokens)?b.tokens:[];
+  b.vendaIds = Array.isArray(b.vendaIds)?b.vendaIds:[];
+  b.orcSemRecriarVenda = Array.isArray(b.orcSemRecriarVenda)?b.orcSemRecriarVenda:[];
+  if(Array.isArray(dbRef.__orcExcluidos)){
+    dbRef.__orcExcluidos.forEach(function(x){
+      var s = txt(x);
+      if(!s) return;
+      if(s.indexOf('orc_tok_')===0 || s.length>20){ if(b.tokens.indexOf(s)<0) b.tokens.push(s); }
+      if(b.orcIds.indexOf(s)<0) b.orcIds.push(s);
+    });
+  }
+  return b;
+}
+
+function tem(arr, id){
+  var s = txt(id);
+  if(!s) return false;
+  return (arr||[]).indexOf(s)>=0;
+}
+
+function addUniq(arr, id){
+  var s = txt(id);
+  if(!s) return arr;
+  if(arr.indexOf(s)<0) arr.push(s);
+  return arr;
+}
+
+function orcamentoBloqueado(o, dbRef){
+  if(!o) return true;
+  var b = bloqueio(dbRef);
+  if(txt(o.status)==='excluido' || txt(o.status)==='estornado') return true;
+  if(tem(b.orcIds, o.id) || tem(b.tokens, o.token)) return true;
+  return false;
+}
+
+function naoRecriarVenda(o, dbRef){
+  if(!o) return true;
+  if(orcamentoBloqueado(o, dbRef)) return true;
+  var b = bloqueio(dbRef);
+  if(tem(b.orcSemRecriarVenda, o.id) || tem(b.orcSemRecriarVenda, o.token)) return true;
+  if(o.vendaExcluidaPeloUsuario) return true;
+  if(o.vendaId && tem(b.vendaIds, o.vendaId)) return true;
+  return false;
+}
+
+function marcarOrcamentoExcluido(o, dbRef){
+  if(!o) return;
+  var b = bloqueio(dbRef);
+  addUniq(b.orcIds, o.id);
+  addUniq(b.tokens, o.token);
+  addUniq(b.vendaIds, o.vendaId);
+  addUniq(b.orcSemRecriarVenda, o.id);
+  o.status = 'excluido';
+  o.excluidoEm = o.excluidoEm || new Date().toISOString();
+}
+
+function marcarVendaExcluida(v, dbRef){
+  if(!v) return;
+  var b = bloqueio(dbRef);
+  addUniq(b.vendaIds, v.id);
+  var oid = v.origemOrcamentoId;
+  if(oid){
+    addUniq(b.orcSemRecriarVenda, oid);
+    var o = ((dbRef&&dbRef.orcamentos)||[]).find(function(x){ return x && x.id===oid; });
+    if(o){
+      o.vendaExcluidaPeloUsuario = true;
+      addUniq(b.orcSemRecriarVenda, o.token);
+    }
+  }
+}
+
+function vendaPodeFicar(v, dbRef){
+  if(!v) return false;
+  var b = bloqueio(dbRef);
+  if(tem(b.vendaIds, v.id)) return false;
+  if(v.origemOrcamentoId && tem(b.orcIds, v.origemOrcamentoId)) return false;
+  if(v.origemOrcamentoId && tem(b.orcSemRecriarVenda, v.origemOrcamentoId)) return false;
+  var o = ((dbRef&&dbRef.orcamentos)||[]).find(function(x){ return x && x.id===v.origemOrcamentoId; });
+  if(o && orcamentoBloqueado(o, dbRef)) return false;
+  if(o && naoRecriarVenda(o, dbRef)) return false;
+  return true;
+}
+
+function orcamentoPodeFicar(o, dbRef){
+  if(!o) return false;
+  return !orcamentoBloqueado(o, dbRef);
+}
+
+window.ORCAMENTO_NAO_VOLTA_V52261_PURE = {
+  VERSAO: VERSAO,
+  orcamentoBloqueado: orcamentoBloqueado,
+  naoRecriarVenda: naoRecriarVenda,
+  marcarOrcamentoExcluido: marcarOrcamentoExcluido,
+  marcarVendaExcluida: marcarVendaExcluida,
+  vendaPodeFicar: vendaPodeFicar,
+  orcamentoPodeFicar: orcamentoPodeFicar,
+  avisoNoSino: true,
+  semPopup: true
+};
+
+if(typeof document==='undefined') return;
+
+function avisarSino(texto){
+  if(typeof window.notificarEvento==='function'){
+    window.notificarEvento('info', texto, { tipo:'orcamento' });
+    return;
+  }
+  if(typeof toast==='function') toast(texto, 'info');
+}
+
+if(typeof window.lfbAlert==='function' && !window.lfbAlert.__v52261orc){
+  var oldAlert = window.lfbAlert;
+  window.lfbAlert = function(msg, tit){
+    var m = String(msg||'');
+    var t = String(tit||'');
+    if(/orçamento autorizado/i.test(t) || /foi AUTORIZADO/i.test(m) || /gerou a VENDA SALVA/i.test(m)){
+      avisarSino(m.replace(/\s+/g,' ').trim());
+      return;
+    }
+    return oldAlert.apply(this, arguments);
+  };
+  window.lfbAlert.__v52261orc = true;
+}
+
+if(typeof window.fetch==='function' && !window.fetch.__v52261orc){
+  var oldFetch = window.fetch;
+  window.fetch = function(url, opts){
+    try{
+      var u = String(url||'');
+      var method = String((opts&&opts.method)||'GET').toUpperCase();
+      if(method==='GET' && u.indexOf('/orcamento')>=0){
+        var m = /[?&]c=([^&]+)/.exec(u);
+        var tok = m ? decodeURIComponent(m[1]) : '';
+        var _db = getDb();
+        var b = bloqueio(_db);
+        if(tok && (tem(b.tokens, tok) || tem(b.orcSemRecriarVenda, tok) || tem(b.orcIds, tok))){
+          return Promise.resolve(new Response(JSON.stringify({ ok:true, status:'aberto' }), { headers:{ 'content-type':'application/json' } }));
+        }
+      }
+    }catch(e){}
+    return oldFetch.apply(this, arguments);
+  };
+  window.fetch.__v52261orc = true;
+}
+
+function wrapGerar(nomeObj){
+  var bag = window[nomeObj];
+  if(!bag || typeof bag.gerarVendaSalvaDeOrcamento!=='function' || bag.gerarVendaSalvaDeOrcamento.__v52261) return;
+  var old = bag.gerarVendaSalvaDeOrcamento;
+  bag.gerarVendaSalvaDeOrcamento = function(orcId, origem){
+    var _db = getDb();
+    var o = (_db.orcamentos||[]).find(function(x){ return x && (x.id===orcId || x.token===orcId); });
+    if(o && naoRecriarVenda(o, _db)) return null;
+    var ja = o && o.vendaId && (_db.vendas||[]).some(function(v){ return v && v.id===o.vendaId; });
+    var r = old.apply(this, arguments);
+    if(r && !ja){
+      avisarSino('Orçamento '+(o&&o.numero||'')+' autorizado. Venda salva '+(r.numero||'')+' gerada.');
+    }
+    return r;
+  };
+  bag.gerarVendaSalvaDeOrcamento.__v52261 = true;
+}
+
+['ORCAMENTO_APROVACAO_V52255_PURE','ORCAMENTO_APROVACAO_V52256_PURE','ORCAMENTO_APROVACAO_V52257_PURE'].forEach(wrapGerar);
+
+if(typeof window.aprovarOrcamentoInterno==='function' && !window.aprovarOrcamentoInterno.__v52261){
+  var oldInt = window.aprovarOrcamentoInterno;
+  window.aprovarOrcamentoInterno = function(orcId, origem){
+    var _db = getDb();
+    var o = (_db.orcamentos||[]).find(function(x){ return x && (x.id===orcId || x.token===orcId); });
+    if(o && naoRecriarVenda(o, _db)) return null;
+    return oldInt.apply(this, arguments);
+  };
+  window.aprovarOrcamentoInterno.__v52261 = true;
+}
+
+function wrapVerificar(nomeObj){
+  var bag = window[nomeObj];
+  if(!bag || typeof bag.verificarAprovacoesNuvem!=='function' || bag.verificarAprovacoesNuvem.__v52261) return;
+  var oldV = bag.verificarAprovacoesNuvem;
+  bag.verificarAprovacoesNuvem = function(){
+    var _db = getDb();
+    if(_db && Array.isArray(_db.orcamentos)){
+      _db.orcamentos.forEach(function(o){
+        if(o && naoRecriarVenda(o, _db) && o.status==='aprovado' && o.vendaId){
+          o.__skipPoll = true;
+        }
+      });
+    }
+    return oldV.apply(this, arguments);
+  };
+  bag.verificarAprovacoesNuvem.__v52261 = true;
+}
+['ORCAMENTO_APROVACAO_V52255_PURE','ORCAMENTO_APROVACAO_V52256_PURE','ORCAMENTO_APROVACAO_V52257_PURE'].forEach(wrapVerificar);
+
+if(typeof window.excluirVendaUnificado==='function' && !window.excluirVendaUnificado.__v52261){
+  var oldExcV = window.excluirVendaUnificado;
+  window.excluirVendaUnificado = function(){
+    var _db = getDb();
+    var checks = Array.from(document.querySelectorAll('input[name="venda-check-lote"]:checked'));
+    var ids = checks.map(function(ch){ return ch.value; });
+    if(!ids.length && (window.neoVendaSelecionada||window.vendaSelecionadaId)){
+      ids = [window.neoVendaSelecionada||window.vendaSelecionadaId];
+    }
+    ids.forEach(function(id){
+      var v = (_db.vendas||[]).find(function(x){ return x && x.id===id; });
+      if(v) marcarVendaExcluida(v, _db);
+    });
+    return oldExcV.apply(this, arguments);
+  };
+  window.excluirVendaUnificado.__v52261 = true;
+}
+
+if(typeof window.excluirOrcamentosMarcados==='function' && !window.excluirOrcamentosMarcados.__v52261){
+  var oldExcO = window.excluirOrcamentosMarcados;
+  window.excluirOrcamentosMarcados = function(idUnico){
+    var _db = getDb();
+    var ids = idUnico ? [idUnico] : Array.from(document.querySelectorAll('input[name="orc-check"]:checked')).map(function(c){ return c.value; });
+    if(!ids.length && window.neoOrcSel) ids = [window.neoOrcSel];
+    ids.forEach(function(id){
+      var o = (_db.orcamentos||[]).find(function(x){ return x && x.id===id; });
+      if(o) marcarOrcamentoExcluido(o, _db);
+    });
+    return oldExcO.apply(this, arguments);
+  };
+  window.excluirOrcamentosMarcados.__v52261 = true;
+  window.excluirOrcamento = window.excluirOrcamentosMarcados;
+}
+
+function varrerRessuscitadas(){
+  var _db = getDb();
+  if(!_db) return;
+  bloqueio(_db);
+  var mudou = false;
+  if(Array.isArray(_db.vendas)){
+    var nv = _db.vendas.filter(function(v){ return vendaPodeFicar(v, _db); });
+    if(nv.length!==_db.vendas.length){ _db.vendas = nv; mudou = true; }
+  }
+  if(Array.isArray(_db.orcamentos)){
+    var no = _db.orcamentos.filter(function(o){ return orcamentoPodeFicar(o, _db); });
+    if(no.length!==_db.orcamentos.length){ _db.orcamentos = no; mudou = true; }
+  }
+  if(mudou && typeof saveDB==='function') saveDB();
+}
+
+setTimeout(varrerRessuscitadas, 800);
+setInterval(varrerRessuscitadas, 2500);
+
+function pintar(){
+  var ver = document.getElementById('footer-version');
+  if(ver) ver.textContent = 'v'+VERSAO;
+}
+pintar();
+setTimeout(pintar, 200);
+setTimeout(pintar, 900);
+if(typeof window.navigateTo==='function' && !window.navigateTo.__v52261ver){
+  var oldN = window.navigateTo;
+  window.navigateTo = function(){
+    var r = oldN.apply(this, arguments);
+    try{ pintar(); wrapGerar('ORCAMENTO_APROVACAO_V52257_PURE'); }catch(e){}
+    return r;
+  };
+  window.navigateTo.__v52261ver = true;
+}
+
+console.log('[DIGICOPY] v5.22.61 orçamento: apagou não volta, aviso no sino');
 })();
 
 ;

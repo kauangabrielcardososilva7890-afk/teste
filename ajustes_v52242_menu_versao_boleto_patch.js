@@ -54,9 +54,10 @@ function pintarMenuAberto(view){
 }
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer span:not(#footer-session)');
   if(foot && !/v5\.22\./.test(foot.textContent||'')){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+VERSAO;
+    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
   }
 }
 

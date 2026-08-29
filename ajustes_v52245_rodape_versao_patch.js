@@ -11,6 +11,7 @@ window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
 if(typeof document==='undefined') return;
 
 function pintarRodape(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer');
   if(!foot) return;
   foot.className = 'h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60';
@@ -24,7 +25,7 @@ function pintarRodape(){
     if(sess) foot.insertBefore(ver, sess);
     else foot.appendChild(ver);
   }
-  ver.textContent = 'v'+VERSAO;
+  ver.textContent = 'v'+curV;
   if(left){
     left.textContent = 'Sistema Digicopy • Banco na Nuvem';
     left.classList.add('text-left');

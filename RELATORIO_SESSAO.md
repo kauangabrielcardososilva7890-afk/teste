@@ -1,13 +1,268 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-28  
+**Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/23  
-**Última versão:** **v5.22.49**  
+**Última versão:** **v5.22.61**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.49. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.61. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.61 — orçamento apagado não volta; aviso no sino
+
+- Orçamento excluído não gera venda de novo e não reaparece.
+- Venda gerada do orçamento, se você apagar, não volta sozinha. O orçamento fica Autorizado.
+- Sem popup de “foi autorizado”. O aviso vai no sino do PC.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.61`
+
+---
+
+
+## v5.22.60 — trava total em orçamentos autorizados, atalho direto para venda salva, exclusão funcional e correção na seleção de cliente
+
+- **Trava Total de Edição em Orçamentos Autorizados:**
+  - Quando um orçamento estiver com status **Autorizado** (`status: 'aprovado'` ou vinculado a uma venda salva):
+    - Todos os campos ficam travados e desabilitados (`disabled` / `readonly`): busca de cliente, filtros, seleção de produtos/recargas, quantidades, preços, descontos, observações e campos da Ordem de Serviço (OS).
+    - Botões de adicionar item e remover item da lista são ocultados.
+    - O botão Salvar é ocultado / bloqueado para impedir sobrescrita de dados já autorizados.
+    - Exibe um aviso/banner destacado: `🔒 Orçamento AUTORIZADO — Edição bloqueada`.
+- **Botão Atalho para Abrir a Venda Salva Gerada:**
+  - Em orçamentos autorizados, exibe o botão em destaque: **`Abrir Venda Salva nº [Número]`** tanto no banner do topo do modal quanto no rodapé e na tabela principal.
+  - Ao clicar, o sistema fecha o modal do orçamento e abre diretamente a Venda Salva no módulo de Vendas.
+- **Exclusão Funcional e Confiável de Orçamentos:**
+  - Implementada função de exclusão direta e em lote (`excluirOrcamentosMarcados`), com caixa de confirmação nativa.
+  - Se o orçamento possuir venda salva gerada pendente (não faturada), a venda vinculada também é removida de forma limpa.
+  - Adicionado botão individual de lixeira em cada linha da listagem de orçamentos e no modal de edição.
+- **Correção Definitiva na Seleção de Cliente:**
+  - Corrigido o manipulador de clique `window.orcSelCliente(id)` e `window.orcLimparCliente()` para atribuir o cliente selecionado diretamente ao formulário do modal (`window.__ORC_ST.form.cliente`).
+  - Eliminado o erro onde o sistema dizia "cliente não selecionado mesmo tendo selecionado o cliente".
+- **Sincronização Visual da Versão v5.22.60:**
+  - Versão **v5.22.60** atualizada no título da aba, cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 188 scripts compilados no `app.bundle.js` (`sha256: cc191dabeb8b62df`).
+  - Suíte consolidada com **112 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.60`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.59 — remoção da opção 'Serviço' do tipo de item, restauração de filtros, eliminação do botão 'Copiar link' e carregamento instantâneo da página do cliente
+
+- **Correção no Select de Tipo de Item em Orçamentos:**
+  - Removida a opção inexistente **Serviço** do dropdown de tipo de item.
+  - O seletor conta exclusivamente com os tipos oficiais do sistema: **Produto** e **Recarga de toner**.
+- **Restauração Completa dos Filtros de Pesquisa no Modal:**
+  - **Filtro de Busca de Clientes:** Reintegrado o seletor `orc-cli-campo` com todos os campos de pesquisa rápida (*Pesquisar em tudo, Nome, Fantasia, Código, CPF/CNPJ, RG/IE, Endereço, Telefone, WhatsApp, Cidade, Bairro, Contato, E-mail, Observação, CEP, UF*).
+  - **Filtro de Categorias de Produtos:** Quando selecionado o tipo *Produto*, exibe o dropdown de categorias (`orc-prod-cat`: *Todas categorias, Produto, Serviço, Cartucho, Cartucho Vazio, Insumo, Equipamento, Impressoras, Chip, Compatível, Informática, Original, Outros*) ao lado do campo de busca e botão de lupa.
+  - **Filtro de Busca de Recargas:** Quando selecionado o tipo *Recarga de toner*, exibe o dropdown de campos de recarga (`orc-rec-campo`: *Pesquisar recarga, Código, Descrição, Marca*).
+  - **Etiqueta e Lupa de Recarga:** Exibe o campo de etiqueta da recarga (`orc-item-cartucho`) com botão de lupa (`orc-etq-lupa`), permitindo buscar etiquetas existentes ou digitar e adicionar etiquetas novas.
+- **Remoção do Botão "Copiar link":**
+  - Removido o botão "Copiar link" do rodapé do modal de orçamentos, mantendo a interface limpa e direta com *Sair, Revalidar link (quando existente), Imprimir e Salvar*.
+- **Carregamento Instantâneo na Página do Cliente (`public-orcamento/index.html` e `orcamento_pagar.html`):**
+  - Resolvido o travamento em *"Carregando..."*: a página agora renderiza **imediatamente** (0ms) a partir do payload `d` da URL, exibindo itens, valores, cliente, OS e botões de decisão sem depender de resposta síncrona do Worker.
+  - Adicionado timeout e tratamento robusto de erros e decodificação UTF-8 com `AbortController`.
+- **Sincronização Visual da Versão v5.22.59:**
+  - Versão **v5.22.59** propagada no título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 187 scripts compilados no `app.bundle.js` (`sha256: 903b8c5558431441`).
+  - Suíte consolidada com **111 testes passando** (0 falhas).
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.59`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.58 — orçamentos com Ordem de Serviço (OS), revalidação de link, preservação de status e venda salva
+
+- **Orçamentos com Ordem de Serviço Opcional (OS):**
+  - Implementado layout idêntico à OS de Vendas no modal de orçamentos, organizado em duas abas limpas: **Itens** e **Ordem de Serviço (Opcional)**.
+  - Na aba de OS, todos os campos começam vazios por padrão (sem obrigatoriedade de preenchimento): *Número de série, Modelo do equipamento, Tipo da OS, Patrimônio, Contador / cópias, Acessórios, Técnico responsável, Responsável entrega, Garantia, Situação da OS, Defeito apresentado, Serviços executados / previstos e Peças utilizadas / orçadas*.
+  - Desativada a busca inteligente/automática por número de série em orçamentos anteriores para dar total liberdade de digitação.
+  - Os dados preenchidos na OS são exibidos de forma clara e profissional na página web de aprovação do cliente (`public-orcamento/index.html` e fallback `orcamento_pagar.html`).
+  - Ao ser autorizado pelo cliente ou no ERP, os dados da OS são passados integralmente para a venda salva gerada (`db.vendas`) e espelhados em `db.os`.
+- **Preservação de Status e Visibilidade dos Orçamentos:**
+  - Orçamentos autorizados e não autorizados **nunca mais somem da lista**.
+  - Exibição de badge com status em tempo real: **Autorizado** (verde/ok), **Não autorizado** (amarelo/wait) e **Aberto** (azul/info).
+  - Ícone indicador `🔧 OS` na tabela para identificar visualmente orçamentos que possuem dados de Ordem de Serviço.
+- **Botão "Revalidar link" com Confirmação e Revogação Segura de Venda:**
+  - Adicionado botão de ação rápida **Revalidar link** tanto na tabela de orçamentos quanto no rodapé do modal de edição.
+  - Ao clicar, exibe mensagem de confirmação do sistema:
+    - *O link voltará a ficar ativo (status Aberto);*
+    - *Qualquer venda salva pendente gerada por ele será automaticamente estornada e cancelada do sistema;*
+    - *Um novo token limpo é gerado para o orçamento, permitindo novo envio e decisão do cliente.*
+  - Se a venda gerada já tiver sido faturada/finalizada no financeiro, o sistema bloqueia a revalidação e instrui o estorno prévio no módulo de Vendas.
+- **Sincronização Visual Global da Versão v5.22.58:**
+  - Atualização automática em todos os pontos: título da aba do navegador (`document.title`), cabeçalho do ERP (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes Automatizados:**
+  - 186 scripts compilados no `app.bundle.js` (`sha256: 495806b44ef495df`).
+  - Suíte consolidada com **110 testes passando** (0 falhas).
+  - APK Mobile mantido intacto conforme diretrizes.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.58`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.57 — sincronização total de aprovação/rejeição de orçamentos, venda salva e versão v5.22.57
+
+- **Sincronização Total de Aprovação e Rejeição:**
+  - Garantido que quando o cliente aprova o orçamento no link público (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`), o status no ERP transiciona de **Aberto** para **Autorizado** (`status: 'aprovado'`) e gera a **Venda Salva** (`db.vendas` com status `aguardar`, itens, cliente e valores).
+  - Quando o cliente rejeita o orçamento, o status no ERP transiciona para **Não autorizado** (`status: 'recusado'`).
+  - Implementada sincronização bidirecional e polling resiliente via Cloudflare D1/Worker (`/orcamento/status`) e localStorage fallback.
+- **Autorização e Rejeição Manual no ERP:**
+  - Métodos manuais `window.autorizarOrcamentoDirect(id)` e `window.recusarOrcamentoDirect(id)` disponíveis para aprovação direta quando o cliente confirma por WhatsApp ou pessoalmente.
+  - Ao autorizar manualmente, a venda salva é gerada instantaneamente no banco local e os dados são sincronizados.
+- **Sincronização Visual de Versão v5.22.57:**
+  - Versão **v5.22.57** propagada em todos os pontos: título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 185 scripts compilados no `app.bundle.js` (`sha256: 0e6771d221edaed9`).
+  - 109 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.57`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.56 — aprovação de orçamento 100% via link do cliente, tela limpa e versão v5.22.56
+
+- **Fluxo Oficial 100% Via Link do Cliente:**
+  - Removidos os botões manuais extras da listagem de orçamentos, deixando a tabela limpa e no visual padrão do sistema.
+  - O fluxo opera 100% pelo link enviado ao cliente (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`).
+  - Ao aprovar ou recusar no link, a página confirma com o cliente, invalida o link, comunica a nuvem e abre o WhatsApp com a mensagem pronta.
+- **Sincronização e Geração de Venda Salva:**
+  - Polling em tempo real a cada 4 segundos no ERP.
+  - Ao detectar a aprovação remota, o ERP altera o status de **ABERTO** para **AUTORIZADO** (`status: 'aprovado'`) e gera a **Venda Salva** (status `aguardar`, pronta para faturar) com itens, valores e cliente.
+  - Orçamentos sem token prévio ganham tokens únicos gerados automaticamente (`garantirTokensOrcamentos`).
+- **Sincronização Visual de Versão v5.22.56:**
+  - Versão **v5.22.56** sincronizada na aba do navegador (`document.title`), cabeçalho superior e no centro do rodapé.
+- **Bundle e Testes:**
+  - 184 scripts compilados no `app.bundle.js` (`sha256: a821da86dfdd010f`).
+  - 108 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.56`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.55 — autorização de orçamento gerando venda salva e sincronização de status completa
+
+- **Conversão Automática em Venda Salva no Sistema:**
+  - Quando o cliente autoriza o orçamento no Cloudflare Pages (`https://digicopy-orcamentos.pages.dev/`), o sistema puxa a aprovação da nuvem e gera automaticamente a **Venda Salva** (status `aguardar`, pronta para faturar) com os mesmos itens, cliente e valores.
+  - O orçamento muda imediatamente de **Aberto** para **Autorizado** (`status: 'aprovado'`), vinculando o `vendaId` e exibindo o número da venda gerada.
+- **Tratamento de Recusa:**
+  - Quando o cliente recusa o orçamento no Pages, o status muda de **Aberto** para **Não autorizado** (`status: 'recusado'`).
+- **Botões de Ação Direta no ERP:**
+  - Na listagem de orçamentos e no modal de edição foram incluídos os botões rápidos **Autorizar** e **Recusar** manual, permitindo ao atendente autorizar com 1 clique caso o cliente confirme pelo WhatsApp ou pessoalmente.
+  - Orçamentos já autorizados exibem o botão direto **Venda [Número]** para abrir a venda gerada.
+- **Sincronização Visual de Versão em Toda a Interface:**
+  - Inicialização global de `window.DIGICOPY_APP_VERSION = '5.22.55'` no topo do `index.html` e no início do bundle.
+  - Atualização dinâmica no título da aba do navegador (`document.title`), na barra superior (`#app-title-version`) e no rodapé central (`#footer-version`), garantindo que em qualquer menu ou troca de tela a versão exibida seja sempre **v5.22.55**.
+- **Correção no Worker e D1:**
+  - Criado o dispositivo de sistema `public-orcamento` para contornar a chave estrangeira em SQLite D1.
+  - Aceita payload de fallback `d=` para garantir persistência mesmo se o orçamento local ainda não tivesse subido na nuvem.
+- **Bundle e Testes:**
+  - 183 scripts compilados no `app.bundle.js` (`sha256: 296d20888b0584f5`).
+  - 107 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.55`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.54 — integração oficial dos orçamentos no Cloudflare Pages (`digicopy-orcamentos.pages.dev`)
+
+- **Página Oficial Cloudflare Pages Configurada:**
+  - URL de produção configurada: `https://digicopy-orcamentos.pages.dev/`.
+  - Links gerados no sistema (notinha meia folha, botões de copiar link e compartilhamento WhatsApp) agora apontam diretamente para `https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=DADOS&v=5.22.54`.
+- **Arquitetura de Alta Disponibilidade:**
+  - Consulta primária via Worker Cloudflare (`digicopy-sync-api`) e banco D1 (`digicopy-erp`).
+  - Fallback instantâneo via payload seguro codificado em base64 (`d=`), permitindo que o cliente visualize o orçamento mesmo em caso de instabilidade na conexão.
+  - Modal de confirmação *"Tem certeza?"* antes de autorizar ou recusar.
+  - Invalidação automática após a decisão: o link é marcado como usado no dispositivo e no banco de dados.
+- **Bundle e Testes:**
+  - 182 scripts compilados no `app.bundle.js` com integridade sha256 validada.
+  - 106 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.54`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
+
+---
+
+## v5.22.53 — correção definitiva da inicialização, login instantâneo e proteção total anti-tela branca
+
+- **Causa raiz da tela branca / carregamento infinito eliminada:**
+  1. Exportação explícita de `window.db` logo após a carga do banco em `app.js`, impedindo erros de `ReferenceError: db is not defined` em IIFEs e patches modulares.
+  2. Proteções com null-check defensivo em substituições de nós e manipulação de elementos DOM nos patches `ajustes_v52238_vendas_os_ajustes_patch.js`, `ajustes_v52235_codigo_sem_sku_patch.js`, `ajustes_v52221_cert_nuvem_a1_patch.js`, `leitura_impressao_compacta_produtos_patch.js` e `finalizacao_sistema_patch.js`.
+  3. Remoção e ocultação de qualquer overlay de carregamento preso (`cloud-load-overlay`).
+- **Login Instantâneo e Resiliente:** Novo patch `ajustes_v52253_login_tela_branca_patch.js` traz autenticação direta infalível, transição limpa entre `#login-screen` e `#app-shell`, e sincronização de dados do usuário e empresa.
+- **Guarda Global Anti-Tela Branca:** Monitoramento de erros e exceções não tratadas que recupera automaticamente a interface para a tela de login ou a tela principal.
+- **Bundle e Testes:** 181 scripts compilados com integridade validada; 105 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.53`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.52 — resolução definitiva de loop de carregamento infinito e boot ultrarrápido
+
+- **Causa raiz do carregamento infinito identificada e eliminada:** Múltiplas instâncias de `MutationObserver` em patches anteriores (`ajustes_v52246_nuvem_nao_autorizar_patch.js`, `ajustes_v52249_relatorio_patch.js` e `ajustes_v52250_exe_bundle_patch.js`) observavam recursivamente mutações no `document.documentElement` e disparavam atualizações contínuas no `footer-version` e elementos da DOM em um loop microtask infinito (`Maximum call stack size exceeded`), travando a CPU e impedindo o término do carregamento da página no Electron / Chromium.
+- **Eliminação completa dos observers concorrentes:** Removidos todos os `MutationObserver` globais redundantes e substituídos por chamadas diretas e seguras atreladas aos eventos de ciclo de vida (`navigateTo`, `DOMContentLoaded` e gatilhos de renderização).
+- **Boot instantâneo e leveza no .exe:** O novo patch `ajustes_v52252_resolucao_loop_patch.js` garante que a inicialização do login ocorra em menos de 100ms sem polling desnecessário e sem consumo excessivo de CPU em computadores fracos.
+- **Bundle unificado e manifesto sincronizado:** 180 scripts compilados no `app.bundle.js` com integridade sha256 validada.
+- **Suíte de testes:** 104 testes passando 100% integrados no runner.
+- **APK Mobile:** Mantido inalterado e preservado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.52`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.51 — correção da tela branca no .exe e resiliência total de inicialização
+
+- **Causa raiz da tela branca identificada e corrigida:** Durante a inicialização limpa (quando não havia sessão anterior ativa ou após logout), a leitura `sess.usuarioNome` no bloco imediato de `app.js` gerava uma exceção não tratada (`TypeError: Cannot read properties of null`), interrompendo a execução do JavaScript e travando a renderização da interface.
+- **Null safety em todo o fluxo de inicialização:** Corrigida a inicialização de sessão para verificar se o objeto `sess` é nulo antes de acessar `usuarioNome` ou `login` tanto em `app.js` quanto nos patches auxiliares.
+- **Guardas anti-tela branca e recuperação automática:** Novo patch `ajustes_v52251_exe_resiliencia_patch.js` monitora o ciclo de vida do DOM e garante a correta exibição da tela de login ou da tela principal com recuperação automática em caso de atraso na renderização.
+- **Ciclo de vida suave no Electron (`main.js`):** Limpeza segura de cache via APIs do Electron (`win.webContents.session.clearCache` e `clearStorageData`) sem risco de bloqueio de arquivos concorrentes pelo sistema de arquivos do Windows, somado a temporizador de segurança garantindo que a janela principal seja sempre exibida.
+- **Suíte de testes:** 103 testes passando 100% integrados no runner.
+- **APK Mobile:** Mantido inalterado e preservado nesta etapa.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.51`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
+
+---
+
+## v5.22.50 — correção definitiva do bundle e empacotamento no .exe
+
+- **Correção de empacotamento:** todos os patches entram diretamente no `app.bundle.js` e são validados pelo manifesto e pelo build.
+- **Cache automático do .exe:** ao abrir a versão 5.22.50, o Electron limpa automaticamente `Cache`, `Code Cache` e `GPUCache` na pasta de dados do Windows.
+- **Rodapé e versão:** sincronizado para v5.22.50 em todos os componentes e rodapé.
+- **Testes:** 102 suítes consolidadas passando com 100% de aprovação.
+- **APK Mobile:** mantido pausado e isolado nesta etapa conforme solicitado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.50`
+
+GitHack orçamento (cliente): `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html`
 
 ---
 

@@ -76,7 +76,7 @@ async function apagarA1LocalSeHouver(){
 function ajustarCard(){
   esconderCarregarLocal();
   var p = document.querySelector('#nfe-config-card p');
-  if(p && !p.dataset.v52221a1){
+  if(p && p.dataset && !p.dataset.v52221a1){
     p.dataset.v52221a1 = '1';
     p.textContent = 'Ainda não emite nota na SEFAZ. O A1 sobe pela página de envio. Senha só na hora de assinar.';
   }

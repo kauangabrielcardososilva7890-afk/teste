@@ -159,6 +159,7 @@ if(typeof window.vosBuscarSerial==='function' && !window.vosBuscarSerial.__v5223
       var s=txt(serial).toLowerCase();
       if(!s || typeof getSession!=='function' || typeof db==='undefined') return r;
       var sess=getSession();
+      if(!sess) return r;
       var hist=(db.vendas||[]).filter(function(v){
         return v && v.empresaId===sess.empresaId && v.os && txt(v.os.numeroSerie||v.os.serie).toLowerCase()===s;
       }).sort(function(a,b){ return new Date(b.data||0)-new Date(a.data||0); });

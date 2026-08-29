@@ -247,6 +247,7 @@ if(typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ try{ setTimeout(()=>gravarSnapshotLegado(true), 1200); }catch(eV){} } });
 }
 let db=loadDB();
+if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
@@ -985,7 +986,7 @@ function getFiltered(list){const sess=getSession(); if(!sess) return []; return 
 function renderDashboard(){
   const sess=getSession(); if(!sess) return;
   const empFilter=id=>!id||id===sess.empresaId;
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   document.getElementById('kpi-contratos').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').length;
   document.getElementById('kpi-parque').innerText=db.parque.filter(p=>p.empresaId===sess.empresaId && p.status==='ativo').length;
   document.getElementById('kpi-os').innerText=db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length;
@@ -1281,7 +1282,7 @@ function gerarFaturasPendentes(){const sess=getSession(); const pend=db.leituras
   console.log('DIGICOPY ERP — build 3.11.2 (upload a prova de painel duplicado: progresso ancorado no input clicado, re-selecionar mesmos arquivos funciona, erros visiveis na tela e no console)');
   const sess=getSession();
   if(sess){showApp();}else{showLogin();}
-  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess.usuarioNome||sess.login||'-').split(' ')[0].toUpperCase();
+  const currentDateEl=document.getElementById('current-date'); if(currentDateEl) currentDateEl.innerText=new Date().toLocaleDateString('pt-BR',{day:'2-digit', month:'2-digit', year:'numeric'}); const statusUserHome=document.getElementById('status-user-home'); if(statusUserHome) statusUserHome.innerText=(sess ? (sess.usuarioNome||sess.login||'-') : '-').split(' ')[0].toUpperCase();
   // permitir Enter nos logins
   document.addEventListener('keydown',e=>{
     if(e.key==='Enter'){

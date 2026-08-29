@@ -6,8 +6,9 @@
 window.EXE_CACHE_V52248_PURE = { VERSAO:'5.22.48', v8Cache:'none' };
 if(typeof document==='undefined') return;
 function pintar(){
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.48';
   var ver=document.getElementById('footer-version');
-  if(ver) ver.textContent='v5.22.48';
+  if(ver) ver.textContent='v'+curV;
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52248ver){
   var oldN=window.navigateTo;

@@ -47,7 +47,12 @@ function clientesDeveListar(busca,campo,status){
 }
 function instalarBuscadorMenuFinal(){
   const nav=document.getElementById('nav-gest'); if(nav&&!nav.querySelector('[data-nav="buscador-escola"]')){
-    const btn=document.createElement('button'); btn.dataset.nav='buscador-escola'; btn.onclick=()=>navigateTo('buscador-escola'); btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white'; btn.innerHTML='<i class="ph ph-magnifying-glass text-[19px]"></i><span>Buscador Escola</span>';
+    const btn=document.createElement('button');
+    if(btn.dataset) btn.dataset.nav='buscador-escola';
+    else if(typeof btn.setAttribute==='function') btn.setAttribute('data-nav','buscador-escola');
+    btn.onclick=()=>navigateTo('buscador-escola');
+    btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    btn.innerHTML='<i class="ph ph-magnifying-glass text-[19px]"></i><span>Buscador Escola</span>';
     const cfg=nav.querySelector('[data-nav="config"]'); if(cfg) nav.insertBefore(btn,cfg); else nav.appendChild(btn);
   }
   const toolbar=document.querySelector('.classic-toolbar-scroll');

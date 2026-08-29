@@ -1,17 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
 //            no .exe e no link do cliente.
-//            1.2 Tem certeza?  1.3 link não vale mais  1.4 autorizar=venda /
-//            recusar some. O Pages antigo não tinha isso; o link passa a
-//            abrir a página nova (GitHack, com token + dados + versão).
-//            Este arquivo também entra SOZINHO no instalador (depois do
-//            bundle), para a atualização não depender só do app.bundle.js.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -58,6 +53,8 @@ window.RELATORIO_V52249_PURE = {
 };
 
 if(typeof document==='undefined') return;
+if(window.__v52249_relatorio_loaded) return;
+window.__v52249_relatorio_loaded = true;
 
 function aplicarLinkOrcamento(){
   if(window.ORCAMENTOS_V52238_PURE){
@@ -204,6 +201,20 @@ function aplicarLeitura(){
   };
 }
 
+function refsDoLancamento(c, dbRef){
+  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
+  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
+  return [];
+}
+function htmlRefs(refs){
+  if(!refs || !refs.length) return '';
+  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
+  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
+    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
+  }).join(' • ')+'</p>';
+}
+
+
 function garantirDatas(){
   var view = document.getElementById('view-financeiro');
   if(!view) return;
@@ -248,20 +259,8 @@ function garantirDatas(){
   ligar(ate,'ate');
 }
 
-function refsDoLancamento(c, dbRef){
-  var F = window.FINANCEIRO_HIST_DATAS_V52245_PURE;
-  if(F && typeof F.refsDoLancamento==='function') return F.refsDoLancamento(c, dbRef);
-  return [];
-}
-function htmlRefs(refs){
-  if(!refs || !refs.length) return '';
-  var mapa = {venda:'Venda', leitura:'Leitura', chamado:'Chamado'};
-  return '<p class="text-[12px] text-slate-600 mt-2">'+refs.map(function(r){
-    return (mapa[r.tipo]||r.tipo)+': <b class="text-[#0a1e8a]">'+esc(r.codigo)+'</b>';
-  }).join(' • ')+'</p>';
-}
-
 function aplicarFinanceiro(){
+
   if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52249datas){
     var oldR = window.renderFinanceiro;
     window.renderFinanceiro = function(){
@@ -296,17 +295,11 @@ function aplicarFinanceiro(){
   }
 }
 
-function pintarRodape(){
-  var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
-}
-
 function aplicarTudo(){
   aplicarLinkOrcamento();
   aplicarVenda();
   aplicarLeitura();
   aplicarFinanceiro();
-  pintarRodape();
 }
 
 aplicarTudo();
@@ -320,13 +313,6 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
     return r;
   };
   window.navigateTo.__v52249ver = true;
-}
-if(typeof MutationObserver==='function' && document.documentElement && !window.__v52249obs){
-  window.__v52249obs = true;
-  var obs = new MutationObserver(function(){
-    try{ tirarBotaoSair(); garantirDatas(); pintarRodape(); }catch(e){}
-  });
-  obs.observe(document.documentElement, { childList:true, subtree:true });
 }
 
 console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
