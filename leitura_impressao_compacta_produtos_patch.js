@@ -82,7 +82,13 @@ function garantirProdutosVisivel(){
     const loc=[...row.querySelectorAll('.module')].find(m=>/Locação/i.test(m.textContent||'')); if(loc) row.insertBefore(div,loc); else row.appendChild(div);
   }
   const nav=document.getElementById('nav-main'); if(nav && !nav.querySelector('[data-nav="produtos"]')){
-    const b=document.createElement('button'); b.dataset.nav='produtos'; b.onclick=()=>navigateTo('produtos'); b.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white'; b.innerHTML='<i class="ph ph-package text-[19px]"></i><span>Produtos</span>'; nav.appendChild(b);
+    const b=document.createElement('button');
+    if(b.dataset) b.dataset.nav='produtos';
+    else if(typeof b.setAttribute==='function') b.setAttribute('data-nav','produtos');
+    b.onclick=()=>navigateTo('produtos');
+    b.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    b.innerHTML='<i class="ph ph-package text-[19px]"></i><span>Produtos</span>';
+    nav.appendChild(b);
   }
 }
 const oldBuildNav=window.buildNav; if(typeof oldBuildNav==='function'&&!oldBuildNav.__prodFix){ window.buildNav=function(){ const ret=oldBuildNav.apply(this,arguments); setTimeout(garantirProdutosVisivel,0); return ret; }; window.buildNav.__prodFix=true; }

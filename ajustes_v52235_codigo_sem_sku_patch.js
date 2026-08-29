@@ -28,7 +28,7 @@ function trocarNo(el){
     el.setAttribute('placeholder', textoCodigo(el.getAttribute('placeholder')));
   }
   if(el.title && /SKU|sku/.test(el.title)) el.title=textoCodigo(el.title);
-  var kids=el.childNodes;
+  var kids=el.childNodes || [];
   for(var i=0;i<kids.length;i++) trocarNo(kids[i]);
 }
 
