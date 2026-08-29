@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 189 | sha256: bf2202a5724a39c7
+ * scripts: 190 | sha256: 5d8d90c364fb51c2
  */
 
 /* ===== lz.js ===== */
@@ -40239,7 +40239,7 @@ if(typeof window.DIGICOPY_CLOUD_SYNC==='object' && window.DIGICOPY_CLOUD_SYNC.ti
   var oldT=window.DIGICOPY_CLOUD_SYNC.tick;
   window.DIGICOPY_CLOUD_SYNC.tick=function(){
     var p=oldT.apply(this, arguments);
-    Promise.resolve(p).then(function(){ setTimeout(puxarAprovacoes, 300); }).catch(function(){});
+    /* v5.22.62 nao puxa no tick da nuvem */
     return p;
   };
   window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc=true;
@@ -40279,10 +40279,7 @@ if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52
     var r=oldR.apply(this, arguments);
     try{
       var agora=Date.now();
-      if(!window.__orcPuxarEm || agora-window.__orcPuxarEm>8000){
-        window.__orcPuxarEm=agora;
-        puxarAprovacoes();
-      }
+/* v5.22.62 render nao dispara poll */
     }catch(e){}
     return r;
   };
@@ -40290,7 +40287,7 @@ if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52
 }
 
 setTimeout(puxarAprovacoes, 2500);
-setInterval(puxarAprovacoes, 20000);
+/* v5.22.62 sem poll 20s */
 
 console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
 })();
@@ -42384,9 +42381,10 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       if(vendaExistente){
         o.status = 'aprovado';
         o.vendaNumero = vendaExistente.numero || o.vendaNumero;
-        if(typeof saveDB === 'function') saveDB();
         return vendaExistente;
       }
+      o.vendaExcluidaPeloUsuario = true;
+      return null;
     }
 
     var s = getSess();
@@ -42446,6 +42444,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     o.vendaNumero = novaVenda.numero;
     o.aprovadoEm = new Date().toISOString();
     o.aprovadoOrigem = origem || 'cliente';
+    o.vendaGeradaUmaVez = true;
 
     // Cria notificação
     var ntf = {
@@ -42621,7 +42620,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     setTimeout(sincronizarVersaoVisual, 1000);
 
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 4000);
+    /* v5.22.62: sem polling 4s — gerava venda em loop */
     setTimeout(verificarAprovacoesNuvem, 1000);
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
@@ -42701,9 +42700,10 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       if(vendaExistente){
         o.status = 'aprovado';
         o.vendaNumero = vendaExistente.numero || o.vendaNumero;
-        if(typeof saveDB === 'function') saveDB();
         return vendaExistente;
       }
+      o.vendaExcluidaPeloUsuario = true;
+      return null;
     }
 
     var s = getSess();
@@ -42763,6 +42763,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     o.vendaNumero = novaVenda.numero;
     o.aprovadoEm = new Date().toISOString();
     o.aprovadoOrigem = origem || 'cliente';
+    o.vendaGeradaUmaVez = true;
 
     // Cria notificação
     var ntf = {
@@ -43047,7 +43048,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     setTimeout(sincronizarVersaoVisual, 1000);
 
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 4000);
+    /* v5.22.62: sem polling 4s — gerava venda em loop */
     setTimeout(verificarAprovacoesNuvem, 1000);
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
@@ -43127,9 +43128,10 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       if(vendaExistente){
         o.status = 'aprovado';
         o.vendaNumero = vendaExistente.numero || o.vendaNumero;
-        if(typeof saveDB === 'function') saveDB();
         return vendaExistente;
       }
+      o.vendaExcluidaPeloUsuario = true;
+      return null;
     }
 
     var s = getSess();
@@ -43189,6 +43191,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     o.vendaNumero = novaVenda.numero;
     o.aprovadoEm = new Date().toISOString();
     o.aprovadoOrigem = origem || 'cliente';
+    o.vendaGeradaUmaVez = true;
 
     // Cria notificação
     var ntf = {
@@ -43402,7 +43405,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     setTimeout(sincronizarVersaoVisual, 1000);
 
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 3000);
+    /* v5.22.62: sem polling 3s — gerava venda em loop */
     setTimeout(verificarAprovacoesNuvem, 1000);
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
@@ -43558,9 +43561,10 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       if(vendaExistente){
         o.status = 'aprovado';
         o.vendaNumero = vendaExistente.numero || o.vendaNumero;
-        if(typeof saveDB === 'function') saveDB();
         return vendaExistente;
       }
+      o.vendaExcluidaPeloUsuario = true;
+      return null;
     }
 
     var s = getSess();
@@ -43646,6 +43650,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     o.vendaNumero = novaVenda.numero;
     o.aprovadoEm = new Date().toISOString();
     o.aprovadoOrigem = origem || 'cliente';
+    o.vendaGeradaUmaVez = true;
 
     // Cria notificação
     var ntf = {
@@ -44259,7 +44264,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     setTimeout(sincronizarVersaoVisual, 1000);
 
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 3000);
+    /* v5.22.62: sem polling 3s — gerava venda em loop */
     setTimeout(verificarAprovacoesNuvem, 1000);
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu
@@ -45784,7 +45789,7 @@ function varrerRessuscitadas(){
 }
 
 setTimeout(varrerRessuscitadas, 800);
-setInterval(varrerRessuscitadas, 2500);
+/* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){
   var ver = document.getElementById('footer-version');
@@ -45804,6 +45809,63 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52261ver){
 }
 
 console.log('[DIGICOPY] v5.22.61 orçamento: apagou não volta, aviso no sino');
+})();
+
+;
+
+/* ===== ajustes_v52262_orcamento_uma_vez_loop_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.22.62 — Orçamento gera venda UMA vez. Apagou não volta.
+//            Para o loop de carregar (poll 3s + saveDB).
+//            Não mexe no layout da tela de orçamentos.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+var VERSAO = '5.22.62';
+window.ORCAMENTO_UMA_VEZ_V52262_PURE = {
+  VERSAO: VERSAO,
+  geraUmaVez: true,
+  apagouNaoVolta: true,
+  semPoll3s: true
+};
+if(typeof document==='undefined') return;
+
+function overlayOff(){
+  try{
+    var cloud = document.getElementById('cloud-load-overlay');
+    if(cloud){ cloud.style.display='none'; cloud.remove(); }
+  }catch(e){}
+}
+overlayOff();
+setTimeout(overlayOff, 200);
+setTimeout(overlayOff, 1500);
+
+function pintar(){
+  var ver = document.getElementById('footer-version');
+  if(ver) ver.textContent = 'v'+VERSAO;
+}
+pintar();
+setTimeout(pintar, 400);
+
+if(typeof window.aprovarOrcamentoInterno==='function' && !window.aprovarOrcamentoInterno.__v52262){
+  var old = window.aprovarOrcamentoInterno;
+  window.aprovarOrcamentoInterno = function(orcId){
+    var _db = (typeof db!=='undefined'?db:(window.db||{}));
+    var o = (_db.orcamentos||[]).find(function(x){ return x && (x.id===orcId || x.token===orcId); });
+    if(!o) return null;
+    if(o.status==='excluido' || o.vendaExcluidaPeloUsuario || o.vendaGeradaUmaVez){
+      if(o.vendaId){
+        var ja = (_db.vendas||[]).find(function(v){ return v && v.id===o.vendaId; });
+        if(ja) return ja;
+      }
+      return null;
+    }
+    return old.apply(this, arguments);
+  };
+  window.aprovarOrcamentoInterno.__v52262 = true;
+}
+
+console.log('[DIGICOPY] v5.22.62 orçamento: uma vez, sem loop de carregar');
 })();
 
 ;

@@ -101,7 +101,7 @@ if(typeof window.DIGICOPY_CLOUD_SYNC==='object' && window.DIGICOPY_CLOUD_SYNC.ti
   var oldT=window.DIGICOPY_CLOUD_SYNC.tick;
   window.DIGICOPY_CLOUD_SYNC.tick=function(){
     var p=oldT.apply(this, arguments);
-    Promise.resolve(p).then(function(){ setTimeout(puxarAprovacoes, 300); }).catch(function(){});
+    /* v5.22.62 nao puxa no tick da nuvem */
     return p;
   };
   window.DIGICOPY_CLOUD_SYNC.tick.__v52244orc=true;
@@ -141,10 +141,7 @@ if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52
     var r=oldR.apply(this, arguments);
     try{
       var agora=Date.now();
-      if(!window.__orcPuxarEm || agora-window.__orcPuxarEm>8000){
-        window.__orcPuxarEm=agora;
-        puxarAprovacoes();
-      }
+/* v5.22.62 render nao dispara poll */
     }catch(e){}
     return r;
   };
@@ -152,7 +149,7 @@ if(typeof window.renderOrcamentos==='function' && !window.renderOrcamentos.__v52
 }
 
 setTimeout(puxarAprovacoes, 2500);
-setInterval(puxarAprovacoes, 20000);
+/* v5.22.62 sem poll 20s */
 
 console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
 })();

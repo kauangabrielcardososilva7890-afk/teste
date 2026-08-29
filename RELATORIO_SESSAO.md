@@ -3,10 +3,20 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
-**Última versão:** **v5.22.61**  
+**Última versão:** **v5.22.62**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.61. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.62 — orçamento uma vez, sem loop de carregar
+
+- Não refaz a tela de orçamentos.
+- Autorizar gera a venda **uma vez**. Apagou orçamento ou venda: não volta.
+- Tirei o polling de 3s que recriava tudo e travava a página em “carregando”.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a010fa-teste/index.html?v=5.22.62`
 
 ---
 

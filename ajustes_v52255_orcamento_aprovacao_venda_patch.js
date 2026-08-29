@@ -51,9 +51,10 @@
       if(vendaExistente){
         o.status = 'aprovado';
         o.vendaNumero = vendaExistente.numero || o.vendaNumero;
-        if(typeof saveDB === 'function') saveDB();
         return vendaExistente;
       }
+      o.vendaExcluidaPeloUsuario = true;
+      return null;
     }
 
     var s = getSess();
@@ -113,6 +114,7 @@
     o.vendaNumero = novaVenda.numero;
     o.aprovadoEm = new Date().toISOString();
     o.aprovadoOrigem = origem || 'cliente';
+    o.vendaGeradaUmaVez = true;
 
     // Cria notificação
     var ntf = {
@@ -288,7 +290,7 @@
     setTimeout(sincronizarVersaoVisual, 1000);
 
     // Polling contínuo para receber aprovações feitas pelo cliente no Pages / WhatsApp
-    setInterval(verificarAprovacoesNuvem, 4000);
+    /* v5.22.62: sem polling 4s — gerava venda em loop */
     setTimeout(verificarAprovacoesNuvem, 1000);
 
     // Dispara checagem imediata e sincronização de versão ao navegar para qualquer menu

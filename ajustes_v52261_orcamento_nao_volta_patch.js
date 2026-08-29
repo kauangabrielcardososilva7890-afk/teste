@@ -267,7 +267,7 @@ function varrerRessuscitadas(){
 }
 
 setTimeout(varrerRessuscitadas, 800);
-setInterval(varrerRessuscitadas, 2500);
+/* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){
   var ver = document.getElementById('footer-version');

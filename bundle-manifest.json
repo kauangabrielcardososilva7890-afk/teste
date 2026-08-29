@@ -187,5 +187,6 @@
   "ajustes_v52258_orcamento_os_revalidar_patch.js",
   "ajustes_v52259_orcamento_filtros_item_patch.js",
   "ajustes_v52260_orcamento_trava_venda_atalho_patch.js",
-  "ajustes_v52261_orcamento_nao_volta_patch.js"
+  "ajustes_v52261_orcamento_nao_volta_patch.js",
+  "ajustes_v52262_orcamento_uma_vez_loop_patch.js"
 ]
