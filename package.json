@@ -24,13 +24,17 @@
       "nfe_assinatura.js",
       "pix_pagar.html",
       "orcamento_pagar.html",
+      "envio_arquivos.html",
+      "escola_login.html",
       "public-orcamento/**/*",
       "public-pix/**/*",
+      "cloudflare-worker/**/*",
       "manifest.webmanifest",
       "logo.png",
       "logo_2.png",
       "assets/icon.ico",
       "assets/vendor/**/*",
+      "assets/**/*",
       "ajustes_v52249_relatorio_patch.js",
       "ajustes_v52250_exe_bundle_patch.js",
       "ajustes_v52251_exe_resiliencia_patch.js",
@@ -43,7 +47,9 @@
       "ajustes_v52258_orcamento_os_revalidar_patch.js",
       "ajustes_v52259_orcamento_filtros_item_patch.js",
       "ajustes_v52260_orcamento_trava_venda_atalho_patch.js",
-      "ajustes_*.js"
+      "*.js",
+      "!test_*.js",
+      "!test_runner.js"
     ],
     "win": {
       "target": [

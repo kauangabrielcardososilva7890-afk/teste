@@ -35,6 +35,11 @@ function createWindow () {
   });
 
   try{
+    win.webContents.session.clearCache().catch(()=>{});
+    win.webContents.session.clearStorageData({ storages: ['cachestorage', 'serviceworkers', 'shadercache'] }).catch(()=>{});
+  }catch(e){}
+
+  try{
     const marker = path.join(app.getPath('userData'), 'app-version.txt');
     const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
     if(!prev || (APP_VERSION && prev !== APP_VERSION)){
