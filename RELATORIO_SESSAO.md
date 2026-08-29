@@ -3,10 +3,34 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.54**  
+**Última versão:** **v5.22.55**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.54. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.55. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.55 — autorização de orçamento gerando venda salva e sincronização de status completa
+
+- **Conversão Automática em Venda Salva no Sistema:**
+  - Quando o cliente autoriza o orçamento no Cloudflare Pages (`https://digicopy-orcamentos.pages.dev/`), o sistema puxa a aprovação da nuvem e gera automaticamente a **Venda Salva** (status `aguardar`, pronta para faturar) com os mesmos itens, cliente e valores.
+  - O orçamento muda imediatamente de **Aberto** para **Autorizado** (`status: 'aprovado'`), vinculando o `vendaId` e exibindo o número da venda gerada.
+- **Tratamento de Recusa:**
+  - Quando o cliente recusa o orçamento no Pages, o status muda de **Aberto** para **Não autorizado** (`status: 'recusado'`).
+- **Botões de Ação Direta no ERP:**
+  - Na listagem de orçamentos e no modal de edição foram incluídos os botões rápidos **Autorizar** e **Recusar** manual, permitindo ao atendente autorizar com 1 clique caso o cliente confirme pelo WhatsApp ou pessoalmente.
+  - Orçamentos já autorizados exibem o botão direto **Venda [Número]** para abrir a venda gerada.
+- **Correção no Worker e D1:**
+  - Criado o dispositivo de sistema `public-orcamento` para contornar a chave estrangeira em SQLite D1.
+  - Aceita payload de fallback `d=` para garantir persistência mesmo se o orçamento local ainda não tivesse subido na nuvem.
+- **Bundle e Testes:**
+  - 183 scripts compilados no `app.bundle.js` (`sha256: 4632b074ed32baf3`).
+  - 107 suítes de testes passando com 100% de sucesso.
+- **APK Mobile:** Preservado e intocado.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.55`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 

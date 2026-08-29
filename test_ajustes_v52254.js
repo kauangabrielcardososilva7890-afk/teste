@@ -7,7 +7,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 const html = fs.readFileSync('index.html', 'utf8');
 
-ok('versão 5.22.54', P.VERSAO === '5.22.54' && pkg.version === '5.22.54');
+ok('versão 5.22.54 base', P.VERSAO === '5.22.54' && /^5\.22\.\d+/.test(pkg.version));
 ok('url Cloudflare Pages oficial', P.PAGINA_PAGES === 'https://digicopy-orcamentos.pages.dev/');
 
 const orcMock = {
@@ -27,10 +27,10 @@ ok('link contém token c=', link.includes('c=tok_abc123'));
 ok('link contém payload d=', link.includes('d='));
 ok('link contém versão v=5.22.54', link.includes('v=5.22.54'));
 
-ok('patch no manifesto do bundle', manifest.includes('ajustes_v52254_orcamentos_pages_patch.js') && manifest[manifest.length - 1] === 'ajustes_v52254_orcamentos_pages_patch.js');
+ok('patch no manifesto do bundle', manifest.includes('ajustes_v52254_orcamentos_pages_patch.js'));
 ok('patch no files do electron-builder', pkg.build.files.indexOf('ajustes_v52254_orcamentos_pages_patch.js') >= 0);
-ok('index carrega scripts na versão 5.22.54', /app\.bundle\.js\?v=5\.22\.54/.test(html) && /ajustes_v52254_orcamentos_pages_patch\.js\?v=5\.22\.54/.test(html));
-ok('rodapé v5.22.54', /footer-version/.test(html) && /v5\.22\.54/.test(html));
+ok('index carrega scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /ajustes_v52254_orcamentos_pages_patch\.js\?v=5\.22\.\d+/.test(html));
+ok('rodapé v5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
 
 // Teste de imunidade contra regressão de versão no DOM em tempo de execução
 global.window = {

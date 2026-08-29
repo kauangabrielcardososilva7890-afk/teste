@@ -103,7 +103,7 @@ button{flex:1;min-width:140px;height:48px;border:0;border-radius:12px;font-weigh
     var msgNo='Olá, sou '+nome+'. O orçamento do COD '+cod+' NÃO foi autorizado. Por favor, entre em contato para alinharmos as opções.';
     var msg=acao==='aprovar'?msgOk:msgNo;
     area.innerHTML='<p class="msg">'+(acao==='aprovar'?'Orçamento autorizado. Abrindo o WhatsApp da loja…':'Orçamento recusado. Abrindo o WhatsApp da loja para avisar…')+'</p>';
-    var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg};
+    var corpo={c:tok, acao:acao, numero:cod, clienteNome:nome, mensagem:msg, d:params.get('d')||''};
     fetch(API+'/orcamento',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(corpo)})
       .then(function(r){ return r.json().then(function(j){ return {okHttp:r.ok, j:j}; }); })
       .then(function(res){
