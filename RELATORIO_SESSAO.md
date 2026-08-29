@@ -3,10 +3,32 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a04e20-teste`  
-**Última versão:** **v5.22.56**  
+**Última versão:** **v5.22.57**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
-A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.56. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.57. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.57 — sincronização total de aprovação/rejeição de orçamentos, venda salva e versão v5.22.57
+
+- **Sincronização Total de Aprovação e Rejeição:**
+  - Garantido que quando o cliente aprova o orçamento no link público (`https://digicopy-orcamentos.pages.dev/?c=TOKEN&d=...`), o status no ERP transiciona de **Aberto** para **Autorizado** (`status: 'aprovado'`) e gera a **Venda Salva** (`db.vendas` com status `aguardar`, itens, cliente e valores).
+  - Quando o cliente rejeita o orçamento, o status no ERP transiciona para **Não autorizado** (`status: 'recusado'`).
+  - Implementada sincronização bidirecional e polling resiliente via Cloudflare D1/Worker (`/orcamento/status`) e localStorage fallback.
+- **Autorização e Rejeição Manual no ERP:**
+  - Métodos manuais `window.autorizarOrcamentoDirect(id)` e `window.recusarOrcamentoDirect(id)` disponíveis para aprovação direta quando o cliente confirma por WhatsApp ou pessoalmente.
+  - Ao autorizar manualmente, a venda salva é gerada instantaneamente no banco local e os dados são sincronizados.
+- **Sincronização Visual de Versão v5.22.57:**
+  - Versão **v5.22.57** propagada em todos os pontos: título da aba (`document.title`), cabeçalho superior (`#app-title-version`), centro do rodapé (`#footer-version`), tela de login e variáveis globais.
+- **Bundle e Testes:**
+  - 185 scripts compilados no `app.bundle.js` (`sha256: 0e6771d221edaed9`).
+  - 109 suítes de testes passando com 100% de sucesso.
+  - APK Mobile mantido intacto.
+
+GitHack sistema: `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a04e20-teste/index.html?v=5.22.57`
+
+Página do orçamento (cliente): `https://digicopy-orcamentos.pages.dev/`
 
 ---
 
