@@ -42,6 +42,7 @@ const CHECK_EXTRA = ['clean_dist.js', 'nfe_assinatura.js', 'main.js', 'preload.j
 
 const problemas = [];
 const alteracoes = [];
+const avisos = [];
 
 function ler(f) { return fs.readFileSync(f, 'utf8'); }
 
@@ -51,6 +52,24 @@ function ler(f) { return fs.readFileSync(f, 'utf8'); }
 const pkg = JSON.parse(ler('package.json'));
 const versao = String(pkg.version || '').trim();
 if (!versao) { console.error('package.json sem "version".'); process.exit(1); }
+
+// Repositório e branch publicados (fonte única dos links de teste/cliente).
+const REPO = (pkg.digicopy && pkg.digicopy.repo) || 'kauangabrielcardososilva7890-afk/teste';
+const BRANCH = (pkg.digicopy && pkg.digicopy.branch) || '';
+if (!BRANCH) { console.error('package.json sem "digicopy.branch".'); process.exit(1); }
+
+const LINK_GITHACK = `https://raw.githack.com/${REPO}/${BRANCH}/index.html?v=${versao}`;
+const LINK_ZIP = `https://github.com/${REPO}/archive/refs/heads/${BRANCH}.zip`;
+
+// Aviso se a branch configurada não for a que está em uso (não bloqueia build).
+try {
+  const atual = require('child_process')
+    .execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString().trim();
+  if (atual && atual !== 'HEAD' && atual !== BRANCH) {
+    avisos.push(`branch do git é "${atual}" mas package.json > digicopy.branch é "${BRANCH}".`);
+  }
+} catch (e) { /* sem git: segue */ }
 
 const manifest = JSON.parse(ler('bundle-manifest.json'));
 const faltandoNoDisco = manifest.filter(f => !fs.existsSync(f));
@@ -166,6 +185,34 @@ if (pkg.scripts.check !== checkEsperado) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4b. Links do GitHack no código — sempre na branch publicada
+// ─────────────────────────────────────────────────────────────────────────────
+// O link do orçamento que vai para o CLIENTE estava fixo em branches antigas
+// (arena/01a04e20-teste, arena/01a010fa-teste). Resultado: o cliente abria uma
+// página velha, sem as correções. Agora a branch vem do package.json e é
+// carimbada em todos os arquivos do bundle.
+const reGithack = new RegExp(
+  'https://raw\\.githack\\.com/' + REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+  '/(?:arena/[A-Za-z0-9._-]+|[0-9a-f]{7,40})/', 'g'
+);
+const alvoGithack = `https://raw.githack.com/${REPO}/${BRANCH}/`;
+const arquivosLink = [];
+const escritasLink = [];
+
+for (const arquivo of manifest) {
+  const conteudo = ler(arquivo);
+  if (conteudo.indexOf('raw.githack.com') < 0) continue;
+  const novo = conteudo.replace(reGithack, alvoGithack);
+  if (novo !== conteudo) {
+    arquivosLink.push(arquivo);
+    escritasLink.push([arquivo, novo]);
+  }
+}
+if (arquivosLink.length) {
+  alteracoes.push(`link GitHack → ${BRANCH} em: ${arquivosLink.join(', ')}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 5. Relatório / escrita
 // ─────────────────────────────────────────────────────────────────────────────
 if (problemas.length) {
@@ -175,8 +222,19 @@ if (problemas.length) {
   process.exit(1);
 }
 
+function imprimirLinks(){
+  console.log('');
+  console.log('  Teste no navegador (GitHack):');
+  console.log('    ' + LINK_GITHACK);
+  console.log('  Baixar tudo (zip do GitHub):');
+  console.log('    ' + LINK_ZIP);
+}
+
+avisos.forEach(a => console.log('  ⚠ ' + a));
+
 if (!alteracoes.length) {
   console.log(`Sync OK: v${versao} | ${manifest.length} no bundle | ${scriptsSoltos.length} soltos | ${filesEsperado.length} entradas em build.files`);
+  imprimirLinks();
   process.exit(0);
 }
 
@@ -189,5 +247,7 @@ if (CHECK) {
 
 fs.writeFileSync('index.html', html);
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+escritasLink.forEach(([arquivo, conteudo]) => fs.writeFileSync(arquivo, conteudo));
 console.log(`Sync aplicado (v${versao}):`);
 alteracoes.forEach(a => console.log('   • ' + a));
+imprimirLinks();

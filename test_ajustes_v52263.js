@@ -81,4 +81,30 @@ ok('build.files enxuto', pkg.build.files.length <= 15);
 ok('verify tem modo simulação com o matcher real', /--dry/.test(verify) && /app-builder-lib\/out\/fileMatcher/.test(verify));
 ok('atalho npm run verify:files', pkg.scripts['verify:files'] === 'node verify_pack.js --dry');
 
+// ── 9. Links de teste e download (obrigatórios a cada atualização) ──────────
+const REPO = pkg.digicopy.repo, BRANCH = pkg.digicopy.branch;
+ok('package.json guarda repo e branch publicados', !!REPO && !!BRANCH);
+ok('sync monta o link do GitHack', /LINK_GITHACK/.test(sync) && /raw\.githack\.com/.test(sync));
+ok('sync monta o link do zip do GitHub', /LINK_ZIP/.test(sync) && /archive\/refs\/heads/.test(sync));
+ok('sync imprime os dois links', /imprimirLinks/.test(sync));
+ok('sync avisa se a branch do git divergir', /digicopy\.branch/.test(sync));
+
+// nenhum arquivo do bundle pode apontar para branch antiga do GitHack
+const branchErrada = manifest.filter(f => {
+  const c = fs.readFileSync(f, 'utf8');
+  if (c.indexOf('raw.githack.com') < 0) return false;
+  const re = new RegExp('raw\\.githack\\.com/' + REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/(?!' + BRANCH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/)', 'g');
+  return re.test(c);
+});
+ok('link do cliente aponta para a branch atual (' + BRANCH + ')', branchErrada.length === 0);
+
+// os dois links precisam estar documentados
+const rel = fs.readFileSync('RELATORIO_SESSAO.md', 'utf8');
+const guia = fs.readFileSync('BUILD_EXE.md', 'utf8');
+ok('RELATORIO_SESSAO.md traz o link do GitHack', rel.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0);
+ok('RELATORIO_SESSAO.md traz o link do zip', rel.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
+ok('BUILD_EXE.md traz os dois links',
+   guia.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0 &&
+   guia.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
+
 console.log('\nRESULTADO: v5.22.63 passou!');

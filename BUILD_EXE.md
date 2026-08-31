@@ -38,6 +38,36 @@ dando 404**.
 
 ---
 
+## 1b. Links da versão (obrigatórios em toda atualização)
+
+Toda atualização precisa sair com **os dois links**:
+
+**Testar no navegador (GitHack)** — não precisa instalar nada:
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.63>
+
+**Baixar tudo (zip do próprio GitHub)** — não gerar `.zip` novo no repositório:
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+
+Os dois são impressos no final de `npm run sync`:
+
+```
+  Teste no navegador (GitHack):
+    https://raw.githack.com/.../arena/01a0590a-teste/index.html?v=5.22.63
+  Baixar tudo (zip do GitHub):
+    https://github.com/.../archive/refs/heads/arena/01a0590a-teste.zip
+```
+
+A branch fica em `package.json > digicopy.branch`. O `npm run sync` usa esse
+valor para carimbar **também os links do GitHack dentro do código** — inclusive
+o link de orçamento que vai para o cliente, que estava preso em branches
+antigas (`arena/01a04e20-teste`, `arena/01a010fa-teste`) e servia página velha.
+Se a branch do git for diferente da configurada, o sync avisa.
+
+> Ao mudar de branch de sessão: atualize `digicopy.branch`, rode `npm run sync`
+> e `npm run bundle`.
+
+---
+
 ## 2. Como gerar o `.exe` agora
 
 ```bash

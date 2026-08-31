@@ -4,9 +4,16 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
 **Última versão:** **v5.22.63**  
-**Zip para baixar (sempre este, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>  
-APK parado nesta etapa — prioridade é o sistema de PC.
+### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
+
+**1. Testar no navegador (GitHack):**
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.63>
+
+**2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+
+Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
+GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
 
@@ -28,6 +35,9 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
    antes de qualquer entrega.
 5. **Baixar sempre pelo zip da branch no GitHub**, sem gerar arquivos `.zip`
    novos no repositório.
+6. **É OBRIGATÓRIO mandar os DOIS links em toda atualização:** o link de teste
+   do **GitHack** (abrir no navegador) e o link do **zip do GitHub** (baixar).
+   Ambos são impressos no final de `npm run sync` — é só copiar.
 
 ---
 

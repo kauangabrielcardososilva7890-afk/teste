@@ -70,5 +70,9 @@
     "electron-builder": "^24.9.0"
   },
   "author": "DIGICOPY",
-  "license": "MIT"
+  "license": "MIT",
+  "digicopy": {
+    "repo": "kauangabrielcardososilva7890-afk/teste",
+    "branch": "arena/01a0590a-teste"
+  }
 }
