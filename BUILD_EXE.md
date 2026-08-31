@@ -116,7 +116,7 @@ Depois:
 ```bash
 npm run sync    # carimba a versão e atualiza build.files + scripts.check
 npm run bundle  # regenera o app.bundle.js
-npm test        # 116 suítes
+npm test        # 117 suítes
 ```
 
 O `npm run sync` faz sozinho:
@@ -145,7 +145,7 @@ O `npm run sync` faz sozinho:
 | `npm run check` | valida a sintaxe de todos os arquivos do bundle |
 | `npm run verify:exe` | raio-X num `dist/` já gerado |
 | `npm run verify:files` | **simula** o empacotamento sem gerar o `.exe` |
-| `npm test` | suíte completa (116) |
+| `npm test` | suíte completa (117) |
 
 ### Conferir o empacotamento sem gerar o `.exe`
 
@@ -199,6 +199,23 @@ abrir a janela.
 
 Resultado: **qualquer** mudança de código força a limpeza do cache — mesmo
 reempacotando com o mesmo número de versão.
+
+---
+
+## 6b. A versão que aparece na tela
+
+A fonte da verdade é `window.DIGICOPY_APP_VERSION`, definida no `index.html`
+pelo `npm run sync` a partir do `package.json`.
+
+**Regra:** nenhum patch pode fazer `window.DIGICOPY_APP_VERSION = VERSAO;` —
+isso sobrescreve a versão real com o valor fixo do patch. Use sempre
+`window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;`.
+E ao pintar rodapé, `app-title-version` ou `document.title`, leia a global,
+nunca a constante local do patch.
+
+Foi exatamente isso que travou o rodapé e o nome da janela em v5.22.60 estando
+na 5.22.63. O `test_versao_visual.js` agora bloqueia as duas coisas e simula a
+ordem dos 191 scripts para conferir o que apareceria na tela.
 
 ---
 

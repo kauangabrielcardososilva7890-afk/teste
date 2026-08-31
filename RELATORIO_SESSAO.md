@@ -95,6 +95,29 @@ Auditoria do carregamento encontrou trabalho duplicado puro:
 - `spellcheck: false` (menos memória) e **Chart.js (206 KB) saiu do `<head>`**
   para o fim do `<body>`, liberando a primeira pintura da tela.
 
+### Rodapé e nome da janela travados numa versão velha
+
+Relatado: o sistema estava na 5.22.63 mas o rodapé e o nome da janela
+mostravam **v5.22.60**.
+
+**Causa:** seis patches (v5.22.55 a v5.22.60) faziam
+`window.DIGICOPY_APP_VERSION = VERSAO;` com a versão **fixa** deles,
+sobrescrevendo a versão real definida no `index.html`. O último a rodar era o
+v5.22.60, então a variável global inteira virava `5.22.60` — e todos os outros
+patches, mesmo os que liam a global "corretamente", passavam a pintar 5.22.60.
+Esses mesmos patches ainda forçavam `document.title`, o que travava o nome da
+janela.
+
+**Correção:**
+- Os seis passaram a respeitar a versão já definida
+  (`window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO`).
+- Todos os painters de rodapé/título agora leem a versão global em vez do valor
+  fixo (8 arquivos, 21 pontos corrigidos).
+- O painter final (v5.22.63) passou a cuidar também do `document.title`.
+- Novo `test_versao_visual.js`: proíbe sobrescrever a versão global, proíbe
+  pintar com versão fixa e **simula a ordem real dos 191 scripts** conferindo
+  o resultado. A simulação reproduziu o bug (v5.22.60) antes da correção.
+
 ### Verificação sem baixar o Electron
 
 O binário do Electron vem de `release-assets.githubusercontent.com`, bloqueado
@@ -103,7 +126,7 @@ só os pacotes JS, e o novo `npm run verify:files` usa o **matcher real do
 `electron-builder`** (`app-builder-lib`) para calcular a lista exata de
 arquivos que ele copiaria — conferência completa sem gerar o `.exe`.
 
-Suíte: **116 passaram, 0 falharam**.
+Suíte: **117 passaram, 0 falharam**.
 
 Adicionar uma atualização agora são 2 passos: criar o `_patch.js` e citá-lo no
 `bundle-manifest.json`. O resto é automático.

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 191 | sha256: 43bc71d0baace087
+ * scripts: 191 | sha256: 3e67b31bae352743
  */
 
 /* ===== lz.js ===== */
@@ -42334,7 +42334,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.55';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
@@ -42600,11 +42600,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
         var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
         if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
@@ -42654,7 +42655,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.56';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
@@ -43027,11 +43028,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
         var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
         if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
@@ -43082,7 +43084,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.57';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
@@ -43384,11 +43386,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
         var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
         if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
@@ -43442,7 +43445,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.58';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
@@ -44243,11 +44246,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
         var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
         if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
@@ -44312,7 +44316,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.59';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
@@ -44750,11 +44754,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
       }catch(e){}
     }
@@ -44801,7 +44806,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
   var VERSAO = '5.22.60';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
@@ -45478,11 +45483,12 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
       }catch(e){}
     }
@@ -45793,7 +45799,8 @@ setTimeout(varrerRessuscitadas, 800);
 
 function pintar(){
   var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
+  var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  if(ver) ver.textContent = 'v'+_vUI;
 }
 pintar();
 setTimeout(pintar, 200);
@@ -45842,7 +45849,8 @@ setTimeout(overlayOff, 1500);
 
 function pintar(){
   var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
+  var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  if(ver) ver.textContent = 'v'+_vUI;
 }
 pintar();
 setTimeout(pintar, 400);
@@ -45914,11 +45922,16 @@ function pintarRodape(){
   if(ver && ver.textContent !== 'v' + curV) ver.textContent = 'v' + curV;
   var appVer = document.getElementById('app-title-version');
   if(appVer && appVer.textContent !== 'Sistema Digicopy v' + curV) appVer.textContent = 'Sistema Digicopy v' + curV;
+  // Nome da janela/aba: patches antigos fixavam a versão deles aqui e o título
+  // ficava travado numa versão velha. Agora segue sempre a versão real.
+  var tituloCerto = 'Sistema Digicopy v' + curV;
+  if(typeof document !== 'undefined' && document.title !== tituloCerto) document.title = tituloCerto;
 }
 
 pintarRodape();
 setTimeout(pintarRodape, 150);
 setTimeout(pintarRodape, 700);
+setTimeout(pintarRodape, 1500);
 
 if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52263ver){
   var oldN = window.navigateTo;

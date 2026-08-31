@@ -41,11 +41,16 @@ function pintarRodape(){
   if(ver && ver.textContent !== 'v' + curV) ver.textContent = 'v' + curV;
   var appVer = document.getElementById('app-title-version');
   if(appVer && appVer.textContent !== 'Sistema Digicopy v' + curV) appVer.textContent = 'Sistema Digicopy v' + curV;
+  // Nome da janela/aba: patches antigos fixavam a versão deles aqui e o título
+  // ficava travado numa versão velha. Agora segue sempre a versão real.
+  var tituloCerto = 'Sistema Digicopy v' + curV;
+  if(typeof document !== 'undefined' && document.title !== tituloCerto) document.title = tituloCerto;
 }
 
 pintarRodape();
 setTimeout(pintarRodape, 150);
 setTimeout(pintarRodape, 700);
+setTimeout(pintarRodape, 1500);
 
 if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52263ver){
   var oldN = window.navigateTo;

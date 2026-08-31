@@ -4,7 +4,7 @@
 
   var VERSAO = '5.22.55';
   if(typeof window !== 'undefined'){
-    window.DIGICOPY_APP_VERSION = VERSAO;
+    window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
   var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
@@ -270,11 +270,12 @@
       try{
         if(typeof document === 'undefined') return;
         var fv = document.getElementById('footer-version');
-        if(fv && fv.textContent !== 'v' + VERSAO) fv.textContent = 'v' + VERSAO;
+        var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+        if(fv && fv.textContent !== 'v' + _vUI) fv.textContent = 'v' + _vUI;
         var tv = document.getElementById('app-title-version');
-        if(tv && tv.textContent !== 'Sistema Digicopy v' + VERSAO) tv.textContent = 'Sistema Digicopy v' + VERSAO;
-        if(document.title && !document.title.includes(VERSAO)){
-          document.title = 'Sistema Digicopy v' + VERSAO;
+        if(tv && tv.textContent !== 'Sistema Digicopy v' + _vUI) tv.textContent = 'Sistema Digicopy v' + _vUI;
+        if(document.title && !document.title.includes(_vUI)){
+          document.title = 'Sistema Digicopy v' + _vUI;
         }
         var footSpan = document.querySelector('footer span:not(#footer-session):not(#footer-version)');
         if(footSpan && !footSpan.textContent.includes('Sistema Digicopy')){
