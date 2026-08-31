@@ -115,6 +115,7 @@ const tests=[
   "test_ajustes_v52261.js",
   "test_ajustes_v52262.js",
   "test_ajustes_v52263.js",
+  "test_ajustes_v52264.js",
   "test_versao_visual.js",
   "test_mobile_apk.js"
 ];

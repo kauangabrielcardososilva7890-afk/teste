@@ -68,6 +68,32 @@ Se a branch do git for diferente da configurada, o sync avisa.
 
 ---
 
+## 1c. Toda entrega sobe o número da versão
+
+Se você gerar um `.exe` novo **com o mesmo número**, o instalador sai com o
+**mesmo nome de arquivo** (`Sistema-Digicopy-Setup-5.22.63.exe`) do instalador
+antigo que já está na pasta de downloads. É muito fácil instalar o errado sem
+perceber — e o resultado é "gerei o .exe e não veio nada".
+
+**Regra: mudou o código, sobe o número.** Altere `version` no `package.json` e
+rode `npm run sync`. O nome do instalador muda junto e não tem como confundir.
+
+### Descobrir o que está instalado de verdade
+
+```bash
+npm run diag
+```
+
+O `diagnostico_exe.js` compara o código-fonte da pasta com o que está **de
+fato** dentro do `dist\win-unpacked` e da instalação do Windows, e diz qual
+arquivo está velho. Ele só lê, não altera nada.
+
+Se o `index.html` estiver novo e o `app.bundle.js` antigo, é exatamente o
+sintoma de **"só o rodapé da versão atualiza"** — o diagnóstico aponta isso com
+todas as letras.
+
+---
+
 ## 2. Como gerar o `.exe` agora
 
 ```bash
@@ -151,6 +177,7 @@ O `npm run sync` faz sozinho:
 | `npm run check` | valida a sintaxe de todos os arquivos do bundle |
 | `npm run verify:exe` | raio-X num `dist/` já gerado |
 | `npm run verify:files` | **simula** o empacotamento sem gerar o `.exe` |
+| `npm run diag` | mostra o que está dentro do `.exe`/instalação |
 | `npm test` | suíte completa (117) |
 
 ### Conferir o empacotamento sem gerar o `.exe`

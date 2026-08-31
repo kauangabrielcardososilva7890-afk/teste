@@ -76,6 +76,39 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.64 — cada entrega com número novo + diagnóstico do .exe
+
+Relatado: "no GitHack funciona, mas no `.exe` continua tudo igual; só o rodapé
+da versão aparece atualizado".
+
+O GitHack funcionando prova que **o código está certo** — o problema está entre
+gerar o `.exe` e abrir o programa instalado.
+
+**Causa 1 — o número da versão não mudava.** Todas as correções saíram como
+v5.22.63. O instalador se chama `Sistema-Digicopy-Setup-5.22.63.exe` sempre, o
+mesmo nome do instalador antigo que ainda está na pasta de downloads. Dá para
+instalar o arquivo errado sem perceber. **Agora toda entrega sobe o número.**
+
+**Causa 2 — não dava para olhar dentro do que está instalado.** Novo
+`npm run diag` (`diagnostico_exe.js`): compara o código-fonte da pasta com o
+que está de fato dentro do `dist\win-unpacked` e da instalação do Windows, e
+diz qual arquivo está velho. Só lê, não altera nada.
+
+O sintoma "só o rodapé atualiza" quer dizer `index.html` novo +
+`app.bundle.js` antigo — o rodapé vem do `index.html`, todo o resto vem do
+bundle. O diagnóstico detecta e nomeia exatamente esse caso.
+
+**Se acontecer de novo, nesta ordem:**
+
+1. `npm run diag` — e me mandar a saída
+2. `npm run build:win` — build completo e verificado
+3. **Desinstalar** o Sistema Digicopy pelo Painel de Controle
+4. Instalar `dist\Sistema-Digicopy-Setup-5.22.64.exe` (confira o número no nome)
+
+Nenhuma lógica do sistema mudou nesta versão.
+
+---
+
 ## v5.22.63 — .exe completo: nenhuma atualização fica de fora
 
 **Causa encontrada** do problema "gero o .exe e não vêm as atualizações novas":

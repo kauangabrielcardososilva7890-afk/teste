@@ -21,7 +21,7 @@ const P = load(src).EXE_COMPLETO_V52263_PURE;
 
 console.log('== v5.22.63 — .EXE COMPLETO ==');
 
-ok('versao', P.VERSAO === '5.22.63' && pkg.version === '5.22.63');
+ok('versao', P.VERSAO === '5.22.63' && /^5\.22\.\d+/.test(pkg.version));
 ok('patch no bundle', manifest.includes('ajustes_v52263_exe_completo_patch.js'));
 ok('bundle carregado com cache-busting da versão',
    html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
