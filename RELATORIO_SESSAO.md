@@ -47,6 +47,10 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
    passe pela lista da seção seguinte.
 9. **Código morto se apaga.** Arquivo que não entra no bundle nem no `.exe`
    não fica no repositório "por via das dúvidas". O git guarda o histórico.
+10. **UM ARQUIVO POR MÓDULO.** Correção **mexe no arquivo do módulo que já
+    existe** — não se copia o arquivo inteiro para criar uma versão nova.
+    Arquivo novo só quando a função **ainda não existe em lugar nenhum**.
+    E continua separado por módulo: nada de jogar tudo num arquivão só.
 
 ---
 
@@ -175,6 +179,38 @@ Três vigias de DOM rodavam **para sempre**, mesmo com a janela minimizada:
 `instalarBuscadorMenuFinal` (2s), `limparTopoMenus` (3s) e
 `garantirProdutosVisivel` (4s). Agora começam com `if(document.hidden) return;`
 — zero trabalho quando o sistema não está à vista.
+
+### Consolidação: 6 módulos que estavam em duplicata
+
+Os arquivos da v5.22.42 e da v5.22.43 eram **o mesmo módulo duas vezes**:
+`orcamentos_status`, `contratos_sort`, `impressora_remanejar`,
+`financeiro_filtros`, `financeiro_menu` e `menu_versao_boleto`. Em vez de
+corrigir o arquivo existente, cada um foi **copiado inteiro** e a versão
+trocada — inclusive as guardas (`__v52242fin` virou `__v52243fin`), o que faz
+as duas cópias rodarem.
+
+O que isso custava:
+
+- **42 KB lidos e executados à toa** por abertura.
+- A v5.22.42 embrulhava `renderFinanceiro`, `renderContratos`,
+  `renderOrcamentos` e `navigateTo`; a v5.22.43 embrulhava por cima. A tela do
+  financeiro chegava a ser **desenhada com a barra antiga** (De/Até sempre
+  visível, o bug que a 43 corrigiu) e só depois refeita.
+- `financeiro_menu` era **byte a byte igual**, só mudava o número da versão.
+
+Verificação antes de apagar: a v5.22.43 publica o mesmo conjunto de funções da
+42, **não depende de nada** que só a 42 publique, e cada diferença encontrada é
+a 43 fazendo **mais** que a 42 (ex.: `out.push('clientes')` virou
+`out.push('clientes','produtos','impressoras')`). As três referências a
+`__v52242` que sobraram na 43 são só nomes de flag copiados — ela grava, não lê.
+
+Resultado: **6 arquivos apagados**, bundle de 191 para **185 scripts**. O
+`test_ajustes_v52243.js` já cobria tudo do teste antigo e mais 5 casos; as 3
+asserções exclusivas dele (worker e página do cliente) foram herdadas.
+
+Novo `test_um_arquivo_por_modulo.js` impede a volta do padrão: barra módulo com
+duas versões no bundle, arquivo que é cópia de outro só com a versão trocada, e
+`_PURE` publicado por mais de um arquivo.
 
 ### Verificação sem baixar o Electron
 

@@ -107,6 +107,12 @@ Agora são **2 passos** em vez de 4:
 1. Criar o arquivo `ajustes_vXXXXX_algumacoisa_patch.js`.
 2. Adicionar o nome dele em `bundle-manifest.json`.
 
+> **Regra: um arquivo por módulo.** Correção **edita o arquivo do módulo que
+> já existe**. Não copie o arquivo para criar uma versão nova — isso deixa as
+> duas rodando (aconteceu com 6 módulos entre a v5.22.42 e a v5.22.43). Crie
+> arquivo novo só quando a função ainda não existir em lugar nenhum, e mantenha
+> um módulo por arquivo. O `test_um_arquivo_por_modulo.js` verifica isso.
+
 **Não** adicione tag `<script>` no `index.html`: tudo que está no
 `bundle-manifest.json` já viaja dentro do `app.bundle.js`. Se adicionar mesmo
 assim, o `npm run sync` remove a duplicata sozinho.
