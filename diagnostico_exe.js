@@ -226,6 +226,37 @@ for (const nome of ['Sistema Digicopy', 'digicopy-erp']) {
   }
 }
 
+// ── 3b. Log de falhas do bundle (gravado pelo próprio app) ──────────────────
+// Cada script do bundle roda no seu try/catch; se algum falhar, o main.js
+// registra aqui. É este arquivo que diz POR QUE algo não aparece na tela.
+let logLido = false;
+for (const nome of ['digicopy-erp', 'Sistema Digicopy']) {
+  const log = path.join(APPDATA, nome, 'log-erros.txt');
+  if (!existe(log)) continue;
+  logLido = true;
+  let linhas = [];
+  try { linhas = String(fs.readFileSync(log, 'utf8')).trim().split(/\r?\n/); } catch(e){}
+  const ultimas = linhas.slice(-40);
+  console.log('  ── log de falhas do app (' + nome + ')');
+  console.log('     arquivo: ' + log);
+  if (!ultimas.length) {
+    console.log('     (vazio)');
+  } else {
+    ultimas.forEach(l => console.log('     ' + l));
+    const falhou = ultimas.filter(l => /FALHOU|NÃO CHEGOU AO FIM|SCRIPTS QUE FALHARAM|•/.test(l));
+    if (falhou.length) {
+      problemas.push('o app registrou ' + falhou.length + ' linha(s) de falha ao carregar os scripts — veja o log acima.');
+    }
+  }
+  console.log('');
+}
+if (!logLido) {
+  console.log('  ── log de falhas do app');
+  console.log('     ainda não existe. Abra o Sistema Digicopy uma vez e rode este');
+  console.log('     diagnóstico de novo — o log é criado na primeira abertura.');
+  console.log('');
+}
+
 // ── 4. Veredito ─────────────────────────────────────────────────────────────
 const temDist = existe(path.join('dist', 'win-unpacked', 'resources', 'app'));
 const temInstalacao = CANDIDATOS.some(([rotulo, dir]) => rotulo !== 'recém gerado (dist)' && existe(dir));

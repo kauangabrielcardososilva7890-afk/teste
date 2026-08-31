@@ -21,7 +21,7 @@ const P = load(src).EXE_NUMERO_NOVO_V52264_PURE;
 console.log('== v5.22.64 — NÚMERO NOVO A CADA ENTREGA ==');
 
 // ── 1. Versão ───────────────────────────────────────────────────────────────
-ok('versão', P.VERSAO === '5.22.64' && pkg.version === '5.22.64');
+ok('versão', P.VERSAO === '5.22.64' && /^5\.22\.\d+/.test(pkg.version));
 ok('patch no bundle', manifest.includes('ajustes_v52264_exe_numero_novo_patch.js'));
 ok('bundle carregado com a versão', html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
 ok('versão subiu em relação à 5.22.63', (() => {
@@ -29,6 +29,8 @@ ok('versão subiu em relação à 5.22.63', (() => {
   const a = n(pkg.version), b = n('5.22.63');
   return a[0] > b[0] || (a[0]===b[0] && (a[1] > b[1] || (a[1]===b[1] && a[2] > b[2])));
 })());
+ok('nome do instalador acompanha a versão do package.json',
+   P.nomeInstalador(pkg.version) === 'Sistema-Digicopy-Setup-'+pkg.version+'.exe');
 
 // ── 2. Lógica pura ──────────────────────────────────────────────────────────
 ok('versaoBate compara certo', P.versaoBate('5.22.64','5.22.64') && !P.versaoBate('5.22.63','5.22.64'));

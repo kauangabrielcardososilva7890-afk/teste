@@ -69,6 +69,55 @@ function createWindow () {
     }
   }catch(e){}
   win.loadFile(path.join(__dirname, 'index.html'));
+
+  // ── Registro de falhas do bundle (v5.22.65) ───────────────────────────────
+  // O app.bundle.js junta ~186 scripts. Cada um roda dentro do seu try/catch,
+  // então uma falha não derruba os outros — mas precisa ficar registrada, ou
+  // some sem ninguém ver. Aqui as falhas vão para um arquivo de texto que o
+  // `npm run diag` lê. Nunca atrapalha o uso: tudo dentro de try/catch.
+  try{
+    const logPath = path.join(app.getPath('userData'), 'log-erros.txt');
+    const anotar = (texto) => {
+      try{
+        fs.appendFileSync(logPath,
+          '[' + new Date().toISOString() + '] v' + APP_VERSION + ' ' + texto + '\n', 'utf8');
+      }catch(e){}
+    };
+
+    win.webContents.on('console-message', (event, level, message) => {
+      // level 3 = error. Só o que interessa, para o arquivo não crescer à toa.
+      if (level >= 2 && /\[DIGICOPY\]\[FALHOU\]|Uncaught|SecurityError/i.test(String(message||''))) {
+        anotar('CONSOLE: ' + String(message).slice(0, 500));
+      }
+    });
+
+    win.webContents.on('render-process-gone', (event, detalhes) => {
+      anotar('TELA MORREU: ' + JSON.stringify(detalhes));
+    });
+
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.executeJavaScript(
+        '(function(){try{return JSON.stringify({' +
+        'completo: window.__DIGICOPY_BUNDLE_COMPLETO === true,' +
+        'scripts: window.__DIGICOPY_BUNDLE_SCRIPTS || 0,' +
+        'erros: (window.__DIGICOPY_ERROS||[]).map(function(x){return x.arquivo+" :: "+String(x.erro).split("\\n")[0];})' +
+        '});}catch(e){return "{}";}})()'
+      ).then((json) => {
+        let r = {};
+        try{ r = JSON.parse(json) || {}; }catch(e){}
+        if (r.completo === false) {
+          anotar('BUNDLE NÃO CHEGOU AO FIM — algo abortou a execução.');
+        }
+        if (Array.isArray(r.erros) && r.erros.length) {
+          anotar('SCRIPTS QUE FALHARAM (' + r.erros.length + ' de ' + r.scripts + '):');
+          r.erros.forEach(e => anotar('   • ' + String(e).slice(0, 400)));
+        } else if (r.completo) {
+          anotar('OK: bundle completo, ' + r.scripts + ' scripts, nenhuma falha.');
+        }
+      }).catch(() => {});
+    });
+  }catch(e){}
+
   try{
     win.webContents.on('will-navigate', (event, url) => {
       if(String(url||'').startsWith('file://')) return;

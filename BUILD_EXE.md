@@ -94,6 +94,27 @@ todas as letras.
 
 ---
 
+## 1d. Um script quebrado não derruba os outros
+
+O `app.bundle.js` junta ~187 scripts num arquivo só. Antes, um erro em qualquer
+um deles **abortava todo o resto** — os seguintes nunca rodavam, sem aviso
+nenhum. Era o que fazia "faltar muita coisa" no `.exe` e funcionar no GitHack:
+o site abre por `https`, o `.exe` abre por `file://`, onde o Chromium bloqueia
+APIs como IndexedDB.
+
+Agora cada script vai dentro do **seu próprio try/catch**. Ficam fora só os que
+declaram no escopo global (`app.js`, `evolucao_patch.js`), detectados lendo o
+código com o `acorn` — não por lista escrita à mão.
+
+Se algo falhar:
+
+- `window.__DIGICOPY_ERROS` guarda arquivo e erro;
+- o `main.js` grava em `%APPDATA%\digicopy-erp\log-erros.txt`;
+- `npm run diag` mostra o log;
+- o sistema avisa quem está usando, em vez de faltar coisa em silêncio.
+
+---
+
 ## 2. Como gerar o `.exe` agora
 
 ```bash

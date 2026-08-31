@@ -76,6 +76,49 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.65 — CAUSA ENCONTRADA: um script quebrado derrubava o resto
+
+O usuário confirmou: `dist\win-unpacked\Sistema Digicopy.exe` (build recém
+gerado, digital conferida) **continuava sem as alterações** — modo escuro, menu
+de orçamentos, ajustes do financeiro e "muita coisa que nem consigo listar".
+E a pista decisiva: *"eu testava apenas no GitHack, não transformava para .exe
+antes"*.
+
+**Causa raiz.** O `app.bundle.js` junta ~186 scripts num arquivo só. Como é UM
+arquivo, um erro de execução em qualquer um deles **aborta todo o restante** —
+os scripts seguintes nunca rodam. Não aparece erro, o sistema abre normalmente,
+só que pela metade.
+
+Por que só no `.exe`: o GitHack serve por **https**, uma origem normal. O
+`.exe` abre por **file://**, que o Chromium trata como origem opaca e onde
+várias APIs são bloqueadas (IndexedDB, por exemplo). Um patch que funciona no
+site falha no `.exe` — e leva junto tudo que vem depois dele na fila.
+
+Bate com o relato. Posições no bundle: `indexeddb_persistence_patch.js` é o
+**95**, `cloudflare_data_sync_patch.js` o **97**; modo escuro é o **136**, menu
+de orçamentos o **145**, financeiro do **150** em diante. Tudo que sumia está
+depois; tudo que funcionava está antes. E o rodapé atualizava porque a versão
+vem escrita no `index.html`, não do bundle.
+
+**Correção.** Cada script entra no bundle dentro do **seu próprio try/catch**.
+Uma falha isolada não contamina os outros 186. Ficam fora só os arquivos que
+declaram no escopo global (`app.js` e `evolucao_patch.js`) — envolvê-los
+mudaria o escopo. Isso é decidido **lendo o código** com o `acorn`, não por
+lista escrita à mão: 185 isolados, 2 globais.
+
+Prova executada nos dois modos, com o script do meio quebrando:
+
+| | scripts que rodaram | bundle terminou |
+|---|---|---|
+| antes | `um, dois` (abortou) | não |
+| depois | `um, dois, tres` | sim, com a falha registrada |
+
+**E agora falha nunca mais é silenciosa:** `window.__DIGICOPY_ERROS` na tela, o
+`main.js` grava `log-erros.txt` em `%APPDATA%\digicopy-erp`, o `npm run diag`
+mostra o conteúdo e o sistema avisa quem está usando.
+
+---
+
 ## v5.22.64 — cada entrega com número novo + diagnóstico do .exe
 
 Relatado: "no GitHack funciona, mas no `.exe` continua tudo igual; só o rodapé
