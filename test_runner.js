@@ -51,6 +51,7 @@ const tests=[
   "test_offline_assets.js",
   "test_confirm_compat.js",
   "test_app_bundle.js",
+  "test_build_sync.js",
   "test_electron_security.js",
   "test_ajustes_v5214.js",
   "test_ajustes_v5215.js",
@@ -113,6 +114,7 @@ const tests=[
   "test_ajustes_v52260.js",
   "test_ajustes_v52261.js",
   "test_ajustes_v52262.js",
+  "test_ajustes_v52263.js",
   "test_mobile_apk.js"
 ];
 let failed=0, passed=0, xfailed=0;

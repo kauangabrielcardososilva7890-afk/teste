@@ -15,4 +15,8 @@ ok('www tem o sistema',html.includes('app.bundle.js')&&fs.existsSync('mobile/www
 ok('www marca canal celular e versão 1.0',html.includes('DIGICOPY_APP_CANAL="celular"')&&html.includes('DIGICOPY_APP_VER="1.0"'));
 ok('PC index não virou 1.0',!fs.readFileSync('index.html','utf8').includes('DIGICOPY_APP_CANAL'));
 ok('bundle do PC existe no www',fs.existsSync('mobile/www/app.bundle.js'));
+const refsWww=[...html.matchAll(/(?:src|href)="\.\/([A-Za-z0-9_.\-/]+?)(?:\?[^"]*)?"/g)].map(m=>m[1]);
+const quebradas=refsWww.filter(f=>!fs.existsSync(path.join('mobile','www',f)));
+ok('APK não sai com arquivo faltando ('+refsWww.length+' recursos)',quebradas.length===0);
+ok('patches soltos também vão para o APK',refsWww.filter(f=>/^ajustes_v/.test(f)).every(f=>fs.existsSync(path.join('mobile','www',f))));
 console.log('\nRESULTADO: app celular 1.0 passou!');

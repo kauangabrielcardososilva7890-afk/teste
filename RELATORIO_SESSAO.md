@@ -3,10 +3,48 @@
 **Data:** 2026-08-29  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a010fa-teste`  
-**Última versão:** **v5.22.62**  
+**Última versão:** **v5.22.63**  
 **Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## v5.22.63 — .exe completo: nenhuma atualização fica de fora
+
+**Causa encontrada** do problema "gero o .exe e não vêm as atualizações novas":
+o `electron-builder` só copia o que está em `package.json > build.files`. Essa
+lista era escrita **à mão**, junto com outras 3 listas (`bundle-manifest.json`,
+tags do `index.html` e `scripts.check`). Esquecer a lista do `build.files` fazia
+o arquivo **não ir para dentro do instalador**, sem nenhum aviso: o rodapé
+mostrava a versão nova, mas o comportamento continuava o antigo.
+
+**Segunda causa:** o cache do Electron só era limpo quando o *número* da versão
+mudava. Reempacotar com o mesmo número deixava o sistema rodando o código antigo
+guardado em `%APPDATA%\digicopy-erp\Cache`.
+
+O que mudou:
+
+- Novo `sync_build.js`: `index.html` (versão, título, rodapé e todos os `?v=`),
+  `build.files` e `scripts.check` passam a ser **gerados** de uma fonte só.
+  `npm run sync:check` reprova build dessincronizado.
+- Novo `verify_pack.js`: depois do `electron-builder`, abre o pacote e confere
+  arquivo por arquivo — inclusive se o `app.bundle.js` empacotado tem o **mesmo
+  sha256** do projeto. Faltou algo, o build **falha**.
+- `npm run build:win` agora é: limpa → sincroniza → empacota → **confere**.
+- `main.js`: cache invalidado pela impressão digital (sha256) do código, não só
+  pela versão. Qualquer mudança de código força limpeza do cache.
+- `mobile/sync-www.js`: o APK estava saindo com **14 scripts dando 404** (lista
+  fixa não incluía os patches soltos) e o `mobile/www` no git estava 2 versões
+  atrasado. Agora copia tudo que o `index.html` carrega e falha se sobrar
+  referência quebrada.
+- Removido o limite de 30 entradas em `build.files` do `test_app_bundle.js` —
+  era uma bomba-relógio que estouraria na próxima atualização.
+- Novos `test_build_sync.js` e `test_ajustes_v52263.js`. Guia completo em
+  **`BUILD_EXE.md`**.
+
+Adicionar uma atualização agora são 2 passos: criar o `_patch.js` e citá-lo no
+`bundle-manifest.json`. O resto é automático.
 
 ---
 

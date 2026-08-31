@@ -9,6 +9,21 @@ const APP_VERSION = (function(){
   try{ return String(require('./package.json').version||''); }catch(e){ return ''; }
 })();
 
+// Impressão digital do código empacotado. O build_bundle.js grava o sha256 do
+// bundle no cabeçalho do app.bundle.js. Usar essa digital (e não só a versão)
+// evita o problema de gerar um .exe NOVO com o MESMO número de versão e o
+// Electron continuar servindo o código ANTIGO do cache.
+const APP_FINGERPRINT = (function(){
+  try{
+    const fd = fs.openSync(path.join(__dirname, 'app.bundle.js'), 'r');
+    const buf = Buffer.alloc(512);
+    const lidos = fs.readSync(fd, buf, 0, 512, 0);
+    fs.closeSync(fd);
+    const m = /sha256:\s*([0-9a-f]+)/.exec(buf.toString('utf8', 0, lidos));
+    return APP_VERSION + '|' + (m ? m[1] : '');
+  }catch(e){ return APP_VERSION + '|'; }
+})();
+
 try{ app.commandLine.appendSwitch('disable-http-cache'); }catch(e){}
 
 function createWindow () {
@@ -37,7 +52,7 @@ function createWindow () {
   try{
     const marker = path.join(app.getPath('userData'), 'app-version.txt');
     const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
-    if(!prev || (APP_VERSION && prev !== APP_VERSION)){
+    if(!prev || prev !== APP_FINGERPRINT){
       const ud = app.getPath('userData');
       ['Cache','Code Cache','GPUCache','Service Worker'].forEach(function(nome){
         try{ fs.rmSync(path.join(ud, nome), { recursive:true, force:true }); }catch(e){}
@@ -45,7 +60,7 @@ function createWindow () {
       try{ win.webContents.session.clearCache(); }catch(e){}
       try{ win.webContents.session.clearStorageData({ storages: ['cachestorage', 'serviceworkers', 'shadercache'] }); }catch(e){}
       try{ if(win.webContents.session.clearCodeCaches) win.webContents.session.clearCodeCaches({ urls: [] }); }catch(e){}
-      try{ fs.writeFileSync(marker, APP_VERSION||'', 'utf8'); }catch(e){}
+      try{ fs.writeFileSync(marker, APP_FINGERPRINT, 'utf8'); }catch(e){}
     }
   }catch(e){}
   win.loadFile(path.join(__dirname, 'index.html'));
