@@ -43,7 +43,7 @@ const tests=[
   "test_ajustes_pos_final.js",
   "test_ajustes_v52023.js",
   "test_ajustes_v52024.js",
-  "test_ajustes_v52025.js",
+  "test_nuvem_antiga_removida.js",
   "test_sync_quota_guard.js",
   "test_cloudflare_sync.js",
   "test_cloudflare_data_sync.js",

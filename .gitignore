@@ -16,16 +16,9 @@ test-results/
 *.deb
 *.rpm
 
-# Zips de versão antiga / upload (não entram no git)
+# Zips NUNCA entram no git. Para baixar o sistema, use o zip da branch:
+# https://github.com/<repo>/archive/refs/heads/<branch>.zip
 *.zip
-!Sistema-Digicopy-v5.22.46.zip
-!Sistema-Digicopy-v5.22.47.zip
-!Sistema-Digicopy-completo-v5.22.47.zip
-!Sistema-Digicopy-completo-v5.22.48.zip
-!Sistema-Digicopy-completo-v5.22.49.zip
-!Sistema-Digicopy-completo-v5.22.61.zip
-!Sistema-Digicopy-completo-v5.22.62.zip
-!Sistema-Digicopy-completo-v5.22.50.zip
 
 # Backups/exportações locais
 backups/

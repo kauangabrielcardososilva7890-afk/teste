@@ -38,6 +38,37 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
 6. **É OBRIGATÓRIO mandar os DOIS links em toda atualização:** o link de teste
    do **GitHack** (abrir no navegador) e o link do **zip do GitHub** (baixar).
    Ambos são impressos no final de `npm run sync` — é só copiar.
+7. **PERGUNTE ANTES DE CODAR.** Quando eu pedir uma atualização e restar
+   QUALQUER dúvida sobre o que eu quero, **pergunte primeiro**. Quero que
+   fique exatamente como estou pensando — ou melhor do que eu esperava.
+   Não adivinhe, não faça "a sua versão" do pedido. Se enxergar uma forma
+   melhor do que eu pedi, proponha antes de implementar.
+8. **NADA DE ERRO BOBO.** Erro besta é perda de tempo. Antes de entregar,
+   passe pela lista da seção seguinte.
+9. **Código morto se apaga.** Arquivo que não entra no bundle nem no `.exe`
+   não fica no repositório "por via das dúvidas". O git guarda o histórico.
+
+---
+
+## CHECKLIST ANTIERRO — passar antes de entregar
+
+Erros que já aconteceram neste projeto e não podem se repetir:
+
+| Erro | Como evitar |
+|------|-------------|
+| Arquivo novo não vai para o `.exe` | Só citar em `bundle-manifest.json` e rodar `npm run sync`. Nunca editar `build.files` à mão. |
+| Rodapé/janela numa versão velha | Nunca `window.DIGICOPY_APP_VERSION = VERSAO`. Use `= window.DIGICOPY_APP_VERSION \|\| VERSAO` e leia a global ao pintar. |
+| Script rodando duas vezes | Não adicionar tag `<script>` para arquivo que já está no bundle. |
+| Patch sem guarda | Todo patch que embrulha função ou registra ouvinte precisa de `if(window.__vXXXX) return;`. |
+| Link do cliente numa branch velha | Nunca escrever URL do GitHack na mão. A branch vem de `package.json > digicopy.branch`. |
+| Teste amarrado à versão | Não usar `pkg.version === '5.22.XX'` em teste antigo. Use `/^5\.22\.\d+/`. |
+| Lista fixa em teste | Nada de "lista dos últimos patches" nem limite tipo `files.length <= 30`. Derive das fontes. |
+| Timer rodando em segundo plano | `setInterval` que mexe no DOM começa com `if(document.hidden) return;`. |
+| Polling curto | Nada de `setInterval` de 2–4s recriando tela. Já causou loop de venda duplicada. |
+| Zip no repositório | `.zip` é ignorado. Para baixar, usar o zip da branch no GitHub. |
+
+Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
+(117 suítes, 0 falha) e `npm run verify:files`.
 
 ---
 
@@ -117,6 +148,33 @@ janela.
 - Novo `test_versao_visual.js`: proíbe sobrescrever a versão global, proíbe
   pintar com versão fixa e **simula a ordem real dos 191 scripts** conferindo
   o resultado. A simulação reproduziu o bug (v5.22.60) antes da correção.
+
+### Limpeza: nuvem antiga apagada e repositório 12x menor
+
+- **Repositório de 207 MB → 16 MB.** Havia **190 MB de `.zip`** commitados
+  (v5.22.47, 48, 49, 61, 62). O zip da branch que eu baixo carregava tudo isso
+  junto. Apagados; o `.gitignore` agora bloqueia `.zip` sem exceção. O git
+  guarda o histórico, então nada foi perdido de verdade.
+- **Nuvem antiga (Google Firebase / Supabase) apagada de vez.** Quatro arquivos
+  mortos, que não entravam no bundle nem no `.exe`, ficavam no repositório:
+  `sync_client.js` (28 KB), `sync_realtime_patch.js` (20 KB),
+  `limpar_nuvem_patch.js`, `ajustes_v52025_patch.js`. Mais dois testes órfãos.
+- **Sobre a API do Google que o GitHub acusa:** a chave estava em
+  `firebase_config.js`, arquivo que **já não existe** no código. O alerta vem
+  do **histórico do git** (commit `26e5987`), que é permanente. O jeito certo
+  de resolver é **revogar/apagar a chave no console do Google** — aí o alerta
+  pode ser dispensado. Reescrever o histórico não é recomendado: quebraria o
+  PR e a chave continuaria em cópias/forks.
+- Novo `test_nuvem_antiga_removida.js`: garante que esses arquivos não voltem,
+  que nenhuma chave `AIza...` entre no código, que nenhum endpoint
+  Firebase/Supabase apareça e que nenhum `.zip` volte para o repositório.
+
+### Desempenho: timers parados em segundo plano
+
+Três vigias de DOM rodavam **para sempre**, mesmo com a janela minimizada:
+`instalarBuscadorMenuFinal` (2s), `limparTopoMenus` (3s) e
+`garantirProdutosVisivel` (4s). Agora começam com `if(document.hidden) return;`
+— zero trabalho quando o sistema não está à vista.
 
 ### Verificação sem baixar o Electron
 

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 191 | sha256: 3e67b31bae352743
+ * scripts: 191 | sha256: f4a8a82a8082c01b
  */
 
 /* ===== lz.js ===== */
@@ -17416,7 +17416,7 @@ window.LOGIN_DIRETO_LEGADO_PURE={ fold, loginCompativel, senhaCompativel, perfil
 if(typeof document!=='undefined'){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); });
   else { estilizarLogin(); }
-  setInterval(limparTopoMenus,3000);
+  setInterval(function(){ if(document.hidden) return; limparTopoMenus(); },3000);
 }
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
 })();
@@ -18174,7 +18174,7 @@ function garantirProdutosVisivel(){
   }
 }
 const oldBuildNav=window.buildNav; if(typeof oldBuildNav==='function'&&!oldBuildNav.__prodFix){ window.buildNav=function(){ const ret=oldBuildNav.apply(this,arguments); setTimeout(garantirProdutosVisivel,0); return ret; }; window.buildNav.__prodFix=true; }
-if(typeof document!=='undefined'){ setTimeout(garantirProdutosVisivel,800); setInterval(garantirProdutosVisivel,4000); }
+if(typeof document!=='undefined'){ setTimeout(garantirProdutosVisivel,800); setInterval(function(){ if(document.hidden) return; garantirProdutosVisivel(); },4000); }
 window.LEITURA_IMPRESSAO_COMPACTA_PURE={ agruparPorDepartamento, totais, htmlNotinhaLeitura };
 console.log('[DIGICOPY] leitura_impressao_compacta_produtos_patch.js v4.9.48 carregado');
 })();
@@ -18736,7 +18736,7 @@ if(typeof oldVosHtml==='function') window.vosGerarHtmlNotinha=function(id,opts){
 
 const oldBuildNav=window.buildNav;
 window.buildNav=function(){ const r=oldBuildNav?oldBuildNav.apply(this,arguments):undefined; setTimeout(()=>{ instalarBuscadorMenuFinal(); },80); return r; };
-setInterval(()=>{ instalarBuscadorMenuFinal(); },2000);
+setInterval(()=>{ if(typeof document!=='undefined'&&document.hidden) return; instalarBuscadorMenuFinal(); },2000);
 setTimeout(()=>{ instalarBuscadorMenuFinal(); },600);
 console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();
