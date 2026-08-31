@@ -40,7 +40,12 @@ function createWindow () {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
-      v8CacheOptions: 'none',
+      // Cache de código V8 LIGADO: o bundle tem ~2,9 MB e recompilá-lo do zero
+      // a cada abertura pesa muito em PC fraco. Era 'none' (v5.22.48) só para
+      // contornar código antigo preso no cache — problema agora resolvido na
+      // raiz pela impressão digital: se o código muda, o Code Cache é apagado.
+      v8CacheOptions: 'bypassHeatCheck',
+      spellcheck: false,
       devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },

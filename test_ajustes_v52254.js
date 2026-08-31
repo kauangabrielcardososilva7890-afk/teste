@@ -28,8 +28,10 @@ ok('link contém payload d=', link.includes('d='));
 ok('link contém versão v=5.22.54', link.includes('v=5.22.54'));
 
 ok('patch no manifesto do bundle', manifest.includes('ajustes_v52254_orcamentos_pages_patch.js'));
-ok('patch no files do electron-builder', pkg.build.files.indexOf('ajustes_v52254_orcamentos_pages_patch.js') >= 0);
-ok('index carrega scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /ajustes_v52254_orcamentos_pages_patch\.js\?v=5\.22\.\d+/.test(html));
+ok('patch vai para o .exe dentro do app.bundle.js',
+   pkg.build.files.indexOf('app.bundle.js')>=0 &&
+   JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52254_orcamentos_pages_patch.js'));
+ok('index carrega scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52254_orcamentos_pages_patch.js'));
 ok('rodapé v5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
 
 // Teste de imunidade contra regressão de versão no DOM em tempo de execução

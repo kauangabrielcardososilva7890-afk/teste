@@ -1,12 +1,33 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-29  
+**Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a010fa-teste`  
+**Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
 **Última versão:** **v5.22.63**  
-**Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
+**Zip para baixar (sempre este, não gerar `.zip` novo):**
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>  
+APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## REGRAS FIXAS DA SESSÃO — ler sempre antes de começar
+
+1. **Em todo chat novo, abrir um pull request.** Trabalhar na branch fixa da
+   sessão e abrir o PR ao final do trabalho, sempre.
+2. **Foco é o sistema de PC.** É o que está sendo construído agora. O APK
+   (celular) **fica parado por um tempo** — primeiro o PC, depois o celular.
+   As alterações feitas no APK são apenas para **não dar problema nas próximas
+   atualizações** (manter o `mobile/www` coerente com o sistema); não são
+   evolução do app de celular.
+3. **Os PCs que vão rodar o sistema são fracos.** Toda mudança precisa
+   otimizar: menos arquivo lido ao abrir, menos código executado, menos
+   memória. Nada de trabalho duplicado.
+4. **Não quebrar nada.** A suíte (`npm test`) precisa terminar com 0 falhas
+   antes de qualquer entrega.
+5. **Baixar sempre pelo zip da branch no GitHub**, sem gerar arquivos `.zip`
+   novos no repositório.
 
 ---
 
@@ -43,8 +64,43 @@ O que mudou:
 - Novos `test_build_sync.js` e `test_ajustes_v52263.js`. Guia completo em
   **`BUILD_EXE.md`**.
 
+### Otimização para PC fraco (mesma versão)
+
+Auditoria do carregamento encontrou trabalho duplicado puro:
+
+- **15 patches eram carregados duas vezes** — estavam dentro do `app.bundle.js`
+  **e** também como tag `<script>` solta no `index.html`. Isso relia e
+  reexecutava **216 KB** a cada abertura.
+- **6 desses patches não tinham guarda contra execução dupla**: os de orçamento
+  (v5.22.55 a v5.22.62) registravam ouvintes `storage` e **52 `setTimeout` em
+  dobro**. Isso ajudava a produzir justamente o comportamento duplicado/loop
+  que essas versões vinham tentando corrigir.
+- O `npm run sync` agora remove essa duplicata sozinho. `index.html` carrega
+  **só o bundle**; `build.files` caiu de 28 para 13 entradas e o pacote de 32
+  para 17 arquivos.
+- **Cache de código V8 religado** (`bypassHeatCheck`). Estava `none` desde a
+  v5.22.48 como contorno do código preso em cache; com o bundle em ~2,9 MB isso
+  forçava recompilar tudo a cada abertura. A causa raiz agora é a impressão
+  digital, então dá para ligar sem risco.
+- `spellcheck: false` (menos memória) e **Chart.js (206 KB) saiu do `<head>`**
+  para o fim do `<body>`, liberando a primeira pintura da tela.
+
+### Verificação sem baixar o Electron
+
+O binário do Electron vem de `release-assets.githubusercontent.com`, bloqueado
+no ambiente de desenvolvimento. Solução: `npm install --ignore-scripts` instala
+só os pacotes JS, e o novo `npm run verify:files` usa o **matcher real do
+`electron-builder`** (`app-builder-lib`) para calcular a lista exata de
+arquivos que ele copiaria — conferência completa sem gerar o `.exe`.
+
+Suíte: **116 passaram, 0 falharam**.
+
 Adicionar uma atualização agora são 2 passos: criar o `_patch.js` e citá-lo no
 `bundle-manifest.json`. O resto é automático.
+
+**APK:** as mudanças no `mobile/sync-www.js` são só para o celular não quebrar
+nas próximas atualizações. O app de celular segue **parado**; a prioridade é o
+sistema de PC.
 
 ---
 

@@ -40,11 +40,65 @@ function acharPastaApp() {
 }
 
 const APP = acharPastaApp();
-if (!APP) {
-  console.error('\n✘ VERIFY_PACK: não encontrei a pasta empacotada em dist/.');
-  console.error('  (o electron-builder rodou? o build usa asar:false, então deve existir');
-  console.error('   dist/win-unpacked/resources/app)\n');
-  process.exit(1);
+
+// ── Modo simulação (--dry) ──────────────────────────────────────────────────
+// Usa o MESMO matcher do electron-builder (app-builder-lib) para calcular a
+// lista exata de arquivos que ele copiaria, sem precisar baixar o binário do
+// Electron. Serve para conferir o empacotamento em máquina/CI sem rede.
+if (process.argv.includes('--dry') || !APP) {
+  let FileMatcher;
+  try { ({ FileMatcher } = require('app-builder-lib/out/fileMatcher')); } catch (e) { FileMatcher = null; }
+
+  if (!FileMatcher) {
+    console.error('\n✘ VERIFY_PACK: não encontrei a pasta empacotada em dist/.');
+    console.error('  (o electron-builder rodou? o build usa asar:false, então deve existir');
+    console.error('   dist/win-unpacked/resources/app)');
+    console.error('\n  Para conferir sem empacotar, instale as dependências e rode:');
+    console.error('    npm install --ignore-scripts && node verify_pack.js --dry\n');
+    process.exit(1);
+  }
+
+  const matcher = new FileMatcher(process.cwd(), '/out', s => s, pkg.build.files);
+  const filtro = matcher.createFilter();
+  const IGNORAR = new Set(['node_modules', '.git', 'dist', 'mobile', 'e2e', 'cloudflare-worker']);
+  const copiados = [];
+  (function anda(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (IGNORAR.has(e.name)) continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) anda(full);
+      else if (filtro(full, fs.statSync(full))) copiados.push(path.relative(process.cwd(), full).split(path.sep).join('/'));
+    }
+  })(process.cwd());
+
+  const problemas = [];
+  const htmlSrc = fs.readFileSync('index.html', 'utf8');
+  const re = /(?:src|href)="\.\/([A-Za-z0-9_.\-/]+?)(?:\?[^"]*)?"/g;
+  let mm;
+  while ((mm = re.exec(htmlSrc)) !== null) {
+    if (copiados.indexOf(mm[1]) < 0) problemas.push(`index.html carrega "${mm[1]}", mas o electron-builder NÃO copiaria esse arquivo.`);
+  }
+  for (const f of pkg.build.files) {
+    if (f.includes('*')) continue;
+    if (copiados.indexOf(f) < 0) problemas.push(`build.files lista "${f}", mas ele não seria copiado.`);
+  }
+
+  const tam = copiados.reduce((s, f) => s + fs.statSync(f).size, 0);
+  console.log('');
+  console.log('══ SIMULAÇÃO DO EMPACOTAMENTO (matcher real do electron-builder) ══');
+  console.log(`  versão......: ${versao}`);
+  console.log(`  arquivos....: ${copiados.length}`);
+  console.log(`  tamanho.....: ${(tam / 1048576).toFixed(1)} MB (+ node_modules de produção)`);
+  console.log('═══════════════════════════════════════════════════════════════════');
+
+  if (problemas.length) {
+    console.error('\n✘ O instalador sairia INCOMPLETO:\n');
+    problemas.forEach(p => console.error('   • ' + p));
+    console.error('');
+    process.exit(1);
+  }
+  console.log('\n✔ Lista de empacotamento completa: nada do sistema ficaria de fora.\n');
+  process.exit(0);
 }
 
 const erros = [];

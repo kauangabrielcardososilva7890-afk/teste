@@ -11,7 +11,11 @@ const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const P=load(src).EXE_CACHE_V52248_PURE;
-ok('v8 cache desligado', main.indexOf("v8CacheOptions: 'none'")>=0);
+// v5.22.63: desligar o cache V8 foi um contorno; a causa (código antigo preso
+// no cache) passou a ser resolvida pela impressão digital do bundle. Com isso o
+// cache de código volta LIGADO, que é o que importa em PC fraco.
+ok('cache V8 ligado para abrir rápido', main.indexOf("v8CacheOptions: 'bypassHeatCheck'")>=0);
+ok('cache antigo não sobrevive a mudança de código', /prev\s*!==\s*APP_FINGERPRINT/.test(main) && main.indexOf('Code Cache')>=0);
 ok('apaga Code Cache na versão nova', main.indexOf('Code Cache')>=0 && main.indexOf('GPUCache')>=0);
 ok('loadFile sem query', main.indexOf("loadFile(path.join(__dirname, 'index.html'))")>=0);
 ok('asar continua off', pkg.build.asar===false);

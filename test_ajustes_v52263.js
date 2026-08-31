@@ -23,9 +23,13 @@ console.log('== v5.22.63 — .EXE COMPLETO ==');
 
 ok('versao', P.VERSAO === '5.22.63' && pkg.version === '5.22.63');
 ok('patch no bundle', manifest.includes('ajustes_v52263_exe_completo_patch.js'));
-ok('patch no index com cache-busting da versão',
-   html.indexOf('ajustes_v52263_exe_completo_patch.js?v='+pkg.version) >= 0);
-ok('patch vai para o .exe', pkg.build.files.includes('ajustes_v52263_exe_completo_patch.js'));
+ok('bundle carregado com cache-busting da versão',
+   html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
+ok('patch vai para o .exe dentro do bundle', pkg.build.files.includes('app.bundle.js'));
+ok('index.html não carrega script duplicado do bundle',
+   [...html.matchAll(/<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)/g)]
+     .map(m=>m[1]).filter(f=>f!=='app.bundle.js'&&!f.startsWith('assets/'))
+     .every(f=>!manifest.includes(f)));
 
 // ── 1. Lista de arquivos do .exe é gerada, não escrita à mão ────────────────
 ok('sync gera build.files', P.listaAutomatica === true && /pkg\.build\.files\s*=\s*filesEsperado/.test(sync));
@@ -60,5 +64,21 @@ ok('APK falha se sobrar referência quebrada', /o APK sairia com arquivos faltan
 // ── 6. Higiene ──────────────────────────────────────────────────────────────
 ok('bundle atualizado com as fontes', (cp.execFileSync(process.execPath,['build_bundle.js','--check'],{stdio:'pipe'}), true));
 ok('patch não mexe no APK', src.indexOf('mobile/') < 0);
+
+// ── 7. Otimização para PC fraco ─────────────────────────────────────────────
+ok('cache de código V8 ligado (abre mais rápido)',
+   main.indexOf("v8CacheOptions: 'bypassHeatCheck'") >= 0);
+ok('corretor ortográfico desligado (menos memória)', /spellcheck:\s*false/.test(main));
+const soltos = [...html.matchAll(/<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)/g)]
+  .map(m => m[1]).filter(f => f !== 'app.bundle.js' && !f.startsWith('assets/'));
+ok('zero script duplicado: nada é lido/executado 2x', soltos.length === 0);
+ok('sync remove duplicata do bundle automaticamente', /duplicado\(s\) do bundle removido/.test(sync));
+ok('Chart.js não bloqueia mais a primeira pintura',
+   html.indexOf('chart.umd.js') > html.indexOf('<div id="toast-container"'));
+ok('build.files enxuto', pkg.build.files.length <= 15);
+
+// ── 8. Verificação sem baixar o Electron ────────────────────────────────────
+ok('verify tem modo simulação com o matcher real', /--dry/.test(verify) && /app-builder-lib\/out\/fileMatcher/.test(verify));
+ok('atalho npm run verify:files', pkg.scripts['verify:files'] === 'node verify_pack.js --dry');
 
 console.log('\nRESULTADO: v5.22.63 passou!');

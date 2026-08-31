@@ -90,6 +90,25 @@ html = html.replace(
 
 if (html !== htmlOriginal) alteracoes.push('index.html (versão/cache-busting)');
 
+// ── Desduplicação: script que já está DENTRO do app.bundle.js não pode ser
+// carregado de novo como tag solta. Antes, 15 patches eram lidos e executados
+// DUAS VEZES a cada abertura (216 KB a mais de leitura/parse, 6 ouvintes e 52
+// setTimeout registrados em dobro) — peso puro em PC fraco, além de causar
+// efeito duplicado nos patches sem guarda.
+const antesDedup = html;
+const removidos = [];
+html = html.replace(
+  /[ \t]*<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)(?:\?[^"]*)?"[^>]*>\s*<\/script>\r?\n?/g,
+  (m, arquivo) => {
+    if (arquivo === 'app.bundle.js' || arquivo.startsWith('assets/vendor/')) return m;
+    if (manifest.includes(arquivo)) { removidos.push(arquivo); return ''; }
+    return m;
+  }
+);
+if (html !== antesDedup) {
+  alteracoes.push(`index.html: ${removidos.length} script(s) duplicado(s) do bundle removido(s)`);
+}
+
 // Recursos locais que o index.html realmente carrega.
 const refsHtml = [];
 const reRef = /(?:src|href)="\.\/([A-Za-z0-9_.\-/]+?)(?:\?[^"]*)?"/g;

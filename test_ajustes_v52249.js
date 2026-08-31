@@ -27,8 +27,10 @@ ok('faturar não imprime', /__vosFatSemPrint/.test(src));
 ok('apagar leitura devolve contador', /deleteLeituraContrato/.test(src) && /contadorPBAnterior/.test(src));
 ok('De/Até sempre visíveis', /garantirDatas/.test(src) && /type = 'date'/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52249_relatorio_patch.js'));
-ok('patch também entra sozinho no exe', pkg.build.files.indexOf('ajustes_v52249_relatorio_patch.js')>=0);
-ok('index carrega os scripts da aplicação', /app\.bundle\.js\?v=/.test(html) && /ajustes_v52249_relatorio_patch\.js\?v=/.test(html));
+ok('patch vai para o .exe dentro do app.bundle.js',
+   pkg.build.files.indexOf('app.bundle.js')>=0 &&
+   JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52249_relatorio_patch.js'));
+ok('index carrega os scripts da aplicação', /app\.bundle\.js\?v=/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52249_relatorio_patch.js'));
 ok('rodapé na versão 5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
 ok('APK quieto', src.indexOf('mobile/')<0);
 ok('sem nome pessoal novo', !/kauan/i.test(src.replace(/__KAUAN_REFINO_STATE__/g,'').replace(/kauangabrielcardososilva7890-afk/g,'')));

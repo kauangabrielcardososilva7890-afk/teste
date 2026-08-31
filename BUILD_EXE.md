@@ -77,8 +77,9 @@ Agora são **2 passos** em vez de 4:
 1. Criar o arquivo `ajustes_vXXXXX_algumacoisa_patch.js`.
 2. Adicionar o nome dele em `bundle-manifest.json`.
 
-Se o patch também precisar ser carregado solto (fora do bundle), acrescente a
-tag no fim do `index.html` — o `?v=` pode ser qualquer coisa, o sync corrige.
+**Não** adicione tag `<script>` no `index.html`: tudo que está no
+`bundle-manifest.json` já viaja dentro do `app.bundle.js`. Se adicionar mesmo
+assim, o `npm run sync` remove a duplicata sozinho.
 
 Depois:
 
@@ -92,6 +93,8 @@ O `npm run sync` faz sozinho:
 
 - carimba a versão do `package.json` no `index.html` (variável
   `DIGICOPY_APP_VERSION`, `<title>`, rodapé e **todos** os `?v=`);
+- **remove tags `<script>` de arquivos que já estão no bundle** (evita ler e
+  executar o mesmo código duas vezes);
 - reconstrói `build.files` a partir do que o `index.html` realmente carrega;
 - reconstrói `scripts.check` a partir do `bundle-manifest.json`;
 - **falha** se o `index.html` apontar para um arquivo que não existe.
@@ -110,8 +113,29 @@ O `npm run sync` faz sozinho:
 | `npm run sync:check` | só verifica; sai com erro se estiver dessincronizado |
 | `npm run bundle` | regenera o `app.bundle.js` |
 | `npm run check` | valida a sintaxe de todos os arquivos do bundle |
-| `npm run verify:exe` | roda o raio-X num `dist/` já gerado |
-|  `npm test` | suíte completa |
+| `npm run verify:exe` | raio-X num `dist/` já gerado |
+| `npm run verify:files` | **simula** o empacotamento sem gerar o `.exe` |
+| `npm test` | suíte completa (116) |
+
+### Conferir o empacotamento sem gerar o `.exe`
+
+`npm run verify:files` usa o **matcher real do `electron-builder`**
+(`app-builder-lib`) para calcular a lista exata de arquivos que ele copiaria —
+sem precisar baixar o binário do Electron:
+
+```
+══ SIMULAÇÃO DO EMPACOTAMENTO (matcher real do electron-builder) ══
+  versão......: 5.22.63
+  arquivos....: 17
+  tamanho.....: 3.8 MB (+ node_modules de produção)
+═══════════════════════════════════════════════════════════════════
+
+✔ Lista de empacotamento completa: nada do sistema ficaria de fora.
+```
+
+Precisa das dependências instaladas. Em rede restrita:
+`npm install --ignore-scripts` — baixa só os pacotes JS e pula o download do
+binário do Electron (que vem de `release-assets.githubusercontent.com`).
 
 ---
 
@@ -161,7 +185,38 @@ reempacotando com o mesmo número de versão.
 
 ---
 
-## 8. Arquivos desta correção
+## 8. Desempenho em PC fraco (v5.22.63)
+
+Os PCs que vão rodar o sistema são fracos. O que foi otimizado, sem mudar
+comportamento:
+
+| Item | Antes | Depois |
+|------|-------|--------|
+| Scripts lidos ao abrir | `app.bundle.js` + **15 duplicados** | só `app.bundle.js` |
+| Código relido/reexecutado | **216 KB** a cada abertura | 0 |
+| Ouvintes registrados em dobro | 6 `addEventListener` | 0 |
+| Agendamentos em dobro | 52 `setTimeout` | 0 |
+| Cache de código V8 | **desligado** (`none`) | ligado (`bypassHeatCheck`) |
+| Corretor ortográfico | ligado | desligado |
+| Chart.js (206 KB) | bloqueava o `<head>` | carrega no fim do `<body>` |
+| Arquivos no `.exe` | 32 | 17 |
+
+**Duplicação de scripts.** 15 patches estavam ao mesmo tempo dentro do
+`app.bundle.js` **e** como tag `<script>` solta no `index.html`. Eram lidos e
+executados **duas vezes** a cada abertura. Seis deles não tinham guarda contra
+execução dupla — os patches de orçamento (v5.22.55 a v5.22.62) registravam
+ouvintes `storage` e dezenas de `setTimeout` em dobro, o que ajudava a produzir
+justamente o comportamento duplicado/loop que essas versões tentavam corrigir.
+Agora o `npm run sync` remove a duplicata sozinho.
+
+**Cache de código V8.** Estava desligado desde a v5.22.48 para contornar código
+antigo preso no cache. Com o bundle em ~2,9 MB, isso obrigava o V8 a recompilar
+tudo a cada abertura — caro em máquina fraca. A causa raiz agora é tratada pela
+impressão digital (seção 6), então o cache de código voltou a ficar ligado.
+
+---
+
+## 9. Arquivos desta correção
 
 | Arquivo | Papel |
 |---------|-------|
@@ -170,5 +225,6 @@ reempacotando com o mesmo número de versão.
 | `main.js` | cache invalidado pela digital sha256 do bundle |
 | `mobile/sync-www.js` | APK copia tudo que o `index.html` carrega |
 | `ajustes_v52263_exe_completo_patch.js` | marcador de versão no runtime |
+| `verify_pack.js --dry` | simula o empacotamento sem baixar o Electron |
 | `test_build_sync.js` | trava regressões no empacotamento |
 | `test_ajustes_v52263.js` | teste da v5.22.63 |

@@ -18,7 +18,9 @@ ok('todo script solto existe e está no bundle ou em build.files',
    scriptsSoltos.every(f=>fs.existsSync(f)&&(manifest.includes(f)||pkg.build.files.includes(f))));
 const htmlRefs=[...html.matchAll(/(?:src|href)="\.\/([A-Za-z0-9_.\-/]+?)(?:\?[^"]*)?"/g)].map(m=>m[1]);
 const globAssets=f=>f.startsWith('assets/');
-ok('Electron inclui bundle e patches do runtime',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.includes('package.json')&&pkg.build.files.includes('ajustes_v52262_orcamento_uma_vez_loop_patch.js'));
+ok('Electron inclui bundle e essenciais',pkg.build.files.includes('app.bundle.js')&&pkg.build.files.includes('package.json')&&pkg.build.files.includes('index.html'));
+ok('patches recentes viajam dentro do bundle',['ajustes_v52262_orcamento_uma_vez_loop_patch.js','ajustes_v52263_exe_completo_patch.js'].every(f=>manifest.includes(f)));
+ok('index.html carrega SÓ o bundle (sem script duplicado)',scriptsSoltos.length===0);
 ok('TUDO que o index.html carrega vai para o .exe',htmlRefs.filter(f=>!globAssets(f)).every(f=>pkg.build.files.includes(f)));
 ok('build.files não leva lixo para o instalador',!pkg.build.files.some(f=>/^test_|\.zip$|^RELATORIO|^dist\//.test(f)));
 ok('build.files só aponta para arquivos que existem',pkg.build.files.every(f=>f.includes('*')||fs.existsSync(f)));

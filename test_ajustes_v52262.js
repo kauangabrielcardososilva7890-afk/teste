@@ -24,6 +24,6 @@ ok('sem varrer 2.5s', !/setInterval\(varrerRessuscitadas/.test(a61));
 ok('sem poll 20s', !/setInterval\(puxarAprovacoes, 20000\)/.test(a44));
 ok('nao redesenha tela', !/abrirTelaOrcamento/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52262_orcamento_uma_vez_loop_patch.js'));
-ok('index', new RegExp('ajustes_v52262_orcamento_uma_vez_loop_patch\\.js\\?v='+pkg.version.replace(/\./g,'\\.')).test(html));
+ok('index', JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52262_orcamento_uma_vez_loop_patch.js'));
 ok('APK quieto', src.indexOf('mobile/')<0);
 console.log('\nRESULTADO: v5.22.62 passou!');
