@@ -76,6 +76,35 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.66 — o log apontou o culpado: contextBridge congela o objeto
+
+O isolamento da 5.22.65 fez o serviço: em vez de dezenas de scripts sumirem
+calados, o `npm run diag` do usuário mostrou **exatamente 2 falhas de 187**:
+
+```
+ajustes_v52221_cert_nuvem_a1_patch.js  -> TypeError: Cannot assign to
+ajustes_v52228_a1_nuvem_lupa_ncm_patch.js   read only property 'assinar'
+```
+
+**Motivo.** O `preload.js` publicava as APIs com
+`contextBridge.exposeInMainWorld`, e o contextBridge **congela** tudo o que
+expõe. Os dois patches envelopam `nfeCertAPI.assinar` para injetar o
+certificado A1 da nuvem — no objeto congelado isso dá TypeError. No navegador
+nunca aparecia: lá não existe preload, o objeto é comum e aceita a troca.
+Mesma família do bug anterior — funciona no site, quebra no `.exe`.
+
+**Correção.** O preload agora entrega tudo dentro de uma ponte só,
+`__digicopyPontes`. O `ponte_electron_patch.js` (primeiro script do bundle)
+copia a ponte para os nomes de sempre — `firebirdAPI`, `fileAPI`,
+`caixaEscolarAPI`, `printAPI`, `backupAPI`, `nfeCertAPI` — como objetos
+normais, graváveis. Nada mais no sistema precisou mudar, e o problema morre
+para as seis APIs, não só para o `assinar`.
+
+O `test_ponte_electron.js` (26 casos) proíbe voltar a expor esses nomes
+direto pelo contextBridge.
+
+---
+
 ## v5.22.65 — CAUSA ENCONTRADA: um script quebrado derrubava o resto
 
 O usuário confirmou: `dist\win-unpacked\Sistema Digicopy.exe` (build recém

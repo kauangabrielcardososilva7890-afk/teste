@@ -1,4 +1,5 @@
 [
+  "ponte_electron_patch.js",
   "lz.js",
   "logo_data.js",
   "app.js",

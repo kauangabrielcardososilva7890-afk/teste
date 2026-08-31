@@ -24,7 +24,7 @@ const P = load(src).EXE_SCRIPT_ISOLADO_V52265_PURE;
 console.log('== v5.22.65 — SCRIPT ISOLADO ==');
 
 // ── 1. Versão ───────────────────────────────────────────────────────────────
-ok('versão', P.VERSAO === '5.22.65' && pkg.version === '5.22.65');
+ok('versão', P.VERSAO === '5.22.65' && /^5\.22\.\d+/.test(pkg.version));
 ok('patch no bundle', manifest.includes('ajustes_v52265_script_isolado_patch.js'));
 ok('bundle carregado com a versão', fs.readFileSync('index.html','utf8').indexOf('app.bundle.js?v='+pkg.version) >= 0);
 

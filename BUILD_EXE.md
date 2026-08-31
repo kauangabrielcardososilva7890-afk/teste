@@ -115,6 +115,24 @@ Se algo falhar:
 
 ---
 
+## 1e. Nunca exponha uma API direto pelo contextBridge
+
+O `contextBridge` **congela** o que expõe. Se um patch precisar envelopar um
+método (é o caso do `nfeCertAPI.assinar`, que recebe o A1 da nuvem), dá
+`Cannot assign to read only property` — e só no `.exe`, porque no navegador
+não existe preload.
+
+Por isso o `preload.js` publica **uma ponte só**, `__digicopyPontes`, e o
+`ponte_electron_patch.js` (primeiro script do bundle) copia dela os nomes de
+sempre: `firebirdAPI`, `fileAPI`, `caixaEscolarAPI`, `printAPI`, `backupAPI`,
+`nfeCertAPI`.
+
+Para adicionar uma API nova: coloque dentro de `pontes`, no `preload.js`. Ela
+aparece sozinha no `window`. Não use `exposeInMainWorld` com o nome final —
+o `test_ponte_electron.js` reprova.
+
+---
+
 ## 2. Como gerar o `.exe` agora
 
 ```bash

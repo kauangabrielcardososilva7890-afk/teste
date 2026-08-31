@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 187 | sha256: 5632f38f1fa44b65
+ * scripts: 188 | sha256: fb1d14c62fef0cf2
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -16,6 +16,79 @@
     }catch(e){}
   };
 })();
+
+/* ===== ponte_electron_patch.js ===== */
+try{
+// ============================================================
+// PONTE ELECTRON — primeiro script do bundle
+// ============================================================
+// O `preload.js` entrega tudo dentro de `window.__digicopyPontes`.
+// O contextBridge CONGELA o que expõe: quem tentasse fazer
+//   window.nfeCertAPI.assinar = ...
+// levava "Cannot assign to read only property" e o patch inteiro
+// morria. No navegador isso nunca aparecia (lá não existe preload,
+// os objetos são normais); só quebrava no .exe.
+//
+// Aqui a ponte vira uma CÓPIA normal, gravável, com os nomes de
+// sempre (firebirdAPI, fileAPI, caixaEscolarAPI, printAPI,
+// backupAPI, nfeCertAPI). Assim os patches podem envelopar os
+// métodos como sempre fizeram, e o .exe se comporta igual ao site.
+//
+// Este arquivo precisa ser o PRIMEIRO do bundle-manifest.json.
+(function () {
+  'use strict';
+
+  var API = (window.PONTE_ELECTRON_PURE = window.PONTE_ELECTRON_PURE || {});
+
+  // Cópia rasa e gravável de um objeto congelado pelo contextBridge.
+  API.copiaGravavel = function (origem) {
+    if (!origem || typeof origem !== 'object') return origem;
+    var copia = {};
+    for (var chave in origem) {
+      try { copia[chave] = origem[chave]; } catch (e) {}
+    }
+    return copia;
+  };
+
+  // Grava no window mesmo que o nome já exista como somente-leitura.
+  API.gravarGlobal = function (alvo, nome, valor) {
+    try {
+      alvo[nome] = valor;
+      if (alvo[nome] === valor) return true;
+    } catch (e) {}
+    try {
+      Object.defineProperty(alvo, nome, {
+        value: valor, writable: true, configurable: true, enumerable: true
+      });
+      return alvo[nome] === valor;
+    } catch (e) { return false; }
+  };
+
+  // Abre a ponte: devolve a lista de nomes publicados.
+  API.abrir = function (alvo, pontes) {
+    alvo = alvo || window;
+    pontes = pontes || alvo.__digicopyPontes;
+    var nomes = [];
+    if (!pontes || typeof pontes !== 'object') return nomes;
+    for (var nome in pontes) {
+      var copia = API.copiaGravavel(pontes[nome]);
+      if (API.gravarGlobal(alvo, nome, copia)) nomes.push(nome);
+    }
+    return nomes;
+  };
+
+  API.VERSAO = '5.22.66';
+
+  var publicados = API.abrir(window);
+  window.__DIGICOPY_PONTES_ABERTAS = publicados;
+
+  if (publicados.length) {
+    console.log('[DIGICOPY] ponte Electron aberta: ' + publicados.join(', '));
+  }
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ponte_electron_patch.js", e); }
+;
 
 /* ===== lz.js ===== */
 try{
@@ -45600,12 +45673,12 @@ if (typeof window !== 'undefined') {
 // Rodapé, cabeçalho e nome da janela seguem a versão real do index.html.
 function pintarVersao(){
   if (typeof document === 'undefined') return;
-  var v = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var rodape = document.getElementById('footer-version');
-  if (rodape && rodape.textContent !== 'v' + v) rodape.textContent = 'v' + v;
+  if (rodape && rodape.textContent !== 'v' + curV) rodape.textContent = 'v' + curV;
   var titulo = document.getElementById('app-title-version');
-  if (titulo && titulo.textContent !== 'Sistema Digicopy v' + v) titulo.textContent = 'Sistema Digicopy v' + v;
-  var certo = 'Sistema Digicopy v' + v;
+  if (titulo && titulo.textContent !== 'Sistema Digicopy v' + curV) titulo.textContent = 'Sistema Digicopy v' + curV;
+  var certo = 'Sistema Digicopy v' + curV;
   if (document.title !== certo) document.title = certo;
 }
 pintarVersao();
@@ -45641,11 +45714,11 @@ if (typeof console !== 'undefined' && console.log) {
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 187;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 188;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 187 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 188 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

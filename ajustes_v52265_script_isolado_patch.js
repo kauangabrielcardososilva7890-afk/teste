@@ -60,12 +60,12 @@ if (typeof window !== 'undefined') {
 // Rodapé, cabeçalho e nome da janela seguem a versão real do index.html.
 function pintarVersao(){
   if (typeof document === 'undefined') return;
-  var v = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var rodape = document.getElementById('footer-version');
-  if (rodape && rodape.textContent !== 'v' + v) rodape.textContent = 'v' + v;
+  if (rodape && rodape.textContent !== 'v' + curV) rodape.textContent = 'v' + curV;
   var titulo = document.getElementById('app-title-version');
-  if (titulo && titulo.textContent !== 'Sistema Digicopy v' + v) titulo.textContent = 'Sistema Digicopy v' + v;
-  var certo = 'Sistema Digicopy v' + v;
+  if (titulo && titulo.textContent !== 'Sistema Digicopy v' + curV) titulo.textContent = 'Sistema Digicopy v' + curV;
+  var certo = 'Sistema Digicopy v' + curV;
   if (document.title !== certo) document.title = certo;
 }
 pintarVersao();
