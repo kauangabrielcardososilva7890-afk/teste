@@ -50,6 +50,12 @@ ok('diagnóstico compara a digital do bundle', /lerSha/.test(diag) && /FONTE\.sh
 ok('diagnóstico procura a instalação do Windows', /LOCALAPPDATA/.test(diag) && /win-unpacked/.test(diag));
 ok('diagnóstico reconhece o sintoma do rodapé', /só o rodapé atualiza/.test(diag));
 ok('diagnóstico só lê, não escreve', !/writeFileSync|rmSync|unlinkSync|mkdirSync/.test(diag));
+ok('diagnóstico caça outras cópias instaladas', /OUTRA CÓPIA ENCONTRADA/.test(diag) && /function varrer/.test(diag));
+ok('diagnóstico mostra para onde os atalhos apontam', /alvoDoAtalho/.test(diag) && /Start Menu/.test(diag));
+ok('diagnóstico avisa quando o build está ok mas nada foi instalado',
+   /NÃO existe nenhum Sistema Digicopy instalado/.test(diag));
+ok('diagnóstico lembra de fechar o app antes de instalar', /FECHE o Sistema Digicopy/.test(diag));
+ok('diagnóstico não trava em pasta gigante', /visitados < \d+/.test(diag) && /profundidadeMax/.test(diag));
 
 // ── 5. Documentação ─────────────────────────────────────────────────────────
 ok('BUILD_EXE.md explica o número novo', guia.indexOf('5.22.64') >= 0 || /número novo/i.test(guia));

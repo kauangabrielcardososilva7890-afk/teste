@@ -98,6 +98,21 @@ O sintoma "só o rodapé atualiza" quer dizer `index.html` novo +
 `app.bundle.js` antigo — o rodapé vem do `index.html`, todo o resto vem do
 bundle. O diagnóstico detecta e nomeia exatamente esse caso.
 
+**Resultado do primeiro diagnóstico na máquina do usuário (31/08):** o build
+saiu **perfeito** — `verify_pack` com 111 arquivos e digital
+`cde94bef7c98d9f3` batendo com a fonte. Mas o diagnóstico **não encontrou
+nenhuma instalação** do Sistema Digicopy: só a pasta `dist`. Ou seja, o
+instalador novo não chegou a ser executado — o programa aberto no dia a dia
+não é esse build. O marcador de cache mostrava `5.22.63|ab6a39aaac59997c`,
+provando que o app já rodou o bundle da 5.22.63 em algum momento.
+
+O diagnóstico foi ampliado: agora **varre a máquina** atrás de qualquer cópia
+do sistema (`resources\app\app.bundle.js`) em `Programs`, `Program Files`,
+pasta do usuário e `C:\`, mostra **para onde os atalhos apontam** e avisa em
+letras claras quando o build está certo mas nada foi instalado. Também lembra
+de **fechar o programa antes de instalar** — com o app aberto o Windows não
+substitui os arquivos e a instalação fica velha.
+
 **Se acontecer de novo, nesta ordem:**
 
 1. `npm run diag` — e me mandar a saída

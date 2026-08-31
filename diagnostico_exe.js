@@ -80,6 +80,79 @@ const CANDIDATOS = [
   ['instalado (digicopy-erp)', path.join(LOCAL, 'Programs', 'digicopy-erp', 'resources', 'app')]
 ];
 
+// ── Caça-cópias: procura QUALQUER Sistema Digicopy instalado na máquina ─────
+// Se o programa que você abre não está em nenhuma pasta padrão, é aqui que ele
+// aparece. Varredura rasa e com limite, para não demorar.
+const IGNORAR_DIR = new Set(['node_modules', '.git', 'Temp', 'Windows', 'ProgramData',
+  'WindowsApps', '$Recycle.Bin', 'System Volume Information', 'Cache', 'Code Cache']);
+
+function varrer(raiz, profundidadeMax){
+  const achados = [];
+  const fila = [[raiz, 0]];
+  let visitados = 0;
+  while (fila.length && visitados < 6000) {
+    const [dir, nivel] = fila.shift();
+    visitados++;
+    let itens;
+    try { itens = fs.readdirSync(dir, { withFileTypes: true }); } catch(e){ continue; }
+    for (const it of itens) {
+      if (!it.isDirectory()) {
+        if (it.name === 'app.bundle.js' && /(\\|\/)resources(\\|\/)app$/i.test(dir)) achados.push(dir);
+        continue;
+      }
+      if (IGNORAR_DIR.has(it.name)) continue;
+      if (nivel < profundidadeMax) fila.push([path.join(dir, it.name), nivel + 1]);
+    }
+  }
+  return achados;
+}
+
+const RAIZES = [
+  [LOCAL ? path.join(LOCAL, 'Programs') : null, 4],
+  [PROG, 3],
+  [PROG86, 3],
+  [os.homedir(), 4],
+  ['C:\\', 2]
+].filter(r => r[0] && existe(r[0]));
+
+const encontradasExtra = [];
+for (const [raiz, prof] of RAIZES) {
+  for (const d of varrer(raiz, prof)) {
+    const jaListada = CANDIDATOS.some(([, p]) => path.resolve(p) === path.resolve(d));
+    if (!jaListada && !encontradasExtra.includes(d)) encontradasExtra.push(d);
+  }
+}
+for (const d of encontradasExtra) CANDIDATOS.push(['OUTRA CÓPIA ENCONTRADA', d]);
+
+// ── Para onde apontam os atalhos ────────────────────────────────────────────
+function alvoDoAtalho(lnk){
+  try {
+    const b = fs.readFileSync(lnk);
+    const txt = b.toString('latin1');
+    const m = txt.match(/[A-Za-z]:\\[^\0]{0,240}?\.exe/g);
+    if (!m) return null;
+    const digi = m.filter(x => /digicopy/i.test(x));
+    return (digi[0] || m[m.length - 1]) || null;
+  } catch(e){ return null; }
+}
+const PASTAS_ATALHO = [
+  path.join(os.homedir(), 'Desktop'),
+  path.join(os.homedir(), 'OneDrive', 'Desktop'),
+  path.join(os.homedir(), 'OneDrive', 'Área de Trabalho'),
+  path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+];
+const atalhos = [];
+for (const pasta of PASTAS_ATALHO) {
+  if (!existe(pasta)) continue;
+  let itens;
+  try { itens = fs.readdirSync(pasta); } catch(e){ continue; }
+  for (const nome of itens) {
+    if (!/\.lnk$/i.test(nome) || !/digicopy/i.test(nome)) continue;
+    const alvo = alvoDoAtalho(path.join(pasta, nome));
+    atalhos.push({ nome, pasta, alvo: alvo || '(não consegui ler)' });
+  }
+}
+
 let achou = 0;
 let problemas = [];
 
@@ -123,6 +196,19 @@ if (!achou) {
   console.log('');
 }
 
+// ── Atalhos: qual .exe você abre de verdade ─────────────────────────────────
+console.log('  ── atalhos do Sistema Digicopy');
+if (!atalhos.length) {
+  console.log('     nenhum atalho encontrado na Área de Trabalho nem no Menu Iniciar.');
+  console.log('     Se você abre o programa de outro jeito, me diga qual.');
+} else {
+  for (const a of atalhos) {
+    console.log('     ' + a.nome);
+    console.log('        aponta para: ' + a.alvo);
+  }
+}
+console.log('');
+
 // ── 3. Marcador de cache do Electron ────────────────────────────────────────
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
 for (const nome of ['Sistema Digicopy', 'digicopy-erp']) {
@@ -141,20 +227,41 @@ for (const nome of ['Sistema Digicopy', 'digicopy-erp']) {
 }
 
 // ── 4. Veredito ─────────────────────────────────────────────────────────────
+const temDist = existe(path.join('dist', 'win-unpacked', 'resources', 'app'));
+const temInstalacao = CANDIDATOS.some(([rotulo, dir]) => rotulo !== 'recém gerado (dist)' && existe(dir));
+
 console.log('═══════════════════════════════════════════════════════════════');
 if (problemas.length) {
   console.log('  PROBLEMA ENCONTRADO:');
   problemas.forEach(p => console.log('   • ' + p));
   console.log('');
   console.log('  O que fazer, nesta ordem:');
-  console.log('   1) npm run bundle          (regera o app.bundle.js)');
-  console.log('   2) npm run build:win       (build completo e verificado)');
+  console.log('   1) FECHE o Sistema Digicopy (se estiver aberto, o Windows não');
+  console.log('      consegue substituir os arquivos e a instalação fica velha)');
+  console.log('   2) npm run build:win');
   console.log('   3) DESINSTALE o Sistema Digicopy pelo Painel de Controle');
-  console.log('   4) instale o novo dist\\Sistema-Digicopy-Setup-'+FONTE.versao+'.exe');
+  console.log('   4) instale dist\\Sistema-Digicopy-Setup-' + FONTE.versao + '.exe');
+} else if (temDist && !temInstalacao) {
+  console.log('  O .exe GERADO está correto — bate 100% com o código-fonte.');
+  console.log('');
+  console.log('  Mas NÃO existe nenhum Sistema Digicopy instalado nesta máquina.');
+  console.log('  Ou seja: o instalador novo ainda não foi executado. O programa');
+  console.log('  que você abre no dia a dia não é este build.');
+  console.log('');
+  console.log('  Faça assim:');
+  console.log('   1) FECHE o Sistema Digicopy se estiver aberto');
+  console.log('   2) Painel de Controle > Programas > desinstale o Sistema Digicopy');
+  console.log('   3) abra a pasta  dist\\  e execute:');
+  console.log('        Sistema-Digicopy-Setup-' + FONTE.versao + '.exe');
+  console.log('      (confira o número ' + FONTE.versao + ' no nome do arquivo)');
+  console.log('   4) rode  npm run diag  de novo: tem que aparecer "instalado"');
+  console.log('');
+  console.log('  Para testar AGORA sem instalar, abra direto:');
+  console.log('        dist\\win-unpacked\\Sistema Digicopy.exe');
 } else if (achou) {
   console.log('  Tudo bate com o código-fonte. O que está instalado é o atual.');
 } else {
-  console.log('  Nada para comparar ainda.');
+  console.log('  Nada para comparar ainda. Rode:  npm run build:win');
 }
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('');
