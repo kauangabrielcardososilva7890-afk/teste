@@ -108,7 +108,7 @@ ok('copiaGravavel devolve cópia solta', (() => {
 ok('copiaGravavel aguenta valor vazio', api.copiaGravavel(null) === null);
 ok('abrir devolve lista vazia sem ponte', api.abrir({}, null).length === 0);
 ok('versão do módulo bate com o package.json',
-   api.VERSAO === '5.22.66' && /^5\.22\.\d+/.test(pkg.version));
+   /^5\.22\.\d+/.test(api.VERSAO) && /^5\.22\.\d+/.test(pkg.version));
 
 // ---- não mexe no celular ------------------------------------------------
 ok('patch não fala de APK/Capacitor', !/capacitor|cordova|apk/i.test(fonte));

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 188 | sha256: fb1d14c62fef0cf2
+ * scripts: 190 | sha256: e731fdc8a16c23ef
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -503,8 +503,20 @@ if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function fmtDate(s){if(!s) return '-'; const d=new Date(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
-function fmtDateTime(s){if(!s) return '-'; return new Date(s).toLocaleString('pt-BR')}
+// Datas: 'AAAA-MM-DD' sem hora precisa virar meia-noite LOCAL. Se cair no
+// new Date() direto, o navegador entende como UTC e no Brasil (UTC-3) a tela
+// mostra o dia ANTERIOR. Era o bug das datas erradas das vendas.
+function parseDataLocal(valor){
+  if(valor instanceof Date) return valor;
+  if(typeof valor !== 'string') return new Date(valor);
+  const so = valor.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(so);
+  if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  return new Date(so);
+}
+window.parseDataLocal = parseDataLocal;
+function fmtDate(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
+function fmtDateTime(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleString('pt-BR')}
 function onlyDigits(s){return (s||'').replace(/\D/g,'')}
 function initials(name){return (name||'').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('')||'??'}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
@@ -18239,12 +18251,69 @@ window.abrirLeituraContratoDetalhe=function(leituraId){
 };
 function buscaHay(p){ const e=eq(p.equipamentoId)||{}; return {impressora:[e.modelo,e.descricao].join(' '),serial:e.serie,patrimonio:e.patrimonio||p.patrimonio,departamento:[p.setor,p.localInstalacao].join(' '),localizacao:[p.setor,p.localInstalacao].join(' ')}; }
 function filtrarPendentes(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); const c=contratoLeitura(l); const campo=document.getElementById('lan-filtro-campo')?.value||'impressora'; const q=low(document.getElementById('lan-filtro-texto')?.value||''); return maquinasAtivas(c).filter(p=>medPendentes(p,l).length>0).filter(p=>!q||low(buscaHay(p)[campo]).includes(q)); }
-function optP(p){ const e=eq(p.equipamentoId)||{}; const ult=(db.leituras||[]).flatMap(l=>l.itens||[]).filter(it=>it.parqueId===p.id).slice(-1)[0]; const visita=(db.os||[]).filter(o=>o.parqueId===p.id||o.equipamentoId===p.equipamentoId).slice(-1)[0]; return `<option value="${p.id}">${esc(e.modelo||'Impressora')} | Serial ${esc(e.serie||'-')} | Patr ${esc(e.patrimonio||p.patrimonio||'-')} | ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'-')} | Últ. leitura ${ult?ult.atual:'-'} | Últ. visita ${visita?dataBR(visita.dataAbertura||visita.criadoEm):'-'}</option>`; }
-window.buscarImpressorasLancamento=function(leituraId){ const sel=document.getElementById('lan-prq'); if(!sel) return; const lista=filtrarPendentes(leituraId); sel.innerHTML='<option value="">Selecione</option>'+lista.map(optP).join(''); document.getElementById('lan-busca-info').innerText=`${lista.length} impressora(s) com medidor pendente`; if(lista.length===1){ sel.value=lista[0].id; atualizarTiposLancamento(); } };
+// v5.22.67 — a impressora deixou de ser caixa de escolha e virou LISTA.
+// Um clique só destaca; para escolher tem que dar DOIS cliques no nome.
+function linhaP(p){
+  const e=eq(p.equipamentoId)||{};
+  const ult=(db.leituras||[]).flatMap(l=>l.itens||[]).filter(it=>it.parqueId===p.id).slice(-1)[0];
+  const visita=(db.os||[]).filter(o=>o.parqueId===p.id||o.equipamentoId===p.equipamentoId).slice(-1)[0];
+  return `<div class="lan-lin" data-id="${esc(p.id)}" role="option" aria-selected="false" tabindex="0"
+    onclick="destacarImpressoraLancamento('${esc(p.id)}')"
+    ondblclick="escolherImpressoraLancamento('${esc(p.id)}')"
+    onkeydown="if(event.key==='Enter'){event.preventDefault();escolherImpressoraLancamento('${esc(p.id)}')}"
+    title="Dois cliques para escolher esta impressora"
+    style="padding:7px 10px;border-bottom:1px solid #e8ecf3;cursor:pointer">
+    <div style="font-weight:700">${esc(e.modelo||'Impressora')}</div>
+    <div style="font-size:11px;color:#64748b">Serial ${esc(e.serie||'-')} • Patr ${esc(e.patrimonio||p.patrimonio||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'-')}</div>
+    <div style="font-size:11px;color:#64748b">Últ. leitura ${ult?ult.atual:'-'} • Últ. visita ${visita?dataBR(visita.dataAbertura||visita.criadoEm):'-'}</div>
+  </div>`;
+}
+function listaImpressorasHtml(maquinas){
+  if(!maquinas.length) return '<div style="padding:14px;text-align:center;color:#94a3b8">Nenhuma impressora com medidor pendente.</div>';
+  return maquinas.map(linhaP).join('');
+}
+function pintarLinhaEscolhida(pid, escolhida){
+  document.querySelectorAll('#lan-prq-lista .lan-lin').forEach(function(el){
+    const desta = el.getAttribute('data-id')===pid;
+    el.setAttribute('aria-selected', desta && escolhida ? 'true' : 'false');
+    el.style.background = desta ? (escolhida ? '#dbeafe' : '#f1f5f9') : '';
+    el.style.boxShadow = desta && escolhida ? 'inset 3px 0 0 #0a1e8a' : '';
+  });
+}
+window.destacarImpressoraLancamento=function(pid){
+  pintarLinhaEscolhida(pid, document.getElementById('lan-prq')?.value===pid);
+};
+window.escolherImpressoraLancamento=function(pid){
+  const alvo=document.getElementById('lan-prq'); if(!alvo) return;
+  if(alvo.disabled) return;
+  alvo.value=pid;
+  pintarLinhaEscolhida(pid, true);
+  const p=prq(pid), e=p?(eq(p.equipamentoId)||{}):{};
+  const nome=document.getElementById('lan-prq-nome');
+  if(nome) nome.innerHTML=`Escolhida: <b>${esc(e.modelo||'Impressora')}</b> • Patr ${esc(e.patrimonio||(p&&p.patrimonio)||'-')}`;
+  if(typeof atualizarTiposLancamento==='function') atualizarTiposLancamento();
+  const cont=document.getElementById('lan-cont'); if(cont) cont.focus();
+};
+window.buscarImpressorasLancamento=function(leituraId){
+  const box=document.getElementById('lan-prq-lista'); if(!box) return;
+  const lista=filtrarPendentes(leituraId);
+  box.innerHTML=listaImpressorasHtml(lista);
+  const info=document.getElementById('lan-busca-info');
+  if(info) info.innerText=`${lista.length} impressora(s) com medidor pendente — dois cliques para escolher`;
+  const alvo=document.getElementById('lan-prq');
+  if(alvo && alvo.value && !lista.some(p=>p.id===alvo.value)){
+    alvo.value='';
+    const nome=document.getElementById('lan-prq-nome');
+    if(nome) nome.innerText='Nenhuma impressora escolhida ainda.';
+    if(typeof atualizarTiposLancamento==='function') atualizarTiposLancamento();
+  }
+  if(lista.length===1) escolherImpressoraLancamento(lista[0].id);
+  else if(alvo && alvo.value) pintarLinhaEscolhida(alvo.value, true);
+};
 window.abrirLancamentoContador=function(leituraId, idx=null){
   const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; if(leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); const edit=idx!=null && l.itens&&l.itens[idx]; const item=edit?l.itens[idx]:null; const c=contratoLeitura(l); const rem=maquinasRemanejadas(c);
-  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente</p></div><label class="font-bold text-slate-600">Impressora<select id="lan-prq" ${edit?'disabled':''} onchange="atualizarTiposLancamento()" class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Selecione</option>${(edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean).map(optP).join('')}</select></label><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" value="${edit?item.atual:''}" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
-  if(edit){ document.getElementById('lan-prq').value=item.parqueId; atualizarTiposLancamento(); document.getElementById('lan-med').value=item.medidor; }
+  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente — dois cliques para escolher</p></div><div class="font-bold text-slate-600">Impressora<input type="hidden" id="lan-prq" ${edit?'disabled':''} value="${edit?esc(item.parqueId):''}"><div id="lan-prq-lista" role="listbox" class="mt-1 w-full rounded-xl border bg-white" style="max-height:200px;overflow-y:auto">${listaImpressorasHtml((edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean))}</div><p id="lan-prq-nome" class="text-[11px] text-slate-500 mt-1">${edit?'Impressora do lançamento em edição.':'Nenhuma impressora escolhida ainda. Dê <b>dois cliques</b> no nome para escolher.'}</p></div><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" value="${edit?item.atual:''}" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
+  if(edit){ document.getElementById('lan-prq').value=item.parqueId; pintarLinhaEscolhida(item.parqueId, true); atualizarTiposLancamento(); document.getElementById('lan-med').value=item.medidor; }
 };
 window.atualizarTiposLancamento=function(){ const l=(db.leituras||[]).find(x=>x.id===document.getElementById('lan-leitura-id')?.value)||{itens:[]}; const idx=document.getElementById('lan-edit-idx')?.value; const p=prq(document.getElementById('lan-prq')?.value); const sel=document.getElementById('lan-med'); if(!sel) return; let meds=p?medPendentes(p,l):[]; if(idx!==''&&p){ const item=l.itens[Number(idx)]; const old=medAtivos(p).find(m=>m.key===item.medidor); if(old&&!meds.find(m=>m.key===old.key)) meds=[old,...meds]; } sel.innerHTML=p?meds.map(m=>`<option value="${m.key}">${esc(m.label)} — ${esc(m.modalidade)}</option>`).join('')||'<option value="">Todos os tipos ativos já lançados</option>':'<option value="">Escolha a impressora</option>'; };
 window.editarLancamentoLeitura=function(leituraId,idx){ abrirLancamentoContador(leituraId,idx); };
@@ -18700,17 +18769,46 @@ function atualizarNomeSistema(){
     }
   });
 }
+// Dia local de uma data qualquer. NÃO usar toISOString aqui: à noite ela já
+// devolve o dia seguinte em UTC e o sistema deslogaria sem motivo.
+function diaLocalDe(valor){
+  if(!valor) return '';
+  const d=new Date(valor);
+  if(isNaN(d)) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// Regra: pede login de novo quando VIRA O DIA. Só isso.
+//
+// Antes esta função rodava a cada 60s comparando com `loginDia`, um carimbo
+// gravado por um envelope no doLoginUser. Se qualquer outro patch trocasse o
+// doLoginUser sem encadear (e são 4 mexendo nele), o carimbo nunca era gravado
+// e a sessão caía DE MINUTO EM MINUTO. Agora o carimbo é só um atalho: a
+// verdade é o `loginAt`, que o próprio login grava na sessão. E sem nenhuma
+// das duas informações a sessão é adotada como de hoje, nunca derrubada.
 function exigirLoginDiario(){
   const s=sess(); if(!s) return false;
   const hoje=hojeLocal();
-  if(s.loginDia===hoje) return false;
+  const dia = s.loginDia || diaLocalDe(s.loginAt);
+  if(!dia){
+    s.loginDia=hoje;
+    try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+    return false;
+  }
+  if(dia===hoje){
+    if(s.loginDia!==hoje){
+      s.loginDia=hoje;
+      try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+    }
+    return false;
+  }
   try{ if(typeof clearSession==='function') clearSession(); else localStorage.removeItem('digicopy_session_v42_demo_apresentacao'); }catch(e){}
   toastMsg('Novo dia: faça login novamente para continuar.','info');
   if(typeof showLogin==='function') setTimeout(()=>showLogin(),50);
   return true;
 }
 
-window.SISTEMA_CLIENTES_LOJA_PURE={extrairRowsJson,mapClienteRow,importarClientesDeObjetos,proximoCodigoCliente,salvarLoja,hojeLocal};
+window.SISTEMA_CLIENTES_LOJA_PURE={extrairRowsJson,mapClienteRow,importarClientesDeObjetos,proximoCodigoCliente,salvarLoja,hojeLocal,diaLocalDe,exigirLoginDiario};
 
 if(typeof document==='undefined') return;
 
@@ -28290,20 +28388,6 @@ function ehUsuarioDemoAntigo(u, demoLogins, demoIds){
   return (demoLogins||[]).includes(l) && (!u.criadoPor || u.criadoPor==='sistema');
 }
 
-// Backup diário: já rodou se a data salva é o mesmo dia (hora local).
-function jaRodouHoje(ultimaISO, agora){
-  if(!ultimaISO) return false;
-  const a = new Date(ultimaISO), b = (agora instanceof Date) ? agora : new Date(agora||Date.now());
-  if(isNaN(a) || isNaN(b)) return false;
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-}
-
-function nomeBackupDiario(d){
-  const dt = (d instanceof Date) ? d : new Date(d||Date.now());
-  const p2 = n => String(n).padStart(2,'0');
-  return 'digicopy-backup-'+dt.getFullYear()+'-'+p2(dt.getMonth()+1)+'-'+p2(dt.getDate())+'.json';
-}
-
 // JSON do backup SEM o campo interno de sincronização (_rt) — igual exportBackup.
 function jsonBackupLimpo(db){
   const o=JSON.parse(JSON.stringify(db, (k,v)=>k==='_rt'?undefined:v));
@@ -28311,7 +28395,7 @@ function jsonBackupLimpo(db){
   return JSON.stringify(o, null, 2);
 }
 
-window.AJUSTES_V52024_PURE = { ehUsuarioDemoAntigo, jaRodouHoje, nomeBackupDiario, jsonBackupLimpo };
+window.AJUSTES_V52024_PURE = { ehUsuarioDemoAntigo, jsonBackupLimpo };
 
 if(typeof document === 'undefined') return; // modo teste (node)
 
@@ -28342,51 +28426,13 @@ if(typeof window.renderFinanceiro === 'function' && !window.renderFinanceiro.__v
   wrapF.__v52024 = true; window.renderFinanceiro = wrapF;
 }
 
-/* ---------------- 2. Backup automático 1x ao dia ---------------- */
-var LS_BKP = 'digicopy_backup_auto_v1';
-async function rodarBackupDiario(){
-  try{
-    if(typeof db === 'undefined') return;
-    if(typeof getSession === 'function' && !getSession()) return; // só depois de logado
-    let ultima = null;
-    try{ ultima = localStorage.getItem(LS_BKP); }catch(e){}
-    if(jaRodouHoje(ultima, new Date())) return;
-    const nome = nomeBackupDiario(new Date());
-    const json = jsonBackupLimpo(db);
-    let ok = false, onde = '';
-    if(window.backupAPI && typeof window.backupAPI.saveDaily === 'function'){
-      // Programinha (.exe): salva direto em %APPDATA%\digicopy-erp\backups — sem janela, sem clique.
-      try{
-        const r = await window.backupAPI.saveDaily(nome, json);
-        ok = !!(r && r.ok); onde = r && (r.dir || r.path) || 'pasta de backups do programa';
-      }catch(e){ ok = false; }
-    }
-    if(!ok){
-      // Navegador (ou .exe antigo sem a ponte): baixa o arquivo (cai em Downloads).
-      try{
-        const blob = new Blob([json], {type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = nome; a.click();
-        setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 4000);
-        ok = true; onde = 'Downloads';
-      }catch(e){ ok = false; }
-    }
-    if(ok){
-      try{ localStorage.setItem(LS_BKP, new Date().toISOString()); }catch(e){}
-      if(typeof toast === 'function') toast('Backup diário salvo'+(onde?(' em '+onde):''), 'success');
-      console.log('[DIGICOPY] backup diário salvo:', nome, onde);
-    }
-  }catch(e){ /* nunca atrapalha o uso */ }
-}
-function agendarBackupDiario(){
-  // dispara ~30s depois que logar/abrir e re-avalia de tempos em tempos (virada de dia com o app aberto)
-  setTimeout(rodarBackupDiario, 30*1000);
-  setInterval(rodarBackupDiario, 2*60*60*1000);
-  document.addEventListener('visibilitychange', function(){ if(!document.hidden) rodarBackupDiario(); });
-}
-if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', agendarBackupDiario); } else { agendarBackupDiario(); }
+/* -------- 2. Backup: SÓ no botão -------------------------------------
+   O backup automático diário foi removido a pedido do usuário (v5.22.67).
+   A cópia de segurança agora sai apenas quando alguém clica em "Backup",
+   que chama o exportBackup logo acima. Nada roda sozinho, nada de arquivo
+   aparecendo em Downloads sem ninguém pedir.                            */
 
-console.log('[DIGICOPY] ajustes_v52024_patch.js carregado — sem filtro de tipo no financeiro + backup diário automático');
+console.log('[DIGICOPY] ajustes_v52024_patch.js carregado — sem filtro de tipo no financeiro, backup só pelo botão');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52024_patch.js", e); }
@@ -36616,6 +36662,7 @@ try{
 var FILTROS = [
   ['todos','Todos'],
   ['nome','Nome'],
+  ['cidade','Cidade'],
   ['equipamento','Equipamento'],
   ['patrimonio','Patrimônio'],
   ['serial','Serial'],
@@ -36660,6 +36707,12 @@ function eqDe(p){
 function clienteDe(c){
   if(!c || typeof db==='undefined') return {};
   return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{};
+}
+// Cidade do CLIENTE do contrato. Cada cadastro guardou com um nome
+// diferente ao longo do tempo, então aceita todos.
+function cidadeDe(c){
+  var cl=clienteDe(c);
+  return txt(cl.cidade || cl.municipio || cl.cidadeNome || (cl.endereco && cl.endereco.cidade) || '');
 }
 function chamadosAbertos(c){
   if(!c || typeof db==='undefined') return 0;
@@ -36706,6 +36759,7 @@ function filtraContratos(list, campo, q){
     var cl=clienteDe(c);
     var maqs=maquinas(c);
     if(campo==='nome') return up(cl.nome).indexOf(termo)>=0 || up(cl.fantasia).indexOf(termo)>=0;
+    if(campo==='cidade') return up(cidadeDe(c)).indexOf(termo)>=0;
     if(campo==='equipamento') return maqs.some(function(p){ return up(eqDe(p).modelo).indexOf(termo)>=0; });
     if(campo==='patrimonio') return maqs.some(function(p){ return up(eqDe(p).patrimonio||p.patrimonio).indexOf(termo)>=0; });
     if(campo==='serial') return maqs.some(function(p){ return up(eqDe(p).serie).indexOf(termo)>=0; });
@@ -36748,7 +36802,7 @@ function filtraContratos(list, campo, q){
   });
 }
 
-window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContratos, codigoNorm: codigoNorm };
+window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContratos, codigoNorm: codigoNorm, cidadeDe: cidadeDe };
 
 if(typeof document==='undefined') return;
 
@@ -38129,6 +38183,9 @@ try{
 // v5.22.39 — Imprimir venda: escolhe Vendas ou OS, depois 1 ou 2 vias
 // • Venda: sem aviso EPSON. 2 vias = duas meias folhas (uma folha se couber)
 // • OS: aviso EPSON sempre. 2 vias = duas folhas separadas
+// • v5.22.67: o aviso não pode empurrar a OS para uma segunda folha. Antes de
+//   imprimir, se a folha passou do tamanho do A4, a página inteira encolhe o
+//   necessário para caber em UMA folha só.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -38149,8 +38206,37 @@ function fatiarPagina(html){
 function avisoEpsonHtml(){
   var t=(window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.AVISO_EPSON) ||
     'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
-  return '<div class="aviso-epson" style="margin:3mm 0 0;padding:2.5mm 3mm;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:9.5px;line-height:1.35;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'+
+  return '<div class="aviso-epson" style="margin:2.5mm 0 0;padding:2mm 2.5mm;page-break-inside:avoid;break-inside:avoid;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:8.8px;line-height:1.3;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'+
     String(t).replace(/</g,'&lt;')+'</div>';
+}
+
+// Encolhe a folha só quando ela passa do A4. Se já cabe, não mexe em nada.
+function fatorParaCaber(alturaConteudo, alturaFolha, minimo){
+  var min = minimo == null ? 0.7 : minimo;
+  if (!alturaConteudo || !alturaFolha || alturaConteudo <= alturaFolha) return 1;
+  var k = alturaFolha / alturaConteudo;
+  return k < min ? min : Math.floor(k * 100) / 100;
+}
+
+var SCRIPT_UMA_FOLHA =
+  '<script>(function(){try{' +
+  'var régua=document.createElement("div");régua.style.cssText="position:absolute;visibility:hidden;height:297mm";' +
+  'document.body.appendChild(régua);var folha=régua.offsetHeight;régua.remove();' +
+  'if(!folha)return;' +
+  'var pgs=document.querySelectorAll(".pagina.inteira");' +
+  'for(var i=0;i<pgs.length;i++){var pg=pgs[i];' +
+  'var alt=pg.getBoundingClientRect().height;' +
+  'if(alt<=folha)continue;' +
+  'var k=folha/alt;if(k<0.7)k=0.7;k=Math.floor(k*100)/100;' +
+  'pg.style.zoom=k;' +
+  'for(var t=0;t<8&&pg.getBoundingClientRect().height>folha&&k>0.7;t++){k=Math.round((k-0.01)*100)/100;pg.style.zoom=k;}' +
+  '}}catch(e){}})();<\/script>';
+
+function injetarUmaFolha(html){
+  var s=String(html||'');
+  if(s.indexOf('régua')>=0) return s;   // já tem o ajuste, não repete
+  if(s.indexOf('</body>')>=0) return s.replace('</body>', SCRIPT_UMA_FOLHA+'</body>');
+  return s+SCRIPT_UMA_FOLHA;
 }
 
 function aplicarTipo(html, tipo){
@@ -38166,7 +38252,7 @@ function aplicarTipo(html, tipo){
     if(s.indexOf('<p class="audit">')>=0) s=s.replace('<p class="audit">', avisoEpsonHtml()+'<p class="audit">');
     else s=s.replace('</div>\n  <div class="corte', avisoEpsonHtml()+'</div>\n  <div class="corte');
   }
-  return s;
+  return injetarUmaFolha(s);
 }
 
 function montarVias(html, tipo, vias){
@@ -38192,7 +38278,9 @@ function montarVias(html, tipo, vias){
 window.V52239_PRINT_PURE = {
   fatiarPagina: fatiarPagina,
   aplicarTipo: aplicarTipo,
-  montarVias: montarVias
+  montarVias: montarVias,
+  fatorParaCaber: fatorParaCaber,
+  injetarUmaFolha: injetarUmaFolha
 };
 
 if(typeof document==='undefined') return;
@@ -45710,15 +45798,282 @@ if (typeof console !== 'undefined' && console.log) {
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
 ;
 
+/* ===== menus_tela_pequena_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// MENUS EM TELA PEQUENA (v5.22.67)
+//
+// Em monitores baixos os menus suspensos passavam da borda e a última opção
+// ficava inalcançável. Agora, SÓ quando não cabe, o menu ganha rolagem e é
+// puxado para dentro da tela. Se cabe, nada muda — nenhuma barra aparece.
+//
+// Vale para os menus da faixa azul (.module-menu), sugestões (.neo-suggest)
+// e qualquer lista marcada com data-menu-flutuante.
+// ═══════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  var FOLGA = 12;      // respiro até a borda da janela
+  var MIN_ALTURA = 140; // abaixo disso rolar não adianta, é melhor deixar aberto
+
+  // Cálculo puro: dado o retângulo do menu e o tamanho da janela, devolve o
+  // que precisa mudar. `null` = cabe, não mexe em nada.
+  function ajusteNecessario(rect, janela, folga, minAltura) {
+    folga = folga == null ? FOLGA : folga;
+    minAltura = minAltura == null ? MIN_ALTURA : minAltura;
+    var out = { alturaMax: 0, deslocarX: 0, precisa: false };
+
+    var sobraBaixo = janela.altura - rect.top - folga;
+    if (rect.altura > sobraBaixo) {
+      out.alturaMax = Math.max(minAltura, Math.round(sobraBaixo));
+      out.precisa = true;
+    }
+
+    var passouDireita = rect.left + rect.largura - (janela.largura - folga);
+    if (passouDireita > 0) {
+      out.deslocarX = -Math.round(Math.min(passouDireita, Math.max(0, rect.left - folga)));
+      out.precisa = true;
+    }
+
+    return out.precisa ? out : null;
+  }
+
+  window.MENUS_TELA_PEQUENA_PURE = {
+    ajusteNecessario: ajusteNecessario,
+    FOLGA: FOLGA,
+    MIN_ALTURA: MIN_ALTURA,
+    VERSAO: '5.22.67'
+  };
+
+  if (typeof document === 'undefined') return;
+
+  var SELETOR = '.module-menu, .neo-suggest, [data-menu-flutuante]';
+
+  function visivel(el) {
+    if (!el || !el.getBoundingClientRect) return false;
+    var r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  }
+
+  function limpar(el) {
+    if (el.getAttribute('data-menu-ajustado') !== '1') return;
+    el.style.maxHeight = '';
+    el.style.overflowY = '';
+    el.style.overscrollBehavior = '';
+    el.style.transform = el.getAttribute('data-menu-transform-anterior') || '';
+    el.removeAttribute('data-menu-transform-anterior');
+    el.removeAttribute('data-menu-ajustado');
+  }
+
+  function ajustar(el) {
+    if (!visivel(el)) { limpar(el); return; }
+
+    // mede sem o ajuste anterior, senão o menu encolhe a cada abertura
+    limpar(el);
+    var r = el.getBoundingClientRect();
+    var plano = ajusteNecessario(
+      { top: r.top, left: r.left, largura: r.width, altura: r.height },
+      { largura: window.innerWidth, altura: window.innerHeight }
+    );
+    if (!plano) return;
+
+    if (plano.alturaMax) {
+      el.style.maxHeight = plano.alturaMax + 'px';
+      el.style.overflowY = 'auto';
+      el.style.overscrollBehavior = 'contain';
+    }
+    if (plano.deslocarX) {
+      el.setAttribute('data-menu-transform-anterior', el.style.transform || '');
+      var base = el.style.transform ? el.style.transform + ' ' : '';
+      el.style.transform = base + 'translateX(' + plano.deslocarX + 'px)';
+    }
+    el.setAttribute('data-menu-ajustado', '1');
+  }
+
+  var agendado = false;
+  function varrer() {
+    if (agendado) return;
+    agendado = true;
+    requestAnimationFrame(function () {
+      agendado = false;
+      try {
+        var menus = document.querySelectorAll(SELETOR);
+        for (var i = 0; i < menus.length; i++) ajustar(menus[i]);
+      } catch (e) {}
+    });
+  }
+
+  // dispara nos momentos em que um menu pode abrir ou mudar de tamanho
+  document.addEventListener('click', varrer, true);
+  document.addEventListener('mouseover', function (ev) {
+    if (ev.target && ev.target.closest && ev.target.closest('.module, .modern-topnav')) varrer();
+  }, true);
+  document.addEventListener('focusin', varrer, true);
+  document.addEventListener('keyup', varrer, true);
+  window.addEventListener('resize', varrer);
+  setTimeout(varrer, 800);
+
+  console.log('[DIGICOPY] menus se ajustam a telas pequenas');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menus_tela_pequena_patch.js", e); }
+;
+
+/* ===== vendas_financeiro_pendente_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// VENDA SALVA TAMBÉM APARECE NO FINANCEIRO (v5.22.67)
+//
+// Até aqui só a venda FATURADA virava título em contas a receber. A venda
+// apenas salva (aguardando faturamento) não gerava nada, então sumia do
+// financeiro — era o "algumas vendas não estão indo pro financeiro".
+//
+// Agora toda venda em aberto ganha um título de acompanhamento, marcado como
+// `aguardandoFaturamento`. Quando a venda é faturada de verdade, o próprio
+// faturamento apaga os títulos abertos dela e cria os definitivos (à vista ou
+// as parcelas), então não existe risco de contar duas vezes.
+//
+// Venda cancelada, excluída ou já faturada NÃO entra aqui.
+// ═══════════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  var MARCA = 'aguardandoFaturamento';
+
+  function texto(v) { return String(v == null ? '' : v).trim(); }
+
+  function vendaEmAberto(v) {
+    if (!v || !v.id) return false;
+    var st = texto(v.status).toLowerCase();
+    if (!st) return true;                       // sem status = ainda em aberto
+    if (st.indexOf('fatur') === 0) return false; // faturado / faturada
+    if (/cancel|exclu|estorn|devolv/.test(st)) return false;
+    return true;
+  }
+
+  // Quais vendas em aberto ainda não têm NENHUM título no financeiro.
+  function vendasSemTitulo(vendas, contasReceber) {
+    var comTitulo = Object.create(null);
+    (contasReceber || []).forEach(function (c) {
+      if (c && c.vendaId) comTitulo[c.vendaId] = true;
+    });
+    return (vendas || []).filter(function (v) {
+      return vendaEmAberto(v) && !comTitulo[v.id];
+    });
+  }
+
+  // Títulos de acompanhamento que perderam a venda (apagada ou já faturada).
+  function titulosOrfaos(contasReceber, vendas) {
+    var porId = Object.create(null);
+    (vendas || []).forEach(function (v) { if (v && v.id) porId[v.id] = v; });
+    return (contasReceber || []).filter(function (c) {
+      if (!c || !c[MARCA] || !c.vendaId) return false;
+      var v = porId[c.vendaId];
+      return !v || !vendaEmAberto(v);
+    });
+  }
+
+  function tituloDaVenda(v, sess, novoId) {
+    return {
+      id: novoId,
+      empresaId: (v && v.empresaId) || (sess && sess.empresaId) || '',
+      origem: 'venda',
+      clienteId: v && v.clienteId,
+      descricao: 'Venda ' + texto(v && v.numero) + ' • aguardando faturamento',
+      valor: Number((v && v.total) || 0),
+      vencimento: (v && (v.data || v.criadoEm)) || new Date().toISOString(),
+      pagamentoData: null,
+      status: 'aberto',
+      contratoId: null,
+      leituraId: null,
+      vendaId: v && v.id,
+      aguardandoFaturamento: true,
+      criadoPor: (v && v.criadoPor) || (sess && sess.usuarioId) || '',
+      criadoPorNome: (v && v.criadoPorNome) || (sess && sess.usuarioNome) || ''
+    };
+  }
+
+  window.VENDAS_FINANCEIRO_PENDENTE_PURE = {
+    vendaEmAberto: vendaEmAberto,
+    vendasSemTitulo: vendasSemTitulo,
+    titulosOrfaos: titulosOrfaos,
+    tituloDaVenda: tituloDaVenda,
+    MARCA: MARCA,
+    VERSAO: '5.22.67'
+  };
+
+  if (typeof document === 'undefined') return;
+
+  function novoId() {
+    return typeof uid === 'function' ? uid('cr') : 'cr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  }
+
+  // Assinatura barata: só refaz a conta quando algo realmente mudou.
+  // Os PCs da loja são fracos, isto roda a cada abertura do financeiro.
+  var ultimaAssinatura = '';
+
+  function sincronizar() {
+    if (typeof db === 'undefined' || !db) return 0;
+    var sess = typeof getSession === 'function' ? getSession() : null;
+    if (!sess) return 0;
+
+    var vendas = db.vendas || [];
+    var crs = db.contasReceber || (db.contasReceber = []);
+    var assinatura = vendas.length + ':' + crs.length;
+    if (assinatura === ultimaAssinatura) return 0;
+
+    var faltando = vendasSemTitulo(vendas, crs);
+    var orfaos = titulosOrfaos(crs, vendas);
+    if (!faltando.length && !orfaos.length) { ultimaAssinatura = assinatura; return 0; }
+
+    if (orfaos.length) {
+      var fora = Object.create(null);
+      orfaos.forEach(function (c) { fora[c.id] = true; });
+      db.contasReceber = crs.filter(function (c) { return !fora[c.id]; });
+      crs = db.contasReceber;
+    }
+    faltando.forEach(function (v) { crs.push(tituloDaVenda(v, sess, novoId())); });
+
+    ultimaAssinatura = vendas.length + ':' + crs.length;
+    try { if (typeof saveDB === 'function') saveDB(); } catch (e) {}
+    return faltando.length + orfaos.length;
+  }
+
+  window.sincronizarVendasNoFinanceiro = sincronizar;
+
+  function envelopar(nome, marca) {
+    var velho = window[nome];
+    if (typeof velho !== 'function' || velho[marca]) return;
+    var novo = function () {
+      try { sincronizar(); } catch (e) {}
+      return velho.apply(this, arguments);
+    };
+    novo[marca] = true;
+    window[nome] = novo;
+  }
+
+  envelopar('renderFinanceiro', '__v52267vendaPend');
+  envelopar('renderVendas', '__v52267vendaPend');
+
+  setTimeout(function () { try { sincronizar(); } catch (e) {} }, 1500);
+
+  console.log('[DIGICOPY] venda salva também aparece no financeiro');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_financeiro_pendente_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 188;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 190;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 188 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 190 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

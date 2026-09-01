@@ -68,12 +68,69 @@ window.abrirLeituraContratoDetalhe=function(leituraId){
 };
 function buscaHay(p){ const e=eq(p.equipamentoId)||{}; return {impressora:[e.modelo,e.descricao].join(' '),serial:e.serie,patrimonio:e.patrimonio||p.patrimonio,departamento:[p.setor,p.localInstalacao].join(' '),localizacao:[p.setor,p.localInstalacao].join(' ')}; }
 function filtrarPendentes(leituraId){ const l=(db.leituras||[]).find(x=>x.id===leituraId); const c=contratoLeitura(l); const campo=document.getElementById('lan-filtro-campo')?.value||'impressora'; const q=low(document.getElementById('lan-filtro-texto')?.value||''); return maquinasAtivas(c).filter(p=>medPendentes(p,l).length>0).filter(p=>!q||low(buscaHay(p)[campo]).includes(q)); }
-function optP(p){ const e=eq(p.equipamentoId)||{}; const ult=(db.leituras||[]).flatMap(l=>l.itens||[]).filter(it=>it.parqueId===p.id).slice(-1)[0]; const visita=(db.os||[]).filter(o=>o.parqueId===p.id||o.equipamentoId===p.equipamentoId).slice(-1)[0]; return `<option value="${p.id}">${esc(e.modelo||'Impressora')} | Serial ${esc(e.serie||'-')} | Patr ${esc(e.patrimonio||p.patrimonio||'-')} | ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'-')} | Últ. leitura ${ult?ult.atual:'-'} | Últ. visita ${visita?dataBR(visita.dataAbertura||visita.criadoEm):'-'}</option>`; }
-window.buscarImpressorasLancamento=function(leituraId){ const sel=document.getElementById('lan-prq'); if(!sel) return; const lista=filtrarPendentes(leituraId); sel.innerHTML='<option value="">Selecione</option>'+lista.map(optP).join(''); document.getElementById('lan-busca-info').innerText=`${lista.length} impressora(s) com medidor pendente`; if(lista.length===1){ sel.value=lista[0].id; atualizarTiposLancamento(); } };
+// v5.22.67 — a impressora deixou de ser caixa de escolha e virou LISTA.
+// Um clique só destaca; para escolher tem que dar DOIS cliques no nome.
+function linhaP(p){
+  const e=eq(p.equipamentoId)||{};
+  const ult=(db.leituras||[]).flatMap(l=>l.itens||[]).filter(it=>it.parqueId===p.id).slice(-1)[0];
+  const visita=(db.os||[]).filter(o=>o.parqueId===p.id||o.equipamentoId===p.equipamentoId).slice(-1)[0];
+  return `<div class="lan-lin" data-id="${esc(p.id)}" role="option" aria-selected="false" tabindex="0"
+    onclick="destacarImpressoraLancamento('${esc(p.id)}')"
+    ondblclick="escolherImpressoraLancamento('${esc(p.id)}')"
+    onkeydown="if(event.key==='Enter'){event.preventDefault();escolherImpressoraLancamento('${esc(p.id)}')}"
+    title="Dois cliques para escolher esta impressora"
+    style="padding:7px 10px;border-bottom:1px solid #e8ecf3;cursor:pointer">
+    <div style="font-weight:700">${esc(e.modelo||'Impressora')}</div>
+    <div style="font-size:11px;color:#64748b">Serial ${esc(e.serie||'-')} • Patr ${esc(e.patrimonio||p.patrimonio||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'-')}</div>
+    <div style="font-size:11px;color:#64748b">Últ. leitura ${ult?ult.atual:'-'} • Últ. visita ${visita?dataBR(visita.dataAbertura||visita.criadoEm):'-'}</div>
+  </div>`;
+}
+function listaImpressorasHtml(maquinas){
+  if(!maquinas.length) return '<div style="padding:14px;text-align:center;color:#94a3b8">Nenhuma impressora com medidor pendente.</div>';
+  return maquinas.map(linhaP).join('');
+}
+function pintarLinhaEscolhida(pid, escolhida){
+  document.querySelectorAll('#lan-prq-lista .lan-lin').forEach(function(el){
+    const desta = el.getAttribute('data-id')===pid;
+    el.setAttribute('aria-selected', desta && escolhida ? 'true' : 'false');
+    el.style.background = desta ? (escolhida ? '#dbeafe' : '#f1f5f9') : '';
+    el.style.boxShadow = desta && escolhida ? 'inset 3px 0 0 #0a1e8a' : '';
+  });
+}
+window.destacarImpressoraLancamento=function(pid){
+  pintarLinhaEscolhida(pid, document.getElementById('lan-prq')?.value===pid);
+};
+window.escolherImpressoraLancamento=function(pid){
+  const alvo=document.getElementById('lan-prq'); if(!alvo) return;
+  if(alvo.disabled) return;
+  alvo.value=pid;
+  pintarLinhaEscolhida(pid, true);
+  const p=prq(pid), e=p?(eq(p.equipamentoId)||{}):{};
+  const nome=document.getElementById('lan-prq-nome');
+  if(nome) nome.innerHTML=`Escolhida: <b>${esc(e.modelo||'Impressora')}</b> • Patr ${esc(e.patrimonio||(p&&p.patrimonio)||'-')}`;
+  if(typeof atualizarTiposLancamento==='function') atualizarTiposLancamento();
+  const cont=document.getElementById('lan-cont'); if(cont) cont.focus();
+};
+window.buscarImpressorasLancamento=function(leituraId){
+  const box=document.getElementById('lan-prq-lista'); if(!box) return;
+  const lista=filtrarPendentes(leituraId);
+  box.innerHTML=listaImpressorasHtml(lista);
+  const info=document.getElementById('lan-busca-info');
+  if(info) info.innerText=`${lista.length} impressora(s) com medidor pendente — dois cliques para escolher`;
+  const alvo=document.getElementById('lan-prq');
+  if(alvo && alvo.value && !lista.some(p=>p.id===alvo.value)){
+    alvo.value='';
+    const nome=document.getElementById('lan-prq-nome');
+    if(nome) nome.innerText='Nenhuma impressora escolhida ainda.';
+    if(typeof atualizarTiposLancamento==='function') atualizarTiposLancamento();
+  }
+  if(lista.length===1) escolherImpressoraLancamento(lista[0].id);
+  else if(alvo && alvo.value) pintarLinhaEscolhida(alvo.value, true);
+};
 window.abrirLancamentoContador=function(leituraId, idx=null){
   const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; if(leituraBloqueada(l)) return toastMsg('Leitura faturada. Estorne para alterar.','error'); const edit=idx!=null && l.itens&&l.itens[idx]; const item=edit?l.itens[idx]:null; const c=contratoLeitura(l); const rem=maquinasRemanejadas(c);
-  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente</p></div><label class="font-bold text-slate-600">Impressora<select id="lan-prq" ${edit?'disabled':''} onchange="atualizarTiposLancamento()" class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Selecione</option>${(edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean).map(optP).join('')}</select></label><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" value="${edit?item.atual:''}" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
-  if(edit){ document.getElementById('lan-prq').value=item.parqueId; atualizarTiposLancamento(); document.getElementById('lan-med').value=item.medidor; }
+  setModal(edit?'Editar lançamento':'Novo lançamento de contador',`<input type="hidden" id="lan-leitura-id" value="${l.id}"><input type="hidden" id="lan-edit-idx" value="${edit?idx:''}"><div class="space-y-4 text-[13px]"><div class="rounded-xl border bg-slate-50 p-3"><b>Buscar impressora</b><p class="text-[11px] text-slate-500">Busque por modelo, serial, patrimônio ou departamento/localização. Só aparecem medidores ainda pendentes.</p><div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2"><select id="lan-filtro-campo" class="h-10 px-3 rounded-xl border"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento/Localização</option></select><input id="lan-filtro-texto" onkeydown="if(event.key==='Enter'){event.preventDefault(); buscarImpressorasLancamento('${l.id}') }" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite o termo da busca"><button onclick="buscarImpressorasLancamento('${l.id}')" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i> Buscar</button></div><p id="lan-busca-info" class="text-[11px] text-slate-500 mt-2">${filtrarPendentes(leituraId).length} impressora(s) com medidor pendente — dois cliques para escolher</p></div><div class="font-bold text-slate-600">Impressora<input type="hidden" id="lan-prq" ${edit?'disabled':''} value="${edit?esc(item.parqueId):''}"><div id="lan-prq-lista" role="listbox" class="mt-1 w-full rounded-xl border bg-white" style="max-height:200px;overflow-y:auto">${listaImpressorasHtml((edit?[prq(item.parqueId)]:filtrarPendentes(leituraId)).filter(Boolean))}</div><p id="lan-prq-nome" class="text-[11px] text-slate-500 mt-1">${edit?'Impressora do lançamento em edição.':'Nenhuma impressora escolhida ainda. Dê <b>dois cliques</b> no nome para escolher.'}</p></div><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" ${edit?'disabled':''} class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" value="${edit?item.atual:''}" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label>${rem.length?`<div class="rounded-xl border bg-amber-50 p-3"><b>Remanejadas neste contrato</b><p class="text-[11px] text-amber-800">Aparecem só para histórico e não podem receber leitura.</p>${rem.map(p=>{const e=eq(p.equipamentoId)||{}; return `<div class="mt-1 text-[12px]">${esc(e.patrimonio||p.patrimonio||'-')} — ${esc(e.modelo||'')}</div>`;}).join('')}</div>`:''}</div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'820px');
+  if(edit){ document.getElementById('lan-prq').value=item.parqueId; pintarLinhaEscolhida(item.parqueId, true); atualizarTiposLancamento(); document.getElementById('lan-med').value=item.medidor; }
 };
 window.atualizarTiposLancamento=function(){ const l=(db.leituras||[]).find(x=>x.id===document.getElementById('lan-leitura-id')?.value)||{itens:[]}; const idx=document.getElementById('lan-edit-idx')?.value; const p=prq(document.getElementById('lan-prq')?.value); const sel=document.getElementById('lan-med'); if(!sel) return; let meds=p?medPendentes(p,l):[]; if(idx!==''&&p){ const item=l.itens[Number(idx)]; const old=medAtivos(p).find(m=>m.key===item.medidor); if(old&&!meds.find(m=>m.key===old.key)) meds=[old,...meds]; } sel.innerHTML=p?meds.map(m=>`<option value="${m.key}">${esc(m.label)} — ${esc(m.modalidade)}</option>`).join('')||'<option value="">Todos os tipos ativos já lançados</option>':'<option value="">Escolha a impressora</option>'; };
 window.editarLancamentoLeitura=function(leituraId,idx){ abrirLancamentoContador(leituraId,idx); };

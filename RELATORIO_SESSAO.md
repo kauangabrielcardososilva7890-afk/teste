@@ -76,6 +76,32 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.67 — relatório do usuário, 8 itens
+
+Respostas dadas antes de codar: login **uma vez por dia** (não a cada minuto),
+aviso EPSON **na mesma folha**, vendas **faltando** no financeiro, data **um
+dia a menos**, cidade **do cliente**. O item 2.4 (etiquetas) foi cancelado
+pelo próprio usuário.
+
+| # | O que era | O que foi feito |
+|---|---|---|
+| 1.1 | Voltava pro login sozinho | `exigirLoginDiario` rodava a cada 60s comparando um carimbo que 4 patches diferentes podiam apagar ao trocar o `doLoginUser`. Sem carimbo, deslogava DE MINUTO EM MINUTO. Agora a verdade é o `loginAt` da sessão e, sem informação nenhuma, a sessão é adotada como de hoje. Só cai na virada do dia. |
+| 1.2 | Backup automático | Removido o backup diário inteiro (`rodarBackupDiario`, `agendarBackupDiario`, temporizadores, `saveDaily`). Cópia de segurança só no botão **Backup**. |
+| 1.3 | Menu passava da borda | `menus_tela_pequena_patch.js`: mede o menu aberto e, **só quando não cabe**, dá rolagem e puxa para dentro da tela. Cabendo, não muda nada. |
+| 2.1 | Aviso EPSON estourava a folha | O aviso já existia e já era só da OS. Ficou mais compacto e a folha agora **encolhe sozinha** (até 70%) quando passa do A4, garantindo UMA folha. |
+| 2.2 | Venda não ia pro financeiro | Só a venda faturada virava título. `vendas_financeiro_pendente_patch.js` cria um título de acompanhamento para toda venda salva, marcado `aguardandoFaturamento`, e o apaga sozinho quando ela é faturada ou cancelada — sem contar duas vezes. |
+| 2.3 | Data um dia a menos | `new Date('2026-09-01')` é lido como UTC; no Brasil (UTC-3) a tela mostrava 31/08. Novo `parseDataLocal` no `app.js`, usado por `fmtDate`/`fmtDateTime` — e o sistema inteiro passa por eles. |
+| 3.1 | Faltava buscar por cidade | Filtro **Cidade** nos contratos, pela cidade do cliente, aceitando `cidade`, `municipio` e afins, sem ligar para acento nem maiúscula. |
+| 4.1 | Impressora era caixa fechada | Virou **lista** rolável: um clique destaca, **dois cliques escolhem** (Enter também). A busca reconstrói a lista. |
+
+**Atenção:** o workspace voltou sozinho para o commit `947ee33` no meio desta
+sessão, pela segunda vez. Recuperado com
+`git fetch origin <branch>:refs/remotes/origin/<branch>` + `git reset --hard`.
+Sempre conferir `git log --oneline -1` contra o remoto antes de confiar no
+que está em disco.
+
+---
+
 ## v5.22.66 — o log apontou o culpado: contextBridge congela o objeto
 
 O isolamento da 5.22.65 fez o serviço: em vez de dezenas de scripts sumirem

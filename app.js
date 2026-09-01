@@ -251,8 +251,20 @@ if(typeof window !== 'undefined'){ window.db = db; }
 
 function uid(p='id'){return p+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
 function fmtMoney(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function fmtDate(s){if(!s) return '-'; const d=new Date(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
-function fmtDateTime(s){if(!s) return '-'; return new Date(s).toLocaleString('pt-BR')}
+// Datas: 'AAAA-MM-DD' sem hora precisa virar meia-noite LOCAL. Se cair no
+// new Date() direto, o navegador entende como UTC e no Brasil (UTC-3) a tela
+// mostra o dia ANTERIOR. Era o bug das datas erradas das vendas.
+function parseDataLocal(valor){
+  if(valor instanceof Date) return valor;
+  if(typeof valor !== 'string') return new Date(valor);
+  const so = valor.trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(so);
+  if(m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  return new Date(so);
+}
+window.parseDataLocal = parseDataLocal;
+function fmtDate(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleDateString('pt-BR')}
+function fmtDateTime(s){if(!s) return '-'; const d=parseDataLocal(s); if(isNaN(d)) return s; return d.toLocaleString('pt-BR')}
 function onlyDigits(s){return (s||'').replace(/\D/g,'')}
 function initials(name){return (name||'').split(' ').filter(Boolean).slice(0,2).map(n=>n[0].toUpperCase()).join('')||'??'}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
