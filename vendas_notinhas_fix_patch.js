@@ -461,52 +461,11 @@
     window.__vosItensAdicionadosTemp = [];
   }
 
-  function cancelarSairVenda() {
-    devolverReservaTemporaria();
-    if (!vendaJaExisteNoBanco()) {
-      if (window.__vosForm && window.__vosForm.vendaId) {
-        const idNaoSalva = window.__vosForm.vendaId;
-        db.vendas = (db.vendas || []).filter(x => x.id !== idNaoSalva);
-      }
-    }
-    window.__vosForm = null;
-    window.__vosDirty = false;
-    if (typeof saveDB === 'function') saveDB();
-    if (typeof renderProdutos === 'function') renderProdutos();
-    if (typeof renderVendas === 'function') renderVendas();
-  }
-
+  // v5.22.68 — acabou o "Deseja salvar esta venda?". Faturar e sair não
+  // perguntam mais nada: o closeModal já grava sozinho quando há cliente
+  // (ajustes_v52241), então o aviso só repetia trabalho.
   function perguntarSairVenda(depoisFechar) {
-    if (window.__vosSaindoVenda) return;
-    if (!telaVendaAberta() || !window.__vosForm) {
-      depoisFechar();
-      return;
-    }
-    const temCliente = !!(window.__vosForm.cliente || window.__vosForm.clienteId);
-    const temItem = (window.__vosForm.itens || []).length > 0;
-    const precisaAviso = window.__vosDirty || temCliente || temItem;
-    if (!precisaAviso) {
-      depoisFechar();
-      return;
-    }
-    window.__vosSaindoVenda = true;
-    const msg = 'Deseja salvar esta venda?';
-    const fechar = () => {
-      window.__vosSaindoVenda = false;
-      depoisFechar();
-    };
-    if (typeof window.confirmSistema === 'function') {
-      window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
-        if (salvar) {
-          if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-        } else {
-          cancelarSairVenda();
-        }
-        fechar();
-      });
-      return;
-    }
-    fechar();
+    depoisFechar();
   }
 
   const _origCloseModalEst = window.closeModal;
