@@ -59,6 +59,7 @@
       descricao: 'Venda ' + texto(v && v.numero) + ' • aguardando faturamento',
       valor: Number((v && v.total) || 0),
       vencimento: (v && (v.data || v.criadoEm)) || new Date().toISOString(),
+      criadoEm: (v && (v.data || v.criadoEm)) || new Date().toISOString(),
       pagamentoData: null,
       status: 'aberto',
       contratoId: null,

@@ -157,9 +157,17 @@ function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
 }
 
+// v5.22.68 — a busca era redesenhada junto com a lista e voltava vazia,
+// apagando o que a pessoa tinha acabado de digitar. Agora o texto é reposto.
+function reporTexto(){
+  var busca=document.getElementById('search-contratos');
+  if(busca && STATE.q && !busca.value) busca.value=STATE.q;
+}
+
 function injetar(){
   var view=document.getElementById('view-contratos');
   if(!view || view.classList.contains('hidden')) return;
+  reporTexto();
   if(document.getElementById('ctr-filtro-campo')) return;
   var busca=document.getElementById('search-contratos');
   if(!busca) return;
