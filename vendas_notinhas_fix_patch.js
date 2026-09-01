@@ -3,7 +3,7 @@
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
-// 4. Sair sem salvar pergunta "Deseja salvar esta venda?": Não devolve estoque/descarta; Sim salva
+// 4. Sair da venda nao pergunta mais nada (v5.22.68): o closeModal grava sozinho
 // 5. Estoque exato em tempo real: lixeira devolve item no estoque na hora
 // 6. Botão ÚNICO "Excluir" na lista que atua em seleção múltipla ou item único; proíbe faturadas
 // 7. Meia folha A4 em 135mm estrita sem pular folha (IMAGEM correção 3)
