@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: e9c4659d3061751b
+ * scripts: 190 | sha256: c9eb2ac33c9bed53
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28740,7 +28740,7 @@ async function renderConnected(body){
   const escolher=!!sync.paused;
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
-    ?('Primeira conexão deste computador. Para não duplicar nada, escolha o que fazer com os '+(held||'dados')+' registros que já existem aqui. Depois da escolha a nuvem sincroniza sozinha, sempre.')
+    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
     :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
@@ -28838,6 +28838,23 @@ window.abrirCloudflareNuvem=async function(){
   if(token()) await renderConnected(body); else await renderDisconnected(body);
 };
 
+// A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
+// clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
+// escolha se apresenta sozinha, uma vez por sessão.
+function cobrarEscolha(){
+  if(!token()||!systemAdmin())return;
+  if(window.__dcEscolhaMostrada)return;
+  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
+  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
+  if(document.getElementById('digicopy-cloud-modal'))return;
+  window.__dcEscolhaMostrada=true;
+  window.abrirCloudflareNuvem();
+}
+if(typeof document!=='undefined'){
+  setTimeout(cobrarEscolha,9000);
+  setTimeout(cobrarEscolha,45000);
+}
+
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
 })();
 
@@ -28865,13 +28882,34 @@ const MAX_OUTBOX=100;
 const PUSH_BATCH=10;
 const HEARTBEAT_MS=60000;
 
+// Listas com formato especial. Todo o resto do banco entra sozinho pela
+// definicoes(): antes a nuvem só levava estas 19 listas e tudo o que estava
+// fora (despesas de locação, compras, cartuchos, cidades, agenda, caixa,
+// e-mails, boletos, favoritos...) ficava preso no PC onde foi criado — era por
+// isso que um computador tinha tudo e o outro aparecia faltando dados.
 const DEFINITIONS={
   empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
   os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
   logs:'array', tecnicos:'array', notificacoes:'array',
-  config:'root', modulosDinamicos:'map'
+  config:'root', modulosDinamicos:'map', _seq:'contador'
 };
+// Coisas que NÃO viajam: controle interno do próprio arquivo local.
+const NAO_SINCRONIZA=new Set(['meta','__proto__']);
+
+// Lê o banco de verdade e devolve o mapa completo do que sincronizar. Lista
+// nova criada por qualquer módulo entra automaticamente na próxima passada.
+function definicoes(){
+  const mapa=Object.assign({},DEFINITIONS);
+  if(typeof db==='undefined'||!db)return mapa;
+  for(const chave of Object.keys(db)){
+    if(mapa[chave]||NAO_SINCRONIZA.has(chave))continue;
+    const valor=db[chave];
+    if(Array.isArray(valor))mapa[chave]='array';
+    else if(valor&&typeof valor==='object')mapa[chave]='map';
+  }
+  return mapa;
+}
 
 function parse(raw,fallback){try{const x=JSON.parse(raw);return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}}
 function loadState(){
@@ -28880,10 +28918,21 @@ function loadState(){
   s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};
   s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
   s.pauseReason=s.pauseReason||'';
+  s.regras=s.regras||'';
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
 let state=loadState(),outbox=loadOutbox();
+// v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
+// conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
+// única vez o que fazer com eles antes de voltar a sincronizar.
+const REGRAS='v5.22.69-tudo';
+if(state.initialPull&&state.regras!==REGRAS){
+  state.regras=REGRAS;
+  state.paused=true;
+  state.pauseReason='escolha-inicial';
+  try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
+}else if(!state.regras){state.regras=REGRAS;}
 let busy=false,applying=false,timer=null,failures=0,lastError='',lastTick=0;
 
 function persist(){
@@ -28911,8 +28960,9 @@ function authorized(){return !!(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.tok
 function entriesFor(entity,mode){
   if(typeof db==='undefined'||!db)return [];
   const value=db[entity];
-  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&x.id).map(x=>({id:String(x.id),data:clean(x)}));
+  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&typeof x==='object').map(x=>({id:x.id?String(x.id):('h_'+hash(clean(x))),data:clean(x)}));
   if(mode==='root')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
+  if(mode==='contador')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
   if(mode==='map')return value&&typeof value==='object'?Object.keys(value).map(id=>({id:String(id),data:{value:clean(value[id])}})):[];
   return [];
 }
@@ -28924,7 +28974,7 @@ function findLocal(entity,mode,id){
   return null;
 }
 function applyRemote(change){
-  const mode=DEFINITIONS[change.entity];if(!mode)return false;
+  const mode=definicoes()[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
   let changed=false;
@@ -28936,6 +28986,18 @@ function applyRemote(change){
   }else if(mode==='root'){
     if(change.operation==='delete'){/* objetos essenciais nunca são apagados por ausência */}
     else if(change.data){db[change.entity]=change.data;changed=true;}
+  }else if(mode==='contador'){
+    // Numeração de venda/OS/orçamento: nunca volta atrás. Cada contador fica
+    // com o MAIOR número entre este PC e a nuvem, para dois computadores não
+    // emitirem documentos com o mesmo número.
+    if(change.data&&typeof change.data==='object'){
+      if(!db[change.entity]||typeof db[change.entity]!=='object')db[change.entity]={};
+      const alvo=db[change.entity];
+      for(const nome of Object.keys(change.data)){
+        const nuvem=Number(change.data[nome])||0,aqui=Number(alvo[nome])||0;
+        if(nuvem>aqui){alvo[nome]=nuvem;changed=true;}
+      }
+    }
   }else if(mode==='map'){
     if(!db[change.entity]||typeof db[change.entity]!=='object')db[change.entity]={};
     if(change.operation==='delete'){if(Object.prototype.hasOwnProperty.call(db[change.entity],change.recordId)){delete db[change.entity][change.recordId];changed=true;}}
@@ -28949,7 +29011,8 @@ function applyRemote(change){
 
 function localKeysSnapshot(){
   const set=new Set();
-  for(const entity of Object.keys(DEFINITIONS))for(const entry of entriesFor(entity,DEFINITIONS[entity]))set.add(key(entity,entry.id));
+  const MAPA=definicoes();
+  for(const entity of Object.keys(MAPA))for(const entry of entriesFor(entity,MAPA[entity]))set.add(key(entity,entry.id));
   return set;
 }
 function localBusinessCount(){
@@ -28975,8 +29038,11 @@ function decideReinstallGuard(opts){
   const cloudHasData=!!(opts&&opts.cloudHasData);
   const localCount=Number(opts&&opts.localCount)||0;
   const extraCount=Number(opts&&opts.extraCount)||0;
-  if(activation==='invite'){
-    return {pause:false,isolate:extraCount>0,hold:false,reason:extraCount?'convidado-isola-local':'convidado-ok'};
+  // v5.22.69 — o PC autorizado por convite APAGAVA daqui tudo o que a nuvem não
+  // tinha. Era isso que deixava o segundo computador faltando dados. Agora ele
+  // recebe a mesma escolha dos outros: nada é apagado sem a pessoa mandar.
+  if(activation==='invite'&&extraCount===0){
+    return {pause:false,isolate:false,hold:false,reason:'convidado-ok'};
   }
   if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
     return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
@@ -28986,8 +29052,9 @@ function decideReinstallGuard(opts){
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
   let removed=0;
-  for(const entity of Object.keys(DEFINITIONS)){
-    const mode=DEFINITIONS[entity];
+  const MAPA=definicoes();
+  for(const entity of Object.keys(MAPA)){
+    const mode=MAPA[entity];
     if(mode==='array'&&Array.isArray(db[entity])){
       db[entity]=db[entity].filter(item=>{
         if(!item||!item.id)return true;
@@ -29031,9 +29098,10 @@ function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
-  for(const entity of Object.keys(DEFINITIONS)){
+  const MAPA=definicoes();
+  for(const entity of Object.keys(MAPA)){
     if(outbox.length>=MAX_OUTBOX)break;
-    const mode=DEFINITIONS[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
+    const mode=MAPA[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
     for(const entry of entries){
       if(outbox.length>=MAX_OUTBOX)break;
       const k=key(entity,entry.id),h=hash(entry.data);
@@ -29245,7 +29313,7 @@ async function resetCloudOnly(){
 // vez de criar cópia.
 async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
-  state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;persist();
+  state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
   const synced=await tick('publicacao-manual-completa');
   if(!synced){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error(lastError||'Não foi possível enviar. A sincronização continua parada.');}
   return true;
@@ -29256,7 +29324,7 @@ async function manterLocalSemEnviar(){
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
   state.heldLocalOnly=extras;
-  state.paused=false;state.pauseReason='';state.initialPull=true;persist();
+  state.paused=false;state.pauseReason='';state.initialPull=true;state.regras=REGRAS;persist();
   await tick('escolha-nao-enviar');
   return extras.length;
 }
@@ -29302,8 +29370,9 @@ async function discardLocalKeepCloud(){
 }
 function pendingEstimate(){
   const pending=pendingKeys();let total=pending.size;
-  for(const entity of Object.keys(DEFINITIONS)){
-    const entries=entriesFor(entity,DEFINITIONS[entity]),present=new Set();
+  const MAPA=definicoes();
+  for(const entity of Object.keys(MAPA)){
+    const entries=entriesFor(entity,MAPA[entity]),present=new Set();
     for(const entry of entries){const k=key(entity,entry.id);present.add(k);if(!pending.has(k)&&state.hashes[k]!==hash(entry.data))total++;}
     for(const k of Object.keys(state.known)){if(k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k))total++;}
   }
@@ -29311,7 +29380,7 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes};
 
 if(typeof document==='undefined')return;
 try{

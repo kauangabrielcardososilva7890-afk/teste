@@ -166,7 +166,7 @@ async function renderConnected(body){
   const escolher=!!sync.paused;
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
-    ?('Primeira conexão deste computador. Para não duplicar nada, escolha o que fazer com os '+(held||'dados')+' registros que já existem aqui. Depois da escolha a nuvem sincroniza sozinha, sempre.')
+    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
     :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
@@ -263,6 +263,23 @@ window.abrirCloudflareNuvem=async function(){
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);
 };
+
+// A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
+// clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
+// escolha se apresenta sozinha, uma vez por sessão.
+function cobrarEscolha(){
+  if(!token()||!systemAdmin())return;
+  if(window.__dcEscolhaMostrada)return;
+  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
+  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
+  if(document.getElementById('digicopy-cloud-modal'))return;
+  window.__dcEscolhaMostrada=true;
+  window.abrirCloudflareNuvem();
+}
+if(typeof document!=='undefined'){
+  setTimeout(cobrarEscolha,9000);
+  setTimeout(cobrarEscolha,45000);
+}
 
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
 })();

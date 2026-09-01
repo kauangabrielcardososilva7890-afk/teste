@@ -26,7 +26,9 @@ ok('sobra local não sobe sozinha',gHold.pause===true&&gHold.hold===true&&gHold.
 const gOk=S.decideReinstallGuard({activation:'initial',cloudHasData:true,localCount:10,extraCount:0});
 ok('sem sobra local não pergunta nada',gOk.pause===false&&gOk.reason==='ok');
 const gInvite=S.decideReinstallGuard({activation:'invite',cloudHasData:true,localCount:57,extraCount:57});
-ok('PC convidado isola histórico velho e não pausa',gInvite.isolate===true&&gInvite.pause===false);
+ok('PC convidado escolhe em vez de perder dados',gInvite.isolate===false&&gInvite.pause===true);
+const gInviteLimpo=S.decideReinstallGuard({activation:'invite',cloudHasData:true,localCount:57,extraCount:0});
+ok('PC convidado sem sobra entra direto',gInviteLimpo.pause===false&&gInviteLimpo.reason==='convidado-ok');
 ok('escolha tem as duas opções',typeof S.publishLocalToCloud==='function'&&typeof S.manterLocalSemEnviar==='function');
 ok('sempre puxa antes de escanear e enviar',/await pullAll\(\);[\s\S]{0,2000}scanLocal\(\)/.test(code));
 ok('exclusões não travam mais a tela',!/blockedDeletes/.test(code)&&!/approveMassDelete/.test(code));

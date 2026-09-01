@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.68**  
+**Última versão:** **v5.22.69**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.68>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.69>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,41 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.69 — "um PC completo e o outro faltando dados"
+
+**O que estava acontecendo (três causas):**
+
+1. **A nuvem só levava 19 listas.** O motor tinha uma lista fixa (`DEFINITIONS`)
+   com clientes, produtos, vendas, OS, contratos, financeiro e mais algumas.
+   Todo o resto do banco — mais de 70 listas: despesas de locação, compras e
+   recebimentos, fornecedores, cartuchos e etiquetas, cidades, agenda, caixa,
+   contadores, boletos, NF-e migradas, e-mails, favoritos, escola — **nunca saía
+   do PC onde foi criado**. Por isso um computador mostrava tudo e o outro não.
+2. **O contador de numeração (`db._seq`) também não subia**, então cada PC
+   contava vendas/OS/orçamentos por conta própria.
+3. **O PC autorizado por código de convite apagava, na primeira conexão, tudo o
+   que a nuvem não tinha** (`reconcileFirstAuthorizedDevice`). Era proteção
+   contra duplicar histórico velho, mas na prática esvaziava o segundo PC.
+
+**O que foi feito:**
+
+| Correção | Como ficou | Arquivo |
+|---|---|---|
+| Sincronizar tudo | A lista fixa virou `definicoes()`, que lê o banco de verdade. Qualquer lista que exista (ou que um módulo criar amanhã) entra sozinha. Só `meta` fica de fora | `cloudflare_data_sync_patch.js` |
+| Não duplicar | Cada registro viaja pelo próprio `id`, então reenviar atualiza em vez de criar cópia. Item de lista antiga sem `id` ganha um id fixo calculado pelo conteúdo — o mesmo item dá sempre o mesmo id nos dois PCs | idem |
+| Numeração | `db._seq` sincroniza no modo `contador`: cada contador fica com o **maior** número entre o PC e a nuvem, nunca volta atrás | idem |
+| PC convidado | Não apaga mais nada. Recebe a mesma escolha de duas opções | idem |
+| Uma pergunta só | Como a regra mudou, quem já estava conectado recebe a escolha uma única vez (marca `state.regras`) e depois nunca mais | idem |
+| A escolha não fica escondida | A sincronização fica parada até escolher, então o painel se abre sozinho uma vez por sessão enquanto a escolha estiver pendente | `cloudflare_sync_patch.js` |
+
+**Dados que o segundo PC já perdeu** (apagados pela regra antiga do convite):
+estão na cópia `antes_primeira_nuvem`, na aba **Recuperar** do painel da nuvem.
+
+Testes: `test_ajustes_v52269.js` (novo). Ajustados `test_ajustes_v5226.js` e
+`test_cloudflare_data_sync.js`. Suíte: **123 passaram / 0 falharam**.
 
 ---
 

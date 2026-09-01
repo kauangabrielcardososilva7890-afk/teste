@@ -14,9 +14,9 @@ ok('mesmo ID na nuvem segue sem pausar',!same.pause&&!same.hold&&same.reason==='
 const leftover=S.decideReinstallGuard({activation:'recovery',cloudHasData:true,localCount:1976,extraCount:57});
 ok('57 sobras ficam retidas',leftover.pause&&leftover.hold&&!leftover.isolate);
 const invite=S.decideReinstallGuard({activation:'invite',cloudHasData:true,localCount:80,extraCount:57});
-ok('segundo PC ainda isola e não publica sobra',invite.isolate&&!invite.pause&&!invite.hold);
+ok('PC convidado não apaga mais nada: escolhe',!invite.isolate&&invite.pause&&invite.reason==='escolha-inicial');
 ok('scan pula chave retida',code.includes('held.has(k)'));
 ok('enviar os dados atuais é escolha da pessoa',code.includes('async function publishLocalToCloud')&&code.includes('async function manterLocalSemEnviar'));
-ok('painel explica a escolha sem duplicar',ui.includes('Para não duplicar nada, escolha o que fazer'));
+ok('painel explica a escolha sem duplicar',ui.includes('Escolha o que fazer com os dados que já existem neste computador'));
 ok('as duas opções destravam a sincronização',ui.includes('dc-enviar-locais')&&ui.includes('dc-nao-enviar'));
 console.log('\nRESULTADO: reinstalação não duplica na nuvem!');

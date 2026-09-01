@@ -4,7 +4,7 @@ const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const ler=f=>fs.readFileSync(f,'utf8');
 console.log('== AJUSTES v5.22.68 ==');
-ok('versão subiu para 5.22.68',pkg.version==='5.22.68');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // 1.3 — a faixa azul de módulos não passa mais da borda
 const menus=ler('menus_tela_pequena_patch.js');
