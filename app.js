@@ -13,7 +13,7 @@ const defaultData={
   usuarios:[],
   clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
-  tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
+  tecnicos:[], // v5.22.68: sem técnico de demonstração. Ver TECNICOS_DEMO.
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
 };
 
@@ -42,12 +42,28 @@ function storageDecode(raw){
   }
   return raw;
 }
+// Técnicos que o sistema criava sozinho nas versões antigas.
+const TECNICOS_DEMO = [
+  {id:'t1', nome:'Carlos Mendes', especialidade:'Laser Mono'},
+  {id:'t2', nome:'Ana Souza',     especialidade:'Color'},
+  {id:'t3', nome:'Rafael Lima',   especialidade:'Grande formato'}
+];
+function ehTecnicoDemo(t){
+  if(!t) return false;
+  return TECNICOS_DEMO.some(d =>
+    d.id === t.id &&
+    d.nome === String(t.nome||'').trim() &&
+    d.especialidade === String(t.especialidade||'').trim());
+}
+window.ehTecnicoDemo = ehTecnicoDemo;
+window.TECNICOS_DEMO = TECNICOS_DEMO;
+
 function normalizeDbShape(parsed){
   ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
-  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=[];
   if(!parsed.config) parsed.config=structuredClone(defaultData.config);
   if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
   parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
@@ -325,6 +341,16 @@ function seedData(force=false){
   ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
+
+  // Técnicos que vinham de fábrica e voltavam sozinhos toda vez que a lista
+  // ficava vazia. Some SÓ o registro de demonstração (id t1/t2/t3 com o nome e
+  // a especialidade originais). Cadastrar um técnico com o mesmo nome pela
+  // tela continua permitido — não virou regra, só parou de voltar.
+  db.tecnicos = (db.tecnicos||[]).filter(t=>{
+    if(!t) return false;
+    if(ehTecnicoDemo(t)){ mudou = true; return false; }
+    return true;
+  });
 
   // Remove usuários de demonstração (de versões antigas).
   // v5.20.24 — NUNCA apaga usuário cadastrado pela tela: só remove demo de verdade
