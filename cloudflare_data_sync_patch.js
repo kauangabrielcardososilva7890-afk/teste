@@ -27,9 +27,9 @@ const DEFINITIONS={
 
 function parse(raw,fallback){try{const x=JSON.parse(raw);return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}}
 function loadState(){
-  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0,paused:false,heldLocalOnly:[],pauseReason:''};
+  let s={cursor:0,versions:{},hashes:{},known:{},initialPull:false,lastOk:0,paused:false,heldLocalOnly:[],pauseReason:''};
   try{s=Object.assign(s,parse(localStorage.getItem(STATE_KEY),{}));}catch(e){}
-  s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};s.blockedDeletes=s.blockedDeletes||{};
+  s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};
   s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
   s.pauseReason=s.pauseReason||'';
   return s;
@@ -118,6 +118,10 @@ function listLocalOnlyKeys(beforeKeys){
   beforeKeys.forEach(k=>{if(!state.known[k])extras.push(k);});
   return extras;
 }
+// v5.22.68 — na PRIMEIRA vez que este PC entra na nuvem, nada sobe sozinho.
+// Se há dados aqui que a nuvem não tem, a sincronização espera uma escolha de
+// duas opções: enviar os dados atuais deste PC, ou não enviar. Qualquer uma
+// das duas destrava a sincronização daí em diante.
 function decideReinstallGuard(opts){
   const activation=opts&&opts.activation;
   const cloudHasData=!!(opts&&opts.cloudHasData);
@@ -126,11 +130,8 @@ function decideReinstallGuard(opts){
   if(activation==='invite'){
     return {pause:false,isolate:extraCount>0,hold:false,reason:extraCount?'convidado-isola-local':'convidado-ok'};
   }
-  if(!cloudHasData&&localCount>0){
-    return {pause:true,isolate:false,hold:false,reason:'nuvem-vazia-publicar-manual'};
-  }
-  if(cloudHasData&&extraCount>0){
-    return {pause:true,isolate:false,hold:true,reason:'sobra-local-nao-enviar'};
+  if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
+    return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
   }
   return {pause:false,isolate:false,hold:false,reason:'ok'};
 }
@@ -178,7 +179,7 @@ async function pullAll(){
 }
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
-function scanLocal(approvedEntity){
+function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
@@ -193,10 +194,6 @@ function scanLocal(approvedEntity){
       pending.add(k);added++;
     }
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
-    const knownCount=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')).length;
-    const mass=missing.length>=10&&knownCount>0&&missing.length/knownCount>.30;
-    if(mass&&approvedEntity!==entity){state.blockedDeletes[entity]=missing.map(k=>k.slice(entity.length+1));continue;}
-    delete state.blockedDeletes[entity];
     for(const k of missing){
       if(outbox.length>=MAX_OUTBOX)break;
       const id=k.slice(entity.length+1);
@@ -290,9 +287,7 @@ async function tick(reason){
       state.pauseReason=decision.pause?decision.reason:'';
       if(decision.pause){
         state.paused=true;state.initialPull=true;persist();
-        indicator(false,decision.reason==='nuvem-vazia-publicar-manual'
-          ?'Nuvem vazia • clique em Publicar este PC'
-          :'Sobra local retida • não enviei para não duplicar');
+        indicator(false,'Escolha o que fazer com os dados deste PC');
         return true;
       }
     }
@@ -391,21 +386,31 @@ async function resetCloudOnly(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'nuvem-vazia-publicar-manual',cloudGeneration:result.generation};
+  state={cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation};
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
-  persist();indicator(false,'Nuvem vazia • sincronização pausada');
+  persist();indicator(false,'Escolha o que fazer com os dados deste PC');
   return {result,paused:true};
 }
+// Opção 1 da escolha: enviar os dados atuais deste PC para a nuvem.
+// Cada registro sobe pelo próprio id, então reenviar o mesmo dado atualiza em
+// vez de criar cópia.
 async function publishLocalToCloud(){
-  if(!state.paused)throw new Error('A sincronização não está pausada.');
-  if(Object.keys(state.known).length>0){
-    throw new Error('A nuvem já tem dados. Zere a nuvem primeiro e só então publique este PC, para não duplicar.');
-  }
+  const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;persist();
   const synced=await tick('publicacao-manual-completa');
-  if(!synced){state.paused=true;state.pauseReason='nuvem-vazia-publicar-manual';persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
+  if(!synced){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error(lastError||'Não foi possível enviar. A sincronização continua parada.');}
   return true;
+}
+// Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais
+// ficam só neste PC e a nuvem passa a sincronizar normalmente daí em diante.
+async function manterLocalSemEnviar(){
+  const snap=localKeysSnapshot();
+  const extras=planNaoAutorizarLocal([...snap], state.known);
+  state.heldLocalOnly=extras;
+  state.paused=false;state.pauseReason='';state.initialPull=true;persist();
+  await tick('escolha-nao-enviar');
+  return extras.length;
 }
 function planNaoAutorizarLocal(localKeys, known){
   const extras=[];
@@ -428,7 +433,6 @@ async function discardLocalKeepCloud(){
     state.versions={};
     state.hashes={};
     state.known={};
-    state.blockedDeletes={};
     persist();
     await pullAll();
     if(!Object.keys(state.known).length){
@@ -448,10 +452,6 @@ async function discardLocalKeepCloud(){
     return {removed:Number(removed)||extras.length, extras:extras.length, cloudUntouched:true};
   }finally{busy=false;}
 }
-function approveMassDelete(entity){
-  if(!state.blockedDeletes[entity])return false;
-  scanLocal(entity);schedule(100);return true;
-}
 function pendingEstimate(){
   const pending=pendingKeys();let total=pending.size;
   for(const entity of Object.keys(DEFINITIONS)){
@@ -461,9 +461,9 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{
