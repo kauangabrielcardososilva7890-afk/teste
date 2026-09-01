@@ -212,7 +212,7 @@ async function pullAll(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
   do{
-    const data=await call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'});
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
@@ -226,6 +226,33 @@ async function pullAll(){
   }
   persist();
   return changed;
+}
+
+// A nuvem (Cloudflare/D1) responde 503, 502 ou 429 quando está sobrecarregada
+// ou quando recebe muita escrita de uma vez — típico da primeira remessa grande.
+// Não é erro de dados: é "espere um pouco e mande de novo". Antes qualquer 503
+// abortava o envio inteiro e aparecia "Envio pendente" na cara da pessoa.
+const ESPERAS=[900,2500,6000,12000];
+function ehSobrecarga(erro){
+  const st=Number(erro&&erro.status)||0;
+  if(st===429||st===500||st===502||st===503||st===504)return true;
+  const txt=(erro&&erro.message||'').toLowerCase();
+  return txt.indexOf('sem conexão')>=0||txt.indexOf('network')>=0||txt.indexOf('failed to fetch')>=0;
+}
+function dormir(ms){return new Promise(r=>setTimeout(r,ms));}
+async function comPaciencia(fn){
+  let ultimo=null;
+  for(let tentativa=0;tentativa<=ESPERAS.length;tentativa++){
+    try{return await fn();}
+    catch(e){
+      ultimo=e;
+      if(!ehSobrecarga(e)||tentativa===ESPERAS.length)throw e;
+      lastError='A nuvem está ocupada. Tentando de novo em '+Math.round(ESPERAS[tentativa]/1000)+'s...';
+      indicator(false,lastError);
+      await dormir(ESPERAS[tentativa]);
+    }
+  }
+  throw ultimo;
 }
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
@@ -262,18 +289,33 @@ function rememberConflict(item,result){
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
+// Tamanho do lote em uso. Cai pela metade quando a nuvem reclama e volta a
+// crescer sozinho quando ela aceita — o PC nunca fica travado nem afoga o D1.
+let lote=PUSH_BATCH;
 async function pushOutbox(){
   const call=api();if(!call||!outbox.length)return 0;
   let sent=0;
   while(outbox.length){
     const batch=[];let bytes=0;
-    for(const item of outbox.slice(0,PUSH_BATCH)){
+    for(const item of outbox.slice(0,Math.max(1,lote))){
       const size=stable(item.mutation).length;
       if(batch.length&&bytes+size>550000)break;
       batch.push(item);bytes+=size;
     }
     if(!batch.length)break;
-    const response=await call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})});
+    let response;
+    try{
+      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})}));
+    }catch(e){
+      if(ehSobrecarga(e)&&lote>1){
+        // Ainda ocupada: manda menos por vez na próxima rodada em vez de desistir.
+        lote=Math.max(1,Math.floor(lote/2));
+        persist();
+        return sent;
+      }
+      throw e;
+    }
+    if(lote<PUSH_BATCH)lote=Math.min(PUSH_BATCH,lote+1);
     const remove=new Set();
     for(const result of (response.results||[])){
       const item=batch[result.index];if(!item)continue;
@@ -292,6 +334,7 @@ async function pushOutbox(){
     }
     outbox=outbox.filter(x=>!remove.has(x.mutation.mutationId));persist();
     if(!remove.size)break;
+    if(outbox.length)await dormir(180);
   }
   return sent;
 }
@@ -351,7 +394,14 @@ async function tick(reason){
     // Só consulta novamente quando este PC realmente enviou algo. Em repouso,
     // cada ciclo custa uma única consulta incremental, não duas.
     if(totalSent>0)await pullAll();
-    failures=0;lastError='';state.lastOk=Date.now();persist();indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    failures=0;lastError='';state.lastOk=Date.now();persist();
+    if(outbox.length){
+      // Remessa grande: mostra o quanto falta e volta logo para continuar, em vez
+      // de esperar o próximo ciclo normal de vários minutos.
+      indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
+      busy=false;schedule(3000);return true;
+    }
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
@@ -359,7 +409,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{busy=false;scheduleHeartbeat();}
+  }finally{if(busy){busy=false;scheduleHeartbeat();}}
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
 function scheduleHeartbeat(){
@@ -450,7 +500,13 @@ async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
   const synced=await tick('publicacao-manual-completa');
-  if(!synced){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error(lastError||'Não foi possível enviar. A sincronização continua parada.');}
+  // Remessa grande não cabe numa tacada só, e a nuvem pode pedir calma no meio.
+  // A escolha já foi feita: a sincronização FICA LIGADA e o resto sobe sozinho
+  // em segundo plano. Voltar a pausar aqui era o que fazia tudo parar num 503.
+  if(!synced){
+    if(!authorized()){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error('Este computador perdeu a autorização da nuvem.');}
+    schedule(4000);
+  }
   return true;
 }
 // Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais

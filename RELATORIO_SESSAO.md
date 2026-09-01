@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.69**  
+**Última versão:** **v5.22.70**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.69>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.70>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,33 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.70 — "envio pendente / erro HTTP 503"
+
+**O que era:** ao clicar em *Enviar os dados deste PC*, a primeira remessa
+(agora com TODAS as listas do sistema) manda milhares de registros em rajada.
+A nuvem da Cloudflare responde **503** quando está sobrecarregada — é um "espere
+um pouco", não um erro de dados. O código tratava qualquer falha do mesmo jeito:
+abortava o envio inteiro, mostrava *Envio pendente* e **voltava a pausar** a
+sincronização. Resultado: parava tudo no primeiro soluço da nuvem.
+
+**O que foi feito** (`cloudflare_data_sync_patch.js`, `cloudflare_sync_patch.js`):
+
+- `comPaciencia()`: 429/500/502/503/504 e queda de conexão agora são "nuvem
+  ocupada". Tenta de novo sozinho em 0,9s → 2,5s → 6s → 12s, avisando no ícone.
+- **Lote elástico**: manda 10 por vez; se a nuvem reclamar, cai para 5, 2, 1 e
+  volta a crescer quando ela aceita de novo.
+- **Respiro de 180ms entre lotes**, para não afogar o D1 nem o PC fraco.
+- **A escolha não se desfaz mais**: remessa grande não cabe numa tacada só, então
+  a sincronização fica LIGADA e o resto sobe em segundo plano, recomeçando de
+  onde parou. Só volta a pausar se o PC perder a autorização.
+- **Mostra o progresso**: ícone e painel exibem "faltam N registros", e o painel
+  diz que pode fechar a janela e continuar trabalhando.
+- A fila fica gravada em disco: fechar o programa no meio não perde nada.
+
+Teste: `test_ajustes_v52270.js`. Suíte: **124 passaram / 0 falharam**.
 
 ---
 

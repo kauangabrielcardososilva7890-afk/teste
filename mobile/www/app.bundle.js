@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: c9eb2ac33c9bed53
+ * scripts: 190 | sha256: 516f2e4a0ac0bd8c
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28741,7 +28741,8 @@ async function renderConnected(body){
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
     ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
-    :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
+    :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
@@ -28756,7 +28757,7 @@ async function renderConnected(body){
       const ok=await window.confirmSistema('Enviar agora os dados deste computador para a nuvem?','Enviar dados deste PC');if(!ok)return;
       setBusy(btn,true,'Enviando...');
       try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();}
-      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Envio pendente');}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Nuvem');}
       await renderConnected(body);
     };
     body.querySelector('#dc-nao-enviar').onclick=async()=>{
@@ -29077,7 +29078,7 @@ async function pullAll(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
   do{
-    const data=await call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'});
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
@@ -29091,6 +29092,33 @@ async function pullAll(){
   }
   persist();
   return changed;
+}
+
+// A nuvem (Cloudflare/D1) responde 503, 502 ou 429 quando está sobrecarregada
+// ou quando recebe muita escrita de uma vez — típico da primeira remessa grande.
+// Não é erro de dados: é "espere um pouco e mande de novo". Antes qualquer 503
+// abortava o envio inteiro e aparecia "Envio pendente" na cara da pessoa.
+const ESPERAS=[900,2500,6000,12000];
+function ehSobrecarga(erro){
+  const st=Number(erro&&erro.status)||0;
+  if(st===429||st===500||st===502||st===503||st===504)return true;
+  const txt=(erro&&erro.message||'').toLowerCase();
+  return txt.indexOf('sem conexão')>=0||txt.indexOf('network')>=0||txt.indexOf('failed to fetch')>=0;
+}
+function dormir(ms){return new Promise(r=>setTimeout(r,ms));}
+async function comPaciencia(fn){
+  let ultimo=null;
+  for(let tentativa=0;tentativa<=ESPERAS.length;tentativa++){
+    try{return await fn();}
+    catch(e){
+      ultimo=e;
+      if(!ehSobrecarga(e)||tentativa===ESPERAS.length)throw e;
+      lastError='A nuvem está ocupada. Tentando de novo em '+Math.round(ESPERAS[tentativa]/1000)+'s...';
+      indicator(false,lastError);
+      await dormir(ESPERAS[tentativa]);
+    }
+  }
+  throw ultimo;
 }
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
@@ -29127,18 +29155,33 @@ function rememberConflict(item,result){
     localStorage.setItem(CONFLICT_KEY,JSON.stringify(list.slice(0,20)));
   }catch(e){}
 }
+// Tamanho do lote em uso. Cai pela metade quando a nuvem reclama e volta a
+// crescer sozinho quando ela aceita — o PC nunca fica travado nem afoga o D1.
+let lote=PUSH_BATCH;
 async function pushOutbox(){
   const call=api();if(!call||!outbox.length)return 0;
   let sent=0;
   while(outbox.length){
     const batch=[];let bytes=0;
-    for(const item of outbox.slice(0,PUSH_BATCH)){
+    for(const item of outbox.slice(0,Math.max(1,lote))){
       const size=stable(item.mutation).length;
       if(batch.length&&bytes+size>550000)break;
       batch.push(item);bytes+=size;
     }
     if(!batch.length)break;
-    const response=await call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})});
+    let response;
+    try{
+      response=await comPaciencia(()=>call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:batch.map(x=>x.mutation)})}));
+    }catch(e){
+      if(ehSobrecarga(e)&&lote>1){
+        // Ainda ocupada: manda menos por vez na próxima rodada em vez de desistir.
+        lote=Math.max(1,Math.floor(lote/2));
+        persist();
+        return sent;
+      }
+      throw e;
+    }
+    if(lote<PUSH_BATCH)lote=Math.min(PUSH_BATCH,lote+1);
     const remove=new Set();
     for(const result of (response.results||[])){
       const item=batch[result.index];if(!item)continue;
@@ -29157,6 +29200,7 @@ async function pushOutbox(){
     }
     outbox=outbox.filter(x=>!remove.has(x.mutation.mutationId));persist();
     if(!remove.size)break;
+    if(outbox.length)await dormir(180);
   }
   return sent;
 }
@@ -29216,7 +29260,14 @@ async function tick(reason){
     // Só consulta novamente quando este PC realmente enviou algo. Em repouso,
     // cada ciclo custa uma única consulta incremental, não duas.
     if(totalSent>0)await pullAll();
-    failures=0;lastError='';state.lastOk=Date.now();persist();indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    failures=0;lastError='';state.lastOk=Date.now();persist();
+    if(outbox.length){
+      // Remessa grande: mostra o quanto falta e volta logo para continuar, em vez
+      // de esperar o próximo ciclo normal de vários minutos.
+      indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
+      busy=false;schedule(3000);return true;
+    }
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
@@ -29224,7 +29275,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{busy=false;scheduleHeartbeat();}
+  }finally{if(busy){busy=false;scheduleHeartbeat();}}
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
 function scheduleHeartbeat(){
@@ -29315,7 +29366,13 @@ async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
   const synced=await tick('publicacao-manual-completa');
-  if(!synced){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error(lastError||'Não foi possível enviar. A sincronização continua parada.');}
+  // Remessa grande não cabe numa tacada só, e a nuvem pode pedir calma no meio.
+  // A escolha já foi feita: a sincronização FICA LIGADA e o resto sobe sozinho
+  // em segundo plano. Voltar a pausar aqui era o que fazia tudo parar num 503.
+  if(!synced){
+    if(!authorized()){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error('Este computador perdeu a autorização da nuvem.');}
+    schedule(4000);
+  }
   return true;
 }
 // Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais

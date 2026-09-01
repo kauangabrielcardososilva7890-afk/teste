@@ -167,7 +167,8 @@ async function renderConnected(body){
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
     ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
-    :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
+    :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
@@ -182,7 +183,7 @@ async function renderConnected(body){
       const ok=await window.confirmSistema('Enviar agora os dados deste computador para a nuvem?','Enviar dados deste PC');if(!ok)return;
       setBusy(btn,true,'Enviando...');
       try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();}
-      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Envio pendente');}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Nuvem');}
       await renderConnected(body);
     };
     body.querySelector('#dc-nao-enviar').onclick=async()=>{
