@@ -224,14 +224,14 @@ async function renderConnected(body){
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
       const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
       if(!ok1)return;
-      const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização pausada. Depois clique em Publicar este PC. Confirma?','Confirmar zerar nuvem');
+      const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização parada. Depois o sistema pergunta se você quer enviar os dados deste PC. Confirma?','Confirmar zerar nuvem');
       if(!ok2)return;
       const btn=body.querySelector('#dc-reset-cloud');
       setBusy(btn,true,'Zerando...');
       try{
         if(!window.DIGICOPY_CLOUD_SYNC||typeof window.DIGICOPY_CLOUD_SYNC.resetCloudOnly!=='function')throw new Error('Motor de sincronização não carregado.');
         await window.DIGICOPY_CLOUD_SYNC.resetCloudOnly();
-        if(typeof window.lfbAlert==='function')window.lfbAlert('Nuvem vazia. Agora clique em Publicar este PC na nuvem.','Nuvem zerada');
+        if(typeof window.lfbAlert==='function')window.lfbAlert('Nuvem vazia. Agora escolha se quer enviar os dados deste PC.','Nuvem zerada');
         await renderConnected(body);
       }catch(e){
         if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não foi possível zerar');

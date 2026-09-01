@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.63**  
+**Última versão:** **v5.22.68**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.63>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.68>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,32 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.68 — relatório do usuário, 9 itens
+
+Fechados pelo usuário na rodada anterior: 1.1, 1.2, 2.2, 4.1.
+
+| # | Pedido | O que foi feito | Arquivo |
+|---|---|---|---|
+| 1.3 | A faixa azul de cima passava da borda | A barra de módulos ganhou rolagem lateral própria (`.digi-row-rola`) e o menu que abre virou `position:fixed`, colado no botão, para não ser cortado pela rolagem | `menus_tela_pequena_patch.js` |
+| 1.4 | Técnicos de demonstração voltavam sozinhos | O seed não cria mais técnico nenhum e o `seedData` limpa Carlos Mendes / Ana Souza / Rafael Lima quando id, nome e especialidade batem com o demo | `app.js` |
+| 2.1 | Impressão da OS não pode ser bloqueada | Caiu a trava de técnico no salvar e a trava "só imprime depois de faturar". Campo vazio sai em branco no papel; o aviso do técnico virou dica | `ajustes_v52237_vendas_os_visual_patch.js`, `ajustes_v52218_pix_prazo_print_venda_patch.js` |
+| 2.3 | Financeiro só mostrava vencimento | A listagem mostra "Vence" e "Criado". Título antigo sem data pega a data da venda/leitura de origem | `app.js`, `vendas_financeiro_pendente_patch.js` |
+| 2.4 | Botões repetidos na barra | Ficaram "Imprimir" e "Conferir NF-e". Saíram o "Imprimir/PDF" e o "Pré-visualizar NF-e" do modal | `ajustes_v52218_...`, `ajustes_v5229_nfe_atalho_historico_patch.js` |
+| 2.5 | Venda só salva não imprimia | O botão Imprimir fica sempre visível e funciona sem faturar | `ajustes_v52218_pix_prazo_print_venda_patch.js` |
+| 2.6 | Aviso "deseja salvar?" ao faturar e ao sair | A pergunta acabou; ao sair, o sistema grava sozinho quando há cliente | `vendas_notinhas_fix_patch.js` |
+| 3.1 | Filtro Cidade apagava o texto digitado | A busca repõe o texto depois que a lista é redesenhada | `ajustes_v52237_contratos_filtros_patch.js` |
+| 5.1 | Nuvem duplicando / bloqueios na tela | Na primeira conexão do PC aparece **uma escolha de duas opções**: *Enviar os dados deste PC para a nuvem* ou *Não enviar os dados atuais*. Qualquer uma destrava a sincronização; escolhendo "não enviar", os dados atuais ficam só aqui e tudo o que vier depois sincroniza. Os avisos "Confirmar exclusões de X (N)" sumiram da tela | `cloudflare_data_sync_patch.js`, `cloudflare_sync_patch.js` |
+
+Testes: `test_ajustes_v52268.js` (novo, registrado no `test_runner.js`). Ajustados os
+testes que cobriam as regras antigas: `test_cloudflare_sync.js`, `test_cloudflare_data_sync.js`,
+`test_ajustes_v5226.js`, `test_ajustes_v52218.js`, `test_ajustes_v52267.js`.
+Suíte: **122 passaram / 0 falharam**. Bundle: 190 scripts.
+
+> Para rodar `npm install` aqui: use `npm install --ignore-scripts` (o postinstall
+> do electron não consegue baixar o binário no sandbox e derruba a instalação inteira).
 
 ---
 

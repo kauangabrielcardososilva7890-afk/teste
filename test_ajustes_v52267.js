@@ -256,8 +256,8 @@ console.log('== RELATÓRIO v5.22.67 ==');
 }
 
 // ── versão ─────────────────────────────────────────────────────────────────
-ok('versão subiu para 5.22.67', pkg.version === '5.22.67');
-ok('index.html está na mesma versão', ler('index.html').indexOf("'5.22.67'") >= 0);
+ok('versão continua na família 5.22', /^5\.22\.\d+/.test(pkg.version));
+ok('index.html está na mesma versão do package', ler('index.html').indexOf("'" + pkg.version + "'") >= 0);
 
 console.log(falhas === 0
   ? '\nRESULTADO: relatório v5.22.67 passou!'

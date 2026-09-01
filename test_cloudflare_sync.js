@@ -18,11 +18,11 @@ ok('exportação também valida Admin',/Somente o administrador pode exportar/.t
 ok('painel compara clientes locais e nuvem',/CLIENTES NESTE PC/.test(code)&&/CLIENTES NA NUVEM/.test(code));
 ok('admin mantém somente aparelhos e excluídos',/dc-list-deleted/.test(code)&&/dc-list-devices/.test(code));
 ok('ferramentas temporárias saíram da interface',!/dc-dedupe-clients|dc-review-blocked|dc-clear-tests/.test(code));
-ok('admin pode zerar a nuvem e depois publicar este PC',/dc-reset-cloud/.test(code)&&/resetCloudOnly/.test(code)&&/Publicar este PC na nuvem/.test(code));
+ok('admin pode zerar a nuvem e depois escolher o que enviar',/dc-reset-cloud/.test(code)&&/resetCloudOnly/.test(code)&&/dc-enviar-locais/.test(code));
 ok('aparelhos mostram registros, alterações e último acesso',/activeRecords/.test(code)&&/totalChanges/.test(code)&&/Último acesso/.test(code));
-ok('publicação manual continua disponível quando pausada',/Publicar este PC na nuvem/.test(code));
-ok('não publica por cima da nuvem cheia',/Zere a nuvem primeiro/.test(code));
-ok('explica sobra local sem enviar',/não duplicar/.test(code));
+ok('escolha aparece quando a sincronização está parada',/const escolher=!!sync\.paused/.test(code));
+ok('nada sobe sem a pessoa escolher',/dc-enviar-locais/.test(code)&&/dc-nao-enviar/.test(code));
+ok('explica que não duplica',/não duplicar/.test(code));
 ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
 ok('novo painel está no bundle',manifest.includes('cloudflare_sync_patch.js'));
 ok('Firebase automático apagado',!fs.existsSync('sync_realtime_patch.js'));

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: e731fdc8a16c23ef
+ * scripts: 190 | sha256: e9c4659d3061751b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -265,7 +265,7 @@ const defaultData={
   usuarios:[],
   clientes:[], produtos:[], recargas:[], equipamentos:[], contratos:[], parque:[], leituras:[], os:[], vendas:[], orcamentos:[], contasReceber:[], contasPagar:[], logs:[],
   modulosDinamicos:{}, // Armazena dados de tabelas sem mapeamento direto
-  tecnicos:[{id:'t1',nome:'Carlos Mendes',especialidade:'Laser Mono',osConcluidas:87},{id:'t2',nome:'Ana Souza',especialidade:'Color',osConcluidas:62},{id:'t3',nome:'Rafael Lima',especialidade:'Grande formato',osConcluidas:44}],
+  tecnicos:[], // v5.22.68: sem técnico de demonstração. Ver TECNICOS_DEMO.
   config:{empresa:{nome:'DIGICOPY Cartuchos e Impressoras',cnpj:'',fone:'',email:''}}
 };
 
@@ -294,12 +294,28 @@ function storageDecode(raw){
   }
   return raw;
 }
+// Técnicos que o sistema criava sozinho nas versões antigas.
+const TECNICOS_DEMO = [
+  {id:'t1', nome:'Carlos Mendes', especialidade:'Laser Mono'},
+  {id:'t2', nome:'Ana Souza',     especialidade:'Color'},
+  {id:'t3', nome:'Rafael Lima',   especialidade:'Grande formato'}
+];
+function ehTecnicoDemo(t){
+  if(!t) return false;
+  return TECNICOS_DEMO.some(d =>
+    d.id === t.id &&
+    d.nome === String(t.nome||'').trim() &&
+    d.especialidade === String(t.especialidade||'').trim());
+}
+window.ehTecnicoDemo = ehTecnicoDemo;
+window.TECNICOS_DEMO = TECNICOS_DEMO;
+
 function normalizeDbShape(parsed){
   ['empresas','usuarios','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'].forEach(k=>{
     if(!Array.isArray(parsed[k])) parsed[k]=[];
   });
   if(!parsed.modulosDinamicos || typeof parsed.modulosDinamicos !== 'object') parsed.modulosDinamicos = {};
-  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=structuredClone(defaultData.tecnicos);
+  if(!Array.isArray(parsed.tecnicos)) parsed.tecnicos=[];
   if(!parsed.config) parsed.config=structuredClone(defaultData.config);
   if(!parsed.config.empresa) parsed.config.empresa=structuredClone(defaultData.config.empresa);
   parsed.meta={...(parsed.meta||{}), appVersion:APP_VERSION, migradoEm:new Date().toISOString()};
@@ -577,6 +593,16 @@ function seedData(force=false){
   ];
   const demoLogins = ['admin','carlos','ana','financeiro'];
   const demoIds = ['usr_admin'];
+
+  // Técnicos que vinham de fábrica e voltavam sozinhos toda vez que a lista
+  // ficava vazia. Some SÓ o registro de demonstração (id t1/t2/t3 com o nome e
+  // a especialidade originais). Cadastrar um técnico com o mesmo nome pela
+  // tela continua permitido — não virou regra, só parou de voltar.
+  db.tecnicos = (db.tecnicos||[]).filter(t=>{
+    if(!t) return false;
+    if(ehTecnicoDemo(t)){ mudou = true; return false; }
+    return true;
+  });
 
   // Remove usuários de demonstração (de versões antigas).
   // v5.20.24 — NUNCA apaga usuário cadastrado pela tela: só remove demo de verdade
@@ -1138,7 +1164,7 @@ function initTemplates(){
 
   document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><button onclick="novaVenda()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova venda / Orçamento</button><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
-  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Venc / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
+  document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
@@ -1464,10 +1490,27 @@ function renderVendas(){
 }
 function showVenda(id){const v=db.vendas.find(x=>x.id===id); if(!v) return; const cli=db.clientes.find(c=>c.id===v.clienteId); const isPix=v.formaPagamento&&/pix/i.test(v.formaPagamento); let botoes=''; if(v.status==='orcamento'||v.status==='aprovado'){botoes=`<button onclick="faturarVenda('${v.id}')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13px]">Faturar venda</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='faturado'){botoes=`<button onclick="estornarVenda('${v.id}')" class="h-11 rounded-xl bg-amber-500 text-white font-semibold text-[13px]">Estornar</button><button onclick="toast('PDF','info')" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Imprimir</button>`;}else if(v.status==='estornada'){botoes=`<span class="text-[13px] text-amber-700 font-bold col-span-2 text-center py-2">Venda estornada</span>`;} const pixHtml=isPix?'<div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800">WhatsApp QR Code: +55 38 99109-8698</div>':''; document.getElementById('venda-detail').innerHTML=`<div class="flex justify-between"><div><p class="font-mono text-[11px] font-bold text-[#0a1e8a]">${v.numero}</p><h3 class="font-bold text-[16px] mt-1">${cli?.nome}</h3><p class="text-[12px] text-slate-500">por ${v.criadoPorNome||'-'} \u2022 ${fmtDateTime(v.data)} \u2022 ${v.formaPagamento}</p></div><span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase border bg-slate-50">${v.status}</span></div>${pixHtml}<div class="mt-6 space-y-2">${v.itens.map(it=>{const p=db.produtos.find(pr=>pr.id===it.produtoId); return `<div class="flex justify-between items-center p-3 rounded-xl border bg-slate-50/70"><div><p class="font-semibold text-[13px]">${p?.nome||it.descricao||'Produto removido'}</p><p class="text-[11px] text-slate-500">${it.qtd} x ${fmtMoney(it.preco)}</p></div><b class="text-[13px]">${fmtMoney(it.subtotal)}</b></div>`}).join('')}</div><div class="mt-6 border-t pt-4 space-y-2 text-[13px]"><div class="flex justify-between font-bold text-[16px] pt-2 border-t"><span>Total</span><span>${fmtMoney(v.total)}</span></div><p class="text-[11px] text-slate-500">Criado por ${v.criadoPorNome||'-'} em ${fmtDateTime(v.data||v.criadoEm)}</p></div><div class="mt-6 grid grid-cols-2 gap-2">${botoes}</div>`;}
 
-function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:v.clienteId,descricao:`Venda ${v.numero}`,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
+function faturarVenda(id){const sess=getSession(); const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!v) return; if(v.status==='faturado') return toast('Já faturado','error'); v.status='faturado'; db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',criadoEm:new Date().toISOString(),clienteId:v.clienteId,descricao:`Venda ${v.numero}`,valor:v.total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:v.id, criadoPor:sess.usuarioId, criadoPorNome:sess.usuarioNome}); logAction('venda','faturar',id,`Faturada venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderFinanceiro(); showVenda(id); renderAuditoria(); toast('Venda faturada','success');}
 function deleteVenda(id){const sess=getSession(); if(confirm('Excluir venda? Estoque estornado.')){const v=db.vendas.find(x=>x.id===id && x.empresaId===sess.empresaId); if(v){v.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId); if(p) p.estoque+=it.qtd;}); db.vendas=db.vendas.filter(x=>!(x.id===id && x.empresaId===sess.empresaId)); logAction('venda','excluir',id,`Excluída venda ${v.numero} por ${sess.usuarioNome}`); saveDB(); renderVendas(); renderProdutos(); document.getElementById('venda-detail').innerHTML='<div class="text-center py-20 text-slate-400 text-[13px]">Venda excluída</div>'; toast('Venda excluída','success'); renderAuditoria();}}}
 
 function setFinTab(tab){document.querySelectorAll('.fin-tab').forEach(b=>{b.classList.remove('bg-[#0a1e8a]','text-white'); b.classList.add('bg-white','border','border-slate-200');}); document.querySelector(`[data-fintab="${tab}"]`).classList.add('bg-[#0a1e8a]','text-white'); document.querySelector(`[data-fintab="${tab}"]`).classList.remove('bg-white','border'); document.querySelectorAll('.fin-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('fin-'+tab).classList.remove('hidden'); if(tab==='visao') renderFluxoChart();}
+// Data em que o título nasceu. Títulos antigos não gravavam `criadoEm`, então
+// o sistema volta na origem (venda/leitura) para não mostrar traço na tela.
+function dataCriacaoCR(cr){
+  if(!cr) return '';
+  if(cr.criadoEm) return cr.criadoEm;
+  if(cr.vendaId){
+    const v=(db.vendas||[]).find(x=>x.id===cr.vendaId);
+    if(v && (v.data||v.criadoEm)) return v.data||v.criadoEm;
+  }
+  if(cr.leituraId){
+    const l=(db.leituras||[]).find(x=>x.id===cr.leituraId);
+    if(l && (l.dataLeitura||l.criadoEm)) return l.dataLeitura||l.criadoEm;
+  }
+  return cr.vencimento||'';
+}
+window.dataCriacaoCR = dataCriacaoCR;
+
 function renderFinanceiro(){
   const sess=getSession(); if(!sess) return;
   const totalReceberMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth() && new Date(cr.vencimento).getFullYear()===new Date().getFullYear()).reduce((s,c)=>s+c.valor,0);
@@ -1494,7 +1537,7 @@ function renderFinanceiro(){
     if(cr.contratoId) return "navigateTo('contratos')";
     return '';
   }
-  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3"><input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()"></td><td class="px-5 py-3"><p class="text-[12px] font-semibold">'+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
+  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3"><input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()"></td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
   const dreRows=[{label:'Receita Bruta - Locações', valor: db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0)*1.1},{label:'Receita - Excedentes', valor: db.leituras.filter(l=>l.empresaId===sess.empresaId).reduce((s,l)=>s+l.valorExcedente,0)},{label:'Receita - Vendas', valor: db.vendas.filter(v=>v.empresaId===sess.empresaId).reduce((s,v)=>s+v.total,0)},{label:'(=) Lucro Bruto', valor: 0, isTotal:true}];
   dreRows[3].valor=dreRows[0].valor+dreRows[1].valor+dreRows[2].valor;
   const dreEl=document.getElementById('dre-table'); if(dreEl) dreEl.innerHTML=dreRows.map(r=>'<div class="flex justify-between py-2 px-3 rounded-xl '+(r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50')+' text-[13px]"><span>'+r.label+'</span><span class="'+(r.isTotal?'text-white':'')+'">'+fmtMoney(r.valor)+'</span></div>').join('');
@@ -20385,7 +20428,7 @@ try{
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
-// 4. Sair sem salvar pergunta "Deseja salvar esta venda?": Não devolve estoque/descarta; Sim salva
+// 4. Sair da venda nao pergunta mais nada (v5.22.68): o closeModal grava sozinho
 // 5. Estoque exato em tempo real: lixeira devolve item no estoque na hora
 // 6. Botão ÚNICO "Excluir" na lista que atua em seleção múltipla ou item único; proíbe faturadas
 // 7. Meia folha A4 em 135mm estrita sem pular folha (IMAGEM correção 3)
@@ -20843,52 +20886,11 @@ try{
     window.__vosItensAdicionadosTemp = [];
   }
 
-  function cancelarSairVenda() {
-    devolverReservaTemporaria();
-    if (!vendaJaExisteNoBanco()) {
-      if (window.__vosForm && window.__vosForm.vendaId) {
-        const idNaoSalva = window.__vosForm.vendaId;
-        db.vendas = (db.vendas || []).filter(x => x.id !== idNaoSalva);
-      }
-    }
-    window.__vosForm = null;
-    window.__vosDirty = false;
-    if (typeof saveDB === 'function') saveDB();
-    if (typeof renderProdutos === 'function') renderProdutos();
-    if (typeof renderVendas === 'function') renderVendas();
-  }
-
+  // v5.22.68 — acabou o "Deseja salvar esta venda?". Faturar e sair não
+  // perguntam mais nada: o closeModal já grava sozinho quando há cliente
+  // (ajustes_v52241), então o aviso só repetia trabalho.
   function perguntarSairVenda(depoisFechar) {
-    if (window.__vosSaindoVenda) return;
-    if (!telaVendaAberta() || !window.__vosForm) {
-      depoisFechar();
-      return;
-    }
-    const temCliente = !!(window.__vosForm.cliente || window.__vosForm.clienteId);
-    const temItem = (window.__vosForm.itens || []).length > 0;
-    const precisaAviso = window.__vosDirty || temCliente || temItem;
-    if (!precisaAviso) {
-      depoisFechar();
-      return;
-    }
-    window.__vosSaindoVenda = true;
-    const msg = 'Deseja salvar esta venda?';
-    const fechar = () => {
-      window.__vosSaindoVenda = false;
-      depoisFechar();
-    };
-    if (typeof window.confirmSistema === 'function') {
-      window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
-        if (salvar) {
-          if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-        } else {
-          cancelarSairVenda();
-        }
-        fechar();
-      });
-      return;
-    }
-    fechar();
+    depoisFechar();
   }
 
   const _origCloseModalEst = window.closeModal;
@@ -28734,40 +28736,43 @@ async function renderConnected(body){
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
-  const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado',blockedDeletes:{}};
-  const blocked=Object.keys(sync.blockedDeletes||{});
+  const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
+  const escolher=!!sync.paused;
   const held=Number(sync.heldLocalOnly)||0;
-  const syncMessage=sync.paused?(sync.pauseReason==='sobra-local-nao-enviar'
-    ?('Este PC tem '+(held||'alguns')+' registros locais que a nuvem não tem. Não enviei sozinho para não duplicar. Para lançar este PC: Zerar dados da nuvem e depois Publicar este PC.')
-    :'Nuvem vazia e sincronização PAUSADA. Nada será enviado automaticamente até você publicar este PC.'):(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
-  const blockedHtml=blocked.length?'<div style="margin:12px 0">'+message('Proteção ativada: uma exclusão grande foi bloqueada. Confirme somente se você realmente apagou esses dados.','error')+blocked.map(entity=>'<button class="dc-approve-delete" data-entity="'+esc(entity)+'" style="margin:7px 7px 0 0;padding:8px 11px;border-radius:9px;background:#b91c1c;color:white;font-weight:800">Confirmar exclusões de '+esc(entity)+' ('+sync.blockedDeletes[entity].length+')</button>').join('')+'</div>':'';
+  const syncMessage=escolher
+    ?('Primeira conexão deste computador. Para não duplicar nada, escolha o que fazer com os '+(held||'dados')+' registros que já existem aqui. Depois da escolha a nuvem sincroniza sozinha, sempre.')
+    :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
-    '<div style="display:flex;gap:8px;margin-bottom:14px">'+button(sync.paused?'Publicar este PC na nuvem':'Sincronizar agora','dc-sync-now',true)+'</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
+      ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
+      :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
-  body.querySelector('#dc-sync-now').onclick=async()=>{
+  if(escolher){
+    body.querySelector('#dc-enviar-locais').onclick=async()=>{
+      const btn=body.querySelector('#dc-enviar-locais');
+      const ok=await window.confirmSistema('Enviar agora os dados deste computador para a nuvem?','Enviar dados deste PC');if(!ok)return;
+      setBusy(btn,true,'Enviando...');
+      try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Envio pendente');}
+      await renderConnected(body);
+    };
+    body.querySelector('#dc-nao-enviar').onclick=async()=>{
+      const btn=body.querySelector('#dc-nao-enviar');
+      const ok=await window.confirmSistema('Os dados que já existem neste computador ficam só aqui e não vão para a nuvem. Tudo o que for feito daqui para frente sincroniza normalmente. Confirma?','Não enviar os dados atuais');if(!ok)return;
+      setBusy(btn,true,'Aplicando...');
+      try{await window.DIGICOPY_CLOUD_SYNC.manterLocalSemEnviar();}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Não consegui aplicar');}
+      await renderConnected(body);
+    };
+  } else body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');
-    if(sync.paused){
-      if(cloudClients>0){
-        if(typeof window.lfbAlert==='function')window.lfbAlert('A nuvem já tem dados. Zere a nuvem primeiro e só então clique em Publicar este PC. Assim não duplica.','Não publiquei');
-        return;
-      }
-      const ok=await window.confirmSistema('Publicar agora todos os dados deste PC na nuvem vazia?','Publicar este PC');if(!ok)return;
-      setBusy(btn,true,'Publicando...');
-      try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();await renderConnected(body);}catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Publicação pendente');await renderConnected(body);}
-      return;
-    }
     setBusy(btn,true,'Sincronizando...');
     try{if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('manual');await renderConnected(body);}
     catch(e){setBusy(btn,false);}
   };
-  body.querySelectorAll('.dc-approve-delete').forEach(btn=>btn.onclick=async()=>{
-    const entity=btn.dataset.entity;
-    const ok=typeof window.confirmSistema==='function'?await window.confirmSistema('Você realmente excluiu estes registros de '+entity+'? Eles ficarão recuperáveis na nuvem.','Confirmar exclusão em massa'):false;
-    if(ok&&window.DIGICOPY_CLOUD_SYNC){window.DIGICOPY_CLOUD_SYNC.approveMassDelete(entity);await window.DIGICOPY_CLOUD_SYNC.tick('exclusao-aprovada');await renderConnected(body);}
-  });
   if(isAdmin) body.querySelector('#dc-invite').onclick=async()=>{
     const btn=body.querySelector('#dc-invite'),result=body.querySelector('#dc-invite-result'),role=body.querySelector('#dc-role').value;
     setBusy(btn,true,'Gerando...');
@@ -28793,14 +28798,14 @@ async function renderConnected(body){
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
       const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
       if(!ok1)return;
-      const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização pausada. Depois clique em Publicar este PC. Confirma?','Confirmar zerar nuvem');
+      const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização parada. Depois o sistema pergunta se você quer enviar os dados deste PC. Confirma?','Confirmar zerar nuvem');
       if(!ok2)return;
       const btn=body.querySelector('#dc-reset-cloud');
       setBusy(btn,true,'Zerando...');
       try{
         if(!window.DIGICOPY_CLOUD_SYNC||typeof window.DIGICOPY_CLOUD_SYNC.resetCloudOnly!=='function')throw new Error('Motor de sincronização não carregado.');
         await window.DIGICOPY_CLOUD_SYNC.resetCloudOnly();
-        if(typeof window.lfbAlert==='function')window.lfbAlert('Nuvem vazia. Agora clique em Publicar este PC na nuvem.','Nuvem zerada');
+        if(typeof window.lfbAlert==='function')window.lfbAlert('Nuvem vazia. Agora escolha se quer enviar os dados deste PC.','Nuvem zerada');
         await renderConnected(body);
       }catch(e){
         if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não foi possível zerar');
@@ -28870,9 +28875,9 @@ const DEFINITIONS={
 
 function parse(raw,fallback){try{const x=JSON.parse(raw);return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}}
 function loadState(){
-  let s={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:false,lastOk:0,paused:false,heldLocalOnly:[],pauseReason:''};
+  let s={cursor:0,versions:{},hashes:{},known:{},initialPull:false,lastOk:0,paused:false,heldLocalOnly:[],pauseReason:''};
   try{s=Object.assign(s,parse(localStorage.getItem(STATE_KEY),{}));}catch(e){}
-  s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};s.blockedDeletes=s.blockedDeletes||{};
+  s.versions=s.versions||{};s.hashes=s.hashes||{};s.known=s.known||{};
   s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
   s.pauseReason=s.pauseReason||'';
   return s;
@@ -28961,6 +28966,10 @@ function listLocalOnlyKeys(beforeKeys){
   beforeKeys.forEach(k=>{if(!state.known[k])extras.push(k);});
   return extras;
 }
+// v5.22.68 — na PRIMEIRA vez que este PC entra na nuvem, nada sobe sozinho.
+// Se há dados aqui que a nuvem não tem, a sincronização espera uma escolha de
+// duas opções: enviar os dados atuais deste PC, ou não enviar. Qualquer uma
+// das duas destrava a sincronização daí em diante.
 function decideReinstallGuard(opts){
   const activation=opts&&opts.activation;
   const cloudHasData=!!(opts&&opts.cloudHasData);
@@ -28969,11 +28978,8 @@ function decideReinstallGuard(opts){
   if(activation==='invite'){
     return {pause:false,isolate:extraCount>0,hold:false,reason:extraCount?'convidado-isola-local':'convidado-ok'};
   }
-  if(!cloudHasData&&localCount>0){
-    return {pause:true,isolate:false,hold:false,reason:'nuvem-vazia-publicar-manual'};
-  }
-  if(cloudHasData&&extraCount>0){
-    return {pause:true,isolate:false,hold:true,reason:'sobra-local-nao-enviar'};
+  if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
+    return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
   }
   return {pause:false,isolate:false,hold:false,reason:'ok'};
 }
@@ -29021,7 +29027,7 @@ async function pullAll(){
 }
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
-function scanLocal(approvedEntity){
+function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
@@ -29036,10 +29042,6 @@ function scanLocal(approvedEntity){
       pending.add(k);added++;
     }
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
-    const knownCount=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')).length;
-    const mass=missing.length>=10&&knownCount>0&&missing.length/knownCount>.30;
-    if(mass&&approvedEntity!==entity){state.blockedDeletes[entity]=missing.map(k=>k.slice(entity.length+1));continue;}
-    delete state.blockedDeletes[entity];
     for(const k of missing){
       if(outbox.length>=MAX_OUTBOX)break;
       const id=k.slice(entity.length+1);
@@ -29133,9 +29135,7 @@ async function tick(reason){
       state.pauseReason=decision.pause?decision.reason:'';
       if(decision.pause){
         state.paused=true;state.initialPull=true;persist();
-        indicator(false,decision.reason==='nuvem-vazia-publicar-manual'
-          ?'Nuvem vazia • clique em Publicar este PC'
-          :'Sobra local retida • não enviei para não duplicar');
+        indicator(false,'Escolha o que fazer com os dados deste PC');
         return true;
       }
     }
@@ -29234,21 +29234,31 @@ async function resetCloudOnly(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},blockedDeletes:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'nuvem-vazia-publicar-manual',cloudGeneration:result.generation};
+  state={cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation};
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
-  persist();indicator(false,'Nuvem vazia • sincronização pausada');
+  persist();indicator(false,'Escolha o que fazer com os dados deste PC');
   return {result,paused:true};
 }
+// Opção 1 da escolha: enviar os dados atuais deste PC para a nuvem.
+// Cada registro sobe pelo próprio id, então reenviar o mesmo dado atualiza em
+// vez de criar cópia.
 async function publishLocalToCloud(){
-  if(!state.paused)throw new Error('A sincronização não está pausada.');
-  if(Object.keys(state.known).length>0){
-    throw new Error('A nuvem já tem dados. Zere a nuvem primeiro e só então publique este PC, para não duplicar.');
-  }
+  const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;persist();
   const synced=await tick('publicacao-manual-completa');
-  if(!synced){state.paused=true;state.pauseReason='nuvem-vazia-publicar-manual';persist();throw new Error(lastError||'Não foi possível publicar. A nuvem continua pausada.');}
+  if(!synced){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error(lastError||'Não foi possível enviar. A sincronização continua parada.');}
   return true;
+}
+// Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais
+// ficam só neste PC e a nuvem passa a sincronizar normalmente daí em diante.
+async function manterLocalSemEnviar(){
+  const snap=localKeysSnapshot();
+  const extras=planNaoAutorizarLocal([...snap], state.known);
+  state.heldLocalOnly=extras;
+  state.paused=false;state.pauseReason='';state.initialPull=true;persist();
+  await tick('escolha-nao-enviar');
+  return extras.length;
 }
 function planNaoAutorizarLocal(localKeys, known){
   const extras=[];
@@ -29271,7 +29281,6 @@ async function discardLocalKeepCloud(){
     state.versions={};
     state.hashes={};
     state.known={};
-    state.blockedDeletes={};
     persist();
     await pullAll();
     if(!Object.keys(state.known).length){
@@ -29291,10 +29300,6 @@ async function discardLocalKeepCloud(){
     return {removed:Number(removed)||extras.length, extras:extras.length, cloudUntouched:true};
   }finally{busy=false;}
 }
-function approveMassDelete(entity){
-  if(!state.blockedDeletes[entity])return false;
-  scanLocal(entity);schedule(100);return true;
-}
 function pendingEstimate(){
   const pending=pendingKeys();let total=pending.size;
   for(const entity of Object.keys(DEFINITIONS)){
@@ -29304,9 +29309,9 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,blockedDeletes:state.blockedDeletes,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,approveMassDelete,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS};
 
 if(typeof document==='undefined')return;
 try{
@@ -30726,23 +30731,9 @@ function injetarLeituras(){
   marcarLeituras();
 }
 
-function injetarNoModalHistorico(tipo,id){
-  const body=document.getElementById('modal-body');
-  const footer=document.getElementById('modal-footer');
-  if(!id) return;
-  const alvo=footer||body;
-  if(!alvo||alvo.querySelector('#btn-nfe-previa-modal')) return;
-  const b=botao('btn-nfe-previa-modal','Pré-visualizar NF-e',function(ev){
-    if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-    nfePreVisualizar(tipo,id);
-  });
-  if(footer&&footer!==body) footer.insertBefore(b, footer.firstChild);
-  else{
-    const wrap=body&&body.querySelector('.flex.flex-wrap.gap-2');
-    if(wrap) wrap.insertBefore(b, wrap.firstChild);
-    else if(body) body.appendChild(b);
-  }
-}
+// v5.22.68 — o modal não recebe mais o "Pré-visualizar NF-e": ele fazia a
+// mesma coisa que o "Conferir NF-e", que já fica no mesmo rodapé.
+function injetarNoModalHistorico(){ /* botão repetido removido */ }
 
 function wrapRender(nome,depois){
   const orig=window[nome];
@@ -33372,18 +33363,19 @@ if(typeof window.vosEscolherForma==='function' && !window.vosEscolherForma.__v52
   window.vosEscolherForma.__v52218=true;
 }
 
+// v5.22.68 — a regra "só imprime depois de faturar" acabou. A venda apenas
+// salva também imprime, e o botão Imprimir fica sempre visível. O que esta
+// função faz agora é só ligar o botão na venda certa.
 function esconderImprimirAntesDeFaturar(){
   var footer=document.getElementById('modal-footer');
   if(footer && document.getElementById('vos-itens-body')){
     var f=window.__vosForm;
-    var v=f&&f.vendaId&&(db.vendas||[]).find(function(x){ return x.id===f.vendaId; });
-    var ok=ehFaturada(v);
     footer.querySelectorAll('button').forEach(function(b){
       var t=(b.textContent||'').toLowerCase();
       var oc=(b.getAttribute('onclick')||'').toLowerCase();
       if(/imprimir/.test(t) || /imprimirnotinha|vosimprimir/.test(oc)){
-        b.style.display=ok?'':'none';
-        if(ok) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
+        b.style.display='';
+        if(f && f.vendaId) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
       }
     });
   }
@@ -33394,26 +33386,11 @@ function esconderImprimirAntesDeFaturar(){
       if(!/imprimir/.test(t)) return;
       b.onclick=function(){
         var id=window.neoVendaSelecionada;
-        if(!id){ aviso('Selecione uma notinha faturada.','Imprimir'); return; }
-        var v=(db.vendas||[]).find(function(x){ return x.id===id; });
-        if(!ehFaturada(v)){ aviso('Só imprime depois de faturar a venda.','Imprimir'); return; }
+        if(!id){ aviso('Selecione uma notinha.','Imprimir'); return; }
         if(typeof imprimirNotinha==='function') imprimirNotinha(id);
       };
     });
   }
-}
-
-if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52218){
-  var oldImp=window.imprimirNotinha;
-  window.imprimirNotinha=function(vendaId){
-    var v=(db.vendas||[]).find(function(x){ return x.id===vendaId; });
-    if(v && !ehFaturada(v)){
-      aviso('Só imprime depois de faturar a venda.','Imprimir');
-      return;
-    }
-    return oldImp.apply(this, arguments);
-  };
-  window.imprimirNotinha.__v52218=true;
 }
 
 if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
@@ -33425,24 +33402,8 @@ if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
   };
   window.novaVenda.__v52218print=true;
 }
-if(typeof window.lockVendaFaturadaUI==='function' && !window.lockVendaFaturadaUI.__v52218){
-  var oldLock=window.lockVendaFaturadaUI;
-  window.lockVendaFaturadaUI=function(id){
-    var r=oldLock.apply(this, arguments);
-    setTimeout(function(){
-      var footer=document.getElementById('modal-footer'); if(!footer) return;
-      if(footer.querySelector('[data-print-fat]')) return;
-      var b=document.createElement('button');
-      b.setAttribute('data-print-fat','1');
-      b.className='h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2';
-      b.innerHTML='<i class="ph ph-printer"></i> Imprimir/PDF';
-      b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(id); };
-      footer.appendChild(b);
-    }, 40);
-    return r;
-  };
-  window.lockVendaFaturadaUI.__v52218=true;
-}
+// v5.22.68 — não injeta mais um segundo botão "Imprimir/PDF": o rodapé já tem
+// o "Imprimir", e dois botões para a mesma coisa só confundem.
 if(typeof window.renderVendas==='function' && !window.renderVendas.__v52218print){
   var oldRV=window.renderVendas;
   window.renderVendas=function(){
@@ -36407,30 +36368,18 @@ if(typeof window.vosOsRuleHint==='function' && !window.vosOsRuleHint.__v52237){
     var os=window.vosColetarOS();
     if(txt(os.modelo)&&txt(os.numeroSerie)&&(txt(os.patrimonio)||txt(os.contador)) && !txt(os.tecnico)){
       el.className='rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
-      el.innerHTML='<i class="ph ph-warning"></i> Para ordem de serviço, escolha o <b>técnico responsável</b>.';
+      el.innerHTML='<i class="ph ph-info"></i> Dica: escolha o <b>técnico responsável</b> desta ordem de serviço.';
     }
     return r;
   };
   window.vosOsRuleHint.__v52237=true;
 }
 
-function wrapGravar(){
-  if(typeof window.vosGravarVenda!=='function' || window.vosGravarVenda.__v52237) return;
-  var old=window.vosGravarVenda;
-  window.vosGravarVenda=function(){
-    wrapColetar();
-    var os = document.getElementById('vos-aba-os') && typeof window.vosColetarOS==='function' ? window.vosColetarOS() : null;
-    var tem = os && ['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico'].some(function(k){ return txt(os[k]); });
-    if(tem && !txt(os.tecnico)){
-      if(typeof window.lfbAlert==='function') window.lfbAlert('Para ordem de serviço, escolha o técnico responsável.','Ordem de serviço');
-      else if(typeof toast==='function') toast('Escolha o técnico responsável','error');
-      if(typeof window.vosSetAba==='function') window.vosSetAba('os');
-      return null;
-    }
-    return old.apply(this, arguments);
-  };
-  window.vosGravarVenda.__v52237=true;
-}
+// v5.22.68 — o técnico DEIXOU de ser obrigatório. Antes, uma OS com dados e
+// sem técnico travava o Salvar e, por tabela, a impressão. Agora nada trava:
+// o que não estiver preenchido sai em branco no papel. Ficou só o lembrete
+// amarelo na tela (vosOsRuleHint), que avisa sem impedir.
+function wrapGravar(){ /* sem trava */ }
 
 if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52237){
   var oldHtml=window.vosGerarHtmlNotinha;
@@ -36812,9 +36761,17 @@ function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
 }
 
+// v5.22.68 — a busca era redesenhada junto com a lista e voltava vazia,
+// apagando o que a pessoa tinha acabado de digitar. Agora o texto é reposto.
+function reporTexto(){
+  var busca=document.getElementById('search-contratos');
+  if(busca && STATE.q && !busca.value) busca.value=STATE.q;
+}
+
 function injetar(){
   var view=document.getElementById('view-contratos');
   if(!view || view.classList.contains('hidden')) return;
+  reporTexto();
   if(document.getElementById('ctr-filtro-campo')) return;
   var busca=document.getElementById('search-contratos');
   if(!busca) return;
@@ -45807,6 +45764,11 @@ try{
 // ficava inalcançável. Agora, SÓ quando não cabe, o menu ganha rolagem e é
 // puxado para dentro da tela. Se cabe, nada muda — nenhuma barra aparece.
 //
+// v5.22.68: a FAIXA AZUL de cima também. Quando os módulos não cabem na
+// largura da tela, a faixa ganha rolagem lateral em vez de sumir na borda.
+// Rolagem lateral cortaria os menus que descem, então, enquanto a faixa está
+// rolando, o menu aberto é posicionado por cima de tudo.
+//
 // Vale para os menus da faixa azul (.module-menu), sugestões (.neo-suggest)
 // e qualquer lista marcada com data-menu-flutuante.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -45838,8 +45800,25 @@ try{
     return out.precisa ? out : null;
   }
 
+  // A faixa de módulos precisa rolar? (folga de 2px contra arredondamento)
+  function precisaRolar(larguraConteudo, larguraVisivel) {
+    return Number(larguraConteudo || 0) > Number(larguraVisivel || 0) + 2;
+  }
+
+  // Onde colocar o menu que desce, já preso dentro da tela.
+  function posicaoDoMenu(botao, menu, janela, folga) {
+    folga = folga == null ? FOLGA : folga;
+    var left = botao.left;
+    var direita = left + menu.largura;
+    if (direita > janela.largura - folga) left = janela.largura - folga - menu.largura;
+    if (left < folga) left = folga;
+    return { left: Math.round(left), top: Math.round(botao.top + botao.altura + 2) };
+  }
+
   window.MENUS_TELA_PEQUENA_PURE = {
     ajusteNecessario: ajusteNecessario,
+    precisaRolar: precisaRolar,
+    posicaoDoMenu: posicaoDoMenu,
     FOLGA: FOLGA,
     MIN_ALTURA: MIN_ALTURA,
     VERSAO: '5.22.67'
@@ -45848,6 +45827,62 @@ try{
   if (typeof document === 'undefined') return;
 
   var SELETOR = '.module-menu, .neo-suggest, [data-menu-flutuante]';
+
+  // ── faixa azul dos módulos ───────────────────────────────────────────────
+  function css() {
+    if (document.getElementById('digi-menus-tela-pequena')) return;
+    var st = document.createElement('style');
+    st.id = 'digi-menus-tela-pequena';
+    st.textContent =
+      '.module-row.digi-row-rola{overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:thin;scroll-behavior:smooth}' +
+      '.module-row.digi-row-rola::-webkit-scrollbar{height:7px}' +
+      '.module-row.digi-row-rola::-webkit-scrollbar-thumb{background:#c7d2e4;border-radius:6px}' +
+      '.module-row.digi-row-rola::-webkit-scrollbar-track{background:transparent}' +
+      '.module-row.digi-row-rola > *{flex:0 0 auto}' +
+      '.module-row.digi-row-rola .module-menu{position:fixed;top:auto;left:auto;z-index:1200}';
+    document.head.appendChild(st);
+  }
+
+  function faixa() { return document.querySelector('.module-row'); }
+
+  function conferirFaixa() {
+    var row = faixa();
+    if (!row) return false;
+    if (row.classList.contains('digi-row-rola')) {
+      // já rolando: só tira a rolagem se voltar a caber sem ela
+      row.classList.remove('digi-row-rola');
+      if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return true; }
+      return false;
+    }
+    if (precisaRolar(row.scrollWidth, row.clientWidth)) { row.classList.add('digi-row-rola'); return true; }
+    return false;
+  }
+
+  function colarMenuNoBotao(mod) {
+    var row = faixa();
+    if (!row || !row.classList.contains('digi-row-rola')) return;
+    var btn = mod.querySelector(':scope > button');
+    var menu = mod.querySelector('.module-menu');
+    if (!btn || !menu) return;
+    var rb = btn.getBoundingClientRect();
+    var lm = menu.getBoundingClientRect();
+    var pos = posicaoDoMenu(
+      { left: rb.left, top: rb.top, altura: rb.height },
+      { largura: lm.width || 230 },
+      { largura: window.innerWidth, altura: window.innerHeight }
+    );
+    menu.style.left = pos.left + 'px';
+    menu.style.top = pos.top + 'px';
+  }
+
+  document.addEventListener('mouseover', function (ev) {
+    var mod = ev.target && ev.target.closest && ev.target.closest('.module');
+    if (mod) colarMenuNoBotao(mod);
+  }, true);
+  document.addEventListener('click', function (ev) {
+    var mod = ev.target && ev.target.closest && ev.target.closest('.module');
+    if (mod) setTimeout(function () { colarMenuNoBotao(mod); }, 0);
+  }, true);
 
   function visivel(el) {
     if (!el || !el.getBoundingClientRect) return false;
@@ -45898,6 +45933,7 @@ try{
     agendado = true;
     requestAnimationFrame(function () {
       agendado = false;
+      try { css(); conferirFaixa(); } catch (e) {}
       try {
         var menus = document.querySelectorAll(SELETOR);
         for (var i = 0; i < menus.length; i++) ajustar(menus[i]);
@@ -45914,8 +45950,15 @@ try{
   document.addEventListener('keyup', varrer, true);
   window.addEventListener('resize', varrer);
   setTimeout(varrer, 800);
+  setTimeout(varrer, 2500);   // a faixa é montada por outros patches, confere de novo
+  if (typeof MutationObserver === 'function') {
+    try {
+      new MutationObserver(varrer).observe(document.querySelector('.modern-topnav') || document.body,
+        { childList: true, subtree: true });
+    } catch (e) {}
+  }
 
-  console.log('[DIGICOPY] menus se ajustam a telas pequenas');
+  console.log('[DIGICOPY] menus e faixa de módulos se ajustam a telas pequenas');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menus_tela_pequena_patch.js", e); }
@@ -45984,6 +46027,7 @@ try{
       descricao: 'Venda ' + texto(v && v.numero) + ' • aguardando faturamento',
       valor: Number((v && v.total) || 0),
       vencimento: (v && (v.data || v.criadoEm)) || new Date().toISOString(),
+      criadoEm: (v && (v.data || v.criadoEm)) || new Date().toISOString(),
       pagamentoData: null,
       status: 'aberto',
       contratoId: null,
