@@ -9,7 +9,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.71 ==');
-ok('versão subiu para 5.22.71',pkg.version==='5.22.71');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 const mapa=S.definicoes();
 ok('auditoria não viaja mais',mapa.logs===undefined);
 ok('avisos não viajam mais',mapa.notificacoes===undefined);

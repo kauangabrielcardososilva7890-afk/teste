@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: f6b3d9a065838dc1
+ * scripts: 190 | sha256: 05e0fec9e089529d
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28760,7 +28760,10 @@ async function renderConnected(body){
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px"><label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer"><input type="checkbox" id="dc-espelho" '+(sync.espelho?'checked':'')+' style="margin-top:2px"><span><b>Manter este PC igual à nuvem</b><br><small style="color:#64748b">Depois de sincronizar sem nenhum problema, o que sobrar só neste computador é apagado daqui. Todos os PCs mostram a mesma informação, sem lixo e sem duplicata. A nuvem nunca é apagada.</small></span></label></div>'+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
+  const chk=body.querySelector('#dc-espelho');
+  if(chk) chk.onchange=()=>{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ligarEspelho) window.DIGICOPY_CLOUD_SYNC.ligarEspelho(chk.checked); };
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');
@@ -28945,6 +28948,7 @@ function loadState(){
   s.pauseReason=s.pauseReason||'';
   s.regras=s.regras||'';
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
+  s.espelho=(s.espelho===undefined)?true:!!s.espelho;
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -29209,6 +29213,71 @@ function scanLocal(){
   persist();return added;
 }
 
+// ESPELHO DA NUVEM (v5.22.72)
+// Pedido: o PC não deve guardar um monte de dado solto e errado. Depois que a
+// sincronização fecha SEM NENHUM PROBLEMA, o que existe aqui e não existe na
+// nuvem é sobra — sai do PC. Assim todo computador mostra exatamente a mesma
+// informação, sem duplicata e sem lixo.
+//
+// Só roda com o caminho todo limpo, e nunca no escuro:
+//   fila vazia, nenhum erro pendente, nuvem com dados, PC não pausado;
+//   nada que a pessoa mandou "não enviar" é tocado;
+//   sumiço grande demais (mais de 30% de uma lista ou 200 no total) NÃO apaga
+//   nada e vira aviso — é sinal de que algo está errado, não de sobra;
+//   antes da primeira limpeza o sistema grava uma cópia de recuperação.
+function planejarEspelho(){
+  const sobras=[];
+  if(typeof db==='undefined'||!db)return sobras;
+  const held=new Set(state.heldLocalOnly||[]);
+  const MAPA=definicoes();
+  for(const entity of Object.keys(MAPA)){
+    if(NAO_SINCRONIZA.has(entity))continue;
+    const mode=MAPA[entity];
+    if(mode!=='array')continue;
+    const entries=entriesFor(entity,mode);
+    const fora=entries.filter(x=>{const k=key(entity,x.id);return !state.known[k]&&!held.has(k);});
+    if(!fora.length)continue;
+    if(entries.length&&fora.length/entries.length>0.30){
+      lastError='Este PC tem '+fora.length+' registros de '+entity+' que a nuvem não tem. É muita coisa: não apaguei nada.';
+      return [];
+    }
+    fora.forEach(x=>sobras.push({entity,id:x.id}));
+  }
+  if(sobras.length>200){
+    lastError='Este PC tem '+sobras.length+' registros que a nuvem não tem. É muita coisa: não apaguei nada.';
+    return [];
+  }
+  return sobras;
+}
+async function espelharNuvem(){
+  if(state.espelho===false)return 0;
+  if(state.paused||outbox.length||lastError)return 0;
+  if(!state.initialPull||!Object.keys(state.known).length)return 0;
+  const sobras=planejarEspelho();
+  if(!sobras.length)return 0;
+  if(!state.espelhoAvisado&&window.DIGICOPY_INDEXED_DB){
+    await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_espelhar_nuvem',db);
+    state.espelhoAvisado=true;
+  }
+  const porLista={};
+  sobras.forEach(x=>{(porLista[x.entity]=porLista[x.entity]||new Set()).add(String(x.id));});
+  let apagados=0;
+  for(const entity of Object.keys(porLista)){
+    if(!Array.isArray(db[entity]))continue;
+    const alvo=porLista[entity];
+    const antes=db[entity].length;
+    db[entity]=db[entity].filter(item=>!(item&&item.id&&alvo.has(String(item.id))));
+    apagados+=antes-db[entity].length;
+  }
+  if(apagados){
+    applying=true;
+    try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}
+    finally{applying=false;}
+    persist();
+  }
+  return apagados;
+}
+
 function rememberConflict(item,result){
   try{
     let list=JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');if(!Array.isArray(list))list=[];
@@ -29328,7 +29397,8 @@ async function tick(reason){
       indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
       busy=false;schedule(3000);return true;
     }
-    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    const sobras=await espelharNuvem();
+    indicator(true,(sobras?('Nuvem sincronizada • '+sobras+' sobras locais limpas • '):'Nuvem sincronizada • ')+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
@@ -29497,9 +29567,11 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function espelhoLigado(){return state.espelho!==false;}
+function ligarEspelho(ligar){state.espelho=!!ligar;persist();return state.espelho;}
+function info(){return {authorized:authorized(),busy,espelho:state.espelho!==false,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e)};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho};
 
 if(typeof document==='undefined')return;
 try{

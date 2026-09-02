@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.71**  
+**Última versão:** **v5.22.72**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.71>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.72>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,39 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.72 — espelho da nuvem: todo PC com a mesma informação
+
+Pedido do usuário: *"o processo é salvar no PC e do PC para a nuvem; depois que
+passar na nuvem SEM NENHUM PROBLEMA, apaga os dados do PC"* — motivo: não deixar
+um monte de dado solto e errado em cada computador. Ele faz backup todo dia e
+não usa o sistema sem internet. Também pediu: **nunca apagar nada da nuvem** e
+**todos os PCs têm que ter a mesma informação**.
+
+**Como foi feito (sem transformar o sistema em refém da internet):** o PC não
+vira uma tela vazia — ele vira um **espelho exato da nuvem**. Depois de um ciclo
+que fecha sem nenhum problema, o que existe só neste computador é sobra e sai
+daqui. O que está na nuvem continua no PC, então o sistema abre e funciona
+normalmente; e os dois computadores passam a mostrar exatamente a mesma coisa.
+
+Trava por trava (`espelharNuvem()` / `planejarEspelho()`):
+
+- só roda com **fila vazia, nenhum erro pendente, nuvem com dados e PC não pausado**;
+- **nunca toca** no que a pessoa mandou "não enviar" (`heldLocalOnly`);
+- sobra grande demais — **mais de 30% de uma lista ou mais de 200 no total** —
+  não apaga nada e vira aviso: isso é sinal de problema, não de sobra;
+- **grava uma cópia de recuperação** (`antes_espelhar_nuvem`) antes da primeira limpeza;
+- auditoria e avisos ficam de fora (não sincronizam);
+- **a nuvem nunca é apagada** por esse mecanismo;
+- interruptor no painel: **"Manter este PC igual à nuvem"**, ligado por padrão.
+
+Sobre as tabelas antigas da migração: o menu "Migrados" já não existe (os dados
+aparecem dentro dos menus normais), então são dados de trabalho e **continuam
+sincronizando** — é o que garante PCs iguais.
+
+Teste: `test_ajustes_v52272.js`. Suíte: **126 passaram / 0 falharam**.
 
 ---
 
