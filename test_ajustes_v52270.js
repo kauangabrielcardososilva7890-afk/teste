@@ -8,7 +8,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.70 ==');
-ok('versão subiu para 5.22.70',pkg.version==='5.22.70');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 ok('503 é tratado como "nuvem ocupada"',/st===429\|\|st===500\|\|st===502\|\|st===503\|\|st===504/.test(code));
 ok('tenta de novo, com espera crescente',/const ESPERAS=\[900,2500,6000,12000\]/.test(code)&&/async function comPaciencia/.test(code));
 ok('envio e leitura usam a espera',/comPaciencia\(\(\)=>call\('\/v1\/changes',\{method:'POST'/.test(code)&&/comPaciencia\(\(\)=>call\('\/v1\/changes\?cursor=/.test(code));

@@ -26,11 +26,25 @@ const DEFINITIONS={
   empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
   os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
-  logs:'array', tecnicos:'array', notificacoes:'array',
+  tecnicos:'array',
   config:'root', modulosDinamicos:'map', _seq:'contador'
 };
 // Coisas que NÃO viajam: controle interno do próprio arquivo local.
-const NAO_SINCRONIZA=new Set(['meta','__proto__']);
+// Nunca viajam. `logs` e `notificacoes` são cortados em 500 por PC pelo próprio
+// sistema: cada corte virava uma ordem de exclusão para o outro computador, e o
+// outro reenviava os seus. Era esse vai-e-vem que fazia dado sumir e voltar, e
+// era ele que inchava a contagem da nuvem.
+const NAO_SINCRONIZA=new Set(['meta','__proto__','logs','notificacoes']);
+
+// Só estas listas podem mandar EXCLUSÃO para a nuvem — são as que têm botão de
+// excluir de verdade na tela. Todas as outras (as que os módulos filtram e
+// remontam sozinhos) só sabem mandar novidade: some daqui, mas não some do
+// outro PC nem da nuvem.
+const PODE_EXCLUIR=new Set(['empresas','usuarios','clientes','produtos','recargas',
+  'equipamentos','contratos','parque','leituras','os','vendas','orcamentos',
+  'contasReceber','contasPagar','tecnicos']);
+// Trava contra apagão: numa passada só, nunca mais que isto por lista.
+const MAX_EXCLUSOES=20;
 
 // Lê o banco de verdade e devolve o mapa completo do que sincronizar. Lista
 // nova criada por qualquer módulo entra automaticamente na próxima passada.
@@ -54,6 +68,7 @@ function loadState(){
   s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
   s.pauseReason=s.pauseReason||'';
   s.regras=s.regras||'';
+  s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -61,13 +76,29 @@ let state=loadState(),outbox=loadOutbox();
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v5.22.69-tudo';
-if(state.initialPull&&state.regras!==REGRAS){
+const REGRAS='v5.22.71-sem-logs';
+if(state.initialPull&&!String(state.regras||'').startsWith('v5.22.7')){
   state.regras=REGRAS;
   state.paused=true;
   state.pauseReason='escolha-inicial';
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
-}else if(!state.regras){state.regras=REGRAS;}
+}else if(state.regras!==REGRAS){state.regras=REGRAS;}
+// Auditoria e avisos já subiram nas versões anteriores e agora não viajam mais.
+// Ficariam ocupando lugar na nuvem e inflando a contagem, então saem de lá uma
+// vez só, no ritmo normal da fila.
+(function marcarLimpeza(){
+  const alvo=[];
+  for(const k of Object.keys(state.known||{})){
+    const nome=k.slice(0,k.indexOf('|'));
+    if(NAO_SINCRONIZA.has(nome))alvo.push(k);
+  }
+  if(alvo.length){
+    const ja=new Set(state.limpar||[]);
+    alvo.forEach(k=>ja.add(k));
+    state.limpar=[...ja];
+    try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
+  }
+})();
 let busy=false,applying=false,timer=null,failures=0,lastError='',lastTick=0;
 
 function persist(){
@@ -95,7 +126,7 @@ function authorized(){return !!(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.tok
 function entriesFor(entity,mode){
   if(typeof db==='undefined'||!db)return [];
   const value=db[entity];
-  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&typeof x==='object').map(x=>({id:x.id?String(x.id):('h_'+hash(clean(x))),data:clean(x)}));
+  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&x.id).map(x=>({id:String(x.id),data:clean(x)}));
   if(mode==='root')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
   if(mode==='contador')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
   if(mode==='map')return value&&typeof value==='object'?Object.keys(value).map(id=>({id:String(id),data:{value:clean(value[id])}})):[];
@@ -260,6 +291,18 @@ function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
+  // Fila de limpeza: some da nuvem o que não viaja mais, aos poucos.
+  if((state.limpar||[]).length){
+    const fatia=state.limpar.slice(0,40);
+    for(const k of fatia){
+      if(outbox.length>=MAX_OUTBOX)break;
+      if(pending.has(k))continue;
+      const corte=k.indexOf('|');
+      outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity:k.slice(0,corte),recordId:k.slice(corte+1),operation:'delete',baseVersion:Number(state.versions[k]||0)}});
+      pending.add(k);added++;
+    }
+    state.limpar=state.limpar.filter(k=>!pending.has(k));
+  }
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
     if(outbox.length>=MAX_OUTBOX)break;
@@ -271,7 +314,15 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
+    if(!PODE_EXCLUIR.has(entity))continue;
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
+    const conhecidos=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')).length;
+    // Sumiço em massa quase nunca é exclusão de verdade: é lista meio carregada,
+    // filtro do módulo ou base ainda abrindo. Nesse caso não apaga nada e avisa.
+    if(missing.length>MAX_EXCLUSOES||(conhecidos>0&&missing.length/conhecidos>0.30)){
+      lastError='Muitos registros de '+entity+' sumiram deste PC de uma vez ('+missing.length+'). Por segurança a nuvem não apagou nada.';
+      continue;
+    }
     for(const k of missing){
       if(outbox.length>=MAX_OUTBOX)break;
       const id=k.slice(entity.length+1);
@@ -565,13 +616,14 @@ function pendingEstimate(){
   for(const entity of Object.keys(MAPA)){
     const entries=entriesFor(entity,MAPA[entity]),present=new Set();
     for(const entry of entries){const k=key(entity,entry.id);present.add(k);if(!pending.has(k)&&state.hashes[k]!==hash(entry.data))total++;}
+    if(!PODE_EXCLUIR.has(entity))continue;
     for(const k of Object.keys(state.known)){if(k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k))total++;}
   }
   return total;
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e)};
 
 if(typeof document==='undefined')return;
 try{

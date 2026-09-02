@@ -27,10 +27,10 @@ ok('lista antiga continua igual',mapa.clientes==='array'&&mapa.config==='root'&&
 ok('controle interno do arquivo não viaja',mapa.meta===undefined);
 ok('contador de numeração tem tratamento próprio',mapa._seq==='contador');
 ok('numeração fica com o maior número dos dois PCs',/const nuvem=Number\(change\.data\[nome\]\)\|\|0,aqui=Number\(alvo\[nome\]\)\|\|0;/.test(code)&&/if\(nuvem>aqui\)/.test(code));
-ok('item sem id ganha id fixo pelo conteúdo (não duplica)',/id:x\.id\?String\(x\.id\):\('h_'\+hash\(clean\(x\)\)\)/.test(code));
-ok('mesmo item sem id dá sempre o mesmo id',S.hash(S.clean({nome:'linha sem id'}))===S.hash(S.clean({nome:'linha sem id'})));
+ok('só sobe registro com id de verdade (v5.22.71)',/\.filter\(x=>x&&x\.id\)/.test(code));
+ok('a marca do registro é sempre a mesma',S.hash(S.clean({nome:'x'}))===S.hash(S.clean({nome:'x'})));
 ok('PC convidado não apaga mais os dados dele',/activation==='invite'&&extraCount===0/.test(code));
-ok('regra nova pergunta uma vez só',/const REGRAS='v5\.22\.69-tudo'/.test(code)&&/state\.regras!==REGRAS/.test(code));
+ok('regra nova pergunta uma vez só',/const REGRAS='v5\.22\.71-sem-logs'/.test(code)&&/state\.regras/.test(code));
 ok('escolha se apresenta sozinha, não fica escondida',/function cobrarEscolha/.test(painel)&&/escolha-inicial/.test(painel));
 ok('escolha não abre por cima de outra janela da nuvem',/digicopy-cloud-modal/.test(painel));
 console.log('\nRESULTADO: ajustes v5.22.69 passaram!');

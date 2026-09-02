@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.70**  
+**Última versão:** **v5.22.71**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.70>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.71>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,41 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.71 — dado sumindo e voltando + os "23 mil registros"
+
+**Causa achada (erro meu na v5.22.68/69):**
+
+1. Na v5.22.68 eu tirei da tela o bloqueio *"Confirmar exclusões de X (N)"* —
+   mas ele não era só um aviso chato: era **a trava que impedia a nuvem de
+   apagar em massa**. Sem ela, toda ausência local virou ordem de exclusão.
+2. O sistema **corta `db.logs` em 500 por PC** (`app.js:309`). A cada corte, o
+   PC mandava exclusão dos logs velhos para a nuvem; o outro PC mandava os
+   dele de volta. Vai-e-vem infinito — é isso que fazia **dado sumir e voltar**
+   e o que inflou a contagem. `notificacoes` fazia o mesmo.
+3. Vários módulos **remontam listas com `.filter()`** (recargasEtiquetas,
+   escolaOrc/It/Exc...). Cada remontagem virava exclusão para o outro PC.
+4. Os ids por conteúdo que criei na v5.22.69 para itens sem `id` só pioravam:
+   qualquer mudança no item gerava um id novo + exclusão do antigo.
+
+**O que foi feito:**
+
+| Correção | Como ficou |
+|---|---|
+| `logs` e `notificacoes` | **Não viajam mais.** São de cada PC, cortados em 500 por ele mesmo. E o que já subiu é apagado da nuvem aos poucos (`state.limpar`, 40 por vez) |
+| Exclusão só onde faz sentido | Só as 15 listas com botão de excluir de verdade (clientes, produtos, vendas, OS, contratos, leituras, orçamentos, financeiro, parque, equipamentos...) mandam exclusão. As outras ~70 **só sabem mandar novidade** |
+| Trava contra apagão | Mesmo nas listas permitidas: nunca mais que **20 exclusões por passada**, e nunca mais que **30% da lista**. Passou disso, não apaga nada e registra o motivo |
+| Item sem `id` | Não sobe mais (era cache derivado; virava lixo na nuvem) |
+| "23 mil registros" | O painel agora abre **lista por lista** mostrando de onde vem cada número |
+
+Teste: `test_ajustes_v52271.js`. Suíte: **125 passaram / 0 falharam**.
+
+**Pendente de decisão do usuário:** ele pediu para *apagar os dados do PC depois
+que subirem sem problema para a nuvem*. Não implementado — foi feita a pergunta
+antes, porque isso deixaria o sistema dependente de internet e, com o histórico
+recente de sincronização, poderia destruir dados.
 
 ---
 

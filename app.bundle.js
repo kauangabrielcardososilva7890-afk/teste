@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 516f2e4a0ac0bd8c
+ * scripts: 190 | sha256: f6b3d9a065838dc1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28738,6 +28738,16 @@ async function renderConnected(body){
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
   const escolher=!!sync.paused;
+  // "23 mil registros" não diz nada sozinho. Aqui a pessoa vê lista por lista de
+  // onde vem cada número e confere se bate com o que ela usa.
+  const porLista=Object.keys((t&&t.byEntity)||{})
+    .map(nome=>({nome,n:Number(t.byEntity[nome]&&t.byEntity[nome].active)||0}))
+    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  const detalhe=porLista.length
+    ?'<details style="margin:12px 0"><summary style="cursor:pointer;font-size:12px;font-weight:800">O que são os '+t.records+' registros da nuvem (ver lista por lista)</summary><div style="margin-top:8px;max-height:260px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px">'
+      +porLista.map(x=>'<div style="display:flex;justify-content:space-between;padding:7px 11px;border-bottom:1px solid #f1f5f9;font-size:12px"><span>'+esc(x.nome)+'</span><b>'+x.n+'</b></div>').join('')
+      +'</div></details>'
+    :'';
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
     ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
@@ -28745,7 +28755,7 @@ async function renderConnected(body){
       :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
-    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
+    detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
@@ -28892,11 +28902,25 @@ const DEFINITIONS={
   empresas:'array', usuarios:'array', clientes:'array', produtos:'array', recargas:'array',
   equipamentos:'array', contratos:'array', parque:'array', leituras:'array',
   os:'array', vendas:'array', orcamentos:'array', contasReceber:'array', contasPagar:'array',
-  logs:'array', tecnicos:'array', notificacoes:'array',
+  tecnicos:'array',
   config:'root', modulosDinamicos:'map', _seq:'contador'
 };
 // Coisas que NÃO viajam: controle interno do próprio arquivo local.
-const NAO_SINCRONIZA=new Set(['meta','__proto__']);
+// Nunca viajam. `logs` e `notificacoes` são cortados em 500 por PC pelo próprio
+// sistema: cada corte virava uma ordem de exclusão para o outro computador, e o
+// outro reenviava os seus. Era esse vai-e-vem que fazia dado sumir e voltar, e
+// era ele que inchava a contagem da nuvem.
+const NAO_SINCRONIZA=new Set(['meta','__proto__','logs','notificacoes']);
+
+// Só estas listas podem mandar EXCLUSÃO para a nuvem — são as que têm botão de
+// excluir de verdade na tela. Todas as outras (as que os módulos filtram e
+// remontam sozinhos) só sabem mandar novidade: some daqui, mas não some do
+// outro PC nem da nuvem.
+const PODE_EXCLUIR=new Set(['empresas','usuarios','clientes','produtos','recargas',
+  'equipamentos','contratos','parque','leituras','os','vendas','orcamentos',
+  'contasReceber','contasPagar','tecnicos']);
+// Trava contra apagão: numa passada só, nunca mais que isto por lista.
+const MAX_EXCLUSOES=20;
 
 // Lê o banco de verdade e devolve o mapa completo do que sincronizar. Lista
 // nova criada por qualquer módulo entra automaticamente na próxima passada.
@@ -28920,6 +28944,7 @@ function loadState(){
   s.heldLocalOnly=Array.isArray(s.heldLocalOnly)?s.heldLocalOnly:[];
   s.pauseReason=s.pauseReason||'';
   s.regras=s.regras||'';
+  s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -28927,13 +28952,29 @@ let state=loadState(),outbox=loadOutbox();
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v5.22.69-tudo';
-if(state.initialPull&&state.regras!==REGRAS){
+const REGRAS='v5.22.71-sem-logs';
+if(state.initialPull&&!String(state.regras||'').startsWith('v5.22.7')){
   state.regras=REGRAS;
   state.paused=true;
   state.pauseReason='escolha-inicial';
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
-}else if(!state.regras){state.regras=REGRAS;}
+}else if(state.regras!==REGRAS){state.regras=REGRAS;}
+// Auditoria e avisos já subiram nas versões anteriores e agora não viajam mais.
+// Ficariam ocupando lugar na nuvem e inflando a contagem, então saem de lá uma
+// vez só, no ritmo normal da fila.
+(function marcarLimpeza(){
+  const alvo=[];
+  for(const k of Object.keys(state.known||{})){
+    const nome=k.slice(0,k.indexOf('|'));
+    if(NAO_SINCRONIZA.has(nome))alvo.push(k);
+  }
+  if(alvo.length){
+    const ja=new Set(state.limpar||[]);
+    alvo.forEach(k=>ja.add(k));
+    state.limpar=[...ja];
+    try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
+  }
+})();
 let busy=false,applying=false,timer=null,failures=0,lastError='',lastTick=0;
 
 function persist(){
@@ -28961,7 +29002,7 @@ function authorized(){return !!(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.tok
 function entriesFor(entity,mode){
   if(typeof db==='undefined'||!db)return [];
   const value=db[entity];
-  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&typeof x==='object').map(x=>({id:x.id?String(x.id):('h_'+hash(clean(x))),data:clean(x)}));
+  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&x.id).map(x=>({id:String(x.id),data:clean(x)}));
   if(mode==='root')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
   if(mode==='contador')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
   if(mode==='map')return value&&typeof value==='object'?Object.keys(value).map(id=>({id:String(id),data:{value:clean(value[id])}})):[];
@@ -29126,6 +29167,18 @@ function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
+  // Fila de limpeza: some da nuvem o que não viaja mais, aos poucos.
+  if((state.limpar||[]).length){
+    const fatia=state.limpar.slice(0,40);
+    for(const k of fatia){
+      if(outbox.length>=MAX_OUTBOX)break;
+      if(pending.has(k))continue;
+      const corte=k.indexOf('|');
+      outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity:k.slice(0,corte),recordId:k.slice(corte+1),operation:'delete',baseVersion:Number(state.versions[k]||0)}});
+      pending.add(k);added++;
+    }
+    state.limpar=state.limpar.filter(k=>!pending.has(k));
+  }
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
     if(outbox.length>=MAX_OUTBOX)break;
@@ -29137,7 +29190,15 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
+    if(!PODE_EXCLUIR.has(entity))continue;
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
+    const conhecidos=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')).length;
+    // Sumiço em massa quase nunca é exclusão de verdade: é lista meio carregada,
+    // filtro do módulo ou base ainda abrindo. Nesse caso não apaga nada e avisa.
+    if(missing.length>MAX_EXCLUSOES||(conhecidos>0&&missing.length/conhecidos>0.30)){
+      lastError='Muitos registros de '+entity+' sumiram deste PC de uma vez ('+missing.length+'). Por segurança a nuvem não apagou nada.';
+      continue;
+    }
     for(const k of missing){
       if(outbox.length>=MAX_OUTBOX)break;
       const id=k.slice(entity.length+1);
@@ -29431,13 +29492,14 @@ function pendingEstimate(){
   for(const entity of Object.keys(MAPA)){
     const entries=entriesFor(entity,MAPA[entity]),present=new Set();
     for(const entry of entries){const k=key(entity,entry.id);present.add(k);if(!pending.has(k)&&state.hashes[k]!==hash(entry.data))total++;}
+    if(!PODE_EXCLUIR.has(entity))continue;
     for(const k of Object.keys(state.known)){if(k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k))total++;}
   }
   return total;
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e)};
 
 if(typeof document==='undefined')return;
 try{
