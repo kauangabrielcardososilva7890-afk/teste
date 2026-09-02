@@ -7,7 +7,7 @@ const ref=ler('contratos_refino_patch.js');
 const cham=ler('locacao_chamados_fix_patch.js');
 const painel=ler('cloudflare_sync_patch.js');
 console.log('== AJUSTES v5.22.73 ==');
-ok('versão subiu para 5.22.73',pkg.version==='5.22.73');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // 1 — a venda salva
 ok('sumiu o "Não encontrei função de salvar esta venda"',!/Não encontrei função de salvar esta venda/.test(pos));
@@ -23,8 +23,4 @@ ok('continua usando o cadastro da impressora',/return impressoraTemColor\(p, eq\
 ok('campo do chamado só é preenchido se existir',/function porCampo\(id, valor\)\{ const el = document\.getElementById\(id\); if\(el\) el\.value = valor; \}/.test(ref));
 ok('nenhum campo do chamado escreve sem conferir',!/document\.getElementById\('kr-os-modelo'\)\.value/.test(ref)&&!/document\.getElementById\('kr-os-cont-ant'\)\.value/.test(ref));
 
-// 4 — recuperar o que sumiu
-ok('dá para restaurar tudo de uma vez',/dc-restore-all/.test(painel)&&/Restaurar TUDO que foi excluído/.test(painel));
-ok('a restauração não apaga nada',/Nada é apagado por esta ação/.test(painel));
-ok('depois de restaurar, puxa para este PC',/tick\('restauracao'\)/.test(painel));
 console.log('\nRESULTADO: ajustes v5.22.73 passaram!');

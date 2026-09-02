@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 675aebb3a6e4df5a
+ * scripts: 190 | sha256: 1ee8335c778f4ed3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -21667,12 +21667,20 @@ function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
 function parqueAtivo(p){ return p && p.status!=='inativo' && p.modalidade!=='inativo'; }
+// v5.22.73 — quem manda é a MODALIDADE do medidor color no cadastro da
+// impressora: Color A4 ou Color A3 com modalidade ativa. O palpite pelo nome do
+// tipo do equipamento saiu — era ele que fazia máquina preto e branco pedir
+// contador color.
+function modalidadeAtiva(med){
+  if(!med) return false;
+  const mod = String(med.modalidade || med.mod || '').toLowerCase();
+  return !!(mod && mod !== 'inativo' && mod !== 'off');
+}
 function impressoraTemColor(p, eq){
-  if(p && (p.temColor===true || p.colorAtivo===true)) return true;
   const meds = (p && (p.medidoresConfig||p.medidores)) || {};
-  if(meds.colorA4 && meds.colorA4.modalidade && meds.colorA4.modalidade!=='inativo') return true;
-  if(meds.colorA3 && meds.colorA3.modalidade && meds.colorA3.modalidade!=='inativo') return true;
-  if(eq && (eq.temColor===true || /color/i.test(eq.tipo||''))) return true;
+  if(modalidadeAtiva(meds.colorA4) || modalidadeAtiva(meds.colorA3)) return true;
+  const medsEq = (eq && (eq.medidoresConfig||eq.medidores)) || {};
+  if(modalidadeAtiva(medsEq.colorA4) || modalidadeAtiva(medsEq.colorA3)) return true;
   return false;
 }
 function chamadoDeContrato(o){ return !!(o && o.contratoId); }
@@ -28772,7 +28780,7 @@ async function renderConnected(body){
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Restaurar TUDO que foi excluído ('+(t.deleted||0)+')','dc-restore-all',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px"><label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer"><input type="checkbox" id="dc-espelho" '+(sync.espelho?'checked':'')+' style="margin-top:2px"><span><b>Manter este PC igual à nuvem</b><br><small style="color:#64748b">Depois de sincronizar sem nenhum problema, o que sobrar só neste computador é apagado daqui. Todos os PCs mostram a mesma informação, sem lixo e sem duplicata. A nuvem nunca é apagada.</small></span></label></div>'+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   const chk=body.querySelector('#dc-espelho');
@@ -28839,33 +28847,9 @@ async function renderConnected(body){
         setBusy(btn,false);
       }
     };
-    // A nuvem guarda tudo o que foi excluído. Quando uma exclusão indevida
-    // passa (foi o que aconteceu na v5.22.69), isto traz tudo de volta de uma
-    // vez, sem precisar clicar registro por registro.
-    body.querySelector('#dc-restore-all').onclick=async()=>{
-      const btn=body.querySelector('#dc-restore-all');
-      const ok=await window.confirmSistema('Trazer de volta TODOS os registros excluídos que estão guardados na nuvem? Nada é apagado por esta ação.','Restaurar tudo');
-      if(!ok)return;
-      setBusy(btn,true,'Restaurando...');
-      let voltaram=0,falharam=0;
-      try{
-        for(let pagina=0;pagina<40;pagina++){
-          const data=await api('/v1/deleted?limit=100',{method:'GET'});
-          const lista=data.records||[];
-          if(!lista.length)break;
-          let algum=false;
-          for(const r of lista){
-            try{ await api('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}); voltaram++; algum=true; }
-            catch(e){ falharam++; }
-            adminResult.innerHTML=message('Restaurando... '+voltaram+' de volta'+(falharam?(' • '+falharam+' não deu'):''),'info');
-          }
-          if(!algum)break;
-        }
-        if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('restauracao');
-        adminResult.innerHTML=message(voltaram+' registros voltaram para a nuvem e já estão descendo para este computador.'+(falharam?(' '+falharam+' não puderam voltar.'):''),voltaram?'ok':'info');
-      }catch(e){ adminResult.innerHTML=message(e.message,'error'); }
-      setBusy(btn,false);
-      };
+    // v5.22.74 — nada de botão: o que sumiu sozinho volta sozinho. O motor
+    // reconhece as exclusões em lote da falha da v5.22.69 e desfaz só elas,
+    // sem tocar no que a pessoa apagou de propósito.
     body.querySelector('#dc-list-deleted').onclick=async()=>{
       adminResult.innerHTML=message('Carregando itens excluídos...','info');
       try{
@@ -28989,6 +28973,7 @@ function loadState(){
   s.regras=s.regras||'';
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   s.espelho=(s.espelho===undefined)?true:!!s.espelho;
+  s.reparo=s.reparo||'';
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -29293,6 +29278,7 @@ async function espelharNuvem(){
   if(state.espelho===false)return 0;
   if(state.paused||outbox.length||lastError)return 0;
   if(!state.initialPull||!Object.keys(state.known).length)return 0;
+  if(state.reparo!==REPARO)return 0; // primeiro devolve o que sumiu sozinho, depois limpa sobra
   const sobras=planejarEspelho();
   if(!sobras.length)return 0;
   if(!state.espelhoAvisado&&window.DIGICOPY_INDEXED_DB){
@@ -29316,6 +29302,67 @@ async function espelharNuvem(){
     persist();
   }
   return apagados;
+}
+
+// CONSERTO AUTOMÁTICO DO APAGÃO DA v5.22.69 (v5.22.74)
+// Entre a v5.22.68 e a v5.22.71 a nuvem apagava por conta própria tudo o que
+// sumia da tela do PC — corte de auditoria, lista remontada por um módulo, base
+// abrindo pela metade. Foram exclusões EM LOTE, dezenas no mesmo segundo, sem
+// ninguém clicar em nada.
+//
+// Exclusão de verdade é diferente: a pessoa apaga um registro, às vezes dois,
+// com intervalo entre eles. Então o conserto devolve só o que sumiu em lote e
+// NÃO MEXE no que foi apagado de propósito.
+const REPARO='v5.22.74-apagao';
+const REPARO_LOTE=8;        // a partir de 8 no mesmo intervalo já é lote
+const REPARO_JANELA=90000;  // 90 segundos
+
+function agruparApagao(excluidos){
+  const porEntidade={};
+  (excluidos||[]).forEach(r=>{
+    if(!r||!r.entity||!r.recordId||!r.deletedAt)return;
+    if(NAO_SINCRONIZA.has(r.entity))return; // auditoria e avisos não voltam: são lixo
+    (porEntidade[r.entity]=porEntidade[r.entity]||[]).push(r);
+  });
+  const devolver=[];
+  for(const entity of Object.keys(porEntidade)){
+    const lista=porEntidade[entity].sort((a,b)=>a.deletedAt-b.deletedAt);
+    let grupo=[lista[0]];
+    for(let i=1;i<=lista.length;i++){
+      const atual=lista[i];
+      if(atual&&atual.deletedAt-grupo[grupo.length-1].deletedAt<=REPARO_JANELA){grupo.push(atual);continue;}
+      if(grupo.length>=REPARO_LOTE)grupo.forEach(x=>devolver.push(x));
+      grupo=atual?[atual]:[];
+    }
+  }
+  return devolver;
+}
+
+async function repararApagao(){
+  if(state.reparo===REPARO)return 0;
+  const call=api();if(!call)return 0;
+  let voltaram=0;
+  try{
+    for(let volta=0;volta<40;volta++){
+      const data=await comPaciencia(()=>call('/v1/deleted?limit=100',{method:'GET'}));
+      const lista=data&&data.records?data.records:[];
+      if(!lista.length)break;
+      const devolver=agruparApagao(lista);
+      if(!devolver.length)break;
+      let algum=false;
+      for(const r of devolver){
+        try{
+          await comPaciencia(()=>call('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}));
+          voltaram++;algum=true;
+        }catch(e){/* esse não voltou; segue o baile */}
+      }
+      if(!algum)break;
+      indicator(false,'Trazendo de volta o que sumiu sozinho • '+voltaram);
+    }
+    state.reparo=REPARO;persist();
+    if(voltaram)await pullAll();
+  }catch(e){/* tenta de novo no próximo ciclo */}
+  return voltaram;
 }
 
 function rememberConflict(item,result){
@@ -29437,6 +29484,8 @@ async function tick(reason){
       indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
       busy=false;schedule(3000);return true;
     }
+    const devolvidos=await repararApagao();
+    if(devolvidos)lastError='';
     const sobras=await espelharNuvem();
     indicator(true,(sobras?('Nuvem sincronizada • '+sobras+' sobras locais limpas • '):'Nuvem sincronizada • ')+new Date().toLocaleTimeString('pt-BR'));
     return true;
@@ -29611,7 +29660,7 @@ function espelhoLigado(){return state.espelho!==false;}
 function ligarEspelho(ligar){state.espelho=!!ligar;persist();return state.espelho;}
 function info(){return {authorized:authorized(),busy,espelho:state.espelho!==false,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho,agruparApagao,repararApagao};
 
 if(typeof document==='undefined')return;
 try{

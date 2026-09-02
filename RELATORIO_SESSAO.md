@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.73**  
+**Última versão:** **v5.22.74**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.73>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.74>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,35 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.74 — o que sumiu sozinho volta sozinho (sem botão)
+
+O usuário recusou o botão "Restaurar tudo": *"eu não quero restaurar não, você vai
+voltar o que eu não fiz, voltar o problema que você arrumou"*. E deixou claro:
+**o que ele apagou de propósito TEM que continuar apagado.**
+
+**Como o sistema separa um do outro:** a falha da v5.22.69 apagava **em lote** —
+dezenas de registros no mesmo intervalo, sem ninguém clicar (corte de auditoria,
+lista remontada por módulo, base abrindo pela metade). Exclusão de verdade é
+uma ou duas, com intervalo entre elas.
+
+`agruparApagao()` agrupa os excluídos por lista e por tempo: grupo com **8 ou
+mais exclusões dentro de 90 segundos** = apagão, volta. Menos que isso = foi a
+pessoa, **não se toca**. `logs` e `notificacoes` nunca voltam (são lixo local).
+
+`repararApagao()` roda **dentro do ciclo normal da nuvem, uma vez por PC**
+(`state.reparo`), sem botão e sem pergunta. O espelho da v5.22.72 só começa a
+limpar **depois** que o conserto terminou.
+
+**Contador color (2ª correção pedida):** o critério agora é a **modalidade** —
+Color A4 ou Color A3 com modalidade diferente de `inativo`/`off`, no cadastro do
+parque ou do equipamento. O palpite pelo nome do tipo (`/color/i.test(eq.tipo)`)
+foi removido: era ele que fazia máquina preto e branco pedir contador color.
+
+Teste: `test_ajustes_v52274.js` (com um cenário de 25 exclusões em lote + 3
+manuais: volta as 25, não volta as 3). Suíte: **128 passaram / 0 falharam**.
 
 ---
 

@@ -70,6 +70,7 @@ function loadState(){
   s.regras=s.regras||'';
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   s.espelho=(s.espelho===undefined)?true:!!s.espelho;
+  s.reparo=s.reparo||'';
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -374,6 +375,7 @@ async function espelharNuvem(){
   if(state.espelho===false)return 0;
   if(state.paused||outbox.length||lastError)return 0;
   if(!state.initialPull||!Object.keys(state.known).length)return 0;
+  if(state.reparo!==REPARO)return 0; // primeiro devolve o que sumiu sozinho, depois limpa sobra
   const sobras=planejarEspelho();
   if(!sobras.length)return 0;
   if(!state.espelhoAvisado&&window.DIGICOPY_INDEXED_DB){
@@ -397,6 +399,67 @@ async function espelharNuvem(){
     persist();
   }
   return apagados;
+}
+
+// CONSERTO AUTOMÁTICO DO APAGÃO DA v5.22.69 (v5.22.74)
+// Entre a v5.22.68 e a v5.22.71 a nuvem apagava por conta própria tudo o que
+// sumia da tela do PC — corte de auditoria, lista remontada por um módulo, base
+// abrindo pela metade. Foram exclusões EM LOTE, dezenas no mesmo segundo, sem
+// ninguém clicar em nada.
+//
+// Exclusão de verdade é diferente: a pessoa apaga um registro, às vezes dois,
+// com intervalo entre eles. Então o conserto devolve só o que sumiu em lote e
+// NÃO MEXE no que foi apagado de propósito.
+const REPARO='v5.22.74-apagao';
+const REPARO_LOTE=8;        // a partir de 8 no mesmo intervalo já é lote
+const REPARO_JANELA=90000;  // 90 segundos
+
+function agruparApagao(excluidos){
+  const porEntidade={};
+  (excluidos||[]).forEach(r=>{
+    if(!r||!r.entity||!r.recordId||!r.deletedAt)return;
+    if(NAO_SINCRONIZA.has(r.entity))return; // auditoria e avisos não voltam: são lixo
+    (porEntidade[r.entity]=porEntidade[r.entity]||[]).push(r);
+  });
+  const devolver=[];
+  for(const entity of Object.keys(porEntidade)){
+    const lista=porEntidade[entity].sort((a,b)=>a.deletedAt-b.deletedAt);
+    let grupo=[lista[0]];
+    for(let i=1;i<=lista.length;i++){
+      const atual=lista[i];
+      if(atual&&atual.deletedAt-grupo[grupo.length-1].deletedAt<=REPARO_JANELA){grupo.push(atual);continue;}
+      if(grupo.length>=REPARO_LOTE)grupo.forEach(x=>devolver.push(x));
+      grupo=atual?[atual]:[];
+    }
+  }
+  return devolver;
+}
+
+async function repararApagao(){
+  if(state.reparo===REPARO)return 0;
+  const call=api();if(!call)return 0;
+  let voltaram=0;
+  try{
+    for(let volta=0;volta<40;volta++){
+      const data=await comPaciencia(()=>call('/v1/deleted?limit=100',{method:'GET'}));
+      const lista=data&&data.records?data.records:[];
+      if(!lista.length)break;
+      const devolver=agruparApagao(lista);
+      if(!devolver.length)break;
+      let algum=false;
+      for(const r of devolver){
+        try{
+          await comPaciencia(()=>call('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}));
+          voltaram++;algum=true;
+        }catch(e){/* esse não voltou; segue o baile */}
+      }
+      if(!algum)break;
+      indicator(false,'Trazendo de volta o que sumiu sozinho • '+voltaram);
+    }
+    state.reparo=REPARO;persist();
+    if(voltaram)await pullAll();
+  }catch(e){/* tenta de novo no próximo ciclo */}
+  return voltaram;
 }
 
 function rememberConflict(item,result){
@@ -518,6 +581,8 @@ async function tick(reason){
       indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
       busy=false;schedule(3000);return true;
     }
+    const devolvidos=await repararApagao();
+    if(devolvidos)lastError='';
     const sobras=await espelharNuvem();
     indicator(true,(sobras?('Nuvem sincronizada • '+sobras+' sobras locais limpas • '):'Nuvem sincronizada • ')+new Date().toLocaleTimeString('pt-BR'));
     return true;
@@ -692,7 +757,7 @@ function espelhoLigado(){return state.espelho!==false;}
 function ligarEspelho(ligar){state.espelho=!!ligar;persist();return state.espelho;}
 function info(){return {authorized:authorized(),busy,espelho:state.espelho!==false,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho,agruparApagao,repararApagao};
 
 if(typeof document==='undefined')return;
 try{

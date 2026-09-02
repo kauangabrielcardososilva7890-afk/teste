@@ -185,7 +185,7 @@ async function renderConnected(body){
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Restaurar TUDO que foi excluído ('+(t.deleted||0)+')','dc-restore-all',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px"><label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer"><input type="checkbox" id="dc-espelho" '+(sync.espelho?'checked':'')+' style="margin-top:2px"><span><b>Manter este PC igual à nuvem</b><br><small style="color:#64748b">Depois de sincronizar sem nenhum problema, o que sobrar só neste computador é apagado daqui. Todos os PCs mostram a mesma informação, sem lixo e sem duplicata. A nuvem nunca é apagada.</small></span></label></div>'+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   const chk=body.querySelector('#dc-espelho');
@@ -252,33 +252,9 @@ async function renderConnected(body){
         setBusy(btn,false);
       }
     };
-    // A nuvem guarda tudo o que foi excluído. Quando uma exclusão indevida
-    // passa (foi o que aconteceu na v5.22.69), isto traz tudo de volta de uma
-    // vez, sem precisar clicar registro por registro.
-    body.querySelector('#dc-restore-all').onclick=async()=>{
-      const btn=body.querySelector('#dc-restore-all');
-      const ok=await window.confirmSistema('Trazer de volta TODOS os registros excluídos que estão guardados na nuvem? Nada é apagado por esta ação.','Restaurar tudo');
-      if(!ok)return;
-      setBusy(btn,true,'Restaurando...');
-      let voltaram=0,falharam=0;
-      try{
-        for(let pagina=0;pagina<40;pagina++){
-          const data=await api('/v1/deleted?limit=100',{method:'GET'});
-          const lista=data.records||[];
-          if(!lista.length)break;
-          let algum=false;
-          for(const r of lista){
-            try{ await api('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}); voltaram++; algum=true; }
-            catch(e){ falharam++; }
-            adminResult.innerHTML=message('Restaurando... '+voltaram+' de volta'+(falharam?(' • '+falharam+' não deu'):''),'info');
-          }
-          if(!algum)break;
-        }
-        if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('restauracao');
-        adminResult.innerHTML=message(voltaram+' registros voltaram para a nuvem e já estão descendo para este computador.'+(falharam?(' '+falharam+' não puderam voltar.'):''),voltaram?'ok':'info');
-      }catch(e){ adminResult.innerHTML=message(e.message,'error'); }
-      setBusy(btn,false);
-      };
+    // v5.22.74 — nada de botão: o que sumiu sozinho volta sozinho. O motor
+    // reconhece as exclusões em lote da falha da v5.22.69 e desfaz só elas,
+    // sem tocar no que a pessoa apagou de propósito.
     body.querySelector('#dc-list-deleted').onclick=async()=>{
       adminResult.innerHTML=message('Carregando itens excluídos...','info');
       try{

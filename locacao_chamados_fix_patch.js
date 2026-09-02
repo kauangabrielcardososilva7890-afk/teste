@@ -14,12 +14,20 @@ function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
 function parqueAtivo(p){ return p && p.status!=='inativo' && p.modalidade!=='inativo'; }
+// v5.22.73 — quem manda é a MODALIDADE do medidor color no cadastro da
+// impressora: Color A4 ou Color A3 com modalidade ativa. O palpite pelo nome do
+// tipo do equipamento saiu — era ele que fazia máquina preto e branco pedir
+// contador color.
+function modalidadeAtiva(med){
+  if(!med) return false;
+  const mod = String(med.modalidade || med.mod || '').toLowerCase();
+  return !!(mod && mod !== 'inativo' && mod !== 'off');
+}
 function impressoraTemColor(p, eq){
-  if(p && (p.temColor===true || p.colorAtivo===true)) return true;
   const meds = (p && (p.medidoresConfig||p.medidores)) || {};
-  if(meds.colorA4 && meds.colorA4.modalidade && meds.colorA4.modalidade!=='inativo') return true;
-  if(meds.colorA3 && meds.colorA3.modalidade && meds.colorA3.modalidade!=='inativo') return true;
-  if(eq && (eq.temColor===true || /color/i.test(eq.tipo||''))) return true;
+  if(modalidadeAtiva(meds.colorA4) || modalidadeAtiva(meds.colorA3)) return true;
+  const medsEq = (eq && (eq.medidoresConfig||eq.medidores)) || {};
+  if(modalidadeAtiva(medsEq.colorA4) || modalidadeAtiva(medsEq.colorA3)) return true;
   return false;
 }
 function chamadoDeContrato(o){ return !!(o && o.contratoId); }
