@@ -76,6 +76,16 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.81 — o Chamados do menu Locação (achei quem recolocava)
+
+O botão continuava aparecendo porque existia uma terceira mão: a função `montarMenuLocacao()` em `locacao_chamados_fix_patch.js` **reescrevia o menu Locação inteiro a cada navegação**, sempre com Contratos + Impressoras + Chamados. Por isso tirar de `app.js` e do catálogo não adiantou nada.
+
+Agora o menu Locação monta só com **Contratos** e **Impressoras**. A tela de chamados continua existindo (Atendimento → Abrir chamado, e dentro do contrato).
+
+Lição para o CHECKLIST ANTIERRO: **antes de dar um menu por removido, procurar quem escreve `innerHTML` no `id` daquele menu** (`menu-outsourcing`, `menu-cadastros`, `menu-config`), não só as listas de dados.
+
+Testes: `test_ajustes_v52281.js` (6 conferências). Suíte: 135 passaram, 0 falharam.
+
 ## v5.22.80 — o erro da nuvem tinha nome: limite diário do banco grátis
 
 Com o carimbo 0.4.6 no ar, o erro finalmente veio com o motivo:

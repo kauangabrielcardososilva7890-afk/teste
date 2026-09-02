@@ -8,7 +8,7 @@ new Function('window','localStorage','document','db',code)(w,{getItem:()=>null,s
 const S=w.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.80 ==');
-ok('versão subiu para 5.22.80',pkg.version==='5.22.80');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 const recado="D1_ERROR: Your account has exceeded D1's free tier daily row write limit. Upgrade to a paid plan or wait until tomorrow (midnight UTC) to continue.";
 ok('o sistema reconhece o limite diário do banco grátis',S.ehLimiteDiario(recado)===true);
 ok('erro comum não é confundido com limite',S.ehLimiteDiario('Falha de rede')===false&&S.ehLimiteDiario('')===false);

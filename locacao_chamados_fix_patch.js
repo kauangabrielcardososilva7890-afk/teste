@@ -77,8 +77,10 @@ function montarMenuLocacao(){
   if(!menu) return;
   menu.innerHTML =
     '<button onclick="navigateTo(\'contratos\')"><i class="ph ph-file-text"></i>Contratos</button>'+
-    '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>'+
-    '<button onclick="abrirHistoricoChamadosGeral()"><i class="ph ph-wrench"></i>Chamados</button>';
+    '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>';
+  // v5.22.81: Chamados NÃO é submenu de Locação. Era esta função que recolocava
+  // o botão a cada navegação, por isso ele voltava mesmo depois de removido dos
+  // outros lugares. Os chamados continuam em Atendimento e dentro do contrato.
 }
 const _nav = window.navigateTo;
 if(typeof _nav==='function' && !_nav.__lcMenu){
