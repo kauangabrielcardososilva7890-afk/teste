@@ -5,7 +5,7 @@ const worker=fs.readFileSync('cloudflare-worker/src/index.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.78 ==');
-ok('versão subiu para 5.22.78',pkg.version==='5.22.78');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 ok('a janela da nuvem abre mesmo se a contagem falhar',/contagemFalhou=e\.message/.test(painel)&&/status=\{device:salvo,totals:/.test(painel));
 ok('sem autorização guardada ainda mostra o erro de sempre',/if\(!salvo\)\{/.test(painel));
 ok('senha errada continua desconectando',/if\(e\.status===401\)\{forgetAuth\(\);return renderDisconnected\(body\);\}/.test(painel));

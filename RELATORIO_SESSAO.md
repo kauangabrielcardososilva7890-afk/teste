@@ -76,6 +76,17 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.79 — carimbo de versão na nuvem
+
+A nuvem passou a se identificar como **0.4.6** (antes 0.4.5). Serve para saber, olhando a própria nuvem, se o código novo subiu mesmo: basta abrir o endereço da API e olhar o campo `version` da resposta.
+
+- `version: "0.4.5"` = ainda é o servidor antigo, o conserto do "Erro interno da API" não subiu.
+- `version: "0.4.6"` = o servidor novo está no ar (contas independentes, erro com motivo, índices).
+
+Testes: `test_ajustes_v52279.js` (6 conferências). Suíte: 133 passaram, 0 falharam.
+
+> Nota: o workspace voltou sozinho para a v5.22.62 pela oitava vez durante esta rodada. Recuperado com `git fetch` + `git reset --hard origin/arena/01a0590a-teste` e `npm install --ignore-scripts`.
+
 ## v5.22.78 — a tela da nuvem para de travar por causa do erro da API
 
 O conserto de verdade do "Erro interno da API" está no servidor (v5.22.76) e **só vale depois de republicar o Worker**. Enquanto isso não acontece, esta versão faz a janela da nuvem parar de ficar refém da contagem de registros:

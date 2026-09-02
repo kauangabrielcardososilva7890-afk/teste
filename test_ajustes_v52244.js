@@ -24,7 +24,7 @@ const F=load(fin).FINANCEIRO_DATAS_V52244_PURE;
 ok('datas visíveis', F.datasVisiveis===true);
 ok('hoje não aplica De/Até', F.aplicaDatas('hoje')===false && F.aplicaDatas('abertos')===true && F.aplicaDatas('todos')===true);
 
-ok('worker 0.4.5', /API_VERSION = '0.4.5'/.test(worker) && wpkg.version==='0.4.5');
+ok('worker e package na mesma versão', new RegExp("API_VERSION = '"+wpkg.version.replace(/\./g,'\\.')+"'").test(worker));
 ok('worker recusar exclui', /orc_del_/.test(worker) && /excluido: true/.test(worker));
 ok('worker GET USED traz venda', /vendaNumero: found.data.vendaNumero/.test(worker));
 ok('venda id estável no worker', /vda_orc_/.test(worker));
