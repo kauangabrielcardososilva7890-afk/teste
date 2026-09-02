@@ -49,10 +49,11 @@ S.devolverSumidos().then(n=>{
 
   // ── 4. a tela da nuvem não quebra mais ──
   ok('a cópia de recuperação pode ser lida de volta',/readRecoverySnapshot/.test(idb)&&/DIGICOPY_INDEXED_DB=\{writeNow,writeRecoverySnapshot,readRecoverySnapshot/.test(idb));
-  ok('cada conta da tela da nuvem vai sozinha',/async function conta\(sql\)/.test(worker)&&/DIGICOPY_STATUS_PARCIAL/.test(worker));
-  ok('conta que falha vem zerada em vez de derrubar a tela',/return 0;\n    \}\n  \}/.test(worker));
+  // v5.22.82: as contas viraram um resumo guardado, que gasta muito menos do banco.
+  ok('a contagem não derruba mais a tela',/async function resumoDaNuvem/.test(worker)&&/DIGICOPY_RESUMO_AGRUPADO/.test(worker));
+  ok('conta que falha não derruba a tela',/DIGICOPY_RESUMO_PARCIAL/.test(worker));
   ok('o erro da API agora diz o motivo',/detail: motivo/.test(worker)&&/' Motivo: ' \+ motivo/.test(worker));
-  ok('banco ganhou índice para contar rápido',fs.existsSync('cloudflare-worker/migrations/0003_indices_contagem.sql'));
+  ok('as migrações do banco existem',fs.existsSync('cloudflare-worker/migrations/0003_indices_contagem.sql')&&fs.existsSync('cloudflare-worker/migrations/0004_menos_gravacoes.sql'));
 
   console.log('\nRESULTADO: ajustes v5.22.76 passaram!');
 }).catch(e=>{console.error(e);process.exit(1);});

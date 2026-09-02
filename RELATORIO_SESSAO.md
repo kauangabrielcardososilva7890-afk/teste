@@ -76,6 +76,29 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.82 — cortando pela metade o que o sistema grava na nuvem
+
+O usuário perguntou se usa tudo isso mesmo. Conferindo, **parte do gasto era desperdício meu**. No D1, cada índice de uma tabela conta como **uma gravação a mais** toda vez que a linha muda. Estava assim, por registro sincronizado:
+
+| O que gravava | Linhas |
+|---|---|
+| linha em `changes` | 1 |
+| índice `mutation_id` (necessário) | 1 |
+| índice `idx_changes_record` (usado) | 1 |
+| índice `idx_changes_cursor` (**índice em cima da chave primária**) | 1 |
+| linha em `records` | 1 |
+| índice `idx_records_updated` (**nenhuma consulta usa**) | 1 |
+| `idx_records_deleted` + `idx_records_entity_deleted` (**criados por mim na v5.22.76**) | 2 |
+| **Total** | **8** |
+
+Migração `0004_menos_gravacoes.sql` derruba os quatro índices inúteis: passa de **8 para 4 linhas por registro** — metade do consumo.
+
+Os dois índices da contagem foram substituídos por algo mais barato: um **resumo guardado numa linha só**, refeito no máximo de 10 em 10 minutos (`resumoDaNuvem`). A tela da nuvem lê esse resumo em vez de varrer a tabela a cada clique — e os totais saem todos da mesma consulta, em vez de cinco.
+
+Nuvem carimbada como **0.4.7**.
+
+Testes: `test_ajustes_v52282.js` (11 conferências). Suíte: 136 passaram, 0 falharam.
+
 ## v5.22.81 — o Chamados do menu Locação (achei quem recolocava)
 
 O botão continuava aparecendo porque existia uma terceira mão: a função `montarMenuLocacao()` em `locacao_chamados_fix_patch.js` **reescrevia o menu Locação inteiro a cada navegação**, sempre com Contratos + Impressoras + Chamados. Por isso tirar de `app.js` e do catálogo não adiantou nada.

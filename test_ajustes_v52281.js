@@ -6,7 +6,7 @@ const menus=fs.readFileSync('ajustes_v52213_menus_atalhos_patch.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.81 ==');
-ok('versão subiu para 5.22.81',pkg.version==='5.22.81');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // Quem recolocava o botão era montarMenuLocacao, que roda a cada navegação.
 const menuLoc=cham.slice(cham.indexOf('function montarMenuLocacao'),cham.indexOf('const _nav'));

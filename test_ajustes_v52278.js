@@ -11,6 +11,6 @@ ok('sem autorização guardada ainda mostra o erro de sempre',/if\(!salvo\)\{/.t
 ok('senha errada continua desconectando',/if\(e\.status===401\)\{forgetAuth\(\);return renderDisconnected\(body\);\}/.test(painel));
 ok('a pessoa é avisada do motivo, sem susto',/Os números da nuvem não puderam ser contados agora/.test(painel)&&/NÃO atrapalha a sincronização/.test(painel));
 ok('os botões continuam na tela',/dc-sync-now/.test(painel)&&/dc-list-deleted/.test(painel));
-ok('no servidor, cada conta vai sozinha',/async function conta\(sql\)/.test(worker));
+ok('no servidor, a contagem virou resumo guardado',/async function resumoDaNuvem/.test(worker));
 ok('o erro do servidor diz o motivo',/detail: motivo/.test(worker));
 console.log('\nRESULTADO: ajustes v5.22.78 passaram!');
