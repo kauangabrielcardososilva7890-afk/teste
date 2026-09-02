@@ -116,6 +116,7 @@ function loadState(){
   s.reparo=s.reparo||'';
   s.devolucao=s.devolucao||'';
   s.faxina=s.faxina||'';
+  s.limiteAte=Number(s.limiteAte)||0;
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
@@ -596,12 +597,43 @@ async function tick(reason){
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
-    failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
+    failures++;lastError=e&&e.message?e.message:String(e);
+    if(ehLimiteDiario(lastError)){
+      lastError=recadoDoLimite();
+      state.limiteAte=viradaDoLimite();persist();
+      indicator(false,lastError);
+      busy=false;
+      if(timer)clearTimeout(timer);
+      timer=setTimeout(()=>tick('limite-virou'),Math.min(3600000,Math.max(60000,state.limiteAte-Date.now())));
+      return false;
+    }
+    indicator(false,'Nuvem pendente: '+lastError);
     if(e&&e.status===401){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
   }finally{if(busy){busy=false;scheduleHeartbeat();}}
+}
+// LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
+// O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
+// estoura, TODA consulta volta com erro em inglês e parece que o sistema
+// quebrou. Não quebrou: nada se perdeu, o envio só fica esperando o teto virar,
+// o que acontece à meia-noite no horário de Londres (21h no horário de
+// Brasília). Aqui o sistema reconhece isso, avisa em português e para de bater
+// na porta à toa — cada tentativa inútil consome mais do limite de amanhã.
+function ehLimiteDiario(msg){
+  return /free tier daily|daily row (write|read) limit|exceeded .*limit/i.test(String(msg||''));
+}
+function viradaDoLimite(){
+  const agora=new Date();
+  const virada=Date.UTC(agora.getUTCFullYear(),agora.getUTCMonth(),agora.getUTCDate()+1,0,2,0);
+  return virada;
+}
+function recadoDoLimite(){
+  const falta=Math.max(0,viradaDoLimite()-Date.now());
+  const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
+  return 'A nuvem grátis atingiu o limite de gravação de hoje. Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
+    +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
 function scheduleHeartbeat(){
@@ -764,7 +796,7 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+window.DIGICOPY_CLOUD_SYNC={tick,info,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();

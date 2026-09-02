@@ -76,6 +76,23 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.80 — o erro da nuvem tinha nome: limite diário do banco grátis
+
+Com o carimbo 0.4.6 no ar, o erro finalmente veio com o motivo:
+
+> `D1_ERROR: Your account has exceeded D1's free tier daily row write limit.`
+
+Não era defeito do sistema. O plano **grátis** da Cloudflare tem um teto de gravações por dia e ele estourou. Quando isso acontece, toda consulta ao banco volta com erro em inglês e parece que tudo quebrou.
+
+O que esta versão faz:
+
+- **Reconhece o limite** e mostra em português: "A nuvem grátis atingiu o limite de gravação de hoje. Nada foi perdido: o envio recomeça sozinho quando o limite virar, em Xh Ymin (por volta das 21h, horário de Brasília)."
+- **Para de bater na porta à toa.** Cada tentativa inútil consome mais do limite do dia seguinte, então o sistema espera a virada (meia-noite no horário de Londres) em vez de tentar de minuto em minuto.
+- **Recomeça sozinho** na virada, de onde parou. Nenhum dado se perde.
+- O painel da nuvem mostra o mesmo recado em vez do texto em inglês.
+
+Testes: `test_ajustes_v52280.js` (10 conferências). Suíte: 134 passaram, 0 falharam.
+
 ## v5.22.79 — carimbo de versão na nuvem
 
 A nuvem passou a se identificar como **0.4.6** (antes 0.4.5). Serve para saber, olhando a própria nuvem, se o código novo subiu mesmo: basta abrir o endereço da API e olhar o campo `version` da resposta.

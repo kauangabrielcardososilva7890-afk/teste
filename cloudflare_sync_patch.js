@@ -166,6 +166,8 @@ async function renderConnected(body){
       body.innerHTML=message(e.message,'error')+'<div style="margin-top:12px">'+button('Tentar novamente','dc-retry',true)+'</div>'; body.querySelector('#dc-retry').onclick=()=>renderConnected(body);return;
     }
     contagemFalhou=e.message||'a nuvem não respondeu a contagem';
+    const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
+    if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
