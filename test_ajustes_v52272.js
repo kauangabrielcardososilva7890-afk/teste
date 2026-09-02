@@ -9,7 +9,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.72 ==');
-ok('versão subiu para 5.22.72',pkg.version==='5.22.72');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 ok('o espelho vem ligado',S.espelhoLigado()===true);
 ok('dá para desligar e ligar',S.ligarEspelho(false)===false&&S.ligarEspelho(true)===true);
 ok('só limpa com a fila vazia e sem erro',/if\(state\.paused\|\|outbox\.length\|\|lastError\)return 0;/.test(code));

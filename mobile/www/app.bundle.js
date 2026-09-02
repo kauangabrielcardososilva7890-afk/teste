@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 05e0fec9e089529d
+ * scripts: 190 | sha256: 675aebb3a6e4df5a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -11978,7 +11978,23 @@ window.openModalChamadoCompleto = function(osId, contratoId){
   renderPecas(); if(o.equipamentoId) autoPreencherDadosChamado(o.equipamentoId, true, o.id);
 };
 window.atualizarImpressorasChamadoRefino = function(){ const clienteId = document.getElementById('kr-os-cli')?.value || ''; const sel = document.getElementById('kr-os-eq'); if(sel) sel.innerHTML = '<option value="">Selecione</option>'+selectEquipOptions(null, '', clienteId); };
-window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){ const eq = getEq(equipId); if(!eq) return; const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {}; document.getElementById('kr-os-modelo').value = eq.modelo || ''; document.getElementById('kr-os-patr').value = eq.patrimonio || ''; document.getElementById('kr-os-serie').value = eq.serie || ''; document.getElementById('kr-os-local').value = p.localInstalacao || p.setor || ''; const ult = ultimoContador(equipId, ignoreOsId); document.getElementById('kr-os-cont-ant').value = ult.valor; if(!manterAtual) document.getElementById('kr-os-cont-atu').value = ult.valor; calcImpressoesChamado(); };
+// v5.22.73 — cada campo é preenchido só se existir na tela. A tela do chamado
+// mudou com o tempo (campos que somem quando a impressora não tem contador
+// color, por exemplo) e escrever direto no campo ausente derrubava o sistema
+// com "Cannot set properties of null".
+function porCampo(id, valor){ const el = document.getElementById(id); if(el) el.value = valor; }
+window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
+  const eq = getEq(equipId); if(!eq) return;
+  const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {};
+  porCampo('kr-os-modelo', eq.modelo || '');
+  porCampo('kr-os-patr', eq.patrimonio || '');
+  porCampo('kr-os-serie', eq.serie || '');
+  porCampo('kr-os-local', p.localInstalacao || p.setor || '');
+  const ult = ultimoContador(equipId, ignoreOsId);
+  porCampo('kr-os-cont-ant', ult.valor);
+  if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
+  calcImpressoesChamado();
+};
 window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
 function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
@@ -19112,21 +19128,6 @@ function isProdutoImpressoraLocacao(p){
   if(origem.includes('equipamento')||origem.includes('locacao')||origem.includes('locação')||origem.includes('itens_locacao')) return true;
   return false;
 }
-function vendaEmAndamento(){
-  const ctx=window.modalContext||{};
-  const vendaCtx=ctx.type==='venda'||document.getElementById('nv-itens')||document.getElementById('neo-venda-itens')||document.getElementById('cv-itens');
-  if(!vendaCtx) return false;
-  const hasItems=(window.itensTemp&&window.itensTemp.length)||(window.neoVendaItens&&window.neoVendaItens.length)||(window.cvItens&&window.cvItens.length);
-  const hasClient=window.neoVendaCliente||document.getElementById('nv-cli')?.value||document.getElementById('cv-cliente')?.value;
-  const obs=document.querySelector('#modal-body textarea')?.value||'';
-  return !!(hasItems||hasClient||txt(obs));
-}
-function chamarSalvarVendaDisponivel(){
-  if(typeof window.neoSalvarVenda==='function' && (window.neoVendaItens||[]).length) return window.neoSalvarVenda();
-  if(typeof window.cvSaveVenda==='function' && (window.cvItens||[]).length) return window.cvSaveVenda();
-  if(typeof window.saveVenda==='function') return window.saveVenda();
-  toastMsg('Não encontrei função de salvar esta venda.','error');
-}
 function rodapeLojaHtml(){
   const l=loja();
   return `<div class="rodape-loja-final" style="margin:6mm 10mm 3mm;border-top:1px solid #d8dee9;padding-top:2mm;text-align:center;font-family:Arial,sans-serif;font-size:8.5px;color:#5b6472;page-break-inside:avoid"><b>${esc(l.fantasia)}</b>${l.razao?' • '+esc(l.razao):''}${l.cnpj?' • CNPJ '+esc(l.cnpj):''}<br>${esc(l.endereco||'Endereço não informado')}${l.telefone?' • Tel. '+esc(l.telefone):''}${l.whatsapp?' • WhatsApp '+esc(l.whatsapp):''}${l.email?' • '+esc(l.email):''}</div>`;
@@ -19166,19 +19167,11 @@ if(typeof oldRenderProdutos==='function') window.renderProdutos=function(){
   finally{ db.produtos=orig; }
 };
 
-// Fechar venda em andamento: pergunta se deseja salvar antes de sair.
-const oldClose=window.closeModal;
-window.closeModal=function(){
-  if(vendaEmAndamento()&&!window.__fecharVendaConfirmado&&!window.__salvandoVendaFinal){
-    const salvarVenda=confirm('Você está saindo de uma venda/notinha em andamento. Deseja salvar antes de sair?\n\nOK = salvar agora\nCancelar = sair sem salvar');
-    if(salvarVenda){ window.__salvandoVendaFinal=true; try{ chamarSalvarVendaDisponivel(); } finally{ setTimeout(()=>window.__salvandoVendaFinal=false,600); } return; }
-    window.__fecharVendaConfirmado=true;
-    const r=oldClose?oldClose.apply(this,arguments):undefined;
-    setTimeout(()=>window.__fecharVendaConfirmado=false,200);
-    return r;
-  }
-  return oldClose?oldClose.apply(this,arguments):undefined;
-};
+// v5.22.73 — este aviso "Deseja salvar antes de sair?" era de uma tela de venda
+// que não existe mais: ele procurava neoSalvarVenda/cvSaveVenda/saveVenda e,
+// como a venda de hoje salva por vosGravarVenda, terminava em "Não encontrei
+// função de salvar esta venda" — travando o Salvar. A venda atual já grava
+// sozinha ao fechar (ajustes_v52241), então esta camada foi removida.
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=document.getElementById('modal-root'); if(m&&!m.classList.contains('hidden')){ e.preventDefault(); window.closeModal(); } } },true);
 
 // Rodapé padrão em qualquer janela HTML de impressão/PDF (exceto RTF).
@@ -22024,6 +22017,22 @@ function marcarDirtyChamado(){
   body.addEventListener('input', ()=>{ window.__lcChamDirty = true; }, { once:false });
 }
 
+// Descobre a impressora do chamado aberto e responde se ela tem contador color.
+// Sem impressora identificada, a resposta é não — nunca travar por dúvida.
+function chamadoTemColor(){
+  let equipId = document.getElementById('ko-equip')?.value
+    || document.getElementById('ca-equip')?.value || '';
+  if(!equipId){
+    const id = window.modalContext && window.modalContext.id;
+    const o = id ? (db.os||[]).find(x=>x.id===id) : null;
+    equipId = (o && o.equipamentoId) || '';
+  }
+  if(!equipId) return false;
+  const p = (db.parque||[]).find(x=>x.equipamentoId===equipId);
+  const eq = (db.equipamentos||[]).find(x=>x.id===equipId);
+  return impressoraTemColor(p, eq);
+}
+
 function validarFinalizar(contrato){
   const chk = document.getElementById('ko-concluido') || document.getElementById('o-concluido') || document.getElementById('ca-concluido');
   if(!chk || !chk.checked) return true;
@@ -22033,8 +22042,12 @@ function validarFinalizar(contrato){
   if(!txt(pb && pb.value)){ toastMsg('Preencha o contador preto atual para finalizar.','error'); return false; }
   if(!txt(motivo && motivo.value)){ toastMsg('Preencha Motivo / Defeito para finalizar.','error'); return false; }
   if(!txt(dataAt && dataAt.value)){ toastMsg('Preencha a data de atendimento para finalizar.','error'); return false; }
+  // v5.22.73 — antes bastava o campo estar habilitado para o sistema exigir o
+  // contador color, e ele nasce habilitado. Impressora preto e branco ficava
+  // presa pedindo um número que ela não tem. Agora só pede se a impressora do
+  // chamado realmente tiver contador color no cadastro.
   const colorEl = document.getElementById('lc-cont-color-atu');
-  if(contrato && colorEl && !colorEl.disabled && !txt(colorEl.value)){
+  if(contrato && colorEl && !colorEl.disabled && chamadoTemColor() && !txt(colorEl.value)){
     toastMsg('Preencha o contador color atual para finalizar.','error'); return false;
   }
   if(!contrato){
@@ -28759,7 +28772,7 @@ async function renderConnected(body){
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Restaurar TUDO que foi excluído ('+(t.deleted||0)+')','dc-restore-all',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px"><label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer"><input type="checkbox" id="dc-espelho" '+(sync.espelho?'checked':'')+' style="margin-top:2px"><span><b>Manter este PC igual à nuvem</b><br><small style="color:#64748b">Depois de sincronizar sem nenhum problema, o que sobrar só neste computador é apagado daqui. Todos os PCs mostram a mesma informação, sem lixo e sem duplicata. A nuvem nunca é apagada.</small></span></label></div>'+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   const chk=body.querySelector('#dc-espelho');
@@ -28826,6 +28839,33 @@ async function renderConnected(body){
         setBusy(btn,false);
       }
     };
+    // A nuvem guarda tudo o que foi excluído. Quando uma exclusão indevida
+    // passa (foi o que aconteceu na v5.22.69), isto traz tudo de volta de uma
+    // vez, sem precisar clicar registro por registro.
+    body.querySelector('#dc-restore-all').onclick=async()=>{
+      const btn=body.querySelector('#dc-restore-all');
+      const ok=await window.confirmSistema('Trazer de volta TODOS os registros excluídos que estão guardados na nuvem? Nada é apagado por esta ação.','Restaurar tudo');
+      if(!ok)return;
+      setBusy(btn,true,'Restaurando...');
+      let voltaram=0,falharam=0;
+      try{
+        for(let pagina=0;pagina<40;pagina++){
+          const data=await api('/v1/deleted?limit=100',{method:'GET'});
+          const lista=data.records||[];
+          if(!lista.length)break;
+          let algum=false;
+          for(const r of lista){
+            try{ await api('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}); voltaram++; algum=true; }
+            catch(e){ falharam++; }
+            adminResult.innerHTML=message('Restaurando... '+voltaram+' de volta'+(falharam?(' • '+falharam+' não deu'):''),'info');
+          }
+          if(!algum)break;
+        }
+        if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('restauracao');
+        adminResult.innerHTML=message(voltaram+' registros voltaram para a nuvem e já estão descendo para este computador.'+(falharam?(' '+falharam+' não puderam voltar.'):''),voltaram?'ok':'info');
+      }catch(e){ adminResult.innerHTML=message(e.message,'error'); }
+      setBusy(btn,false);
+      };
     body.querySelector('#dc-list-deleted').onclick=async()=>{
       adminResult.innerHTML=message('Carregando itens excluídos...','info');
       try{

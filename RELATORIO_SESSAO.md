@@ -3,11 +3,11 @@
 **Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.72**  
+**Última versão:** **v5.22.73**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.72>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.73>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
@@ -73,6 +73,19 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.73 — venda que não salvava, contador color inexistente e erro de tela
+
+| Problema relatado | Causa | Correção |
+|---|---|---|
+| *"Não encontrei função de salvar esta venda"* ao clicar em **Salvar** | `ajustes_pos_final_patch.js` tinha um `closeModal` de uma tela de venda **que não existe mais**: procurava `neoSalvarVenda`/`cvSaveVenda`/`saveVenda`. A venda de hoje salva por `vosGravarVenda`. Com a retirada do aviso de salvar (2.6 da v5.22.68), o fluxo passou a cair nessa camada velha | Camada removida inteira (`vendaEmAndamento`, `chamarSalvarVendaDisponivel` e o `closeModal` obsoleto). A venda atual já grava sozinha ao fechar |
+| *"Preencha o contador color atual"* numa impressora sem contador color | `validarFinalizar` exigia o campo só por ele estar **habilitado** — e ele nasce habilitado | Novo `chamadoTemColor()`: só exige se a impressora do chamado tiver contador color no cadastro (parque/equipamento). Sem impressora identificada, não trava |
+| `Uncaught TypeError: Cannot set properties of null (setting 'value')` | `autoPreencherDadosChamado` (`contratos_refino_patch.js`) escrevia em 6 campos sem conferir se existiam; a tela do chamado mudou e alguns somem | Helper `porCampo(id,valor)`: preenche só o que existe |
+| Dados que sumiram na v5.22.69 | Exclusão em massa por ausência (corrigida na v5.22.71) | **Botão novo no painel: "Restaurar TUDO que foi excluído (N)"** — a nuvem guarda todo registro excluído; o botão traz tudo de volta de uma vez e puxa para o PC. Nada é apagado por essa ação |
+
+Teste: `test_ajustes_v52273.js`. Suíte: **127 passaram / 0 falharam**.
 
 ---
 

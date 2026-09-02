@@ -364,6 +364,22 @@ function marcarDirtyChamado(){
   body.addEventListener('input', ()=>{ window.__lcChamDirty = true; }, { once:false });
 }
 
+// Descobre a impressora do chamado aberto e responde se ela tem contador color.
+// Sem impressora identificada, a resposta é não — nunca travar por dúvida.
+function chamadoTemColor(){
+  let equipId = document.getElementById('ko-equip')?.value
+    || document.getElementById('ca-equip')?.value || '';
+  if(!equipId){
+    const id = window.modalContext && window.modalContext.id;
+    const o = id ? (db.os||[]).find(x=>x.id===id) : null;
+    equipId = (o && o.equipamentoId) || '';
+  }
+  if(!equipId) return false;
+  const p = (db.parque||[]).find(x=>x.equipamentoId===equipId);
+  const eq = (db.equipamentos||[]).find(x=>x.id===equipId);
+  return impressoraTemColor(p, eq);
+}
+
 function validarFinalizar(contrato){
   const chk = document.getElementById('ko-concluido') || document.getElementById('o-concluido') || document.getElementById('ca-concluido');
   if(!chk || !chk.checked) return true;
@@ -373,8 +389,12 @@ function validarFinalizar(contrato){
   if(!txt(pb && pb.value)){ toastMsg('Preencha o contador preto atual para finalizar.','error'); return false; }
   if(!txt(motivo && motivo.value)){ toastMsg('Preencha Motivo / Defeito para finalizar.','error'); return false; }
   if(!txt(dataAt && dataAt.value)){ toastMsg('Preencha a data de atendimento para finalizar.','error'); return false; }
+  // v5.22.73 — antes bastava o campo estar habilitado para o sistema exigir o
+  // contador color, e ele nasce habilitado. Impressora preto e branco ficava
+  // presa pedindo um número que ela não tem. Agora só pede se a impressora do
+  // chamado realmente tiver contador color no cadastro.
   const colorEl = document.getElementById('lc-cont-color-atu');
-  if(contrato && colorEl && !colorEl.disabled && !txt(colorEl.value)){
+  if(contrato && colorEl && !colorEl.disabled && chamadoTemColor() && !txt(colorEl.value)){
     toastMsg('Preencha o contador color atual para finalizar.','error'); return false;
   }
   if(!contrato){
