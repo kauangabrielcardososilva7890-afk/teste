@@ -9,7 +9,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.74 ==');
-ok('versão subiu para 5.22.74',pkg.version==='5.22.74');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // ── o que sumiu sozinho volta sozinho ──
 ok('não tem botão para o usuário apertar',!/dc-restore-all/.test(painel));

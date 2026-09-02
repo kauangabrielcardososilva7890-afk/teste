@@ -36,15 +36,59 @@ const DEFINITIONS={
 // era ele que inchava a contagem da nuvem.
 const NAO_SINCRONIZA=new Set(['meta','__proto__','logs','notificacoes']);
 
-// Só estas listas podem mandar EXCLUSÃO para a nuvem — são as que têm botão de
-// excluir de verdade na tela. Todas as outras (as que os módulos filtram e
-// remontam sozinhos) só sabem mandar novidade: some daqui, mas não some do
-// outro PC nem da nuvem.
+// EXCLUSÃO SÓ QUANDO FOI DE PROPÓSITO (v5.22.75)
+// A nuvem não adivinha mais nada. Registro que some da tela por conta própria
+// — lista remontada por um módulo, base abrindo pela metade, corte automático —
+// NÃO vira exclusão: o dado continua na nuvem e nos outros computadores.
+// A nuvem só apaga quando o sistema avisa que a pessoa mandou apagar, e aí
+// apaga 1 ou 500, sem limite e sem pergunta.
+//
+// O aviso vem de dois sinais, os dois deterministas:
+//   1. uma função de exclusão do sistema foi chamada;
+//   2. a pessoa respondeu SIM em uma confirmação (todo excluir passa por uma).
+// Coisa automática nunca confirma nada, então nunca cai aqui.
+const JANELA_INTENCAO=60000;
+const CONFIRMA_SUMICO=3000;
+let intencaoAte=0;
+function marcarIntencaoDeExcluir(){ intencaoAte=Date.now()+JANELA_INTENCAO; }
+function houveIntencaoDeExcluir(){ return Date.now()<intencaoAte; }
+window.DIGICOPY_EXCLUSAO_INTENCIONAL=marcarIntencaoDeExcluir;
+
+const FUNCOES_QUE_EXCLUEM=['deleteVenda','deleteCliente','deleteProduto','deleteCR',
+  'deleteUsuario','deleteLeituraContrato','excluirVendaNeo','excluirVendaSelecionada',
+  'excluirVendaUnificado','excluirClienteClassic','excluirClientesSelecionados',
+  'excluirClientesCascata','excluirProdutoUnificado','excluirContratoUnificado',
+  'excluirContratoOperacional','excluirChamadosSelecionados','excluirFinanceiroSelecionados',
+  'excluirLancamentosFinanceiro','excluirLeiturasMarcadas','excluirOrcamentosMarcados',
+  'excluirRecarga','excluirTecnico','excluirUsuario'];
+function vigiarExclusoes(){
+  if(typeof window==='undefined')return;
+  FUNCOES_QUE_EXCLUEM.forEach(nome=>{
+    const original=window[nome];
+    if(typeof original!=='function'||original.__vigiado)return;
+    const vigiada=function(){ marcarIntencaoDeExcluir(); return original.apply(this,arguments); };
+    vigiada.__vigiado=true;
+    window[nome]=vigiada;
+  });
+  ['confirmSistema','confirm','lfbConfirm'].forEach(nome=>{
+    const original=window[nome];
+    if(typeof original!=='function'||original.__vigiado)return;
+    const vigiada=function(){
+      const r=original.apply(this,arguments);
+      if(r&&typeof r.then==='function'){ r.then(ok=>{ if(ok)marcarIntencaoDeExcluir(); }).catch(()=>{}); }
+      else if(r) marcarIntencaoDeExcluir();
+      return r;
+    };
+    vigiada.__vigiado=true;
+    window[nome]=vigiada;
+  });
+}
+
+// Listas que podem receber ordem de exclusão. As demais (as que os módulos
+// remontam sozinhos) nunca apagam nada na nuvem, nem com intenção.
 const PODE_EXCLUIR=new Set(['empresas','usuarios','clientes','produtos','recargas',
   'equipamentos','contratos','parque','leituras','os','vendas','orcamentos',
   'contasReceber','contasPagar','tecnicos']);
-// Trava contra apagão: numa passada só, nunca mais que isto por lista.
-const MAX_EXCLUSOES=20;
 
 // Lê o banco de verdade e devolve o mapa completo do que sincronizar. Lista
 // nova criada por qualquer módulo entra automaticamente na próxima passada.
@@ -71,6 +115,8 @@ function loadState(){
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   s.espelho=(s.espelho===undefined)?true:!!s.espelho;
   s.reparo=s.reparo||'';
+  s.marcoReparo=Number(s.marcoReparo)||0;
+  s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
@@ -312,25 +358,34 @@ function scanLocal(){
     for(const entry of entries){
       if(outbox.length>=MAX_OUTBOX)break;
       const k=key(entity,entry.id),h=hash(entry.data);
+      if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
     if(!PODE_EXCLUIR.has(entity))continue;
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
-    const conhecidos=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')).length;
-    // Sumiço em massa quase nunca é exclusão de verdade: é lista meio carregada,
-    // filtro do módulo ou base ainda abrindo. Nesse caso não apaga nada e avisa.
-    if(missing.length>MAX_EXCLUSOES||(conhecidos>0&&missing.length/conhecidos>0.30)){
-      lastError='Muitos registros de '+entity+' sumiram deste PC de uma vez ('+missing.length+'). Por segurança a nuvem não apagou nada.';
+    if(!missing.length)continue;
+    if(!houveIntencaoDeExcluir()){
+      // Ninguém mandou apagar. Este PC apenas deixa de acompanhar o registro:
+      // ele segue inteiro na nuvem e nos outros computadores. Sem apagão.
+      missing.forEach(k=>{ delete state.known[k]; delete state.hashes[k]; delete state.sumindo[k]; });
       continue;
     }
+    // Confere duas vezes antes de apagar. Não é limite de quantidade: pode ser
+    // 1 ou 5.000. É só um respiro de 3 segundos para o caso da base estar
+    // abrindo e a lista ainda estar pela metade — aí o registro reaparece e a
+    // exclusão é cancelada sozinha.
+    const agora=Date.now();
     for(const k of missing){
       if(outbox.length>=MAX_OUTBOX)break;
+      if(!state.sumindo[k]){ state.sumindo[k]=agora; continue; }
+      if(agora-Number(state.sumindo[k])<CONFIRMA_SUMICO) continue;
       const id=k.slice(entity.length+1);
       outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity,recordId:id,operation:'delete',baseVersion:Number(state.versions[k]||0)}});
-      pending.add(k);added++;
+      pending.add(k);delete state.sumindo[k];added++;
     }
+    if(missing.length)schedule(CONFIRMA_SUMICO+500);
   }
   persist();return added;
 }
@@ -438,13 +493,18 @@ function agruparApagao(excluidos){
 async function repararApagao(){
   if(state.reparo===REPARO)return 0;
   const call=api();if(!call)return 0;
+  // MARCO: o conserto só olha para o que já estava excluído quando esta versão
+  // entrou. Nada que a pessoa apagar de hoje em diante pode voltar — e depois
+  // de rodar uma vez, este código nunca mais é executado neste PC.
+  if(!state.marcoReparo){state.marcoReparo=Date.now();persist();}
+  const marco=Number(state.marcoReparo)||Date.now();
   let voltaram=0;
   try{
     for(let volta=0;volta<40;volta++){
       const data=await comPaciencia(()=>call('/v1/deleted?limit=100',{method:'GET'}));
       const lista=data&&data.records?data.records:[];
       if(!lista.length)break;
-      const devolver=agruparApagao(lista);
+      const devolver=agruparApagao(lista.filter(r=>r&&Number(r.deletedAt)<marco));
       if(!devolver.length)break;
       let algum=false;
       for(const r of devolver){
@@ -757,9 +817,13 @@ function espelhoLigado(){return state.espelho!==false;}
 function ligarEspelho(ligar){state.espelho=!!ligar;persist();return state.espelho;}
 function info(){return {authorized:authorized(),busy,espelho:state.espelho!==false,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho,agruparApagao,repararApagao};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho,agruparApagao,repararApagao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
+// O vigia das exclusões entra antes de tudo: ele não depende de tela.
+vigiarExclusoes();
 if(typeof document==='undefined')return;
+setTimeout(vigiarExclusoes,4000);
+setTimeout(vigiarExclusoes,15000);
 try{
   const original=window.saveDB;
   if(typeof original==='function'&&!original.__cfWrapped){

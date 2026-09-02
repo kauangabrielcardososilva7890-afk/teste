@@ -76,6 +76,18 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.75 — a nuvem só apaga quando VOCÊ mandou apagar
+
+Você disse: *"não quero que isso vire regra, isso vai dar problema... as pessoas que vão usar são meio problemáticas"*. Então saiu toda e qualquer adivinhação.
+
+- **Acabou o teto de 20 e a regra dos 30%.** Se você apagar 500 clientes de propósito, os 500 somem em todos os PCs. Sem trava, sem aviso, sem "por segurança não apaguei".
+- **Sumiu sozinho? A nuvem não apaga.** Se um registro desaparecer do PC sem ninguém mandar, o PC só para de acompanhar aquele registro. O dado continua na nuvem e nos outros PCs, e não fica mais engordando o "faltam N".
+- **Como o sistema sabe que foi de propósito:** ele vigia as 23 funções de excluir do programa e as janelas de confirmação. Você clicou em excluir, ou respondeu SIM numa pergunta de confirmação, abre uma janela de 60 segundos em que a exclusão vale. Fora dela, nada é apagado.
+- **Confere duas vezes.** Entre ver o registro sumido e mandar apagar existe um respiro de 3 segundos. Se a base ainda estava abrindo e a lista voltar, a exclusão é cancelada sozinha. Isso não é limite de quantidade: pode ser 1 ou 5.000.
+- **O conserto da falha da v5.22.69 virou coisa de uma vez só e com data.** Ele roda uma única vez por PC e só devolve o que sumiu ANTES da data em que rodou. Nada que você apagar de hoje em diante volta, nunca.
+
+Testes: `test_ajustes_v52275.js` (16 conferências). Suíte: 129 passaram, 0 falharam.
+
 ## v5.22.74 — o que sumiu sozinho volta sozinho (sem botão)
 
 O usuário recusou o botão "Restaurar tudo": *"eu não quero restaurar não, você vai
