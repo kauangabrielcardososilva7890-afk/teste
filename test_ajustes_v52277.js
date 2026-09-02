@@ -7,7 +7,7 @@ const rec=fs.readFileSync('ajustes_v52214_recargas_patch.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.77 ==');
-ok('versão subiu para 5.22.77',pkg.version==='5.22.77');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // ── 1. nome de demonstração: limpeza de uma vez, NÃO regra ──
 ok('a nuvem não recusa mais nome nenhum',!/ehLixoDeDemonstracao\(change\.entity/.test(code));

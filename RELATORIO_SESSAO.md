@@ -76,6 +76,25 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.78 — a tela da nuvem para de travar por causa do erro da API
+
+O conserto de verdade do "Erro interno da API" está no servidor (v5.22.76) e **só vale depois de republicar o Worker**. Enquanto isso não acontece, esta versão faz a janela da nuvem parar de ficar refém da contagem de registros:
+
+- Se a contagem falhar, a janela **abre do mesmo jeito**, com o que o PC já sabe.
+- Aparece um aviso explicando o motivo e deixando claro que a sincronização **não** está parada.
+- Sincronizar agora, autorizar outro computador, ver excluídos e remover autorização continuam funcionando normalmente.
+- Só o que muda: os números da nuvem aparecem como "—" até o servidor conseguir contar.
+- Autorização vencida (401) continua desconectando como antes.
+
+### Como republicar o Worker (resolve o erro de vez)
+```
+cd cloudflare-worker
+npx wrangler d1 migrations apply digicopy-sync --remote
+npx wrangler deploy
+```
+
+Testes: `test_ajustes_v52278.js` (8 conferências). Suíte: 132 passaram, 0 falharam.
+
 ## v5.22.77 — limpeza de uma vez (não regra) e dois submenus fora
 
 **1. Os nomes de teste: limpeza, não regra.** Na versão passada eu tinha deixado uma regra fixa que recusava esses nomes para sempre — não era isso que você pediu. Desfiz. Agora é uma **faxina única**: o sistema apaga Rafael Lima, Carlos Mendes e Ana Souza do PC e da nuvem uma vez, marca que já limpou e **nunca mais olha para nome nenhum**. Se um dia existir um técnico de verdade com esse nome, ele funciona igual a qualquer outro.

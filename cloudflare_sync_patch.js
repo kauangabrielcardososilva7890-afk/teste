@@ -153,11 +153,20 @@ async function renderDisconnected(body){
 
 async function renderConnected(body){
   body.innerHTML=message('Verificando autorização deste computador...','info');
-  let status;
+  let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
     if(e.status===401){forgetAuth();return renderDisconnected(body);}
-    body.innerHTML=message(e.message,'error')+'<div style="margin-top:12px">'+button('Tentar novamente','dc-retry',true)+'</div>'; body.querySelector('#dc-retry').onclick=()=>renderConnected(body);return;
+    // A tela da nuvem não pode ficar refém da contagem de registros. Se a conta
+    // falhar, a janela abre do mesmo jeito com o que o PC já sabe, e tudo que
+    // importa — sincronizar, autorizar outro PC, ver excluídos — continua
+    // funcionando. Só os números da nuvem ficam de fora, com o aviso do motivo.
+    const salvo=deviceInfo();
+    if(!salvo){
+      body.innerHTML=message(e.message,'error')+'<div style="margin-top:12px">'+button('Tentar novamente','dc-retry',true)+'</div>'; body.querySelector('#dc-retry').onclick=()=>renderConnected(body);return;
+    }
+    contagemFalhou=e.message||'a nuvem não respondeu a contagem';
+    status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
@@ -179,7 +188,10 @@ async function renderConnected(body){
     ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
     :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
       :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
-  body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
+  const avisoContagem=contagemFalhou
+    ?message('Os números da nuvem não puderam ser contados agora ('+esc(contagemFalhou)+'). Isso NÃO atrapalha a sincronização: seus dados continuam indo e voltando normalmente. Os botões abaixo funcionam.','info')
+    :'';
+  body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
