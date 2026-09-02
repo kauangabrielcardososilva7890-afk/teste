@@ -570,7 +570,8 @@ function toggleSidebar(forceClose=false){
 function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
-  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
+  // v5.22.77: Chamados não é submenu de Contratos. Saiu daqui a pedido.
+  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'}];
   const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'buscador-escola',icon:'ph-magnifying-glass',label:'Buscador Escola'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   
   // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)

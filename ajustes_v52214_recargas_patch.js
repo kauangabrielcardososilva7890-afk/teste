@@ -302,17 +302,8 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52214rec){
   window.vosAddItem.__v52214rec = true;
 }
 
-if(typeof window.MENUS_ATALHOS_PURE==='object' && window.MENUS_ATALHOS_PURE.catalogoAtalhos && !window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214){
-  var oldCat = window.MENUS_ATALHOS_PURE.catalogoAtalhos;
-  window.MENUS_ATALHOS_PURE.catalogoAtalhos = function(){
-    var list = oldCat();
-    if(!list.some(function(a){ return a.id==='recargas'; })){
-      list.push({id:'recargas', icon:'ph-drop', label:'Recargas', click:'if(typeof window.abrirAbaRecargas===\'function\') window.abrirAbaRecargas(); else navigateTo(\'produtos\')'});
-    }
-    return list;
-  };
-  window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214 = true;
-}
+// v5.22.77: Recargas NÃO é submenu de Cadastros. A tela continua existindo
+// pela função window.abrirAbaRecargas, mas o atalho não é mais injetado.
 
-console.log('[DIGICOPY] v5.22.14 recargas: aba + submenu + venda sem estoque');
+console.log('[DIGICOPY] v5.22.14 recargas: aba + venda sem estoque');
 })();

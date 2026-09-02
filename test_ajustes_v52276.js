@@ -7,7 +7,7 @@ const app=fs.readFileSync('app.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.76 ==');
-ok('versão subiu para 5.22.76',pkg.version==='5.22.76');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // ── 1. nenhum PC apaga dado sozinho ──
 ok('o espelho que apagava dado do PC foi removido',!/espelharNuvem|planejarEspelho/.test(code));
@@ -39,7 +39,7 @@ S.devolverSumidos().then(n=>{
   // ── 3. nomes de teste nunca mais ──
   ok('o sistema sabe quem é nome de demonstração',/ehTecnicoDemo/.test(app)&&/Rafael Lima/.test(app)&&/TECNICOS_DEMO/.test(app));
   ok('nome de demonstração é varrido do PC e da nuvem',/function varrerDemonstracao/.test(code)&&/naFila\.add\(k\);/.test(code));
-  ok('se a nuvem mandar de volta, o PC recusa',/if\(change\.operation!=='delete'&&ehLixoDeDemonstracao\(change\.entity,change\.data\)\)/.test(code));
+  ok('a limpeza é de uma vez só, sem regra permanente',/if\(state\.faxina===FAXINA\)return 0;/.test(code)&&!/ehLixoDeDemonstracao\(change\.entity/.test(code));
   const sujo={tecnicos:[{id:'t3',nome:'Rafael Lima'},{id:'x9',nome:'Técnico de verdade'}]};
   const w2={DIGICOPY_CLOUD:{token:()=>''},ehTecnicoDemo:t=>['t1','t2','t3'].indexOf(t&&t.id)>=0,saveDB:()=>{}};
   new Function('window','localStorage','document','db',code)(w2,{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},undefined,sujo);

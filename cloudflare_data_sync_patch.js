@@ -115,6 +115,7 @@ function loadState(){
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   s.reparo=s.reparo||'';
   s.devolucao=s.devolucao||'';
+  s.faxina=s.faxina||'';
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
@@ -190,11 +191,6 @@ function applyRemote(change){
   const mode=definicoes()[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
-  // Nome de demonstração que ficou guardado na nuvem antiga não entra de volta.
-  if(change.operation!=='delete'&&ehLixoDeDemonstracao(change.entity,change.data)){
-    state.versions[k]=Number(change.version)||0;
-    return false;
-  }
   let changed=false;
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
@@ -446,15 +442,18 @@ async function devolverSumidos(){
   return voltaram;
 }
 
-// OS NOMES DE DEMONSTRAÇÃO NÃO VOLTAM NUNCA MAIS (v5.22.76)
-// Carlos Mendes, Ana Souza e Rafael Lima não existem. Eles ficaram guardados na
-// nuvem de quando o sistema antigo os criava sozinho. Aqui eles são apagados do
-// PC e a ordem de exclusão sobe para a nuvem, para sumirem de todos os
-// computadores de uma vez — e se a nuvem mandar de volta, o PC recusa.
+// FAXINA DOS NOMES DE DEMONSTRAÇÃO — UMA VEZ SÓ (v5.22.77)
+// Carlos Mendes, Ana Souza e Rafael Lima foram apagados do PC e da nuvem uma
+// única vez, porque a nuvem antiga tinha guardado eles. NÃO é regra: depois
+// dessa limpeza o sistema nunca mais olha para nome nenhum. Se um dia existir
+// um técnico de verdade com esse nome, ele funciona igual a qualquer outro.
+const FAXINA='v5.22.77-limpeza-unica';
 function varrerDemonstracao(){
-  if(typeof db==='undefined'||!db||!Array.isArray(db.tecnicos))return 0;
+  if(state.faxina===FAXINA)return 0;
+  if(typeof db==='undefined'||!db||!Array.isArray(db.tecnicos)){return 0;}
+  state.faxina=FAXINA;
   const lixo=db.tecnicos.filter(t=>ehLixoDeDemonstracao('tecnicos',t));
-  if(!lixo.length)return 0;
+  if(!lixo.length){persist();return 0;}
   db.tecnicos=db.tecnicos.filter(t=>!ehLixoDeDemonstracao('tecnicos',t));
   const naFila=pendingKeys();
   lixo.forEach(t=>{

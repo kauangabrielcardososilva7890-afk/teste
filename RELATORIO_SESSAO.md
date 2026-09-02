@@ -76,6 +76,16 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.77 — limpeza de uma vez (não regra) e dois submenus fora
+
+**1. Os nomes de teste: limpeza, não regra.** Na versão passada eu tinha deixado uma regra fixa que recusava esses nomes para sempre — não era isso que você pediu. Desfiz. Agora é uma **faxina única**: o sistema apaga Rafael Lima, Carlos Mendes e Ana Souza do PC e da nuvem uma vez, marca que já limpou e **nunca mais olha para nome nenhum**. Se um dia existir um técnico de verdade com esse nome, ele funciona igual a qualquer outro.
+
+**2. Submenu Chamados dentro de Contratos: removido** (`app.js`, `buildNav`). A tela de chamados continua existindo e o atendimento continua abrindo chamado normalmente.
+
+**3. Submenu Recargas dentro de Cadastros: removido** (`ajustes_v52213_menus_atalhos_patch.js` e a injeção no catálogo em `ajustes_v52214_recargas_patch.js`). A tela de recargas continua existindo.
+
+Testes: `test_ajustes_v52277.js` (13 conferências). Suíte: 131 passaram, 0 falharam.
+
 ## v5.22.76 — o que sumiu volta, os nomes de teste vão embora e a nuvem para de dar erro
 
 **1. Achei quem apagou.** Era o "espelho" que entrou na v5.22.72: depois de sincronizar, ele apagava DO PC tudo o que a nuvem não tivesse. Foi ele que levou usuário de login, produto de recarga e impressora de dentro do contrato. **O espelho foi removido do sistema.** Nenhum computador apaga dado sozinho nunca mais — agora é o contrário: o que existe no PC e não está na nuvem SOBE para a nuvem.

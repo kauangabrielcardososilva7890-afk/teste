@@ -16,7 +16,7 @@ ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 // nenhum botão de restaurar em massa existe e que aquele conserto saiu.
 ok('não tem botão para o usuário apertar',!/dc-restore-all/.test(painel));
 ok('o conserto que ressuscitava dado saiu',!/repararApagao/.test(code)&&!/agruparApagao/.test(code));
-ok('nome de demonstração não volta pela nuvem',/ehLixoDeDemonstracao\(change\.entity,change\.data\)/.test(code));
+ok('a limpeza dos nomes velhos é de uma vez, não é regra',/if\(state\.faxina===FAXINA\)return 0;/.test(code));
 
 // ── contador color pela modalidade ──
 ok('contador color olha a modalidade',/function modalidadeAtiva/.test(cham)&&/modalidadeAtiva\(meds\.colorA4\) \|\| modalidadeAtiva\(meds\.colorA3\)/.test(cham));

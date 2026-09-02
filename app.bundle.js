@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: f2ae03d374db5460
+ * scripts: 190 | sha256: 230e78b319767dbf
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -822,7 +822,8 @@ function toggleSidebar(forceClose=false){
 function buildNav(){
   const sess=getSession();
   const main=[{id:'dashboard',icon:'ph-house',label:'Início'},{id:'vendas',icon:'ph-shopping-cart-simple',label:'Vender / Orçar'},{id:'clientes',icon:'ph-users',label:'Clientes'},{id:'produtos',icon:'ph-package',label:'Estoque'}];
-  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'},{id:'manutencao',icon:'ph-wrench',label:'Chamados'}];
+  // v5.22.77: Chamados não é submenu de Contratos. Saiu daqui a pedido.
+  const op=[{id:'impressoras',icon:'ph-printer',label:'Cadastro de impressoras'},{id:'contratos',icon:'ph-file-text',label:'Contratos de locação'},{id:'parque',icon:'ph-map-pin',label:'Máquinas nos clientes'},{id:'leituras',icon:'ph-speedometer',label:'Leituras'}];
   const gest=[{id:'financeiro',icon:'ph-bank',label:'Financeiro'},{id:'buscador-escola',icon:'ph-magnifying-glass',label:'Buscador Escola'},{id:'usuarios',icon:'ph-users-three',label:'Usuários'},{id:'auditoria',icon:'ph-clipboard-text',label:'Auditoria'},{id:'config',icon:'ph-gear',label:'Configurações'}];
   
   // Adicionar módulos dinâmicos (tabelas importadas sem mapeamento)
@@ -29020,6 +29021,7 @@ function loadState(){
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
   s.reparo=s.reparo||'';
   s.devolucao=s.devolucao||'';
+  s.faxina=s.faxina||'';
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
@@ -29095,11 +29097,6 @@ function applyRemote(change){
   const mode=definicoes()[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
-  // Nome de demonstração que ficou guardado na nuvem antiga não entra de volta.
-  if(change.operation!=='delete'&&ehLixoDeDemonstracao(change.entity,change.data)){
-    state.versions[k]=Number(change.version)||0;
-    return false;
-  }
   let changed=false;
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
@@ -29351,15 +29348,18 @@ async function devolverSumidos(){
   return voltaram;
 }
 
-// OS NOMES DE DEMONSTRAÇÃO NÃO VOLTAM NUNCA MAIS (v5.22.76)
-// Carlos Mendes, Ana Souza e Rafael Lima não existem. Eles ficaram guardados na
-// nuvem de quando o sistema antigo os criava sozinho. Aqui eles são apagados do
-// PC e a ordem de exclusão sobe para a nuvem, para sumirem de todos os
-// computadores de uma vez — e se a nuvem mandar de volta, o PC recusa.
+// FAXINA DOS NOMES DE DEMONSTRAÇÃO — UMA VEZ SÓ (v5.22.77)
+// Carlos Mendes, Ana Souza e Rafael Lima foram apagados do PC e da nuvem uma
+// única vez, porque a nuvem antiga tinha guardado eles. NÃO é regra: depois
+// dessa limpeza o sistema nunca mais olha para nome nenhum. Se um dia existir
+// um técnico de verdade com esse nome, ele funciona igual a qualquer outro.
+const FAXINA='v5.22.77-limpeza-unica';
 function varrerDemonstracao(){
-  if(typeof db==='undefined'||!db||!Array.isArray(db.tecnicos))return 0;
+  if(state.faxina===FAXINA)return 0;
+  if(typeof db==='undefined'||!db||!Array.isArray(db.tecnicos)){return 0;}
+  state.faxina=FAXINA;
   const lixo=db.tecnicos.filter(t=>ehLixoDeDemonstracao('tecnicos',t));
-  if(!lixo.length)return 0;
+  if(!lixo.length){persist();return 0;}
   db.tecnicos=db.tecnicos.filter(t=>!ehLixoDeDemonstracao('tecnicos',t));
   const naFila=pendingKeys();
   lixo.forEach(t=>{
@@ -31906,8 +31906,8 @@ function menusPadrao(){
     ]},
     {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
       {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},
-      {id:'novo-cliente', icon:'ph-user-plus', label:'Novo cliente', click:'openModal(\'cliente\')'},
-      {id:'recargas', icon:'ph-drop', label:'Recargas', click:'if(typeof window.abrirAbaRecargas===\'function\') window.abrirAbaRecargas(); else navigateTo(\'produtos\')'}
+      // v5.22.77: Recargas saiu de Cadastros a pedido do usuário.
+      {id:'novo-cliente', icon:'ph-user-plus', label:'Novo cliente', click:'openModal(\'cliente\')'}
     ]},
     {id:'financeiro', icon:'ph-bank', label:'Financeiro', click:'navigateTo(\'financeiro\')', menuId:'menu-financeiro', items:[
       {id:'contas-caixas', icon:'ph-bank', label:'Contas e caixas', click:'navigateTo(\'financeiro\')'}
@@ -32608,19 +32608,10 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52214rec){
   window.vosAddItem.__v52214rec = true;
 }
 
-if(typeof window.MENUS_ATALHOS_PURE==='object' && window.MENUS_ATALHOS_PURE.catalogoAtalhos && !window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214){
-  var oldCat = window.MENUS_ATALHOS_PURE.catalogoAtalhos;
-  window.MENUS_ATALHOS_PURE.catalogoAtalhos = function(){
-    var list = oldCat();
-    if(!list.some(function(a){ return a.id==='recargas'; })){
-      list.push({id:'recargas', icon:'ph-drop', label:'Recargas', click:'if(typeof window.abrirAbaRecargas===\'function\') window.abrirAbaRecargas(); else navigateTo(\'produtos\')'});
-    }
-    return list;
-  };
-  window.MENUS_ATALHOS_PURE.catalogoAtalhos.__v52214 = true;
-}
+// v5.22.77: Recargas NÃO é submenu de Cadastros. A tela continua existindo
+// pela função window.abrirAbaRecargas, mas o atalho não é mais injetado.
 
-console.log('[DIGICOPY] v5.22.14 recargas: aba + submenu + venda sem estoque');
+console.log('[DIGICOPY] v5.22.14 recargas: aba + venda sem estoque');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52214_recargas_patch.js", e); }
