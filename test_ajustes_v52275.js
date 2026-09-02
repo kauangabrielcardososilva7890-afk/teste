@@ -11,7 +11,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.75 ==');
-ok('versão subiu para 5.22.75',pkg.version==='5.22.75');
+ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
 
 // ── nada de adivinhação ──
 ok('acabou o teto de exclusões',!/MAX_EXCLUSOES/.test(code));
@@ -37,8 +37,9 @@ function return_test(){
     new Function('window','localStorage','document','db',code)(w3,{getItem:()=>null,setItem:()=>{},removeItem:()=>{}},undefined,{});
     w3.confirmSistema('apagar?').then(()=>{
       ok('confirmar NÃO mantém tudo travado',w3.DIGICOPY_CLOUD_SYNC.houveIntencaoDeExcluir()===false);
-      ok('conserto do apagão só olha o passado',/state\.marcoReparo/.test(code)&&/Number\(r\.deletedAt\)<marco/.test(code));
-      ok('conserto roda uma vez e nunca mais',/if\(state\.reparo===REPARO\)return 0;/.test(code));
+      // v5.22.76: o conserto que devolvia dado da nuvem saiu (trazia nome de
+      // demonstração de volta). Fica só a devolução da cópia local, uma vez só.
+      ok('a devolução do que sumiu roda uma vez e nunca mais',/if\(state\.devolucao===DEVOLUCAO\)return 0;/.test(code));
       ok('o vigia é religado depois que os módulos carregam',/setTimeout\(vigiarExclusoes,4000\)/.test(code)&&/setTimeout\(vigiarExclusoes,15000\)/.test(code));
       ok('confere duas vezes antes de apagar (base abrindo)',/const CONFIRMA_SUMICO=3000/.test(code)&&/if\(!state\.sumindo\[k\]\)\{ state\.sumindo\[k\]=agora; continue; \}/.test(code));
       ok('registro que reaparece cancela a exclusão',/if\(state\.sumindo\[k\]\)delete state\.sumindo\[k\];/.test(code));

@@ -76,6 +76,20 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
+## v5.22.76 — o que sumiu volta, os nomes de teste vão embora e a nuvem para de dar erro
+
+**1. Achei quem apagou.** Era o "espelho" que entrou na v5.22.72: depois de sincronizar, ele apagava DO PC tudo o que a nuvem não tivesse. Foi ele que levou usuário de login, produto de recarga e impressora de dentro do contrato. **O espelho foi removido do sistema.** Nenhum computador apaga dado sozinho nunca mais — agora é o contrário: o que existe no PC e não está na nuvem SOBE para a nuvem.
+
+**2. Devolvendo o que ele levou.** Antes de limpar, o espelho gravava uma cópia de segurança dentro do próprio PC. Ao abrir esta versão, o sistema lê essa cópia sozinho e devolve para a base tudo o que ela tinha e hoje não existe mais. Roda uma vez só, por computador, sem apertar nada.
+
+**3. Rafael Lima, Carlos Mendes e Ana Souza acabaram.** Eles estavam guardados na nuvem antiga e o conserto automático da v5.22.74 trouxe os três de volta. **Esse conserto foi removido.** Agora: o sistema apaga esses nomes do PC, manda a ordem de exclusão para a nuvem (somem de todos os computadores) e, se a nuvem tentar mandar de volta, o PC recusa. A devolução da cópia também nunca traz esses nomes.
+
+**4. "Erro interno da API" ao clicar na nuvem.** A tela contava registro percorrendo a tabela inteira cinco vezes a cada clique; com a base grande, o banco desistia e devolvia erro. Agora cada conta vai sozinha, uma que falhe vem zerada em vez de derrubar a tela, e o erro passou a dizer o motivo em vez de só "erro interno". Criados dois índices no banco (`0003_indices_contagem.sql`) para a conta ser instantânea.
+
+> Os itens 4 e parte do 3 dependem de **publicar o Worker de novo** (`npx wrangler deploy` e `npx wrangler d1 migrations apply`) para valerem na nuvem.
+
+Testes: `test_ajustes_v52276.js` (18 conferências). Suíte: 130 passaram, 0 falharam.
+
 ## v5.22.75 — a nuvem só apaga quando VOCÊ mandou apagar
 
 Você disse: *"não quero que isso vire regra, isso vai dar problema... as pessoas que vão usar são meio problemáticas"*. Então saiu toda e qualquer adivinhação.

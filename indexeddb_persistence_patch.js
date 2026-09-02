@@ -103,6 +103,11 @@ async function writeRecoverySnapshot(name,data){
     await putSnapshot({key:'recovery_'+String(name||Date.now()),savedAt:Date.now(),reason:'recovery',data:copy});return true;
   }catch(e){lastError=e&&e.message?e.message:String(e);return false;}
 }
+// Ler de volta uma cópia de recuperação (usado pelo conserto da nuvem).
+async function readRecoverySnapshot(name){
+  try{const snap=await getSnapshot('recovery_'+String(name||''));return snap&&snap.data?snap.data:null;}
+  catch(e){lastError=e&&e.message?e.message:String(e);return null;}
+}
 async function clearLocalData(){
   clearing=true;if(writeTimer)clearTimeout(writeTimer);
   try{if(database){database.close();database=null;}}catch(e){}
@@ -111,7 +116,7 @@ async function clearLocalData(){
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;

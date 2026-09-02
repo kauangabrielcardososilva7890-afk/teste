@@ -788,30 +788,40 @@ async function handleResetCloud(request, env) {
 
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
-  const [devices, records, deleted, changes, grouped] = await env.DB.batch([
-    env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'),
-    env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NULL'),
-    env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NOT NULL'),
-    env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes'),
-    env.DB.prepare(`SELECT entity,
-      SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS active,
-      SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS deleted
-      FROM records GROUP BY entity ORDER BY entity`)
+  // A tela da nuvem não pode quebrar por causa de uma conta. Cada consulta vai
+  // sozinha e, se o banco estiver ocupado demais para responder, aquele número
+  // vem zerado em vez de derrubar a tela inteira com "Erro interno da API".
+  async function conta(sql) {
+    try {
+      const row = await env.DB.prepare(sql).first();
+      return Number(row && row.total) || 0;
+    } catch (error) {
+      console.error('DIGICOPY_STATUS_PARCIAL', sql, error);
+      return 0;
+    }
+  }
+  const [devices, records, deleted, changes] = await Promise.all([
+    conta('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'),
+    conta('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NULL'),
+    conta('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NOT NULL'),
+    conta('SELECT COALESCE(MAX(seq), 0) AS total FROM changes')
   ]);
   const byEntity = {};
-  for (const row of (grouped.results || [])) {
-    byEntity[row.entity] = { active: Number(row.active) || 0, deleted: Number(row.deleted) || 0 };
+  try {
+    const grouped = await env.DB.prepare(`SELECT entity,
+      SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS active,
+      SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS deleted
+      FROM records GROUP BY entity ORDER BY entity`).all();
+    for (const row of (grouped.results || [])) {
+      byEntity[row.entity] = { active: Number(row.active) || 0, deleted: Number(row.deleted) || 0 };
+    }
+  } catch (error) {
+    console.error('DIGICOPY_STATUS_AGRUPADO', error);
   }
   return json({
     ok: true,
     device,
-    totals: {
-      devices: Number(devices.results[0].total),
-      records: Number(records.results[0].total),
-      deleted: Number(deleted.results[0].total),
-      cursor: Number(changes.results[0].total),
-      byEntity
-    }
+    totals: { devices, records, deleted, cursor: changes, byEntity }
   });
 }
 
@@ -1072,7 +1082,10 @@ export default {
         return json({ ok: false, error: error.code, message: error.message }, error.status);
       }
       console.error('DIGICOPY_API_ERROR', error);
-      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' }, 500);
+      // Sem o motivo junto ninguém consegue consertar: "Erro interno da API" e
+      // ponto final não diz nada. Vai o recado curto do que falhou.
+      const motivo = String((error && error.message) || error || '').slice(0, 200);
+      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' + (motivo ? ' Motivo: ' + motivo : ''), detail: motivo }, 500);
     }
   }
 };

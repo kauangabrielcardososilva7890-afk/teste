@@ -113,9 +113,8 @@ function loadState(){
   s.pauseReason=s.pauseReason||'';
   s.regras=s.regras||'';
   s.limpar=Array.isArray(s.limpar)?s.limpar:[];
-  s.espelho=(s.espelho===undefined)?true:!!s.espelho;
   s.reparo=s.reparo||'';
-  s.marcoReparo=Number(s.marcoReparo)||0;
+  s.devolucao=s.devolucao||'';
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
@@ -191,6 +190,11 @@ function applyRemote(change){
   const mode=definicoes()[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
+  // Nome de demonstração que ficou guardado na nuvem antiga não entra de volta.
+  if(change.operation!=='delete'&&ehLixoDeDemonstracao(change.entity,change.data)){
+    state.versions[k]=Number(change.version)||0;
+    return false;
+  }
   let changed=false;
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
@@ -390,136 +394,82 @@ function scanLocal(){
   persist();return added;
 }
 
-// ESPELHO DA NUVEM (v5.22.72)
-// Pedido: o PC não deve guardar um monte de dado solto e errado. Depois que a
-// sincronização fecha SEM NENHUM PROBLEMA, o que existe aqui e não existe na
-// nuvem é sobra — sai do PC. Assim todo computador mostra exatamente a mesma
-// informação, sem duplicata e sem lixo.
+// NENHUM COMPUTADOR APAGA DADO SOZINHO (v5.22.76)
+// O espelho da v5.22.72 fazia o contrário: o que existia no PC e não existia na
+// nuvem ele apagava do PC. Foi ele que sumiu com usuário de login, produto de
+// recarga e impressora dentro de contrato. Espelho REMOVIDO. Agora o caminho é
+// o oposto: o que existe no PC e não está na nuvem SOBE para a nuvem.
 //
-// Só roda com o caminho todo limpo, e nunca no escuro:
-//   fila vazia, nenhum erro pendente, nuvem com dados, PC não pausado;
-//   nada que a pessoa mandou "não enviar" é tocado;
-//   sumiço grande demais (mais de 30% de uma lista ou 200 no total) NÃO apaga
-//   nada e vira aviso — é sinal de que algo está errado, não de sobra;
-//   antes da primeira limpeza o sistema grava uma cópia de recuperação.
-function planejarEspelho(){
-  const sobras=[];
-  if(typeof db==='undefined'||!db)return sobras;
-  const held=new Set(state.heldLocalOnly||[]);
-  const MAPA=definicoes();
-  for(const entity of Object.keys(MAPA)){
-    if(NAO_SINCRONIZA.has(entity))continue;
-    const mode=MAPA[entity];
-    if(mode!=='array')continue;
-    const entries=entriesFor(entity,mode);
-    const fora=entries.filter(x=>{const k=key(entity,x.id);return !state.known[k]&&!held.has(k);});
-    if(!fora.length)continue;
-    if(entries.length&&fora.length/entries.length>0.30){
-      lastError='Este PC tem '+fora.length+' registros de '+entity+' que a nuvem não tem. É muita coisa: não apaguei nada.';
-      return [];
-    }
-    fora.forEach(x=>sobras.push({entity,id:x.id}));
-  }
-  if(sobras.length>200){
-    lastError='Este PC tem '+sobras.length+' registros que a nuvem não tem. É muita coisa: não apaguei nada.';
-    return [];
-  }
-  return sobras;
+// DEVOLVER O QUE O ESPELHO LEVOU
+// Antes de limpar, o espelho gravava uma cópia de recuperação no PC. Uma única
+// vez, este conserto lê essa cópia e devolve para a base tudo o que ela tinha e
+// hoje não existe mais. Não devolve nada que a pessoa apagou de propósito
+// depois, porque só devolve o que sumiu ANTES da cópia, e nunca devolve os
+// nomes de demonstração.
+const DEVOLUCAO='v5.22.76-desfaz-espelho';
+
+function ehLixoDeDemonstracao(entity,item){
+  if(!item)return false;
+  if(entity==='tecnicos'&&typeof window.ehTecnicoDemo==='function')return window.ehTecnicoDemo(item);
+  return false;
 }
-async function espelharNuvem(){
-  if(state.espelho===false)return 0;
-  if(state.paused||outbox.length||lastError)return 0;
-  if(!state.initialPull||!Object.keys(state.known).length)return 0;
-  if(state.reparo!==REPARO)return 0; // primeiro devolve o que sumiu sozinho, depois limpa sobra
-  const sobras=planejarEspelho();
-  if(!sobras.length)return 0;
-  if(!state.espelhoAvisado&&window.DIGICOPY_INDEXED_DB){
-    await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_espelhar_nuvem',db);
-    state.espelhoAvisado=true;
+
+async function devolverSumidos(){
+  if(state.devolucao===DEVOLUCAO)return 0;
+  if(typeof db==='undefined'||!db){return 0;}
+  const idb=window.DIGICOPY_INDEXED_DB;
+  if(!idb||typeof idb.readRecoverySnapshot!=='function'){state.devolucao=DEVOLUCAO;persist();return 0;}
+  let copia=null;
+  try{copia=await idb.readRecoverySnapshot('antes_espelhar_nuvem');}catch(e){copia=null;}
+  if(!copia||typeof copia!=='object'){state.devolucao=DEVOLUCAO;persist();return 0;}
+  let voltaram=0;
+  for(const entity of Object.keys(copia)){
+    if(NAO_SINCRONIZA.has(entity))continue;
+    const antiga=copia[entity];
+    if(!Array.isArray(antiga)||!Array.isArray(db[entity]))continue;
+    const tem=new Set(db[entity].map(x=>x&&x.id!=null?String(x.id):'').filter(Boolean));
+    antiga.forEach(item=>{
+      if(!item||item.id==null)return;
+      if(tem.has(String(item.id)))return;
+      if(ehLixoDeDemonstracao(entity,item))return;
+      db[entity].push(item);voltaram++;
+    });
   }
-  const porLista={};
-  sobras.forEach(x=>{(porLista[x.entity]=porLista[x.entity]||new Set()).add(String(x.id));});
-  let apagados=0;
-  for(const entity of Object.keys(porLista)){
-    if(!Array.isArray(db[entity]))continue;
-    const alvo=porLista[entity];
-    const antes=db[entity].length;
-    db[entity]=db[entity].filter(item=>!(item&&item.id&&alvo.has(String(item.id))));
-    apagados+=antes-db[entity].length;
-  }
-  if(apagados){
+  state.devolucao=DEVOLUCAO;
+  if(voltaram){
     applying=true;
     try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}
     finally{applying=false;}
-    persist();
+    indicator(false,'Devolvendo '+voltaram+' registros que tinham sumido do PC');
   }
-  return apagados;
-}
-
-// CONSERTO AUTOMÁTICO DO APAGÃO DA v5.22.69 (v5.22.74)
-// Entre a v5.22.68 e a v5.22.71 a nuvem apagava por conta própria tudo o que
-// sumia da tela do PC — corte de auditoria, lista remontada por um módulo, base
-// abrindo pela metade. Foram exclusões EM LOTE, dezenas no mesmo segundo, sem
-// ninguém clicar em nada.
-//
-// Exclusão de verdade é diferente: a pessoa apaga um registro, às vezes dois,
-// com intervalo entre eles. Então o conserto devolve só o que sumiu em lote e
-// NÃO MEXE no que foi apagado de propósito.
-const REPARO='v5.22.74-apagao';
-const REPARO_LOTE=8;        // a partir de 8 no mesmo intervalo já é lote
-const REPARO_JANELA=90000;  // 90 segundos
-
-function agruparApagao(excluidos){
-  const porEntidade={};
-  (excluidos||[]).forEach(r=>{
-    if(!r||!r.entity||!r.recordId||!r.deletedAt)return;
-    if(NAO_SINCRONIZA.has(r.entity))return; // auditoria e avisos não voltam: são lixo
-    (porEntidade[r.entity]=porEntidade[r.entity]||[]).push(r);
-  });
-  const devolver=[];
-  for(const entity of Object.keys(porEntidade)){
-    const lista=porEntidade[entity].sort((a,b)=>a.deletedAt-b.deletedAt);
-    let grupo=[lista[0]];
-    for(let i=1;i<=lista.length;i++){
-      const atual=lista[i];
-      if(atual&&atual.deletedAt-grupo[grupo.length-1].deletedAt<=REPARO_JANELA){grupo.push(atual);continue;}
-      if(grupo.length>=REPARO_LOTE)grupo.forEach(x=>devolver.push(x));
-      grupo=atual?[atual]:[];
-    }
-  }
-  return devolver;
-}
-
-async function repararApagao(){
-  if(state.reparo===REPARO)return 0;
-  const call=api();if(!call)return 0;
-  // MARCO: o conserto só olha para o que já estava excluído quando esta versão
-  // entrou. Nada que a pessoa apagar de hoje em diante pode voltar — e depois
-  // de rodar uma vez, este código nunca mais é executado neste PC.
-  if(!state.marcoReparo){state.marcoReparo=Date.now();persist();}
-  const marco=Number(state.marcoReparo)||Date.now();
-  let voltaram=0;
-  try{
-    for(let volta=0;volta<40;volta++){
-      const data=await comPaciencia(()=>call('/v1/deleted?limit=100',{method:'GET'}));
-      const lista=data&&data.records?data.records:[];
-      if(!lista.length)break;
-      const devolver=agruparApagao(lista.filter(r=>r&&Number(r.deletedAt)<marco));
-      if(!devolver.length)break;
-      let algum=false;
-      for(const r of devolver){
-        try{
-          await comPaciencia(()=>call('/v1/restore',{method:'POST',body:JSON.stringify({entity:r.entity,recordId:r.recordId})}));
-          voltaram++;algum=true;
-        }catch(e){/* esse não voltou; segue o baile */}
-      }
-      if(!algum)break;
-      indicator(false,'Trazendo de volta o que sumiu sozinho • '+voltaram);
-    }
-    state.reparo=REPARO;persist();
-    if(voltaram)await pullAll();
-  }catch(e){/* tenta de novo no próximo ciclo */}
+  persist();
   return voltaram;
+}
+
+// OS NOMES DE DEMONSTRAÇÃO NÃO VOLTAM NUNCA MAIS (v5.22.76)
+// Carlos Mendes, Ana Souza e Rafael Lima não existem. Eles ficaram guardados na
+// nuvem de quando o sistema antigo os criava sozinho. Aqui eles são apagados do
+// PC e a ordem de exclusão sobe para a nuvem, para sumirem de todos os
+// computadores de uma vez — e se a nuvem mandar de volta, o PC recusa.
+function varrerDemonstracao(){
+  if(typeof db==='undefined'||!db||!Array.isArray(db.tecnicos))return 0;
+  const lixo=db.tecnicos.filter(t=>ehLixoDeDemonstracao('tecnicos',t));
+  if(!lixo.length)return 0;
+  db.tecnicos=db.tecnicos.filter(t=>!ehLixoDeDemonstracao('tecnicos',t));
+  const naFila=pendingKeys();
+  lixo.forEach(t=>{
+    const k=key('tecnicos',t.id);
+    if(!naFila.has(k)){
+      outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity:'tecnicos',recordId:String(t.id),operation:'delete',baseVersion:Number(state.versions[k]||0)}});
+      naFila.add(k);
+    }
+    delete state.known[k];delete state.hashes[k];delete state.sumindo[k];
+  });
+  applying=true;
+  try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}
+  finally{applying=false;}
+  persist();
+  return lixo.length;
 }
 
 function rememberConflict(item,result){
@@ -641,10 +591,10 @@ async function tick(reason){
       indicator(true,'Enviando para a nuvem • faltam '+outbox.length+' registros');
       busy=false;schedule(3000);return true;
     }
-    const devolvidos=await repararApagao();
-    if(devolvidos)lastError='';
-    const sobras=await espelharNuvem();
-    indicator(true,(sobras?('Nuvem sincronizada • '+sobras+' sobras locais limpas • '):'Nuvem sincronizada • ')+new Date().toLocaleTimeString('pt-BR'));
+    const devolvidos=await devolverSumidos();
+    if(devolvidos){lastError='';schedule(1200);}
+    if(varrerDemonstracao())schedule(1200);
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);indicator(false,'Nuvem pendente: '+lastError);
@@ -813,17 +763,18 @@ function pendingEstimate(){
   }
   return total;
 }
-function espelhoLigado(){return state.espelho!==false;}
-function ligarEspelho(ligar){state.espelho=!!ligar;persist();return state.espelho;}
-function info(){return {authorized:authorized(),busy,espelho:state.espelho!==false,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),espelhoLigado,ligarEspelho,planejarEspelho,agruparApagao,repararApagao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+window.DIGICOPY_CLOUD_SYNC={tick,info,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
 if(typeof document==='undefined')return;
 setTimeout(vigiarExclusoes,4000);
 setTimeout(vigiarExclusoes,15000);
+// Tira os nomes de demonstração da tela assim que a base termina de abrir,
+// mesmo antes de falar com a nuvem.
+setTimeout(()=>{try{varrerDemonstracao();}catch(e){}},6000);
 try{
   const original=window.saveDB;
   if(typeof original==='function'&&!original.__cfWrapped){
