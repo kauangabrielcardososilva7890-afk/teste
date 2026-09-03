@@ -2,7 +2,7 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.5';
+const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -786,33 +786,63 @@ async function handleResetCloud(request, env) {
   });
 }
 
-async function handleStatus(request, env) {
-  const device = await authenticate(request, env);
-  const [devices, records, deleted, changes, grouped] = await env.DB.batch([
-    env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'),
-    env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NULL'),
-    env.DB.prepare('SELECT COUNT(*) AS total FROM records WHERE deleted_at IS NOT NULL'),
-    env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes'),
-    env.DB.prepare(`SELECT entity,
+// Resumo da nuvem guardado por 10 minutos (v5.22.82)
+// Contar a tabela inteira a cada clique custa leitura no banco, e no plano
+// grátis isso tem teto diário. O resultado passa a ser guardado numa linha só e
+// reaproveitado por 10 minutos — é número de conferência, não precisa ser do
+// segundo exato.
+const RESUMO_VALE_POR = 10 * 60 * 1000;
+
+async function resumoDaNuvem(env) {
+  try {
+    const linha = await env.DB.prepare("SELECT value FROM system_meta WHERE key = 'resumo_json' LIMIT 1").first();
+    if (linha && linha.value) {
+      const guardado = JSON.parse(linha.value);
+      if (guardado && Date.now() - Number(guardado.em || 0) < RESUMO_VALE_POR) return guardado.totais;
+    }
+  } catch (error) {
+    console.error('DIGICOPY_RESUMO_LEITURA', error);
+  }
+  const totais = { devices: 0, records: 0, deleted: 0, cursor: 0, byEntity: {} };
+  try {
+    const grouped = await env.DB.prepare(`SELECT entity,
       SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) AS active,
       SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS deleted
-      FROM records GROUP BY entity ORDER BY entity`)
-  ]);
-  const byEntity = {};
-  for (const row of (grouped.results || [])) {
-    byEntity[row.entity] = { active: Number(row.active) || 0, deleted: Number(row.deleted) || 0 };
-  }
-  return json({
-    ok: true,
-    device,
-    totals: {
-      devices: Number(devices.results[0].total),
-      records: Number(records.results[0].total),
-      deleted: Number(deleted.results[0].total),
-      cursor: Number(changes.results[0].total),
-      byEntity
+      FROM records GROUP BY entity ORDER BY entity`).all();
+    for (const row of (grouped.results || [])) {
+      const ativos = Number(row.active) || 0, apagados = Number(row.deleted) || 0;
+      totais.byEntity[row.entity] = { active: ativos, deleted: apagados };
+      totais.records += ativos;
+      totais.deleted += apagados;
     }
-  });
+  } catch (error) {
+    console.error('DIGICOPY_RESUMO_AGRUPADO', error);
+    return null;
+  }
+  try {
+    const devices = await env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL').first();
+    totais.devices = Number(devices && devices.total) || 0;
+    const changes = await env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes').first();
+    totais.cursor = Number(changes && changes.total) || 0;
+  } catch (error) {
+    console.error('DIGICOPY_RESUMO_PARCIAL', error);
+  }
+  try {
+    await env.DB.prepare(
+      `INSERT INTO system_meta(key, value, updated_at) VALUES ('resumo_json', ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+    ).bind(JSON.stringify({ em: Date.now(), totais }), Date.now()).run();
+  } catch (error) {
+    console.error('DIGICOPY_RESUMO_GRAVACAO', error);
+  }
+  return totais;
+}
+
+async function handleStatus(request, env) {
+  const device = await authenticate(request, env);
+  const totals = await resumoDaNuvem(env);
+  if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
+  return json({ ok: true, device, totals });
 }
 
 function avisoEpson() {
@@ -1072,7 +1102,10 @@ export default {
         return json({ ok: false, error: error.code, message: error.message }, error.status);
       }
       console.error('DIGICOPY_API_ERROR', error);
-      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' }, 500);
+      // Sem o motivo junto ninguém consegue consertar: "Erro interno da API" e
+      // ponto final não diz nada. Vai o recado curto do que falhou.
+      const motivo = String((error && error.message) || error || '').slice(0, 200);
+      return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' + (motivo ? ' Motivo: ' + motivo : ''), detail: motivo }, 500);
     }
   }
 };

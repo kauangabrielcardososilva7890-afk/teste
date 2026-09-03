@@ -52,18 +52,19 @@ if(typeof window.vosEscolherForma==='function' && !window.vosEscolherForma.__v52
   window.vosEscolherForma.__v52218=true;
 }
 
+// v5.22.68 — a regra "só imprime depois de faturar" acabou. A venda apenas
+// salva também imprime, e o botão Imprimir fica sempre visível. O que esta
+// função faz agora é só ligar o botão na venda certa.
 function esconderImprimirAntesDeFaturar(){
   var footer=document.getElementById('modal-footer');
   if(footer && document.getElementById('vos-itens-body')){
     var f=window.__vosForm;
-    var v=f&&f.vendaId&&(db.vendas||[]).find(function(x){ return x.id===f.vendaId; });
-    var ok=ehFaturada(v);
     footer.querySelectorAll('button').forEach(function(b){
       var t=(b.textContent||'').toLowerCase();
       var oc=(b.getAttribute('onclick')||'').toLowerCase();
       if(/imprimir/.test(t) || /imprimirnotinha|vosimprimir/.test(oc)){
-        b.style.display=ok?'':'none';
-        if(ok) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
+        b.style.display='';
+        if(f && f.vendaId) b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(f.vendaId); };
       }
     });
   }
@@ -74,26 +75,11 @@ function esconderImprimirAntesDeFaturar(){
       if(!/imprimir/.test(t)) return;
       b.onclick=function(){
         var id=window.neoVendaSelecionada;
-        if(!id){ aviso('Selecione uma notinha faturada.','Imprimir'); return; }
-        var v=(db.vendas||[]).find(function(x){ return x.id===id; });
-        if(!ehFaturada(v)){ aviso('Só imprime depois de faturar a venda.','Imprimir'); return; }
+        if(!id){ aviso('Selecione uma notinha.','Imprimir'); return; }
         if(typeof imprimirNotinha==='function') imprimirNotinha(id);
       };
     });
   }
-}
-
-if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52218){
-  var oldImp=window.imprimirNotinha;
-  window.imprimirNotinha=function(vendaId){
-    var v=(db.vendas||[]).find(function(x){ return x.id===vendaId; });
-    if(v && !ehFaturada(v)){
-      aviso('Só imprime depois de faturar a venda.','Imprimir');
-      return;
-    }
-    return oldImp.apply(this, arguments);
-  };
-  window.imprimirNotinha.__v52218=true;
 }
 
 if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
@@ -105,24 +91,8 @@ if(typeof window.novaVenda==='function' && !window.novaVenda.__v52218print){
   };
   window.novaVenda.__v52218print=true;
 }
-if(typeof window.lockVendaFaturadaUI==='function' && !window.lockVendaFaturadaUI.__v52218){
-  var oldLock=window.lockVendaFaturadaUI;
-  window.lockVendaFaturadaUI=function(id){
-    var r=oldLock.apply(this, arguments);
-    setTimeout(function(){
-      var footer=document.getElementById('modal-footer'); if(!footer) return;
-      if(footer.querySelector('[data-print-fat]')) return;
-      var b=document.createElement('button');
-      b.setAttribute('data-print-fat','1');
-      b.className='h-[44px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2';
-      b.innerHTML='<i class="ph ph-printer"></i> Imprimir/PDF';
-      b.onclick=function(){ if(typeof imprimirNotinha==='function') imprimirNotinha(id); };
-      footer.appendChild(b);
-    }, 40);
-    return r;
-  };
-  window.lockVendaFaturadaUI.__v52218=true;
-}
+// v5.22.68 — não injeta mais um segundo botão "Imprimir/PDF": o rodapé já tem
+// o "Imprimir", e dois botões para a mesma coisa só confundem.
 if(typeof window.renderVendas==='function' && !window.renderVendas.__v52218print){
   var oldRV=window.renderVendas;
   window.renderVendas=function(){

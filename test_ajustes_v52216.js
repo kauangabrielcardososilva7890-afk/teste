@@ -32,18 +32,19 @@ const at=layout.find(x=>x.id==='atendimento');
 ok('submenu reordenado', at.items[0].id==='abrir-chamado' && at.items[2].id==='nova-venda');
 ok('nome do submenu', at.items[2].label==='Venda nova');
 ok('NF-e marcada oculta', layout.find(x=>x.id==='nfe').oculto===true);
-ok('recargas marcada oculta', layout.find(x=>x.id==='cadastros').items.find(i=>i.id==='recargas').oculto===true);
+// v5.22.77: Recargas não é mais submenu de Cadastros.
+ok('recargas não é mais submenu de cadastros', !layout.find(x=>x.id==='cadastros').items.some(i=>i.id==='recargas'));
 
 const func=S.menusParaUsuario(layout, false);
 ok('funcionário não vê NF-e', !func.some(x=>x.id==='nfe'));
-ok('funcionário não vê recargas', !func.find(x=>x.id==='cadastros').items.some(i=>i.id==='recargas'));
+ok('ninguém vê recargas em cadastros', !func.find(x=>x.id==='cadastros').items.some(i=>i.id==='recargas'));
 ok('funcionário vê Sair', func.some(x=>x.id==='sair'));
 const adm=S.menusParaUsuario(layout, true);
 ok('admin ainda vê NF-e', adm.some(x=>x.id==='nfe'));
 
 const cat=S.catalogoDeSubmenus(pad);
 ok('catálogo tem submenu Nova venda', cat.some(a=>a.id==='nova-venda'));
-ok('catálogo tem Recargas', cat.some(a=>a.id==='recargas'));
+ok('catálogo não tem mais Recargas', !cat.some(a=>a.id==='recargas'));
 ok('catálogo não é só o menu Atendimento', !cat.some(a=>a.id==='atendimento') && cat.some(a=>a.menuId==='atendimento'));
 
 ok('atalho some se menu oculto', S.atalhoOcultoPara({id:'nota-fiscal',menuId:'nfe'}, salvo, false)===true);

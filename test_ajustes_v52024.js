@@ -23,15 +23,11 @@ ok('funcionário "ana" criado pela tela é PRESERVADO', P.ehUsuarioDemoAntigo({ 
 ok('usuário comum preservado', P.ehUsuarioDemoAntigo({ id:'usr_kauan', login:'kauan', criadoPor:'sistema' }, LOGINS, IDS) === false);
 ok('legado migrado com login de demo é PRESERVADO', P.ehUsuarioDemoAntigo({ id:'usr_m1', login:'carlos', criadoPor:'migracao' }, LOGINS, IDS) === false);
 
-// jaRodouHoje
-const hoje = new Date('2026-08-16T10:00:00');
-ok('mesmo dia = já rodou', P.jaRodouHoje('2026-08-16T03:00:00', hoje) === true);
-ok('ontem = não rodou', P.jaRodouHoje('2026-08-15T23:59:00', hoje) === false);
-ok('nunca rodou (null)', P.jaRodouHoje(null, hoje) === false);
-ok('data inválida = não rodou', P.jaRodouHoje('xxxx', hoje) === false);
-
-// nomeBackupDiario
-ok('nome do arquivo do backup', P.nomeBackupDiario(hoje) === 'digicopy-backup-2026-08-16.json');
+// backup automático: removido na v5.22.67, agora só pelo botão
+const fonte = require('fs').readFileSync(__dirname+'/ajustes_v52024_patch.js','utf8');
+ok('não existe mais backup rodando sozinho', !/rodarBackupDiario|agendarBackupDiario|saveDaily/.test(fonte));
+ok('não sobrou temporizador de backup', !/setInterval|setTimeout\(\s*rodarBackup/.test(fonte));
+ok('o botão de backup continua de pé', /window\.exportBackup\s*=/.test(fonte));
 
 // jsonBackupLimpo: tira _rt, mantém o resto
 {

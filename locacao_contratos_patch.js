@@ -187,7 +187,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? db.produtos.find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: uid('prd'), nome: '', categoria: 'Produto', fabricante: '',
-    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional'
+    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional', estoqueInfinito: false
   };
   if(!p) return toast('Produto não encontrado', 'error');
 
@@ -238,8 +238,13 @@ window.renderModalProduto = function(id){
       </div>
 
       <div id="painel-prod-estoque" class="hidden space-y-4">
-        <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3 text-[12px] text-blue-800 font-medium">
-          <i class="ph ph-check-circle"></i> Controle de Estoque sempre ativo. Notificações ocorrem apenas quando abaixo (<) do estoque mínimo.
+        <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer">
+          <input id="p-estoque-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueInfinito()" class="w-4 h-4 accent-[#0a1e8a]">
+          <span><i class="ph ph-infinity"></i> Não controlar estoque deste produto (estoque infinito)</span>
+        </label>
+        <div id="p-campos-estoque">
+        <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">
+          Quando marcado, o produto fica sempre disponível e não é descontado nas vendas.
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -264,6 +269,7 @@ window.renderModalProduto = function(id){
             <label class="block font-bold text-slate-600 mb-1">Localização no Almoxarifado</label>
             <input id="p-local" value="${escapeHtml(p.local||'')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor">
           </div>
+        </div>
         </div>
       </div>
 
@@ -292,6 +298,14 @@ window.renderModalProduto = function(id){
   `;
   document.getElementById('modal-root').classList.remove('hidden');
   window.modalContext = { type: 'produto', id };
+  alternarEstoqueInfinito();
+};
+
+window.alternarEstoqueInfinito = function(){
+  const infinito = !!document.getElementById('p-estoque-infinito')?.checked;
+  ['p-est','p-est-min','p-est-ideal','p-custo','p-local'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }
+  });
 };
 
 window.mudarAbaProd = function(aba){
@@ -317,7 +331,8 @@ window.salvarProdutoModal = function(id){
     nome: window.VOTM_PURE ? window.VOTM_PURE.toTitleCase(nome) : nome,
     categoria: document.getElementById('p-cat')?.value || 'Produto',
     fabricante: document.getElementById('p-fab')?.value?.trim() || '',
-    estoque: parseInt(document.getElementById('p-est')?.value || 0) || 0,
+    estoqueInfinito: !!document.getElementById('p-estoque-infinito')?.checked,
+    estoque: document.getElementById('p-estoque-infinito')?.checked ? 0 : (parseInt(document.getElementById('p-est')?.value || 0) || 0),
     estoqueMin: parseInt(document.getElementById('p-est-min')?.value || 0) || 0,
     estoqueIdeal: parseInt(document.getElementById('p-est-ideal')?.value || 0) || 0,
     custo: parseFloat(document.getElementById('p-custo')?.value || 0) || 0,

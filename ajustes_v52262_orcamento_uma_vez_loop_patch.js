@@ -26,7 +26,8 @@ setTimeout(overlayOff, 1500);
 
 function pintar(){
   var ver = document.getElementById('footer-version');
-  if(ver) ver.textContent = 'v'+VERSAO;
+  var _vUI = (typeof window!=='undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
+  if(ver) ver.textContent = 'v'+_vUI;
 }
 pintar();
 setTimeout(pintar, 400);

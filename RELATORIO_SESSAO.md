@@ -1,12 +1,693 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-29  
+**Data:** 2026-08-31  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a010fa-teste`  
-**Última versão:** **v5.22.62**  
-**Zip:** gerar a cada versão para testar. Zip completo clicável desta versão entra no GitHub. APK parado nesta etapa.
+**Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
+**Última versão:** **v5.22.74**  
+### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
+
+**1. Testar no navegador (GitHack):**
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.74>
+
+**2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+
+Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
+GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## REGRAS FIXAS DA SESSÃO — ler sempre antes de começar
+
+1. **Em todo chat novo, abrir um pull request.** Trabalhar na branch fixa da
+   sessão e abrir o PR ao final do trabalho, sempre.
+2. **Foco é o sistema de PC.** É o que está sendo construído agora. O APK
+   (celular) **fica parado por um tempo** — primeiro o PC, depois o celular.
+   As alterações feitas no APK são apenas para **não dar problema nas próximas
+   atualizações** (manter o `mobile/www` coerente com o sistema); não são
+   evolução do app de celular.
+3. **Os PCs que vão rodar o sistema são fracos.** Toda mudança precisa
+   otimizar: menos arquivo lido ao abrir, menos código executado, menos
+   memória. Nada de trabalho duplicado.
+4. **Não quebrar nada.** A suíte (`npm test`) precisa terminar com 0 falhas
+   antes de qualquer entrega.
+5. **Baixar sempre pelo zip da branch no GitHub**, sem gerar arquivos `.zip`
+   novos no repositório.
+6. **É OBRIGATÓRIO mandar os DOIS links em toda atualização:** o link de teste
+   do **GitHack** (abrir no navegador) e o link do **zip do GitHub** (baixar).
+   Ambos são impressos no final de `npm run sync` — é só copiar.
+7. **PERGUNTE ANTES DE CODAR.** Quando eu pedir uma atualização e restar
+   QUALQUER dúvida sobre o que eu quero, **pergunte primeiro**. Quero que
+   fique exatamente como estou pensando — ou melhor do que eu esperava.
+   Não adivinhe, não faça "a sua versão" do pedido. Se enxergar uma forma
+   melhor do que eu pedi, proponha antes de implementar.
+8. **NADA DE ERRO BOBO.** Erro besta é perda de tempo. Antes de entregar,
+   passe pela lista da seção seguinte.
+9. **Código morto se apaga.** Arquivo que não entra no bundle nem no `.exe`
+   não fica no repositório "por via das dúvidas". O git guarda o histórico.
+10. **UM ARQUIVO POR MÓDULO.** Correção **mexe no arquivo do módulo que já
+    existe** — não se copia o arquivo inteiro para criar uma versão nova.
+    Arquivo novo só quando a função **ainda não existe em lugar nenhum**.
+    E continua separado por módulo: nada de jogar tudo num arquivão só.
+
+---
+
+## CHECKLIST ANTIERRO — passar antes de entregar
+
+Erros que já aconteceram neste projeto e não podem se repetir:
+
+| Erro | Como evitar |
+|------|-------------|
+| Arquivo novo não vai para o `.exe` | Só citar em `bundle-manifest.json` e rodar `npm run sync`. Nunca editar `build.files` à mão. |
+| Rodapé/janela numa versão velha | Nunca `window.DIGICOPY_APP_VERSION = VERSAO`. Use `= window.DIGICOPY_APP_VERSION \|\| VERSAO` e leia a global ao pintar. |
+| Script rodando duas vezes | Não adicionar tag `<script>` para arquivo que já está no bundle. |
+| Patch sem guarda | Todo patch que embrulha função ou registra ouvinte precisa de `if(window.__vXXXX) return;`. |
+| Link do cliente numa branch velha | Nunca escrever URL do GitHack na mão. A branch vem de `package.json > digicopy.branch`. |
+| Teste amarrado à versão | Não usar `pkg.version === '5.22.XX'` em teste antigo. Use `/^5\.22\.\d+/`. |
+| Lista fixa em teste | Nada de "lista dos últimos patches" nem limite tipo `files.length <= 30`. Derive das fontes. |
+| Timer rodando em segundo plano | `setInterval` que mexe no DOM começa com `if(document.hidden) return;`. |
+| Polling curto | Nada de `setInterval` de 2–4s recriando tela. Já causou loop de venda duplicada. |
+| Zip no repositório | `.zip` é ignorado. Para baixar, usar o zip da branch no GitHub. |
+
+Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
+(117 suítes, 0 falha) e `npm run verify:files`.
+
+---
+
+## v5.22.82 — cortando pela metade o que o sistema grava na nuvem
+
+O usuário perguntou se usa tudo isso mesmo. Conferindo, **parte do gasto era desperdício meu**. No D1, cada índice de uma tabela conta como **uma gravação a mais** toda vez que a linha muda. Estava assim, por registro sincronizado:
+
+| O que gravava | Linhas |
+|---|---|
+| linha em `changes` | 1 |
+| índice `mutation_id` (necessário) | 1 |
+| índice `idx_changes_record` (usado) | 1 |
+| índice `idx_changes_cursor` (**índice em cima da chave primária**) | 1 |
+| linha em `records` | 1 |
+| índice `idx_records_updated` (**nenhuma consulta usa**) | 1 |
+| `idx_records_deleted` + `idx_records_entity_deleted` (**criados por mim na v5.22.76**) | 2 |
+| **Total** | **8** |
+
+Migração `0004_menos_gravacoes.sql` derruba os quatro índices inúteis: passa de **8 para 4 linhas por registro** — metade do consumo.
+
+Os dois índices da contagem foram substituídos por algo mais barato: um **resumo guardado numa linha só**, refeito no máximo de 10 em 10 minutos (`resumoDaNuvem`). A tela da nuvem lê esse resumo em vez de varrer a tabela a cada clique — e os totais saem todos da mesma consulta, em vez de cinco.
+
+Nuvem carimbada como **0.4.7**.
+
+Testes: `test_ajustes_v52282.js` (11 conferências). Suíte: 136 passaram, 0 falharam.
+
+## v5.22.81 — o Chamados do menu Locação (achei quem recolocava)
+
+O botão continuava aparecendo porque existia uma terceira mão: a função `montarMenuLocacao()` em `locacao_chamados_fix_patch.js` **reescrevia o menu Locação inteiro a cada navegação**, sempre com Contratos + Impressoras + Chamados. Por isso tirar de `app.js` e do catálogo não adiantou nada.
+
+Agora o menu Locação monta só com **Contratos** e **Impressoras**. A tela de chamados continua existindo (Atendimento → Abrir chamado, e dentro do contrato).
+
+Lição para o CHECKLIST ANTIERRO: **antes de dar um menu por removido, procurar quem escreve `innerHTML` no `id` daquele menu** (`menu-outsourcing`, `menu-cadastros`, `menu-config`), não só as listas de dados.
+
+Testes: `test_ajustes_v52281.js` (6 conferências). Suíte: 135 passaram, 0 falharam.
+
+## v5.22.80 — o erro da nuvem tinha nome: limite diário do banco grátis
+
+Com o carimbo 0.4.6 no ar, o erro finalmente veio com o motivo:
+
+> `D1_ERROR: Your account has exceeded D1's free tier daily row write limit.`
+
+Não era defeito do sistema. O plano **grátis** da Cloudflare tem um teto de gravações por dia e ele estourou. Quando isso acontece, toda consulta ao banco volta com erro em inglês e parece que tudo quebrou.
+
+O que esta versão faz:
+
+- **Reconhece o limite** e mostra em português: "A nuvem grátis atingiu o limite de gravação de hoje. Nada foi perdido: o envio recomeça sozinho quando o limite virar, em Xh Ymin (por volta das 21h, horário de Brasília)."
+- **Para de bater na porta à toa.** Cada tentativa inútil consome mais do limite do dia seguinte, então o sistema espera a virada (meia-noite no horário de Londres) em vez de tentar de minuto em minuto.
+- **Recomeça sozinho** na virada, de onde parou. Nenhum dado se perde.
+- O painel da nuvem mostra o mesmo recado em vez do texto em inglês.
+
+Testes: `test_ajustes_v52280.js` (10 conferências). Suíte: 134 passaram, 0 falharam.
+
+## v5.22.79 — carimbo de versão na nuvem
+
+A nuvem passou a se identificar como **0.4.6** (antes 0.4.5). Serve para saber, olhando a própria nuvem, se o código novo subiu mesmo: basta abrir o endereço da API e olhar o campo `version` da resposta.
+
+- `version: "0.4.5"` = ainda é o servidor antigo, o conserto do "Erro interno da API" não subiu.
+- `version: "0.4.6"` = o servidor novo está no ar (contas independentes, erro com motivo, índices).
+
+Testes: `test_ajustes_v52279.js` (6 conferências). Suíte: 133 passaram, 0 falharam.
+
+> Nota: o workspace voltou sozinho para a v5.22.62 pela oitava vez durante esta rodada. Recuperado com `git fetch` + `git reset --hard origin/arena/01a0590a-teste` e `npm install --ignore-scripts`.
+
+## v5.22.78 — a tela da nuvem para de travar por causa do erro da API
+
+O conserto de verdade do "Erro interno da API" está no servidor (v5.22.76) e **só vale depois de republicar o Worker**. Enquanto isso não acontece, esta versão faz a janela da nuvem parar de ficar refém da contagem de registros:
+
+- Se a contagem falhar, a janela **abre do mesmo jeito**, com o que o PC já sabe.
+- Aparece um aviso explicando o motivo e deixando claro que a sincronização **não** está parada.
+- Sincronizar agora, autorizar outro computador, ver excluídos e remover autorização continuam funcionando normalmente.
+- Só o que muda: os números da nuvem aparecem como "—" até o servidor conseguir contar.
+- Autorização vencida (401) continua desconectando como antes.
+
+### Como republicar o Worker (resolve o erro de vez)
+```
+cd cloudflare-worker
+npx wrangler d1 migrations apply digicopy-sync --remote
+npx wrangler deploy
+```
+
+Testes: `test_ajustes_v52278.js` (8 conferências). Suíte: 132 passaram, 0 falharam.
+
+## v5.22.77 — limpeza de uma vez (não regra) e dois submenus fora
+
+**1. Os nomes de teste: limpeza, não regra.** Na versão passada eu tinha deixado uma regra fixa que recusava esses nomes para sempre — não era isso que você pediu. Desfiz. Agora é uma **faxina única**: o sistema apaga Rafael Lima, Carlos Mendes e Ana Souza do PC e da nuvem uma vez, marca que já limpou e **nunca mais olha para nome nenhum**. Se um dia existir um técnico de verdade com esse nome, ele funciona igual a qualquer outro.
+
+**2. Submenu Chamados dentro de Contratos: removido** (`app.js`, `buildNav`). A tela de chamados continua existindo e o atendimento continua abrindo chamado normalmente.
+
+**3. Submenu Recargas dentro de Cadastros: removido** (`ajustes_v52213_menus_atalhos_patch.js` e a injeção no catálogo em `ajustes_v52214_recargas_patch.js`). A tela de recargas continua existindo.
+
+Testes: `test_ajustes_v52277.js` (13 conferências). Suíte: 131 passaram, 0 falharam.
+
+## v5.22.76 — o que sumiu volta, os nomes de teste vão embora e a nuvem para de dar erro
+
+**1. Achei quem apagou.** Era o "espelho" que entrou na v5.22.72: depois de sincronizar, ele apagava DO PC tudo o que a nuvem não tivesse. Foi ele que levou usuário de login, produto de recarga e impressora de dentro do contrato. **O espelho foi removido do sistema.** Nenhum computador apaga dado sozinho nunca mais — agora é o contrário: o que existe no PC e não está na nuvem SOBE para a nuvem.
+
+**2. Devolvendo o que ele levou.** Antes de limpar, o espelho gravava uma cópia de segurança dentro do próprio PC. Ao abrir esta versão, o sistema lê essa cópia sozinho e devolve para a base tudo o que ela tinha e hoje não existe mais. Roda uma vez só, por computador, sem apertar nada.
+
+**3. Rafael Lima, Carlos Mendes e Ana Souza acabaram.** Eles estavam guardados na nuvem antiga e o conserto automático da v5.22.74 trouxe os três de volta. **Esse conserto foi removido.** Agora: o sistema apaga esses nomes do PC, manda a ordem de exclusão para a nuvem (somem de todos os computadores) e, se a nuvem tentar mandar de volta, o PC recusa. A devolução da cópia também nunca traz esses nomes.
+
+**4. "Erro interno da API" ao clicar na nuvem.** A tela contava registro percorrendo a tabela inteira cinco vezes a cada clique; com a base grande, o banco desistia e devolvia erro. Agora cada conta vai sozinha, uma que falhe vem zerada em vez de derrubar a tela, e o erro passou a dizer o motivo em vez de só "erro interno". Criados dois índices no banco (`0003_indices_contagem.sql`) para a conta ser instantânea.
+
+> Os itens 4 e parte do 3 dependem de **publicar o Worker de novo** (`npx wrangler deploy` e `npx wrangler d1 migrations apply`) para valerem na nuvem.
+
+Testes: `test_ajustes_v52276.js` (18 conferências). Suíte: 130 passaram, 0 falharam.
+
+## v5.22.75 — a nuvem só apaga quando VOCÊ mandou apagar
+
+Você disse: *"não quero que isso vire regra, isso vai dar problema... as pessoas que vão usar são meio problemáticas"*. Então saiu toda e qualquer adivinhação.
+
+- **Acabou o teto de 20 e a regra dos 30%.** Se você apagar 500 clientes de propósito, os 500 somem em todos os PCs. Sem trava, sem aviso, sem "por segurança não apaguei".
+- **Sumiu sozinho? A nuvem não apaga.** Se um registro desaparecer do PC sem ninguém mandar, o PC só para de acompanhar aquele registro. O dado continua na nuvem e nos outros PCs, e não fica mais engordando o "faltam N".
+- **Como o sistema sabe que foi de propósito:** ele vigia as 23 funções de excluir do programa e as janelas de confirmação. Você clicou em excluir, ou respondeu SIM numa pergunta de confirmação, abre uma janela de 60 segundos em que a exclusão vale. Fora dela, nada é apagado.
+- **Confere duas vezes.** Entre ver o registro sumido e mandar apagar existe um respiro de 3 segundos. Se a base ainda estava abrindo e a lista voltar, a exclusão é cancelada sozinha. Isso não é limite de quantidade: pode ser 1 ou 5.000.
+- **O conserto da falha da v5.22.69 virou coisa de uma vez só e com data.** Ele roda uma única vez por PC e só devolve o que sumiu ANTES da data em que rodou. Nada que você apagar de hoje em diante volta, nunca.
+
+Testes: `test_ajustes_v52275.js` (16 conferências). Suíte: 129 passaram, 0 falharam.
+
+## v5.22.74 — o que sumiu sozinho volta sozinho (sem botão)
+
+O usuário recusou o botão "Restaurar tudo": *"eu não quero restaurar não, você vai
+voltar o que eu não fiz, voltar o problema que você arrumou"*. E deixou claro:
+**o que ele apagou de propósito TEM que continuar apagado.**
+
+**Como o sistema separa um do outro:** a falha da v5.22.69 apagava **em lote** —
+dezenas de registros no mesmo intervalo, sem ninguém clicar (corte de auditoria,
+lista remontada por módulo, base abrindo pela metade). Exclusão de verdade é
+uma ou duas, com intervalo entre elas.
+
+`agruparApagao()` agrupa os excluídos por lista e por tempo: grupo com **8 ou
+mais exclusões dentro de 90 segundos** = apagão, volta. Menos que isso = foi a
+pessoa, **não se toca**. `logs` e `notificacoes` nunca voltam (são lixo local).
+
+`repararApagao()` roda **dentro do ciclo normal da nuvem, uma vez por PC**
+(`state.reparo`), sem botão e sem pergunta. O espelho da v5.22.72 só começa a
+limpar **depois** que o conserto terminou.
+
+**Contador color (2ª correção pedida):** o critério agora é a **modalidade** —
+Color A4 ou Color A3 com modalidade diferente de `inativo`/`off`, no cadastro do
+parque ou do equipamento. O palpite pelo nome do tipo (`/color/i.test(eq.tipo)`)
+foi removido: era ele que fazia máquina preto e branco pedir contador color.
+
+Teste: `test_ajustes_v52274.js` (com um cenário de 25 exclusões em lote + 3
+manuais: volta as 25, não volta as 3). Suíte: **128 passaram / 0 falharam**.
+
+---
+
+## v5.22.73 — venda que não salvava, contador color inexistente e erro de tela
+
+| Problema relatado | Causa | Correção |
+|---|---|---|
+| *"Não encontrei função de salvar esta venda"* ao clicar em **Salvar** | `ajustes_pos_final_patch.js` tinha um `closeModal` de uma tela de venda **que não existe mais**: procurava `neoSalvarVenda`/`cvSaveVenda`/`saveVenda`. A venda de hoje salva por `vosGravarVenda`. Com a retirada do aviso de salvar (2.6 da v5.22.68), o fluxo passou a cair nessa camada velha | Camada removida inteira (`vendaEmAndamento`, `chamarSalvarVendaDisponivel` e o `closeModal` obsoleto). A venda atual já grava sozinha ao fechar |
+| *"Preencha o contador color atual"* numa impressora sem contador color | `validarFinalizar` exigia o campo só por ele estar **habilitado** — e ele nasce habilitado | Novo `chamadoTemColor()`: só exige se a impressora do chamado tiver contador color no cadastro (parque/equipamento). Sem impressora identificada, não trava |
+| `Uncaught TypeError: Cannot set properties of null (setting 'value')` | `autoPreencherDadosChamado` (`contratos_refino_patch.js`) escrevia em 6 campos sem conferir se existiam; a tela do chamado mudou e alguns somem | Helper `porCampo(id,valor)`: preenche só o que existe |
+| Dados que sumiram na v5.22.69 | Exclusão em massa por ausência (corrigida na v5.22.71) | **Botão novo no painel: "Restaurar TUDO que foi excluído (N)"** — a nuvem guarda todo registro excluído; o botão traz tudo de volta de uma vez e puxa para o PC. Nada é apagado por essa ação |
+
+Teste: `test_ajustes_v52273.js`. Suíte: **127 passaram / 0 falharam**.
+
+---
+
+## v5.22.72 — espelho da nuvem: todo PC com a mesma informação
+
+Pedido do usuário: *"o processo é salvar no PC e do PC para a nuvem; depois que
+passar na nuvem SEM NENHUM PROBLEMA, apaga os dados do PC"* — motivo: não deixar
+um monte de dado solto e errado em cada computador. Ele faz backup todo dia e
+não usa o sistema sem internet. Também pediu: **nunca apagar nada da nuvem** e
+**todos os PCs têm que ter a mesma informação**.
+
+**Como foi feito (sem transformar o sistema em refém da internet):** o PC não
+vira uma tela vazia — ele vira um **espelho exato da nuvem**. Depois de um ciclo
+que fecha sem nenhum problema, o que existe só neste computador é sobra e sai
+daqui. O que está na nuvem continua no PC, então o sistema abre e funciona
+normalmente; e os dois computadores passam a mostrar exatamente a mesma coisa.
+
+Trava por trava (`espelharNuvem()` / `planejarEspelho()`):
+
+- só roda com **fila vazia, nenhum erro pendente, nuvem com dados e PC não pausado**;
+- **nunca toca** no que a pessoa mandou "não enviar" (`heldLocalOnly`);
+- sobra grande demais — **mais de 30% de uma lista ou mais de 200 no total** —
+  não apaga nada e vira aviso: isso é sinal de problema, não de sobra;
+- **grava uma cópia de recuperação** (`antes_espelhar_nuvem`) antes da primeira limpeza;
+- auditoria e avisos ficam de fora (não sincronizam);
+- **a nuvem nunca é apagada** por esse mecanismo;
+- interruptor no painel: **"Manter este PC igual à nuvem"**, ligado por padrão.
+
+Sobre as tabelas antigas da migração: o menu "Migrados" já não existe (os dados
+aparecem dentro dos menus normais), então são dados de trabalho e **continuam
+sincronizando** — é o que garante PCs iguais.
+
+Teste: `test_ajustes_v52272.js`. Suíte: **126 passaram / 0 falharam**.
+
+---
+
+## v5.22.71 — dado sumindo e voltando + os "23 mil registros"
+
+**Causa achada (erro meu na v5.22.68/69):**
+
+1. Na v5.22.68 eu tirei da tela o bloqueio *"Confirmar exclusões de X (N)"* —
+   mas ele não era só um aviso chato: era **a trava que impedia a nuvem de
+   apagar em massa**. Sem ela, toda ausência local virou ordem de exclusão.
+2. O sistema **corta `db.logs` em 500 por PC** (`app.js:309`). A cada corte, o
+   PC mandava exclusão dos logs velhos para a nuvem; o outro PC mandava os
+   dele de volta. Vai-e-vem infinito — é isso que fazia **dado sumir e voltar**
+   e o que inflou a contagem. `notificacoes` fazia o mesmo.
+3. Vários módulos **remontam listas com `.filter()`** (recargasEtiquetas,
+   escolaOrc/It/Exc...). Cada remontagem virava exclusão para o outro PC.
+4. Os ids por conteúdo que criei na v5.22.69 para itens sem `id` só pioravam:
+   qualquer mudança no item gerava um id novo + exclusão do antigo.
+
+**O que foi feito:**
+
+| Correção | Como ficou |
+|---|---|
+| `logs` e `notificacoes` | **Não viajam mais.** São de cada PC, cortados em 500 por ele mesmo. E o que já subiu é apagado da nuvem aos poucos (`state.limpar`, 40 por vez) |
+| Exclusão só onde faz sentido | Só as 15 listas com botão de excluir de verdade (clientes, produtos, vendas, OS, contratos, leituras, orçamentos, financeiro, parque, equipamentos...) mandam exclusão. As outras ~70 **só sabem mandar novidade** |
+| Trava contra apagão | Mesmo nas listas permitidas: nunca mais que **20 exclusões por passada**, e nunca mais que **30% da lista**. Passou disso, não apaga nada e registra o motivo |
+| Item sem `id` | Não sobe mais (era cache derivado; virava lixo na nuvem) |
+| "23 mil registros" | O painel agora abre **lista por lista** mostrando de onde vem cada número |
+
+Teste: `test_ajustes_v52271.js`. Suíte: **125 passaram / 0 falharam**.
+
+**Pendente de decisão do usuário:** ele pediu para *apagar os dados do PC depois
+que subirem sem problema para a nuvem*. Não implementado — foi feita a pergunta
+antes, porque isso deixaria o sistema dependente de internet e, com o histórico
+recente de sincronização, poderia destruir dados.
+
+---
+
+## v5.22.70 — "envio pendente / erro HTTP 503"
+
+**O que era:** ao clicar em *Enviar os dados deste PC*, a primeira remessa
+(agora com TODAS as listas do sistema) manda milhares de registros em rajada.
+A nuvem da Cloudflare responde **503** quando está sobrecarregada — é um "espere
+um pouco", não um erro de dados. O código tratava qualquer falha do mesmo jeito:
+abortava o envio inteiro, mostrava *Envio pendente* e **voltava a pausar** a
+sincronização. Resultado: parava tudo no primeiro soluço da nuvem.
+
+**O que foi feito** (`cloudflare_data_sync_patch.js`, `cloudflare_sync_patch.js`):
+
+- `comPaciencia()`: 429/500/502/503/504 e queda de conexão agora são "nuvem
+  ocupada". Tenta de novo sozinho em 0,9s → 2,5s → 6s → 12s, avisando no ícone.
+- **Lote elástico**: manda 10 por vez; se a nuvem reclamar, cai para 5, 2, 1 e
+  volta a crescer quando ela aceita de novo.
+- **Respiro de 180ms entre lotes**, para não afogar o D1 nem o PC fraco.
+- **A escolha não se desfaz mais**: remessa grande não cabe numa tacada só, então
+  a sincronização fica LIGADA e o resto sobe em segundo plano, recomeçando de
+  onde parou. Só volta a pausar se o PC perder a autorização.
+- **Mostra o progresso**: ícone e painel exibem "faltam N registros", e o painel
+  diz que pode fechar a janela e continuar trabalhando.
+- A fila fica gravada em disco: fechar o programa no meio não perde nada.
+
+Teste: `test_ajustes_v52270.js`. Suíte: **124 passaram / 0 falharam**.
+
+---
+
+## v5.22.69 — "um PC completo e o outro faltando dados"
+
+**O que estava acontecendo (três causas):**
+
+1. **A nuvem só levava 19 listas.** O motor tinha uma lista fixa (`DEFINITIONS`)
+   com clientes, produtos, vendas, OS, contratos, financeiro e mais algumas.
+   Todo o resto do banco — mais de 70 listas: despesas de locação, compras e
+   recebimentos, fornecedores, cartuchos e etiquetas, cidades, agenda, caixa,
+   contadores, boletos, NF-e migradas, e-mails, favoritos, escola — **nunca saía
+   do PC onde foi criado**. Por isso um computador mostrava tudo e o outro não.
+2. **O contador de numeração (`db._seq`) também não subia**, então cada PC
+   contava vendas/OS/orçamentos por conta própria.
+3. **O PC autorizado por código de convite apagava, na primeira conexão, tudo o
+   que a nuvem não tinha** (`reconcileFirstAuthorizedDevice`). Era proteção
+   contra duplicar histórico velho, mas na prática esvaziava o segundo PC.
+
+**O que foi feito:**
+
+| Correção | Como ficou | Arquivo |
+|---|---|---|
+| Sincronizar tudo | A lista fixa virou `definicoes()`, que lê o banco de verdade. Qualquer lista que exista (ou que um módulo criar amanhã) entra sozinha. Só `meta` fica de fora | `cloudflare_data_sync_patch.js` |
+| Não duplicar | Cada registro viaja pelo próprio `id`, então reenviar atualiza em vez de criar cópia. Item de lista antiga sem `id` ganha um id fixo calculado pelo conteúdo — o mesmo item dá sempre o mesmo id nos dois PCs | idem |
+| Numeração | `db._seq` sincroniza no modo `contador`: cada contador fica com o **maior** número entre o PC e a nuvem, nunca volta atrás | idem |
+| PC convidado | Não apaga mais nada. Recebe a mesma escolha de duas opções | idem |
+| Uma pergunta só | Como a regra mudou, quem já estava conectado recebe a escolha uma única vez (marca `state.regras`) e depois nunca mais | idem |
+| A escolha não fica escondida | A sincronização fica parada até escolher, então o painel se abre sozinho uma vez por sessão enquanto a escolha estiver pendente | `cloudflare_sync_patch.js` |
+
+**Dados que o segundo PC já perdeu** (apagados pela regra antiga do convite):
+estão na cópia `antes_primeira_nuvem`, na aba **Recuperar** do painel da nuvem.
+
+Testes: `test_ajustes_v52269.js` (novo). Ajustados `test_ajustes_v5226.js` e
+`test_cloudflare_data_sync.js`. Suíte: **123 passaram / 0 falharam**.
+
+---
+
+## v5.22.68 — relatório do usuário, 9 itens
+
+Fechados pelo usuário na rodada anterior: 1.1, 1.2, 2.2, 4.1.
+
+| # | Pedido | O que foi feito | Arquivo |
+|---|---|---|---|
+| 1.3 | A faixa azul de cima passava da borda | A barra de módulos ganhou rolagem lateral própria (`.digi-row-rola`) e o menu que abre virou `position:fixed`, colado no botão, para não ser cortado pela rolagem | `menus_tela_pequena_patch.js` |
+| 1.4 | Técnicos de demonstração voltavam sozinhos | O seed não cria mais técnico nenhum e o `seedData` limpa Carlos Mendes / Ana Souza / Rafael Lima quando id, nome e especialidade batem com o demo | `app.js` |
+| 2.1 | Impressão da OS não pode ser bloqueada | Caiu a trava de técnico no salvar e a trava "só imprime depois de faturar". Campo vazio sai em branco no papel; o aviso do técnico virou dica | `ajustes_v52237_vendas_os_visual_patch.js`, `ajustes_v52218_pix_prazo_print_venda_patch.js` |
+| 2.3 | Financeiro só mostrava vencimento | A listagem mostra "Vence" e "Criado". Título antigo sem data pega a data da venda/leitura de origem | `app.js`, `vendas_financeiro_pendente_patch.js` |
+| 2.4 | Botões repetidos na barra | Ficaram "Imprimir" e "Conferir NF-e". Saíram o "Imprimir/PDF" e o "Pré-visualizar NF-e" do modal | `ajustes_v52218_...`, `ajustes_v5229_nfe_atalho_historico_patch.js` |
+| 2.5 | Venda só salva não imprimia | O botão Imprimir fica sempre visível e funciona sem faturar | `ajustes_v52218_pix_prazo_print_venda_patch.js` |
+| 2.6 | Aviso "deseja salvar?" ao faturar e ao sair | A pergunta acabou; ao sair, o sistema grava sozinho quando há cliente | `vendas_notinhas_fix_patch.js` |
+| 3.1 | Filtro Cidade apagava o texto digitado | A busca repõe o texto depois que a lista é redesenhada | `ajustes_v52237_contratos_filtros_patch.js` |
+| 5.1 | Nuvem duplicando / bloqueios na tela | Na primeira conexão do PC aparece **uma escolha de duas opções**: *Enviar os dados deste PC para a nuvem* ou *Não enviar os dados atuais*. Qualquer uma destrava a sincronização; escolhendo "não enviar", os dados atuais ficam só aqui e tudo o que vier depois sincroniza. Os avisos "Confirmar exclusões de X (N)" sumiram da tela | `cloudflare_data_sync_patch.js`, `cloudflare_sync_patch.js` |
+
+Testes: `test_ajustes_v52268.js` (novo, registrado no `test_runner.js`). Ajustados os
+testes que cobriam as regras antigas: `test_cloudflare_sync.js`, `test_cloudflare_data_sync.js`,
+`test_ajustes_v5226.js`, `test_ajustes_v52218.js`, `test_ajustes_v52267.js`.
+Suíte: **122 passaram / 0 falharam**. Bundle: 190 scripts.
+
+> Para rodar `npm install` aqui: use `npm install --ignore-scripts` (o postinstall
+> do electron não consegue baixar o binário no sandbox e derruba a instalação inteira).
+
+---
+
+## v5.22.67 — relatório do usuário, 8 itens
+
+Respostas dadas antes de codar: login **uma vez por dia** (não a cada minuto),
+aviso EPSON **na mesma folha**, vendas **faltando** no financeiro, data **um
+dia a menos**, cidade **do cliente**. O item 2.4 (etiquetas) foi cancelado
+pelo próprio usuário.
+
+| # | O que era | O que foi feito |
+|---|---|---|
+| 1.1 | Voltava pro login sozinho | `exigirLoginDiario` rodava a cada 60s comparando um carimbo que 4 patches diferentes podiam apagar ao trocar o `doLoginUser`. Sem carimbo, deslogava DE MINUTO EM MINUTO. Agora a verdade é o `loginAt` da sessão e, sem informação nenhuma, a sessão é adotada como de hoje. Só cai na virada do dia. |
+| 1.2 | Backup automático | Removido o backup diário inteiro (`rodarBackupDiario`, `agendarBackupDiario`, temporizadores, `saveDaily`). Cópia de segurança só no botão **Backup**. |
+| 1.3 | Menu passava da borda | `menus_tela_pequena_patch.js`: mede o menu aberto e, **só quando não cabe**, dá rolagem e puxa para dentro da tela. Cabendo, não muda nada. |
+| 2.1 | Aviso EPSON estourava a folha | O aviso já existia e já era só da OS. Ficou mais compacto e a folha agora **encolhe sozinha** (até 70%) quando passa do A4, garantindo UMA folha. |
+| 2.2 | Venda não ia pro financeiro | Só a venda faturada virava título. `vendas_financeiro_pendente_patch.js` cria um título de acompanhamento para toda venda salva, marcado `aguardandoFaturamento`, e o apaga sozinho quando ela é faturada ou cancelada — sem contar duas vezes. |
+| 2.3 | Data um dia a menos | `new Date('2026-09-01')` é lido como UTC; no Brasil (UTC-3) a tela mostrava 31/08. Novo `parseDataLocal` no `app.js`, usado por `fmtDate`/`fmtDateTime` — e o sistema inteiro passa por eles. |
+| 3.1 | Faltava buscar por cidade | Filtro **Cidade** nos contratos, pela cidade do cliente, aceitando `cidade`, `municipio` e afins, sem ligar para acento nem maiúscula. |
+| 4.1 | Impressora era caixa fechada | Virou **lista** rolável: um clique destaca, **dois cliques escolhem** (Enter também). A busca reconstrói a lista. |
+
+**Atenção:** o workspace voltou sozinho para o commit `947ee33` no meio desta
+sessão, pela segunda vez. Recuperado com
+`git fetch origin <branch>:refs/remotes/origin/<branch>` + `git reset --hard`.
+Sempre conferir `git log --oneline -1` contra o remoto antes de confiar no
+que está em disco.
+
+---
+
+## v5.22.66 — o log apontou o culpado: contextBridge congela o objeto
+
+O isolamento da 5.22.65 fez o serviço: em vez de dezenas de scripts sumirem
+calados, o `npm run diag` do usuário mostrou **exatamente 2 falhas de 187**:
+
+```
+ajustes_v52221_cert_nuvem_a1_patch.js  -> TypeError: Cannot assign to
+ajustes_v52228_a1_nuvem_lupa_ncm_patch.js   read only property 'assinar'
+```
+
+**Motivo.** O `preload.js` publicava as APIs com
+`contextBridge.exposeInMainWorld`, e o contextBridge **congela** tudo o que
+expõe. Os dois patches envelopam `nfeCertAPI.assinar` para injetar o
+certificado A1 da nuvem — no objeto congelado isso dá TypeError. No navegador
+nunca aparecia: lá não existe preload, o objeto é comum e aceita a troca.
+Mesma família do bug anterior — funciona no site, quebra no `.exe`.
+
+**Correção.** O preload agora entrega tudo dentro de uma ponte só,
+`__digicopyPontes`. O `ponte_electron_patch.js` (primeiro script do bundle)
+copia a ponte para os nomes de sempre — `firebirdAPI`, `fileAPI`,
+`caixaEscolarAPI`, `printAPI`, `backupAPI`, `nfeCertAPI` — como objetos
+normais, graváveis. Nada mais no sistema precisou mudar, e o problema morre
+para as seis APIs, não só para o `assinar`.
+
+O `test_ponte_electron.js` (26 casos) proíbe voltar a expor esses nomes
+direto pelo contextBridge.
+
+---
+
+## v5.22.65 — CAUSA ENCONTRADA: um script quebrado derrubava o resto
+
+O usuário confirmou: `dist\win-unpacked\Sistema Digicopy.exe` (build recém
+gerado, digital conferida) **continuava sem as alterações** — modo escuro, menu
+de orçamentos, ajustes do financeiro e "muita coisa que nem consigo listar".
+E a pista decisiva: *"eu testava apenas no GitHack, não transformava para .exe
+antes"*.
+
+**Causa raiz.** O `app.bundle.js` junta ~186 scripts num arquivo só. Como é UM
+arquivo, um erro de execução em qualquer um deles **aborta todo o restante** —
+os scripts seguintes nunca rodam. Não aparece erro, o sistema abre normalmente,
+só que pela metade.
+
+Por que só no `.exe`: o GitHack serve por **https**, uma origem normal. O
+`.exe` abre por **file://**, que o Chromium trata como origem opaca e onde
+várias APIs são bloqueadas (IndexedDB, por exemplo). Um patch que funciona no
+site falha no `.exe` — e leva junto tudo que vem depois dele na fila.
+
+Bate com o relato. Posições no bundle: `indexeddb_persistence_patch.js` é o
+**95**, `cloudflare_data_sync_patch.js` o **97**; modo escuro é o **136**, menu
+de orçamentos o **145**, financeiro do **150** em diante. Tudo que sumia está
+depois; tudo que funcionava está antes. E o rodapé atualizava porque a versão
+vem escrita no `index.html`, não do bundle.
+
+**Correção.** Cada script entra no bundle dentro do **seu próprio try/catch**.
+Uma falha isolada não contamina os outros 186. Ficam fora só os arquivos que
+declaram no escopo global (`app.js` e `evolucao_patch.js`) — envolvê-los
+mudaria o escopo. Isso é decidido **lendo o código** com o `acorn`, não por
+lista escrita à mão: 185 isolados, 2 globais.
+
+Prova executada nos dois modos, com o script do meio quebrando:
+
+| | scripts que rodaram | bundle terminou |
+|---|---|---|
+| antes | `um, dois` (abortou) | não |
+| depois | `um, dois, tres` | sim, com a falha registrada |
+
+**E agora falha nunca mais é silenciosa:** `window.__DIGICOPY_ERROS` na tela, o
+`main.js` grava `log-erros.txt` em `%APPDATA%\digicopy-erp`, o `npm run diag`
+mostra o conteúdo e o sistema avisa quem está usando.
+
+---
+
+## v5.22.64 — cada entrega com número novo + diagnóstico do .exe
+
+Relatado: "no GitHack funciona, mas no `.exe` continua tudo igual; só o rodapé
+da versão aparece atualizado".
+
+O GitHack funcionando prova que **o código está certo** — o problema está entre
+gerar o `.exe` e abrir o programa instalado.
+
+**Causa 1 — o número da versão não mudava.** Todas as correções saíram como
+v5.22.63. O instalador se chama `Sistema-Digicopy-Setup-5.22.63.exe` sempre, o
+mesmo nome do instalador antigo que ainda está na pasta de downloads. Dá para
+instalar o arquivo errado sem perceber. **Agora toda entrega sobe o número.**
+
+**Causa 2 — não dava para olhar dentro do que está instalado.** Novo
+`npm run diag` (`diagnostico_exe.js`): compara o código-fonte da pasta com o
+que está de fato dentro do `dist\win-unpacked` e da instalação do Windows, e
+diz qual arquivo está velho. Só lê, não altera nada.
+
+O sintoma "só o rodapé atualiza" quer dizer `index.html` novo +
+`app.bundle.js` antigo — o rodapé vem do `index.html`, todo o resto vem do
+bundle. O diagnóstico detecta e nomeia exatamente esse caso.
+
+**Resultado do primeiro diagnóstico na máquina do usuário (31/08):** o build
+saiu **perfeito** — `verify_pack` com 111 arquivos e digital
+`cde94bef7c98d9f3` batendo com a fonte. Mas o diagnóstico **não encontrou
+nenhuma instalação** do Sistema Digicopy: só a pasta `dist`. Ou seja, o
+instalador novo não chegou a ser executado — o programa aberto no dia a dia
+não é esse build. O marcador de cache mostrava `5.22.63|ab6a39aaac59997c`,
+provando que o app já rodou o bundle da 5.22.63 em algum momento.
+
+O diagnóstico foi ampliado: agora **varre a máquina** atrás de qualquer cópia
+do sistema (`resources\app\app.bundle.js`) em `Programs`, `Program Files`,
+pasta do usuário e `C:\`, mostra **para onde os atalhos apontam** e avisa em
+letras claras quando o build está certo mas nada foi instalado. Também lembra
+de **fechar o programa antes de instalar** — com o app aberto o Windows não
+substitui os arquivos e a instalação fica velha.
+
+**Se acontecer de novo, nesta ordem:**
+
+1. `npm run diag` — e me mandar a saída
+2. `npm run build:win` — build completo e verificado
+3. **Desinstalar** o Sistema Digicopy pelo Painel de Controle
+4. Instalar `dist\Sistema-Digicopy-Setup-5.22.64.exe` (confira o número no nome)
+
+Nenhuma lógica do sistema mudou nesta versão.
+
+---
+
+## v5.22.63 — .exe completo: nenhuma atualização fica de fora
+
+**Causa encontrada** do problema "gero o .exe e não vêm as atualizações novas":
+o `electron-builder` só copia o que está em `package.json > build.files`. Essa
+lista era escrita **à mão**, junto com outras 3 listas (`bundle-manifest.json`,
+tags do `index.html` e `scripts.check`). Esquecer a lista do `build.files` fazia
+o arquivo **não ir para dentro do instalador**, sem nenhum aviso: o rodapé
+mostrava a versão nova, mas o comportamento continuava o antigo.
+
+**Segunda causa:** o cache do Electron só era limpo quando o *número* da versão
+mudava. Reempacotar com o mesmo número deixava o sistema rodando o código antigo
+guardado em `%APPDATA%\digicopy-erp\Cache`.
+
+O que mudou:
+
+- Novo `sync_build.js`: `index.html` (versão, título, rodapé e todos os `?v=`),
+  `build.files` e `scripts.check` passam a ser **gerados** de uma fonte só.
+  `npm run sync:check` reprova build dessincronizado.
+- Novo `verify_pack.js`: depois do `electron-builder`, abre o pacote e confere
+  arquivo por arquivo — inclusive se o `app.bundle.js` empacotado tem o **mesmo
+  sha256** do projeto. Faltou algo, o build **falha**.
+- `npm run build:win` agora é: limpa → sincroniza → empacota → **confere**.
+- `main.js`: cache invalidado pela impressão digital (sha256) do código, não só
+  pela versão. Qualquer mudança de código força limpeza do cache.
+- `mobile/sync-www.js`: o APK estava saindo com **14 scripts dando 404** (lista
+  fixa não incluía os patches soltos) e o `mobile/www` no git estava 2 versões
+  atrasado. Agora copia tudo que o `index.html` carrega e falha se sobrar
+  referência quebrada.
+- Removido o limite de 30 entradas em `build.files` do `test_app_bundle.js` —
+  era uma bomba-relógio que estouraria na próxima atualização.
+- Novos `test_build_sync.js` e `test_ajustes_v52263.js`. Guia completo em
+  **`BUILD_EXE.md`**.
+
+### Otimização para PC fraco (mesma versão)
+
+Auditoria do carregamento encontrou trabalho duplicado puro:
+
+- **15 patches eram carregados duas vezes** — estavam dentro do `app.bundle.js`
+  **e** também como tag `<script>` solta no `index.html`. Isso relia e
+  reexecutava **216 KB** a cada abertura.
+- **6 desses patches não tinham guarda contra execução dupla**: os de orçamento
+  (v5.22.55 a v5.22.62) registravam ouvintes `storage` e **52 `setTimeout` em
+  dobro**. Isso ajudava a produzir justamente o comportamento duplicado/loop
+  que essas versões vinham tentando corrigir.
+- O `npm run sync` agora remove essa duplicata sozinho. `index.html` carrega
+  **só o bundle**; `build.files` caiu de 28 para 13 entradas e o pacote de 32
+  para 17 arquivos.
+- **Cache de código V8 religado** (`bypassHeatCheck`). Estava `none` desde a
+  v5.22.48 como contorno do código preso em cache; com o bundle em ~2,9 MB isso
+  forçava recompilar tudo a cada abertura. A causa raiz agora é a impressão
+  digital, então dá para ligar sem risco.
+- `spellcheck: false` (menos memória) e **Chart.js (206 KB) saiu do `<head>`**
+  para o fim do `<body>`, liberando a primeira pintura da tela.
+
+### Rodapé e nome da janela travados numa versão velha
+
+Relatado: o sistema estava na 5.22.63 mas o rodapé e o nome da janela
+mostravam **v5.22.60**.
+
+**Causa:** seis patches (v5.22.55 a v5.22.60) faziam
+`window.DIGICOPY_APP_VERSION = VERSAO;` com a versão **fixa** deles,
+sobrescrevendo a versão real definida no `index.html`. O último a rodar era o
+v5.22.60, então a variável global inteira virava `5.22.60` — e todos os outros
+patches, mesmo os que liam a global "corretamente", passavam a pintar 5.22.60.
+Esses mesmos patches ainda forçavam `document.title`, o que travava o nome da
+janela.
+
+**Correção:**
+- Os seis passaram a respeitar a versão já definida
+  (`window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO`).
+- Todos os painters de rodapé/título agora leem a versão global em vez do valor
+  fixo (8 arquivos, 21 pontos corrigidos).
+- O painter final (v5.22.63) passou a cuidar também do `document.title`.
+- Novo `test_versao_visual.js`: proíbe sobrescrever a versão global, proíbe
+  pintar com versão fixa e **simula a ordem real dos 191 scripts** conferindo
+  o resultado. A simulação reproduziu o bug (v5.22.60) antes da correção.
+
+### Limpeza: nuvem antiga apagada e repositório 12x menor
+
+- **Repositório de 207 MB → 16 MB.** Havia **190 MB de `.zip`** commitados
+  (v5.22.47, 48, 49, 61, 62). O zip da branch que eu baixo carregava tudo isso
+  junto. Apagados; o `.gitignore` agora bloqueia `.zip` sem exceção. O git
+  guarda o histórico, então nada foi perdido de verdade.
+- **Nuvem antiga (Google Firebase / Supabase) apagada de vez.** Quatro arquivos
+  mortos, que não entravam no bundle nem no `.exe`, ficavam no repositório:
+  `sync_client.js` (28 KB), `sync_realtime_patch.js` (20 KB),
+  `limpar_nuvem_patch.js`, `ajustes_v52025_patch.js`. Mais dois testes órfãos.
+- **Sobre a API do Google que o GitHub acusa:** a chave estava em
+  `firebase_config.js`, arquivo que **já não existe** no código. O alerta vem
+  do **histórico do git** (commit `26e5987`), que é permanente. O jeito certo
+  de resolver é **revogar/apagar a chave no console do Google** — aí o alerta
+  pode ser dispensado. Reescrever o histórico não é recomendado: quebraria o
+  PR e a chave continuaria em cópias/forks.
+- Novo `test_nuvem_antiga_removida.js`: garante que esses arquivos não voltem,
+  que nenhuma chave `AIza...` entre no código, que nenhum endpoint
+  Firebase/Supabase apareça e que nenhum `.zip` volte para o repositório.
+
+### Desempenho: timers parados em segundo plano
+
+Três vigias de DOM rodavam **para sempre**, mesmo com a janela minimizada:
+`instalarBuscadorMenuFinal` (2s), `limparTopoMenus` (3s) e
+`garantirProdutosVisivel` (4s). Agora começam com `if(document.hidden) return;`
+— zero trabalho quando o sistema não está à vista.
+
+### Consolidação: 6 módulos que estavam em duplicata
+
+Os arquivos da v5.22.42 e da v5.22.43 eram **o mesmo módulo duas vezes**:
+`orcamentos_status`, `contratos_sort`, `impressora_remanejar`,
+`financeiro_filtros`, `financeiro_menu` e `menu_versao_boleto`. Em vez de
+corrigir o arquivo existente, cada um foi **copiado inteiro** e a versão
+trocada — inclusive as guardas (`__v52242fin` virou `__v52243fin`), o que faz
+as duas cópias rodarem.
+
+O que isso custava:
+
+- **42 KB lidos e executados à toa** por abertura.
+- A v5.22.42 embrulhava `renderFinanceiro`, `renderContratos`,
+  `renderOrcamentos` e `navigateTo`; a v5.22.43 embrulhava por cima. A tela do
+  financeiro chegava a ser **desenhada com a barra antiga** (De/Até sempre
+  visível, o bug que a 43 corrigiu) e só depois refeita.
+- `financeiro_menu` era **byte a byte igual**, só mudava o número da versão.
+
+Verificação antes de apagar: a v5.22.43 publica o mesmo conjunto de funções da
+42, **não depende de nada** que só a 42 publique, e cada diferença encontrada é
+a 43 fazendo **mais** que a 42 (ex.: `out.push('clientes')` virou
+`out.push('clientes','produtos','impressoras')`). As três referências a
+`__v52242` que sobraram na 43 são só nomes de flag copiados — ela grava, não lê.
+
+Resultado: **6 arquivos apagados**, bundle de 191 para **185 scripts**. O
+`test_ajustes_v52243.js` já cobria tudo do teste antigo e mais 5 casos; as 3
+asserções exclusivas dele (worker e página do cliente) foram herdadas.
+
+Novo `test_um_arquivo_por_modulo.js` impede a volta do padrão: barra módulo com
+duas versões no bundle, arquivo que é cópia de outro só com a versão trocada, e
+`_PURE` publicado por mais de um arquivo.
+
+### Verificação sem baixar o Electron
+
+O binário do Electron vem de `release-assets.githubusercontent.com`, bloqueado
+no ambiente de desenvolvimento. Solução: `npm install --ignore-scripts` instala
+só os pacotes JS, e o novo `npm run verify:files` usa o **matcher real do
+`electron-builder`** (`app-builder-lib`) para calcular a lista exata de
+arquivos que ele copiaria — conferência completa sem gerar o `.exe`.
+
+Suíte: **117 passaram, 0 falharam**.
+
+Adicionar uma atualização agora são 2 passos: criar o `_patch.js` e citá-lo no
+`bundle-manifest.json`. O resto é automático.
+
+**APK:** as mudanças no `mobile/sync-www.js` são só para o celular não quebrar
+nas próximas atualizações. O app de celular segue **parado**; a prioridade é o
+sistema de PC.
 
 ---
 

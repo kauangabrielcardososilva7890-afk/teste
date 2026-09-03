@@ -80,7 +80,7 @@ function gerarVendaDoOrcamento(o, origem){
   };
   (venda.itens||[]).forEach(function(it){
     var p=it.produtoId && (db.produtos||[]).find(function(x){ return x.id===it.produtoId; });
-    if(p && !/servi[cç]o|recarga/i.test(String(p.categoria||''))) p.estoque=n(p.estoque)-n(it.qtd);
+    if(p && !/servi[cç]o|recarga/i.test(String(p.categoria||'')) && !p.estoqueInfinito) p.estoque=n(p.estoque)-n(it.qtd);
   });
   db.vendas=db.vendas||[];
   db.vendas.push(venda);

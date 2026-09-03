@@ -36,8 +36,10 @@ ok('patch 50 sem MutationObserver em documentElement', !p50.includes('MutationOb
 ok('patch 49 sem MutationObserver em documentElement', !p49.includes('MutationObserver'));
 ok('patch 46 sem MutationObserver em documentElement', !p46.includes('MutationObserver'));
 ok('patch no manifesto do bundle', manifest.includes('ajustes_v52252_resolucao_loop_patch.js'));
-ok('patch no files do electron-builder', pkg.build.files.indexOf('ajustes_v52252_resolucao_loop_patch.js') >= 0);
-ok('index carrega os scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && /ajustes_v52252_resolucao_loop_patch\.js\?v=5\.22\.\d+/.test(html));
+ok('patch vai para o .exe dentro do app.bundle.js',
+   pkg.build.files.indexOf('app.bundle.js')>=0 &&
+   JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52252_resolucao_loop_patch.js'));
+ok('index carrega os scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52252_resolucao_loop_patch.js'));
 ok('rodapé na versão 5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
 ok('sem nome pessoal novo', !/kauan/i.test(src.replace(/__KAUAN_REFINO_STATE__/g, '').replace(/kauangabrielcardososilva7890-afk/g, '')));
 

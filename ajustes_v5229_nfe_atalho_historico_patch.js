@@ -79,23 +79,9 @@ function injetarLeituras(){
   marcarLeituras();
 }
 
-function injetarNoModalHistorico(tipo,id){
-  const body=document.getElementById('modal-body');
-  const footer=document.getElementById('modal-footer');
-  if(!id) return;
-  const alvo=footer||body;
-  if(!alvo||alvo.querySelector('#btn-nfe-previa-modal')) return;
-  const b=botao('btn-nfe-previa-modal','Pré-visualizar NF-e',function(ev){
-    if(ev){ ev.preventDefault(); ev.stopPropagation(); }
-    nfePreVisualizar(tipo,id);
-  });
-  if(footer&&footer!==body) footer.insertBefore(b, footer.firstChild);
-  else{
-    const wrap=body&&body.querySelector('.flex.flex-wrap.gap-2');
-    if(wrap) wrap.insertBefore(b, wrap.firstChild);
-    else if(body) body.appendChild(b);
-  }
-}
+// v5.22.68 — o modal não recebe mais o "Pré-visualizar NF-e": ele fazia a
+// mesma coisa que o "Conferir NF-e", que já fica no mesmo rodapé.
+function injetarNoModalHistorico(){ /* botão repetido removido */ }
 
 function wrapRender(nome,depois){
   const orig=window[nome];

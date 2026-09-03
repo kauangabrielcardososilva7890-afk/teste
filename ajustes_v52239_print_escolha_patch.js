@@ -2,6 +2,9 @@
 // v5.22.39 — Imprimir venda: escolhe Vendas ou OS, depois 1 ou 2 vias
 // • Venda: sem aviso EPSON. 2 vias = duas meias folhas (uma folha se couber)
 // • OS: aviso EPSON sempre. 2 vias = duas folhas separadas
+// • v5.22.67: o aviso não pode empurrar a OS para uma segunda folha. Antes de
+//   imprimir, se a folha passou do tamanho do A4, a página inteira encolhe o
+//   necessário para caber em UMA folha só.
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -22,8 +25,37 @@ function fatiarPagina(html){
 function avisoEpsonHtml(){
   var t=(window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.AVISO_EPSON) ||
     'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
-  return '<div class="aviso-epson" style="margin:3mm 0 0;padding:2.5mm 3mm;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:9.5px;line-height:1.35;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'+
+  return '<div class="aviso-epson" style="margin:2.5mm 0 0;padding:2mm 2.5mm;page-break-inside:avoid;break-inside:avoid;border:1.6px solid #0a1e8a;background:#eef2ff;border-radius:2mm;font-size:8.8px;line-height:1.3;color:#0a1e8a;white-space:pre-wrap;font-weight:600">'+
     String(t).replace(/</g,'&lt;')+'</div>';
+}
+
+// Encolhe a folha só quando ela passa do A4. Se já cabe, não mexe em nada.
+function fatorParaCaber(alturaConteudo, alturaFolha, minimo){
+  var min = minimo == null ? 0.7 : minimo;
+  if (!alturaConteudo || !alturaFolha || alturaConteudo <= alturaFolha) return 1;
+  var k = alturaFolha / alturaConteudo;
+  return k < min ? min : Math.floor(k * 100) / 100;
+}
+
+var SCRIPT_UMA_FOLHA =
+  '<script>(function(){try{' +
+  'var régua=document.createElement("div");régua.style.cssText="position:absolute;visibility:hidden;height:297mm";' +
+  'document.body.appendChild(régua);var folha=régua.offsetHeight;régua.remove();' +
+  'if(!folha)return;' +
+  'var pgs=document.querySelectorAll(".pagina.inteira");' +
+  'for(var i=0;i<pgs.length;i++){var pg=pgs[i];' +
+  'var alt=pg.getBoundingClientRect().height;' +
+  'if(alt<=folha)continue;' +
+  'var k=folha/alt;if(k<0.7)k=0.7;k=Math.floor(k*100)/100;' +
+  'pg.style.zoom=k;' +
+  'for(var t=0;t<8&&pg.getBoundingClientRect().height>folha&&k>0.7;t++){k=Math.round((k-0.01)*100)/100;pg.style.zoom=k;}' +
+  '}}catch(e){}})();<\/script>';
+
+function injetarUmaFolha(html){
+  var s=String(html||'');
+  if(s.indexOf('régua')>=0) return s;   // já tem o ajuste, não repete
+  if(s.indexOf('</body>')>=0) return s.replace('</body>', SCRIPT_UMA_FOLHA+'</body>');
+  return s+SCRIPT_UMA_FOLHA;
 }
 
 function aplicarTipo(html, tipo){
@@ -39,7 +71,7 @@ function aplicarTipo(html, tipo){
     if(s.indexOf('<p class="audit">')>=0) s=s.replace('<p class="audit">', avisoEpsonHtml()+'<p class="audit">');
     else s=s.replace('</div>\n  <div class="corte', avisoEpsonHtml()+'</div>\n  <div class="corte');
   }
-  return s;
+  return injetarUmaFolha(s);
 }
 
 function montarVias(html, tipo, vias){
@@ -65,7 +97,9 @@ function montarVias(html, tipo, vias){
 window.V52239_PRINT_PURE = {
   fatiarPagina: fatiarPagina,
   aplicarTipo: aplicarTipo,
-  montarVias: montarVias
+  montarVias: montarVias,
+  fatorParaCaber: fatorParaCaber,
+  injetarUmaFolha: injetarUmaFolha
 };
 
 if(typeof document==='undefined') return;

@@ -18,7 +18,7 @@ const E=ctx.window.ETIQUETA_RECARGA_VENDA_PURE;
 console.log('== PRINT / PIX / ETIQUETA ==');
 ok('faturada sim', P.ehFaturada({status:'faturado'})===true);
 ok('salva não imprime', P.ehFaturada({status:'aguardar'})===false);
-ok('imprimir só faturada', /Só imprime depois de faturar/.test(pix));
+ok('venda salva também imprime (v5.22.68)', !/Só imprime depois de faturar/.test(pix));
 ok('PIX não reabre título', /reabrirTituloPix=function\(\)\{ return 0; \}/.test(pix));
 ok('comprovante no A prazo', /fx==='Prazo'/.test(pix) && /pixRenderPainelFaturamento/.test(pix));
 

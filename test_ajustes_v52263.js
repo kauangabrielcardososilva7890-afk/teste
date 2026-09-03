@@ -1,0 +1,110 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// TESTE v5.22.63 — .exe completo: nenhuma atualização fica de fora
+// ═══════════════════════════════════════════════════════════════════════════
+const fs = require('fs');
+const cp = require('child_process');
+function ok(name, cond){ if(!cond){ console.error('  ✘ '+name); process.exit(1);} console.log('  ✔ '+name); }
+function load(src){
+  const ctx = { window:{}, document:undefined };
+  new Function('window','document', src)(ctx.window, ctx.document);
+  return ctx.window;
+}
+
+const src = fs.readFileSync('ajustes_v52263_exe_completo_patch.js','utf8');
+const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
+const html = fs.readFileSync('index.html','utf8');
+const sync = fs.readFileSync('sync_build.js','utf8');
+const verify = fs.readFileSync('verify_pack.js','utf8');
+const main = fs.readFileSync('main.js','utf8');
+const P = load(src).EXE_COMPLETO_V52263_PURE;
+
+console.log('== v5.22.63 — .EXE COMPLETO ==');
+
+ok('versao', P.VERSAO === '5.22.63' && /^5\.22\.\d+/.test(pkg.version));
+ok('patch no bundle', manifest.includes('ajustes_v52263_exe_completo_patch.js'));
+ok('bundle carregado com cache-busting da versão',
+   html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
+ok('patch vai para o .exe dentro do bundle', pkg.build.files.includes('app.bundle.js'));
+ok('index.html não carrega script duplicado do bundle',
+   [...html.matchAll(/<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)/g)]
+     .map(m=>m[1]).filter(f=>f!=='app.bundle.js'&&!f.startsWith('assets/'))
+     .every(f=>!manifest.includes(f)));
+
+// ── 1. Lista de arquivos do .exe é gerada, não escrita à mão ────────────────
+ok('sync gera build.files', P.listaAutomatica === true && /pkg\.build\.files\s*=\s*filesEsperado/.test(sync));
+ok('sync gera scripts.check', /pkg\.scripts\.check\s*=\s*checkEsperado/.test(sync));
+ok('sync tem modo --check para travar build sujo', /--check/.test(sync) && /process\.exit\(1\)/.test(sync));
+cp.execFileSync(process.execPath, ['sync_build.js','--check'], { stdio:'pipe' });
+ok('configuração está sincronizada agora', 'ok');
+
+// ── 2. O pacote gerado é conferido ──────────────────────────────────────────
+ok('verify confere o pacote', P.conferePacote === true);
+ok('verify compara o sha256 do bundle empacotado', /sha\(bundleRel\)/.test(verify) && /DIFERENTE do projeto/.test(verify));
+ok('verify acusa recurso do index ausente no pacote', /NÃO foi para o \.exe/.test(verify));
+ok('verify falha o build quando falta algo', /erros\.length/.test(verify) && /process\.exit\(1\)/.test(verify));
+
+// ── 3. Cache do Electron por conteúdo, não só por versão ────────────────────
+ok('cache por impressão digital', P.cachePorConteudo === true && /APP_FINGERPRINT/.test(main));
+ok('fingerprint usa o sha256 do bundle', /sha256/.test(main) && /app\.bundle\.js/.test(main));
+ok('não depende só do número da versão', /prev\s*!==\s*APP_FINGERPRINT/.test(main));
+
+// ── 4. Pipeline do npm encadeado na ordem certa ─────────────────────────────
+const bw = pkg.scripts['build:win'];
+ok('build:win = limpa → sincroniza → empacota → confere',
+   bw.indexOf('clean_dist.js') < bw.indexOf('sync_build.js') &&
+   bw.indexOf('sync_build.js') < bw.indexOf('electron-builder') &&
+   bw.indexOf('electron-builder') < bw.indexOf('verify_pack.js'));
+
+// ── 5. APK sem arquivos faltando ────────────────────────────────────────────
+const www = fs.readFileSync('mobile/sync-www.js','utf8');
+ok('APK copia o que o index carrega', P.apkSemFaltas === true && /refsLocais\(htmlOrigem\)/.test(www));
+ok('APK falha se sobrar referência quebrada', /o APK sairia com arquivos faltando/.test(www));
+
+// ── 6. Higiene ──────────────────────────────────────────────────────────────
+ok('bundle atualizado com as fontes', (cp.execFileSync(process.execPath,['build_bundle.js','--check'],{stdio:'pipe'}), true));
+ok('patch não mexe no APK', src.indexOf('mobile/') < 0);
+
+// ── 7. Otimização para PC fraco ─────────────────────────────────────────────
+ok('cache de código V8 ligado (abre mais rápido)',
+   main.indexOf("v8CacheOptions: 'bypassHeatCheck'") >= 0);
+ok('corretor ortográfico desligado (menos memória)', /spellcheck:\s*false/.test(main));
+const soltos = [...html.matchAll(/<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)/g)]
+  .map(m => m[1]).filter(f => f !== 'app.bundle.js' && !f.startsWith('assets/'));
+ok('zero script duplicado: nada é lido/executado 2x', soltos.length === 0);
+ok('sync remove duplicata do bundle automaticamente', /duplicado\(s\) do bundle removido/.test(sync));
+ok('Chart.js não bloqueia mais a primeira pintura',
+   html.indexOf('chart.umd.js') > html.indexOf('<div id="toast-container"'));
+ok('build.files enxuto', pkg.build.files.length <= 15);
+
+// ── 8. Verificação sem baixar o Electron ────────────────────────────────────
+ok('verify tem modo simulação com o matcher real', /--dry/.test(verify) && /app-builder-lib\/out\/fileMatcher/.test(verify));
+ok('atalho npm run verify:files', pkg.scripts['verify:files'] === 'node verify_pack.js --dry');
+
+// ── 9. Links de teste e download (obrigatórios a cada atualização) ──────────
+const REPO = pkg.digicopy.repo, BRANCH = pkg.digicopy.branch;
+ok('package.json guarda repo e branch publicados', !!REPO && !!BRANCH);
+ok('sync monta o link do GitHack', /LINK_GITHACK/.test(sync) && /raw\.githack\.com/.test(sync));
+ok('sync monta o link do zip do GitHub', /LINK_ZIP/.test(sync) && /archive\/refs\/heads/.test(sync));
+ok('sync imprime os dois links', /imprimirLinks/.test(sync));
+ok('sync avisa se a branch do git divergir', /digicopy\.branch/.test(sync));
+
+// nenhum arquivo do bundle pode apontar para branch antiga do GitHack
+const branchErrada = manifest.filter(f => {
+  const c = fs.readFileSync(f, 'utf8');
+  if (c.indexOf('raw.githack.com') < 0) return false;
+  const re = new RegExp('raw\\.githack\\.com/' + REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/(?!' + BRANCH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/)', 'g');
+  return re.test(c);
+});
+ok('link do cliente aponta para a branch atual (' + BRANCH + ')', branchErrada.length === 0);
+
+// os dois links precisam estar documentados
+const rel = fs.readFileSync('RELATORIO_SESSAO.md', 'utf8');
+const guia = fs.readFileSync('BUILD_EXE.md', 'utf8');
+ok('RELATORIO_SESSAO.md traz o link do GitHack', rel.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0);
+ok('RELATORIO_SESSAO.md traz o link do zip', rel.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
+ok('BUILD_EXE.md traz os dois links',
+   guia.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0 &&
+   guia.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
+
+console.log('\nRESULTADO: v5.22.63 passou!');

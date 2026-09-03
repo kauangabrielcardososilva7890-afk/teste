@@ -462,9 +462,25 @@ window.openModalChamadoCompleto = function(osId, contratoId){
   renderPecas(); if(o.equipamentoId) autoPreencherDadosChamado(o.equipamentoId, true, o.id);
 };
 window.atualizarImpressorasChamadoRefino = function(){ const clienteId = document.getElementById('kr-os-cli')?.value || ''; const sel = document.getElementById('kr-os-eq'); if(sel) sel.innerHTML = '<option value="">Selecione</option>'+selectEquipOptions(null, '', clienteId); };
-window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){ const eq = getEq(equipId); if(!eq) return; const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {}; document.getElementById('kr-os-modelo').value = eq.modelo || ''; document.getElementById('kr-os-patr').value = eq.patrimonio || ''; document.getElementById('kr-os-serie').value = eq.serie || ''; document.getElementById('kr-os-local').value = p.localInstalacao || p.setor || ''; const ult = ultimoContador(equipId, ignoreOsId); document.getElementById('kr-os-cont-ant').value = ult.valor; if(!manterAtual) document.getElementById('kr-os-cont-atu').value = ult.valor; calcImpressoesChamado(); };
+// v5.22.73 — cada campo é preenchido só se existir na tela. A tela do chamado
+// mudou com o tempo (campos que somem quando a impressora não tem contador
+// color, por exemplo) e escrever direto no campo ausente derrubava o sistema
+// com "Cannot set properties of null".
+function porCampo(id, valor){ const el = document.getElementById(id); if(el) el.value = valor; }
+window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
+  const eq = getEq(equipId); if(!eq) return;
+  const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {};
+  porCampo('kr-os-modelo', eq.modelo || '');
+  porCampo('kr-os-patr', eq.patrimonio || '');
+  porCampo('kr-os-serie', eq.serie || '');
+  porCampo('kr-os-local', p.localInstalacao || p.setor || '');
+  const ult = ultimoContador(equipId, ignoreOsId);
+  porCampo('kr-os-cont-ant', ult.valor);
+  if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
+  calcImpressoesChamado();
+};
 window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
-function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
+function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
   const c = contratoId ? getCtr(contratoId) : null;

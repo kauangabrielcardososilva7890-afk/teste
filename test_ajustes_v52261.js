@@ -33,7 +33,7 @@ ok('orcamento autorizado continua na lista', P.orcamentoPodeFicar(db2.orcamentos
 ok('venda apagada nao volta', P.vendaPodeFicar(db2.vendas[0], db2)===false);
 ok('aviso no sino sem popup', P.avisoNoSino===true && P.semPopup===true && /notificarEvento/.test(src) && /lfbAlert/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52261_orcamento_nao_volta_patch.js'));
-ok('index carrega o patch', /ajustes_v52261_orcamento_nao_volta_patch\.js\?v=5\.22\.\d+/.test(html));
+ok('index carrega o patch', JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52261_orcamento_nao_volta_patch.js'));
 ok('rodape 5.22', /v5\.22\.\d+/.test(html));
 ok('APK quieto', src.indexOf('mobile/')<0);
 console.log('\nRESULTADO: v5.22.61 passou!');

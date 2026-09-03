@@ -198,7 +198,7 @@ window.LOGIN_DIRETO_LEGADO_PURE={ fold, loginCompativel, senhaCompativel, perfil
 if(typeof document!=='undefined'){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{ estilizarLogin(); });
   else { estilizarLogin(); }
-  setInterval(limparTopoMenus,3000);
+  setInterval(function(){ if(document.hidden) return; limparTopoMenus(); },3000);
 }
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
 })();

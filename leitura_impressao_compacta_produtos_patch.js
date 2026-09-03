@@ -92,7 +92,7 @@ function garantirProdutosVisivel(){
   }
 }
 const oldBuildNav=window.buildNav; if(typeof oldBuildNav==='function'&&!oldBuildNav.__prodFix){ window.buildNav=function(){ const ret=oldBuildNav.apply(this,arguments); setTimeout(garantirProdutosVisivel,0); return ret; }; window.buildNav.__prodFix=true; }
-if(typeof document!=='undefined'){ setTimeout(garantirProdutosVisivel,800); setInterval(garantirProdutosVisivel,4000); }
+if(typeof document!=='undefined'){ setTimeout(garantirProdutosVisivel,800); setInterval(function(){ if(document.hidden) return; garantirProdutosVisivel(); },4000); }
 window.LEITURA_IMPRESSAO_COMPACTA_PURE={ agruparPorDepartamento, totais, htmlNotinhaLeitura };
 console.log('[DIGICOPY] leitura_impressao_compacta_produtos_patch.js v4.9.48 carregado');
 })();

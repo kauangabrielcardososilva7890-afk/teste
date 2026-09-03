@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1e8a">
+<script>
+window.DIGICOPY_APP_VERSION = '5.22.82';
+try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')document.documentElement.classList.add('digi-escuro');}catch(e){}
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Digicopy">
+<title>Sistema Digicopy v5.22.82</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./logo_2.png">
+<link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
+<link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1">
+<style>
+:root{--digi:#0a1e8a;--digi-dark:#08176e;--digi-light:#e8eaf8}
+.bg-indigo-600{background:var(--digi) !important} .hover\:bg-indigo-700:hover{background:var(--digi-dark) !important}
+.text-indigo-600{color:var(--digi) !important} .text-indigo-700{color:var(--digi) !important}
+.bg-indigo-50{background:var(--digi-light) !important} .border-indigo-100{border-color:#c9ceef !important}
+.focus\:border-indigo-200:focus{border-color:#8a93d6 !important} .focus\:ring-indigo-500\/10:focus{--tw-ring-color:rgba(10,30,138,0.12) !important}
+.shadow-indigo-500\/20{--tw-shadow-color:rgba(10,30,138,0.2) !important}
+.glass{backdrop-filter:blur(16px)}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.animate-slideIn{animation:slideIn .25s ease-out}
+.animate-fadeIn{animation:fadeIn .3s ease-out}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
+
+
+
+.classic-toolbar{background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.classic-toolbar-scroll{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:0 18px}
+.classic-menu-btn{min-width:94px;height:64px;padding:7px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid #eef2f7;color:#334155;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+.classic-menu-btn:first-child{border-left:1px solid #eef2f7}.classic-menu-btn i{font-size:22px;color:#0a1e8a}.classic-menu-btn:hover{background:#f8fafc;color:#0a1e8a}
+.ribbon-actions{display:flex;align-items:stretch;overflow-x:auto;background:white;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.ribbon-actions button{min-width:118px;padding:12px 14px;border-right:1px solid #eef2f7;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;font-weight:800;color:#334155;background:white}
+.ribbon-actions button:hover{background:#f8fafc;color:#0a1e8a}.ribbon-actions i{font-size:26px;color:#0a1e8a}.ribbon-actions small{font-weight:600;color:#64748b;font-size:10.5px;line-height:1.1}
+
+button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
+#sidebar,#overlay{display:none!important}
+body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.shadow-lg{box-shadow:0 1px 3px rgba(15,23,42,.10)!important}
+header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
+.classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
+
+
+.app-titlebar{box-shadow:none}#app-shell{display:flex;flex-direction:column;min-height:100vh}#app-shell main{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{min-height:calc(100vh - 124px);height:auto;display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:15;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}#app-shell main{padding-bottom:22px;overflow:visible}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}.app-titlebar{position:sticky;top:0;z-index:40}.modern-topnav{position:relative;top:auto;z-index:35;overflow:visible}.module-menu{z-index:999 !important;}
+
+
+
+.modern-topnav{position:relative;top:auto;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
+.module-row{height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:linear-gradient(180deg,#ffffff,#f8fbff);overflow:visible}
+.module{position:relative}.module>button{height:34px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:7px;transition:.18s;background:transparent}.module>button i{font-size:17px;color:#0a1e8a}.module>button:hover{background:#eaf2ff;color:#0a1e8a;transform:translateY(-1px)}
+.module-menu{position:absolute;top:39px;left:0;min-width:230px;background:white;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s;z-index:80}.module:hover .module-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.module-menu button{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;transition:.14s}.module-menu button:hover{background:#f1f6ff;color:#0a1e8a;padding-left:14px}.module-menu i{font-size:18px;color:#0a1e8a}.module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
+.command-row{height:42px;display:flex;align-items:center;gap:8px;padding:4px 12px;background:white;border-top:1px solid #eef2f7}.command-row .quick{height:28px;padding:0 10px;border:1px solid #dbe3ef;border-radius:8px;background:#fff;font-size:11.5px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;transition:.15s}.command-row .quick:hover{border-color:#0a1e8a;color:#0a1e8a;box-shadow:0 4px 14px rgba(10,30,138,.10);transform:translateY(-1px)}.command-row .quick.primary{background:#0a1e8a;color:white;border-color:#0a1e8a}.command-search{height:28px;width:250px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12px}.pulse-dot{width:7px;height:7px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulseRing 1.7s infinite}@keyframes pulseRing{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.clean-home{height:calc(100vh - 124px);background:radial-gradient(circle at 52% 48%,#eef5ff 0,#fff 32%,#fff 100%);position:relative;overflow:hidden;display:grid;place-items:center}.clean-home:before,.clean-home:after{content:"";position:absolute;border-radius:999px;border:1px solid rgba(10,30,138,.08);animation:floatSoft 7s ease-in-out infinite}.clean-home:before{width:360px;height:360px}.clean-home:after{width:520px;height:520px;animation-delay:-2s}@keyframes floatSoft{0%,100%{transform:translateY(0) scale(1);opacity:.55}50%{transform:translateY(-12px) scale(1.025);opacity:.9}}
+.clean-logo{position:relative;z-index:1;text-align:center;color:#1f2937}.clean-logo img{height:68px;margin:auto;filter:drop-shadow(0 10px 18px rgba(10,30,138,.12))}.clean-logo h1{font-size:32px;font-weight:800;margin-top:12px;letter-spacing:-.03em}.clean-logo p{font-size:13px;color:#64748b;margin-top:6px}.clean-shortcuts{position:absolute;bottom:42px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 16px}.clean-shortcuts button{height:34px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:rgba(255,255,255,.85);font-size:12px;font-weight:700;color:#334155;backdrop-filter:blur(8px);transition:.16s}.clean-shortcuts button:hover{background:#0a1e8a;color:white;transform:translateY(-2px)}
+
+.neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:calc(100vh - 170px);animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
+
+
+/* anti-flash login */
+#app-shell.hidden{display:none!important}
+#login-screen:not(.hidden){display:flex!important}
+
+/* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
+.view { scroll-margin-top: 80px; }
+
+</style>
+<style id="prototipo-visual-final">
+/* Base estrutural mantida do index original. Este arquivo não carrega o sistema. */
+body{background:#f3f5f8!important}.app-titlebar{background:#0a1e8a!important;box-shadow:0 2px 6px rgba(15,33,91,.16)!important}.modern-topnav{background:#fff!important;border-bottom:1px solid #dce2ea!important;box-shadow:0 1px 5px rgba(20,35,70,.06)!important}.module-row{max-width:1500px;margin:auto}.module>button{transition:background .18s,color .18s,transform .18s}.module>button:hover{transform:translateY(-1px);background:#eef2ff!important;color:#0a1e8a!important}.module-menu{border-radius:10px!important;box-shadow:0 12px 28px rgba(19,39,83,.14)!important}.neo-shell{animation:layoutIn .32s ease both}.neo-panel,.card{box-shadow:0 3px 12px rgba(20,37,78,.06)!important;transition:box-shadow .2s,transform .2s}.neo-panel:hover,.card:hover{box-shadow:0 8px 19px rgba(20,37,78,.11)!important;transform:translateY(-2px)}#proto-nav button{transition:background .18s,color .18s,padding .18s}#proto-nav button:hover{padding-left:15px;background:#ffffff12!important}.proto-empty{border:1px solid #dbe2eb;background:#fff;border-radius:14px;padding:42px;text-align:center;color:#64748b}.proto-empty i{display:block;font-size:34px;color:#a9b8e6;margin-bottom:10px}.proto-empty b{display:block;color:#1e293b;font-size:16px}.proto-empty p{font-size:12px;margin:7px 0 0}@keyframes layoutIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@media(max-width:900px){.module-row{overflow:auto}.workspace-pad{padding:0!important}}
+</style><style id="listas-do-prototipo">.hidden{display:none!important}.list-page{max-width:1200px;margin:auto;animation:layoutIn .25s ease}.list-title{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #cbd4df;padding-bottom:13px;margin-bottom:16px}.list-title h1{font-size:23px;font-weight:600;margin:0}.list-title p{font-size:12px;color:#64748b;margin:5px 0 0}.list-filter{background:#fff;border:1px solid #d5dde7;padding:12px;display:flex;gap:8px;align-items:center;margin-bottom:12px}.list-filter input{height:31px;border:1px solid #c5ced9;padding:0 9px;font-size:12px;flex:1;max-width:300px}.list-filter button{height:31px;border:1px solid #bbc7d4;background:#f8fafc;color:#334155;padding:0 12px;font-size:11px}.list-box{background:#fff;border:1px solid #cbd4df}.list-box table{width:100%;border-collapse:collapse;font-size:12px}.list-box th{background:#edf1f5;color:#4b5967;font-weight:600;text-align:left;border:1px solid #d3dbe4;padding:8px}.list-box td{border:1px solid #e0e5ea;padding:16px 9px;color:#7b8794}.list-empty{text-align:center!important;padding:42px 15px!important}.list-empty i{display:block;color:#aebbd1;font-size:29px;margin-bottom:8px}.list-empty b{display:block;color:#334155;font-size:13px}.list-empty small{display:block;margin-top:5px;color:#84909e}.list-note{margin-top:10px;color:#8a96a3;font-size:11px}@keyframes layoutIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}</style><style id="ajuste-visual-sobrio">
+/* Ajuste visual: interface sóbria, clara e profissional, sem aparência de template. */
+:root{--blue:#123b83;--dark:#17243b;--hover:#eef4fb;--bg:#f2f4f7;--line:#d9dfe7}.titlebar{background:#123b83!important}.sidebar{background:#17243b!important;box-shadow:1px 0 0 #0d1728!important}.side-head{background:#123b83!important}.side-logo{border-radius:3px!important}.account{border-color:#ffffff20!important;background:#ffffff08!important}.section-label{color:#9eacc1!important;letter-spacing:.08em!important}.side-nav button{color:#c4cfde!important;border-radius:3px!important}.side-nav button:hover{background:#ffffff10!important;color:#fff!important}.side-nav button.active{background:#ffffff19!important;border-left-color:#83a8e0!important;color:#fff!important}.modulebar{background:#fff!important;box-shadow:0 1px 2px #182b460a!important}.module>button{border-radius:3px!important;color:#43546a!important}.module>button:hover,.module.open>button{background:#f0f4f8!important;color:#123b83!important;border-bottom-color:#6d97c9!important}.module-menu{border-radius:3px!important;box-shadow:0 5px 12px #182b4620!important}.content{background:#f2f4f7!important}.welcome,.card,.panel{border-radius:3px!important;box-shadow:0 1px 3px #182b4610!important}.welcome{border-left-color:#123b83!important}.card:after{background:#123b83!important}.panel-head{background:#f7f8fa!important}.neo-shell{animation:layoutIn .28s ease both}.neo-panel:hover,.card:hover{transform:translateY(-1px)!important;box-shadow:0 4px 10px #182b4615!important}.statusbar{background:#e7ebf0!important}
+</style><style id="bordas-quadradas-prototipo">
+/* Teste solicitado: quinas quadradas em toda a interface, sem alterar o original. */
+.side-head,.side-logo,.account,.module>button,.module-menu,.module-menu button,.welcome,.welcome button,.card,.panel,.panel-head,.neo-panel,.simple-pill,.proto-empty,.list-page,.list-filter,.list-box,.list-filter input,.list-filter button,.statusbar{border-radius:0!important}
+</style><style id="somente-quinas-quadradas">*,*:before,*:after{border-radius:0!important}</style></head>
+<body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
+
+<!-- LOGIN REMOVIDO: prototipo visual virgem -->
+<!-- MAIN APP (hidden until login) -->
+<div id="app-shell">
+<div class="flex min-h-screen">
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[300px] bg-[#060e2f] text-white flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-white/5">
+    <div class="h-[76px] px-5 flex items-center justify-between border-b border-white/[0.08] bg-[#0a1e8a]">
+      <div class="flex items-center gap-3"><img src="./logo_2.png?v=5.3.5" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">Sistema</p></div></div>
+      <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 grid place-items-center rounded-lg bg-white/10"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="px-4 py-4">
+      <div class="rounded-xl bg-white/[0.07] border border-white/10 p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] border border-white/10 text-white grid place-items-center font-bold text-[13px] shrink-0" id="user-avatar">KG</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13.5px] font-semibold leading-tight truncate" id="user-name">Usuário</p>
+          <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
+        </div>
+        <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
+        <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
+      </div>
+      <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
+  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
+    </nav>
+    <div class="p-4 border-t border-white/5">
+      <div class="rounded-xl bg-[#0a1e8a] border border-white/10 p-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-28 h-28 bg-white/10 rounded-full blur-xl"></div><p class="text-[12px] font-semibold relative z-10">Contratos a vencer</p><p class="text-[11px] text-white/70 mt-1 relative z-10"><span id="alert-vencendo">0</span> nos próximos 30 dias</p><button onclick="navigateTo('contratos')" class="mt-3 w-full h-8 rounded-lg bg-white text-[#0a1e8a] text-[12px] font-bold hover:bg-white/90 relative z-10">Ver contratos</button></div>
+      <div class="mt-3 px-1 text-[10px] text-white/30 leading-relaxed">Logado como <b id="audit-user" class="text-white/60">-</b> • Auditoria ativa</div>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0 flex flex-col">
+    <header class="app-titlebar sticky top-0 z-30">
+  <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
+    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
+    <span id="page-title" class="font-medium">Início</span>
+    <div class="absolute right-2 flex items-center gap-2">
+      <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
+        <i class="ph ph-bell text-[15px]"></i>
+        <span id="ntf-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9.5px] font-bold grid place-items-center">0</span>
+      </button>
+      <span class="text-[11px] opacity-80" id="current-date"></span>
+    </div>
+  </div>
+</header>
+<div class="modern-topnav">
+      <div class="module-row">
+        <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="navigateTo('orcamentos')"><i class="ph ph-clipboard-text"></i>Orçamentos</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
+        <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
+        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button></div>
+
+        <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
+        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button id="btn-backup-top" type="button" onclick="exportBackup()" title="Baixar uma cópia de segurança de todos os dados"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
+        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
+      </div></div>
+    <div class="flex-1 p-4 lg:p-8">
+      <section id="view-dashboard" class="view space-y-6"></section>
+      <section id="view-clientes" class="view hidden space-y-4"></section>
+      <section id="view-produtos" class="view hidden space-y-4"></section>
+      <section id="view-impressoras" class="view hidden space-y-4"></section>
+      <section id="view-contratos" class="view hidden space-y-4"></section>
+      <section id="view-parque" class="view hidden space-y-4"></section>
+      <section id="view-leituras" class="view hidden space-y-4"></section>
+      <section id="view-manutencao" class="view hidden space-y-4"></section>
+      <section id="view-vendas" class="view hidden space-y-4"></section>
+      <section id="view-financeiro" class="view hidden space-y-4"></section>
+      <section id="view-relatorios" class="view hidden space-y-4"></section>
+      <section id="view-config" class="view hidden space-y-4"></section>
+      <section id="view-usuarios" class="view hidden space-y-4"></section>
+      <section id="view-auditoria" class="view hidden space-y-4"></section>
+    </div>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v5.22.82</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
+  </main>
+</div>
+</div>
+
+<div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden backdrop-blur-sm"></div>
+
+<div id="modal-root" class="fixed inset-0 z-50 hidden"><div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div><div class="absolute inset-0 p-4 lg:p-10 flex items-start lg:items-center justify-center overflow-auto"><div id="modal-box" class="w-full max-w-[720px] rounded-[22px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[90vh] flex flex-col"><div class="h-[64px] px-7 flex items-center justify-between border-b border-slate-100 shrink-0"><h3 id="modal-title" class="font-bold text-[16px]">Modal</h3><button onclick="closeModal()" class="w-8 h-8 grid place-items-center rounded-xl bg-slate-100"><i class="ph ph-x"></i></button></div><div id="modal-body" class="flex-1 overflow-auto p-7"></div><div id="modal-footer" class="p-5 border-t border-slate-100 bg-slate-50/80 flex justify-end gap-2 shrink-0"></div></div></div></div>
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
+
+
+<script>
+/* Protótipo virgem: somente estrutura e navegação, sem app.bundle, dados ou persistência. */
+(function(){
+ const nav=(id,icon,label)=>`<button data-proto-nav="${id}" class="w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium text-white/60 hover:text-white"><i class="ph ${icon} text-[19px]"></i><span>${label}</span></button>`;
+ const main=document.getElementById('nav-main'),op=document.getElementById('nav-op'),gest=document.getElementById('nav-gest');
+ if(main)main.id='proto-nav';
+ if(main)main.innerHTML=nav('dashboard','ph-house','Início')+nav('vendas','ph-shopping-cart-simple','Vender / Orçar')+nav('clientes','ph-users','Clientes')+nav('produtos','ph-package','Estoque');
+ if(op)op.innerHTML=nav('impressoras','ph-printer','Cadastro de impressoras')+nav('contratos','ph-file-text','Contratos de locação')+nav('parque','ph-map-pin','Máquinas nos clientes')+nav('leituras','ph-speedometer','Leituras')+nav('manutencao','ph-wrench','Chamados');
+ if(gest)gest.innerHTML=nav('financeiro','ph-bank','Financeiro')+nav('relatorios','ph-chart-bar','Relatórios')+nav('usuarios','ph-users-three','Usuários')+nav('auditoria','ph-clipboard-text','Auditoria')+nav('config','ph-gear','Configurações');
+ const d=document.getElementById('view-dashboard'); if(d)d.innerHTML=`<div class="neo-shell"><div class="flex items-end justify-between gap-4 mb-6"><div><p class="text-[11px] uppercase tracking-widest font-bold text-[#0a1e8a]">Prévia do layout</p><h1 class="text-[28px] font-bold tracking-tight text-slate-800 mt-2">Início</h1><p class="text-[13px] text-slate-500 mt-1">Área principal vazia para testar a navegação do sistema.</p></div><span class="simple-pill px-3 py-2 rounded-lg text-[11px] font-semibold">Protótipo virgem</span></div><div class="proto-empty"><i class="ph ph-layout"></i><b>Nenhum dado carregado</b><p>Esta cópia contém somente o layout original e os menus.<br>Use a barra superior e o menu lateral para avaliar a organização.</p></div></div>`;
+ const telas={clientes:['Clientes','ph-users',['Nome / Razão social','Documento','Cidade','Situação']],produtos:['Produtos e estoque','ph-package',['Produto','Categoria','Estoque','Situação']],impressoras:['Cadastro de impressoras','ph-printer',['Modelo','Marca','Número de série','Situação']],contratos:['Contratos de locação','ph-file-text',['Cliente','Contrato','Vigência','Situação']],parque:['Máquinas nos clientes','ph-map-pin',['Cliente','Equipamento','Localização','Situação']],leituras:['Leituras','ph-gauge',['Contrato','Período','Contador','Situação']],manutencao:['Chamados','ph-wrench',['Número','Cliente','Assunto','Situação']],vendas:['Vendas e orçamentos','ph-shopping-cart-simple',['Número','Cliente','Data','Situação']],financeiro:['Financeiro','ph-bank',['Vencimento','Descrição','Cliente','Situação']],relatorios:['Relatórios','ph-chart-bar',['Relatório','Período','Última execução','Situação']],config:['Configurações','ph-gear',['Preferência','Descrição','Valor']],usuarios:['Usuários','ph-users-three',['Nome','Login','Perfil','Situação']],auditoria:['Auditoria','ph-clipboard-text',['Data','Usuário','Ação','Origem']]};
+function montarLista(id){const t=telas[id];const el=document.getElementById('view-'+id);if(!t||!el)return;el.innerHTML=`<div class="list-page"><div class="list-title"><div><h1>${t[0]}</h1><p>Listagem de ${t[0].toLowerCase()} — prévia visual</p></div><span class="simple-pill px-3 py-2 rounded-lg text-[11px] font-semibold">0 registros</span></div><div class="list-filter"><input placeholder="Pesquisar nesta listagem" disabled><button disabled><i class="ph ph-magnifying-glass"></i> Pesquisar</button><button disabled><i class="ph ph-funnel"></i> Filtros</button></div><div class="list-box"><table><thead><tr>${t[2].map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody><tr><td colspan="${t[2].length}" class="list-empty"><i class="ph ${t[1]}"></i><b>Nenhum registro para exibir</b><small>Esta listagem está vazia de propósito. Nenhum dado do sistema original foi carregado.</small></td></tr></tbody></table></div><div class="list-note">Os botões e filtros estão desativados nesta prévia. O objetivo é testar somente a navegação e o layout.</div></div>`;}
+Object.keys(telas).forEach(montarLista);
+window.navigateTo=function(id){const aliases={'Nova venda':'vendas','Orçamentos':'vendas','Novo cliente':'clientes','Nova leitura':'leituras','Novo chamado':'manutencao','Contas a receber':'financeiro','Contas a pagar':'financeiro','Fluxo de caixa':'financeiro','Nuvem':'config','Pesquisar':'clientes','Ajuda':'config'};id=aliases[id]||id;document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));const v=document.getElementById('view-'+id);if(v)v.classList.remove('hidden');const names={dashboard:'Início',...Object.fromEntries(Object.entries(telas).map(([k,v])=>[k,v[0]]))};const t=names[id]||id;const h=document.getElementById('page-title');if(h)h.textContent=t;document.querySelectorAll('[data-proto-nav]').forEach(x=>x.classList.toggle('bg-white/[0.12]',x.dataset.protoNav===id));};
+ window.toggleSidebar=function(){document.getElementById('sidebar')?.classList.toggle('-translate-x-full');document.getElementById('overlay')?.classList.toggle('hidden')};
+ window.toast=function(){ };window.openQuickOS=window.openModal=window.closeModal=window.exportBackup=window.doLogout=window.abrirCloudflareNuvem=function(){};window.ntfAlternarPainel=function(){};
+ document.querySelectorAll('[data-proto-nav]').forEach(b=>b.addEventListener('click',()=>navigateTo(b.dataset.protoNav)));
+ navigateTo('dashboard');
+})();
+</script></body>
+</html>

@@ -14,6 +14,7 @@ const fin=fs.readFileSync('ajustes_v52243_financeiro_filtros_patch.js','utf8');
 const menu=fs.readFileSync('ajustes_v52243_financeiro_menu_patch.js','utf8');
 const geral=fs.readFileSync('ajustes_v52243_menu_versao_boleto_patch.js','utf8');
 const pag=fs.readFileSync('public-orcamento/index.html','utf8');
+const worker=fs.readFileSync('cloudflare-worker/src/index.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
@@ -65,6 +66,10 @@ ok('versão 5.22.43', G.VERSAO==='5.22.43');
 ok('módulo financeiro marca a tela', G.moduloAberto('financeiro',"navigateTo('financeiro')")===true);
 ok('página pede tem certeza', /Tem certeza\?/.test(pag));
 ok('Boleto na venda e na baixa', /vosAbrirRecebimento/.test(geral) && /finConfirmarBaixa/.test(geral) && /Boleto/.test(geral));
+// herdado do antigo test_ajustes_v52242.js (v52242 consolidados na v52243)
+ok('página trata link usado', /não vale mais/.test(pag));
+ok('worker GET recusa já decidido', /error: 'USED'/.test(worker) && /ALREADY_DECIDED/.test(worker));
+ok('worker não reabre venda no POST', !/if \(data\.status === 'aprovado' && data\.vendaNumero\)/.test(worker));
 ok('sem submenu Contas e caixas no HTML', !/Contas e caixas/.test(html));
 ok('versão no rodapé', /v5\.22\.\d+/.test(html));
 ok('patches no bundle', ['ajustes_v52243_orcamentos_status_patch.js','ajustes_v52243_contratos_sort_patch.js','ajustes_v52243_impressora_remanejar_patch.js','ajustes_v52243_financeiro_filtros_patch.js','ajustes_v52243_financeiro_menu_patch.js','ajustes_v52243_menu_versao_boleto_patch.js'].every(function(f){ return manifest.includes(f); }));

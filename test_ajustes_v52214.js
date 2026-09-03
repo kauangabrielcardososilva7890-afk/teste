@@ -39,7 +39,8 @@ const lista=R.filtrarRecargas([
   {id:'3',empresaId:'x',nome:'HP 85A',codigo:'3'}
 ],'e','85');
 ok('filtra recarga ativa da empresa', lista.length===1 && lista[0].id==='1');
-ok('submenu Recargas no menu', /id:'recargas'/.test(men));
+// v5.22.77: o submenu foi retirado a pedido. A tela continua existindo.
+ok('Recargas não é mais submenu', !/id:'recargas'/.test(men));
 ok('venda não puxa produto no tipo recarga', /ehRecargaNaVenda/.test(rec) && /pintarBuscaRecargas/.test(rec));
 ok('cadastro sem estoque', /semEstoque: true/.test(rec) && /Sem estoque/.test(rec));
 ok('busca recargas Enter/lupa', /key==='Enter'/.test(rec) && /aplicarBuscaRecargas/.test(rec));

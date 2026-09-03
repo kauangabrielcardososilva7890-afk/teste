@@ -7,6 +7,7 @@
 var FILTROS = [
   ['todos','Todos'],
   ['nome','Nome'],
+  ['cidade','Cidade'],
   ['equipamento','Equipamento'],
   ['patrimonio','Patrimônio'],
   ['serial','Serial'],
@@ -51,6 +52,12 @@ function eqDe(p){
 function clienteDe(c){
   if(!c || typeof db==='undefined') return {};
   return (db.clientes||[]).find(function(x){ return x.id===c.clienteId; })||{};
+}
+// Cidade do CLIENTE do contrato. Cada cadastro guardou com um nome
+// diferente ao longo do tempo, então aceita todos.
+function cidadeDe(c){
+  var cl=clienteDe(c);
+  return txt(cl.cidade || cl.municipio || cl.cidadeNome || (cl.endereco && cl.endereco.cidade) || '');
 }
 function chamadosAbertos(c){
   if(!c || typeof db==='undefined') return 0;
@@ -97,6 +104,7 @@ function filtraContratos(list, campo, q){
     var cl=clienteDe(c);
     var maqs=maquinas(c);
     if(campo==='nome') return up(cl.nome).indexOf(termo)>=0 || up(cl.fantasia).indexOf(termo)>=0;
+    if(campo==='cidade') return up(cidadeDe(c)).indexOf(termo)>=0;
     if(campo==='equipamento') return maqs.some(function(p){ return up(eqDe(p).modelo).indexOf(termo)>=0; });
     if(campo==='patrimonio') return maqs.some(function(p){ return up(eqDe(p).patrimonio||p.patrimonio).indexOf(termo)>=0; });
     if(campo==='serial') return maqs.some(function(p){ return up(eqDe(p).serie).indexOf(termo)>=0; });
@@ -139,7 +147,7 @@ function filtraContratos(list, campo, q){
   });
 }
 
-window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContratos, codigoNorm: codigoNorm };
+window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContratos, codigoNorm: codigoNorm, cidadeDe: cidadeDe };
 
 if(typeof document==='undefined') return;
 
@@ -149,9 +157,17 @@ function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
 }
 
+// v5.22.68 — a busca era redesenhada junto com a lista e voltava vazia,
+// apagando o que a pessoa tinha acabado de digitar. Agora o texto é reposto.
+function reporTexto(){
+  var busca=document.getElementById('search-contratos');
+  if(busca && STATE.q && !busca.value) busca.value=STATE.q;
+}
+
 function injetar(){
   var view=document.getElementById('view-contratos');
   if(!view || view.classList.contains('hidden')) return;
+  reporTexto();
   if(document.getElementById('ctr-filtro-campo')) return;
   var busca=document.getElementById('search-contratos');
   if(!busca) return;

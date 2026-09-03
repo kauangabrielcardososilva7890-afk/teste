@@ -200,30 +200,18 @@ if(typeof window.vosOsRuleHint==='function' && !window.vosOsRuleHint.__v52237){
     var os=window.vosColetarOS();
     if(txt(os.modelo)&&txt(os.numeroSerie)&&(txt(os.patrimonio)||txt(os.contador)) && !txt(os.tecnico)){
       el.className='rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
-      el.innerHTML='<i class="ph ph-warning"></i> Para ordem de serviço, escolha o <b>técnico responsável</b>.';
+      el.innerHTML='<i class="ph ph-info"></i> Dica: escolha o <b>técnico responsável</b> desta ordem de serviço.';
     }
     return r;
   };
   window.vosOsRuleHint.__v52237=true;
 }
 
-function wrapGravar(){
-  if(typeof window.vosGravarVenda!=='function' || window.vosGravarVenda.__v52237) return;
-  var old=window.vosGravarVenda;
-  window.vosGravarVenda=function(){
-    wrapColetar();
-    var os = document.getElementById('vos-aba-os') && typeof window.vosColetarOS==='function' ? window.vosColetarOS() : null;
-    var tem = os && ['numeroSerie','modelo','patrimonio','contador','defeito','servicos','pecas','acessorios','tecnico'].some(function(k){ return txt(os[k]); });
-    if(tem && !txt(os.tecnico)){
-      if(typeof window.lfbAlert==='function') window.lfbAlert('Para ordem de serviço, escolha o técnico responsável.','Ordem de serviço');
-      else if(typeof toast==='function') toast('Escolha o técnico responsável','error');
-      if(typeof window.vosSetAba==='function') window.vosSetAba('os');
-      return null;
-    }
-    return old.apply(this, arguments);
-  };
-  window.vosGravarVenda.__v52237=true;
-}
+// v5.22.68 — o técnico DEIXOU de ser obrigatório. Antes, uma OS com dados e
+// sem técnico travava o Salvar e, por tabela, a impressão. Agora nada trava:
+// o que não estiver preenchido sai em branco no papel. Ficou só o lembrete
+// amarelo na tela (vosOsRuleHint), que avisa sem impedir.
+function wrapGravar(){ /* sem trava */ }
 
 if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha.__v52237){
   var oldHtml=window.vosGerarHtmlNotinha;

@@ -14,12 +14,20 @@ function clienteTemContrato(clienteId){
   return (db.contratos||[]).some(c => c.clienteId===clienteId && c.status!=='excluido' && c.status!=='encerrado');
 }
 function parqueAtivo(p){ return p && p.status!=='inativo' && p.modalidade!=='inativo'; }
+// v5.22.73 — quem manda é a MODALIDADE do medidor color no cadastro da
+// impressora: Color A4 ou Color A3 com modalidade ativa. O palpite pelo nome do
+// tipo do equipamento saiu — era ele que fazia máquina preto e branco pedir
+// contador color.
+function modalidadeAtiva(med){
+  if(!med) return false;
+  const mod = String(med.modalidade || med.mod || '').toLowerCase();
+  return !!(mod && mod !== 'inativo' && mod !== 'off');
+}
 function impressoraTemColor(p, eq){
-  if(p && (p.temColor===true || p.colorAtivo===true)) return true;
   const meds = (p && (p.medidoresConfig||p.medidores)) || {};
-  if(meds.colorA4 && meds.colorA4.modalidade && meds.colorA4.modalidade!=='inativo') return true;
-  if(meds.colorA3 && meds.colorA3.modalidade && meds.colorA3.modalidade!=='inativo') return true;
-  if(eq && (eq.temColor===true || /color/i.test(eq.tipo||''))) return true;
+  if(modalidadeAtiva(meds.colorA4) || modalidadeAtiva(meds.colorA3)) return true;
+  const medsEq = (eq && (eq.medidoresConfig||eq.medidores)) || {};
+  if(modalidadeAtiva(medsEq.colorA4) || modalidadeAtiva(medsEq.colorA3)) return true;
   return false;
 }
 function chamadoDeContrato(o){ return !!(o && o.contratoId); }
@@ -69,8 +77,10 @@ function montarMenuLocacao(){
   if(!menu) return;
   menu.innerHTML =
     '<button onclick="navigateTo(\'contratos\')"><i class="ph ph-file-text"></i>Contratos</button>'+
-    '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>'+
-    '<button onclick="abrirHistoricoChamadosGeral()"><i class="ph ph-wrench"></i>Chamados</button>';
+    '<button onclick="navigateTo(\'impressoras\')"><i class="ph ph-printer"></i>Impressoras</button>';
+  // v5.22.81: Chamados NÃO é submenu de Locação. Era esta função que recolocava
+  // o botão a cada navegação, por isso ele voltava mesmo depois de removido dos
+  // outros lugares. Os chamados continuam em Atendimento e dentro do contrato.
 }
 const _nav = window.navigateTo;
 if(typeof _nav==='function' && !_nav.__lcMenu){
@@ -364,6 +374,22 @@ function marcarDirtyChamado(){
   body.addEventListener('input', ()=>{ window.__lcChamDirty = true; }, { once:false });
 }
 
+// Descobre a impressora do chamado aberto e responde se ela tem contador color.
+// Sem impressora identificada, a resposta é não — nunca travar por dúvida.
+function chamadoTemColor(){
+  let equipId = document.getElementById('ko-equip')?.value
+    || document.getElementById('ca-equip')?.value || '';
+  if(!equipId){
+    const id = window.modalContext && window.modalContext.id;
+    const o = id ? (db.os||[]).find(x=>x.id===id) : null;
+    equipId = (o && o.equipamentoId) || '';
+  }
+  if(!equipId) return false;
+  const p = (db.parque||[]).find(x=>x.equipamentoId===equipId);
+  const eq = (db.equipamentos||[]).find(x=>x.id===equipId);
+  return impressoraTemColor(p, eq);
+}
+
 function validarFinalizar(contrato){
   const chk = document.getElementById('ko-concluido') || document.getElementById('o-concluido') || document.getElementById('ca-concluido');
   if(!chk || !chk.checked) return true;
@@ -373,8 +399,12 @@ function validarFinalizar(contrato){
   if(!txt(pb && pb.value)){ toastMsg('Preencha o contador preto atual para finalizar.','error'); return false; }
   if(!txt(motivo && motivo.value)){ toastMsg('Preencha Motivo / Defeito para finalizar.','error'); return false; }
   if(!txt(dataAt && dataAt.value)){ toastMsg('Preencha a data de atendimento para finalizar.','error'); return false; }
+  // v5.22.73 — antes bastava o campo estar habilitado para o sistema exigir o
+  // contador color, e ele nasce habilitado. Impressora preto e branco ficava
+  // presa pedindo um número que ela não tem. Agora só pede se a impressora do
+  // chamado realmente tiver contador color no cadastro.
   const colorEl = document.getElementById('lc-cont-color-atu');
-  if(contrato && colorEl && !colorEl.disabled && !txt(colorEl.value)){
+  if(contrato && colorEl && !colorEl.disabled && chamadoTemColor() && !txt(colorEl.value)){
     toastMsg('Preencha o contador color atual para finalizar.','error'); return false;
   }
   if(!contrato){

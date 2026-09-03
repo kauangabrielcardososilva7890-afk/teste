@@ -102,7 +102,7 @@ function voltarSePendente(){
 window.V52237_ESTOQUE_ZERO_PURE = {
   ehServico: ehServico,
   precisaAviso: function(p, qtd){
-    if(!p || ehServico(p)) return false;
+    if(!p || ehServico(p) || p.estoqueInfinito) return false;
     return n(p.estoque)<=0 || n(qtd)>n(p.estoque);
   }
 };
@@ -115,11 +115,11 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52237est){
     var f=window.__vosForm;
     var p=f && f.produtoSel;
     var qtd=n(document.getElementById('vos-item-qtd')&&document.getElementById('vos-item-qtd').value)||1;
-    if(p && !ehServico(p) && n(p.estoque)<=0){
+    if(p && !ehServico(p) && !p.estoqueInfinito && n(p.estoque)<=0){
       perguntarZerado(p);
       return;
     }
-    if(p && !ehServico(p) && qtd>n(p.estoque)){
+    if(p && !ehServico(p) && !p.estoqueInfinito && qtd>n(p.estoque)){
       perguntarZerado(p);
       return;
     }
@@ -133,7 +133,7 @@ if(typeof window.vosVendaSelectProd==='function' && !window.vosVendaSelectProd._
   window.vosVendaSelectProd=function(id){
     var r=oldSel.apply(this, arguments);
     var p=(typeof db!=='undefined' && db.produtos||[]).find(function(x){ return x.id===id; });
-    if(p && !ehServico(p) && n(p.estoque)<=0) perguntarZerado(p);
+    if(p && !ehServico(p) && !p.estoqueInfinito && n(p.estoque)<=0) perguntarZerado(p);
     return r;
   };
   window.vosVendaSelectProd.__v52237est=true;

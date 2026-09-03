@@ -92,6 +92,7 @@ function vosNovoForm(){
   return {
     vendaId: null,
     cliente: null,
+    osSelecionada: false,
     produtoSel: null,
     itens: [],
     codigo: '',
@@ -210,11 +211,11 @@ window.novaVenda = function(){
           </label>
           <button onclick="openModal('produto')" class="hidden md:flex col-span-1 h-[40px] rounded-xl bg-white border text-[#0a1e8a] items-center justify-center" title="Cadastrar produto"><i class="ph ph-plus-circle text-[18px]"></i></button>
           <label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Qtd
-            <input id="vos-item-qtd" type="number" min="1" value="1" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-qtd" type="number" min="1" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">V. Unit
-            <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Desc R$
-            <input id="vos-item-desc" type="number" step="0.01" value="0" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-desc" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Total
             <input id="vos-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 text-[12.5px] font-bold"></label>
         </div>
@@ -231,7 +232,7 @@ window.novaVenda = function(){
             <input id="vos-item-tec" list="vos-tec-list" class="mt-1 w-full h-[38px] px-2 rounded-xl border bg-white text-[12px]"></label>
         </div>
         <div class="flex justify-end">
-          <button onclick="vosAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white text-[12.5px] font-bold flex items-center gap-2"><i class="ph ph-plus-circle"></i> Adicionar item</button>
+          <button id="vos-add-item" disabled onclick="vosAddItem()" class="h-[40px] px-5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 text-white text-[12.5px] font-bold flex items-center gap-2"><i class="ph ph-plus-circle"></i> Adicionar item</button>
         </div>
       </div>
       <div class="rounded-[14px] border overflow-hidden bg-white">
@@ -323,6 +324,7 @@ window.novaVenda = function(){
 
 // ── Abas ──
 window.vosSetAba = function(aba){
+  if(window.__vosForm) window.__vosForm.osSelecionada = (aba === 'os');
   document.getElementById('vos-aba-itens')?.classList.toggle('hidden', aba!=='itens');
   document.getElementById('vos-aba-os')?.classList.toggle('hidden', aba!=='os');
   const ti = document.getElementById('vos-tab-itens'), to = document.getElementById('vos-tab-os');
@@ -418,9 +420,15 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = p.preco||0;
+  document.getElementById('vos-item-vunit').value = '';
+  document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
+};
+window.vosAtualizarBotaoItem = function(){
+  const el=document.getElementById('vos-item-qtd');
+  const btn=document.getElementById('vos-add-item');
+  if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
 window.vosItemCalcTotal = function(){
   const qtd = parseFloat(document.getElementById('vos-item-qtd')?.value)||0;
@@ -428,6 +436,7 @@ window.vosItemCalcTotal = function(){
   const de  = parseFloat(document.getElementById('vos-item-desc')?.value)||0;
   const el = document.getElementById('vos-item-total');
   if(el) el.value = fmtMoney(Math.max(0, qtd*vu - de));
+  vosAtualizarBotaoItem();
 };
 window.vosAddItem = function(){
   const f = window.__vosForm;
@@ -435,15 +444,21 @@ window.vosAddItem = function(){
   const p = f.produtoSel;
   if(!p && !descTxt) return toast('Selecione um produto ou escreva a descrição','error');
   // bloqueio estoque
-  if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+  if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
     const est = Number(p.estoque||0);
     const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
     if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
     if(qtd>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
   }
-  const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
-  const preco = parseFloat(document.getElementById('vos-item-vunit').value)||0;
-  const desc = parseFloat(document.getElementById('vos-item-desc').value)||0;
+  const qtdRaw = (document.getElementById('vos-item-qtd').value||'').trim();
+  const precoRaw = (document.getElementById('vos-item-vunit').value||'').trim();
+  const descRaw = (document.getElementById('vos-item-desc').value||'').trim();
+  if(!precoRaw || !/^\d+(?:[.,]\d+)?$/.test(precoRaw)) return toast('Informe um valor unitário numérico para adicionar o item','error');
+  if(descRaw && !/^\d+(?:[.,]\d+)?$/.test(descRaw)) return toast('O desconto deve conter somente números','error');
+  if(qtdRaw && !/^\d+(?:[.,]\d+)?$/.test(qtdRaw)) return toast('A quantidade deve conter somente números','error');
+  const qtd = parseFloat(qtdRaw.replace(',','.'))||1;
+  const preco = parseFloat(precoRaw.replace(',','.'))||0;
+  const desc = descRaw ? parseFloat(descRaw.replace(',','.'))||0 : 0;
   const tipo = document.getElementById('vos-item-tipo').value;
   const showExtra = !document.getElementById('vos-item-extra').classList.contains('hidden');
   const item = {
@@ -462,9 +477,9 @@ window.vosAddItem = function(){
   f.itens.push(item);
   f.produtoSel = null;
   ['vos-prod-search','vos-item-cartucho','vos-item-ident','vos-item-tec'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
-  document.getElementById('vos-item-qtd').value = 1;
+  document.getElementById('vos-item-qtd').value = '';
   document.getElementById('vos-item-vunit').value = '';
-  document.getElementById('vos-item-desc').value = 0;
+  document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-item-total').value = '';
   document.getElementById('vos-item-pe').checked = false;
   document.getElementById('vos-item-ps').checked = false;
@@ -621,8 +636,8 @@ function vosGravarVenda(silencioso){
   const sess = getSession(); const f = window.__vosForm;
   if(!f.cliente){ toast('Selecione o cliente','error'); vosSetAba('itens'); return null; }
   const os = vosColetarOS();
-  const temOS = vosOsTemAlgumDado(os);
-  if(!f.itens.length && !(temOS && (os.valorServico||0)>0)){
+  const temOS = !!(f.osSelecionada || vosOsTemAlgumDado(os));
+  if(!f.itens.length && !temOS){
     toast('Adicione ao menos um item ou um valor de serviço na OS','error'); return null;
   }
   const descVenda = parseFloat(document.getElementById('vos-desc-venda').value)||0;
@@ -638,7 +653,7 @@ function vosGravarVenda(silencioso){
     // baixa de estoque apenas na criação
     f.itens.forEach(it=>{
       const p = it.produtoId && db.produtos.find(x=>x.id===it.produtoId);
-      if(p && p.categoria!=='Serviço'){ p.estoque = (p.estoque||0) - it.qtd; }
+      if(p && p.categoria!=='Serviço' && !p.estoqueInfinito){ p.estoque = (p.estoque||0) - it.qtd; }
     });
     db.vendas.push(venda);
     f.vendaId = venda.id;
@@ -980,7 +995,7 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
   if(!v) return null;
   const cli = (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
   const empresa = vosDadosEmpresaNotinha(sess);
-  const temOS = v.os && (v.origemMigracao || v.os.migrado || vosOsCompleta(v.os));
+  const temOS = !!v.os;
   const ora = new Date(v.data||Date.now());
   const hora = isNaN(ora) ? '' : ora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const codNum = (v.numero||'').replace(/^VD-/,'');
@@ -1037,8 +1052,8 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
     </div>
     <div class="cli-dir">
       <span class="lbl">Entrega</span>
-      <p class="emp-info">Destino: <b>${escapeHtml(v.destino||'-')}</b></p>
-      <p class="emp-info">Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):'-'}</b> • Prazo: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):'___/___/____'}</b></p>
+      <p class="emp-info">Destino: <b>${escapeHtml(v.destino||'')}</b></p>
+      <p class="emp-info">Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):''}</b> • Prazo: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):''}</b></p>
       <p class="emp-info">Pagamento: <b>${escapeHtml(v.formaPagamento||'—')}</b> • Situação: <b>${(String(v.status||'').toUpperCase())}</b></p>
     </div>
   </div>`;
@@ -1068,22 +1083,22 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
         <tr>
           <td><span class="lbl">Equipamento / modelo</span><b>${escapeHtml(o.modelo||'')}</b></td>
           <td><span class="lbl">Nº de série</span><b>${escapeHtml(o.numeroSerie||'')}</b></td>
-          <td><span class="lbl">Patrimônio</span><b>${escapeHtml(o.patrimonio||'-')}</b></td>
-          <td><span class="lbl">Contador (cópias)</span><b>${escapeHtml(String(o.contador??'')||'-')}</b></td>
+          <td><span class="lbl">Patrimônio</span><b>${escapeHtml(o.patrimonio||'')}</b></td>
+          <td><span class="lbl">Contador (cópias)</span><b>${escapeHtml(String(o.contador??''))}</b></td>
         </tr>
         <tr>
-          <td><span class="lbl">Tipo da OS</span><b>${escapeHtml(o.tipoOS||'-')}</b></td>
-          <td><span class="lbl">Acessórios</span><b>${escapeHtml(o.acessorios||'-')}</b></td>
-          <td><span class="lbl">Técnico responsável</span><b>${escapeHtml(o.tecnico||'-')}</b></td>
-          <td><span class="lbl">Resp. entrega / garantia</span><b>${escapeHtml(o.responsavelEntrega||'-')} • ${escapeHtml(o.garantia||'-')}</b></td>
+          <td><span class="lbl">Tipo da OS</span><b>${escapeHtml(o.tipoOS||'')}</b></td>
+          <td><span class="lbl">Acessórios</span><b>${escapeHtml(o.acessorios||'')}</b></td>
+          <td><span class="lbl">Técnico responsável</span><b>${escapeHtml(o.tecnico||'')}</b></td>
+          <td><span class="lbl">Resp. entrega / garantia</span><b>${escapeHtml(o.responsavelEntrega||'')} • ${escapeHtml(o.garantia||'')}</b></td>
         </tr>
       </tbody>
     </table>
     <table class="tb" style="margin-top:2mm"><tbody>
-      <tr><td><span class="lbl">Defeito apresentado</span><p>${escapeHtml(o.defeito||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Serviços executados</span><p>${escapeHtml(o.servicos||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Peças</span><p>${escapeHtml(o.pecas||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Situação da OS</span><b>${escapeHtml(o.situacao||'-')}</b></td></tr>
+      <tr><td><span class="lbl">Defeito apresentado</span><p>${escapeHtml(o.defeito||'')}</p></td></tr>
+      <tr><td><span class="lbl">Serviços executados</span><p>${escapeHtml(o.servicos||'')}</p></td></tr>
+      <tr><td><span class="lbl">Peças</span><p>${escapeHtml(o.pecas||'')}</p></td></tr>
+      <tr><td><span class="lbl">Situação da OS</span><b>${escapeHtml(o.situacao||'')}</b></td></tr>
     </tbody></table>
     <div class="ass-dupla">
       <div class="ass">Assinatura do cliente</div>
@@ -1462,7 +1477,7 @@ window.historicoVenda = function(id){
     <div class="rounded-[14px] border p-3 text-[12.5px]">
       <p class="font-bold">${cli.codigo?`#${cli.codigo} — `:''}${escapeHtml(cli.nome||'(sem cliente)')} ${cli.fantasia?`(${escapeHtml(cli.fantasia)})`:''}</p>
       <p class="text-slate-500">${escapeHtml(cli.documento||'')} • ${escapeHtml(cli.telefone||'')} • ${escapeHtml(cli.endereco||'')} ${cli.cidade?`• ${cli.cidade}/${cli.estado||''}`:''}</p>
-      ${v.destino||v.prazoEntrega||v.dataSaida?`<p class="mt-1 text-slate-500">Destino: <b>${escapeHtml(v.destino||'-')}</b> • Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):'-'}</b> • Prazo entrega: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):'-'}</b></p>`:''}
+      ${v.destino||v.prazoEntrega||v.dataSaida?`<p class="mt-1 text-slate-500">Destino: <b>${escapeHtml(v.destino||'')}</b> • Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):''}</b> • Prazo entrega: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):''}</b></p>`:''}
     </div>
     <div class="rounded-[14px] border overflow-hidden">
       <table class="w-full text-left text-[12px]">
@@ -1479,16 +1494,16 @@ window.historicoVenda = function(id){
       <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
         <span>Modelo: <b>${escapeHtml(o.modelo||'-')}</b></span>
         <span>Série: <b>${escapeHtml(o.numeroSerie||'-')}</b></span>
-        <span>Patrimônio: <b>${escapeHtml(o.patrimonio||'-')}</b></span>
-        <span>Contador: <b>${escapeHtml(String(o.contador??'-'))}</b></span>
-        <span>Tipo: <b>${escapeHtml(o.tipoOS||'-')}</b></span>
-        <span>Técnico: <b>${escapeHtml(o.tecnico||'-')}</b></span>
-        <span>Entrega: <b>${escapeHtml(o.responsavelEntrega||'-')}</b></span>
-        <span>Garantia: <b>${escapeHtml(o.garantia||'-')}</b></span>
-        <span>Situação OS: <b>${escapeHtml(o.situacao||'-')}</b></span>
+        <span>Patrimônio: <b>${escapeHtml(o.patrimonio||'')}</b></span>
+        <span>Contador: <b>${escapeHtml(String(o.contador??''))}</b></span>
+        <span>Tipo: <b>${escapeHtml(o.tipoOS||'')}</b></span>
+        <span>Técnico: <b>${escapeHtml(o.tecnico||'')}</b></span>
+        <span>Entrega: <b>${escapeHtml(o.responsavelEntrega||'')}</b></span>
+        <span>Garantia: <b>${escapeHtml(o.garantia||'')}</b></span>
+        <span>Situação OS: <b>${escapeHtml(o.situacao||'')}</b></span>
         <span>Valor serviço: <b>${fmtMoney(o.valorServico||0)}</b></span>
         <span>Desc. OS: <b>${fmtMoney(o.desconto||0)}</b></span>
-        <span>Acessórios: <b>${escapeHtml(o.acessorios||'-')}</b></span>
+        <span>Acessórios: <b>${escapeHtml(o.acessorios||'')}</b></span>
       </div>
       ${o.defeito?`<p class="mt-1"><b>Defeito:</b> ${escapeHtml(o.defeito)}</p>`:''}
       ${o.servicos?`<p class="mt-1"><b>Serviços executados:</b> ${escapeHtml(o.servicos)}</p>`:''}

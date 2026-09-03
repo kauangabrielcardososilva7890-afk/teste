@@ -172,7 +172,7 @@ if(typeof oldVosHtml==='function') window.vosGerarHtmlNotinha=function(id,opts){
 
 const oldBuildNav=window.buildNav;
 window.buildNav=function(){ const r=oldBuildNav?oldBuildNav.apply(this,arguments):undefined; setTimeout(()=>{ instalarBuscadorMenuFinal(); },80); return r; };
-setInterval(()=>{ instalarBuscadorMenuFinal(); },2000);
+setInterval(()=>{ if(typeof document!=='undefined'&&document.hidden) return; instalarBuscadorMenuFinal(); },2000);
 setTimeout(()=>{ instalarBuscadorMenuFinal(); },600);
 console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();

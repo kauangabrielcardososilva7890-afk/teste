@@ -3,7 +3,7 @@
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
 // 2. Faturadas ficam travadas na mesma aba; estorno destrava e APAGA os títulos do financeiro
 // 3. Reposição automática: ao repor estoque (0 ou insuficiente), volta na venda, adiciona e desconta
-// 4. Sair sem salvar pergunta "Deseja salvar esta venda?": Não devolve estoque/descarta; Sim salva
+// 4. Sair da venda nao pergunta mais nada (v5.22.68): o closeModal grava sozinho
 // 5. Estoque exato em tempo real: lixeira devolve item no estoque na hora
 // 6. Botão ÚNICO "Excluir" na lista que atua em seleção múltipla ou item único; proíbe faturadas
 // 7. Meia folha A4 em 135mm estrita sem pular folha (IMAGEM correção 3)
@@ -355,7 +355,7 @@
         (v.itens || []).forEach(it => {
           if (it.produtoId && typeof db.produtos !== 'undefined') {
             const p = db.produtos.find(x => x.id === it.produtoId);
-            if (p && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
+            if (p && !p.estoqueInfinito && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
           }
         });
         db.vendas = (db.vendas || []).filter(x => x.id !== v.id);
@@ -454,59 +454,18 @@
   function devolverReservaTemporaria() {
     (window.__vosItensAdicionadosTemp || []).forEach(it => {
       const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
-      if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+      if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
         p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
       }
     });
     window.__vosItensAdicionadosTemp = [];
   }
 
-  function cancelarSairVenda() {
-    devolverReservaTemporaria();
-    if (!vendaJaExisteNoBanco()) {
-      if (window.__vosForm && window.__vosForm.vendaId) {
-        const idNaoSalva = window.__vosForm.vendaId;
-        db.vendas = (db.vendas || []).filter(x => x.id !== idNaoSalva);
-      }
-    }
-    window.__vosForm = null;
-    window.__vosDirty = false;
-    if (typeof saveDB === 'function') saveDB();
-    if (typeof renderProdutos === 'function') renderProdutos();
-    if (typeof renderVendas === 'function') renderVendas();
-  }
-
+  // v5.22.68 — acabou o "Deseja salvar esta venda?". Faturar e sair não
+  // perguntam mais nada: o closeModal já grava sozinho quando há cliente
+  // (ajustes_v52241), então o aviso só repetia trabalho.
   function perguntarSairVenda(depoisFechar) {
-    if (window.__vosSaindoVenda) return;
-    if (!telaVendaAberta() || !window.__vosForm) {
-      depoisFechar();
-      return;
-    }
-    const temCliente = !!(window.__vosForm.cliente || window.__vosForm.clienteId);
-    const temItem = (window.__vosForm.itens || []).length > 0;
-    const precisaAviso = window.__vosDirty || temCliente || temItem;
-    if (!precisaAviso) {
-      depoisFechar();
-      return;
-    }
-    window.__vosSaindoVenda = true;
-    const msg = 'Deseja salvar esta venda?';
-    const fechar = () => {
-      window.__vosSaindoVenda = false;
-      depoisFechar();
-    };
-    if (typeof window.confirmSistema === 'function') {
-      window.confirmSistema(msg, 'Sair da Venda').then(salvar => {
-        if (salvar) {
-          if (typeof window.vosSalvarVenda === 'function') window.vosSalvarVenda();
-        } else {
-          cancelarSairVenda();
-        }
-        fechar();
-      });
-      return;
-    }
-    fechar();
+    depoisFechar();
   }
 
   const _origCloseModalEst = window.closeModal;
@@ -559,7 +518,7 @@
       const idxTemp = (window.__vosItensAdicionadosTemp || []).findIndex(t => t.produtoId === item.produtoId);
       if (idxTemp >= 0) {
         const p = db.produtos && db.produtos.find(x => x.id === item.produtoId);
-        if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+        if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
           p.estoque = (p.estoque || 0) + (parseFloat(item.qtd) || 1);
         }
         window.__vosItensAdicionadosTemp.splice(idxTemp, 1);
