@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: b83c5651f5f06608
+ * scripts: 190 | sha256: e64edc3866ab2165
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2976,7 +2976,7 @@ try{
     };
     window.selectProdutoVenda = function(id){
       const p = db.produtos.find(x=>x.id===id); if(!p) return;
-      if(p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+      if(p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
         const est = Number(p.estoque||0);
         let existingQtd = (window.itensTemp.find(i=>i.produtoId===id)?.qtd||0);
         if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
@@ -3020,7 +3020,7 @@ try{
       const it = window.itensTemp[idx]; if(!it) return;
       if(delta>0){
         const p = db.produtos.find(x=>x.id===it.produtoId);
-        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
           const est = Number(p.estoque||0);
           if(it.qtd+1>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
         }
@@ -3098,7 +3098,7 @@ try{
       // baixa estoque
       venda.itens.forEach(it=>{
         const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId);
-        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga') p.estoque -= it.qtd;
+        if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito) p.estoque -= it.qtd;
       });
       db.vendas.push(venda);
       logAction('venda','criar',venda.id,`Venda ${venda.numero} cliente ${window.clienteSelecionadoVenda.nome} total ${fmtMoney(total)} por ${sess.usuarioNome} - Código cliente ${window.clienteSelecionadoVenda.codigo} - Pagamento ${pagamento||'N/A'}`);
@@ -3768,7 +3768,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const sess=getSession(); if(!window.cvCliente) return toast('Selecione o cliente','error'); if(!window.cvItens?.length) return toast('Adicione ao menos um item','error');
     const desc=parseFloat(document.getElementById('cv-desc')?.value)||0; const total=Math.max(0,window.cvItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=forceStatus||document.getElementById('cv-status')?.value||'aguardar';
     const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:window.cvCliente.id,data:new Date().toISOString(),itens:[...window.cvItens],desconto:desc,total,formaPagamento:status==='faturado'?'Prazo':'Não faturado',status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()};
-    venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId); if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga') p.estoque-=it.qtd;});
+    venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId && x.empresaId===sess.empresaId); if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito) p.estoque-=it.qtd;});
     db.vendas.push(venda); window.cvVendaSalva=venda.id; logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)} por ${sess.usuarioNome}`);
     if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:'Prazo'});
     saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); toast(`Venda ${venda.numero} salva`,'success'); closeModal(); setTimeout(()=>imprimirNotinha(venda.id),300);
@@ -5014,6 +5014,7 @@ function vosNovoForm(){
   return {
     vendaId: null,
     cliente: null,
+    osSelecionada: false,
     produtoSel: null,
     itens: [],
     codigo: '',
@@ -5132,11 +5133,11 @@ window.novaVenda = function(){
           </label>
           <button onclick="openModal('produto')" class="hidden md:flex col-span-1 h-[40px] rounded-xl bg-white border text-[#0a1e8a] items-center justify-center" title="Cadastrar produto"><i class="ph ph-plus-circle text-[18px]"></i></button>
           <label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Qtd
-            <input id="vos-item-qtd" type="number" min="1" value="1" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-qtd" type="number" min="1" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">V. Unit
-            <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Desc R$
-            <input id="vos-item-desc" type="number" step="0.01" value="0" oninput="vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-desc" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Total
             <input id="vos-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 text-[12.5px] font-bold"></label>
         </div>
@@ -5153,7 +5154,7 @@ window.novaVenda = function(){
             <input id="vos-item-tec" list="vos-tec-list" class="mt-1 w-full h-[38px] px-2 rounded-xl border bg-white text-[12px]"></label>
         </div>
         <div class="flex justify-end">
-          <button onclick="vosAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white text-[12.5px] font-bold flex items-center gap-2"><i class="ph ph-plus-circle"></i> Adicionar item</button>
+          <button id="vos-add-item" disabled onclick="vosAddItem()" class="h-[40px] px-5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 text-white text-[12.5px] font-bold flex items-center gap-2"><i class="ph ph-plus-circle"></i> Adicionar item</button>
         </div>
       </div>
       <div class="rounded-[14px] border overflow-hidden bg-white">
@@ -5245,6 +5246,7 @@ window.novaVenda = function(){
 
 // ── Abas ──
 window.vosSetAba = function(aba){
+  if(window.__vosForm) window.__vosForm.osSelecionada = (aba === 'os');
   document.getElementById('vos-aba-itens')?.classList.toggle('hidden', aba!=='itens');
   document.getElementById('vos-aba-os')?.classList.toggle('hidden', aba!=='os');
   const ti = document.getElementById('vos-tab-itens'), to = document.getElementById('vos-tab-os');
@@ -5340,9 +5342,15 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = p.preco||0;
+  document.getElementById('vos-item-vunit').value = '';
+  document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
+};
+window.vosAtualizarBotaoItem = function(){
+  const el=document.getElementById('vos-item-qtd');
+  const btn=document.getElementById('vos-add-item');
+  if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
 window.vosItemCalcTotal = function(){
   const qtd = parseFloat(document.getElementById('vos-item-qtd')?.value)||0;
@@ -5350,6 +5358,7 @@ window.vosItemCalcTotal = function(){
   const de  = parseFloat(document.getElementById('vos-item-desc')?.value)||0;
   const el = document.getElementById('vos-item-total');
   if(el) el.value = fmtMoney(Math.max(0, qtd*vu - de));
+  vosAtualizarBotaoItem();
 };
 window.vosAddItem = function(){
   const f = window.__vosForm;
@@ -5357,15 +5366,21 @@ window.vosAddItem = function(){
   const p = f.produtoSel;
   if(!p && !descTxt) return toast('Selecione um produto ou escreva a descrição','error');
   // bloqueio estoque
-  if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga'){
+  if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito){
     const est = Number(p.estoque||0);
     const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
     if(est<=0){ if(window.lfbAlert) return window.lfbAlert('Produto sem estoque','Sem estoque'); else return alert('Produto sem estoque'); }
     if(qtd>est){ if(window.lfbAlert) return window.lfbAlert('Estoque insuficiente. Disponível: '+est,'Estoque insuficiente'); else return alert('Estoque insuficiente. Disponível: '+est); }
   }
-  const qtd = parseFloat(document.getElementById('vos-item-qtd').value)||1;
-  const preco = parseFloat(document.getElementById('vos-item-vunit').value)||0;
-  const desc = parseFloat(document.getElementById('vos-item-desc').value)||0;
+  const qtdRaw = (document.getElementById('vos-item-qtd').value||'').trim();
+  const precoRaw = (document.getElementById('vos-item-vunit').value||'').trim();
+  const descRaw = (document.getElementById('vos-item-desc').value||'').trim();
+  if(!precoRaw || !/^\d+(?:[.,]\d+)?$/.test(precoRaw)) return toast('Informe um valor unitário numérico para adicionar o item','error');
+  if(descRaw && !/^\d+(?:[.,]\d+)?$/.test(descRaw)) return toast('O desconto deve conter somente números','error');
+  if(qtdRaw && !/^\d+(?:[.,]\d+)?$/.test(qtdRaw)) return toast('A quantidade deve conter somente números','error');
+  const qtd = parseFloat(qtdRaw.replace(',','.'))||1;
+  const preco = parseFloat(precoRaw.replace(',','.'))||0;
+  const desc = descRaw ? parseFloat(descRaw.replace(',','.'))||0 : 0;
   const tipo = document.getElementById('vos-item-tipo').value;
   const showExtra = !document.getElementById('vos-item-extra').classList.contains('hidden');
   const item = {
@@ -5384,9 +5399,9 @@ window.vosAddItem = function(){
   f.itens.push(item);
   f.produtoSel = null;
   ['vos-prod-search','vos-item-cartucho','vos-item-ident','vos-item-tec'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
-  document.getElementById('vos-item-qtd').value = 1;
+  document.getElementById('vos-item-qtd').value = '';
   document.getElementById('vos-item-vunit').value = '';
-  document.getElementById('vos-item-desc').value = 0;
+  document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-item-total').value = '';
   document.getElementById('vos-item-pe').checked = false;
   document.getElementById('vos-item-ps').checked = false;
@@ -5543,8 +5558,8 @@ function vosGravarVenda(silencioso){
   const sess = getSession(); const f = window.__vosForm;
   if(!f.cliente){ toast('Selecione o cliente','error'); vosSetAba('itens'); return null; }
   const os = vosColetarOS();
-  const temOS = vosOsTemAlgumDado(os);
-  if(!f.itens.length && !(temOS && (os.valorServico||0)>0)){
+  const temOS = !!(f.osSelecionada || vosOsTemAlgumDado(os));
+  if(!f.itens.length && !temOS){
     toast('Adicione ao menos um item ou um valor de serviço na OS','error'); return null;
   }
   const descVenda = parseFloat(document.getElementById('vos-desc-venda').value)||0;
@@ -5560,7 +5575,7 @@ function vosGravarVenda(silencioso){
     // baixa de estoque apenas na criação
     f.itens.forEach(it=>{
       const p = it.produtoId && db.produtos.find(x=>x.id===it.produtoId);
-      if(p && p.categoria!=='Serviço'){ p.estoque = (p.estoque||0) - it.qtd; }
+      if(p && p.categoria!=='Serviço' && !p.estoqueInfinito){ p.estoque = (p.estoque||0) - it.qtd; }
     });
     db.vendas.push(venda);
     f.vendaId = venda.id;
@@ -5902,7 +5917,7 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
   if(!v) return null;
   const cli = (typeof clienteDaVenda==='function' ? clienteDaVenda(v) : db.clientes.find(c=>c.id===v.clienteId)) || {};
   const empresa = vosDadosEmpresaNotinha(sess);
-  const temOS = v.os && (v.origemMigracao || v.os.migrado || vosOsCompleta(v.os));
+  const temOS = !!v.os;
   const ora = new Date(v.data||Date.now());
   const hora = isNaN(ora) ? '' : ora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const codNum = (v.numero||'').replace(/^VD-/,'');
@@ -5959,8 +5974,8 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
     </div>
     <div class="cli-dir">
       <span class="lbl">Entrega</span>
-      <p class="emp-info">Destino: <b>${escapeHtml(v.destino||'-')}</b></p>
-      <p class="emp-info">Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):'-'}</b> • Prazo: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):'___/___/____'}</b></p>
+      <p class="emp-info">Destino: <b>${escapeHtml(v.destino||'')}</b></p>
+      <p class="emp-info">Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):''}</b> • Prazo: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):''}</b></p>
       <p class="emp-info">Pagamento: <b>${escapeHtml(v.formaPagamento||'—')}</b> • Situação: <b>${(String(v.status||'').toUpperCase())}</b></p>
     </div>
   </div>`;
@@ -5990,22 +6005,22 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
         <tr>
           <td><span class="lbl">Equipamento / modelo</span><b>${escapeHtml(o.modelo||'')}</b></td>
           <td><span class="lbl">Nº de série</span><b>${escapeHtml(o.numeroSerie||'')}</b></td>
-          <td><span class="lbl">Patrimônio</span><b>${escapeHtml(o.patrimonio||'-')}</b></td>
-          <td><span class="lbl">Contador (cópias)</span><b>${escapeHtml(String(o.contador??'')||'-')}</b></td>
+          <td><span class="lbl">Patrimônio</span><b>${escapeHtml(o.patrimonio||'')}</b></td>
+          <td><span class="lbl">Contador (cópias)</span><b>${escapeHtml(String(o.contador??''))}</b></td>
         </tr>
         <tr>
-          <td><span class="lbl">Tipo da OS</span><b>${escapeHtml(o.tipoOS||'-')}</b></td>
-          <td><span class="lbl">Acessórios</span><b>${escapeHtml(o.acessorios||'-')}</b></td>
-          <td><span class="lbl">Técnico responsável</span><b>${escapeHtml(o.tecnico||'-')}</b></td>
-          <td><span class="lbl">Resp. entrega / garantia</span><b>${escapeHtml(o.responsavelEntrega||'-')} • ${escapeHtml(o.garantia||'-')}</b></td>
+          <td><span class="lbl">Tipo da OS</span><b>${escapeHtml(o.tipoOS||'')}</b></td>
+          <td><span class="lbl">Acessórios</span><b>${escapeHtml(o.acessorios||'')}</b></td>
+          <td><span class="lbl">Técnico responsável</span><b>${escapeHtml(o.tecnico||'')}</b></td>
+          <td><span class="lbl">Resp. entrega / garantia</span><b>${escapeHtml(o.responsavelEntrega||'')} • ${escapeHtml(o.garantia||'')}</b></td>
         </tr>
       </tbody>
     </table>
     <table class="tb" style="margin-top:2mm"><tbody>
-      <tr><td><span class="lbl">Defeito apresentado</span><p>${escapeHtml(o.defeito||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Serviços executados</span><p>${escapeHtml(o.servicos||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Peças</span><p>${escapeHtml(o.pecas||'-')}</p></td></tr>
-      <tr><td><span class="lbl">Situação da OS</span><b>${escapeHtml(o.situacao||'-')}</b></td></tr>
+      <tr><td><span class="lbl">Defeito apresentado</span><p>${escapeHtml(o.defeito||'')}</p></td></tr>
+      <tr><td><span class="lbl">Serviços executados</span><p>${escapeHtml(o.servicos||'')}</p></td></tr>
+      <tr><td><span class="lbl">Peças</span><p>${escapeHtml(o.pecas||'')}</p></td></tr>
+      <tr><td><span class="lbl">Situação da OS</span><b>${escapeHtml(o.situacao||'')}</b></td></tr>
     </tbody></table>
     <div class="ass-dupla">
       <div class="ass">Assinatura do cliente</div>
@@ -6384,7 +6399,7 @@ window.historicoVenda = function(id){
     <div class="rounded-[14px] border p-3 text-[12.5px]">
       <p class="font-bold">${cli.codigo?`#${cli.codigo} — `:''}${escapeHtml(cli.nome||'(sem cliente)')} ${cli.fantasia?`(${escapeHtml(cli.fantasia)})`:''}</p>
       <p class="text-slate-500">${escapeHtml(cli.documento||'')} • ${escapeHtml(cli.telefone||'')} • ${escapeHtml(cli.endereco||'')} ${cli.cidade?`• ${cli.cidade}/${cli.estado||''}`:''}</p>
-      ${v.destino||v.prazoEntrega||v.dataSaida?`<p class="mt-1 text-slate-500">Destino: <b>${escapeHtml(v.destino||'-')}</b> • Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):'-'}</b> • Prazo entrega: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):'-'}</b></p>`:''}
+      ${v.destino||v.prazoEntrega||v.dataSaida?`<p class="mt-1 text-slate-500">Destino: <b>${escapeHtml(v.destino||'')}</b> • Saída: <b>${v.dataSaida?fmtDate(v.dataSaida):''}</b> • Prazo entrega: <b>${v.prazoEntrega?fmtDate(v.prazoEntrega):''}</b></p>`:''}
     </div>
     <div class="rounded-[14px] border overflow-hidden">
       <table class="w-full text-left text-[12px]">
@@ -6401,16 +6416,16 @@ window.historicoVenda = function(id){
       <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
         <span>Modelo: <b>${escapeHtml(o.modelo||'-')}</b></span>
         <span>Série: <b>${escapeHtml(o.numeroSerie||'-')}</b></span>
-        <span>Patrimônio: <b>${escapeHtml(o.patrimonio||'-')}</b></span>
-        <span>Contador: <b>${escapeHtml(String(o.contador??'-'))}</b></span>
-        <span>Tipo: <b>${escapeHtml(o.tipoOS||'-')}</b></span>
-        <span>Técnico: <b>${escapeHtml(o.tecnico||'-')}</b></span>
-        <span>Entrega: <b>${escapeHtml(o.responsavelEntrega||'-')}</b></span>
-        <span>Garantia: <b>${escapeHtml(o.garantia||'-')}</b></span>
-        <span>Situação OS: <b>${escapeHtml(o.situacao||'-')}</b></span>
+        <span>Patrimônio: <b>${escapeHtml(o.patrimonio||'')}</b></span>
+        <span>Contador: <b>${escapeHtml(String(o.contador??''))}</b></span>
+        <span>Tipo: <b>${escapeHtml(o.tipoOS||'')}</b></span>
+        <span>Técnico: <b>${escapeHtml(o.tecnico||'')}</b></span>
+        <span>Entrega: <b>${escapeHtml(o.responsavelEntrega||'')}</b></span>
+        <span>Garantia: <b>${escapeHtml(o.garantia||'')}</b></span>
+        <span>Situação OS: <b>${escapeHtml(o.situacao||'')}</b></span>
         <span>Valor serviço: <b>${fmtMoney(o.valorServico||0)}</b></span>
         <span>Desc. OS: <b>${fmtMoney(o.desconto||0)}</b></span>
-        <span>Acessórios: <b>${escapeHtml(o.acessorios||'-')}</b></span>
+        <span>Acessórios: <b>${escapeHtml(o.acessorios||'')}</b></span>
       </div>
       ${o.defeito?`<p class="mt-1"><b>Defeito:</b> ${escapeHtml(o.defeito)}</p>`:''}
       ${o.servicos?`<p class="mt-1"><b>Serviços executados:</b> ${escapeHtml(o.servicos)}</p>`:''}
@@ -8887,7 +8902,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? db.produtos.find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: uid('prd'), nome: '', categoria: 'Produto', fabricante: '',
-    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional'
+    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional', estoqueInfinito: false
   };
   if(!p) return toast('Produto não encontrado', 'error');
 
@@ -8938,8 +8953,13 @@ window.renderModalProduto = function(id){
       </div>
 
       <div id="painel-prod-estoque" class="hidden space-y-4">
-        <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3 text-[12px] text-blue-800 font-medium">
-          <i class="ph ph-check-circle"></i> Controle de Estoque sempre ativo. Notificações ocorrem apenas quando abaixo (<) do estoque mínimo.
+        <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer">
+          <input id="p-estoque-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueInfinito()" class="w-4 h-4 accent-[#0a1e8a]">
+          <span><i class="ph ph-infinity"></i> Não controlar estoque deste produto (estoque infinito)</span>
+        </label>
+        <div id="p-campos-estoque">
+        <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">
+          Quando marcado, o produto fica sempre disponível e não é descontado nas vendas.
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -8964,6 +8984,7 @@ window.renderModalProduto = function(id){
             <label class="block font-bold text-slate-600 mb-1">Localização no Almoxarifado</label>
             <input id="p-local" value="${escapeHtml(p.local||'')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor">
           </div>
+        </div>
         </div>
       </div>
 
@@ -8992,6 +9013,14 @@ window.renderModalProduto = function(id){
   `;
   document.getElementById('modal-root').classList.remove('hidden');
   window.modalContext = { type: 'produto', id };
+  alternarEstoqueInfinito();
+};
+
+window.alternarEstoqueInfinito = function(){
+  const infinito = !!document.getElementById('p-estoque-infinito')?.checked;
+  ['p-est','p-est-min','p-est-ideal','p-custo','p-local'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }
+  });
 };
 
 window.mudarAbaProd = function(aba){
@@ -9017,7 +9046,8 @@ window.salvarProdutoModal = function(id){
     nome: window.VOTM_PURE ? window.VOTM_PURE.toTitleCase(nome) : nome,
     categoria: document.getElementById('p-cat')?.value || 'Produto',
     fabricante: document.getElementById('p-fab')?.value?.trim() || '',
-    estoque: parseInt(document.getElementById('p-est')?.value || 0) || 0,
+    estoqueInfinito: !!document.getElementById('p-estoque-infinito')?.checked,
+    estoque: document.getElementById('p-estoque-infinito')?.checked ? 0 : (parseInt(document.getElementById('p-est')?.value || 0) || 0),
     estoqueMin: parseInt(document.getElementById('p-est-min')?.value || 0) || 0,
     estoqueIdeal: parseInt(document.getElementById('p-est-ideal')?.value || 0) || 0,
     custo: parseFloat(document.getElementById('p-custo')?.value || 0) || 0,
@@ -10472,7 +10502,7 @@ window.renderProdutos = function(){
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
-  if(STATE.prod.baixo) list = list.filter(p => estoqueBaixoEstrito(p.estoque, p.estoqueMin));
+  if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
     list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
@@ -10492,7 +10522,7 @@ window.renderProdutos = function(){
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
-  const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
+  const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
   const estoqueTotal = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido')
     .reduce((s, p) => s + (toNumber(p.estoque) * toNumber(p.preco)), 0);
 
@@ -10539,14 +10569,14 @@ window.renderProdutos = function(){
             </thead>
             <tbody class="divide-y">
               ${vis.map(p => {
-                const isLow = estoqueBaixoEstrito(p.estoque, p.estoqueMin);
+                const isLow = !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin);
                 return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
                   <td class="px-2 py-2.5 w-8"><input type="checkbox" name="produto-check-lote" value="${p.id}" onclick="event.stopPropagation()"></td>
                   <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-[#0a1e8a]">${html(produtoCodigo(p))}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold text-[13px]">${html(p.nome || p.descricao || '')}</p><p class="text-[11px] text-slate-500">Marca: ${html(p.fabricante || '-')} • Criado por ${html(p.criadoPorNome || '-')}</p></td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${html(categoriaUnificada(p.categoria))}</span></td>
-                  <td class="px-4 py-2.5"><b class="${isLow ? 'text-red-600' : ''}">${toNumber(p.estoque)}</b></td>
-                  <td class="px-4 py-2.5">${toNumber(p.estoqueMin)}</td>
+                  <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
+                  <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
                   <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
@@ -11997,7 +12027,7 @@ window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
   calcImpressoesChamado();
 };
 window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
-function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
+function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
   const c = contratoId ? getCtr(contratoId) : null;
@@ -20774,7 +20804,7 @@ try{
         (v.itens || []).forEach(it => {
           if (it.produtoId && typeof db.produtos !== 'undefined') {
             const p = db.produtos.find(x => x.id === it.produtoId);
-            if (p && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
+            if (p && !p.estoqueInfinito && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
           }
         });
         db.vendas = (db.vendas || []).filter(x => x.id !== v.id);
@@ -20873,7 +20903,7 @@ try{
   function devolverReservaTemporaria() {
     (window.__vosItensAdicionadosTemp || []).forEach(it => {
       const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
-      if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+      if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
         p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
       }
     });
@@ -20937,7 +20967,7 @@ try{
       const idxTemp = (window.__vosItensAdicionadosTemp || []).findIndex(t => t.produtoId === item.produtoId);
       if (idxTemp >= 0) {
         const p = db.produtos && db.produtos.find(x => x.id === item.produtoId);
-        if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+        if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
           p.estoque = (p.estoque || 0) + (parseFloat(item.qtd) || 1);
         }
         window.__vosItensAdicionadosTemp.splice(idxTemp, 1);
@@ -36930,7 +36960,7 @@ function voltarSePendente(){
 window.V52237_ESTOQUE_ZERO_PURE = {
   ehServico: ehServico,
   precisaAviso: function(p, qtd){
-    if(!p || ehServico(p)) return false;
+    if(!p || ehServico(p) || p.estoqueInfinito) return false;
     return n(p.estoque)<=0 || n(qtd)>n(p.estoque);
   }
 };
@@ -36943,11 +36973,11 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52237est){
     var f=window.__vosForm;
     var p=f && f.produtoSel;
     var qtd=n(document.getElementById('vos-item-qtd')&&document.getElementById('vos-item-qtd').value)||1;
-    if(p && !ehServico(p) && n(p.estoque)<=0){
+    if(p && !ehServico(p) && !p.estoqueInfinito && n(p.estoque)<=0){
       perguntarZerado(p);
       return;
     }
-    if(p && !ehServico(p) && qtd>n(p.estoque)){
+    if(p && !ehServico(p) && !p.estoqueInfinito && qtd>n(p.estoque)){
       perguntarZerado(p);
       return;
     }
@@ -36961,7 +36991,7 @@ if(typeof window.vosVendaSelectProd==='function' && !window.vosVendaSelectProd._
   window.vosVendaSelectProd=function(id){
     var r=oldSel.apply(this, arguments);
     var p=(typeof db!=='undefined' && db.produtos||[]).find(function(x){ return x.id===id; });
-    if(p && !ehServico(p) && n(p.estoque)<=0) perguntarZerado(p);
+    if(p && !ehServico(p) && !p.estoqueInfinito && n(p.estoque)<=0) perguntarZerado(p);
     return r;
   };
   window.vosVendaSelectProd.__v52237est=true;
@@ -37873,7 +37903,7 @@ function gerarVendaDoOrcamento(o, origem){
   };
   (venda.itens||[]).forEach(function(it){
     var p=it.produtoId && (db.produtos||[]).find(function(x){ return x.id===it.produtoId; });
-    if(p && !/servi[cç]o|recarga/i.test(String(p.categoria||''))) p.estoque=n(p.estoque)-n(it.qtd);
+    if(p && !/servi[cç]o|recarga/i.test(String(p.categoria||'')) && !p.estoqueInfinito) p.estoque=n(p.estoque)-n(it.qtd);
   });
   db.vendas=db.vendas||[];
   db.vendas.push(venda);

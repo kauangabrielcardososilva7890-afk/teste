@@ -355,7 +355,7 @@
         (v.itens || []).forEach(it => {
           if (it.produtoId && typeof db.produtos !== 'undefined') {
             const p = db.produtos.find(x => x.id === it.produtoId);
-            if (p && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
+            if (p && !p.estoqueInfinito && p.categoria !== 'Serviço') p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
           }
         });
         db.vendas = (db.vendas || []).filter(x => x.id !== v.id);
@@ -454,7 +454,7 @@
   function devolverReservaTemporaria() {
     (window.__vosItensAdicionadosTemp || []).forEach(it => {
       const p = db.produtos && db.produtos.find(x => x.id === it.produtoId);
-      if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+      if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
         p.estoque = (p.estoque || 0) + (parseFloat(it.qtd) || 1);
       }
     });
@@ -518,7 +518,7 @@
       const idxTemp = (window.__vosItensAdicionadosTemp || []).findIndex(t => t.produtoId === item.produtoId);
       if (idxTemp >= 0) {
         const p = db.produtos && db.produtos.find(x => x.id === item.produtoId);
-        if (p && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
+        if (p && !p.estoqueInfinito && p.categoria !== 'Serviço' && p.categoria !== 'Recarga') {
           p.estoque = (p.estoque || 0) + (parseFloat(item.qtd) || 1);
         }
         window.__vosItensAdicionadosTemp.splice(idxTemp, 1);

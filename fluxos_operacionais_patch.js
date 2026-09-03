@@ -467,7 +467,7 @@ window.renderProdutos = function(){
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
-  if(STATE.prod.baixo) list = list.filter(p => estoqueBaixoEstrito(p.estoque, p.estoqueMin));
+  if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
     list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
@@ -487,7 +487,7 @@ window.renderProdutos = function(){
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
   const totalProdutos = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido').length;
-  const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
+  const baixoCount = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido' && !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin)).length;
   const estoqueTotal = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido')
     .reduce((s, p) => s + (toNumber(p.estoque) * toNumber(p.preco)), 0);
 
@@ -534,14 +534,14 @@ window.renderProdutos = function(){
             </thead>
             <tbody class="divide-y">
               ${vis.map(p => {
-                const isLow = estoqueBaixoEstrito(p.estoque, p.estoqueMin);
+                const isLow = !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin);
                 return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer ${isLow ? 'bg-red-50/40' : ''}">
                   <td class="px-2 py-2.5 w-8"><input type="checkbox" name="produto-check-lote" value="${p.id}" onclick="event.stopPropagation()"></td>
                   <td class="px-4 py-2.5 font-mono text-[11px] font-bold text-[#0a1e8a]">${html(produtoCodigo(p))}</td>
                   <td class="px-4 py-2.5"><p class="font-semibold text-[13px]">${html(p.nome || p.descricao || '')}</p><p class="text-[11px] text-slate-500">Marca: ${html(p.fabricante || '-')} • Criado por ${html(p.criadoPorNome || '-')}</p></td>
                   <td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${html(categoriaUnificada(p.categoria))}</span></td>
-                  <td class="px-4 py-2.5"><b class="${isLow ? 'text-red-600' : ''}">${toNumber(p.estoque)}</b></td>
-                  <td class="px-4 py-2.5">${toNumber(p.estoqueMin)}</td>
+                  <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
+                  <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
                   <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
