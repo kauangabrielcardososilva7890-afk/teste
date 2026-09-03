@@ -265,10 +265,6 @@ window.renderModalProduto = function(id){
             <label class="block font-bold text-slate-600 mb-1">Custo Total R$</label>
             <input id="p-custo" type="number" step="0.01" value="${p.custo||0}" class="w-full h-10 px-3 rounded-xl border">
           </div>
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">Localização no Almoxarifado</label>
-            <input id="p-local" value="${escapeHtml(p.local||'')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor">
-          </div>
         </div>
         </div>
       </div>
@@ -303,7 +299,7 @@ window.renderModalProduto = function(id){
 
 window.alternarEstoqueInfinito = function(){
   const infinito = !!document.getElementById('p-estoque-infinito')?.checked;
-  ['p-est','p-est-min','p-est-ideal','p-custo','p-local'].forEach(id=>{
+  ['p-est','p-est-min','p-est-ideal','p-custo'].forEach(id=>{
     const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }
   });
 };
@@ -337,7 +333,7 @@ window.salvarProdutoModal = function(id){
     estoqueIdeal: parseInt(document.getElementById('p-est-ideal')?.value || 0) || 0,
     custo: parseFloat(document.getElementById('p-custo')?.value || 0) || 0,
     preco: parseFloat(document.getElementById('p-preco')?.value || 0) || 0,
-    local: document.getElementById('p-local')?.value?.trim() || '',
+    local: '',
     ncm: document.getElementById('p-ncm')?.value?.trim() || '',
     origem: document.getElementById('p-origem')?.value || '0 - Nacional',
     status: 'ativo'

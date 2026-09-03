@@ -182,6 +182,7 @@ window.vosAbrirImpressaoESalvar=function(){
       window.__vosPermitirVendaVazia=true;
       var venda;
       try{ venda=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null; }
+      catch(err){ console.error('[impressao] falha ao salvar antes de imprimir',err); if(typeof toast==='function') toast('Não foi possível preparar a impressão','error'); venda=null; }
       finally{ window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior; }
       if(!venda) return;
       // A impressão salva a venda, mas mantém esta aba aberta.
