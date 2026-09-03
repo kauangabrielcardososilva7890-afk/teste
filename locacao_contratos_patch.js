@@ -156,7 +156,7 @@ window.renderProdutos = function(){
           <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${escapeHtml(p.categoria||'Produto')}</span></td>
           <td class="px-5 py-3"><p class="font-bold ${isLow ? 'text-red-600' : ''}">${p.estoque||0} un</p><p class="text-[11px] text-slate-500">mín. ${p.estoqueMin||0}</p></td>
           <td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo||0)} → <b>${fmtMoney(p.preco||0)}</b></p></td>
-          <td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${escapeHtml(p.local||'-')}</span></td>
+          
           <td class="px-5 py-3 text-right"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Alterar"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir"><i class="ph ph-trash"></i></button></div></td>
         </tr>
       `;

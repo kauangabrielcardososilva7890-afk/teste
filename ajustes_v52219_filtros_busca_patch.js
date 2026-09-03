@@ -80,7 +80,7 @@ function filtraProdutos(list, q, cat){
     if(ehRecargaCat(p.categoria) || ehRecargaCat(p.tipo) || ehRecargaCat(p.nome)) return false;
     if(catN && unificaCat(p.categoria)!==catN && String(p.categoria||'')!==catN) return false;
     if(!termo) return true;
-    return [p.nome, p.sku, p.codigo, p.fabricante, p.local, p.ncm, p.categoria]
+    return [p.nome, p.sku, p.codigo, p.fabricante, p.ncm, p.categoria]
       .some(function(x){ return fold(x).indexOf(termo)>=0; });
   });
 }

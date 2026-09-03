@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 6d8e5bc73e581043
+ * scripts: 190 | sha256: 91f768feb0ad22b7
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -3906,7 +3906,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const sess=getSession(); if(!sess) return; const q=document.getElementById('neo-search-produtos')?.value||''; const low=q.toLowerCase();
     let list=db.produtos.filter(p=>p.empresaId===sess.empresaId && (!low||(p.nome||'').toLowerCase().includes(low)||(p.sku||'').toLowerCase().includes(low)||(p.categoria||'').toLowerCase().includes(low)));
     list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); const baixo=list.filter(p=>(p.estoque||0)<=(p.estoqueMin||0)).length;
-    document.getElementById('view-produtos').innerHTML=neoPage('Estoque', 'Produtos, suprimentos, peças, serviços e recargas', `<button onclick="openModal('produto')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo produto</button><button onclick="openModal('entradaEstoque')" class="neo-btn"><i class="ph ph-arrow-fat-line-up"></i>Entrada</button>`, `${inputSearch('neo-search-produtos',q,'renderProdutos','Pesquisar produto, SKU, categoria...')}<button onclick="neoSetFilter('neoProdutosBaixo',!window.neoProdutosBaixo,'renderProdutos')" class="neo-btn ${window.neoProdutosBaixo?'primary':''}"><i class="ph ph-warning"></i>Estoque baixo ${baixo}</button><button onclick="openModal('produto')" class="neo-btn"><i class="ph ph-plus-circle"></i>Cadastrar opção</button>`, `<table class="neo-table"><thead><tr><th>SKU</th><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead><tbody>${list.filter(p=>!window.neoProdutosBaixo || (p.estoque||0)<=(p.estoqueMin||0)).map(p=>`<tr><td><b class="text-[#0a1e8a]">${escapeHtml(p.sku||'')}</b></td><td><b>${escapeHtml(p.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(p.fabricante||'')} • ${escapeHtml(p.local||'')}</span></td><td>${statusPill(p.categoria,'info')}</td><td><b class="${(p.estoque||0)<=(p.estoqueMin||0)?'text-red-600':''}">${p.estoque||0}</b><br><span class="text-[11px] text-slate-500">mín. ${p.estoqueMin||0}</span></td><td>${fmtMoney(p.custo||0)}</td><td><b>${fmtMoney(p.preco||0)}</b></td><td><button onclick="openModal('produto','${p.id}')" class="neo-btn"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||emptyRow(7,'Nenhum produto encontrado')}</tbody></table>`);
+    document.getElementById('view-produtos').innerHTML=neoPage('Estoque', 'Produtos, suprimentos, peças, serviços e recargas', `<button onclick="openModal('produto')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo produto</button><button onclick="openModal('entradaEstoque')" class="neo-btn"><i class="ph ph-arrow-fat-line-up"></i>Entrada</button>`, `${inputSearch('neo-search-produtos',q,'renderProdutos','Pesquisar produto, SKU, categoria...')}<button onclick="neoSetFilter('neoProdutosBaixo',!window.neoProdutosBaixo,'renderProdutos')" class="neo-btn ${window.neoProdutosBaixo?'primary':''}"><i class="ph ph-warning"></i>Estoque baixo ${baixo}</button><button onclick="openModal('produto')" class="neo-btn"><i class="ph ph-plus-circle"></i>Cadastrar opção</button>`, `<table class="neo-table"><thead><tr><th>SKU</th><th>Produto</th><th>Categoria</th><th>Estoque</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead><tbody>${list.filter(p=>!window.neoProdutosBaixo || (p.estoque||0)<=(p.estoqueMin||0)).map(p=>`<tr><td><b class="text-[#0a1e8a]">${escapeHtml(p.sku||'')}</b></td><td><b>${escapeHtml(p.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(p.fabricante||'')}</span></td><td>${statusPill(p.categoria,'info')}</td><td><b class="${(p.estoque||0)<=(p.estoqueMin||0)?'text-red-600':''}">${p.estoque||0}</b><br><span class="text-[11px] text-slate-500">mín. ${p.estoqueMin||0}</span></td><td>${fmtMoney(p.custo||0)}</td><td><b>${fmtMoney(p.preco||0)}</b></td><td><button onclick="openModal('produto','${p.id}')" class="neo-btn"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||emptyRow(7,'Nenhum produto encontrado')}</tbody></table>`);
   };
 
   window.renderEquipamentos=function(){
@@ -8864,7 +8864,7 @@ window.renderProdutos = function(){
           <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${escapeHtml(p.categoria||'Produto')}</span></td>
           <td class="px-5 py-3"><p class="font-bold ${isLow ? 'text-red-600' : ''}">${p.estoque||0} un</p><p class="text-[11px] text-slate-500">mín. ${p.estoqueMin||0}</p></td>
           <td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo||0)} → <b>${fmtMoney(p.preco||0)}</b></p></td>
-          <td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${escapeHtml(p.local||'-')}</span></td>
+          
           <td class="px-5 py-3 text-right"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Alterar"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir"><i class="ph ph-trash"></i></button></div></td>
         </tr>
       `;
@@ -34137,7 +34137,7 @@ function filtraProdutos(list, q, cat){
     if(ehRecargaCat(p.categoria) || ehRecargaCat(p.tipo) || ehRecargaCat(p.nome)) return false;
     if(catN && unificaCat(p.categoria)!==catN && String(p.categoria||'')!==catN) return false;
     if(!termo) return true;
-    return [p.nome, p.sku, p.codigo, p.fabricante, p.local, p.ncm, p.categoria]
+    return [p.nome, p.sku, p.codigo, p.fabricante, p.ncm, p.categoria]
       .some(function(x){ return fold(x).indexOf(termo)>=0; });
   });
 }
