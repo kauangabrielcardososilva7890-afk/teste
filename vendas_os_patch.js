@@ -637,7 +637,7 @@ function vosGravarVenda(silencioso){
   if(!f.cliente){ toast('Selecione o cliente','error'); vosSetAba('itens'); return null; }
   const os = vosColetarOS();
   const temOS = !!(f.osSelecionada || vosOsTemAlgumDado(os));
-  if(!f.itens.length && !temOS){
+  if(!f.itens.length && !temOS && !window.__vosPermitirVendaVazia){
     toast('Adicione ao menos um item ou um valor de serviço na OS','error'); return null;
   }
   const descVenda = parseFloat(document.getElementById('vos-desc-venda').value)||0;
@@ -710,16 +710,9 @@ window.vosGravarVenda = vosGravarVenda;
 window.vosSalvarVenda = function(){ vosGravarVenda(false); };
 window.vosImprimirAtual = function(){
   const f = window.__vosForm;
-  if(!f || !f.vendaId){
-    const v = vosGravarVenda(true);
-    if(!v) return;
-    toast(`Venda ${v.numero} salva`, 'success');
-  } else {
-    if(!vosGravarVenda(true)) return;
-  }
-  closeModal();
-  renderVendas(); renderFinanceiro && renderFinanceiro();
-  imprimirNotinha(window.__vosForm ? window.__vosForm.vendaId : null);
+  if(!f || !f.cliente) return toast('Selecione o cliente','error');
+  if(typeof window.vosAbrirImpressaoESalvar === 'function') return window.vosAbrirImpressaoESalvar();
+  return toast('Abra as opções de impressão novamente','error');
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

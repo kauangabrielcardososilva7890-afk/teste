@@ -561,7 +561,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? (db.produtos || []).find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: '', nome: '', categoria: 'Produto', fabricante: '', estoque: 0, estoqueMin: 0, estoqueIdeal: 0,
-    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo'
+    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
   };
   if(!p) return toastMsg('Produto não encontrado', 'error');
   const cat = categoriaUnificada(p.categoria || p.tipoCadastro || p.tipo);
@@ -587,7 +587,8 @@ window.renderModalProduto = function(id){
       </div>
 
       <div id="kp-prod-estoque" class="hidden space-y-4">
-        <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3 text-[12px] text-blue-800 font-medium"><i class="ph ph-check-circle"></i> Controle de estoque sempre ligado. Aviso só aparece quando estoque fica abaixo do mínimo.</div>
+        <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer"><input id="kp-prd-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueOperacional()" class="w-4 h-4 accent-[#0a1e8a]"><span><i class="ph ph-infinity"></i> Não controlar estoque — estoque infinito</span></label>
+        <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">Produto infinito não sofre baixa nem alerta de estoque.</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">Estoque Atual</label><input id="kp-prd-est" type="number" value="${toNumber(p.estoque, 0)}" class="w-full h-10 px-3 rounded-xl border font-bold"></div>
           <div><label class="block font-bold text-slate-600 mb-1">Estoque Mínimo</label><input id="kp-prd-min" type="number" value="${toNumber(p.estoqueMin, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
@@ -613,6 +614,12 @@ window.renderModalProduto = function(id){
   `, '760px');
   const origem = document.getElementById('kp-prd-origem');
   if(origem && p.origem) origem.value = p.origem;
+  alternarEstoqueOperacional();
+};
+
+window.alternarEstoqueOperacional = function(){
+  const infinito=!!document.getElementById('kp-prd-infinito')?.checked;
+  ['kp-prd-est','kp-prd-min','kp-prd-ideal','kp-prd-custo','kp-prd-local'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }});
 };
 
 window.mudarAbaProdutoOperacional = function(aba){
@@ -645,7 +652,8 @@ window.salvarProdutoOperacional = function(id){
     descricao: nome,
     categoria,
     fabricante: document.getElementById('kp-prd-fab')?.value?.trim() || '',
-    estoque: toInt(document.getElementById('kp-prd-est')?.value, 0),
+    estoqueInfinito: !!document.getElementById('kp-prd-infinito')?.checked,
+    estoque: document.getElementById('kp-prd-infinito')?.checked ? 0 : toInt(document.getElementById('kp-prd-est')?.value, 0),
     estoqueMin: toInt(document.getElementById('kp-prd-min')?.value, 0),
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
@@ -654,7 +662,7 @@ window.salvarProdutoOperacional = function(id){
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
-    controleEstoque: true
+    controleEstoque: !document.getElementById('kp-prd-infinito')?.checked
   };
   ['tipoCadastro', 'tipoProduto', 'promocao', 'precoPromocao', 'varejo', 'precoVarejo'].forEach(k => delete payload[k]);
   if(id){

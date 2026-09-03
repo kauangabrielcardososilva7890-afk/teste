@@ -169,6 +169,30 @@ if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha
   window.vosGerarHtmlNotinha.__v52239print=true;
 }
 
+window.vosAbrirImpressaoESalvar=function(){
+  var f=window.__vosForm;
+  if(!f || !f.cliente) return toast('Selecione o cliente','error');
+  escolherDois('Como deseja imprimir?', 'Vendas', 'venda', 'Ordem de serviço', 'os').then(function(tipo){
+    if(!tipo) return;
+    escolherDois('Quantas vias?', '1 via', '1', '2 vias', '2').then(function(vias){
+      if(!vias) return;
+      var anterior=f.osSelecionada;
+      f.osSelecionada=tipo==='os';
+      window.__vosPermitirVendaVazia=true;
+      var venda;
+      try{ venda=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null; }
+      finally{ window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior; }
+      if(!venda) return;
+      closeModal();
+      if(typeof renderVendas==='function') renderVendas();
+      if(typeof renderFinanceiro==='function') renderFinanceiro();
+      window.__vosPrintOpts={tipo:tipo,vias:vias};
+      try{ window.imprimirNotinha(venda.id,{tipo:tipo,vias:vias}); }
+      finally{ window.__vosPrintOpts=null; }
+    });
+  });
+};
+
 if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v52239escolha){
   var oldImp=window.imprimirNotinha;
   window.imprimirNotinha=function(vendaId, ja){

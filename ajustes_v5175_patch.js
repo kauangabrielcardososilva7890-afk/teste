@@ -136,12 +136,30 @@ function htmlBuscaImpressoraContrato(){
       <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <select id="ko-equip" onchange="autoPreencherDadosChamado(this.value)" class="mt-2 w-full h-10 px-3 rounded-xl border bg-white font-semibold"><option value="">Selecione a impressora</option></select>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
-window.lcBuscarImpressoraChamado=function(){
+window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
+  sel.value=equipId;
+  const e=eq(equipId)||{};
+  const chosen=document.getElementById('ko-equip-selected');
+  const name=document.getElementById('ko-equip-selected-name');
+  const list=document.getElementById('ko-equip-lista');
+  if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
+  if(chosen) chosen.classList.remove('hidden');
+  if(list) list.classList.add('hidden');
+  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
+};
+window.lcEditarImpressoraChamado=function(){
+  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  document.getElementById('ko-equip-lista')?.classList.remove('hidden');
+  lcBuscarImpressoraChamado();
+};
+
+window.lcBuscarImpressoraChamado=function(){
+  const sel=document.getElementById('ko-equip'); const listaEl=document.getElementById('ko-equip-lista'); if(!sel || !listaEl) return;
   const campo=document.getElementById('lc-imp-busca-campo')?.value||'impressora';
   const q=low(document.getElementById('lc-imp-busca-q')?.value||'');
   const cid=window.modalContext&&window.modalContext.contratoId;
@@ -153,11 +171,8 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
-  sel.innerHTML='<option value="">Selecione a impressora</option>'+opts.map(p=>{
-    const e=eq(p.equipamentoId)||{};
-    return `<option value="${p.equipamentoId}">${esc(e.modelo||'')} — ${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</option>`;
-  }).join('');
-  if(cur) sel.value=cur;
+  listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
+  if(cur) lcEscolherImpressoraChamado(cur);
 };
 
 function setModalSize(){
@@ -218,7 +233,7 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
   if(equipId){
-    const sel=document.getElementById('ko-equip'); if(sel) sel.value=equipId;
+    const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);
     const ant=document.getElementById('ko-cont-ant'); if(ant) ant.value=contadorOficial(equipId,false);
     const ca=document.getElementById('lc-cont-color-ant'); if(ca) ca.value=contadorOficial(equipId,true);
