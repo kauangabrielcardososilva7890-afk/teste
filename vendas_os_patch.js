@@ -313,7 +313,7 @@ window.novaVenda = function(){
   </div>`;
   document.getElementById('modal-footer').innerHTML = `
     <button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold flex items-center gap-2"><i class="ph ph-x-circle"></i> Sair</button>
-    <button onclick="vosImprimirAtual()" class="h-[46px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2"><i class="ph ph-printer"></i> Imprimir</button>
+    <button onclick="vosAbrirImpressaoESalvar()" class="h-[46px] px-5 rounded-xl bg-white border font-bold flex items-center gap-2"><i class="ph ph-printer"></i> Imprimir</button>
     <button onclick="vosSalvarVenda()" class="h-[46px] px-6 rounded-xl bg-[#0a1e8a] text-white font-bold flex items-center gap-2"><i class="ph ph-floppy-disk"></i> Salvar</button>
     <button onclick="vosFaturarAtual()" class="h-[46px] px-6 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-check"></i> Faturar</button>`;
   document.getElementById('modal-root').classList.remove('hidden');
