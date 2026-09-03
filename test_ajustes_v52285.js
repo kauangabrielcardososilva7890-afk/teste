@@ -27,8 +27,9 @@ ok('orçamento NÃO baixa estoque ao adicionar item', !/estoque\s*=\s*[^=][^.]*e
 ok('salvar do orçamento também não baixa estoque', !/\.estoque\s*=\s*/.test(save60.replace(/estoqueInfinito/g,'')));
 
 console.log('== 2. SEM "ORÇAMENTO NÃO ENCONTRADO" AO SALVAR ==');
-ok('salvar reabre o orçamento pelo OBJETO (sem consulta no meio)', save60.includes("if(typeof window.abrirTelaOrcamento === 'function') window.abrirTelaOrcamento(o);"));
-ok('caminho principal não depende de procurar por id na base', save60.indexOf('window.abrirTelaOrcamento(o)') >= 0 && save60.indexOf('window.abrirTelaOrcamento(o)') < 1e9);
+// v5.22.87: o salvar não reabre mais a tela — fecha. A blindagem que importa
+// é a abertura por id/token/número/formulário, sem tostão fantasma.
+ok('salvar não baseia confirmação em procura intermediária', !save60.includes("window.abrirOrcamento(o.id);"));
 ok('abrir orçamento tenta id, depois token e número de reserva', /x\.token===id \|\| String\(x\.numero\)===String\(id\)/.test(o37));
 ok('abrir orçamento usa o formulário em tela como última reserva', /f\.id===id \|\| f\.token===id/.test(o37));
 

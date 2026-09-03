@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 6e08ae4149ca6465
+ * scripts: 190 | sha256: 132571113f1b69e5
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -44331,7 +44331,8 @@ try{
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -44353,10 +44354,13 @@ try{
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -44401,6 +44405,15 @@ try{
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };
@@ -45342,8 +45355,18 @@ try{
   if(typeof window !== 'undefined'){
     window.orcOnTipoItem = orcOnTipoItem;
     window.orcBuscarCliente = orcBuscarCliente;
-    window.orcSelCliente = orcSelCliente;
-    window.orcLimparCliente = orcLimparCliente;
+    window.orcSelCliente = function(id){
+      orcSelCliente(id);
+      // v5.22.87 — escolheu: some o campo de busca, fica só o cartão do cliente
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.add('hidden');
+    };
+    window.orcLimparCliente = function(){
+      orcLimparCliente();
+      // v5.22.87 — tirou o cliente: volta a mostrar a busca
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.remove('hidden');
+    };
     window.orcBuscarProd = orcBuscarProd;
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
@@ -45477,15 +45500,17 @@ try{
 
         // Linha do Cliente com Filtro de Campos
         +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
-        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">'+(f.cliente ? 'Cliente' : 'Cliente * — selecione o filtro e busque com Enter ou lupa')+'</label>'
+        +'<div id="orc-cli-busca" class="'+(f.cliente || isAutorizado ? 'hidden' : '')+'">'
         +'<div class="flex flex-wrap items-center gap-2 mt-1">'
-        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
         +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
-        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'</div>'
         +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
         +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
         +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
@@ -45493,13 +45518,8 @@ try{
         +'</div>'
         +'</div>'
 
-        // Barra de Abas (Itens / Ordem de Serviço)
-        +'<div class="flex border-b border-slate-200">'
-        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
-        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
-        +'</div>'
-
-        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        // v5.22.87 — nada de abas: Itens e Ordem de Serviço ficam na MESMA
+        // tela, um embaixo do outro (a "tela 2" sempre aparece agora)
         +'<div id="orc-aba-itens" class="space-y-3">'
         +(!isAutorizado ? (
           '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
@@ -45544,8 +45564,8 @@ try{
         +'<tbody id="orc-itens-body"></tbody></table></div>'
         +'</div>'
 
-        // ABA 2: ORDEM DE SERVIÇO
-        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        // ABA 2: ORDEM DE SERVIÇO (sempre visível, logo abaixo dos itens)
+        +'<div id="orc-aba-os" class="space-y-3 pt-3 border-t-2 border-[#0a1e8a]/15 mt-2">'
         +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
@@ -45588,8 +45608,9 @@ try{
         +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
         +'</div>';
 
+      // v5.22.87 — a aba fecha pelo X do canto superior: nada de botão Sair no rodapé
       document.getElementById('modal-footer').innerHTML =
-        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        ''
         +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
@@ -45750,12 +45771,11 @@ try{
       if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
       if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
 
-      window.__ORC_ST.form.id = o.id;
+      window.__ORC_ST.form = null;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      // v5.22.85 — reabre o orçamento recém-salvo DIRETO pelo objeto: sem
-      // consulta no meio, sem chance de aparecer "Orçamento não encontrado"
-      if(typeof window.abrirTelaOrcamento === 'function') window.abrirTelaOrcamento(o);
-      else if(typeof window.abrirOrcamento === 'function') window.abrirOrcamento(o.id);
+      // v5.22.87 — salvou, fechou! A aba do orçamento não fica aberta depois
+      // do salvar; volta direto para a lista de orçamentos
+      if(typeof closeModal === 'function') closeModal();
     };
 
     // Sincronização de versão visual

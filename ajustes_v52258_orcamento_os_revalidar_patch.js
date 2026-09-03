@@ -729,7 +729,8 @@
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -751,10 +752,13 @@
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -799,6 +803,15 @@
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };

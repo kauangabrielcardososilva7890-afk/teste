@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.86**  
+**Última versão:** **v5.22.87**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.86>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.87>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -77,7 +77,21 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
-## v5.22.86 — orçamentos: lixeira dos itens volta a funcionar
+## v5.22.87 — orçamentos: tela enxuta (cliente só quando precisa, uma única página, sem Sair)
+
+**1) Orçamento já salvo não pede mais cliente** — a área de busca/filtro de cliente agora fica dentro de `orc-cli-busca`, que só aparece quando não tem cliente. Abriu orçamento salvo (ou escolheu o cliente): mostra só o cartão do cliente (nome, documento, cidade). Clicou no X "Trocar cliente": a busca volta. Ajuste em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js` + `orcSelCliente`/`orcLimparCliente` alternando o bloco.
+
+**2) "A tela 2 não apareceu"** — cortado o mal pela raiz: os botões de aba (Itens/Ordem de Serviço) foram REMOVIDOS e as duas seções agora aparecem **sempre, uma embaixo da outra** (`orc-aba-os` sem `hidden`). Zero dependência de clique/toggle para a OS aparecer — os campos e a busca por serial da v5.22.85 seguem nos mesmos ids.
+
+**3) Salvar fecha a aba** — o botão Salvar do orçamento agora termina com `closeModal()` (e `__ORC_ST.form = null`), voltando direto para a lista, em vez de permanecer na tela recém-salva.
+
+**4) Sem botão "Sair"** — rodapé do orçamento sem o Sair: a aba fecha pelo **X do canto superior** (existe no header do modal desde sempre). Mantidos: Revalidar link, Imprimir, Salvar e "Abrir Venda Salva" (quando autorizado).
+
+**5) Lista: "Mostrar todos aprovados" e "Mostrar todos desaprovados"** — ao lado do botão "Todos" no menu Orçamentos (`ajustes_v52258_orcamento_os_revalidar_patch.js`), via nova `window.orcFiltroLista('fechados'|'recusados')`. Criado o filtro `recusados` (status recusado pelo cliente no link) e adicionado na `<select>`. "Não fechados" deixou de misturar recusado.
+
+**6) Revalidar link: FUNCIONA** (resposta ao usuário) — `revalidarLinkOrcamento` na v5.22.58: gera token novo, volta status pra `aberto`, remove a venda gerada não faturada (e sua OS), limpa os registros locais de decisão do link, salva e re-renderiza; se a venda gerada JÁ foi faturada, bloqueia com orientação pra estornar primeiro.
+
+**TESTE NOVO:** `test_ajustes_v52287.js` — 20 verificações; `test_ajustes_v52285.js` atualizado (salvar fecha, não reabre). Suíte 140/140.
 
 **Conserto:** "Uncaught TypeError: window.orcDelItem is not a function". A tabela de itens do orçamento (tela vigente, v5.22.60) chamava `window.orcDelItem(idx)` e essa função **nunca existiu** em nenhum arquivo — só tinha sido chamada. Criada em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`: remove o item, em orçamento autorizado/fechado bloqueia com aviso, e redesenha a lista com o total recalculado.
 
