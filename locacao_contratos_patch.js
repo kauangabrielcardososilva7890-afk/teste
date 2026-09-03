@@ -1138,7 +1138,7 @@ window.openModalChamadoCompleto = function(osId, contratoId){
         <div class="rounded-xl bg-blue-50 border border-blue-200 p-3 flex items-center justify-between">
           <div>
             <label class="font-bold text-blue-900 mr-2">Selecione a Impressora da Manutenção:</label>
-            <select id="o-equip-sel" onchange="autoPreencherDadosChamado(this.value)" class="h-9 px-3 rounded-lg border font-semibold">${maqSel}<option value="">Outro Equipamento</option></select>
+            <input type="hidden" id="o-equip-sel" value="${o.equipamentoId||''}"><div id="o-equip-escolhida" class="${o.equipamentoId?'':'hidden'} mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="o-equip-nome" class="font-semibold text-[12px]">${o.equipamentoId?escapeHtml((db.equipamentos||[]).find(e=>e.id===o.equipamentoId)?.modelo||'Impressora'):''}</span><button type="button" onclick="editarEquipamentoOS()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="o-equip-lista" class="${o.equipamentoId?'hidden':''} mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto">${maqSel.replace(/<option[^>]*value="([^"]+)"[^>]*>([\s\S]*?)<\/option>/g, '<button type="button" onclick="selecionarEquipamentoOS(\'$1\')" class="w-full text-left px-3 py-2 border-b hover:bg-blue-50">$2</button>')}</div>
           </div>
           <span class="text-[11px] text-blue-700">Preenche Serial/Patrimônio e Contador Antigo</span>
         </div>

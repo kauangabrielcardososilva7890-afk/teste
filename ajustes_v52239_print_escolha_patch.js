@@ -181,9 +181,17 @@ window.vosAbrirImpressaoESalvar=function(){
       f.osSelecionada=tipo==='os';
       window.__vosPermitirVendaVazia=true;
       var venda;
+      var itensOriginais=f.itens||[];
+      // A impressão pode preparar uma venda sem itens; o item temporário só evita
+      // validações antigas e nunca é persistido no documento final.
+      if(!itensOriginais.length) f.itens=[{descricao:'',qtd:0,preco:0,subtotal:0,tipo:'Produto',_impressaoVazia:true}];
       try{ venda=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null; }
       catch(err){ console.error('[impressao] falha ao salvar antes de imprimir',err); if(typeof toast==='function') toast('Não foi possível preparar a impressão','error'); venda=null; }
-      finally{ window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior; }
+      finally{
+        f.itens=itensOriginais;
+        if(venda && venda.itens) venda.itens=venda.itens.filter(function(it){return !it._impressaoVazia && (it.qtd||it.descricao);});
+        window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior;
+      }
       if(!venda) return;
       // A impressão salva a venda, mas mantém esta aba aberta.
       window.__vosPrintOpts=opcoes;
