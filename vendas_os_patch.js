@@ -211,7 +211,7 @@ window.novaVenda = function(){
           </label>
           <button onclick="openModal('produto')" class="hidden md:flex col-span-1 h-[40px] rounded-xl bg-white border text-[#0a1e8a] items-center justify-center" title="Cadastrar produto"><i class="ph ph-plus-circle text-[18px]"></i></button>
           <label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Qtd
-            <input id="vos-item-qtd" type="number" min="1" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-qtd" type="number" min="1" value="1" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">V. Unit
             <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Desc R$
@@ -477,7 +477,7 @@ window.vosAddItem = function(){
   f.itens.push(item);
   f.produtoSel = null;
   ['vos-prod-search','vos-item-cartucho','vos-item-ident','vos-item-tec'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
-  document.getElementById('vos-item-qtd').value = '';
+  document.getElementById('vos-item-qtd').value = 1;
   document.getElementById('vos-item-vunit').value = '';
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-item-total').value = '';

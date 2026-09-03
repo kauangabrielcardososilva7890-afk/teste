@@ -596,7 +596,7 @@ window.renderModalProduto = function(id){
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Localização</label><input id="kp-prd-local" value="${html(p.local || '')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor"></div>
+          
         </div>
       </div>
 
@@ -619,7 +619,7 @@ window.renderModalProduto = function(id){
 
 window.alternarEstoqueOperacional = function(){
   const infinito=!!document.getElementById('kp-prd-infinito')?.checked;
-  ['kp-prd-est','kp-prd-min','kp-prd-ideal','kp-prd-custo','kp-prd-local'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }});
+  ['kp-prd-est','kp-prd-min','kp-prd-ideal','kp-prd-custo'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }});
 };
 
 window.mudarAbaProdutoOperacional = function(aba){
@@ -658,7 +658,7 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: document.getElementById('kp-prd-local')?.value?.trim() || '',
+    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',

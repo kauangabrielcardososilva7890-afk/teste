@@ -177,17 +177,16 @@ window.vosAbrirImpressaoESalvar=function(){
     escolherDois('Quantas vias?', '1 via', '1', '2 vias', '2').then(function(vias){
       if(!vias) return;
       var anterior=f.osSelecionada;
+      var opcoes={tipo:tipo,vias:vias};
       f.osSelecionada=tipo==='os';
       window.__vosPermitirVendaVazia=true;
       var venda;
       try{ venda=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null; }
       finally{ window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior; }
       if(!venda) return;
-      closeModal();
-      if(typeof renderVendas==='function') renderVendas();
-      if(typeof renderFinanceiro==='function') renderFinanceiro();
-      window.__vosPrintOpts={tipo:tipo,vias:vias};
-      try{ window.imprimirNotinha(venda.id,{tipo:tipo,vias:vias}); }
+      // A impressão salva a venda, mas mantém esta aba aberta.
+      window.__vosPrintOpts=opcoes;
+      try{ window.imprimirNotinha(venda.id,opcoes); }
       finally{ window.__vosPrintOpts=null; }
     });
   });

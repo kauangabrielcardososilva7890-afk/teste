@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: b180b2861cee23e6
+ * scripts: 190 | sha256: 9eb295c7a6322937
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -5133,7 +5133,7 @@ window.novaVenda = function(){
           </label>
           <button onclick="openModal('produto')" class="hidden md:flex col-span-1 h-[40px] rounded-xl bg-white border text-[#0a1e8a] items-center justify-center" title="Cadastrar produto"><i class="ph ph-plus-circle text-[18px]"></i></button>
           <label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Qtd
-            <input id="vos-item-qtd" type="number" min="1" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
+            <input id="vos-item-qtd" type="number" min="1" value="1" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">V. Unit
             <input id="vos-item-vunit" type="number" step="0.01" value="" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');vosItemCalcTotal()" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-[12.5px]"></label>
           <label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-slate-500">Desc R$
@@ -5399,7 +5399,7 @@ window.vosAddItem = function(){
   f.itens.push(item);
   f.produtoSel = null;
   ['vos-prod-search','vos-item-cartucho','vos-item-ident','vos-item-tec'].forEach(id=>{const e=document.getElementById(id); if(e) e.value='';});
-  document.getElementById('vos-item-qtd').value = '';
+  document.getElementById('vos-item-qtd').value = 1;
   document.getElementById('vos-item-vunit').value = '';
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-item-total').value = '';
@@ -10624,7 +10624,7 @@ window.renderModalProduto = function(id){
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label class="block font-bold text-slate-600 mb-1">Custo Total R$</label><input id="kp-prd-custo" type="number" step="0.01" value="${toNumber(p.custo, 0)}" class="w-full h-10 px-3 rounded-xl border"></div>
-          <div><label class="block font-bold text-slate-600 mb-1">Localização</label><input id="kp-prd-local" value="${html(p.local || '')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor"></div>
+          
         </div>
       </div>
 
@@ -10647,7 +10647,7 @@ window.renderModalProduto = function(id){
 
 window.alternarEstoqueOperacional = function(){
   const infinito=!!document.getElementById('kp-prd-infinito')?.checked;
-  ['kp-prd-est','kp-prd-min','kp-prd-ideal','kp-prd-custo','kp-prd-local'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }});
+  ['kp-prd-est','kp-prd-min','kp-prd-ideal','kp-prd-custo'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }});
 };
 
 window.mudarAbaProdutoOperacional = function(aba){
@@ -10686,7 +10686,7 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: document.getElementById('kp-prd-local')?.value?.trim() || '',
+    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
@@ -38769,17 +38769,16 @@ window.vosAbrirImpressaoESalvar=function(){
     escolherDois('Quantas vias?', '1 via', '1', '2 vias', '2').then(function(vias){
       if(!vias) return;
       var anterior=f.osSelecionada;
+      var opcoes={tipo:tipo,vias:vias};
       f.osSelecionada=tipo==='os';
       window.__vosPermitirVendaVazia=true;
       var venda;
       try{ venda=typeof window.vosGravarVenda==='function' ? window.vosGravarVenda(true) : null; }
       finally{ window.__vosPermitirVendaVazia=false; f.osSelecionada=anterior; }
       if(!venda) return;
-      closeModal();
-      if(typeof renderVendas==='function') renderVendas();
-      if(typeof renderFinanceiro==='function') renderFinanceiro();
-      window.__vosPrintOpts={tipo:tipo,vias:vias};
-      try{ window.imprimirNotinha(venda.id,{tipo:tipo,vias:vias}); }
+      // A impressão salva a venda, mas mantém esta aba aberta.
+      window.__vosPrintOpts=opcoes;
+      try{ window.imprimirNotinha(venda.id,opcoes); }
       finally{ window.__vosPrintOpts=null; }
     });
   });
