@@ -1,4 +1,223 @@
-<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Digicopy · protótipo</title><link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1"><style>
-:root{--blue:#0a1e8a;--blue2:#1735ad;--ink:#1b2740;--muted:#76839a;--line:#e5eaf2;--bg:#f7f9fc;--soft:#eef2ff;--green:#159a72;--orange:#c88720}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px "Segoe UI",Arial,sans-serif}button,input{font:inherit}button{cursor:pointer;border:0}.app{min-height:100vh}.header{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 42px;gap:44px}.brand{display:flex;align-items:center;gap:10px;color:var(--blue);font-size:16px;font-weight:800;letter-spacing:.07em}.logo{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:var(--blue);color:#fff;font-weight:900;font-size:19px}.nav{display:flex;gap:3px;height:100%;align-items:center}.nav button{height:38px;padding:0 14px;color:#56637a;background:transparent;border-radius:8px;font-size:12px}.nav button:hover,.nav button.active{background:var(--soft);color:var(--blue);font-weight:700}.header-tools{margin-left:auto;display:flex;align-items:center;gap:10px}.search{height:35px;width:210px;border:1px solid var(--line);border-radius:8px;padding:0 11px;background:#fbfcfe;color:var(--ink)}.bell{width:34px;height:34px;border-radius:8px;color:#64718a;background:#f5f7fb;font-size:17px}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#dce5ff;color:var(--blue);font-weight:800;font-size:11px}.body{max-width:1280px;margin:auto;padding:37px 42px}.welcome{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px}.welcome h1{font-size:30px;letter-spacing:-.045em;margin:8px 0 0}.welcome p{color:var(--muted);margin:7px 0 0}.welcome small{color:var(--muted);font-size:12px}.welcome small b{color:var(--ink);display:block;font-size:13px;margin-bottom:3px}.hero{height:150px;border-radius:15px;background:linear-gradient(105deg,var(--blue),#2947bb);color:#fff;padding:25px 28px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative}.hero:after{content:"";position:absolute;width:265px;height:265px;border:1px solid #ffffff20;border-radius:50%;right:65px;top:-175px;box-shadow:0 0 0 28px #ffffff09,0 0 0 56px #ffffff06}.hero-copy{position:relative;z-index:1}.hero h2{font-size:20px;margin:0 0 7px}.hero p{color:#dce3ff;font-size:12px;margin:0}.hero button{position:relative;z-index:1;background:#fff;color:var(--blue);border-radius:8px;padding:10px 15px;font-weight:700;font-size:12px}.section-head{display:flex;align-items:center;justify-content:space-between;margin:29px 0 13px}.section-head h2{font-size:16px;margin:0}.section-head span{font-size:11px;color:var(--muted)}.areas{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.area{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;transition:.18s;min-height:132px}.area:hover{border-color:#b8c7f5;box-shadow:0 8px 22px #1b347b10;transform:translateY(-3px)}.area-top{display:flex;justify-content:space-between;align-items:start}.area-icon{height:35px;width:35px;border-radius:9px;background:var(--soft);color:var(--blue);display:grid;place-items:center;font-size:18px}.area .arrow{color:#a1adbf;font-size:16px}.area h3{font-size:14px;margin:13px 0 5px}.area p{font-size:11px;color:var(--muted);margin:0}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quick button{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px;text-align:left;color:var(--ink);transition:.18s}.quick button:hover{border-color:#b8c7f5;background:#fbfcff}.quick i{color:var(--blue);font-size:18px;margin-right:8px;vertical-align:middle}.quick span{font-size:12px;font-weight:600}.bottom{display:grid;grid-template-columns:1.1fr .9fr;gap:13px;margin-top:25px}.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px}.box h3{font-size:14px;margin:0 0 13px}.line{display:flex;align-items:center;padding:9px 0;border-top:1px solid #f0f2f6;font-size:11px}.line:first-of-type{border-top:0}.line i{width:26px;height:26px;border-radius:7px;background:#eef8f4;color:var(--green);display:grid;place-items:center;margin-right:9px}.line b{font-size:11.5px}.line small{display:block;color:var(--muted);margin-top:2px}.line time{margin-left:auto;color:#a3adbb;font-size:10px}.cloud{display:flex;align-items:center;gap:13px;background:#f6f8ff;border-left:3px solid var(--blue);padding:14px}.cloud i{color:var(--blue);font-size:24px}.cloud b{font-size:12px}.cloud p{font-size:11px;color:var(--muted);margin:4px 0 0}.mock{display:none;text-align:center;padding:90px 20px;color:var(--muted)}.mock i{display:block;font-size:36px;color:#b6c3eb;margin-bottom:12px}.mock b{color:var(--ink);font-size:17px}.mock p{font-size:12px}.mobile{display:none;background:none;color:var(--blue);font-size:20px}@media(max-width:900px){.header{padding:0 22px;gap:22px}.body{padding:28px 22px}.areas{grid-template-columns:repeat(2,1fr)}.bottom{grid-template-columns:1fr}}@media(max-width:620px){.header{height:62px;padding:0 14px}.mobile{display:block}.brand{font-size:14px}.nav{display:none}.search{display:none}.body{padding:23px 14px}.welcome{display:block}.welcome h1{font-size:26px}.welcome small{display:block;margin-top:15px}.hero{height:auto;min-height:164px;padding:22px;display:block}.hero button{margin-top:20px}.areas{grid-template-columns:1fr;gap:9px}.area{min-height:auto;padding:15px}.quick{grid-template-columns:1fr 1fr}.bottom{display:block}.box{margin-top:12px}}
-</style></head><body><div class="app"><header class="header"><button class="mobile" id="mobile"><i class="ph ph-list"></i></button><div class="brand"><span class="logo">D</span>DIGICOPY</div><nav class="nav"><button class="active" data-screen="Início">Início</button><button data-screen="Operação">Operação</button><button data-screen="Cadastros">Cadastros</button><button data-screen="Financeiro">Financeiro</button><button data-screen="Relatórios">Relatórios</button></nav><div class="header-tools"><input class="search" placeholder="Pesquisar"><button class="bell"><i class="ph ph-bell"></i></button><div class="avatar">KC</div></div></header><main class="body"><div id="home"><div class="welcome"><div><small>PAINEL PRINCIPAL</small><h1>Olá, equipe Digicopy</h1><p>Escolha uma área para começar seu trabalho.</p></div><small><b>03 de setembro de 2026</b>Quinta-feira</small></div><section class="hero"><div class="hero-copy"><h2>Bom dia. Tudo certo por aqui.</h2><p>Seus dados estão protegidos e a sincronização com a nuvem está ativa.</p></div><button data-screen="Nuvem">Ver situação da nuvem <i class="ph ph-arrow-right"></i></button></section><div class="section-head"><h2>Áreas do sistema</h2><span>Selecione uma opção</span></div><div class="areas"><button class="area" data-screen="Clientes"><div class="area-top"><span class="area-icon"><i class="ph ph-users"></i></span><span class="arrow">›</span></div><h3>Clientes</h3><p>Cadastros, contatos e histórico de atendimento</p></button><button class="area" data-screen="Estoque"><div class="area-top"><span class="area-icon"><i class="ph ph-package"></i></span><span class="arrow">›</span></div><h3>Estoque</h3><p>Produtos, peças, cartuchos e serviços</p></button><button class="area" data-screen="Contratos"><div class="area-top"><span class="area-icon"><i class="ph ph-file-text"></i></span><span class="arrow">›</span></div><h3>Contratos de locação</h3><p>Contratos, impressoras e leituras</p></button><button class="area" data-screen="Vendas"><div class="area-top"><span class="area-icon"><i class="ph ph-shopping-cart"></i></span><span class="arrow">›</span></div><h3>Vendas e orçamentos</h3><p>Novas vendas, orçamentos e notinhas</p></button><button class="area" data-screen="Chamados"><div class="area-top"><span class="area-icon"><i class="ph ph-wrench"></i></span><span class="arrow">›</span></div><h3>Chamados</h3><p>Ordens de serviço e atendimento técnico</p></button><button class="area" data-screen="Financeiro"><div class="area-top"><span class="area-icon"><i class="ph ph-bank"></i></span><span class="arrow">›</span></div><h3>Financeiro</h3><p>Contas, recebimentos e fluxo de caixa</p></button></div><div class="section-head"><h2>Atalhos</h2><span>Ações mais usadas</span></div><div class="quick"><button data-screen="Novo cliente"><i class="ph ph-user-plus"></i><span>Novo cliente</span></button><button data-screen="Nova venda"><i class="ph ph-receipt"></i><span>Nova venda</span></button><button data-screen="Nova leitura"><i class="ph ph-gauge"></i><span>Lançar leitura</span></button><button data-screen="Novo chamado"><i class="ph ph-wrench"></i><span>Abrir chamado</span></button></div><div class="bottom"><section class="box"><h3>Últimas atividades</h3><div class="line"><i class="ph ph-check"></i><div><b>Leitura lançada</b><small>Contrato 482 · Centro</small></div><time>há 12 min</time></div><div class="line"><i class="ph ph-user-plus"></i><div><b>Novo cliente cadastrado</b><small>Comercial Oliveira Ltda.</small></div><time>há 38 min</time></div><div class="line"><i class="ph ph-wrench"></i><div><b>Chamado atualizado</b><small>OS 197 · Em atendimento</small></div><time>há 1 h</time></div></section><section class="box"><h3>Conexão e segurança</h3><div class="cloud"><i class="ph ph-cloud-check"></i><div><b>Sincronização ativa</b><p>Último envio realizado há 4 minutos.</p></div></div></section></div></div><div class="mock" id="mock"><i class="ph ph-sparkle"></i><b id="mock-title">Módulo em prévia</b><p>Esta tela é somente uma demonstração visual.<br>Nenhuma função real está ligada.</p></div></main></div><script>const home=document.getElementById('home'),mock=document.getElementById('mock');document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-screen]').forEach(x=>x.classList.remove('active'));b.classList.add('active');const n=b.dataset.screen;home.style.display=n==='Início'?'block':'none';mock.style.display=n==='Início'?'none':'block';document.getElementById('mock-title').textContent=n+' · prévia'}));document.getElementById('mobile').addEventListener('click',()=>{const n=document.querySelector('.nav');n.style.display=n.style.display==='flex'?'none':'flex';n.style.position='absolute';n.style.top='62px';n.style.left='0';n.style.right='0';n.style.height='auto';n.style.padding='8px 14px';n.style.background='#fff';n.style.borderBottom='1px solid var(--line)';n.style.flexDirection='column';n.style.alignItems='stretch'});</script></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a1e8a">
+<script>
+window.DIGICOPY_APP_VERSION = '5.22.82';
+try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')document.documentElement.classList.add('digi-escuro');}catch(e){}
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Digicopy">
+<title>Sistema Digicopy v5.22.82</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./logo_2.png">
+<link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
+<link rel="stylesheet" href="./assets/vendor/phosphor/style.css?v=2.1.1">
+<style>
+:root{--digi:#0a1e8a;--digi-dark:#08176e;--digi-light:#e8eaf8}
+.bg-indigo-600{background:var(--digi) !important} .hover\:bg-indigo-700:hover{background:var(--digi-dark) !important}
+.text-indigo-600{color:var(--digi) !important} .text-indigo-700{color:var(--digi) !important}
+.bg-indigo-50{background:var(--digi-light) !important} .border-indigo-100{border-color:#c9ceef !important}
+.focus\:border-indigo-200:focus{border-color:#8a93d6 !important} .focus\:ring-indigo-500\/10:focus{--tw-ring-color:rgba(10,30,138,0.12) !important}
+.shadow-indigo-500\/20{--tw-shadow-color:rgba(10,30,138,0.2) !important}
+.glass{backdrop-filter:blur(16px)}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.animate-slideIn{animation:slideIn .25s ease-out}
+.animate-fadeIn{animation:fadeIn .3s ease-out}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.login-bg{background:radial-gradient(1200px 600px at 20% 10%, #1a2bbf 0%, #0a1e8a 35%, #070f4d 100%)}
+
+
+
+.classic-toolbar{background:#fff;border-bottom:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.classic-toolbar-scroll{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:0 18px}
+.classic-menu-btn{min-width:94px;height:64px;padding:7px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-right:1px solid #eef2f7;color:#334155;font-size:11px;font-weight:700;white-space:nowrap;transition:.15s}
+.classic-menu-btn:first-child{border-left:1px solid #eef2f7}.classic-menu-btn i{font-size:22px;color:#0a1e8a}.classic-menu-btn:hover{background:#f8fafc;color:#0a1e8a}
+.ribbon-actions{display:flex;align-items:stretch;overflow-x:auto;background:white;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.ribbon-actions button{min-width:118px;padding:12px 14px;border-right:1px solid #eef2f7;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;font-weight:800;color:#334155;background:white}
+.ribbon-actions button:hover{background:#f8fafc;color:#0a1e8a}.ribbon-actions i{font-size:26px;color:#0a1e8a}.ribbon-actions small{font-weight:600;color:#64748b;font-size:10.5px;line-height:1.1}
+
+button,input,select{font-size:14px}.simple-pill{border:1px solid #dbe3ff;background:#f8f9ff;color:#0a1e8a}
+
+#sidebar,#overlay{display:none!important}
+body{background:#f3f4f6;color:#111827}.glass{backdrop-filter:none}.shadow-xl,.shadow-lg{box-shadow:0 1px 3px rgba(15,23,42,.10)!important}
+header{height:54px!important;background:#fff!important;backdrop-filter:none!important}.classic-toolbar{position:sticky;top:54px;z-index:25}
+.classic-window{background:#f7f7f7;border:1px solid #b8c1cc;border-radius:2px;box-shadow:none}.classic-title{background:#2476d0;color:white;text-align:center;font-weight:700;padding:7px 10px;font-size:18px}.classic-fieldset{border:1px solid #cfd6df;background:#fafafa;padding:10px}.classic-fieldset legend{font-size:11px;padding:0 5px;color:#111827}.classic-label{font-size:11px;color:#111827;margin-bottom:3px;display:block}.classic-input,.classic-select{height:24px;border:1px solid #b9c2cc;background:white;padding:2px 6px;font-size:11px;border-radius:0;outline:none}.classic-input:focus{border-color:#2476d0}.classic-grid-table{width:100%;border-collapse:collapse;background:white;font-size:11px}.classic-grid-table th{background:#f4f6f8;border:1px solid #d7dce2;padding:3px 5px;text-align:left;font-weight:500}.classic-grid-table td{border:1px solid #e2e6ea;padding:3px 5px;height:22px}.classic-toolbar-btn{height:35px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-right:1px solid #d7dce2;font-size:12px;color:#111827}.classic-toolbar-btn:hover{background:#eaf2ff}.classic-toolbar-btn i{font-size:20px;color:#0a1e8a}.classic-icon-btn{width:38px;height:35px;border:1px solid #d7dce2;background:#fff;display:grid;place-items:center}.classic-icon-btn i{font-size:22px;color:#0a1e8a}.classic-bottom-btn{height:54px;min-width:74px;border:1px solid #d7dce2;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px}.classic-total{font-size:30px;font-weight:800;color:#2476d0;text-align:right}.classic-row-selected{background:#93cdfd!important}
+
+
+.app-titlebar{box-shadow:none}#app-shell{display:flex;flex-direction:column;min-height:100vh}#app-shell main{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1{flex:1;display:flex;flex-direction:column}#app-shell main>.flex-1.p-4{padding:0!important}.workspace-pad{padding:0}.desktop-home{min-height:calc(100vh - 124px);height:auto;display:grid;place-items:center;background:white}.desktop-logo{display:flex;align-items:center;gap:12px;color:#333;font-size:28px;font-weight:700;font-style:italic}.desktop-logo img{height:54px;width:auto}.statusbar{height:22px;background:#f2f2f2;border-top:1px solid #cfd6df;position:fixed;bottom:0;left:0;right:0;z-index:15;display:grid;grid-template-columns:220px 140px 240px 1fr;font-size:11px;color:#111}#app-shell main{padding-bottom:22px;overflow:visible}.statusbar span{border-right:1px solid #cfd6df;padding:3px 8px;white-space:nowrap;overflow:hidden}.app-titlebar{position:sticky;top:0;z-index:40}.modern-topnav{position:relative;top:auto;z-index:35;overflow:visible}.module-menu{z-index:999 !important;}
+
+
+
+.modern-topnav{position:relative;top:auto;z-index:28;background:rgba(255,255,255,.96);border-bottom:1px solid #dbe3ef;box-shadow:0 1px 8px rgba(15,23,42,.06)}
+.module-row{height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:linear-gradient(180deg,#ffffff,#f8fbff);overflow:visible}
+.module{position:relative}.module>button{height:34px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:7px;transition:.18s;background:transparent}.module>button i{font-size:17px;color:#0a1e8a}.module>button:hover{background:#eaf2ff;color:#0a1e8a;transform:translateY(-1px)}
+.module-menu{position:absolute;top:39px;left:0;min-width:230px;background:white;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.14);padding:8px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:.16s;z-index:80}.module:hover .module-menu{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.module-menu button{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;transition:.14s}.module-menu button:hover{background:#f1f6ff;color:#0a1e8a;padding-left:14px}.module-menu i{font-size:18px;color:#0a1e8a}.module-menu small{margin-left:auto;color:#94a3b8;font-size:10px}
+.command-row{height:42px;display:flex;align-items:center;gap:8px;padding:4px 12px;background:white;border-top:1px solid #eef2f7}.command-row .quick{height:28px;padding:0 10px;border:1px solid #dbe3ef;border-radius:8px;background:#fff;font-size:11.5px;font-weight:700;color:#334155;display:flex;align-items:center;gap:6px;transition:.15s}.command-row .quick:hover{border-color:#0a1e8a;color:#0a1e8a;box-shadow:0 4px 14px rgba(10,30,138,.10);transform:translateY(-1px)}.command-row .quick.primary{background:#0a1e8a;color:white;border-color:#0a1e8a}.command-search{height:28px;width:250px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12px}.pulse-dot{width:7px;height:7px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulseRing 1.7s infinite}@keyframes pulseRing{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.clean-home{height:calc(100vh - 124px);background:radial-gradient(circle at 52% 48%,#eef5ff 0,#fff 32%,#fff 100%);position:relative;overflow:hidden;display:grid;place-items:center}.clean-home:before,.clean-home:after{content:"";position:absolute;border-radius:999px;border:1px solid rgba(10,30,138,.08);animation:floatSoft 7s ease-in-out infinite}.clean-home:before{width:360px;height:360px}.clean-home:after{width:520px;height:520px;animation-delay:-2s}@keyframes floatSoft{0%,100%{transform:translateY(0) scale(1);opacity:.55}50%{transform:translateY(-12px) scale(1.025);opacity:.9}}
+.clean-logo{position:relative;z-index:1;text-align:center;color:#1f2937}.clean-logo img{height:68px;margin:auto;filter:drop-shadow(0 10px 18px rgba(10,30,138,.12))}.clean-logo h1{font-size:32px;font-weight:800;margin-top:12px;letter-spacing:-.03em}.clean-logo p{font-size:13px;color:#64748b;margin-top:6px}.clean-shortcuts{position:absolute;bottom:42px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:0 16px}.clean-shortcuts button{height:34px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:rgba(255,255,255,.85);font-size:12px;font-weight:700;color:#334155;backdrop-filter:blur(8px);transition:.16s}.clean-shortcuts button:hover{background:#0a1e8a;color:white;transform:translateY(-2px)}
+
+.neo-shell{padding:18px;background:linear-gradient(180deg,#f8fbff 0,#ffffff 72%);min-height:calc(100vh - 170px);animation:fadeIn .22s ease-out}.neo-panel{background:rgba(255,255,255,.94);border:1px solid #dbe5f1;border-radius:18px;box-shadow:0 12px 35px rgba(15,23,42,.07);overflow:hidden}.neo-head{background:linear-gradient(135deg,#0a1e8a,#0876c9);color:white;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}.neo-head h3{font-size:20px;font-weight:800;letter-spacing:-.02em}.neo-head p{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px}.neo-actions{display:flex;gap:8px;flex-wrap:wrap}.neo-btn{height:34px;padding:0 13px;border-radius:10px;border:1px solid #d9e3ef;background:white;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:7px;transition:.16s}.neo-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(10,30,138,.12);border-color:#0a1e8a;color:#0a1e8a}.neo-btn.primary{background:#0a1e8a;border-color:#0a1e8a;color:white}.neo-btn.danger:hover{border-color:#dc2626;color:#dc2626}.neo-input,.neo-select{height:36px;border:1px solid #cbd5e1;border-radius:10px;background:white;padding:0 11px;font-size:13px;outline:none;transition:.14s}.neo-input:focus,.neo-select:focus{border-color:#0a1e8a;box-shadow:0 0 0 4px rgba(10,30,138,.08)}.neo-label{font-size:11px;text-transform:uppercase;font-weight:800;color:#64748b;display:block;margin-bottom:5px}.neo-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;padding:16px}.neo-card{border:1px solid #e2e8f0;border-radius:16px;background:#fff;padding:14px;animation:fadeIn .22s ease-out}.neo-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}.neo-table th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;text-align:left;padding:9px;border-bottom:1px solid #e2e8f0}.neo-table td{padding:9px;border-bottom:1px solid #eef2f7}.neo-table tr{transition:.12s}.neo-table tbody tr:hover{background:#f5f9ff}.neo-selected{background:#dbeafe!important}.neo-total{font-size:34px;font-weight:900;color:#0a1e8a;letter-spacing:-.04em}.neo-suggest{max-height:160px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:white;margin-top:6px;box-shadow:0 14px 35px rgba(15,23,42,.10);animation:slideIn .16s ease-out}.neo-suggest button{width:100%;padding:9px 11px;text-align:left;font-size:12.5px;border-bottom:1px solid #f1f5f9}.neo-suggest button:hover{background:#eff6ff;color:#0a1e8a}.neo-tabs{display:flex;gap:7px;flex-wrap:wrap}.neo-tab{height:30px;padding:0 12px;border-radius:999px;border:1px solid #dbe3ef;background:white;font-size:12px;font-weight:750;color:#475569}.neo-tab.active,.neo-tab:hover{background:#0a1e8a;color:white;border-color:#0a1e8a}.neo-status{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:800;text-transform:uppercase}.neo-status.ok{background:#dcfce7;color:#166534}.neo-status.wait{background:#fef3c7;color:#92400e}.neo-status.info{background:#dbeafe;color:#1e40af}.neo-float-in{animation:floatIn .22s ease-out}@keyframes floatIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}@media(max-width:900px){.neo-grid{grid-template-columns:1fr}.neo-head{align-items:flex-start;flex-direction:column}}
+
+
+/* anti-flash login */
+#app-shell.hidden{display:none!important}
+#login-screen:not(.hidden){display:flex!important}
+
+/* fix menu cobrindo botão contrato - dá espaço sem quebrar scroll */
+.view { scroll-margin-top: 80px; }
+
+</style>
+<style id="layout-prototipo-melhorado">
+/* Cópia visual do index original: melhorias somente neste arquivo de teste. */
+:root{--digi:#0a1e8a;--digi-dark:#07145f;--digi-soft:#eef1ff;--digi-line:#dfe5ef}
+body{background:#f5f7fb!important;color:#1e293b!important}
+.app-titlebar{background:linear-gradient(110deg,#07145f 0%,#0a1e8a 65%,#1532aa 100%)!important;box-shadow:0 2px 9px rgba(7,20,95,.22)!important}
+.app-titlebar .text-white\/70{color:rgba(255,255,255,.75)!important}
+.modern-topnav{background:#fff!important;border-bottom:1px solid var(--digi-line)!important;box-shadow:0 2px 8px rgba(15,23,42,.06)!important}
+.module-row{max-width:1500px;margin:auto;height:50px!important;padding:0 18px!important;background:#fff!important}
+.module>button{height:36px!important;border-radius:8px!important;color:#334155!important;font-size:12px!important}
+.module>button:hover{background:var(--digi-soft)!important;color:var(--digi)!important;transform:none!important}
+.module-menu{border:1px solid #d9e0eb!important;border-radius:9px!important;box-shadow:0 12px 28px rgba(20,37,78,.14)!important;padding:6px!important}
+.module-menu button{height:35px!important;border-radius:7px!important}
+.command-row{max-width:1500px;margin:auto;background:#fbfcfe!important;border-top:1px solid #f1f3f7!important;border-bottom:0!important;height:45px!important;padding:4px 18px!important}
+.command-row .quick{height:30px!important;border-radius:7px!important;font-size:11px!important}
+.command-row .quick.primary{background:var(--digi)!important}
+.workspace-pad,.neo-shell{max-width:1500px;margin:auto!important}
+.neo-panel,.panel,.card{border-color:var(--digi-line)!important;box-shadow:0 3px 12px rgba(20,37,78,.055)!important;border-radius:12px!important}
+.neo-panel:hover,.card:hover{box-shadow:0 7px 20px rgba(20,37,78,.09)!important}
+button{transition:background-color .14s,border-color .14s,box-shadow .14s,transform .14s}
+.statusbar{background:#f8fafc!important;border-top-color:#dce3ed!important;color:#526071!important}
+@media(max-width:900px){.module-row{padding:0 10px!important}.command-row{padding:4px 10px!important}}
+</style>
+</head>
+<body class="bg-[#f4f5f9] text-slate-800 font-sans antialiased selection:bg-[#0a1e8a]/20">
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="fixed inset-0 z-[100] flex">
+  <!-- LEFT PANEL -->
+  <div class="hidden lg:flex w-[52%] login-bg text-white flex-col justify-between p-12 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-20 pointer-events-none">
+      <div class="absolute -right-32 -top-32 w-[600px] h-[600px] rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute -left-40 bottom-0 w-[700px] h-[700px] rounded-full bg-indigo-400/10 blur-3xl"></div>
+    </div>
+    <div class="relative z-10 flex items-center justify-center" style="min-height:280px">
+      <img src="./logo_2.png?v=5.3.8" alt="DIGICOPY" style="width:min(520px,78vw);height:auto;max-height:62vh;object-fit:contain;filter:drop-shadow(0 22px 45px rgba(0,0,0,.35))">
+    </div>
+  </div>
+  <!-- RIGHT PANEL - FORMS -->
+  <div class="flex-1 bg-white flex flex-col">
+    <div class="lg:hidden h-[76px] px-6 flex items-center border-b border-slate-100 bg-[#0a1e8a]"><img src="./logo_2.png?v=5.3.5" class="h-9 w-auto"></div>
+    <div class="flex-1 flex items-center justify-center p-6 lg:p-10">
+      <div class="w-full max-w-[400px]">
+        <!-- LOGIN DIRETO - SEM CNPJ -->
+        <div id="login-step-user">
+          <div class="mb-6 flex items-center gap-3 p-3 rounded-xl bg-[#eef2ff] border border-[#c9ceef]"><div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[13px]">DG</div><div><p class="font-bold text-[13px] leading-tight">Digicopy</p><p class="text-[11px] text-slate-500">Acesso por usuário</p></div><span class="ml-auto w-2 h-2 rounded-full bg-emerald-500"></span></div>
+          <div class="mb-6"><h2 class="text-[20px] font-bold tracking-tight">Login do usuário</h2><p class="text-[13px] text-slate-500 mt-1">Informe usuário e senha do sistema antigo ou do Sistema.</p></div>
+          <div class="space-y-4">
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">USUÁRIO / LOGIN</label><input id="login-user" placeholder="" class="mt-1.5 w-full h-[48px] px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"></div>
+            <div><label class="text-[11px] font-bold uppercase text-slate-500">SENHA USUÁRIO</label><div class="relative"><input id="login-senha-user" type="password" placeholder="" class="mt-1.5 w-full h-[48px] px-4 pr-12 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#0a1e8a] focus:ring-4 focus:ring-[#0a1e8a]/10 outline-none text-[14px]"><button type="button" onclick="togglePass('login-senha-user')" class="absolute right-3 top-[50%] -translate-y-[40%] w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-eye"></i></button></div></div>
+            <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
+          </div>
+        </div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="app-shell" class="hidden" style="display:none">
+<div class="flex min-h-screen">
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-[300px] bg-[#060e2f] text-white flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-white/5">
+    <div class="h-[76px] px-5 flex items-center justify-between border-b border-white/[0.08] bg-[#0a1e8a]">
+      <div class="flex items-center gap-3"><img src="./logo_2.png?v=5.3.5" class="h-10 w-auto object-contain"><div class="hidden"><h1 class="font-bold text-[15px] leading-none">DIGICOPY</h1><p class="text-[10px] tracking-[0.18em] text-white/70 font-semibold mt-[2px]">Sistema</p></div></div>
+      <button onclick="toggleSidebar()" class="lg:hidden w-8 h-8 grid place-items-center rounded-lg bg-white/10"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="px-4 py-4">
+      <div class="rounded-xl bg-white/[0.07] border border-white/10 p-3.5 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#0a1e8a] border border-white/10 text-white grid place-items-center font-bold text-[13px] shrink-0" id="user-avatar">KG</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13.5px] font-semibold leading-tight truncate" id="user-name">Usuário</p>
+          <p class="text-[11px] text-white/50 truncate flex items-center gap-1.5"><span id="user-perfil" class="px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase">Admin</span><span id="user-empresa" class="truncate">DIGICOPY</span></p>
+        </div>
+        <button onclick="exportBackup()" title="Exportar backup (arquivo JSON com todos os dados)" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-download-simple"></i></button>
+        <button onclick="doLogout()" class="w-8 h-8 grid place-items-center rounded-lg bg-white/5 hover:bg-white/10"><i class="ph ph-sign-out"></i></button>
+      </div>
+      <div class="mt-2 px-1 flex items-center justify-between text-[10.5px] text-white/40"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span id="session-cnpj" class="font-mono">CNPJ</span></span><span id="session-time">00:00</span></div>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 pb-4 space-y-6">
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Início</p><div id="nav-main" class="space-y-1"></div></div>
+      <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Locação</p><div id="nav-op" class="space-y-1"></div></div>
+  <div><p class="px-3 mb-2 text-[10.5px] font-bold tracking-widest text-white/30 uppercase">Administração</p><div id="nav-gest" class="space-y-1"></div></div>
+    </nav>
+    <div class="p-4 border-t border-white/5">
+      <div class="rounded-xl bg-[#0a1e8a] border border-white/10 p-4 relative overflow-hidden"><div class="absolute -right-10 -top-10 w-28 h-28 bg-white/10 rounded-full blur-xl"></div><p class="text-[12px] font-semibold relative z-10">Contratos a vencer</p><p class="text-[11px] text-white/70 mt-1 relative z-10"><span id="alert-vencendo">0</span> nos próximos 30 dias</p><button onclick="navigateTo('contratos')" class="mt-3 w-full h-8 rounded-lg bg-white text-[#0a1e8a] text-[12px] font-bold hover:bg-white/90 relative z-10">Ver contratos</button></div>
+      <div class="mt-3 px-1 text-[10px] text-white/30 leading-relaxed">Logado como <b id="audit-user" class="text-white/60">-</b> • Auditoria ativa</div>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0 flex flex-col">
+    <header class="app-titlebar sticky top-0 z-30">
+  <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
+    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
+    <span id="page-title" class="font-medium">Início</span>
+    <div class="absolute right-2 flex items-center gap-2">
+      <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
+        <i class="ph ph-bell text-[15px]"></i>
+        <span id="ntf-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9.5px] font-bold grid place-items-center">0</span>
+      </button>
+      <span class="text-[11px] opacity-80" id="current-date"></span>
+    </div>
+  </div>
+</header>
+<div class="modern-topnav">
+      <div class="module-row">
+        <div class="module"><button onclick="navigateTo('dashboard')"><i class="ph ph-house"></i>Início</button></div>
+        <div class="module"><button onclick="navigateTo('vendas')"><i class="ph ph-cash-register"></i>Atendimento</button><div class="module-menu"><button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')"><i class="ph ph-shopping-cart-simple"></i>Nova venda</button><button onclick="navigateTo('vendas')"><i class="ph ph-list-magnifying-glass"></i>Consultar notinhas</button><button onclick="navigateTo('orcamentos')"><i class="ph ph-clipboard-text"></i>Orçamentos</button><button onclick="openQuickOS()"><i class="ph ph-wrench"></i>Abrir chamado</button></div></div>
+        <div class="module"><button onclick="navigateTo('contratos')"><i class="ph ph-printer"></i>Locação</button><div id="menu-outsourcing" class="module-menu"><button onclick="navigateTo('contratos')"><i class="ph ph-file-text"></i>Contratos</button><button onclick="navigateTo('parque')"><i class="ph ph-map-pin"></i>Máquinas nos clientes</button><button onclick="navigateTo('leituras')"><i class="ph ph-speedometer"></i>Leituras</button><button onclick="navigateTo('impressoras')"><i class="ph ph-printer"></i>Cadastro de impressoras</button></div></div>
+        <div class="module"><button onclick="toast('Módulo fiscal em preparação','info')"><i class="ph ph-file-text"></i>NF-e/NFC-e</button><div class="module-menu"><button onclick="toast('Em breve: emissão de nota fiscal','info')"><i class="ph ph-file-plus"></i>Nota fiscal</button><button onclick="toast('Em breve: perfil tributário','info')"><i class="ph ph-scales"></i>Perfil tributário</button><button onclick="toast('Em breve: NCM e configurações fiscais','info')"><i class="ph ph-list-checks"></i>NCM e fiscal</button></div></div>
+        <div class="module"><button onclick="navigateTo('clientes')"><i class="ph ph-users"></i>Cadastros</button><div id="menu-cadastros" class="module-menu"><button onclick="navigateTo('clientes')"><i class="ph ph-users-three"></i>Clientes</button><button onclick="openModal('cliente')"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div>
+        <div class="module"><button onclick="navigateTo('financeiro')"><i class="ph ph-bank"></i>Financeiro</button></div>
+
+        <div class="module" id="topmod-buscador-escola-fixo"><button onclick="navigateTo('buscador-escola')"><i class="ph ph-magnifying-glass"></i>Buscador Escola</button></div>
+        <div class="module"><button onclick="navigateTo('config')"><i class="ph ph-gear"></i>Configurações</button><div id="menu-config" class="module-menu"><button onclick="navigateTo('config')"><i class="ph ph-sliders"></i>Preferências</button><button onclick="navigateTo('usuarios')"><i class="ph ph-user-gear"></i>Usuários e permissões</button><button onclick="navigateTo('auditoria')"><i class="ph ph-clipboard-text"></i>Auditoria</button></div></div>
+        <div class="module"><button id="btn-backup-top" type="button" onclick="exportBackup()" title="Baixar uma cópia de segurança de todos os dados"><i class="ph ph-download-simple"></i>Backup</button></div>
+        <div class="module"><button id="btn-nuvem" type="button" onclick="abrirCloudflareNuvem()" title="Configurar e verificar a nuvem DIGICOPY"><i class="ph ph-cloud-check"></i>Nuvem</button></div>
+        <div class="module"><button onclick="doLogout()" title="Sair do sistema"><i class="ph ph-sign-out"></i>Sair</button></div><div class="ml-auto flex items-center gap-2 text-[11px] text-slate-500"><span class="pulse-dot"></span><span class="hidden xl:inline">local</span></div>
+      </div></div>
+    <div class="flex-1 p-4 lg:p-8">
+      <section id="view-dashboard" class="view space-y-6"></section>
+      <section id="view-clientes" class="view hidden space-y-4"></section>
+      <section id="view-produtos" class="view hidden space-y-4"></section>
+      <section id="view-impressoras" class="view hidden space-y-4"></section>
+      <section id="view-contratos" class="view hidden space-y-4"></section>
+      <section id="view-parque" class="view hidden space-y-4"></section>
+      <section id="view-leituras" class="view hidden space-y-4"></section>
+      <section id="view-manutencao" class="view hidden space-y-4"></section>
+      <section id="view-vendas" class="view hidden space-y-4"></section>
+      <section id="view-financeiro" class="view hidden space-y-4"></section>
+      <section id="view-relatorios" class="view hidden space-y-4"></section>
+      <section id="view-config" class="view hidden space-y-4"></section>
+      <section id="view-usuarios" class="view hidden space-y-4"></section>
+      <section id="view-auditoria" class="view hidden space-y-4"></section>
+    </div>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v5.22.82</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
+  </main>
+</div>
+</div>
+
+<div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden backdrop-blur-sm"></div>
+
+<div id="modal-root" class="fixed inset-0 z-50 hidden"><div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div><div class="absolute inset-0 p-4 lg:p-10 flex items-start lg:items-center justify-center overflow-auto"><div id="modal-box" class="w-full max-w-[720px] rounded-[22px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[90vh] flex flex-col"><div class="h-[64px] px-7 flex items-center justify-between border-b border-slate-100 shrink-0"><h3 id="modal-title" class="font-bold text-[16px]">Modal</h3><button onclick="closeModal()" class="w-8 h-8 grid place-items-center rounded-xl bg-slate-100"><i class="ph ph-x"></i></button></div><div id="modal-body" class="flex-1 overflow-auto p-7"></div><div id="modal-footer" class="p-5 border-t border-slate-100 bg-slate-50/80 flex justify-end gap-2 shrink-0"></div></div></div></div>
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
+
+<script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
+<script src="./app.bundle.js?v=5.22.82"></script>
+</body>
+</html>
