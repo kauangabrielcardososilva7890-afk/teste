@@ -1,6 +1,6 @@
 {
   "name": "digicopy-erp",
-  "version": "5.22.82",
+  "version": "5.22.83",
   "description": "Sistema Digicopy - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
@@ -75,6 +75,6 @@
   "license": "MIT",
   "digicopy": {
     "repo": "kauangabrielcardososilva7890-afk/teste",
-    "branch": "arena/01a0590a-teste"
+    "branch": "arena/01a0683d-teste"
   }
 }

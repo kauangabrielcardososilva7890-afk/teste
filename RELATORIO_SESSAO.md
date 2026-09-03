@@ -1,16 +1,16 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-31  
+**Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.74**  
+**Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
+**Última versão:** **v5.22.83**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.74>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.83>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
@@ -75,6 +75,28 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
 
 ---
+
+## v5.22.83 — sessão nova, branch nova; só troco de endereço
+
+Chat novo, sessão com branch fixa nova (`arena/01a0683d-teste`). Nenhuma função
+do sistema mudou — o que mudou é **para onde os links apontam**:
+
+- `package.json > digicopy.branch` passa a ser `arena/01a0683d-teste`; o
+  `npm run sync` recarimbou os links do GitHack dentro do código (inclusive o
+  link de orçamento que vai para o cliente) para a branch nova.
+- Ambiente do agente restaurado: `npm install --ignore-scripts` (o download do
+  binário do Electron continua falhando por TLS neste sandbox — limitação já
+  conhecida; o `.exe` se gera no PC com `npm run build:win`).
+- Encontrado e corrigido: `test_ajustes_v52282.js` estava amarrado à versão
+  exata `5.22.82` (o próprio CHECKLIST ANTIERRO proíbe isso). Trocado para
+  `/^5\.22\.\d+/`.
+
+Estado ao abrir a sessão: suíte com 5 falhas, todas de ambiente (faltava
+`node_modules` e o bundle fora de data). Depois do `npm install`: **136
+suítes, 0 falhas**.
+
+Testes: `test_ajustes_v52282.js` (corrigido), `test_ajustes_v52263.js`. Suíte:
+136 passaram, 0 falharam.
 
 ## v5.22.82 — cortando pela metade o que o sistema grava na nuvem
 

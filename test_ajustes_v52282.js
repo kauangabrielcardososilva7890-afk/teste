@@ -6,7 +6,7 @@ const mig=fs.readFileSync('cloudflare-worker/migrations/0004_menos_gravacoes.sql
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.82 ==');
-ok('versão subiu para 5.22.82',pkg.version==='5.22.82');
+ok('versão da linha 5.22.x (não amarrar teste à versão exata)',/^5\.22\.\d+$/.test(pkg.version));
 ok('a nuvem se identifica como 0.4.7',/API_VERSION = '0\.4\.7'/.test(worker)&&wpkg.version==='0.4.7');
 
 // ── menos gravação: índice que ninguém usa sai ──
