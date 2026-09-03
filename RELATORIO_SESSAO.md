@@ -86,6 +86,8 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 **TESTE NOVO:** `test_ajustes_v52284.js` — 47 verificações dos 3 pontos (suíte 137/137).
 
+**ENTREGA (2026-09-03, retorno do usuário):** usuário testou e relatou "imprimir continua igual / produtos nada mudou" — investigado: código na branch está 100% certo (nenhum "Fature a notinha" ativo em lugar nenhum, bundle limpo, GitHub na v5.22.84). Ele estava olhando **cópia velha** (aba antiga aberta / cache / atalho do programa instalado). A partir desta versão o link de teste passou a ser com **hash do commit** (endereço novo a cada entrega = impossível cair em versão velha): padrão `https://raw.githack.com/<user>/<repo>/<sha>/index.html?v=<versão>`. Sempre mandar assim + dizer pra conferir a versão que aparece na tela de login/titulo da aba.
+
 **Lição:** quando uma regra visual depende de estado, o sentido tem de morar no MESMO objeto de estado da tela que a lista lê. E trava de impressão feita "envelopando" `imprimirNotinha` no meio da cadeia de arquivos é a última coisa que a documentação de fluxo pega — achar a cadeia inteira exige olhar a ordem de carga do bundle, não só greps.
 
 ## v5.22.83 — sessão nova, branch nova; só troco de endereço
