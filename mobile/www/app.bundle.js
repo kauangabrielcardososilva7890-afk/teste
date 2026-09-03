@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: e4a9a75c7bea79ab
+ * scripts: 190 | sha256: db976a01e33f7bc6
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -37636,7 +37636,17 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
+  // v5.22.85 — procura de todos os jeitos antes de desistir: id, token,
+  // número e, por último, o orçamento que já está na tela. Assim nunca cai
+  // no "Orçamento não encontrado" por uma linha de timing da base.
+  var o=store().find(function(x){ return x && x.id===id; });
+  if(!o) o=store().find(function(x){ return x && (x.token===id || String(x.numero)===String(id)); });
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===id || f.token===id){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
   if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
   window.abrirTelaOrcamento(o);
 };
@@ -44880,6 +44890,22 @@ try{
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
 
+      // v5.22.85 — regra do orçamento: NÃO baixa estoque (continua assim), mas
+      // pra LANÇAR um produto físico tem que ter estoque. Avisa e não deixa
+      // entrar: precisa de no mínimo a quantidade que vai pro orçamento.
+      if(p && !isRec){
+        var ehServicoItem = /servi[cç]o|recarga/i.test(String(p.categoria || '') + ' ' + String(p.tipo || ''));
+        if(!ehServicoItem && !p.estoqueInfinito){
+          var temEstoque = n(p.estoque);
+          if(temEstoque < qtd){
+            if(typeof toast === 'function'){
+              toast('Sem estoque: ' + esc(p.nome || 'produto') + ' tem ' + Math.max(0, temEstoque) + '. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento.', 'error');
+            }
+            return;
+          }
+        }
+      }
+
       var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
       if(cartucho && !descricaoFinal.includes(cartucho)){
         descricaoFinal += ' (Etiqueta: ' + cartucho + ')';
@@ -45322,11 +45348,85 @@ try{
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
     window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.orcBuscarSerial = orcBuscarSerial;
     window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
     window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
     window.excluirOrcamento = excluirOrcamentosMarcados;
 
     // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+  // v5.22.85 — Busca por número de série no orçamento: IGUAL às vendas.
+  // Puxa a última notinha/venda com esse serial e já preenche modelo,
+  // patrimônio, contador e o cliente sozinho (mesmas regras da aba OS).
+  function orcBuscarSerial(serial){
+    var s = getSess(); if(!s) return;
+    var srl = txt(serial).toLowerCase();
+    var info = document.getElementById('orc-serial-info');
+    if(!srl){ if(info) info.classList.add('hidden'); return; }
+    var _db = getDb();
+    var normSerie = function(o){ return txt(o && (o.numeroSerie || o.serie)).toLowerCase(); };
+    // 1) vendas com esse serial (a mais recente manda)
+    var hist = (_db.vendas || []).filter(function(v){
+      return v && v.empresaId === s.empresaId && v.os && normSerie(v.os) === srl;
+    }).sort(function(a, b){ return new Date(b.data || 0) - new Date(a.data || 0); });
+    // 2) chamados/OS com esse serial
+    var chamado = (_db.os || []).filter(function(o){
+      return o && o.empresaId === s.empresaId && normSerie(o) === srl;
+    }).sort(function(a, b){ return new Date(b.abertura || b.criadoEm || 0) - new Date(a.abertura || a.criadoEm || 0); })[0];
+    // 3) cadastro de equipamentos
+    var eq = (_db.equipamentos || []).find(function(e){ return e && e.empresaId === s.empresaId && normSerie(e) === srl; });
+    var ult = hist[0];
+    var preencheu = 0;
+    var setSeVazio = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && !el.value.trim() && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var setSempre = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var fonte = ult ? ult.os : (chamado || null);
+    if(fonte){
+      setSeVazio('orc-os-modelo', fonte.modelo || fonte.equipamentoModelo || '');
+      setSeVazio('orc-os-patri', fonte.patrimonio || '');
+      setSeVazio('orc-os-contador', fonte.contador != null ? fonte.contador : '');
+    }
+    if(eq){
+      setSeVazio('orc-os-modelo', eq.modelo);
+      setSeVazio('orc-os-patri', eq.patrimonio);
+      setSeVazio('orc-os-contador', eq.contadorPB);
+    }
+    // cliente: última notinha > chamado > máquina instalada (parque)
+    var cliId = ult ? ult.clienteId : (chamado ? chamado.clienteId : null);
+    if(!cliId && eq){
+      var inst = (_db.parque || []).find(function(p){ return p && p.empresaId === s.empresaId && p.equipamentoId === eq.id; });
+      if(inst) cliId = inst.clienteId;
+    }
+    var f = window.__ORC_ST && window.__ORC_ST.form;
+    var autoCli = false;
+    if(cliId && !(f && f.cliente)){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === cliId; });
+      if(c){ orcSelCliente(c.id); autoCli = true; }
+    }
+    // regra das vendas: a última notinha encontrada comanda os dados do aparelho
+    if(ult && ult.os){
+      setSempre('orc-os-modelo', ult.os.modelo || ult.os.equipamentoModelo || '');
+      setSempre('orc-os-patri', ult.os.patrimonio || '');
+      if(ult.clienteId && !(f && f.cliente)){
+        var c2 = (_db.clientes || []).find(function(x){ return x && x.id === ult.clienteId; });
+        if(c2){ orcSelCliente(c2.id); autoCli = true; }
+      }
+    }
+    if(info){
+      var fmt = function(d){ return typeof fmtDate === 'function' ? fmtDate(d) : (d || '-'); };
+      if(ult || chamado || eq){
+        var clNome = ((_db.clientes || []).find(function(x){ return x && x.id === (ult ? ult.clienteId : cliId); }) || {}).nome || '-';
+        info.className = 'col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900 block';
+        info.innerHTML = '<p class="font-bold mb-1"><i class="ph ph-clock-counter-clockwise"></i> Última notinha encontrada para este equipamento:</p>'
+          + (ult ? 'Data: <b>' + fmt(ult.data) + '</b> • Cliente: <b>' + esc(clNome) + '</b> • Modelo: <b>' + esc(ult.os.modelo || '-') + '</b> • Venda/OS: <b>' + esc(ult.numero) + '</b>'
+            : chamado ? 'Chamado <b>' + esc(chamado.numero || '-') + '</b> de <b>' + fmt(chamado.abertura || chamado.criadoEm) + '</b> • Cliente: <b>' + esc(clNome) + '</b>'
+            : 'Equipamento cadastrado: <b>' + esc(eq.modelo || '-') + '</b> (patrimônio ' + esc(eq.patrimonio || '-') + ')')
+          + (preencheu || autoCli ? '<p class="mt-1 text-emerald-800 font-semibold"><i class="ph ph-magic-wand"></i> Preenchido automaticamente' + (autoCli ? ' (incluindo cliente)' : '') + ' — confira antes de salvar.</p>' : '');
+      } else {
+        info.className = 'col-span-12 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-500 block';
+        info.innerHTML = '<i class="ph ph-info"></i> Nenhuma notinha anterior encontrada para este número de série.';
+      }
+    }
+  }
+
     window.abrirTelaOrcamento = function(existente){
       var s = getSess(); if(!s) return;
       var _db = getDb();
@@ -45450,7 +45550,11 @@ try{
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
         +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
-        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : 'onchange="window.orcBuscarSerial && window.orcBuscarSerial(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.orcBuscarSerial && window.orcBuscarSerial(this.value);}"')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série... (Enter ou lupa puxa o histórico)" class="flex-1 h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcBuscarSerial && window.orcBuscarSerial(document.getElementById(\'orc-os-serie\').value)" class="shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Buscar histórico desse serial"><i class="ph ph-magnifying-glass"></i></button>' : '')
+        +'</div></label>'
+        +'<div id="orc-serial-info" class="col-span-12 hidden"></div>'
         +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
         +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
         +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
@@ -45636,7 +45740,10 @@ try{
 
       window.__ORC_ST.form.id = o.id;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      // v5.22.85 — reabre o orçamento recém-salvo DIRETO pelo objeto: sem
+      // consulta no meio, sem chance de aparecer "Orçamento não encontrado"
+      if(typeof window.abrirTelaOrcamento === 'function') window.abrirTelaOrcamento(o);
+      else if(typeof window.abrirOrcamento === 'function') window.abrirOrcamento(o.id);
     };
 
     // Sincronização de versão visual

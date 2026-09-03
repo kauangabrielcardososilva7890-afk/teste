@@ -416,6 +416,22 @@
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
 
+      // v5.22.85 — regra do orçamento: NÃO baixa estoque (continua assim), mas
+      // pra LANÇAR um produto físico tem que ter estoque. Avisa e não deixa
+      // entrar: precisa de no mínimo a quantidade que vai pro orçamento.
+      if(p && !isRec){
+        var ehServicoItem = /servi[cç]o|recarga/i.test(String(p.categoria || '') + ' ' + String(p.tipo || ''));
+        if(!ehServicoItem && !p.estoqueInfinito){
+          var temEstoque = n(p.estoque);
+          if(temEstoque < qtd){
+            if(typeof toast === 'function'){
+              toast('Sem estoque: ' + esc(p.nome || 'produto') + ' tem ' + Math.max(0, temEstoque) + '. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento.', 'error');
+            }
+            return;
+          }
+        }
+      }
+
       var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
       if(cartucho && !descricaoFinal.includes(cartucho)){
         descricaoFinal += ' (Etiqueta: ' + cartucho + ')';

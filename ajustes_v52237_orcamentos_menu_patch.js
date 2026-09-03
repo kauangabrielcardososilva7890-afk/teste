@@ -303,7 +303,17 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
+  // v5.22.85 — procura de todos os jeitos antes de desistir: id, token,
+  // número e, por último, o orçamento que já está na tela. Assim nunca cai
+  // no "Orçamento não encontrado" por uma linha de timing da base.
+  var o=store().find(function(x){ return x && x.id===id; });
+  if(!o) o=store().find(function(x){ return x && (x.token===id || String(x.numero)===String(id)); });
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===id || f.token===id){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
   if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
   window.abrirTelaOrcamento(o);
 };

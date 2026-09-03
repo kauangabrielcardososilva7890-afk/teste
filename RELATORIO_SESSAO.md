@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.84**  
+**Última versão:** **v5.22.85**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.84>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.85>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -76,7 +76,15 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 
 ---
 
-## v5.22.84 — impressão de vendas livre, caixa de itens esperta, produtos sem "Local"
+## v5.22.85 — orçamentos: estoque avisando, salvar sem sumiço, busca por serial igual vendas
+
+**1) Estoque no orçamento** — regra final: orçamento NÃO baixa estoque (igual sempre foi), mas produto físico sem estoque suficiente **não entra**: ao lançar, se o estoque for menor que a quantidade, aparece o aviso "Sem estoque: ... tem X. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento." e o item NÃO entra. Serviço, recarga/etiqueta e produto de estoque infinito seguem livres. Essa trava existia na v5.22.37 e se perdeu quando a v5.22.59 reescreveu o `orcAddItem` (versão que vale hoje) — foi restaurada nela (`ajustes_v52259_orcamento_filtros_item_patch.js`). Atenção: a v52237 tem uma versão morta do orcAddItem com outro fluxo (perguntava abrir cadastro de estoque) — não foi mexida por ser substituída na cadeia.
+
+**2) "Orçamento não encontrado" ao salvar + não abria depois** — duas correções: (a) ao salvar (`ajustes_v52260_orcamento_trava_venda_atalho_patch.js`), a tela reabre o orçamento **pelo objeto recém-gravado** (`window.abrirTelaOrcamento(o)`), sem consulta intermediária → nunca mais a mensagem fantasma; (b) `window.abrirOrcamento` (`ajustes_v52237_orcamentos_menu_patch.js`) ganhou procura de reserva depois do id: **token**, **número** e, por último, o orçamento que já está aberto na tela (monta o objeto a partir do formulário). Só aparece "não encontrado" se for de verdade. Se a queixa era no **link público de aprovação** (página Pages), aí é a sincronia com o Worker/D1 — confirmar com o usuário.
+
+**3) Busca por número de série no orçamento** — `orcBuscarSerial` em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`, espelho de `vosBuscarSerial` (+ regra da v52237: última notinha comanda os dados). Campo de série da aba OS com **lupa e Enter**: procura serial nas vendas, chamados e equipamentos; preenche modelo/patrimônio/contador e **seleciona o cliente sozinho** (última notinha > chamado > máquina no parque); quanto acha, mostra a caixa âmbar "Última notinha encontrada..." com Data/Cliente/Modelo nº, e "Preenchido automaticamente — confira antes de salvar". Autorizado (somente leitura) não mostra lupa nem dispara.
+
+**TESTE NOVO:** `test_ajustes_v52285.js` — 18 verificações (suíte 138/138).
 
 **1) Vendas imprimem sem restrição (vendas)** — a trava "Fature a notinha antes de imprimir" morreu (estava em `ajustes_relatorio_pai_patch.js`, era o ÚNICO ponto do código que bloqueava por status). Agora a notinha imprime em qualquer situação: venda aberta da lista, salva, faturada, direto do formulário ou pelo histórico — no formato Vendas (meia folha) ou Ordem de Serviço (folha inteira, o "aberto com S"). O fluxo continua: Imprimir → formato → quantidade de vias → **salva automaticamente ao escolher as vias** (salvamento silencioso, a aba segue aberta) → abre em PDF/impressora. A trava de EDIÇÃO de venda faturada (estornar para alterar) continua valendo, como sempre.
 
