@@ -309,7 +309,7 @@
 
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
 
@@ -322,7 +322,7 @@
         +'</div></label>'
         +'</div>'
 
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
 
         // Tabela de itens
@@ -410,6 +410,9 @@
       }
 
       var qtd = n(document.getElementById('orc-item-qtd') && document.getElementById('orc-item-qtd').value) || 1;
+      // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+      var vuRaw = String((document.getElementById('orc-item-vunit')||{}).value||'').trim();
+      if(!/^\d+(?:[.,]\d+)?$/.test(vuRaw)){ if(typeof toast === 'function') toast('Informe um valor unitário numérico para adicionar o item', 'error'); return; }
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
 
@@ -435,7 +438,7 @@
       var ci = document.getElementById('orc-item-cartucho'); if(ci) ci.value = '';
       var qi = document.getElementById('orc-item-qtd'); if(qi) qi.value = 1;
       var vi = document.getElementById('orc-item-vunit'); if(vi) vi.value = '';
-      var di = document.getElementById('orc-item-desc'); if(di) di.value = 0;
+      var di = document.getElementById('orc-item-desc'); if(di) di.value = '';
       var ti = document.getElementById('orc-item-total'); if(ti) ti.value = '';
 
       if(typeof window.orcRenderItens === 'function') window.orcRenderItens();

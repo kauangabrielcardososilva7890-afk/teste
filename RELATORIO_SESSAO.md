@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.83**  
+**Última versão:** **v5.22.84**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.83>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.84>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -75,6 +75,18 @@ Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
 (117 suítes, 0 falha) e `npm run verify:files`.
 
 ---
+
+## v5.22.84 — impressão de vendas livre, caixa de itens esperta, produtos sem "Local"
+
+**1) Vendas imprimem sem restrição (vendas)** — a trava "Fature a notinha antes de imprimir" morreu (estava em `ajustes_relatorio_pai_patch.js`, era o ÚNICO ponto do código que bloqueava por status). Agora a notinha imprime em qualquer situação: venda aberta da lista, salva, faturada, direto do formulário ou pelo histórico — no formato Vendas (meia folha) ou Ordem de Serviço (folha inteira, o "aberto com S"). O fluxo continua: Imprimir → formato → quantidade de vias → **salva automaticamente ao escolher as vias** (salvamento silencioso, a aba segue aberta) → abre em PDF/impressora. A trava de EDIÇÃO de venda faturada (estornar para alterar) continua valendo, como sempre.
+
+**2) Caixa de itens — valor unitário e desconto nascem vazios (vendas, chamados e orçamentos)** — regra única nos 3 lugares: quantidade padrão 1, unitário e desconto vazios, e o botão "Adicionar item" só habilita quando o campo de valor unitário tem um número válido. Escolher um produto da lista preenche o preço cadastrado (dá para mudar antes de adicionar — o botão já liga no ato). Depois de adicionar, os campos voltam vazios para o próximo item. Há ainda uma trava de segurança dentro da função de adicionar, para nenhum atalho de teclado furar a regra. Mudado de verdade em `vendas_os_patch.js` (venda), `ajustes_v5182_patch.js` + `ajustes_v5186_patch.js` (chamados — duas gerações do modal), `ajustes_v52237_orcamentos_menu_patch.js` + `v52258` + `v52259` + `v52260` (orçamentos — as 4 gerações da tela). O fluxo da ETIQUETA/RECARGA, que preenche valor sozinho para o dia a dia correr, continua exatamente igual. Orçamentos virando venda: `orcItensParaVenda()` (utilitários/compartilhados/utilidades_operacionais_patch.js) lê do DOM só se a tela existir; o fundo na etiqueta da recarga é o mesmo (mesma base de preços).
+
+**3) Produtos: "Local" aposentado + ordenação corrigida de vez (produtos)** — a coluna "Local" sumiu da listagem (e do novo cadastro, da busca e da importação), como combinado: ninguém usava. Dados antigos já gravados são apagados sozinhos numa varredura quando a tela de produtos abre (uma vez só; depois da limpeza não acha mais nada). A ordenação por clique no título agora funciona A→Z e Z→A de verdade: antes o sentido era guardado num objeto de estado separado (a trava do v52214 nunca enxergava a mudança) e, quando tentava, "invertia as linhas" na tela — jogava a linha de contagem ("mostrando 300 de 1031") para o topo. Agora o sentido mora no mesmo `STATE.prod.dir` da lista, a lista INTEIRA é ordenada no sentido certo antes de cortar os 300 em tela, e o título mostra ▲/▼. Arquivos: `fluxos_operacionais_patch.js` (mais a remoção da trava `wrapSort('produtosSortOperacional')` de `ajustes_v52214_ordenacao_patch.js`, mantidos contratos/chamados e a função pura `proximaDir`).
+
+**TESTE NOVO:** `test_ajustes_v52284.js` — 47 verificações dos 3 pontos (suíte 137/137).
+
+**Lição:** quando uma regra visual depende de estado, o sentido tem de morar no MESMO objeto de estado da tela que a lista lê. E trava de impressão feita "envelopando" `imprimirNotinha` no meio da cadeia de arquivos é a última coisa que a documentação de fluxo pega — achar a cadeia inteira exige olhar a ordem de carga do bundle, não só greps.
 
 ## v5.22.83 — sessão nova, branch nova; só troco de endereço
 
