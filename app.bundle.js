@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: db976a01e33f7bc6
+ * scripts: 190 | sha256: 6e08ae4149ca6465
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -45644,6 +45644,18 @@ try{
 
       var totalEl = document.getElementById('orc-total');
       if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // v5.22.86 — remove um item da lista do orçamento. A lixeira da tabela
+    // chama essa função e ela não existia (erro "orcDelItem is not a function").
+    window.orcDelItem = function(idx){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f || !f.itens) return;
+      idx = n(idx);
+      if(idx < 0 || idx >= f.itens.length) return;
+      if(f.status === 'aprovado' || f.vendaId){ if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error'); return; }
+      f.itens.splice(idx, 1);
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
     };
 
     // Override do salvarOrcamentoTela com bloqueio em autorizados
