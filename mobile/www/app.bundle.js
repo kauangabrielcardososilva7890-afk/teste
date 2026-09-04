@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 759d06e75fcb8c3e
+ * scripts: 191 | sha256: 14545784055e300c
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -37681,19 +37681,48 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  // v5.22.85 — procura de todos os jeitos antes de desistir: id, token,
-  // número e, por último, o orçamento que já está na tela. Assim nunca cai
-  // no "Orçamento não encontrado" por uma linha de timing da base.
-  var o=store().find(function(x){ return x && x.id===id; });
-  if(!o) o=store().find(function(x){ return x && (x.token===id || String(x.numero)===String(id)); });
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
   if(!o && window.__ORC_ST && window.__ORC_ST.form){
     var f=window.__ORC_ST.form;
-    if(f.id===id || f.token===id){
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
       o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
     }
   }
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte.', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
@@ -46476,6 +46505,109 @@ if (typeof console !== 'undefined' && console.log) {
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
 ;
 
+/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.89 — caça ao aviso "orçamento não encontrado" + autocura da lista
+//
+// 1) CARIMBO DE ORIGEM: qualquer aviso (popup central ou toast) que contenha
+//    a palavra "encontrad" (encontrado/encontrada) ganha uma linha cinza no
+//    final dizendo DE ONDE ele saiu: função @ arquivo : linha. Se o aviso
+//    misterioso do orçamento aparecer de novo, é só mandar esse código —
+//    acha-se a causa raiz na hora. Avisos sem "encontrad" ficam intactos.
+// 2) AUTOCURA: orçamentos antigos SEM id (salvos por versões velhas) ganham
+//    um id estável na renderização da lista e quando alguém tenta abrir —
+//    sem isso, a linha da lista chamava abrirOrcamento('undefined').
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+window.AJUSTES_V52289_PURE = {
+  interessa: function(msg){ return /encontrad/i.test(String(msg == null ? '' : msg)); }
+};
+
+if(typeof document === 'undefined') return;
+
+// ── 1) carimbo de origem ────────────────────────────────────────────────────
+function origemDoAviso(){
+  try{
+    var st = String((new Error()).stack || '');
+    var linhas = st.split('\n').filter(function(l){
+      return l.indexOf('ajustes_v52289') < 0 && l.indexOf('Error') < 0;
+    });
+    for(var i = 0; i < linhas.length; i++){
+      var l = linhas[i];
+      // Chrome: "at funcao (arquivo.js:123:45)" | Firefox: "funcao@arquivo.js:123:45"
+      var m = l.match(/at\s+([^\s(]+)[^(]*\(([^()\s]+\.js)[^()\s]*?:(\d+):\d+\)/);
+      if(!m) m = l.match(/([A-Za-z0-9_.$\[\]-]+)@([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(!m) m = l.match(/at\s+([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(m){
+        var fn = m.length >= 4 ? (m[1] || 'anon') : 'anon';
+        var arq = (m[m.length - 2] || '').split('/').pop();
+        var lin = m[m.length - 1] || '?';
+        if(arq){ return fn + ' @ ' + arq + ' : ' + lin; }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+
+function carimbo(msg){
+  if(!window.AJUSTES_V52289_PURE.interessa(msg)) return msg;
+  var o = origemDoAviso();
+  if(!o) return msg;
+  return String(msg) + '<br><span style="display:block;margin-top:6px;font-size:10px;color:#94a3b8">código: ' + o + ' — mande ao suporte</span>';
+}
+
+if(typeof window.lfbAlert === 'function' && !window.lfbAlert.__v52289){
+  var oldAlert = window.lfbAlert;
+  window.lfbAlert = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAlert.apply(this, a); };
+  window.lfbAlert.__v52289 = true;
+}
+if(typeof window.avisoSistema === 'function' && !window.avisoSistema.__v52289){
+  var oldAviso = window.avisoSistema;
+  window.avisoSistema = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAviso.apply(this, a); };
+  window.avisoSistema.__v52289 = true;
+}
+if(typeof window.toast === 'function' && !window.toast.__v52289){
+  var oldToast = window.toast;
+  window.toast = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldToast.apply(this, a); };
+  window.toast.__v52289 = true;
+}
+
+// ── 2) orçamentos antigos sem id ganham id estável na renderização da lista ──
+function garantirIdsOrcamentos(){
+  try{
+    var _db = (typeof db !== 'undefined') ? db : (window.db || null);
+    if(!_db || !Array.isArray(_db.orcamentos)) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(o && !o.id){
+        o.id = 'orc_legado_' + (o.token || ('n' + (String(o.numero || '').replace(/\D/g, '') || Math.random().toString(36).slice(2, 8))));
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }catch(e){}
+}
+
+if(typeof window.renderOrcamentos === 'function' && !window.renderOrcamentos.__v52289ids){
+  var oldRender = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    garantirIdsOrcamentos();
+    return oldRender.apply(this, arguments);
+  };
+  window.renderOrcamentos.__v52289ids = true;
+}
+// Roda uma vez na carga também (a lista pode nem ter sido aberta ainda)
+setTimeout(garantirIdsOrcamentos, 1500);
+
+console.log('[DIGICOPY] v5.22.89 carimbo de avisos + autocura da lista de orçamentos');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52289_orcamento_carimbo_autocura_patch.js", e); }
+;
+
 /* ===== menus_tela_pequena_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46834,11 +46966,11 @@ try{
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 190;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 191;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 190 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 191 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

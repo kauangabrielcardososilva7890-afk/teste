@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.88**  
+**Última versão:** **v5.22.89**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.88>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.89>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -60,6 +60,41 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
       impressora avulso, produto sem preço
 - [x] Version bump: package.json + index.html (4 pontos)
 - [x] Sem arquivo novo de módulo (edições nos donos de cada tela)
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.89 (2026-09-04)
+
+**Resposta ao "orçamento não encontrado" (popup central ao abrir o orçamento
+salvo pela lista).** A caça ficou séria:
+
+1. **O texto exato "Orçamento não encontrado" saía de UM lugar só**: o
+   `abrirOrcamento` desistindo de procurar (toast vermelho no canto). Ele foi
+   REESCRITO de raiz à prova de bala — procura por **7 caminhos** (id exato,
+   token, número, número normalizado, formulário aberto na tela, último
+   selecionado da lista, e autocura de id em orçamento sem id). No pior caso,
+   atualiza a lista sozinho e abre **popup central CLARO E DIFERENTE**:
+   "Não achei esse orçamento neste PC agora..." (se o popup do usuário voltar
+   com o texto antigo, NÃO é esse caminho).
+2. **Autocura de orçamentos antigos SEM id** (de versões velhas): a linha da
+   lista chamava `abrirOrcamento('undefined')`. Agora a renderização da
+   lista garante id estável (`orc_legado_...`) antes de montar as linhas —
+   prova de máquina: legado sem id abre normal.
+3. **CARIMBO DE ORIGEM (instrumentação)**: qualquer popup/toast que contenha
+   "encontrado/encontrada" ganha, no final, um código cinza dizendo
+   `função @ arquivo : linha` de onde o aviso saiu no código. Se o aviso
+   misterioso voltar, o usuário manda só esse código e a causa raiz aparece
+   na hora. Avisos sem "encontrad" ficam intocados.
+
+### CHECKLIST ANTIERRO v5.22.89
+- [x] bundle 191 scripts — **189 isolados, 2 globais** ✔
+- [x] `npm test` — **142/142** ✔
+- [x] sync:check, check, verify:files ✔
+- [x] Prova jsdom: abre por id, abre legado autocurado, clique inválido dá
+      popup claro novo (nunca mais o toast vago), regex do carimbo pega
+      stack real de navegador
+- [x] Teste novo: test_ajustes_v52289.js; ajustados: v52284/85/86/87
+- [x] Pergunta ao usuário antes de codar (momento/formato/versão) ✔
 
 ---
 

@@ -30,8 +30,8 @@ console.log('== 2. SEM "ORÇAMENTO NÃO ENCONTRADO" AO SALVAR ==');
 // v5.22.87: o salvar não reabre mais a tela — fecha. A blindagem que importa
 // é a abertura por id/token/número/formulário, sem tostão fantasma.
 ok('salvar não baseia confirmação em procura intermediária', !save60.includes("window.abrirOrcamento(o.id);"));
-ok('abrir orçamento tenta id, depois token e número de reserva', /x\.token===id \|\| String\(x\.numero\)===String\(id\)/.test(o37));
-ok('abrir orçamento usa o formulário em tela como última reserva', /f\.id===id \|\| f\.token===id/.test(o37));
+ok('abrir orçamento tenta id, depois token e número de reserva', /x\.token===idStr \|\| String\(x\.numero\)===idStr/.test(o37) || /x\.token===id \|\| String\(x\.numero\)===String\(id\)/.test(o37));
+ok('abrir orçamento usa o formulário em tela como última reserva', /f\.id===idStr \|\| f\.token===idStr/.test(o37) || /f\.id===id \|\| f\.token===id/.test(o37));
 
 console.log('== 3. BUSCA POR SERIAL IGUAL ÀS VENDAS ==');
 ok('campo de série do orçamento tem lupa e Enter', /window\.orcBuscarSerial && window\.orcBuscarSerial\(this\.value\)/.test(o60) && /orc-os-serie'\)\.value/.test(o60));
@@ -44,7 +44,7 @@ ok('função exposta pra tela', /window\.orcBuscarSerial = orcBuscarSerial;/.tes
 ok('mesmos campos que as vendas guardam no save', /numeroSerie: txt\(document\.getElementById\('orc-os-serie'\)/.test(o60));
 
 console.log('== 4. CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo)', manifest.length === 190);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo)', manifest.length === 191);
 ok('versão 5.22.x', /^5\.22\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.85 passaram!');

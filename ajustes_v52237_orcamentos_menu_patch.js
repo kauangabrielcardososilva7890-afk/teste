@@ -303,19 +303,48 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  // v5.22.85 — procura de todos os jeitos antes de desistir: id, token,
-  // número e, por último, o orçamento que já está na tela. Assim nunca cai
-  // no "Orçamento não encontrado" por uma linha de timing da base.
-  var o=store().find(function(x){ return x && x.id===id; });
-  if(!o) o=store().find(function(x){ return x && (x.token===id || String(x.numero)===String(id)); });
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
   if(!o && window.__ORC_ST && window.__ORC_ST.form){
     var f=window.__ORC_ST.form;
-    if(f.id===id || f.token===id){
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
       o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
     }
   }
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte.', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
