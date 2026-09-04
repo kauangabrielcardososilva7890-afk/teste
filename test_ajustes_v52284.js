@@ -79,7 +79,7 @@ ok('a trava velha de ordenação saiu do v52214', !/wrapSort\('produtosSortOpera
 ok('a função pura do v52214 continua', /ORDENACAO_TITULO_PURE/.test(ord) && /proximaDir/.test(ord));
 
 console.log('== 4. CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo)', manifest.length === 191);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião)', manifest.length === 192);
 ok('versão 5.22.x', /^5\.22\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.84 passaram!');

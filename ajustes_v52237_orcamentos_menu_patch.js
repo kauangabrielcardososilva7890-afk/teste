@@ -355,7 +355,10 @@ window.abrirOrcamento=function(id){
       _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
     }catch(e){}
     var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '.)', 'Orçamento');
+    // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
+    // que conta quem tirou o orçamento do banco entre a lista e o clique
+    var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '.)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 

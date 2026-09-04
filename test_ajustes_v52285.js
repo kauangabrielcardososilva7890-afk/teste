@@ -44,7 +44,7 @@ ok('função exposta pra tela', /window\.orcBuscarSerial = orcBuscarSerial;/.tes
 ok('mesmos campos que as vendas guardam no save', /numeroSerie: txt\(document\.getElementById\('orc-os-serie'\)/.test(o60));
 
 console.log('== 4. CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo)', manifest.length === 191);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião)', manifest.length === 192);
 ok('versão 5.22.x', /^5\.22\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.85 passaram!');

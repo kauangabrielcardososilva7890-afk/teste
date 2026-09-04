@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 191 | sha256: a16d0719f4176a3f
+ * scripts: 192 | sha256: cb33d00737c5a102
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -37785,7 +37785,10 @@ window.abrirOrcamento=function(id){
       _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
     }catch(e){}
     var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '.)', 'Orçamento');
+    // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
+    // que conta quem tirou o orçamento do banco entre a lista e o clique
+    var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '.)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
@@ -47026,15 +47029,119 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_financeiro_pendente_patch.js", e); }
 ;
 
+/* ===== ajustes_v52293_orcamento_guardiao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.93 — guardião do banco de orçamentos
+//
+// Três dias de diagnóstico mostraram: o orçamento ESTÁ na lista e, na hora do
+// clique, já NÃO está no banco. Alguém tira ele do array entre uma coisa e a
+// outra — e os nomes conhecidos não confessaram. Então agora ninguém precisa
+// confessar: este guardião anota TODA SAÍDA de registro do array db.orcamentos
+// com horário e trilha (quem chamou), num anel no próprio PC (__orc_saiu).
+// O aviso de "não achei" (v5.22.91/92) passa a mostrar a última baixa — o
+// usuário manda o texto e a causa aparece escrita.
+//
+// Também corrige onde o retrato da lista é guardado: a listagem que o usuário
+// VÊ é a definição mais nova de renderOrcamentos; este arquivo roda por último
+// e amarra o retrato nela (antes o retrato ficava na listagem velha e dizia
+// sempre "NÃO estava", mesmo quando estava).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CHAVE_LOG = '__orc_saiu';
+var MAX_LOG = 12;
+
+function anotarSaida(tinham, ficaram, origem){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var foram = tinham.filter(function(x){ return ficaram.indexOf(x) < 0; });
+    log.push({
+      quando: new Date().toISOString(),
+      saiu: foram.join(',').slice(0, 120),
+      origem: String(origem || '').slice(0, 140)
+    });
+    if(log.length > MAX_LOG) log = log.slice(-MAX_LOG);
+    localStorage.setItem(CHAVE_LOG, JSON.stringify(log));
+  }catch(e){}
+}
+
+function idsOrc(){
+  try{
+    if(typeof db === 'undefined' || !Array.isArray(db.orcamentos)) return null;
+    return db.orcamentos.map(function(x){ return String(x && x.id); });
+  }catch(e){ return null; }
+}
+
+// Cão de guarda leve: a cada 400 ms compara os ids. Se alguém tirou registro
+// (splice, filter, replace do array), anota com a pilha da chamada seguinte.
+var ultimoRetrato = null;
+function vigia(){
+  if(typeof document === 'undefined') return;
+  ultimoRetrato = idsOrc();
+  setInterval(function(){
+    var agora = idsOrc();
+    if(!agora) return;
+    if(ultimoRetrato && agora.length < ultimoRetrato.length){
+      anotarSaida(ultimoRetrato, agora, (new Error('vigia')).stack);
+    }
+    ultimoRetrato = agora;
+  }, 400);
+}
+
+// Retrato da listagem VISÍVEL (a última versão de renderOrcamentos que existir)
+function amarrarRetratoDaLista(){
+  if(typeof window.renderOrcamentos !== 'function' || window.renderOrcamentos.__v52293) return;
+  var antiga = window.renderOrcamentos;
+  var embrulhada = function(){
+    var r = antiga.apply(this, arguments);
+    try{
+      var base = idsOrc() || [];
+      localStorage.setItem('__orc_render_ids', JSON.stringify(base.slice(0, 80)));
+      ultimoRetrato = base;
+    }catch(e){}
+    return r;
+  };
+  embrulhada.__v52293 = true;
+  embrulhada.__v52243status = antiga.__v52243status;
+  embrulhada.__v52244orc = antiga.__v52244orc;
+  window.renderOrcamentos = embrulhada;
+}
+
+// A trilha da última baixa entra no aviso "não achei"
+function resumoUltimaBaixa(){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var u = log[log.length - 1];
+    if(!u) return 'nenhuma baixa anotada ainda';
+    return 'última baixa: saiu [' + (u.saiu || '?') + '] às ' + String(u.quando || '').slice(11, 19);
+  }catch(e){ return '?'; }
+}
+window.__orcResumoUltimaBaixa = resumoUltimaBaixa;
+
+if(typeof document !== 'undefined'){
+  vigia();
+  amarrarRetratoDaLista();
+  // Se a listagem for trocada depois por outro módulo carregando tarde, reamarra
+  setTimeout(amarrarRetratoDaLista, 1500);
+  setTimeout(amarrarRetratoDaLista, 5000);
+}
+
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52293_orcamento_guardiao_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 191;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 192;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 191 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 192 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

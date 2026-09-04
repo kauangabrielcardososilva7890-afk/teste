@@ -189,5 +189,6 @@
   "ajustes_v52265_script_isolado_patch.js",
   "ajustes_v52289_orcamento_carimbo_autocura_patch.js",
   "menus_tela_pequena_patch.js",
-  "vendas_financeiro_pendente_patch.js"
+  "vendas_financeiro_pendente_patch.js",
+  "ajustes_v52293_orcamento_guardiao_patch.js"
 ]

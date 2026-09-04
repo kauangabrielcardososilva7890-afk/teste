@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.92**  
+**Última versão:** **v5.22.93**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.92>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.93>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,27 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.93 (2026-09-04)
+
+1. **O orçamento voltou a sumir APÓS a trava .92 — mas o diagnóstico revelou
+   duas coisas:** o id falho (orc_ + tempo + aleatório, 8+4) é gerado pelo
+   salvar do módulo v52258 (que sobrescreve v52237), e o retrato da lista
+   gravado na .91 era da listagem VELHA — a que o usuário VÊ é a do v52258,
+   então "NÃO estava na lista" não provava nada. Lição: instrumentar sempre
+   o ÚLTIMO vencedor do bundle.
+2. **Guardião do banco (arquivo novo, último do bundle):** a cada 400 ms
+   compara os ids de db.orcamentos; QUALQUER saída de registro grava horário,
+   quais ids sumiram e a TRILHA (pilha) de quem chamou, num anel __orc_saiu
+   no PC. A listagem visível passou a alimentar o retrato. O aviso "não
+   achei" agora mostra: quantos tem, código clicado, estava-na-lista (agora
+   certo), códigos atuais e a ÚLTIMA BAIXA. A próxima mensagem do usuário traz
+   o nome do ladrão escrito — sem mais hipótese.
+3. Trava .92 (delete de nuvem vira excluído + este PC não manda delete de
+   orçamento) MANTIDA — continua eliminando a classe "apagão replicado" que
+   já aconteceu antes com outros dados.
 
 ---
 
