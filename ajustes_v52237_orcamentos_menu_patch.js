@@ -180,6 +180,9 @@ window.renderOrcamentos=function(){
   var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
     return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
   });
+  // v5.22.91 — guarda os ids que a tela mostrou agora; o aviso de "não achei"
+  // compara com isso e diz se o clicado ESTAVA na lista (fecha o diagnóstico)
+  try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x.id); }).slice(0,80))); }catch(e){}
   view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
     +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
     +'<div class="neo-actions">'
@@ -303,9 +306,57 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    // v5.22.91 — diagnóstico completo: quantos tem, qual clicou, se o clicado
+    // ESTAVA na lista que a tela mostrou, e os códigos que existem agora
+    var _qtd = 0; try{ _qtd = store().length; }catch(e){}
+    var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
+    var _estava = '?'; try{
+      var _snap = JSON.parse(localStorage.getItem('__orc_render_ids')||'[]');
+      _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
+    }catch(e){}
+    var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '.)', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
@@ -342,10 +393,10 @@ window.abrirTelaOrcamento=function(existente){
     +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div></label>'
     +'<label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
-    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold"></label>'
     +'</div>'
-    +'<div class="flex justify-end"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+    +'<div class="flex justify-end"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
     +'</div>'
     +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
     +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -424,7 +475,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){
@@ -445,6 +496,10 @@ window.orcCalcItem=function(){
   var de=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
   var el=document.getElementById('orc-item-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  var btn=document.getElementById('orc-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim());
 };
 window.orcAddItem=function(){
   var f=ST.form; if(!f) return;
@@ -468,6 +523,8 @@ window.orcAddItem=function(){
   }
   var preco=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
   var descV=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  // v5.22.84 — sem valor unitário numérico, não adiciona
+  if(!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim())){ if(typeof toast==='function') toast('Informe um valor unitário numérico para adicionar o item','error'); return; }
   f.itens.push({
     produtoId:p?p.id:null, descricao:p?(p.nome||''):desc, sku:p?(p.sku||''):'',
     tipo:(document.getElementById('orc-item-tipo')||{}).value||'Produto',
@@ -477,7 +534,7 @@ window.orcAddItem=function(){
   document.getElementById('orc-prod-search').value='';
   document.getElementById('orc-item-qtd').value=1;
   document.getElementById('orc-item-vunit').value='';
-  document.getElementById('orc-item-desc').value=0;
+  document.getElementById('orc-item-desc').value='';
   window.orcRenderItens();
 };
 window.orcRenderItens=function(){

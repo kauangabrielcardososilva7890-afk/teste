@@ -231,7 +231,7 @@
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 
@@ -356,17 +356,101 @@
   if(typeof window !== 'undefined'){
     window.orcOnTipoItem = orcOnTipoItem;
     window.orcBuscarCliente = orcBuscarCliente;
-    window.orcSelCliente = orcSelCliente;
-    window.orcLimparCliente = orcLimparCliente;
+    window.orcSelCliente = function(id){
+      orcSelCliente(id);
+      // v5.22.87 — escolheu: some o campo de busca, fica só o cartão do cliente
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.add('hidden');
+    };
+    window.orcLimparCliente = function(){
+      orcLimparCliente();
+      // v5.22.87 — tirou o cliente: volta a mostrar a busca
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.remove('hidden');
+    };
     window.orcBuscarProd = orcBuscarProd;
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
     window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.orcBuscarSerial = orcBuscarSerial;
     window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
     window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
     window.excluirOrcamento = excluirOrcamentosMarcados;
 
     // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+  // v5.22.85 — Busca por número de série no orçamento: IGUAL às vendas.
+  // Puxa a última notinha/venda com esse serial e já preenche modelo,
+  // patrimônio, contador e o cliente sozinho (mesmas regras da aba OS).
+  function orcBuscarSerial(serial){
+    var s = getSess(); if(!s) return;
+    var srl = txt(serial).toLowerCase();
+    var info = document.getElementById('orc-serial-info');
+    if(!srl){ if(info) info.classList.add('hidden'); return; }
+    var _db = getDb();
+    var normSerie = function(o){ return txt(o && (o.numeroSerie || o.serie)).toLowerCase(); };
+    // 1) vendas com esse serial (a mais recente manda)
+    var hist = (_db.vendas || []).filter(function(v){
+      return v && v.empresaId === s.empresaId && v.os && normSerie(v.os) === srl;
+    }).sort(function(a, b){ return new Date(b.data || 0) - new Date(a.data || 0); });
+    // 2) chamados/OS com esse serial
+    var chamado = (_db.os || []).filter(function(o){
+      return o && o.empresaId === s.empresaId && normSerie(o) === srl;
+    }).sort(function(a, b){ return new Date(b.abertura || b.criadoEm || 0) - new Date(a.abertura || a.criadoEm || 0); })[0];
+    // 3) cadastro de equipamentos
+    var eq = (_db.equipamentos || []).find(function(e){ return e && e.empresaId === s.empresaId && normSerie(e) === srl; });
+    var ult = hist[0];
+    var preencheu = 0;
+    var setSeVazio = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && !el.value.trim() && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var setSempre = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var fonte = ult ? ult.os : (chamado || null);
+    if(fonte){
+      setSeVazio('orc-os-modelo', fonte.modelo || fonte.equipamentoModelo || '');
+      setSeVazio('orc-os-patri', fonte.patrimonio || '');
+      setSeVazio('orc-os-contador', fonte.contador != null ? fonte.contador : '');
+    }
+    if(eq){
+      setSeVazio('orc-os-modelo', eq.modelo);
+      setSeVazio('orc-os-patri', eq.patrimonio);
+      setSeVazio('orc-os-contador', eq.contadorPB);
+    }
+    // cliente: última notinha > chamado > máquina instalada (parque)
+    var cliId = ult ? ult.clienteId : (chamado ? chamado.clienteId : null);
+    if(!cliId && eq){
+      var inst = (_db.parque || []).find(function(p){ return p && p.empresaId === s.empresaId && p.equipamentoId === eq.id; });
+      if(inst) cliId = inst.clienteId;
+    }
+    var f = window.__ORC_ST && window.__ORC_ST.form;
+    var autoCli = false;
+    if(cliId && !(f && f.cliente)){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === cliId; });
+      if(c){ orcSelCliente(c.id); autoCli = true; }
+    }
+    // regra das vendas: a última notinha encontrada comanda os dados do aparelho
+    if(ult && ult.os){
+      setSempre('orc-os-modelo', ult.os.modelo || ult.os.equipamentoModelo || '');
+      setSempre('orc-os-patri', ult.os.patrimonio || '');
+      if(ult.clienteId && !(f && f.cliente)){
+        var c2 = (_db.clientes || []).find(function(x){ return x && x.id === ult.clienteId; });
+        if(c2){ orcSelCliente(c2.id); autoCli = true; }
+      }
+    }
+    if(info){
+      var fmt = function(d){ return typeof fmtDate === 'function' ? fmtDate(d) : (d || '-'); };
+      if(ult || chamado || eq){
+        var clNome = ((_db.clientes || []).find(function(x){ return x && x.id === (ult ? ult.clienteId : cliId); }) || {}).nome || '-';
+        info.className = 'col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900 block';
+        info.innerHTML = '<p class="font-bold mb-1"><i class="ph ph-clock-counter-clockwise"></i> Última notinha encontrada para este equipamento:</p>'
+          + (ult ? 'Data: <b>' + fmt(ult.data) + '</b> • Cliente: <b>' + esc(clNome) + '</b> • Modelo: <b>' + esc(ult.os.modelo || '-') + '</b> • Venda/OS: <b>' + esc(ult.numero) + '</b>'
+            : chamado ? 'Chamado <b>' + esc(chamado.numero || '-') + '</b> de <b>' + fmt(chamado.abertura || chamado.criadoEm) + '</b> • Cliente: <b>' + esc(clNome) + '</b>'
+            : 'Equipamento cadastrado: <b>' + esc(eq.modelo || '-') + '</b> (patrimônio ' + esc(eq.patrimonio || '-') + ')')
+          + (preencheu || autoCli ? '<p class="mt-1 text-emerald-800 font-semibold"><i class="ph ph-magic-wand"></i> Preenchido automaticamente' + (autoCli ? ' (incluindo cliente)' : '') + ' — confira antes de salvar.</p>' : '');
+      } else {
+        info.className = 'col-span-12 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-500 block';
+        info.innerHTML = '<i class="ph ph-info"></i> Nenhuma notinha anterior encontrada para este número de série.';
+      }
+    }
+  }
+
     window.abrirTelaOrcamento = function(existente){
       var s = getSess(); if(!s) return;
       var _db = getDb();
@@ -417,15 +501,17 @@
 
         // Linha do Cliente com Filtro de Campos
         +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
-        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">'+(f.cliente ? 'Cliente' : 'Cliente * — selecione o filtro e busque com Enter ou lupa')+'</label>'
+        +'<div id="orc-cli-busca" class="'+(f.cliente || isAutorizado ? 'hidden' : '')+'">'
         +'<div class="flex flex-wrap items-center gap-2 mt-1">'
-        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
         +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
-        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'</div>'
         +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
         +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
         +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
@@ -433,13 +519,8 @@
         +'</div>'
         +'</div>'
 
-        // Barra de Abas (Itens / Ordem de Serviço)
-        +'<div class="flex border-b border-slate-200">'
-        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
-        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
-        +'</div>'
-
-        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        // v5.22.87 — nada de abas: Itens e Ordem de Serviço ficam na MESMA
+        // tela, um embaixo do outro (a "tela 2" sempre aparece agora)
         +'<div id="orc-aba-itens" class="space-y-3">'
         +(!isAutorizado ? (
           '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
@@ -464,7 +545,7 @@
           +'</div>'
           +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
           +'</div>'
           +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -474,7 +555,7 @@
           +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div></label>'
           +'</div>'
-          +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+          +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
           +'</div>'
         ) : '')
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
@@ -484,13 +565,17 @@
         +'<tbody id="orc-itens-body"></tbody></table></div>'
         +'</div>'
 
-        // ABA 2: ORDEM DE SERVIÇO
-        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        // ABA 2: ORDEM DE SERVIÇO (sempre visível, logo abaixo dos itens)
+        +'<div id="orc-aba-os" class="space-y-3 pt-3 border-t-2 border-[#0a1e8a]/15 mt-2">'
         +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
         +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
-        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : 'onchange="window.orcBuscarSerial && window.orcBuscarSerial(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.orcBuscarSerial && window.orcBuscarSerial(this.value);}"')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série... (Enter ou lupa puxa o histórico)" class="flex-1 h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcBuscarSerial && window.orcBuscarSerial(document.getElementById(\'orc-os-serie\').value)" class="shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Buscar histórico desse serial"><i class="ph ph-magnifying-glass"></i></button>' : '')
+        +'</div></label>'
+        +'<div id="orc-serial-info" class="col-span-12 hidden"></div>'
         +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
         +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
         +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
@@ -524,8 +609,9 @@
         +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
         +'</div>';
 
+      // v5.22.87 — a aba fecha pelo X do canto superior: nada de botão Sair no rodapé
       document.getElementById('modal-footer').innerHTML =
-        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        ''
         +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
@@ -580,6 +666,18 @@
 
       var totalEl = document.getElementById('orc-total');
       if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // v5.22.86 — remove um item da lista do orçamento. A lixeira da tabela
+    // chama essa função e ela não existia (erro "orcDelItem is not a function").
+    window.orcDelItem = function(idx){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f || !f.itens) return;
+      idx = n(idx);
+      if(idx < 0 || idx >= f.itens.length) return;
+      if(f.status === 'aprovado' || f.vendaId){ if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error'); return; }
+      f.itens.splice(idx, 1);
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
     };
 
     // Override do salvarOrcamentoTela com bloqueio em autorizados
@@ -674,9 +772,11 @@
       if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
       if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
 
-      window.__ORC_ST.form.id = o.id;
+      window.__ORC_ST.form = null;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      // v5.22.87 — salvou, fechou! A aba do orçamento não fica aberta depois
+      // do salvar; volta direto para a lista de orçamentos
+      if(typeof closeModal === 'function') closeModal();
     };
 
     // Sincronização de versão visual

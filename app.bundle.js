@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 9e9ca4b8fcf29aa1
+ * scripts: 191 | sha256: 407bed00ca9082b3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -5342,13 +5342,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
@@ -10309,7 +10313,8 @@ window.FLUXOS_PURE = {
 if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
-  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo' },
+  // v5.22.84 — dir guarda o sentido A→Z / Z→A da ordenação da lista de produtos
+  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo', dir: 'asc' },
   ctr: { q: '', status: '', sort: 'codigo' },
   leiturasBusca: '',
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
@@ -10350,6 +10355,11 @@ function botaoBusca(onclick){
 
 function thSort(fn, col, label, active){
   return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? ' ▲' : ''}</th>`;
+}
+
+// v5.22.84 — título com seta nos DOIS sentidos (▲ A→Z, ▼ Z→A)
+function thSortDir(fn, col, label, active, dir){
+  return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? (dir === 'desc' ? ' ▼' : ' ▲') : ''}</th>`;
 }
 
 function bindBuscaEnter(id, callbackName){
@@ -10450,8 +10460,13 @@ window.aplicarBuscaProdutosOperacional = function(){
   window.renderProdutos();
 };
 
+// v5.22.84 — clicar na mesma coluna troca o sentido; coluna nova começa A→Z.
+// Antes o sentido ficava guardado em outro objeto de estado e a lista nunca
+// virava Z→A; quando virava, era "invertendo a linha" na tela (bugava).
 window.produtosSortOperacional = function(col){
-  STATE.prod.sort = col;
+  if(!STATE.prod.dir) STATE.prod.dir = 'asc';
+  if(STATE.prod.sort === col) STATE.prod.dir = STATE.prod.dir === 'asc' ? 'desc' : 'asc';
+  else { STATE.prod.sort = col; STATE.prod.dir = 'asc'; }
   window.renderProdutos();
 };
 
@@ -10488,12 +10503,19 @@ window.renderProdutos = function(){
   if(!view) return;
   if(adaptarProdutosMigrados(db, sess.empresaId)) saveSafe();
 
+  // v5.22.84 — o "Local" do produto deixou de existir (não era usado).
+  // Dados antigos já gravados são apagados aqui, uma varredura por abertura
+  // da tela; depois da primeira limpeza não encontra mais nada.
+  let purgeiLocal = false;
+  (db.produtos || []).forEach(p => { if(p && Object.prototype.hasOwnProperty.call(p, 'local')){ delete p.local; purgeiLocal = true; } });
+  if(purgeiLocal) saveSafe();
+
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
   if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
-    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
+    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
   }
 
@@ -10503,10 +10525,13 @@ window.renderProdutos = function(){
     categoria: p => p.categoria || '',
     estoque: p => toNumber(p.estoque),
     minimo: p => toNumber(p.estoqueMin),
-    valor: p => toNumber(p.preco),
-    local: p => p.local || ''
+    valor: p => toNumber(p.preco)
   };
-  list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
+  // v5.22.84 — ordena a lista INTEIRA no sentido certo antes de fatiar os 300
+  const prodGetter = sorters[STATE.prod.sort] || sorters.codigo;
+  list = STATE.prod.dir === 'desc'
+    ? [...list].sort((a, b) => compareSmart(prodGetter(b), prodGetter(a)))
+    : sortAsc(list, prodGetter);
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
@@ -10546,13 +10571,12 @@ window.renderProdutos = function(){
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500">
               <tr>
                 <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'produto-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
-                ${thSort('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'local', 'Local', STATE.prod.sort)}
+                ${thSortDir('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort, STATE.prod.dir)}
                 <th class="px-4 py-2.5 text-right">Ações</th>
               </tr>
             </thead>
@@ -10567,11 +10591,10 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
                   <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
-                  <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="9" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="9" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              ${list.length > vis.length ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -10585,7 +10608,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? (db.produtos || []).find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: '', nome: '', categoria: 'Produto', fabricante: '', estoque: 0, estoqueMin: 0, estoqueIdeal: 0,
-    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
+    custo: 0, preco: 0, ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
   };
   if(!p) return toastMsg('Produto não encontrado', 'error');
   const cat = categoriaUnificada(p.categoria || p.tipoCadastro || p.tipo);
@@ -10682,7 +10705,6 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
@@ -12038,7 +12060,35 @@ window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
   if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
   calcImpressoesChamado();
 };
-window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
+// v5.22.90 — a função que VALIA procurava só os ids kr-os-* (tela antiga)
+// e deixava o chamado atual (ko-*) sem calcular a quantidade impressa.
+// Agora atende TODOS os conjuntos de id usados pelas telas de chamado.
+window.calcImpressoesChamado = function(){
+  var pares = [
+    ['ko-cont-ant','ko-cont-atu','ko-qtd-imp'],
+    ['kr-os-cont-ant','kr-os-cont-atu','kr-os-qtd'],
+    ['o-cont-ant','o-cont-atu','o-qtd-imp'],
+    ['ca-cont-ant','ca-cont-atu','ca-qtd']
+  ];
+  for(var i = 0; i < pares.length; i++){
+    var a = document.getElementById(pares[i][0]);
+    var u = document.getElementById(pares[i][1]);
+    var q = document.getElementById(pares[i][2]);
+    if(!a && !u && !q) continue;
+    var ant = Number(a && a.value ? a.value : 0) || 0;
+    var atu = u && u.value !== '' && u.value != null ? (Number(u.value) || 0) : ant;
+    if(atu < ant) atu = ant;
+    if(q) q.value = atu - ant;
+  }
+};
+// v5.22.90 — além do oninput dos campos (que nem sempre existe), um ouvinte
+// garante o cálculo em QUALQUER campo de contador, em qualquer tela.
+if(typeof document !== 'undefined'){
+  document.addEventListener('input', function(e){
+    var id = (e && e.target && e.target.id) || '';
+    if(/-cont-atu$/.test(id) || /-cont-ant$/.test(id)) window.calcImpressoesChamado();
+  }, true);
+}
 function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
@@ -16912,6 +16962,7 @@ function renderImpressorasResultado(clienteId){
   let lista = parquesCliente(clienteId || window.__CHAMADO_AVULSO.clienteId);
   if(q) lista = lista.filter(p => { const e=equipamento(p.equipamentoId)||{}; return [e.patrimonio,e.modelo,e.serie,p.setor,p.localInstalacao].some(v=>norm(v).includes(q)); });
   out.innerHTML = lista.map(p => { const e=equipamento(p.equipamentoId)||{}; return `<button type="button" onclick="selecionarImpressoraChamadoAvulso('${p.equipamentoId}')" class="w-full text-left p-2 hover:bg-blue-50 border-b last:border-0"><b>Patr. ${esc(e.patrimonio||'-')}</b> — ${esc(e.modelo||'')}<br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'')}</span></button>`; }).join('') || '<p class="p-3 text-center text-slate-400">Nenhuma impressora para este cliente</p>';
+  if(window.__marcarImpAvulso) window.__marcarImpAvulso(window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId);
 }
 
 window.buscarClientesChamadoAvulso = renderClientesResultado;
@@ -16922,10 +16973,27 @@ window.selecionarClienteChamadoAvulso = function(id){
   const el = document.getElementById('ca-cliente-selecionado'); if(el) el.innerHTML = `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>`;
   renderImpressorasResultado(id);
 };
+// v5.22.88 — marca a impressora escolhida na lista do avulso (azul = escolhida)
+window.__marcarImpAvulso = function(equipId){
+  const lista = document.getElementById('ca-impressoras-result'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on = b.getAttribute('onclick')||'';
+    const marc = equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.selecionarImpressoraChamadoAvulso = function(equipId){
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  const selTxt = document.getElementById('ca-impressora-selecionada');
+  if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+  // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)
+  const _res = document.getElementById('ca-impressoras-result'); if(_res) _res.classList.add('hidden');
+  window.__marcarImpAvulso(equipId);
   const ant = ultimoContador(equipId);
   ['modelo','patr','serie','local'].forEach(k => { const el=document.getElementById('ca-'+k); if(el){ if(k==='modelo') el.value=e.modelo||''; if(k==='patr') el.value=e.patrimonio||''; if(k==='serie') el.value=e.serie||''; if(k==='local') el.value=p.localInstalacao||p.setor||''; }});
   const antEl = document.getElementById('ca-cont-ant'); if(antEl) antEl.value = ant;
@@ -16944,6 +17012,7 @@ function renderChamadoAvulso(id){
     <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><b>Chamado fora de contrato</b><p class="text-[12px] text-blue-800 mt-1">Use para atendimento avulso. Para cliente de contrato, abra pelo contrato.</p></div>
     <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Código</label><input id="ca-num" readonly value="${esc(codigo)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono font-bold"></div><div><label class="block font-bold text-slate-600 mb-1">Data</label><input id="ca-data" type="date" value="${String(o?.dataAbertura || new Date().toISOString()).slice(0,10)}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Prioridade</label><select id="ca-prio" class="w-full h-10 px-3 rounded-xl border"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div><div><label class="block font-bold text-slate-600 mb-1">Criado por</label><input readonly value="${esc(o?.criadoPorNome || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50"></div><div><label class="block font-bold text-slate-600 mb-1">Técnico</label><input id="ca-tec" value="${esc(o?.tecnico || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar cliente</label><div class="flex gap-2"><input id="ca-busca-cliente" placeholder="Digite código, nome, documento..." class="flex-1 h-10 px-3 rounded-xl border">${botaoBusca('buscarClientesChamadoAvulso()')}</div><div id="ca-cliente-selecionado" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]">${c ? `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>` : 'Nenhum cliente selecionado'}</div><div id="ca-clientes-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
+    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — digite para filtrar; ao escolher, a lista fecha ✔)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Modelo</label><input id="ca-modelo" value="${esc(o?.modelo||'')}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Patrimônio</label><input id="ca-patr" value="${esc(o?.patrimonio||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Serial</label><input id="ca-serie" value="${esc(o?.serie||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Local</label><input id="ca-local" value="${esc(o?.local||'')}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div><label class="block font-bold text-slate-600 mb-1">Motivo / Defeito *</label><input id="ca-desc" value="${esc(o?.descricao||'')}" class="w-full h-10 px-3 rounded-xl border font-semibold"></div>
     <label class="bg-slate-50 border rounded-xl p-3 flex items-center gap-3 cursor-pointer"><input type="checkbox" id="ca-concluido" ${o?.status==='concluido'?'checked':''}><span class="font-bold">Este chamado já foi finalizado?</span></label>
@@ -16953,7 +17022,16 @@ function renderChamadoAvulso(id){
   document.getElementById('ca-prio').value = o?.prioridade || 'normal';
   bindEnter('ca-busca-cliente', renderClientesResultado);
   bindEnter('ca-busca-impressora', () => renderImpressorasResultado());
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  const _impQ = document.getElementById('ca-busca-impressora');
+  if(_impQ && !_impQ.__v52288){ _impQ.__v52288=1; _impQ.addEventListener('input', () => renderImpressorasResultado()); }
   if(c) renderImpressorasResultado(c.id);
+  if(o && o.equipamentoId){
+    const eX = equipamento(o.equipamentoId) || {};
+    const selX = document.getElementById('ca-impressora-selecionada');
+    if(selX) selX.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+    const _resX = document.getElementById('ca-impressoras-result'); if(_resX) _resX.classList.add('hidden');
+  }
 }
 window.fecharModalChamadoAvulso = fechar;
 window.salvarChamadoAvulso = function(id){
@@ -16976,6 +17054,14 @@ const oldOpenModal = window.openModal;
 window.openModal = function(type, id){
   if(type === 'os') return renderChamadoAvulso(id);
   if(oldOpenModal) return oldOpenModal.apply(this, arguments);
+};
+
+// v5.22.90 — lápis reabre a lista de impressoras do avulso (e FICA aberta)
+window.caEditarImpressoraAvulso = function(){
+  const q = document.getElementById('ca-busca-impressora'); if(q) q.value='';
+  const res = document.getElementById('ca-impressoras-result'); if(res) res.classList.remove('hidden');
+  renderImpressorasResultado();
+  if(q) q.focus();
 };
 
 console.log('[DIGICOPY] chamados_avulsos_aberto_patch.js v4.9.16 carregado');
@@ -17877,7 +17963,9 @@ function ajustarBuscaVenda(){
   const pi=document.getElementById('vos-prod-search'); if(pi&&!document.getElementById('vos-prod-lupa')){ pi.removeAttribute('oninput'); pi.oninput=null; pi.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); window.vosVendaSearchProd(pi.value);} }; pi.insertAdjacentHTML('afterend','<button id="vos-prod-lupa" type="button" onclick="vosVendaSearchProd(document.getElementById(\'vos-prod-search\').value)" class="absolute right-2 top-[30px] h-8 px-3 rounded-lg bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button>'); }
 }
 const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda=function(){ const r=oldNova.apply(this,arguments); setTimeout(ajustarBuscaVenda,80); return r; };
-const oldImp=window.imprimirNotinha; window.imprimirNotinha=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(v && !['faturado','finalizada'].includes(low(v.status))){ toast('Fature a notinha antes de imprimir ou salvar em PDF','error'); return; } return oldImp?oldImp.apply(this,arguments):null; };
+// v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
+// aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
+// A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
 window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
@@ -23774,30 +23862,45 @@ function htmlBuscaImpressoraContrato(){
   return `<div class="rounded-xl bg-blue-50 border border-blue-200 p-3" id="lc-busca-imp-ctr">
     <b class="text-blue-900">Buscar impressora do contrato</b>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-      <select id="lc-imp-busca-campo" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
-      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
+      <select id="lc-imp-busca-campo" onchange="lcBuscarImpressoraChamado()" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
+      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2 flex items-center gap-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px] flex-1"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Digite para filtrar; ao tocar, só a escolhida fica. ✏️ abre a lista de novo.</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
+// v5.22.88 — a escolhida fica marcada em azul DENTRO da lista (nada de esconder)
+window.lcMarcarImpressoraNaLista=function(equipId){
+  const lista=document.getElementById('ko-equip-lista'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on=b.getAttribute('onclick')||'';
+    const marc=equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
   sel.value=equipId;
   const e=eq(equipId)||{};
-  const chosen=document.getElementById('ko-equip-selected');
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(chosen) chosen.classList.remove('hidden');
+  // v5.22.90 — ao escolher, a lista RECOLHE e fica só a escolhida + lápis (modelo das leituras)
   if(list) list.classList.add('hidden');
+  const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
+  window.lcMarcarImpressoraNaLista(equipId);
   if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
 };
+// Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
-  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
+  if(q) q.focus();
 };
 
 window.lcBuscarImpressoraChamado=function(){
@@ -23813,8 +23916,9 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
+  listaEl.classList.remove('hidden');
   listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
-  if(cur) lcEscolherImpressoraChamado(cur);
+  if(cur) window.lcMarcarImpressoraNaLista(cur);
 };
 
 function setModalSize(){
@@ -23874,6 +23978,13 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   document.getElementById('modal-root')?.classList.remove('hidden');
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  setTimeout(function(){
+    const qi=document.getElementById('lc-imp-busca-q');
+    if(qi && !qi.__v52288){ qi.__v52288=1; qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); }); }
+    const cs=document.getElementById('lc-imp-busca-campo');
+    if(cs && !cs.__v52288){ cs.__v52288=1; cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); }); }
+  }, 0);
   if(equipId){
     const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);
@@ -25510,12 +25621,12 @@ function htmlPecasVendas(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -25527,6 +25638,10 @@ window.lcPecaCalc=function(prefix){
   const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
   const el=document.getElementById(prefix+'-prod-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  const btn=document.getElementById(prefix+'-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String(document.getElementById(prefix+'-prod-preco')?.value||'').trim());
 };
 
 window.lcBuscarPeca=function(prefix){
@@ -25551,7 +25666,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -25560,6 +25675,9 @@ window.lcAddPecaManual=function(prefix){
   const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
   const p=window.__lcPecaSel;
   if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+  const precoRaw=String(document.getElementById(prefix+'-prod-preco')?.value||'').trim();
+  if(!/^\d+(?:[.,]\d+)?$/.test(precoRaw)){ aviso('Informe um valor unitário numérico para adicionar o item'); return; }
   const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
   const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
   const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
@@ -25573,7 +25691,7 @@ window.lcAddPecaManual=function(prefix){
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
   const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
   const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
-  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value='';
   window.lcPecaCalc(prefix);
   window.lcRenderPecas(prefix);
 };
@@ -26550,12 +26668,12 @@ function htmlPecasVendas5186(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -32372,11 +32490,11 @@ function wrapSort(nome, pegarEstado, seletor){
 
 function kauan(){ return window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {}); }
 
-wrapSort('produtosSortOperacional', function(){
-  var st = kauan();
-  st.prod = st.prod || { sort:'codigo', dir:'asc' };
-  return st.prod;
-}, '#view-produtos');
+// v5.22.84 — a ordenação de produtos ganhou sentido próprio guardado no mesmo
+// estado da lista (fluxos_operacionais_patch.js) e a trava antiga saiu: ela
+// guardava o sentido em objeto separado (nunca virava Z→A) e "invertia as
+// linhas" na tela, jogando a linha de contagem para o topo.
+
 
 wrapSort('contratosSortOperacional', function(){
   var st = kauan();
@@ -35014,7 +35132,7 @@ function mapearProduto(row, cats){
     estoqueMin: parseInt(row && (row.ESTOQUE_MINIMO || row.ESTOQUE_MIN), 10) || 0,
     custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
     preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
-    local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    // v5.22.84 — "Local" do produto aposentado: nem importado ele entra na base
     ncm: txt(row && (row.NCM || row.PR_NCM || row.ncm)).replace(/\D/g,'').slice(0,8),
     status: 'ativo'
   };
@@ -37482,6 +37600,9 @@ window.renderOrcamentos=function(){
   var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
     return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
   });
+  // v5.22.91 — guarda os ids que a tela mostrou agora; o aviso de "não achei"
+  // compara com isso e diz se o clicado ESTAVA na lista (fecha o diagnóstico)
+  try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x.id); }).slice(0,80))); }catch(e){}
   view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
     +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
     +'<div class="neo-actions">'
@@ -37605,9 +37726,57 @@ function formNovo(existente){
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
 window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    // v5.22.91 — diagnóstico completo: quantos tem, qual clicou, se o clicado
+    // ESTAVA na lista que a tela mostrou, e os códigos que existem agora
+    var _qtd = 0; try{ _qtd = store().length; }catch(e){}
+    var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
+    var _estava = '?'; try{
+      var _snap = JSON.parse(localStorage.getItem('__orc_render_ids')||'[]');
+      _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
+    }catch(e){}
+    var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '.)', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
@@ -37644,10 +37813,10 @@ window.abrirTelaOrcamento=function(existente){
     +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div></label>'
     +'<label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
-    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold"></label>'
     +'</div>'
-    +'<div class="flex justify-end"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+    +'<div class="flex justify-end"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
     +'</div>'
     +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
     +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -37726,7 +37895,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){
@@ -37747,6 +37916,10 @@ window.orcCalcItem=function(){
   var de=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
   var el=document.getElementById('orc-item-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  var btn=document.getElementById('orc-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim());
 };
 window.orcAddItem=function(){
   var f=ST.form; if(!f) return;
@@ -37770,6 +37943,8 @@ window.orcAddItem=function(){
   }
   var preco=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
   var descV=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  // v5.22.84 — sem valor unitário numérico, não adiciona
+  if(!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim())){ if(typeof toast==='function') toast('Informe um valor unitário numérico para adicionar o item','error'); return; }
   f.itens.push({
     produtoId:p?p.id:null, descricao:p?(p.nome||''):desc, sku:p?(p.sku||''):'',
     tipo:(document.getElementById('orc-item-tipo')||{}).value||'Produto',
@@ -37779,7 +37954,7 @@ window.orcAddItem=function(){
   document.getElementById('orc-prod-search').value='';
   document.getElementById('orc-item-qtd').value=1;
   document.getElementById('orc-item-vunit').value='';
-  document.getElementById('orc-item-desc').value=0;
+  document.getElementById('orc-item-desc').value='';
   window.orcRenderItens();
 };
 window.orcRenderItens=function(){
@@ -38144,7 +38319,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -41421,7 +41596,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -42299,7 +42474,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -44131,7 +44306,7 @@ try{
         +'</div>'
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
         +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -44141,7 +44316,7 @@ try{
         +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div></label>'
         +'</div>'
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
         +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -44284,7 +44459,8 @@ try{
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -44306,10 +44482,13 @@ try{
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -44354,6 +44533,15 @@ try{
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };
@@ -44736,7 +44924,7 @@ try{
 
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
 
@@ -44749,7 +44937,7 @@ try{
         +'</div></label>'
         +'</div>'
 
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
 
         // Tabela de itens
@@ -44837,8 +45025,27 @@ try{
       }
 
       var qtd = n(document.getElementById('orc-item-qtd') && document.getElementById('orc-item-qtd').value) || 1;
+      // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+      var vuRaw = String((document.getElementById('orc-item-vunit')||{}).value||'').trim();
+      if(!/^\d+(?:[.,]\d+)?$/.test(vuRaw)){ if(typeof toast === 'function') toast('Informe um valor unitário numérico para adicionar o item', 'error'); return; }
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
+
+      // v5.22.85 — regra do orçamento: NÃO baixa estoque (continua assim), mas
+      // pra LANÇAR um produto físico tem que ter estoque. Avisa e não deixa
+      // entrar: precisa de no mínimo a quantidade que vai pro orçamento.
+      if(p && !isRec){
+        var ehServicoItem = /servi[cç]o|recarga/i.test(String(p.categoria || '') + ' ' + String(p.tipo || ''));
+        if(!ehServicoItem && !p.estoqueInfinito){
+          var temEstoque = n(p.estoque);
+          if(temEstoque < qtd){
+            if(typeof toast === 'function'){
+              toast('Sem estoque: ' + esc(p.nome || 'produto') + ' tem ' + Math.max(0, temEstoque) + '. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento.', 'error');
+            }
+            return;
+          }
+        }
+      }
 
       var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
       if(cartucho && !descricaoFinal.includes(cartucho)){
@@ -44862,7 +45069,7 @@ try{
       var ci = document.getElementById('orc-item-cartucho'); if(ci) ci.value = '';
       var qi = document.getElementById('orc-item-qtd'); if(qi) qi.value = 1;
       var vi = document.getElementById('orc-item-vunit'); if(vi) vi.value = '';
-      var di = document.getElementById('orc-item-desc'); if(di) di.value = 0;
+      var di = document.getElementById('orc-item-desc'); if(di) di.value = '';
       var ti = document.getElementById('orc-item-total'); if(ti) ti.value = '';
 
       if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
@@ -45151,7 +45358,7 @@ try{
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 
@@ -45276,17 +45483,101 @@ try{
   if(typeof window !== 'undefined'){
     window.orcOnTipoItem = orcOnTipoItem;
     window.orcBuscarCliente = orcBuscarCliente;
-    window.orcSelCliente = orcSelCliente;
-    window.orcLimparCliente = orcLimparCliente;
+    window.orcSelCliente = function(id){
+      orcSelCliente(id);
+      // v5.22.87 — escolheu: some o campo de busca, fica só o cartão do cliente
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.add('hidden');
+    };
+    window.orcLimparCliente = function(){
+      orcLimparCliente();
+      // v5.22.87 — tirou o cliente: volta a mostrar a busca
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.remove('hidden');
+    };
     window.orcBuscarProd = orcBuscarProd;
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
     window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.orcBuscarSerial = orcBuscarSerial;
     window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
     window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
     window.excluirOrcamento = excluirOrcamentosMarcados;
 
     // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+  // v5.22.85 — Busca por número de série no orçamento: IGUAL às vendas.
+  // Puxa a última notinha/venda com esse serial e já preenche modelo,
+  // patrimônio, contador e o cliente sozinho (mesmas regras da aba OS).
+  function orcBuscarSerial(serial){
+    var s = getSess(); if(!s) return;
+    var srl = txt(serial).toLowerCase();
+    var info = document.getElementById('orc-serial-info');
+    if(!srl){ if(info) info.classList.add('hidden'); return; }
+    var _db = getDb();
+    var normSerie = function(o){ return txt(o && (o.numeroSerie || o.serie)).toLowerCase(); };
+    // 1) vendas com esse serial (a mais recente manda)
+    var hist = (_db.vendas || []).filter(function(v){
+      return v && v.empresaId === s.empresaId && v.os && normSerie(v.os) === srl;
+    }).sort(function(a, b){ return new Date(b.data || 0) - new Date(a.data || 0); });
+    // 2) chamados/OS com esse serial
+    var chamado = (_db.os || []).filter(function(o){
+      return o && o.empresaId === s.empresaId && normSerie(o) === srl;
+    }).sort(function(a, b){ return new Date(b.abertura || b.criadoEm || 0) - new Date(a.abertura || a.criadoEm || 0); })[0];
+    // 3) cadastro de equipamentos
+    var eq = (_db.equipamentos || []).find(function(e){ return e && e.empresaId === s.empresaId && normSerie(e) === srl; });
+    var ult = hist[0];
+    var preencheu = 0;
+    var setSeVazio = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && !el.value.trim() && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var setSempre = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var fonte = ult ? ult.os : (chamado || null);
+    if(fonte){
+      setSeVazio('orc-os-modelo', fonte.modelo || fonte.equipamentoModelo || '');
+      setSeVazio('orc-os-patri', fonte.patrimonio || '');
+      setSeVazio('orc-os-contador', fonte.contador != null ? fonte.contador : '');
+    }
+    if(eq){
+      setSeVazio('orc-os-modelo', eq.modelo);
+      setSeVazio('orc-os-patri', eq.patrimonio);
+      setSeVazio('orc-os-contador', eq.contadorPB);
+    }
+    // cliente: última notinha > chamado > máquina instalada (parque)
+    var cliId = ult ? ult.clienteId : (chamado ? chamado.clienteId : null);
+    if(!cliId && eq){
+      var inst = (_db.parque || []).find(function(p){ return p && p.empresaId === s.empresaId && p.equipamentoId === eq.id; });
+      if(inst) cliId = inst.clienteId;
+    }
+    var f = window.__ORC_ST && window.__ORC_ST.form;
+    var autoCli = false;
+    if(cliId && !(f && f.cliente)){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === cliId; });
+      if(c){ orcSelCliente(c.id); autoCli = true; }
+    }
+    // regra das vendas: a última notinha encontrada comanda os dados do aparelho
+    if(ult && ult.os){
+      setSempre('orc-os-modelo', ult.os.modelo || ult.os.equipamentoModelo || '');
+      setSempre('orc-os-patri', ult.os.patrimonio || '');
+      if(ult.clienteId && !(f && f.cliente)){
+        var c2 = (_db.clientes || []).find(function(x){ return x && x.id === ult.clienteId; });
+        if(c2){ orcSelCliente(c2.id); autoCli = true; }
+      }
+    }
+    if(info){
+      var fmt = function(d){ return typeof fmtDate === 'function' ? fmtDate(d) : (d || '-'); };
+      if(ult || chamado || eq){
+        var clNome = ((_db.clientes || []).find(function(x){ return x && x.id === (ult ? ult.clienteId : cliId); }) || {}).nome || '-';
+        info.className = 'col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900 block';
+        info.innerHTML = '<p class="font-bold mb-1"><i class="ph ph-clock-counter-clockwise"></i> Última notinha encontrada para este equipamento:</p>'
+          + (ult ? 'Data: <b>' + fmt(ult.data) + '</b> • Cliente: <b>' + esc(clNome) + '</b> • Modelo: <b>' + esc(ult.os.modelo || '-') + '</b> • Venda/OS: <b>' + esc(ult.numero) + '</b>'
+            : chamado ? 'Chamado <b>' + esc(chamado.numero || '-') + '</b> de <b>' + fmt(chamado.abertura || chamado.criadoEm) + '</b> • Cliente: <b>' + esc(clNome) + '</b>'
+            : 'Equipamento cadastrado: <b>' + esc(eq.modelo || '-') + '</b> (patrimônio ' + esc(eq.patrimonio || '-') + ')')
+          + (preencheu || autoCli ? '<p class="mt-1 text-emerald-800 font-semibold"><i class="ph ph-magic-wand"></i> Preenchido automaticamente' + (autoCli ? ' (incluindo cliente)' : '') + ' — confira antes de salvar.</p>' : '');
+      } else {
+        info.className = 'col-span-12 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-500 block';
+        info.innerHTML = '<i class="ph ph-info"></i> Nenhuma notinha anterior encontrada para este número de série.';
+      }
+    }
+  }
+
     window.abrirTelaOrcamento = function(existente){
       var s = getSess(); if(!s) return;
       var _db = getDb();
@@ -45337,15 +45628,17 @@ try{
 
         // Linha do Cliente com Filtro de Campos
         +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
-        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">'+(f.cliente ? 'Cliente' : 'Cliente * — selecione o filtro e busque com Enter ou lupa')+'</label>'
+        +'<div id="orc-cli-busca" class="'+(f.cliente || isAutorizado ? 'hidden' : '')+'">'
         +'<div class="flex flex-wrap items-center gap-2 mt-1">'
-        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
         +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
-        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'</div>'
         +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
         +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
         +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
@@ -45353,13 +45646,8 @@ try{
         +'</div>'
         +'</div>'
 
-        // Barra de Abas (Itens / Ordem de Serviço)
-        +'<div class="flex border-b border-slate-200">'
-        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
-        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
-        +'</div>'
-
-        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        // v5.22.87 — nada de abas: Itens e Ordem de Serviço ficam na MESMA
+        // tela, um embaixo do outro (a "tela 2" sempre aparece agora)
         +'<div id="orc-aba-itens" class="space-y-3">'
         +(!isAutorizado ? (
           '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
@@ -45384,7 +45672,7 @@ try{
           +'</div>'
           +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
           +'</div>'
           +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -45394,7 +45682,7 @@ try{
           +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div></label>'
           +'</div>'
-          +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+          +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
           +'</div>'
         ) : '')
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
@@ -45404,13 +45692,17 @@ try{
         +'<tbody id="orc-itens-body"></tbody></table></div>'
         +'</div>'
 
-        // ABA 2: ORDEM DE SERVIÇO
-        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        // ABA 2: ORDEM DE SERVIÇO (sempre visível, logo abaixo dos itens)
+        +'<div id="orc-aba-os" class="space-y-3 pt-3 border-t-2 border-[#0a1e8a]/15 mt-2">'
         +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
         +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
-        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : 'onchange="window.orcBuscarSerial && window.orcBuscarSerial(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.orcBuscarSerial && window.orcBuscarSerial(this.value);}"')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série... (Enter ou lupa puxa o histórico)" class="flex-1 h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcBuscarSerial && window.orcBuscarSerial(document.getElementById(\'orc-os-serie\').value)" class="shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Buscar histórico desse serial"><i class="ph ph-magnifying-glass"></i></button>' : '')
+        +'</div></label>'
+        +'<div id="orc-serial-info" class="col-span-12 hidden"></div>'
         +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
         +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
         +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
@@ -45444,8 +45736,9 @@ try{
         +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
         +'</div>';
 
+      // v5.22.87 — a aba fecha pelo X do canto superior: nada de botão Sair no rodapé
       document.getElementById('modal-footer').innerHTML =
-        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        ''
         +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
@@ -45500,6 +45793,18 @@ try{
 
       var totalEl = document.getElementById('orc-total');
       if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // v5.22.86 — remove um item da lista do orçamento. A lixeira da tabela
+    // chama essa função e ela não existia (erro "orcDelItem is not a function").
+    window.orcDelItem = function(idx){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f || !f.itens) return;
+      idx = n(idx);
+      if(idx < 0 || idx >= f.itens.length) return;
+      if(f.status === 'aprovado' || f.vendaId){ if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error'); return; }
+      f.itens.splice(idx, 1);
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
     };
 
     // Override do salvarOrcamentoTela com bloqueio em autorizados
@@ -45594,9 +45899,11 @@ try{
       if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
       if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
 
-      window.__ORC_ST.form.id = o.id;
+      window.__ORC_ST.form = null;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      // v5.22.87 — salvou, fechou! A aba do orçamento não fica aberta depois
+      // do salvar; volta direto para a lista de orçamentos
+      if(typeof closeModal === 'function') closeModal();
     };
 
     // Sincronização de versão visual
@@ -46252,6 +46559,109 @@ if (typeof console !== 'undefined' && console.log) {
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
 ;
 
+/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.89 — caça ao aviso "orçamento não encontrado" + autocura da lista
+//
+// 1) CARIMBO DE ORIGEM: qualquer aviso (popup central ou toast) que contenha
+//    a palavra "encontrad" (encontrado/encontrada) ganha uma linha cinza no
+//    final dizendo DE ONDE ele saiu: função @ arquivo : linha. Se o aviso
+//    misterioso do orçamento aparecer de novo, é só mandar esse código —
+//    acha-se a causa raiz na hora. Avisos sem "encontrad" ficam intactos.
+// 2) AUTOCURA: orçamentos antigos SEM id (salvos por versões velhas) ganham
+//    um id estável na renderização da lista e quando alguém tenta abrir —
+//    sem isso, a linha da lista chamava abrirOrcamento('undefined').
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+window.AJUSTES_V52289_PURE = {
+  interessa: function(msg){ return /encontrad/i.test(String(msg == null ? '' : msg)); }
+};
+
+if(typeof document === 'undefined') return;
+
+// ── 1) carimbo de origem ────────────────────────────────────────────────────
+function origemDoAviso(){
+  try{
+    var st = String((new Error()).stack || '');
+    var linhas = st.split('\n').filter(function(l){
+      return l.indexOf('ajustes_v52289') < 0 && l.indexOf('Error') < 0;
+    });
+    for(var i = 0; i < linhas.length; i++){
+      var l = linhas[i];
+      // Chrome: "at funcao (arquivo.js:123:45)" | Firefox: "funcao@arquivo.js:123:45"
+      var m = l.match(/at\s+([^\s(]+)[^(]*\(([^()\s]+\.js)[^()\s]*?:(\d+):\d+\)/);
+      if(!m) m = l.match(/([A-Za-z0-9_.$\[\]-]+)@([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(!m) m = l.match(/at\s+([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(m){
+        var fn = m.length >= 4 ? (m[1] || 'anon') : 'anon';
+        var arq = (m[m.length - 2] || '').split('/').pop();
+        var lin = m[m.length - 1] || '?';
+        if(arq){ return fn + ' @ ' + arq + ' : ' + lin; }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+
+function carimbo(msg){
+  if(!window.AJUSTES_V52289_PURE.interessa(msg)) return msg;
+  var o = origemDoAviso();
+  if(!o) return msg;
+  return String(msg) + '<br><span style="display:block;margin-top:6px;font-size:10px;color:#94a3b8">código: ' + o + ' — mande ao suporte</span>';
+}
+
+if(typeof window.lfbAlert === 'function' && !window.lfbAlert.__v52289){
+  var oldAlert = window.lfbAlert;
+  window.lfbAlert = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAlert.apply(this, a); };
+  window.lfbAlert.__v52289 = true;
+}
+if(typeof window.avisoSistema === 'function' && !window.avisoSistema.__v52289){
+  var oldAviso = window.avisoSistema;
+  window.avisoSistema = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAviso.apply(this, a); };
+  window.avisoSistema.__v52289 = true;
+}
+if(typeof window.toast === 'function' && !window.toast.__v52289){
+  var oldToast = window.toast;
+  window.toast = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldToast.apply(this, a); };
+  window.toast.__v52289 = true;
+}
+
+// ── 2) orçamentos antigos sem id ganham id estável na renderização da lista ──
+function garantirIdsOrcamentos(){
+  try{
+    var _db = (typeof db !== 'undefined') ? db : (window.db || null);
+    if(!_db || !Array.isArray(_db.orcamentos)) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(o && !o.id){
+        o.id = 'orc_legado_' + (o.token || ('n' + (String(o.numero || '').replace(/\D/g, '') || Math.random().toString(36).slice(2, 8))));
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }catch(e){}
+}
+
+if(typeof window.renderOrcamentos === 'function' && !window.renderOrcamentos.__v52289ids){
+  var oldRender = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    garantirIdsOrcamentos();
+    return oldRender.apply(this, arguments);
+  };
+  window.renderOrcamentos.__v52289ids = true;
+}
+// Roda uma vez na carga também (a lista pode nem ter sido aberta ainda)
+setTimeout(garantirIdsOrcamentos, 1500);
+
+console.log('[DIGICOPY] v5.22.89 carimbo de avisos + autocura da lista de orçamentos');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52289_orcamento_carimbo_autocura_patch.js", e); }
+;
+
 /* ===== menus_tela_pequena_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46610,11 +47020,11 @@ try{
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 190;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 191;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 190 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 191 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

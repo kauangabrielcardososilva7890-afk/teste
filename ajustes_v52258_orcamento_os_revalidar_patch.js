@@ -576,7 +576,7 @@
         +'</div>'
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
         +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -586,7 +586,7 @@
         +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div></label>'
         +'</div>'
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
         +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -729,7 +729,8 @@
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -751,10 +752,13 @@
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -799,6 +803,15 @@
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };

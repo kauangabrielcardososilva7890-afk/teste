@@ -420,13 +420,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };

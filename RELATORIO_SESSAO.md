@@ -1,21 +1,142 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-31  
+**Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.74**  
+**Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
+**Última versão:** **v5.22.91**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.74>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.91>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.91 (2026-09-04)
+
+1. **Diagnóstico final do orçamento "não achei".** O aviso agora diz: quantos
+   orçamentos o PC tem, o código clicado, se esse código ESTAVA na lista que a
+   tela mostrou (snapshot salvo a cada render) e os códigos que existem no
+   banco. Com o próximo recado do usuário, a causa fica fechada (nuvem que
+   apaga vs. outra origem). Primeiro diagnóstico do usuário: 4 orçamentos no
+   banco, clicado orc_mtnbguxr_4772 — id legítimo que já estava renderizado
+   → sumiu do array entre a renderização e o clique (suspeita: op delete da
+   nuvem). Sem correção às cegas — só instrumentou.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.90 (2026-09-04)
+
+1. **Escolher impressora do chamado: tocou, some o resto e fica só a
+   escolhida + lápis (igual coletor de leituras).** Era minha leitura errada
+   da v5.22.88 (deixei a lista sempre aberta). Agora, no CONTRATO e no
+   AVULSO: ao tocar numa impressora a lista recolhe; a linha dela fica com um
+   lápis "✏️ trocar"; o lápis reabre a lista COMPLETA e ela FICA aberta;
+   digitar na busca também reabre; o filtro enquanto digita continua igual.
+   Prova de máquina (jsdom): 9/9 comportamentos no contrato + 5/5 no avulso.
+2. **"Quantidade de páginas impressas" do chamado volta a contar.** A função
+   que valia procurava os campos da tela antiga (kr-os-*) — o chamado atual
+   usa (ko-*) e nunca calculava; ao salvar, gravava 0. Troquei pela função
+   ÚNICA que atende TODOS os conjuntos de campo (ko/*, kr-os/*, o/*, ca/*)
+   mais um ouvinte que calcula ao digitar em qualquer campo de contador.
+   Prova: digitou 1500 tendo anterior 1000 → 500 na hora e salvou 500.
+3. **Orçamento "não achei" agora mostra números para o suporte.** Se voltar a
+   aparecer, o aviso dirá quantos orçamentos o PC tem e qual código foi
+   clicado — com esses dois números dá para fechar a causa exata.
+
+### CHECKLIST ANTIERRO v5.22.90
+- [x] jsdom imprimiu a função viva antes/depois (bundle-load-order checado)
+- [x] pesquisou os 10 pontos que definem salvar/calcular chamado
+- [x] testes novos (29 asserções) + 2 suítes antigas atualizadas
+- [x] gate 0 falhas: sync:check + bundle + test + verify:files
+- [x] bundle 191 scripts — 189 isolados / 2 globais
+- [x] versão subiu em package.json + index.html
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.88 (2026-09-04)
+
+1. **Escolher impressora do chamado agora é LISTA SEMPRE ABERTA (dentro do
+   contrato).** Acabou a "caixa fechada" com lápis: a lista aparece aberta
+   assim que o chamado abre, a impressora escolhida fica marcada em azul, e
+   trocar é só tocar em outra. O bug do lápis (clicava e nada acontecia) foi
+   eliminado junto — a causa era a própria busca re-escondendo a lista depois
+   de montada. Prova de máquina (jsdom): lista visível + filtro aplicado.
+2. **Filtro da impressora AGORA filtra enquanto digita** (chamado do contrato
+   e avulso). Tem `oninput` no HTML + `addEventListener('input')` real como
+   reforço — não depende mais de apertar Enter/lupa. O campo de busca
+   (Impressora/Serial/Patrimônio/Departamento/Localização) também refiltra
+   ao trocar.
+3. **Chamado AVULSO ganhou a área de busca de impressora** (não existia!):
+   depois de escolher o cliente, a lista de impressoras do cliente aparece,
+   filtra enquanto digita, e a escolhida fica marcada — preenchendo modelo,
+   patrimônio, serial, local e contador automaticamente como antes.
+4. **Produto sem valor (0 ou vazio no cadastro): a caixa de valor unitário
+   nasce VAZIA** nas 4 telas (venda, chamados/peças, orçamento nas 2
+   gerações). Antes ela já vinha com "0" e induzia erro. Lançar 0 à mão
+   continua permitido — as travas de item aceitam número "0" normalmente.
+   Fluxo de recarga/etiqueta (v52218) intocado.
+5. **Orçamento "cliente não encontrado" / "orçamento não encontrado"**:
+   investigado de ponta a ponta — o código da v5.22.87 foi EXECUTADO de
+   verdade em navegador simulado (jsdom): selecionar cliente grava, adicionar
+   item funciona, salvar grava e fecha a aba. Nenhum dos dois avisos é
+   produzido pelo código novo — os dois textos existiam só em versões
+   ANTIGAS. Ou seja: o relato veio de tela desatualizada (cache). Regra: usar
+   o link com hash do commit entregue e conferir **v5.22.88 no rodapé** da
+   tela antes de testar.
+
+### CHECKLIST ANTIERRO v5.22.88
+- [x] bundle 190 scripts — **188 isolados, 2 globais** (app.js, evolucao) ✔
+- [x] `npm test` — **141/141** ✔
+- [x] `sync:check`, `check`, `verify:files` ✔
+- [x] Teste novo: `test_ajustes_v52288.js` (24 checagens)
+- [x] Teste da .84 atualizado para o novo contrato de caixa vazia
+- [x] Provas de máquina no jsdom: orçamento completo, impressora contrato,
+      impressora avulso, produto sem preço
+- [x] Version bump: package.json + index.html (4 pontos)
+- [x] Sem arquivo novo de módulo (edições nos donos de cada tela)
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.89 (2026-09-04)
+
+**Resposta ao "orçamento não encontrado" (popup central ao abrir o orçamento
+salvo pela lista).** A caça ficou séria:
+
+1. **O texto exato "Orçamento não encontrado" saía de UM lugar só**: o
+   `abrirOrcamento` desistindo de procurar (toast vermelho no canto). Ele foi
+   REESCRITO de raiz à prova de bala — procura por **7 caminhos** (id exato,
+   token, número, número normalizado, formulário aberto na tela, último
+   selecionado da lista, e autocura de id em orçamento sem id). No pior caso,
+   atualiza a lista sozinho e abre **popup central CLARO E DIFERENTE**:
+   "Não achei esse orçamento neste PC agora..." (se o popup do usuário voltar
+   com o texto antigo, NÃO é esse caminho).
+2. **Autocura de orçamentos antigos SEM id** (de versões velhas): a linha da
+   lista chamava `abrirOrcamento('undefined')`. Agora a renderização da
+   lista garante id estável (`orc_legado_...`) antes de montar as linhas —
+   prova de máquina: legado sem id abre normal.
+3. **CARIMBO DE ORIGEM (instrumentação)**: qualquer popup/toast que contenha
+   "encontrado/encontrada" ganha, no final, um código cinza dizendo
+   `função @ arquivo : linha` de onde o aviso saiu no código. Se o aviso
+   misterioso voltar, o usuário manda só esse código e a causa raiz aparece
+   na hora. Avisos sem "encontrad" ficam intocados.
+
+### CHECKLIST ANTIERRO v5.22.89
+- [x] bundle 191 scripts — **189 isolados, 2 globais** ✔
+- [x] `npm test` — **142/142** ✔
+- [x] sync:check, check, verify:files ✔
+- [x] Prova jsdom: abre por id, abre legado autocurado, clique inválido dá
+      popup claro novo (nunca mais o toast vago), regex do carimbo pega
+      stack real de navegador
+- [x] Teste novo: test_ajustes_v52289.js; ajustados: v52284/85/86/87
+- [x] Pergunta ao usuário antes de codar (momento/formato/versão) ✔
 
 ---
 
@@ -70,11 +191,78 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 | Timer rodando em segundo plano | `setInterval` que mexe no DOM começa com `if(document.hidden) return;`. |
 | Polling curto | Nada de `setInterval` de 2–4s recriando tela. Já causou loop de venda duplicada. |
 | Zip no repositório | `.zip` é ignorado. Para baixar, usar o zip da branch no GitHub. |
+| Bundle "isolados: 0" | O gerador só isola os scripts com o parser `acorn`; o `node_modules` some entre sessões. Se o bundle disser "isolados contra erro: 0", rode `npm install --ignore-scripts` e gere de novo até dar 188/2. |
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
-(117 suítes, 0 falha) e `npm run verify:files`.
+(139 suítes, 0 falha) e `npm run verify:files`.
 
 ---
+
+## v5.22.87 — orçamentos: tela enxuta (cliente só quando precisa, uma única página, sem Sair)
+
+**1) Orçamento já salvo não pede mais cliente** — a área de busca/filtro de cliente agora fica dentro de `orc-cli-busca`, que só aparece quando não tem cliente. Abriu orçamento salvo (ou escolheu o cliente): mostra só o cartão do cliente (nome, documento, cidade). Clicou no X "Trocar cliente": a busca volta. Ajuste em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js` + `orcSelCliente`/`orcLimparCliente` alternando o bloco.
+
+**2) "A tela 2 não apareceu"** — cortado o mal pela raiz: os botões de aba (Itens/Ordem de Serviço) foram REMOVIDOS e as duas seções agora aparecem **sempre, uma embaixo da outra** (`orc-aba-os` sem `hidden`). Zero dependência de clique/toggle para a OS aparecer — os campos e a busca por serial da v5.22.85 seguem nos mesmos ids.
+
+**3) Salvar fecha a aba** — o botão Salvar do orçamento agora termina com `closeModal()` (e `__ORC_ST.form = null`), voltando direto para a lista, em vez de permanecer na tela recém-salva.
+
+**4) Sem botão "Sair"** — rodapé do orçamento sem o Sair: a aba fecha pelo **X do canto superior** (existe no header do modal desde sempre). Mantidos: Revalidar link, Imprimir, Salvar e "Abrir Venda Salva" (quando autorizado).
+
+**5) Lista: "Mostrar todos aprovados" e "Mostrar todos desaprovados"** — ao lado do botão "Todos" no menu Orçamentos (`ajustes_v52258_orcamento_os_revalidar_patch.js`), via nova `window.orcFiltroLista('fechados'|'recusados')`. Criado o filtro `recusados` (status recusado pelo cliente no link) e adicionado na `<select>`. "Não fechados" deixou de misturar recusado.
+
+**6) Revalidar link: FUNCIONA** (resposta ao usuário) — `revalidarLinkOrcamento` na v5.22.58: gera token novo, volta status pra `aberto`, remove a venda gerada não faturada (e sua OS), limpa os registros locais de decisão do link, salva e re-renderiza; se a venda gerada JÁ foi faturada, bloqueia com orientação pra estornar primeiro.
+
+**TESTE NOVO:** `test_ajustes_v52287.js` — 20 verificações; `test_ajustes_v52285.js` atualizado (salvar fecha, não reabre). Suíte 140/140.
+
+**Conserto:** "Uncaught TypeError: window.orcDelItem is not a function". A tabela de itens do orçamento (tela vigente, v5.22.60) chamava `window.orcDelItem(idx)` e essa função **nunca existiu** em nenhum arquivo — só tinha sido chamada. Criada em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`: remove o item, em orçamento autorizado/fechado bloqueia com aviso, e redesenha a lista com o total recalculado.
+
+**Descoberta (confirmada nos reclames do usuário):** a cadeia viva de orçamentos hoje é — tela/render/salvar/serial = v5.22.60; adicionar item/regras = **`orcAddItem` da v5.22.37** (a reescrita da v5.22.59 fica dentro da sua própria tela, que a v5.22.60 substituiu de vez). Por isso a trava de estoque que o usuário vê é o fluxo antigo ("quer modificar o estoque?", igual vendas, com o item bloqueado) — **comportamento correto e pedido** ("tem que ter no mínimo a quantidade"). O bloco de toast da v5.22.59 (v5.22.85) fica como reserva documentada.
+
+**LIÇÃO GRAVE (anotada no checklist):** o gerador do bundle SÓ isola cada script contra erro quando o parser **acorn** está instalado; sem ele gera tudo no escopo global (quebra a app: redeclaração de const entre 190 arquivos). SINTOMA: a linha do bundle imprime "isolados contra erro: 0". O `node_modules` não sobrevive entre sessões/turnos. **Regra nova: antes de entregar, conferir que o bundle mostra "isolados contra erro: 188 | no escopo global: 2"; se mostrar 0, rodar `npm install --ignore-scripts` e gerar de novo.** Os testes pegaram isso (137 ok + 2 falhas de "try/catch no bundle").
+
+**TESTE NOVO:** `test_ajustes_v52286.js` — simulação de runtime do clique na lixeira + trava do autorizado (suíte 139/139).
+
+**1) Estoque no orçamento** — regra final: orçamento NÃO baixa estoque (igual sempre foi), mas produto físico sem estoque suficiente **não entra**: ao lançar, se o estoque for menor que a quantidade, aparece o aviso "Sem estoque: ... tem X. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento." e o item NÃO entra. Serviço, recarga/etiqueta e produto de estoque infinito seguem livres. Essa trava existia na v5.22.37 e se perdeu quando a v5.22.59 reescreveu o `orcAddItem` (versão que vale hoje) — foi restaurada nela (`ajustes_v52259_orcamento_filtros_item_patch.js`). Atenção: a v52237 tem uma versão morta do orcAddItem com outro fluxo (perguntava abrir cadastro de estoque) — não foi mexida por ser substituída na cadeia.
+
+**2) "Orçamento não encontrado" ao salvar + não abria depois** — duas correções: (a) ao salvar (`ajustes_v52260_orcamento_trava_venda_atalho_patch.js`), a tela reabre o orçamento **pelo objeto recém-gravado** (`window.abrirTelaOrcamento(o)`), sem consulta intermediária → nunca mais a mensagem fantasma; (b) `window.abrirOrcamento` (`ajustes_v52237_orcamentos_menu_patch.js`) ganhou procura de reserva depois do id: **token**, **número** e, por último, o orçamento que já está aberto na tela (monta o objeto a partir do formulário). Só aparece "não encontrado" se for de verdade. Se a queixa era no **link público de aprovação** (página Pages), aí é a sincronia com o Worker/D1 — confirmar com o usuário.
+
+**3) Busca por número de série no orçamento** — `orcBuscarSerial` em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`, espelho de `vosBuscarSerial` (+ regra da v52237: última notinha comanda os dados). Campo de série da aba OS com **lupa e Enter**: procura serial nas vendas, chamados e equipamentos; preenche modelo/patrimônio/contador e **seleciona o cliente sozinho** (última notinha > chamado > máquina no parque); quanto acha, mostra a caixa âmbar "Última notinha encontrada..." com Data/Cliente/Modelo nº, e "Preenchido automaticamente — confira antes de salvar". Autorizado (somente leitura) não mostra lupa nem dispara.
+
+**TESTE NOVO:** `test_ajustes_v52285.js` — 18 verificações (suíte 138/138).
+
+**1) Vendas imprimem sem restrição (vendas)** — a trava "Fature a notinha antes de imprimir" morreu (estava em `ajustes_relatorio_pai_patch.js`, era o ÚNICO ponto do código que bloqueava por status). Agora a notinha imprime em qualquer situação: venda aberta da lista, salva, faturada, direto do formulário ou pelo histórico — no formato Vendas (meia folha) ou Ordem de Serviço (folha inteira, o "aberto com S"). O fluxo continua: Imprimir → formato → quantidade de vias → **salva automaticamente ao escolher as vias** (salvamento silencioso, a aba segue aberta) → abre em PDF/impressora. A trava de EDIÇÃO de venda faturada (estornar para alterar) continua valendo, como sempre.
+
+**2) Caixa de itens — valor unitário e desconto nascem vazios (vendas, chamados e orçamentos)** — regra única nos 3 lugares: quantidade padrão 1, unitário e desconto vazios, e o botão "Adicionar item" só habilita quando o campo de valor unitário tem um número válido. Escolher um produto da lista preenche o preço cadastrado (dá para mudar antes de adicionar — o botão já liga no ato). Depois de adicionar, os campos voltam vazios para o próximo item. Há ainda uma trava de segurança dentro da função de adicionar, para nenhum atalho de teclado furar a regra. Mudado de verdade em `vendas_os_patch.js` (venda), `ajustes_v5182_patch.js` + `ajustes_v5186_patch.js` (chamados — duas gerações do modal), `ajustes_v52237_orcamentos_menu_patch.js` + `v52258` + `v52259` + `v52260` (orçamentos — as 4 gerações da tela). O fluxo da ETIQUETA/RECARGA, que preenche valor sozinho para o dia a dia correr, continua exatamente igual. Orçamentos virando venda: `orcItensParaVenda()` (utilitários/compartilhados/utilidades_operacionais_patch.js) lê do DOM só se a tela existir; o fundo na etiqueta da recarga é o mesmo (mesma base de preços).
+
+**3) Produtos: "Local" aposentado + ordenação corrigida de vez (produtos)** — a coluna "Local" sumiu da listagem (e do novo cadastro, da busca e da importação), como combinado: ninguém usava. Dados antigos já gravados são apagados sozinhos numa varredura quando a tela de produtos abre (uma vez só; depois da limpeza não acha mais nada). A ordenação por clique no título agora funciona A→Z e Z→A de verdade: antes o sentido era guardado num objeto de estado separado (a trava do v52214 nunca enxergava a mudança) e, quando tentava, "invertia as linhas" na tela — jogava a linha de contagem ("mostrando 300 de 1031") para o topo. Agora o sentido mora no mesmo `STATE.prod.dir` da lista, a lista INTEIRA é ordenada no sentido certo antes de cortar os 300 em tela, e o título mostra ▲/▼. Arquivos: `fluxos_operacionais_patch.js` (mais a remoção da trava `wrapSort('produtosSortOperacional')` de `ajustes_v52214_ordenacao_patch.js`, mantidos contratos/chamados e a função pura `proximaDir`).
+
+**TESTE NOVO:** `test_ajustes_v52284.js` — 47 verificações dos 3 pontos (suíte 137/137).
+
+**ENTREGA (2026-09-03, retorno do usuário):** usuário testou e relatou "imprimir continua igual / produtos nada mudou" — investigado: código na branch está 100% certo (nenhum "Fature a notinha" ativo em lugar nenhum, bundle limpo, GitHub na v5.22.84). Ele estava olhando **cópia velha** (aba antiga aberta / cache / atalho do programa instalado). A partir desta versão o link de teste passou a ser com **hash do commit** (endereço novo a cada entrega = impossível cair em versão velha): padrão `https://raw.githack.com/<user>/<repo>/<sha>/index.html?v=<versão>`. Sempre mandar assim + dizer pra conferir a versão que aparece na tela de login/titulo da aba.
+
+**Lição:** quando uma regra visual depende de estado, o sentido tem de morar no MESMO objeto de estado da tela que a lista lê. E trava de impressão feita "envelopando" `imprimirNotinha` no meio da cadeia de arquivos é a última coisa que a documentação de fluxo pega — achar a cadeia inteira exige olhar a ordem de carga do bundle, não só greps.
+
+## v5.22.83 — sessão nova, branch nova; só troco de endereço
+
+Chat novo, sessão com branch fixa nova (`arena/01a0683d-teste`). Nenhuma função
+do sistema mudou — o que mudou é **para onde os links apontam**:
+
+- `package.json > digicopy.branch` passa a ser `arena/01a0683d-teste`; o
+  `npm run sync` recarimbou os links do GitHack dentro do código (inclusive o
+  link de orçamento que vai para o cliente) para a branch nova.
+- Ambiente do agente restaurado: `npm install --ignore-scripts` (o download do
+  binário do Electron continua falhando por TLS neste sandbox — limitação já
+  conhecida; o `.exe` se gera no PC com `npm run build:win`).
+- Encontrado e corrigido: `test_ajustes_v52282.js` estava amarrado à versão
+  exata `5.22.82` (o próprio CHECKLIST ANTIERRO proíbe isso). Trocado para
+  `/^5\.22\.\d+/`.
+
+Estado ao abrir a sessão: suíte com 5 falhas, todas de ambiente (faltava
+`node_modules` e o bundle fora de data). Depois do `npm install`: **136
+suítes, 0 falhas**.
+
+Testes: `test_ajustes_v52282.js` (corrigido), `test_ajustes_v52263.js`. Suíte:
+136 passaram, 0 falharam.
 
 ## v5.22.82 — cortando pela metade o que o sistema grava na nuvem
 
