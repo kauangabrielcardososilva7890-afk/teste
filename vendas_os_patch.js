@@ -422,7 +422,7 @@ window.vosVendaSelectProd = function(id){
   document.getElementById('vos-prod-search').value = p.nome||'';
   // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
   // o botão Adicionar habilita porque o valor unitário ficou preenchido.
-  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='') ? p.preco : '';
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();

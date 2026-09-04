@@ -132,28 +132,40 @@ function htmlBuscaImpressoraContrato(){
   return `<div class="rounded-xl bg-blue-50 border border-blue-200 p-3" id="lc-busca-imp-ctr">
     <b class="text-blue-900">Buscar impressora do contrato</b>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-      <select id="lc-imp-busca-campo" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
-      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
+      <select id="lc-imp-busca-campo" onchange="lcBuscarImpressoraChamado()" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
+      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Lista sempre aberta: toque na impressora para escolher (a azul marcada é a escolhida).</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
+// v5.22.88 — a escolhida fica marcada em azul DENTRO da lista (nada de esconder)
+window.lcMarcarImpressoraNaLista=function(equipId){
+  const lista=document.getElementById('ko-equip-lista'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on=b.getAttribute('onclick')||'';
+    const marc=equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
   sel.value=equipId;
   const e=eq(equipId)||{};
-  const chosen=document.getElementById('ko-equip-selected');
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(chosen) chosen.classList.remove('hidden');
-  if(list) list.classList.add('hidden');
+  if(list) list.classList.remove('hidden');
+  window.lcMarcarImpressoraNaLista(equipId);
   if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
 };
+// Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
-  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
 };
@@ -171,8 +183,9 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
+  listaEl.classList.remove('hidden');
   listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
-  if(cur) lcEscolherImpressoraChamado(cur);
+  if(cur) window.lcMarcarImpressoraNaLista(cur);
 };
 
 function setModalSize(){
@@ -232,6 +245,13 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   document.getElementById('modal-root')?.classList.remove('hidden');
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  setTimeout(function(){
+    const qi=document.getElementById('lc-imp-busca-q');
+    if(qi && !qi.__v52288){ qi.__v52288=1; qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); }); }
+    const cs=document.getElementById('lc-imp-busca-campo');
+    if(cs && !cs.__v52288){ cs.__v52288=1; cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); }); }
+  }, 0);
   if(equipId){
     const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);

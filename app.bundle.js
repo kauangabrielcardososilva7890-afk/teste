@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 132571113f1b69e5
+ * scripts: 190 | sha256: 759d06e75fcb8c3e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -5344,7 +5344,7 @@ window.vosVendaSelectProd = function(id){
   document.getElementById('vos-prod-search').value = p.nome||'';
   // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
   // o botão Adicionar habilita porque o valor unitário ficou preenchido.
-  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='') ? p.preco : '';
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
@@ -16934,6 +16934,7 @@ function renderImpressorasResultado(clienteId){
   let lista = parquesCliente(clienteId || window.__CHAMADO_AVULSO.clienteId);
   if(q) lista = lista.filter(p => { const e=equipamento(p.equipamentoId)||{}; return [e.patrimonio,e.modelo,e.serie,p.setor,p.localInstalacao].some(v=>norm(v).includes(q)); });
   out.innerHTML = lista.map(p => { const e=equipamento(p.equipamentoId)||{}; return `<button type="button" onclick="selecionarImpressoraChamadoAvulso('${p.equipamentoId}')" class="w-full text-left p-2 hover:bg-blue-50 border-b last:border-0"><b>Patr. ${esc(e.patrimonio||'-')}</b> — ${esc(e.modelo||'')}<br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'')}</span></button>`; }).join('') || '<p class="p-3 text-center text-slate-400">Nenhuma impressora para este cliente</p>';
+  if(window.__marcarImpAvulso) window.__marcarImpAvulso(window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId);
 }
 
 window.buscarClientesChamadoAvulso = renderClientesResultado;
@@ -16944,10 +16945,25 @@ window.selecionarClienteChamadoAvulso = function(id){
   const el = document.getElementById('ca-cliente-selecionado'); if(el) el.innerHTML = `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>`;
   renderImpressorasResultado(id);
 };
+// v5.22.88 — marca a impressora escolhida na lista do avulso (azul = escolhida)
+window.__marcarImpAvulso = function(equipId){
+  const lista = document.getElementById('ca-impressoras-result'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on = b.getAttribute('onclick')||'';
+    const marc = equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.selecionarImpressoraChamadoAvulso = function(equipId){
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  const selTxt = document.getElementById('ca-impressora-selecionada');
+  if(selTxt) selTxt.innerHTML = `<b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span>`;
+  window.__marcarImpAvulso(equipId);
   const ant = ultimoContador(equipId);
   ['modelo','patr','serie','local'].forEach(k => { const el=document.getElementById('ca-'+k); if(el){ if(k==='modelo') el.value=e.modelo||''; if(k==='patr') el.value=e.patrimonio||''; if(k==='serie') el.value=e.serie||''; if(k==='local') el.value=p.localInstalacao||p.setor||''; }});
   const antEl = document.getElementById('ca-cont-ant'); if(antEl) antEl.value = ant;
@@ -16966,6 +16982,7 @@ function renderChamadoAvulso(id){
     <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><b>Chamado fora de contrato</b><p class="text-[12px] text-blue-800 mt-1">Use para atendimento avulso. Para cliente de contrato, abra pelo contrato.</p></div>
     <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Código</label><input id="ca-num" readonly value="${esc(codigo)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono font-bold"></div><div><label class="block font-bold text-slate-600 mb-1">Data</label><input id="ca-data" type="date" value="${String(o?.dataAbertura || new Date().toISOString()).slice(0,10)}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Prioridade</label><select id="ca-prio" class="w-full h-10 px-3 rounded-xl border"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div><div><label class="block font-bold text-slate-600 mb-1">Criado por</label><input readonly value="${esc(o?.criadoPorNome || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50"></div><div><label class="block font-bold text-slate-600 mb-1">Técnico</label><input id="ca-tec" value="${esc(o?.tecnico || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar cliente</label><div class="flex gap-2"><input id="ca-busca-cliente" placeholder="Digite código, nome, documento..." class="flex-1 h-10 px-3 rounded-xl border">${botaoBusca('buscarClientesChamadoAvulso()')}</div><div id="ca-cliente-selecionado" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]">${c ? `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>` : 'Nenhum cliente selecionado'}</div><div id="ca-clientes-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
+    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — lista sempre aberta, filtra enquanto digita)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Modelo</label><input id="ca-modelo" value="${esc(o?.modelo||'')}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Patrimônio</label><input id="ca-patr" value="${esc(o?.patrimonio||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Serial</label><input id="ca-serie" value="${esc(o?.serie||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Local</label><input id="ca-local" value="${esc(o?.local||'')}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div><label class="block font-bold text-slate-600 mb-1">Motivo / Defeito *</label><input id="ca-desc" value="${esc(o?.descricao||'')}" class="w-full h-10 px-3 rounded-xl border font-semibold"></div>
     <label class="bg-slate-50 border rounded-xl p-3 flex items-center gap-3 cursor-pointer"><input type="checkbox" id="ca-concluido" ${o?.status==='concluido'?'checked':''}><span class="font-bold">Este chamado já foi finalizado?</span></label>
@@ -16975,7 +16992,15 @@ function renderChamadoAvulso(id){
   document.getElementById('ca-prio').value = o?.prioridade || 'normal';
   bindEnter('ca-busca-cliente', renderClientesResultado);
   bindEnter('ca-busca-impressora', () => renderImpressorasResultado());
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  const _impQ = document.getElementById('ca-busca-impressora');
+  if(_impQ && !_impQ.__v52288){ _impQ.__v52288=1; _impQ.addEventListener('input', () => renderImpressorasResultado()); }
   if(c) renderImpressorasResultado(c.id);
+  if(o && o.equipamentoId){
+    const eX = equipamento(o.equipamentoId) || {};
+    const selX = document.getElementById('ca-impressora-selecionada');
+    if(selX) selX.innerHTML = `<b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span>`;
+  }
 }
 window.fecharModalChamadoAvulso = fechar;
 window.salvarChamadoAvulso = function(id){
@@ -23798,28 +23823,40 @@ function htmlBuscaImpressoraContrato(){
   return `<div class="rounded-xl bg-blue-50 border border-blue-200 p-3" id="lc-busca-imp-ctr">
     <b class="text-blue-900">Buscar impressora do contrato</b>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-      <select id="lc-imp-busca-campo" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
-      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
+      <select id="lc-imp-busca-campo" onchange="lcBuscarImpressoraChamado()" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
+      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Lista sempre aberta: toque na impressora para escolher (a azul marcada é a escolhida).</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
+// v5.22.88 — a escolhida fica marcada em azul DENTRO da lista (nada de esconder)
+window.lcMarcarImpressoraNaLista=function(equipId){
+  const lista=document.getElementById('ko-equip-lista'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on=b.getAttribute('onclick')||'';
+    const marc=equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
   sel.value=equipId;
   const e=eq(equipId)||{};
-  const chosen=document.getElementById('ko-equip-selected');
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(chosen) chosen.classList.remove('hidden');
-  if(list) list.classList.add('hidden');
+  if(list) list.classList.remove('hidden');
+  window.lcMarcarImpressoraNaLista(equipId);
   if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
 };
+// Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
-  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
 };
@@ -23837,8 +23874,9 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
+  listaEl.classList.remove('hidden');
   listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
-  if(cur) lcEscolherImpressoraChamado(cur);
+  if(cur) window.lcMarcarImpressoraNaLista(cur);
 };
 
 function setModalSize(){
@@ -23898,6 +23936,13 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   document.getElementById('modal-root')?.classList.remove('hidden');
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  setTimeout(function(){
+    const qi=document.getElementById('lc-imp-busca-q');
+    if(qi && !qi.__v52288){ qi.__v52288=1; qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); }); }
+    const cs=document.getElementById('lc-imp-busca-campo');
+    if(cs && !cs.__v52288){ cs.__v52288=1; cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); }); }
+  }, 0);
   if(equipId){
     const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);
@@ -25579,7 +25624,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -37767,7 +37812,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){
@@ -45230,7 +45275,7 @@ try{
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 

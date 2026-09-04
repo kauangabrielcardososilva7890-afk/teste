@@ -434,7 +434,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){

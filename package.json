@@ -1,6 +1,6 @@
 {
   "name": "digicopy-erp",
-  "version": "5.22.87",
+  "version": "5.22.88",
   "description": "Sistema Digicopy - vendas, locação e outsourcing de impressoras",
   "main": "main.js",
   "scripts": {
@@ -63,13 +63,14 @@
     }
   },
   "dependencies": {
+    "jsdom": "^30.0.1",
     "node-firebird": "^1.1.9",
     "node-forge": "^1.4.0"
   },
   "devDependencies": {
+    "acorn": "^8.12.0",
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.0",
-    "acorn": "^8.12.0"
+    "electron-builder": "^24.9.0"
   },
   "author": "DIGICOPY",
   "license": "MIT",

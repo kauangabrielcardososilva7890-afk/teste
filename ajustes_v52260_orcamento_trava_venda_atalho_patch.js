@@ -231,7 +231,7 @@
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 

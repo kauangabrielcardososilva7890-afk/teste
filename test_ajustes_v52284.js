@@ -49,14 +49,14 @@ ok('chamados: botão tem id e começa desligado', /id="\$\{prefix\}-btn-add" dis
 ok('chamados: lcPecaCalc liga/desliga o botão pelo unitário', /prefix\+'-btn-add'\)[\s\S]{0,120}disabled=!\^\\d/.test(p5182) || /btn\.disabled=!\/\^\\d\+\(\?:\[\.,\]\\d\+\)\?\$\//.test(p5182));
 ok('chamados: trava de segurança ao adicionar', /Informe um valor unitário numérico para adicionar o item/.test(p5182));
 ok('chamados: depois de adicionar o desconto volta vazio', /-prod-desc'\); if\(d\) d\.value='';/.test(p5182));
-ok('chamados: escolher produto continua trazendo o preço', /prod-preco'\); if\(pr\) pr\.value=p\.preco\|\|0;/.test(p5182));
+ok('chamados: produto COM preço preenche e produto SEM preço (0/vazio) deixa a caixa vazia', /prod-preco'\); if\(pr\) pr\.value=\(p\.preco!=null && p\.preco!=='' && Number\(p\.preco\)!==0\) \? p\.preco : '';/.test(p5182));
 // Orçamentos (v52237 + v52258 + v52259 + v52260)
 ok('orçamentos: desconto nasce vazio nas 4 gerações da tela', ![o37,o58,o59,o60].some(s=>/orc-item-desc" type="number" step="0\.01" value="0"/.test(s)));
 ok('orçamentos: botão tem id e começa desligado nas 4 telas', [o37,o58,o59,o60].every(s=>/id="orc-btn-add" disabled/.test(s)));
 ok('orçamentos: orcCalcItem liga/desliga pelo unitário', /orc-btn-add'?\)[\s\S]{0,200}disabled=!\/\^\\d/.test(o37) || /btn\.disabled=!\/\^\\d\+\(\?:\[\.,\]\\d\+\)\?\$\//.test(o37));
 ok('orçamentos: trava de segurança ao adicionar', /Informe um valor unitário numérico para adicionar o item/.test(o37) && /Informe um valor unitário numérico para adicionar o item/.test(o59));
 ok('orçamentos: depois de adicionar o desconto volta vazio', /orc-item-desc'\); if\(di\) di\.value = ''/.test(o59) && /orc-item-desc'\)\.value='';/.test(o37));
-ok('orçamentos: escolher produto continua trazendo o preço', /orc-item-vunit'\)\.value=p\.preco\|\|0;/.test(o37));
+ok('orçamentos: produto COM preço preenche e SEM preço (0/vazio) deixa a caixa vazia', /orc-item-vunit'\)\.value=\(p\.preco!=null && p\.preco!=='' && Number\(p\.preco\)!==0\) \? p\.preco : '';/.test(o37));
 ok('orçamentos: quantidade continua padrão 1', /orc-item-qtd'\)\.value ?\|\| ?1/.test(o59) || /orc-item-qtd'\)\.value=1;/.test(o37));
 ok('etiqueta: fluxo de recarga continua preenchendo sozinho', /vos-item-vunit'\);[ ]*if\(vu\) vu\.value = rec\.valor/.test(ler('vendas_notinhas_fix_patch.js').replace(/\s+/g,' ')) || /vu\) vu\.value = rec\.valor/.test(ler('vendas_notinhas_fix_patch.js')));
 

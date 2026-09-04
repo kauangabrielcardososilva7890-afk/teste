@@ -82,7 +82,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };

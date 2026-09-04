@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.87**  
+**Última versão:** **v5.22.88**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.87>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.88>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,50 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.88 (2026-09-04)
+
+1. **Escolher impressora do chamado agora é LISTA SEMPRE ABERTA (dentro do
+   contrato).** Acabou a "caixa fechada" com lápis: a lista aparece aberta
+   assim que o chamado abre, a impressora escolhida fica marcada em azul, e
+   trocar é só tocar em outra. O bug do lápis (clicava e nada acontecia) foi
+   eliminado junto — a causa era a própria busca re-escondendo a lista depois
+   de montada. Prova de máquina (jsdom): lista visível + filtro aplicado.
+2. **Filtro da impressora AGORA filtra enquanto digita** (chamado do contrato
+   e avulso). Tem `oninput` no HTML + `addEventListener('input')` real como
+   reforço — não depende mais de apertar Enter/lupa. O campo de busca
+   (Impressora/Serial/Patrimônio/Departamento/Localização) também refiltra
+   ao trocar.
+3. **Chamado AVULSO ganhou a área de busca de impressora** (não existia!):
+   depois de escolher o cliente, a lista de impressoras do cliente aparece,
+   filtra enquanto digita, e a escolhida fica marcada — preenchendo modelo,
+   patrimônio, serial, local e contador automaticamente como antes.
+4. **Produto sem valor (0 ou vazio no cadastro): a caixa de valor unitário
+   nasce VAZIA** nas 4 telas (venda, chamados/peças, orçamento nas 2
+   gerações). Antes ela já vinha com "0" e induzia erro. Lançar 0 à mão
+   continua permitido — as travas de item aceitam número "0" normalmente.
+   Fluxo de recarga/etiqueta (v52218) intocado.
+5. **Orçamento "cliente não encontrado" / "orçamento não encontrado"**:
+   investigado de ponta a ponta — o código da v5.22.87 foi EXECUTADO de
+   verdade em navegador simulado (jsdom): selecionar cliente grava, adicionar
+   item funciona, salvar grava e fecha a aba. Nenhum dos dois avisos é
+   produzido pelo código novo — os dois textos existiam só em versões
+   ANTIGAS. Ou seja: o relato veio de tela desatualizada (cache). Regra: usar
+   o link com hash do commit entregue e conferir **v5.22.88 no rodapé** da
+   tela antes de testar.
+
+### CHECKLIST ANTIERRO v5.22.88
+- [x] bundle 190 scripts — **188 isolados, 2 globais** (app.js, evolucao) ✔
+- [x] `npm test` — **141/141** ✔
+- [x] `sync:check`, `check`, `verify:files` ✔
+- [x] Teste novo: `test_ajustes_v52288.js` (24 checagens)
+- [x] Teste da .84 atualizado para o novo contrato de caixa vazia
+- [x] Provas de máquina no jsdom: orçamento completo, impressora contrato,
+      impressora avulso, produto sem preço
+- [x] Version bump: package.json + index.html (4 pontos)
+- [x] Sem arquivo novo de módulo (edições nos donos de cada tela)
 
 ---
 
