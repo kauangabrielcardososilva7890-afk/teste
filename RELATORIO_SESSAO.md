@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.91**  
+**Última versão:** **v5.22.92**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.91>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.92>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,22 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.92 (2026-09-04)
+
+1. **ORÇAMENTO NUNCA MAIS SOME POR MANDADO DA NUVEM.** Causa encontrada com
+   os 3 diagnósticos: o usuário usa VÁRIOS PCs na mesma conta; quando algum
+   deles manda "apagar orçamento", a nuvem replicava o apagar e o registro
+   SUMIA do banco deste PC — a tela ainda mostrava a lista antiga e o clique
+   caía no vazio ("não achei esse orçamento"). Agora: (a) delete que VEM da
+   nuvem vira "excluído" (sai das listas de trabalho, permanece no banco e
+   volta com Estornar); (b) este PC NUNCA manda delete de orçamento para a
+   nuvem. Excluir/Estornar na tela seguem com o mesmo comportamento visual.
+   Snapshot fica: a trava usa o que já existia para clientes e identidade.
+2. Diagnóstico final confirmado pelo usuário: clique logo depois de salvar +
+   vários PCs + uso recente de Excluir → exatamente o cenário da trava.
 
 ---
 

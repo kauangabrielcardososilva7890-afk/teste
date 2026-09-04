@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 191 | sha256: 407bed00ca9082b3
+ * scripts: 191 | sha256: a16d0719f4176a3f
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29296,6 +29296,16 @@ function applyRemote(change){
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
     const arr=db[change.entity],idx=arr.findIndex(x=>x&&String(x.id)===String(change.recordId));
+    // v5.22.92 — ORÇAMENTO NUNCA SOME POR MANDADO DA NUVEM.
+    // Orçamento sumindo foi o bug de "cliquei e não achei". Mesmo que outro
+    // aparelho mande apagar, aqui o orçamento fica marcado como excluído
+    // (sai das listas de trabalho, mas segue no banco e volta em Estornar)
+    // em vez de desaparecer de verdade.
+    if(change.operation==='delete'&&change.entity==='orcamentos'){
+      if(idx>=0){ arr[idx].status='excluido'; arr[idx].excluidoEm=arr[idx].excluidoEm||new Date().toISOString(); changed=true; }
+      state.versions[k]=Number(change.version);state.known[k]=true;state.hashes[k]=hash(arr[idx]);
+      return changed;
+    }
     if(change.operation==='delete'){if(idx>=0){arr.splice(idx,1);changed=true;}}
     else if(change.data){if(idx>=0)arr[idx]=change.data;else arr.push(change.data);changed=true;}
   }else if(mode==='root'){
@@ -29464,7 +29474,7 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
-    if(!PODE_EXCLUIR.has(entity))continue;
+    if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue; // v5.22.92 — este PC nunca manda apagar orçamento
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
     if(!missing.length)continue;
     if(!houveIntencaoDeExcluir()){
