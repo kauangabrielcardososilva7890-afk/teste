@@ -479,7 +479,35 @@ window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
   if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
   calcImpressoesChamado();
 };
-window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
+// v5.22.90 — a função que VALIA procurava só os ids kr-os-* (tela antiga)
+// e deixava o chamado atual (ko-*) sem calcular a quantidade impressa.
+// Agora atende TODOS os conjuntos de id usados pelas telas de chamado.
+window.calcImpressoesChamado = function(){
+  var pares = [
+    ['ko-cont-ant','ko-cont-atu','ko-qtd-imp'],
+    ['kr-os-cont-ant','kr-os-cont-atu','kr-os-qtd'],
+    ['o-cont-ant','o-cont-atu','o-qtd-imp'],
+    ['ca-cont-ant','ca-cont-atu','ca-qtd']
+  ];
+  for(var i = 0; i < pares.length; i++){
+    var a = document.getElementById(pares[i][0]);
+    var u = document.getElementById(pares[i][1]);
+    var q = document.getElementById(pares[i][2]);
+    if(!a && !u && !q) continue;
+    var ant = Number(a && a.value ? a.value : 0) || 0;
+    var atu = u && u.value !== '' && u.value != null ? (Number(u.value) || 0) : ant;
+    if(atu < ant) atu = ant;
+    if(q) q.value = atu - ant;
+  }
+};
+// v5.22.90 — além do oninput dos campos (que nem sempre existe), um ouvinte
+// garante o cálculo em QUALQUER campo de contador, em qualquer tela.
+if(typeof document !== 'undefined'){
+  document.addEventListener('input', function(e){
+    var id = (e && e.target && e.target.id) || '';
+    if(/-cont-atu$/.test(id) || /-cont-ant$/.test(id)) window.calcImpressoesChamado();
+  }, true);
+}
 function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;

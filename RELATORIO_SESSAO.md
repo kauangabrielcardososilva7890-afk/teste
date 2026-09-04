@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.89**  
+**Última versão:** **v5.22.90**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.89>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.90>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,35 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.90 (2026-09-04)
+
+1. **Escolher impressora do chamado: tocou, some o resto e fica só a
+   escolhida + lápis (igual coletor de leituras).** Era minha leitura errada
+   da v5.22.88 (deixei a lista sempre aberta). Agora, no CONTRATO e no
+   AVULSO: ao tocar numa impressora a lista recolhe; a linha dela fica com um
+   lápis "✏️ trocar"; o lápis reabre a lista COMPLETA e ela FICA aberta;
+   digitar na busca também reabre; o filtro enquanto digita continua igual.
+   Prova de máquina (jsdom): 9/9 comportamentos no contrato + 5/5 no avulso.
+2. **"Quantidade de páginas impressas" do chamado volta a contar.** A função
+   que valia procurava os campos da tela antiga (kr-os-*) — o chamado atual
+   usa (ko-*) e nunca calculava; ao salvar, gravava 0. Troquei pela função
+   ÚNICA que atende TODOS os conjuntos de campo (ko/*, kr-os/*, o/*, ca/*)
+   mais um ouvinte que calcula ao digitar em qualquer campo de contador.
+   Prova: digitou 1500 tendo anterior 1000 → 500 na hora e salvou 500.
+3. **Orçamento "não achei" agora mostra números para o suporte.** Se voltar a
+   aparecer, o aviso dirá quantos orçamentos o PC tem e qual código foi
+   clicado — com esses dois números dá para fechar a causa exata.
+
+### CHECKLIST ANTIERRO v5.22.90
+- [x] jsdom imprimiu a função viva antes/depois (bundle-load-order checado)
+- [x] pesquisou os 10 pontos que definem salvar/calcular chamado
+- [x] testes novos (29 asserções) + 2 suítes antigas atualizadas
+- [x] gate 0 falhas: sync:check + bundle + test + verify:files
+- [x] bundle 191 scripts — 189 isolados / 2 globais
+- [x] versão subiu em package.json + index.html
 
 ---
 

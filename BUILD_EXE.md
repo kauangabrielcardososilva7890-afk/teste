@@ -1,6 +1,6 @@
 # Gerar o .exe — guia definitivo
 
-**Versão atual:** v5.22.89
+**Versão atual:** v5.22.90
 
 Este documento existe por causa de um problema recorrente: **gerar o `.exe` e o
 sistema abrir sem as atualizações novas**. A causa foi encontrada e corrigida.
@@ -43,7 +43,7 @@ dando 404**.
 Toda atualização precisa sair com **os dois links**:
 
 **Testar no navegador (GitHack)** — não precisa instalar nada:
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.89>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.90>
 
 **Baixar tudo (zip do próprio GitHub)** — não gerar `.zip` novo no repositório:
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -52,7 +52,7 @@ Os dois são impressos no final de `npm run sync`:
 
 ```
   Teste no navegador (GitHack):
-    https://raw.githack.com/.../arena/01a0683d-teste/index.html?v=5.22.89
+    https://raw.githack.com/.../arena/01a0683d-teste/index.html?v=5.22.90
   Baixar tudo (zip do GitHub):
     https://github.com/.../archive/refs/heads/arena/01a0683d-teste.zip
 ```

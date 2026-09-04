@@ -91,7 +91,9 @@ window.selecionarImpressoraChamadoAvulso = function(equipId){
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
   const selTxt = document.getElementById('ca-impressora-selecionada');
-  if(selTxt) selTxt.innerHTML = `<b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span>`;
+  if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+  // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)
+  const _res = document.getElementById('ca-impressoras-result'); if(_res) _res.classList.add('hidden');
   window.__marcarImpAvulso(equipId);
   const ant = ultimoContador(equipId);
   ['modelo','patr','serie','local'].forEach(k => { const el=document.getElementById('ca-'+k); if(el){ if(k==='modelo') el.value=e.modelo||''; if(k==='patr') el.value=e.patrimonio||''; if(k==='serie') el.value=e.serie||''; if(k==='local') el.value=p.localInstalacao||p.setor||''; }});
@@ -111,7 +113,7 @@ function renderChamadoAvulso(id){
     <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><b>Chamado fora de contrato</b><p class="text-[12px] text-blue-800 mt-1">Use para atendimento avulso. Para cliente de contrato, abra pelo contrato.</p></div>
     <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Código</label><input id="ca-num" readonly value="${esc(codigo)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono font-bold"></div><div><label class="block font-bold text-slate-600 mb-1">Data</label><input id="ca-data" type="date" value="${String(o?.dataAbertura || new Date().toISOString()).slice(0,10)}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Prioridade</label><select id="ca-prio" class="w-full h-10 px-3 rounded-xl border"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div><div><label class="block font-bold text-slate-600 mb-1">Criado por</label><input readonly value="${esc(o?.criadoPorNome || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50"></div><div><label class="block font-bold text-slate-600 mb-1">Técnico</label><input id="ca-tec" value="${esc(o?.tecnico || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar cliente</label><div class="flex gap-2"><input id="ca-busca-cliente" placeholder="Digite código, nome, documento..." class="flex-1 h-10 px-3 rounded-xl border">${botaoBusca('buscarClientesChamadoAvulso()')}</div><div id="ca-cliente-selecionado" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]">${c ? `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>` : 'Nenhum cliente selecionado'}</div><div id="ca-clientes-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
-    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — lista sempre aberta, filtra enquanto digita)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
+    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — digite para filtrar; ao escolher, a lista fecha ✔)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Modelo</label><input id="ca-modelo" value="${esc(o?.modelo||'')}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Patrimônio</label><input id="ca-patr" value="${esc(o?.patrimonio||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Serial</label><input id="ca-serie" value="${esc(o?.serie||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Local</label><input id="ca-local" value="${esc(o?.local||'')}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div><label class="block font-bold text-slate-600 mb-1">Motivo / Defeito *</label><input id="ca-desc" value="${esc(o?.descricao||'')}" class="w-full h-10 px-3 rounded-xl border font-semibold"></div>
     <label class="bg-slate-50 border rounded-xl p-3 flex items-center gap-3 cursor-pointer"><input type="checkbox" id="ca-concluido" ${o?.status==='concluido'?'checked':''}><span class="font-bold">Este chamado já foi finalizado?</span></label>
@@ -128,7 +130,8 @@ function renderChamadoAvulso(id){
   if(o && o.equipamentoId){
     const eX = equipamento(o.equipamentoId) || {};
     const selX = document.getElementById('ca-impressora-selecionada');
-    if(selX) selX.innerHTML = `<b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span>`;
+    if(selX) selX.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+    const _resX = document.getElementById('ca-impressoras-result'); if(_resX) _resX.classList.add('hidden');
   }
 }
 window.fecharModalChamadoAvulso = fechar;
@@ -152,6 +155,14 @@ const oldOpenModal = window.openModal;
 window.openModal = function(type, id){
   if(type === 'os') return renderChamadoAvulso(id);
   if(oldOpenModal) return oldOpenModal.apply(this, arguments);
+};
+
+// v5.22.90 — lápis reabre a lista de impressoras do avulso (e FICA aberta)
+window.caEditarImpressoraAvulso = function(){
+  const q = document.getElementById('ca-busca-impressora'); if(q) q.value='';
+  const res = document.getElementById('ca-impressoras-result'); if(res) res.classList.remove('hidden');
+  renderImpressorasResultado();
+  if(q) q.focus();
 };
 
 console.log('[DIGICOPY] chamados_avulsos_aberto_patch.js v4.9.16 carregado');

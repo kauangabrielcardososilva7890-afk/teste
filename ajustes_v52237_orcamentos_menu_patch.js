@@ -343,7 +343,10 @@ window.abrirOrcamento=function(id){
   // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
   try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
   if(typeof window.lfbAlert==='function'){
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte.', 'Orçamento');
+    // v5.22.90 — números de diagnóstico para o suporte identificar a causa
+    var _qtd = 0; try{ _qtd = store().length; }catch(e){}
+    var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '".)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 

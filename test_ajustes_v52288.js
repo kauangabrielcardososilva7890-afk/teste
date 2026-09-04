@@ -15,13 +15,15 @@ ok(v175.indexOf('oninput="lcBuscarImpressoraChamado()"') >= 0, 'campo de busca d
 ok(v175.indexOf("qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); })") >= 0, 'listener real de input amarrado na busca (v52288)');
 ok(v175.indexOf("cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); })") >= 0, 'trocar o campo da busca também refiltra');
 
-// 2. Lista sempre aberta — ninguém mais esconde a lista depois de escolher
+// 2. v5.22.90 (pedido do usuário): ao escolher, a lista RECOLHE e fica só a
+//    escolhida + lápis (modelo das leituras); o lápis reabre a lista de verdade
 const iEscolher = v175.indexOf('window.lcEscolherImpressoraChamado=function');
 const iEditar = v175.indexOf('window.lcEditarImpressoraChamado=function');
 const blocoEscolher = v175.slice(iEscolher, iEditar);
-ok(blocoEscolher.indexOf("list.classList.remove('hidden')") >= 0, 'escolher a impressora mantém a lista aberta');
-ok(blocoEscolher.indexOf("list.classList.add('hidden')") < 0, 'escolher a impressora NÃO esconde mais a lista');
-ok(v175.indexOf('window.lcMarcarImpressoraNaLista=function') >= 0, 'existe marcador da escolhida dentro da lista');
+ok(blocoEscolher.indexOf("list.classList.add('hidden')") >= 0, 'escolher a impressora recolhe a lista (v5.22.90)');
+ok(blocoEscolher.indexOf("selBox.classList.remove('hidden')") >= 0, 'escolher mostra a linha da impressora escolhida');
+ok(v175.indexOf('lcEditarImpressoraChamado()\"') >= 0 || v175.indexOf('lcEditarImpressoraChamado()"') >= 0, 'linha da escolhida tem o lápis que reabre a lista');
+ok(blocoEscolher.indexOf('lcMarcarImpressoraNaLista(equipId)') >= 0, 'existe marcador da escolhida dentro da lista');
 
 // 3. O bug do lápis sumiu: a busca não re-esconde a lista ao final
 const iBuscar = v175.indexOf('window.lcBuscarImpressoraChamado=function');
@@ -31,11 +33,12 @@ ok(blocoBuscar.indexOf('lcEscolherImpressoraChamado(cur)') < 0, 'buscar não cha
 ok(blocoBuscar.indexOf("listaEl.classList.remove('hidden')") >= 0, 'buscar garante a lista visível');
 ok(blocoBuscar.indexOf('lcMarcarImpressoraNaLista(cur)') >= 0, 'buscar re-marca a escolhida na lista filtrada');
 
-// 4. O cartão fechado + lápis saíram do bloco de busca (user pediu lista)
-const iBuscaImp = v175.indexOf('id="lc-busca-imp-ctr"');
-const trechoBusca = v175.slice(iBuscaImp, v175.indexOf('</div>`;', iBuscaImp));
-ok(trechoBusca.indexOf('ph-pencil') < 0, 'sem lápis no bloco de impressora do contrato (lista no lugar)');
-ok(trechoBusca.indexOf('Lista sempre aberta') >= 0, 'aviso visual de lista sempre aberta');
+// 4. v5.22.90: lápis volta a funcionar de verdade (reabre e FICA aberta)
+const iLp = v175.indexOf('window.lcEditarImpressoraChamado=function');
+const trechoLapis = v175.slice(iLp, iLp + 400);
+ok(trechoLapis.indexOf("classList.remove('hidden')") >= 0, 'lápis reabre a lista');
+ok(trechoLapis.indexOf('q.focus()') >= 0, 'lápis já joga o cursor na busca');
+ok(v175.indexOf('Digite para filtrar; ao tocar') >= 0, 'novo aviso visual de recolhimento');
 
 // ── Avulso (chamados_avulsos_aberto_patch.js) ──
 const cav = le('chamados_avulsos_aberto_patch.js');

@@ -136,7 +136,7 @@ function htmlBuscaImpressoraContrato(){
       <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Lista sempre aberta: toque na impressora para escolher (a azul marcada é a escolhida).</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2 flex items-center gap-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px] flex-1"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Digite para filtrar; ao tocar, só a escolhida fica. ✏️ abre a lista de novo.</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
@@ -159,7 +159,9 @@ window.lcEscolherImpressoraChamado=function(equipId){
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(list) list.classList.remove('hidden');
+  // v5.22.90 — ao escolher, a lista RECOLHE e fica só a escolhida + lápis (modelo das leituras)
+  if(list) list.classList.add('hidden');
+  const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
   window.lcMarcarImpressoraNaLista(equipId);
   if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
 };
@@ -168,6 +170,7 @@ window.lcEditarImpressoraChamado=function(){
   const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
+  if(q) q.focus();
 };
 
 window.lcBuscarImpressoraChamado=function(){
