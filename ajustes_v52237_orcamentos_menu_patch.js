@@ -180,6 +180,9 @@ window.renderOrcamentos=function(){
   var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
     return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
   });
+  // v5.22.91 — guarda os ids que a tela mostrou agora; o aviso de "não achei"
+  // compara com isso e diz se o clicado ESTAVA na lista (fecha o diagnóstico)
+  try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x.id); }).slice(0,80))); }catch(e){}
   view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
     +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
     +'<div class="neo-actions">'
@@ -343,10 +346,16 @@ window.abrirOrcamento=function(id){
   // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
   try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
   if(typeof window.lfbAlert==='function'){
-    // v5.22.90 — números de diagnóstico para o suporte identificar a causa
+    // v5.22.91 — diagnóstico completo: quantos tem, qual clicou, se o clicado
+    // ESTAVA na lista que a tela mostrou, e os códigos que existem agora
     var _qtd = 0; try{ _qtd = store().length; }catch(e){}
     var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '".)', 'Orçamento');
+    var _estava = '?'; try{
+      var _snap = JSON.parse(localStorage.getItem('__orc_render_ids')||'[]');
+      _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
+    }catch(e){}
+    var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '.)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 

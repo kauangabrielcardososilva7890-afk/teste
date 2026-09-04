@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.90**  
+**Última versão:** **v5.22.91**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.90>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.91>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,19 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.91 (2026-09-04)
+
+1. **Diagnóstico final do orçamento "não achei".** O aviso agora diz: quantos
+   orçamentos o PC tem, o código clicado, se esse código ESTAVA na lista que a
+   tela mostrou (snapshot salvo a cada render) e os códigos que existem no
+   banco. Com o próximo recado do usuário, a causa fica fechada (nuvem que
+   apaga vs. outra origem). Primeiro diagnóstico do usuário: 4 orçamentos no
+   banco, clicado orc_mtnbguxr_4772 — id legítimo que já estava renderizado
+   → sumiu do array entre a renderização e o clique (suspeita: op delete da
+   nuvem). Sem correção às cegas — só instrumentou.
 
 ---
 
