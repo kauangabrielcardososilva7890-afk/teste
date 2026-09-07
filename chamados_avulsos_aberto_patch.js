@@ -87,9 +87,20 @@ window.__marcarImpAvulso = function(equipId){
   });
 };
 window.selecionarImpressoraChamadoAvulso = function(equipId){
+  // v5.22.94 — troca: dados da impressora VELHA saem; motivo auto troca junto
+  const _antIdAv = (window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId) || '';
+  const _trocaAv = !!_antIdAv && _antIdAv !== equipId;
+  const _eAntAv = _trocaAv ? (equipamento(_antIdAv) || {}) : {};
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  if(_trocaAv){
+    const _motAv = document.getElementById('ca-desc');
+    const _nomeAntAv = String(_eAntAv.modelo || '').trim();
+    if(_motAv && _nomeAntAv && String(_motAv.value || '').trim().toLowerCase() === _nomeAntAv.toLowerCase()){
+      _motAv.value = e.modelo || '';
+    }
+  }
   const selTxt = document.getElementById('ca-impressora-selecionada');
   if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
   // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)

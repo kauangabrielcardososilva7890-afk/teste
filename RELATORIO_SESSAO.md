@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.93**  
+**Última versão:** **v5.22.94**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.93>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.94>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,25 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.94 (2026-09-04)
+
+1. **Lápis do chamado: trocar de impressora agora TROCA os dados junto.**
+   Antes, ao tocar no lápis e escolher outra impressora, ficavam modelo,
+   serial, patrimônio e local da antiga, e o Motivo mantinha o modelo da
+   antiga. Agora, na troca (contrato e avulso): modelo/serial/patrimônio/
+   local viram os da impressora nova; o contador antigo vem da nova e o
+   atual limpa para digitar; o Motivo, se era exatamente o modelo da antiga,
+   vira o da nova — texto que a pessoa escreveu NÃO se mexe. Na ABERTURA do
+   chamado nada pisa nos dados salvos (só preenche o vazio). Prova de
+   máquina: 11/11 comportamentos.
+2. Ouro de bobeira protegido: contador atual da impressora nova limpa na
+   troca (pra não salvar contagem da antiga na nova).
+3. Caso de borda no sandbox: npm sem o `acorn` (node_modules some) gera
+   bundle com 0 isolados — NOTAR o aviso no build e instalar com
+   `npm install --ignore-scripts` (o electron postinstall é quem trava).
 
 ---
 

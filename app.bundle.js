@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 192 | sha256: cb33d00737c5a102
+ * scripts: 192 | sha256: 0abe7a4959bfee0a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -16986,9 +16986,20 @@ window.__marcarImpAvulso = function(equipId){
   });
 };
 window.selecionarImpressoraChamadoAvulso = function(equipId){
+  // v5.22.94 — troca: dados da impressora VELHA saem; motivo auto troca junto
+  const _antIdAv = (window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId) || '';
+  const _trocaAv = !!_antIdAv && _antIdAv !== equipId;
+  const _eAntAv = _trocaAv ? (equipamento(_antIdAv) || {}) : {};
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  if(_trocaAv){
+    const _motAv = document.getElementById('ca-desc');
+    const _nomeAntAv = String(_eAntAv.modelo || '').trim();
+    if(_motAv && _nomeAntAv && String(_motAv.value || '').trim().toLowerCase() === _nomeAntAv.toLowerCase()){
+      _motAv.value = e.modelo || '';
+    }
+  }
   const selTxt = document.getElementById('ca-impressora-selecionada');
   if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
   // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)
@@ -23884,8 +23895,13 @@ window.lcMarcarImpressoraNaLista=function(equipId){
 };
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
+  // v5.22.94 — TROCA deverdade: os dados da impressora VELHA saem da tela
+  const anteriorId=sel.value||'';
+  const troca=!!anteriorId && anteriorId!==equipId;
+  const eAnt=troca ? (eq(anteriorId)||{}) : {};
   sel.value=equipId;
   const e=eq(equipId)||{};
+  const pNovo=(db.parque||[]).find(x=>x.equipamentoId===equipId)||{};
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
@@ -23893,7 +23909,33 @@ window.lcEscolherImpressoraChamado=function(equipId){
   if(list) list.classList.add('hidden');
   const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
   window.lcMarcarImpressoraNaLista(equipId);
-  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
+  // v5.22.94 — campos ligados à impressora escritos AQUI (não depende de quem
+  // ganha a ordem do bundle). Na TROCA: sobrescreve tudo; na ABERTURA: só o vazio.
+  function preenche(id, valor, soVazio){
+    const el=document.getElementById(id); if(!el) return;
+    if(soVazio && String(el.value||'').trim()!=='') return;
+    el.value=valor;
+  }
+  preenche('ko-modelo', e.modelo||'', !troca);
+  preenche('ko-serie', e.serie||'', !troca);
+  preenche('ko-patr', e.patrimonio||'', !troca);
+  preenche('ko-local', pNovo.localInstalacao||pNovo.setor||'', !troca);
+  preenche('ko-cont-ant', contadorOficial(equipId,false), !troca);
+  const corAnt=document.getElementById('lc-cont-color-ant');
+  if(corAnt && (troca || String(corAnt.value||'').trim()==='')) corAnt.value=contadorOficial(equipId,true);
+  const bloco=document.getElementById('ko-color-block'); if(bloco) bloco.style.display=temColor(pNovo)?'':'none';
+  if(troca){
+    const atu=document.getElementById('ko-cont-atu'); if(atu) atu.value='';
+    // Motivo: se era EXATAMENTE o modelo da impressora antiga (auto), vira o
+    // da nova. Se a pessoa escreveu outra coisa, o texto dela não se mexe.
+    const motivo=document.getElementById('ko-desc');
+    const nomeAntigo=String(eAnt.modelo||'').trim();
+    if(motivo && nomeAntigo && String(motivo.value||'').trim().toLowerCase()===nomeAntigo.toLowerCase()){
+      motivo.value=(e.modelo||'');
+    }
+  }
+  if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
+  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, troca===true, undefined);
 };
 // Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){

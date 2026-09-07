@@ -154,8 +154,13 @@ window.lcMarcarImpressoraNaLista=function(equipId){
 };
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
+  // v5.22.94 — TROCA deverdade: os dados da impressora VELHA saem da tela
+  const anteriorId=sel.value||'';
+  const troca=!!anteriorId && anteriorId!==equipId;
+  const eAnt=troca ? (eq(anteriorId)||{}) : {};
   sel.value=equipId;
   const e=eq(equipId)||{};
+  const pNovo=(db.parque||[]).find(x=>x.equipamentoId===equipId)||{};
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
@@ -163,7 +168,33 @@ window.lcEscolherImpressoraChamado=function(equipId){
   if(list) list.classList.add('hidden');
   const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
   window.lcMarcarImpressoraNaLista(equipId);
-  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
+  // v5.22.94 — campos ligados à impressora escritos AQUI (não depende de quem
+  // ganha a ordem do bundle). Na TROCA: sobrescreve tudo; na ABERTURA: só o vazio.
+  function preenche(id, valor, soVazio){
+    const el=document.getElementById(id); if(!el) return;
+    if(soVazio && String(el.value||'').trim()!=='') return;
+    el.value=valor;
+  }
+  preenche('ko-modelo', e.modelo||'', !troca);
+  preenche('ko-serie', e.serie||'', !troca);
+  preenche('ko-patr', e.patrimonio||'', !troca);
+  preenche('ko-local', pNovo.localInstalacao||pNovo.setor||'', !troca);
+  preenche('ko-cont-ant', contadorOficial(equipId,false), !troca);
+  const corAnt=document.getElementById('lc-cont-color-ant');
+  if(corAnt && (troca || String(corAnt.value||'').trim()==='')) corAnt.value=contadorOficial(equipId,true);
+  const bloco=document.getElementById('ko-color-block'); if(bloco) bloco.style.display=temColor(pNovo)?'':'none';
+  if(troca){
+    const atu=document.getElementById('ko-cont-atu'); if(atu) atu.value='';
+    // Motivo: se era EXATAMENTE o modelo da impressora antiga (auto), vira o
+    // da nova. Se a pessoa escreveu outra coisa, o texto dela não se mexe.
+    const motivo=document.getElementById('ko-desc');
+    const nomeAntigo=String(eAnt.modelo||'').trim();
+    if(motivo && nomeAntigo && String(motivo.value||'').trim().toLowerCase()===nomeAntigo.toLowerCase()){
+      motivo.value=(e.modelo||'');
+    }
+  }
+  if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
+  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, troca===true, undefined);
 };
 // Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
