@@ -33,6 +33,8 @@ async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
+  // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
+  try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -199,8 +201,14 @@ async function renderConnected(body){
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+button('📁 Backups na nuvem','dc-backups-open',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div><div id="dc-backups"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
+  if(body.querySelector('#dc-backups-open')){
+    body.querySelector('#dc-backups-open').onclick=function(){
+      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }
+      catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert('Falha no painel de backups.','Backups'); }
+    };
+  }
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');

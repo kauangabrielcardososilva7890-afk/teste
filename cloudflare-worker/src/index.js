@@ -475,8 +475,9 @@ async function applyMutation(env, device, mutation) {
   };
 }
 
-async function handlePush(request, env) {
+async function handlePush(request, env, ctx) {
   const device = await authenticate(request, env);
+  try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
   const body = await readBody(request);
   const mutations = body.mutations;
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
@@ -1067,7 +1068,7 @@ async function handleOrcamentoPost(request, env) {
   return json({ ok: true, status: 'aprovado', vendaId, vendaNumero, mensagem });
 }
 
-async function route(request, env) {
+async function route(request, env, ctx) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
@@ -1079,7 +1080,7 @@ async function route(request, env) {
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/invites') return handleCreateInvite(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
-  if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
@@ -1090,24 +1091,213 @@ async function route(request, env) {
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
+  // Backups (somente aparelho administrador)
+  if (request.method === 'GET' && url.pathname === '/v1/backups') return handleBackupListar(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/backup') return handleBackupBaixar(request, env);
+  if (request.method === 'DELETE' && url.pathname === '/v1/backup') return handleBackupApagarUm(request, env);
+  if (request.method === 'DELETE' && url.pathname === '/v1/backups') return handleBackupApagarTodos(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKUPS AUTOMÁTICOS (v5.22.96)
+// Dois ciclos independentes que a nuvem faz sozinha, com os PCs desligados:
+//  1) Diário às 18:30 de São Paulo (cron 21:30 UTC) — "Backup 08-09-2026.json"
+//  2) A cada ATUALIZAÇÃO do sistema — o primeiro sync de uma versão nova faz
+//     primeiro a foto do banco com o nome da versão ANTERIOR
+//     ("Backup sistema 5.22.95.json").
+// Os arquivos moram no balde R2 "digicopy-backups" e NUNCA são apagados sozinhos:
+// a limpeza é manual, pelos botões do administrador no painel da nuvem.
+// ═══════════════════════════════════════════════════════════════════════════
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function dataArquivoSP(agora){
+  // Data de São Paulo no formato do dono: DD-MM-AAAA.
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric'
+  }).format(agora).replaceAll('/', '-');
+}
+
+function nomeBackupDiario(agora){
+  return 'Backup ' + dataArquivoSP(agora) + '.json';
+}
+
+function nomeBackupSistema(versaoAnterior){
+  return 'Backup sistema ' + String(versaoAnterior || '').trim() + '.json';
+}
+
+function compararVersao(a, b){
+  // 5.22.96 > 5.22.95; compara pedaço numérico por pedaço.
+  const pa = String(a || '').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+  const pb = String(b || '').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+  const tam = Math.max(pa.length, pb.length);
+  for (let i = 0; i < tam; i++){
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+function exigirBalde(env){
+  if (!env.BACKUPS){
+    throw new ApiError(503, 'BACKUP_SEM_BALDE',
+      'Balde de backups ainda não ligado. Crie o R2 "digicopy-backups" e rode o deploy (veja README).');
+  }
+  return env.BACKUPS;
+}
+
+async function gerarBackup(env, nome, meta){
+  const balde = exigirBalde(env);
+  // Foto completa: registros paginados + aparelhos (SEM token_hash).
+  // Página a página com OFFSET na chave primária (entity, record_id): a
+  // ordenação é única, então nenhuma linha se perde ou se repete entre páginas.
+  const records = [];
+  let pulados = 0;
+  for (let guard = 0; guard < 500; guard++){
+    const lote = await env.DB.prepare(
+      `SELECT entity, record_id, data_json, version, updated_at, deleted_at, updated_by
+         FROM records ORDER BY entity ASC, record_id ASC LIMIT 1000 OFFSET ?`
+    ).bind(pulados).all();
+    const linhas = lote.results || [];
+    records.push(...linhas);
+    if (linhas.length < 1000) break;
+    pulados += linhas.length;
+  }
+  const devices = await env.DB.prepare(
+    `SELECT id, name, role, created_at, last_seen_at, revoked_at FROM devices ORDER BY created_at ASC`
+  ).all();
+  const totals = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM records WHERE deleted_at IS NULL) AS records_vivos,
+            (SELECT COUNT(*) FROM records WHERE deleted_at IS NOT NULL) AS records_excluidos,
+            (SELECT COUNT(*) FROM changes) AS changes`
+  ).first();
+  const agora = new Date();
+  const arquivo = {
+    ferramenta: 'digicopy-backup',
+    tipo: meta && meta.tipo || 'manual',
+    versaoSistemaAnterior: meta && meta.versaoAnterior || undefined,
+    geradoEm: agora.toISOString(),
+    geradoEmSaoPaulo: agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+    totais: totals || {},
+    aparelhos: (devices.results || []),
+    registros: records
+  };
+  await balde.put(nome, JSON.stringify(arquivo, null, 2), {
+    httpMetadata: { contentType: 'application/json; charset=utf-8' }
+  });
+  return { nome, registros: records.length };
+}
+
+async function checarTrocaDeVersao(request, env, ctx){
+  // Roda em todo push autenticado: se o sistema que está enviando veio com
+  // versão MAIS alta que a última vista, fotografa o banco com o nome da
+  // versão anterior antes de marcar a nova como última.
+  const versaoApp = (request.headers.get('x-digicopy-versao') || '').trim();
+  if (!versaoApp) return;
+  const atual = await env.DB.prepare(
+    'SELECT value FROM system_meta WHERE key = ? LIMIT 1'
+  ).bind('backup_ultima_versao').first();
+  const ultima = (atual && atual.value) ? String(atual.value) : '';
+  if (compararVersao(versaoApp, ultima) <= 0) return;
+  // Marca ANTES de gerar: se dois PCs atualizarem ao mesmo tempo, só um
+  // dispara a foto (e se falhar, a próxima atualização tenta de novo).
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES ('backup_ultima_versao', ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+  ).bind(versaoApp, Date.now()).run();
+  if (!ultima) return; // primeiro PC visto: não existe "versão anterior" ainda
+  const nome = nomeBackupSistema(ultima);
+  // Mesmo nome por versão: se já existir foto daquela versão, é sobrescrita
+  // (não acumula duplicado).
+  const tarefa = gerarBackup(env, nome, { tipo: 'sistema', versaoAnterior: ultima })
+    .catch(e => console.error('BACKUP_VERSAO_FALHOU', e));
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(tarefa);
+  else await tarefa;
+}
+
+async function handleBackupListar(request, env){
+  await requireAdmin(request, env);
+  const balde = exigirBalde(env);
+  const l = await balde.list({ limit: 200 });
+  const backups = (l.objects || [])
+    .map(o => ({ nome: o.key, tamanho: o.size, geradoEm: o.uploaded }))
+    .sort((a, b) => (a.geradoEm < b.geradoEm ? 1 : -1));
+  return json({ ok: true, backups });
+}
+
+async function handleBackupBaixar(request, env){
+  await requireAdmin(request, env);
+  const balde = exigirBalde(env);
+  const key = new URL(request.url).searchParams.get('key') || '';
+  if (key.indexOf('/') >= 0 || key.indexOf('..') >= 0 || !key) {
+    throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  }
+  const obj = await balde.get(key);
+  if (!obj) throw new ApiError(404, 'BACKUP_NAO_ACHOU', 'Backup não encontrado na nuvem.');
+  return new Response(obj.body, {
+    headers: {
+      ...JSON_HEADERS,
+      'content-type': 'application/json; charset=utf-8',
+      'content-disposition': 'attachment; filename="' + key.replaceAll('"', '') + '"'
+    }
+  });
+}
+
+async function handleBackupApagarUm(request, env){
+  await requireAdmin(request, env);
+  const balde = exigirBalde(env);
+  const key = new URL(request.url).searchParams.get('key') || '';
+  if (key.indexOf('/') >= 0 || key.indexOf('..') >= 0 || !key) {
+    throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  }
+  await balde.delete(key);
+  return json({ ok: true, apagado: key });
+}
+
+async function handleBackupApagarTodos(request, env){
+  await requireAdmin(request, env);
+  const balde = exigirBalde(env);
+  // Apaga SOMENTE os arquivos de backup do balde. O banco do sistema (D1)
+  // nunca é tocado aqui, e o ciclo continua: amanhã às 18:30 e a cada
+  // atualização novos backups voltam a aparecer sozinhos.
+  let apagados = 0;
+  let cursor;
+  for (let guard = 0; guard < 50; guard++){
+    const l = await balde.list({ limit: 1000, cursor });
+    const keys = (l.objects || []).map(o => o.key);
+    if (keys.length){ await balde.delete(keys); apagados += keys.length; }
+    if (!l.truncated) break;
+    cursor = l.cursor;
+  }
+  return json({ ok: true, apagados });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
-      return await route(request, env);
+      return await route(request, env, ctx);
     } catch (error) {
       if (error instanceof ApiError) {
         return json({ ok: false, error: error.code, message: error.message }, error.status);
       }
       console.error('DIGICOPY_API_ERROR', error);
-      // Sem o motivo junto ninguém consegue consertar: "Erro interno da API" e
-      // ponto final não diz nada. Vai o recado curto do que falhou.
       const motivo = String((error && error.message) || error || '').slice(0, 200);
       return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' + (motivo ? ' Motivo: ' + motivo : ''), detail: motivo }, 500);
+    }
+  },
+  // Relógio da própria nuvem: todo dia 18:30 de São Paulo faz o backup
+  // diário sozinho — não precisa de nenhum PC ligado.
+  async scheduled(event, env, ctx) {
+    try {
+      const nome = nomeBackupDiario(new Date());
+      const r = await gerarBackup(env, nome, { tipo: 'diario' });
+      console.log('BACKUP_DIARIO_OK', JSON.stringify(r));
+    } catch (e) {
+      console.error('BACKUP_DIARIO_FALHOU', e);
     }
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel };
+export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, compararVersao, dataArquivoSP };

@@ -46,5 +46,38 @@ npx wrangler d1 migrations apply DB --remote
 - `POST /v1/review/remove-revoked` — remove seleção validando novamente a origem bloqueada
 - `POST /v1/admin/reset-cloud` — zera somente dados de negócio, exigindo admin único e frase exata
 - `GET /v1/status` — diagnóstico autenticado
+- `GET /v1/backups` — admin lista os backups guardados
+- `GET /v1/backup?key=NOME` — admin baixa um backup (arquivo `.json`)
+- `DELETE /v1/backup?key=NOME` — admin apaga UM backup
+- `DELETE /v1/backups` — admin apaga TODOS os backups (só o balde; os dados do sistema nunca)
 
 Nenhuma rota substitui a base inteira.
+
+## Backups automáticos (v5.22.96)
+
+Dois ciclos independentes, feitos pela nuvem sozinha (não precisa PC ligado):
+
+1. **Diário 18:30 (horário de São Paulo)** — gera `Backup 08-09-2026.json`.
+   Relógio da própria Cloudflare (`crons` no `wrangler.jsonc`). O nome é fixo
+   por dia: nunca acumula dois do mesmo dia.
+2. **A cada atualização do sistema** — quando o primeiro sync chega de uma
+   versão nova (ex.: 5.22.96), a nuvem primeiro fotografa o banco como estava
+   na versão anterior e guarda `Backup sistema 5.22.95.json`. Versão antiga
+   sincronizando depois NÃO dispara backup de tabela invertida.
+
+Os arquivos ficam no balde R2 **`digicopy-backups`** e **nunca são apagados
+sozinhos** — a limpeza é manual, pelos botões do administrador no painel
+"Nuvem" do sistema (📥 Baixar todos / 🗑️ Excluir backups, que apagam SÓ os
+backups; o ciclo continua).
+
+### Ativando pela primeira vez (uma vez só)
+
+```bash
+cd cloudflare-worker
+npx wrangler r2 bucket create digicopy-backups   # cria o balde
+npx wrangler deploy                              # publica worker com R2 + relógio
+```
+
+Se for o primeiro uso do R2 na conta, o painel da Cloudflare pede só um clique
+de aceite (plano grátis, 10 GB). `npx wrangler tail` mostra as linhas
+`BACKUP_DIARIO_OK` / `BACKUP_VERSAO_FALHOU` se quiser acompanhar.

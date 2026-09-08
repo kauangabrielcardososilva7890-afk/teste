@@ -40,3 +40,27 @@ assert.equal(__test.activityLabel('{"senha":"x"}','cli_9'), 'cli_9');
 assert.ok(__test.activityLabel('{"nome":"'+('A'.repeat(90))+'"}','id').length<=80);
 console.log('  ✔ rótulo de acompanhamento sem vazar senha');
 console.log('\nRESULTADO: funções puras da API passaram!');
+
+console.log('== BACKUPS AUTOMÁTICOS v5.22.96 ==');
+
+// Nome do arquivo diário: "Backup 08-09-2026.json" com data de São Paulo
+const dia = new Date('2026-09-08T21:30:00Z'); // 18:30 em São Paulo
+assert.equal(__test.nomeBackupDiario(dia), 'Backup 08-09-2026.json');
+console.log('  ✔ backup diário usa o nome do dono (dia de São Paulo)');
+
+// 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
+const madrugada = new Date('2026-09-09T00:30:00Z');
+assert.equal(__test.nomeBackupDiario(madrugada), 'Backup 08-09-2026.json');
+console.log('  ✔ madrugada UTC continua no dia certo de São Paulo');
+
+// Nome do backup de atualização = versão ANTERIOR
+assert.equal(__test.nomeBackupSistema('5.22.95'), 'Backup sistema 5.22.95.json');
+console.log('  ✔ backup de atualização sai com o nome da versão anterior');
+
+// Comparação de versões
+assert.equal(__test.compararVersao('5.22.96', '5.22.95'), 1);
+assert.equal(__test.compararVersao('5.22.95', '5.22.95'), 0);
+assert.equal(__test.compararVersao('v5.22.95', '5.22.96'), -1);
+assert.equal(__test.compararVersao('5.22.96', ''), 1);
+assert.equal(__test.compararVersao('5.9.9', '5.22.1'), -1);
+console.log('  ✔ versão nova só dispara backup quando é MAIOR (PC velho não dispara "desatualização")');
