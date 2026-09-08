@@ -117,3 +117,23 @@
 
 ### Testes
 - Estático v52296: 30 asserts; harness da aba 16/16 (inclui unificação: qualquer exportBackup abre a aba; exportarBackupJSON baixa o cru); suíte 149/149; bundle 194 scripts; emulação do worker: push/status OK.
+
+## A nuvem agora responde de pé: /health carimba a versão do código que está no ar — v5.23.3 🤝
+
+### 🔎 Diagnóstico (com dados do dono — obrigado pelos testes!)
+- **`PRAGMA quick_check` retornou `ok`** → o banco D1 está **íntegro**, sem corrupção. Dados seguros.
+- **A lista de tabelas entregou o resto:** faltam `uso_diario`, `uso_real` e `backups` — o worker que está no ar **não é o novo** (as tabelas seriam autocriadas no primeiro uso). O deploy de anteontem não chegou lá (provavelmente rodado numa pasta desatualizada).
+
+### O que muda daqui pra frente
+- **`GET /health` agora devolve a versão do código** (`"versao":"5.23.3"`) — dá pra conferir de qualquer navegador, sem terminal.
+- **`/v1/status` também devolve a versão**, e o painel Nuvem exibe:
+  - com worker novo: linha discreta "🔧 Código da nuvem: vX.Y.Z";
+  - com worker velho: **quadro laranja** "O código da nuvem está ANTIGO (não responde a versão). Repita o `npx wrangler deploy`" — ninguém mais fica se perguntando se faltou deploy.
+- `garantirTabelaUso` deixa de engolir erro calado: a última falha aparece no `avisoUso` do status (diagnóstico honesto).
+
+### Ação única do dono
+1. Baixar o ZIP desta versão → `cd cloudflare-worker` → `npx wrangler deploy`.
+2. Abrir <https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/health> no navegador: tem que aparecer `"versao":"5.23.3"`.
+
+### Testes
+- Estático v52296: 33 asserts (+ carimbo de versão,avisos, preferências); suite 149/149; bundle 194 scripts.

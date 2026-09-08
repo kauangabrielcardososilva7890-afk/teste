@@ -4,6 +4,9 @@
 
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
+// Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
+const WORKER_VERSION = '5.23.3';
+
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
 const ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -190,6 +193,7 @@ async function handleHealth(env) {
     database,
     schemaVersion,
     setupConfigured: !!env.SETUP_SECRET,
+    versao: WORKER_VERSION,
     ready: database === 'ok' && schemaVersion === '2' && !!env.SETUP_SECRET,
     message: database === 'ok'
       ? (schemaVersion ? 'API e banco D1 disponíveis.' : 'Banco vinculado; migração pendente.')
@@ -848,6 +852,7 @@ async function resumoDaNuvem(env) {
 // worker pra aba Nuvem mostrar "usou X de 100.000" — o dono vê antes de virar.
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
+let ultimoErroUso = '';
 async function garantirTabelaUso(env){
   if (__USO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS uso_diario (
@@ -867,7 +872,7 @@ async function _somar(env, escritas, leituras){
       `INSERT INTO uso_diario(dia, escritas, leituras) VALUES (?, ?, ?)
          ON CONFLICT(dia) DO UPDATE SET escritas = escritas + ?, leituras = leituras + ?`
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
-  }catch(e){ console.error('USO_DIARIO_FALHOU', e); }
+  }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
 // v5.22.103 — a anotação nunca segura a resposta: com ctx vai por waitUntil
 // (sem ctx cai no await de antes, que também funciona).
@@ -895,7 +900,8 @@ async function handleStatus(request, env, ctx) {
   const totals = await resumoDaNuvem(env);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
   somarUso(env, 0, 30, ctx); // abrir o status também lê algumas linhas
-  return json({ ok: true, device, totals, usoHoje: await (async () => {
+  return json({ ok: true, device, totals, workerVersao: WORKER_VERSION,
+    usoHoje: await (async () => {
       // v5.23.1 — medidor oficial (mini-worker contador-uso) tem precedência;
       // sem ele (ou zerado), cai na estimativa do próprio uso.
       try {
@@ -905,7 +911,8 @@ async function handleStatus(request, env, ctx) {
                    tetoEscritas: 100000, tetoLeituras: 5000000, fonte: 'oficial', medidoEm: real.medido_em || null };
         }
       } catch (e) { /* tabela ainda não existe — tudo bem */ }
-      return Object.assign(await usoHoje(env), { fonte: 'estimada' });
+      const est = await usoHoje(env); if (ultimoErroUso) est.avisoUso = ultimoErroUso;
+      return Object.assign(est, { fonte: 'estimada' });
     })() });
 }
 
