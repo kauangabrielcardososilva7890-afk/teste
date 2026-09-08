@@ -15,7 +15,7 @@ const db={
   vendas:[{id:'v1',origemOrcamentoId:'o1',numero:'10'}],
   __orcBloqueio:{orcIds:[],tokens:[],vendaIds:[],orcSemRecriarVenda:[]}
 };
-ok('versao', P.VERSAO==='5.22.61' && /^5\.22\.\d+/.test(pkg.version));
+ok('versao', P.VERSAO==='5.22.61' && /^5\.\d+\.\d+/.test(pkg.version));
 ok('orcamento aberto nao bloqueia', P.orcamentoBloqueado({id:'o2',status:'aberto'}, db)===false);
 P.marcarOrcamentoExcluido(db.orcamentos[0], db);
 ok('orcamento excluido nao volta', P.orcamentoBloqueado(db.orcamentos[0], db)===true);
@@ -34,6 +34,6 @@ ok('venda apagada nao volta', P.vendaPodeFicar(db2.vendas[0], db2)===false);
 ok('aviso no sino sem popup', P.avisoNoSino===true && P.semPopup===true && /notificarEvento/.test(src) && /lfbAlert/.test(src));
 ok('patch no bundle', manifest.includes('ajustes_v52261_orcamento_nao_volta_patch.js'));
 ok('index carrega o patch', JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52261_orcamento_nao_volta_patch.js'));
-ok('rodape 5.22', /v5\.22\.\d+/.test(html));
+ok('rodape 5.22', /v5\.\d+\.\d+/.test(html));
 ok('APK quieto', src.indexOf('mobile/')<0);
 console.log('\nRESULTADO: v5.22.61 passou!');

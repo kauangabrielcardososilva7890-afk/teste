@@ -256,7 +256,7 @@ console.log('== RELATÓRIO v5.22.67 ==');
 }
 
 // ── versão ─────────────────────────────────────────────────────────────────
-ok('versão continua na família 5.22', /^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22', /^5\.\d+\.\d+/.test(pkg.version));
 ok('index.html está na mesma versão do package', ler('index.html').indexOf("'" + pkg.version + "'") >= 0);
 
 console.log(falhas === 0

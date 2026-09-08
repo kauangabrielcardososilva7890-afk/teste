@@ -11,7 +11,7 @@ const S=window.DIGICOPY_CLOUD_SYNC;
 // O espelho da v5.22.72 foi REMOVIDO na v5.22.76: era ele que apagava do PC o
 // que a nuvem não tinha. O que este arquivo garante hoje é que ele não volte.
 console.log('== AJUSTES v5.22.72 (revisto na v5.22.76) ==');
-ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 ok('o espelho que apagava dado do PC não existe mais',!/function espelharNuvem/.test(code)&&!/function planejarEspelho/.test(code));
 ok('o interruptor do espelho saiu do painel',!/dc-espelho/.test(painel));
 ok('nenhum resto do espelho na lista de funções',!S.espelhoLigado&&!S.planejarEspelho);

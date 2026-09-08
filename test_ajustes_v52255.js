@@ -7,7 +7,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 const html = fs.readFileSync('index.html', 'utf8');
 
-ok('versão 5.22.55 base', P.VERSAO === '5.22.55' && /^5\.22\.\d+/.test(pkg.version));
+ok('versão 5.22.55 base', P.VERSAO === '5.22.55' && /^5\.\d+\.\d+/.test(pkg.version));
 
 // Mock do ambiente do ERP
 global.db = {
@@ -74,7 +74,7 @@ ok('patch no manifesto do bundle', manifest.includes('ajustes_v52255_orcamento_a
 ok('patch vai para o .exe dentro do app.bundle.js',
    pkg.build.files.indexOf('app.bundle.js')>=0 &&
    JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52255_orcamento_aprovacao_venda_patch.js'));
-ok('index carrega scripts na versão 5.22', /app\.bundle\.js\?v=5\.22\.\d+/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52255_orcamento_aprovacao_venda_patch.js'));
-ok('rodapé v5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
+ok('index carrega scripts na versão 5.22', /app\.bundle\.js\?v=5\.\d+\.\d+/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52255_orcamento_aprovacao_venda_patch.js'));
+ok('rodapé v5.22', /footer-version/.test(html) && /v5\.\d+\.\d+/.test(html));
 
 console.log('TODOS OS TESTES DE v5.22.55 PASSARAM COM SUCESSO!');

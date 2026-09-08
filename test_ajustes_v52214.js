@@ -48,7 +48,7 @@ ok('db.recargas no núcleo', /recargas:\[\]/.test(app) && /'recargas'/.test(app)
 ok('nuvem sincroniza recargas', /recargas:'array'/.test(cf));
 
 ok('patches no bundle', manifest.includes('ajustes_v52214_ordenacao_patch.js') && manifest.includes('ajustes_v52214_recargas_patch.js'));
-ok('versão 5.22.x', /^5\.22\./.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.x', /^5\.\d+\./.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile/.test(ord+rec));
 
 console.log('\nRESULTADO: v5.22.14 passou!');

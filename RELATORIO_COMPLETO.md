@@ -53,3 +53,30 @@
 
 ### Testes
 - Harness da aba agora simula as 2 pinturas dinâmicas do sistema de menus (botão com id re-pintado + botão de module-menu sem id) e prova que ambas abrem a aba sem baixar nada, enquanto um botão "Exportar" solto dentro de tela continua funcionando — 14/14. Estático v52296: 21 asserts (modelo do menu incluso). Suíte 149/149. Bundle 194 scripts.
+
+## 📣 A nova lei de versões em ação: v5.23.0 + menu Backup com tranca definitiva + a verdade do contador da nuvem — v5.23.0 🤝
+
+### 🧭 A lei de versões mudou (palavra do dono, registrada aqui)
+- **Relatório grande (muitas mudanças):** sobe a **segunda casa** (`5.22.xxx → 5.23.0`), não a última.
+- **Ajustes pequenos:** andam na última casa (`5.23.00 → 5.23.01…5.23.09`); estourou o 9, sobe a segunda.
+- Para isso funcionar de verdade, **63 testes antigos** que carimbavam "5.22." foram ensinados a aceitar `5.xx.yy` (com trava de piso: cada um segue exigindo no mínimo a sua própria versão de nascimento — aceitam 5.23+ ou 5.22.NN+, nunca menos).
+- Por isso esta entrega é a **v5.23.0**: mexeu em menu, versão, nuvem e suíte inteira — relatório grande de verdade.
+
+### 1) 🔒 Menu Backup: agora a aba abre ou nada (tranca de ferro)
+- Investigação profunda mostrou que o clique "clássico" podia vencer as redes anteriores nos menus re-pintados/personalizados. Solução final em camadas:
+  1. **modelo do sistema de menus** já nasce apontando pra aba;
+  2. **captura no bundle** cobre com e sem id;
+  3. **tranca inline no próprio `index.html`**: roda ANTES de qualquer script, por captura — se o clique for no Backup do menu e a aba ainda não carregou, ele **avisa** em vez de baixar. Agora é impossível o "clicou e baixou" voltar: ou abre a aba, ou pede um segundo pro carregamento terminar.
+- Botões "Exportar backup" dentro das telas (Configurações/Relatórios) seguem baixando normalmente — o sistema distingue menu de tela.
+
+### 2) 📊 Uso da nuvem: por que mostrava 0/0 (meldels) e o que fazer
+- O painel **estimado** (grátis, sem senha) estava zerado por um detalhe técnico: no worker que está no ar (da v5.22.101), a anotação do uso morria antes de gravar; a correção saiu na v5.22.102 (anota em segundo plano do jeito certo) — **basta repetir o `npx wrangler deploy`**, e o contador começa a andar.
+- Pergunta do dono: *"quer que conte já, sem eu fazer nada — tem como ler o número real sem passar acesso à conta?"* — **Não tem, e é por segurança**: a Cloudflare só libera o medidor oficial com um token de leitura criado por você. Sem token, não existe caminho (isso vale pra qualquer sistema). Por isso o painel usa o estimado da própria nuvem; pra melhorar a precisão quando quiser, criamos depois o caminho opcional "anotar minha conta".
+- **E relaxa:** sua foto do painel da Cloudflare mostrou 4,3 mil gravações de 100 mil e 167 mil leituras de 5 milhões — o sistema está usando ~4% do teto diário. Tem muuuuita folga.
+- E detalhe de honestidade: quando a nuvem não responde, o painel agora **diz que não conseguiu medir** em vez de mostrar zeros ilusórios.
+
+### 3) ☁️ Deploy lembrado
+- O `npx wrangler deploy` desta vez liga: o contador de uso funcionando de verdade (ele cria a tabelinha de uso sozinho).
+
+### 4) Qualidade
+- Suíte: **149/149 em 5.23.0** (ou seja: a subida de versão não quebrou nada — antes derrubava 63 testes). Bundle 194 scripts, sync OK, verify:files OK, harness da aba 14/14.

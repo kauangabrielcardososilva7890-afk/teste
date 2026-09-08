@@ -5,12 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a1e8a">
 <script>
-window.DIGICOPY_APP_VERSION = '5.22.103';
+window.DIGICOPY_APP_VERSION = '5.23.0';
+
+// v5.23.0 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
+// no documento, impede que o clique em Backup baixe arquivo. Se a tela ainda
+// não estiver carregada, avisa para aguardar (nunca mais "clicou e baixou").
+document.addEventListener('click', function(ev){
+  try{
+    var b = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+    if(!b){
+      var c = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+      if(c && /exportBackup\s*\(\s*\)/.test(c.getAttribute('onclick')||'') &&
+         c.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"]')) b = c;
+    }
+    if(!b) return;
+    ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    if(typeof window.abrirTelaBackup === 'function'){ window.abrirTelaBackup(); }
+    else if(typeof window.toast === 'function'){ window.toast('Carregando a aba Backup... toque de novo em um instante.'); }
+  }catch(e){}
+}, true);
 try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')document.documentElement.classList.add('digi-escuro');}catch(e){}
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Digicopy">
-<title>Sistema Digicopy v5.22.103</title>
+<title>Sistema Digicopy v5.23.0</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./logo_2.png">
 <link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
@@ -184,7 +202,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v5.22.103</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem</span><span id="footer-version" class="text-center font-bold text-slate-500">v5.23.0</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>

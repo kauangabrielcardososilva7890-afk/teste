@@ -45,6 +45,6 @@ ok('mesmos campos que as vendas guardam no save', /numeroSerie: txt\(document\.g
 
 console.log('== 4. CONSISTÊNCIA ==');
 ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups)', manifest.length === 194);
-ok('versão 5.22.x', /^5\.22\./.test(pkg.version));
+ok('versão 5.22.x', /^5\.\d+\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.85 passaram!');

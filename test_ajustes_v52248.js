@@ -21,6 +21,6 @@ ok('loadFile sem query', main.indexOf("loadFile(path.join(__dirname, 'index.html
 ok('asar continua off', pkg.build.asar===false);
 ok('pure', P.VERSAO==='5.22.48' && P.v8Cache==='none');
 ok('patch no bundle', manifest.includes('ajustes_v52248_exe_cache_patch.js'));
-ok('versão', /^5\.22\.\d+/.test(pkg.version) && html.indexOf('app.bundle.js?v=')>=0 && /v5\.22\.\d+/.test(html));
+ok('versão', /^5\.\d+\.\d+/.test(pkg.version) && html.indexOf('app.bundle.js?v=')>=0 && /v5\.\d+\.\d+/.test(html));
 ok('APK quieto', src.indexOf('mobile/')<0);
 console.log('\nRESULTADO: v5.22.48 passou!');

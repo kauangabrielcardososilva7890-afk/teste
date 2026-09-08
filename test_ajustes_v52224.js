@@ -25,6 +25,6 @@ ok('só letra isolada no dado', n===2 && prods[0].categoria==='Produto' && prods
 ok('outros filtros ficam', prods[1].categoria==='Chip' && prods[2].categoria==='Original' && prods[4].categoria==='Produto');
 
 ok('patches no bundle', manifest.includes('ajustes_v52223_cat_letra_patch.js') && manifest.includes('ajustes_v52224_cat_letra_uma_vez_patch.js'));
-ok('versão 5.22.24+', /^5\.22\.(2[4-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.24+', (/^5\.\d+\.\d+$/.test(pkg.version) && (parseInt(pkg.version.split('.')[1],10)>=23 || parseInt(pkg.version.split('.')[2],10)>=24)) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(cat+uma));
 console.log('\nRESULTADO: v5.22.24 passou!');

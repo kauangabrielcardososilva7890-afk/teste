@@ -23,6 +23,6 @@ ok('apaga seta de verdade', /b.remove()/.test(men) && typeof M.apagarSetas==='fu
 ok('segue o mouse', /pointermove/.test(men) && /ghost/.test(men));
 
 ok('patches no bundle', manifest.includes('ajustes_v52223_cat_letra_patch.js') && manifest.includes('ajustes_v52223_menus_arraste_patch.js'));
-ok('versão 5.22.23+', /^5\.22\.(2[3-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.23+', (/^5\.\d+\.\d+$/.test(pkg.version) && (parseInt(pkg.version.split('.')[1],10)>=23 || parseInt(pkg.version.split('.')[2],10)>=23)) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(cat+men));
 console.log('\nRESULTADO: v5.22.23 passou!');

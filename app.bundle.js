@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 567145a207b4446e
+ * scripts: 194 | sha256: 8b884fc4cec0547e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28996,7 +28996,7 @@ async function renderConnected(body){
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
-  const uso=status.usoHoje||null;
+  const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
   function garantirCssUso(){
     if(document.getElementById('dc-uso-css')) return;
     const s=document.createElement('style');
@@ -29023,7 +29023,9 @@ async function renderConnected(body){
       '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
       '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.</small>'+
       '</div>'
-    : '';
+    : (contagemFalhou
+      ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
+      : '');
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};

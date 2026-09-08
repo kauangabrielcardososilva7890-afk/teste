@@ -9,7 +9,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.74 ==');
-ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 
 // O conserto automático que devolvia o que sumiu foi REMOVIDO na v5.22.76:
 // ele trouxe de volta os nomes de demonstração. O que fica garantido é que

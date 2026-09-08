@@ -18,6 +18,6 @@ ok('main limpa cache na versão nova', main.indexOf('clearCache')>=0 && main.ind
 ok('loadFile com versão', main.indexOf('APP_VERSION')>=0 && main.indexOf('loadFile')>=0);
 ok('pure', P.asar===false && P.limpaCacheNaVersao===true && P.VERSAO==='5.22.47');
 ok('patch no bundle', manifest.includes('ajustes_v52247_exe_atualiza_patch.js'));
-ok('versão', String(pkg.version).indexOf('5.22.')===0 && html.indexOf('app.bundle.js?v=')>=0);
+ok('versão', /^5\.\d+\.\d+/.test(String(pkg.version)) && html.indexOf('app.bundle.js?v=')>=0);
 ok('APK quieto', src.indexOf('mobile/')<0 && main.indexOf('mobile/')<0);
 console.log('\nRESULTADO: v5.22.47 passou!');
