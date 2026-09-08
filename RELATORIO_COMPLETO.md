@@ -137,3 +137,14 @@
 
 ### Testes
 - Estático v52296: 33 asserts (+ carimbo de versão,avisos, preferências); suite 149/149; bundle 194 scripts.
+
+## Confirmação do dono: /health respondeu `"versao":"5.23.3"` ✅ (sem mudança de código)
+
+- O dono repetiu o deploy e conferiu no navegador: **a nuvem agora roda o código novo** (worker v5.23.3 no ar). As tabelas `uso_diario`/`uso_real`/`backups` passam a ser autocriadas no primeiro uso, e o quadro laranja de "código da nuvem antigo" no painel Nuvem some sozinho.
+- Token que tinha sido colado na conversa: **revogado antes de qualquer uso** (confirmado pelo dono). Assunto encerrado, conta segura.
+- Próximos passos combinados: refazer o teste de **criar cliente** no link v5.23.3 (com Ctrl+F5) e testar as telas de **Backup/Restaurar**; se "criar" falhar de novo, o dono manda o que aparece no Console (F12).
+- Tutorial do **medidor oficial** (`cloudflare-contador/`) explicado passo a passo no chat a pedido do dono: token novo só de leitura (`Account Analytics: Read` + `D1: Read`) → `wrangler secret put CF_API_TOKEN` (a digitação não aparece na tela, é normal) → preencher `ACCOUNT_ID` e `database_id` no `wrangler.jsonc` (UUID `b6c32346-d6d5-475a-b9c3-40782b525bae`) → `wrangler deploy` → testar `/v1/medir`.
+- Ensinado no chat, a pedido do dono: bloco de código nas mensagens = 3 crases numa linha antes e 3 crases numa linha depois do texto.
+
+### Testes
+- Nenhum código alterado nesta rodada (só registro). Última bateria verde: estático 33 asserts; harness 16/16; suíte 149/149; bundle 194 scripts.
