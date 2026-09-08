@@ -1,10 +1,10 @@
-// Teste v5.23.1 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
+// Teste v5.23.2 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.23.1 — menu Backup sempre abre a aba (modelo+captura) ==');
+console.log('== v5.23.2 — menu Backup sempre abre a aba (modelo+captura) ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -95,6 +95,14 @@ ok(contador.indexOf('uso_real') >= 0 && contador.indexOf('d1AnalyticsAdaptiveGro
 ok(worker.indexOf('uso_real WHERE dia = ?') >= 0 && worker.indexOf("fonte: 'oficial'") >= 0, 'worker principal prefere o medidor oficial quando existe');
 ok(sync.indexOf('medidor oficial da sua conta Cloudflare') >= 0, 'painel mostra quando o número é oficial');
 
+// 14) v5.23.2 — ele não aguentava mais: exportBackup (e importBackup) agora abrem a aba
+ok(patch.indexOf("window.exportarBackupJSON") >= 0 && patch.indexOf("window.exportBackup = function(){ abrirTelaBackup(); }") >= 0, 'QUALQUER chamada a exportBackup (menu/restaurados/telas) abre a aba; JSON cru em exportarBackupJSON');
+ok(patch.indexOf("window.importBackup = function(){ abrirTelaBackup(); }") >= 0, 'botões antigos de restauro também abrem a aba');
+
+// 15) Restaurar backup voltou — dentro da própria aba (substituir/somar, com prévia)
+ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'aba tem restaurar (arquivo → prévia → substituir/somar)');
+ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
+
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 ok(man[man.length - 1] === 'ajustes_v52296_backups_nuvem_patch.js', 'patch de backups continua último no bundle');
@@ -102,4 +110,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.23.1!');
+console.log('\nTudo certo v5.23.2!');

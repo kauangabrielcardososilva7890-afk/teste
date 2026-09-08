@@ -35,6 +35,7 @@ function tamanhoBR(bytes){
   return n + ' B';
 }
 
+function escap(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function aviso(el, texto, cor){
   if(!el) return;
   el.innerHTML = '<div style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
@@ -381,6 +382,76 @@ async function abrir(painelBody){
 
 // ─── Menu lateral BACKUP: abre a TELA NORMAL "Backup do sistema" ───────────
 // (igual às outras abas — nada de gaveta/dropdown bugado por cima da tela).
+// v5.23.2 — RESTAURAR backup: volta a valer dentro da aba (modo seguro)
+const LISTAS_DB = ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'];
+function ehFormatoBackup(obj){
+  if(!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(listas.length < 3) return null; // backup de verdade traz várias listas
+  return listas;
+}
+function resumoBackup(obj, listas){
+  return listas.map(k => k + ': ' + obj[k].length).join('  •  ');
+}
+function preencherBanco(obj, modo){ // modo: 'substituir' (exato como o arquivo) | 'somar' (junta sem apagar)
+  if(typeof db === 'undefined' || !db) throw new Error('Banco local não carregado.');
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(modo === 'substituir'){
+    listas.forEach(k => { db[k] = obj[k].map(x => Object.assign({}, x)); });
+  }else{
+    listas.forEach(k => {
+      if(!Array.isArray(db[k])) db[k] = [];
+      const ja = new Set(db[k].map(x => x && x.id).filter(Boolean));
+      obj[k].forEach(x => {
+        if(x && x.id && ja.has(x.id)){ // mesmo id: o do backup entra só se for mais novo
+          const alvo = db[k].find(y => y && y.id === x.id);
+          if(alvo && String(x.atualizadoEm || x.criadoEm || '') > String(alvo.atualizadoEm || alvo.criadoEm || '')) Object.assign(alvo, x);
+        }else db[k].push(Object.assign({}, x));
+      });
+    });
+  }
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof window.renderApp === 'function') try{ window.renderApp(); }catch(e){}
+}
+function lerArquivoJSON(inp){
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  const leitor = new FileReader();
+  leitor.onload = function(){
+    const caixa = document.getElementById('bk-rest-prev');
+    try{
+      const obj = JSON.parse(String(leitor.result || ''));
+      const listas = ehFormatoBackup(obj);
+      if(!listas){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Esse arquivo não é um backup do Digicopy (não achei as listas de dados).</div>'; window.__bkRestaurar = null; return; }
+      window.__bkRestaurar = obj;
+      caixa.innerHTML = '<div style="font-size:12px;color:#166534;font-weight:800">✅ Backup reconhecido (' + escap(f.name) + ')</div>' +
+        '<div style="font-size:11px;color:#475569;margin-top:3px">' + escap(resumoBackup(obj, listas)) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+        '<button type="button" id="bk-rest-substituir" style="' + estiloBtn(true) + '">🔄 Substitui tudo (fica exato como o backup)</button>' +
+        '<button type="button" id="bk-rest-somar" style="' + estiloBtn(false) + '">➕ Soma nos dados (não apaga nada)</button></div>';
+      caixa.querySelector('#bk-rest-substituir').onclick = function(){ confirmarRestauracao('substituir'); };
+      caixa.querySelector('#bk-rest-somar').onclick = function(){ confirmarRestauracao('somar'); };
+    }catch(e){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Arquivo inválido: ' + escap(e && e.message || e) + '</div>'; window.__bkRestaurar = null; }
+  };
+  leitor.readAsText(f);
+}
+async function confirmarRestauracao(modo){
+  const obj = window.__bkRestaurar;
+  if(!obj) return;
+  const perg = modo === 'substituir'
+    ? 'Isso SUBSTITUI todos os dados deste PC pelos dados do backup. O que estiver aqui e não estiver no backup some deste PC. Continuar?'
+    : 'Isso SOMA os dados do backup nos dados deste PC (linhas com o mesmo código são atualizadas se o backup for mais novo). Continuar?';
+  const ok = typeof window.confirmSistema === 'function' ? await window.confirmSistema(perg, 'Restaurar backup') : true;
+  if(!ok) return;
+  try{
+    preencherBanco(obj, modo);
+    if(typeof toast === 'function') toast(modo === 'substituir' ? 'Backup restaurado: o PC ficou exato como o arquivo ✔' : 'Backup somado aos dados ✔', 'success');
+    const caixa = document.getElementById('bk-rest-prev'); if(caixa) caixa.innerHTML = '';
+    const inp = document.getElementById('bk-rest-arq'); if(inp) inp.value = '';
+    window.__bkRestaurar = null;
+  }catch(e){ window.lfbAlert && window.lfbAlert('Falha ao restaurar: ' + (e && e.message || e), 'Restaurar backup'); }
+}
+
 function abrirTelaBackup(){
   if(typeof setModal !== 'function'){ try{ window.exportBackup(); }catch(e){} return; }
   setModal('Backup do sistema',
@@ -393,12 +464,17 @@ function abrirTelaBackup(){
       '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
       '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
         '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
+        '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
+        '<div style="margin-top:6px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div></div>' +
         '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
       '</div>' +
     '</div>',
     '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
   const pcBtn = document.getElementById('bk-pc-baixar');
-  if(pcBtn) pcBtn.onclick = function(){ try{ window.exportBackup(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  const restInp = document.getElementById('bk-rest-arq');
+  if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;
   setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
 }
@@ -421,6 +497,20 @@ async function acaoBackupManual(btn, raiz){
 }
 
 window.abrirTelaBackup = abrirTelaBackup;
+
+// v5.23.2 — o clássico separado do menu: baixar o JSON bruto ganhou nome próprio
+// (window.exportarBackupJSON) e TODA chamada a exportBackup() abre esta aba.
+// Assim qualquer pintura/personalização antiga do menu abre a tela certa.
+if(typeof window.exportBackup === 'function' && !window.exportBackup.__v52302){
+  const _exporJSON = window.exportBackup;
+  if(!window.exportarBackupJSON) window.exportarBackupJSON = function(){ return _exporJSON.apply(this, arguments); };
+  window.exportBackup = function(){ abrirTelaBackup(); };
+  window.exportBackup.__v52302 = true;
+}
+if(typeof window.importBackup !== 'function' || !window.importBackup.__v52302){
+  window.importBackup = function(){ abrirTelaBackup(); };
+  window.importBackup.__v52302 = true;
+}
 
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o

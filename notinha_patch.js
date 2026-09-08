@@ -331,7 +331,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
 
   window.renderRelatorios=function(){
     const sess=getSession(); if(!sess) return; const cards=[['Clientes',db.clientes.filter(c=>c.empresaId===sess.empresaId).length],['Vendas',db.vendas.filter(v=>v.empresaId===sess.empresaId).length],['Contratos',db.contratos.filter(c=>c.empresaId===sess.empresaId).length],['Chamados',db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length]];
-    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="exportBackup()" class="neo-btn primary"><i class="ph ph-download"></i>Exportar</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
+    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="neo-btn primary"><i class="ph ph-download"></i>Backup</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
   };
 
   window.renderAuditoria=function(){

@@ -95,3 +95,25 @@
 
 ### Testes
 - Estático v52296: 26 asserts (captura v4, mini-worker, preferência oficial, rótulo do painel); harness da aba 14/14; suíte 149/149; bundle 194 scripts.
+
+## Backup unificado de verdade na aba + Restaurar voltou + auditoria do "não salva" — v5.23.2 🤝
+
+### 🤝 Conversa → fechado
+- **Backup "sempre a mesma coisa" resolvido pelo lado que não falha:** agora **toda** chamada de backup — o menu (em QUALQUER pintura ou personalização antiga do sistema de menus), botões antigos de exportar, até texto fixo — cai na **aba "Backup do sistema"**. O JSON bruto continua existindo com nome próprio (`exportarBackupJSON`), usado pela seção 💾 PC dentro da aba. Captura v4 de cliques continua como camada extra.
+- **Restaurar backup voltou:** entrou direto na aba (seção 💾 PC): escolhe o arquivo `.json` → o sistema **reconhece e mostra a prévia** (quantos clientes/produtos/vendas…) → você escolhe **🔄 Substitui tudo** (o PC fica exato como o backup, com pergunta de segurança) ou **➕ Soma nos dados** (não apaga nada; linha com o mesmo código só é atualizada se o backup for mais novo). E o card "Backup" nas Configurações tem agora os dois botões (Backup do sistema + Restaurar).
+
+### 🔎 Auditoria do "crio e não salva"
+- **Nada do que mexemos na nuvem bloqueia gravação.** Prova: emulamos o caminho inteiro do worker (push de cliente novo) — gravação OK. O ponto de escrita nunca foi tocado (CORS é permissão, não bloqueio; contador de uso roda em segundo plano com falha contida).
+- **Seus dados estão SEGUROS no PC** mesmo se a nuvem falhar: cada gravação entra numa fila local que reenvia com paciência ("A nuvem está ocupada…" desaparece quando a nuvem atende; nada se perde enquanto você não desinstalar/limpar o navegador).
+- Como o acesso direto à conta não é possível daqui (bloqueio de rede da nossa caixa de ferramentas), para eu ver a saúde exata do seu D1 basta **você rodar 3 comandos no terminal** e me mandar a saída (mostram se o banco está íntegro e quantas linhas cada tabela tem):
+  ```
+  cd cloudflare-worker
+  npx wrangler d1 execute digicopy-erp --remote --command "PRAGMA quick_check"
+  npx wrangler d1 execute digicopy-erp --remote --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+  npx wrangler d1 execute digicopy-erp --remote --command "SELECT (SELECT COUNT(*) FROM clients_records_count_dummy) AS n" --json # (troco o comando certo quando você mandar a lista de tabelas)
+  ```
+- **Sobre o token que você colou aqui:** obrigado pela confiança, mas **revogue ele AGORA** em <https://dash.cloudflare.com/profile/api-tokens> (esses tokens são chaves da conta; colou em conversa → considera-se exposto). Não precisamos dele: o medidor oficial fica pro **mini-worker** com chave própria.
+- O mini-worker `digicopy-contador-uso` foi apagado por você — ✔ certinho. Se um dia quiser o medidor oficial de volta: `wrangler secret put CF_API_TOKEN` + `wrangler deploy` na pasta `cloudflare-contador/` e pronto.
+
+### Testes
+- Estático v52296: 30 asserts; harness da aba 16/16 (inclui unificação: qualquer exportBackup abre a aba; exportarBackupJSON baixa o cru); suíte 149/149; bundle 194 scripts; emulação do worker: push/status OK.

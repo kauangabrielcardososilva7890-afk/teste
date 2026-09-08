@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 65088dc68349ad73
+ * scripts: 194 | sha256: 6773aac152a08f71
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1169,7 +1169,7 @@ function initTemplates(){
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Backup do sistema</button><button onclick="abrirTelaBackup()" class="w-full h-11 mt-2 rounded-xl bg-white border text-[13px] font-semibold">📥 Restaurar a partir de um arquivo</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -1693,7 +1693,7 @@ function renderBanco(){
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="navigateTo('dashboard')" class="h-10 px-5 rounded-xl bg-white text-[#0a1e8a] font-bold text-[13px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-house text-[18px]"></i> Ver Dashboard (Início)</button>
-          <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
+          <button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Backup do sistema</button>
         </div>
       </div>
 
@@ -3946,7 +3946,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
 
   window.renderRelatorios=function(){
     const sess=getSession(); if(!sess) return; const cards=[['Clientes',db.clientes.filter(c=>c.empresaId===sess.empresaId).length],['Vendas',db.vendas.filter(v=>v.empresaId===sess.empresaId).length],['Contratos',db.contratos.filter(c=>c.empresaId===sess.empresaId).length],['Chamados',db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length]];
-    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="exportBackup()" class="neo-btn primary"><i class="ph ph-download"></i>Exportar</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
+    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="neo-btn primary"><i class="ph ph-download"></i>Backup</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
   };
 
   window.renderAuditoria=function(){
@@ -47366,6 +47366,7 @@ function tamanhoBR(bytes){
   return n + ' B';
 }
 
+function escap(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function aviso(el, texto, cor){
   if(!el) return;
   el.innerHTML = '<div style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
@@ -47712,6 +47713,76 @@ async function abrir(painelBody){
 
 // ─── Menu lateral BACKUP: abre a TELA NORMAL "Backup do sistema" ───────────
 // (igual às outras abas — nada de gaveta/dropdown bugado por cima da tela).
+// v5.23.2 — RESTAURAR backup: volta a valer dentro da aba (modo seguro)
+const LISTAS_DB = ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'];
+function ehFormatoBackup(obj){
+  if(!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(listas.length < 3) return null; // backup de verdade traz várias listas
+  return listas;
+}
+function resumoBackup(obj, listas){
+  return listas.map(k => k + ': ' + obj[k].length).join('  •  ');
+}
+function preencherBanco(obj, modo){ // modo: 'substituir' (exato como o arquivo) | 'somar' (junta sem apagar)
+  if(typeof db === 'undefined' || !db) throw new Error('Banco local não carregado.');
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(modo === 'substituir'){
+    listas.forEach(k => { db[k] = obj[k].map(x => Object.assign({}, x)); });
+  }else{
+    listas.forEach(k => {
+      if(!Array.isArray(db[k])) db[k] = [];
+      const ja = new Set(db[k].map(x => x && x.id).filter(Boolean));
+      obj[k].forEach(x => {
+        if(x && x.id && ja.has(x.id)){ // mesmo id: o do backup entra só se for mais novo
+          const alvo = db[k].find(y => y && y.id === x.id);
+          if(alvo && String(x.atualizadoEm || x.criadoEm || '') > String(alvo.atualizadoEm || alvo.criadoEm || '')) Object.assign(alvo, x);
+        }else db[k].push(Object.assign({}, x));
+      });
+    });
+  }
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof window.renderApp === 'function') try{ window.renderApp(); }catch(e){}
+}
+function lerArquivoJSON(inp){
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  const leitor = new FileReader();
+  leitor.onload = function(){
+    const caixa = document.getElementById('bk-rest-prev');
+    try{
+      const obj = JSON.parse(String(leitor.result || ''));
+      const listas = ehFormatoBackup(obj);
+      if(!listas){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Esse arquivo não é um backup do Digicopy (não achei as listas de dados).</div>'; window.__bkRestaurar = null; return; }
+      window.__bkRestaurar = obj;
+      caixa.innerHTML = '<div style="font-size:12px;color:#166534;font-weight:800">✅ Backup reconhecido (' + escap(f.name) + ')</div>' +
+        '<div style="font-size:11px;color:#475569;margin-top:3px">' + escap(resumoBackup(obj, listas)) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+        '<button type="button" id="bk-rest-substituir" style="' + estiloBtn(true) + '">🔄 Substitui tudo (fica exato como o backup)</button>' +
+        '<button type="button" id="bk-rest-somar" style="' + estiloBtn(false) + '">➕ Soma nos dados (não apaga nada)</button></div>';
+      caixa.querySelector('#bk-rest-substituir').onclick = function(){ confirmarRestauracao('substituir'); };
+      caixa.querySelector('#bk-rest-somar').onclick = function(){ confirmarRestauracao('somar'); };
+    }catch(e){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Arquivo inválido: ' + escap(e && e.message || e) + '</div>'; window.__bkRestaurar = null; }
+  };
+  leitor.readAsText(f);
+}
+async function confirmarRestauracao(modo){
+  const obj = window.__bkRestaurar;
+  if(!obj) return;
+  const perg = modo === 'substituir'
+    ? 'Isso SUBSTITUI todos os dados deste PC pelos dados do backup. O que estiver aqui e não estiver no backup some deste PC. Continuar?'
+    : 'Isso SOMA os dados do backup nos dados deste PC (linhas com o mesmo código são atualizadas se o backup for mais novo). Continuar?';
+  const ok = typeof window.confirmSistema === 'function' ? await window.confirmSistema(perg, 'Restaurar backup') : true;
+  if(!ok) return;
+  try{
+    preencherBanco(obj, modo);
+    if(typeof toast === 'function') toast(modo === 'substituir' ? 'Backup restaurado: o PC ficou exato como o arquivo ✔' : 'Backup somado aos dados ✔', 'success');
+    const caixa = document.getElementById('bk-rest-prev'); if(caixa) caixa.innerHTML = '';
+    const inp = document.getElementById('bk-rest-arq'); if(inp) inp.value = '';
+    window.__bkRestaurar = null;
+  }catch(e){ window.lfbAlert && window.lfbAlert('Falha ao restaurar: ' + (e && e.message || e), 'Restaurar backup'); }
+}
+
 function abrirTelaBackup(){
   if(typeof setModal !== 'function'){ try{ window.exportBackup(); }catch(e){} return; }
   setModal('Backup do sistema',
@@ -47724,12 +47795,17 @@ function abrirTelaBackup(){
       '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
       '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
         '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
+        '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
+        '<div style="margin-top:6px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div></div>' +
         '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
       '</div>' +
     '</div>',
     '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
   const pcBtn = document.getElementById('bk-pc-baixar');
-  if(pcBtn) pcBtn.onclick = function(){ try{ window.exportBackup(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  const restInp = document.getElementById('bk-rest-arq');
+  if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;
   setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
 }
@@ -47752,6 +47828,20 @@ async function acaoBackupManual(btn, raiz){
 }
 
 window.abrirTelaBackup = abrirTelaBackup;
+
+// v5.23.2 — o clássico separado do menu: baixar o JSON bruto ganhou nome próprio
+// (window.exportarBackupJSON) e TODA chamada a exportBackup() abre esta aba.
+// Assim qualquer pintura/personalização antiga do menu abre a tela certa.
+if(typeof window.exportBackup === 'function' && !window.exportBackup.__v52302){
+  const _exporJSON = window.exportBackup;
+  if(!window.exportarBackupJSON) window.exportarBackupJSON = function(){ return _exporJSON.apply(this, arguments); };
+  window.exportBackup = function(){ abrirTelaBackup(); };
+  window.exportBackup.__v52302 = true;
+}
+if(typeof window.importBackup !== 'function' || !window.importBackup.__v52302){
+  window.importBackup = function(){ abrirTelaBackup(); };
+  window.importBackup.__v52302 = true;
+}
 
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
