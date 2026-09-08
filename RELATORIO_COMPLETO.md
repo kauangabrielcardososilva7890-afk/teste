@@ -80,3 +80,18 @@
 
 ### 4) Qualidade
 - Suíte: **149/149 em 5.23.0** (ou seja: a subida de versão não quebrou nada — antes derrubava 63 testes). Bundle 194 scripts, sync OK, verify:files OK, harness da aba 14/14.
+
+## Captura v4 do menu Backup + o "index separado" do dono: medidor oficial da nuvem gravado na própria nuvem — v5.23.1 🤝
+
+### 🤝 Conversa → o que saiu
+- **Backup ainda baixava.** Motivo final: as redes anteriores só reconheciam o botão por id/onclick/containers que eu conhecia. **v4 da captura** reconhece o Backup de mais dois jeitos, usando o que não muda nunca: (1) o **clique antigo** + o botão estar **no topo fixo da tela** (menu é sempre barra de cima — botão "Exportar" dentro de tela fica mais abaixo e continua baixando normal); (2) o **rótulo/dica "Backup"** dentro de qualquer barra de menu. As 3 camadas anteriores continuam — a soma deixa o "clicou e baixou" sem lugar pra se esconder. (Se ainda assim aparecer, a versãozinha do rodapé me conta de onde veio a cópia antiga.)
+- **Sua ideia do contador, implementada tal qual:** um **index separado** pra você implantar — a pasta nova `cloudflare-contador/`. É um segundo worker mínimo que:
+  1. mede o uso **OFICIAL** na API da Cloudflare (GraphQL, com um token **só de leitura** guardado como segredo *daquele* worker — nunca vai pro sistema nem pros PCs);
+  2. grava o número **na própria nuvem** (tabela `uso_real` no D1, criada sozinha);
+  3. roda a cada 15 min automaticamente (+ rota `/v1/medir` pra medir na hora);
+  4. e o sistema inteiro lê junto com os dados normais — o painel "Uso da nuvem hoje" passa a exibir **"medidor oficial da sua conta Cloudflare"** (senão continua mostrando a estimativa, sem quebrar nada).
+- **Setup dele (uma vez, ~5 min):** passo a passo ilustrado em `cloudflare-contador/README.md` (criar token só-leitura → colar 2 IDs no jsonc → `wrangler secret put` → `wrangler deploy`).
+- Worker principal atualizado: `/v1/status` agora **prefere o oficial** e cai na estimativa só se ele não existir (sem precisar deversão nova pra isso funcionar depois do seu deploy normal da pasta principal).
+
+### Testes
+- Estático v52296: 26 asserts (captura v4, mini-worker, preferência oficial, rótulo do painel); harness da aba 14/14; suíte 149/149; bundle 194 scripts.

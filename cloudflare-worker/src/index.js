@@ -895,7 +895,18 @@ async function handleStatus(request, env, ctx) {
   const totals = await resumoDaNuvem(env);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
   somarUso(env, 0, 30, ctx); // abrir o status também lê algumas linhas
-  return json({ ok: true, device, totals, usoHoje: await usoHoje(env) });
+  return json({ ok: true, device, totals, usoHoje: await (async () => {
+      // v5.23.1 — medidor oficial (mini-worker contador-uso) tem precedência;
+      // sem ele (ou zerado), cai na estimativa do próprio uso.
+      try {
+        const real = await env.DB.prepare('SELECT leituras, escritas, medido_em FROM uso_real WHERE dia = ?').bind(hojeUTC()).first();
+        if (real && (Number(real.leituras) > 0 || Number(real.escritas) > 0)) {
+          return { dia: hojeUTC(), escritas: Number(real.escritas) || 0, leituras: Number(real.leituras) || 0,
+                   tetoEscritas: 100000, tetoLeituras: 5000000, fonte: 'oficial', medidoEm: real.medido_em || null };
+        }
+      } catch (e) { /* tabela ainda não existe — tudo bem */ }
+      return Object.assign(await usoHoje(env), { fonte: 'estimada' });
+    })() });
 }
 
 

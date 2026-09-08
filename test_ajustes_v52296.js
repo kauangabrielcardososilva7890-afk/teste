@@ -1,10 +1,10 @@
-// Teste v5.23.0 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
+// Teste v5.23.1 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.23.0 — menu Backup sempre abre a aba (modelo+captura) ==');
+console.log('== v5.23.1 — menu Backup sempre abre a aba (modelo+captura) ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -64,7 +64,7 @@ ok(patch.indexOf('acaoBackupManual') >= 0 && patch.indexOf('baixarUmBackup(chave
 ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0 || patch.indexOf('📥 Baixar todos os backups') >= 0, 'botão 2: baixar histórico');
 ok(patch.indexOf('🗑️ Excluir o histórico de backups') >= 0 || patch.indexOf('🗑️ Excluir backups') >= 0, 'botão 3: excluir histórico (só backups)');
 ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0, 'ó clássico do PC continua lá dentro');
-ok(patch.indexOf("__v522103bkClick") >= 0 || patch.indexOf("__v522103") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
+ok(patch.indexOf("__v52301bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
 ok(patch.indexOf("button[onclick]") >= 0 && patch.indexOf('exportBackup') >= 0 && patch.indexOf('.module-menu') >= 0, 'captura cobre botões de menu sem id (onclick clássico)');
 const menus = fs.readFileSync('ajustes_v52213_menus_atalhos_patch.js', 'utf8');
 ok(menus.indexOf("{id:'backup'") >= 0 && menus.indexOf("click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()'") >= 0, 'modelo do sistema de menus: Backup abre a aba (todas as pinturas)');
@@ -77,11 +77,23 @@ ok(sync.indexOf('📊 Uso da nuvem hoje') >= 0 && sync.indexOf('usoHoje') >= 0, 
 ok(sync.indexOf("'+fmtNum(uso.tetoEscritas)+'") >= 0 && sync.indexOf('uso.tetoLeituras') >= 0, 'mostra X de 100.000 e Y de 5.000.000');
 ok(worker.indexOf('uso_diario') >= 0 && worker.indexOf('somarUso') >= 0, 'worker conta gravações/leituras por dia (tabela autocriada)');
 ok(worker.indexOf('tetoEscritas: 100000') >= 0 && worker.indexOf('tetoLeituras: 5000000') >= 0, 'tetos do plano grátis D1 fixados (vira 21h SP)');
-ok(worker.indexOf('usoHoje: await usoHoje(env)') >= 0, 'status da nuvem devolve o uso do dia');
+ok(worker.indexOf('usoHoje:') >= 0 && worker.indexOf('uso_real') >= 0 && worker.indexOf('fonte: \'estimada\'') >= 0, 'status da nuvem devolve o uso do dia (oficial > estimada)');
 
 // 11) tranca inline no index.html (antes do bundle carregar — à prova de cache)
 ok(index.indexOf('tranca do menu Backup') >= 0 && index.indexOf("document.addEventListener('click'") >= 0, 'index.html carrega a tranca de clique do Backup inline');
 ok(index.indexOf('Carregando a aba Backup') >= 0, 'tranca avisa (nunca baixa) se a aba ainda não carregou');
+
+// 12) v4 da captura: reconhece o Backup até por posição no topo e rótulo
+ok(patch.indexOf('getBoundingClientRect') >= 0 && patch.indexOf('rc.top < 90') >= 0 || patch.indexOf('.top < 90') >= 0, 'captura v4: botão antigo no topo da tela é do menu');
+ok(patch.indexOf('backup($|\\s|c[oó]pia)') >= 0, 'captura v4: também reconhece pelo rótulo/título "Backup"');
+ok(index.indexOf('rc.top < 90') >= 0 && index.indexOf('backup($|\\s|c[oó]pia)') >= 0, 'tranca inline com a mesma lógica v4');
+
+// 13) index separado do dono: mini-worker mede OFICIAL e grava na própria nuvem
+ok(fs.existsSync('cloudflare-contador/src/index.js') && fs.existsSync('cloudflare-contador/wrangler.jsonc'), 'mini-worker contador-uso existe (index separado pra implantar)');
+const contador = fs.readFileSync('cloudflare-contador/src/index.js', 'utf8');
+ok(contador.indexOf('uso_real') >= 0 && contador.indexOf('d1AnalyticsAdaptiveGroups') >= 0, 'contador mede no GraphQL oficial e grava uso_real no D1');
+ok(worker.indexOf('uso_real WHERE dia = ?') >= 0 && worker.indexOf("fonte: 'oficial'") >= 0, 'worker principal prefere o medidor oficial quando existe');
+ok(sync.indexOf('medidor oficial da sua conta Cloudflare') >= 0, 'painel mostra quando o número é oficial');
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
@@ -90,4 +102,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.23.0!');
+console.log('\nTudo certo v5.23.1!');

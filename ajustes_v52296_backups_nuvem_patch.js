@@ -425,23 +425,36 @@ window.abrirTelaBackup = abrirTelaBackup;
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
 // clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
-if(typeof document !== 'undefined' && !document.__v522103bkClick){
+if(typeof document !== 'undefined' && !document.__v52301bkClick){
   document.addEventListener('click', function(ev){
     try{
       let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
       if(!alvo){
-        // v5.22.103 — nas pinturas do sistema de menus o botão pode vir sem id
-        // (dentro de module-menu etc.) mas sempre com onclick "clássico":
         const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
-        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '') &&
-           b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"]')) alvo = b;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '')){
+          // v5.23.1 — é menu se estiver no topo fixo OU dentro de um painel de menu
+          const r = b.getBoundingClientRect ? b.getBoundingClientRect() : null;
+          const noTopo = r && r.top < 90 && r.bottom > 0;
+          const noMenu = b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(noTopo || noMenu) alvo = b;
+        }
+      }
+      if(!alvo){
+        // v5.23.1 — botão re-pintado por outro sistema (título antigo ou texto "Backup" no topo)
+        const b2 = ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+        if(b2){
+          const titulo = (b2.getAttribute && b2.getAttribute('title')) || '';
+          const rotulo = ((b2.textContent || '').trim() + ' ' + titulo).toLowerCase();
+          const dentroDoTopo = b2.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(dentroDoTopo && /(^|\s)backup($|\s|c[oó]pia)/.test(rotulo)) alvo = b2;
+        }
       }
       if(!alvo) return;
       ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
     }catch(e){ return; }
     try{ abrirTelaBackup(); }catch(e){}
   }, true);
-  document.__v522103bkClick = true;
+  document.__v52301bkClick = true;
 }
 
 function alternar(painelBody){

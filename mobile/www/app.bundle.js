@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 8b884fc4cec0547e
+ * scripts: 194 | sha256: 65088dc68349ad73
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29021,7 +29021,7 @@ async function renderConnected(body){
       '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
       '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
       '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
-      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.</small>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare — o mesmo número do painel dela'+(uso.medidoEm?', medido agora mesmo.':'.'):'contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.')+'</small>'+
       '</div>'
     : (contagemFalhou
       ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
@@ -47756,23 +47756,36 @@ window.abrirTelaBackup = abrirTelaBackup;
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
 // clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
-if(typeof document !== 'undefined' && !document.__v522103bkClick){
+if(typeof document !== 'undefined' && !document.__v52301bkClick){
   document.addEventListener('click', function(ev){
     try{
       let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
       if(!alvo){
-        // v5.22.103 — nas pinturas do sistema de menus o botão pode vir sem id
-        // (dentro de module-menu etc.) mas sempre com onclick "clássico":
         const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
-        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '') &&
-           b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"]')) alvo = b;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '')){
+          // v5.23.1 — é menu se estiver no topo fixo OU dentro de um painel de menu
+          const r = b.getBoundingClientRect ? b.getBoundingClientRect() : null;
+          const noTopo = r && r.top < 90 && r.bottom > 0;
+          const noMenu = b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(noTopo || noMenu) alvo = b;
+        }
+      }
+      if(!alvo){
+        // v5.23.1 — botão re-pintado por outro sistema (título antigo ou texto "Backup" no topo)
+        const b2 = ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+        if(b2){
+          const titulo = (b2.getAttribute && b2.getAttribute('title')) || '';
+          const rotulo = ((b2.textContent || '').trim() + ' ' + titulo).toLowerCase();
+          const dentroDoTopo = b2.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(dentroDoTopo && /(^|\s)backup($|\s|c[oó]pia)/.test(rotulo)) alvo = b2;
+        }
       }
       if(!alvo) return;
       ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
     }catch(e){ return; }
     try{ abrirTelaBackup(); }catch(e){}
   }, true);
-  document.__v522103bkClick = true;
+  document.__v52301bkClick = true;
 }
 
 function alternar(painelBody){

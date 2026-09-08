@@ -1,0 +1,17 @@
+{
+  "name": "digicopy-contador-uso",
+  "main": "src/index.js",
+  "compatibility_date": "2025-11-12",
+  "vars": {
+    "ACCOUNT_ID": "COLE_AQUI_O_ID_DA_SUA_CONTA",
+    "D1_NOME": "digicopy-erp"
+  },
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "digicopy-erp",
+      "database_id": "COLE_AQUI_O_UUID_DO_D1"
+    }
+  ]
+}
