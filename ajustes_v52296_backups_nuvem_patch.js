@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // AJUSTES v5.22.99 — Menu BACKUP próprio (não mais dentro da Nuvem):
-// a tela "Backup do sistema" serve como aba com TUDO do assunto —
-// os backups na nuvem (card abaixo) e o backup clássico do PC.
+// o botão Backup do menu lateral desce uma gaveta com 3 botões diretos:
+// 📸 Backup manual (cria na nuvem E baixa no PC — faz os dois),
+// 📥 Baixar todo histórico de backup, 🗑️ Excluir o histórico de backups.
 // ═══════════════════════════════════════════════════════════════════════════
 // Em "Nuvem" há agora um card "Backups na nuvem" com:
 //   • a lista do que a nuvem guardou, separado nas pastas:
@@ -380,40 +381,107 @@ async function abrir(painelBody){
   carregar(card);
 }
 
-// ─── A tela "Backup do sistema" (menu lateral Backup — não mais na Nuvem) ───
-function abrirTelaBackup(){
-  if(typeof setModal !== 'function'){ return window.exportBackup && window.exportBackup(); }
-  setModal('Backup do sistema',
-    '<div style="font-size:12px;color:#475569;margin-bottom:12px">Suas fotos de segurança, em dois lugares: <b>na nuvem</b> (automática, todo dia 18:30 e a cada atualização) e <b>neste PC</b> (o backup clássico de sempre).</div>' +
-    '<div style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
-      '<div style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
-      '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
-    '</div>' +
-    '<div style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
-      '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
-      '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
-        '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados do sistema neste computador — bom pra levar no HD externo também.</small>' +
-      '</div>' +
-    '</div>',
-    '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
-  const pcBtn = document.getElementById('bk-pc-baixar');
-  if(pcBtn) pcBtn.onclick = function(){ try{ window.exportBackup(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
-  const raiz = document.getElementById('modal-box') || document.body;
-  setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+// ─── Menu lateral BACKUP: desce 3 botões diretos (sem telinha intermediária) ───
+// 📸 Backup manual  → cria o backup na nuvem E já baixa pro PC (faz os dois)
+// 📥 Baixar todo histórico → zip com todos os backups da nuvem pro PC
+// 🗑️ Excluir histórico → apaga SÓ os backups da nuvem (confirmação dupla)
+function idGaveta(){ return 'bk-menu-gaveta'; }
+
+function estiloBtnMenu(extra){
+  return 'display:block;width:100%;text-align:left;padding:9px 12px;margin:4px 0;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;' +
+    'background:#fff;color:#334155;border:1px solid #cbd5e1;' + (extra || '');
 }
 
-window.abrirTelaBackup = abrirTelaBackup;
+function preencherMiniResumo(raiz, itens){
+  const box = raiz.querySelector('#bk-mini-resumo'); if(!box) return;
+  const porPasta = {};
+  (itens || []).forEach(function(b){ const p = b.pasta || ''; if(!porPasta[p]) porPasta[p] = b; });
+  const ultimo = (itens || [])[0];
+  const prox = proximaDiaria(Date.now());
+  function linha(t, v){ return '<div style="font-size:10px;line-height:1.6;color:#475569"><b style="color:#334155">' + t + '</b> ' + (v || '<span style="color:#94a3b8">ainda nenhum</span>') + '</div>'; }
+  box.innerHTML =
+    linha('🕐 Último backup:', ultimo ? rotuloDataHora(ultimo.geradoEm) : '') +
+    linha('📁 Diário:', porPasta['Backup diario'] ? rotuloDataHora(porPasta['Backup diario'].geradoEm) : '') +
+    linha('📁 Sistema:', porPasta['Backup atualizações'] ? porPasta['Backup atualizações'].nome.replace(/</g,'&lt;').replace('Backup sistema ', '') : '') +
+    linha('📁 Manual:', porPasta['Backup manual'] ? rotuloDataHora(porPasta['Backup manual'].geradoEm) : '') +
+    linha('⏳ Próximo diário:', (prox.ehHoje ? 'hoje' : 'amanhã') + ' 18:30 — falta ' + prox.faltaTexto + ' <span style="color:#94a3b8">(medido ao abrir o menu)</span>');
+}
 
-// O botão Backup do menu lateral passa a abrir ESTA tela (continua baixando
-// o clássico direto daqui dentro). Ajusta em toda pintura de menu.
+async function recarregarGaveta(raiz){
+  const box = raiz.querySelector('#bk-mini-resumo'); if(!box) return;
+  box.innerHTML = '<div style="font-size:10px;color:#64748b">Lendo a nuvem...</div>';
+  try{
+    const d = await listar();
+    preencherMiniResumo(raiz, (d && d.backups) || []);
+  }catch(e){
+    box.innerHTML = '<div style="font-size:10px;color:#b91c1c;font-weight:700">' + traduzErro(e).replace(/</g,'&lt;') + '</div>';
+  }
+}
+
+async function acaoBackupManual(btn, raiz){
+  btn.innerText = '📸 fazendo...';
+  btn.disabled = true;
+  try{
+    // 1) cria na nuvem (pasta Backup manual)
+    const r = await backupAgora();
+    const chave = r && r.backup;
+    toast('Backup guardado na nuvem ✔', 'success');
+    // 2) e já baixa pro PC (faz os dois, como o dono pediu)
+    try{
+      const arq = await baixarUmBackup(chave);
+      baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
+      toast('E baixado neste PC também ✔', 'success');
+    }catch(e){ window.lfbAlert && window.lfbAlert('Guardei na nuvem, mas o download falhou: ' + traduzErro(e), 'Backup manual'); }
+    recarregarGaveta(raiz);
+  }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backup manual'); }
+  finally{ btn.innerText = '📸 Backup manual (nuvem + baixa no PC)'; btn.disabled = false; }
+}
+
+const RAIZ_MENU = '#btn-backup-top';
+function gavetaAbrirFechar(){
+  const btn = document.querySelector(RAIZ_MENU);
+  if(!btn) return;
+  const pai = btn.closest('.module') || btn.parentElement && btn.parentElement.parentElement || btn.parentElement;
+  let gav = document.getElementById(idGaveta());
+  if(gav){ gav.remove(); return; }
+  gav = document.createElement('div');
+  gav.id = idGaveta();
+  gav.style.cssText = 'margin:6px 4px 8px;padding:10px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:12px;';
+  gav.innerHTML =
+    '<div id="bk-mini-resumo" style="background:#fff;border:1px solid #dbe3f5;border-radius:10px;padding:8px 10px;margin-bottom:6px"><div style="font-size:10px;color:#64748b">Lendo a nuvem...</div></div>' +
+    '<button type="button" id="bk-acao-manual" style="' + estiloBtnMenu() + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+    '<button type="button" id="bk-acao-baixar-todos" style="' + estiloBtnMenu() + '">📥 Baixar todo histórico de backup</button>' +
+    '<button type="button" id="bk-acao-excluir-todos" style="' + estiloBtnMenu('color:#b91c1c;border-color:#fecaca;') + '">🗑️ Excluir o histórico de backups</button>' +
+    '<div id="bk-mini-aviso" style="margin-top:3px"></div>';
+  // encaixa a gaveta logo embaixo do item Backup
+  if(pai && pai.parentElement && pai.parentElement.contains(pai)) pai.parentElement.insertBefore(gav, pai.nextSibling);
+  else btn.parentElement.insertBefore(gav, btn.nextSibling);
+
+  const avisoEl = gav.querySelector('#bk-mini-aviso');
+  gav.querySelector('#bk-acao-manual').onclick = function(){ acaoBackupManual(this, gav); };
+  gav.querySelector('#bk-acao-baixar-todos').onclick = async function(){
+    const b = this; b.disabled = true; b.innerText = '📥 baixando...';
+    try{ await baixarTodos(avisoEl, b); }
+    catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ b.disabled = false; b.innerText = '📥 Baixar todo histórico de backup'; recarregarGaveta(gav); }
+  };
+  gav.querySelector('#bk-acao-excluir-todos').onclick = async function(){
+    const b = this; b.disabled = true;
+    try{ await excluirTodos(avisoEl); }
+    catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ b.disabled = false; recarregarGaveta(gav); }
+  };
+  recarregarGaveta(gav);
+}
+
+// O botão Backup do menu lateral vira ABRE/FECHA da gaveta de 3 botões.
 if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v52299bk){
   const _pm = window.pintarMenus;
   window.pintarMenus = function(){
     const r = _pm.apply(this, arguments);
     try{
-      const btn = document.getElementById('btn-backup-top');
-      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); abrirTelaBackup(); };
+      const btn = document.querySelector(RAIZ_MENU);
+      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); gavetaAbrirFechar(); };
     }catch(e){}
     return r;
   };
@@ -427,6 +495,6 @@ function alternar(painelBody){
   abrir(painelBody);
 }
 
-window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
-console.log('[DIGICOPY] backups na nuvem v5.22.96 carregado');
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, gavetaAbrirFechar: gavetaAbrirFechar, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherMiniResumo: preencherMiniResumo };
+console.log('[DIGICOPY] menu Backup com 3 botões diretos carregado');
 })();

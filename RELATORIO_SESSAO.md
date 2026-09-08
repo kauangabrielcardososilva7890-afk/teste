@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.99**  
+**Última versão:** **v5.22.100**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.99>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.100>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,29 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.100 (2026-09-08)
+
+1. **🔥 FIX REAL DO "A nuvem está ocupada. Tentando de novo em 12s...":**
+   o header novo de versão (`x-digicopy-versao`, entrado na v5.22.96) não
+   estava autorizado no preflight CORS do worker — o navegador bloqueava
+   TODA chamada e o sync caía em repetição eterna com "ocupada". Worker
+   agora autoriza o header e também o método `DELETE` (botões de apagar
+   backup). **PRECISA rodar `npx wrangler deploy` de novo** na pasta
+   `cloudflare-worker` desta versão.
+2. **Menu Backup = 3 botões diretos (sem telinha no meio).** Clicar em
+   Backup no menu lateral desce uma gaveta com:
+   • 📸 **Backup manual (nuvem + baixa no PC)** — cria na pasta manual da
+     nuvem E já baixa o arquivo pro PC (faz os dois num clique só);
+   • 📥 **Baixar todo histórico de backup** — zip de tudo da nuvem pro PC;
+   • 🗑️ **Excluir o histórico de backups** — só os backups (confirmação
+     dupla; dados do sistema nunca; ciclo continua).
+   Em cima dos botões vai o mini-resumo CONGELADO (último backup geral,
+   diário/sistema/manual e quanto falta pro próximo diário, medido só na
+   abertura — nada de reloginho rodando).
+3. Prova de máquina: 8/8 fluxo gaveta + 149/149 suíte.
 
 ---
 

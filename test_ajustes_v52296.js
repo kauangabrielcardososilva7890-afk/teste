@@ -1,10 +1,10 @@
-// Teste v5.22.99 — backups em menu próprio BACKUP (fora da Nuvem), duas pastas na nuvem D1
+// Teste v5.22.100 — backups: menu Backup com gaveta de 3 botões diretos + fix CORS do header de versão
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.22.99 — menu Backup próprio: nuvem + clássico juntos ==');
+console.log('== v5.22.100 — gaveta Backup: manual, baixar-histórico, excluir ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -21,6 +21,8 @@ ok(worker.indexOf("PASTA_DIARIO + '/Backup '") >= 0 && worker.indexOf("PASTA_ATU
 // 2) guarda dentro da nuvem que ele já usa (sem precisar habilitar R2)
 ok(wrangler.indexOf('r2_buckets') < 0, 'R2 removido do deploy (nada de ativar plano/cartão)');
 ok(wrangler.indexOf('"30 21 * * *"') >= 0, 'relógio 21:30 UTC = 18:30 São Paulo mantido');
+ok(worker.indexOf("x-digicopy-versao',") >= 0, 'CORS autoriza o header de versão (senão o navegador bloqueava o preflight e a nuvem ficava "ocupada" eternamente)');
+ok(worker.indexOf("'GET, POST, DELETE, OPTIONS'") >= 0, 'CORS permite DELETE (botões de apagar backup)');
 ok(worker.indexOf('CREATE TABLE IF NOT EXISTS backups') >= 0 && worker.indexOf('garantirTabelaBackups') >= 0, 'tabela só de backups se autocria — não mistura com dados do sistema');
 ok(worker.indexOf('gzipTexto') >= 0 && worker.indexOf('gunzipBytes') >= 0, 'backup grava compactado e baixa idêntico');
 ok(worker.indexOf('DELETE FROM backups') >= 0 && worker.indexOf("SELECT entity, record_id") >= 0, 'excluir apaga só as tabelas de backup');
@@ -52,15 +54,15 @@ ok(readme.indexOf('## Backups automáticos (v5.22.97)') >= 0, 'README documenta 
 ok(readme.indexOf('r2 bucket') < 0, 'README não manda mais criar balde (não precisa ativar R2)');
 ok(readme.indexOf('npx wrangler deploy') >= 0, 'README: um comando só basta');
 
-// 9) menu BACKUP próprio (não está mais dentro do painel Nuvem)
-ok(sync.indexOf('dc-backups') < 0, 'backups NÃO ficam mais no painel da Nuvem (desfeito)');
-ok(patch.indexOf('abrirTelaBackup') >= 0 && patch.indexOf("setModal('Backup do sistema'") >= 0, 'menu Backup abre a tela "Backup do sistema"');
-ok(patch.indexOf('btn-backup-top') >= 0 && patch.indexOf('pintarMenus') >= 0, 'wrap na pintura de menus aponta o botão Backup pra tela nova');
-ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0 && patch.indexOf('Backup no PC') >= 0, 'o backup clássico do PC continua lá dentro');
-ok(patch.indexOf('dc-backups') >= 0 && patch.indexOf('Backups na nuvem') >= 0 && patch.indexOf('sozinha, com PC desligado') >= 0, 'card de backups na nuvem dentro da tela própria');
-ok(patch.indexOf('preencherResumo') >= 0 && patch.indexOf('bk-resumo') >= 0, 'resumo no topo do card (últimos + próximo diário)');
-ok(patch.indexOf('Último backup:') >= 0 && patch.indexOf('Último DIÁRIO:') >= 0 && patch.indexOf('Último ATUALIZAÇÃO:') >= 0 && patch.indexOf('Último MANUAL:') >= 0, 'último geral + um por pasta');
-ok(patch.indexOf('não fica atualizando sozinho') >= 0 && !/setInterval\s*\(/.test(patch), 'tempo CONGELADO na abertura (nenhum setInterval no módulo)');
+// 9) menu Backup desce UMA GAVETA com 3 botões diretos (sem telinha)
+ok(patch.indexOf('gavetaAbrirFechar') >= 0 && patch.indexOf('bk-menu-gaveta') >= 0, 'botão Backup abre/recolhe a gaveta');
+ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0, 'botão 1: backup manual FAZ OS DOIS (cria na nuvem e baixa no PC)');
+ok(patch.indexOf('backupAgora') >= 0 && patch.indexOf('baixarUmBackup(chave)') >= 0, 'manual: nuvem primeiro, download em seguida');
+ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0, 'botão 2: baixar todo o histórico');
+ok(patch.indexOf('🗑️ Excluir o histórico de backups') >= 0 && patch.indexOf('excluirTodos') >= 0, 'botão 3: excluir histórico (só backups, confirmação dupla)');
+ok(patch.indexOf('bk-mini-resumo') >= 0 && patch.indexOf('Próximo diário') >= 0, 'mini-resumo congelado dentro da gaveta');
+ok(patch.indexOf('abrirTelaBackup') < 0, 'a telinha intermediária foi removida (o dono quer botões diretos)');
+ok(patch.indexOf('pintarMenus') >= 0 && patch.indexOf('btn-backup-top') >= 0, 'wrap aponta o menu Backup pra gaveta');
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
@@ -69,4 +71,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.22.99!');
+console.log('\nTudo certo v5.22.100!');

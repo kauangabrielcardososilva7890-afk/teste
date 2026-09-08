@@ -14,8 +14,8 @@ const JSON_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, content-type, x-setup-secret',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao',
+  'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
   'access-control-max-age': '86400'
 };
 
