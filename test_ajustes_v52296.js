@@ -1,10 +1,10 @@
-// Teste v5.22.97 — backups automáticos em DUAS PASTAS dentro da própria nuvem
+// Teste v5.22.98 — backups automáticos em DUAS PASTAS dentro da própria nuvem
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.22.97 — backups na nuvem em duas pastas (sem R2/cartão) ==');
+console.log('== v5.22.98 — backups na nuvem: painel antigo mostra resumo de cara ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -52,6 +52,15 @@ ok(readme.indexOf('## Backups automáticos (v5.22.97)') >= 0, 'README documenta 
 ok(readme.indexOf('r2 bucket') < 0, 'README não manda mais criar balde (não precisa ativar R2)');
 ok(readme.indexOf('npx wrangler deploy') >= 0, 'README: um comando só basta');
 
+// 9) painel antigo da Nuvem mostra os backups JÁ ABERTOS, com resumo congelado
+ok(sync.indexOf('DIGICOPY_BACKUPS.abrir') >= 0 && sync.indexOf('setTimeout(function(){') >= 0, 'painel da nuvem abre o card sozinho (de cara)');
+ok(sync.indexOf('DIGICOPY_BACKUPS.alternar') >= 0, 'botão antigo vira mostrar/esconder');
+ok(patch.indexOf('preencherResumo') >= 0 && patch.indexOf('bk-resumo') >= 0, 'resumo no topo do card');
+ok(patch.indexOf('Último backup:') >= 0 && patch.indexOf('Último DIÁRIO:') >= 0 && patch.indexOf('Último ATUALIZAÇÃO:') >= 0 && patch.indexOf('Último MANUAL:') >= 0, 'único último geral + um por modalidade');
+ok(patch.indexOf('Próximo diário:') >= 0 && patch.indexOf('proximaDiaria') >= 0, 'quantos tempo falta pro próximo diário');
+ok(patch.indexOf('não fica atualizando sozinho') >= 0 && !/setInterval\s*\(/.test(patch), 'tempo CONGELADO na abertura (nenhum setInterval no módulo)');
+ok(patch.indexOf('ALVO_DIARIO_HORA_UTC = 21') >= 0 && patch.indexOf('ALVO_DIARIO_MIN_UTC = 30') >= 0, 'alvo 18:30 SP = 21:30 UTC fixo (Brasil sem horário de verão)');
+
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 ok(man[man.length - 1] === 'ajustes_v52296_backups_nuvem_patch.js', 'patch de backups continua último no bundle');
@@ -59,4 +68,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.22.97!');
+console.log('\nTudo certo v5.22.98!');

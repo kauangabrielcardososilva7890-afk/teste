@@ -205,9 +205,13 @@ async function renderConnected(body){
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   if(body.querySelector('#dc-backups-open')){
     body.querySelector('#dc-backups-open').onclick=function(){
-      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }
+      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.alternar) window.DIGICOPY_BACKUPS.alternar(body); }
       catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert('Falha no painel de backups.','Backups'); }
     };
+    // O dono quer os backups de cara ao abrir a janela da Nuvem: já abre sozinho.
+    setTimeout(function(){
+      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }catch(e){}
+    }, 250);
   }
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{

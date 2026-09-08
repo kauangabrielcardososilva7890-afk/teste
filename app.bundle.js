@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 236369f98d5a15ae
+ * scripts: 194 | sha256: 922d1627c43282e5
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29028,9 +29028,13 @@ async function renderConnected(body){
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
   if(body.querySelector('#dc-backups-open')){
     body.querySelector('#dc-backups-open').onclick=function(){
-      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }
+      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.alternar) window.DIGICOPY_BACKUPS.alternar(body); }
       catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert('Falha no painel de backups.','Backups'); }
     };
+    // O dono quer os backups de cara ao abrir a janela da Nuvem: já abre sozinho.
+    setTimeout(function(){
+      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }catch(e){}
+    }, 250);
   }
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
@@ -47305,7 +47309,7 @@ window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 /* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.97 — Painel de BACKUPS na nuvem (só administrador)
+// AJUSTES v5.22.98 — Painel de BACKUPS na nuvem (só administrador)
 // ═══════════════════════════════════════════════════════════════════════════
 // Em "Nuvem" há agora um card "Backups na nuvem" com:
 //   • a lista do que a nuvem guardou, separado nas pastas:
@@ -47316,7 +47320,11 @@ try{
 //   • 🗑️ Excluir os backups (apaga SÓ os backups da nuvem — os dados do
 //     sistema nunca, e o ciclo continua: amanhã 18:30 sai outro diário).
 // O card só aparece para o aparelho/usuário administrador (mesmo lugar dos
-// outros botões de administração da nuvem).
+// outros botões de administração da nuvem) e já abre sozinho, de cara, com:
+//   • último backup de TUDO;
+//   • último de cada modalidade (diário / atualizações / manual);
+//   • quanto falta pro próximo diário — tempo CONGELADO na abertura da
+//     janela (nada de reloginho rodando sem parar: PC da loja não sofre).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -47452,6 +47460,80 @@ async function backupAgora(){
 // ─── Funções do painel ─────────────────────────────────────────────────────
 async function listar(){ const call = api(); if(!call) throw new Error('API da nuvem não carregada.'); return call('/v1/backups'); }
 
+// ─── Resumo (últimos + contagem CONGELADA na abertura da janela) ───────────
+// Nada de setInterval: o tempo até o próximo diário é calculado UMA vez,
+// no momento em que a janela da Nuvem é aberta — PC da loja não sofre.
+function horaSPde(ms){ // retorna {dia, mes, ano, hora, min} no horário de São Paulo
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date(ms));
+  const o = {};
+  partes.forEach(function(p){ if(p.type !== 'literal') o[p.type] = parseInt(p.value, 10); });
+  return { dia: o.day, mes: o.month, ano: o.year, hora: o.hour % 24, min: o.minute };
+}
+const ALVO_DIARIO_HORA_UTC = 21, ALVO_DIARIO_MIN_UTC = 30; // 18:30 SP = 21:30 UTC (Brasil sem horário de verão)
+
+function proximaDiaria(ms){
+  // Próxima 18:30 de São Paulo: hoje se ainda não passou, senão amanhã.
+  const hoje = horaSPde(ms);
+  let alvo = Date.UTC(hoje.ano, hoje.mes - 1, hoje.dia, ALVO_DIARIO_HORA_UTC, ALVO_DIARIO_MIN_UTC);
+  let ehHoje = true;
+  if (ms >= alvo){ alvo += 86400000; ehHoje = false; }
+  const falta = alvo - ms;
+  const faltamH = Math.floor(falta / 3600000);
+  const faltamM = Math.floor((falta % 3600000) / 60000);
+  return {
+    ehHoje: ehHoje,
+    alvoMs: alvo,
+    faltaTexto: faltamH > 0 ? (faltamH + 'h ' + String(faltamM).padStart(2, '0') + 'min') : (faltamM + ' min'),
+    alvoSP: horaSPde(alvo)
+  };
+}
+
+function rotuloDataHora(iso){
+  if(!iso) return '—';
+  try{
+    const ms = new Date(iso).getTime();
+    const sp = horaSPde(ms);
+    return pad2(sp.dia) + '/' + pad2(sp.mes) + ' ' + pad2(sp.hora) + 'h' + pad2(sp.min);
+  }catch(e){ return dataBR(iso); }
+}
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function linhaResumo(titulo, valor, vazio){
+  return '<div style="display:flex;gap:6px;font-size:11px;line-height:1.55">' +
+    '<span style="min-width:118px;font-weight:900;color:#334155">' + titulo + '</span>' +
+    '<span style="color:' + (vazio ? '#94a3b8' : '#1e293b') + ';font-weight:700">' + (valor || vazio) + '</span></div>';
+}
+
+function preencherResumo(card, itens){
+  const box = card.querySelector('#bk-resumo'); if(!box) return;
+  const porPasta = {};
+  itens.forEach(function(b){ const p = b.pasta || ''; if(!porPasta[p]) porPasta[p] = b; }); // já vem do mais novo pro mais velho
+  const ultimo = itens[0];
+  const prox = proximaDiaria(Date.now());
+  let h = '<div style="background:#fff;border:1px solid #dbe3f5;border-radius:10px;padding:10px 12px">';
+  h += linhaResumo('🕐 Último backup:', ultimo
+    ? '<b>' + ultimo.nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(ultimo.geradoEm) + ' • ' + tamanhoBR(ultimo.tamanho)
+    : null, 'nenhum ainda');
+  h += linhaResumo('📁 Último DIÁRIO:', porPasta['Backup diario']
+    ? '<b>' + porPasta['Backup diario'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup diario'].geradoEm)
+    : null, 'o primeiro sai sozinho 18:30');
+  h += linhaResumo('📁 Último ATUALIZAÇÃO:', porPasta['Backup atualizações']
+    ? '<b>' + porPasta['Backup atualizações'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup atualizações'].geradoEm)
+    : null, 'sai sozinho quando subir versão nova');
+  h += linhaResumo('📁 Último MANUAL:', porPasta['Backup manual']
+    ? '<b>' + porPasta['Backup manual'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup manual'].geradoEm)
+    : null, 'aperta 📸 Backup agora pra fazer');
+  h += '<div style="border-top:1px dashed #dbe3f5;margin:7px 0"></div>';
+  h += linhaResumo('⏳ Próximo diário:',
+    '<b>' + (prox.ehHoje ? 'hoje' : 'amanhã') + ' às 18:30</b> — faltam <b>' + prox.faltaTexto + '</b>');
+  h += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">tempo contado quando esta janela abriu — não fica atualizando sozinho; reabra pra atualizar.</div>';
+  h += '</div>';
+  box.innerHTML = h;
+}
+
 async function baixarTodos(avisoEl, botao){
   const d = await listar();
   const itens = (d && d.backups) || [];
@@ -47552,6 +47634,7 @@ async function carregar(card){
     const itens = (d && d.backups) || [];
     const cont = card.querySelector('#bk-contador');
     if(cont) cont.innerText = itens.length + ' guardado(s)';
+    preencherResumo(card, itens);
     renderLista(lista, itens);
     aviso(rodape, '', 'apagar');
     if(rodape) rodape.innerHTML = '';
@@ -47577,6 +47660,7 @@ async function abrir(painelBody){
         '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(true) + '">📥 Baixar todos os backups</button>' +
         '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir backups</button>' +
       '</div>' +
+      '<div id="bk-resumo" style="margin-top:10px"></div>' +
       '<div id="bk-aviso" style="margin-top:10px"></div>' +
       '<div id="bk-lista" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:260px;overflow:auto"></div>' +
     '</div>';
@@ -47604,7 +47688,14 @@ async function abrir(painelBody){
   carregar(card);
 }
 
-window.DIGICOPY_BACKUPS = { abrir: abrir, _montarZip: montarZip, _crc32: crc32 };
+function alternar(painelBody){
+  const card = painelBody.querySelector('#dc-backups');
+  if(!card) return;
+  if(card.innerHTML && card.innerHTML.length > 0){ card.innerHTML = ''; return; }
+  abrir(painelBody);
+}
+
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] backups na nuvem v5.22.96 carregado');
 })();
 

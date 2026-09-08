@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.97**  
+**Última versão:** **v5.22.98**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.97>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.98>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,24 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.98 (2026-09-08)
+
+1. **Painel antigo do botão Nuvem agora traz os backups JÁ ABERTOS de cara**
+   (não precisa clicar pra expandir), com resumo no topo:
+   • 🕐 **Último backup de tudo** (nome + data/hora SP + tamanho);
+   • 📁 **Último de cada modalidade**: diário, atualizações e manual (se a
+     pasta estiver vazia, explica quando sai);
+   • ⏳ **Quanto falta pro próximo diário** — "hoje às 18:30 — faltam 2h04min"
+   • com o tempo **CONGELADO no momento em que a janela abriu** (não fica
+     atualizando sozinho, pra não pesar o PC); reabrir atualiza.
+   O botão antigo "📁 Backups na nuvem" continua ali e agora vira
+   mostrar/esconder.
+2. Prova de máquina: 12/12 — cálculo do próximo diário em 5 horários-chave
+   (antes/depois/exatamente 18:30 SP), resumo pintando todas as linhas e
+   ZERO `setInterval` no módulo de backups; 149/149 do sistema.
 
 ---
 
