@@ -38,7 +38,7 @@ ok(p.indexOf("window.__V52295_PURE") >= 0, 'marca de diagnóstico/teste presente
 
 // regressão: bundle contém o patch por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 1] === 'ajustes_v52295_venda_volta_patch.js', 'patch é o ÚLTIMO do bundle (aplica por cima de tudo)');
+ok(man[man.length - 2] === 'ajustes_v52295_venda_volta_patch.js', 'patch é penúltimo do bundle (o último agora é o de backups v5.22.96)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('__vosVendaPendente') >= 0, 'lógica presente no app.bundle.js');
 

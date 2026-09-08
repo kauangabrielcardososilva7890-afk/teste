@@ -480,6 +480,7 @@ async function handlePush(request, env, ctx) {
   try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
   const body = await readBody(request);
   const mutations = body.mutations;
+  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0);
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
@@ -502,6 +503,7 @@ async function handleChanges(request, env) {
   await authenticate(request, env);
   const url = new URL(request.url);
   const cursor = Math.max(0, Number.parseInt(url.searchParams.get('cursor') || '0', 10) || 0);
+  somarUso(env, 0, 60); // uma folha do diário lida por baixo
   const limit = Math.min(MAX_CHANGE_LIMIT,
     Math.max(1, Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200));
   const query = await env.DB.prepare(
@@ -839,12 +841,57 @@ async function resumoDaNuvem(env) {
   return totais;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// USO DA NUVEM (v5.22.101) — contagem estimada por dia UTC
+// O teto grátis do D1: 100.000 gravações/dia e 5.000.000 leituras/dia
+// (vira 00h UTC = 21h em São Paulo, como o sistema já avisa). Conta aqui no
+// worker pra aba Nuvem mostrar "usou X de 100.000" — o dono vê antes de virar.
+// ═══════════════════════════════════════════════════════════════════════════
+let __USO_TABELA_OK = false;
+async function garantirTabelaUso(env){
+  if (__USO_TABELA_OK) return;
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS uso_diario (
+  dia TEXT PRIMARY KEY,
+  escritas INTEGER NOT NULL DEFAULT 0,
+  leituras INTEGER NOT NULL DEFAULT 0
+)`);
+  __USO_TABELA_OK = true;
+}
+function hojeUTC(){
+  return new Date().toISOString().slice(0, 10);
+}
+async function somarUso(env, escritas, leituras){
+  try{
+    await garantirTabelaUso(env);
+    await env.DB.prepare(
+      `INSERT INTO uso_diario(dia, escritas, leituras) VALUES (?, ?, ?)
+         ON CONFLICT(dia) DO UPDATE SET escritas = escritas + ?, leituras = leituras + ?`
+    ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
+  }catch(e){ console.error('USO_DIARIO_FALHOU', e); }
+}
+async function usoHoje(env){
+  try{
+    await garantirTabelaUso(env);
+    const r = await env.DB.prepare('SELECT dia, escritas, leituras FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    return {
+      dia: hojeUTC(),
+      escritas: (r && Number(r.escritas)) || 0,
+      leituras: (r && Number(r.leituras)) || 0,
+      tetoEscritas: 100000,
+      tetoLeituras: 5000000
+    };
+  }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 100000, tetoLeituras: 5000000 }; }
+}
+
 async function handleStatus(request, env) {
   const device = await authenticate(request, env);
   const totals = await resumoDaNuvem(env);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
-  return json({ ok: true, device, totals });
+  somarUso(env, 0, 30); // abrir o status também lê algumas linhas
+  return json({ ok: true, device, totals, usoHoje: await usoHoje(env) });
 }
+
+
 
 function avisoEpson() {
   return 'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';

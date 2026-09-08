@@ -173,6 +173,21 @@ async function renderConnected(body){
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
+  const uso=status.usoHoje||null;
+  function barraUso(pct){
+    const p=Math.max(0,Math.min(100,pct));
+    const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
+    return '<div style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+  }
+  function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
+  const usoBloco = uso
+    ? '<div style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
+      '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
+      '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.</small>'+
+      '</div>'
+    : '';
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
@@ -197,6 +212,7 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    usoBloco+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
