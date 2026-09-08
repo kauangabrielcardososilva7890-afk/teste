@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.98 — Painel de BACKUPS na nuvem (só administrador)
+// AJUSTES v5.22.99 — Menu BACKUP próprio (não mais dentro da Nuvem):
+// a tela "Backup do sistema" serve como aba com TUDO do assunto —
+// os backups na nuvem (card abaixo) e o backup clássico do PC.
 // ═══════════════════════════════════════════════════════════════════════════
 // Em "Nuvem" há agora um card "Backups na nuvem" com:
 //   • a lista do que a nuvem guardou, separado nas pastas:
@@ -378,6 +380,46 @@ async function abrir(painelBody){
   carregar(card);
 }
 
+// ─── A tela "Backup do sistema" (menu lateral Backup — não mais na Nuvem) ───
+function abrirTelaBackup(){
+  if(typeof setModal !== 'function'){ return window.exportBackup && window.exportBackup(); }
+  setModal('Backup do sistema',
+    '<div style="font-size:12px;color:#475569;margin-bottom:12px">Suas fotos de segurança, em dois lugares: <b>na nuvem</b> (automática, todo dia 18:30 e a cada atualização) e <b>neste PC</b> (o backup clássico de sempre).</div>' +
+    '<div style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
+      '<div style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
+      '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
+    '</div>' +
+    '<div style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
+      '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
+      '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
+        '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados do sistema neste computador — bom pra levar no HD externo também.</small>' +
+      '</div>' +
+    '</div>',
+    '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
+  const pcBtn = document.getElementById('bk-pc-baixar');
+  if(pcBtn) pcBtn.onclick = function(){ try{ window.exportBackup(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  const raiz = document.getElementById('modal-box') || document.body;
+  setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+}
+
+window.abrirTelaBackup = abrirTelaBackup;
+
+// O botão Backup do menu lateral passa a abrir ESTA tela (continua baixando
+// o clássico direto daqui dentro). Ajusta em toda pintura de menu.
+if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v52299bk){
+  const _pm = window.pintarMenus;
+  window.pintarMenus = function(){
+    const r = _pm.apply(this, arguments);
+    try{
+      const btn = document.getElementById('btn-backup-top');
+      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); abrirTelaBackup(); };
+    }catch(e){}
+    return r;
+  };
+  window.pintarMenus.__v52299bk = true;
+}
+
 function alternar(painelBody){
   const card = painelBody.querySelector('#dc-backups');
   if(!card) return;
@@ -385,6 +427,6 @@ function alternar(painelBody){
   abrir(painelBody);
 }
 
-window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] backups na nuvem v5.22.96 carregado');
 })();

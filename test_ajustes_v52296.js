@@ -1,10 +1,10 @@
-// Teste v5.22.98 — backups automáticos em DUAS PASTAS dentro da própria nuvem
+// Teste v5.22.99 — backups em menu próprio BACKUP (fora da Nuvem), duas pastas na nuvem D1
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.22.98 — backups na nuvem: painel antigo mostra resumo de cara ==');
+console.log('== v5.22.99 — menu Backup próprio: nuvem + clássico juntos ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -37,7 +37,7 @@ ok(patch.indexOf('📸 Backup agora') >= 0 && patch.indexOf('backupAgora') >= 0,
 
 // 5) segurança: só administrador
 ok((worker.match(/requireAdmin\(request, env\)/g) || []).length >= 5, 'rotas de backup exigem admin');
-ok(sync.indexOf('dc-backups-open') >= 0 && sync.indexOf('dc-backups') >= 0, 'card pendurado no bloco admin da nuvem');
+ok(sync.indexOf('dc-backups') < 0, 'painel Nuvem ficou sem o card (o menu Backup é o dono)');
 
 // 6) app informa versão para o ciclo de atualização funcionar
 ok(sync.indexOf("x-digicopy-versao") >= 0 && sync.indexOf('DIGICOPY_APP_VERSION') >= 0, 'app manda a versão em toda chamada');
@@ -52,14 +52,15 @@ ok(readme.indexOf('## Backups automáticos (v5.22.97)') >= 0, 'README documenta 
 ok(readme.indexOf('r2 bucket') < 0, 'README não manda mais criar balde (não precisa ativar R2)');
 ok(readme.indexOf('npx wrangler deploy') >= 0, 'README: um comando só basta');
 
-// 9) painel antigo da Nuvem mostra os backups JÁ ABERTOS, com resumo congelado
-ok(sync.indexOf('DIGICOPY_BACKUPS.abrir') >= 0 && sync.indexOf('setTimeout(function(){') >= 0, 'painel da nuvem abre o card sozinho (de cara)');
-ok(sync.indexOf('DIGICOPY_BACKUPS.alternar') >= 0, 'botão antigo vira mostrar/esconder');
-ok(patch.indexOf('preencherResumo') >= 0 && patch.indexOf('bk-resumo') >= 0, 'resumo no topo do card');
-ok(patch.indexOf('Último backup:') >= 0 && patch.indexOf('Último DIÁRIO:') >= 0 && patch.indexOf('Último ATUALIZAÇÃO:') >= 0 && patch.indexOf('Último MANUAL:') >= 0, 'único último geral + um por modalidade');
-ok(patch.indexOf('Próximo diário:') >= 0 && patch.indexOf('proximaDiaria') >= 0, 'quantos tempo falta pro próximo diário');
+// 9) menu BACKUP próprio (não está mais dentro do painel Nuvem)
+ok(sync.indexOf('dc-backups') < 0, 'backups NÃO ficam mais no painel da Nuvem (desfeito)');
+ok(patch.indexOf('abrirTelaBackup') >= 0 && patch.indexOf("setModal('Backup do sistema'") >= 0, 'menu Backup abre a tela "Backup do sistema"');
+ok(patch.indexOf('btn-backup-top') >= 0 && patch.indexOf('pintarMenus') >= 0, 'wrap na pintura de menus aponta o botão Backup pra tela nova');
+ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0 && patch.indexOf('Backup no PC') >= 0, 'o backup clássico do PC continua lá dentro');
+ok(patch.indexOf('dc-backups') >= 0 && patch.indexOf('Backups na nuvem') >= 0 && patch.indexOf('sozinha, com PC desligado') >= 0, 'card de backups na nuvem dentro da tela própria');
+ok(patch.indexOf('preencherResumo') >= 0 && patch.indexOf('bk-resumo') >= 0, 'resumo no topo do card (últimos + próximo diário)');
+ok(patch.indexOf('Último backup:') >= 0 && patch.indexOf('Último DIÁRIO:') >= 0 && patch.indexOf('Último ATUALIZAÇÃO:') >= 0 && patch.indexOf('Último MANUAL:') >= 0, 'último geral + um por pasta');
 ok(patch.indexOf('não fica atualizando sozinho') >= 0 && !/setInterval\s*\(/.test(patch), 'tempo CONGELADO na abertura (nenhum setInterval no módulo)');
-ok(patch.indexOf('ALVO_DIARIO_HORA_UTC = 21') >= 0 && patch.indexOf('ALVO_DIARIO_MIN_UTC = 30') >= 0, 'alvo 18:30 SP = 21:30 UTC fixo (Brasil sem horário de verão)');
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
@@ -68,4 +69,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.22.98!');
+console.log('\nTudo certo v5.22.99!');

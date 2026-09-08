@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.98**  
+**Última versão:** **v5.22.99**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.98>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.99>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,21 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.99 (2026-09-08)
+
+1. **Menu próprio: BACKUP** — as coisas de backup saíram de dentro do painel
+   Nuvem (botão desfeito lá) e agora o menu lateral **Backup** (que antes já
+   baixava o clássico) abre a tela **"Backup do sistema"** com tudo junto:
+   • ☁️ **seção Nuvem**: o card completo (resumo de últimos + próximo
+     diário; 📸 Backup agora, 📥 Baixar todos, 🗑️ Excluir backups;
+     listinha por pasta com ⬇️/🗑️ por item);
+   • 💾 **seção PC**: o backup clássico de sempre (botão baixa o `.json`
+     de todos os dados) — nenhum costume antigo quebrado.
+   Só aparece para Admin, como antes. Prova de máquina: 12/12 no fluxo da
+   tela + 149/149 suíte + resumo/sessões conferidos no sandbox.
 
 ---
 

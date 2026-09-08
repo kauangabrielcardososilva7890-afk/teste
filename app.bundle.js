@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 922d1627c43282e5
+ * scripts: 194 | sha256: 098e8d53a3aac029
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29024,18 +29024,8 @@ async function renderConnected(body){
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+button('📁 Backups na nuvem','dc-backups-open',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div><div id="dc-backups"></div></div>':'')+
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
-  if(body.querySelector('#dc-backups-open')){
-    body.querySelector('#dc-backups-open').onclick=function(){
-      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.alternar) window.DIGICOPY_BACKUPS.alternar(body); }
-      catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert('Falha no painel de backups.','Backups'); }
-    };
-    // O dono quer os backups de cara ao abrir a janela da Nuvem: já abre sozinho.
-    setTimeout(function(){
-      try{ if(window.DIGICOPY_BACKUPS && window.DIGICOPY_BACKUPS.abrir) window.DIGICOPY_BACKUPS.abrir(body); }catch(e){}
-    }, 250);
-  }
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');
@@ -47309,7 +47299,9 @@ window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 /* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.98 — Painel de BACKUPS na nuvem (só administrador)
+// AJUSTES v5.22.99 — Menu BACKUP próprio (não mais dentro da Nuvem):
+// a tela "Backup do sistema" serve como aba com TUDO do assunto —
+// os backups na nuvem (card abaixo) e o backup clássico do PC.
 // ═══════════════════════════════════════════════════════════════════════════
 // Em "Nuvem" há agora um card "Backups na nuvem" com:
 //   • a lista do que a nuvem guardou, separado nas pastas:
@@ -47688,6 +47680,46 @@ async function abrir(painelBody){
   carregar(card);
 }
 
+// ─── A tela "Backup do sistema" (menu lateral Backup — não mais na Nuvem) ───
+function abrirTelaBackup(){
+  if(typeof setModal !== 'function'){ return window.exportBackup && window.exportBackup(); }
+  setModal('Backup do sistema',
+    '<div style="font-size:12px;color:#475569;margin-bottom:12px">Suas fotos de segurança, em dois lugares: <b>na nuvem</b> (automática, todo dia 18:30 e a cada atualização) e <b>neste PC</b> (o backup clássico de sempre).</div>' +
+    '<div style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
+      '<div style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
+      '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
+    '</div>' +
+    '<div style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
+      '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
+      '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
+        '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados do sistema neste computador — bom pra levar no HD externo também.</small>' +
+      '</div>' +
+    '</div>',
+    '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
+  const pcBtn = document.getElementById('bk-pc-baixar');
+  if(pcBtn) pcBtn.onclick = function(){ try{ window.exportBackup(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
+  const raiz = document.getElementById('modal-box') || document.body;
+  setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+}
+
+window.abrirTelaBackup = abrirTelaBackup;
+
+// O botão Backup do menu lateral passa a abrir ESTA tela (continua baixando
+// o clássico direto daqui dentro). Ajusta em toda pintura de menu.
+if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v52299bk){
+  const _pm = window.pintarMenus;
+  window.pintarMenus = function(){
+    const r = _pm.apply(this, arguments);
+    try{
+      const btn = document.getElementById('btn-backup-top');
+      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); abrirTelaBackup(); };
+    }catch(e){}
+    return r;
+  };
+  window.pintarMenus.__v52299bk = true;
+}
+
 function alternar(painelBody){
   const card = painelBody.querySelector('#dc-backups');
   if(!card) return;
@@ -47695,7 +47727,7 @@ function alternar(painelBody){
   abrir(painelBody);
 }
 
-window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] backups na nuvem v5.22.96 carregado');
 })();
 
