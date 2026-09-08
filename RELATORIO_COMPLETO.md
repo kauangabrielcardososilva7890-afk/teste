@@ -40,3 +40,16 @@
 
 ### Testes
 - Harness da aba adaptado pro clique real (dispatchEvent): 12/12 ✔ (inclui "clicou não baixa mais nada" e "segue abrindo mesmo após re-render"); estático v52296: 19 asserts ✔; suíte 149/149; bundle 194 scripts.
+
+## Menu Backup abre a aba em QUALQUER pintura do sistema de menus — v5.22.103 🤝
+
+### 🤝 Conversa → ajuste
+- **Ainda baixava em vez de abrir a aba.** Investigação achou o motivo: o menu de cima não usa o botão parado do HTML — ele é **re-pintado** pelo sistema de menus a partir de um modelo (`ajustes_v52213_menus_atalhos_patch.js`), e o modelo do Backup trazia `click:'exportBackup()'`. Dependendo da tela, o botão aparece até **sem o id** (dentro de listas do menu), escapando da primeira interceptação.
+- **Correção na fonte + rede dupla de segurança:**
+  1. O **modelo** do Backup agora aponta pra aba (`abrirTelaBackup()`, com exportBackup só como plano B) → toda pintura nova nasce certa;
+  2. A **captura de clique** foi ampliada: além do id, reconhece qualquer botão de menu cujo clique antigo seja o de baixar (cobre menus guardados em personalizações antigas);
+  3. Botões "Exportar backup" **dentro das telas** (Configurações, Relatórios) continuam baixando normalmente — a interceptação só vale pros controles do menu de cima.
+- Modo escuro do painel Nuvem: confirmado arrumado na rodada anterior (v5.22.102).
+
+### Testes
+- Harness da aba agora simula as 2 pinturas dinâmicas do sistema de menus (botão com id re-pintado + botão de module-menu sem id) e prova que ambas abrem a aba sem baixar nada, enquanto um botão "Exportar" solto dentro de tela continua funcionando — 14/14. Estático v52296: 21 asserts (modelo do menu incluso). Suíte 149/149. Bundle 194 scripts.

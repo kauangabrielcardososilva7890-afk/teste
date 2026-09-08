@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.102 — Menu BACKUP próprio (não dentro da Nuvem):
+// AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
 // 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
@@ -425,14 +425,23 @@ window.abrirTelaBackup = abrirTelaBackup;
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
 // clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
-if(typeof document !== 'undefined' && !document.__v522102bkClick){
+if(typeof document !== 'undefined' && !document.__v522103bkClick){
   document.addEventListener('click', function(ev){
-    const alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
-    if(!alvo) return;
-    try{ if(ev.preventDefault) ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){}
+    try{
+      let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+      if(!alvo){
+        // v5.22.103 — nas pinturas do sistema de menus o botão pode vir sem id
+        // (dentro de module-menu etc.) mas sempre com onclick "clássico":
+        const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '') &&
+           b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"]')) alvo = b;
+      }
+      if(!alvo) return;
+      ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){ return; }
     try{ abrirTelaBackup(); }catch(e){}
   }, true);
-  document.__v522102bkClick = true;
+  document.__v522103bkClick = true;
 }
 
 function alternar(painelBody){

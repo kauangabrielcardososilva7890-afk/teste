@@ -1,10 +1,10 @@
-// Teste v5.22.101 — aba Backup NORMAL (não gaveta), 3 jeitos de backup + painel Nuvem mostra o uso (X de 100.000)
+// Teste v5.22.103 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.22.101 — aba Backup normal + uso da nuvem no painel ==');
+console.log('== v5.22.103 — menu Backup sempre abre a aba (modelo+captura) ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -64,7 +64,10 @@ ok(patch.indexOf('acaoBackupManual') >= 0 && patch.indexOf('baixarUmBackup(chave
 ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0 || patch.indexOf('📥 Baixar todos os backups') >= 0, 'botão 2: baixar histórico');
 ok(patch.indexOf('🗑️ Excluir o histórico de backups') >= 0 || patch.indexOf('🗑️ Excluir backups') >= 0, 'botão 3: excluir histórico (só backups)');
 ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0, 'ó clássico do PC continua lá dentro');
-ok(patch.indexOf("__v522102bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
+ok(patch.indexOf("__v522103bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
+ok(patch.indexOf("button[onclick]") >= 0 && patch.indexOf('exportBackup') >= 0 && patch.indexOf('.module-menu') >= 0, 'captura cobre botões de menu sem id (onclick clássico)');
+const menus = fs.readFileSync('ajustes_v52213_menus_atalhos_patch.js', 'utf8');
+ok(menus.indexOf("{id:'backup'") >= 0 && menus.indexOf("click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()'") >= 0, 'modelo do sistema de menus: Backup abre a aba (todas as pinturas)');
 ok(index.indexOf('window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()') >= 0, 'index.html: menu Backup chama a aba (fallback so se patch ausente)');
 ok(sync.indexOf('dc-uso-nuvem') >= 0 && sync.indexOf('dc-uso-barra') >= 0 && sync.indexOf('dc-uso-css') >= 0, 'bloco de uso legível no modo escuro (css dedicado)');
 ok(worker.indexOf('waitUntil') >= 0, 'worker: anota\u00e7\u00e3o de uso em segundo plano (waitUntil)');
@@ -83,4 +86,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.22.102!');
+console.log('\nTudo certo v5.22.103!');

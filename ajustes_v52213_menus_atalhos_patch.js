@@ -48,7 +48,7 @@ function menusPadrao(){
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
       {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
     ]},
-    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'exportBackup()', btnId:'btn-backup-top', title:'Baixar uma cópia de segurança de todos os dados'},
+    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
     {id:'sair', icon:'ph-sign-out', label:'Sair', click:'doLogout()', title:'Sair do sistema'}
   ];

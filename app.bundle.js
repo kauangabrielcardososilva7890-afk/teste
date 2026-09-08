@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 77a56f3e925306ba
+ * scripts: 194 | sha256: 567145a207b4446e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -32227,7 +32227,7 @@ function menusPadrao(){
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
       {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
     ]},
-    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'exportBackup()', btnId:'btn-backup-top', title:'Baixar uma cópia de segurança de todos os dados'},
+    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
     {id:'sair', icon:'ph-sign-out', label:'Sair', click:'doLogout()', title:'Sair do sistema'}
   ];
@@ -47328,7 +47328,7 @@ window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 /* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.102 — Menu BACKUP próprio (não dentro da Nuvem):
+// AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
 // 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
@@ -47754,14 +47754,23 @@ window.abrirTelaBackup = abrirTelaBackup;
 // O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
 // CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
 // clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
-if(typeof document !== 'undefined' && !document.__v522102bkClick){
+if(typeof document !== 'undefined' && !document.__v522103bkClick){
   document.addEventListener('click', function(ev){
-    const alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
-    if(!alvo) return;
-    try{ if(ev.preventDefault) ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){}
+    try{
+      let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+      if(!alvo){
+        // v5.22.103 — nas pinturas do sistema de menus o botão pode vir sem id
+        // (dentro de module-menu etc.) mas sempre com onclick "clássico":
+        const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '') &&
+           b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"]')) alvo = b;
+      }
+      if(!alvo) return;
+      ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){ return; }
     try{ abrirTelaBackup(); }catch(e){}
   }, true);
-  document.__v522102bkClick = true;
+  document.__v522103bkClick = true;
 }
 
 function alternar(painelBody){
