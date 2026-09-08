@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.95**  
+**Última versão:** **v5.22.97**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.95>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.97>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,59 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.97 (2026-09-08)
+
+1. **Backups agora em DUAS PASTAS separadas dentro da nuvem (como o dono
+   desenhou):** 📁 **Backup diario** (todo dia **18:30** sozinho) e
+   📁 **Backup atualizações** (sozinho a cada versão nova, com a foto da
+   versão anterior). O **📸 Backup agora** (botão manual do painel) gera na
+   hora e mora na pasta 📁 **Backup manual** — reforço.
+2. **REGRA COMBINADA (registrada por pedido do dono):** a cada atualização
+   que ele pedir, o backup da versão anterior vai pra nuvem **antes de
+   mexer nela** — pela lei do botão 📸 **Backup agora** (já na tela) + o
+   automático que dispara no primeiro sync da versão nova (foto com o nome
+   da versão anterior, sem erro de PC). Ou seja: mexer em atualização sem
+   backup na nuvem virou pecado fora da regra.
+3. **Sem R2 / sem cartão:** o balde R2 pediu habilitação + método de
+   pagamento no painel (erro 10042 no teste do dono). Arquitetura trocada:
+   os backups moram **dentro da própria nuvem D1 que o sistema já usa**, em
+   **tabela exclusiva de backups** que se autocria no primeiro uso,
+   **compactados** (prova de ida-e-volta). Não mistura com os dados do
+   sistema; apagar backups nunca toca nos dados. **Ativação ficou de um
+   comando só: `npx wrangler deploy` na pasta `cloudflare-worker`**.
+4. Prova de máquina: 6/6 testes puros novos do worker (pastas, fuso, gzip
+   estável) + zip **com as pastas dentro** abrindo na biblioteca padrão +
+   149/149 do sistema.
+5. Caso de borda real: erro **10042** = R2 não habilitado na conta — ficou
+   documentado no README junto do motivo da troca de arquitetura.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.96 (2026-09-08)
+
+1. **BACKUPS AUTOMÁTICOS na nuvem — dois ciclos independentes, sem PC ligado.**
+   • Diário às **18:30** (relógio da própria Cloudflare): `Backup 08-09-2026.json`.
+   • A cada **atualização**: quando o primeiro sync da versão nova chega, a
+   nuvem primeiro fotografa o banco com o nome da versão ANTERIOR
+   (`Backup sistema 5.22.95.json`). PC velho sincronizando depois NÃO faz
+   backup de tabela invertida (só dispara se a versão for MAIOR).
+   Os arquivos ficam no balde R2 **digicopy-backups** (10 GB grátis) e NUNCA
+   são apagados sozinhos. Planejado para o HD externo como cópia extra.
+2. **Dois botões só do administrador** no painel "Nuvem" (mesmo bloco dos
+   outros botões de administração): **📥 Baixar todos os backups** (gera um
+   `.zip` pronto pra HD, com um arquivo por backup — ZIP real provado abrindo
+   na biblioteca padrão) e **🗑️ Excluir backups** (confirmação dupla, apaga
+   SÓ os backups da nuvem; dados do sistema nunca; o ciclo continua). Por
+   item da lista também dá pra ⬇️ baixar e 🗑️ apagar de um em um.
+3. **Ativação (1x só, na conta Cloudflare):** `npx wrangler r2 bucket create
+   digicopy-backups` e `npx wrangler deploy` — passos em
+   `cloudflare-worker/README.md` ("Ativando pela primeira vez"). Sem isso o
+   card mostra o recado do que falta, sem quebrar a tela.
+4. Prova de máquina: 10 testes puros do worker (nomes de arquivo, fuso de SP,
+   comparação de versões) + 149/149 do sistema + zip integridade.
 
 ---
 

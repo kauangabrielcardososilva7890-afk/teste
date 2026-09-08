@@ -13,12 +13,6 @@
       "database_id": "b6c32346-d6d5-475a-b9c3-40782b525bae"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "BACKUPS",
-      "bucket_name": "digicopy-backups"
-    }
-  ],
   // Backup diário sozinho na nuvem: 21:30 UTC = 18:30 em São Paulo (sem
   // horário de verão no Brasil). PC da loja pode estar desligado.
   "triggers": {

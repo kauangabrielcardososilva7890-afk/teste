@@ -41,21 +41,24 @@ assert.ok(__test.activityLabel('{"nome":"'+('A'.repeat(90))+'"}','id').length<=8
 console.log('  ✔ rótulo de acompanhamento sem vazar senha');
 console.log('\nRESULTADO: funções puras da API passaram!');
 
-console.log('== BACKUPS AUTOMÁTICOS v5.22.96 ==');
+console.log('== BACKUPS AUTOMÁTICOS v5.22.97 ==');
 
-// Nome do arquivo diário: "Backup 08-09-2026.json" com data de São Paulo
+// Duas pastas separadas, com os nomes do desenho do dono
 const dia = new Date('2026-09-08T21:30:00Z'); // 18:30 em São Paulo
-assert.equal(__test.nomeBackupDiario(dia), 'Backup 08-09-2026.json');
-console.log('  ✔ backup diário usa o nome do dono (dia de São Paulo)');
+assert.equal(__test.nomeBackupDiario(dia), 'Backup diario/Backup 08-09-2026.json');
+console.log('  ✔ diário mora na pasta "Backup diario"');
+
+assert.equal(__test.nomeBackupSistema('5.22.95'), 'Backup atualizações/Backup sistema 5.22.95.json');
+console.log('  ✔ backup de atualização mora na pasta "Backup atualizações", nome da versão anterior');
+
+const manual = __test.nomeBackupManual(dia);
+assert.ok(manual.indexOf('Backup manual/Backup 08-09-2026 ') === 0 && manual.endsWith('.json'));
+console.log('  ✔ reforço manual mora na pasta "Backup manual", com data e hora');
 
 // 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
 const madrugada = new Date('2026-09-09T00:30:00Z');
-assert.equal(__test.nomeBackupDiario(madrugada), 'Backup 08-09-2026.json');
+assert.equal(__test.nomeBackupDiario(madrugada), 'Backup diario/Backup 08-09-2026.json');
 console.log('  ✔ madrugada UTC continua no dia certo de São Paulo');
-
-// Nome do backup de atualização = versão ANTERIOR
-assert.equal(__test.nomeBackupSistema('5.22.95'), 'Backup sistema 5.22.95.json');
-console.log('  ✔ backup de atualização sai com o nome da versão anterior');
 
 // Comparação de versões
 assert.equal(__test.compararVersao('5.22.96', '5.22.95'), 1);
@@ -64,3 +67,11 @@ assert.equal(__test.compararVersao('v5.22.95', '5.22.96'), -1);
 assert.equal(__test.compararVersao('5.22.96', ''), 1);
 assert.equal(__test.compararVersao('5.9.9', '5.22.1'), -1);
 console.log('  ✔ versão nova só dispara backup quando é MAIOR (PC velho não dispara "desatualização")');
+
+// gzip de ida e volta (o que grava compactado volta idêntico ao baixar)
+const textoOriginal = JSON.stringify({a:1, nome:'Lojação'}) + ' bem longão '.repeat(5000);
+const gz = await __test.gzipTexto(textoOriginal);
+const de_volta = await __test.gunzipBytes(gz);
+assert.equal(de_volta, textoOriginal);
+assert.ok(gz.length < textoOriginal.length, 'compactou mesmo');
+console.log('  ✔ backup grava compactado e baixa idêntico ao original');

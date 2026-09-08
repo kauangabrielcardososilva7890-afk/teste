@@ -53,31 +53,37 @@ npx wrangler d1 migrations apply DB --remote
 
 Nenhuma rota substitui a base inteira.
 
-## Backups automáticos (v5.22.96)
+## Backups automáticos (v5.22.97)
 
-Dois ciclos independentes, feitos pela nuvem sozinha (não precisa PC ligado):
+Dois ciclos independentes, feitos pela nuvem sozinha (não precisa PC ligado), e
+um reforço manual. Tudo organizado em **pastas dentro da nuvem do sistema**
+(tabela exclusiva de backups, criada sozinha — não mistura com os dados) e
+guardado **compactado** para economizar espaço:
 
-1. **Diário 18:30 (horário de São Paulo)** — gera `Backup 08-09-2026.json`.
-   Relógio da própria Cloudflare (`crons` no `wrangler.jsonc`). O nome é fixo
-   por dia: nunca acumula dois do mesmo dia.
-2. **A cada atualização do sistema** — quando o primeiro sync chega de uma
-   versão nova (ex.: 5.22.96), a nuvem primeiro fotografa o banco como estava
-   na versão anterior e guarda `Backup sistema 5.22.95.json`. Versão antiga
-   sincronizando depois NÃO dispara backup de tabela invertida.
+| 📁 Pasta | Quando sai sozinho | Exemplo de arquivo |
+|---|---|---|
+| **Backup diario** | Todo dia **18:30** (horário de São Paulo) | `Backup 08-09-2026.json` |
+| **Backup atualizações** | No primeiro sync de uma **versão nova** — foto da versão **anterior** | `Backup sistema 5.22.95.json` |
+| **Backup manual** | Quando o dono aperta **📸 Backup agora** na tela | `Backup 08-09-2026 19h20.json` |
 
-Os arquivos ficam no balde R2 **`digicopy-backups`** e **nunca são apagados
-sozinhos** — a limpeza é manual, pelos botões do administrador no painel
-"Nuvem" do sistema (📥 Baixar todos / 🗑️ Excluir backups, que apagam SÓ os
-backups; o ciclo continua).
+O backup de atualização só dispara quando a versão **sobe** (um PC antigo que
+sincronizar depois não dispara backup de tabela invertida). Mesmo dia/mesma
+versão = mesmo nome de arquivo: **não acumula duplicado**.
 
-### Ativando pela primeira vez (uma vez só)
+Os backups **nunca são apagados sozinhos** — a limpeza é manual, pelos botões
+do administrador no painel "Nuvem" do sistema: **📥 Baixar todos** (um `.zip`
+com as pastas e um arquivo por backup, pronto pro HD externo) e
+**🗑️ Excluir backups** (confirmação dupla; apaga SÓ os backups, os dados do
+sistema nunca; o ciclo continua normal).
+
+### Ativando pela primeira vez (um comando só)
 
 ```bash
 cd cloudflare-worker
-npx wrangler r2 bucket create digicopy-backups   # cria o balde
-npx wrangler deploy                              # publica worker com R2 + relógio
+npx wrangler deploy
 ```
 
-Se for o primeiro uso do R2 na conta, o painel da Cloudflare pede só um clique
-de aceite (plano grátis, 10 GB). `npx wrangler tail` mostra as linhas
+Pronto. A tabela de backups se cria sozinha no primeiro uso. **Não é preciso
+ativar R2, plano pago nem cartão** — os backups moram no mesmo banco D1 que o
+sistema já usa (dentro do limite grátis). `npx wrangler tail` mostra as linhas
 `BACKUP_DIARIO_OK` / `BACKUP_VERSAO_FALHOU` se quiser acompanhar.

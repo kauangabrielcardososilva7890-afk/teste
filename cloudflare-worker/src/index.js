@@ -1096,18 +1096,23 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/backup') return handleBackupBaixar(request, env);
   if (request.method === 'DELETE' && url.pathname === '/v1/backup') return handleBackupApagarUm(request, env);
   if (request.method === 'DELETE' && url.pathname === '/v1/backups') return handleBackupApagarTodos(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/backup/agora') return handleBackupAgora(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// BACKUPS AUTOMÁTICOS (v5.22.96)
+// BACKUPS AUTOMÁTICOS (v5.22.97)
 // Dois ciclos independentes que a nuvem faz sozinha, com os PCs desligados:
-//  1) Diário às 18:30 de São Paulo (cron 21:30 UTC) — "Backup 08-09-2026.json"
+//  1) Diário às 18:30 de São Paulo (cron 21:30 UTC)
 //  2) A cada ATUALIZAÇÃO do sistema — o primeiro sync de uma versão nova faz
-//     primeiro a foto do banco com o nome da versão ANTERIOR
-//     ("Backup sistema 5.22.95.json").
-// Os arquivos moram no balde R2 "digicopy-backups" e NUNCA são apagados sozinhos:
-// a limpeza é manual, pelos botões do administrador no painel da nuvem.
+//     primeiro a foto do banco com o nome da versão ANTERIOR.
+// + um reforço manual: o dono pode pedir "Backup agora" na tela.
+// Os arquivos ficam organizados em pastas dentro da própria nuvem (tabela
+// exclusiva de backups, criada sozinha — NÃO mistura com os dados do sistema):
+//   📁 Backup diario       → Backup 08-09-2026.json
+//   📁 Backup atualizações → Backup sistema 5.22.95.json  (foto da versão anterior)
+//   📁 Backup manual       → Backup 08-09-2026 19h20.json (reforço antes de mexer)
+// A limpeza é MANUAL pelos botões do administrador — nunca apaga sozinho.
 // ═══════════════════════════════════════════════════════════════════════════
 
 function pad2(n){ return String(n).padStart(2, '0'); }
@@ -1119,12 +1124,26 @@ function dataArquivoSP(agora){
   }).format(agora).replaceAll('/', '-');
 }
 
+function horaArquivoSP(agora){
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(agora).replace(':', 'h').replace('\u200f', '').trim();
+}
+
+const PASTA_DIARIO = 'Backup diario';
+const PASTA_ATUALIZACOES = 'Backup atualizações';
+const PASTA_MANUAL = 'Backup manual';
+
 function nomeBackupDiario(agora){
-  return 'Backup ' + dataArquivoSP(agora) + '.json';
+  return PASTA_DIARIO + '/Backup ' + dataArquivoSP(agora) + '.json';
 }
 
 function nomeBackupSistema(versaoAnterior){
-  return 'Backup sistema ' + String(versaoAnterior || '').trim() + '.json';
+  return PASTA_ATUALIZACOES + '/Backup sistema ' + String(versaoAnterior || '').trim() + '.json';
+}
+
+function nomeBackupManual(agora){
+  return PASTA_MANUAL + '/Backup ' + dataArquivoSP(agora) + ' ' + horaArquivoSP(agora) + '.json';
 }
 
 function compararVersao(a, b){
@@ -1140,19 +1159,44 @@ function compararVersao(a, b){
   return 0;
 }
 
-function exigirBalde(env){
-  if (!env.BACKUPS){
-    throw new ApiError(503, 'BACKUP_SEM_BALDE',
-      'Balde de backups ainda não ligado. Crie o R2 "digicopy-backups" e rode o deploy (veja README).');
-  }
-  return env.BACKUPS;
+// Compacta o texto do backup (backup textual comprime MUITO, economiza nuvem)
+async function gzipTexto(texto){
+  const dados = new TextEncoder().encode(texto);
+  const stream = new Blob([dados]).stream().pipeThrough(new CompressionStream('gzip'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function gunzipBytes(bytes){
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Response(stream).text();
 }
 
-async function gerarBackup(env, nome, meta){
-  const balde = exigirBalde(env);
+// Tabela exclusiva de backups, autocriada no primeiro uso (não precisa migrate)
+let __BACKUP_TABELA_OK = false;
+async function garantirTabelaBackups(env){
+  if (__BACKUP_TABELA_OK) return;
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups (
+  id TEXT PRIMARY KEY,
+  nome TEXT NOT NULL,
+  pasta TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  tamanho_original INTEGER NOT NULL,
+  tamanho_gzip INTEGER NOT NULL,
+  registros INTEGER NOT NULL,
+  gerado_em INTEGER NOT NULL
+)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups_chunks (
+  id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  chunk BLOB NOT NULL,
+  PRIMARY KEY (id, seq)
+)`);
+  __BACKUP_TABELA_OK = true;
+}
+
+const TAMANHO_CHUNK = 1500000; // pedaços pequenos: nunca estica uma linha do banco
+
+async function gerarBackup(env, chave, meta){
   // Foto completa: registros paginados + aparelhos (SEM token_hash).
-  // Página a página com OFFSET na chave primária (entity, record_id): a
-  // ordenação é única, então nenhuma linha se perde ou se repete entre páginas.
   const records = [];
   let pulados = 0;
   for (let guard = 0; guard < 500; guard++){
@@ -1184,10 +1228,35 @@ async function gerarBackup(env, nome, meta){
     aparelhos: (devices.results || []),
     registros: records
   };
-  await balde.put(nome, JSON.stringify(arquivo, null, 2), {
-    httpMetadata: { contentType: 'application/json; charset=utf-8' }
-  });
-  return { nome, registros: records.length };
+  const texto = JSON.stringify(arquivo, null, 2);
+  const gzip = await gzipTexto(texto);
+
+  await garantirTabelaBackups(env);
+  const corte = chave.indexOf('/');
+  const pasta = corte > 0 ? chave.slice(0, corte) : '';
+  const nome = corte > 0 ? chave.slice(corte + 1) : chave;
+  const partes = [];
+  for (let i = 0; i < gzip.length; i += TAMANHO_CHUNK){
+    partes.push(gzip.slice(i, i + TAMANHO_CHUNK));
+  }
+  const lotes = [
+    env.DB.prepare('DELETE FROM backups WHERE id = ?').bind(chave),
+    env.DB.prepare('DELETE FROM backups_chunks WHERE id = ?').bind(chave)
+  ].concat(
+    [env.DB.prepare(
+      `INSERT INTO backups(id, nome, pasta, tipo, tamanho_original, tamanho_gzip, registros, gerado_em)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(chave, nome, pasta, (meta && meta.tipo) || 'manual', texto.length, gzip.length, records.length, Date.now())]
+  ).concat(
+    partes.map((p, idx) => env.DB.prepare(
+      'INSERT INTO backups_chunks(id, seq, chunk) VALUES (?, ?, ?)'
+    ).bind(chave, idx, p))
+  );
+  // grava em levas para não estourar o tamanho de um batch só
+  for (let i = 0; i < lotes.length; i += 25){
+    await env.DB.batch(lotes.slice(i, i + 25));
+  }
+  return { nome: chave, registros: records.length, tamanho: gzip.length };
 }
 
 async function checarTrocaDeVersao(request, env, ctx){
@@ -1208,70 +1277,104 @@ async function checarTrocaDeVersao(request, env, ctx){
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
   ).bind(versaoApp, Date.now()).run();
   if (!ultima) return; // primeiro PC visto: não existe "versão anterior" ainda
-  const nome = nomeBackupSistema(ultima);
   // Mesmo nome por versão: se já existir foto daquela versão, é sobrescrita
   // (não acumula duplicado).
-  const tarefa = gerarBackup(env, nome, { tipo: 'sistema', versaoAnterior: ultima })
+  const tarefa = gerarBackup(env, nomeBackupSistema(ultima), { tipo: 'sistema', versaoAnterior: ultima })
     .catch(e => console.error('BACKUP_VERSAO_FALHOU', e));
   if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(tarefa);
   else await tarefa;
 }
 
+function chaveBackupValida(chave){
+  return !!chave && chave.indexOf('..') < 0 && chave.length < 300;
+}
+
 async function handleBackupListar(request, env){
   await requireAdmin(request, env);
-  const balde = exigirBalde(env);
-  const l = await balde.list({ limit: 200 });
-  const backups = (l.objects || [])
-    .map(o => ({ nome: o.key, tamanho: o.size, geradoEm: o.uploaded }))
-    .sort((a, b) => (a.geradoEm < b.geradoEm ? 1 : -1));
+  await garantirTabelaBackups(env);
+  const r = await env.DB.prepare(
+    `SELECT id, nome, pasta, tipo, tamanho_original, tamanho_gzip, registros, gerado_em
+       FROM backups ORDER BY gerado_em DESC LIMIT 300`
+  ).all();
+  const backups = (r.results || []).map(x => ({
+    chave: x.id, nome: x.nome, pasta: x.pasta, tipo: x.tipo,
+    tamanho: x.tamanho_original, tamanhoGzip: x.tamanho_gzip,
+    registros: x.registros, geradoEm: new Date(Number(x.gerado_em)).toISOString()
+  }));
   return json({ ok: true, backups });
+}
+
+async function lerBackupCompleto(env, chave){
+  const meta = await env.DB.prepare('SELECT id, tamanho_gzip FROM backups WHERE id = ?').bind(chave).first();
+  if (!meta) return null;
+  const linhas = await env.DB.prepare('SELECT chunk FROM backups_chunks WHERE id = ? ORDER BY seq ASC').bind(chave).all();
+  const partes = (linhas.results || []).map(x => new Uint8Array(x.chunk));
+  const total = partes.reduce((a, p) => a + p.length, 0);
+  const gzip = new Uint8Array(total);
+  let pos = 0;
+  partes.forEach(p => { gzip.set(p, pos); pos += p.length; });
+  return { gzip, meta };
 }
 
 async function handleBackupBaixar(request, env){
   await requireAdmin(request, env);
-  const balde = exigirBalde(env);
-  const key = new URL(request.url).searchParams.get('key') || '';
-  if (key.indexOf('/') >= 0 || key.indexOf('..') >= 0 || !key) {
-    throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
-  }
-  const obj = await balde.get(key);
-  if (!obj) throw new ApiError(404, 'BACKUP_NAO_ACHOU', 'Backup não encontrado na nuvem.');
-  return new Response(obj.body, {
+  await garantirTabelaBackups(env);
+  const chave = new URL(request.url).searchParams.get('key') || '';
+  if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  const achado = await lerBackupCompleto(env, chave);
+  if (!achado) throw new ApiError(404, 'BACKUP_NAO_ACHOU', 'Backup não encontrado na nuvem.');
+  const texto = await gunzipBytes(achado.gzip);
+  const corte = chave.indexOf('/');
+  const nomeFinal = corte > 0 ? chave.slice(corte + 1) : chave;
+  return new Response(texto, {
     headers: {
       ...JSON_HEADERS,
       'content-type': 'application/json; charset=utf-8',
-      'content-disposition': 'attachment; filename="' + key.replaceAll('"', '') + '"'
+      'content-disposition': 'attachment; filename="' + nomeFinal.replaceAll('"', '') + '"'
     }
   });
 }
 
 async function handleBackupApagarUm(request, env){
   await requireAdmin(request, env);
-  const balde = exigirBalde(env);
-  const key = new URL(request.url).searchParams.get('key') || '';
-  if (key.indexOf('/') >= 0 || key.indexOf('..') >= 0 || !key) {
-    throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
-  }
-  await balde.delete(key);
-  return json({ ok: true, apagado: key });
+  await garantirTabelaBackups(env);
+  const chave = new URL(request.url).searchParams.get('key') || '';
+  if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM backups WHERE id = ?').bind(chave),
+    env.DB.prepare('DELETE FROM backups_chunks WHERE id = ?').bind(chave)
+  ]);
+  return json({ ok: true, apagado: chave });
 }
 
 async function handleBackupApagarTodos(request, env){
   await requireAdmin(request, env);
-  const balde = exigirBalde(env);
-  // Apaga SOMENTE os arquivos de backup do balde. O banco do sistema (D1)
-  // nunca é tocado aqui, e o ciclo continua: amanhã às 18:30 e a cada
-  // atualização novos backups voltam a aparecer sozinhos.
-  let apagados = 0;
-  let cursor;
-  for (let guard = 0; guard < 50; guard++){
-    const l = await balde.list({ limit: 1000, cursor });
-    const keys = (l.objects || []).map(o => o.key);
-    if (keys.length){ await balde.delete(keys); apagados += keys.length; }
-    if (!l.truncated) break;
-    cursor = l.cursor;
+  await garantirTabelaBackups(env);
+  // Apaga SOMENTE os backups (tabelas exclusivas de backup). Os dados do
+  // sistema (records/changes) nunca são tocados aqui, e o ciclo continua:
+  // amanhã às 18:30 e a cada atualização novos backups voltam a aparecer.
+  const antes = await env.DB.prepare('SELECT COUNT(*) AS n FROM backups').first();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM backups'),
+    env.DB.prepare('DELETE FROM backups_chunks')
+  ]);
+  return json({ ok: true, apagados: (antes && antes.n) || 0 });
+}
+
+async function handleBackupAgora(request, env){
+  // Reforço ANTES de mexer em atualização: ciõa a foto na hora, como o dono pediu.
+  await requireAdmin(request, env);
+  const corpo = await readBody(request).catch(() => ({}));
+  const tipo = (corpo && corpo.tipo === 'atualizacao') ? 'atualizacao' : 'manual';
+  let chave;
+  if (tipo === 'atualizacao'){
+    const versao = cleanText((corpo && corpo.versao) || '', 40) || 'sem-numero';
+    chave = nomeBackupSistema(versao + ' (antes de mexer)');
+  } else {
+    chave = nomeBackupManual(new Date());
   }
-  return json({ ok: true, apagados });
+  const r = await gerarBackup(env, chave, { tipo: tipo === 'atualizacao' ? 'sistema' : 'manual', versaoAnterior: corpo && corpo.versao || undefined });
+  return json({ ok: true, backup: r.nome, registros: r.registros });
 }
 
 export default {
@@ -1300,4 +1403,4 @@ export default {
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, compararVersao, dataArquivoSP };
+export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };
