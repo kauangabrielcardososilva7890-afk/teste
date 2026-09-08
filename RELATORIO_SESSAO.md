@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.94**  
+**Última versão:** **v5.22.95**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.94>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.95>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,31 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.95 (2026-09-08)
+
+1. **Abrir qualquer tela a partir da venda em andamento agora devolve a
+   MESMA venda inteira.** Ex.: estava montando a venda VND-123, clicou
+   "+" para cadastrar um produto (ou abriu qualquer outra tela a partir
+   dela), salvou OU cancelou — em vez de cair numa venda zerada, a VND-123
+   volta com TUDO: cliente, itens, descontos, observação, data/hora e até o
+   item digitado pela metade.
+2. **Como funciona (genérico, sem função avulsa por botão):** ao abrir
+   qualquer outro modal com a venda na tela, o sistema tira uma "foto"
+   completa da venda; ao fechar (salvar e cancelar passam pelo mesmo
+   `closeModal`), a venda é reconstruída (`novaVenda`) e a foto é devolvida.
+   Tem ainda um olho bem leve (1x/s) que devolve a venda caso alguma tela
+   feche por outro caminho. Finalizar a venda segue normal (nenhuma tela
+   foi aberta, então nada é restaurado).
+3. Prova de máquina: fluxo real no navegador simulado — venda montada com
+   cliente + item + obs + item pela metade → abre o modal de produto →
+   CANCELA: 7/7 verificações ok; → SALVA o produto: 7/7 ok (o produto novo
+   já aparece na busca da venda).
+4. Caso de borda de entrega: o bundle de versões pode ficar raso se o
+   `node_modules` sumir — rechecar a linha "isolados" no build antes de
+   commitar (vantagem: `npm test` cobre isso).
 
 ---
 
