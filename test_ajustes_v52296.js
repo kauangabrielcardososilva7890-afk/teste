@@ -11,6 +11,7 @@ const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
 const patch = fs.readFileSync('ajustes_v52296_backups_nuvem_patch.js', 'utf8');
 const sync = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
 const readme = fs.readFileSync('cloudflare-worker/README.md', 'utf8');
+const index = fs.readFileSync('index.html', 'utf8');
 
 // 1) duas pastas separadas, nomes do desenho do dono
 ok(worker.indexOf("const PASTA_DIARIO = 'Backup diario'") >= 0, 'pasta "Backup diario"');
@@ -63,7 +64,10 @@ ok(patch.indexOf('acaoBackupManual') >= 0 && patch.indexOf('baixarUmBackup(chave
 ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0 || patch.indexOf('📥 Baixar todos os backups') >= 0, 'botão 2: baixar histórico');
 ok(patch.indexOf('🗑️ Excluir o histórico de backups') >= 0 || patch.indexOf('🗑️ Excluir backups') >= 0, 'botão 3: excluir histórico (só backups)');
 ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0, 'ó clássico do PC continua lá dentro');
-ok(patch.indexOf('btn-backup-top') >= 0 && patch.indexOf('pintarMenus') >= 0, 'wrap aponta o menu Backup pra aba');
+ok(patch.indexOf("__v522102bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
+ok(index.indexOf('window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()') >= 0, 'index.html: menu Backup chama a aba (fallback so se patch ausente)');
+ok(sync.indexOf('dc-uso-nuvem') >= 0 && sync.indexOf('dc-uso-barra') >= 0 && sync.indexOf('dc-uso-css') >= 0, 'bloco de uso legível no modo escuro (css dedicado)');
+ok(worker.indexOf('waitUntil') >= 0, 'worker: anota\u00e7\u00e3o de uso em segundo plano (waitUntil)');
 
 // 10) painel Nuvem mostra quanto já usou (X de 100.000 / Y de 5.000.000)
 ok(sync.indexOf('📊 Uso da nuvem hoje') >= 0 && sync.indexOf('usoHoje') >= 0, 'bloco "Uso da nuvem hoje" no painel Nuvem');
@@ -79,4 +83,4 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.22.101!');
+console.log('\nTudo certo v5.22.102!');

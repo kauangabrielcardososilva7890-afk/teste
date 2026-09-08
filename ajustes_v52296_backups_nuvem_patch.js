@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.101 — Menu BACKUP próprio (não dentro da Nuvem):
+// AJUSTES v5.22.102 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
 // 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
@@ -422,18 +422,17 @@ async function acaoBackupManual(btn, raiz){
 
 window.abrirTelaBackup = abrirTelaBackup;
 
-// O botão Backup do menu lateral abre ESSA tela (integra em toda pintura).
-if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v522101bk){
-  const _pm = window.pintarMenus;
-  window.pintarMenus = function(){
-    const r = _pm.apply(this, arguments);
-    try{
-      const btn = document.getElementById('btn-backup-top');
-      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); abrirTelaBackup(); };
-    }catch(e){}
-    return r;
-  };
-  window.pintarMenus.__v522101bk = true;
+// O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
+// CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
+// clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
+if(typeof document !== 'undefined' && !document.__v522102bkClick){
+  document.addEventListener('click', function(ev){
+    const alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+    if(!alvo) return;
+    try{ if(ev.preventDefault) ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){}
+    try{ abrirTelaBackup(); }catch(e){}
+  }, true);
+  document.__v522102bkClick = true;
 }
 
 function alternar(painelBody){

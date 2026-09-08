@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: f05c38a1db13a467
+ * scripts: 194 | sha256: 77a56f3e925306ba
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28997,14 +28997,27 @@ async function renderConnected(body){
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
   const uso=status.usoHoje||null;
+  function garantirCssUso(){
+    if(document.getElementById('dc-uso-css')) return;
+    const s=document.createElement('style');
+    s.id='dc-uso-css';
+    s.textContent=[
+      'html.digi-escuro .dc-uso-nuvem{background:#1e293b!important;border-color:#334155!important}',
+      'html.digi-escuro .dc-uso-nuvem h3{color:#e5e7eb!important}',
+      'html.digi-escuro .dc-uso-nuvem .dc-uso-barra{background:#0f172a!important}',
+      'html.digi-escuro .dc-uso-nuvem small,html.digi-escuro .dc-uso-nuvem span{color:#94a3b8!important}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  garantirCssUso();
   function barraUso(pct){
     const p=Math.max(0,Math.min(100,pct));
     const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
-    return '<div style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+    return '<div class="dc-uso-barra" style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
   }
   function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
   const usoBloco = uso
-    ? '<div style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+    ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
       '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
       '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
@@ -47315,7 +47328,7 @@ window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 /* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// AJUSTES v5.22.101 — Menu BACKUP próprio (não dentro da Nuvem):
+// AJUSTES v5.22.102 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
 // abas, nada de gaveta voadora) com os 3 botões diretos dentro:
 // 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
@@ -47738,18 +47751,17 @@ async function acaoBackupManual(btn, raiz){
 
 window.abrirTelaBackup = abrirTelaBackup;
 
-// O botão Backup do menu lateral abre ESSA tela (integra em toda pintura).
-if(typeof window.pintarMenus === 'function' && !window.pintarMenus.__v522101bk){
-  const _pm = window.pintarMenus;
-  window.pintarMenus = function(){
-    const r = _pm.apply(this, arguments);
-    try{
-      const btn = document.getElementById('btn-backup-top');
-      if(btn) btn.onclick = function(ev){ if(ev && ev.preventDefault) ev.preventDefault(); abrirTelaBackup(); };
-    }catch(e){}
-    return r;
-  };
-  window.pintarMenus.__v522101bk = true;
+// O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
+// CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
+// clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
+if(typeof document !== 'undefined' && !document.__v522102bkClick){
+  document.addEventListener('click', function(ev){
+    const alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+    if(!alvo) return;
+    try{ if(ev.preventDefault) ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(e){}
+    try{ abrirTelaBackup(); }catch(e){}
+  }, true);
+  document.__v522102bkClick = true;
 }
 
 function alternar(painelBody){

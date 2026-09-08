@@ -29,3 +29,14 @@
 
 ### 3) Qualidade
 - Bundle: 194 scripts (estável — arquivos in-place); suíte: **149/149** ✓; sync OK; verify:files OK; testes v52296 reescritos (15) + harness aba 11/11 ✓; header v5.22.101; bumps alinhados (pkg/lock/index/BUILD).
+
+## Menu Backup abre a aba de verdade + painel de uso legível no modo escuro — v5.22.102 🤝
+
+### 🤝 O que foi conversado e ajustado
+- **Menu Backup deu um passo atrás:** em vez de abrir a aba, clicar fazia o download manual de antes. Causa: o botão do menu carrega um clique antigo fixo no HTML (`onclick="exportBackup()"`), e a nossa amarração anterior dependia da pintura do menu — que em várias chamadas internas não passava pelo nosso gancho. **Correção em duas camadas:** (1) o próprio HTML do menu agora pede a aba (`abrirTelaBackup()` com o download só como plano B se o patch não estiver carregado); (2) interceptação por **captura** no documento: qualquer clique em `#btn-backup-top` abre a aba e impede o comportamento antigo — mesmo que o menu seja re-pintado por outro trecho do sistema. Clicou → abre a tela "Backup do sistema", igual Nova Venda / Novo Chamado.
+- **Modo escuro deixava o painel de uso ilegível:** o tema escuro clareia os textos do painel Nuvem, mas o card "📊 Uso da nuvem hoje" tinha um fundo claro que o tema não conhecia — ficou texto claro em fundo claro. Agora o card tem estilo próprio pro modo escuro (fundo escuro, texto claro, trilha da barra escura), seguindo o padrão visual do restante da janela.
+- **A contagem zerada é certa, sim?** Sim — o contador começa a contar **a partir do deploy** (a tabela `uso_diario` nasceu junto com a nova versão do worker). Ele sobe conforme o uso: cada lote de mudanças salvas soma gravações, cada abertura do painel/sincronização soma leituras. Cada vez que você abre a janela da Nuvem ele mostra o valor **já atualizado até aquele momento**. E ficou mais esperta: a anotação de uso agora roda **em segundo plano** (não segura a resposta).
+- Toques da regra de versão: entrega pequena → `.101 → .102` (dentro dos pares `.00–.09`), tudo anotado aqui no relatório.
+
+### Testes
+- Harness da aba adaptado pro clique real (dispatchEvent): 12/12 ✔ (inclui "clicou não baixa mais nada" e "segue abrindo mesmo após re-render"); estático v52296: 19 asserts ✔; suíte 149/149; bundle 194 scripts.

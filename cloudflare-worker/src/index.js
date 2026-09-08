@@ -480,7 +480,7 @@ async function handlePush(request, env, ctx) {
   try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
   const body = await readBody(request);
   const mutations = body.mutations;
-  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0);
+  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0, ctx);
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
@@ -499,11 +499,11 @@ async function handlePush(request, env, ctx) {
   return json({ ok: results.every(item => item.ok), results });
 }
 
-async function handleChanges(request, env) {
+async function handleChanges(request, env, ctx) {
   await authenticate(request, env);
   const url = new URL(request.url);
   const cursor = Math.max(0, Number.parseInt(url.searchParams.get('cursor') || '0', 10) || 0);
-  somarUso(env, 0, 60); // uma folha do diário lida por baixo
+  somarUso(env, 0, 60, ctx); // uma folha do diário lida por baixo
   const limit = Math.min(MAX_CHANGE_LIMIT,
     Math.max(1, Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200));
   const query = await env.DB.prepare(
@@ -860,7 +860,7 @@ async function garantirTabelaUso(env){
 function hojeUTC(){
   return new Date().toISOString().slice(0, 10);
 }
-async function somarUso(env, escritas, leituras){
+async function _somar(env, escritas, leituras){
   try{
     await garantirTabelaUso(env);
     await env.DB.prepare(
@@ -868,6 +868,13 @@ async function somarUso(env, escritas, leituras){
          ON CONFLICT(dia) DO UPDATE SET escritas = escritas + ?, leituras = leituras + ?`
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ console.error('USO_DIARIO_FALHOU', e); }
+}
+// v5.22.103 — a anotação nunca segura a resposta: com ctx vai por waitUntil
+// (sem ctx cai no await de antes, que também funciona).
+function somarUso(env, escritas, leituras, ctx){
+  const p = _somar(env, escritas, leituras);
+  if(ctx && typeof ctx.waitUntil === 'function'){ ctx.waitUntil(p); return; }
+  return p;
 }
 async function usoHoje(env){
   try{
@@ -883,11 +890,11 @@ async function usoHoje(env){
   }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 100000, tetoLeituras: 5000000 }; }
 }
 
-async function handleStatus(request, env) {
+async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
   const totals = await resumoDaNuvem(env);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
-  somarUso(env, 0, 30); // abrir o status também lê algumas linhas
+  somarUso(env, 0, 30, ctx); // abrir o status também lê algumas linhas
   return json({ ok: true, device, totals, usoHoje: await usoHoje(env) });
 }
 
@@ -1128,7 +1135,7 @@ async function route(request, env, ctx) {
   if (request.method === 'POST' && url.pathname === '/v1/invites') return handleCreateInvite(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env, ctx);
-  if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
@@ -1137,7 +1144,7 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
-  if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env, ctx);
   // Backups (somente aparelho administrador)
   if (request.method === 'GET' && url.pathname === '/v1/backups') return handleBackupListar(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/backup') return handleBackupBaixar(request, env);
