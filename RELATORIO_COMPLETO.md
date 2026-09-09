@@ -178,3 +178,24 @@
 
 ### Testes
 - Estático v52296: 37 asserts, "Tudo certo v5.23.4!"; suíte 149/149; bundle 194 scripts; sync:check ✔; verify_pack ✔; harness da aba 16/16.
+
+## v5.23.5 — wrangler.jsonc do contador já vem preenchido de fábrica (a pegadinha do COLE_AQUI aposentada) 🏭
+
+### O que pegou (log do dono)
+- Deploy do zip v5.23.4 falhou com `database_id` inválido (10021): o `wrangler.jsonc` novo voltou com os placeholders `COLE_AQUI...` e o passo de preencher foi esquecido (2.ª vez que essa armadilha morde — a primeira foi o "worker velho" de anteontem).
+
+### Conserto pela raiz
+- **`cloudflare-contador/wrangler.jsonc` agora chega pronto**: `ACCOUNT_ID` (`f6e5851c871c92c55c92faa2de33b8ef`) e `database_id` (`b6c32346-…-525bae`) gravados no repositório. São identificadores (como CEP), NÃO segredos — o segredo segue sendo só o `CF_API_TOKEN`, no cofre do worker.
+- README do contador: eliminado o passo "ache o ID e o UUID"; tutorial volta a ter 3 passos.
+- Próximos zips: **zero edição manual** antes do deploy.
+
+### Estado real no ar agora
+- O medidor deployado continua sendo a versão anterior (com cron de 15 min), pois o deploy 10021 abortou. O segredo novo (token) FICOU gravado (secrets sobrevivem a deploys). O deploy do zip 5.23.5 substitui tudo: versão nova + sem cron + sem placeholders.
+- Ação do dono: baixar zip 5.23.5 → `cd cloudflare-contador` → `npx wrangler deploy` (sem editar nada) → F5 no /v1/medir.
+
+### Nota de sandbox (transparência de bastidor)
+- Este turno rodou num sandbox fresco: repositório voltou ao commit-base (reconstruído via fetch do commit 854faa9 do remoto ✅), sem node_modules e **sem rede pro npm** → os 5 testes que dependem de acorn/node-forge/electron-packager não rodam aqui (ambiente, não produto); bundle não foi re-gerado (nenhuma fonte empacotada mudou — restaurado o bundle verificado da 5.23.4).
+- Suíte: tudo verde exceto os 5 de infra (test_app_bundle, test_build_sync, test_ajustes_v5228, v52263, v52265). Estático v52296: "Tudo certo v5.23.5!" (39 asserts).
+
+### Testes
+- sync:check ✔; estático 39 asserts ✔; suíte: verde fora os 5 de dependência de sandbox.

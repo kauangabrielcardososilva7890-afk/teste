@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// DIGICOPY CONTADOR-USO (worker separado) — v5.23.4 (sem cronômetro: mede sob demanda)
+// DIGICOPY CONTADOR-USO (worker separado) — v5.23.5 (sem cronômetro: mede sob demanda)
 // Ideia do dono: um "index separado" que ele implanta UMA VEZ. Ele lê o
 // medidor OFICIAL da Cloudflare (com um token só de leitura guardado como
 // segredo DESTE worker) e grava o resultado no próprio D1 (tabela uso_real).

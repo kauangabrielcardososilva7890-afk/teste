@@ -23,20 +23,11 @@ contagem estimada. Este worker só deixa a medida exata/oficial.
    - **Permissions:** 2.ª linha (+ Add more): `Account` → `D1` → `Read`
 4. **Continue to summary** → **Create Token** → **copie** o token (só aparece uma vez).
 
-### 2) Achar o ID da conta e o UUID do banco
+### 2) Nada para preencher (v5.23.5+)
 
-Ainda logado na Cloudflare, rode dentro desta pasta:
-
-```
-npx wrangler login        (se ainda não estiver logado)
-npx wrangler d1 list
-```
-
-- O wrangler mostra o **uuid** do banco `digicopy-erp` → cole em `wrangler.jsonc`
-  no lugar de `COLE_AQUI_O_UUID_DO_D1`.
-- O **ID da conta** aparece na barra lateral direita do painel da Cloudflare
-  (página inicial de Workers & Pages, "Account ID") → cole no lugar de
-  `COLE_AQUI_O_ID_DA_SUA_CONTA`.
+O `wrangler.jsonc` já chega preenchido de fábrica com o ID da conta e o UUID do
+banco `digicopy-erp` do sistema — são identificadores, não segredos. A armadilha
+de "esquecer o COLE_AQUI" foi eliminada pela raiz.
 
 ### 3) Guardar o token como segredo e subir
 
