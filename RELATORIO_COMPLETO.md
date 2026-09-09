@@ -227,3 +227,16 @@
 
 ### Testes
 - Estático v52296: 42 asserts, "Tudo certo v5.23.6!" (+3 asserts anti-recursão/modal próprio); sync:check ✔; suíte: 144 passaram, falham só os 5 de dependência de sandbox (acorn/node-forge/electron) — nenhum de produto.
+
+## v5.23.7 — tela "Backup do sistema" agora combina com o modo escuro 🌙
+
+### Sintoma do dono
+- A tela ressuscitada abria 🎉, mas no modo escuro ficava estampada de blocos brancos com textos invisíveis (cores claras fixas em estilo inline).
+
+### Correção
+- Blocos da tela ganharam classes (`bk-aba/bk-intro/bk-sec/bk-sec-head/bk-sub/bk-card/bk-note/bk-title/bk-dashed/bk-msg-*`) sem mudar o visual no tema claro.
+- Novo `garantirCssBk()` injeta UMA vez o CSS `html.digi-escuro …` com `!important` (único jeito de vencer estilo inline): fundos vão pras paletas slate/azul-marinho, textos clareiam, avisos erro/ok/info ficam em versões escuras.
+- Aplicado na fonte + nos dois bundles via hotpatch idêntico (sandbox segue sem npm/acorn para o build completo).
+
+### Testes
+- Estático v52296: 46 asserts, "Tudo certo v5.23.7!"; sync:check ✔; suíte: verde fora os 5 de infra (acorn/node-forge/electron ausentes aqui).

@@ -38,7 +38,7 @@ function tamanhoBR(bytes){
 function escap(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function aviso(el, texto, cor){
   if(!el) return;
-  el.innerHTML = '<div style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
+  el.innerHTML = '<div class="bk-msg bk-msg-' + cor + '" style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
     (cor === 'erro' ? '#fef2f2' : cor === 'ok' ? '#ecfdf5' : '#eff6ff') +
     ';color:' + (cor === 'erro' ? '#991b1b' : cor === 'ok' ? '#047857' : '#1d4ed8') +
     ';border:1px solid ' + (cor === 'erro' ? '#fecaca' : cor === 'ok' ? '#a7f3d0' : '#bfdbfe') + '">' + texto + '</div>';
@@ -343,12 +343,12 @@ async function abrir(painelBody){
   const card = painelBody.querySelector('#dc-backups');
   if(!card) return;
   card.innerHTML =
-    '<div style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
+    '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
         '<h4 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📁 Backups na nuvem</h4>' +
         '<small id="bk-contador" style="color:#64748b;font-weight:800">...</small>' +
       '</div>' +
-      '<small style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups.</small>' +
+      '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups.</small>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
         '<button type="button" id="bk-atualizar" style="' + estiloBtn(false) + '">🔄 Atualizar</button>' +
         '<button type="button" id="bk-agora" style="' + estiloBtn(false) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
@@ -491,23 +491,34 @@ window.bkFecharTelaBackup = function(){
   const ov = document.getElementById('bk-overlay'); if(ov) ov.style.display = 'none';
 };
 
+// v5.23.7 — modo escuro da tela Backup: o conteúdo usa cores claras fixas
+// (estilo inline). Como inline ganha de tudo, a regra escura precisa de
+// !important — e só vale quando o app está em digi-escuro. Injetada UMA vez.
+function garantirCssBk(){
+  if(document.getElementById('bk-aba-css')) return;
+  const s = document.createElement('style'); s.id = 'bk-aba-css';
+  s.textContent = "html.digi-escuro .bk-aba div{background-color:transparent !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-aba,html.digi-escuro .bk-aba b,html.digi-escuro .bk-aba p,html.digi-escuro .bk-aba span,html.digi-escuro .bk-aba small,html.digi-escuro .bk-aba h3,html.digi-escuro .bk-aba h4{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-intro{color:#cbd5e1 !important}\nhtml.digi-escuro .bk-sec{background:#1e293b !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-sec-head{background:#0f172a !important;color:#93c5fd !important}\nhtml.digi-escuro .bk-sec-head .bk-sub{color:#94a3b8 !important}\nhtml.digi-escuro .bk-card{background:#16203a !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-card h4{color:#93c5fd !important}\nhtml.digi-escuro .bk-card small{color:#94a3b8 !important}\nhtml.digi-escuro .bk-note{color:#94a3b8 !important}\nhtml.digi-escuro .bk-title{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-dashed{border-color:#475569 !important}\nhtml.digi-escuro .bk-msg-erro{background:rgba(220,38,38,.16) !important;color:#fca5a5 !important;border-color:#7f1d1d !important}\nhtml.digi-escuro .bk-msg-ok{background:rgba(16,185,129,.14) !important;color:#6ee7b7 !important;border-color:#065f46 !important}\nhtml.digi-escuro .bk-msg-info{background:rgba(59,130,246,.15) !important;color:#93c5fd !important;border-color:#1e3a8a !important}";
+  document.head.appendChild(s);
+}
+
 function abrirTelaBackup(){
+  garantirCssBk();
   bkSetModal('Backup do sistema',
-    '<div style="font-size:12px;color:#475569;margin-bottom:12px">São <b>3 jeitos</b> de guardar seus dados: 📸 <b>manual</b> (aperta o botão — salva na nuvem E baixa no PC), 📁 <b>diário</b> (sozinho, todo dia <b>18:30</b>) e 📁 <b>a cada atualização</b> (sozinho, foto da versão anterior). Tudo fica na nuvem, organizado em pastas.</div>' +
-    '<div style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
-      '<div style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
+    '<div class="bk-aba"><div class="bk-intro" style="font-size:12px;color:#475569;margin-bottom:12px">São <b>3 jeitos</b> de guardar seus dados: 📸 <b>manual</b> (aperta o botão — salva na nuvem E baixa no PC), 📁 <b>diário</b> (sozinho, todo dia <b>18:30</b>) e 📁 <b>a cada atualização</b> (sozinho, foto da versão anterior). Tudo fica na nuvem, organizado em pastas.</div>' +
+    '<div class="bk-sec" style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small class="bk-sub" style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
       '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
     '</div>' +
-    '<div style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
-      '<div style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
+    '<div class="bk-sec" style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small class="bk-sub" style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
       '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
         '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
-        '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
+        '<div class="bk-dashed" style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b class="bk-title" style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
         '<div style="margin-top:6px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
         '<div id="bk-rest-prev" style="margin-top:6px"></div></div>' +
-        '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
+        '<small class="bk-note" style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
       '</div>' +
-    '</div>',
+    '</div>' + '</div>',
     '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
   const pcBtn = document.getElementById('bk-pc-baixar');
   if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
