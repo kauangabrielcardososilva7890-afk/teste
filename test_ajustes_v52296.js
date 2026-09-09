@@ -1,10 +1,10 @@
-// Teste v5.23.7 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
+// Teste v5.23.8 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.23.7 — menu Backup sempre abre a aba (modelo+captura) ==');
+console.log('== v5.23.8 — menu Backup sempre abre a aba (modelo+captura) ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -47,7 +47,7 @@ ok(sync.indexOf("x-digicopy-versao") >= 0 && sync.indexOf('DIGICOPY_APP_VERSION'
 
 // 7) zip baixado mantém as pastas
 ok(patch.indexOf(".replace(/\\\\/g, '/')") >= 0 && patch.indexOf('montarZip') >= 0, 'zip montado com pastas dentro');
-ok(patch.indexOf('📥 Baixar todos os backups') >= 0 && patch.indexOf('🗑️ Excluir backups') >= 0, 'dois botões grandes intactos');
+ok(patch.indexOf('📥 Baixar todos os backups (.zip)') >= 0 && patch.indexOf('🗑️ Excluir todos os backups da nuvem') >= 0, 'botões de baixar-todos e excluir-todos (rótulos novos do modelo do dono)');
 ok(patch.indexOf('Backup diario') >= 0 && patch.indexOf('Backup atualizações') >= 0, 'card mostra as duas pastas');
 
 // 8) instruções da nuvem sem armadilha de cartão
@@ -57,12 +57,12 @@ ok(readme.indexOf('npx wrangler deploy') >= 0, 'README: um comando só basta');
 
 // 9) aba Backup NORMAL (igual às outras, nada de gaveta/dropdown voador)
 ok(patch.indexOf('gavetaAbrirFechar') < 0 && patch.indexOf('bk-menu-gaveta') < 0, 'gaveta flutuante removida de vez');
-ok(patch.indexOf('abrirTelaBackup') >= 0 && patch.indexOf("bkSetModal('Backup do sistema'") >= 0, 'menu Backup abre a aba normal "Backup do sistema" (v5.23.7: modal próprio bkSetModal)');
+ok(patch.indexOf('abrirTelaBackup') >= 0 && patch.indexOf("bkSetModal('Backup do sistema'") >= 0, 'menu Backup abre a aba normal "Backup do sistema" (v5.23.8: modal próprio bkSetModal)');
 ok(patch.indexOf('3 jeitos') >= 0 && patch.indexOf('18:30') >= 0 && patch.indexOf('a cada atualização') >= 0, 'aba explica os 3 jeitos de backup');
 ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0, 'botão 1: backup manual FAZ OS DOIS (nuvem + PC)');
 ok(patch.indexOf('acaoBackupManual') >= 0 && patch.indexOf('baixarUmBackup(chave)') >= 0, 'manual: guarda na nuvem e baixa em seguida');
 ok(patch.indexOf('📥 Baixar todo histórico de backup') >= 0 || patch.indexOf('📥 Baixar todos os backups') >= 0, 'botão 2: baixar histórico');
-ok(patch.indexOf('🗑️ Excluir o histórico de backups') >= 0 || patch.indexOf('🗑️ Excluir backups') >= 0, 'botão 3: excluir histórico (só backups)');
+ok(patch.indexOf('🗑️ Excluir todos os backups da nuvem') >= 0 && patch.indexOf('Excluir <b>') >= 0 && patch.indexOf('Última confirmação') >= 0, 'botão 3: excluir backups com DUAS confirmações (uma já sugere baixar o .zip antes)');
 ok(patch.indexOf('bk-pc-baixar') >= 0 && patch.indexOf('exportBackup()') >= 0, 'ó clássico do PC continua lá dentro');
 ok(patch.indexOf("__v52301bkClick") >= 0 && patch.indexOf("addEventListener('click'") >= 0 && patch.indexOf("closest('#btn-backup-top')") >= 0, 'menu Backup: clique interceptado por captura (sempre abre a aba)');
 ok(patch.indexOf("button[onclick]") >= 0 && patch.indexOf('exportBackup') >= 0 && patch.indexOf('.module-menu') >= 0, 'captura cobre botões de menu sem id (onclick clássico)');
@@ -103,12 +103,12 @@ ok(patch.indexOf("window.importBackup = function(){ abrirTelaBackup(); }") >= 0,
 ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'aba tem restaurar (arquivo → prévia → substituir/somar)');
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
-// 16) v5.23.7 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.23.7'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+// 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
+ok(worker.indexOf("const WORKER_VERSION = '5.23.8'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
-// 17) v5.23.7 — medidor oficial SEM cronômetro: mede quando o dono abre a tela (pedido dele)
+// 17) v5.23.8 — medidor oficial SEM cronômetro: mede quando o dono abre a tela (pedido dele)
 const contadorCfg = fs.readFileSync('cloudflare-contador/wrangler.jsonc', 'utf8');
 ok(contadorCfg.indexOf('"crons": []') >= 0, 'contador sem agendamento (lista de crons vazia = deploy remove o cronômetro de 15min)');
 ok(sync.indexOf('MEDIDOR_OFICIAL_URL') >= 0 && sync.indexOf('__dcUltPingMedidor') >= 0 && sync.indexOf('window.DC_chamarMedidorOficial') >= 0, 'app cutuca o medidor ao abrir a tela (sem token no sistema, trava de 3 min)');
@@ -121,16 +121,23 @@ ok(man[man.length - 1] === 'ajustes_v52296_backups_nuvem_patch.js', 'patch de ba
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
-// 19) v5.23.7 — menu Backup nunca mais mudo: no bundle, setModal dos outros patches fica preso no bloco try{} (não vira global) e o fallback antigo chamava exportBackup (= a própria aba) → recursão engolida
+// 19) v5.23.8 — menu Backup nunca mais mudo: no bundle, setModal dos outros patches fica preso no bloco try{} (não vira global) e o fallback antigo chamava exportBackup (= a própria aba) → recursão engolida
 ok(patch.indexOf('function bkSetModal') >= 0 && patch.indexOf('window.bkFecharTelaBackup') >= 0, 'aba Backup tem modal próprio (bkSetModal) + fechamento próprio');
 ok(patch.indexOf("try{ window.exportBackup(); }catch(e){} return;") < 0, 'fallback recursivo (exportBackup→abrirTelaBackup→exportBackup…) eliminado da aba');
 ok(bundle.indexOf('function bkSetModal') >= 0 && bundle.indexOf('bkFecharTelaBackup()') >= 0, 'bundle hotpatch recebeu o modal próprio também');
 
-// 20) v5.23.7 — tela Backup bonita no modo escuro (classes + CSS digi-escuro com !important sobre estilo inline)
+// 20) v5.23.8 — tela Backup bonita no modo escuro (classes + CSS digi-escuro com !important sobre estilo inline)
 ok(patch.indexOf('garantirCssBk') >= 0 && patch.indexOf('bk-aba-css') >= 0, 'CSS escuro da tela Backup injetado UMA vez');
 ok(patch.indexOf('html.digi-escuro .bk-sec') >= 0 && patch.indexOf('bk-msg-erro') >= 0 && patch.indexOf('html.digi-escuro .bk-card') >= 0, 'regras escuras p/ seções, cartões e avisos');
 ok(patch.indexOf('class="bk-aba"') >= 0 && patch.indexOf('class="bk-sec-head"') >= 0 && patch.indexOf('bk-dashed') >= 0, 'tela Backup classificada para o tema');
 ok(bundle.indexOf('bk-aba-css') >= 0 && bundle.indexOf('digi-escuro .bk-card') >= 0, 'bundle carrega o modo escuro da tela Backup');
 
+// 21) v5.23.8 — tela Backup no modelo do dono: 3 botões (manual → zip → excluir) + cura do 403 escrita no aviso + auto-backup de atualização é do worker
+ok(patch.indexOf('id="bk-atualizar"') < 0 && bundle.indexOf('id="bk-atualizar"') < 0, 'sem botão Atualizar (a lista recarrega sozinha ao abrir/após ações)');
+ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0 && patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') < patch.indexOf('📥 Baixar todos os backups (.zip)') && patch.indexOf('📥 Baixar todos os backups (.zip)') < patch.indexOf('🗑️ Excluir todos os backups da nuvem'), 'exatamente 3 botões na ordem do dono: manual → zip → excluir');
+ok(patch.indexOf('UPDATE devices SET role') >= 0, 'aviso de 403 agora entrega a cura (login-admin ≠ aparelho-admin)');
+ok(worker.indexOf('checarTrocaDeVersao') >= 0 && worker.indexOf('nomeBackupSistema') >= 0, 'backup a-cada-atualização roda sozinho no worker (foto da versão anterior)');
+ok(patch.indexOf('Só o aparelho administrador pode mexer nos backups') < 0 || patch.indexOf('Pra liberar, rode UMA vez') >= 0, 'mensagem velha substituída pela orientação');
+
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.23.7!');
+console.log('\nTudo certo v5.23.8!');

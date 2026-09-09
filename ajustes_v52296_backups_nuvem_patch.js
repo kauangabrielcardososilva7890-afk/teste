@@ -49,7 +49,7 @@ function traduzErro(e){
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
-    return 'Só o aparelho administrador pode mexer nos backups.';
+    return 'Este aparelho não está marcado como administrador da nuvem (seu LOGIN é admin, mas a autorização deste computador é outra coisa). Pra liberar, rode UMA vez no terminal: npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role=\'admin\'" — aí todo computador seu vira admin.';
   return e && e.message || String(e);
 }
 
@@ -344,16 +344,11 @@ async function abrir(painelBody){
   if(!card) return;
   card.innerHTML =
     '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
-        '<h4 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📁 Backups na nuvem</h4>' +
-        '<small id="bk-contador" style="color:#64748b;font-weight:800">...</small>' +
-      '</div>' +
-      '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups.</small>' +
+      '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-        '<button type="button" id="bk-atualizar" style="' + estiloBtn(false) + '">🔄 Atualizar</button>' +
-        '<button type="button" id="bk-agora" style="' + estiloBtn(false) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
-        '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(true) + '">📥 Baixar todos os backups</button>' +
-        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir backups</button>' +
+        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+        '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
+        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir todos os backups da nuvem</button>' +
       '</div>' +
       '<div id="bk-resumo" style="margin-top:10px"></div>' +
       '<div id="bk-aviso" style="margin-top:10px"></div>' +
@@ -363,7 +358,6 @@ async function abrir(painelBody){
   const btnB = card.querySelector('#bk-baixar-todos');
   const btnE = card.querySelector('#bk-excluir-todos');
   const avisoEl = card.querySelector('#bk-aviso');
-  card.querySelector('#bk-atualizar').onclick = function(){ carregar(card); };
   card.querySelector('#bk-agora').onclick = async function(){
     const b = this;
     await acaoBackupManual(b, card);

@@ -240,3 +240,22 @@
 
 ### Testes
 - Estático v52296: 46 asserts, "Tudo certo v5.23.7!"; sync:check ✔; suíte: verde fora os 5 de infra (acorn/node-forge/electron ausentes aqui).
+
+## v5.23.8 — tela Backup no modelo EXATO do dono: 3 botões + cura do "login admin que não consegue"
+
+### O que ele pediu (palavras dele)
+- "n era pra ter 3 botões somente n? 1º baixar manual (baixa pro PC e vai pra nuvem numa pasta separada) 2º baixar zip de TODOS 3º excluir todos os backups da nuvem (com aba de confirmação e aviso pra baixar o zip antes)".
+
+### O que estava confuso e como ficou
+- Antes: cartão dentro da seção repetindo o título "Backups na nuvem" + 4 botões (tinha "🔄 Atualizar"). Agora: título só na seção, contador de backups na linha de explicação, e **exatamente 3 botões na ordem do dono**: 📸 Backup manual (nuvem + baixa no PC) → 📥 Baixar todos os backups (.zip) → 🗑️ Excluir todos os backups da nuvem. "Atualizar" sumiu (a lista recarrega sozinha ao abrir e após cada ação).
+- Confirmação do excluir: **já existem DUAS** — "Excluir N backup(s)? apaga SOMENTE os backups, dados do sistema intactos" + "Última confirmação… lembre de guardar o arquivo .zip antes" (espírito idêntico à sugestão dele).
+
+### "Login admin mas não consigo baixar nada"
+- **Dois admins diferentes**: login do SISTEMA (ele é ✔) vs AUTORIZAÇÃO DO APARELHO na nuvem (virou 'device', daí 403 em todos os botões da nuvem).
+- Cura sem código novo: `npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role = 'admin'"` — todos os computadores dele viram admin. O aviso de 403 no app agora já traz essa instrução escrita.
+
+### "o backup a cada atualização já está fazendo?"
+- Sim: `checarTrocaDeVersao` roda em TODO push autenticado — versão nova falando com a nuvem → worker fotografa o banco como "Backup atualizações/Backup sistema <versão anterior>.json" (sobrescreve por nome, sem duplicar; nem depende de ser admin). Começou a valer quando o worker 5.23.3 entrou no ar; versões anteriores a essa data não têm foto. Diário 18:30: primeiro disparo hoje (cron chegou depois das 18:30 de ontem).
+
+### Testes
+- Estático v52296: 51 asserts, "Tudo certo v5.23.8!"; sync:check ✔; suíte verde fora os 5 de infra do sandbox.
