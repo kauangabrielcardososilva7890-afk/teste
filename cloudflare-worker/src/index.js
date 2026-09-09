@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.2';
+const WORKER_VERSION = '5.24.3';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -890,11 +890,9 @@ let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
 async function garantirTabelaUso(env){
   if (__USO_TABELA_OK) return;
-  await env.DB.exec(`CREATE TABLE IF NOT EXISTS uso_diario (
-  dia TEXT PRIMARY KEY,
-  escritas INTEGER NOT NULL DEFAULT 0,
-  leituras INTEGER NOT NULL DEFAULT 0
-)`);
+  // v5.24.3 — D1 .exec() QUEBRA os comandos por LINHA: DDL multilinha virava
+  // "incomplete input" (o erro que aparecia no Backup). Tudo numa linha só.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS uso_diario (dia TEXT PRIMARY KEY, escritas INTEGER NOT NULL DEFAULT 0, leituras INTEGER NOT NULL DEFAULT 0)`);
   __USO_TABELA_OK = true;
 }
 function hojeUTC(){
@@ -1297,22 +1295,9 @@ async function gunzipBytes(bytes){
 let __BACKUP_TABELA_OK = false;
 async function garantirTabelaBackups(env){
   if (__BACKUP_TABELA_OK) return;
-  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups (
-  id TEXT PRIMARY KEY,
-  nome TEXT NOT NULL,
-  pasta TEXT NOT NULL,
-  tipo TEXT NOT NULL,
-  tamanho_original INTEGER NOT NULL,
-  tamanho_gzip INTEGER NOT NULL,
-  registros INTEGER NOT NULL,
-  gerado_em INTEGER NOT NULL
-)`);
-  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups_chunks (
-  id TEXT NOT NULL,
-  seq INTEGER NOT NULL,
-  chunk BLOB NOT NULL,
-  PRIMARY KEY (id, seq)
-)`);
+  // v5.24.3 — D1 .exec() quebra por LINHA (ver garantirTabelaUso): uma linha só.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY, nome TEXT NOT NULL, pasta TEXT NOT NULL, tipo TEXT NOT NULL, tamanho_original INTEGER NOT NULL, tamanho_gzip INTEGER NOT NULL, registros INTEGER NOT NULL, gerado_em INTEGER NOT NULL)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups_chunks (id TEXT NOT NULL, seq INTEGER NOT NULL, chunk BLOB NOT NULL, PRIMARY KEY (id, seq))`);
   __BACKUP_TABELA_OK = true;
 }
 

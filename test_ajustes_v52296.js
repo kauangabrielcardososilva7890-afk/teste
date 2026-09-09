@@ -104,7 +104,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.24.2'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.3'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -117,7 +117,7 @@ ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também di
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 2] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 1] === 'ajustes_v5240_relatorio_grande_patch.js', 'patch de backups continua no fim do bundle (penúltimo; v5.24.0 fecha a fila)');
+ok(man[man.length - 3] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 2] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 1] === 'ajustes_v5243_cliente_abas_patch.js', 'patch de backups continua no fim do bundle (3º a partir do fim; v5.24.0 depois, v5.24.3 fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 

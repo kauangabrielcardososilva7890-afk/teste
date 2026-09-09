@@ -56,6 +56,15 @@ assert.equal(manual, 'Backup manual/Backup manual 1.json');
 assert.equal(__test.nomeBackupManual(12), 'Backup manual/Backup manual 12.json');
 console.log('  ✔ reforço manual numerado (v5.24.0): "Backup manual N.json" — o número nunca se repete');
 
+// v5.24.3 — o .exec() do D1 quebra os comandos por LINHA: DDL multilinha
+// virava "incomplete input" e backups/medidor nunca criavam as tabelas.
+const __src = (await import('node:fs')).readFileSync(new URL('./src/index.js', import.meta.url), 'utf8');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY'), 'ddl backups em uma linha só (v5.24.3)');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS backups_chunks (id TEXT NOT NULL'), 'ddl backups_chunks em uma linha só (v5.24.3)');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS uso_diario (dia TEXT PRIMARY KEY'), 'ddl uso_diario em uma linha só (v5.24.3)');
+assert.ok(!/CREATE TABLE IF NOT EXISTS \w+ \(\s*\n/.test(__src), 'nenhum CREATE TABLE multilinha restante');
+console.log('  ✔ DDL de backups/medidor em uma linha (v5.24.3): D1 .exec() quebra por linha');
+
 // 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
 const madrugada = new Date('2026-09-09T00:30:00Z');
 assert.equal(__test.nomeBackupDiario(madrugada), 'Backup diario/Backup 08-09-2026.json');

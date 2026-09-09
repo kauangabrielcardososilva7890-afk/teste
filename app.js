@@ -820,7 +820,6 @@ function initTemplates(){
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-shopping-cart-simple text-[16px]"></i> Nova venda</button>
         <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
         <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
         <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
@@ -951,9 +950,11 @@ function saveCliente(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('f-cli-nome').value.trim(), documento:document.getElementById('f-cli-doc').value.trim(), tipo:document.getElementById('f-cli-tipo').value, email:document.getElementById('f-cli-email').value.trim(), telefone:document.getElementById('f-cli-tel').value.trim(), endereco:document.getElementById('f-cli-end').value.trim(), cidade:document.getElementById('f-cli-cidade').value.trim(), estado:document.getElementById('f-cli-estado').value.trim(), cep:document.getElementById('f-cli-cep').value.trim(), status:document.getElementById('f-cli-status').value};
   if(!payload.nome) return toast('Informe nome','error');
-  if(id){
-    const existing=db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    Object.assign(existing,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
+  // v5.24.3 — procura UMA vez: se o id está fantasma (cliente sumiu da base
+  // local), cai para o cadastro NOVO em vez de estourar e perder o digitado.
+  const existingCli=id?db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId):null;
+  if(existingCli){
+    Object.assign(existingCli,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome}`);
   }else{
     const novo={id:uid('cli'),...payload,mensalidade:0,criadoEm:new Date().toISOString(),criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome};

@@ -12,7 +12,7 @@ ok(g.indexOf('window.__orcResumoUltimaBaixa') >= 0, 'exposição do resumo da ú
 ok(g.indexOf('renderOrcamentos') >= 0 && g.indexOf('__v52293') >= 0, 'amarra o retrato na listagem VISÍVEL (a última que existir)');
 
 const m = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 4, 'guardião logo antes da fila final (depois vêm volta-venda, backups e o v5.24.0);');
+ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 5, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0 e as abas do cliente v5.24.3);');
 
 const v237 = fs.readFileSync('ajustes_v52237_orcamentos_menu_patch.js', 'utf8');
 ok(v237.indexOf('__orcResumoUltimaBaixa') >= 0, 'aviso "não achei" mostra a última baixa');

@@ -336,3 +336,21 @@ Causas raiz encontradas e extirpadas:
 
 ### Comando para o dono (obrigatório)
 1. `npx.cmd wrangler deploy` dentro da pasta `cloudflare-worker` (do zip novo) — sobe CORS + regra Admin.
+
+## v5.24.3 — Backup de volta de verdade (D1) + menu sem "Nova venda" + 4.1 na raiz + abas no cadastro do cliente
+
+### Veredito dos testes do dono → causa → cura
+- **1.1/1.2/1.3 (D1_EXEC_ERROR `CREATE TABLE ... (: incomplete input`)**: o `.exec()` do D1 **quebra os comandos por LINHA** — os DDL multilinha das tabelas `backups`, `backups_chunks` e `uso_diario` nunca executavam (backups na nuvem e medidor nunca gravaram; o erro só apareceu quando o CORS da v5.24.2 deixou as chamadas chegarem). **Cura**: os 3 DDL viraram UMA linha; guarda no test-pure proíbe recaída (regex de CREATE TABLE multilinha). Deploy obrigatório.
+- **2.1 ("Nova venda" continuava)**: o atalho removido na v5.24.0 era o do topo; o que ele vê é o do **painel principal** (hero do dashboard). Removido também. O botão "+ Nova venda / Orçamento" DENTRO do módulo Vendas continua.
+- **4.1 (cenário real, contado por ele)**: "escolho o cliente, vou adicionar um item e pede pra escolher o cliente; dá cliente não encontrado" — a ponte pós-cadastro chamava a seleção da tela ANTIGA (`selectClienteVenda`, ids `nv-*`), que não existe mais: estourava na 1ª linha e o cliente nunca era amarrado na venda VOS (tela atual, ids `vos-*`). **Cura-raiz**: chamadas à seleção antiga são desviadas para `vosVendaSelectCliente` quando a tela VOS está aberta, e a seleção VOS é à prova de falha visual (reamarra `__vosForm.cliente` se algo falhar). Reforços: save dos DOIS formulários de cliente protegido (id fantasma vira cadastro novo; erro mostra motivo e mantém a tela aberta).
+- **5.2 + 5.2.1 (novo)**: cadastro do cliente com ABAS — Dados (o formulário de sempre) | Vendas | Financeiro | Orçamentos | Chamados | Leituras, cada uma listando tudo do cliente (com contadores). Clicar num item abre RESUMO rápido com botão "Abrir no módulo": venda abre o detalhe na tela Vendas; conta abre o Financeiro em "Contas a receber" já filtrado; orçamento abre pronto na tela de orçamentos; chamado abre a OS na Manutenção; leitura abre o registro nas Leituras. Abas só aparecem para cliente já cadastrado.
+- 3.1/3.2: confirmados por ele como resolvidos ✅ (sem mudança). 4.2: o retry já estava no ar; ele retesta depois do 4.1.
+
+### Engenharia
+- Novo patch `ajustes_v5243_cliente_abas_patch.js` (manifest #196, fecha a fila; núcleo puro `CLITAB_PURE` testável no Node).
+- Bundles recriados byte-exatos (sha256 `9cbee15b454b7b02`), raiz = mobile; o rebuild agora imita a regra do acorn para arquivos novos sem marcador.
+- Teste `test_ajustes_v5243.js` (30+ asserts: DDL 1-linha + regex anti-recaída, hero sem atalho, 4.1 raiz+reforços, 6 abas, resumo/atalhos, integridade/versões). v52293/95/84-87 (posições 196) e v52296/v5240 (versões/posição) atualizados. Worker test-pure ganhou guarda de DDL multilinha.
+- Suíte: **158 passaram**; as únicas falhas são as mesmas pré-existentes de ambiente/legado (acorn ausente: test_app_bundle/test_build_sync/test_runner/v5228/v52263/v52265; fontes ausentes do sandbox: correcoes_relatorio/vendas_chamados_reparo; legado v5188 — provado no HEAD limpo).
+
+### Comando para o dono (obrigatório — a cura do backup mora na nuvem)
+1. `npx.cmd wrangler deploy` dentro da pasta `cloudflare-worker` do zip novo.
