@@ -199,3 +199,13 @@
 
 ### Testes
 - sync:check ✔; estático 39 asserts ✔; suíte: verde fora os 5 de dependência de sandbox.
+
+## 🏁 MEDIDOR OFICIAL NO AR — saga encerrada (confirmação do dono)
+
+```
+{"ok":true,"uso":{"dia":"2026-09-09","leituras":132519,"escritas":3}}
+```
+
+- O /v1/medir respondeu com os números **oficiais da conta Cloudflare**: token vivo no cofre, 2 permissões conferidas na prática (D1 Read na listagem do banco + Account Analytics Read na medida GraphQL), `uso_real` gravado no próprio D1, e **sem cronômetro** (mede quando o dono abre a tela de Backup/Nuvem — o app cutuca /v1/medir).
+- Cadeia de causas que travava tudo, na ordem em que foram derrubadas: ① worker principal velho no ar (deploy de pasta desatualizada — resolvido com carimbo de versão no /health); ② segredo do cofre com valor velho/errado (o token do painel sempre esteve bom — prova: teste direto); ③ Rolls de segurança sem re-gravar o cofre; ④ e o sabotador final: a "placa" COLE_O_TOKEN_AQUI indo no lugar do token — morta com a linha `(Get-Clipboard -Raw).Trim() | Set-Content -NoNewline t.txt; cmd /c "npx wrangler secret put CF_API_TOKEN < t.txt"; del t.txt` (área de transferência → arquivo → stdin do wrangler, zero colagem no prompt escondido).
+- Pendências de polimento (não bloqueantes): carimbo do worker principal ainda diz 5.23.3 até o dono redeployar `cloudflare-worker` do zip 5.23.5 (código funcional idêntico); reteste do fluxo "criar cliente" com o link 5.23.5.
