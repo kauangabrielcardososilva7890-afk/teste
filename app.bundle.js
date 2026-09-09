@@ -47807,9 +47807,47 @@ async function confirmarRestauracao(modo){
   }catch(e){ window.lfbAlert && window.lfbAlert('Falha ao restaurar: ' + (e && e.message || e), 'Restaurar backup'); }
 }
 
+// v5.23.6 — modal próprio garantido. No bundle final, cada patch vai dentro de
+// um bloco try{} do isolamento: declarações "function setModal" dos outros
+// patches ficam PRESAS no bloco e nunca viram globais. Resultado real: o botão
+// do menu Backup chamava abrirTelaBackup, que caía no fallback chamando
+// window.exportBackup — que desde a 5.23.2 É o próprio abrirTelaBackup →
+// recursão infinita, engolida pelo try/catch da captura → "botão clicável que
+// não faz nada". Agora a tela usa o esqueleto de modal nativo do app
+// (#modal-root) e, se nem isso existir, cria um overlay próprio.
+function bkSetModal(titulo, corpo, rodape, max){
+  const raiz = document.getElementById('modal-root');
+  if(raiz){
+    const box = document.getElementById('modal-box');
+    if(box) box.className = 'w-full max-w-[' + (max || '940px') + '] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+    const t = document.getElementById('modal-title'); if(t) t.innerText = titulo;
+    const b = document.getElementById('modal-body'); if(b) b.innerHTML = corpo;
+    const f = document.getElementById('modal-footer'); if(f) f.innerHTML = rodape || '';
+    raiz.classList.remove('hidden');
+    return true;
+  }
+  let ov = document.getElementById('bk-overlay');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'bk-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = '<div style="background:#fff;border-radius:18px;max-width:' + (max || '940px') + ';width:100%;max-height:94vh;overflow:auto;box-shadow:0 25px 60px rgba(0,0,0,.35)"><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0"><b class="bk-ov-t" style="font-size:15px"></b><button type="button" class="bk-ov-x" style="font-size:18px;line-height:1;padding:4px 10px">✕</button></div><div class="bk-ov-b" style="padding:16px 18px"></div><div class="bk-ov-f" style="padding:12px 18px;border-top:1px solid #e2e8f0;text-align:right"></div></div>';
+    ov.querySelector('.bk-ov-x').onclick = function(){ window.bkFecharTelaBackup(); };
+    ov.onclick = function(ev){ if(ev.target === ov) window.bkFecharTelaBackup(); };
+    document.body.appendChild(ov);
+  }
+  ov.querySelector('.bk-ov-t').innerText = titulo;
+  ov.querySelector('.bk-ov-b').innerHTML = corpo;
+  ov.querySelector('.bk-ov-f').innerHTML = rodape || '';
+  ov.style.display = 'flex';
+  return true;
+}
+window.bkFecharTelaBackup = function(){
+  const raiz = document.getElementById('modal-root'); if(raiz){ try{ raiz.classList.add('hidden'); }catch(e){} }
+  const ov = document.getElementById('bk-overlay'); if(ov) ov.style.display = 'none';
+};
+
 function abrirTelaBackup(){
-  if(typeof setModal !== 'function'){ try{ window.exportBackup(); }catch(e){} return; }
-  setModal('Backup do sistema',
+  bkSetModal('Backup do sistema',
     '<div style="font-size:12px;color:#475569;margin-bottom:12px">São <b>3 jeitos</b> de guardar seus dados: 📸 <b>manual</b> (aperta o botão — salva na nuvem E baixa no PC), 📁 <b>diário</b> (sozinho, todo dia <b>18:30</b>) e 📁 <b>a cada atualização</b> (sozinho, foto da versão anterior). Tudo fica na nuvem, organizado em pastas.</div>' +
     '<div style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
       '<div style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
@@ -47825,7 +47863,7 @@ function abrirTelaBackup(){
         '<small style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
       '</div>' +
     '</div>',
-    '<button type="button" onclick="closeModal()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
+    '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
   const pcBtn = document.getElementById('bk-pc-baixar');
   if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
   const restInp = document.getElementById('bk-rest-arq');

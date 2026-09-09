@@ -209,3 +209,21 @@
 - O /v1/medir respondeu com os números **oficiais da conta Cloudflare**: token vivo no cofre, 2 permissões conferidas na prática (D1 Read na listagem do banco + Account Analytics Read na medida GraphQL), `uso_real` gravado no próprio D1, e **sem cronômetro** (mede quando o dono abre a tela de Backup/Nuvem — o app cutuca /v1/medir).
 - Cadeia de causas que travava tudo, na ordem em que foram derrubadas: ① worker principal velho no ar (deploy de pasta desatualizada — resolvido com carimbo de versão no /health); ② segredo do cofre com valor velho/errado (o token do painel sempre esteve bom — prova: teste direto); ③ Rolls de segurança sem re-gravar o cofre; ④ e o sabotador final: a "placa" COLE_O_TOKEN_AQUI indo no lugar do token — morta com a linha `(Get-Clipboard -Raw).Trim() | Set-Content -NoNewline t.txt; cmd /c "npx wrangler secret put CF_API_TOKEN < t.txt"; del t.txt` (área de transferência → arquivo → stdin do wrangler, zero colagem no prompt escondido).
 - Pendências de polimento (não bloqueantes): carimbo do worker principal ainda diz 5.23.3 até o dono redeployar `cloudflare-worker` do zip 5.23.5 (código funcional idêntico); reteste do fluxo "criar cliente" com o link 5.23.5.
+
+## v5.23.6 — menu Backup ressuscitado: "botão clicável que não faz nada" 💀→🟢
+
+### O sintoma do dono
+- Medidor oficial OK no painel Nuvem 🎉, MAS o menu Backup virou um botão que clicava e nada acontecia.
+
+### A autópsia (bug real, introduzido na unificação 5.23.2)
+- No `app.bundle.js`, cada patch vai dentro de um bloco `try{...}` do isolamento: as declarações `function setModal` dos patches de contratos/leituras etc. ficam **presas no bloco e nunca viram globais**.
+- `abrirTelaBackup` testava `typeof setModal !== 'function'` → sempre TRUE no app real → caía no fallback `window.exportBackup()` → **que desde a 5.23.2 É o próprio `abrirTelaBackup`** → recursão infinita → stack overflow → engolido pelo `try/catch` da captura do menu → **silêncio total**. O clique morria sem deixar rastro.
+- Por que os testes não pegaram: o harness simulava um `setModal` global, então o caminho do modal era exercido só no mock.
+
+### O conserto
+- **Modal próprio garantido** na aba: `bkSetModal(titulo,corpo,rodape,max)` usa o esqueleto nativo do app (`#modal-root`/`#modal-box`) quando existe e cria um overlay próprio quando não existe; fechamento próprio `window.bkFecharTelaBackup()` (o botão Fechar não depende mais do `closeModal`).
+- Fallback recursivo eliminado (lei do dono intacta: clique no menu NUNCA baixa nada).
+- **Bundle hotpatchado à mão** (fonte + app.bundle.js + mobile/www/app.bundle.js byte-a-byte iguais): este sandbox está sem rede npm (acorn ausente → build cairia no modo 0-isolamento); na próxima máquina com `npm i`, `node build_bundle.js` reproduz o mesmo resultado a partir da fonte.
+
+### Testes
+- Estático v52296: 42 asserts, "Tudo certo v5.23.6!" (+3 asserts anti-recursão/modal próprio); sync:check ✔; suíte: 144 passaram, falham só os 5 de dependência de sandbox (acorn/node-forge/electron) — nenhum de produto.

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.23.5';
+const WORKER_VERSION = '5.23.6';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
