@@ -47,12 +47,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
   // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
   try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }

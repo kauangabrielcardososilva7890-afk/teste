@@ -49,7 +49,24 @@ console.log('-- item 1.3: Backup manual 1, 2, 3... (worker) --');
 ok(worker.indexOf("return PASTA_MANUAL + '/Backup manual ' + seq + '.json';") >= 0, 'nome do manual = "Backup manual N.json"');
 ok(worker.indexOf('backup_seq_manual') >= 0 && worker.indexOf('ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1') >= 0, 'contador persistente na nuvem (system_meta) com incremento atômico');
 ok(worker.indexOf('chave = nomeBackupManual(await proximoSeqManual(env));') >= 0, 'backup manual usa o próximo número da nuvem');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.0'") >= 0, 'worker carimba v5.24.0');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.1'") >= 0, 'worker carimba v5.24.1');
+
+// 11) v5.24.1: backups dependem do USUÁRIO (cargo Admin/Dono), não do aparelho
+console.log('-- v5.24.1: backup por usuário admin, qualquer PC --');
+const patchSyncAux = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
+ok(worker.indexOf('async function requireUsuarioAdmin') >= 0, 'worker tem requireUsuarioAdmin');
+ok((worker.match(/await requireUsuarioAdmin\(request, env\);/g) || []).length === 5, 'as 5 rotas de backup trocaram para requireUsuarioAdmin');
+['handleBackupListar','handleBackupBaixar','handleBackupApagarUm','handleBackupApagarTodos','handleBackupAgora'].forEach(function(nome){
+  const i = worker.indexOf('async function ' + nome + '(request, env)');
+  const prox = worker.indexOf('async function ', i + 10);
+  const trecho = worker.slice(i, prox > 0 ? prox : undefined);
+  ok(trecho.indexOf('await requireUsuarioAdmin(request, env);') >= 0 && trecho.indexOf('await requireAdmin(request, env);') < 0, nome + ' usa prova do usuário');
+});
+ok(worker.indexOf("x-digicopy-usuario-login") >= 0 && worker.indexOf("x-digicopy-usuario-prova") >= 0 && worker.indexOf("cargo !== 'admin' && cargo !== 'dono'") >= 0, 'worker confere login + prova sha256 + cargo Admin/Dono');
+ok(patchSyncAux.indexOf("x-digicopy-usuario-prova") >= 0 && patchSyncAux.indexOf('async function provaUsuario') >= 0, 'app anexa a prova do usuário nas chamadas da nuvem');
+ok(patchBk.indexOf('usuarioAtualEhAdminBackup') >= 0 && patchBk.indexOf('🔒 Backups da nuvem: só usuário com cargo Admin') >= 0, 'tela Backup trava com cadeado quando o usuário não é Admin/Dono');
+ok(patchBk.indexOf('UPDATE devices SET role') < 0, 'cura por SQL de aparelho saiu do app (modelo novo não depende de aparelho)');
+seguroEmAmbos('usuarioAtualEhAdminBackup', 'trava de usuário-admin no app');
 
 // 3) item 3.2 extra worker: reset só depois de backup
 console.log('-- item 3.2: zerar a nuvem só com foto antes --');
@@ -106,9 +123,9 @@ fontes.forEach(function(f){
 });
 ok(manifest[manifest.length - 1] === 'ajustes_v5240_relatorio_grande_patch.js' && manifest.length === 195, 'manifest tem 195 scripts, último é o v5.24.0');
 ok(bundle.indexOf('scripts: 195 | sha256:') >= 0, 'header do bundle com 195 scripts + sha256 novo');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.0'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.0') >= 0, 'index.html na v5.24.0');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.0'") >= 0, 'mobile/www/index.html na v5.24.0');
-ok(pkg.version === '5.24.0', 'package.json v5.24.0');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.1'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.1') >= 0, 'index.html na v5.24.1');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.1'") >= 0, 'mobile/www/index.html na v5.24.1');
+ok(pkg.version === '5.24.1', 'package.json v5.24.1');
 
 if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.0'); process.exit(1); }
 console.log('\nTudo certo v5.24.0!');

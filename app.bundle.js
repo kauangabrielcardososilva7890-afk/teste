@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 195 | sha256: 640baed711fd5148
+ * scripts: 195 | sha256: 8f4410eb252fbcf3
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28854,12 +28854,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
   // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
   try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -47402,7 +47425,7 @@ function traduzErro(e){
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
-    return 'Este aparelho não está marcado como administrador da nuvem (seu LOGIN é admin, mas a autorização deste computador é outra coisa). Pra liberar, rode UMA vez no terminal: npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role=\'admin\'" — aí todo computador seu vira admin.';
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. A partir da v5.24.1 o que vale é o usuário (não o aparelho): entre com Kauan (Admin) ou Denivaldo (Dono) em qualquer computador para ver, baixar ou apagar backups.';
   return e && e.message || String(e);
 }
 
@@ -47486,10 +47509,39 @@ function baixarArquivo(nome, blob){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
 }
+// v5.24.1 — cargo do USUÁRIO logado (Admin/Dono = permissão total no sistema).
+function usuarioAtualEhAdminBackup(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess) return false;
+    const cargo=String(sess.perfil||'').trim().toLowerCase();
+    if(cargo==='admin'||cargo==='dono') return true;
+    // sessão pode ser mais velha que o cadastro (trocaram o cargo depois do login)
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&x.id===sess.usuarioId;});
+    const cargo2=String((u&&u.perfil)||'').trim().toLowerCase();
+    return cargo2==='admin'||cargo2==='dono';
+  }catch(e){ return false; }
+}
+// Prova do usuário para o download direto abaixo (fetch cru; os outros
+// endpoints passam pelo api() global, que já anexa a prova desde a v5.24.1).
+async function bkCabUsuario(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess||!sess.login) return {};
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&String(x.login||'').toLowerCase()===String(sess.login).toLowerCase();});
+    if(!u||!u.senha||typeof crypto==='undefined'||!crypto.subtle) return {};
+    const dados=new TextEncoder().encode(String(sess.login).toLowerCase()+'|'+String(u.senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    const prova=Array.from(new Uint8Array(digest),function(b){return b.toString(16).padStart(2,'0');}).join('');
+    return {'x-digicopy-usuario-login':String(sess.login).toLowerCase(),'x-digicopy-usuario-prova':prova};
+  }catch(e){ return {}; }
+}
+
 async function baixarUmBackup(chave){
   const call = api(); if(!call) throw new Error('API da nuvem não carregada.');
+  const cabUsuario = await bkCabUsuario();
   const resp = await fetch(window.DIGICOPY_CLOUD.API + '/v1/backup?key=' + encodeURIComponent(chave), {
-    headers: { authorization: 'Bearer ' + window.DIGICOPY_CLOUD.token() }
+    headers: Object.assign({ authorization: 'Bearer ' + window.DIGICOPY_CLOUD.token() }, cabUsuario)
   });
   if(!resp.ok){
     let msg = 'Erro HTTP ' + resp.status;
@@ -47695,6 +47747,17 @@ async function carregar(card){
 async function abrir(painelBody){
   const card = painelBody.querySelector('#dc-backups');
   if(!card) return;
+  // v5.24.1 — backup da nuvem depende do USUÁRIO (cargo Admin/Dono), não do
+  // aparelho. Sem cargo, a seção da nuvem mostra o cadeado e nem chama a API;
+  // a restauração por arquivo (seção de baixo) continua liberada para todos.
+  if(!usuarioAtualEhAdminBackup()){
+    card.innerHTML =
+      '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
+        '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com Kauan (Admin) ou Denivaldo (Dono) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+      '</div>';
+    return;
+  }
   card.innerHTML =
     '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
       '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +

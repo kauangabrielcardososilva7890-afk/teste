@@ -297,3 +297,20 @@ Causas raiz encontradas e extirpadas:
 ### Comandos que o dono roda UMA vez no PowerShell (qualquer pasta)
 1. `npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role='admin'"` — vira admin do APARELHO (destrava os botões de nuvem/backup; causa do 403).
 2. `cd cloudflare-worker` e `npx wrangler deploy` — sobe o worker 5.24.0 (numeração do manual + foto antes de zerar nuvem).
+
+## v5.24.1 — Backup: permissão pelo USUÁRIO (cargo), não pelo aparelho
+
+### Pedido do dono (palavras dele)
+- "eu não quero que algum aparelho vire admin, quero que somente o usuário que acessar que tenha o cargo admin possa baixar — qualquer pc pode baixar, irá depender apenas do usuário".
+
+### O que mudou
+- **Worker**: nova `requireUsuarioAdmin` substitui `requireAdmin` SÓ nas 5 rotas de backup (listar, baixar 1, apagar 1, apagar todos, fazer agora). O aparelho precisa estar autorizado na nuvem (como sempre); quem manda agora é o USUÁRIO: a nuvem confere `x-digicopy-usuario-login` + `x-digicopy-usuario-prova` (sha256 de `login|senha`) contra o cadastro `usuarios` sincronizado e exige perfil **Admin ou Dono** (os dois têm permissão total no sistema) e usuário ativo. Demais rotas admin (aparelhos, reset, auditoria) seguem no modelo antigo.
+- **App**: o `api()` global anexa a prova do usuário logado em toda chamada da nuvem (só quando há sessão+cadastro; inofensiva nas demais rotas). Download direto do backup (fetch cru) anexa também. Tela Backup: se o usuário NÃO é Admin/Dono, a seção da nuvem mostra 🔒 "Backups da nuvem: só usuário com cargo Admin" e nem chama a API; restauração por arquivo segue liberada. Aviso 403 trocou a cura-de-SQL pela orientação nova ("entre com Kauan (Admin) ou Denivaldo (Dono) em qualquer computador").
+- **Modelo antigo morreu**: nenhum `UPDATE devices` é mais necessário para backups. Se o dono rodou o comando que promovia todos os aparelhos, pode reverter para o padrão (só o 1º aparelho admin) com: `UPDATE devices SET role = CASE WHEN created_at = (SELECT MIN(created_at) FROM devices) THEN 'admin' ELSE 'device' END`.
+
+### Testes
+- `test_ajustes_v5240.js` ganhou bloco v5.24.1 (função nova, 5 trocas de rota, prova sha256+cargo, cadeado no app, SQL-cure removida) — verde; v52296 verde (asserts atualizados); worker pure verde; suíte 144/5-infra; bundles recriados byte-exatos (sha256 novo), raiz=mobile.
+
+### Comandos para o dono
+1. Deploy do worker: `cd cloudflare-worker` → `npx wrangler deploy` (obrigatório — a checagem mora na nuvem).
+2. (Opcional, só se rodou o UPDATE anterior) reverter aparelhos: `npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role = CASE WHEN created_at = (SELECT MIN(created_at) FROM devices) THEN 'admin' ELSE 'device' END"`.

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.0';
+const WORKER_VERSION = '5.24.1';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -110,6 +110,35 @@ async function requireAdmin(request, env) {
     throw new ApiError(403, 'ADMIN_REQUIRED', 'Somente o aparelho administrador pode realizar esta ação.');
   }
   return device;
+}
+
+// v5.24.1 — BACKUPS dependem do USUÁRIO logado, não do aparelho (pedido do dono:
+// "qualquer PC pode baixar, depende apenas do usuário"). O aparelho só precisa
+// estar autorizado na nuvem; quem manda é o cargo: perfil Admin ou Dono (os
+// dois têm permissão total no sistema). A prova é login + sha256(login|senha)
+// conferidos contra o cadastro sincronizado na nuvem.
+async function requireUsuarioAdmin(request, env) {
+  await authenticate(request, env);
+  const login = cleanText(request.headers.get('x-digicopy-usuario-login') || '', 80).toLowerCase();
+  const prova = String(request.headers.get('x-digicopy-usuario-prova') || '');
+  if (!login || !prova) {
+    throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Backups dependem do usuário: entre no sistema com um usuário de cargo Admin.');
+  }
+  const rows = await env.DB.prepare(
+    "SELECT data_json FROM records WHERE entity = 'usuarios' AND deleted_at IS NULL"
+  ).all();
+  for (const row of (rows.results || [])) {
+    let data = null;
+    try { data = JSON.parse(row.data_json); } catch (e) {}
+    if (!data) continue;
+    if (String(data.login || '').trim().toLowerCase() !== login) continue;
+    if (data.ativo === false) continue;
+    const cargo = String(data.perfil || data.cargo || '').trim().toLowerCase();
+    if (cargo !== 'admin' && cargo !== 'dono') continue;
+    const esperado = await sha256(login + '|' + String(data.senha || ''));
+    if (esperado === prova) return { login };
+  }
+  throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Somente usuários com cargo Admin podem ver, baixar ou apagar backups — em qualquer computador.');
 }
 
 function handlePix(url) {
@@ -1383,7 +1412,7 @@ function chaveBackupValida(chave){
 }
 
 async function handleBackupListar(request, env){
-  await requireAdmin(request, env);
+  await requireUsuarioAdmin(request, env);
   await garantirTabelaBackups(env);
   const r = await env.DB.prepare(
     `SELECT id, nome, pasta, tipo, tamanho_original, tamanho_gzip, registros, gerado_em
@@ -1410,7 +1439,7 @@ async function lerBackupCompleto(env, chave){
 }
 
 async function handleBackupBaixar(request, env){
-  await requireAdmin(request, env);
+  await requireUsuarioAdmin(request, env);
   await garantirTabelaBackups(env);
   const chave = new URL(request.url).searchParams.get('key') || '';
   if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
@@ -1429,7 +1458,7 @@ async function handleBackupBaixar(request, env){
 }
 
 async function handleBackupApagarUm(request, env){
-  await requireAdmin(request, env);
+  await requireUsuarioAdmin(request, env);
   await garantirTabelaBackups(env);
   const chave = new URL(request.url).searchParams.get('key') || '';
   if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
@@ -1441,7 +1470,7 @@ async function handleBackupApagarUm(request, env){
 }
 
 async function handleBackupApagarTodos(request, env){
-  await requireAdmin(request, env);
+  await requireUsuarioAdmin(request, env);
   await garantirTabelaBackups(env);
   // Apaga SOMENTE os backups (tabelas exclusivas de backup). Os dados do
   // sistema (records/changes) nunca são tocados aqui, e o ciclo continua:
@@ -1456,7 +1485,7 @@ async function handleBackupApagarTodos(request, env){
 
 async function handleBackupAgora(request, env){
   // Reforço ANTES de mexer em atualização: ciõa a foto na hora, como o dono pediu.
-  await requireAdmin(request, env);
+  await requireUsuarioAdmin(request, env);
   const corpo = await readBody(request).catch(() => ({}));
   const tipo = (corpo && corpo.tipo === 'atualizacao') ? 'atualizacao' : 'manual';
   let chave;

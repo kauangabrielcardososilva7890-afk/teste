@@ -104,7 +104,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.24.0'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.1'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -135,7 +135,7 @@ ok(bundle.indexOf('bk-aba-css') >= 0 && bundle.indexOf('digi-escuro .bk-card') >
 // 21) v5.23.8 — tela Backup no modelo do dono: 3 botões (manual → zip → excluir) + cura do 403 escrita no aviso + auto-backup de atualização é do worker
 ok(patch.indexOf('id="bk-atualizar"') < 0 && bundle.indexOf('id="bk-atualizar"') < 0, 'sem botão Atualizar (a lista recarrega sozinha ao abrir/após ações)');
 ok(patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') >= 0 && patch.indexOf('📸 Backup manual (nuvem + baixa no PC)') < patch.indexOf('📥 Baixar todos os backups (.zip)') && patch.indexOf('📥 Baixar todos os backups (.zip)') < patch.indexOf('🗑️ Excluir todos os backups da nuvem'), 'exatamente 3 botões na ordem do dono: manual → zip → excluir');
-ok(patch.indexOf('UPDATE devices SET role') >= 0, 'aviso de 403 agora entrega a cura (login-admin ≠ aparelho-admin)');
+ok(patch.indexOf('UPDATE devices SET role') < 0 && patch.indexOf('Seu USUÁRIO não tem cargo Admin') >= 0, 'v5.24.1: aviso de 403 agora diz que vale o USUÁRIO (não o aparelho)');
 ok(worker.indexOf('checarTrocaDeVersao') >= 0 && worker.indexOf('nomeBackupSistema') >= 0, 'backup a-cada-atualização roda sozinho no worker (foto da versão anterior)');
 ok(patch.indexOf('Só o aparelho administrador pode mexer nos backups') < 0 || patch.indexOf('Pra liberar, rode UMA vez') >= 0, 'mensagem velha substituída pela orientação');
 
