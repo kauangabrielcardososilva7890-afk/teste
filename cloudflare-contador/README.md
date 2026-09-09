@@ -54,8 +54,10 @@ https://digicopy-contador-uso.<SEU-SUBDOMINIO>.workers.dev/v1/medir
 ```
 
 Tem que aparecer `{"ok":true,"uso":{"leituras":...,"escritas":...}}`.
-Pronto: de 15 em 15 minutos ele mede sozinho, e o painel "Uso da nuvem hoje"
-do sistema passa a exibir **"medidor oficial da sua conta Cloudflare"**.
+Pronto: **sem cronômetro** (pedido seu, v5.23.4) — o sistema chama o medidor
+sozinho toda vez que você abre a tela de Backup e Nuvem, e o painel "Uso da
+nuvem hoje" passa a exibir **"medidor oficial da sua conta Cloudflare — medido
+agora"**. Quiser medir fora do sistema, é só abrir esse /v1/medir.
 
 ---
 

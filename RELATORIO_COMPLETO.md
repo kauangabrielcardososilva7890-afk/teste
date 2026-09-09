@@ -148,3 +148,33 @@
 
 ### Testes
 - Nenhum código alterado nesta rodada (só registro). Última bateria verde: estático 33 asserts; harness 16/16; suíte 149/149; bundle 194 scripts.
+
+## Medidor oficial sem cronômetro: mede quando o dono abre a tela — v5.23.4 🎯
+
+### Pedido do dono (palavras dele)
+- "nah, a cada 15 min n, so quando eu abrir aquele menu de backup" — nada de relógio medindo sozinho; a medida oficial acontece quando ELE abre a tela.
+
+### O que mudou
+- **cloudflare-contador/wrangler.jsonc:** `"triggers": { "crons": [] }` — o próximo deploy REMOVE o agendamento de 15 em 15 min. O endpoint `/v1/medir` continua (mede na hora sempre que chamado).
+- **Sistema:** ao abrir a tela de Nuvem (renderConnected) OU o menu Backup, o app "cutuca" o medidor (`GET /v1/medir`) ANTES de pedir o `/v1/status` — o painel "Uso da nuvem hoje" já nasce com o número oficial fresco ("medido agora, na abertura desta tela"). Trava de 3 min: abrir 10x seguidas não mede 10x. Se o medidor não responder, segue com a contagem estimada — nada quebra.
+- **Zero token no sistema** continua lei: o app só chama uma URL pública; o token vive no cofre do próprio medidor.
+- Worker principal carimbado `WORKER_VERSION = '5.23.4'`; README do contador atualizado.
+
+### Diagnóstico de hoje (prova real, com dados do dono)
+- Teste do token direto no PowerShell dele: **`"success":true`** — token novo com as 2 permissões (Account Analytics Read + D1 Read) funciona e localizou o banco `digicopy-erp` pela API.
+- Logo, o `LISTA_D1_FALHOU: 400` do /v1/medir vinha do **valor velho/errado guardado no cofre** do medidor — não do token. Correção: repetir o `secret put` com o valor certo (e novo, após o Roll).
+
+### Segurança — começo do token apareceu na conversa
+- O prefixo (`cfut_2ztn…`) veio colado junto do comando de teste. Prefixo sozinho não abre nada, mas a regra é regra: **colou = troca**. Passo combinado: **Roll** no token (menu ⋯ → Roll gera valor novo e mata o velho na hora) e usar o valor novo no `secret put`.
+- Account ID nos logs: sem risco (identificador público da conta; toda chamada exige token válido junto).
+
+### Ação do dono (tudo num terminal só)
+1. Baixar o zip 5.23.4 novo, extrair, apagar a pasta velha.
+2. Painel Cloudflare → ⋯ do token `digicopy-contador-uso` → **Roll** → copiar o valor novo.
+3. `cd cloudflare-contador` → `npx wrangler secret put CF_API_TOKEN` (cola o valor novo) → `npx wrangler deploy` (esse deploy também REMOVE o cronômetro).
+4. `cd ..\cloudflare-worker` → `npx wrangler deploy` (carimbo 5.23.4).
+5. Conferir: `/v1/medir` → `{"ok":true,...}`; `/health` → `"versao":"5.23.4"`.
+6. Abrir o sistema 5.23.4 → tela de Nuvem (ou menu Backup) → "medidor oficial … medido agora, na abertura desta tela".
+
+### Testes
+- Estático v52296: 37 asserts, "Tudo certo v5.23.4!"; suíte 149/149; bundle 194 scripts; sync:check ✔; verify_pack ✔; harness da aba 16/16.

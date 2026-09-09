@@ -1,10 +1,10 @@
-// Teste v5.23.3 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
+// Teste v5.23.4 — aba Backup normal + menu sempre abre a aba (modelo do sistema de menus + captura ampliada) + painel Nuvem mostra o uso
 // (diário 18:30 + a cada atualização + reforço manual), tabela só de backups,
 // compactado; baixar-todos (zip com pastas) e excluir-backups só do admin.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, msg){ if(cond){ console.log('  ok -', msg); } else { falhas++; console.log('  FALHOU -', msg); } }
-console.log('== v5.23.3 — menu Backup sempre abre a aba (modelo+captura) ==');
+console.log('== v5.23.4 — menu Backup sempre abre a aba (modelo+captura) ==');
 
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const wrangler = fs.readFileSync('cloudflare-worker/wrangler.jsonc', 'utf8');
@@ -103,10 +103,17 @@ ok(patch.indexOf("window.importBackup = function(){ abrirTelaBackup(); }") >= 0,
 ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'aba tem restaurar (arquivo → prévia → substituir/somar)');
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
-// 16) v5.23.3 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.23.3'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+// 16) v5.23.4 — nuvem responde qual código roda nela (/health e /v1/status)
+ok(worker.indexOf("const WORKER_VERSION = '5.23.4'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
+
+// 17) v5.23.4 — medidor oficial SEM cronômetro: mede quando o dono abre a tela (pedido dele)
+const contadorCfg = fs.readFileSync('cloudflare-contador/wrangler.jsonc', 'utf8');
+ok(contadorCfg.indexOf('"crons": []') >= 0, 'contador sem agendamento (lista de crons vazia = deploy remove o cronômetro de 15min)');
+ok(sync.indexOf('MEDIDOR_OFICIAL_URL') >= 0 && sync.indexOf('__dcUltPingMedidor') >= 0 && sync.indexOf('window.DC_chamarMedidorOficial') >= 0, 'app cutuca o medidor ao abrir a tela (sem token no sistema, trava de 3 min)');
+ok(sync.indexOf('const medidoAgora = await chamarMedidorOficial()') >= 0 && sync.indexOf('medido agora, na abertura desta tela') >= 0, 'tela mede ANTES de pedir o status e avisa "medido agora, na abertura desta tela"');
+ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também dispara a medida ao abrir');
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
@@ -115,4 +122,5 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
-console.log('\nTudo certo v5.23.3!');
+if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
+console.log('\nTudo certo v5.23.4!');

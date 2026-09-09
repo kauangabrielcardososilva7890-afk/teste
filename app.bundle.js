@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: c2adc3993d889ef4
+ * scripts: 194 | sha256: 62e777cb021948b1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28830,6 +28830,24 @@ try{
 'use strict';
 
 const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+// v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
+// mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
+// público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
+// próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
+// Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.kauangabrielcardososilva7890.workers.dev/v1/medir';
+async function chamarMedidorOficial(){
+  const agora = Date.now();
+  if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
+  window.__dcUltPingMedidor = agora;
+  try{
+    const r = await fetch(MEDIDOR_OFICIAL_URL, { cache: 'no-store' });
+    const j = await r.json().catch(() => null);
+    return !!(j && j.ok);
+  }catch(e){ return false; }
+}
+window.DC_chamarMedidorOficial = chamarMedidorOficial;
 const TOKEN_KEY = 'digicopy_cloud_device_token_v1';
 const DEVICE_KEY = 'digicopy_cloud_device_info_v1';
 
@@ -28977,7 +28995,10 @@ async function renderDisconnected(body){
 }
 
 async function renderConnected(body){
-  body.innerHTML=message('Verificando autorização deste computador...','info');
+  body.innerHTML=message('Medindo o uso oficial e verificando autorização deste computador...','info');
+  // v5.23.4 — mede quando a tela abre (pedido do dono); se o medidor não
+  // estiver implantado/responder, segue a vida com a contagem estimada.
+  const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
@@ -29024,7 +29045,7 @@ async function renderConnected(body){
       '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
       '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
       '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
-      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare — o mesmo número do painel dela'+(uso.medidoEm?', medido agora mesmo.':'.'):'contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.')+'</small>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare'+(medidoAgora?' — medido agora, na abertura desta tela (ele remede sozinho a cada abertura).':(uso.medidoEm?' — o mesmo número do painel dela, medido agora mesmo.':' — o mesmo número do painel dela.')):'contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.')+'</small>'+
       '</div>'
     : (contagemFalhou
       ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
@@ -47811,6 +47832,8 @@ function abrirTelaBackup(){
   if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;
   setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+  // v5.23.4 — dono pediu: medir o uso oficial quando ELE abre o menu (sem cronômetro)
+  if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.

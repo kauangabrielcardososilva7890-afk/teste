@@ -477,6 +477,8 @@ function abrirTelaBackup(){
   if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;
   setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+  // v5.23.4 — dono pediu: medir o uso oficial quando ELE abre o menu (sem cronômetro)
+  if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
 }
 
 // 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.

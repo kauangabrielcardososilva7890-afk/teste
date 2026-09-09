@@ -6,7 +6,10 @@
     "ACCOUNT_ID": "COLE_AQUI_O_ID_DA_SUA_CONTA",
     "D1_NOME": "digicopy-erp"
   },
-  "triggers": { "crons": ["*/15 * * * *"] },
+  // v5.23.4 — dono pediu SEM cronômetro: mede só quando ele abre a tela de
+  // Backup/Nuvem do sistema (o app chama /v1/medir na hora). Lista vazia =
+  // o próximo deploy REMOVE o agendamento de 15 em 15 min.
+  "triggers": { "crons": [] },
   "d1_databases": [
     {
       "binding": "DB",
