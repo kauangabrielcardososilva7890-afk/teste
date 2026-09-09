@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 195 | sha256: 8f4410eb252fbcf3
+ * scripts: 195 | sha256: 4155810dd1c141df
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -47425,7 +47425,7 @@ function traduzErro(e){
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
-    return 'Seu USUÁRIO não tem cargo Admin no sistema. A partir da v5.24.1 o que vale é o usuário (não o aparelho): entre com Kauan (Admin) ou Denivaldo (Dono) em qualquer computador para ver, baixar ou apagar backups.';
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin (ex.: Kauan) em qualquer computador para ver, baixar ou apagar backups.';
   return e && e.message || String(e);
 }
 
@@ -47509,17 +47509,19 @@ function baixarArquivo(nome, blob){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
 }
-// v5.24.1 — cargo do USUÁRIO logado (Admin/Dono = permissão total no sistema).
+// v5.24.2 — cargo do USUÁRIO logado: SOMENTE Admin (pedido final do dono:
+// "somente o admin vai ver os menus de nuvem e de backup; o cargo Dono não
+// vê nem a nuvem nem o backup"). Dono e os demais cargos ficam de fora.
 function usuarioAtualEhAdminBackup(){
   try{
     const sess=(typeof getSession==='function')?getSession():null;
     if(!sess) return false;
     const cargo=String(sess.perfil||'').trim().toLowerCase();
-    if(cargo==='admin'||cargo==='dono') return true;
+    if(cargo==='admin') return true;
     // sessão pode ser mais velha que o cadastro (trocaram o cargo depois do login)
     const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&x.id===sess.usuarioId;});
     const cargo2=String((u&&u.perfil)||'').trim().toLowerCase();
-    return cargo2==='admin'||cargo2==='dono';
+    return cargo2==='admin';
   }catch(e){ return false; }
 }
 // Prova do usuário para o download direto abaixo (fetch cru; os outros
@@ -47754,7 +47756,7 @@ async function abrir(painelBody){
     card.innerHTML =
       '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
         '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
-        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com Kauan (Admin) ou Denivaldo (Dono) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin (ex.: Kauan) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
       '</div>';
     return;
   }
@@ -48016,7 +48018,49 @@ function alternar(painelBody){
   abrir(painelBody);
 }
 
-window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
+// ──────────────────────────────────────────────────────────────────────────
+// v5.24.2 — VISIBILIDADE DOS MENUS Nuvem e Backup: só o cargo ADMIN vê os
+// dois menus (pedido final do dono: "somente o admin vai ver os menus de
+// nuvem e de backup; o Dono não vê nem a nuvem nem o backup"). IMPORTANTE: o
+// MOTOR de sincronização continua rodando em silêncio para TODO mundo —
+// escondemos só os botões, os dados dos outros caixas/PCs continuam fluindo.
+function aplicarVisibilidadeMenusNuvemBackup(){
+  try{
+    if(typeof document==='undefined') return true;
+    const ok=usuarioAtualEhAdminBackup();
+    const btnN=document.getElementById('btn-nuvem');
+    if(btnN){ const w1=btnN.closest('.module')||btnN; w1.style.display=ok?'':'none'; }
+    const btnB=document.getElementById('btn-backup-top');
+    if(btnB){ const w2=btnB.closest('.module')||btnB; w2.style.display=ok?'':'none'; }
+    // ícone de download direto no cabeçalho (exportBackup puro) — também é backup
+    const icones=document.querySelectorAll('button[onclick="exportBackup()"]');
+    for(let i=0;i<icones.length;i++){ icones[i].style.display=ok?'':'none'; }
+    return ok;
+  }catch(e){ return true; } // em dúvida não esconde: evita sumir o menu do Admin por erro bobo
+}
+try{
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aplicarVisibilidadeMenusNuvemBackup);
+  else aplicarVisibilidadeMenusNuvemBackup();
+}catch(e){}
+// guarda permanente: login/logout/troca de usuário repinta a tela — reavalia sempre
+if(!window.__v5242visMenus){ window.__v5242visMenus=setInterval(aplicarVisibilidadeMenusNuvemBackup,2000); }
+// trava extra: mesmo que alguém force a tela da Nuvem sem cargo Admin, ela não abre
+(function travaTelaNuvem(){
+  if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuvem.__v5242){
+    const antiga=window.abrirCloudflareNuvem;
+    window.abrirCloudflareNuvem=async function(){
+      if(!usuarioAtualEhAdminBackup()){
+        if(typeof window.toast==='function') window.toast('🔒 O menu Nuvem é só para usuário com cargo Admin.');
+        return;
+      }
+      return antiga.apply(this,arguments);
+    };
+    window.abrirCloudflareNuvem.__v5242=true;
+  }
+  if(!(typeof window.abrirCloudflareNuvem==='function' && window.abrirCloudflareNuvem.__v5242)) setTimeout(travaTelaNuvem,800);
+})();
+
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, aplicarVisibilidadeMenus: aplicarVisibilidadeMenusNuvemBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 })();
 

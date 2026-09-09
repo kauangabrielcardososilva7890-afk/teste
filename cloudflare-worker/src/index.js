@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.1';
+const WORKER_VERSION = '5.24.2';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -17,7 +17,7 @@ const JSON_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao',
+  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova',
   'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
   'access-control-max-age': '86400'
 };
@@ -112,11 +112,12 @@ async function requireAdmin(request, env) {
   return device;
 }
 
-// v5.24.1 — BACKUPS dependem do USUÁRIO logado, não do aparelho (pedido do dono:
+// v5.24.2 — BACKUPS dependem do USUÁRIO logado, não do aparelho (pedido do dono:
 // "qualquer PC pode baixar, depende apenas do usuário"). O aparelho só precisa
-// estar autorizado na nuvem; quem manda é o cargo: perfil Admin ou Dono (os
-// dois têm permissão total no sistema). A prova é login + sha256(login|senha)
-// conferidos contra o cadastro sincronizado na nuvem.
+// estar autorizado na nuvem; quem manda é o cargo: SOMENTE o perfil Admin —
+// v5.24.2: o dono pediu que o cargo Dono NÃO veja mais os menus de Nuvem e de
+// Backup. A prova é login + sha256(login|senha) conferidos contra o cadastro
+// sincronizado na nuvem.
 async function requireUsuarioAdmin(request, env) {
   await authenticate(request, env);
   const login = cleanText(request.headers.get('x-digicopy-usuario-login') || '', 80).toLowerCase();
@@ -134,7 +135,7 @@ async function requireUsuarioAdmin(request, env) {
     if (String(data.login || '').trim().toLowerCase() !== login) continue;
     if (data.ativo === false) continue;
     const cargo = String(data.perfil || data.cargo || '').trim().toLowerCase();
-    if (cargo !== 'admin' && cargo !== 'dono') continue;
+    if (cargo !== 'admin') continue;
     const esperado = await sha256(login + '|' + String(data.senha || ''));
     if (esperado === prova) return { login };
   }

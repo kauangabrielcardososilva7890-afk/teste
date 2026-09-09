@@ -314,3 +314,25 @@ Causas raiz encontradas e extirpadas:
 ### Comandos para o dono
 1. Deploy do worker: `cd cloudflare-worker` → `npx wrangler deploy` (obrigatório — a checagem mora na nuvem).
 2. (Opcional, só se rodou o UPDATE anterior) reverter aparelhos: `npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role = CASE WHEN created_at = (SELECT MIN(created_at) FROM devices) THEN 'admin' ELSE 'device' END"`.
+
+## v5.24.2 — Nuvem de volta no ar (CORS) + menus Nuvem/Backup SÓ para Admin
+
+### Bug que ele viu na tela (causa real)
+- Depois da v5.24.1 o app passou a anexar `x-digicopy-usuario-login` / `x-digicopy-usuario-prova` em TODA chamada da nuvem, mas o worker não liberava esses dois cabeçalhos no CORS (`access-control-allow-headers`). O navegador bloqueava o preflight de TUDO → menu Backup: "Sem conexão com a nuvem. Verifique a internet." • tela Nuvem: "⚠️ O código da nuvem está ANTIGO (não responde a versão)". O /health respondia OK por curl (sem preflight), por isso o deploy parecia certo e a tela dizia o contrário.
+- **Cura (worker)**: allow-headers ampliado com os dois cabeçalhos da prova do usuário. Deploy obrigatório (a lista mora na nuvem).
+
+### Pedido final de permissão (palavras dele, corrigindo a própria confusão)
+- "somente o admin vai ver os MENUS de cada, só vai ver os menus de nuvem e os menus de backup" — o cargo **Dono NÃO vê mais nem a nuvem nem o backup**.
+
+### O que mudou
+- **Menus**: novo `aplicarVisibilidadeMenusNuvemBackup()` (patch 52296) esconde `#btn-nuvem` e `#btn-backup-top` (com seus wrappers `.module`) e o ícone de download `exportBackup()` do cabeçalho para qualquer sessão que NÃO seja cargo **Admin**. Reavalia sozinho a cada 2s (login, logout, troca de usuário). **O motor de sincronização continua rodando em silêncio para TODO mundo** — só os botões somem; os dados dos outros caixas/PCs seguem fluindo.
+- **Travas**: `usuarioAtualEhAdminBackup()` passou a aceitar SOMENTE `admin` (Dono saiu, nas duas checagens: sessão e cadastro); tela da Nuvem ganhou trava `__v5242` (mesmo forçando a abertura sem Admin, aparece 🔒 e não abre); cadeado do Backup e mensagem de 403 não citam mais o Dono.
+- **Worker**: `requireUsuarioAdmin` passou a exigir SOMENTE perfil Admin (`cargo !== 'admin'`); WORKER_VERSION 5.24.2. Demais rotas admin (aparelhos, reset, auditoria) inalteradas.
+
+### Testes
+- `test_ajustes_v5240.js`: bloco v5.24.2 novo (linha CORS completa, Dono fora do gate do app e do worker, helper de visibilidade + trava da tela, textos sem Dono, visibilidade presente nos 2 bundles) — verde. `test_ajustes_v52296.js`: assert de CORS atualizado — verde. Worker test-pure verde.
+- Bundle recriado byte-exato (sha256 `4155810dd1c141df`; fragmentos de fontes não alteradas provados byte-idênticos ao bundle anterior; raiz = mobile).
+- Suíte: **157 passaram**; falham só os mesmos de ambiente/legado que já falhavam no HEAD limpo (acorn ausente: test_app_bundle/test_build_sync/test_runner/v5228/v52263/v52265; fontes ausentes do sandbox: correcoes_relatorio/vendas_chamados_reparo; legado v5188 — provado com git stash que falha igual sem minhas edições). sync_build OK (v5.24.2 | 195 | 0 soltos).
+
+### Comando para o dono (obrigatório)
+1. `npx.cmd wrangler deploy` dentro da pasta `cloudflare-worker` (do zip novo) — sobe CORS + regra Admin.

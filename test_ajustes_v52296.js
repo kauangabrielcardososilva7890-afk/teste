@@ -22,7 +22,7 @@ ok(worker.indexOf("PASTA_DIARIO + '/Backup '") >= 0 && worker.indexOf("PASTA_ATU
 // 2) guarda dentro da nuvem que ele já usa (sem precisar habilitar R2)
 ok(wrangler.indexOf('r2_buckets') < 0, 'R2 removido do deploy (nada de ativar plano/cartão)');
 ok(wrangler.indexOf('"30 21 * * *"') >= 0, 'relógio 21:30 UTC = 18:30 São Paulo mantido');
-ok(worker.indexOf("x-digicopy-versao',") >= 0, 'CORS autoriza o header de versão (senão o navegador bloqueava o preflight e a nuvem ficava "ocupada" eternamente)');
+ok(worker.indexOf('x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova') >= 0, 'CORS autoriza versão + prova do usuário (senão o navegador bloqueava o preflight e a nuvem ficava "ocupada"/"sem conexão" eternamente)');
 ok(worker.indexOf("'GET, POST, DELETE, OPTIONS'") >= 0, 'CORS permite DELETE (botões de apagar backup)');
 ok(worker.indexOf('CREATE TABLE IF NOT EXISTS backups') >= 0 && worker.indexOf('garantirTabelaBackups') >= 0, 'tabela só de backups se autocria — não mistura com dados do sistema');
 ok(worker.indexOf('gzipTexto') >= 0 && worker.indexOf('gunzipBytes') >= 0, 'backup grava compactado e baixa idêntico');
@@ -104,7 +104,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.24.1'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.2'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
