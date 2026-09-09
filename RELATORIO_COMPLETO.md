@@ -259,3 +259,41 @@
 
 ### Testes
 - Estático v52296: 51 asserts, "Tudo certo v5.23.8!"; sync:check ✔; suíte verde fora os 5 de infra do sandbox.
+
+## v5.24.0 — RELATÓRIO GRANDE do dono (backup, vendas, PERDA DE DADOS, orçamentos, clientes)
+
+### Como foi conduzido (regra dele: "dúvidas pergunto antes")
+3 perguntas feitas ANTES de mexer, respostas dele aplicadas: (1) manter o 📥 .zip — o botão duplicado era o manual QUE NÃO IA PRA NUVEM (o clássico local) → esse saiu; (2) extorno marca "Extornada" e fica no histórico; (3) liberado mexer no worker (ele roda o deploy no fim).
+
+### 1° Backup
+- **1.1/1.2** tela fica só com os 3 botões da nuvem (📸 manual nuvem+PC • 📥 .zip de todos • 🗑️ excluir c/ 2 confirmações). REMOVIDO o "💾 Baixar backup para este PC" (o manual separado que NÃO ia pra nuvem — o duplicado que ele apontou). A **restauração por arquivo fica** (porta de entrada nunca pode sumir), agora em seção própria "📥 Restaurar a partir de um arquivo de backup".
+- **1.3 (worker)** manual passa a sair numerado: `Backup manual/Backup manual 1.json`, `2`... — contador persistente `backup_seq_manual` em system_meta (upsert com incremento), nunca repete mesmo excluindo, igual código de cliente/venda. ⚠️ **precisa do deploy do worker**.
+
+### 2° Atendimento > Vendas
+- **2.1** atalho "Nova venda" removido do menu do topo (raiz + mobile). Criar venda segue dentro de Consultar notinhas.
+- **2.2** criado o **Extornar**: botão "↩ Extornar" na MESMA barra do Excluir (mesma caixa de seleção `venda-check-lote` ou linha selecionada; só entram FATURADAS). TAMBÉM curado o botão "Estornar" do detalhe da notinha — ele chamava `estornarVenda()` que **não existia (botão morto)**; agora a função existe. Espelho exato do faturamento: status vira 'estornada' (o sistema já previa e mostra "Venda estornada"), contas a receber da venda são desfeitas (pagas/à vista incluídas, com aviso de conferir o caixa), **estoque intocado** (faturar não mexia nele). Bônus: o Excluir já liberava após extorno ("Estorne a venda primeiro…") — fluxo agora completo de verdade.
+
+### 3° PERDA DE DADOS (prioridade máxima — "não posso perder os dados") 
+Causas raiz encontradas e extirpadas:
+- **A varredura assassina** (`varrerRessuscitadas`, v52261): removia vendas/orçamentos do array por guardas locais __orcBloqueio ( exclusas de CADA PC) e o saveDB seguinte virava DELETE na fila de envio → registro apagado na nuvem e em todos os PCs. Era o "criei a venda e ela sumiu" + "cada PC mostra uns dados". DESLIGADA de vez (no-op).
+- **Conflito de push**: antes, ao disputar com outro PC, a edição local era descartada em SILÊNCIO. Agora: aplica o estado da nuvem e REENVIA a intenção 1x com baseVersion nova; só cede em concorrência real repetida, e avisa no sino.
+- **Reconciliação do 1º aparelho**: só remove "sobras locais" se o pull da nuvem terminou completo (`state.initialPull`) — internet caída no meio não apaga mais dado legítimo.
+- **(worker) zerar a nuvem** agora tira uma foto COMPLETA antes ("Backup seguranca/Backup antes de zerar a nuvem <data> <hora>.json"); se o backup falhar, o reset não acontece.
+
+### 4° Orçamentos
+- **4.1** "cliente não encontrado mesmo selecionando": o salvar-cliente abortava quando o id de edição era velho/fantasma (referência que já não estava na lista) e PERDIA o digitado; agora cai para CADASTRO NOVO com os mesmos dados em vez de travar.
+- **4.2** "orçamento não encontrado nesse computador": o abrir-orçamento ganhou wrap — antes de desistir, puxa a nuvem (tick do sync) e tenta de novo 2x; mensagem final orienta (internet / excluído no outro aparelho não volta).
+
+### 5° Clientes
+- **5.1** botão "Importar clientes" + input + função `importarClientesJsonFinal` REMOVIDOS (cadastro só manual).
+
+### Engenharia (desta vez diferente)
+- Sandbox sem acorn → reescrito `app.bundle.js` de forma **byte-exata a partir das fontes** (script temporário próprio que replica o build_bundle.js, modos lidos do bundle atual; sha256 do header RECOMPUTADO). Antes: hotpatch manual. Agora fonte⇄bundle provados byte-a-byte em teste (`test_ajustes_v5240.js`, 40+ asserts) e `sync_build.js` rodado (scripts.check/build.files derivados do manifest com o arquivo novo).
+- Testes de suíte legados que falhavam por POSIÇÃO no manifest (v52284-87/93/95) atualizados para a fila nova (195 scripts; último = v5240), comentando o motivo.
+
+### Testes
+- `test_ajustes_v5240.js`: "Tudo certo v5.24.0!" • `test_ajustes_v52296.js`: "Tudo certo v5.23.8!" (asserts de tela/posição ajustados à nova realidade) • worker test-pure.mjs ✔ (manual numerado) • suíte: **144 passaram / 5 falharam = as mesmas 5 de infra do sandbox (acorn/node-forge/electron ausentes)** • sync:check ✔ • bundles raiz/mobile idênticos.
+
+### Comandos que o dono roda UMA vez no PowerShell (qualquer pasta)
+1. `npx wrangler d1 execute digicopy-erp --remote --command "UPDATE devices SET role='admin'"` — vira admin do APARELHO (destrava os botões de nuvem/backup; causa do 403).
+2. `cd cloudflare-worker` e `npx wrangler deploy` — sobe o worker 5.24.0 (numeração do manual + foto antes de zerar nuvem).

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.23.8';
+const WORKER_VERSION = '5.24.0';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -766,6 +766,11 @@ async function handleResetCloud(request, env) {
     env.DB.prepare('SELECT COUNT(*) AS total FROM records'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM changes')
   ]);
+  // v5.24.0 — zerar a nuvem SÓ depois de guardar uma foto completa dela na
+  // pasta "Backup seguranca". Se o backup falhar, o reset NÃO acontece
+  // (os dados da empresa valem mais que qualquer comando).
+  const agoraSp = new Date();
+  await gerarBackup(env, 'Backup seguranca/Backup antes de zerar a nuvem ' + dataArquivoSP(agoraSp) + ' ' + horaArquivoSP(agoraSp) + '.json', { tipo: 'seguranca' });
   const now = Date.now();
   const generation = crypto.randomUUID();
   await env.DB.batch([
@@ -1183,7 +1188,7 @@ async function route(request, env, ctx) {
 // exclusiva de backups, criada sozinha — NÃO mistura com os dados do sistema):
 //   📁 Backup diario       → Backup 08-09-2026.json
 //   📁 Backup atualizações → Backup sistema 5.22.95.json  (foto da versão anterior)
-//   📁 Backup manual       → Backup 08-09-2026 19h20.json (reforço antes de mexer)
+//   📁 Backup manual       → Backup manual 1.json, Backup manual 2.json... (número nunca repete)
 // A limpeza é MANUAL pelos botões do administrador — nunca apaga sozinho.
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1214,8 +1219,24 @@ function nomeBackupSistema(versaoAnterior){
   return PASTA_ATUALIZACOES + '/Backup sistema ' + String(versaoAnterior || '').trim() + '.json';
 }
 
-function nomeBackupManual(agora){
-  return PASTA_MANUAL + '/Backup ' + dataArquivoSP(agora) + ' ' + horaArquivoSP(agora) + '.json';
+function nomeBackupManual(seq){
+  // v5.24.0 — manual numerado, como o dono pediu: "Backup manual 1, 2, 3..."
+  // e o número NUNCA se repete, mesmo excluindo os arquivos (igual ao código
+  // de clientes/vendas). O contador mora na nuvem e vale para todos os PCs.
+  return PASTA_MANUAL + '/Backup manual ' + seq + '.json';
+}
+
+async function proximoSeqManual(env){
+  // Contador persistente do manual (upsert em system_meta).
+  const agora = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES ('backup_seq_manual', '1', ?)
+     ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = ?`
+  ).bind(agora, agora).run();
+  const linha = await env.DB.prepare(
+    "SELECT value FROM system_meta WHERE key = 'backup_seq_manual' LIMIT 1"
+  ).first();
+  return Number(linha && linha.value) || 1;
 }
 
 function compararVersao(a, b){
@@ -1443,7 +1464,7 @@ async function handleBackupAgora(request, env){
     const versao = cleanText((corpo && corpo.versao) || '', 40) || 'sem-numero';
     chave = nomeBackupSistema(versao + ' (antes de mexer)');
   } else {
-    chave = nomeBackupManual(new Date());
+    chave = nomeBackupManual(await proximoSeqManual(env));
   }
   const r = await gerarBackup(env, chave, { tipo: tipo === 'atualizacao' ? 'sistema' : 'manual', versaoAnterior: corpo && corpo.versao || undefined });
   return json({ ok: true, backup: r.nome, registros: r.registros });

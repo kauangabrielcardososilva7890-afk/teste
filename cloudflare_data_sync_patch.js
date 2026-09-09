@@ -276,6 +276,11 @@ function decideReinstallGuard(opts){
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
+  // v5.24.0 — só remove "sobras locais" quando o puxamento da nuvem terminou
+  // DE VERDADE. Se a internet caiu no meio, state.known fica incompleto e a
+  // reconciliação APAGARIA dados legítimos deste computador (e a remoção
+  // local vira delete na fila de envio → apagaria na nuvem também).
+  if(!state.initialPull)return 0;
   let removed=0;
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
@@ -525,8 +530,20 @@ async function pushOutbox(){
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
         remove.add(item.mutation.mutationId);sent++;
       }else if(result.conflict){
-        rememberConflict(item,result);
+        // v5.24.0 — conflito NÃO descarta mais a edição local de cara. Antes:
+        // aceitava o estado da nuvem e jogava a mutação fora em silêncio —
+        // era um caminho de "salvei e sumiu" quando dois PCs mexiam juntos.
+        // Agora: aplica o estado atual da nuvem e REENVIA a mesma intenção
+        // uma vez, com baseVersion atualizada. Só cede se mudarem de novo
+        // (concorrência real — última escrita vence), e avisa no sino.
         if(result.current)applyRemote({entity:result.current.entity,recordId:result.current.recordId,data:result.current.data,version:result.current.version,operation:result.current.deletedAt?'delete':'upsert'});
+        if(!item.retryV5240){
+          item.retryV5240=true;
+          if(result.current){item.mutation=Object.assign({},item.mutation,{baseVersion:Number(result.current.version)||0});}
+          continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
+        }
+        rememberConflict(item,result);
+        try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);remove.add(item.mutation.mutationId);

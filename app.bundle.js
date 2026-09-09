@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 194 | sha256: 62e777cb021948b1
+ * scripts: 195 | sha256: 640baed711fd5148
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -7859,7 +7859,12 @@ window.saveCliente = function(){
   let alvo = null;
   if(id){
     alvo = db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    if(!alvo) return toast('Cliente não encontrado','error');
+    // v5.24.0 — id velho/fantasma (o cliente sumiu da lista ou o modal ficou
+    // com referência antiga): em vez de abortar com "Cliente não encontrado"
+    // e PERDER tudo o que foi digitado, cai para o cadastro NOVO abaixo.
+    if(!alvo) id = null;
+  }
+  if(alvo){
     payload.codigo = alvo.codigo;
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);
@@ -19174,29 +19179,8 @@ window.ordenarClientesFinal=function(col){
 };
 window.buscarClientesFinal=function(){ window.__clientesTodosFinal=false; window.__clientesBuscaFinal=txt(document.getElementById('clientes-busca-final')?.value); window.__clientesCampoFinal=txt(document.getElementById('clientes-campo-final')?.value)||'nome'; renderClientes(); };
 window.clientesMostrarTodos=function(){ window.__clientesTodosFinal=true; window.__clientesBuscaFinal=''; window.__clientesCampoFinal='nome'; window.__clientesStatusFinal='ativos'; window.__clientesSortFinal=window.__clientesSortFinal||{col:'codigo',dir:'asc'}; renderClientes(); };
-window.importarClientesJsonFinal=async function(){
-  const s=sess(); if(!s) return;
-  const input=document.getElementById('clientes-json-input');
-  const files=Array.from(input?.files||[]);
-  if(!files.length){ toastMsg('Selecione CLIENTES.json e/ou CLIENTES_FINAL.json','error'); return; }
-  const importer = (window.SISTEMA_CLIENTES_LOJA_PURE && window.SISTEMA_CLIENTES_LOJA_PURE.importarClientesDeObjetos);
-  if(typeof importer !== 'function'){ toastMsg('Importador indisponível nesta versão.','error'); return; }
-  const arquivos=[];
-  for(const f of files){
-    try{ arquivos.push({nome:f.name,json:JSON.parse(await f.text())}); }
-    catch(e){ toastMsg('Erro lendo '+f.name+': '+e.message,'error'); }
-  }
-  if(!arquivos.length) return;
-  const r=importer(db,arquivos,s.empresaId);
-  if(typeof saveDB==='function') saveDB();
-  if(typeof renderClientes==='function') renderClientes();
-  const st=document.getElementById('clientes-import-status');
-  if(st){ st.style.display='block'; st.innerHTML=`✅ <b>${r.importados}</b> importados • <b>${r.atualizados}</b> atualizados • <b>${r.ignorados}</b> ignorados • Próximo código: <b>${r.ultimoCodigo+1}</b>`; }
-  const msg='Importação concluída:\n\n• Importados: '+r.importados+'\n• Atualizados: '+r.atualizados+'\n• Ignorados: '+r.ignorados+'\n\nTotal de clientes agora: '+r.total;
-  if(typeof window.lfbAlert==='function') window.lfbAlert(msg,'Clientes importados');
-  else toastMsg(msg,'success');
-  input.value='';
-};
+/* v5.24.0 — botão "Importar clientes" e suas funções REMOVIDOS a pedido do
+   dono (cadastro > clientes fica só com cadastro manual). */
 
 window.renderClientes=function(){
   const s=sess(); if(!s) return;
@@ -19216,7 +19200,7 @@ window.renderClientes=function(){
   const seta=col=>sort.col===col?(sort.dir==='asc'?' ▲':' ▼'):'';
   const th=(col,label)=>`<th onclick="ordenarClientesFinal('${col}')" class="cursor-pointer select-none hover:text-[#0a1e8a]">${label}${seta(col)}</th>`;
   const vazioMsg=deveListar?'Nenhum cliente encontrado com esse filtro.':'Pesquise ou escolha um filtro para listar os clientes. A lista não abre tudo por padrão para ficar leve.';
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="document.getElementById('clientes-json-input').click()" class="neo-btn"><i class="ph ph-upload-simple"></i>Importar clientes</button><input id="clientes-json-input" type="file" accept=".json,application/json" multiple style="display:none" onchange="importarClientesJsonFinal()"></div></div><div id="clientes-import-status" class="mx-4 mt-2 text-[12px]" style="display:none"></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
   const csel=document.getElementById('clientes-campo-final'); if(csel) csel.value=campo;
   const ssel=document.getElementById('clientes-status-final'); if(ssel) ssel.value=status;
 };
@@ -29475,6 +29459,11 @@ function decideReinstallGuard(opts){
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
+  // v5.24.0 — só remove "sobras locais" quando o puxamento da nuvem terminou
+  // DE VERDADE. Se a internet caiu no meio, state.known fica incompleto e a
+  // reconciliação APAGARIA dados legítimos deste computador (e a remoção
+  // local vira delete na fila de envio → apagaria na nuvem também).
+  if(!state.initialPull)return 0;
   let removed=0;
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
@@ -29724,8 +29713,20 @@ async function pushOutbox(){
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
         remove.add(item.mutation.mutationId);sent++;
       }else if(result.conflict){
-        rememberConflict(item,result);
+        // v5.24.0 — conflito NÃO descarta mais a edição local de cara. Antes:
+        // aceitava o estado da nuvem e jogava a mutação fora em silêncio —
+        // era um caminho de "salvei e sumiu" quando dois PCs mexiam juntos.
+        // Agora: aplica o estado atual da nuvem e REENVIA a mesma intenção
+        // uma vez, com baseVersion atualizada. Só cede se mudarem de novo
+        // (concorrência real — última escrita vence), e avisa no sino.
         if(result.current)applyRemote({entity:result.current.entity,recordId:result.current.recordId,data:result.current.data,version:result.current.version,operation:result.current.deletedAt?'delete':'upsert'});
+        if(!item.retryV5240){
+          item.retryV5240=true;
+          if(result.current){item.mutation=Object.assign({},item.mutation,{baseVersion:Number(result.current.version)||0});}
+          continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
+        }
+        rememberConflict(item,result);
+        try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);remove.add(item.mutation.mutationId);
@@ -46321,22 +46322,19 @@ if(typeof window.excluirOrcamentosMarcados==='function' && !window.excluirOrcame
 }
 
 function varrerRessuscitadas(){
-  var _db = getDb();
-  if(!_db) return;
-  bloqueio(_db);
-  var mudou = false;
-  if(Array.isArray(_db.vendas)){
-    var nv = _db.vendas.filter(function(v){ return vendaPodeFicar(v, _db); });
-    if(nv.length!==_db.vendas.length){ _db.vendas = nv; mudou = true; }
-  }
-  if(Array.isArray(_db.orcamentos)){
-    var no = _db.orcamentos.filter(function(o){ return orcamentoPodeFicar(o, _db); });
-    if(no.length!==_db.orcamentos.length){ _db.orcamentos = no; mudou = true; }
-  }
-  if(mudou && typeof saveDB==='function') saveDB();
+  // v5.24.0 — DESATIVADO DE VEZ. Esta varredura REMOVIA vendas/orçamentos do
+  // array com base em guardas gravadas SÓ neste computador (__orcBloqueio) e
+  // em seguida dava saveDB(): a remoção virava DELETE na fila de envio para a
+  // nuvem e apagava o registro DE VERDADE em todos os PCs. Era a causa de
+  // "criei a venda e ela sumiu" e de cada computador mostrar dados diferentes.
+  // Exclusões reais já chegam pela nuvem como operação delete (e orçamento,
+  // desde a 5.22.92, nunca some — vira status 'excluido' no applyRemote).
+  if(window.__V5240_DEBUG){ try{ console.log('[DIGICOPY] varrerRessuscitadas desativado na v5.24.0'); }catch(e){} }
+  return;
 }
 
-setTimeout(varrerRessuscitadas, 800);
+/* v5.24.0 — sem agendamento da varredura (era setTimeout(..., 800)): nada de
+   filtrar os arrays por guarda local. */
 /* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){
@@ -47858,19 +47856,20 @@ function abrirTelaBackup(){
       '<div class="bk-sec-head" style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small class="bk-sub" style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
       '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
     '</div>' +
+    // v5.24.0 — o "💾 Baixar backup para este PC" (manual SÓ local, que não ia
+    // pra nuvem) foi REMOVIDO a pedido do dono: era o botão duplicado. Ficam os
+    // 3 da nuvem (📸 manual nuvem+PC, 📥 .zip de todos, 🗑️ excluir todos) e,
+    // aqui embaixo, só a RESTAURAÇÃO a partir de arquivo — a porta de entrada
+    // dos dados, que nunca pode sumir.
     '<div class="bk-sec" style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
-      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small class="bk-sub" style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
-      '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
-        '<div class="bk-dashed" style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b class="bk-title" style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
-        '<div style="margin-top:6px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
-        '<div id="bk-rest-prev" style="margin-top:6px"></div></div>' +
-        '<small class="bk-note" style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
+      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">📥 Restaurar a partir de um arquivo de backup</div>' +
+      '<div style="padding:12px">' +
+        '<div style="margin-top:2px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div>' +
+        '<small class="bk-note" style="color:#64748b">Escolha aqui um arquivo de backup baixado antes (o manual .json ou o conteúdo do .zip) para restaurar os dados neste computador.</small>' +
       '</div>' +
     '</div>' + '</div>',
     '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
-  const pcBtn = document.getElementById('bk-pc-baixar');
-  if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
   const restInp = document.getElementById('bk-rest-arq');
   if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;
@@ -47961,15 +47960,223 @@ console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
 ;
 
+/* ===== ajustes_v5240_relatorio_grande_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES v5.24.0 — RELATÓRIO GRANDE DO DONO
+//
+// Cobre, junto com as edições nas fontes já existentes:
+//   1.2 Backup: tela sem o botão local duplicado (edição no ajustes_v52296) e
+//       numeração sequencial no worker ("Backup manual 1, 2, 3...").
+//   2.1 Atalho "Nova venda" removido do menu (index.html).
+//   2.2 Extorno ESTE ARQUIVO: window.estornarVenda (o botão do detalhe chamava
+//       uma função que não existia — botão morto) + estornarVendasSelecionadas
+//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Extornar" na barra.
+//       Modo escolhido pelo dono: marca "Extornada" (fica no histórico), desfaz
+//       o financeiro (contas a receber da venda), NÃO mexe no estoque (o
+//       faturamento também não mexia — ele baixa quando a venda nasce).
+//   3.x Perda de dados: varrerRessuscitadas desativado (ajustes_v52261),
+//       conflito de push com 1 reenvio (cloudflare_data_sync), reconciliação
+//       só com pull completo (cloudflare_data_sync), backup antes de zerar a
+//       nuvem (worker).
+//   4.1 "cliente não encontrado" ao salvar cliente com id velho → vira
+//       cadastro novo em vez de abortar (clientes_patch).
+//   4.2 Orçamento não encontrado neste PC → busca na nuvem e tenta de novo.
+//   5.1 Botão "Importar clientes" e funções removidos (finalizacao_sistema).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.24.0';
+
+function low(v){ return String(v==null?'':v).toLowerCase(); }
+function DB(){ if(typeof db!=='undefined' && db) return db; if(typeof window!=='undefined' && window.db) return window.db; return {}; }
+
+// ── 2.2 EXTORNO ─────────────────────────────────────────────────────────────
+function ehFaturada(st){
+  var s = low(st);
+  return s==='faturado' || s==='finalizada' || s==='concluido' || s==='pago';
+}
+
+// Espelho do faturamento (vosConcluirFaturamento): o faturar só mexia em
+// status + contas a receber (parcelas ou à vista). O estorno desfaz só isso.
+function estornarUmaVenda(v){
+  if(!v || !ehFaturada(v.status)) return null;
+  var sess = typeof getSession==='function' ? getSession() : null;
+  var antes = low(v.status);
+  var arr = (DB().contasReceber || []);
+  var titulos = arr.filter(function(c){ return c && c.vendaId === v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  DB().contasReceber = arr.filter(function(c){ return !(c && c.vendaId === v.id); });
+  v.status = 'estornada';
+  v.estornoDe = antes;
+  v.estornadoEm = new Date().toISOString();
+  v.estornadoPor = (sess && sess.usuarioNome) || '-';
+  v.parcelas = [];
+  v.formaPagamento = 'Não faturado';
+  if(typeof logAction==='function') logAction('venda','estornar',v.id,'Estornada venda '+v.numero+' (era '+antes+') — '+titulos.length+' título(s) desfeito(s), '+pagos+' já pago(s), por '+v.estornadoPor);
+  return { titulos: titulos.length, pagos: pagos };
+}
+
+function acharVenda(id){
+  var v = (DB().vendas || []).find(function(x){ return x && x.id===id; });
+  if(!v && typeof vosLegadosVendas==='function'){
+    try{
+      var sess = typeof getSession==='function' ? getSession() : null;
+      v = (vosLegadosVendas(sess) || []).find(function(x){ return x && x.id===id; });
+    }catch(e){}
+  }
+  return v || null;
+}
+
+function renderDepois(){
+  if(typeof saveDB==='function') saveDB();
+  if(typeof renderVendas==='function') renderVendas();
+  if(typeof renderFinanceiro==='function') renderFinanceiro();
+  if(typeof renderAuditoria==='function') renderAuditoria();
+}
+
+function aviso(txt, titulo){
+  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Extornar'); return; }
+  if(typeof toast==='function'){ toast(txt, 'info'); return; }
+  if(typeof alert==='function') alert(txt);
+}
+function confirma(txt, titulo, cb){
+  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Extornar venda').then(cb); return; }
+  cb(typeof confirm==='function' ? confirm(txt) : true);
+}
+
+// Individual — o botão "Estornar" do detalhe da venda já CHAMAVA
+// estornarVenda(...), mas a função não existia em lugar nenhum: botão morto.
+window.estornarVenda = function(id){
+  var v = acharVenda(id);
+  if(!v){ aviso('Venda não encontrada.', 'Extornar'); return; }
+  if(!ehFaturada(v.status)){
+    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para extornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Extornar');
+    return;
+  }
+  var titulos = (DB().contasReceber || []).filter(function(c){ return c && c.vendaId===v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  confirma('Extornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela serão desfeitas (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + ').\n• Ela fica marcada como "Extornada" no histórico.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Extornar venda', function(ok){
+    if(!ok) return;
+    estornarUmaVenda(v);
+    renderDepois();
+    if(typeof showVenda==='function') showVenda(v.id);
+    if(typeof toast==='function') toast('Venda extornada', 'success');
+  });
+};
+
+// Em lote — a mesma caixa de seleção do Excluir (checkboxes venda-check-lote
+// ou a linha selecionada). Só vendas FATURADAS entram; o resto é avisado.
+window.estornarVendasSelecionadas = function(){
+  var checks = Array.prototype.slice.call(document.querySelectorAll('input[name="venda-check-lote"]:checked'));
+  var alvos = [];
+  if(checks.length){
+    alvos = checks.map(function(ch){ return acharVenda(ch.value); }).filter(Boolean);
+  }else{
+    var selId = window.neoVendaSelecionada || window.vendaSelecionadaId;
+    if(selId){ var unica = acharVenda(selId); if(unica) alvos = [unica]; }
+  }
+  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para extornar.', 'Extornar vendas'); return; }
+  var faturadas = alvos.filter(function(x){ return ehFaturada(x.status); });
+  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Extornar vendas'); return; }
+  var puladas = alvos.length - faturadas.length;
+  confirma('Extornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas serão desfeitas (as já pagas/à vista também — confira o caixa depois).\n• Ficam marcadas como "Extornada" no histórico.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Extornar vendas', function(ok){
+    if(!ok) return;
+    var n = 0, tit = 0, pagos = 0;
+    faturadas.forEach(function(v){
+      var r = estornarUmaVenda(v);
+      if(r){ n++; tit += r.titulos; pagos += r.pagos; }
+    });
+    renderDepois();
+    window.neoVendaSelecionada = null; window.vendaSelecionadaId = null;
+    if(typeof toast==='function') toast(n + ' venda(s) extornada(s) • ' + tit + ' título(s) desfeito(s)' + (pagos ? ' (' + pagos + ' à vista — confira o caixa)' : ''), 'success');
+  });
+};
+
+// Botão "Extornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
+// que é injetado como #btn-excluir-venda-unificado na .neo-actions).
+function garantirBotaoExtornar(){
+  try{
+    if(typeof document==='undefined') return;
+    var view = document.getElementById('view-vendas');
+    if(!view) return;
+    var actions = view.querySelector('.neo-actions');
+    if(!actions) return;
+    if(actions.querySelector('#btn-estornar-venda')) return;
+    var btn = document.createElement('button');
+    btn.id = 'btn-estornar-venda';
+    btn.className = 'neo-btn';
+    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Extornar';
+    btn.onclick = window.estornarVendasSelecionadas;
+    var exc = actions.querySelector('#btn-excluir-venda-unificado');
+    if(exc) actions.insertBefore(btn, exc); else actions.appendChild(btn);
+  }catch(e){}
+}
+if(typeof window!=='undefined' && typeof window.renderVendas==='function' && !window.renderVendas.__v5240ext){
+  var _renderVendasAntes = window.renderVendas;
+  window.renderVendas = function(){
+    var r = _renderVendasAntes.apply(this, arguments);
+    try{ setTimeout(garantirBotaoExtornar, 60); }catch(e){}
+    return r;
+  };
+  window.renderVendas.__v5240ext = true;
+}
+if(typeof document!=='undefined'){
+  setTimeout(garantirBotaoExtornar, 1600);
+  setInterval(garantirBotaoExtornar, 3000);
+}
+
+// ── 4.2 ORÇAMENTO NÃO ENCONTRADO NESTE PC ───────────────────────────────────
+// Antes de declarar que não achou, puxa a nuvem (tick da sincronização) e
+// tenta de novo até 2 vezes. Resolve o "existe no outro PC, aqui não abre".
+if(typeof window!=='undefined' && typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v5240){
+  var _abrirOrcAntes = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(){
+    var arg = arguments[0] || {};
+    var id = arg && arg.id;
+    if(!id) return _abrirOrcAntes.apply(this, arguments);
+    var existe = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+    if(existe) return _abrirOrcAntes.apply(this, arguments);
+    var self = this, args = arguments, tent = 0;
+    if(typeof toast==='function') toast('Buscando o orçamento na nuvem…', 'info');
+    (function tente(){
+      var chegou = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+      if(chegou){ _abrirOrcAntes.apply(self, args); return; }
+      if(tent >= 2){
+        if(typeof window.lfbAlert==='function') window.lfbAlert('Orçamento não encontrado neste computador — nem depois de buscar na nuvem. Confira a internet e tente de novo em alguns segundos; se ele foi EXCLUÍDO em outro aparelho, ele não volta.', 'Orçamento');
+        return;
+      }
+      tent++;
+      var p = null;
+      try{ if(window.DIGICOPY_CLOUD_SYNC && window.DIGICOPY_CLOUD_SYNC.tick) p = window.DIGICOPY_CLOUD_SYNC.tick('orc-nao-achado'); }catch(e){}
+      Promise.resolve(p).catch(function(){}).then(function(){ setTimeout(tente, 900); });
+    })();
+    return undefined;
+  };
+  window.abrirTelaOrcamento.__v5240 = true;
+}
+
+window.V5240_RELATORIO_PURE = { VERSAO: VERSAO, ehFaturada: ehFaturada, estornarUmaVenda: estornarUmaVenda };
+if(typeof module!=='undefined' && module.exports){ module.exports = window.V5240_RELATORIO_PURE; }
+
+if(typeof document!=='undefined' && typeof console!=='undefined' && console.log){
+  console.log('[DIGICOPY] v' + VERSAO + ': extorno individual + em lote (botão nas notinhas), orçamento com retry de nuvem');
+}
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5240_relatorio_grande_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 194;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 195;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 194 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 195 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

@@ -51,9 +51,10 @@ console.log('  ✔ diário mora na pasta "Backup diario"');
 assert.equal(__test.nomeBackupSistema('5.22.95'), 'Backup atualizações/Backup sistema 5.22.95.json');
 console.log('  ✔ backup de atualização mora na pasta "Backup atualizações", nome da versão anterior');
 
-const manual = __test.nomeBackupManual(dia);
-assert.ok(manual.indexOf('Backup manual/Backup 08-09-2026 ') === 0 && manual.endsWith('.json'));
-console.log('  ✔ reforço manual mora na pasta "Backup manual", com data e hora');
+const manual = __test.nomeBackupManual(1);
+assert.equal(manual, 'Backup manual/Backup manual 1.json');
+assert.equal(__test.nomeBackupManual(12), 'Backup manual/Backup manual 12.json');
+console.log('  ✔ reforço manual numerado (v5.24.0): "Backup manual N.json" — o número nunca se repete');
 
 // 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
 const madrugada = new Date('2026-09-09T00:30:00Z');

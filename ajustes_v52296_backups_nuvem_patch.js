@@ -503,19 +503,20 @@ function abrirTelaBackup(){
       '<div class="bk-sec-head" style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small class="bk-sub" style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
       '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
     '</div>' +
+    // v5.24.0 — o "💾 Baixar backup para este PC" (manual SÓ local, que não ia
+    // pra nuvem) foi REMOVIDO a pedido do dono: era o botão duplicado. Ficam os
+    // 3 da nuvem (📸 manual nuvem+PC, 📥 .zip de todos, 🗑️ excluir todos) e,
+    // aqui embaixo, só a RESTAURAÇÃO a partir de arquivo — a porta de entrada
+    // dos dados, que nunca pode sumir.
     '<div class="bk-sec" style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
-      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">💾 Backup no PC <small class="bk-sub" style="color:#64748b;font-weight:700">(o clássico de sempre)</small></div>' +
-      '<div style="padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<button type="button" id="bk-pc-baixar" style="' + estiloBtn(true) + '">💾 Baixar backup para este PC (.json)</button>' +
-        '<div class="bk-dashed" style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1"><b class="bk-title" style="font-size:12px;color:#0f172a">📥 Restaurar a partir de um arquivo de backup</b>' +
-        '<div style="margin-top:6px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
-        '<div id="bk-rest-prev" style="margin-top:6px"></div></div>' +
-        '<small class="bk-note" style="color:#64748b">Baixa agora um arquivo com TODOS os dados deste computador — bom pra levar no HD externo também.</small>' +
+      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">📥 Restaurar a partir de um arquivo de backup</div>' +
+      '<div style="padding:12px">' +
+        '<div style="margin-top:2px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div>' +
+        '<small class="bk-note" style="color:#64748b">Escolha aqui um arquivo de backup baixado antes (o manual .json ou o conteúdo do .zip) para restaurar os dados neste computador.</small>' +
       '</div>' +
     '</div>' + '</div>',
     '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
-  const pcBtn = document.getElementById('bk-pc-baixar');
-  if(pcBtn) pcBtn.onclick = function(){ try{ (window.exportarBackupJSON || window.exportBackup)(); }catch(e){ window.lfbAlert && window.lfbAlert('Falha no backup do PC.','Backup'); } };
   const restInp = document.getElementById('bk-rest-arq');
   if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
   const raiz = document.getElementById('modal-box') || document.body;

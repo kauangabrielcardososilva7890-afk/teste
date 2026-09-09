@@ -54,7 +54,7 @@ ok('revalidar exposto na janela', /window\.revalidarLinkOrcamento = revalidarLin
 ok('revalidar gera token novo e volta pra aberto', /o\.token = 'orc_tok_'/.test(o58) && /o\.status = 'aberto';/.test(o58));
 
 console.log('== CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups)', manifest.length === 194);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups; v5.24.0 soma o relatório grande)', manifest.length === 195);
 ok('versão 5.22.x', /^5\.\d+\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.87 passaram!');

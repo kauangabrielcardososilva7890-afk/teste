@@ -192,5 +192,6 @@
   "vendas_financeiro_pendente_patch.js",
   "ajustes_v52293_orcamento_guardiao_patch.js",
   "ajustes_v52295_venda_volta_patch.js",
-  "ajustes_v52296_backups_nuvem_patch.js"
+  "ajustes_v52296_backups_nuvem_patch.js",
+  "ajustes_v5240_relatorio_grande_patch.js"
 ]
