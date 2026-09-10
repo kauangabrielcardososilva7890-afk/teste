@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: aafdb176fc73e93f
+ * scripts: 196 | sha256: e75011c44b120370
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -32043,7 +32043,6 @@ function menusPadrao(){
   return [
     {id:'inicio', icon:'ph-house', label:'Início', click:'navigateTo(\'dashboard\')'},
     {id:'atendimento', icon:'ph-cash-register', label:'Atendimento', click:'navigateTo(\'vendas\')', items:[
-      {id:'nova-venda', icon:'ph-shopping-cart-simple', label:'Nova venda', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
       {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Consultar notinhas', click:'navigateTo(\'vendas\')'},
       {id:'abrir-chamado', icon:'ph-wrench', label:'Abrir chamado', click:'openQuickOS()'}
     ]},
@@ -44086,7 +44085,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         +'<option value="nome">Descrição</option>'
         +'<option value="marca">Marca</option>'
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
@@ -44485,7 +44484,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -44701,7 +44700,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
         +CAMPOS_RECARGA.map(function(rc){ return '<option value="'+esc(rc[0])+'">'+esc(rc[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar item"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
@@ -44994,7 +44993,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -45448,7 +45447,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
           +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
           +CAMPOS_RECARGA.map(function(r){ return '<option value="'+esc(r[0])+'">'+esc(r[1])+'</option>'; }).join('')
           +'</select>'
-          +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+          +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
           +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div>'
           +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
@@ -48165,7 +48164,7 @@ function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('
 function removerRegistro(sub, id){
   const banco=_dbx();
   if(sub==='venda'){
-    const v=((banco.vendas)||[]).find(function(x){return x.id===id;}); if(!v) return false;
+    const v=((banco.vendas)||[]).find(function(x){return String(x.id)===String(id);}); if(!v) return false;
     const stt=String(v.status||'').toLowerCase();
     if(/faturad|finalizad|conclu|pago/.test(stt)) return 'pula'; // faturada: só sai estornando antes (regra do sistema)
     try{ (v.itens||[]).forEach(function(it){ const p=((banco.produtos)||[]).find(function(x){return x.id===it.produtoId;}); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque=(p.estoque||0)+(Number(it.qtd)||0); }); }catch(e){}
@@ -48179,7 +48178,7 @@ function removerRegistro(sub, id){
     return true;
   }
   if(sub==='orcamento'){
-    const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    const o=((banco.orcamentos)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
     // v5.24.5 — ordem dele: deletar é DE VEZ. Sai daqui, a nuvem recebe o
     // comando de apagar e os outros PCs apagam também (sem marca-fantasma).
     db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;});
@@ -48187,13 +48186,13 @@ function removerRegistro(sub, id){
     return true;
   }
   if(sub==='chamado'){
-    const o=((banco.os)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    const o=((banco.os)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
     db.os=(banco.os||[]).filter(function(x){return x.id!==id;});
     logCli('excluir_chamado',id,'Chamado excluído pela ficha do cliente');
     return true;
   }
   if(sub==='leitura'){
-    const l=((banco.leituras)||[]).find(function(x){return x.id===id;}); if(!l) return false;
+    const l=((banco.leituras)||[]).find(function(x){return String(x.id)===String(id);}); if(!l) return false;
     db.leituras=(banco.leituras||[]).filter(function(x){return x.id!==id;});
     logCli('excluir_leitura',id,'Leitura excluída pela ficha do cliente');
     return true;
@@ -48204,25 +48203,40 @@ window.clitabExcluir=function(){
   const st=window.__clitab; if(!st) return;
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{}); if(!ids.length) return;
-  if(typeof confirm==='function' && !confirm('Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'?')) return;
-  let feitos=0, pulados=0;
-  ids.forEach(function(id){
-    try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
-    catch(e){ pulados++; }
-  });
-  st.sel[sub]={};
-  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
-  try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
-  try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-  window.clitabSub(sub);
-  if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(feitos?'':'')+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':'')) : ''), feitos?'success':'info');
+  const pergunta='Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'? É DE VEZ: some da tela, deste PC e dos outros PCs pela nuvem.';
+  function executar(){
+    // v5.24.6 — avisa o motor da nuvem que a exclusão é INTENCIONAL: se um
+    // puxão trouxer o registro de volta nos próximos 60s, ele é apagado de
+    // novo automaticamente (era o "não exclui" da foto 3).
+    try{ if(window.DIGICOPY_EXCLUSAO_INTENCIONAL) window.DIGICOPY_EXCLUSAO_INTENCIONAL(); }catch(_){}
+    let feitos=0, pulados=0;
+    ids.forEach(function(id){
+      try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
+      catch(e){ pulados++; }
+    });
+    st.sel[sub]={};
+    try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+    try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
+    try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
+    try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+    window.clitabSub(sub);
+    if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':' — já não estava neste PC (lista atualizada)')) : ''), feitos?'success':'info');
+  }
+  // popup do PRÓPRIO sistema (pedido dele — nunca o cinza do navegador)
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(pergunta,'Excluir de vez').then(function(ok){ if(ok) executar(); }); return; }
+  if(typeof confirm==='function' && confirm(pergunta)) executar();
 };
 window.clitabExtornar=function(){
   const st=window.__clitab; if(!st||st.sub!=='vendas') return;
   const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabExtornarAgora(ids); }); return; }
+  window.__clitabExtornarAgora(ids);
+};
+window.__clitabExtornarAgora=function(ids){
+  const st=window.__clitab; if(!st) return;
   let feitas=0, puladas=0;
   ids.forEach(function(id){
-    const v=((_dbx().vendas)||[]).find(function(x){return x.id===id;});
+    const v=((_dbx().vendas)||[]).find(function(x){return String(x.id)===String(id);});
     const stt=String((v&&v.status)||'').toLowerCase();
     if(stt!=='faturado' || typeof window.estornarVenda!=='function'){ puladas++; return; }
     try{ window.estornarVenda(id); feitas++; }catch(e){ puladas++; }
@@ -48271,7 +48285,7 @@ window.clitabAbrirRegistro=function(tipo, id){
     if(typeof navigateTo==='function') navigateTo('vendas');
     depois(200,function(){ if(typeof window.showVenda==='function') window.showVenda(id); });
   }else if(tipo==='financeiro'){
-    const c=((_dbx().contasReceber)||[]).find(function(x){return x.id===id;})||{};
+    const c=((_dbx().contasReceber)||[]).find(function(x){return String(x.id)===String(id);})||{};
     if(typeof navigateTo==='function') navigateTo('financeiro');
     depois(250,function(){
       if(typeof setFinTab==='function') setFinTab('receber');
@@ -48279,7 +48293,7 @@ window.clitabAbrirRegistro=function(tipo, id){
       if(b && c.descricao!=null){ b.value=c.descricao; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
     });
   }else if(tipo==='orcamento'){
-    const o=((_dbx().orcamentos)||[]).find(function(x){return x.id===id;});
+    const o=((_dbx().orcamentos)||[]).find(function(x){return String(x.id)===String(id);});
     if(o && typeof window.abrirTelaOrcamento==='function') window.abrirTelaOrcamento(o);
     else if(typeof navigateTo==='function') navigateTo('orcamentos');
   }else if(tipo==='chamado'){

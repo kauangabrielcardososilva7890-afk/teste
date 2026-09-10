@@ -21,16 +21,17 @@ const pad=M.menusPadrao();
 const salvo={
   ordem:['cadastros','inicio','atendimento','locacao','nfe','financeiro','buscador','config','backup','nuvem','sair'],
   nomes:{cadastros:'Cadastros'},
-  sub:{atendimento:{'nova-venda':'Venda nova'}},
-  subOrdem:{atendimento:['abrir-chamado','notinhas','nova-venda']},
+  sub:{atendimento:{'notinhas':'Notinhas'}},
+  subOrdem:{atendimento:['abrir-chamado','notinhas']},
   ocultos:{nfe:true},
   ocultosSub:{cadastros:{recargas:true}}
 };
 const layout=S.aplicarLayout(pad, salvo);
 ok('cadastros no começo', layout[0].id==='cadastros');
 const at=layout.find(x=>x.id==='atendimento');
-ok('submenu reordenado', at.items[0].id==='abrir-chamado' && at.items[2].id==='nova-venda');
-ok('nome do submenu', at.items[2].label==='Venda nova');
+ok('submenu reordenado', at.items[0].id==='abrir-chamado' && at.items[1].id==='notinhas');
+ok('nova-venda não volta nem com ordem salva antiga (v5.24.6)', !at.items.some(i=>i.id==='nova-venda'));
+ok('nome do submenu', at.items[1].label==='Notinhas');
 ok('NF-e marcada oculta', layout.find(x=>x.id==='nfe').oculto===true);
 // v5.22.77: Recargas não é mais submenu de Cadastros.
 ok('recargas não é mais submenu de cadastros', !layout.find(x=>x.id==='cadastros').items.some(i=>i.id==='recargas'));
@@ -43,7 +44,7 @@ const adm=S.menusParaUsuario(layout, true);
 ok('admin ainda vê NF-e', adm.some(x=>x.id==='nfe'));
 
 const cat=S.catalogoDeSubmenus(pad);
-ok('catálogo tem submenu Nova venda', cat.some(a=>a.id==='nova-venda'));
+ok('catálogo sem o submenu Nova venda (v5.24.6)', !cat.some(a=>a.id==='nova-venda'));
 ok('catálogo não tem mais Recargas', !cat.some(a=>a.id==='recargas'));
 ok('catálogo não é só o menu Atendimento', !cat.some(a=>a.id==='atendimento') && cat.some(a=>a.menuId==='atendimento'));
 

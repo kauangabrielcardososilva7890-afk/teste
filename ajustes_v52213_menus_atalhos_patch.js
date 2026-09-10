@@ -21,7 +21,6 @@ function menusPadrao(){
   return [
     {id:'inicio', icon:'ph-house', label:'Início', click:'navigateTo(\'dashboard\')'},
     {id:'atendimento', icon:'ph-cash-register', label:'Atendimento', click:'navigateTo(\'vendas\')', items:[
-      {id:'nova-venda', icon:'ph-shopping-cart-simple', label:'Nova venda', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
       {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Consultar notinhas', click:'navigateTo(\'vendas\')'},
       {id:'abrir-chamado', icon:'ph-wrench', label:'Abrir chamado', click:'openQuickOS()'}
     ]},

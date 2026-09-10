@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.5**  
+**Última versão:** **v5.24.6**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.5>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.6>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,27 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.6 (2026-09-10)
+
+1. **2.1 de verdade de verdade:** o "Nova venda" vivo era o atalho do **menu
+   lateral** (bloco Atendimento, `ajustes_v52213_menus_atalhos_patch.js`).
+   Removido do menu padrão; a ordem salva dele no PC é ignorada sozinha (o
+   motor de ordem só trabalha em cima do padrão). Criar venda continua pelo
+   atalho **Nova notinha** do Início.
+2. **4.1/4.2 de verdade:** o formulário de **orçamento** usava o placeholder
+   "Digite para buscar..." — o guardião de segurança da tela de venda escuta
+   esse texto e travava tudo com "Cliente Não Selecionado" mesmo com o cliente
+   escolhido (a venda usava a base nova, o orçamento não). Placeholder trocado
+   nas 3 camadas do orçamento: busca e adiciona item em paz.
+3. **5.x com popup próprio + exclusão que vence a nuvem:** Excluir/Estornar
+   agora usam o **popup do sistema** (`confirmSistema` — nunca o cinza do
+   navegador); ao excluir, o motor da nuvem é avisado que foi INTENCIONAL e
+   desfaz sozinho qualquer "ressuscitação" do puxão em até 60s, com empurrão
+   do delete na hora + id tolerante a string/número. Era o "não exclui".
+   Suite: 163 verdes; 6 falhas são artefatos pré-existentes do sandbox.
 
 ---
 
