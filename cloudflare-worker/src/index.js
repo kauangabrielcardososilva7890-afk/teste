@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.4';
+const WORKER_VERSION = '5.24.5';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -529,6 +529,22 @@ async function handlePush(request, env, ctx) {
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
+  // FREIO PREVENTIVO DA COTA (v5.24.5) — a ordem do dono é "nunca deixar
+  // estourar". O plano grátis corta TUDO no teto de 100 mil escritas/dia
+  // e só volta na virada (21h em Brasília). Aqui a própria nuvem para de
+  // aceitar gravação um pouco ANTES do teto (folga de segurança) e devolve
+  // uma pausa amigável: o app guarda as mudanças no PC e reenvia sozinho.
+  // A mensagem carrega as palavras "daily row write limit" de propósito:
+  // é assim que o app reconhece a pausa e mostra o aviso em português.
+  const LIMITE_ESCRITA_DIA = 95000;
+  try {
+    const usoAgora = await env.DB.prepare('SELECT escritas AS w FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    const escritasAteAgora = Number((usoAgora && usoAgora.w) || 0);
+    const estimativaDesteLote = mutations.length * 2; // cada alteração grava o registro + o evento
+    if (escritasAteAgora + estimativaDesteLote > LIMITE_ESCRITA_DIA) {
+      return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
+    }
+  } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
   const results = [];
   for (let index = 0; index < mutations.length; index++) {
     try {

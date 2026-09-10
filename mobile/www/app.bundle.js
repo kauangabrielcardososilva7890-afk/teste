@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: b7b207030b89c0df
+ * scripts: 196 | sha256: aafdb176fc73e93f
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -3838,7 +3838,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const total=list.reduce((s,v)=>s+(v.total||0),0);
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white flex flex-wrap items-center gap-3"><input type="hidden" id="neo-tab-vendas" value="${tab}"><div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div><input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[280px]" placeholder="Pesquisar por código, cliente, usuário..."><div class="text-right text-[12px] text-slate-500 min-w-[130px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div></div>
         <div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th></tr></thead><tbody>${list.map(v=>{const c=db.clientes.find(x=>x.id===v.clienteId)||{}; return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="showVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c.codigo||'-'} • ${escapeHtml(c.documento||'')}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml((v.criadoPorNome||'-').split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
       </div>
@@ -4109,7 +4109,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const situacoes=[...new Set(base.map(v=>v.status||'aguardar'))].sort();
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white space-y-2">
           <input type="hidden" id="neo-tab-vendas" value="${tab}">
           <div class="flex flex-wrap items-center gap-3">
@@ -6287,7 +6287,7 @@ window.renderVendas = function(){
   const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">
@@ -47917,14 +47917,35 @@ if(typeof document!=='undefined' && typeof console!=='undefined' && console.log)
 //
 // Reforço 4.1: qualquer erro inesperado ao salvar o cliente NÃO fecha a tela
 // e NÃO perde o digitado — mostra o motivo exato num aviso vermelho.
+//
+// v5.24.5 (nova rodada dele):
+//  • Excluir é DE VEZ (some da tela, do PC e da nuvem — orçamento inclusive,
+//    sem marca-fantasma); o que estava excluído NUNCA mais aparece na lista;
+//  • cada linha mostra o STATUS igual ao módulo de origem (Salva, Faturada,
+//    Estornada, Em aberto...);
+//  • a ficha sempre abre em Dados — o botão Salvar nunca mais some;
+//  • clicar num registro que já não existe atualiza a lista e avisa, em vez
+//    de abrir o módulo às cegas;
+//  • 4.1 curado de vez: a busca de cliente da venda refaz o índice sozinha
+//    quando a base troca por baixo, e o clique se CURA com o dado da própria
+//    busca (1ª tentativa não falha mais).
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── núcleo puro (testável no Node, sem tela) ────────────────────────────────
 const CLITAB_PURE = {
   filtra: function(db, colecao, clienteId, empresaId){
     return (((db||{})[colecao])||[]).filter(function(x){
-      return !!x && x.clienteId===clienteId && (!empresaId || x.empresaId===empresaId);
+      if(!x || x.clienteId!==clienteId || (empresaId && x.empresaId!==empresaId)) return false;
+      if(x.deletedAt || x.excluido===true) return false;                 // v5.24.5: apagado de vez não aparece
+      if(String(x.status||'').toLowerCase()==='excluido') return false;  // idem marcações antigas
+      return true;
     });
+  },
+  // rótulo + cor do status IGUAIS ao módulo de origem (v5.24.5)
+  chipStatus: function(status){
+    const s=String(status==null||status===''?'salvo':status).toLowerCase();
+    const map={faturado:['Faturada','bg-green-100 text-green-700'],faturada:['Faturada','bg-green-100 text-green-700'],pago:['Pago','bg-green-100 text-green-700'],quitado:['Pago','bg-green-100 text-green-700'],finalizado:['Finalizado','bg-green-100 text-green-700'],aprovado:['Aprovado','bg-green-100 text-green-700'],estornada:['Estornada','bg-amber-100 text-amber-700'],estornado:['Estornado','bg-amber-100 text-amber-700'],aguardando:['Aguardando','bg-amber-100 text-amber-700'],andamento:['Em andamento','bg-amber-100 text-amber-700'],analise:['Em análise','bg-amber-100 text-amber-700'],vencido:['Vencido','bg-red-100 text-red-700'],cancelado:['Cancelado','bg-red-100 text-red-700'],orcamento:['Orçamento','bg-sky-100 text-sky-700'],aberto:['Em aberto','bg-blue-100 text-blue-700'],aberta:['Aberta','bg-blue-100 text-blue-700'],salvo:['Salva','bg-blue-100 text-blue-700'],rascunho:['Salva','bg-blue-100 text-blue-700'],pendente:['Pendente','bg-blue-100 text-blue-700']};
+    return map[s]||[String(status),'bg-slate-100 text-slate-600'];
   },
   contagens: function(db, clienteId, empresaId){
     const f=CLITAB_PURE.filtra;
@@ -47965,6 +47986,7 @@ function _data(d){ try{ if(typeof fmtDate==='function') return fmtDate(d); }catc
 function _dataHora(d){ try{ if(typeof fmtDateTime==='function') return fmtDateTime(d); }catch(e){} return _data(d); }
 function _esc(s){ try{ if(typeof escapeHtml==='function') return escapeHtml(String(s==null?'':s)); }catch(e){} return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function _sess(){ try{ return (typeof getSession==='function'?getSession():null)||{}; }catch(e){ return {}; } }
+function chipStatusHtml(status){ const m=CLITAB_PURE.chipStatus(status); return '<span class="px-1.5 py-0.5 rounded '+m[1]+' font-bold text-[10px] uppercase tracking-wide shrink-0">'+_esc(m[0])+'</span>'; }
 function _dbx(){ return (typeof db!=='undefined'&&db)||{}; }
 
 const ABAS = [
@@ -47986,7 +48008,9 @@ function montarAbasCliente(id){
   if(typeof document==='undefined') return;
   const body=document.getElementById('modal-body'); if(!body) return;
   const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab : null;
-  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:(anterior&&anterior.aba)||'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
+  // v5.24.5: a ficha SEMPRE abre em Dados (o botão Salvar nunca some de novo);
+  // só o sub-menu do Histórico lembra a última escolha — isso não esconde botão.
+  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
 
   // embrulha o formulário que a tela já montou como a aba "Dados"
   const paneDados=document.createElement('div');
@@ -48019,8 +48043,8 @@ function montarAbasCliente(id){
   body.appendChild(holder);
 
   window.clitabAbrir('dados');
-  if(anterior && anterior.aba==='historico'){ try{ window.clitabAbrir('historico'); }catch(e){} }
 }
+
 
 function pintarBarra(){
   const st=window.__clitab; if(!st) return;
@@ -48088,28 +48112,28 @@ function renderSub(sub){
   if(sub==='vendas'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('vendas'),'data');
     html=list.map(function(v){
-      return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), _esc(v.formaPagamento||'')+' • '+_esc(v.status||'')+' • por '+_esc(v.criadoPorNome||'-'));
+      return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), chipStatusHtml(v.status)+' '+_esc(v.formaPagamento||'')+' • por '+_esc(v.criadoPorNome||'-'));
     }).join('')||vazioAba('venda');
   }else if(sub==='financeiro'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('contasReceber'),'vencimento');
     html=list.map(function(c){
-      return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), 'vence '+_data(c.vencimento)+' • '+_esc(c.status||'')+' • '+_esc(c.origem||''));
+      return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), chipStatusHtml(c.status)+' vence '+_data(c.vencimento)+' • '+_esc(c.origem||''));
     }).join('')||vazioAba('conta a receber');
   }else if(sub==='orcamentos'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('orcamentos'),'data');
     html=list.map(function(o){
-      return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), _esc(o.status||'')+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
+      return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), chipStatusHtml(o.status)+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
     }).join('')||vazioAba('orçamento');
   }else if(sub==='chamados'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('os'),'dataAbertura');
     html=list.map(function(o){
-      return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), _esc(o.status||'')+' • '+_esc(String(o.descricao||'').slice(0,60)));
+      return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), chipStatusHtml(o.status)+' '+_esc(String(o.descricao||'').slice(0,60)));
     }).join('')||vazioAba('chamado');
   }else if(sub==='leituras'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('leituras'),'dataLeitura');
     html=list.map(function(l){
       const eq=((banco.equipamentos)||[]).find(function(e){ return e.id===l.equipamentoId; })||{};
-      return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), 'PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-')+' • '+_esc(l.status||''));
+      return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), chipStatusHtml(l.status)+' PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-'));
     }).join('')||vazioAba('leitura');
   }
   pane.innerHTML='<div class="space-y-2 max-h-[52vh] overflow-auto pr-1">'+html+'</div>';
@@ -48156,8 +48180,10 @@ function removerRegistro(sub, id){
   }
   if(sub==='orcamento'){
     const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return false;
-    o.status='excluido'; // mesmo modelo do sistema: orçamento sai por marcação
-    logCli('excluir_orcamento',id,'Orçamento excluído pela ficha do cliente');
+    // v5.24.5 — ordem dele: deletar é DE VEZ. Sai daqui, a nuvem recebe o
+    // comando de apagar e os outros PCs apagam também (sem marca-fantasma).
+    db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_orcamento',id,'Orçamento excluído de vez pela ficha do cliente');
     return true;
   }
   if(sub==='chamado'){
@@ -48189,7 +48215,7 @@ window.clitabExcluir=function(){
   try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
   try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
   window.clitabSub(sub);
-  if(typeof toast==='function') toast(feitos+' excluído(s)'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':'')) : ''), feitos?'success':'info');
+  if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(feitos?'':'')+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':'')) : ''), feitos?'success':'info');
 };
 window.clitabExtornar=function(){
   const st=window.__clitab; if(!st||st.sub!=='vendas') return;
@@ -48227,6 +48253,18 @@ window.clitabAbrirLista=function(){
 };
 // botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
 window.clitabAbrirRegistro=function(tipo, id){
+  // v5.24.5 — a lista pode estar velha se a nuvem trocou a base depois dela
+  // aparecer na tela (o aviso do 4.2 nasceu exatamente assim). Conferir na
+  // hora do clique: se já não existe, atualiza e avisa, sem abrir nada às cegas.
+  try{
+    const col=(tipo==='venda')?'vendas':(tipo==='financeiro')?'contasReceber':(tipo==='orcamento')?'orcamentos':(tipo==='chamado')?'os':'leituras';
+    const existe=(((_dbx())[col])||[]).find(function(x){ return x && x.id===id; });
+    if(!existe){
+      try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+      if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+      return;
+    }
+  }catch(e){}
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
   function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
   if(tipo==='venda'){
@@ -48299,32 +48337,72 @@ if(typeof window.selectClienteVenda==='function' && !window.selectClienteVenda._
   };
   window.selectClienteVenda.__v5243 = true;
 }
-// Ponte 2: a seleção da VOS nunca pode sair sem amarrar o cliente — se a
-// parte visual falhar (qualquer erro bobo), o vínculo é refeito por segurança.
-// v5.24.4 — e agora a tela CONFIRMA a amarração: sem esse aviso o dono não
-// tinha como saber se o clique pegou (relato real do 4.1: escolheu um cliente
-// existente e a venda "não segurou").
-if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5243){
-  const _selClienteVos = window.vosVendaSelectCliente;
+// Ponte 2 + cura 4.1 (v5.24.5) — POR QUE a 1ª tentativa falhava e a 2ª ia:
+// a busca usava um índice feito uma vez só e a nuvem trocava a base por baixo
+// dele; a linha aparecia na tela, mas o clique não achava o cliente na base
+// nova. Agora: (a) a busca refaz o índice sozinha sempre que a base troca e
+// guarda o que mostrou em __vosUltBusca; (b) o clique procura na base atual e,
+// se não achar, SE CURA com o dado da própria busca — devolve o cliente à
+// base, marca para subir e amarra na hora.
+window.__vosUltBusca = window.__vosUltBusca || {};
+if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCliente.__v5245){
+  window.__vosCliIdxBase = null; window.__vosCliIdxFresco = null;
+  window.vosVendaSearchCliente = function(q){
+    const sessf=(typeof getSession==='function'?getSession():null)||{};
+    const el = document.getElementById('vos-cli-results'); if(!el) return;
+    const low = (q||'').toLowerCase().trim();
+    if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    const base = (typeof db!=='undefined' && db.clientes)||[];
+    if(window.__vosCliIdxBase !== base){
+      window.__vosCliIdxBase = base;
+      window.__vosCliIdxFresco = base.map(function(c){
+        const doc=String(c.documento||'');
+        return { c:c, hay:[c.codigo,c.nome,c.fantasia,c.documento,(typeof onlyDigits==='function'?onlyDigits(c.documento):doc.replace(/\D/g,'')),c.endereco,c.telefone,c.cidade,c.estado].filter(function(x){return x!=null&&x!=='';}).join(' ').toLowerCase() };
+      });
+    }
+    const list = window.__vosCliIdxFresco
+      .filter(function(x){ return x.c.empresaId===sessf.empresaId && x.hay.indexOf(low)>=0; })
+      .map(function(x){ return x.c; }).slice(0,15);
+    window.__vosUltBusca = {};
+    el.innerHTML = list.map(function(c){
+      window.__vosUltBusca[c.id]=c;
+      return '<button type="button" onclick="vosVendaSelectCliente(\''+String(c.id).replace(/'/g,'')+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">'
+        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
+        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
+    }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
+    el.classList.remove('hidden');
+  };
+  window.vosVendaSearchCliente.__v5245 = true;
+}
+if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5245){
+  const _selClienteVos5245 = window.vosVendaSelectCliente;
   window.vosVendaSelectCliente = function(id){
-    try{ _selClienteVos.apply(this, arguments); }catch(e){}
+    let cura=false;
+    try{
+      let c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
+      if(!c && window.__vosUltBusca && window.__vosUltBusca[id]){
+        try{ db.clientes=(db.clientes||[]).concat([window.__vosUltBusca[id]]); if(typeof saveDB==='function') saveDB(); }catch(_e){}
+        c = ((db.clientes)||[]).find(function(x){ return x && x.id===id; });
+        cura = !!c;
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('cura-cliente'); }catch(_){}
+      }
+      if(!c){
+        try{ if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error'); }catch(_){}
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_2){}
+        return;
+      }
+    }catch(e){}
+    try{ _selClienteVos5245.apply(this, arguments); }catch(e){}
     try{
       const c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
       if(c && window.__vosForm && !window.__vosForm.cliente){ window.__vosForm.cliente = c; }
-      if(c && window.__vosForm && window.__vosForm.cliente && window.__vosForm.cliente.id===c.id){
-        if(typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||''), 'success');
-      }else if(!c){
-        if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error');
-        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_){}
-      }else{
-        if(typeof toast==='function') toast('A venda perdeu a referência do formulário — feche e abra a venda de novo (os itens ficam salvos).', 'error');
-      }
+      if(c && typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||'')+(cura?' (recuperado da busca)':''), 'success');
     }catch(e){}
   };
-  window.vosVendaSelectCliente.__v5243 = true;
+  window.vosVendaSelectCliente.__v5245 = true;
 }
 
-try{ console.log('[DIGICOPY] v5.24.3 — cadastro do cliente com abas (Vendas/Financeiro/Orçamentos/Chamados/Leituras) + resumo com atalho + ponte cliente↔venda (4.1)'); }catch(e){}
+try{ console.log('[DIGICOPY] v5.24.5 — ficha sempre abre em Dados (Salvar garantido) + histórico com status, exclusão de vez e listas à prova de nuvem + 4.1 curado (clique se cura com o dado da busca)'); }catch(e){}
 })();
 
 ;

@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.4**  
+**Última versão:** **v5.24.5**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.4>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.5>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,36 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.5 (2026-09-10)
+
+1. **🛡️ GARANTIA ANTI-ESTOURO (ordem dele: "nunca deixa estourar essa nuvem").**
+   Duas muralhas novas: a nuvem só grava o que é NOVO (dedupe da v5.24.4) E agora
+   tem um **FREIO dentro do worker**: ao chegar em 95 mil escritas no dia, ela
+   para de aceitar gravação ANTES do teto de 100 mil — responde a pausa que o
+   app já reconhece ("envio pausado até 21h, nada se perde"). Mais o **farol
+   automático** `node checar_cota_nuvem.js`: roda antes de toda versão e reprova
+   qualquer mudança que ameace a cota, com a conta do dia típico (dia movimentado
+   de loja ≈ 0,6% do teto). Estourar agora exigiria milhares de mudanças reais
+   no mesmo dia. **Rodar `npx.cmd wrangler deploy`** (o freio mora na nuvem).
+2. **2.1 de verdade:** o "Nova venda" que ele via era da tela VIVA "Vendas e
+   Notinhas" (`vendas_os_patch.js`) — o botão do app.js morto tinha saído na
+   5.24.4. Removido da tela viva + 2 cópias mortas no `notinha_patch.js`
+   (prevenção). Criação continua pelo atalho **Nova notinha**.
+3. **4.1/4.2 curados (a 1ª tentativa falhava, a 2ª ia):** a busca usava um
+   índice congelado e a nuvem trocava a base por baixo — linha na tela, clique
+   no vazio. Agora o índice se refaz sozinho quando a base troca e o clique SE
+   CURA com o dado da própria busca (toast "Cliente vinculado … (recuperado da
+   busca)"). **Salvar que sumia:** a ficha reabria no Histórico (que esconde o
+   rodapé) — agora SEMPRE abre em Dados. Clicar num registro que a nuvem já
+   trocou atualiza a lista e avisa (morre o aviso do 4.2).
+4. **5.x.x — Histórico:** cada linha mostra o **STATUS** igual ao módulo
+   (Salva, Faturada, Estornada, Em aberto, Vencido…); **Excluir = DE VEZ**
+   (some da tela, deste PC e dos outros pela nuvem — orçamento também, sem
+   marca-fantasma); lista nunca mais mostra registro já excluído.
+   Suite: 162 verdes; 6 falhas são artefatos pré-existentes do sandbox.
 
 ---
 
