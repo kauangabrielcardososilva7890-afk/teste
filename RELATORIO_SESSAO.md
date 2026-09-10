@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.100**  
+**Última versão:** **v5.24.4**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.22.100>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.4>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,36 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.4 (2026-09-10)
+
+1. **🔥 COTA DA NUVEM BLINDADA (erro `D1_ERROR: daily row write limit`).** A conta
+   grátis de 100 mil escritas/dia estourou porque o sync regravava registros
+   idênticos a cada ciclo. Cura nos DOIS lados: o **worker não regrava** o que
+   chega igual (responde `noop` — upsert e delete) e o **`/v1/status` não derruba
+   mais a tela Nuvem** se o medidor não puder gravar (mostra "medidor pausado
+   (cota)"). Na tela, o disfarce "⚠️ código da nuvem ANTIGO" só aparece se o
+   `/health` verdadeiro falhar — antes qualquer corte de cota virava falso alarme.
+   E o Backup traduz a cota estourada para português claro: "a nuvem grátis está
+   cheia hoje — volta 21h". (Renova meia-noite UTC.) **PRECISA rodar
+   `npx.cmd wrangler deploy`** na pasta `cloudflare-worker` desta versão.
+2. **"+ Nova venda / Orçamento" fora da tela de Vendas** (item 2.1, confirmado
+   por ele: era o botão de dentro do módulo). Criação continua pelo atalho
+   **Nova notinha** no menu Atendimento.
+3. **4.1 — cliente existente agora SEGURA na venda, com aviso na tela.**
+   Escolheu o cliente e a pintura falhou? O vínculo é refeito por trás e a tela
+   confirma **"Cliente vinculado à venda: Nome"**. Se o cliente ainda não chegou
+   neste PC pela nuvem, a tela avisa e já cutuca a sincronização.
+4. **Histórico do cliente redesenhado (5.2.1/5.2.2).** Abas: **Dados | Histórico
+   do sistema**. Dentro do Histórico, sub-menus: **Vendas (padrão), Financeiro,
+   Orçamentos, Chamados e Leituras**. Cada listagem tem caixas de múltipla escolha
+   com os botões **Excluir** (pula venda faturada — estornar antes), **Extornar**
+   (só em Vendas) e **Abrir lista de origem** (cai no módulo já com o cliente na
+   busca). **Botão DIREITO** numa linha abre aquele registro no módulo de origem.
+   O resumo intermediário morreu a pedido dele.
+   Suite: 161 verdes; as 6 falhas são de ambiente do sandbox (pré-existentes).
 
 ---
 

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 9cbee15b454b7b02
+ * scripts: 196 | sha256: b7b207030b89c0df
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -17,8 +17,7 @@
   };
 })();
 
-/* ===== ponte_electron_patch.js ===== */
-try{
+/* ===== ponte_electron_patch.js (escopo global) ===== */
 // ============================================================
 // PONTE ELECTRON — primeiro script do bundle
 // ============================================================
@@ -87,11 +86,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ponte_electron_patch.js", e); }
 ;
 
-/* ===== lz.js ===== */
-try{
+/* ===== lz.js (escopo global) ===== */
 // LZ-String (MIT) — compressão UTF-16 para caber a base grande no localStorage.
 // Só o par compress/decompress usado pelo ERP. Conteúdo entre PCs continua JSON normal.
 (function(){
@@ -237,16 +234,13 @@ try{
   };
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("lz.js", e); }
 ;
 
-/* ===== logo_data.js ===== */
-try{
+/* ===== logo_data.js (escopo global) ===== */
 // Logo da loja embutida (data URI) — usada na notinha e na página de pagamento Pix.
 // Gerado a partir de logo.png; para trocar a logo, substitua logo.png e regenere este arquivo.
 window.DIGICOPY_LOGO="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gIoSUNDX1BST0ZJTEUAAQEAAAIYAAAAAAIQAABtbnRyUkdCIFhZWiAAAAAAAAAAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAAHRyWFlaAAABZAAAABRnWFlaAAABeAAAABRiWFlaAAABjAAAABRyVFJDAAABoAAAAChnVFJDAAABoAAAAChiVFJDAAABoAAAACh3dHB0AAAByAAAABRjcHJ0AAAB3AAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAFgAAAAcAHMAUgBHAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABvogAAOPUAAAOQWFlaIAAAAAAAAGKZAAC3hQAAGNpYWVogAAAAAAAAJKAAAA+EAAC2z3BhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABYWVogAAAAAAAA9tYAAQAAAADTLW1sdWMAAAAAAAAAAQAAAAxlblVTAAAAIAAAABwARwBvAG8AZwBsAGUAIABJAG4AYwAuACAAMgAwADEANv/bAEMACAYGBwYFCAcHBwkJCAoMFA0MCwsMGRITDxQdGh8eHRocHCAkLicgIiwjHBwoNyksMDE0NDQfJzk9ODI8LjM0Mv/bAEMBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMv/AABEIAoACgAMBIgACEQEDEQH/xAAcAAEBAAIDAQEAAAAAAAAAAAAAAQIHBAYIBQP/xABSEAEAAQMCAgUGCQYKCAUFAAAAAQIDBAURBlEHEhchMRNBVZHR0hQiNmF0gZKUsVRxcqGkshYjMjQ3QlJzdbMVJDM1OFbC4wgmY6LEYoLD8PH/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIEAwUG/8QANBEBAAEDAgMHAQgCAgMAAAAAAAECAxEEEiExUQUTFBVBUqFhIjJxgbHB0fCR4TM0QlNy/9oADAMBAAIRAxEAPwDVu885N55oP2bkXeeZvPNAF3nmdaecoKL1p5ydaecoAvWnnJ1p5ygovWnnJvPOUFGW88zeebGJZAbzzN55gBvPNd55oKLvPM3nmigbzzN55gobzzN55gBvPM3nmChvPM3nmAG88zeeYATM85TeeaoBvPM3nmCBMzzlOtPOVSYA3nnJvPNBBd55m880EDeeZvPMBTeeZvPMAN55pMzzlQE3nmbzzBA3nmTM85AE3nmbzzJhEF3nmbzzQQN55ybzzADeeZvPMATeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885BB+gAgAoAKAAACgAAsIKMhIlQAACAUUBQAAAAAUAAAAQVJ7gAEGIyYgAIACAAKAAIoCAICSoDEJEAAAABFEEAAAAAAAAAAAAAAAAAAAQfoAAAIAKACgAAAoAALEoKMhIlQAAFQUUASABVAAAFAAAAEFQABBiMmIACSACAAKAAkipIACAxlkAxAQAEABQRRBAAAAAAAAAAAAAAAAAEH6Cb96gAKAAgAAAoAAAKAACwgoyCAAABUFRQFUAAAUAAAACYAEFQBNlEGIswgACSACAAKAAgqbIAAJMIySYBAEAAAABFEEAAAAAAAAAAAAAAAQZgIKIrQAAACACgAAAAAoAAMmIoyAAAAVBUlQFUAAAUAAAAEmFAQBASYUBiLMIAAkgAgACgAIKiAACTCMkmCRAEAAAACUVJhAAAAAAAAAAAAAAQZgICoAoitAAAAIAKAAAAACgAAyYrEqKAAAAqKoAKAAACgAAAAigIAgJMKAxAAAZAAAAUABBUQAASUZMUkAAAAAASRUQAAAAAAAAAAAEGYecQAAFhBYFAUAAABAAABQAAAUAAWJVisSooAAAKIqoAKoAAAoAAAAIoCAIDFkTAMQAAGQAAAFAAQJEAAGIyYpIAAAIACiCogAAAAAAAAAIMwGQAUAAFQUUBQAAAEAFAAAAABQAUWJViu4KAAACiQqoAKoAAAoAAAAIpsCAIJKMkkEAAAZAAUAARQEAQCQBiLMIgAAAAAIIKgAAAAAAACDMBkAFAAAACFQWBQFAAAAQAUAAAAAFABRkMWQA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";
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("logo_data.js", e); }
 ;
 
 /* ===== app.js (escopo global) ===== */
@@ -1162,7 +1156,7 @@ function initTemplates(){
 
   document.getElementById('view-manutencao').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('os')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Abrir chamado</button><button onclick="toggleOsView()" id="btn-os-kanban" class="h-11 px-4 rounded-xl bg-white border text-[13px]">Kanban</button></div><div class="flex gap-2"><select id="filter-os-status" onchange="renderOs()" class="h-11 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_peca">Aguard. peça</option><option value="concluido">Concluído</option></select><input id="search-os" oninput="renderOs()" placeholder="Buscar OS..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="os-kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div><div id="os-list" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">OS / Cliente / Criado por</th><th class="px-5 py-3">Tipo / Prioridade</th><th class="px-5 py-3">Técnico</th><th class="px-5 py-3">SLA</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-os" class="divide-y"></tbody></table></div>`;
 
-  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><button onclick="novaVenda()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova venda / Orçamento</button><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
+  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
   document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
@@ -2666,8 +2660,7 @@ window.addEventListener('DOMContentLoaded',function(){
 
 ;
 
-/* ===== vendas_patch.js ===== */
-try{
+/* ===== vendas_patch.js (escopo global) ===== */
 // DIGICOPY ERP v3.1 - PATCH vendas aprimoradas + cliente codigo + login primeira vez + logo original handling
 (function(){
   // Garantir codigos de clientes existentes
@@ -3309,7 +3302,6 @@ try{
   console.log('PATCH vendas v3.1 carregado - cliente codigo, busca aberta, pagamento só ao faturar, tipo produto/recarga');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_patch.js", e); }
 ;
 
 /* ===== evolucao_patch.js (escopo global) ===== */
@@ -3612,8 +3604,7 @@ console.log('PATCH evolucao v3.2 - empresas PDF, CNPJ busca, chamados branco/ver
 
 ;
 
-/* ===== notinha_patch.js ===== */
-try{
+/* ===== notinha_patch.js (escopo global) ===== */
 // NOTINHA PATCH v4.1 - Layout de impressão e navegação de vendas
 (function(){
 window.imprimirNotinha = function(vendaId){
@@ -4447,11 +4438,9 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   };
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("notinha_patch.js", e); }
 ;
 
-/* ===== locacao_patch.js ===== */
-try{
+/* ===== locacao_patch.js (escopo global) ===== */
 /* ==========================================================================
  * DIGICOPY ERP — PATCH LOCAÇÃO v4.4 (build 3.11)
  * O importador original lia as tabelas LOCACAO / ITENS_LOCACAO / VISITAS /
@@ -4916,11 +4905,9 @@ if(typeof window !== 'undefined'){
 })();
 console.log('PATCH locacao v4.4 carregado - LOCACAO/ITENS_LOCACAO/CONTADOR_PAGINAS/LEITURAS/VISITAS viram Contratos/Parque/Leituras/Chamados + limpeza de demos');
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_patch.js", e); }
 ;
 
-/* ===== vendas_os_patch.js ===== */
-try{
+/* ===== vendas_os_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // VENDAS_OS_PATCH v4.2.0 — Tela de Vendas + Ordem de Serviço completa
 // - Nova venda: código automático SÓ NÚMERO (sem prefixo/ano), data/hora, usuário
@@ -6459,11 +6446,9 @@ window.showVenda = window.historicoVenda;
 console.log('PATCH vendas+OS v4.2.0 — nova venda completa, OS, serial, faturamento, parcelas, carnê e impressão A4');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_os_patch.js", e); }
 ;
 
-/* ===== performance_patch.js ===== */
-try{
+/* ===== performance_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PERFORMANCE_PATCH v4.3.0 — destrava a interface e acelera a nuvem
 //
@@ -6809,11 +6794,9 @@ window.syncCarregarDaNuvem = async function(opts={}){
 console.log('PATCH performance v4.4.2 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("performance_patch.js", e); }
 ;
 
-/* ===== pix_patch.js ===== */
-try{
+/* ===== pix_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Pix (QR Code estático padrão Banco Central + copia e cola) — v4.6.0
 // O QR sai com o VALOR EXATO da venda: o cliente só escaneia e confirma, sem digitar nada.
 // Carregado por ÚLTIMO em index.html (depois dos demais patches).
@@ -7121,11 +7104,9 @@ window.renderConfig = function(){
 console.log('[DIGICOPY] Pix v4.6.0 carregado — QR estático padrão Banco Central (valor exato + copia e cola)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("pix_patch.js", e); }
 ;
 
-/* ===== notificacoes_patch.js ===== */
-try{
+/* ===== notificacoes_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Central de notificações (sino) — v4.7.0
 // Alertas automáticos (estoque no mínimo, contas vencidas/a vencer) + eventos
 // (ex.: "Fulano pagou — baixa registrada"). O Pix automático vai avisar aqui também.
@@ -7344,11 +7325,9 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(ntfAtualiza
 console.log('[DIGICOPY] Notificações v4.7.0 carregadas — sino com estoque mínimo, contas e avisos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("notificacoes_patch.js", e); }
 ;
 
-/* ===== vendas_extra_patch.js ===== */
-try{
+/* ===== vendas_extra_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Extras de vendas — v4.7.0
 // 1) Número da notinha sem prefixo ("VD-2026-0081" vira "2026-0081") nas telas
 // 2) "Refazer faturamento": cliente disse que ia pagar no Pix mas mudou a forma?
@@ -7442,11 +7421,9 @@ window.historicoVenda = function(id){
 console.log('[DIGICOPY] Extras de vendas v4.7.0 — número curto + refazer faturamento');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_extra_patch.js", e); }
 ;
 
-/* ===== migrados_print_patch.js ===== */
-try{
+/* ===== migrados_print_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Impressão das notinhas do sistema antigo (módulos migrados) — v4.7.0
 // Cada registro de qualquer tabela migrada ganha botão "Imprimir" no detalhe,
 // saindo um documento formatado com a logo. Tabelas de notinha/cupom são
@@ -7566,11 +7543,9 @@ window.abrirNotinhasAntigas = function(){
 console.log('[DIGICOPY] Impressão de notinhas antigas v4.7.0 carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("migrados_print_patch.js", e); }
 ;
 
-/* ===== clientes_patch.js ===== */
-try{
+/* ===== clientes_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Módulo de Clientes completo — v4.8.0
 // Consulta (Novo/Alterar/Excluir + filtros auxiliares por campo) e cadastro com:
 // dados essenciais obrigatórios (nome, telefone, rua, número, bairro), busca
@@ -7935,11 +7910,9 @@ window.renderClientes = function(){
 console.log('[DIGICOPY] Clientes v4.8.0 — essenciais obrigatórios, CEP inteligente, filtros auxiliares e aba NF pronta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("clientes_patch.js", e); }
 ;
 
-/* ===== interface_patch.js ===== */
-try{
+/* ===== interface_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Ajustes de interface v4.9.0
 // • Esc fecha modal/painéis de qualquer tela
 // • Nuvem sem avisos repetitivos (só 1 confirmação clara nas ações manuais; erros continuam)
@@ -8160,11 +8133,9 @@ else setTimeout(window.uiAjustarHome, 400);
 console.log('[DIGICOPY] Interface v4.9.3 — Esc fecha tudo, nuvem quieta, home sem scroll vazio');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("interface_patch.js", e); }
 ;
 
-/* ===== vendas_otimizacao_patch.js ===== */
-try{
+/* ===== vendas_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.8 — Otimização total de Vendas/Notinhas e regras de negócio:
 // • Exclusão de tabelas auxiliares/inválidas no Explorar Migrados ("S"/"N"/"ordens")
@@ -8490,11 +8461,9 @@ window.closeModal = function(){
 console.log('[DIGICOPY] PATCH vendas_otimizacao_patch.js v4.9.8 — Exclusão tabelas auxiliares, Title Case, Estorno/Edição Notinha e performance');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_otimizacao_patch.js", e); }
 ;
 
-/* ===== login_otimizacao_patch.js ===== */
-try{
+/* ===== login_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.8 — Otimização de Login, Funcionários e Vendedores:
 // • Login flexível case-insensitive para qualquer formato (FULANO, Fulano, fUlAnO)
@@ -8653,11 +8622,9 @@ window.showApp = function(){
 console.log('[DIGICOPY] PATCH login_otimizacao_patch.js v4.9.8 — Login case-insensitive, unificação admin principal e Recepção');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("login_otimizacao_patch.js", e); }
 ;
 
-/* ===== render_gate_patch.js ===== */
-try{
+/* ===== render_gate_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.11 — Gate de Renderização para PCs Fracos (render_gate_patch.js):
 // • Bloqueia execução de renders quando a respectiva tela <section> está oculta
@@ -8711,11 +8678,9 @@ RENDER_MAP.forEach(({ fn, view }) => {
 console.log('[DIGICOPY] PATCH render_gate_patch.js v4.9.11 — Gate de renderização (economia de 80-90% de CPU em PCs fracos)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("render_gate_patch.js", e); }
 ;
 
-/* ===== locacao_contratos_patch.js ===== */
-try{
+/* ===== locacao_contratos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.12 — Locação, Contratos, Leituras e Chamados Técnicos Completo:
 // • Fim de busca por digitação (apenas no Enter ou Lupa) e sem barra A..Z
@@ -10027,11 +9992,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_contratos_patch.js", e); }
 ;
 
-/* ===== fluxos_operacionais_patch.js ===== */
-try{
+/* ===== fluxos_operacionais_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.13 — Ajustes dos fluxos pedidos pelo Operacional
 // • Produtos com busca só no Enter/lupa, categorias unificadas, estoque mínimo estrito e NF preparada
@@ -11580,11 +11543,9 @@ try{
 console.log(`[DIGICOPY] fluxos_operacionais_patch.js ${KAUAN_VERSION} carregado`);
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fluxos_operacionais_patch.js", e); }
 ;
 
-/* ===== contratos_refino_patch.js ===== */
-try{
+/* ===== contratos_refino_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.14 — Refinos de Contratos/Leituras/Chamados pedidos pelo Operacional
 // • Leituras ficam apenas dentro do contrato
@@ -12202,11 +12163,9 @@ window.openModal = function(type, id){
 console.log(`[DIGICOPY] contratos_refino_patch.js ${PATCH_VERSION} carregado`);
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_refino_patch.js", e); }
 ;
 
-/* ===== contratos_final_patch.js ===== */
-try{
+/* ===== contratos_final_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.17 — Contratos final, vínculos migrados e RTF
 // • Corrige "Sem cliente" vinculando contratos aos cadastros migrados
@@ -12441,11 +12400,9 @@ window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,argument
 console.log('[DIGICOPY] contratos_final_patch.js v4.9.17 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_final_patch.js", e); }
 ;
 
-/* ===== contratos_visitas_vinculo_patch.js ===== */
-try{
+/* ===== contratos_visitas_vinculo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.19 — Vínculo por VISITAS/CONTADOR_PAGINAS
 // • Usa VISITAS para ligar contrato sem cliente ao cliente correto
@@ -12563,11 +12520,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_
 console.log('[DIGICOPY] contratos_visitas_vinculo_patch.js v4.9.19 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_visitas_vinculo_patch.js", e); }
 ;
 
-/* ===== contratos_rtf_template_patch.js ===== */
-try{
+/* ===== contratos_rtf_template_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.18 — Modelos RTF editáveis de contrato/proposta
 // • Usa placeholders do modelo original: {CLI_NOMERAZAO}, {EMP_NOMERAZAO}, [TABLE]...
@@ -12808,11 +12763,9 @@ setTimeout(renderCardConfig, 500);
 console.log('[DIGICOPY] contratos_rtf_template_patch.js v4.9.18 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_rtf_template_patch.js", e); }
 ;
 
-/* ===== otimizacao_profunda_patch.js ===== */
-try{
+/* ===== otimizacao_profunda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.33 — Otimização profunda de carregamento e travamentos
 // • Agenda automações pesadas em fila ociosa, uma por vez, sem bloquear a tela
@@ -13004,11 +12957,9 @@ setTimeout(()=>{ try{ instalarRenderTurbo(); wrapModuloDinamico(); }catch(e){ co
 console.log('[DIGICOPY] otimizacao_profunda_patch.js v4.9.33 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("otimizacao_profunda_patch.js", e); }
 ;
 
-/* ===== automacoes_triggers_patch.js ===== */
-try{
+/* ===== automacoes_triggers_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.21 — Automações úteis extraídas das triggers
 // • Orçamento recalcula total pelos itens e pode virar venda sem duplicar
@@ -13164,11 +13115,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_triggers_patch.js v4.9.21 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_triggers_patch.js", e); }
 ;
 
-/* ===== automacoes_financeiro_estoque_patch.js ===== */
-try{
+/* ===== automacoes_financeiro_estoque_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.22 — Automações financeiras, leituras, fiscal leve e estoque
 // • Continuação da adaptação de triggers úteis do banco anterior
@@ -13450,11 +13399,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_financeiro_estoque_patch.js v4.9.22 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_financeiro_estoque_patch.js", e); }
 ;
 
-/* ===== automacoes_locacao_visitas_patch.js ===== */
-try{
+/* ===== automacoes_locacao_visitas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.23 — Automações de locação, despesas e visitas
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -13660,11 +13607,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_locacao_visitas_patch.js v4.9.23 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_locacao_visitas_patch.js", e); }
 ;
 
-/* ===== automacoes_contratos_caixa_fiscal_patch.js ===== */
-try{
+/* ===== automacoes_contratos_caixa_fiscal_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.24 — Automações de contratos, caixa, fiscal leve e produtos
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -13940,11 +13885,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_contratos_caixa_fiscal_patch.js v4.9.24 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_contratos_caixa_fiscal_patch.js", e); }
 ;
 
-/* ===== automacoes_fiscal_cartuchos_patch.js ===== */
-try{
+/* ===== automacoes_fiscal_cartuchos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.52 — Automações fiscais preparatórias, cartuchos e estornos
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14259,11 +14202,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_fiscal_cartuchos_patch.js v4.9.52 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_fiscal_cartuchos_patch.js", e); }
 ;
 
-/* ===== automacoes_vendas_compras_cadastros_patch.js ===== */
-try{
+/* ===== automacoes_vendas_compras_cadastros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.26 — Automações de vendas, compras e cadastros auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14523,11 +14464,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_vendas_compras_cadastros_patch.js v4.9.26 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_vendas_compras_cadastros_patch.js", e); }
 ;
 
-/* ===== automacoes_orcamentos_clientes_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_orcamentos_clientes_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.27 — Automações de orçamentos, clientes e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14783,11 +14722,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_orcamentos_clientes_auxiliares_patch.js v4.9.27 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_orcamentos_clientes_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_pix_contadores_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_pix_contadores_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.28 — Automações de Pix, contadores, contas e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14996,11 +14933,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_pix_contadores_auxiliares_patch.js v4.9.28 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_pix_contadores_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_vendas_fiscal_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_vendas_fiscal_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.29 — Automações de vendas, cartões, encomendas, fiscal e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 9
@@ -15464,11 +15399,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_vendas_fiscal_auxiliares_patch.js v4.9.29 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_vendas_fiscal_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_compras_recebimentos_contadores_patch.js ===== */
-try{
+/* ===== automacoes_compras_recebimentos_contadores_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.30 — Automações de vendas, compras, recebimentos, contadores e loja
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 10
@@ -15897,11 +15830,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_compras_recebimentos_contadores_patch.js v4.9.30 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_compras_recebimentos_contadores_patch.js", e); }
 ;
 
-/* ===== automacoes_caixa_chat_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_caixa_chat_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.31 — Automações de caixa, chat, fornecedores e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 11
@@ -16171,11 +16102,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_caixa_chat_auxiliares_patch.js v4.9.31 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_caixa_chat_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_finais_locacao_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_finais_locacao_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.32 — Automações finais de locação, histórico, custos e auxiliares
 // • Última parte da adaptação das triggers úteis do banco anterior — Parte 12
@@ -16574,11 +16503,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_finais_locacao_auxiliares_patch.js v4.9.32 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_finais_locacao_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_procedures_operacionais_patch.js ===== */
-try{
+/* ===== automacoes_procedures_operacionais_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.34 — Adaptação das PROCEDURES operacionais do banco antigo
 // • Recria regras úteis encontradas nas procedures sem copiar rotinas pesadas
@@ -16898,11 +16825,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_procedures_operacionais_patch.js v4.9.34 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_procedures_operacionais_patch.js", e); }
 ;
 
-/* ===== chamados_avulsos_aberto_patch.js ===== */
-try{
+/* ===== chamados_avulsos_aberto_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.16 — Chamado avulso aberto/profissional
 // • A tela fora do contrato fica para atendimento avulso
@@ -17084,11 +17009,9 @@ window.caEditarImpressoraAvulso = function(){
 console.log('[DIGICOPY] chamados_avulsos_aberto_patch.js v4.9.16 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("chamados_avulsos_aberto_patch.js", e); }
 ;
 
-/* ===== cadastros_nomes_patch.js ===== */
-try{
+/* ===== cadastros_nomes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Correção de nomes vazios em cadastros migrados
 // • Preenche nomes conhecidos por código
@@ -17241,11 +17164,9 @@ setTimeout(aplicar, 300);
 console.log('[DIGICOPY] cadastros_nomes_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cadastros_nomes_patch.js", e); }
 ;
 
-/* ===== pix_comprovante_manual_patch.js ===== */
-try{
+/* ===== pix_comprovante_manual_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Pix com comprovante manual
 // • Mantém QR Pix com valor exato da notinha
@@ -17325,11 +17246,9 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
 console.log('[DIGICOPY] pix_comprovante_manual_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("pix_comprovante_manual_patch.js", e); }
 ;
 
-/* ===== desktop_otimizacao_patch.js ===== */
-try{
+/* ===== desktop_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Otimização para uso diário e futuro .exe
 // • Debounce leve em renders pesados para evitar travar máquinas fracas
@@ -17389,11 +17308,9 @@ setTimeout(() => {
 console.log('[DIGICOPY] desktop_otimizacao_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("desktop_otimizacao_patch.js", e); }
 ;
 
-/* ===== correcoes_uso_diario_patch.js ===== */
-try{
+/* ===== correcoes_uso_diario_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.38 — Correções de uso diário, vendas e limpeza visual
 // • Remove aviso de endereço provisório
@@ -17599,11 +17516,9 @@ setTimeout(instalar,50); setTimeout(instalar,1000); setTimeout(instalar,3500);
 console.log('[DIGICOPY] correcoes_uso_diario_patch.js v4.9.38 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("correcoes_uso_diario_patch.js", e); }
 ;
 
-/* ===== login_dados_automaticos_patch.js ===== */
-try{
+/* ===== login_dados_automaticos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.39 — Login direto por usuário, usuários migrados e carga automática
 // • Remove a etapa de CNPJ do login e deixa somente usuário/senha
@@ -17809,11 +17724,9 @@ if(typeof document!=='undefined'){
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("login_dados_automaticos_patch.js", e); }
 ;
 
-/* ===== ajustes_relatorio_pai_patch.js ===== */
-try{
+/* ===== ajustes_relatorio_pai_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.43 — Ajustes do relatório de avaliação
 // • Leitura em tela detalhada com lançamentos por impressora/medidor e total
@@ -17992,11 +17905,9 @@ window.AJUSTES_RELATORIO_PAI_PURE={ medidorDefault, consumoMed, cod };
 console.log('[DIGICOPY] ajustes_relatorio_pai_patch.js v4.9.43 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_relatorio_pai_patch.js", e); }
 ;
 
-/* ===== contratos_leituras_definitivo_patch.js ===== */
-try{
+/* ===== contratos_leituras_definitivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.44 — Contratos e leituras definitivos para apresentação
 // • Modalidades ficam no cadastro da IMPRESSORA do contrato, não no contrato novo
@@ -18133,11 +18044,9 @@ window.CONTRATOS_LEITURAS_DEFINITIVO_PURE={ medidorPadrao, calcMed };
 console.log('[DIGICOPY] contratos_leituras_definitivo_patch.js v4.9.44 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_leituras_definitivo_patch.js", e); }
 ;
 
-/* ===== fluxo_contrato_leitura_corrigido_patch.js ===== */
-try{
+/* ===== fluxo_contrato_leitura_corrigido_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.45 — Fluxo correto de contrato > leituras > lançamentos
 // • Modalidades ficam somente na impressora do contrato
@@ -18280,11 +18189,9 @@ window.CONTRATOS_LEITURAS_CORRIGIDO_PURE={ medPadrao, calc, normalizarModalidade
 console.log('[DIGICOPY] fluxo_contrato_leitura_corrigido_patch.js v4.9.45 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fluxo_contrato_leitura_corrigido_patch.js", e); }
 ;
 
-/* ===== leitura_busca_fluxo_patch.js ===== */
-try{
+/* ===== leitura_busca_fluxo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.46 — Ajuste fino do fluxo de leituras e busca de impressoras
 // • Histórico de leituras sem botão/radio de selecionar: abre no duplo clique
@@ -18383,11 +18290,9 @@ window.LEITURA_BUSCA_FLUXO_PURE={ filtrarMaquinasLancamento:function(dbRef, leit
 console.log('[DIGICOPY] leitura_busca_fluxo_patch.js v4.9.46 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_busca_fluxo_patch.js", e); }
 ;
 
-/* ===== leitura_detalhada_departamentos_patch.js ===== */
-try{
+/* ===== leitura_detalhada_departamentos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.47 — Leitura detalhada por departamento e lançamentos editáveis
 // • Histórico de leituras só abre no duplo clique
@@ -18537,11 +18442,9 @@ window.LEITURA_DETALHADA_DEPARTAMENTOS_PURE={ agruparPorDepartamento, medPendent
 console.log('[DIGICOPY] leitura_detalhada_departamentos_patch.js v4.9.47 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_detalhada_departamentos_patch.js", e); }
 ;
 
-/* ===== leitura_impressao_compacta_produtos_patch.js ===== */
-try{
+/* ===== leitura_impressao_compacta_produtos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.48 — Notinha de leitura compacta + aba Produtos visível
 // • Notinha de leitura com logo, dados da loja e dados do cliente
@@ -18641,11 +18544,9 @@ window.LEITURA_IMPRESSAO_COMPACTA_PURE={ agruparPorDepartamento, totais, htmlNot
 console.log('[DIGICOPY] leitura_impressao_compacta_produtos_patch.js v4.9.48 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_impressao_compacta_produtos_patch.js", e); }
 ;
 
-/* ===== cartuchos_etiquetas_config_patch.js ===== */
-try{
+/* ===== cartuchos_etiquetas_config_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.66 — Cartuchos, etiquetas compactas e configurações
 // • Usa o vídeo público apenas como referência funcional, sem copiar identidade
@@ -18872,11 +18773,9 @@ setTimeout(renderCardEtiquetas,2200);
 console.log('[DIGICOPY] cartuchos_etiquetas_config_patch.js v4.9.66 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cartuchos_etiquetas_config_patch.js", e); }
 ;
 
-/* ===== sistema_clientes_loja_patch.js ===== */
-try{
+/* ===== sistema_clientes_loja_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.58 — Login diário, dados da loja e importação de clientes
 // • Todo dia, ao abrir, exige login na primeira abertura do dia
@@ -19054,11 +18953,9 @@ window.renderClientes=function(){ const r=oldRenderClientes?oldRenderClientes.ap
 console.log('[DIGICOPY] sistema_clientes_loja_patch.js v4.9.58 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("sistema_clientes_loja_patch.js", e); }
 ;
 
-/* ===== finalizacao_sistema_patch.js ===== */
-try{
+/* ===== finalizacao_sistema_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.61 — Finalização operacional
 // • X/ESC volta para aba anterior quando fechar janela/modal pelo usuário
@@ -19217,11 +19114,9 @@ setTimeout(()=>{ instalarBuscadorMenuFinal(); },600);
 console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("finalizacao_sistema_patch.js", e); }
 ;
 
-/* ===== ajustes_pos_final_patch.js ===== */
-try{
+/* ===== ajustes_pos_final_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.66 — Ajustes pós-final: produtos, venda, impressão e usuários
 // • Impressoras de locação não aparecem no menu Produtos
@@ -19353,11 +19248,9 @@ window.saveUsuarioFinal=function(id){
 console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_pos_final_patch.js", e); }
 ;
 
-/* ===== buscador_escola_patch.js ===== */
-try{
+/* ===== buscador_escola_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.88 — Buscador Escola
 // • Login da Caixa Escolar fica na nuvem (fora do código). Digita uma vez.
@@ -19712,11 +19605,9 @@ if(typeof document!=='undefined'){
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("buscador_escola_patch.js", e); }
 ;
 
-/* ===== estoque_alert_patch.js ===== */
-try{
+/* ===== estoque_alert_patch.js (escopo global) ===== */
 // PATCH alerta estoque/geral com modal do sistema (igual login incorreto)
 (function(){
   function showSystemAlert(msg, title){
@@ -19747,11 +19638,9 @@ try{
   console.log('[DIGICOPY] estoque_alert_patch carregado - modal sistema');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("estoque_alert_patch.js", e); }
 ;
 
-/* ===== popup_sistema_patch.js ===== */
-try{
+/* ===== popup_sistema_patch.js (escopo global) ===== */
 // PATCH todos os popups no estilo do sistema (igual login incorreto) - REMOVE popups antigos
 (function(){
   // Preserva o confirm real como compatibilidade para fluxos legados ainda
@@ -19868,11 +19757,9 @@ try{
   console.log('[DIGICOPY] popup_sistema_patch v2 carregado - TODOS popups no estilo sistema, antigos removidos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("popup_sistema_patch.js", e); }
 ;
 
-/* ===== etiqueta_busca_patch.js ===== */
-try{
+/* ===== etiqueta_busca_patch.js (escopo global) ===== */
 // PATCH busca por etiqueta — SOMENTE o número da etiqueta do cartucho
 (function(){
   function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -20005,11 +19892,9 @@ try{
   console.log('[DIGICOPY] etiqueta_busca_patch v5.15.1 — busca só pelo número da etiqueta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("etiqueta_busca_patch.js", e); }
 ;
 
-/* ===== delete_hidden_patch.js ===== */
-try{
+/* ===== delete_hidden_patch.js (escopo global) ===== */
 // PATCH delete_hidden - DELETA de vez em vez de ocultar
 (function(){
   function deletarOcultos(){
@@ -20042,11 +19927,9 @@ try{
   console.log('[DIGICOPY] delete_hidden_patch carregado - ocultos deletados de vez');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("delete_hidden_patch.js", e); }
 ;
 
-/* ===== patch_relatorio.js ===== */
-try{
+/* ===== patch_relatorio.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.0 — Relatório completo do usuário
 // 1. Login: campos vazios, mensagens de erro, logo nova, Denivaldo 3232
@@ -20101,11 +19984,9 @@ setTimeout(()=>{
 console.log('[DIGICOPY] patch_relatorio v5.0.0 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_relatorio.js", e); }
 ;
 
-/* ===== patch_vendas_financeiro.js ===== */
-try{
+/* ===== patch_vendas_financeiro.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.2 — Vendas e Financeiro (relatório do usuário)
 // 1. Venda: faturar funciona, estornar só depois de faturar, Pix QR só no Pix
@@ -20172,11 +20053,9 @@ if(typeof _origShowVenda2 === 'function'){
 console.log('[DIGICOPY] patch_vendas_financeiro v5.0.2 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_vendas_financeiro.js", e); }
 ;
 
-/* ===== patch_chamados.js ===== */
-try{
+/* ===== patch_chamados.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.5 — Chamados (relatório do usuário)
 // 1. Código global sequencial (não por cliente)
@@ -20428,11 +20307,9 @@ window.imprimirChamado = function(id){
   }
 };
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_chamados.js", e); }
 ;
 
-/* ===== navegacao_voltar_patch.js ===== */
-try{
+/* ===== navegacao_voltar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.3.9 — Navegação hierárquica completa (4 -> 3 -> 2 -> 1 e sub-menus x.1, x.2)
 // • Deleta/neutraliza qualquer duplicação de página ou pilha interna com innerHTML
@@ -20541,11 +20418,9 @@ try{
   console.log('[DIGICOPY] navegacao_voltar_patch.js v5.3.9 — Hierarquia 4->3->2->1 ativa, sem duplicação');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("navegacao_voltar_patch.js", e); }
 ;
 
-/* ===== vendas_notinhas_fix_patch.js ===== */
-try{
+/* ===== vendas_notinhas_fix_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.15.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
@@ -21776,11 +21651,9 @@ try{
   console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.15.2 — cancelar não apaga venda já salva');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_notinhas_fix_patch.js", e); }
 ;
 
-/* ===== locacao_chamados_fix_patch.js ===== */
-try{
+/* ===== locacao_chamados_fix_patch.js (escopo global) ===== */
 // PATCH v5.16.0 — Locação + Chamados (contrato e avulso)
 (function(){
 'use strict';
@@ -22478,11 +22351,9 @@ console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
 
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_chamados_fix_patch.js", e); }
 ;
 
-/* ===== historico_sort_patch.js ===== */
-try{
+/* ===== historico_sort_patch.js (escopo global) ===== */
 // PATCH v5.17.0 / v5.22.14 — Ordenar históricos clicando no nome da coluna
 // v5.22.14: não empilha seta extra em tabelas que já ordenam no título
 (function(){
@@ -22559,11 +22430,9 @@ setTimeout(scan,400);
 console.log('[DIGICOPY] historico_sort_patch.js v5.22.14 — uma seta só, dois sentidos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("historico_sort_patch.js", e); }
 ;
 
-/* ===== ajustes_v5171_patch.js ===== */
-try{
+/* ===== ajustes_v5171_patch.js (escopo global) ===== */
 // PATCH v5.17.1 — avisos, color no criar, abas finalizado, PDF, filtros, ESC
 (function(){
 'use strict';
@@ -22954,11 +22823,9 @@ window.abrirLeiturasContrato=function(contratoId){
 console.log('[DIGICOPY] ajustes_v5171_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5171_patch.js", e); }
 ;
 
-/* ===== ajustes_v5172_patch.js ===== */
-try{
+/* ===== ajustes_v5172_patch.js (escopo global) ===== */
 // PATCH v5.17.2 — lista finalizar, color abaixo do preto, busca, PDF, ESC sem loop
 (function(){
 'use strict';
@@ -23421,11 +23288,9 @@ window.abrirLeiturasContrato=function(contratoId){
 console.log('[DIGICOPY] ajustes_v5172_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5172_patch.js", e); }
 ;
 
-/* ===== ajustes_v5174_patch.js ===== */
-try{
+/* ===== ajustes_v5174_patch.js (escopo global) ===== */
 // PATCH v5.17.4 — contador oficial da leitura, peças, PDF print, Todos, busca impressora
 (function(){
 'use strict';
@@ -23719,11 +23584,9 @@ window.lcLeiturasTodos=function(){
 console.log('[DIGICOPY] ajustes_v5174_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5174_patch.js", e); }
 ;
 
-/* ===== ajustes_v5175_patch.js ===== */
-try{
+/* ===== ajustes_v5175_patch.js (escopo global) ===== */
 // PATCH v5.17.5 — form contrato = layout avulso; peças; PDF linhas; cliente do contrato
 (function(){
 'use strict';
@@ -24218,11 +24081,9 @@ document.addEventListener('click', function(ev){
 console.log('[DIGICOPY] ajustes_v5175_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5175_patch.js", e); }
 ;
 
-/* ===== ajustes_v5176_patch.js ===== */
-try{
+/* ===== ajustes_v5176_patch.js (escopo global) ===== */
 // PATCH v5.17.6 — antigo do último chamado; Alterar Cont. grava; peças lupa; PDF
 (function(){
 'use strict';
@@ -24539,11 +24400,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5176_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5176_patch.js", e); }
 ;
 
-/* ===== ajustes_v5177_patch.js ===== */
-try{
+/* ===== ajustes_v5177_patch.js (escopo global) ===== */
 // PATCH v5.17.7 — peças: lupa/Enter; remover com aviso; 2.1 só contrato; PDF
 (function(){
 'use strict';
@@ -24775,11 +24634,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5177_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5177_patch.js", e); }
 ;
 
-/* ===== ajustes_v5178_patch.js ===== */
-try{
+/* ===== ajustes_v5178_patch.js (escopo global) ===== */
 // PATCH v5.17.8 — Tirar peça de verdade; assinaturas no fim do A4
 (function(){
 'use strict';
@@ -24935,11 +24792,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5178_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5178_patch.js", e); }
 ;
 
-/* ===== ajustes_v5179_patch.js ===== */
-try{
+/* ===== ajustes_v5179_patch.js (escopo global) ===== */
 // PATCH v5.17.9 — cliente avulso X; color no PDF contrato; contadores vazios; 1 folha
 (function(){
 'use strict';
@@ -25136,11 +24991,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5179_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5179_patch.js", e); }
 ;
 
-/* ===== ajustes_v5180_patch.js ===== */
-try{
+/* ===== ajustes_v5180_patch.js (escopo global) ===== */
 // PATCH v5.18.0 — PDF: contador só se finalizado; rodapé+assinatura no fim da A4
 (function(){
 'use strict';
@@ -25281,11 +25134,9 @@ if(typeof window.imprimirChamado==='function'){
 console.log('[DIGICOPY] ajustes_v5180_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5180_patch.js", e); }
 ;
 
-/* ===== ajustes_v5181_patch.js ===== */
-try{
+/* ===== ajustes_v5181_patch.js (escopo global) ===== */
 // PATCH v5.18.1 — peças com valor/desconto; PDF valor; venda faturada; excluir apaga chamado
 (function(){
 'use strict';
@@ -25604,11 +25455,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5181_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5181_patch.js", e); }
 ;
 
-/* ===== ajustes_v5182_patch.js ===== */
-try{
+/* ===== ajustes_v5182_patch.js (escopo global) ===== */
 // PATCH v5.18.2 — peças igual vendas; PDF só desc/qtd/valor; sem 1.2.1/1.2.2
 (function(){
 'use strict';
@@ -25921,11 +25770,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5182_patch.js", e); }
 ;
 
-/* ===== ajustes_v5183_patch.js ===== */
-try{
+/* ===== ajustes_v5183_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.3 — Correções nos chamados (contrato e fora) + leitura
 // • 4  — Remove a seção duplicada "Produtos / peças utilizadas" (antiga) que
@@ -26099,11 +25946,9 @@ if(typeof _abrirDet === 'function'){
 console.log('[DIGICOPY] ajustes_v5183_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5183_patch.js", e); }
 ;
 
-/* ===== ajustes_v5184_patch.js ===== */
-try{
+/* ===== ajustes_v5184_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.4 — PDF do chamado: dados do cliente e de atendimento lado a lado
 // • Item 3 — no PDF do chamado (Ordem de Serviço), a caixa de DADOS DO CLIENTE
@@ -26240,11 +26085,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] ajustes_v5184_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5184_patch.js", e); }
 ;
 
-/* ===== ajustes_v5185_patch.js ===== */
-try{
+/* ===== ajustes_v5185_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.5 — corrige de verdade a duplicação de peças + impressora no PDF
 // • 4/1.2 — A duplicação "Produtos / peças utilizadas" não saía porque outro
@@ -26465,11 +26308,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] ajustes_v5185_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5185_patch.js", e); }
 ;
 
-/* ===== ajustes_v5186_patch.js ===== */
-try{
+/* ===== ajustes_v5186_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.6 — chamado de contrato (peças + faixas), PDF, nuvem e boas-vindas
 // • 1.2 — Garante a área de peças "igual vendas" (busca/lupa, qtd, valor,
@@ -26866,11 +26707,9 @@ if(typeof _doLogin === 'function'){
 console.log('[DIGICOPY] ajustes_v5186_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5186_patch.js", e); }
 ;
 
-/* ===== ajustes_v5187_patch.js ===== */
-try{
+/* ===== ajustes_v5187_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.7 — aviso de canto (boas-vindas) + PDF puxa dados digitados
 // • 5.1 — Aviso "Bem-vindo, Fulano!" no CANTO da tela (não é popup), some
@@ -26965,11 +26804,9 @@ if(typeof _imp === 'function'){
 console.log('[DIGICOPY] ajustes_v5187_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5187_patch.js", e); }
 ;
 
-/* ===== ajustes_v5188_patch.js ===== */
-try{
+/* ===== ajustes_v5188_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.8 (limpo) — logo PADRÃO apenas
 // • O upload de "Logo da loja" foi REMOVIDO de vez (o usuário não quer
@@ -27008,11 +26845,9 @@ setTimeout(aplicarLogoConfig, 2500);
 console.log('[DIGICOPY] ajustes_v5188_patch.js (sem upload de logo)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5188_patch.js", e); }
 ;
 
-/* ===== ajustes_v5189_patch.js ===== */
-try{
+/* ===== ajustes_v5189_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.9 — correções de impressão de chamado + logo padrão + dados loja
 // • 1  — Corrige o erro "Informe o motivo do chamado" ao imprimir (a validação
@@ -27274,11 +27109,9 @@ setTimeout(function(){ window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL ||
 console.log('[DIGICOPY] ajustes_v5189_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5189_patch.js", e); }
 ;
 
-/* ===== ajustes_v5190_patch.js ===== */
-try{
+/* ===== ajustes_v5190_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.0 — dica de impressão no navegador (Ctrl+P) + reforço no Electron
 // • No programa (.exe/Electron): o Ctrl+P já é interceptado no main.js e imprime
@@ -27324,11 +27157,9 @@ document.addEventListener('keydown', function(e){
 console.log('[DIGICOPY] ajustes_v5190_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5190_patch.js", e); }
 ;
 
-/* ===== ajustes_v5191_patch.js ===== */
-try{
+/* ===== ajustes_v5191_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.1 — otimizações e correções de interferência
 // • Corrige a sincronização manual ("Enviar para nuvem" / "Carregar da nuvem"):
@@ -27392,11 +27223,9 @@ if(_logoPadrao){
 console.log('[DIGICOPY] ajustes_v5191_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5191_patch.js", e); }
 ;
 
-/* ===== ajustes_v5192_patch.js ===== */
-try{
+/* ===== ajustes_v5192_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.2 — corrige o "Informe o motivo do chamado" ao salvar/sair
 // • CAUSA: o formulário do chamado é desenhado com campos de um nome (ko-* /
@@ -27489,11 +27318,9 @@ if(typeof _salvarAvulso === 'function' && !_salvarAvulso.__v5192){
 console.log('[DIGICOPY] ajustes_v5192_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5192_patch.js", e); }
 ;
 
-/* ===== ajustes_v5193_patch.js ===== */
-try{
+/* ===== ajustes_v5193_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.3 — cliente: aviso "salvar ou não" ao sair, só se modificou algo
 // • Ao ALTERAR um cliente, se você mudou qualquer informação e tentar sair
@@ -27594,11 +27421,9 @@ if(typeof _closeModalCli === 'function'){
 console.log('[DIGICOPY] ajustes_v5193_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5193_patch.js", e); }
 ;
 
-/* ===== ajustes_v5196_patch.js ===== */
-try{
+/* ===== ajustes_v5196_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.6 — Usuários e permissões (hierarquia) + técnicos
 // • 0  — Remove TODO o fluxo de "senha CNPJ" da criação/edição de usuário.
@@ -27933,11 +27758,9 @@ try{
 console.log('[DIGICOPY] ajustes_v5196_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5196_patch.js", e); }
 ;
 
-/* ===== ajustes_v5197_patch.js ===== */
-try{
+/* ===== ajustes_v5197_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.7 — Auditoria só para Admin e Dono
 // • Esconde o item "Auditoria" do menu lateral e do submenu Configurações
@@ -28015,11 +27838,9 @@ try{
 console.log('[DIGICOPY] ajustes_v5197_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5197_patch.js", e); }
 ;
 
-/* ===== ajustes_v51916_patch.js ===== */
-try{
+/* ===== ajustes_v51916_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.16 — vendas faturadas, excluir produto e contrato
 // • 1  — Venda faturada abre na tela PRINCIPAL (cadastro), travada, em vez da
@@ -28179,11 +28000,9 @@ try{
 console.log('[DIGICOPY] ajustes_v51916_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v51916_patch.js", e); }
 ;
 
-/* ===== ajustes_v51920_patch.js ===== */
-try{
+/* ===== ajustes_v51920_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.20 — validação de chamado em UM aviso só + destaque em vermelho
 // • Ao salvar/finalizar, junta TUDO que está faltando num único aviso.
@@ -28318,11 +28137,9 @@ if(typeof _salvarAvulso === 'function' && !_salvarAvulso.__v51920){
 console.log('[DIGICOPY] ajustes_v51920_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v51920_patch.js", e); }
 ;
 
-/* ===== ajustes_v52023_patch.js ===== */
-try{
+/* ===== ajustes_v52023_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.20.23 — Excluir em lote (Clientes e Financeiro) + limpezas
 // • Clientes: caixinha de seleção + botão "Excluir selecionados" — apaga DE
@@ -28591,11 +28408,9 @@ window.excluirFinanceiroSelecionados = function(){
 console.log('[DIGICOPY] ajustes_v52023_patch.js carregado — excluir em lote (clientes/financeiro) + sem botão Pagar no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52023_patch.js", e); }
 ;
 
-/* ===== ajustes_v52024_patch.js ===== */
-try{
+/* ===== ajustes_v52024_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.20.24 — Filtro "pagar" do Financeiro + backup automático diário
 // • Financeiro: apaga DE VERDADE o filtro de tipo (Receber+Pagar/Só a receber/
@@ -28666,11 +28481,9 @@ if(typeof window.renderFinanceiro === 'function' && !window.renderFinanceiro.__v
 console.log('[DIGICOPY] ajustes_v52024_patch.js carregado — sem filtro de tipo no financeiro, backup só pelo botão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52024_patch.js", e); }
 ;
 
-/* ===== indexeddb_persistence_patch.js ===== */
-try{
+/* ===== indexeddb_persistence_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PERSISTÊNCIA INDEXEDDB v2 — incremental por entidade
 // Migra automaticamente o snapshot v1 e grava apenas entidades alteradas.
@@ -28801,11 +28614,9 @@ try{document.addEventListener('visibilitychange',()=>{if(document.hidden)writeNo
 console.log('[DIGICOPY] persistência IndexedDB v2 incremental carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("indexeddb_persistence_patch.js", e); }
 ;
 
-/* ===== cloudflare_sync_patch.js ===== */
-try{
+/* ===== cloudflare_sync_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // DIGICOPY CLOUD v5.20.28 — ativação segura de aparelhos (Cloudflare D1)
 // Esta etapa substitui o diagnóstico Firebase e prepara a autorização dos PCs.
@@ -29023,6 +28834,13 @@ async function renderConnected(body){
     const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
     if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
   const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
@@ -29200,11 +29018,9 @@ if(typeof document!=='undefined'){
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cloudflare_sync_patch.js", e); }
 ;
 
-/* ===== cloudflare_data_sync_patch.js ===== */
-try{
+/* ===== cloudflare_data_sync_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // DIGICOPY CLOUD DATA v5.20.30 — sincronização incremental local-first
 // • Nuvem ausente/vazia NUNCA apaga o PC.
@@ -30054,11 +29870,9 @@ if(authorized())schedule(1200);else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cloudflare_data_sync_patch.js", e); }
 ;
 
-/* ===== ajustes_v5214_clientes_visiveis_patch.js ===== */
-try{
+/* ===== ajustes_v5214_clientes_visiveis_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.21.4 — clientes visíveis na tela
 // A nuvem/contagem usa db.clientes.length. A tela filtrava empresaId e
@@ -30145,11 +29959,9 @@ else setTimeout(aposBasePronta,400);
 console.log('[DIGICOPY] v5.21.4 clientes visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5214_clientes_visiveis_patch.js", e); }
 ;
 
-/* ===== ajustes_v5215_cnpj_inteligente_patch.js ===== */
-try{
+/* ===== ajustes_v5215_cnpj_inteligente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.21.5 — busca inteligente de CNPJ na loja e no cliente
 // Consulta BrasilAPI e, se falhar, ReceitaWS. Preenche razão, fantasia,
@@ -30369,11 +30181,9 @@ setTimeout(instalarBuscaLoja,800);
 console.log('[DIGICOPY] v5.21.5 busca inteligente de CNPJ');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5215_cnpj_inteligente_patch.js", e); }
 ;
 
-/* ===== ajustes_v5220_nfe_config_patch.js ===== */
-try{
+/* ===== ajustes_v5220_nfe_config_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.0 — preparação NF-e (sem emitir ainda)
 // • Card em Configurações: IE, regime, série, ambiente
@@ -30504,11 +30314,9 @@ setTimeout(renderNfeCard,800);
 console.log('[DIGICOPY] v5.22.0 preparação NF-e');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5220_nfe_config_patch.js", e); }
 ;
 
-/* ===== ajustes_v5221_nfe_emissao_patch.js ===== */
-try{
+/* ===== ajustes_v5221_nfe_emissao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.1 — conferência NF-e (modelo 55) da venda e da leitura
 // • Regime: Simples Nacional (CRT 1), não é MEI
@@ -31078,11 +30886,9 @@ setTimeout(function(){ try{ atualizarCardNfe(); }catch(e){} },900);
 console.log('[DIGICOPY] v5.22.1 conferência NF-e isolada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5221_nfe_emissao_patch.js", e); }
 ;
 
-/* ===== ajustes_v5227_nuvem_acompanhamento_patch.js ===== */
-try{
+/* ===== ajustes_v5227_nuvem_acompanhamento_patch.js (escopo global) ===== */
 // DIGICOPY v5.22.7 — acompanhamento dos dados dos outros PCs (só Admin)
 (function(){
 'use strict';
@@ -31219,11 +31025,9 @@ window.DIGICOPY_NUVEM_ACOMPANHAMENTO={entityName,opName,activityReady:true};
 console.log('[DIGICOPY] acompanhamento dos PCs na nuvem (Admin)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5227_nuvem_acompanhamento_patch.js", e); }
 ;
 
-/* ===== ajustes_v5228_nfe_assinatura_patch.js ===== */
-try{
+/* ===== ajustes_v5228_nfe_assinatura_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.8 — assinar NF-e com A1 (senha só na hora)
 // • Não grava a senha. Não envia para a SEFAZ. Não altera venda/leitura/nuvem.
@@ -31371,11 +31175,9 @@ window.NFE_ASSINATURA_UI={pedirSenhaA1:typeof document==='undefined'?undefined:p
 console.log('[DIGICOPY] v5.22.8 assinatura A1 isolada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5228_nfe_assinatura_patch.js", e); }
 ;
 
-/* ===== ajustes_v5229_nfe_atalho_historico_patch.js ===== */
-try{
+/* ===== ajustes_v5229_nfe_atalho_historico_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.9 — atalho NF-e no histórico da notinha e da leitura
 // • Usa o que estiver selecionado
@@ -31518,11 +31320,9 @@ window.NFE_ATALHO_HISTORICO={
 console.log('[DIGICOPY] v5.22.9 atalho NF-e no histórico');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5229_nfe_atalho_historico_patch.js", e); }
 ;
 
-/* ===== ajustes_v52210_historico_checkbox_nfe_patch.js ===== */
-try{
+/* ===== ajustes_v52210_historico_checkbox_nfe_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.10 — caixa + excluir no histórico de leituras; NF-e nas duas listas
 // • Histórico de leituras ganha caixa e Excluir (faturada não sai)
@@ -31706,11 +31506,9 @@ window.NFE_LISTA_CHECKBOX={
 console.log('[DIGICOPY] v5.22.10 caixa no histórico + NF-e com uma só');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52210_historico_checkbox_nfe_patch.js", e); }
 ;
 
-/* ===== ajustes_v52211_logo_impressao_unica_patch.js ===== */
-try{
+/* ===== ajustes_v52211_logo_impressao_unica_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.11 — uma logo só na impressão (notinha, leitura, chamado, relatório)
 // • Tira a logo extra que ia para o topo e comia espaço
@@ -31785,11 +31583,9 @@ window.open=function(){
 console.log('[DIGICOPY] v5.22.11 logo única na impressão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52211_logo_impressao_unica_patch.js", e); }
 ;
 
-/* ===== ajustes_v52212_celular_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52212_celular_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.12 — celular autoriza com código e puxa a nuvem
 // • NF-e continua só no PC da loja (A1 local)
@@ -31915,11 +31711,9 @@ setTimeout(ligar,600);
 console.log('[DIGICOPY] v5.22.12 celular autoriza e puxa a nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52212_celular_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52213_financeiro_receber_patch.js ===== */
-try{
+/* ===== ajustes_v52213_financeiro_receber_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.13 — Financeiro: só Contas e caixas; Receber junto da lixeira
 // • Some o submenu Novo recebimento
@@ -32223,11 +32017,9 @@ setTimeout(tirarSubmenuRecebimento, 1200);
 console.log('[DIGICOPY] v5.22.13 financeiro: Contas e caixas + Receber/baixa');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52213_financeiro_receber_patch.js", e); }
 ;
 
-/* ===== ajustes_v52213_menus_atalhos_patch.js ===== */
-try{
+/* ===== ajustes_v52213_menus_atalhos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.13 — Ordem/nome dos menus + atalhos do Início
 // • Só ordem e nome (menu e submenu). Limite de caracteres.
@@ -32570,11 +32362,9 @@ setTimeout(tirarChamadosLocacao, 1800);
 console.log('[DIGICOPY] v5.22.13 menus editáveis + atalhos do Início');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52213_menus_atalhos_patch.js", e); }
 ;
 
-/* ===== ajustes_v52214_ordenacao_patch.js ===== */
-try{
+/* ===== ajustes_v52214_ordenacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.14 — Ordenação dos títulos: um sentido não trava; sem duas setas
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32659,11 +32449,9 @@ wrapSort('chamadosSortRefino', function(){
 console.log('[DIGICOPY] v5.22.14 ordenação: A→Z e Z→A, uma seta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52214_ordenacao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52214_recargas_patch.js ===== */
-try{
+/* ===== ajustes_v52214_recargas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.14 — Recargas fora de produtos: aba, submenu, venda puxa daqui, sem estoque
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32974,11 +32762,9 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52214rec){
 console.log('[DIGICOPY] v5.22.14 recargas: aba + venda sem estoque');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52214_recargas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52216_menus_submenus_patch.js ===== */
-try{
+/* ===== ajustes_v52216_menus_submenus_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.16 — Submenus móveis, menus ocultos só no Admin, atalhos na faixa azul
 // • Setas sobem/descem submenu dentro do menu
@@ -33425,11 +33211,9 @@ setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pinta
 console.log('[DIGICOPY] v5.22.16 submenus móveis + ocultos só Admin + atalhos na faixa azul');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52216_menus_submenus_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_menus_arrastar_visibilidade_patch.js ===== */
-try{
+/* ===== ajustes_v52217_menus_arrastar_visibilidade_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Menus arrastáveis + Nuvem/Backup só no Admin
 // • Editor: arrastar menu e submenu (além das setas)
@@ -33603,11 +33387,9 @@ if(typeof window.showApp==='function' && !window.showApp.__v52217vis){
 console.log('[DIGICOPY] v5.22.17 menus arrastáveis + Nuvem/Backup só Admin');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_menus_arrastar_visibilidade_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_print_sem_rodape_patch.js ===== */
-try{
+/* ===== ajustes_v52217_print_sem_rodape_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Tira o rodapé da loja em toda impressão/PDF
 // (o bloco cinza com razão, CNPJ e endereço que caía na outra metade da folha)
@@ -33667,11 +33449,9 @@ if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha
 console.log('[DIGICOPY] v5.22.17 impressão sem rodapé da loja na outra metade');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_print_sem_rodape_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_financeiro_recibo_patch.js ===== */
-try{
+/* ===== ajustes_v52217_financeiro_recibo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Imprimir recibo no financeiro (ao lado de Receber/Excluir)
 // • Só títulos do mesmo cliente
@@ -33888,11 +33668,9 @@ setTimeout(ajustarBotaoImprimir, 1400);
 console.log('[DIGICOPY] v5.22.17 recibo no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_financeiro_recibo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_cert_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52217_cert_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Certificado público na nuvem (não é o A1 .pfx)
 // • Sobe .p7b / .cer / .crt (arquivo da foto: Troca de Informações Pessoais)
@@ -34021,11 +33799,9 @@ setTimeout(garantirBloco, 900);
 console.log('[DIGICOPY] v5.22.17 certificado público na nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_cert_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.18 — PIX baixa na hora; comprovante só no A prazo; imprimir só depois de faturar
 // ═══════════════════════════════════════════════════════════════════════════
@@ -34135,11 +33911,9 @@ setTimeout(esconderImprimirAntesDeFaturar, 600);
 console.log('[DIGICOPY] v5.22.18 PIX baixa na hora; comprovante no A prazo; imprimir só faturada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52218_pix_prazo_print_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.18 — Etiqueta na recarga: sem botão cadastrar, duplicata bloqueada,
 // preenche cliente sozinha, some no estorno se não restar venda ativa
@@ -34302,11 +34076,9 @@ setTimeout(tirarBotaoCadastrar, 800);
 console.log('[DIGICOPY] v5.22.18 etiqueta recarga: cadastro no faturar, sem duplicar, some no estorno');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52218_etiqueta_recarga_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52219_filtros_busca_patch.js ===== */
-try{
+/* ===== ajustes_v52219_filtros_busca_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.19 — Filtro auxiliar ao lado da busca (cliente / produto / recarga)
 // • Cliente: mesmos campos do menu Clientes, em todo lugar que escolhe cliente
@@ -34699,11 +34471,9 @@ setTimeout(aplicarTudo, 1400);
 console.log('[DIGICOPY] v5.22.19 filtros auxiliares: cliente, produto (sem recarga) e recarga+etiqueta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52219_filtros_busca_patch.js", e); }
 ;
 
-/* ===== ajustes_v52219_pix_link_publico_patch.js ===== */
-try{
+/* ===== ajustes_v52219_pix_link_publico_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.19 — Link do comprovante/página Pix não depende do GitHack
 // O PDF usa a URL pública da nuvem. Se o repositório ficar privado, o cliente
@@ -34733,11 +34503,9 @@ window.pixPagamentoUrl = function(payload){
 console.log('[DIGICOPY] v5.22.19 PIX: página de pagamento na nuvem, sem GitHack');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52219_pix_link_publico_patch.js", e); }
 ;
 
-/* ===== ajustes_v52220_lupa_alinha_patch.js ===== */
-try{
+/* ===== ajustes_v52220_lupa_alinha_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.20 — Lupa no lugar certo (o filtro auxiliar não pode empurrar o botão)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -34891,11 +34659,9 @@ setTimeout(consertarTudo, 1600);
 console.log('[DIGICOPY] v5.22.20 lupa alinhada no campo');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52220_lupa_alinha_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_menus_dispositivo_patch.js ===== */
-try{
+/* ===== ajustes_v52221_menus_dispositivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Menus só deste dispositivo + editor nas Configurações
 // • Layout não sobe na nuvem e não muda os outros PCs
@@ -35069,11 +34835,9 @@ setTimeout(function(){
 console.log('[DIGICOPY] v5.22.21 menus só deste dispositivo');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_menus_dispositivo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_nfe_permissao_patch.js ===== */
-try{
+/* ===== ajustes_v52221_nfe_permissao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Caixa “pode emitir NF” em Usuários
 // • Só Admin ou Dono edita a caixa
@@ -35208,11 +34972,9 @@ setTimeout(injetarCaixas, 800);
 console.log('[DIGICOPY] v5.22.21 permissão de emitir NF');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_nfe_permissao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_import_produtos_patch.js ===== */
-try{
+/* ===== ajustes_v52221_import_produtos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Importação pontual PRODUTOS + PRODUTOS_CATEGORIA
 // • Dedupe só nesta importação, por código/SKU
@@ -35299,11 +35061,9 @@ window.IMPORT_PRODUTOS_PURE = {
 console.log('[DIGICOPY] v5.22.21 importação pontual de produtos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_import_produtos_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_cert_nuvem_a1_patch.js ===== */
-try{
+/* ===== ajustes_v52221_cert_nuvem_a1_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
 // • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
@@ -35426,11 +35186,9 @@ setTimeout(apagarA1LocalSeHouver, 1200);
 console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_cert_nuvem_a1_patch.js", e); }
 ;
 
-/* ===== ajustes_v52222_menus_arrastar_patch.js ===== */
-try{
+/* ===== ajustes_v52222_menus_arrastar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.22 — Editor de menus: só arrastar, sem setas
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35471,11 +35229,9 @@ if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52
 console.log('[DIGICOPY] v5.22.22 menus só arrastar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52222_menus_arrastar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52222_ncm_import_patch.js ===== */
-try{
+/* ===== ajustes_v52222_ncm_import_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.22 — Liga NCM no produto (tabela NCM do sistema antigo + campo no produto)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35540,11 +35296,9 @@ if(window.IMPORT_PRODUTOS_PURE && typeof window.IMPORT_PRODUTOS_PURE.mapearProdu
 console.log('[DIGICOPY] v5.22.22 NCM no produto');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52222_ncm_import_patch.js", e); }
 ;
 
-/* ===== ajustes_v52223_cat_letra_patch.js ===== */
-try{
+/* ===== ajustes_v52223_cat_letra_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.23 — Letras P/S/I/C/E no select: some a opção letra, entra o nome
 // • Chip, Original e o resto ficam.
@@ -35620,11 +35374,9 @@ setTimeout(aplicar, 1600);
 console.log('[DIGICOPY] v5.22.23 letras só no select (sem regra de categoria)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52223_cat_letra_patch.js", e); }
 ;
 
-/* ===== ajustes_v52223_menus_arraste_patch.js ===== */
-try{
+/* ===== ajustes_v52223_menus_arraste_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.23 — Menus: apaga as setas e o bloco segue o mouse
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35724,11 +35476,9 @@ if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52
 console.log('[DIGICOPY] v5.22.23 menus seguem o mouse, sem seta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52223_menus_arraste_patch.js", e); }
 ;
 
-/* ===== ajustes_v52224_cat_letra_uma_vez_patch.js ===== */
-try{
+/* ===== ajustes_v52224_cat_letra_uma_vez_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.24 — Correção pontual: P/S/I/C/E só no dado já importado, uma vez
 // • Não envolve unificaCat / categoriaUnificada (não vira regra).
@@ -35810,11 +35560,9 @@ setTimeout(tentar, 1800);
 console.log('[DIGICOPY] v5.22.24 letra no produto: uma vez, sem regra');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52224_cat_letra_uma_vez_patch.js", e); }
 ;
 
-/* ===== ajustes_v52225_import_pula_del_patch.js ===== */
-try{
+/* ===== ajustes_v52225_import_pula_del_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.25 — Nesta importação, produto com DEL = S não entra
 // • Só DEL. OCULTAR não decide.
@@ -35848,11 +35596,9 @@ if(window.IMPORT_PRODUTOS_PURE && !window.IMPORT_PRODUTOS_PURE.ehDel){
 console.log('[DIGICOPY] v5.22.25 importação pula DEL=S');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52225_import_pula_del_patch.js", e); }
 ;
 
-/* ===== ajustes_v52227_lupa_filtro_cli_patch.js ===== */
-try{
+/* ===== ajustes_v52227_lupa_filtro_cli_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.27 — Some a lupa enfeite em cima do filtro de cliente
 // • A lupa de pesquisar (botão) fica. Some só o ícone absoluto que cobria o select.
@@ -35916,11 +35662,9 @@ setTimeout(tiraLupaEnfeite, 1800);
 console.log('[DIGICOPY] v5.22.27 lupa enfeite do filtro de cliente removida');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52227_lupa_filtro_cli_patch.js", e); }
 ;
 
-/* ===== ajustes_v52227_ncm_origem_patch.js ===== */
-try{
+/* ===== ajustes_v52227_ncm_origem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.27 — NCM pesquisável (Enter/lupa) + origem ICMS 0 a 8
 // • Origem oficial da NF-e. Não inventa origem a partir do NCM.
@@ -36080,11 +35824,9 @@ if(typeof window.openModal==='function' && !window.openModal.__v52227ncm){
 console.log('[DIGICOPY] v5.22.27 NCM pesquisável e origem 0-8');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52227_ncm_origem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52228_a1_nuvem_lupa_ncm_patch.js ===== */
-try{
+/* ===== ajustes_v52228_a1_nuvem_lupa_ncm_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.28 — A1 da nuvem vale na conferência/assinatura + lupa NCM no meio da caixa
 // • Senha só na hora. Ainda não envia à SEFAZ.
@@ -36260,11 +36002,9 @@ setTimeout(aplicarLupa, 900);
 console.log('[DIGICOPY] v5.22.28 A1 da nuvem + lupa NCM no centro da caixa');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52228_a1_nuvem_lupa_ncm_patch.js", e); }
 ;
 
-/* ===== ajustes_v52229_nfe_ie_im_cnae_patch.js ===== */
-try{
+/* ===== ajustes_v52229_nfe_ie_im_cnae_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.29 — Dados fiscais da loja: IE, Inscrição Municipal e CNAE
 // • Grava em db.config.fiscal. Ainda não emite na SEFAZ.
@@ -36442,11 +36182,9 @@ setTimeout(aplicar, 900);
 console.log('[DIGICOPY] v5.22.29 IE, Inscrição Municipal e CNAE');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52229_nfe_ie_im_cnae_patch.js", e); }
 ;
 
-/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js ===== */
-try{
+/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.30 — Modo escuro só neste aparelho
 // • Liga/desliga em Configurações. Não sobe na nuvem. Não muda outros PCs.
@@ -36571,11 +36309,9 @@ setTimeout(cardEscuro, 800);
 console.log('[DIGICOPY] v5.22.30 modo escuro só neste aparelho');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52230_modo_escuro_dispositivo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52233_escuro_login_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52233_escuro_login_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.33 — Modo escuro no login e no painel Nuvem
 // • Só essas duas telas. Não mexe no resto do visual da 5.22.30.
@@ -36627,11 +36363,9 @@ setTimeout(aplicar, 80);
 console.log('[DIGICOPY] v5.22.33 escuro no login e na Nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52233_escuro_login_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52234_config_aviso_salvou_patch.js ===== */
-try{
+/* ===== ajustes_v52234_config_aviso_salvou_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.34 — Aviso de salvo nas Configurações
 // • Qualquer botão Salvar do menu Configurações abre o aviso do sistema.
@@ -36710,11 +36444,9 @@ if(!window.__v52234salvoClick){
 console.log('[DIGICOPY] v5.22.34 aviso de salvo nas Configurações');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52234_config_aviso_salvou_patch.js", e); }
 ;
 
-/* ===== ajustes_v52234_ncm_produto_existente_patch.js ===== */
-try{
+/* ===== ajustes_v52234_ncm_produto_existente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.34 — Reimportação: produto que já existe só ganha o NCM
 // • Não duplica. Não mexe estoque/preço. DEL=S continua pulado.
@@ -36742,11 +36474,9 @@ window.NCM_PRODUTO_EXISTENTE_PURE = {
 console.log('[DIGICOPY] v5.22.34 NCM no produto que já existe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52234_ncm_produto_existente_patch.js", e); }
 ;
 
-/* ===== ajustes_v52235_codigo_sem_sku_patch.js ===== */
-try{
+/* ===== ajustes_v52235_codigo_sem_sku_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.35 — Na tela aparece Código, não SKU
 // • Só o texto. O campo interno continua sku.
@@ -36815,11 +36545,9 @@ setTimeout(aplicar, 600);
 console.log('[DIGICOPY] v5.22.35 código no lugar de SKU');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52235_codigo_sem_sku_patch.js", e); }
 ;
 
-/* ===== ajustes_v52236_codigo_cliente_exato_patch.js ===== */
-try{
+/* ===== ajustes_v52236_codigo_cliente_exato_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.36 — Filtro Código do cliente é exato
 // • 48 acha só 48. Não pega 480, 481, 1048.
@@ -36878,11 +36606,9 @@ setTimeout(function(){
 console.log('[DIGICOPY] v5.22.36 código do cliente é exato');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52236_codigo_cliente_exato_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_vendas_os_visual_patch.js ===== */
-try{
+/* ===== ajustes_v52237_vendas_os_visual_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Vendas / OS: rótulos azuis, série com lupa, garantia escreve,
 //            some valor/desconto OS, técnico obrigatório, aviso EPSON
@@ -37133,11 +36859,9 @@ setTimeout(function(){ wrapColetar(); wrapGravar(); }, 300);
 console.log('[DIGICOPY] v5.22.37 vendas/OS visual, série, garantia, técnico, EPSON');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_vendas_os_visual_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_estoque_zero_volta_patch.js ===== */
-try{
+/* ===== ajustes_v52237_estoque_zero_volta_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Produto zerado: avisa, abre cadastro na aba Estoque e volta
 //            na mesma venda (nada some). Não adiciona o item sozinho.
@@ -37314,11 +37038,9 @@ if(typeof window.closeModal==='function' && !window.closeModal.__v52237est){
 console.log('[DIGICOPY] v5.22.37 estoque zerado volta na venda');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_estoque_zero_volta_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_contratos_filtros_patch.js ===== */
-try{
+/* ===== ajustes_v52237_contratos_filtros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Filtros de busca em Locação → Contratos
 // ═══════════════════════════════════════════════════════════════════════════
@@ -37547,11 +37269,9 @@ setTimeout(injetar, 500);
 console.log('[DIGICOPY] v5.22.37 filtros de contratos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_contratos_filtros_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_orcamentos_menu_patch.js ===== */
-try{
+/* ===== ajustes_v52237_orcamentos_menu_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Menu Orçamentos (cadastro separado do Digicopy, NÃO é o
 //            Buscador Escola). Lista, novo, excluir, estornar, filtros.
@@ -38158,11 +37878,9 @@ garantirNuvem();
 console.log('[DIGICOPY] v5.22.37 menu orçamentos (ERP, não buscador)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_orcamentos_menu_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_orcamentos_aprovacao_patch.js ===== */
-try{
+/* ===== ajustes_v52237_orcamentos_aprovacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Impressão do orçamento (meia folha) + link público para o
 //            cliente aprovar/recusar. Aprovar gera venda SALVA (não
@@ -38444,11 +38162,9 @@ setTimeout(puxarAprovacoes, 4000);
 console.log('[DIGICOPY] v5.22.37 orçamento impressão + aprovação pública');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_orcamentos_aprovacao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52238_orcamentos_ajustes_patch.js ===== */
-try{
+/* ===== ajustes_v52238_orcamentos_ajustes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.38 — Orçamentos: filtro de produto/recarga, avisos, sair pergunta,
 //            link SEPARADO do Pix, autorizar/recusar, WhatsApp nos dois
@@ -38707,11 +38423,9 @@ if(window.ORCAMENTOS_APROVACAO_PURE){
 console.log('[DIGICOPY] v5.22.38 orçamentos: filtros, avisos, link separado do Pix');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52238_orcamentos_ajustes_patch.js", e); }
 ;
 
-/* ===== ajustes_v52238_vendas_os_ajustes_patch.js ===== */
-try{
+/* ===== ajustes_v52238_vendas_os_ajustes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.38 — Vendas/OS: lupa da série ao lado da caixa, OS sai na impressão
 //            quando tem dados, aviso EPSON só na OS, técnico vazio, * nos
@@ -38908,11 +38622,9 @@ setTimeout(pintar, 400);
 console.log('[DIGICOPY] v5.22.38 vendas/OS: série, impressão OS, EPSON só na OS, salvar só cliente');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52238_vendas_os_ajustes_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_print_escolha_patch.js ===== */
-try{
+/* ===== ajustes_v52239_print_escolha_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Imprimir venda: escolhe Vendas ou OS, depois 1 ou 2 vias
 // • Venda: sem aviso EPSON. 2 vias = duas meias folhas (uma folha se couber)
@@ -39138,11 +38850,9 @@ if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v5223
 console.log('[DIGICOPY] v5.22.39 impressão: escolhe venda/OS e 1 ou 2 vias');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_print_escolha_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_patri_nao_obrigatorio_patch.js ===== */
-try{
+/* ===== ajustes_v52239_patri_nao_obrigatorio_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Patrimônio da OS não é obrigatório (some o *)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -39223,11 +38933,9 @@ setTimeout(tirarAstPatri, 500);
 console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_patri_nao_obrigatorio_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_avisos_erro_auditoria_patch.js ===== */
-try{
+/* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
 //            O foco é funcionar sem erro; o aviso é só se der problema.
@@ -39318,11 +39026,9 @@ window.addEventListener('unhandledrejection', function(ev){
 console.log('[DIGICOPY] v5.22.39 avisos de erro na tela, detalhe na auditoria');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_avisos_erro_auditoria_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_menus_imediato_patch.js ===== */
-try{
+/* ===== ajustes_v52239_menus_imediato_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Menus aparecem na hora (não somem e voltam depois).
 //            Continua oculto só o que é por permissão (Backup/Nuvem) ou
@@ -39424,11 +39130,9 @@ pintarAgora(true);
 console.log('[DIGICOPY] v5.22.39 menus na hora, locação completa, sem piscar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_menus_imediato_patch.js", e); }
 ;
 
-/* ===== ajustes_v52240_orcamento_pages_patch.js ===== */
-try{
+/* ===== ajustes_v52240_orcamento_pages_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.40 — Link público do orçamento no Pages separado do Pix
 //            https://digicopy-orcament.pages.dev/
@@ -39489,11 +39193,9 @@ if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento._
 console.log('[DIGICOPY] v5.22.40 orçamento no Pages digicopy-orcament.pages.dev');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52240_orcamento_pages_patch.js", e); }
 ;
 
-/* ===== ajustes_v52241_venda_salvar_fechar_patch.js ===== */
-try{
+/* ===== ajustes_v52241_venda_salvar_fechar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.41 — Venda: Salvar grava e fecha. Sair/Fechar também grava.
 //            Sem pergunta. Só precisa do cliente.
@@ -39579,11 +39281,9 @@ if(typeof window.closeModal==='function' && !window.closeModal.__v52241venda){
 console.log('[DIGICOPY] v5.22.41 venda: salvar fecha, fechar salva');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52241_venda_salvar_fechar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_orcamentos_status_patch.js ===== */
-try{
+/* ===== ajustes_v52243_orcamentos_status_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Orçamentos: Status Autorizado / Não autorizado na lista e na
 //            tela. Sem botão Faturar. FECHADO vira Autorizado.
@@ -39702,11 +39402,9 @@ if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento._
 console.log('[DIGICOPY] v5.22.43 orçamentos: status Autorizado / Não autorizado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_orcamentos_status_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_contratos_sort_patch.js ===== */
-try{
+/* ===== ajustes_v52243_contratos_sort_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Sort dos contratos pelos títulos: 1º A→Z, 2º Z→A, uma seta.
 //            Ordena as linhas pelo texto da coluna. Não inverte tbody
@@ -39813,11 +39511,9 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5224
 console.log('[DIGICOPY] v5.22.43 contratos: sort A→Z / Z→A sem piscar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_contratos_sort_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_impressora_remanejar_patch.js ===== */
-try{
+/* ===== ajustes_v52243_impressora_remanejar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Impressora no contrato (tela do contrato):
 //            novo cadastro começa só no serial; aviso de remanejo só no
@@ -40066,11 +39762,9 @@ if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDo
 console.log('[DIGICOPY] v5.22.43 impressora: remanejo + ativas/remanejadas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_impressora_remanejar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_financeiro_filtros_patch.js ===== */
-try{
+/* ===== ajustes_v52243_financeiro_filtros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Financeiro: some saldos; filtros da lista; lupa/Enter;
 //            padrão Hoje; Abertos / Todos; De/Até só em Abertos.
@@ -40295,11 +39989,9 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 console.log('[DIGICOPY] v5.22.43 financeiro: filtros, lupa, hoje, faturadas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_financeiro_filtros_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_financeiro_menu_patch.js ===== */
-try{
+/* ===== ajustes_v52243_financeiro_menu_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Menu Financeiro único: some o submenu "Contas e caixas".
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40349,11 +40041,9 @@ if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243fin){
 console.log('[DIGICOPY] v5.22.43 financeiro: menu único');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_financeiro_menu_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_menu_versao_boleto_patch.js ===== */
-try{
+/* ===== ajustes_v52243_menu_versao_boleto_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Menu da faixa aberta em azul; versão no rodapé; forma Boleto
 //            (baixa automática, igual Pix/Dinheiro).
@@ -40522,11 +40212,9 @@ if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento
 console.log('[DIGICOPY] v5.22.43 menu azul, versão rodapé, Boleto');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_menu_versao_boleto_patch.js", e); }
 ;
 
-/* ===== ajustes_v52244_orcamentos_autorizar_patch.js ===== */
-try{
+/* ===== ajustes_v52244_orcamentos_autorizar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.44 — Link do cliente: Autorizar gera venda salva; Recusar some o
 //            orçamento. O sistema consulta a nuvem mesmo quando o GET
@@ -40683,11 +40371,9 @@ setTimeout(puxarAprovacoes, 2500);
 console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52244_orcamentos_autorizar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52244_financeiro_datas_patch.js ===== */
-try{
+/* ===== ajustes_v52244_financeiro_datas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.44 — Financeiro: De / Até sempre visíveis. Não filtram em Hoje.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40792,11 +40478,9 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 console.log('[DIGICOPY] v5.22.44 financeiro: De/Até visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52244_financeiro_datas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_impressora_serial_ocultar_patch.js ===== */
-try{
+/* ===== ajustes_v52245_impressora_serial_ocultar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Impressora no contrato:
 //            1) pesquisa só o serial; 2) abre a tela completa (com ou sem
@@ -41145,11 +40829,9 @@ if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDo
 console.log('[DIGICOPY] v5.22.45 impressora: serial, remanejo no salvar, ocultar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_impressora_serial_ocultar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_leitura_apagar_patch.js ===== */
-try{
+/* ===== ajustes_v52245_leitura_apagar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Apagar leitura: confirma no popup do sistema e devolve o
 //            contador da impressora ao valor de antes do lançamento.
@@ -41205,11 +40887,9 @@ window.deleteLeituraContrato = function(leiId, contratoId){
 console.log('[DIGICOPY] v5.22.45 leitura: apagar devolve contador');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_leitura_apagar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_financeiro_hist_datas_patch.js ===== */
-try{
+/* ===== ajustes_v52245_financeiro_hist_datas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Financeiro: histórico mostra código da venda, da leitura e do
 //            chamado; De / Até sempre visíveis (em Hoje não filtram).
@@ -41392,11 +41072,9 @@ if(typeof window.historicoLancamento==='function' && !window.historicoLancamento
 console.log('[DIGICOPY] v5.22.45 financeiro: códigos no histórico, De/Até visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_financeiro_hist_datas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_rodape_versao_patch.js ===== */
-try{
+/* ===== ajustes_v52245_rodape_versao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Versão sozinha no meio do rodapé.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41447,11 +41125,9 @@ setTimeout(pintarRodape, 800);
 console.log('[DIGICOPY] v5.22.45 rodapé: versão no meio');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_rodape_versao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_venda_salvar_print_patch.js ===== */
-try{
+/* ===== ajustes_v52245_venda_salvar_print_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Venda: Salvar grava e fecha (sem aviso no mesmo modal);
 //            some o botão Sair (fica só o X); faturar não abre impressão.
@@ -41549,11 +41225,9 @@ if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFatur
 console.log('[DIGICOPY] v5.22.45 venda: salvar fecha, sem Sair, faturar sem imprimir');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_venda_salvar_print_patch.js", e); }
 ;
 
-/* ===== ajustes_v52246_nuvem_nao_autorizar_patch.js ===== */
-try{
+/* ===== ajustes_v52246_nuvem_nao_autorizar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.46 — Nuvem: botão para NÃO autorizar os dados atuais deste PC.
 //            A nuvem não apaga. Este PC passa a usar a nuvem. O que só
@@ -41653,11 +41327,9 @@ if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuv
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52246_nuvem_nao_autorizar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52247_exe_atualiza_patch.js ===== */
-try{
+/* ===== ajustes_v52247_exe_atualiza_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.47 — .exe passa a usar pasta (sem asar) + limpa cache na versão nova
 //            para a atualização aparecer depois de gerar o instalador.
@@ -41689,11 +41361,9 @@ setTimeout(pintar, 900);
 console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52247_exe_atualiza_patch.js", e); }
 ;
 
-/* ===== ajustes_v52248_exe_cache_patch.js ===== */
-try{
+/* ===== ajustes_v52248_exe_cache_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.48 — .exe: desliga cache V8 e apaga Cache/Code Cache na versão nova
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41720,11 +41390,9 @@ setTimeout(pintar, 900);
 console.log('[DIGICOPY] v5.22.48 exe: sem cache V8');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52248_exe_cache_patch.js", e); }
 ;
 
-/* ===== ajustes_v52249_relatorio_patch.js ===== */
-try{
+/* ===== ajustes_v52249_relatorio_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
 //            no .exe e no link do cliente.
@@ -42045,11 +41713,9 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
 console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52249_relatorio_patch.js", e); }
 ;
 
-/* ===== ajustes_v52250_exe_bundle_patch.js ===== */
-try{
+/* ===== ajustes_v52250_exe_bundle_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.50 — Correção definitiva do empacotamento para o .exe:
 //            Garante que o bundle contenha todas as atualizações recentes,
@@ -42095,11 +41761,9 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
 console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52250_exe_bundle_patch.js", e); }
 ;
 
-/* ===== ajustes_v52251_exe_resiliencia_patch.js ===== */
-try{
+/* ===== ajustes_v52251_exe_resiliencia_patch.js (escopo global) ===== */
 // PATCH v5.22.51 — Resiliência de inicialização do .exe, guardas anti-tela branca e sincronização de versão
 (function(){
   'use strict';
@@ -42236,11 +41900,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52251_exe_resiliencia_patch.js", e); }
 ;
 
-/* ===== ajustes_v52252_resolucao_loop_patch.js ===== */
-try{
+/* ===== ajustes_v52252_resolucao_loop_patch.js (escopo global) ===== */
 // PATCH v5.22.52 — Resolução definitiva de loops de MutationObserver, boot instantâneo e versão 5.22.52
 (function(){
   'use strict';
@@ -42338,11 +42000,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52252_resolucao_loop_patch.js", e); }
 ;
 
-/* ===== ajustes_v52253_login_tela_branca_patch.js ===== */
-try{
+/* ===== ajustes_v52253_login_tela_branca_patch.js (escopo global) ===== */
 // PATCH v5.22.53 — Correção definitiva da inicialização, login instantâneo e guarda anti-tela branca
 (function(){
   'use strict';
@@ -42596,11 +42256,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52253_login_tela_branca_patch.js", e); }
 ;
 
-/* ===== ajustes_v52254_orcamentos_pages_patch.js ===== */
-try{
+/* ===== ajustes_v52254_orcamentos_pages_patch.js (escopo global) ===== */
 // PATCH v5.22.54 — Integração oficial da página de orçamento no Cloudflare Pages: https://digicopy-orcamentos.pages.dev/
 (function(){
   'use strict';
@@ -42746,11 +42404,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52254_orcamentos_pages_patch.js", e); }
 ;
 
-/* ===== ajustes_v52255_orcamento_aprovacao_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52255_orcamento_aprovacao_venda_patch.js (escopo global) ===== */
 // PATCH v5.22.55 — Conversão garantida de Orçamento em Venda Salva e Sincronização de Status
 (function(){
   'use strict';
@@ -43069,11 +42725,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52255_orcamento_aprovacao_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52256_orcamento_venda_limpa_patch.js ===== */
-try{
+/* ===== ajustes_v52256_orcamento_venda_limpa_patch.js (escopo global) ===== */
 // PATCH v5.22.56 — Orçamento 100% via link do cliente, conversão em Venda Salva e Sincronização v5.22.56
 (function(){
   'use strict';
@@ -43500,11 +43154,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52256_orcamento_venda_limpa_patch.js", e); }
 ;
 
-/* ===== ajustes_v52257_orcamento_sync_total_patch.js ===== */
-try{
+/* ===== ajustes_v52257_orcamento_sync_total_patch.js (escopo global) ===== */
 // PATCH v5.22.57 — Sincronização Total e Resiliente de Orçamentos e Vendas Salvas v5.22.57
 (function(){
   'use strict';
@@ -43860,11 +43512,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52257_orcamento_sync_total_patch.js", e); }
 ;
 
-/* ===== ajustes_v52258_orcamento_os_revalidar_patch.js ===== */
-try{
+/* ===== ajustes_v52258_orcamento_os_revalidar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.58 — Orçamentos com Ordem de Serviço (OS), Revalidação de Link,
 //                  Sincronização Perfeita com Vendas Salvas e Versão v5.22.58
@@ -44745,11 +44395,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52258_orcamento_os_revalidar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52259_orcamento_filtros_item_patch.js ===== */
-try{
+/* ===== ajustes_v52259_orcamento_filtros_item_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.59 — Orçamentos: Remoção da opção inválida 'Serviço' do tipo de item,
 //                  Restauração Completa dos Filtros de Busca (Cliente, Categorias de Produto,
@@ -45257,11 +44905,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52259_orcamento_filtros_item_patch.js", e); }
 ;
 
-/* ===== ajustes_v52260_orcamento_trava_venda_atalho_patch.js ===== */
-try{
+/* ===== ajustes_v52260_orcamento_trava_venda_atalho_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.60 — Orçamentos: Trava de Edição em Autorizados, Atalho para Venda Salva,
 //                  Exclusão Funcional com Cancelamento Seguro e Seleção Confiável de Cliente
@@ -46088,11 +45734,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52260_orcamento_trava_venda_atalho_patch.js", e); }
 ;
 
-/* ===== ajustes_v52261_orcamento_nao_volta_patch.js ===== */
-try{
+/* ===== ajustes_v52261_orcamento_nao_volta_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.61 — Orçamento: apagou não volta. Aviso no sino do PC, sem popup.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -46382,11 +46026,9 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52261ver){
 console.log('[DIGICOPY] v5.22.61 orçamento: apagou não volta, aviso no sino');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52261_orcamento_nao_volta_patch.js", e); }
 ;
 
-/* ===== ajustes_v52262_orcamento_uma_vez_loop_patch.js ===== */
-try{
+/* ===== ajustes_v52262_orcamento_uma_vez_loop_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.62 — Orçamento gera venda UMA vez. Apagou não volta.
 //            Para o loop de carregar (poll 3s + saveDB).
@@ -46442,11 +46084,9 @@ if(typeof window.aprovarOrcamentoInterno==='function' && !window.aprovarOrcament
 console.log('[DIGICOPY] v5.22.62 orçamento: uma vez, sem loop de carregar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52262_orcamento_uma_vez_loop_patch.js", e); }
 ;
 
-/* ===== ajustes_v52263_exe_completo_patch.js ===== */
-try{
+/* ===== ajustes_v52263_exe_completo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.63 — .exe COMPLETO: nenhuma atualização fica de fora do instalador
 //
@@ -46514,11 +46154,9 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52263ver){
 console.log('[DIGICOPY] v5.22.63: empacotamento do .exe verificado — nada fica de fora');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52263_exe_completo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52264_exe_numero_novo_patch.js ===== */
-try{
+/* ===== ajustes_v52264_exe_numero_novo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.64 — Cada entrega tem um número novo + diagnóstico do .exe
 //
@@ -46589,11 +46227,9 @@ if (typeof console !== 'undefined' && console.log) {
 }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52264_exe_numero_novo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52265_script_isolado_patch.js ===== */
-try{
+/* ===== ajustes_v52265_script_isolado_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.65 — Um script quebrado não derruba mais o sistema inteiro
 //
@@ -46690,11 +46326,9 @@ if (typeof console !== 'undefined' && console.log) {
 }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
 ;
 
-/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js ===== */
-try{
+/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.89 — caça ao aviso "orçamento não encontrado" + autocura da lista
 //
@@ -46793,11 +46427,9 @@ setTimeout(garantirIdsOrcamentos, 1500);
 console.log('[DIGICOPY] v5.22.89 carimbo de avisos + autocura da lista de orçamentos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52289_orcamento_carimbo_autocura_patch.js", e); }
 ;
 
-/* ===== menus_tela_pequena_patch.js ===== */
-try{
+/* ===== menus_tela_pequena_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // MENUS EM TELA PEQUENA (v5.22.67)
 //
@@ -47002,11 +46634,9 @@ try{
   console.log('[DIGICOPY] menus e faixa de módulos se ajustam a telas pequenas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menus_tela_pequena_patch.js", e); }
 ;
 
-/* ===== vendas_financeiro_pendente_patch.js ===== */
-try{
+/* ===== vendas_financeiro_pendente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // VENDA SALVA TAMBÉM APARECE NO FINANCEIRO (v5.22.67)
 //
@@ -47147,11 +46777,9 @@ try{
   console.log('[DIGICOPY] venda salva também aparece no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_financeiro_pendente_patch.js", e); }
 ;
 
-/* ===== ajustes_v52293_orcamento_guardiao_patch.js ===== */
-try{
+/* ===== ajustes_v52293_orcamento_guardiao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.93 — guardião do banco de orçamentos
 //
@@ -47251,11 +46879,9 @@ if(typeof document !== 'undefined'){
 
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52293_orcamento_guardiao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52295_venda_volta_patch.js ===== */
-try{
+/* ===== ajustes_v52295_venda_volta_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.95 — a venda em andamento sempre te espera
 //
@@ -47370,11 +46996,9 @@ if(typeof document !== 'undefined'){
 window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52295_venda_volta_patch.js", e); }
 ;
 
-/* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52296_backups_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
 // o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
@@ -47423,6 +47047,8 @@ function aviso(el, texto, cor){
 
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
+  if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
+    return 'A nuvem do plano grátis atingiu o LIMITE DIÁRIO de gravações de hoje (100 mil). Libera sozinho às 21h — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
@@ -48065,11 +47691,9 @@ window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: a
 console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v5240_relatorio_grande_patch.js ===== */
-try{
+/* ===== ajustes_v5240_relatorio_grande_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // AJUSTES v5.24.0 — RELATÓRIO GRANDE DO DONO
 //
@@ -48273,7 +47897,6 @@ if(typeof document!=='undefined' && typeof console!=='undefined' && console.log)
 }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5240_relatorio_grande_patch.js", e); }
 ;
 
 /* ===== ajustes_v5243_cliente_abas_patch.js (escopo global) ===== */
@@ -48285,10 +47908,12 @@ if(typeof document!=='undefined' && typeof console!=='undefined' && console.log)
 //   [Orçamentos] | [Chamados] | [Leituras]
 // Cada aba lista TUDO que existe daquele cliente no módulo correspondente.
 //
-// Item 5.2.1: clicar num item da listagem abre um RESUMO rápido; nele há o
-// botão-atalho "Abrir no módulo", que fecha o cadastro e cai direto no
-// módulo de origem daquele dado (a venda na tela de Vendas, a conta no
-// Financeiro já filtrada, o orçamento pronto na tela de Orçamentos, etc).
+// v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
+// do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
+// Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
+// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
+// da v5.24.3 foi aposentado a pedido dele.)
 //
 // Reforço 4.1: qualquer erro inesperado ao salvar o cliente NÃO fecha a tela
 // e NÃO perde o digitado — mostra o motivo exato num aviso vermelho.
@@ -48344,6 +47969,10 @@ function _dbx(){ return (typeof db!=='undefined'&&db)||{}; }
 
 const ABAS = [
   ['dados','Dados','ph-identification-card'],
+  ['historico','Histórico do sistema','ph-clock-counter-clockwise']
+];
+// 5.2.2 — dentro do Histórico, os sub-menus; por padrão abre em VENDAS.
+const SUBABAS = [
   ['vendas','Vendas','ph-shopping-cart'],
   ['financeiro','Financeiro','ph-money'],
   ['orcamentos','Orçamentos','ph-file-text'],
@@ -48356,8 +47985,8 @@ function montarAbasCliente(id){
   if(!id) return; // cadastro NOVO: ainda não existe histórico para listar
   if(typeof document==='undefined') return;
   const body=document.getElementById('modal-body'); if(!body) return;
-  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab.aba : 'dados';
-  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:anterior||'dados', feitas:{} };
+  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab : null;
+  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:(anterior&&anterior.aba)||'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
 
   // embrulha o formulário que a tela já montou como a aba "Dados"
   const paneDados=document.createElement('div');
@@ -48367,153 +47996,249 @@ function montarAbasCliente(id){
   const bar=document.createElement('div');
   bar.id='clitab-bar';
   bar.className='flex flex-wrap gap-1.5 mb-4 border-b pb-3';
+
   const holder=document.createElement('div');
   holder.id='clitab-holder';
   holder.appendChild(paneDados);
-  ABAS.slice(1).forEach(function(a){
-    const p=document.createElement('div');
-    p.id='clitab-pane-'+a[0]; p.className='hidden';
-    holder.appendChild(p);
-  });
+
+  const paneHist=document.createElement('div');
+  paneHist.id='clitab-pane-historico';
+  paneHist.className='hidden';
+  paneHist.innerHTML=
+    '<div id="clitab-subbar" class="flex flex-wrap gap-1.5 mb-3"></div>'+
+    '<div id="clitab-sub-holder"></div>'+
+    '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
+      '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
+      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
+      '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
+    '</div>';
+  holder.appendChild(paneHist);
+
   body.appendChild(bar);
   body.appendChild(holder);
 
-  window.clitabAbrir(window.__clitab.aba==='dados'?'dados':'dados');
-  if(anterior && anterior!=='dados'){ try{ window.clitabAbrir(anterior); }catch(e){} }
+  window.clitabAbrir('dados');
+  if(anterior && anterior.aba==='historico'){ try{ window.clitabAbrir('historico'); }catch(e){} }
 }
 
 function pintarBarra(){
   const st=window.__clitab; if(!st) return;
   const bar=document.getElementById('clitab-bar'); if(!bar) return;
-  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
   bar.innerHTML=ABAS.map(function(a){
     const ativo=st.aba===a[0];
-    const rot=a[1]+(a[0]==='dados'?'':' <b>'+(n[a[0]]||0)+'</b>');
-    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+rot+'</button>';
+    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+'</button>';
+  }).join('');
+}
+
+function pintarSubBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-subbar'); if(!bar) return;
+  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
+  bar.innerHTML=SUBABAS.map(function(a){
+    const ativo=st.sub===a[0];
+    return '<button type="button" onclick="clitabSub(\''+a[0]+'\')" class="h-8 px-3 rounded-xl text-[11.5px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+' <b>'+(n[a[0]]||0)+'</b></button>';
   }).join('');
 }
 
 window.clitabAbrir=function(aba){
   const st=window.__clitab; if(!st) return;
   st.aba=aba;
-  ABAS.forEach(function(a){
-    const p=document.getElementById('clitab-pane-'+a[0]);
-    if(p) p.classList.toggle('hidden', a[0]!==aba);
-  });
+  const pd=document.getElementById('clitab-pane-dados');
+  const ph=document.getElementById('clitab-pane-historico');
+  if(pd) pd.classList.toggle('hidden', aba!=='dados');
+  if(ph) ph.classList.toggle('hidden', aba!=='historico');
   // o botão Salvar só faz sentido na aba Dados
   const foot=document.getElementById('modal-footer');
   if(foot) foot.style.display=(aba==='dados')?'':'none';
-  if(aba!=='dados' && !st.feitas[aba]){ renderAba(aba); st.feitas[aba]=true; }
+  if(aba==='historico'){ window.clitabSub(st.sub||'vendas'); } // 5.2.2: padrão = vendas
   pintarBarra();
 };
 
-// ── listagens por aba ───────────────────────────────────────────────────────
+window.clitabSub=function(sub){
+  const st=window.__clitab; if(!st) return;
+  st.sub=sub;
+  st.sel[sub]=st.sel[sub]||{};
+  renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
+  pintarSubBarra();
+  const btnExt=document.getElementById('clitab-btn-extornar');
+  if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
+  atualizarBotoes();
+};
+
+// ── listagem com caixas de múltipla escolha (5.2.1 novo modelo) ────────────
 function linha(tipo, id, colEsq, colDir, detalhe){
-  return '<div onclick="clitabResumo(\''+tipo+'\',\''+id+'\')" class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border bg-white hover:bg-[#f4f6ff] hover:border-[#0a1e8a]/40 cursor-pointer transition">'
-    +'<div class="min-w-0"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
-    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b><p class="text-[10px] text-[#0a1e8a] font-bold">ver resumo ›</p></div></div>';
+  return '<div class="clitab-row flex items-center gap-2 px-2 py-2 rounded-xl border bg-white hover:bg-[#f4f6ff] transition cursor-pointer" '
+    +'data-tipo="'+tipo+'" data-id="'+id+'" onclick="clitabToggleSel(this)" '
+    +'oncontextmenu="event.preventDefault(); clitabAbrirRegistro(\''+tipo+'\',\''+id+'\')" '
+    +'title="Botão direito do mouse: abrir este registro no módulo de origem">'
+    +'<input type="checkbox" class="clitab-sel w-4 h-4 shrink-0 cursor-pointer" onclick="event.stopPropagation(); clitabToggleSel(this.parentNode, true)">'
+    +'<div class="min-w-0 flex-1"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
+    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b></div></div>';
 }
 function vazioAba(rotulo){
   return '<div class="p-10 text-center text-slate-400 text-[12.5px]"><i class="ph ph-tray text-[26px] block mb-2 opacity-40"></i>Nenhum(a) '+rotulo+' para este cliente ainda.</div>';
 }
-function renderAba(aba){
-  const st=window.__clitab; const pane=document.getElementById('clitab-pane-'+aba);
+function renderSub(sub){
+  const st=window.__clitab; const pane=document.getElementById('clitab-sub-holder');
   if(!st||!pane) return;
   const banco=_dbx();
   const f=function(col){ return CLITAB_PURE.filtra(banco,col,st.id,st.empresaId); };
   let html='';
-  if(aba==='vendas'){
+  if(sub==='vendas'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('vendas'),'data');
     html=list.map(function(v){
       return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), _esc(v.formaPagamento||'')+' • '+_esc(v.status||'')+' • por '+_esc(v.criadoPorNome||'-'));
     }).join('')||vazioAba('venda');
-  }else if(aba==='financeiro'){
+  }else if(sub==='financeiro'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('contasReceber'),'vencimento');
     html=list.map(function(c){
       return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), 'vence '+_data(c.vencimento)+' • '+_esc(c.status||'')+' • '+_esc(c.origem||''));
     }).join('')||vazioAba('conta a receber');
-  }else if(aba==='orcamentos'){
+  }else if(sub==='orcamentos'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('orcamentos'),'data');
     html=list.map(function(o){
       return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), _esc(o.status||'')+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
     }).join('')||vazioAba('orçamento');
-  }else if(aba==='chamados'){
+  }else if(sub==='chamados'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('os'),'dataAbertura');
     html=list.map(function(o){
       return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), _esc(o.status||'')+' • '+_esc(String(o.descricao||'').slice(0,60)));
     }).join('')||vazioAba('chamado');
-  }else if(aba==='leituras'){
+  }else if(sub==='leituras'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('leituras'),'dataLeitura');
     html=list.map(function(l){
       const eq=((banco.equipamentos)||[]).find(function(e){ return e.id===l.equipamentoId; })||{};
       return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), 'PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-')+' • '+_esc(l.status||''));
     }).join('')||vazioAba('leitura');
   }
-  pane.innerHTML='<div class="space-y-2 max-h-[60vh] overflow-auto pr-1">'+html+'</div>';
+  pane.innerHTML='<div class="space-y-2 max-h-[52vh] overflow-auto pr-1">'+html+'</div>';
 }
 
-// ── 5.2.1 resumo rápido + botão-atalho para o módulo de origem ─────────────
-function campo(rotulo, valor){
-  return '<div class="flex justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0 text-[12.5px]"><span class="text-slate-500">'+rotulo+'</span><b class="text-right text-slate-800">'+_esc((valor==null||valor==='')?'—':valor)+'</b></div>';
+// ── seleção múltipla + botões de lote ───────────────────────────────────────
+window.clitabToggleSel=function(row, doCheckbox){
+  try{
+    const st=window.__clitab; if(!st||!row) return;
+    const cb=row.querySelector('.clitab-sel'); if(!cb) return;
+    const marcado = doCheckbox ? cb.checked : !cb.checked;
+    cb.checked = marcado;
+    row.classList.toggle('border-[#0a1e8a]', marcado);
+    row.classList.toggle('bg-[#eef2ff]', marcado);
+    const sub=st.sub; st.sel[sub]=st.sel[sub]||{};
+    if(marcado) st.sel[sub][row.dataset.id]=true; else delete st.sel[sub][row.dataset.id];
+    atualizarBotoes();
+  }catch(e){}
+};
+function atualizarBotoes(){
+  const st=window.__clitab; if(!st) return;
+  const n=Object.keys(st.sel[st.sub]||{}).length;
+  const be=document.getElementById('clitab-btn-excluir');
+  const bx=document.getElementById('clitab-btn-extornar');
+  if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
 }
-window.clitabResumo=function(tipo, id){
+function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('cliente-hist',acao,id,det); }catch(e){} }
+function removerRegistro(sub, id){
   const banco=_dbx();
-  let titulo='', camposHtml='';
-  if(tipo==='venda'){
-    const v=((banco.vendas)||[]).find(function(x){return x.id===id;}); if(!v) return;
-    titulo='🧾 Venda '+_esc(v.numero||'');
-    camposHtml=campo('Data',_dataHora(v.data))+campo('Total',_money(v.total))+campo('Pagamento',v.formaPagamento)+campo('Status',v.status)+campo('Itens',(v.itens||[]).length)+campo('Criada por',v.criadoPorNome);
-  }else if(tipo==='financeiro'){
-    const c=((banco.contasReceber)||[]).find(function(x){return x.id===id;}); if(!c) return;
-    titulo='💰 '+_esc(c.descricao||'Conta a receber');
-    window.__clitabBuscaFin=c.descricao||'';
-    camposHtml=campo('Valor',_money(c.valor))+campo('Vencimento',_data(c.vencimento))+campo('Status',c.status)+campo('Origem',c.origem)+campo('Pago em',c.pagamentoData?_data(c.pagamentoData):'—');
-  }else if(tipo==='orcamento'){
-    const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return;
-    titulo='📄 Orçamento '+_esc(o.numero||o.codigo||'');
-    camposHtml=campo('Data',_data(o.data))+campo('Total',_money(CLITAB_PURE.totalOrc(o)))+campo('Status',o.status)+campo('Observação',String(o.observacao||o.obs||'').slice(0,80));
-  }else if(tipo==='chamado'){
-    const o=((banco.os)||[]).find(function(x){return x.id===id;}); if(!o) return;
-    titulo='🔧 Chamado '+_esc(o.numero||'');
-    camposHtml=campo('Tipo',o.tipo)+campo('Prioridade',o.prioridade)+campo('Status',o.status)+campo('Abertura',_data(o.dataAbertura||o.criadoEm||o.data))+campo('Descrição',String(o.descricao||'').slice(0,90));
-  }else if(tipo==='leitura'){
-    const l=((banco.leituras)||[]).find(function(x){return x.id===id;}); if(!l) return;
-    const eq=((banco.equipamentos)||[]).find(function(e){return e.id===l.equipamentoId;})||{};
-    titulo='🖨️ Leitura '+_data(l.dataLeitura);
-    camposHtml=campo('Equipamento',eq.modelo||'—')+campo('PB',_esc(l.contadorPBAnterior)+' → '+_esc(l.contadorPB))+campo('COR',_esc(l.contadorCorAnterior)+' → '+_esc(l.contadorCor))+campo('Consumo',_esc(l.consumoPB!=null?l.consumoPB:'-')+' PB • '+_esc(l.consumoCor!=null?l.consumoCor:'-')+' COR')+campo('Excedente',_money(l.valorExcedente))+campo('Status',l.status);
-  }else return;
+  if(sub==='venda'){
+    const v=((banco.vendas)||[]).find(function(x){return x.id===id;}); if(!v) return false;
+    const stt=String(v.status||'').toLowerCase();
+    if(/faturad|finalizad|conclu|pago/.test(stt)) return 'pula'; // faturada: só sai estornando antes (regra do sistema)
+    try{ (v.itens||[]).forEach(function(it){ const p=((banco.produtos)||[]).find(function(x){return x.id===it.produtoId;}); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque=(p.estoque||0)+(Number(it.qtd)||0); }); }catch(e){}
+    db.vendas=(banco.vendas||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_venda',id,'Venda '+_esc(v.numero||'')+' excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='financeiro'){
+    db.contasReceber=((banco.contasReceber)||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_conta',id,'Conta a receber excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='orcamento'){
+    const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    o.status='excluido'; // mesmo modelo do sistema: orçamento sai por marcação
+    logCli('excluir_orcamento',id,'Orçamento excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='chamado'){
+    const o=((banco.os)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    db.os=(banco.os||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_chamado',id,'Chamado excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='leitura'){
+    const l=((banco.leituras)||[]).find(function(x){return x.id===id;}); if(!l) return false;
+    db.leituras=(banco.leituras||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_leitura',id,'Leitura excluída pela ficha do cliente');
+    return true;
+  }
+  return false;
+}
+window.clitabExcluir=function(){
+  const st=window.__clitab; if(!st) return;
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{}); if(!ids.length) return;
+  if(typeof confirm==='function' && !confirm('Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'?')) return;
+  let feitos=0, pulados=0;
+  ids.forEach(function(id){
+    try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
+    catch(e){ pulados++; }
+  });
+  st.sel[sub]={};
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
+  try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+  window.clitabSub(sub);
+  if(typeof toast==='function') toast(feitos+' excluído(s)'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':'')) : ''), feitos?'success':'info');
+};
+window.clitabExtornar=function(){
+  const st=window.__clitab; if(!st||st.sub!=='vendas') return;
+  const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
+  let feitas=0, puladas=0;
+  ids.forEach(function(id){
+    const v=((_dbx().vendas)||[]).find(function(x){return x.id===id;});
+    const stt=String((v&&v.status)||'').toLowerCase();
+    if(stt!=='faturado' || typeof window.estornarVenda!=='function'){ puladas++; return; }
+    try{ window.estornarVenda(id); feitas++; }catch(e){ puladas++; }
+  });
+  st.sel.vendas={};
+  try{ if(typeof renderVendas==='function') renderVendas(); }catch(e){}
+  window.clitabSub('vendas');
+  if(typeof toast==='function') toast(feitas+' venda(s) estornada(s)'+(puladas?' • '+puladas+' pulada(s) (só faturadas estornam)':''), feitas?'success':'info');
+};
 
-  window.clitabFecharResumo();
-  const ov=document.createElement('div');
-  ov.id='clitab-resumo';
-  ov.className='fixed inset-0 z-[90] bg-slate-900/50 flex items-center justify-center p-4';
-  ov.innerHTML='<div class="w-full max-w-[430px] rounded-2xl bg-white shadow-2xl p-5 animate-slideIn">'
-    +'<div class="flex items-start justify-between gap-3 mb-3"><h3 class="font-bold text-[15px] text-[#0a1e8a]">'+titulo+'</h3>'
-    +'<button type="button" onclick="clitabFecharResumo()" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400"><i class="ph ph-x"></i></button></div>'
-    +'<div class="rounded-xl border bg-[#f8f9ff] px-3 py-1">'+camposHtml+'</div>'
-    +'<div class="mt-4 grid grid-cols-2 gap-2">'
-    +'<button type="button" onclick="clitabFecharResumo()" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Fechar</button>'
-    +'<button type="button" onclick="clitabIrModulo(\''+tipo+'\',\''+id+'\')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-bold text-[13px]"><i class="ph ph-arrow-square-out"></i> Abrir no módulo</button>'
-    +'</div></div>';
-  ov.addEventListener('click',function(ev){ if(ev.target===ov) window.clitabFecharResumo(); });
-  document.body.appendChild(ov);
+// ── atalhos para o módulo de origem ─────────────────────────────────────────
+window.clitabAbrirLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  const sub=st.sub;
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
+  setTimeout(function(){
+    try{
+      if(sub==='vendas'){
+        const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); }
+      }else if(sub==='financeiro'){
+        if(typeof setFinTab==='function') setFinTab('receber');
+        const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
+      }
+    }catch(e){}
+  },250);
 };
-window.clitabFecharResumo=function(){
-  const ov=document.getElementById('clitab-resumo'); if(ov) ov.remove();
-};
-window.clitabIrModulo=function(tipo, id){
-  window.clitabFecharResumo();
+// botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
+window.clitabAbrirRegistro=function(tipo, id){
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
   function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
   if(tipo==='venda'){
     if(typeof navigateTo==='function') navigateTo('vendas');
     depois(200,function(){ if(typeof window.showVenda==='function') window.showVenda(id); });
   }else if(tipo==='financeiro'){
+    const c=((_dbx().contasReceber)||[]).find(function(x){return x.id===id;})||{};
     if(typeof navigateTo==='function') navigateTo('financeiro');
     depois(250,function(){
       if(typeof setFinTab==='function') setFinTab('receber');
       const b=document.getElementById('search-cr');
-      if(b && window.__clitabBuscaFin!=null){ b.value=window.__clitabBuscaFin; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
+      if(b && c.descricao!=null){ b.value=c.descricao; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
     });
   }else if(tipo==='orcamento'){
     const o=((_dbx().orcamentos)||[]).find(function(x){return x.id===id;});
@@ -48576,6 +48301,9 @@ if(typeof window.selectClienteVenda==='function' && !window.selectClienteVenda._
 }
 // Ponte 2: a seleção da VOS nunca pode sair sem amarrar o cliente — se a
 // parte visual falhar (qualquer erro bobo), o vínculo é refeito por segurança.
+// v5.24.4 — e agora a tela CONFIRMA a amarração: sem esse aviso o dono não
+// tinha como saber se o clique pegou (relato real do 4.1: escolheu um cliente
+// existente e a venda "não segurou").
 if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5243){
   const _selClienteVos = window.vosVendaSelectCliente;
   window.vosVendaSelectCliente = function(id){
@@ -48583,6 +48311,14 @@ if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCli
     try{
       const c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
       if(c && window.__vosForm && !window.__vosForm.cliente){ window.__vosForm.cliente = c; }
+      if(c && window.__vosForm && window.__vosForm.cliente && window.__vosForm.cliente.id===c.id){
+        if(typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||''), 'success');
+      }else if(!c){
+        if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error');
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_){}
+      }else{
+        if(typeof toast==='function') toast('A venda perdeu a referência do formulário — feche e abra a venda de novo (os itens ficam salvos).', 'error');
+      }
     }catch(e){}
   };
   window.vosVendaSelectCliente.__v5243 = true;

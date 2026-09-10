@@ -6,10 +6,12 @@
 //   [Orçamentos] | [Chamados] | [Leituras]
 // Cada aba lista TUDO que existe daquele cliente no módulo correspondente.
 //
-// Item 5.2.1: clicar num item da listagem abre um RESUMO rápido; nele há o
-// botão-atalho "Abrir no módulo", que fecha o cadastro e cai direto no
-// módulo de origem daquele dado (a venda na tela de Vendas, a conta no
-// Financeiro já filtrada, o orçamento pronto na tela de Orçamentos, etc).
+// v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
+// do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
+// Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
+// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
+// da v5.24.3 foi aposentado a pedido dele.)
 //
 // Reforço 4.1: qualquer erro inesperado ao salvar o cliente NÃO fecha a tela
 // e NÃO perde o digitado — mostra o motivo exato num aviso vermelho.
@@ -65,6 +67,10 @@ function _dbx(){ return (typeof db!=='undefined'&&db)||{}; }
 
 const ABAS = [
   ['dados','Dados','ph-identification-card'],
+  ['historico','Histórico do sistema','ph-clock-counter-clockwise']
+];
+// 5.2.2 — dentro do Histórico, os sub-menus; por padrão abre em VENDAS.
+const SUBABAS = [
   ['vendas','Vendas','ph-shopping-cart'],
   ['financeiro','Financeiro','ph-money'],
   ['orcamentos','Orçamentos','ph-file-text'],
@@ -77,8 +83,8 @@ function montarAbasCliente(id){
   if(!id) return; // cadastro NOVO: ainda não existe histórico para listar
   if(typeof document==='undefined') return;
   const body=document.getElementById('modal-body'); if(!body) return;
-  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab.aba : 'dados';
-  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:anterior||'dados', feitas:{} };
+  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab : null;
+  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:(anterior&&anterior.aba)||'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
 
   // embrulha o formulário que a tela já montou como a aba "Dados"
   const paneDados=document.createElement('div');
@@ -88,153 +94,249 @@ function montarAbasCliente(id){
   const bar=document.createElement('div');
   bar.id='clitab-bar';
   bar.className='flex flex-wrap gap-1.5 mb-4 border-b pb-3';
+
   const holder=document.createElement('div');
   holder.id='clitab-holder';
   holder.appendChild(paneDados);
-  ABAS.slice(1).forEach(function(a){
-    const p=document.createElement('div');
-    p.id='clitab-pane-'+a[0]; p.className='hidden';
-    holder.appendChild(p);
-  });
+
+  const paneHist=document.createElement('div');
+  paneHist.id='clitab-pane-historico';
+  paneHist.className='hidden';
+  paneHist.innerHTML=
+    '<div id="clitab-subbar" class="flex flex-wrap gap-1.5 mb-3"></div>'+
+    '<div id="clitab-sub-holder"></div>'+
+    '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
+      '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
+      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
+      '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
+    '</div>';
+  holder.appendChild(paneHist);
+
   body.appendChild(bar);
   body.appendChild(holder);
 
-  window.clitabAbrir(window.__clitab.aba==='dados'?'dados':'dados');
-  if(anterior && anterior!=='dados'){ try{ window.clitabAbrir(anterior); }catch(e){} }
+  window.clitabAbrir('dados');
+  if(anterior && anterior.aba==='historico'){ try{ window.clitabAbrir('historico'); }catch(e){} }
 }
 
 function pintarBarra(){
   const st=window.__clitab; if(!st) return;
   const bar=document.getElementById('clitab-bar'); if(!bar) return;
-  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
   bar.innerHTML=ABAS.map(function(a){
     const ativo=st.aba===a[0];
-    const rot=a[1]+(a[0]==='dados'?'':' <b>'+(n[a[0]]||0)+'</b>');
-    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+rot+'</button>';
+    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+'</button>';
+  }).join('');
+}
+
+function pintarSubBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-subbar'); if(!bar) return;
+  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
+  bar.innerHTML=SUBABAS.map(function(a){
+    const ativo=st.sub===a[0];
+    return '<button type="button" onclick="clitabSub(\''+a[0]+'\')" class="h-8 px-3 rounded-xl text-[11.5px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+' <b>'+(n[a[0]]||0)+'</b></button>';
   }).join('');
 }
 
 window.clitabAbrir=function(aba){
   const st=window.__clitab; if(!st) return;
   st.aba=aba;
-  ABAS.forEach(function(a){
-    const p=document.getElementById('clitab-pane-'+a[0]);
-    if(p) p.classList.toggle('hidden', a[0]!==aba);
-  });
+  const pd=document.getElementById('clitab-pane-dados');
+  const ph=document.getElementById('clitab-pane-historico');
+  if(pd) pd.classList.toggle('hidden', aba!=='dados');
+  if(ph) ph.classList.toggle('hidden', aba!=='historico');
   // o botão Salvar só faz sentido na aba Dados
   const foot=document.getElementById('modal-footer');
   if(foot) foot.style.display=(aba==='dados')?'':'none';
-  if(aba!=='dados' && !st.feitas[aba]){ renderAba(aba); st.feitas[aba]=true; }
+  if(aba==='historico'){ window.clitabSub(st.sub||'vendas'); } // 5.2.2: padrão = vendas
   pintarBarra();
 };
 
-// ── listagens por aba ───────────────────────────────────────────────────────
+window.clitabSub=function(sub){
+  const st=window.__clitab; if(!st) return;
+  st.sub=sub;
+  st.sel[sub]=st.sel[sub]||{};
+  renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
+  pintarSubBarra();
+  const btnExt=document.getElementById('clitab-btn-extornar');
+  if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
+  atualizarBotoes();
+};
+
+// ── listagem com caixas de múltipla escolha (5.2.1 novo modelo) ────────────
 function linha(tipo, id, colEsq, colDir, detalhe){
-  return '<div onclick="clitabResumo(\''+tipo+'\',\''+id+'\')" class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border bg-white hover:bg-[#f4f6ff] hover:border-[#0a1e8a]/40 cursor-pointer transition">'
-    +'<div class="min-w-0"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
-    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b><p class="text-[10px] text-[#0a1e8a] font-bold">ver resumo ›</p></div></div>';
+  return '<div class="clitab-row flex items-center gap-2 px-2 py-2 rounded-xl border bg-white hover:bg-[#f4f6ff] transition cursor-pointer" '
+    +'data-tipo="'+tipo+'" data-id="'+id+'" onclick="clitabToggleSel(this)" '
+    +'oncontextmenu="event.preventDefault(); clitabAbrirRegistro(\''+tipo+'\',\''+id+'\')" '
+    +'title="Botão direito do mouse: abrir este registro no módulo de origem">'
+    +'<input type="checkbox" class="clitab-sel w-4 h-4 shrink-0 cursor-pointer" onclick="event.stopPropagation(); clitabToggleSel(this.parentNode, true)">'
+    +'<div class="min-w-0 flex-1"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
+    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b></div></div>';
 }
 function vazioAba(rotulo){
   return '<div class="p-10 text-center text-slate-400 text-[12.5px]"><i class="ph ph-tray text-[26px] block mb-2 opacity-40"></i>Nenhum(a) '+rotulo+' para este cliente ainda.</div>';
 }
-function renderAba(aba){
-  const st=window.__clitab; const pane=document.getElementById('clitab-pane-'+aba);
+function renderSub(sub){
+  const st=window.__clitab; const pane=document.getElementById('clitab-sub-holder');
   if(!st||!pane) return;
   const banco=_dbx();
   const f=function(col){ return CLITAB_PURE.filtra(banco,col,st.id,st.empresaId); };
   let html='';
-  if(aba==='vendas'){
+  if(sub==='vendas'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('vendas'),'data');
     html=list.map(function(v){
       return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), _esc(v.formaPagamento||'')+' • '+_esc(v.status||'')+' • por '+_esc(v.criadoPorNome||'-'));
     }).join('')||vazioAba('venda');
-  }else if(aba==='financeiro'){
+  }else if(sub==='financeiro'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('contasReceber'),'vencimento');
     html=list.map(function(c){
       return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), 'vence '+_data(c.vencimento)+' • '+_esc(c.status||'')+' • '+_esc(c.origem||''));
     }).join('')||vazioAba('conta a receber');
-  }else if(aba==='orcamentos'){
+  }else if(sub==='orcamentos'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('orcamentos'),'data');
     html=list.map(function(o){
       return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), _esc(o.status||'')+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
     }).join('')||vazioAba('orçamento');
-  }else if(aba==='chamados'){
+  }else if(sub==='chamados'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('os'),'dataAbertura');
     html=list.map(function(o){
       return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), _esc(o.status||'')+' • '+_esc(String(o.descricao||'').slice(0,60)));
     }).join('')||vazioAba('chamado');
-  }else if(aba==='leituras'){
+  }else if(sub==='leituras'){
     const list=CLITAB_PURE.ordenaPorDataDesc(f('leituras'),'dataLeitura');
     html=list.map(function(l){
       const eq=((banco.equipamentos)||[]).find(function(e){ return e.id===l.equipamentoId; })||{};
       return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), 'PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-')+' • '+_esc(l.status||''));
     }).join('')||vazioAba('leitura');
   }
-  pane.innerHTML='<div class="space-y-2 max-h-[60vh] overflow-auto pr-1">'+html+'</div>';
+  pane.innerHTML='<div class="space-y-2 max-h-[52vh] overflow-auto pr-1">'+html+'</div>';
 }
 
-// ── 5.2.1 resumo rápido + botão-atalho para o módulo de origem ─────────────
-function campo(rotulo, valor){
-  return '<div class="flex justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0 text-[12.5px]"><span class="text-slate-500">'+rotulo+'</span><b class="text-right text-slate-800">'+_esc((valor==null||valor==='')?'—':valor)+'</b></div>';
+// ── seleção múltipla + botões de lote ───────────────────────────────────────
+window.clitabToggleSel=function(row, doCheckbox){
+  try{
+    const st=window.__clitab; if(!st||!row) return;
+    const cb=row.querySelector('.clitab-sel'); if(!cb) return;
+    const marcado = doCheckbox ? cb.checked : !cb.checked;
+    cb.checked = marcado;
+    row.classList.toggle('border-[#0a1e8a]', marcado);
+    row.classList.toggle('bg-[#eef2ff]', marcado);
+    const sub=st.sub; st.sel[sub]=st.sel[sub]||{};
+    if(marcado) st.sel[sub][row.dataset.id]=true; else delete st.sel[sub][row.dataset.id];
+    atualizarBotoes();
+  }catch(e){}
+};
+function atualizarBotoes(){
+  const st=window.__clitab; if(!st) return;
+  const n=Object.keys(st.sel[st.sub]||{}).length;
+  const be=document.getElementById('clitab-btn-excluir');
+  const bx=document.getElementById('clitab-btn-extornar');
+  if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
 }
-window.clitabResumo=function(tipo, id){
+function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('cliente-hist',acao,id,det); }catch(e){} }
+function removerRegistro(sub, id){
   const banco=_dbx();
-  let titulo='', camposHtml='';
-  if(tipo==='venda'){
-    const v=((banco.vendas)||[]).find(function(x){return x.id===id;}); if(!v) return;
-    titulo='🧾 Venda '+_esc(v.numero||'');
-    camposHtml=campo('Data',_dataHora(v.data))+campo('Total',_money(v.total))+campo('Pagamento',v.formaPagamento)+campo('Status',v.status)+campo('Itens',(v.itens||[]).length)+campo('Criada por',v.criadoPorNome);
-  }else if(tipo==='financeiro'){
-    const c=((banco.contasReceber)||[]).find(function(x){return x.id===id;}); if(!c) return;
-    titulo='💰 '+_esc(c.descricao||'Conta a receber');
-    window.__clitabBuscaFin=c.descricao||'';
-    camposHtml=campo('Valor',_money(c.valor))+campo('Vencimento',_data(c.vencimento))+campo('Status',c.status)+campo('Origem',c.origem)+campo('Pago em',c.pagamentoData?_data(c.pagamentoData):'—');
-  }else if(tipo==='orcamento'){
-    const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return;
-    titulo='📄 Orçamento '+_esc(o.numero||o.codigo||'');
-    camposHtml=campo('Data',_data(o.data))+campo('Total',_money(CLITAB_PURE.totalOrc(o)))+campo('Status',o.status)+campo('Observação',String(o.observacao||o.obs||'').slice(0,80));
-  }else if(tipo==='chamado'){
-    const o=((banco.os)||[]).find(function(x){return x.id===id;}); if(!o) return;
-    titulo='🔧 Chamado '+_esc(o.numero||'');
-    camposHtml=campo('Tipo',o.tipo)+campo('Prioridade',o.prioridade)+campo('Status',o.status)+campo('Abertura',_data(o.dataAbertura||o.criadoEm||o.data))+campo('Descrição',String(o.descricao||'').slice(0,90));
-  }else if(tipo==='leitura'){
-    const l=((banco.leituras)||[]).find(function(x){return x.id===id;}); if(!l) return;
-    const eq=((banco.equipamentos)||[]).find(function(e){return e.id===l.equipamentoId;})||{};
-    titulo='🖨️ Leitura '+_data(l.dataLeitura);
-    camposHtml=campo('Equipamento',eq.modelo||'—')+campo('PB',_esc(l.contadorPBAnterior)+' → '+_esc(l.contadorPB))+campo('COR',_esc(l.contadorCorAnterior)+' → '+_esc(l.contadorCor))+campo('Consumo',_esc(l.consumoPB!=null?l.consumoPB:'-')+' PB • '+_esc(l.consumoCor!=null?l.consumoCor:'-')+' COR')+campo('Excedente',_money(l.valorExcedente))+campo('Status',l.status);
-  }else return;
+  if(sub==='venda'){
+    const v=((banco.vendas)||[]).find(function(x){return x.id===id;}); if(!v) return false;
+    const stt=String(v.status||'').toLowerCase();
+    if(/faturad|finalizad|conclu|pago/.test(stt)) return 'pula'; // faturada: só sai estornando antes (regra do sistema)
+    try{ (v.itens||[]).forEach(function(it){ const p=((banco.produtos)||[]).find(function(x){return x.id===it.produtoId;}); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque=(p.estoque||0)+(Number(it.qtd)||0); }); }catch(e){}
+    db.vendas=(banco.vendas||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_venda',id,'Venda '+_esc(v.numero||'')+' excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='financeiro'){
+    db.contasReceber=((banco.contasReceber)||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_conta',id,'Conta a receber excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='orcamento'){
+    const o=((banco.orcamentos)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    o.status='excluido'; // mesmo modelo do sistema: orçamento sai por marcação
+    logCli('excluir_orcamento',id,'Orçamento excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='chamado'){
+    const o=((banco.os)||[]).find(function(x){return x.id===id;}); if(!o) return false;
+    db.os=(banco.os||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_chamado',id,'Chamado excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='leitura'){
+    const l=((banco.leituras)||[]).find(function(x){return x.id===id;}); if(!l) return false;
+    db.leituras=(banco.leituras||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_leitura',id,'Leitura excluída pela ficha do cliente');
+    return true;
+  }
+  return false;
+}
+window.clitabExcluir=function(){
+  const st=window.__clitab; if(!st) return;
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{}); if(!ids.length) return;
+  if(typeof confirm==='function' && !confirm('Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'?')) return;
+  let feitos=0, pulados=0;
+  ids.forEach(function(id){
+    try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
+    catch(e){ pulados++; }
+  });
+  st.sel[sub]={};
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
+  try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+  window.clitabSub(sub);
+  if(typeof toast==='function') toast(feitos+' excluído(s)'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':'')) : ''), feitos?'success':'info');
+};
+window.clitabExtornar=function(){
+  const st=window.__clitab; if(!st||st.sub!=='vendas') return;
+  const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
+  let feitas=0, puladas=0;
+  ids.forEach(function(id){
+    const v=((_dbx().vendas)||[]).find(function(x){return x.id===id;});
+    const stt=String((v&&v.status)||'').toLowerCase();
+    if(stt!=='faturado' || typeof window.estornarVenda!=='function'){ puladas++; return; }
+    try{ window.estornarVenda(id); feitas++; }catch(e){ puladas++; }
+  });
+  st.sel.vendas={};
+  try{ if(typeof renderVendas==='function') renderVendas(); }catch(e){}
+  window.clitabSub('vendas');
+  if(typeof toast==='function') toast(feitas+' venda(s) estornada(s)'+(puladas?' • '+puladas+' pulada(s) (só faturadas estornam)':''), feitas?'success':'info');
+};
 
-  window.clitabFecharResumo();
-  const ov=document.createElement('div');
-  ov.id='clitab-resumo';
-  ov.className='fixed inset-0 z-[90] bg-slate-900/50 flex items-center justify-center p-4';
-  ov.innerHTML='<div class="w-full max-w-[430px] rounded-2xl bg-white shadow-2xl p-5 animate-slideIn">'
-    +'<div class="flex items-start justify-between gap-3 mb-3"><h3 class="font-bold text-[15px] text-[#0a1e8a]">'+titulo+'</h3>'
-    +'<button type="button" onclick="clitabFecharResumo()" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400"><i class="ph ph-x"></i></button></div>'
-    +'<div class="rounded-xl border bg-[#f8f9ff] px-3 py-1">'+camposHtml+'</div>'
-    +'<div class="mt-4 grid grid-cols-2 gap-2">'
-    +'<button type="button" onclick="clitabFecharResumo()" class="h-11 rounded-xl bg-white border font-semibold text-[13px]">Fechar</button>'
-    +'<button type="button" onclick="clitabIrModulo(\''+tipo+'\',\''+id+'\')" class="h-11 rounded-xl bg-[#0a1e8a] text-white font-bold text-[13px]"><i class="ph ph-arrow-square-out"></i> Abrir no módulo</button>'
-    +'</div></div>';
-  ov.addEventListener('click',function(ev){ if(ev.target===ov) window.clitabFecharResumo(); });
-  document.body.appendChild(ov);
+// ── atalhos para o módulo de origem ─────────────────────────────────────────
+window.clitabAbrirLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  const sub=st.sub;
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
+  setTimeout(function(){
+    try{
+      if(sub==='vendas'){
+        const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); }
+      }else if(sub==='financeiro'){
+        if(typeof setFinTab==='function') setFinTab('receber');
+        const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
+      }
+    }catch(e){}
+  },250);
 };
-window.clitabFecharResumo=function(){
-  const ov=document.getElementById('clitab-resumo'); if(ov) ov.remove();
-};
-window.clitabIrModulo=function(tipo, id){
-  window.clitabFecharResumo();
+// botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
+window.clitabAbrirRegistro=function(tipo, id){
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
   function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
   if(tipo==='venda'){
     if(typeof navigateTo==='function') navigateTo('vendas');
     depois(200,function(){ if(typeof window.showVenda==='function') window.showVenda(id); });
   }else if(tipo==='financeiro'){
+    const c=((_dbx().contasReceber)||[]).find(function(x){return x.id===id;})||{};
     if(typeof navigateTo==='function') navigateTo('financeiro');
     depois(250,function(){
       if(typeof setFinTab==='function') setFinTab('receber');
       const b=document.getElementById('search-cr');
-      if(b && window.__clitabBuscaFin!=null){ b.value=window.__clitabBuscaFin; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
+      if(b && c.descricao!=null){ b.value=c.descricao; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
     });
   }else if(tipo==='orcamento'){
     const o=((_dbx().orcamentos)||[]).find(function(x){return x.id===id;});
@@ -297,6 +399,9 @@ if(typeof window.selectClienteVenda==='function' && !window.selectClienteVenda._
 }
 // Ponte 2: a seleção da VOS nunca pode sair sem amarrar o cliente — se a
 // parte visual falhar (qualquer erro bobo), o vínculo é refeito por segurança.
+// v5.24.4 — e agora a tela CONFIRMA a amarração: sem esse aviso o dono não
+// tinha como saber se o clique pegou (relato real do 4.1: escolheu um cliente
+// existente e a venda "não segurou").
 if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5243){
   const _selClienteVos = window.vosVendaSelectCliente;
   window.vosVendaSelectCliente = function(id){
@@ -304,6 +409,14 @@ if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCli
     try{
       const c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
       if(c && window.__vosForm && !window.__vosForm.cliente){ window.__vosForm.cliente = c; }
+      if(c && window.__vosForm && window.__vosForm.cliente && window.__vosForm.cliente.id===c.id){
+        if(typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||''), 'success');
+      }else if(!c){
+        if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error');
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_){}
+      }else{
+        if(typeof toast==='function') toast('A venda perdeu a referência do formulário — feche e abra a venda de novo (os itens ficam salvos).', 'error');
+      }
     }catch(e){}
   };
   window.vosVendaSelectCliente.__v5243 = true;

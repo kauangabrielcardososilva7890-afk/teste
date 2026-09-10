@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.3';
+const WORKER_VERSION = '5.24.4';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -444,6 +444,17 @@ async function applyMutation(env, device, mutation) {
     // Exclusão reversível: mantém a última versão no D1. A listagem normal não
     // a considera ativa, mas um administrador poderá restaurá-la.
     dataJson = current.data_json;
+  }
+
+  // v5.24.4 — ECONOMIA DA COTA GRÁTIS (100 mil escritas/dia): se o registro
+  // já está IDÊNTICO na nuvem, não regrava. Replays/reconexões de PCs antes
+  // gastavam 2 escritas por registro sem mudar nada — foi o que estourou a
+  // cota e derrubou o backup ("daily row write limit").
+  if (current && operation === 'upsert' && current.data_json === dataJson && current.deleted_at === null) {
+    return { ok: true, duplicate: true, noop: true, version: currentVersion };
+  }
+  if (current && operation === 'delete' && current.deleted_at !== null) {
+    return { ok: true, duplicate: true, noop: true, version: currentVersion };
   }
 
   const now = Date.now();
@@ -944,7 +955,16 @@ async function handleStatus(request, env, ctx) {
                    tetoEscritas: 100000, tetoLeituras: 5000000, fonte: 'oficial', medidoEm: real.medido_em || null };
         }
       } catch (e) { /* tabela ainda não existe — tudo bem */ }
-      const est = await usoHoje(env); if (ultimoErroUso) est.avisoUso = ultimoErroUso;
+      // v5.24.4 — com a cota estourada a CREATE da tabela de uso falha e o
+      // SELECT abaixo quebrava o /v1/status inteiro (o app caía no aviso
+      // falso de "código ANTIGO"). Medidor quebrado não derruba o status.
+      let est;
+      try {
+        est = await usoHoje(env);
+      } catch (eUso) {
+        est = { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 100000, tetoLeituras: 5000000, avisoUso: 'medidor pausado (cota)' };
+      }
+      if (ultimoErroUso) est.avisoUso = ultimoErroUso;
       return Object.assign(est, { fonte: 'estimada' });
     })() });
 }

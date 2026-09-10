@@ -215,6 +215,13 @@ async function renderConnected(body){
     const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
     if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
   const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
