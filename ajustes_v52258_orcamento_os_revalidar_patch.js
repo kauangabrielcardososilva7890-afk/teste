@@ -322,7 +322,7 @@
 
       // Se a tela do orçamento estiver aberta, recarrega
       if(typeof window !== 'undefined' && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id === o.id){
-        window.abrirOrcamento(o.id);
+        window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o id acabou de ser revalidado aqui, não precisa re-caçar
       }
       return true;
     }
@@ -703,7 +703,7 @@
 
       window.__ORC_ST.form.id = o.id;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o orçamento acabou de nascer aqui, não precisa re-caçar
     };
 
     // Renderizador de listagem de Orçamentos garantindo que NUNCA suma e exiba o status correto
@@ -776,7 +776,7 @@
           var badgeCls = (st === 'aprovado' || o.vendaId) ? 'neo-status ok' : (st === 'recusado' ? 'neo-status wait' : (st === 'estornado' ? 'neo-status info' : 'neo-status info'));
           var temOS = o.os && Object.keys(o.os).some(function(k){ return txt(o.os[k]); });
 
-          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer">'
+          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer">'
             +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
             +'<td><b class="text-[#0a1e8a]">'+esc(o.numero || '')+'</b>'+(temOS ? ' <span class="text-[10px]" title="Contém Ordem de Serviço">🔧 OS</span>' : '')+'</td>'
             +'<td>'+(o.data ? o.data.slice(0, 10).split('-').reverse().join('/') : '-')+'</td>'
@@ -784,7 +784,7 @@
             +'<td><b>'+money(o.total)+'</b></td>'
             +'<td><span class="'+badgeCls+'">'+esc(rotulo)+'</span></td>'
             +'<td><div class="flex items-center gap-1.5" onclick="event.stopPropagation()">'
-            +'<button onclick="window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
+            +'<button onclick="window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
             +'<button onclick="window.revalidarLinkOrcamento(\''+o.id+'\')" class="neo-btn !px-2 text-amber-700" title="Revalidar Link"><i class="ph ph-arrows-counter-clockwise"></i></button>'
             +'</div></td>'
             +'</tr>';

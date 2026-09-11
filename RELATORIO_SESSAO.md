@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.8**  
+**Última versão:** **v5.24.9**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.8>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.9>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,32 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.9 (2026-09-11)
+
+Tema: **o fantasma 4.2 volta a acusar com nome e sobrenome.** Novo relato dele:
+o aviso "Não achei esse orçamento" reapareceu com id fresco (`orc_mtxj0668_mhtz`)
+que NUNCA existiu no banco deste PC (5 orçamentos, mais novo `orc_mtnee661`)
+nem no retrato da tela — referência viva de um registro que não nasceu aqui.
+
+1. **Etiqueta de origem:** `window.abrirOrcamento(id, _origem)` agora recebe
+   QUEM chamou. Linhas e botões-de-olho das duas listas (v52237 e v52258)
+   passam 'linha da lista de orcamentos' / 'botao de olho da lista'. O aviso
+   completa com **"; o clique veio de: ..."** — a próxima foto termina a
+   investigação (antes era charada). Sem etiqueta (algum caminho escondido),
+   ele pede a foto da tela inteira.
+2. **Dois caminhos internos sanados:** recarregar depois de SALVAR e depois de
+   REVALIDAR (v52258 L325/L706) re-caçava o orçamento por id à toa, com o
+   objeto na mão. Agora é `abrirTelaOrcamento(o)` direto — zero fantasma por
+   essas portas. v52258 ficou com ZERO chamadas `abrirOrcamento(o.id)`.
+3. **v52243 (badge de status) intacto:** seu regex lê a 1ª aspa — a etiqueta
+   extra não quebra o leitor.
+4. Detalhe de investigação registrado: `__orc_render_ids` quem mantém vivo é o
+   guardião (v52293), não o render ativo — "NÃO estava" segue significando
+   "não existia no banco na última varredura".
+5. Teste `test_ajustes_v5249.js`. Suíte: **166 passando / 6 de ambiente**.
 
 ---
 

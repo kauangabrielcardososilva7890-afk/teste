@@ -1,4 +1,4 @@
-// Teste v5.24.8 — "abrir já mostrando o que eu escolhi" + 4.2 sem fantasma:
+// Teste v5.24.9 — "abrir já mostrando o que eu escolhi" + 4.2 sem fantasma:
 //  • o botão da ficha agora abre o REGISTRO no módulo (1 marcado abre direto;
 //    vários = módulo filtrado pelo cliente + o 1º abre na hora);
 //  • o abridor vai DIRETO PELO OBJETO — nunca re-caça por id na tela (era o
@@ -32,11 +32,11 @@ ok(patch.indexOf('clitabAbrirRegistro=function(tipo, id){') >= 0 && patch.indexO
 ok(orc37.indexOf("o.status!=='excluido'") >= 0, 'lista do módulo Orçamentos continua escondendo excluídos');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.8'") >= 0, 'worker carimba v5.24.8');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.9'") >= 0, 'worker carimba v5.24.9');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('clitabAbrirDireto') >= 0, 'abridor presente no bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.8') >= 0, 'index.html na v5.24.8');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0, 'mobile/www/index.html na v5.24.8');
-ok(pkg.version === '5.24.8', 'package.json v5.24.8');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.8'); process.exit(1); }
-console.log('\nTudo certo v5.24.8!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.9') >= 0, 'index.html na v5.24.9');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0, 'mobile/www/index.html na v5.24.9');
+ok(pkg.version === '5.24.9', 'package.json v5.24.9');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.9'); process.exit(1); }
+console.log('\nTudo certo v5.24.9!');

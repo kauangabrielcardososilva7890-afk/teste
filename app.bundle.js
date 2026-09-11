@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 5dda9c0db13e838d
+ * scripts: 196 | sha256: 00a6f8584467a598
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -37501,13 +37501,13 @@ window.renderOrcamentos=function(){
     +(list.map(function(o){
       var cl=clienteDe(o);
       var fech=ehFechado(o);
-      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
+      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
         +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
         +'<td><b class="text-[#0a1e8a]">'+esc(o.numero||'')+'</b>'+(fech?' <span class="text-[10px] text-emerald-700 font-bold">FECHADO</span>':'')+'</td>'
         +'<td>'+dataBR(o.data)+'</td>'
         +'<td><b>'+esc(cl.nome||'(sem cliente)')+'</b></td>'
         +'<td><b>'+money(o.total)+'</b></td>'
-        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
+        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
         +'</tr>';
     }).join('') || '<tr><td colspan="6" class="text-center text-slate-400 py-12">Nenhum orçamento</td></tr>')
     +'</tbody></table></div></div></div>';
@@ -37601,7 +37601,10 @@ function formNovo(existente){
 }
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
-window.abrirOrcamento=function(id){
+window.abrirOrcamento=function(id, _origem){
+  // v5.24.9 — ETIQUETA DE ORIGEM: todo chamador conta QUEM clicou. Quando o
+  // orçamento não existe, o aviso já diz "o clique veio de: ..." — a foto do
+  // dono vira resposta, não charada.
   // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
   // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
   // toast vago). Essa função não emite mais "Orçamento não encontrado" —
@@ -37654,7 +37657,9 @@ window.abrirOrcamento=function(id){
     // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
     // que conta quem tirou o orçamento do banco entre a lista e o clique
     var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '.)', 'Orçamento');
+    var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
+    try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
@@ -43861,7 +43866,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
       // Se a tela do orçamento estiver aberta, recarrega
       if(typeof window !== 'undefined' && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id === o.id){
-        window.abrirOrcamento(o.id);
+        window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o id acabou de ser revalidado aqui, não precisa re-caçar
       }
       return true;
     }
@@ -44242,7 +44247,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
 
       window.__ORC_ST.form.id = o.id;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o orçamento acabou de nascer aqui, não precisa re-caçar
     };
 
     // Renderizador de listagem de Orçamentos garantindo que NUNCA suma e exiba o status correto
@@ -44315,7 +44320,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
           var badgeCls = (st === 'aprovado' || o.vendaId) ? 'neo-status ok' : (st === 'recusado' ? 'neo-status wait' : (st === 'estornado' ? 'neo-status info' : 'neo-status info'));
           var temOS = o.os && Object.keys(o.os).some(function(k){ return txt(o.os[k]); });
 
-          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer">'
+          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer">'
             +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
             +'<td><b class="text-[#0a1e8a]">'+esc(o.numero || '')+'</b>'+(temOS ? ' <span class="text-[10px]" title="Contém Ordem de Serviço">🔧 OS</span>' : '')+'</td>'
             +'<td>'+(o.data ? o.data.slice(0, 10).split('-').reverse().join('/') : '-')+'</td>'
@@ -44323,7 +44328,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
             +'<td><b>'+money(o.total)+'</b></td>'
             +'<td><span class="'+badgeCls+'">'+esc(rotulo)+'</span></td>'
             +'<td><div class="flex items-center gap-1.5" onclick="event.stopPropagation()">'
-            +'<button onclick="window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
+            +'<button onclick="window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
             +'<button onclick="window.revalidarLinkOrcamento(\''+o.id+'\')" class="neo-btn !px-2 text-amber-700" title="Revalidar Link"><i class="ph ph-arrows-counter-clockwise"></i></button>'
             +'</div></td>'
             +'</tr>';
@@ -48244,7 +48249,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.8 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.9 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -48293,7 +48298,7 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.8 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.9 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // 1 marcado: abre o registro. Vários: módulo filtrado + o 1º abre na hora.
     if(ids.length){ setTimeout(function(){ try{ window.clitabAbrirDireto(sub, ids[0], true); }catch(e){} }, 260); }
   },250);
@@ -48316,7 +48321,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.8 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.9 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){

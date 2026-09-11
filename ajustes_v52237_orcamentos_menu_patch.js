@@ -205,13 +205,13 @@ window.renderOrcamentos=function(){
     +(list.map(function(o){
       var cl=clienteDe(o);
       var fech=ehFechado(o);
-      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
+      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
         +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
         +'<td><b class="text-[#0a1e8a]">'+esc(o.numero||'')+'</b>'+(fech?' <span class="text-[10px] text-emerald-700 font-bold">FECHADO</span>':'')+'</td>'
         +'<td>'+dataBR(o.data)+'</td>'
         +'<td><b>'+esc(cl.nome||'(sem cliente)')+'</b></td>'
         +'<td><b>'+money(o.total)+'</b></td>'
-        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
+        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
         +'</tr>';
     }).join('') || '<tr><td colspan="6" class="text-center text-slate-400 py-12">Nenhum orçamento</td></tr>')
     +'</tbody></table></div></div></div>';
@@ -305,7 +305,10 @@ function formNovo(existente){
 }
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
-window.abrirOrcamento=function(id){
+window.abrirOrcamento=function(id, _origem){
+  // v5.24.9 — ETIQUETA DE ORIGEM: todo chamador conta QUEM clicou. Quando o
+  // orçamento não existe, o aviso já diz "o clique veio de: ..." — a foto do
+  // dono vira resposta, não charada.
   // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
   // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
   // toast vago). Essa função não emite mais "Orçamento não encontrado" —
@@ -358,7 +361,9 @@ window.abrirOrcamento=function(id){
     // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
     // que conta quem tirou o orçamento do banco entre a lista e o clique
     var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
-    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '.)', 'Orçamento');
+    var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
+    try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');
   } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 

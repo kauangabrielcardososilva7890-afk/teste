@@ -1,10 +1,10 @@
-// Teste v5.24.8 — O FREIO DAS GRAVAÇÕES DA NUVEM (o alerta dos "76 mil"):
+// Teste v5.24.9 — O FREIO DAS GRAVAÇÕES DA NUVEM (o alerta dos "76 mil"):
 //  • buscador Caixa Escolar: automático com rédea (1x/hora quando velho,
 //    relógio de 10 em 10 min, lista vazia NÃO dispara, sem login nem tenta,
 //    nunca limpa a base sozinho, nunca duas buscas ao mesmo tempo);
 //  • worker: medidor de uso não grava mais a cada leitura (acumula em memória,
 //    desce junto de gravação real ou a cada 15 min);
-//  • carimbos 5.24.8 + script de raio-x (ver_gasto_nuvem.cmd) presentes.
+//  • carimbos 5.24.9 + script de raio-x (ver_gasto_nuvem.cmd) presentes.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, nome){ if(cond){ console.log('  ✔ ' + nome); } else { falhas++; console.error('  ✘ FALHOU: ' + nome); } }
@@ -37,12 +37,12 @@ ok(cmd.indexOf('digicopy-erp') >= 0 && cmd.indexOf('FROM changes') >= 0 && cmd.i
 const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.8'") >= 0, 'worker carimba v5.24.8');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.8') >= 0, 'index.html na v5.24.8');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0, 'mobile/www/index.html na v5.24.8');
-ok(pkg.version === '5.24.8', 'package.json v5.24.8');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.9'") >= 0, 'worker carimba v5.24.9');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.9') >= 0, 'index.html na v5.24.9');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0, 'mobile/www/index.html na v5.24.9');
+ok(pkg.version === '5.24.9', 'package.json v5.24.9');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('esAutoTique') >= 0, 'freio da escola está dentro do bundle');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.8'); process.exit(1); }
-console.log('\nTudo certo v5.24.8!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.9'); process.exit(1); }
+console.log('\nTudo certo v5.24.9!');
