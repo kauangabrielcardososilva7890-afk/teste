@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 00a6f8584467a598
+ * scripts: 196 | sha256: ce7460847af43ec5
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -48062,6 +48062,7 @@ function montarAbasCliente(id){
       '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
       '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
       '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
+      '<button type="button" onclick="clitabAbrirClienteNaLista()" class="h-9 px-4 rounded-xl bg-white border border-[#0a1e8a] text-[#0a1e8a] font-bold text-[12px]"><i class="ph ph-users"></i> Este cliente na lista</button>'+
       '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
     '</div>';
   holder.appendChild(paneHist);
@@ -48249,7 +48250,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.9 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.10 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -48290,6 +48291,13 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  // v5.24.10 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
+  // navega com sub conhecido; fora disso, explica e fica quieto.
+  if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
+    if(typeof toast==='function') toast('Essa parte não tem lista de origem — use uma das abas do Histórico.', 'info');
+    return;
+  }
   if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
   setTimeout(function(){
     try{
@@ -48298,9 +48306,27 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.9 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.10 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // 1 marcado: abre o registro. Vários: módulo filtrado + o 1º abre na hora.
     if(ids.length){ setTimeout(function(){ try{ window.clitabAbrirDireto(sub, ids[0], true); }catch(e){} }, 260); }
+  },250);
+};
+
+// v5.24.10 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
+// CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
+// nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
+window.clitabAbrirClienteNaLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  if(typeof navigateTo==='function') navigateTo('clientes');
+  setTimeout(function(){
+    try{
+      const b=document.getElementById('search-clientes');
+      const q=String((cli&&(cli.nome||cli.razao||cli.fantasia||cli.codigo))||'').trim();
+      if(b&&q){ b.value=q; if(typeof renderClientes==='function') renderClientes(); }
+    }catch(e){}
   },250);
 };
 
@@ -48321,7 +48347,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.9 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.10 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){

@@ -1,4 +1,4 @@
-// Teste v5.24.9 — rodada dele:
+// Teste v5.24.10 — rodada dele:
 //  cota) farol anti-estouro: freio dentro do worker + dedupe + app que respeita
 //  planos) (respondido em texto — não há o que testar no código)
 //  2.1) o "Nova venda" que restava era o da tela VIVA (vendas_os): removido
@@ -26,7 +26,7 @@ const pkg       = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const P = require('./ajustes_v5243_cliente_abas_patch.js');
 
 console.log('-- cota: farol anti-estouro --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.9'") >= 0, 'worker carimba v5.24.9');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.10'") >= 0, 'worker carimba v5.24.10');
 ok(worker.indexOf('LIMITE_ESCRITA_DIA = 95000') >= 0, 'freio preventivo: para de gravar antes do teto');
 ok(worker.indexOf('daily row write limit próximo') >= 0, 'pausa do freio usa a frase que o app reconhece');
 ok(fs.existsSync('checar_cota_nuvem.js'), 'farol checar_cota_nuvem.js existe (rodar antes de toda versão)');
@@ -69,9 +69,9 @@ ok(patch.indexOf("' excluído(s) de vez") >= 0, 'aviso da exclusão diz "de vez"
 console.log('-- integridade: bundles e versões --');
 ok(bundle.indexOf('__vosUltBusca[c.id]=c') >= 0 && bundleM.indexOf('__vosUltBusca[c.id]=c') >= 0, 'cura 4.1 presente nos 2 bundles');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.9') >= 0, 'index.html na v5.24.9');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.9'") >= 0, 'mobile/www/index.html na v5.24.9');
-ok(pkg.version === '5.24.9', 'package.json v5.24.9');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.10') >= 0, 'index.html na v5.24.10');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0, 'mobile/www/index.html na v5.24.10');
+ok(pkg.version === '5.24.10', 'package.json v5.24.10');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.9'); process.exit(1); }
-console.log('\nTudo certo v5.24.9!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.10'); process.exit(1); }
+console.log('\nTudo certo v5.24.10!');

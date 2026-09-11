@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.9**  
+**Última versão:** **v5.24.10**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.9>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.10>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,32 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.10 (2026-09-11)
+
+Tema: **"o clientes não abre a lista que mostra os que eu quero"** + a decisão
+da nuvem paga.
+
+1. **Botão novo "Este cliente na lista"** (barra de ações do Histórico da
+   ficha): sai da ficha direto pro módulo **Clientes** (navigateTo('clientes'))
+   já com a busca preenchida com o nome do cadastro — a lista mostra ele e o
+   grupinho de nomes parecidos ("os que eu quero"). Se a reclamação dele era
+   outra (lista do módulo errada/clique na tabela de clientes), pedido a foto
+   da tela no protocolo.
+2. **Trava do 'senão' (bug latente):** `clitabAbrirLista()` jogava QUALQUER
+   sub desconhecido ou aba Dados no módulo Leituras sem avisar. Agora: sub fora
+   dos 5 conhecidos → toast explicativo, nenhuma navegação errada.
+3. Teste `test_ajustes_v52410.js` (e regra nova: testes não prendem em texto
+   de comentário versionado — ajustado v5249 por isso). Suíte: 167/6.
+4. **Resposta da nuvem paga (ele pediu "fala o melhor logo"):** Workers Paid
+   $5/mês na própria Cloudflare — 25 bilhões leituras + 50 milhões gravações/
+   MÊS inclusos, sem migração nenhuma, cancela quando quiser (fontes: omidsaffari
+   /byteiota/dev.to 2026). Turso fica fora por exigir REESCREVER o motor.
+   Estratégia de revenda preservada: loja dele na conta paga; cada cliente na
+   sua própria conta grátis até precisar — aí o cliente paga os $5. Pendente
+   pós-assinatura: ajustar o teto exibido no app (100.000 → 50 mi) numa versão.
 
 ---
 
