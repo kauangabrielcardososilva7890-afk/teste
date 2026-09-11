@@ -34,6 +34,9 @@ ok(worker.indexOf('15 * 60 * 1000') >= 0, 'descarga a cada 15 minutos no máximo
 
 console.log('-- raio-x + carimbos --');
 ok(cmd.indexOf('digicopy-erp') >= 0 && cmd.indexOf('FROM changes') >= 0 && cmd.indexOf('FROM devices') >= 0, 'ver_gasto_nuvem.cmd pergunta por tipo de registro e por aparelho');
+const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
+ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
+ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
 ok(worker.indexOf("const WORKER_VERSION = '5.24.8'") >= 0, 'worker carimba v5.24.8');
 ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.8') >= 0, 'index.html na v5.24.8');
 ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0, 'mobile/www/index.html na v5.24.8');

@@ -25,6 +25,11 @@ echo [3/3] Quais aparelhos estao falando com a nuvem (e o ultimo sinal de cada u
 echo.
 call npx.cmd wrangler d1 execute digicopy-erp --remote --command "SELECT name, role, datetime(last_seen_at/1000,'unixepoch') AS ultimo_sinal_utc FROM devices WHERE revoked_at IS NULL ORDER BY last_seen_at DESC"
 echo.
+echo [extra] Qual versao do motor esta no ar agora (tem que ser 5.24.8 ou mais novo):
+echo.
+curl -s "https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/health"
+echo.
+echo.
 echo ==========================================================
 echo  Pronto! Tira uma foto desta tela INTEIRA e me manda.
 echo ==========================================================

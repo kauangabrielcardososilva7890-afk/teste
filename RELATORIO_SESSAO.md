@@ -47,6 +47,14 @@ Tema: **o alerta dos "76 mil"** — a nuvem gravava demais com o sistema parado.
 5. Teste novo `test_ajustes_v5248.js`. Suíte: **165 passando / 6 fora do ar**
    (as mesmas 6 de ambiente de sempre).
 
+**Complemento (mesmo dia, tarde):** ele rodou `npx wrangler deploy` — o motor
+novo FOI publicado, mas esse comando **não aplica as migrações do banco** (a
+migração 0004, que corta gravação por mudança de ~8 para ~4 linhas, fica
+pendente). Criado `atualizar_motor_nuvem.cmd` na raiz: duplo clique e ele faz
+a sequência certa (lista pendentes → aplica migrações → publica → mostra a
+versão no ar via `/health`). `ver_gasto_nuvem.cmd` ganhou linha extra que
+confere a versão no ar também.
+
 ---
 
 ## O QUE FOI ENTREGUE — v5.24.7 (2026-09-10/11)
