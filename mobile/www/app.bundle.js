@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: e75011c44b120370
+ * scripts: 196 | sha256: eec46dfdb4d8f37a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -48159,6 +48159,8 @@ function atualizarBotoes(){
   const bx=document.getElementById('clitab-btn-extornar');
   if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
   if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
+  const bl=document.getElementById('clitab-btn-lista');
+  if(bl){ bl.innerHTML='<i class="ph ph-arrow-square-out"></i> '+(n?('Abrir selecionado(s) ('+n+')'):'Abrir lista de origem'); }
 }
 function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('cliente-hist',acao,id,det); }catch(e){} }
 function removerRegistro(sub, id){
@@ -48219,6 +48221,12 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+    // v5.24.7 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
+    // clique nela caía no aviso "não achei" (o 4.2 da foto).
+    try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+    try{ if(sub==='chamados'&&typeof renderOs==='function') renderOs(); }catch(e){}
+    try{ if(sub==='leituras'&&typeof renderLeituras==='function') renderLeituras(); }catch(e){}
     window.clitabSub(sub);
     if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':' — já não estava neste PC (lista atualizada)')) : ''), feitos?'success':'info');
   }
@@ -48252,27 +48260,29 @@ window.clitabAbrirLista=function(){
   const st=window.__clitab; if(!st) return;
   const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
   const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
   if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
   setTimeout(function(){
     try{
-      if(sub==='vendas'){
-        const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); }
-      }else if(sub==='financeiro'){
-        if(typeof setFinTab==='function') setFinTab('receber');
-        const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
-      }
+      // o módulo abre já filtrado pelo cliente: a lista mostra o grupo escolhido
+      if(sub==='vendas'){ const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); } }
+      else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
+      else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
+    // v5.24.7 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // 1 marcado: abre o registro. Vários: módulo filtrado + o 1º abre na hora.
+    if(ids.length){ setTimeout(function(){ try{ window.clitabAbrirDireto(sub, ids[0], true); }catch(e){} }, 260); }
   },250);
 };
+
 // botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
 window.clitabAbrirRegistro=function(tipo, id){
-  // v5.24.5 — a lista pode estar velha se a nuvem trocou a base depois dela
-  // aparecer na tela (o aviso do 4.2 nasceu exatamente assim). Conferir na
-  // hora do clique: se já não existe, atualiza e avisa, sem abrir nada às cegas.
+  // v5.24.6/7 — valida na hora do clique: se a nuvem trocou a base depois da
+  // lista aparecer, atualiza e avisa em vez de abrir o módulo às cegas.
   try{
     const col=(tipo==='venda')?'vendas':(tipo==='financeiro')?'contasReceber':(tipo==='orcamento')?'orcamentos':(tipo==='chamado')?'os':'leituras';
-    const existe=(((_dbx())[col])||[]).find(function(x){ return x && x.id===id; });
+    const existe=(((_dbx())[col])||[]).find(function(x){ return x && String(x.id)===String(id); });
     if(!existe){
       try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
       if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
@@ -48280,29 +48290,57 @@ window.clitabAbrirRegistro=function(tipo, id){
     }
   }catch(e){}
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  window.clitabAbrirDireto(tipo, id, false);
+};
+
+// v5.24.7 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
+// silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
+window.clitabAbrirDireto=function(tipo, id, silencioso){
+  const Dx=_dbx();
+  function acha(col){ return ((Dx[col])||[]).find(function(x){ return x && String(x.id)===String(id); }); }
   function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
-  if(tipo==='venda'){
-    if(typeof navigateTo==='function') navigateTo('vendas');
-    depois(200,function(){ if(typeof window.showVenda==='function') window.showVenda(id); });
-  }else if(tipo==='financeiro'){
-    const c=((_dbx().contasReceber)||[]).find(function(x){return String(x.id)===String(id);})||{};
-    if(typeof navigateTo==='function') navigateTo('financeiro');
-    depois(250,function(){
-      if(typeof setFinTab==='function') setFinTab('receber');
-      const b=document.getElementById('search-cr');
-      if(b && c.descricao!=null){ b.value=c.descricao; if(typeof renderFinanceiro==='function') renderFinanceiro(); }
-    });
-  }else if(tipo==='orcamento'){
-    const o=((_dbx().orcamentos)||[]).find(function(x){return String(x.id)===String(id);});
-    if(o && typeof window.abrirTelaOrcamento==='function') window.abrirTelaOrcamento(o);
-    else if(typeof navigateTo==='function') navigateTo('orcamentos');
-  }else if(tipo==='chamado'){
-    if(typeof navigateTo==='function') navigateTo('manutencao');
-    depois(200,function(){ if(typeof openModal==='function') openModal('os',id); });
-  }else if(tipo==='leitura'){
-    if(typeof navigateTo==='function') navigateTo('leituras');
-    depois(200,function(){ if(typeof openModal==='function') openModal('leitura',id); });
+  function fantasma(){
+    try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+    if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+    return false;
   }
+  if(tipo==='venda'||tipo==='vendas'){
+    const v=acha('vendas'); if(!v) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('vendas');
+    depois(silencioso?10:200,function(){ if(typeof window.showVenda==='function') window.showVenda(v.id); });
+    return true;
+  }
+  if(tipo==='financeiro'){
+    const c=acha('contasReceber'); if(!c) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('financeiro');
+    depois(silencioso?10:250,function(){
+      if(typeof setFinTab==='function') setFinTab('receber');
+      // abre a conta de verdade (pedido dele: não só o menu)
+      if(typeof openModal==='function') openModal('contaReceber', c.id);
+    });
+    return true;
+  }
+  if(tipo==='orcamento'||tipo==='orcamentos'){
+    const o=acha('orcamentos'); if(!o) return fantasma();
+    // direto pelo objeto — não passa pelo caçador por id (o popup do 4.2)
+    if(typeof window.abrirTelaOrcamento==='function') window.abrirTelaOrcamento(o);
+    else if(typeof navigateTo==='function') navigateTo('orcamentos');
+    return true;
+  }
+  if(tipo==='chamado'||tipo==='chamados'){
+    const o=acha('os'); if(!o) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('manutencao');
+    depois(silencioso?10:200,function(){ if(typeof openModal==='function') openModal('os', o.id); });
+    return true;
+  }
+  const l=acha('leituras'); if(!l) return fantasma();
+  if(!silencioso && typeof navigateTo==='function') navigateTo('leituras');
+  depois(silencioso?10:200,function(){
+    if(typeof window.abrirLeituraDetalhada==='function') window.abrirLeituraDetalhada(l.id);
+    else if(typeof openModal==='function') openModal('leitura', l.id);
+  });
+  return true;
 };
 
 // ── conexão com o cadastro (embrulha a montagem do modal do cliente) ───────

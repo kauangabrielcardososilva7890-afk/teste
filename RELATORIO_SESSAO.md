@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.6**  
+**Última versão:** **v5.24.7**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.6>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.7>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,22 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.7 (2026-09-10/11)
+
+1. **"Abrir já mostrando o que eu escolhi" (pedido dele):** o botão da ficha
+   agora abre o REGISTRO no módulo — 1 marcado abre direto; vários marcados =
+   o módulo abre filtrado pelo cliente + o 1º já se abre na hora. Financeiro
+   abre a CONTA de verdade (não só a tela), orçamento abre direto pelo objeto,
+   chamado/leitura abrem o registro.
+2. **4.2 sem fantasma:** o caminho novo vai DIRETO PELO OBJETO — nunca re-caça
+   por id na tela (era por onde o "Não achei esse orçamento" aparecia com
+   código-fantasma). E excluir agora VARRE as telas dos módulos: a linha
+   apagada some dali também, então ninguém clica em registro morto (o clique
+   em linha-fantasma era o caminho provável do aviso da foto 4.2).
+   Suite: 164 verdes; 6 falhas são artefatos pré-existentes do sandbox.
 
 ---
 
