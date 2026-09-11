@@ -55,6 +55,21 @@ a sequência certa (lista pendentes → aplica migrações → publica → mostr
 versão no ar via `/health`). `ver_gasto_nuvem.cmd` ganhou linha extra que
 confere a versão no ar também.
 
+**Confirmado por ele (foto do cmd, 17:04):** rodou `atualizar_motor_nuvem.cmd`
+→ "No migrations to apply!" (as 4 migrações, incluindo a 0004_menos_gravacoes,
+JÁ estavam aplicadas de antes) → deploy OK → `/health` respondeu
+**`"versao":"5.24.8"`, `database:"ok"`**. Estado final da nuvem: motor 5.24.8
+no ar com TODAS as economias ativas (não regravar idêntico, ~4 linhas por
+mudança, medidor barato, dedupe, freio). Próxima prova: rodar
+`ver_gasto_nuvem.cmd` no dia seguinte e comparar as gravações.
+
+**Regra permanente (pedido dele, 2026-09-11):** o sistema também roda no
+CELULAR (APK pausado, mas será retomado) — tudo novo precisa ser compatível
+com PC+mobile. Já é a arquitetura atual: UM código só, `app.bundle.js` raiz e
+`mobile/www/app.bundle.js` idênticos em toda versão (teste de paridade na
+suíte), sync idêntico. Os `.cmd` são ferramenta dele de operador no Windows,
+nunca vão para dentro do app.
+
 ---
 
 ## O QUE FOI ENTREGUE — v5.24.7 (2026-09-10/11)
