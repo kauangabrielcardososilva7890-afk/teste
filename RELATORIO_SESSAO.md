@@ -70,6 +70,23 @@ com PC+mobile. Já é a arquitetura atual: UM código só, `app.bundle.js` raiz 
 suíte), sync idêntico. Os `.cmd` são ferramenta dele de operador no Windows,
 nunca vão para dentro do app.
 
+**Certificado NF — VALIDADO (foto Get-PfxCertificate, 2026-09-11):** o arquivo
+`DENIVALDO CERTIFICADO DIGITAL (2).pfx` é **e-CNPJ A1 da loja do pai**:
+Subject `CN="DENIVALDO COMERCIO DE ELETRONICOS, LOCACOES E MAN…:08385589000103"`,
+Thumbprint EA705D60245464773CEA9518FDB8C95DC1C7C5B9. CNPJ do emitente para a
+sessão NF: **08.385.589/0001-03** (Denivaldo Comércio de Eletrônicos, Locações
+e Man[utenção/utensílios]). Validade a confirmar (A1 ~1 ano; arquivo de
+ago/2026 → provável até ago/2027). Senha fica SÓ com ele (by design: o
+sistema guarda o .pfx na nuvem e a senha é digitada na hora de assinar —
+v5.22.21). Nota: ele NUNCA deve mandar a senha do certificado em chat.
+
+**Estado da cota (2026-09-11 ~18h):** dia começou em 76 mil e o freio só foi
+ligado no meio do dia — possível estouro dos 100 mil ainda hoje. Se aconteceu:
+NADA se perde, sync pausa e retoma sozinho após as 21h (virada UTC). Os testes
+do kit v5.24.7/8 (abrir selecionado, excluir, 4.2) são comportamentos LOCAIS
+do app — valem mesmo com a cota estourada; só o PC↔PC que fica na fila.
+`ver_gasto_nuvem.cmd` item [1/3] mostra o número de hoje para conferir.
+
 ---
 
 ## O QUE FOI ENTREGUE — v5.24.7 (2026-09-10/11)
