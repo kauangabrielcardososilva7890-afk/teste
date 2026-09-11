@@ -117,7 +117,10 @@ async function api(method,url,body,tk){
 }
 
 async function sync(opt={}){
-  window.__esSync=false; // Reset always before starting
+  // v5.24.8 — FREIO: duas buscas ao mesmo tempo = trabalho e GRAVAÇÃO de nuvem
+  // dobrados (o relógio automático podia atropelar uma busca longa da tela).
+  // Automático nunca atropela; o botão da tela continua podendo reiniciar na mão.
+  if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'};
   window.__esSync=true;
   window.__esLogs=[];
   // log apenas acumula — NÃO redesenha a tela (evita piscar)
@@ -345,9 +348,29 @@ window.esRest=function(id){
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
+// v5.24.8 — O RALO DAS GRAVAÇÕES: o automático do Caixa Escolar agora tem rédea.
+// Antes: se a lista estivesse vazia (vazio=true), essa busca rodava a CADA 60
+// SEGUNDOS, o dia inteiro, com o sistema parado na tela. Cada volta carimbava a
+// hora na config, a config subia para a nuvem, a nuvem regravava linhas — milhares
+// de gravações por dia sem ninguém fazer nada. E rodava com 'limpar', que apaga
+// e refaz a base escolar de graça. Agora:
+//  • automático só a cada 1 HORA de dados velhos (e o relógio só olha isso de
+//    10 em 10 minutos, em vez de a cada 60 segundos);
+//  • lista vazia NÃO é emergência: espera a hora certa (o botão Atualizar da
+//    tela continua instantâneo, na mão de quem está olhando);
+//  • sem login salvo, nem tenta (não tem o que buscar);
+//  • limpar/refazer a base é só pelo botão "Baixar Tudo" da tela.
+function esAutoTique(){
+  try{
+    if(window.__esSync) return;
+    if(!loginDaNuvem()&&!loginDoNavegador()) return;
+    const c=(db.config&&db.config.escolaSync)||{};
+    if(!c.at||elapsed(c.at)>60*60*1000) sync({auto:true,incremental:true});
+  }catch(_e){}
+}
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
+  setTimeout(esAutoTique,15000);
+  setInterval(esAutoTique,10*60*1000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();

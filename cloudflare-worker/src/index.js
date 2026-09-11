@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.7';
+const WORKER_VERSION = '5.24.8';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -934,10 +934,25 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.22.103 — a anotação nunca segura a resposta: com ctx vai por waitUntil
-// (sem ctx cai no await de antes, que também funciona).
+// v5.24.8 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
+// são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
+// Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
+// leituras acumulam na memória do worker e só descem ao banco junto da próxima
+// gravação real, ou de 15 em 15 minutos. O número na tela pode atrasar alguns
+// minutos; a cota, não vaza mais.
+let __USO_PEND = { esc: 0, lei: 0, desde: 0 };
 function somarUso(env, escritas, leituras, ctx){
-  const p = _somar(env, escritas, leituras);
+  const agora = Date.now();
+  __USO_PEND.esc += Math.max(0, Number(escritas) || 0);
+  __USO_PEND.lei += Math.max(0, Number(leituras) || 0);
+  if (!__USO_PEND.desde) __USO_PEND.desde = agora;
+  const temGravacao = __USO_PEND.esc > 0;
+  const deu15min = (agora - __USO_PEND.desde) >= 15 * 60 * 1000;
+  if (!temGravacao && !deu15min) return; // só leitura: acumula sem gravar
+  const esc = __USO_PEND.esc, lei = __USO_PEND.lei;
+  __USO_PEND = { esc: 0, lei: 0, desde: 0 };
+  const p = _somar(env, esc, lei);
   if(ctx && typeof ctx.waitUntil === 'function'){ ctx.waitUntil(p); return; }
   return p;
 }

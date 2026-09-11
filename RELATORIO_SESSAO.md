@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.7**  
+**Última versão:** **v5.24.8**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.7>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.8>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,36 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.8 (2026-09-11)
+
+Tema: **o alerta dos "76 mil"** — a nuvem gravava demais com o sistema parado.
+
+1. **O ralo achado (app):** o buscador do Caixa Escolar rodava sozinho a CADA
+   60 SEGUNDOS sempre que a lista estava vazia (`||vazio` no relógio de 1 min),
+   carimbava a config e mandava gravação para a nuvem a cada volta — milhares
+   por dia sem ninguém mexer. Agora: automático só 1x/hora com dados velhos,
+   relógio de 10 em 10 minutos, lista vazia espera a vez, sem login nem tenta,
+   nunca limpa a base sozinho (limpar = botão "Baixar Tudo" da tela), nunca
+   duas buscas ao mesmo tempo.
+2. **Medidor sem autogasto (worker):** `somarUso` gravava a linha do medidor a
+   CADA chamada — inclusive leituras (1x/min por PC aberto). ~1.400
+   gravações/dia por aparelho só para medir a própria cota. Agora as leituras
+   acumulam em memória e descem junto da próxima gravação real, ou de 15 em
+   15 minutos. O número da tela pode atrasar minutos; a cota não vaza.
+3. **Motor da nuvem ainda velho — ele precisa rodar o deploy:** a economia já
+   escrita antes (não regravar registro idêntico — v5.24.4; migração
+   0004_menos_gravacoes: ~8 → ~4 gravações por mudança; dedupe e freio) SÓ
+   vale depois de `npm run deploy` dentro da pasta `cloudflare-worker` (o
+   script já aplica as migrações pendentes e publica num comando só).
+4. **Raio-X para conferir:** `ver_gasto_nuvem.cmd` na raiz do sistema — duplo
+   clique e ele mostra: gravações/leituras por dia (semana), quem mais gravou
+   hoje por tipo de registro e quais aparelhos estão falando com a nuvem (com
+   o último sinal de cada um). É consulta pura, não muda nada.
+5. Teste novo `test_ajustes_v5248.js`. Suíte: **165 passando / 6 fora do ar**
+   (as mesmas 6 de ambiente de sempre).
 
 ---
 

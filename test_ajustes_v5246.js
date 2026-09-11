@@ -1,4 +1,4 @@
-// Teste v5.24.7 — rodada com as 3 fotos dele:
+// Teste v5.24.8 — rodada com as 3 fotos dele:
 //  2.1) o "Nova venda" vivo era o atalho do MENU LATERAL (Atendimento):
 //       removido do padrão; config salva em ordem antiga é ignorada sozinha
 //       (aplicarNomesSalvos só trabalha em cima do padrão).
@@ -44,12 +44,12 @@ ok((patch.match(/String\(x\.id\)===String\(id\)/g) || []).length >= 7, 'tolerân
 ok(patch.indexOf("window.confirmSistema('Estornar '") >= 0, 'Estornar também usa o popup do sistema');
 
 console.log('-- integridade: bundles e versões --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.7'") >= 0, 'worker carimba v5.24.7');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.8'") >= 0, 'worker carimba v5.24.8');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf("confirmSistema(pergunta,'Excluir de vez')") >= 0, 'exclusão nova presente no bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.7'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.7') >= 0, 'index.html na v5.24.7');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.7'") >= 0, 'mobile/www/index.html na v5.24.7');
-ok(pkg.version === '5.24.7', 'package.json v5.24.7');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.8') >= 0, 'index.html na v5.24.8');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.8'") >= 0, 'mobile/www/index.html na v5.24.8');
+ok(pkg.version === '5.24.8', 'package.json v5.24.8');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.7'); process.exit(1); }
-console.log('\nTudo certo v5.24.7!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.8'); process.exit(1); }
+console.log('\nTudo certo v5.24.8!');
