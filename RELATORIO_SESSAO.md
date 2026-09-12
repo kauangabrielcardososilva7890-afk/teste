@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.10**  
+**Última versão:** **v5.24.11**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.10>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.11>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,31 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.11 (2026-09-11)
+
+Tema: **pedido literal dele:** "quero que abra onde é a lista que mostra
+todos, mas só mostrando os selecionados que eu pedi".
+
+1. **A LISTA é quem mostra os escolhidos** (manda o que ele pediu): com 1,
+   vários ou todos marcados na ficha, o botão abre o módulo e **a própria
+   lista dele aparece só com aquelas linhas**. Ninguém abre notinha/orçamento
+   por cima mais (o auto-open do 1º, da v5.24.7, foi removido DE PROPÓSITO —
+   test_ajustes_v5247 atualizado para não reintroduzir). Sem marcação: como
+   antes (módulo filtrado pelo cliente).
+2. **`clitabRenderSoSelecionados(sub, ids)`** — troca-segura do "tanque" do
+   módulo: filtra `db.vendas/contasReceber/orcamentos/os/leituras` só com os
+   ids marcados, desenhe a lista nativa (mesmos objetos, zero perda), devolve
+   o tanque inteiro no finally; gravação (saveDB/saveDBAgora) fica de molho
+   durante o desenho — banco nunca é salvo pela metade. Depois, qualquer
+   re-render natural (digitou na busca) volta a lista ao comportamento normal.
+3. Botão direito na linha segue abrindo o REGISTRO (caso de uso separado);
+   "Este cliente na lista" (5.24.10) segue.
+4. Regra de testes recordada: comentários literais não viram fixture (quebra
+   em quebra de linha) — test_ajustes_v5249 ensinou; aplicado no v52411.
+   Suíte: **168 passando / 6 de ambiente**.
 
 ---
 

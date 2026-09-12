@@ -1,10 +1,10 @@
-// Teste v5.24.10 — ETIQUETA DE ORIGEM no aviso do orçamento fantasma:
+// Teste v5.24.11 — ETIQUETA DE ORIGEM no aviso do orçamento fantasma:
 //  • o guard (7 buscas) agora recebe QUEM chamou e o aviso completa com
 //    "o clique veio de: ..." — a próxima foto responde a investigação;
 //  • os 2 recarregamentos internos (pós-salvar e pós-revalidar) viraram
 //    direto-por-objeto — nunca mais re-caçam por id;
 //  • linhas e botões de olho das duas listas carregam a etiqueta;
-//  • carimbos 5.24.10.
+//  • carimbos 5.24.11.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, nome){ if(cond){ console.log('  ✔ ' + nome); } else { falhas++; console.error('  ✘ FALHOU: ' + nome); } }
@@ -31,11 +31,11 @@ ok(reabertos === 2, 'pós-salvar e pós-revalidar reabrem pelo objeto (2 pontos)
 ok(orc43.indexOf("abrirOrcamento\\\\('([^']+)'\\\\)") >= 0 || orc43.indexOf("abrirOrcamento\\('([^']+)'\\)") >= 0, 'v52243 (badge de status) continua casando a 1ª aspa — etiqueta não quebra o leitor');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.10'") >= 0, 'worker carimba v5.24.10');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.11'") >= 0, 'worker carimba v5.24.11');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('o clique veio de:') >= 0 && bundle.indexOf('linha da lista de orcamentos') >= 0, 'etiquetas dentro do bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.10') >= 0, 'index.html na v5.24.10');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0, 'mobile/www/index.html na v5.24.10');
-ok(pkg.version === '5.24.10', 'package.json v5.24.10');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.10'); process.exit(1); }
-console.log('\nTudo certo v5.24.10!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.11') >= 0, 'index.html na v5.24.11');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0, 'mobile/www/index.html na v5.24.11');
+ok(pkg.version === '5.24.11', 'package.json v5.24.11');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.11'); process.exit(1); }
+console.log('\nTudo certo v5.24.11!');

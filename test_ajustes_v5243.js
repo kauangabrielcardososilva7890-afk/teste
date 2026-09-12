@@ -1,4 +1,4 @@
-// Teste v5.24.10 — segunda rodada do relatório pós-testes do dono:
+// Teste v5.24.11 — segunda rodada do relatório pós-testes do dono:
 //  1.x) backup com "D1_ERROR daily row write limit": a cota grátis de 100 mil
 //       escritas/dia estourou (sync regravava registros idênticos). Cura:
 //       push NÃO regrava registro idêntico (dedupe) + /v1/status imune ao
@@ -34,7 +34,7 @@ ok(worker.indexOf('CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY') >= 
 ok(!/CREATE TABLE IF NOT EXISTS \w+ \(\s*\n/.test(worker), 'nenhum CREATE TABLE multilinha');
 ok((worker.match(/noop: true, version: currentVersion/g) || []).length === 2, 'push NÃO regrava registro idêntico nem delete repetido (economia da cota)');
 ok(worker.indexOf("catch (eUso)") >= 0 && worker.indexOf("medidor pausado (cota)") >= 0, '/v1/status não cai mais quando o medidor não consegue gravar');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.10'") >= 0, 'worker carimba v5.24.10');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.11'") >= 0, 'worker carimba v5.24.11');
 ok(syncPat.indexOf("api('/health'") >= 0 && syncPat.indexOf('status.workerVersao=h.versao') >= 0, 'aviso "código ANTIGO" só aparece se o /health de verdade falhar');
 ok(bkPat.indexOf('daily row write limit') >= 0 && bkPat.indexOf('LIMITE DIÁRIO') >= 0, 'Backup traduz a cota estourada para português amigável');
 
@@ -58,7 +58,7 @@ ok(patch.indexOf('class="clitab-sel') >= 0 && patch.indexOf('clitabToggleSel') >
 ok(patch.indexOf('clitab-btn-excluir') >= 0 && patch.indexOf('clitab-btn-extornar') >= 0 && patch.indexOf('clitab-btn-lista') >= 0, 'botões Excluir / Extornar / Abrir lista de origem');
 ok(patch.indexOf("btnExt.style.display=(sub==='vendas')?'':'none'") >= 0, 'Extornar só aparece na listagem de vendas');
 ok(patch.indexOf('faturad|finalizad|conclu|pago') >= 0, 'excluir venda pula faturadas (regra: estornar antes)');
-ok(patch.indexOf("db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;})") >= 0, 'orçamento excluído DE VEZ (v5.24.10: sem marca-fantasma)');
+ok(patch.indexOf("db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;})") >= 0, 'orçamento excluído DE VEZ (v5.24.11: sem marca-fantasma)');
 ok(patch.indexOf('oncontextmenu') >= 0 && patch.indexOf('clitabAbrirRegistro') >= 0, 'botão DIREITO abre o registro no módulo de origem');
 ok(patch.indexOf('clitab-resumo') < 0, 'resumo antigo removido de vez');
 ok(patch.indexOf("getElementById('search-vendas')") >= 0 && patch.indexOf("getElementById('search-cr')") >= 0, 'abrir lista joga o nome do cliente na busca do módulo');
@@ -75,9 +75,9 @@ ok(manifest.length === 196 && manifest[manifest.length-1] === 'ajustes_v5243_cli
 ok(bundle.indexOf('scripts: 196 | sha256:') >= 0, 'header do bundle com 196 scripts');
 ok(bundle.indexOf('clitab-btn-extornar') >= 0 && bundleM.indexOf('clitab-btn-extornar') >= 0, 'novo desenho presente nos 2 bundles');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.10') >= 0, 'index.html na v5.24.10');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0, 'mobile/www/index.html na v5.24.10');
-ok(pkg.version === '5.24.10', 'package.json v5.24.10');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.11') >= 0, 'index.html na v5.24.11');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0, 'mobile/www/index.html na v5.24.11');
+ok(pkg.version === '5.24.11', 'package.json v5.24.11');
 
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.10'); process.exit(1); }
-console.log('\nTudo certo v5.24.10!');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.11'); process.exit(1); }
+console.log('\nTudo certo v5.24.11!');

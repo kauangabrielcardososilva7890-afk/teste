@@ -1,4 +1,4 @@
-// Teste v5.24.10 — "abrir já mostrando o que eu escolhi" + 4.2 sem fantasma:
+// Teste v5.24.11 — "abrir já mostrando o que eu escolhi" + 4.2 sem fantasma:
 //  • o botão da ficha agora abre o REGISTRO no módulo (1 marcado abre direto;
 //    vários = módulo filtrado pelo cliente + o 1º abre na hora);
 //  • o abridor vai DIRETO PELO OBJETO — nunca re-caça por id na tela (era o
@@ -19,7 +19,10 @@ const pkg    = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('-- abrir selecionados: direto no registro, sempre pelo objeto --');
 ok(patch.indexOf('window.clitabAbrirDireto=function(tipo, id, silencioso)') >= 0, 'abridor direto existe');
-ok(patch.indexOf("if(ids.length){ setTimeout(function(){ try{ window.clitabAbrirDireto(sub, ids[0], true); }catch(e){} }, 260); }") >= 0, 'com seleção, o 1º abre na hora junto do módulo filtrado');
+// v5.24.11 SUPERSEDEU o auto-abrir o 1º: a ficha agora desenha a LISTA do
+// módulo só com os marcados (pedido correto dele: "a lista mostrando os
+// selecionados"). O auto-open saiu de propósito — não reintroduzir.
+ok(patch.indexOf('clitabRenderSoSelecionados(sub, ids)') >= 0, 'v5.24.11: a LISTA mostra os marcados (o 1º não abre mais sozinho)');
 ok(patch.indexOf("openModal('contaReceber', c.id)") >= 0, 'Financeiro abre a CONTA (não só o menu)');
 ok(patch.indexOf("window.abrirTelaOrcamento(o)") >= 0, 'orçamento abre direto pelo objeto (fora do caçador de id)');
 ok(patch.indexOf("openModal('os', o.id)") >= 0 && patch.indexOf("abrirLeituraDetalhada(l.id)") >= 0, 'chamado e leitura abrem o registro');
@@ -32,11 +35,11 @@ ok(patch.indexOf('clitabAbrirRegistro=function(tipo, id){') >= 0 && patch.indexO
 ok(orc37.indexOf("o.status!=='excluido'") >= 0, 'lista do módulo Orçamentos continua escondendo excluídos');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.10'") >= 0, 'worker carimba v5.24.10');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.11'") >= 0, 'worker carimba v5.24.11');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('clitabAbrirDireto') >= 0, 'abridor presente no bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.10') >= 0, 'index.html na v5.24.10');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.10'") >= 0, 'mobile/www/index.html na v5.24.10');
-ok(pkg.version === '5.24.10', 'package.json v5.24.10');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.10'); process.exit(1); }
-console.log('\nTudo certo v5.24.10!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.11') >= 0, 'index.html na v5.24.11');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0, 'mobile/www/index.html na v5.24.11');
+ok(pkg.version === '5.24.11', 'package.json v5.24.11');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.11'); process.exit(1); }
+console.log('\nTudo certo v5.24.11!');
