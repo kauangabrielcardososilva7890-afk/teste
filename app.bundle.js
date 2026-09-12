@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 398806752f7c13ba
+ * scripts: 196 | sha256: 1f5ea20d6721e32b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -48320,11 +48320,8 @@ window.clitabAbrirLista=function(){
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
     // v5.24.12 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
-    // 1 marcado: abre o registro. Vários: módulo filtrado + o 1º abre na hora.
-    // v5.24.12 — correção dele: NÃO abrir nenhum registro por cima da lista.
-    // Quem mostra o escolhido é A PRÓPRIA LISTA DO MÓDULO, só com as linhas
-    // marcadas (1, vários ou todos). A notinha/o orçamento abrem só se ELE
-    // clicar neles ali na lista.
+    // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
+    // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
