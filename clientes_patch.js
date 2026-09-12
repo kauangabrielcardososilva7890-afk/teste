@@ -287,7 +287,12 @@ window.saveCliente = function(){
   let alvo = null;
   if(id){
     alvo = db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    if(!alvo) return toast('Cliente não encontrado','error');
+    // v5.24.0 — id velho/fantasma (o cliente sumiu da lista ou o modal ficou
+    // com referência antiga): em vez de abortar com "Cliente não encontrado"
+    // e PERDER tudo o que foi digitado, cai para o cadastro NOVO abaixo.
+    if(!alvo) id = null;
+  }
+  if(alvo){
     payload.codigo = alvo.codigo;
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);

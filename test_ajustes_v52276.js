@@ -7,7 +7,7 @@ const app=fs.readFileSync('app.js','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.76 ==');
-ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 
 // ── 1. nenhum PC apaga dado sozinho ──
 ok('o espelho que apagava dado do PC foi removido',!/espelharNuvem|planejarEspelho/.test(code));

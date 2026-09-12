@@ -37,12 +37,12 @@ function htmlPecasVendas(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -54,6 +54,10 @@ window.lcPecaCalc=function(prefix){
   const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
   const el=document.getElementById(prefix+'-prod-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  const btn=document.getElementById(prefix+'-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String(document.getElementById(prefix+'-prod-preco')?.value||'').trim());
 };
 
 window.lcBuscarPeca=function(prefix){
@@ -78,7 +82,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -87,6 +91,9 @@ window.lcAddPecaManual=function(prefix){
   const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
   const p=window.__lcPecaSel;
   if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+  const precoRaw=String(document.getElementById(prefix+'-prod-preco')?.value||'').trim();
+  if(!/^\d+(?:[.,]\d+)?$/.test(precoRaw)){ aviso('Informe um valor unitário numérico para adicionar o item'); return; }
   const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
   const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
   const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
@@ -100,7 +107,7 @@ window.lcAddPecaManual=function(prefix){
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
   const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
   const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
-  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value='';
   window.lcPecaCalc(prefix);
   window.lcRenderPecas(prefix);
 };

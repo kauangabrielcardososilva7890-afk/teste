@@ -223,12 +223,12 @@ function htmlPecasVendas5186(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;

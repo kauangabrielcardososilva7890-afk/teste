@@ -14,7 +14,7 @@ const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const P=load(src).RELATORIO_V52249_PURE;
 const link=P.linkOrcamento({token:'tok123',numero:'88',total:10},{nome:'Escola'},{whatsapp:'33999999999'});
 
-ok('versão 5.22.49', P.VERSAO==='5.22.49' && /^5\.22\.\d+/.test(pkg.version));
+ok('versão 5.22.49', P.VERSAO==='5.22.49' && /^5\.\d+\.\d+/.test(pkg.version));
 ok('link do cliente é a página nova (GitHack)', link.indexOf('raw.githack.com')>=0 && link.indexOf('orcamento_pagar.html')>=0);
 ok('não usa o Pages velho', link.indexOf('digicopy-orcament.pages.dev')<0 && link.indexOf('digicopy-pix.pages.dev')<0);
 ok('leva token, dados e versão', /[?&]c=tok123/.test(link) && /[?&]d=/.test(link) && /[?&]v=5\.22\.49/.test(link));
@@ -31,7 +31,7 @@ ok('patch vai para o .exe dentro do app.bundle.js',
    pkg.build.files.indexOf('app.bundle.js')>=0 &&
    JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52249_relatorio_patch.js'));
 ok('index carrega os scripts da aplicação', /app\.bundle\.js\?v=/.test(html) && JSON.parse(fs.readFileSync('bundle-manifest.json','utf8')).includes('ajustes_v52249_relatorio_patch.js'));
-ok('rodapé na versão 5.22', /footer-version/.test(html) && /v5\.22\.\d+/.test(html));
+ok('rodapé na versão 5.22', /footer-version/.test(html) && /v5\.\d+\.\d+/.test(html));
 ok('APK quieto', src.indexOf('mobile/')<0);
 ok('sem nome pessoal novo', !/kauan/i.test(src.replace(/__KAUAN_REFINO_STATE__/g,'').replace(/kauangabrielcardososilva7890-afk/g,'')));
 console.log('\nRESULTADO: v5.22.49 passou!');

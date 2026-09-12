@@ -4,6 +4,9 @@
 
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
+// Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
+const WORKER_VERSION = '5.24.12';
+
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
 const ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -14,8 +17,8 @@ const JSON_HEADERS = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'authorization, content-type, x-setup-secret',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'authorization, content-type, x-setup-secret, x-digicopy-versao, x-digicopy-usuario-login, x-digicopy-usuario-prova',
+  'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
   'access-control-max-age': '86400'
 };
 
@@ -109,6 +112,36 @@ async function requireAdmin(request, env) {
   return device;
 }
 
+// v5.24.2 — BACKUPS dependem do USUÁRIO logado, não do aparelho (pedido do dono:
+// "qualquer PC pode baixar, depende apenas do usuário"). O aparelho só precisa
+// estar autorizado na nuvem; quem manda é o cargo: SOMENTE o perfil Admin —
+// v5.24.2: o dono pediu que o cargo Dono NÃO veja mais os menus de Nuvem e de
+// Backup. A prova é login + sha256(login|senha) conferidos contra o cadastro
+// sincronizado na nuvem.
+async function requireUsuarioAdmin(request, env) {
+  await authenticate(request, env);
+  const login = cleanText(request.headers.get('x-digicopy-usuario-login') || '', 80).toLowerCase();
+  const prova = String(request.headers.get('x-digicopy-usuario-prova') || '');
+  if (!login || !prova) {
+    throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Backups dependem do usuário: entre no sistema com um usuário de cargo Admin.');
+  }
+  const rows = await env.DB.prepare(
+    "SELECT data_json FROM records WHERE entity = 'usuarios' AND deleted_at IS NULL"
+  ).all();
+  for (const row of (rows.results || [])) {
+    let data = null;
+    try { data = JSON.parse(row.data_json); } catch (e) {}
+    if (!data) continue;
+    if (String(data.login || '').trim().toLowerCase() !== login) continue;
+    if (data.ativo === false) continue;
+    const cargo = String(data.perfil || data.cargo || '').trim().toLowerCase();
+    if (cargo !== 'admin') continue;
+    const esperado = await sha256(login + '|' + String(data.senha || ''));
+    if (esperado === prova) return { login };
+  }
+  throw new ApiError(403, 'USUARIO_ADMIN_REQUERIDO', 'Somente usuários com cargo Admin podem ver, baixar ou apagar backups — em qualquer computador.');
+}
+
 function handlePix(url) {
   const codigo = url.searchParams.get('c') || '';
   const html = `<!DOCTYPE html>
@@ -190,6 +223,7 @@ async function handleHealth(env) {
     database,
     schemaVersion,
     setupConfigured: !!env.SETUP_SECRET,
+    versao: WORKER_VERSION,
     ready: database === 'ok' && schemaVersion === '2' && !!env.SETUP_SECRET,
     message: database === 'ok'
       ? (schemaVersion ? 'API e banco D1 disponíveis.' : 'Banco vinculado; migração pendente.')
@@ -412,6 +446,17 @@ async function applyMutation(env, device, mutation) {
     dataJson = current.data_json;
   }
 
+  // v5.24.4 — ECONOMIA DA COTA GRÁTIS (100 mil escritas/dia): se o registro
+  // já está IDÊNTICO na nuvem, não regrava. Replays/reconexões de PCs antes
+  // gastavam 2 escritas por registro sem mudar nada — foi o que estourou a
+  // cota e derrubou o backup ("daily row write limit").
+  if (current && operation === 'upsert' && current.data_json === dataJson && current.deleted_at === null) {
+    return { ok: true, duplicate: true, noop: true, version: currentVersion };
+  }
+  if (current && operation === 'delete' && current.deleted_at !== null) {
+    return { ok: true, duplicate: true, noop: true, version: currentVersion };
+  }
+
   const now = Date.now();
   const newVersion = currentVersion + 1;
   let recordStatement;
@@ -475,13 +520,31 @@ async function applyMutation(env, device, mutation) {
   };
 }
 
-async function handlePush(request, env) {
+async function handlePush(request, env, ctx) {
   const device = await authenticate(request, env);
+  try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
   const body = await readBody(request);
   const mutations = body.mutations;
+  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0, ctx);
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
+  // FREIO PREVENTIVO DA COTA (v5.24.5) — a ordem do dono é "nunca deixar
+  // estourar". O plano grátis corta TUDO no teto de 100 mil escritas/dia
+  // e só volta na virada (21h em Brasília). Aqui a própria nuvem para de
+  // aceitar gravação um pouco ANTES do teto (folga de segurança) e devolve
+  // uma pausa amigável: o app guarda as mudanças no PC e reenvia sozinho.
+  // A mensagem carrega as palavras "daily row write limit" de propósito:
+  // é assim que o app reconhece a pausa e mostra o aviso em português.
+  const LIMITE_ESCRITA_DIA = 95000;
+  try {
+    const usoAgora = await env.DB.prepare('SELECT escritas AS w FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    const escritasAteAgora = Number((usoAgora && usoAgora.w) || 0);
+    const estimativaDesteLote = mutations.length * 2; // cada alteração grava o registro + o evento
+    if (escritasAteAgora + estimativaDesteLote > LIMITE_ESCRITA_DIA) {
+      return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
+    }
+  } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
   const results = [];
   for (let index = 0; index < mutations.length; index++) {
     try {
@@ -497,10 +560,11 @@ async function handlePush(request, env) {
   return json({ ok: results.every(item => item.ok), results });
 }
 
-async function handleChanges(request, env) {
+async function handleChanges(request, env, ctx) {
   await authenticate(request, env);
   const url = new URL(request.url);
   const cursor = Math.max(0, Number.parseInt(url.searchParams.get('cursor') || '0', 10) || 0);
+  somarUso(env, 0, 60, ctx); // uma folha do diário lida por baixo
   const limit = Math.min(MAX_CHANGE_LIMIT,
     Math.max(1, Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200));
   const query = await env.DB.prepare(
@@ -759,6 +823,11 @@ async function handleResetCloud(request, env) {
     env.DB.prepare('SELECT COUNT(*) AS total FROM records'),
     env.DB.prepare('SELECT COUNT(*) AS total FROM changes')
   ]);
+  // v5.24.0 — zerar a nuvem SÓ depois de guardar uma foto completa dela na
+  // pasta "Backup seguranca". Se o backup falhar, o reset NÃO acontece
+  // (os dados da empresa valem mais que qualquer comando).
+  const agoraSp = new Date();
+  await gerarBackup(env, 'Backup seguranca/Backup antes de zerar a nuvem ' + dataArquivoSP(agoraSp) + ' ' + horaArquivoSP(agoraSp) + '.json', { tipo: 'seguranca' });
   const now = Date.now();
   const generation = crypto.randomUUID();
   await env.DB.batch([
@@ -838,12 +907,100 @@ async function resumoDaNuvem(env) {
   return totais;
 }
 
-async function handleStatus(request, env) {
+// ═══════════════════════════════════════════════════════════════════════════
+// USO DA NUVEM (v5.22.101) — contagem estimada por dia UTC
+// O teto grátis do D1: 100.000 gravações/dia e 5.000.000 leituras/dia
+// (vira 00h UTC = 21h em São Paulo, como o sistema já avisa). Conta aqui no
+// worker pra aba Nuvem mostrar "usou X de 100.000" — o dono vê antes de virar.
+// ═══════════════════════════════════════════════════════════════════════════
+let __USO_TABELA_OK = false;
+let ultimoErroUso = '';
+async function garantirTabelaUso(env){
+  if (__USO_TABELA_OK) return;
+  // v5.24.3 — D1 .exec() QUEBRA os comandos por LINHA: DDL multilinha virava
+  // "incomplete input" (o erro que aparecia no Backup). Tudo numa linha só.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS uso_diario (dia TEXT PRIMARY KEY, escritas INTEGER NOT NULL DEFAULT 0, leituras INTEGER NOT NULL DEFAULT 0)`);
+  __USO_TABELA_OK = true;
+}
+function hojeUTC(){
+  return new Date().toISOString().slice(0, 10);
+}
+async function _somar(env, escritas, leituras){
+  try{
+    await garantirTabelaUso(env);
+    await env.DB.prepare(
+      `INSERT INTO uso_diario(dia, escritas, leituras) VALUES (?, ?, ?)
+         ON CONFLICT(dia) DO UPDATE SET escritas = escritas + ?, leituras = leituras + ?`
+    ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
+  }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
+}
+// v5.24.12 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
+// são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
+// Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
+// leituras acumulam na memória do worker e só descem ao banco junto da próxima
+// gravação real, ou de 15 em 15 minutos. O número na tela pode atrasar alguns
+// minutos; a cota, não vaza mais.
+let __USO_PEND = { esc: 0, lei: 0, desde: 0 };
+function somarUso(env, escritas, leituras, ctx){
+  const agora = Date.now();
+  __USO_PEND.esc += Math.max(0, Number(escritas) || 0);
+  __USO_PEND.lei += Math.max(0, Number(leituras) || 0);
+  if (!__USO_PEND.desde) __USO_PEND.desde = agora;
+  const temGravacao = __USO_PEND.esc > 0;
+  const deu15min = (agora - __USO_PEND.desde) >= 15 * 60 * 1000;
+  if (!temGravacao && !deu15min) return; // só leitura: acumula sem gravar
+  const esc = __USO_PEND.esc, lei = __USO_PEND.lei;
+  __USO_PEND = { esc: 0, lei: 0, desde: 0 };
+  const p = _somar(env, esc, lei);
+  if(ctx && typeof ctx.waitUntil === 'function'){ ctx.waitUntil(p); return; }
+  return p;
+}
+async function usoHoje(env){
+  try{
+    await garantirTabelaUso(env);
+    const r = await env.DB.prepare('SELECT dia, escritas, leituras FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
+    return {
+      dia: hojeUTC(),
+      escritas: (r && Number(r.escritas)) || 0,
+      leituras: (r && Number(r.leituras)) || 0,
+      tetoEscritas: 100000,
+      tetoLeituras: 5000000
+    };
+  }catch(e){ return { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 100000, tetoLeituras: 5000000 }; }
+}
+
+async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
   const totals = await resumoDaNuvem(env);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
-  return json({ ok: true, device, totals });
+  somarUso(env, 0, 30, ctx); // abrir o status também lê algumas linhas
+  return json({ ok: true, device, totals, workerVersao: WORKER_VERSION,
+    usoHoje: await (async () => {
+      // v5.23.1 — medidor oficial (mini-worker contador-uso) tem precedência;
+      // sem ele (ou zerado), cai na estimativa do próprio uso.
+      try {
+        const real = await env.DB.prepare('SELECT leituras, escritas, medido_em FROM uso_real WHERE dia = ?').bind(hojeUTC()).first();
+        if (real && (Number(real.leituras) > 0 || Number(real.escritas) > 0)) {
+          return { dia: hojeUTC(), escritas: Number(real.escritas) || 0, leituras: Number(real.leituras) || 0,
+                   tetoEscritas: 100000, tetoLeituras: 5000000, fonte: 'oficial', medidoEm: real.medido_em || null };
+        }
+      } catch (e) { /* tabela ainda não existe — tudo bem */ }
+      // v5.24.4 — com a cota estourada a CREATE da tabela de uso falha e o
+      // SELECT abaixo quebrava o /v1/status inteiro (o app caía no aviso
+      // falso de "código ANTIGO"). Medidor quebrado não derruba o status.
+      let est;
+      try {
+        est = await usoHoje(env);
+      } catch (eUso) {
+        est = { dia: hojeUTC(), escritas: 0, leituras: 0, tetoEscritas: 100000, tetoLeituras: 5000000, avisoUso: 'medidor pausado (cota)' };
+      }
+      if (ultimoErroUso) est.avisoUso = ultimoErroUso;
+      return Object.assign(est, { fonte: 'estimada' });
+    })() });
 }
+
+
 
 function avisoEpson() {
   return 'Prezados clientes,\n\nInformamos que as manutenções em impressoras EPSON exigem um prazo maior para a conclusão. Para estes equipamentos, utilizamos produtos químicos específicos que demandam um tempo necessário de reação para garantir a eficácia do serviço. Por isso, solicitamos um prazo médio de 15 dias úteis para a entrega da manutenção.\n\nVale ressaltar que o equipamento pode ficar pronto antes deste prazo, a depender da agilidade da reação dos produtos utilizados.\n\nAgradecemos a compreensão de todos e nos colocamos à disposição para eventuais dúvidas!';
@@ -1067,7 +1224,7 @@ async function handleOrcamentoPost(request, env) {
   return json({ ok: true, status: 'aprovado', vendaId, vendaNumero, mensagem });
 }
 
-async function route(request, env) {
+async function route(request, env, ctx) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
   const url = new URL(request.url);
   if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) return handleHealth(env);
@@ -1079,8 +1236,8 @@ async function route(request, env) {
   if (request.method === 'POST' && url.pathname === '/v1/recover') return handleRecovery(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/invites') return handleCreateInvite(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
-  if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env);
-  if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env, ctx);
+  if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
@@ -1089,25 +1246,320 @@ async function route(request, env) {
   if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
-  if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env, ctx);
+  // Backups (somente aparelho administrador)
+  if (request.method === 'GET' && url.pathname === '/v1/backups') return handleBackupListar(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/backup') return handleBackupBaixar(request, env);
+  if (request.method === 'DELETE' && url.pathname === '/v1/backup') return handleBackupApagarUm(request, env);
+  if (request.method === 'DELETE' && url.pathname === '/v1/backups') return handleBackupApagarTodos(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/backup/agora') return handleBackupAgora(request, env);
   throw new ApiError(404, 'NOT_FOUND', 'Rota não encontrada.');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// BACKUPS AUTOMÁTICOS (v5.22.97)
+// Dois ciclos independentes que a nuvem faz sozinha, com os PCs desligados:
+//  1) Diário às 18:30 de São Paulo (cron 21:30 UTC)
+//  2) A cada ATUALIZAÇÃO do sistema — o primeiro sync de uma versão nova faz
+//     primeiro a foto do banco com o nome da versão ANTERIOR.
+// + um reforço manual: o dono pode pedir "Backup agora" na tela.
+// Os arquivos ficam organizados em pastas dentro da própria nuvem (tabela
+// exclusiva de backups, criada sozinha — NÃO mistura com os dados do sistema):
+//   📁 Backup diario       → Backup 08-09-2026.json
+//   📁 Backup atualizações → Backup sistema 5.22.95.json  (foto da versão anterior)
+//   📁 Backup manual       → Backup manual 1.json, Backup manual 2.json... (número nunca repete)
+// A limpeza é MANUAL pelos botões do administrador — nunca apaga sozinho.
+// ═══════════════════════════════════════════════════════════════════════════
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function dataArquivoSP(agora){
+  // Data de São Paulo no formato do dono: DD-MM-AAAA.
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric'
+  }).format(agora).replaceAll('/', '-');
+}
+
+function horaArquivoSP(agora){
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(agora).replace(':', 'h').replace('\u200f', '').trim();
+}
+
+const PASTA_DIARIO = 'Backup diario';
+const PASTA_ATUALIZACOES = 'Backup atualizações';
+const PASTA_MANUAL = 'Backup manual';
+
+function nomeBackupDiario(agora){
+  return PASTA_DIARIO + '/Backup ' + dataArquivoSP(agora) + '.json';
+}
+
+function nomeBackupSistema(versaoAnterior){
+  return PASTA_ATUALIZACOES + '/Backup sistema ' + String(versaoAnterior || '').trim() + '.json';
+}
+
+function nomeBackupManual(seq){
+  // v5.24.0 — manual numerado, como o dono pediu: "Backup manual 1, 2, 3..."
+  // e o número NUNCA se repete, mesmo excluindo os arquivos (igual ao código
+  // de clientes/vendas). O contador mora na nuvem e vale para todos os PCs.
+  return PASTA_MANUAL + '/Backup manual ' + seq + '.json';
+}
+
+async function proximoSeqManual(env){
+  // Contador persistente do manual (upsert em system_meta).
+  const agora = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES ('backup_seq_manual', '1', ?)
+     ON CONFLICT(key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = ?`
+  ).bind(agora, agora).run();
+  const linha = await env.DB.prepare(
+    "SELECT value FROM system_meta WHERE key = 'backup_seq_manual' LIMIT 1"
+  ).first();
+  return Number(linha && linha.value) || 1;
+}
+
+function compararVersao(a, b){
+  // 5.22.96 > 5.22.95; compara pedaço numérico por pedaço.
+  const pa = String(a || '').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+  const pb = String(b || '').replace(/^v/i, '').split('.').map(x => parseInt(x, 10) || 0);
+  const tam = Math.max(pa.length, pb.length);
+  for (let i = 0; i < tam; i++){
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x > y) return 1;
+    if (x < y) return -1;
+  }
+  return 0;
+}
+
+// Compacta o texto do backup (backup textual comprime MUITO, economiza nuvem)
+async function gzipTexto(texto){
+  const dados = new TextEncoder().encode(texto);
+  const stream = new Blob([dados]).stream().pipeThrough(new CompressionStream('gzip'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function gunzipBytes(bytes){
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Response(stream).text();
+}
+
+// Tabela exclusiva de backups, autocriada no primeiro uso (não precisa migrate)
+let __BACKUP_TABELA_OK = false;
+async function garantirTabelaBackups(env){
+  if (__BACKUP_TABELA_OK) return;
+  // v5.24.3 — D1 .exec() quebra por LINHA (ver garantirTabelaUso): uma linha só.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY, nome TEXT NOT NULL, pasta TEXT NOT NULL, tipo TEXT NOT NULL, tamanho_original INTEGER NOT NULL, tamanho_gzip INTEGER NOT NULL, registros INTEGER NOT NULL, gerado_em INTEGER NOT NULL)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS backups_chunks (id TEXT NOT NULL, seq INTEGER NOT NULL, chunk BLOB NOT NULL, PRIMARY KEY (id, seq))`);
+  __BACKUP_TABELA_OK = true;
+}
+
+const TAMANHO_CHUNK = 1500000; // pedaços pequenos: nunca estica uma linha do banco
+
+async function gerarBackup(env, chave, meta){
+  // Foto completa: registros paginados + aparelhos (SEM token_hash).
+  const records = [];
+  let pulados = 0;
+  for (let guard = 0; guard < 500; guard++){
+    const lote = await env.DB.prepare(
+      `SELECT entity, record_id, data_json, version, updated_at, deleted_at, updated_by
+         FROM records ORDER BY entity ASC, record_id ASC LIMIT 1000 OFFSET ?`
+    ).bind(pulados).all();
+    const linhas = lote.results || [];
+    records.push(...linhas);
+    if (linhas.length < 1000) break;
+    pulados += linhas.length;
+  }
+  const devices = await env.DB.prepare(
+    `SELECT id, name, role, created_at, last_seen_at, revoked_at FROM devices ORDER BY created_at ASC`
+  ).all();
+  const totals = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM records WHERE deleted_at IS NULL) AS records_vivos,
+            (SELECT COUNT(*) FROM records WHERE deleted_at IS NOT NULL) AS records_excluidos,
+            (SELECT COUNT(*) FROM changes) AS changes`
+  ).first();
+  const agora = new Date();
+  const arquivo = {
+    ferramenta: 'digicopy-backup',
+    tipo: meta && meta.tipo || 'manual',
+    versaoSistemaAnterior: meta && meta.versaoAnterior || undefined,
+    geradoEm: agora.toISOString(),
+    geradoEmSaoPaulo: agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+    totais: totals || {},
+    aparelhos: (devices.results || []),
+    registros: records
+  };
+  const texto = JSON.stringify(arquivo, null, 2);
+  const gzip = await gzipTexto(texto);
+
+  await garantirTabelaBackups(env);
+  const corte = chave.indexOf('/');
+  const pasta = corte > 0 ? chave.slice(0, corte) : '';
+  const nome = corte > 0 ? chave.slice(corte + 1) : chave;
+  const partes = [];
+  for (let i = 0; i < gzip.length; i += TAMANHO_CHUNK){
+    partes.push(gzip.slice(i, i + TAMANHO_CHUNK));
+  }
+  const lotes = [
+    env.DB.prepare('DELETE FROM backups WHERE id = ?').bind(chave),
+    env.DB.prepare('DELETE FROM backups_chunks WHERE id = ?').bind(chave)
+  ].concat(
+    [env.DB.prepare(
+      `INSERT INTO backups(id, nome, pasta, tipo, tamanho_original, tamanho_gzip, registros, gerado_em)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(chave, nome, pasta, (meta && meta.tipo) || 'manual', texto.length, gzip.length, records.length, Date.now())]
+  ).concat(
+    partes.map((p, idx) => env.DB.prepare(
+      'INSERT INTO backups_chunks(id, seq, chunk) VALUES (?, ?, ?)'
+    ).bind(chave, idx, p))
+  );
+  // grava em levas para não estourar o tamanho de um batch só
+  for (let i = 0; i < lotes.length; i += 25){
+    await env.DB.batch(lotes.slice(i, i + 25));
+  }
+  return { nome: chave, registros: records.length, tamanho: gzip.length };
+}
+
+async function checarTrocaDeVersao(request, env, ctx){
+  // Roda em todo push autenticado: se o sistema que está enviando veio com
+  // versão MAIS alta que a última vista, fotografa o banco com o nome da
+  // versão anterior antes de marcar a nova como última.
+  const versaoApp = (request.headers.get('x-digicopy-versao') || '').trim();
+  if (!versaoApp) return;
+  const atual = await env.DB.prepare(
+    'SELECT value FROM system_meta WHERE key = ? LIMIT 1'
+  ).bind('backup_ultima_versao').first();
+  const ultima = (atual && atual.value) ? String(atual.value) : '';
+  if (compararVersao(versaoApp, ultima) <= 0) return;
+  // Marca ANTES de gerar: se dois PCs atualizarem ao mesmo tempo, só um
+  // dispara a foto (e se falhar, a próxima atualização tenta de novo).
+  await env.DB.prepare(
+    `INSERT INTO system_meta(key, value, updated_at) VALUES ('backup_ultima_versao', ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+  ).bind(versaoApp, Date.now()).run();
+  if (!ultima) return; // primeiro PC visto: não existe "versão anterior" ainda
+  // Mesmo nome por versão: se já existir foto daquela versão, é sobrescrita
+  // (não acumula duplicado).
+  const tarefa = gerarBackup(env, nomeBackupSistema(ultima), { tipo: 'sistema', versaoAnterior: ultima })
+    .catch(e => console.error('BACKUP_VERSAO_FALHOU', e));
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(tarefa);
+  else await tarefa;
+}
+
+function chaveBackupValida(chave){
+  return !!chave && chave.indexOf('..') < 0 && chave.length < 300;
+}
+
+async function handleBackupListar(request, env){
+  await requireUsuarioAdmin(request, env);
+  await garantirTabelaBackups(env);
+  const r = await env.DB.prepare(
+    `SELECT id, nome, pasta, tipo, tamanho_original, tamanho_gzip, registros, gerado_em
+       FROM backups ORDER BY gerado_em DESC LIMIT 300`
+  ).all();
+  const backups = (r.results || []).map(x => ({
+    chave: x.id, nome: x.nome, pasta: x.pasta, tipo: x.tipo,
+    tamanho: x.tamanho_original, tamanhoGzip: x.tamanho_gzip,
+    registros: x.registros, geradoEm: new Date(Number(x.gerado_em)).toISOString()
+  }));
+  return json({ ok: true, backups });
+}
+
+async function lerBackupCompleto(env, chave){
+  const meta = await env.DB.prepare('SELECT id, tamanho_gzip FROM backups WHERE id = ?').bind(chave).first();
+  if (!meta) return null;
+  const linhas = await env.DB.prepare('SELECT chunk FROM backups_chunks WHERE id = ? ORDER BY seq ASC').bind(chave).all();
+  const partes = (linhas.results || []).map(x => new Uint8Array(x.chunk));
+  const total = partes.reduce((a, p) => a + p.length, 0);
+  const gzip = new Uint8Array(total);
+  let pos = 0;
+  partes.forEach(p => { gzip.set(p, pos); pos += p.length; });
+  return { gzip, meta };
+}
+
+async function handleBackupBaixar(request, env){
+  await requireUsuarioAdmin(request, env);
+  await garantirTabelaBackups(env);
+  const chave = new URL(request.url).searchParams.get('key') || '';
+  if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  const achado = await lerBackupCompleto(env, chave);
+  if (!achado) throw new ApiError(404, 'BACKUP_NAO_ACHOU', 'Backup não encontrado na nuvem.');
+  const texto = await gunzipBytes(achado.gzip);
+  const corte = chave.indexOf('/');
+  const nomeFinal = corte > 0 ? chave.slice(corte + 1) : chave;
+  return new Response(texto, {
+    headers: {
+      ...JSON_HEADERS,
+      'content-type': 'application/json; charset=utf-8',
+      'content-disposition': 'attachment; filename="' + nomeFinal.replaceAll('"', '') + '"'
+    }
+  });
+}
+
+async function handleBackupApagarUm(request, env){
+  await requireUsuarioAdmin(request, env);
+  await garantirTabelaBackups(env);
+  const chave = new URL(request.url).searchParams.get('key') || '';
+  if (!chaveBackupValida(chave)) throw new ApiError(400, 'NOME_INVALIDO', 'Nome de backup inválido.');
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM backups WHERE id = ?').bind(chave),
+    env.DB.prepare('DELETE FROM backups_chunks WHERE id = ?').bind(chave)
+  ]);
+  return json({ ok: true, apagado: chave });
+}
+
+async function handleBackupApagarTodos(request, env){
+  await requireUsuarioAdmin(request, env);
+  await garantirTabelaBackups(env);
+  // Apaga SOMENTE os backups (tabelas exclusivas de backup). Os dados do
+  // sistema (records/changes) nunca são tocados aqui, e o ciclo continua:
+  // amanhã às 18:30 e a cada atualização novos backups voltam a aparecer.
+  const antes = await env.DB.prepare('SELECT COUNT(*) AS n FROM backups').first();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM backups'),
+    env.DB.prepare('DELETE FROM backups_chunks')
+  ]);
+  return json({ ok: true, apagados: (antes && antes.n) || 0 });
+}
+
+async function handleBackupAgora(request, env){
+  // Reforço ANTES de mexer em atualização: ciõa a foto na hora, como o dono pediu.
+  await requireUsuarioAdmin(request, env);
+  const corpo = await readBody(request).catch(() => ({}));
+  const tipo = (corpo && corpo.tipo === 'atualizacao') ? 'atualizacao' : 'manual';
+  let chave;
+  if (tipo === 'atualizacao'){
+    const versao = cleanText((corpo && corpo.versao) || '', 40) || 'sem-numero';
+    chave = nomeBackupSistema(versao + ' (antes de mexer)');
+  } else {
+    chave = nomeBackupManual(await proximoSeqManual(env));
+  }
+  const r = await gerarBackup(env, chave, { tipo: tipo === 'atualizacao' ? 'sistema' : 'manual', versaoAnterior: corpo && corpo.versao || undefined });
+  return json({ ok: true, backup: r.nome, registros: r.registros });
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     try {
-      return await route(request, env);
+      return await route(request, env, ctx);
     } catch (error) {
       if (error instanceof ApiError) {
         return json({ ok: false, error: error.code, message: error.message }, error.status);
       }
       console.error('DIGICOPY_API_ERROR', error);
-      // Sem o motivo junto ninguém consegue consertar: "Erro interno da API" e
-      // ponto final não diz nada. Vai o recado curto do que falhou.
       const motivo = String((error && error.message) || error || '').slice(0, 200);
       return json({ ok: false, error: 'INTERNAL_ERROR', message: 'Erro interno da API.' + (motivo ? ' Motivo: ' + motivo : ''), detail: motivo }, 500);
+    }
+  },
+  // Relógio da própria nuvem: todo dia 18:30 de São Paulo faz o backup
+  // diário sozinho — não precisa de nenhum PC ligado.
+  async scheduled(event, env, ctx) {
+    try {
+      const nome = nomeBackupDiario(new Date());
+      const r = await gerarBackup(env, nome, { tipo: 'diario' });
+      console.log('BACKUP_DIARIO_OK', JSON.stringify(r));
+    } catch (e) {
+      console.error('BACKUP_DIARIO_FALHOU', e);
     }
   }
 };
 
-export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel };
+export const __test = { cleanText, sha256, sameSecret, randomToken, publicRecord, activityLabel, nomeBackupDiario, nomeBackupSistema, nomeBackupManual, compararVersao, dataArquivoSP, gzipTexto, gunzipBytes };

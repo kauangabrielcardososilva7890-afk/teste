@@ -1,21 +1,605 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-31  
+**Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa desta sessão:** `arena/01a0590a-teste` (anterior: `arena/01a010fa-teste`)  
-**Última versão:** **v5.22.74**  
+**Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
+**Última versão:** **v5.24.12**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.74>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.12>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.12 (2026-09-12)
+
+Tema: **bug testado por ele** — aba Vendas → dentro de uma notinha
+FATURADA, o botão Imprimir "fica inacessível" (cinza).
+
+1. **Causa, com nome**: a trava anti-EDIÇÃO da notinha faturada
+   (`lockVendaFaturadaUI`, vendas_notinhas_fix_patch.js) desliga botões cujo
+   texto/onclick tenha "salvar|faturar|item|...". O Imprimir do editor chama
+   `vosAbrirImpressaoESalvar()` — tem **"salvar" no NOME da função**. A trava
+   confundia impressão (leitura) com edição e desligava o botão.
+2. **Remédio cirúrgico dentro da própria varredura**: antes de desligar
+   qualquer botão, a trava pergunta se ele é de impressão (texto ou função).
+   Se for: botão fica LIGADO e passa a imprimir DIRETO a notinha
+   (`imprimirNotinha(vendaId)`) — pura leitura, sem tentar salvar nada, sem
+   mexer na venda. Dica no botão: "Imprimir notinha (não altera nada)".
+3. **O que NÃO muda**: adicionar item / salvar / faturar / excluir / buscar
+   continuam travados com o aviso do sistema "venda faturada... só estornar",
+   e o botão Estornar segue. Impressão nunca altera dados — estornar continua
+   sendo o único jeito de voltar a editar.
+4. **Campos ainda travados** (inputs/selects) — leitura livre, edição não.
+   PC e celular: o mesmo bundle corrigido vai nos dois (mesma origem).
+5. Trava de testes aplicada de novo: `package.json` entra NA LISTA de
+   carimbos (o grep por extensão .js/.html/.md o perdeu nesta rodada; vários
+   testes leem a versão de lá — falharam em cadeia até o carimbo subir).
+   Suíte oficial (`npm test`): **147 passaram, 0 aceita, 2 de ambiente**
+   (node-forge e acorn ausentes no sandbox — nunca do código).
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.11 (2026-09-11)
+
+Tema: **pedido literal dele:** "quero que abra onde é a lista que mostra
+todos, mas só mostrando os selecionados que eu pedi".
+
+1. **A LISTA é quem mostra os escolhidos** (manda o que ele pediu): com 1,
+   vários ou todos marcados na ficha, o botão abre o módulo e **a própria
+   lista dele aparece só com aquelas linhas**. Ninguém abre notinha/orçamento
+   por cima mais (o auto-open do 1º, da v5.24.7, foi removido DE PROPÓSITO —
+   test_ajustes_v5247 atualizado para não reintroduzir). Sem marcação: como
+   antes (módulo filtrado pelo cliente).
+2. **`clitabRenderSoSelecionados(sub, ids)`** — troca-segura do "tanque" do
+   módulo: filtra `db.vendas/contasReceber/orcamentos/os/leituras` só com os
+   ids marcados, desenhe a lista nativa (mesmos objetos, zero perda), devolve
+   o tanque inteiro no finally; gravação (saveDB/saveDBAgora) fica de molho
+   durante o desenho — banco nunca é salvo pela metade. Depois, qualquer
+   re-render natural (digitou na busca) volta a lista ao comportamento normal.
+3. Botão direito na linha segue abrindo o REGISTRO (caso de uso separado);
+   "Este cliente na lista" (5.24.10) segue.
+4. Regra de testes recordada: comentários literais não viram fixture (quebra
+   em quebra de linha) — test_ajustes_v5249 ensinou; aplicado no v52411.
+   Suíte: **168 passando / 6 de ambiente**.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.10 (2026-09-11)
+
+Tema: **"o clientes não abre a lista que mostra os que eu quero"** + a decisão
+da nuvem paga.
+
+1. **Botão novo "Este cliente na lista"** (barra de ações do Histórico da
+   ficha): sai da ficha direto pro módulo **Clientes** (navigateTo('clientes'))
+   já com a busca preenchida com o nome do cadastro — a lista mostra ele e o
+   grupinho de nomes parecidos ("os que eu quero"). Se a reclamação dele era
+   outra (lista do módulo errada/clique na tabela de clientes), pedido a foto
+   da tela no protocolo.
+2. **Trava do 'senão' (bug latente):** `clitabAbrirLista()` jogava QUALQUER
+   sub desconhecido ou aba Dados no módulo Leituras sem avisar. Agora: sub fora
+   dos 5 conhecidos → toast explicativo, nenhuma navegação errada.
+3. Teste `test_ajustes_v52410.js` (e regra nova: testes não prendem em texto
+   de comentário versionado — ajustado v5249 por isso). Suíte: 167/6.
+4. **Resposta da nuvem paga (ele pediu "fala o melhor logo"):** Workers Paid
+   $5/mês na própria Cloudflare — 25 bilhões leituras + 50 milhões gravações/
+   MÊS inclusos, sem migração nenhuma, cancela quando quiser (fontes: omidsaffari
+   /byteiota/dev.to 2026). Turso fica fora por exigir REESCREVER o motor.
+   Estratégia de revenda preservada: loja dele na conta paga; cada cliente na
+   sua própria conta grátis até precisar — aí o cliente paga os $5. Pendente
+   pós-assinatura: ajustar o teto exibido no app (100.000 → 50 mi) numa versão.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.9 (2026-09-11)
+
+Tema: **o fantasma 4.2 volta a acusar com nome e sobrenome.** Novo relato dele:
+o aviso "Não achei esse orçamento" reapareceu com id fresco (`orc_mtxj0668_mhtz`)
+que NUNCA existiu no banco deste PC (5 orçamentos, mais novo `orc_mtnee661`)
+nem no retrato da tela — referência viva de um registro que não nasceu aqui.
+
+1. **Etiqueta de origem:** `window.abrirOrcamento(id, _origem)` agora recebe
+   QUEM chamou. Linhas e botões-de-olho das duas listas (v52237 e v52258)
+   passam 'linha da lista de orcamentos' / 'botao de olho da lista'. O aviso
+   completa com **"; o clique veio de: ..."** — a próxima foto termina a
+   investigação (antes era charada). Sem etiqueta (algum caminho escondido),
+   ele pede a foto da tela inteira.
+2. **Dois caminhos internos sanados:** recarregar depois de SALVAR e depois de
+   REVALIDAR (v52258 L325/L706) re-caçava o orçamento por id à toa, com o
+   objeto na mão. Agora é `abrirTelaOrcamento(o)` direto — zero fantasma por
+   essas portas. v52258 ficou com ZERO chamadas `abrirOrcamento(o.id)`.
+3. **v52243 (badge de status) intacto:** seu regex lê a 1ª aspa — a etiqueta
+   extra não quebra o leitor.
+4. Detalhe de investigação registrado: `__orc_render_ids` quem mantém vivo é o
+   guardião (v52293), não o render ativo — "NÃO estava" segue significando
+   "não existia no banco na última varredura".
+5. Teste `test_ajustes_v5249.js`. Suíte: **166 passando / 6 de ambiente**.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.8 (2026-09-11)
+
+Tema: **o alerta dos "76 mil"** — a nuvem gravava demais com o sistema parado.
+
+1. **O ralo achado (app):** o buscador do Caixa Escolar rodava sozinho a CADA
+   60 SEGUNDOS sempre que a lista estava vazia (`||vazio` no relógio de 1 min),
+   carimbava a config e mandava gravação para a nuvem a cada volta — milhares
+   por dia sem ninguém mexer. Agora: automático só 1x/hora com dados velhos,
+   relógio de 10 em 10 minutos, lista vazia espera a vez, sem login nem tenta,
+   nunca limpa a base sozinho (limpar = botão "Baixar Tudo" da tela), nunca
+   duas buscas ao mesmo tempo.
+2. **Medidor sem autogasto (worker):** `somarUso` gravava a linha do medidor a
+   CADA chamada — inclusive leituras (1x/min por PC aberto). ~1.400
+   gravações/dia por aparelho só para medir a própria cota. Agora as leituras
+   acumulam em memória e descem junto da próxima gravação real, ou de 15 em
+   15 minutos. O número da tela pode atrasar minutos; a cota não vaza.
+3. **Motor da nuvem ainda velho — ele precisa rodar o deploy:** a economia já
+   escrita antes (não regravar registro idêntico — v5.24.4; migração
+   0004_menos_gravacoes: ~8 → ~4 gravações por mudança; dedupe e freio) SÓ
+   vale depois de `npm run deploy` dentro da pasta `cloudflare-worker` (o
+   script já aplica as migrações pendentes e publica num comando só).
+4. **Raio-X para conferir:** `ver_gasto_nuvem.cmd` na raiz do sistema — duplo
+   clique e ele mostra: gravações/leituras por dia (semana), quem mais gravou
+   hoje por tipo de registro e quais aparelhos estão falando com a nuvem (com
+   o último sinal de cada um). É consulta pura, não muda nada.
+5. Teste novo `test_ajustes_v5248.js`. Suíte: **165 passando / 6 fora do ar**
+   (as mesmas 6 de ambiente de sempre).
+
+**Complemento (mesmo dia, tarde):** ele rodou `npx wrangler deploy` — o motor
+novo FOI publicado, mas esse comando **não aplica as migrações do banco** (a
+migração 0004, que corta gravação por mudança de ~8 para ~4 linhas, fica
+pendente). Criado `atualizar_motor_nuvem.cmd` na raiz: duplo clique e ele faz
+a sequência certa (lista pendentes → aplica migrações → publica → mostra a
+versão no ar via `/health`). `ver_gasto_nuvem.cmd` ganhou linha extra que
+confere a versão no ar também.
+
+**Confirmado por ele (foto do cmd, 17:04):** rodou `atualizar_motor_nuvem.cmd`
+→ "No migrations to apply!" (as 4 migrações, incluindo a 0004_menos_gravacoes,
+JÁ estavam aplicadas de antes) → deploy OK → `/health` respondeu
+**`"versao":"5.24.8"`, `database:"ok"`**. Estado final da nuvem: motor 5.24.8
+no ar com TODAS as economias ativas (não regravar idêntico, ~4 linhas por
+mudança, medidor barato, dedupe, freio). Próxima prova: rodar
+`ver_gasto_nuvem.cmd` no dia seguinte e comparar as gravações.
+
+**Regra permanente (pedido dele, 2026-09-11):** o sistema também roda no
+CELULAR (APK pausado, mas será retomado) — tudo novo precisa ser compatível
+com PC+mobile. Já é a arquitetura atual: UM código só, `app.bundle.js` raiz e
+`mobile/www/app.bundle.js` idênticos em toda versão (teste de paridade na
+suíte), sync idêntico. Os `.cmd` são ferramenta dele de operador no Windows,
+nunca vão para dentro do app.
+
+**Certificado NF — VALIDADO (foto Get-PfxCertificate, 2026-09-11):** o arquivo
+`DENIVALDO CERTIFICADO DIGITAL (2).pfx` é **e-CNPJ A1 da loja do pai**:
+Subject `CN="DENIVALDO COMERCIO DE ELETRONICOS, LOCACOES E MAN…:08385589000103"`,
+Thumbprint EA705D60245464773CEA9518FDB8C95DC1C7C5B9. CNPJ do emitente para a
+sessão NF: **08.385.589/0001-03** (Denivaldo Comércio de Eletrônicos, Locações
+e Man[utenção/utensílios]). Validade a confirmar (A1 ~1 ano; arquivo de
+ago/2026 → provável até ago/2027). Senha fica SÓ com ele (by design: o
+sistema guarda o .pfx na nuvem e a senha é digitada na hora de assinar —
+v5.22.21). Nota: ele NUNCA deve mandar a senha do certificado em chat.
+
+**Estado da cota (2026-09-11 ~18h):** dia começou em 76 mil e o freio só foi
+ligado no meio do dia — possível estouro dos 100 mil ainda hoje. Se aconteceu:
+NADA se perde, sync pausa e retoma sozinho após as 21h (virada UTC). Os testes
+do kit v5.24.7/8 (abrir selecionado, excluir, 4.2) são comportamentos LOCAIS
+do app — valem mesmo com a cota estourada; só o PC↔PC que fica na fila.
+`ver_gasto_nuvem.cmd` item [1/3] mostra o número de hoje para conferir.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.7 (2026-09-10/11)
+
+1. **"Abrir já mostrando o que eu escolhi" (pedido dele):** o botão da ficha
+   agora abre o REGISTRO no módulo — 1 marcado abre direto; vários marcados =
+   o módulo abre filtrado pelo cliente + o 1º já se abre na hora. Financeiro
+   abre a CONTA de verdade (não só a tela), orçamento abre direto pelo objeto,
+   chamado/leitura abrem o registro.
+2. **4.2 sem fantasma:** o caminho novo vai DIRETO PELO OBJETO — nunca re-caça
+   por id na tela (era por onde o "Não achei esse orçamento" aparecia com
+   código-fantasma). E excluir agora VARRE as telas dos módulos: a linha
+   apagada some dali também, então ninguém clica em registro morto (o clique
+   em linha-fantasma era o caminho provável do aviso da foto 4.2).
+   Suite: 164 verdes; 6 falhas são artefatos pré-existentes do sandbox.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.6 (2026-09-10)
+
+1. **2.1 de verdade de verdade:** o "Nova venda" vivo era o atalho do **menu
+   lateral** (bloco Atendimento, `ajustes_v52213_menus_atalhos_patch.js`).
+   Removido do menu padrão; a ordem salva dele no PC é ignorada sozinha (o
+   motor de ordem só trabalha em cima do padrão). Criar venda continua pelo
+   atalho **Nova notinha** do Início.
+2. **4.1/4.2 de verdade:** o formulário de **orçamento** usava o placeholder
+   "Digite para buscar..." — o guardião de segurança da tela de venda escuta
+   esse texto e travava tudo com "Cliente Não Selecionado" mesmo com o cliente
+   escolhido (a venda usava a base nova, o orçamento não). Placeholder trocado
+   nas 3 camadas do orçamento: busca e adiciona item em paz.
+3. **5.x com popup próprio + exclusão que vence a nuvem:** Excluir/Estornar
+   agora usam o **popup do sistema** (`confirmSistema` — nunca o cinza do
+   navegador); ao excluir, o motor da nuvem é avisado que foi INTENCIONAL e
+   desfaz sozinho qualquer "ressuscitação" do puxão em até 60s, com empurrão
+   do delete na hora + id tolerante a string/número. Era o "não exclui".
+   Suite: 163 verdes; 6 falhas são artefatos pré-existentes do sandbox.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.5 (2026-09-10)
+
+1. **🛡️ GARANTIA ANTI-ESTOURO (ordem dele: "nunca deixa estourar essa nuvem").**
+   Duas muralhas novas: a nuvem só grava o que é NOVO (dedupe da v5.24.4) E agora
+   tem um **FREIO dentro do worker**: ao chegar em 95 mil escritas no dia, ela
+   para de aceitar gravação ANTES do teto de 100 mil — responde a pausa que o
+   app já reconhece ("envio pausado até 21h, nada se perde"). Mais o **farol
+   automático** `node checar_cota_nuvem.js`: roda antes de toda versão e reprova
+   qualquer mudança que ameace a cota, com a conta do dia típico (dia movimentado
+   de loja ≈ 0,6% do teto). Estourar agora exigiria milhares de mudanças reais
+   no mesmo dia. **Rodar `npx.cmd wrangler deploy`** (o freio mora na nuvem).
+2. **2.1 de verdade:** o "Nova venda" que ele via era da tela VIVA "Vendas e
+   Notinhas" (`vendas_os_patch.js`) — o botão do app.js morto tinha saído na
+   5.24.4. Removido da tela viva + 2 cópias mortas no `notinha_patch.js`
+   (prevenção). Criação continua pelo atalho **Nova notinha**.
+3. **4.1/4.2 curados (a 1ª tentativa falhava, a 2ª ia):** a busca usava um
+   índice congelado e a nuvem trocava a base por baixo — linha na tela, clique
+   no vazio. Agora o índice se refaz sozinho quando a base troca e o clique SE
+   CURA com o dado da própria busca (toast "Cliente vinculado … (recuperado da
+   busca)"). **Salvar que sumia:** a ficha reabria no Histórico (que esconde o
+   rodapé) — agora SEMPRE abre em Dados. Clicar num registro que a nuvem já
+   trocou atualiza a lista e avisa (morre o aviso do 4.2).
+4. **5.x.x — Histórico:** cada linha mostra o **STATUS** igual ao módulo
+   (Salva, Faturada, Estornada, Em aberto, Vencido…); **Excluir = DE VEZ**
+   (some da tela, deste PC e dos outros pela nuvem — orçamento também, sem
+   marca-fantasma); lista nunca mais mostra registro já excluído.
+   Suite: 162 verdes; 6 falhas são artefatos pré-existentes do sandbox.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.4 (2026-09-10)
+
+1. **🔥 COTA DA NUVEM BLINDADA (erro `D1_ERROR: daily row write limit`).** A conta
+   grátis de 100 mil escritas/dia estourou porque o sync regravava registros
+   idênticos a cada ciclo. Cura nos DOIS lados: o **worker não regrava** o que
+   chega igual (responde `noop` — upsert e delete) e o **`/v1/status` não derruba
+   mais a tela Nuvem** se o medidor não puder gravar (mostra "medidor pausado
+   (cota)"). Na tela, o disfarce "⚠️ código da nuvem ANTIGO" só aparece se o
+   `/health` verdadeiro falhar — antes qualquer corte de cota virava falso alarme.
+   E o Backup traduz a cota estourada para português claro: "a nuvem grátis está
+   cheia hoje — volta 21h". (Renova meia-noite UTC.) **PRECISA rodar
+   `npx.cmd wrangler deploy`** na pasta `cloudflare-worker` desta versão.
+2. **"+ Nova venda / Orçamento" fora da tela de Vendas** (item 2.1, confirmado
+   por ele: era o botão de dentro do módulo). Criação continua pelo atalho
+   **Nova notinha** no menu Atendimento.
+3. **4.1 — cliente existente agora SEGURA na venda, com aviso na tela.**
+   Escolheu o cliente e a pintura falhou? O vínculo é refeito por trás e a tela
+   confirma **"Cliente vinculado à venda: Nome"**. Se o cliente ainda não chegou
+   neste PC pela nuvem, a tela avisa e já cutuca a sincronização.
+4. **Histórico do cliente redesenhado (5.2.1/5.2.2).** Abas: **Dados | Histórico
+   do sistema**. Dentro do Histórico, sub-menus: **Vendas (padrão), Financeiro,
+   Orçamentos, Chamados e Leituras**. Cada listagem tem caixas de múltipla escolha
+   com os botões **Excluir** (pula venda faturada — estornar antes), **Extornar**
+   (só em Vendas) e **Abrir lista de origem** (cai no módulo já com o cliente na
+   busca). **Botão DIREITO** numa linha abre aquele registro no módulo de origem.
+   O resumo intermediário morreu a pedido dele.
+   Suite: 161 verdes; as 6 falhas são de ambiente do sandbox (pré-existentes).
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.100 (2026-09-08)
+
+1. **🔥 FIX REAL DO "A nuvem está ocupada. Tentando de novo em 12s...":**
+   o header novo de versão (`x-digicopy-versao`, entrado na v5.22.96) não
+   estava autorizado no preflight CORS do worker — o navegador bloqueava
+   TODA chamada e o sync caía em repetição eterna com "ocupada". Worker
+   agora autoriza o header e também o método `DELETE` (botões de apagar
+   backup). **PRECISA rodar `npx wrangler deploy` de novo** na pasta
+   `cloudflare-worker` desta versão.
+2. **Menu Backup = 3 botões diretos (sem telinha no meio).** Clicar em
+   Backup no menu lateral desce uma gaveta com:
+   • 📸 **Backup manual (nuvem + baixa no PC)** — cria na pasta manual da
+     nuvem E já baixa o arquivo pro PC (faz os dois num clique só);
+   • 📥 **Baixar todo histórico de backup** — zip de tudo da nuvem pro PC;
+   • 🗑️ **Excluir o histórico de backups** — só os backups (confirmação
+     dupla; dados do sistema nunca; ciclo continua).
+   Em cima dos botões vai o mini-resumo CONGELADO (último backup geral,
+   diário/sistema/manual e quanto falta pro próximo diário, medido só na
+   abertura — nada de reloginho rodando).
+3. Prova de máquina: 8/8 fluxo gaveta + 149/149 suíte.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.99 (2026-09-08)
+
+1. **Menu próprio: BACKUP** — as coisas de backup saíram de dentro do painel
+   Nuvem (botão desfeito lá) e agora o menu lateral **Backup** (que antes já
+   baixava o clássico) abre a tela **"Backup do sistema"** com tudo junto:
+   • ☁️ **seção Nuvem**: o card completo (resumo de últimos + próximo
+     diário; 📸 Backup agora, 📥 Baixar todos, 🗑️ Excluir backups;
+     listinha por pasta com ⬇️/🗑️ por item);
+   • 💾 **seção PC**: o backup clássico de sempre (botão baixa o `.json`
+     de todos os dados) — nenhum costume antigo quebrado.
+   Só aparece para Admin, como antes. Prova de máquina: 12/12 no fluxo da
+   tela + 149/149 suíte + resumo/sessões conferidos no sandbox.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.98 (2026-09-08)
+
+1. **Painel antigo do botão Nuvem agora traz os backups JÁ ABERTOS de cara**
+   (não precisa clicar pra expandir), com resumo no topo:
+   • 🕐 **Último backup de tudo** (nome + data/hora SP + tamanho);
+   • 📁 **Último de cada modalidade**: diário, atualizações e manual (se a
+     pasta estiver vazia, explica quando sai);
+   • ⏳ **Quanto falta pro próximo diário** — "hoje às 18:30 — faltam 2h04min"
+   • com o tempo **CONGELADO no momento em que a janela abriu** (não fica
+     atualizando sozinho, pra não pesar o PC); reabrir atualiza.
+   O botão antigo "📁 Backups na nuvem" continua ali e agora vira
+   mostrar/esconder.
+2. Prova de máquina: 12/12 — cálculo do próximo diário em 5 horários-chave
+   (antes/depois/exatamente 18:30 SP), resumo pintando todas as linhas e
+   ZERO `setInterval` no módulo de backups; 149/149 do sistema.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.97 (2026-09-08)
+
+1. **Backups agora em DUAS PASTAS separadas dentro da nuvem (como o dono
+   desenhou):** 📁 **Backup diario** (todo dia **18:30** sozinho) e
+   📁 **Backup atualizações** (sozinho a cada versão nova, com a foto da
+   versão anterior). O **📸 Backup agora** (botão manual do painel) gera na
+   hora e mora na pasta 📁 **Backup manual** — reforço.
+2. **REGRA COMBINADA (registrada por pedido do dono):** a cada atualização
+   que ele pedir, o backup da versão anterior vai pra nuvem **antes de
+   mexer nela** — pela lei do botão 📸 **Backup agora** (já na tela) + o
+   automático que dispara no primeiro sync da versão nova (foto com o nome
+   da versão anterior, sem erro de PC). Ou seja: mexer em atualização sem
+   backup na nuvem virou pecado fora da regra.
+3. **Sem R2 / sem cartão:** o balde R2 pediu habilitação + método de
+   pagamento no painel (erro 10042 no teste do dono). Arquitetura trocada:
+   os backups moram **dentro da própria nuvem D1 que o sistema já usa**, em
+   **tabela exclusiva de backups** que se autocria no primeiro uso,
+   **compactados** (prova de ida-e-volta). Não mistura com os dados do
+   sistema; apagar backups nunca toca nos dados. **Ativação ficou de um
+   comando só: `npx wrangler deploy` na pasta `cloudflare-worker`**.
+4. Prova de máquina: 6/6 testes puros novos do worker (pastas, fuso, gzip
+   estável) + zip **com as pastas dentro** abrindo na biblioteca padrão +
+   149/149 do sistema.
+5. Caso de borda real: erro **10042** = R2 não habilitado na conta — ficou
+   documentado no README junto do motivo da troca de arquitetura.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.96 (2026-09-08)
+
+1. **BACKUPS AUTOMÁTICOS na nuvem — dois ciclos independentes, sem PC ligado.**
+   • Diário às **18:30** (relógio da própria Cloudflare): `Backup 08-09-2026.json`.
+   • A cada **atualização**: quando o primeiro sync da versão nova chega, a
+   nuvem primeiro fotografa o banco com o nome da versão ANTERIOR
+   (`Backup sistema 5.22.95.json`). PC velho sincronizando depois NÃO faz
+   backup de tabela invertida (só dispara se a versão for MAIOR).
+   Os arquivos ficam no balde R2 **digicopy-backups** (10 GB grátis) e NUNCA
+   são apagados sozinhos. Planejado para o HD externo como cópia extra.
+2. **Dois botões só do administrador** no painel "Nuvem" (mesmo bloco dos
+   outros botões de administração): **📥 Baixar todos os backups** (gera um
+   `.zip` pronto pra HD, com um arquivo por backup — ZIP real provado abrindo
+   na biblioteca padrão) e **🗑️ Excluir backups** (confirmação dupla, apaga
+   SÓ os backups da nuvem; dados do sistema nunca; o ciclo continua). Por
+   item da lista também dá pra ⬇️ baixar e 🗑️ apagar de um em um.
+3. **Ativação (1x só, na conta Cloudflare):** `npx wrangler r2 bucket create
+   digicopy-backups` e `npx wrangler deploy` — passos em
+   `cloudflare-worker/README.md` ("Ativando pela primeira vez"). Sem isso o
+   card mostra o recado do que falta, sem quebrar a tela.
+4. Prova de máquina: 10 testes puros do worker (nomes de arquivo, fuso de SP,
+   comparação de versões) + 149/149 do sistema + zip integridade.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.95 (2026-09-08)
+
+1. **Abrir qualquer tela a partir da venda em andamento agora devolve a
+   MESMA venda inteira.** Ex.: estava montando a venda VND-123, clicou
+   "+" para cadastrar um produto (ou abriu qualquer outra tela a partir
+   dela), salvou OU cancelou — em vez de cair numa venda zerada, a VND-123
+   volta com TUDO: cliente, itens, descontos, observação, data/hora e até o
+   item digitado pela metade.
+2. **Como funciona (genérico, sem função avulsa por botão):** ao abrir
+   qualquer outro modal com a venda na tela, o sistema tira uma "foto"
+   completa da venda; ao fechar (salvar e cancelar passam pelo mesmo
+   `closeModal`), a venda é reconstruída (`novaVenda`) e a foto é devolvida.
+   Tem ainda um olho bem leve (1x/s) que devolve a venda caso alguma tela
+   feche por outro caminho. Finalizar a venda segue normal (nenhuma tela
+   foi aberta, então nada é restaurado).
+3. Prova de máquina: fluxo real no navegador simulado — venda montada com
+   cliente + item + obs + item pela metade → abre o modal de produto →
+   CANCELA: 7/7 verificações ok; → SALVA o produto: 7/7 ok (o produto novo
+   já aparece na busca da venda).
+4. Caso de borda de entrega: o bundle de versões pode ficar raso se o
+   `node_modules` sumir — rechecar a linha "isolados" no build antes de
+   commitar (vantagem: `npm test` cobre isso).
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.94 (2026-09-04)
+
+1. **Lápis do chamado: trocar de impressora agora TROCA os dados junto.**
+   Antes, ao tocar no lápis e escolher outra impressora, ficavam modelo,
+   serial, patrimônio e local da antiga, e o Motivo mantinha o modelo da
+   antiga. Agora, na troca (contrato e avulso): modelo/serial/patrimônio/
+   local viram os da impressora nova; o contador antigo vem da nova e o
+   atual limpa para digitar; o Motivo, se era exatamente o modelo da antiga,
+   vira o da nova — texto que a pessoa escreveu NÃO se mexe. Na ABERTURA do
+   chamado nada pisa nos dados salvos (só preenche o vazio). Prova de
+   máquina: 11/11 comportamentos.
+2. Ouro de bobeira protegido: contador atual da impressora nova limpa na
+   troca (pra não salvar contagem da antiga na nova).
+3. Caso de borda no sandbox: npm sem o `acorn` (node_modules some) gera
+   bundle com 0 isolados — NOTAR o aviso no build e instalar com
+   `npm install --ignore-scripts` (o electron postinstall é quem trava).
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.93 (2026-09-04)
+
+1. **O orçamento voltou a sumir APÓS a trava .92 — mas o diagnóstico revelou
+   duas coisas:** o id falho (orc_ + tempo + aleatório, 8+4) é gerado pelo
+   salvar do módulo v52258 (que sobrescreve v52237), e o retrato da lista
+   gravado na .91 era da listagem VELHA — a que o usuário VÊ é a do v52258,
+   então "NÃO estava na lista" não provava nada. Lição: instrumentar sempre
+   o ÚLTIMO vencedor do bundle.
+2. **Guardião do banco (arquivo novo, último do bundle):** a cada 400 ms
+   compara os ids de db.orcamentos; QUALQUER saída de registro grava horário,
+   quais ids sumiram e a TRILHA (pilha) de quem chamou, num anel __orc_saiu
+   no PC. A listagem visível passou a alimentar o retrato. O aviso "não
+   achei" agora mostra: quantos tem, código clicado, estava-na-lista (agora
+   certo), códigos atuais e a ÚLTIMA BAIXA. A próxima mensagem do usuário traz
+   o nome do ladrão escrito — sem mais hipótese.
+3. Trava .92 (delete de nuvem vira excluído + este PC não manda delete de
+   orçamento) MANTIDA — continua eliminando a classe "apagão replicado" que
+   já aconteceu antes com outros dados.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.92 (2026-09-04)
+
+1. **ORÇAMENTO NUNCA MAIS SOME POR MANDADO DA NUVEM.** Causa encontrada com
+   os 3 diagnósticos: o usuário usa VÁRIOS PCs na mesma conta; quando algum
+   deles manda "apagar orçamento", a nuvem replicava o apagar e o registro
+   SUMIA do banco deste PC — a tela ainda mostrava a lista antiga e o clique
+   caía no vazio ("não achei esse orçamento"). Agora: (a) delete que VEM da
+   nuvem vira "excluído" (sai das listas de trabalho, permanece no banco e
+   volta com Estornar); (b) este PC NUNCA manda delete de orçamento para a
+   nuvem. Excluir/Estornar na tela seguem com o mesmo comportamento visual.
+   Snapshot fica: a trava usa o que já existia para clientes e identidade.
+2. Diagnóstico final confirmado pelo usuário: clique logo depois de salvar +
+   vários PCs + uso recente de Excluir → exatamente o cenário da trava.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.91 (2026-09-04)
+
+1. **Diagnóstico final do orçamento "não achei".** O aviso agora diz: quantos
+   orçamentos o PC tem, o código clicado, se esse código ESTAVA na lista que a
+   tela mostrou (snapshot salvo a cada render) e os códigos que existem no
+   banco. Com o próximo recado do usuário, a causa fica fechada (nuvem que
+   apaga vs. outra origem). Primeiro diagnóstico do usuário: 4 orçamentos no
+   banco, clicado orc_mtnbguxr_4772 — id legítimo que já estava renderizado
+   → sumiu do array entre a renderização e o clique (suspeita: op delete da
+   nuvem). Sem correção às cegas — só instrumentou.
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.90 (2026-09-04)
+
+1. **Escolher impressora do chamado: tocou, some o resto e fica só a
+   escolhida + lápis (igual coletor de leituras).** Era minha leitura errada
+   da v5.22.88 (deixei a lista sempre aberta). Agora, no CONTRATO e no
+   AVULSO: ao tocar numa impressora a lista recolhe; a linha dela fica com um
+   lápis "✏️ trocar"; o lápis reabre a lista COMPLETA e ela FICA aberta;
+   digitar na busca também reabre; o filtro enquanto digita continua igual.
+   Prova de máquina (jsdom): 9/9 comportamentos no contrato + 5/5 no avulso.
+2. **"Quantidade de páginas impressas" do chamado volta a contar.** A função
+   que valia procurava os campos da tela antiga (kr-os-*) — o chamado atual
+   usa (ko-*) e nunca calculava; ao salvar, gravava 0. Troquei pela função
+   ÚNICA que atende TODOS os conjuntos de campo (ko/*, kr-os/*, o/*, ca/*)
+   mais um ouvinte que calcula ao digitar em qualquer campo de contador.
+   Prova: digitou 1500 tendo anterior 1000 → 500 na hora e salvou 500.
+3. **Orçamento "não achei" agora mostra números para o suporte.** Se voltar a
+   aparecer, o aviso dirá quantos orçamentos o PC tem e qual código foi
+   clicado — com esses dois números dá para fechar a causa exata.
+
+### CHECKLIST ANTIERRO v5.22.90
+- [x] jsdom imprimiu a função viva antes/depois (bundle-load-order checado)
+- [x] pesquisou os 10 pontos que definem salvar/calcular chamado
+- [x] testes novos (29 asserções) + 2 suítes antigas atualizadas
+- [x] gate 0 falhas: sync:check + bundle + test + verify:files
+- [x] bundle 191 scripts — 189 isolados / 2 globais
+- [x] versão subiu em package.json + index.html
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.88 (2026-09-04)
+
+1. **Escolher impressora do chamado agora é LISTA SEMPRE ABERTA (dentro do
+   contrato).** Acabou a "caixa fechada" com lápis: a lista aparece aberta
+   assim que o chamado abre, a impressora escolhida fica marcada em azul, e
+   trocar é só tocar em outra. O bug do lápis (clicava e nada acontecia) foi
+   eliminado junto — a causa era a própria busca re-escondendo a lista depois
+   de montada. Prova de máquina (jsdom): lista visível + filtro aplicado.
+2. **Filtro da impressora AGORA filtra enquanto digita** (chamado do contrato
+   e avulso). Tem `oninput` no HTML + `addEventListener('input')` real como
+   reforço — não depende mais de apertar Enter/lupa. O campo de busca
+   (Impressora/Serial/Patrimônio/Departamento/Localização) também refiltra
+   ao trocar.
+3. **Chamado AVULSO ganhou a área de busca de impressora** (não existia!):
+   depois de escolher o cliente, a lista de impressoras do cliente aparece,
+   filtra enquanto digita, e a escolhida fica marcada — preenchendo modelo,
+   patrimônio, serial, local e contador automaticamente como antes.
+4. **Produto sem valor (0 ou vazio no cadastro): a caixa de valor unitário
+   nasce VAZIA** nas 4 telas (venda, chamados/peças, orçamento nas 2
+   gerações). Antes ela já vinha com "0" e induzia erro. Lançar 0 à mão
+   continua permitido — as travas de item aceitam número "0" normalmente.
+   Fluxo de recarga/etiqueta (v52218) intocado.
+5. **Orçamento "cliente não encontrado" / "orçamento não encontrado"**:
+   investigado de ponta a ponta — o código da v5.22.87 foi EXECUTADO de
+   verdade em navegador simulado (jsdom): selecionar cliente grava, adicionar
+   item funciona, salvar grava e fecha a aba. Nenhum dos dois avisos é
+   produzido pelo código novo — os dois textos existiam só em versões
+   ANTIGAS. Ou seja: o relato veio de tela desatualizada (cache). Regra: usar
+   o link com hash do commit entregue e conferir **v5.22.88 no rodapé** da
+   tela antes de testar.
+
+### CHECKLIST ANTIERRO v5.22.88
+- [x] bundle 190 scripts — **188 isolados, 2 globais** (app.js, evolucao) ✔
+- [x] `npm test` — **141/141** ✔
+- [x] `sync:check`, `check`, `verify:files` ✔
+- [x] Teste novo: `test_ajustes_v52288.js` (24 checagens)
+- [x] Teste da .84 atualizado para o novo contrato de caixa vazia
+- [x] Provas de máquina no jsdom: orçamento completo, impressora contrato,
+      impressora avulso, produto sem preço
+- [x] Version bump: package.json + index.html (4 pontos)
+- [x] Sem arquivo novo de módulo (edições nos donos de cada tela)
+
+---
+
+## O QUE FOI ENTREGUE — v5.22.89 (2026-09-04)
+
+**Resposta ao "orçamento não encontrado" (popup central ao abrir o orçamento
+salvo pela lista).** A caça ficou séria:
+
+1. **O texto exato "Orçamento não encontrado" saía de UM lugar só**: o
+   `abrirOrcamento` desistindo de procurar (toast vermelho no canto). Ele foi
+   REESCRITO de raiz à prova de bala — procura por **7 caminhos** (id exato,
+   token, número, número normalizado, formulário aberto na tela, último
+   selecionado da lista, e autocura de id em orçamento sem id). No pior caso,
+   atualiza a lista sozinho e abre **popup central CLARO E DIFERENTE**:
+   "Não achei esse orçamento neste PC agora..." (se o popup do usuário voltar
+   com o texto antigo, NÃO é esse caminho).
+2. **Autocura de orçamentos antigos SEM id** (de versões velhas): a linha da
+   lista chamava `abrirOrcamento('undefined')`. Agora a renderização da
+   lista garante id estável (`orc_legado_...`) antes de montar as linhas —
+   prova de máquina: legado sem id abre normal.
+3. **CARIMBO DE ORIGEM (instrumentação)**: qualquer popup/toast que contenha
+   "encontrado/encontrada" ganha, no final, um código cinza dizendo
+   `função @ arquivo : linha` de onde o aviso saiu no código. Se o aviso
+   misterioso voltar, o usuário manda só esse código e a causa raiz aparece
+   na hora. Avisos sem "encontrad" ficam intocados.
+
+### CHECKLIST ANTIERRO v5.22.89
+- [x] bundle 191 scripts — **189 isolados, 2 globais** ✔
+- [x] `npm test` — **142/142** ✔
+- [x] sync:check, check, verify:files ✔
+- [x] Prova jsdom: abre por id, abre legado autocurado, clique inválido dá
+      popup claro novo (nunca mais o toast vago), regex do carimbo pega
+      stack real de navegador
+- [x] Teste novo: test_ajustes_v52289.js; ajustados: v52284/85/86/87
+- [x] Pergunta ao usuário antes de codar (momento/formato/versão) ✔
 
 ---
 
@@ -70,11 +654,78 @@ Erros que já aconteceram neste projeto e não podem se repetir:
 | Timer rodando em segundo plano | `setInterval` que mexe no DOM começa com `if(document.hidden) return;`. |
 | Polling curto | Nada de `setInterval` de 2–4s recriando tela. Já causou loop de venda duplicada. |
 | Zip no repositório | `.zip` é ignorado. Para baixar, usar o zip da branch no GitHub. |
+| Bundle "isolados: 0" | O gerador só isola os scripts com o parser `acorn`; o `node_modules` some entre sessões. Se o bundle disser "isolados contra erro: 0", rode `npm install --ignore-scripts` e gere de novo até dar 188/2. |
 
 Antes de dizer que terminou: `npm run sync:check && npm run bundle && npm test`
-(117 suítes, 0 falha) e `npm run verify:files`.
+(139 suítes, 0 falha) e `npm run verify:files`.
 
 ---
+
+## v5.22.87 — orçamentos: tela enxuta (cliente só quando precisa, uma única página, sem Sair)
+
+**1) Orçamento já salvo não pede mais cliente** — a área de busca/filtro de cliente agora fica dentro de `orc-cli-busca`, que só aparece quando não tem cliente. Abriu orçamento salvo (ou escolheu o cliente): mostra só o cartão do cliente (nome, documento, cidade). Clicou no X "Trocar cliente": a busca volta. Ajuste em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js` + `orcSelCliente`/`orcLimparCliente` alternando o bloco.
+
+**2) "A tela 2 não apareceu"** — cortado o mal pela raiz: os botões de aba (Itens/Ordem de Serviço) foram REMOVIDOS e as duas seções agora aparecem **sempre, uma embaixo da outra** (`orc-aba-os` sem `hidden`). Zero dependência de clique/toggle para a OS aparecer — os campos e a busca por serial da v5.22.85 seguem nos mesmos ids.
+
+**3) Salvar fecha a aba** — o botão Salvar do orçamento agora termina com `closeModal()` (e `__ORC_ST.form = null`), voltando direto para a lista, em vez de permanecer na tela recém-salva.
+
+**4) Sem botão "Sair"** — rodapé do orçamento sem o Sair: a aba fecha pelo **X do canto superior** (existe no header do modal desde sempre). Mantidos: Revalidar link, Imprimir, Salvar e "Abrir Venda Salva" (quando autorizado).
+
+**5) Lista: "Mostrar todos aprovados" e "Mostrar todos desaprovados"** — ao lado do botão "Todos" no menu Orçamentos (`ajustes_v52258_orcamento_os_revalidar_patch.js`), via nova `window.orcFiltroLista('fechados'|'recusados')`. Criado o filtro `recusados` (status recusado pelo cliente no link) e adicionado na `<select>`. "Não fechados" deixou de misturar recusado.
+
+**6) Revalidar link: FUNCIONA** (resposta ao usuário) — `revalidarLinkOrcamento` na v5.22.58: gera token novo, volta status pra `aberto`, remove a venda gerada não faturada (e sua OS), limpa os registros locais de decisão do link, salva e re-renderiza; se a venda gerada JÁ foi faturada, bloqueia com orientação pra estornar primeiro.
+
+**TESTE NOVO:** `test_ajustes_v52287.js` — 20 verificações; `test_ajustes_v52285.js` atualizado (salvar fecha, não reabre). Suíte 140/140.
+
+**Conserto:** "Uncaught TypeError: window.orcDelItem is not a function". A tabela de itens do orçamento (tela vigente, v5.22.60) chamava `window.orcDelItem(idx)` e essa função **nunca existiu** em nenhum arquivo — só tinha sido chamada. Criada em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`: remove o item, em orçamento autorizado/fechado bloqueia com aviso, e redesenha a lista com o total recalculado.
+
+**Descoberta (confirmada nos reclames do usuário):** a cadeia viva de orçamentos hoje é — tela/render/salvar/serial = v5.22.60; adicionar item/regras = **`orcAddItem` da v5.22.37** (a reescrita da v5.22.59 fica dentro da sua própria tela, que a v5.22.60 substituiu de vez). Por isso a trava de estoque que o usuário vê é o fluxo antigo ("quer modificar o estoque?", igual vendas, com o item bloqueado) — **comportamento correto e pedido** ("tem que ter no mínimo a quantidade"). O bloco de toast da v5.22.59 (v5.22.85) fica como reserva documentada.
+
+**LIÇÃO GRAVE (anotada no checklist):** o gerador do bundle SÓ isola cada script contra erro quando o parser **acorn** está instalado; sem ele gera tudo no escopo global (quebra a app: redeclaração de const entre 190 arquivos). SINTOMA: a linha do bundle imprime "isolados contra erro: 0". O `node_modules` não sobrevive entre sessões/turnos. **Regra nova: antes de entregar, conferir que o bundle mostra "isolados contra erro: 188 | no escopo global: 2"; se mostrar 0, rodar `npm install --ignore-scripts` e gerar de novo.** Os testes pegaram isso (137 ok + 2 falhas de "try/catch no bundle").
+
+**TESTE NOVO:** `test_ajustes_v52286.js` — simulação de runtime do clique na lixeira + trava do autorizado (suíte 139/139).
+
+**1) Estoque no orçamento** — regra final: orçamento NÃO baixa estoque (igual sempre foi), mas produto físico sem estoque suficiente **não entra**: ao lançar, se o estoque for menor que a quantidade, aparece o aviso "Sem estoque: ... tem X. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento." e o item NÃO entra. Serviço, recarga/etiqueta e produto de estoque infinito seguem livres. Essa trava existia na v5.22.37 e se perdeu quando a v5.22.59 reescreveu o `orcAddItem` (versão que vale hoje) — foi restaurada nela (`ajustes_v52259_orcamento_filtros_item_patch.js`). Atenção: a v52237 tem uma versão morta do orcAddItem com outro fluxo (perguntava abrir cadastro de estoque) — não foi mexida por ser substituída na cadeia.
+
+**2) "Orçamento não encontrado" ao salvar + não abria depois** — duas correções: (a) ao salvar (`ajustes_v52260_orcamento_trava_venda_atalho_patch.js`), a tela reabre o orçamento **pelo objeto recém-gravado** (`window.abrirTelaOrcamento(o)`), sem consulta intermediária → nunca mais a mensagem fantasma; (b) `window.abrirOrcamento` (`ajustes_v52237_orcamentos_menu_patch.js`) ganhou procura de reserva depois do id: **token**, **número** e, por último, o orçamento que já está aberto na tela (monta o objeto a partir do formulário). Só aparece "não encontrado" se for de verdade. Se a queixa era no **link público de aprovação** (página Pages), aí é a sincronia com o Worker/D1 — confirmar com o usuário.
+
+**3) Busca por número de série no orçamento** — `orcBuscarSerial` em `ajustes_v52260_orcamento_trava_venda_atalho_patch.js`, espelho de `vosBuscarSerial` (+ regra da v52237: última notinha comanda os dados). Campo de série da aba OS com **lupa e Enter**: procura serial nas vendas, chamados e equipamentos; preenche modelo/patrimônio/contador e **seleciona o cliente sozinho** (última notinha > chamado > máquina no parque); quanto acha, mostra a caixa âmbar "Última notinha encontrada..." com Data/Cliente/Modelo nº, e "Preenchido automaticamente — confira antes de salvar". Autorizado (somente leitura) não mostra lupa nem dispara.
+
+**TESTE NOVO:** `test_ajustes_v52285.js` — 18 verificações (suíte 138/138).
+
+**1) Vendas imprimem sem restrição (vendas)** — a trava "Fature a notinha antes de imprimir" morreu (estava em `ajustes_relatorio_pai_patch.js`, era o ÚNICO ponto do código que bloqueava por status). Agora a notinha imprime em qualquer situação: venda aberta da lista, salva, faturada, direto do formulário ou pelo histórico — no formato Vendas (meia folha) ou Ordem de Serviço (folha inteira, o "aberto com S"). O fluxo continua: Imprimir → formato → quantidade de vias → **salva automaticamente ao escolher as vias** (salvamento silencioso, a aba segue aberta) → abre em PDF/impressora. A trava de EDIÇÃO de venda faturada (estornar para alterar) continua valendo, como sempre.
+
+**2) Caixa de itens — valor unitário e desconto nascem vazios (vendas, chamados e orçamentos)** — regra única nos 3 lugares: quantidade padrão 1, unitário e desconto vazios, e o botão "Adicionar item" só habilita quando o campo de valor unitário tem um número válido. Escolher um produto da lista preenche o preço cadastrado (dá para mudar antes de adicionar — o botão já liga no ato). Depois de adicionar, os campos voltam vazios para o próximo item. Há ainda uma trava de segurança dentro da função de adicionar, para nenhum atalho de teclado furar a regra. Mudado de verdade em `vendas_os_patch.js` (venda), `ajustes_v5182_patch.js` + `ajustes_v5186_patch.js` (chamados — duas gerações do modal), `ajustes_v52237_orcamentos_menu_patch.js` + `v52258` + `v52259` + `v52260` (orçamentos — as 4 gerações da tela). O fluxo da ETIQUETA/RECARGA, que preenche valor sozinho para o dia a dia correr, continua exatamente igual. Orçamentos virando venda: `orcItensParaVenda()` (utilitários/compartilhados/utilidades_operacionais_patch.js) lê do DOM só se a tela existir; o fundo na etiqueta da recarga é o mesmo (mesma base de preços).
+
+**3) Produtos: "Local" aposentado + ordenação corrigida de vez (produtos)** — a coluna "Local" sumiu da listagem (e do novo cadastro, da busca e da importação), como combinado: ninguém usava. Dados antigos já gravados são apagados sozinhos numa varredura quando a tela de produtos abre (uma vez só; depois da limpeza não acha mais nada). A ordenação por clique no título agora funciona A→Z e Z→A de verdade: antes o sentido era guardado num objeto de estado separado (a trava do v52214 nunca enxergava a mudança) e, quando tentava, "invertia as linhas" na tela — jogava a linha de contagem ("mostrando 300 de 1031") para o topo. Agora o sentido mora no mesmo `STATE.prod.dir` da lista, a lista INTEIRA é ordenada no sentido certo antes de cortar os 300 em tela, e o título mostra ▲/▼. Arquivos: `fluxos_operacionais_patch.js` (mais a remoção da trava `wrapSort('produtosSortOperacional')` de `ajustes_v52214_ordenacao_patch.js`, mantidos contratos/chamados e a função pura `proximaDir`).
+
+**TESTE NOVO:** `test_ajustes_v52284.js` — 47 verificações dos 3 pontos (suíte 137/137).
+
+**ENTREGA (2026-09-03, retorno do usuário):** usuário testou e relatou "imprimir continua igual / produtos nada mudou" — investigado: código na branch está 100% certo (nenhum "Fature a notinha" ativo em lugar nenhum, bundle limpo, GitHub na v5.22.84). Ele estava olhando **cópia velha** (aba antiga aberta / cache / atalho do programa instalado). A partir desta versão o link de teste passou a ser com **hash do commit** (endereço novo a cada entrega = impossível cair em versão velha): padrão `https://raw.githack.com/<user>/<repo>/<sha>/index.html?v=<versão>`. Sempre mandar assim + dizer pra conferir a versão que aparece na tela de login/titulo da aba.
+
+**Lição:** quando uma regra visual depende de estado, o sentido tem de morar no MESMO objeto de estado da tela que a lista lê. E trava de impressão feita "envelopando" `imprimirNotinha` no meio da cadeia de arquivos é a última coisa que a documentação de fluxo pega — achar a cadeia inteira exige olhar a ordem de carga do bundle, não só greps.
+
+## v5.22.83 — sessão nova, branch nova; só troco de endereço
+
+Chat novo, sessão com branch fixa nova (`arena/01a0683d-teste`). Nenhuma função
+do sistema mudou — o que mudou é **para onde os links apontam**:
+
+- `package.json > digicopy.branch` passa a ser `arena/01a0683d-teste`; o
+  `npm run sync` recarimbou os links do GitHack dentro do código (inclusive o
+  link de orçamento que vai para o cliente) para a branch nova.
+- Ambiente do agente restaurado: `npm install --ignore-scripts` (o download do
+  binário do Electron continua falhando por TLS neste sandbox — limitação já
+  conhecida; o `.exe` se gera no PC com `npm run build:win`).
+- Encontrado e corrigido: `test_ajustes_v52282.js` estava amarrado à versão
+  exata `5.22.82` (o próprio CHECKLIST ANTIERRO proíbe isso). Trocado para
+  `/^5\.22\.\d+/`.
+
+Estado ao abrir a sessão: suíte com 5 falhas, todas de ambiente (faltava
+`node_modules` e o bundle fora de data). Depois do `npm install`: **136
+suítes, 0 falhas**.
+
+Testes: `test_ajustes_v52282.js` (corrigido), `test_ajustes_v52263.js`. Suíte:
+136 passaram, 0 falharam.
 
 ## v5.22.82 — cortando pela metade o que o sistema grava na nuvem
 

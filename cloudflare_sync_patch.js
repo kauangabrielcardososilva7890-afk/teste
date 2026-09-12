@@ -7,6 +7,24 @@
 'use strict';
 
 const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+// v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
+// mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
+// público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
+// próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
+// Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.kauangabrielcardososilva7890.workers.dev/v1/medir';
+async function chamarMedidorOficial(){
+  const agora = Date.now();
+  if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
+  window.__dcUltPingMedidor = agora;
+  try{
+    const r = await fetch(MEDIDOR_OFICIAL_URL, { cache: 'no-store' });
+    const j = await r.json().catch(() => null);
+    return !!(j && j.ok);
+  }catch(e){ return false; }
+}
+window.DC_chamarMedidorOficial = chamarMedidorOficial;
 const TOKEN_KEY = 'digicopy_cloud_device_token_v1';
 const DEVICE_KEY = 'digicopy_cloud_device_info_v1';
 
@@ -29,10 +47,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
+  // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
+  try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -152,7 +195,10 @@ async function renderDisconnected(body){
 }
 
 async function renderConnected(body){
-  body.innerHTML=message('Verificando autorização deste computador...','info');
+  body.innerHTML=message('Medindo o uso oficial e verificando autorização deste computador...','info');
+  // v5.23.4 — mede quando a tela abre (pedido do dono); se o medidor não
+  // estiver implantado/responder, segue a vida com a contagem estimada.
+  const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
@@ -169,8 +215,48 @@ async function renderConnected(body){
     const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
     if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
+  const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
+  const linhaVersaoNuvem = status.workerVersao
+    ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
+    : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  function garantirCssUso(){
+    if(document.getElementById('dc-uso-css')) return;
+    const s=document.createElement('style');
+    s.id='dc-uso-css';
+    s.textContent=[
+      'html.digi-escuro .dc-uso-nuvem{background:#1e293b!important;border-color:#334155!important}',
+      'html.digi-escuro .dc-uso-nuvem h3{color:#e5e7eb!important}',
+      'html.digi-escuro .dc-uso-nuvem .dc-uso-barra{background:#0f172a!important}',
+      'html.digi-escuro .dc-uso-nuvem small,html.digi-escuro .dc-uso-nuvem span{color:#94a3b8!important}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  garantirCssUso();
+  function barraUso(pct){
+    const p=Math.max(0,Math.min(100,pct));
+    const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
+    return '<div class="dc-uso-barra" style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+  }
+  function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
+  const usoBloco = uso
+    ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
+      '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
+      '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare'+(medidoAgora?' — medido agora, na abertura desta tela (ele remede sozinho a cada abertura).':(uso.medidoEm?' — o mesmo número do painel dela, medido agora mesmo.':' — o mesmo número do painel dela.')):'contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.')+'</small>'+
+      '</div>'
+    : (contagemFalhou
+      ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
+      : '');
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
@@ -195,6 +281,7 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    usoBloco+linhaVersaoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+

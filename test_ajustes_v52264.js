@@ -21,7 +21,7 @@ const P = load(src).EXE_NUMERO_NOVO_V52264_PURE;
 console.log('== v5.22.64 — NÚMERO NOVO A CADA ENTREGA ==');
 
 // ── 1. Versão ───────────────────────────────────────────────────────────────
-ok('versão', P.VERSAO === '5.22.64' && /^5\.22\.\d+/.test(pkg.version));
+ok('versão', P.VERSAO === '5.22.64' && /^5\.\d+\.\d+/.test(pkg.version));
 ok('patch no bundle', manifest.includes('ajustes_v52264_exe_numero_novo_patch.js'));
 ok('bundle carregado com a versão', html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
 ok('versão subiu em relação à 5.22.63', (() => {

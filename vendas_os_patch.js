@@ -420,13 +420,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
@@ -1373,7 +1377,7 @@ window.renderVendas = function(){
   const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">

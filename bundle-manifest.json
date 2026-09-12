@@ -187,6 +187,12 @@
   "ajustes_v52263_exe_completo_patch.js",
   "ajustes_v52264_exe_numero_novo_patch.js",
   "ajustes_v52265_script_isolado_patch.js",
+  "ajustes_v52289_orcamento_carimbo_autocura_patch.js",
   "menus_tela_pequena_patch.js",
-  "vendas_financeiro_pendente_patch.js"
+  "vendas_financeiro_pendente_patch.js",
+  "ajustes_v52293_orcamento_guardiao_patch.js",
+  "ajustes_v52295_venda_volta_patch.js",
+  "ajustes_v52296_backups_nuvem_patch.js",
+  "ajustes_v5240_relatorio_grande_patch.js",
+  "ajustes_v5243_cliente_abas_patch.js"
 ]

@@ -7,7 +7,7 @@ const ref=ler('contratos_refino_patch.js');
 const cham=ler('locacao_chamados_fix_patch.js');
 const painel=ler('cloudflare_sync_patch.js');
 console.log('== AJUSTES v5.22.73 ==');
-ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 
 // 1 — a venda salva
 ok('sumiu o "Não encontrei função de salvar esta venda"',!/Não encontrei função de salvar esta venda/.test(pos));

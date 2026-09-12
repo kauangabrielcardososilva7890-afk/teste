@@ -15,7 +15,7 @@ const html=fs.readFileSync('index.html','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const P=load(src).ORCAMENTO_UMA_VEZ_V52262_PURE;
-ok('versao', P.VERSAO==='5.22.62' && /^5\.22\.\d+/.test(pkg.version));
+ok('versao', P.VERSAO==='5.22.62' && /^5\.\d+\.\d+/.test(pkg.version));
 ok('gera uma vez', P.geraUmaVez===true && /vendaGeradaUmaVez/.test(a58+a57+a55));
 ok('apagou venda nao recria', /vendaExcluidaPeloUsuario = true;\n      return null/.test(a58) || /vendaExcluidaPeloUsuario = true/.test(a58));
 ok('sem poll 3s', !/setInterval\(verificarAprovacoesNuvem, 3000\)/.test(a57+a58));

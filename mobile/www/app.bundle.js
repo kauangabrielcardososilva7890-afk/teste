@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 9e9ca4b8fcf29aa1
+ * scripts: 196 | sha256: 1f5ea20d6721e32b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -17,8 +17,7 @@
   };
 })();
 
-/* ===== ponte_electron_patch.js ===== */
-try{
+/* ===== ponte_electron_patch.js (escopo global) ===== */
 // ============================================================
 // PONTE ELECTRON — primeiro script do bundle
 // ============================================================
@@ -87,11 +86,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ponte_electron_patch.js", e); }
 ;
 
-/* ===== lz.js ===== */
-try{
+/* ===== lz.js (escopo global) ===== */
 // LZ-String (MIT) — compressão UTF-16 para caber a base grande no localStorage.
 // Só o par compress/decompress usado pelo ERP. Conteúdo entre PCs continua JSON normal.
 (function(){
@@ -237,16 +234,13 @@ try{
   };
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("lz.js", e); }
 ;
 
-/* ===== logo_data.js ===== */
-try{
+/* ===== logo_data.js (escopo global) ===== */
 // Logo da loja embutida (data URI) — usada na notinha e na página de pagamento Pix.
 // Gerado a partir de logo.png; para trocar a logo, substitua logo.png e regenere este arquivo.
 window.DIGICOPY_LOGO="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gIoSUNDX1BST0ZJTEUAAQEAAAIYAAAAAAIQAABtbnRyUkdCIFhZWiAAAAAAAAAAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAAHRyWFlaAAABZAAAABRnWFlaAAABeAAAABRiWFlaAAABjAAAABRyVFJDAAABoAAAAChnVFJDAAABoAAAAChiVFJDAAABoAAAACh3dHB0AAAByAAAABRjcHJ0AAAB3AAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAFgAAAAcAHMAUgBHAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhZWiAAAAAAAABvogAAOPUAAAOQWFlaIAAAAAAAAGKZAAC3hQAAGNpYWVogAAAAAAAAJKAAAA+EAAC2z3BhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABYWVogAAAAAAAA9tYAAQAAAADTLW1sdWMAAAAAAAAAAQAAAAxlblVTAAAAIAAAABwARwBvAG8AZwBsAGUAIABJAG4AYwAuACAAMgAwADEANv/bAEMACAYGBwYFCAcHBwkJCAoMFA0MCwsMGRITDxQdGh8eHRocHCAkLicgIiwjHBwoNyksMDE0NDQfJzk9ODI8LjM0Mv/bAEMBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMv/AABEIAoACgAMBIgACEQEDEQH/xAAcAAEBAAIDAQEAAAAAAAAAAAAAAQIHBAYIBQP/xABSEAEAAQMCAgUGCQYKCAUFAAAAAQIDBAURBlEHEhchMRNBVZHR0hQiNmF0gZKUsVRxcqGkshYjMjQ3QlJzdbMVJDM1OFbC4wgmY6LEYoLD8PH/xAAaAQEBAQEBAQEAAAAAAAAAAAAAAQIEAwUG/8QANBEBAAEDAgMHAQgCAgMAAAAAAAECAxEEEiExUQUTFBVBUqFhIjJxgbHB0fCR4TM0QlNy/9oADAMBAAIRAxEAPwDVu885N55oP2bkXeeZvPNAF3nmdaecoKL1p5ydaecoAvWnnJ1p5ygovWnnJvPOUFGW88zeebGJZAbzzN55gBvPNd55oKLvPM3nmigbzzN55gobzzN55gBvPM3nmChvPM3nmAG88zeeYATM85TeeaoBvPM3nmCBMzzlOtPOVSYA3nnJvPNBBd55m880EDeeZvPMBTeeZvPMAN55pMzzlQE3nmbzzBA3nmTM85AE3nmbzzJhEF3nmbzzQQN55ybzzADeeZvPMATeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885ADeecm885BB+gAgAoAKAAACgAAsIKMhIlQAACAUUBQAAAAAUAAAAQVJ7gAEGIyYgAIACAAKAAIoCAICSoDEJEAAAABFEEAAAAAAAAAAAAAAAAAAAQfoAAAIAKACgAAAoAALEoKMhIlQAAFQUUASABVAAAFAAAAEFQABBiMmIACSACAAKAAkipIACAxlkAxAQAEABQRRBAAAAAAAAAAAAAAAAAEH6Cb96gAKAAgAAAoAAAKAACwgoyCAAABUFRQFUAAAUAAAACYAEFQBNlEGIswgACSACAAKAAgqbIAAJMIySYBAEAAAABFEEAAAAAAAAAAAAAAAQZgIKIrQAAACACgAAAAAoAAMmIoyAAAAVBUlQFUAAAUAAAAEmFAQBASYUBiLMIAAkgAgACgAIKiAACTCMkmCRAEAAAACUVJhAAAAAAAAAAAAAAQZgICoAoitAAAAIAKAAAAACgAAyYrEqKAAAAqKoAKAAACgAAAAigIAgJMKAxAAAZAAAAUABBUQAASUZMUkAAAAAASRUQAAAAAAAAAAAEGYecQAAFhBYFAUAAABAAABQAAAUAAWJVisSooAAAKIqoAKoAAAoAAAAIoCAIDFkTAMQAAGQAAAFAAQJEAAGIyYpIAAAIACiCogAAAAAAAAAIMwGQAUAAFQUUBQAAAEAFAAAAABQAUWJViu4KAAACiQqoAKoAAAoAAAAIpsCAIJKMkkEAAAZAAUAARQEAQCQBiLMIgAAAAAIIKgAAAAAAACDMBkAFAAAACFQWBQFAAAAQAUAAAAAFABRkMWQAAACiiQogAqgAACgAAACSKkgAIJMIySYBAAAGQAFAAEUBAEBJhQGIswiAAAAAAggAAAAAACDMTfvVkAAAFAAAACFRVABQAAAEAFAAABQAAIkFGQkKAAAAookKAAoAAAKAAAAJIqAAIJMIyYyAAgAIAAoAAigIAgJMKAxFlEAAAABFEEAAAAAQXzrEp5xgZCRKqAAACgAAACwIqgAoACAAACgAAAoAALEoKMhIlQAAFQUUAABQAAAUAAAAQVAAEGIyYgAJgAEAAUAARSQQBAYsgGICAAAAAiiCAAAIL5wnxHmCxKCjISJVQAAAUAAAAURVABQAEAAAFAAABQAAWJQUZCQoAACoeCooCqAAAKAAAAAAIKgBsCDEWUAAQAEAAUABBUkABAliySQQBAAQAFBFEEAQWfEJ8R5gAAsIKMgFAAABQAAABRFaAAAAQAAAUAAAFAABkxFGQAAACoKigKsAAACgAAAAACBIgJMKAxFmEAAQAEAAUABBUQAASYRkkwCAIAAAACKkoKA8gAAAAiWTFYlRQFAAABQAAABQGgAAAEAFAAAAABQAAZMRRkAAAoKhuCgKAAACgAAAAigIEiAkwoDEWYQABkAAABQAEFRAABJhGSSggAAAACAA8gAAAAABYlWKxKwKAoAAAKAABuAKA0AAAAgAoAAAAAKAALCsViVFAAABRFUAFAAABQAAAARQEAQGLI2BiAAAyAAAAoACCogAAxGTEABAAQAHiACgAAAAACxKsViVgUBQAAAUAAFQUUBQAAAEAAAFABQAAAUWJVisSCgAAAoiqgAqgAACgAAAAigIAgkwjJJgEAAAZAAUAASVAQBAJAGIswiAAgAPEAAAFAAAAAAFiVYslABQAAAUAAFQXIoCgAAAIAKAAABAAKACi7qxZAAAAAoiqgAqgAACgAAAAikggCCTCMkmAQAABkABQABFAQBASVAYizCIADnABQAAAUAAAACABkJCtAAAAoAAAAbqhCigKAAAAgMrVq5eu02rVFVdyqdqaaY3mZ5RDY3DvQ1r2q0U39RuUabYq7+rcjr3Zj9GPD65ifmeV2/btRmucLETPJrceidO6FeF8SKZyvhedXHj5W71KZ+qnaf1vtU9GXB1EbRoVifz11z+NThq7VsxPCJlvu5eXB6l7NeDvQWN66vadmvB3oLG9dXtTze30le6l5aHqXs14O9BY3rq9p2a8Hegsb11e1fN7Xtn4O6l5aHqXs14O9BY3rq9p2a8Hegsb11e1PN7Xtk7qXlvdd3qTs14O9A43rq9qdmvB3oLG+1V7V83t+2fg7qXlwfS4gx7WJxLquNj0Rbs2cy9bt0R4U0xXMRHqh819SirfES8gBsUSJUQAVQAABQAAABJFQABBJhGSTAIAAAyAAoAAngoCAICTChIxAcygAgAoAAAKAAA3Jwn0QaNr/C+BquRn59u9k2+vVTbmjqxO8x3b0/M+32D6B6T1L7VHuuOrX2KZmJn4b2S0AsS392D6B6T1L7VHunYPoHpPUvtUe6nmNjr8GyWghvzsJ0D0nqX2rfuuLl9AmFXP+p67kWo5XrFNz8JpajtGx1+JNktGjt/E/RrxDwvZqyb9mjKwqe+rIxpmqKP0omImPz7bfO+fwXoWPxNxdg6RlXbtqzkeU61drbrR1bdVUbbxMeNL37+iaJuROYhnE5w+AN+dhOhek9S+1R7rS3EWm2tG4j1HTbNdddrFyK7VFVe3WmInbv2Zs6u1emYolZpmOb5g7xwz0V8QcR2reTXRRgYVe0xdyN+tXTPnpojvn69onm73i9A2nURPwvWsq7Pm8japt/j1mbmusW5xNXEimZaMG/ewjQfSepeu37p2EaD6T1L12/dY8xsdfhdktBjfnYRoHpPUvtUe6vYToHpPUvtUe6eZWOvwbJaCGwLvAOn2+la1wnGVk/A66d5u70+U/2U18tvGOTvnYVoPpLUvtUe63Xr7NGMzzjKRTMtBv0xse9l5VrGx7dVy9erii3RT41VTO0RH1ufxHplrRuJNR02zXXXaxb9VqmqvbrTET59ncehjTLedxxOTdp3jCx6rtO/9uZimP1VTP1Pa5eii1N2OmUiOOG0+BOj7B4Sw6L9+i3kavXT/GX5jfye/wDVo5R8/jP6nek8B+VuXKrlU1VzmXREY4Qqbuv8Q8ZaFwvFMapnU27tcb02aImu5VHPqx4R3eM7Q6dV068OxPxdP1OY+ei3H/W3b0125GaKZmCaojm2kNWdu3D/AKO1L7FHvHbtw/6N1L7NHvPXwWo9kpvp6tpjVnbtw/6N1L7NHvHbtw/6N1L7NHvHgtR7JN9PVtMas7duH/RupfZo947duH/RupfZo95PA6j2Sb6eraaNW9u3D/o3Uvs0e8nbroHo3Uvs0e8vgdR7JN9PVprin5X619Pv/wCZU+S5us51vUtc1DOtU1U28nJuXqaavGIqqmYifn73CfqLUTTRES5p5g73w50UcRa9at5N+mjT8SvaYryN+vVTPniiO/17bu74vQRp9ET8L1rKuz5vJWqbf49Zz3Nfp7c4mrj/AJaiiZaNG++wrQvSepfao91ewrQvSepfao915+aafr8L3dTQg3td6CtHm3MWdVz6K/NNcUVRH1REfi63rXQhq+Ham7pWfZz9o3m3XT5GuZ38I3maZ+uYbo7S01U43Jsqhq0fvmYeTgZVzGy7FyxkW52rt3KZpqpn80tvcOdD2j6zw5p+pX9Qz6LuTYpu1U0TR1YmY32jel73tVbs0xVVPCSImeTTQ332FaD6T1H10e6dhWhek9S+1R7rm810/X4Xu6mhBvvsK0L0nqX2qPdOwrQfSepeuj3TzXT9fg2VNCDd2X0EYdXfh63ft93hesxX+uJpa84n6O+IOFrU5GVYoyMOPHJx5mqmn9KNomPzzG3zva1r7F2dtNXFJpmHVB2Hgjh/H4n4pxtKyr121Zu0V1TXa260dWmZjxieTbPYZoW3+89R9dHul/XWbFWyueJFMzyaEH0Nawbem69qGn2qqq7eLlXbNNVXjMU1TTEz8/c+e6qaorp3QgAqMZGw+jfgHT+NMbPu52Vk2Zxq6KaYszTG+8T47xPJ2nXehnRdL0DUNQtahqFVzFxrl6mmqaNpmmmZiJ+L4dziua+xRc7uqeLUUzMZaTAdjIAgACgACKAgCDBUVygAoAAAKAAACjfHBnSdwto3B+madm5l6jJsWurcppsV1RE7zPjEPv8AbHwZ+X3/ALtX7HxuCejjhTWODdM1DO0ryuTftda5X8Iu09ad5jwiqIfA6WOCOHuGeHcPK0jT/g165lxbqq8tcr3p6lU7bVVTHjEPhd3prl7Z9rMz9HtmqIy7x2xcGfl9/wC7V+w7YuDPy+/92r9jzQOzyyz1n+/kx3kvS/bFwZ+X3/u1fsc7TOk3hLV8u3iY2rU05FydqKL1uu3vPLeqIjf5t3lpz9E/3/pv0q1+9DFfZlqKZmJlYuS9g10U3aJoqpiqmqNpiY3iYaR0/h6zw30/4OJi24t4t6m5kWKN/wCTTVZubxHzRVFUR80Q3hHhDV+t/wDEHw5/h9f7uQ+bp65p3U+kxL0q9G0miuHeHMbX+mjXbubbi7j4ORdv+Tq74qr6+1MTHnjxn6ob1ao6P/6VuMv72r/MldPVNNFcx0/dKucNrd0Q6XndKfB+DkV2K9Wi5conaryFqu5T9VURtP1S7fk/zW9+hV+Dxn53rotLTfmd08iuqYele2Lgz0he+7V+xe2Hg30hf+7V+x5uxMf4Vm2MfrdXytymjrbb7bztu3F2Az/zL+w/9x03dJpLOO8qmM/3oxFVU8nb+2Hg30hf+7V+w7YeDfSF/wC7V+x1DsBq/wCZf2H/ALh2A1f8y/sP/ceXd6H3T/fyazX0cTTNaweIOnzC1LTrlVzGuU1RTVVRNMzMY9UT3T88N6/M8/cMcOfwU6bdP0j4V8K8lFdXlfJ9TfrWKp8N5583oH53lrooiqiKOW2MfK0euXlDjv5ea59Mufi7t0E/KLU/osfvw6Tx38vNc+mXPxd16CPlHqf0WP34fVv/APS/KP2edP32+wH517vLPSVMz0iazvO/8dH7tLqjtXST/SJrX99H7sOqv12n/wCGj8I/Ry1c5AHsgAoAAAANk9DfDmNrXEeRnZlum7b0+imui3VG8TcqmerM/m6sz+fbk1s3L0B/7bXv0cf8bjj7QrmnT1TS1RH2m6K6qbVE111RTTTG8zM7REOnZvSnwfh3qrNWrxcrpnafI2a66fqqiNp+qXZNd+T+pfRbn7svIMx3vjaDR0ajdNczw6PWuqaeT0n2wcG/l9/7tX7Dth4N/L733av2PNg+l5RY6yx3lT0pR0vcG11bTqV2iOdWNc2/VTLtel6vgazh05Wm5drKsTO3Xt1b7TtE7TynvjunveQG/wDoL+Rub/iFf+XbcWu7Pt2Le+iZaprmZxLLpl4dxs7harWepTRl4NVP8ZEd9duqqKZpn66omOXfzl2vgP5CaH9Dt/g+f0qf0a6x+a1/m0PocBfIPQ/odv8ABy1VzVpYifSr9msfacjiLijS+F8W1k6reqtWrtzydE025r3nbfzfmde7YODfy+992r9j8OlfhzVuJdEwsbScT4TdtZPlK6fKUUbU9WY33qmPPLU/ZRxt6E/arPvujSabS3LebteJ/GISqqqJ4Q2/2wcG/l977tX7Dtg4N/L733av2NP9lHGvoX9qs++dlHG3oT9qs++6fBaH/wBnzDO+vo3fpfSPwrrGXRiYuqU/CLk9Wi3dt12+tM+ERNUREzPLd2i5aov2qrdyimuiqJpqpqjeJifGJhoXhXol4mta3g52fbx8Kzi5Nu7VTXeiuuqKaonuijePN55hv6PB83VW7NquIs1ZbpmZ5tIaDoNrhzp4+A49E0Ys0XLtmJnfamq3M7R80TvH1N3+ZqTKzrFX/iGxbcV7TbxpsVTPdHXm1VVEf+6PrbbnwXWTVVVRVVzmmCn1eSuLflnrn+IZH+ZU+O2jxd0T8S3tfz9Q063ZzrWXk3L9NNNym3XRFVU1bTFUxHdvt3TO/wA3g+D2Ucbehf2qz779DY1diLcZrjl1eU0znk6WO6dlHG3oX9qs++kdE/G01RE6NtvPjOTZ7v8A3vXxdj3x/mGds9He+gb+Ya1/e2vwqbF4w+ReufQL/wC5LrvRlwZn8H6dmU6hes138qumrqWZmYoiInxmYjee/l5vGX3eN8i3jcD63cu1RTT8Cu0bzzqpmmI+uZiH5rU103NVNVE5iZj9nvTGKXk8XZH6yHOAJIAIAAoABKKkpIwAcooiqAAAAACgAo9UdGv9Hei/3H/VLq/Tv8kdP+nR/l1u0dGv9Hei/wBx/wBUvo8R8MaZxThWsPVbVdyzbueVpiiuaZ620x4x80y/M03It6nfPKJl0YzTh5GHpXsb4O/Ir/3mv2nY3wd+RX/vNftfV8ys/V5d3LzU5+h/KDTvpVr9+Hobsb4O/Ir/AN5r9rnaX0ZcJ6Tl28vH0qmvItz1qK7t2u5FM+aerM7b/PszX2la2zERK93LuENXa3/xB8Of4fX+7kNn11026JqqqimmI3mZnaIhpDT+IbXEnT/g5WNci5iWabmPYr2/lU02bm8x801TVMfNMPmaemat09Ilur0bx8zVPR//AErcZf3tX+ZLa7RfDnEWNoPTRr1rMuRbx87Iu2fKVd0U19femZnzR4x9cLp6ZqoriOn7lXOG7sn+a3v0KvweM3tHumOcOlZ/RVwhnX679elRauVzvV5C7XRTv81MTtH1Q9dFqqLEzvjmV0zVyebNOu0WNUxL1yrq27d6iqqdt9oiqJl6TjpZ4J2/31+yXvccbsd4P/Isj7zX7V7HODvyK/8AeK/a9tRqNNqMbs8OmGaaao5OZh9J/COdnY+Ji6tNzIyLlNq1T8Gux1qqp2iN5p2jvl3J0bB6KuFNO1DGzcbEvU38e7Tdt1TkVTEVUzvHdv398O8uC9FqJjus/m9Iz6tNZP8AxJ436H/xqm5Gm8r/AIk8b9D/AONU3I9dVyo/+Y/dI9XlDjv5ea59Mufi7r0EfKPU/osfvw6Vx5P/AJ91z6Zc/F3boJ+UeqfRY/fh9i//ANL8o/Z5U/fb6AfnXu8sdJP9Imtf30fuw6q7V0lRMdIms7xt/HR+7Dqr9bp/+Gj8I/Ry1cwB7IAKAAACg3L0Bf7bXv0cf/8AI002T0NcR42jcSZOBl3KbVvUKKaKLlU7RFymZ6sT+frTH59ubj7QpmrT1RDdH3m99c+T+o/Rbn7svIPney67dN2iqiumKqKo2qpmN4mOTpmX0U8H5d6q7OleRqqnefI3q6Y+qnfaPqh8bs/WUafdFWeL0rpmrk8zj0j2O8H/AJHf+8V+07HeD/yO/wDeK/a+n5rY+v8Ahju5ebm/+gv5GZv+IV/5dt9Snog4NpmJnT7tccqsm5t+qXa9K0fTtFwacTTMS1i48Tv1Lcbbz4bz55nujvnv7nFr9fbv29lES1RRMTmXXulX+jbWPzWv82hz+AvkJof0O3+DqnTLxDjYXC1WixXRXl51VH8XFXfRbpqiqap+umIjnvPKXa+AvkHof0O3+DjmmY0sTPrV+zX/AJOxdydaGrOnSqaeG9N2mY/1zzfoVNEeUr/t1et76Xs2dRb37sfklVeJw9l7wbw8aeUr/t1es8pX/bq9bo8mq9/x/tO9+j2HlZuNhY9V/KyLWPap/lXLtcUUx9ctecVdL2kaTZuY+j3KNRzu+mKqd/I0Tzmr+t/9vdPOHn6ZmfGZn86Pez2RRTOa6s/CTcn0cuvU82vVZ1SrJrnOm95eb8d1XlN+tv8AN3t6cJdL+k6nZtY2uVU6fnd1M3Zj+JuT3Rvv/V+vujm0AO3U6K1qKYirhjlhimqYexMTPxM+xGRiZNnIsz4XLNcV0z9cOS8ZxM0+EzH1tm9B1dVXGeZE1TMf6Pr8Z/8AUtvj6nsvubc3Iqzj6f7elNzM4b/TrRzgr/kS8b3blc3K/j1eM+dzaLRzqpmN2MNVVbXq/V+K9B0KiudS1THsVUbTNvr9a53/AP0RvVPqaL6Qekq5xXTGn4Fq5j6XTVFVXX2696qPDrbeER5o+ufNt0Ce9H2tN2Xbs1b6pzLyqrmeAkqPpMMRZhAAEwACAAKAA/MByAACiKoAAAEAAo3Lwn0v6NoHC+BpWRgZ9y9jW+pVVbpo6szvM929Xzvs9u+gejdS+zR7zQI4quz7NUzMxzb3y3/28cP+jdS+zR7y9vHD/o3Uvs0e88/h5dY6fJ3kvQHbxw/6N1L7NHvOHl9PmBR/M9Dybv8AfXqbf4RU0WLHZ1jp8m+XceJ+kziHiizVjXr1GLhVd1WPjRNMV/pTO8z+bfb5nzeCtex+GuL8HV8q3du2cfynWptRHWnrW6qY23mI8aofAHRFi3FE24jESzmc5b+7d+H/AEdqX2aPeaW4h1K1rPEeo6lYorotZWRXdopr260RM79+z5REsWNJbszM0LNUzzd74Y6VeIOHbVvGuV0ahh0bRTayN+tRTHmprjvju57xHJ3vF6edNrifhei5dqf/AErtNz8eq0WM3NDYuTmaeJFcw39276B6N1L7NHvHbvoHo3Uvs0e80CMeW2Onyu+pv7t30D0bqX2aPeO3fQPRupfZo95oEXy2x0n/ACb6mwrvH2n3OlezxZGLk/A6KdptbU+U/wBlNHPbxnm7327aB6N1L7NHvNBDVegs14z6RhIrmH1OJNTtazxLqOpWaK6LWVfqu0U17daImfPs7j0L6pbweN5xrtURGbj1WqN/7cTFUfqpn1tdP1xsm9h5VrJx7lVu/Zriu3XT401RO8T63tcsxVam1HTCRPHL2aOjcB9IODxdh0Wb1dGPq1FP8bjzO3X2/rUc4+bxj9c95fl7luq3VNNUYl0ROXXeIeC9C4pimrVMGmu9TG1N+iqaLkRy3jxj5p3h0yvoK0CavialqURymq3P/S2qN29TetximqcJNMS1T2E6H6T1H10e6dhGhek9R9dHutrD08ZqPcmylqnsJ0L0pqPro907CdD9Kaj66PdbWDxmo9xspap7CdD9Kaj66PdOwnQ/Smo+uj3W1g8bqPcuylqnsJ0L0pqPro907CdD9Kaj66PdbWRfG6j3myl491rCo03XdQwLVVVVvGyblmmqrxmKapiJn1OC+3xHYuZPG+rWLNFVd25qN6iiimN5qqm5MREPrcW8A3OFsHAvf6QozLuRcmzdt27e0WrkRE9Xfeet4/N4P0cX6YppprnjLnw5nDfS3xDoNq3jZE0ahiUbRFGRv16aY80Vx3+uJd3xennTa4/1vRsu1PK1cpufj1XTtS6MbGDjanRa4is39S0zE+FZWH8Fqpimnq9bur32nu8O7l4MauAeHbegWdau8Z004V275Gm5GmXJibkRMzTEb7+ae/bZwV0aK5O7HPpEtxNcO+9u2gejdS+zR7x266B6N1L7NHvNXZHBE2c/hrCjUIrydbt27tVvyXfj0VzG0z3/ABu7rcv5MuTa4DxrEapmarrdODpWFl14VvInHmuvIuUzMT1aInw7uc/qnbPhtF9fnrg3VtiXenXRYtTNrSs+uvzRX1KY9e8/g63rPThq2Xam1pWn2cDeNpu3KvLVxPOO6Ij64l1TM4UwbfDmo67h61GTh4+VRi40zjTRORXNNNVXdM/F2iqee/V8zm2ujq9e1HS8OnUbdM5WnU6llXLtvqU4lqfHf43xtp7vN9Ud8bp0+ho4z85N1cuoZmblahl3MvMv3L+Rcneu5cqmqqqfztwcN9MOi6Lw5p2m38HPru41im1VVRTR1ZmI829Tp2TwFi5Wk2NQ4e1unU7V3OowKorxqrHUuVbbT3zO8d9Pm87jcScL6Jw/by8b+ElV/V8aaaasT4BXTTVMzG8RXM7d0TM7+fZ73PDaiItznh6Yn+OCRup4vt9IvSLpvGWk4mJhYmXZrs3/ACtU3opiJjqzHdtM82uHaOHeEcTVdCy9a1TWqNLwbF+nHi5OPVemuuY322pmJ8Jjm4eJoFjVOL7GiaXqMZdi9ept0Zc2Jo3p23qq6kzv3d/dv37fO9rM2bNM26OVPPn+rNWZ4y+GO+ad0a3NSxdfybWp0xa0y/dsWpmx/OK7dMzO3xvi+Ec/Fxs3o9ydP4Pw9byMymnJy7tu3bwvJ9/x++nerfx279tmvG2M43cTbLpg2DqfRpjYdjVaMXiO1lajpeP8IysX4LVRFNPV63dXvMT3f/sMsTowtZNrFxquIbVrWMnBjMowasWraKJjz3N9o8OX1J46xjOfif4+V2y14O5adwXplXDWHrWtcSW9Mt5tddOPb+CVXpqiidpn4s93f83Lv736/wACNJwtLxNS1jiSrCx8+u58DmnAruTXbpnaK6tp+LvExO3f3T+fbXjLOcZnpyn+OJtl0h23o64rxOD9fyNQzbF+9buYtVmKbMRvEzVTVv3zHd8WX7Y/Bmk2tDxtX1fiGcLFzLtyjEmnBruzXTRVMdarafi77b7d7DB4NwKtKu6zqmvU4Ok1ZNWPh3oxarleTtM/GiiJ3pjunn4TH58Xb1i7RNFWcTw5T8cCImJbKnpz0CY2/wBG6l9mj3mhq561dU853d8udGdyxxZd0i9q1qjEt4E6hOb5KZ2sxO2/U38d/Nv4d/zPkcScI0aPi6Xm6dqdOqYepdaMeuixVbqmaZiJjqzvPjLx0vhbNeLc/e/Fat083WUl3Pino/vcMaPh5tefRk37t6Me/Yot7eRuTR1+r1t/jd3zQy1zgvSOHLVzH1LiSKdWox/KxiUYVdVFVUxvFMXN9u/ns6o1dmrG2c5+kptl0oB0MiTCgMRZhAAEkAEAAV+YDkAAAAFEVQAAAUAAAFAAAAAAFiVYrEqKAoAAAKAAMrV25Yu03bVdVu5RO9NdE7TTPOJbH4e6Zte0u3Tj6nbo1KxHd1q56l2I/Sjx+uN/na2HjdsW7sYrjKxMxyei9O6aeFsqmmMqrLwq58fK2Zrpj66N/wAH2aOkzg6uN412x9dFcfjDy2rjq7KtTymYb7yXqftI4P8AT2N6qvYdpHB/p7G9VXseWBnym37pO8l6n7SOEPT2N6qvYdpHCHp7G9VXseWA8pte6U7yXqftI4Q9PY3qq9h2kcIensb1Vex5YDym17pO8l6n7SOEPTuN6qvYdpHCHp3G9VXseWA8pte6V7yWwdC1bQcDjbXuJc3IovfBr969p+PETvkXKq6urMTt3REc+cT5n2quLOGte0nSfhFNrTblrXIy8ixXcrvb0bTVXXNUx4VTPg1IOqrRUVTmZnLG6W1uIuPsbXeGeI8ajMt4uTObEY/krfVqy8bfq9WqduXfO+3mh1viTV8GvgnhfRcDLi78Ht3L2XTTEx1btc7xE7x4xvVDpo3b0dFGNvpOfjBNUy3Lma9wrRxXh8WW9cs3bGBgRZxtPpsV+VmqKaoimd42j+VPf/8A18Oc/R+Kej3TNKy9etafn4eVdu3oybdcxd69VVXWiYid/wCV+LWwzGipjGKpzHLl9fp9Tc2bj8XUcOcLaHovD+sY1q/cy705+X5DrU009fq0VzFdPhNO090b7Uvs3eNND1Pifiyxe1Ki1jahp9GJhZVVuqaKYiiYqie7eI61cz4eb8zTK7k6C3VMzM8Zzx/Gcm6Wx7mXouHoWl8LadxBbt3IzKtQytUpt3It27lNMxRTTG28/wBXv820T80fpxzxFg6hwjiYOTquJrGs0ZPX+FY+NNvqWtpjaZmI3mZ28PV3bzrXYap0VMVRVM8pz6c/76G9tfhbiHC0/o/wsDA4oxdG1D4Rcu5XlcWbs1bzMRHfEx4RTO7rXA2q6dpfGuVq+qZlNcY9q/ds3KqZib12e6NojwmYmqXTTZY0lP2+P3vwN3Js/SuONO4e4f0Cim5ObdnJycrUcejunrV01UUxMzG3hVE/U5VfGOl6nXwr8N1G3TXGoXNS1GZpq6tqqmd7dPhy2pjblDUysz2fbmd3rx+c/wA/obpd413j/Vdd1PLwJzbWPpGVlTTXNuzFE1WettHWqiOtMdXxdr1fpDwM/wDhPg42daxbcYlFGm5Nq1tVcimPj299t/jT3Ry72nBqdBanGIxj/X8EVy29kcS4NPBWm6fpHFmLp9NjTupk43wOa67tyafjRFUx3Tvv4eefE0DXdK4d0PIwdT4nwtZ0mMeqLWn04tU1zXPftE1R3R4+Pd3+ZqE2Z8vo27c8M55R+uMrvltzhXXNK4d0evF1PinB1PR5x6pjToxKqq+vV3zTTvEd28z493f5nyYucOcR8IcNYWVrlnTJ0ybsZVm5armqqK6omZpmI2mZiJn62uRqNDTnMVTnOfT6x0+qbvRtq90h4NWRxTrWPdtRk3LVjD02xftzVNVqJnrzMbbbTv1tpfpl8UcO53FWJxFk6jTdxcDTqb2LpnUmOpkzv/FxtTt3TETM8+r5oahGZ7Pt+kz0/LGF3y2hqfEugcWcJV4tyq1ouXe1aMm5TXcuX/Gnaq74fPMbRyZ8RcSYN3gHJ0vUdcxNe1GquiMO7ax5iq1TExvNVUxHftExznfztWbDUaCiJjEziJz/AGefym6RFHcygCAkwoDEAABAAQfkrFYlxw0oCoAAEACgKAAACgAAAoAAAAAAsSrFYlcigKAAACgAAqCwKAoAAACACgAAAAAoAAsSrFYlRQAAAURVQAVQAABQAAAARQEAQGLIBiAAAyPxAcTTLcYslQAUAAFQBQFAAABQAAAUAAAAAAWJVisSooCgAAAoAAKgooCgAAAIAKAAAAACgAosSrFYBQAAAURVQAVQAABQAAAARQEAQSUZJMAgAPxAcDQsSgIyEiVUAFAABUAUBQAAAUAAAFAAAAAAGQxZKACgAAAoAAKgsCgKACAAqAAACgAAAoAKMhiyAAAAUUAQAVQAABQAAAAlFQABBJhGSSD8AHA0ACCxKAMhIVoAAAAFQBQFAAABQAAAUAAAADcAZCRKtAAAAoAAAAohEqKAoAAACACgAAAoAAG4KMhIUAAA3BRRFAAUAAAFAAAAEFQABBxwHz2gBUAAFiUAZCRKtAAAABEqiwAAoAAAKAAACgAAAAsSgoyEiVUAAAFAAAAFEVQAUABAAABQAAAUAAFiUFGQkSoAACoKKAAAoAAAKAAAAIKgOOA+c0ACACgAAy3YgMgGgAAABYEVQAAAAAUAAAFAAAABYlBRkJuqgAAAoAAAAoiqACgAIAAAKAAACgAAsSgoyEhQAAFQVJUBVAAAFAAAAAAHGAfOaABABQAAABd1YrErAoCgAAACiKoAAAAAKAAACgAAAAyhiKMgFAAABQAAIAFEVQAUABAAABQAAAUAAF8UFGQAAACoKigKoAAAoAAAA4wD5zQAIAAAKAAAALEqxWJUUBQAAABRFUAAAFAAABQAAAAAA3ZMViVFAUAAAFAAAgAUBoAAABABQAAAAAUAAGTEUZAAAKCoRIigKoAAAoAA4wD5zQAIAAAAAAAKAALCsWUKACgAAACiQqgAAAoAAAKAAAAAALEqxWJUUBQAAAUAAF3QBQGgAAAEAFAAAAABQABYlWKxKigAAAoiqACgAAAo4wD5zQAIAAAAAAAKAAAAMoGLJQAUAAFQBQgUAAAFAAABQAAAAABYlWKxKwKAoAAAKAACoKKAoAAACAAACgAQACgAosSrFYkFAAABRFVABVAAcYB89oAEAAAAAAAAAFAAAgAZCRKqACgAAqAKAoAAAKAAACgAAAAACxKsWSgAoAAAKAACoQooCgAAAIAKAAAAACgAoygYsgAACAUURRABVcYB89oAEAAAAAAAAAAAFAABYlAGQkSrQAAAAeCoAoCgAAAoAAAKAAAAAAMhjEsmgAAAUAAAAFRVABQAQAFQAUAAAFgAAAFGQxiWQAAACiiKI4wDgbABAAAAAAAAAAAAABQAAWJQBkJCtAAAAAqEAoCgAAAoAAAKAAAACxKCjISJVQAAAUAAAAURVABQAEAAAFAAABQAAWEFGQkSoAAACjjgOBoAEAAAAAAAAAAAAAAAFAABlEsQGQbjQAAAAQqLuoAAAAAKAAACgAAAAsSgoyEiVUAAAFAAAAFEVQAUABAAABQAAAUAAFiUFGQkSoAAOOA4WgAQAAAAAAAAAAAAAAAAAUAAGTFYBQGgAAABRFUAAAAAFAAABQAAAAWJQUZCQqgAAAoAAAAom6qACgAIAAAKAAACgAAsSgoyABxwHC0ACAAAAAAAAAAAAAAAAACgAAACxKsViVFAUAAAAURQAFAAgAFAAgAFAAAADdkxIlRkAoAAAKAAAAKIrQAAACAAACgAAAoAAMmJCj8Q2nkbTycLQG08jaeQgG08jaeQAbTyNp5ABtPI2nkAG08jaeQAbTyNp5ABtPI2nkAG08jaeQAbTyNp5ABtPI2nkAG08jaeSgG08jaeQAbTyNp5AsSqbTyldp5SuQDaeS7TykEF2nlJtPKQQhdp5SbTylQDaeRtPIANp5G08lANp5G08lANp5G08gA2nkbTyMgG08pXaeSiBtPJdp5SCC7Tyk2nlIESqbTykiJ5SuRQ2nkbTyUA2nkbTyMgG08l2nlKiC7Tyk2nlIIptPKU2nlIKERPKTaeSgG08jaeQAbTyNp5SqAbTyNp5ABtPI2nkoC7TyNp5SCC7Tyk2nlKiC7Tyk2nlIP/2Q==";
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("logo_data.js", e); }
 ;
 
 /* ===== app.js (escopo global) ===== */
@@ -1072,7 +1066,6 @@ function initTemplates(){
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-shopping-cart-simple text-[16px]"></i> Nova venda</button>
         <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
         <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
         <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
@@ -1163,13 +1156,13 @@ function initTemplates(){
 
   document.getElementById('view-manutencao').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('os')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Abrir chamado</button><button onclick="toggleOsView()" id="btn-os-kanban" class="h-11 px-4 rounded-xl bg-white border text-[13px]">Kanban</button></div><div class="flex gap-2"><select id="filter-os-status" onchange="renderOs()" class="h-11 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_peca">Aguard. peça</option><option value="concluido">Concluído</option></select><input id="search-os" oninput="renderOs()" placeholder="Buscar OS..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="os-kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div><div id="os-list" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">OS / Cliente / Criado por</th><th class="px-5 py-3">Tipo / Prioridade</th><th class="px-5 py-3">Técnico</th><th class="px-5 py-3">SLA</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-os" class="divide-y"></tbody></table></div>`;
 
-  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><button onclick="novaVenda()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova venda / Orçamento</button><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
+  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
   document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Backup do sistema</button><button onclick="abrirTelaBackup()" class="w-full h-11 mt-2 rounded-xl bg-white border text-[13px] font-semibold">📥 Restaurar a partir de um arquivo</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -1203,9 +1196,11 @@ function saveCliente(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('f-cli-nome').value.trim(), documento:document.getElementById('f-cli-doc').value.trim(), tipo:document.getElementById('f-cli-tipo').value, email:document.getElementById('f-cli-email').value.trim(), telefone:document.getElementById('f-cli-tel').value.trim(), endereco:document.getElementById('f-cli-end').value.trim(), cidade:document.getElementById('f-cli-cidade').value.trim(), estado:document.getElementById('f-cli-estado').value.trim(), cep:document.getElementById('f-cli-cep').value.trim(), status:document.getElementById('f-cli-status').value};
   if(!payload.nome) return toast('Informe nome','error');
-  if(id){
-    const existing=db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    Object.assign(existing,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
+  // v5.24.3 — procura UMA vez: se o id está fantasma (cliente sumiu da base
+  // local), cai para o cadastro NOVO em vez de estourar e perder o digitado.
+  const existingCli=id?db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId):null;
+  if(existingCli){
+    Object.assign(existingCli,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome}`);
   }else{
     const novo={id:uid('cli'),...payload,mensalidade:0,criadoEm:new Date().toISOString(),criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome};
@@ -1693,7 +1688,7 @@ function renderBanco(){
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="navigateTo('dashboard')" class="h-10 px-5 rounded-xl bg-white text-[#0a1e8a] font-bold text-[13px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-house text-[18px]"></i> Ver Dashboard (Início)</button>
-          <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
+          <button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Backup do sistema</button>
         </div>
       </div>
 
@@ -2665,8 +2660,7 @@ window.addEventListener('DOMContentLoaded',function(){
 
 ;
 
-/* ===== vendas_patch.js ===== */
-try{
+/* ===== vendas_patch.js (escopo global) ===== */
 // DIGICOPY ERP v3.1 - PATCH vendas aprimoradas + cliente codigo + login primeira vez + logo original handling
 (function(){
   // Garantir codigos de clientes existentes
@@ -3308,7 +3302,6 @@ try{
   console.log('PATCH vendas v3.1 carregado - cliente codigo, busca aberta, pagamento só ao faturar, tipo produto/recarga');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_patch.js", e); }
 ;
 
 /* ===== evolucao_patch.js (escopo global) ===== */
@@ -3611,8 +3604,7 @@ console.log('PATCH evolucao v3.2 - empresas PDF, CNPJ busca, chamados branco/ver
 
 ;
 
-/* ===== notinha_patch.js ===== */
-try{
+/* ===== notinha_patch.js (escopo global) ===== */
 // NOTINHA PATCH v4.1 - Layout de impressão e navegação de vendas
 (function(){
 window.imprimirNotinha = function(vendaId){
@@ -3846,7 +3838,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const total=list.reduce((s,v)=>s+(v.total||0),0);
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white flex flex-wrap items-center gap-3"><input type="hidden" id="neo-tab-vendas" value="${tab}"><div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div><input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[280px]" placeholder="Pesquisar por código, cliente, usuário..."><div class="text-right text-[12px] text-slate-500 min-w-[130px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div></div>
         <div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th></tr></thead><tbody>${list.map(v=>{const c=db.clientes.find(x=>x.id===v.clienteId)||{}; return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="showVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c.codigo||'-'} • ${escapeHtml(c.documento||'')}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml((v.criadoPorNome||'-').split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
       </div>
@@ -3946,7 +3938,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
 
   window.renderRelatorios=function(){
     const sess=getSession(); if(!sess) return; const cards=[['Clientes',db.clientes.filter(c=>c.empresaId===sess.empresaId).length],['Vendas',db.vendas.filter(v=>v.empresaId===sess.empresaId).length],['Contratos',db.contratos.filter(c=>c.empresaId===sess.empresaId).length],['Chamados',db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length]];
-    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="exportBackup()" class="neo-btn primary"><i class="ph ph-download"></i>Exportar</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
+    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="neo-btn primary"><i class="ph ph-download"></i>Backup</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
   };
 
   window.renderAuditoria=function(){
@@ -4117,7 +4109,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const situacoes=[...new Set(base.map(v=>v.status||'aguardar'))].sort();
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white space-y-2">
           <input type="hidden" id="neo-tab-vendas" value="${tab}">
           <div class="flex flex-wrap items-center gap-3">
@@ -4446,11 +4438,9 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   };
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("notinha_patch.js", e); }
 ;
 
-/* ===== locacao_patch.js ===== */
-try{
+/* ===== locacao_patch.js (escopo global) ===== */
 /* ==========================================================================
  * DIGICOPY ERP — PATCH LOCAÇÃO v4.4 (build 3.11)
  * O importador original lia as tabelas LOCACAO / ITENS_LOCACAO / VISITAS /
@@ -4915,11 +4905,9 @@ if(typeof window !== 'undefined'){
 })();
 console.log('PATCH locacao v4.4 carregado - LOCACAO/ITENS_LOCACAO/CONTADOR_PAGINAS/LEITURAS/VISITAS viram Contratos/Parque/Leituras/Chamados + limpeza de demos');
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_patch.js", e); }
 ;
 
-/* ===== vendas_os_patch.js ===== */
-try{
+/* ===== vendas_os_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // VENDAS_OS_PATCH v4.2.0 — Tela de Vendas + Ordem de Serviço completa
 // - Nova venda: código automático SÓ NÚMERO (sem prefixo/ano), data/hora, usuário
@@ -5342,13 +5330,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
@@ -6295,7 +6287,7 @@ window.renderVendas = function(){
   const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">
@@ -6454,11 +6446,9 @@ window.showVenda = window.historicoVenda;
 console.log('PATCH vendas+OS v4.2.0 — nova venda completa, OS, serial, faturamento, parcelas, carnê e impressão A4');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_os_patch.js", e); }
 ;
 
-/* ===== performance_patch.js ===== */
-try{
+/* ===== performance_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PERFORMANCE_PATCH v4.3.0 — destrava a interface e acelera a nuvem
 //
@@ -6804,11 +6794,9 @@ window.syncCarregarDaNuvem = async function(opts={}){
 console.log('PATCH performance v4.4.2 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("performance_patch.js", e); }
 ;
 
-/* ===== pix_patch.js ===== */
-try{
+/* ===== pix_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Pix (QR Code estático padrão Banco Central + copia e cola) — v4.6.0
 // O QR sai com o VALOR EXATO da venda: o cliente só escaneia e confirma, sem digitar nada.
 // Carregado por ÚLTIMO em index.html (depois dos demais patches).
@@ -7116,11 +7104,9 @@ window.renderConfig = function(){
 console.log('[DIGICOPY] Pix v4.6.0 carregado — QR estático padrão Banco Central (valor exato + copia e cola)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("pix_patch.js", e); }
 ;
 
-/* ===== notificacoes_patch.js ===== */
-try{
+/* ===== notificacoes_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Central de notificações (sino) — v4.7.0
 // Alertas automáticos (estoque no mínimo, contas vencidas/a vencer) + eventos
 // (ex.: "Fulano pagou — baixa registrada"). O Pix automático vai avisar aqui também.
@@ -7339,11 +7325,9 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(ntfAtualiza
 console.log('[DIGICOPY] Notificações v4.7.0 carregadas — sino com estoque mínimo, contas e avisos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("notificacoes_patch.js", e); }
 ;
 
-/* ===== vendas_extra_patch.js ===== */
-try{
+/* ===== vendas_extra_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Extras de vendas — v4.7.0
 // 1) Número da notinha sem prefixo ("VD-2026-0081" vira "2026-0081") nas telas
 // 2) "Refazer faturamento": cliente disse que ia pagar no Pix mas mudou a forma?
@@ -7437,11 +7421,9 @@ window.historicoVenda = function(id){
 console.log('[DIGICOPY] Extras de vendas v4.7.0 — número curto + refazer faturamento');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_extra_patch.js", e); }
 ;
 
-/* ===== migrados_print_patch.js ===== */
-try{
+/* ===== migrados_print_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Impressão das notinhas do sistema antigo (módulos migrados) — v4.7.0
 // Cada registro de qualquer tabela migrada ganha botão "Imprimir" no detalhe,
 // saindo um documento formatado com a logo. Tabelas de notinha/cupom são
@@ -7561,11 +7543,9 @@ window.abrirNotinhasAntigas = function(){
 console.log('[DIGICOPY] Impressão de notinhas antigas v4.7.0 carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("migrados_print_patch.js", e); }
 ;
 
-/* ===== clientes_patch.js ===== */
-try{
+/* ===== clientes_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Módulo de Clientes completo — v4.8.0
 // Consulta (Novo/Alterar/Excluir + filtros auxiliares por campo) e cadastro com:
 // dados essenciais obrigatórios (nome, telefone, rua, número, bairro), busca
@@ -7855,7 +7835,12 @@ window.saveCliente = function(){
   let alvo = null;
   if(id){
     alvo = db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    if(!alvo) return toast('Cliente não encontrado','error');
+    // v5.24.0 — id velho/fantasma (o cliente sumiu da lista ou o modal ficou
+    // com referência antiga): em vez de abortar com "Cliente não encontrado"
+    // e PERDER tudo o que foi digitado, cai para o cadastro NOVO abaixo.
+    if(!alvo) id = null;
+  }
+  if(alvo){
     payload.codigo = alvo.codigo;
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);
@@ -7925,11 +7910,9 @@ window.renderClientes = function(){
 console.log('[DIGICOPY] Clientes v4.8.0 — essenciais obrigatórios, CEP inteligente, filtros auxiliares e aba NF pronta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("clientes_patch.js", e); }
 ;
 
-/* ===== interface_patch.js ===== */
-try{
+/* ===== interface_patch.js (escopo global) ===== */
 // DIGICOPY ERP — Ajustes de interface v4.9.0
 // • Esc fecha modal/painéis de qualquer tela
 // • Nuvem sem avisos repetitivos (só 1 confirmação clara nas ações manuais; erros continuam)
@@ -8150,11 +8133,9 @@ else setTimeout(window.uiAjustarHome, 400);
 console.log('[DIGICOPY] Interface v4.9.3 — Esc fecha tudo, nuvem quieta, home sem scroll vazio');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("interface_patch.js", e); }
 ;
 
-/* ===== vendas_otimizacao_patch.js ===== */
-try{
+/* ===== vendas_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.8 — Otimização total de Vendas/Notinhas e regras de negócio:
 // • Exclusão de tabelas auxiliares/inválidas no Explorar Migrados ("S"/"N"/"ordens")
@@ -8480,11 +8461,9 @@ window.closeModal = function(){
 console.log('[DIGICOPY] PATCH vendas_otimizacao_patch.js v4.9.8 — Exclusão tabelas auxiliares, Title Case, Estorno/Edição Notinha e performance');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_otimizacao_patch.js", e); }
 ;
 
-/* ===== login_otimizacao_patch.js ===== */
-try{
+/* ===== login_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.8 — Otimização de Login, Funcionários e Vendedores:
 // • Login flexível case-insensitive para qualquer formato (FULANO, Fulano, fUlAnO)
@@ -8643,11 +8622,9 @@ window.showApp = function(){
 console.log('[DIGICOPY] PATCH login_otimizacao_patch.js v4.9.8 — Login case-insensitive, unificação admin principal e Recepção');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("login_otimizacao_patch.js", e); }
 ;
 
-/* ===== render_gate_patch.js ===== */
-try{
+/* ===== render_gate_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.11 — Gate de Renderização para PCs Fracos (render_gate_patch.js):
 // • Bloqueia execução de renders quando a respectiva tela <section> está oculta
@@ -8701,11 +8678,9 @@ RENDER_MAP.forEach(({ fn, view }) => {
 console.log('[DIGICOPY] PATCH render_gate_patch.js v4.9.11 — Gate de renderização (economia de 80-90% de CPU em PCs fracos)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("render_gate_patch.js", e); }
 ;
 
-/* ===== locacao_contratos_patch.js ===== */
-try{
+/* ===== locacao_contratos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.12 — Locação, Contratos, Leituras e Chamados Técnicos Completo:
 // • Fim de busca por digitação (apenas no Enter ou Lupa) e sem barra A..Z
@@ -10017,11 +9992,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_contratos_patch.js", e); }
 ;
 
-/* ===== fluxos_operacionais_patch.js ===== */
-try{
+/* ===== fluxos_operacionais_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.13 — Ajustes dos fluxos pedidos pelo Operacional
 // • Produtos com busca só no Enter/lupa, categorias unificadas, estoque mínimo estrito e NF preparada
@@ -10309,7 +10282,8 @@ window.FLUXOS_PURE = {
 if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
-  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo' },
+  // v5.22.84 — dir guarda o sentido A→Z / Z→A da ordenação da lista de produtos
+  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo', dir: 'asc' },
   ctr: { q: '', status: '', sort: 'codigo' },
   leiturasBusca: '',
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
@@ -10350,6 +10324,11 @@ function botaoBusca(onclick){
 
 function thSort(fn, col, label, active){
   return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? ' ▲' : ''}</th>`;
+}
+
+// v5.22.84 — título com seta nos DOIS sentidos (▲ A→Z, ▼ Z→A)
+function thSortDir(fn, col, label, active, dir){
+  return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? (dir === 'desc' ? ' ▼' : ' ▲') : ''}</th>`;
 }
 
 function bindBuscaEnter(id, callbackName){
@@ -10450,8 +10429,13 @@ window.aplicarBuscaProdutosOperacional = function(){
   window.renderProdutos();
 };
 
+// v5.22.84 — clicar na mesma coluna troca o sentido; coluna nova começa A→Z.
+// Antes o sentido ficava guardado em outro objeto de estado e a lista nunca
+// virava Z→A; quando virava, era "invertendo a linha" na tela (bugava).
 window.produtosSortOperacional = function(col){
-  STATE.prod.sort = col;
+  if(!STATE.prod.dir) STATE.prod.dir = 'asc';
+  if(STATE.prod.sort === col) STATE.prod.dir = STATE.prod.dir === 'asc' ? 'desc' : 'asc';
+  else { STATE.prod.sort = col; STATE.prod.dir = 'asc'; }
   window.renderProdutos();
 };
 
@@ -10488,12 +10472,19 @@ window.renderProdutos = function(){
   if(!view) return;
   if(adaptarProdutosMigrados(db, sess.empresaId)) saveSafe();
 
+  // v5.22.84 — o "Local" do produto deixou de existir (não era usado).
+  // Dados antigos já gravados são apagados aqui, uma varredura por abertura
+  // da tela; depois da primeira limpeza não encontra mais nada.
+  let purgeiLocal = false;
+  (db.produtos || []).forEach(p => { if(p && Object.prototype.hasOwnProperty.call(p, 'local')){ delete p.local; purgeiLocal = true; } });
+  if(purgeiLocal) saveSafe();
+
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
   if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
-    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
+    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
   }
 
@@ -10503,10 +10494,13 @@ window.renderProdutos = function(){
     categoria: p => p.categoria || '',
     estoque: p => toNumber(p.estoque),
     minimo: p => toNumber(p.estoqueMin),
-    valor: p => toNumber(p.preco),
-    local: p => p.local || ''
+    valor: p => toNumber(p.preco)
   };
-  list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
+  // v5.22.84 — ordena a lista INTEIRA no sentido certo antes de fatiar os 300
+  const prodGetter = sorters[STATE.prod.sort] || sorters.codigo;
+  list = STATE.prod.dir === 'desc'
+    ? [...list].sort((a, b) => compareSmart(prodGetter(b), prodGetter(a)))
+    : sortAsc(list, prodGetter);
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
@@ -10546,13 +10540,12 @@ window.renderProdutos = function(){
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500">
               <tr>
                 <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'produto-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
-                ${thSort('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'local', 'Local', STATE.prod.sort)}
+                ${thSortDir('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort, STATE.prod.dir)}
                 <th class="px-4 py-2.5 text-right">Ações</th>
               </tr>
             </thead>
@@ -10567,11 +10560,10 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
                   <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
-                  <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="9" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="9" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              ${list.length > vis.length ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -10585,7 +10577,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? (db.produtos || []).find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: '', nome: '', categoria: 'Produto', fabricante: '', estoque: 0, estoqueMin: 0, estoqueIdeal: 0,
-    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
+    custo: 0, preco: 0, ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
   };
   if(!p) return toastMsg('Produto não encontrado', 'error');
   const cat = categoriaUnificada(p.categoria || p.tipoCadastro || p.tipo);
@@ -10682,7 +10674,6 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
@@ -11552,11 +11543,9 @@ try{
 console.log(`[DIGICOPY] fluxos_operacionais_patch.js ${KAUAN_VERSION} carregado`);
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fluxos_operacionais_patch.js", e); }
 ;
 
-/* ===== contratos_refino_patch.js ===== */
-try{
+/* ===== contratos_refino_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.14 — Refinos de Contratos/Leituras/Chamados pedidos pelo Operacional
 // • Leituras ficam apenas dentro do contrato
@@ -12038,7 +12027,35 @@ window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
   if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
   calcImpressoesChamado();
 };
-window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
+// v5.22.90 — a função que VALIA procurava só os ids kr-os-* (tela antiga)
+// e deixava o chamado atual (ko-*) sem calcular a quantidade impressa.
+// Agora atende TODOS os conjuntos de id usados pelas telas de chamado.
+window.calcImpressoesChamado = function(){
+  var pares = [
+    ['ko-cont-ant','ko-cont-atu','ko-qtd-imp'],
+    ['kr-os-cont-ant','kr-os-cont-atu','kr-os-qtd'],
+    ['o-cont-ant','o-cont-atu','o-qtd-imp'],
+    ['ca-cont-ant','ca-cont-atu','ca-qtd']
+  ];
+  for(var i = 0; i < pares.length; i++){
+    var a = document.getElementById(pares[i][0]);
+    var u = document.getElementById(pares[i][1]);
+    var q = document.getElementById(pares[i][2]);
+    if(!a && !u && !q) continue;
+    var ant = Number(a && a.value ? a.value : 0) || 0;
+    var atu = u && u.value !== '' && u.value != null ? (Number(u.value) || 0) : ant;
+    if(atu < ant) atu = ant;
+    if(q) q.value = atu - ant;
+  }
+};
+// v5.22.90 — além do oninput dos campos (que nem sempre existe), um ouvinte
+// garante o cálculo em QUALQUER campo de contador, em qualquer tela.
+if(typeof document !== 'undefined'){
+  document.addEventListener('input', function(e){
+    var id = (e && e.target && e.target.id) || '';
+    if(/-cont-atu$/.test(id) || /-cont-ant$/.test(id)) window.calcImpressoesChamado();
+  }, true);
+}
 function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
@@ -12146,11 +12163,9 @@ window.openModal = function(type, id){
 console.log(`[DIGICOPY] contratos_refino_patch.js ${PATCH_VERSION} carregado`);
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_refino_patch.js", e); }
 ;
 
-/* ===== contratos_final_patch.js ===== */
-try{
+/* ===== contratos_final_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.17 — Contratos final, vínculos migrados e RTF
 // • Corrige "Sem cliente" vinculando contratos aos cadastros migrados
@@ -12385,11 +12400,9 @@ window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,argument
 console.log('[DIGICOPY] contratos_final_patch.js v4.9.17 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_final_patch.js", e); }
 ;
 
-/* ===== contratos_visitas_vinculo_patch.js ===== */
-try{
+/* ===== contratos_visitas_vinculo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.19 — Vínculo por VISITAS/CONTADOR_PAGINAS
 // • Usa VISITAS para ligar contrato sem cliente ao cliente correto
@@ -12507,11 +12520,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_
 console.log('[DIGICOPY] contratos_visitas_vinculo_patch.js v4.9.19 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_visitas_vinculo_patch.js", e); }
 ;
 
-/* ===== contratos_rtf_template_patch.js ===== */
-try{
+/* ===== contratos_rtf_template_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.18 — Modelos RTF editáveis de contrato/proposta
 // • Usa placeholders do modelo original: {CLI_NOMERAZAO}, {EMP_NOMERAZAO}, [TABLE]...
@@ -12752,11 +12763,9 @@ setTimeout(renderCardConfig, 500);
 console.log('[DIGICOPY] contratos_rtf_template_patch.js v4.9.18 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_rtf_template_patch.js", e); }
 ;
 
-/* ===== otimizacao_profunda_patch.js ===== */
-try{
+/* ===== otimizacao_profunda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.33 — Otimização profunda de carregamento e travamentos
 // • Agenda automações pesadas em fila ociosa, uma por vez, sem bloquear a tela
@@ -12948,11 +12957,9 @@ setTimeout(()=>{ try{ instalarRenderTurbo(); wrapModuloDinamico(); }catch(e){ co
 console.log('[DIGICOPY] otimizacao_profunda_patch.js v4.9.33 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("otimizacao_profunda_patch.js", e); }
 ;
 
-/* ===== automacoes_triggers_patch.js ===== */
-try{
+/* ===== automacoes_triggers_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.21 — Automações úteis extraídas das triggers
 // • Orçamento recalcula total pelos itens e pode virar venda sem duplicar
@@ -13108,11 +13115,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_triggers_patch.js v4.9.21 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_triggers_patch.js", e); }
 ;
 
-/* ===== automacoes_financeiro_estoque_patch.js ===== */
-try{
+/* ===== automacoes_financeiro_estoque_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.22 — Automações financeiras, leituras, fiscal leve e estoque
 // • Continuação da adaptação de triggers úteis do banco anterior
@@ -13394,11 +13399,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_financeiro_estoque_patch.js v4.9.22 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_financeiro_estoque_patch.js", e); }
 ;
 
-/* ===== automacoes_locacao_visitas_patch.js ===== */
-try{
+/* ===== automacoes_locacao_visitas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.23 — Automações de locação, despesas e visitas
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -13604,11 +13607,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_locacao_visitas_patch.js v4.9.23 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_locacao_visitas_patch.js", e); }
 ;
 
-/* ===== automacoes_contratos_caixa_fiscal_patch.js ===== */
-try{
+/* ===== automacoes_contratos_caixa_fiscal_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.24 — Automações de contratos, caixa, fiscal leve e produtos
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -13884,11 +13885,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_contratos_caixa_fiscal_patch.js v4.9.24 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_contratos_caixa_fiscal_patch.js", e); }
 ;
 
-/* ===== automacoes_fiscal_cartuchos_patch.js ===== */
-try{
+/* ===== automacoes_fiscal_cartuchos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.52 — Automações fiscais preparatórias, cartuchos e estornos
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14203,11 +14202,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_fiscal_cartuchos_patch.js v4.9.52 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_fiscal_cartuchos_patch.js", e); }
 ;
 
-/* ===== automacoes_vendas_compras_cadastros_patch.js ===== */
-try{
+/* ===== automacoes_vendas_compras_cadastros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.26 — Automações de vendas, compras e cadastros auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14467,11 +14464,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_vendas_compras_cadastros_patch.js v4.9.26 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_vendas_compras_cadastros_patch.js", e); }
 ;
 
-/* ===== automacoes_orcamentos_clientes_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_orcamentos_clientes_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.27 — Automações de orçamentos, clientes e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14727,11 +14722,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_orcamentos_clientes_auxiliares_patch.js v4.9.27 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_orcamentos_clientes_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_pix_contadores_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_pix_contadores_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.28 — Automações de Pix, contadores, contas e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior
@@ -14940,11 +14933,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_pix_contadores_auxiliares_patch.js v4.9.28 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_pix_contadores_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_vendas_fiscal_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_vendas_fiscal_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.29 — Automações de vendas, cartões, encomendas, fiscal e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 9
@@ -15408,11 +15399,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_vendas_fiscal_auxiliares_patch.js v4.9.29 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_vendas_fiscal_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_compras_recebimentos_contadores_patch.js ===== */
-try{
+/* ===== automacoes_compras_recebimentos_contadores_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.30 — Automações de vendas, compras, recebimentos, contadores e loja
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 10
@@ -15841,11 +15830,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_compras_recebimentos_contadores_patch.js v4.9.30 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_compras_recebimentos_contadores_patch.js", e); }
 ;
 
-/* ===== automacoes_caixa_chat_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_caixa_chat_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.31 — Automações de caixa, chat, fornecedores e auxiliares
 // • Continuação da adaptação das triggers úteis do banco anterior — Parte 11
@@ -16115,11 +16102,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_caixa_chat_auxiliares_patch.js v4.9.31 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_caixa_chat_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_finais_locacao_auxiliares_patch.js ===== */
-try{
+/* ===== automacoes_finais_locacao_auxiliares_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.32 — Automações finais de locação, histórico, custos e auxiliares
 // • Última parte da adaptação das triggers úteis do banco anterior — Parte 12
@@ -16518,11 +16503,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_finais_locacao_auxiliares_patch.js v4.9.32 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_finais_locacao_auxiliares_patch.js", e); }
 ;
 
-/* ===== automacoes_procedures_operacionais_patch.js ===== */
-try{
+/* ===== automacoes_procedures_operacionais_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.34 — Adaptação das PROCEDURES operacionais do banco antigo
 // • Recria regras úteis encontradas nas procedures sem copiar rotinas pesadas
@@ -16842,11 +16825,9 @@ if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('automacoes
 console.log('[DIGICOPY] automacoes_procedures_operacionais_patch.js v4.9.34 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("automacoes_procedures_operacionais_patch.js", e); }
 ;
 
-/* ===== chamados_avulsos_aberto_patch.js ===== */
-try{
+/* ===== chamados_avulsos_aberto_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.16 — Chamado avulso aberto/profissional
 // • A tela fora do contrato fica para atendimento avulso
@@ -16912,6 +16893,7 @@ function renderImpressorasResultado(clienteId){
   let lista = parquesCliente(clienteId || window.__CHAMADO_AVULSO.clienteId);
   if(q) lista = lista.filter(p => { const e=equipamento(p.equipamentoId)||{}; return [e.patrimonio,e.modelo,e.serie,p.setor,p.localInstalacao].some(v=>norm(v).includes(q)); });
   out.innerHTML = lista.map(p => { const e=equipamento(p.equipamentoId)||{}; return `<button type="button" onclick="selecionarImpressoraChamadoAvulso('${p.equipamentoId}')" class="w-full text-left p-2 hover:bg-blue-50 border-b last:border-0"><b>Patr. ${esc(e.patrimonio||'-')}</b> — ${esc(e.modelo||'')}<br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'')}</span></button>`; }).join('') || '<p class="p-3 text-center text-slate-400">Nenhuma impressora para este cliente</p>';
+  if(window.__marcarImpAvulso) window.__marcarImpAvulso(window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId);
 }
 
 window.buscarClientesChamadoAvulso = renderClientesResultado;
@@ -16922,10 +16904,38 @@ window.selecionarClienteChamadoAvulso = function(id){
   const el = document.getElementById('ca-cliente-selecionado'); if(el) el.innerHTML = `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>`;
   renderImpressorasResultado(id);
 };
+// v5.22.88 — marca a impressora escolhida na lista do avulso (azul = escolhida)
+window.__marcarImpAvulso = function(equipId){
+  const lista = document.getElementById('ca-impressoras-result'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on = b.getAttribute('onclick')||'';
+    const marc = equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.selecionarImpressoraChamadoAvulso = function(equipId){
+  // v5.22.94 — troca: dados da impressora VELHA saem; motivo auto troca junto
+  const _antIdAv = (window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId) || '';
+  const _trocaAv = !!_antIdAv && _antIdAv !== equipId;
+  const _eAntAv = _trocaAv ? (equipamento(_antIdAv) || {}) : {};
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  if(_trocaAv){
+    const _motAv = document.getElementById('ca-desc');
+    const _nomeAntAv = String(_eAntAv.modelo || '').trim();
+    if(_motAv && _nomeAntAv && String(_motAv.value || '').trim().toLowerCase() === _nomeAntAv.toLowerCase()){
+      _motAv.value = e.modelo || '';
+    }
+  }
+  const selTxt = document.getElementById('ca-impressora-selecionada');
+  if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+  // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)
+  const _res = document.getElementById('ca-impressoras-result'); if(_res) _res.classList.add('hidden');
+  window.__marcarImpAvulso(equipId);
   const ant = ultimoContador(equipId);
   ['modelo','patr','serie','local'].forEach(k => { const el=document.getElementById('ca-'+k); if(el){ if(k==='modelo') el.value=e.modelo||''; if(k==='patr') el.value=e.patrimonio||''; if(k==='serie') el.value=e.serie||''; if(k==='local') el.value=p.localInstalacao||p.setor||''; }});
   const antEl = document.getElementById('ca-cont-ant'); if(antEl) antEl.value = ant;
@@ -16944,6 +16954,7 @@ function renderChamadoAvulso(id){
     <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><b>Chamado fora de contrato</b><p class="text-[12px] text-blue-800 mt-1">Use para atendimento avulso. Para cliente de contrato, abra pelo contrato.</p></div>
     <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Código</label><input id="ca-num" readonly value="${esc(codigo)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono font-bold"></div><div><label class="block font-bold text-slate-600 mb-1">Data</label><input id="ca-data" type="date" value="${String(o?.dataAbertura || new Date().toISOString()).slice(0,10)}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Prioridade</label><select id="ca-prio" class="w-full h-10 px-3 rounded-xl border"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div><div><label class="block font-bold text-slate-600 mb-1">Criado por</label><input readonly value="${esc(o?.criadoPorNome || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50"></div><div><label class="block font-bold text-slate-600 mb-1">Técnico</label><input id="ca-tec" value="${esc(o?.tecnico || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar cliente</label><div class="flex gap-2"><input id="ca-busca-cliente" placeholder="Digite código, nome, documento..." class="flex-1 h-10 px-3 rounded-xl border">${botaoBusca('buscarClientesChamadoAvulso()')}</div><div id="ca-cliente-selecionado" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]">${c ? `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>` : 'Nenhum cliente selecionado'}</div><div id="ca-clientes-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
+    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — digite para filtrar; ao escolher, a lista fecha ✔)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Modelo</label><input id="ca-modelo" value="${esc(o?.modelo||'')}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Patrimônio</label><input id="ca-patr" value="${esc(o?.patrimonio||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Serial</label><input id="ca-serie" value="${esc(o?.serie||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Local</label><input id="ca-local" value="${esc(o?.local||'')}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div><label class="block font-bold text-slate-600 mb-1">Motivo / Defeito *</label><input id="ca-desc" value="${esc(o?.descricao||'')}" class="w-full h-10 px-3 rounded-xl border font-semibold"></div>
     <label class="bg-slate-50 border rounded-xl p-3 flex items-center gap-3 cursor-pointer"><input type="checkbox" id="ca-concluido" ${o?.status==='concluido'?'checked':''}><span class="font-bold">Este chamado já foi finalizado?</span></label>
@@ -16953,7 +16964,16 @@ function renderChamadoAvulso(id){
   document.getElementById('ca-prio').value = o?.prioridade || 'normal';
   bindEnter('ca-busca-cliente', renderClientesResultado);
   bindEnter('ca-busca-impressora', () => renderImpressorasResultado());
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  const _impQ = document.getElementById('ca-busca-impressora');
+  if(_impQ && !_impQ.__v52288){ _impQ.__v52288=1; _impQ.addEventListener('input', () => renderImpressorasResultado()); }
   if(c) renderImpressorasResultado(c.id);
+  if(o && o.equipamentoId){
+    const eX = equipamento(o.equipamentoId) || {};
+    const selX = document.getElementById('ca-impressora-selecionada');
+    if(selX) selX.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+    const _resX = document.getElementById('ca-impressoras-result'); if(_resX) _resX.classList.add('hidden');
+  }
 }
 window.fecharModalChamadoAvulso = fechar;
 window.salvarChamadoAvulso = function(id){
@@ -16978,14 +16998,20 @@ window.openModal = function(type, id){
   if(oldOpenModal) return oldOpenModal.apply(this, arguments);
 };
 
+// v5.22.90 — lápis reabre a lista de impressoras do avulso (e FICA aberta)
+window.caEditarImpressoraAvulso = function(){
+  const q = document.getElementById('ca-busca-impressora'); if(q) q.value='';
+  const res = document.getElementById('ca-impressoras-result'); if(res) res.classList.remove('hidden');
+  renderImpressorasResultado();
+  if(q) q.focus();
+};
+
 console.log('[DIGICOPY] chamados_avulsos_aberto_patch.js v4.9.16 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("chamados_avulsos_aberto_patch.js", e); }
 ;
 
-/* ===== cadastros_nomes_patch.js ===== */
-try{
+/* ===== cadastros_nomes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Correção de nomes vazios em cadastros migrados
 // • Preenche nomes conhecidos por código
@@ -17138,11 +17164,9 @@ setTimeout(aplicar, 300);
 console.log('[DIGICOPY] cadastros_nomes_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cadastros_nomes_patch.js", e); }
 ;
 
-/* ===== pix_comprovante_manual_patch.js ===== */
-try{
+/* ===== pix_comprovante_manual_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Pix com comprovante manual
 // • Mantém QR Pix com valor exato da notinha
@@ -17222,11 +17246,9 @@ window.vosGerarHtmlNotinha = function(vendaId, opts){
 console.log('[DIGICOPY] pix_comprovante_manual_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("pix_comprovante_manual_patch.js", e); }
 ;
 
-/* ===== desktop_otimizacao_patch.js ===== */
-try{
+/* ===== desktop_otimizacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.15 — Otimização para uso diário e futuro .exe
 // • Debounce leve em renders pesados para evitar travar máquinas fracas
@@ -17286,11 +17308,9 @@ setTimeout(() => {
 console.log('[DIGICOPY] desktop_otimizacao_patch.js v4.9.15 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("desktop_otimizacao_patch.js", e); }
 ;
 
-/* ===== correcoes_uso_diario_patch.js ===== */
-try{
+/* ===== correcoes_uso_diario_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.38 — Correções de uso diário, vendas e limpeza visual
 // • Remove aviso de endereço provisório
@@ -17496,11 +17516,9 @@ setTimeout(instalar,50); setTimeout(instalar,1000); setTimeout(instalar,3500);
 console.log('[DIGICOPY] correcoes_uso_diario_patch.js v4.9.38 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("correcoes_uso_diario_patch.js", e); }
 ;
 
-/* ===== login_dados_automaticos_patch.js ===== */
-try{
+/* ===== login_dados_automaticos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.39 — Login direto por usuário, usuários migrados e carga automática
 // • Remove a etapa de CNPJ do login e deixa somente usuário/senha
@@ -17706,11 +17724,9 @@ if(typeof document!=='undefined'){
 console.log('[DIGICOPY] login_dados_automaticos_patch.js v4.9.39 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("login_dados_automaticos_patch.js", e); }
 ;
 
-/* ===== ajustes_relatorio_pai_patch.js ===== */
-try{
+/* ===== ajustes_relatorio_pai_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.43 — Ajustes do relatório de avaliação
 // • Leitura em tela detalhada com lançamentos por impressora/medidor e total
@@ -17877,7 +17893,9 @@ function ajustarBuscaVenda(){
   const pi=document.getElementById('vos-prod-search'); if(pi&&!document.getElementById('vos-prod-lupa')){ pi.removeAttribute('oninput'); pi.oninput=null; pi.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); window.vosVendaSearchProd(pi.value);} }; pi.insertAdjacentHTML('afterend','<button id="vos-prod-lupa" type="button" onclick="vosVendaSearchProd(document.getElementById(\'vos-prod-search\').value)" class="absolute right-2 top-[30px] h-8 px-3 rounded-lg bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button>'); }
 }
 const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda=function(){ const r=oldNova.apply(this,arguments); setTimeout(ajustarBuscaVenda,80); return r; };
-const oldImp=window.imprimirNotinha; window.imprimirNotinha=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(v && !['faturado','finalizada'].includes(low(v.status))){ toast('Fature a notinha antes de imprimir ou salvar em PDF','error'); return; } return oldImp?oldImp.apply(this,arguments):null; };
+// v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
+// aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
+// A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
 window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
@@ -17887,11 +17905,9 @@ window.AJUSTES_RELATORIO_PAI_PURE={ medidorDefault, consumoMed, cod };
 console.log('[DIGICOPY] ajustes_relatorio_pai_patch.js v4.9.43 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_relatorio_pai_patch.js", e); }
 ;
 
-/* ===== contratos_leituras_definitivo_patch.js ===== */
-try{
+/* ===== contratos_leituras_definitivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.44 — Contratos e leituras definitivos para apresentação
 // • Modalidades ficam no cadastro da IMPRESSORA do contrato, não no contrato novo
@@ -18028,11 +18044,9 @@ window.CONTRATOS_LEITURAS_DEFINITIVO_PURE={ medidorPadrao, calcMed };
 console.log('[DIGICOPY] contratos_leituras_definitivo_patch.js v4.9.44 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("contratos_leituras_definitivo_patch.js", e); }
 ;
 
-/* ===== fluxo_contrato_leitura_corrigido_patch.js ===== */
-try{
+/* ===== fluxo_contrato_leitura_corrigido_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.45 — Fluxo correto de contrato > leituras > lançamentos
 // • Modalidades ficam somente na impressora do contrato
@@ -18175,11 +18189,9 @@ window.CONTRATOS_LEITURAS_CORRIGIDO_PURE={ medPadrao, calc, normalizarModalidade
 console.log('[DIGICOPY] fluxo_contrato_leitura_corrigido_patch.js v4.9.45 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fluxo_contrato_leitura_corrigido_patch.js", e); }
 ;
 
-/* ===== leitura_busca_fluxo_patch.js ===== */
-try{
+/* ===== leitura_busca_fluxo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.46 — Ajuste fino do fluxo de leituras e busca de impressoras
 // • Histórico de leituras sem botão/radio de selecionar: abre no duplo clique
@@ -18278,11 +18290,9 @@ window.LEITURA_BUSCA_FLUXO_PURE={ filtrarMaquinasLancamento:function(dbRef, leit
 console.log('[DIGICOPY] leitura_busca_fluxo_patch.js v4.9.46 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_busca_fluxo_patch.js", e); }
 ;
 
-/* ===== leitura_detalhada_departamentos_patch.js ===== */
-try{
+/* ===== leitura_detalhada_departamentos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.47 — Leitura detalhada por departamento e lançamentos editáveis
 // • Histórico de leituras só abre no duplo clique
@@ -18432,11 +18442,9 @@ window.LEITURA_DETALHADA_DEPARTAMENTOS_PURE={ agruparPorDepartamento, medPendent
 console.log('[DIGICOPY] leitura_detalhada_departamentos_patch.js v4.9.47 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_detalhada_departamentos_patch.js", e); }
 ;
 
-/* ===== leitura_impressao_compacta_produtos_patch.js ===== */
-try{
+/* ===== leitura_impressao_compacta_produtos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.48 — Notinha de leitura compacta + aba Produtos visível
 // • Notinha de leitura com logo, dados da loja e dados do cliente
@@ -18536,11 +18544,9 @@ window.LEITURA_IMPRESSAO_COMPACTA_PURE={ agruparPorDepartamento, totais, htmlNot
 console.log('[DIGICOPY] leitura_impressao_compacta_produtos_patch.js v4.9.48 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("leitura_impressao_compacta_produtos_patch.js", e); }
 ;
 
-/* ===== cartuchos_etiquetas_config_patch.js ===== */
-try{
+/* ===== cartuchos_etiquetas_config_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.66 — Cartuchos, etiquetas compactas e configurações
 // • Usa o vídeo público apenas como referência funcional, sem copiar identidade
@@ -18767,11 +18773,9 @@ setTimeout(renderCardEtiquetas,2200);
 console.log('[DIGICOPY] cartuchos_etiquetas_config_patch.js v4.9.66 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cartuchos_etiquetas_config_patch.js", e); }
 ;
 
-/* ===== sistema_clientes_loja_patch.js ===== */
-try{
+/* ===== sistema_clientes_loja_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.58 — Login diário, dados da loja e importação de clientes
 // • Todo dia, ao abrir, exige login na primeira abertura do dia
@@ -18949,11 +18953,9 @@ window.renderClientes=function(){ const r=oldRenderClientes?oldRenderClientes.ap
 console.log('[DIGICOPY] sistema_clientes_loja_patch.js v4.9.58 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("sistema_clientes_loja_patch.js", e); }
 ;
 
-/* ===== finalizacao_sistema_patch.js ===== */
-try{
+/* ===== finalizacao_sistema_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.61 — Finalização operacional
 // • X/ESC volta para aba anterior quando fechar janela/modal pelo usuário
@@ -19075,29 +19077,8 @@ window.ordenarClientesFinal=function(col){
 };
 window.buscarClientesFinal=function(){ window.__clientesTodosFinal=false; window.__clientesBuscaFinal=txt(document.getElementById('clientes-busca-final')?.value); window.__clientesCampoFinal=txt(document.getElementById('clientes-campo-final')?.value)||'nome'; renderClientes(); };
 window.clientesMostrarTodos=function(){ window.__clientesTodosFinal=true; window.__clientesBuscaFinal=''; window.__clientesCampoFinal='nome'; window.__clientesStatusFinal='ativos'; window.__clientesSortFinal=window.__clientesSortFinal||{col:'codigo',dir:'asc'}; renderClientes(); };
-window.importarClientesJsonFinal=async function(){
-  const s=sess(); if(!s) return;
-  const input=document.getElementById('clientes-json-input');
-  const files=Array.from(input?.files||[]);
-  if(!files.length){ toastMsg('Selecione CLIENTES.json e/ou CLIENTES_FINAL.json','error'); return; }
-  const importer = (window.SISTEMA_CLIENTES_LOJA_PURE && window.SISTEMA_CLIENTES_LOJA_PURE.importarClientesDeObjetos);
-  if(typeof importer !== 'function'){ toastMsg('Importador indisponível nesta versão.','error'); return; }
-  const arquivos=[];
-  for(const f of files){
-    try{ arquivos.push({nome:f.name,json:JSON.parse(await f.text())}); }
-    catch(e){ toastMsg('Erro lendo '+f.name+': '+e.message,'error'); }
-  }
-  if(!arquivos.length) return;
-  const r=importer(db,arquivos,s.empresaId);
-  if(typeof saveDB==='function') saveDB();
-  if(typeof renderClientes==='function') renderClientes();
-  const st=document.getElementById('clientes-import-status');
-  if(st){ st.style.display='block'; st.innerHTML=`✅ <b>${r.importados}</b> importados • <b>${r.atualizados}</b> atualizados • <b>${r.ignorados}</b> ignorados • Próximo código: <b>${r.ultimoCodigo+1}</b>`; }
-  const msg='Importação concluída:\n\n• Importados: '+r.importados+'\n• Atualizados: '+r.atualizados+'\n• Ignorados: '+r.ignorados+'\n\nTotal de clientes agora: '+r.total;
-  if(typeof window.lfbAlert==='function') window.lfbAlert(msg,'Clientes importados');
-  else toastMsg(msg,'success');
-  input.value='';
-};
+/* v5.24.0 — botão "Importar clientes" e suas funções REMOVIDOS a pedido do
+   dono (cadastro > clientes fica só com cadastro manual). */
 
 window.renderClientes=function(){
   const s=sess(); if(!s) return;
@@ -19117,7 +19098,7 @@ window.renderClientes=function(){
   const seta=col=>sort.col===col?(sort.dir==='asc'?' ▲':' ▼'):'';
   const th=(col,label)=>`<th onclick="ordenarClientesFinal('${col}')" class="cursor-pointer select-none hover:text-[#0a1e8a]">${label}${seta(col)}</th>`;
   const vazioMsg=deveListar?'Nenhum cliente encontrado com esse filtro.':'Pesquise ou escolha um filtro para listar os clientes. A lista não abre tudo por padrão para ficar leve.';
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="document.getElementById('clientes-json-input').click()" class="neo-btn"><i class="ph ph-upload-simple"></i>Importar clientes</button><input id="clientes-json-input" type="file" accept=".json,application/json" multiple style="display:none" onchange="importarClientesJsonFinal()"></div></div><div id="clientes-import-status" class="mx-4 mt-2 text-[12px]" style="display:none"></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
   const csel=document.getElementById('clientes-campo-final'); if(csel) csel.value=campo;
   const ssel=document.getElementById('clientes-status-final'); if(ssel) ssel.value=status;
 };
@@ -19133,11 +19114,9 @@ setTimeout(()=>{ instalarBuscadorMenuFinal(); },600);
 console.log('[DIGICOPY] finalizacao_sistema_patch.js v4.9.61 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("finalizacao_sistema_patch.js", e); }
 ;
 
-/* ===== ajustes_pos_final_patch.js ===== */
-try{
+/* ===== ajustes_pos_final_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.66 — Ajustes pós-final: produtos, venda, impressão e usuários
 // • Impressoras de locação não aparecem no menu Produtos
@@ -19269,11 +19248,9 @@ window.saveUsuarioFinal=function(id){
 console.log('[DIGICOPY] ajustes_pos_final_patch.js v4.9.66 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_pos_final_patch.js", e); }
 ;
 
-/* ===== buscador_escola_patch.js ===== */
-try{
+/* ===== buscador_escola_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v4.9.88 — Buscador Escola
 // • Login da Caixa Escolar fica na nuvem (fora do código). Digita uma vez.
@@ -19393,7 +19370,10 @@ async function api(method,url,body,tk){
 }
 
 async function sync(opt={}){
-  window.__esSync=false; // Reset always before starting
+  // v5.24.8 — FREIO: duas buscas ao mesmo tempo = trabalho e GRAVAÇÃO de nuvem
+  // dobrados (o relógio automático podia atropelar uma busca longa da tela).
+  // Automático nunca atropela; o botão da tela continua podendo reiniciar na mão.
+  if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'};
   window.__esSync=true;
   window.__esLogs=[];
   // log apenas acumula — NÃO redesenha a tela (evita piscar)
@@ -19621,18 +19601,36 @@ window.esRest=function(id){
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
 window.renderBuscadorEscola=render;
 
+// v5.24.8 — O RALO DAS GRAVAÇÕES: o automático do Caixa Escolar agora tem rédea.
+// Antes: se a lista estivesse vazia (vazio=true), essa busca rodava a CADA 60
+// SEGUNDOS, o dia inteiro, com o sistema parado na tela. Cada volta carimbava a
+// hora na config, a config subia para a nuvem, a nuvem regravava linhas — milhares
+// de gravações por dia sem ninguém fazer nada. E rodava com 'limpar', que apaga
+// e refaz a base escolar de graça. Agora:
+//  • automático só a cada 1 HORA de dados velhos (e o relógio só olha isso de
+//    10 em 10 minutos, em vez de a cada 60 segundos);
+//  • lista vazia NÃO é emergência: espera a hora certa (o botão Atualizar da
+//    tela continua instantâneo, na mão de quem está olhando);
+//  • sem login salvo, nem tenta (não tem o que buscar);
+//  • limpar/refazer a base é só pelo botão "Baixar Tudo" da tela.
+function esAutoTique(){
+  try{
+    if(window.__esSync) return;
+    if(!loginDaNuvem()&&!loginDoNavegador()) return;
+    const c=(db.config&&db.config.escolaSync)||{};
+    if(!c.at||elapsed(c.at)>60*60*1000) sync({auto:true,incremental:true});
+  }catch(_e){}
+}
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
+  setTimeout(esAutoTique,15000);
+  setInterval(esAutoTique,10*60*1000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("buscador_escola_patch.js", e); }
 ;
 
-/* ===== estoque_alert_patch.js ===== */
-try{
+/* ===== estoque_alert_patch.js (escopo global) ===== */
 // PATCH alerta estoque/geral com modal do sistema (igual login incorreto)
 (function(){
   function showSystemAlert(msg, title){
@@ -19663,11 +19661,9 @@ try{
   console.log('[DIGICOPY] estoque_alert_patch carregado - modal sistema');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("estoque_alert_patch.js", e); }
 ;
 
-/* ===== popup_sistema_patch.js ===== */
-try{
+/* ===== popup_sistema_patch.js (escopo global) ===== */
 // PATCH todos os popups no estilo do sistema (igual login incorreto) - REMOVE popups antigos
 (function(){
   // Preserva o confirm real como compatibilidade para fluxos legados ainda
@@ -19784,11 +19780,9 @@ try{
   console.log('[DIGICOPY] popup_sistema_patch v2 carregado - TODOS popups no estilo sistema, antigos removidos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("popup_sistema_patch.js", e); }
 ;
 
-/* ===== etiqueta_busca_patch.js ===== */
-try{
+/* ===== etiqueta_busca_patch.js (escopo global) ===== */
 // PATCH busca por etiqueta — SOMENTE o número da etiqueta do cartucho
 (function(){
   function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -19921,11 +19915,9 @@ try{
   console.log('[DIGICOPY] etiqueta_busca_patch v5.15.1 — busca só pelo número da etiqueta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("etiqueta_busca_patch.js", e); }
 ;
 
-/* ===== delete_hidden_patch.js ===== */
-try{
+/* ===== delete_hidden_patch.js (escopo global) ===== */
 // PATCH delete_hidden - DELETA de vez em vez de ocultar
 (function(){
   function deletarOcultos(){
@@ -19958,11 +19950,9 @@ try{
   console.log('[DIGICOPY] delete_hidden_patch carregado - ocultos deletados de vez');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("delete_hidden_patch.js", e); }
 ;
 
-/* ===== patch_relatorio.js ===== */
-try{
+/* ===== patch_relatorio.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.0 — Relatório completo do usuário
 // 1. Login: campos vazios, mensagens de erro, logo nova, Denivaldo 3232
@@ -20017,11 +20007,9 @@ setTimeout(()=>{
 console.log('[DIGICOPY] patch_relatorio v5.0.0 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_relatorio.js", e); }
 ;
 
-/* ===== patch_vendas_financeiro.js ===== */
-try{
+/* ===== patch_vendas_financeiro.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.2 — Vendas e Financeiro (relatório do usuário)
 // 1. Venda: faturar funciona, estornar só depois de faturar, Pix QR só no Pix
@@ -20088,11 +20076,9 @@ if(typeof _origShowVenda2 === 'function'){
 console.log('[DIGICOPY] patch_vendas_financeiro v5.0.2 carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_vendas_financeiro.js", e); }
 ;
 
-/* ===== patch_chamados.js ===== */
-try{
+/* ===== patch_chamados.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.0.5 — Chamados (relatório do usuário)
 // 1. Código global sequencial (não por cliente)
@@ -20344,11 +20330,9 @@ window.imprimirChamado = function(id){
   }
 };
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("patch_chamados.js", e); }
 ;
 
-/* ===== navegacao_voltar_patch.js ===== */
-try{
+/* ===== navegacao_voltar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.3.9 — Navegação hierárquica completa (4 -> 3 -> 2 -> 1 e sub-menus x.1, x.2)
 // • Deleta/neutraliza qualquer duplicação de página ou pilha interna com innerHTML
@@ -20457,11 +20441,9 @@ try{
   console.log('[DIGICOPY] navegacao_voltar_patch.js v5.3.9 — Hierarquia 4->3->2->1 ativa, sem duplicação');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("navegacao_voltar_patch.js", e); }
 ;
 
-/* ===== vendas_notinhas_fix_patch.js ===== */
-try{
+/* ===== vendas_notinhas_fix_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.15.0 — Vendas e Notinhas (4/6/7/8 estoque de verdade + recarga)
 // 1. Vendas SALVAS abrem em "Nova venda / Notinha" (venda 2.png) para continuar editando onde parou
@@ -20607,7 +20589,20 @@ try{
       const t = (btn.textContent || '').trim().toLowerCase();
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
-      if (/adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa')) {
+      const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
+      // v5.24.12 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // pegava o botão Imprimir por engano (a função dele tem "salvar" no
+      // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
+      // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
+      // leitura, sem tentar salvar coisa nenhuma.
+      if (iaDesligar && (/imprim|print/i.test(t) || /impressao|imprimir|print/i.test(oc))) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.setAttribute('onclick', "imprimirNotinha('" + String(vendaId) + "')");
+        btn.title = 'Imprimir notinha (não altera nada)';
+        return;
+      }
+      if (iaDesligar) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
         if (!btn.__fatPatched) {
@@ -21692,11 +21687,9 @@ try{
   console.log('[DIGICOPY] vendas_notinhas_fix_patch.js v5.15.2 — cancelar não apaga venda já salva');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_notinhas_fix_patch.js", e); }
 ;
 
-/* ===== locacao_chamados_fix_patch.js ===== */
-try{
+/* ===== locacao_chamados_fix_patch.js (escopo global) ===== */
 // PATCH v5.16.0 — Locação + Chamados (contrato e avulso)
 (function(){
 'use strict';
@@ -22394,11 +22387,9 @@ console.log('[DIGICOPY] locacao_chamados_fix_patch.js v5.17.0');
 })();
 
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("locacao_chamados_fix_patch.js", e); }
 ;
 
-/* ===== historico_sort_patch.js ===== */
-try{
+/* ===== historico_sort_patch.js (escopo global) ===== */
 // PATCH v5.17.0 / v5.22.14 — Ordenar históricos clicando no nome da coluna
 // v5.22.14: não empilha seta extra em tabelas que já ordenam no título
 (function(){
@@ -22475,11 +22466,9 @@ setTimeout(scan,400);
 console.log('[DIGICOPY] historico_sort_patch.js v5.22.14 — uma seta só, dois sentidos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("historico_sort_patch.js", e); }
 ;
 
-/* ===== ajustes_v5171_patch.js ===== */
-try{
+/* ===== ajustes_v5171_patch.js (escopo global) ===== */
 // PATCH v5.17.1 — avisos, color no criar, abas finalizado, PDF, filtros, ESC
 (function(){
 'use strict';
@@ -22870,11 +22859,9 @@ window.abrirLeiturasContrato=function(contratoId){
 console.log('[DIGICOPY] ajustes_v5171_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5171_patch.js", e); }
 ;
 
-/* ===== ajustes_v5172_patch.js ===== */
-try{
+/* ===== ajustes_v5172_patch.js (escopo global) ===== */
 // PATCH v5.17.2 — lista finalizar, color abaixo do preto, busca, PDF, ESC sem loop
 (function(){
 'use strict';
@@ -23337,11 +23324,9 @@ window.abrirLeiturasContrato=function(contratoId){
 console.log('[DIGICOPY] ajustes_v5172_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5172_patch.js", e); }
 ;
 
-/* ===== ajustes_v5174_patch.js ===== */
-try{
+/* ===== ajustes_v5174_patch.js (escopo global) ===== */
 // PATCH v5.17.4 — contador oficial da leitura, peças, PDF print, Todos, busca impressora
 (function(){
 'use strict';
@@ -23635,11 +23620,9 @@ window.lcLeiturasTodos=function(){
 console.log('[DIGICOPY] ajustes_v5174_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5174_patch.js", e); }
 ;
 
-/* ===== ajustes_v5175_patch.js ===== */
-try{
+/* ===== ajustes_v5175_patch.js (escopo global) ===== */
 // PATCH v5.17.5 — form contrato = layout avulso; peças; PDF linhas; cliente do contrato
 (function(){
 'use strict';
@@ -23774,30 +23757,76 @@ function htmlBuscaImpressoraContrato(){
   return `<div class="rounded-xl bg-blue-50 border border-blue-200 p-3" id="lc-busca-imp-ctr">
     <b class="text-blue-900">Buscar impressora do contrato</b>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-      <select id="lc-imp-busca-campo" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
-      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
+      <select id="lc-imp-busca-campo" onchange="lcBuscarImpressoraChamado()" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
+      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2 flex items-center gap-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px] flex-1"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Digite para filtrar; ao tocar, só a escolhida fica. ✏️ abre a lista de novo.</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
+// v5.22.88 — a escolhida fica marcada em azul DENTRO da lista (nada de esconder)
+window.lcMarcarImpressoraNaLista=function(equipId){
+  const lista=document.getElementById('ko-equip-lista'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on=b.getAttribute('onclick')||'';
+    const marc=equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
+  // v5.22.94 — TROCA deverdade: os dados da impressora VELHA saem da tela
+  const anteriorId=sel.value||'';
+  const troca=!!anteriorId && anteriorId!==equipId;
+  const eAnt=troca ? (eq(anteriorId)||{}) : {};
   sel.value=equipId;
   const e=eq(equipId)||{};
-  const chosen=document.getElementById('ko-equip-selected');
+  const pNovo=(db.parque||[]).find(x=>x.equipamentoId===equipId)||{};
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(chosen) chosen.classList.remove('hidden');
+  // v5.22.90 — ao escolher, a lista RECOLHE e fica só a escolhida + lápis (modelo das leituras)
   if(list) list.classList.add('hidden');
-  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
+  const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
+  window.lcMarcarImpressoraNaLista(equipId);
+  // v5.22.94 — campos ligados à impressora escritos AQUI (não depende de quem
+  // ganha a ordem do bundle). Na TROCA: sobrescreve tudo; na ABERTURA: só o vazio.
+  function preenche(id, valor, soVazio){
+    const el=document.getElementById(id); if(!el) return;
+    if(soVazio && String(el.value||'').trim()!=='') return;
+    el.value=valor;
+  }
+  preenche('ko-modelo', e.modelo||'', !troca);
+  preenche('ko-serie', e.serie||'', !troca);
+  preenche('ko-patr', e.patrimonio||'', !troca);
+  preenche('ko-local', pNovo.localInstalacao||pNovo.setor||'', !troca);
+  preenche('ko-cont-ant', contadorOficial(equipId,false), !troca);
+  const corAnt=document.getElementById('lc-cont-color-ant');
+  if(corAnt && (troca || String(corAnt.value||'').trim()==='')) corAnt.value=contadorOficial(equipId,true);
+  const bloco=document.getElementById('ko-color-block'); if(bloco) bloco.style.display=temColor(pNovo)?'':'none';
+  if(troca){
+    const atu=document.getElementById('ko-cont-atu'); if(atu) atu.value='';
+    // Motivo: se era EXATAMENTE o modelo da impressora antiga (auto), vira o
+    // da nova. Se a pessoa escreveu outra coisa, o texto dela não se mexe.
+    const motivo=document.getElementById('ko-desc');
+    const nomeAntigo=String(eAnt.modelo||'').trim();
+    if(motivo && nomeAntigo && String(motivo.value||'').trim().toLowerCase()===nomeAntigo.toLowerCase()){
+      motivo.value=(e.modelo||'');
+    }
+  }
+  if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
+  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, troca===true, undefined);
 };
+// Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
-  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
+  if(q) q.focus();
 };
 
 window.lcBuscarImpressoraChamado=function(){
@@ -23813,8 +23842,9 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
+  listaEl.classList.remove('hidden');
   listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
-  if(cur) lcEscolherImpressoraChamado(cur);
+  if(cur) window.lcMarcarImpressoraNaLista(cur);
 };
 
 function setModalSize(){
@@ -23874,6 +23904,13 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   document.getElementById('modal-root')?.classList.remove('hidden');
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  setTimeout(function(){
+    const qi=document.getElementById('lc-imp-busca-q');
+    if(qi && !qi.__v52288){ qi.__v52288=1; qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); }); }
+    const cs=document.getElementById('lc-imp-busca-campo');
+    if(cs && !cs.__v52288){ cs.__v52288=1; cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); }); }
+  }, 0);
   if(equipId){
     const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);
@@ -24080,11 +24117,9 @@ document.addEventListener('click', function(ev){
 console.log('[DIGICOPY] ajustes_v5175_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5175_patch.js", e); }
 ;
 
-/* ===== ajustes_v5176_patch.js ===== */
-try{
+/* ===== ajustes_v5176_patch.js (escopo global) ===== */
 // PATCH v5.17.6 — antigo do último chamado; Alterar Cont. grava; peças lupa; PDF
 (function(){
 'use strict';
@@ -24401,11 +24436,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5176_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5176_patch.js", e); }
 ;
 
-/* ===== ajustes_v5177_patch.js ===== */
-try{
+/* ===== ajustes_v5177_patch.js (escopo global) ===== */
 // PATCH v5.17.7 — peças: lupa/Enter; remover com aviso; 2.1 só contrato; PDF
 (function(){
 'use strict';
@@ -24637,11 +24670,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5177_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5177_patch.js", e); }
 ;
 
-/* ===== ajustes_v5178_patch.js ===== */
-try{
+/* ===== ajustes_v5178_patch.js (escopo global) ===== */
 // PATCH v5.17.8 — Tirar peça de verdade; assinaturas no fim do A4
 (function(){
 'use strict';
@@ -24797,11 +24828,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5178_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5178_patch.js", e); }
 ;
 
-/* ===== ajustes_v5179_patch.js ===== */
-try{
+/* ===== ajustes_v5179_patch.js (escopo global) ===== */
 // PATCH v5.17.9 — cliente avulso X; color no PDF contrato; contadores vazios; 1 folha
 (function(){
 'use strict';
@@ -24998,11 +25027,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5179_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5179_patch.js", e); }
 ;
 
-/* ===== ajustes_v5180_patch.js ===== */
-try{
+/* ===== ajustes_v5180_patch.js (escopo global) ===== */
 // PATCH v5.18.0 — PDF: contador só se finalizado; rodapé+assinatura no fim da A4
 (function(){
 'use strict';
@@ -25143,11 +25170,9 @@ if(typeof window.imprimirChamado==='function'){
 console.log('[DIGICOPY] ajustes_v5180_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5180_patch.js", e); }
 ;
 
-/* ===== ajustes_v5181_patch.js ===== */
-try{
+/* ===== ajustes_v5181_patch.js (escopo global) ===== */
 // PATCH v5.18.1 — peças com valor/desconto; PDF valor; venda faturada; excluir apaga chamado
 (function(){
 'use strict';
@@ -25466,11 +25491,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5181_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5181_patch.js", e); }
 ;
 
-/* ===== ajustes_v5182_patch.js ===== */
-try{
+/* ===== ajustes_v5182_patch.js (escopo global) ===== */
 // PATCH v5.18.2 — peças igual vendas; PDF só desc/qtd/valor; sem 1.2.1/1.2.2
 (function(){
 'use strict';
@@ -25510,12 +25533,12 @@ function htmlPecasVendas(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -25527,6 +25550,10 @@ window.lcPecaCalc=function(prefix){
   const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
   const el=document.getElementById(prefix+'-prod-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  const btn=document.getElementById(prefix+'-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String(document.getElementById(prefix+'-prod-preco')?.value||'').trim());
 };
 
 window.lcBuscarPeca=function(prefix){
@@ -25551,7 +25578,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -25560,6 +25587,9 @@ window.lcAddPecaManual=function(prefix){
   const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
   const p=window.__lcPecaSel;
   if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+  const precoRaw=String(document.getElementById(prefix+'-prod-preco')?.value||'').trim();
+  if(!/^\d+(?:[.,]\d+)?$/.test(precoRaw)){ aviso('Informe um valor unitário numérico para adicionar o item'); return; }
   const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
   const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
   const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
@@ -25573,7 +25603,7 @@ window.lcAddPecaManual=function(prefix){
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
   const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
   const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
-  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value='';
   window.lcPecaCalc(prefix);
   window.lcRenderPecas(prefix);
 };
@@ -25776,11 +25806,9 @@ window.imprimirChamadoPDF=function(osId){
 console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5182_patch.js", e); }
 ;
 
-/* ===== ajustes_v5183_patch.js ===== */
-try{
+/* ===== ajustes_v5183_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.3 — Correções nos chamados (contrato e fora) + leitura
 // • 4  — Remove a seção duplicada "Produtos / peças utilizadas" (antiga) que
@@ -25954,11 +25982,9 @@ if(typeof _abrirDet === 'function'){
 console.log('[DIGICOPY] ajustes_v5183_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5183_patch.js", e); }
 ;
 
-/* ===== ajustes_v5184_patch.js ===== */
-try{
+/* ===== ajustes_v5184_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.4 — PDF do chamado: dados do cliente e de atendimento lado a lado
 // • Item 3 — no PDF do chamado (Ordem de Serviço), a caixa de DADOS DO CLIENTE
@@ -26095,11 +26121,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] ajustes_v5184_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5184_patch.js", e); }
 ;
 
-/* ===== ajustes_v5185_patch.js ===== */
-try{
+/* ===== ajustes_v5185_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.5 — corrige de verdade a duplicação de peças + impressora no PDF
 // • 4/1.2 — A duplicação "Produtos / peças utilizadas" não saía porque outro
@@ -26320,11 +26344,9 @@ window.imprimirChamadoPDF = function(osId){
 console.log('[DIGICOPY] ajustes_v5185_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5185_patch.js", e); }
 ;
 
-/* ===== ajustes_v5186_patch.js ===== */
-try{
+/* ===== ajustes_v5186_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.6 — chamado de contrato (peças + faixas), PDF, nuvem e boas-vindas
 // • 1.2 — Garante a área de peças "igual vendas" (busca/lupa, qtd, valor,
@@ -26550,12 +26572,12 @@ function htmlPecasVendas5186(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -26721,11 +26743,9 @@ if(typeof _doLogin === 'function'){
 console.log('[DIGICOPY] ajustes_v5186_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5186_patch.js", e); }
 ;
 
-/* ===== ajustes_v5187_patch.js ===== */
-try{
+/* ===== ajustes_v5187_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.7 — aviso de canto (boas-vindas) + PDF puxa dados digitados
 // • 5.1 — Aviso "Bem-vindo, Fulano!" no CANTO da tela (não é popup), some
@@ -26820,11 +26840,9 @@ if(typeof _imp === 'function'){
 console.log('[DIGICOPY] ajustes_v5187_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5187_patch.js", e); }
 ;
 
-/* ===== ajustes_v5188_patch.js ===== */
-try{
+/* ===== ajustes_v5188_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.8 (limpo) — logo PADRÃO apenas
 // • O upload de "Logo da loja" foi REMOVIDO de vez (o usuário não quer
@@ -26863,11 +26881,9 @@ setTimeout(aplicarLogoConfig, 2500);
 console.log('[DIGICOPY] ajustes_v5188_patch.js (sem upload de logo)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5188_patch.js", e); }
 ;
 
-/* ===== ajustes_v5189_patch.js ===== */
-try{
+/* ===== ajustes_v5189_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.18.9 — correções de impressão de chamado + logo padrão + dados loja
 // • 1  — Corrige o erro "Informe o motivo do chamado" ao imprimir (a validação
@@ -27129,11 +27145,9 @@ setTimeout(function(){ window.DIGICOPY_LOGO = window.__DIGICOPY_LOGO_ORIGINAL ||
 console.log('[DIGICOPY] ajustes_v5189_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5189_patch.js", e); }
 ;
 
-/* ===== ajustes_v5190_patch.js ===== */
-try{
+/* ===== ajustes_v5190_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.0 — dica de impressão no navegador (Ctrl+P) + reforço no Electron
 // • No programa (.exe/Electron): o Ctrl+P já é interceptado no main.js e imprime
@@ -27179,11 +27193,9 @@ document.addEventListener('keydown', function(e){
 console.log('[DIGICOPY] ajustes_v5190_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5190_patch.js", e); }
 ;
 
-/* ===== ajustes_v5191_patch.js ===== */
-try{
+/* ===== ajustes_v5191_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.1 — otimizações e correções de interferência
 // • Corrige a sincronização manual ("Enviar para nuvem" / "Carregar da nuvem"):
@@ -27247,11 +27259,9 @@ if(_logoPadrao){
 console.log('[DIGICOPY] ajustes_v5191_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5191_patch.js", e); }
 ;
 
-/* ===== ajustes_v5192_patch.js ===== */
-try{
+/* ===== ajustes_v5192_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.2 — corrige o "Informe o motivo do chamado" ao salvar/sair
 // • CAUSA: o formulário do chamado é desenhado com campos de um nome (ko-* /
@@ -27344,11 +27354,9 @@ if(typeof _salvarAvulso === 'function' && !_salvarAvulso.__v5192){
 console.log('[DIGICOPY] ajustes_v5192_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5192_patch.js", e); }
 ;
 
-/* ===== ajustes_v5193_patch.js ===== */
-try{
+/* ===== ajustes_v5193_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.3 — cliente: aviso "salvar ou não" ao sair, só se modificou algo
 // • Ao ALTERAR um cliente, se você mudou qualquer informação e tentar sair
@@ -27449,11 +27457,9 @@ if(typeof _closeModalCli === 'function'){
 console.log('[DIGICOPY] ajustes_v5193_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5193_patch.js", e); }
 ;
 
-/* ===== ajustes_v5196_patch.js ===== */
-try{
+/* ===== ajustes_v5196_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.6 — Usuários e permissões (hierarquia) + técnicos
 // • 0  — Remove TODO o fluxo de "senha CNPJ" da criação/edição de usuário.
@@ -27788,11 +27794,9 @@ try{
 console.log('[DIGICOPY] ajustes_v5196_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5196_patch.js", e); }
 ;
 
-/* ===== ajustes_v5197_patch.js ===== */
-try{
+/* ===== ajustes_v5197_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.7 — Auditoria só para Admin e Dono
 // • Esconde o item "Auditoria" do menu lateral e do submenu Configurações
@@ -27870,11 +27874,9 @@ try{
 console.log('[DIGICOPY] ajustes_v5197_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5197_patch.js", e); }
 ;
 
-/* ===== ajustes_v51916_patch.js ===== */
-try{
+/* ===== ajustes_v51916_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.16 — vendas faturadas, excluir produto e contrato
 // • 1  — Venda faturada abre na tela PRINCIPAL (cadastro), travada, em vez da
@@ -28034,11 +28036,9 @@ try{
 console.log('[DIGICOPY] ajustes_v51916_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v51916_patch.js", e); }
 ;
 
-/* ===== ajustes_v51920_patch.js ===== */
-try{
+/* ===== ajustes_v51920_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.20 — validação de chamado em UM aviso só + destaque em vermelho
 // • Ao salvar/finalizar, junta TUDO que está faltando num único aviso.
@@ -28173,11 +28173,9 @@ if(typeof _salvarAvulso === 'function' && !_salvarAvulso.__v51920){
 console.log('[DIGICOPY] ajustes_v51920_patch.js');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v51920_patch.js", e); }
 ;
 
-/* ===== ajustes_v52023_patch.js ===== */
-try{
+/* ===== ajustes_v52023_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.20.23 — Excluir em lote (Clientes e Financeiro) + limpezas
 // • Clientes: caixinha de seleção + botão "Excluir selecionados" — apaga DE
@@ -28446,11 +28444,9 @@ window.excluirFinanceiroSelecionados = function(){
 console.log('[DIGICOPY] ajustes_v52023_patch.js carregado — excluir em lote (clientes/financeiro) + sem botão Pagar no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52023_patch.js", e); }
 ;
 
-/* ===== ajustes_v52024_patch.js ===== */
-try{
+/* ===== ajustes_v52024_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.20.24 — Filtro "pagar" do Financeiro + backup automático diário
 // • Financeiro: apaga DE VERDADE o filtro de tipo (Receber+Pagar/Só a receber/
@@ -28521,11 +28517,9 @@ if(typeof window.renderFinanceiro === 'function' && !window.renderFinanceiro.__v
 console.log('[DIGICOPY] ajustes_v52024_patch.js carregado — sem filtro de tipo no financeiro, backup só pelo botão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52024_patch.js", e); }
 ;
 
-/* ===== indexeddb_persistence_patch.js ===== */
-try{
+/* ===== indexeddb_persistence_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PERSISTÊNCIA INDEXEDDB v2 — incremental por entidade
 // Migra automaticamente o snapshot v1 e grava apenas entidades alteradas.
@@ -28656,11 +28650,9 @@ try{document.addEventListener('visibilitychange',()=>{if(document.hidden)writeNo
 console.log('[DIGICOPY] persistência IndexedDB v2 incremental carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("indexeddb_persistence_patch.js", e); }
 ;
 
-/* ===== cloudflare_sync_patch.js ===== */
-try{
+/* ===== cloudflare_sync_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // DIGICOPY CLOUD v5.20.28 — ativação segura de aparelhos (Cloudflare D1)
 // Esta etapa substitui o diagnóstico Firebase e prepara a autorização dos PCs.
@@ -28670,6 +28662,24 @@ try{
 'use strict';
 
 const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+
+// v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
+// mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
+// público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
+// próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
+// Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.kauangabrielcardososilva7890.workers.dev/v1/medir';
+async function chamarMedidorOficial(){
+  const agora = Date.now();
+  if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
+  window.__dcUltPingMedidor = agora;
+  try{
+    const r = await fetch(MEDIDOR_OFICIAL_URL, { cache: 'no-store' });
+    const j = await r.json().catch(() => null);
+    return !!(j && j.ok);
+  }catch(e){ return false; }
+}
+window.DC_chamarMedidorOficial = chamarMedidorOficial;
 const TOKEN_KEY = 'digicopy_cloud_device_token_v1';
 const DEVICE_KEY = 'digicopy_cloud_device_info_v1';
 
@@ -28692,10 +28702,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
+  // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
+  try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -28815,7 +28850,10 @@ async function renderDisconnected(body){
 }
 
 async function renderConnected(body){
-  body.innerHTML=message('Verificando autorização deste computador...','info');
+  body.innerHTML=message('Medindo o uso oficial e verificando autorização deste computador...','info');
+  // v5.23.4 — mede quando a tela abre (pedido do dono); se o medidor não
+  // estiver implantado/responder, segue a vida com a contagem estimada.
+  const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
@@ -28832,8 +28870,48 @@ async function renderConnected(body){
     const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
     if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
+  const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
+  const linhaVersaoNuvem = status.workerVersao
+    ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
+    : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  function garantirCssUso(){
+    if(document.getElementById('dc-uso-css')) return;
+    const s=document.createElement('style');
+    s.id='dc-uso-css';
+    s.textContent=[
+      'html.digi-escuro .dc-uso-nuvem{background:#1e293b!important;border-color:#334155!important}',
+      'html.digi-escuro .dc-uso-nuvem h3{color:#e5e7eb!important}',
+      'html.digi-escuro .dc-uso-nuvem .dc-uso-barra{background:#0f172a!important}',
+      'html.digi-escuro .dc-uso-nuvem small,html.digi-escuro .dc-uso-nuvem span{color:#94a3b8!important}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  garantirCssUso();
+  function barraUso(pct){
+    const p=Math.max(0,Math.min(100,pct));
+    const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
+    return '<div class="dc-uso-barra" style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+  }
+  function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
+  const usoBloco = uso
+    ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">o teto grátis zera às 21h (horário de Brasília)</small></div>'+
+      '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
+      '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare'+(medidoAgora?' — medido agora, na abertura desta tela (ele remede sozinho a cada abertura).':(uso.medidoEm?' — o mesmo número do painel dela, medido agora mesmo.':' — o mesmo número do painel dela.')):'contagem estimada pela própria nuvem — mostra a medida do uso de hoje pra você não ser pego de surpresa pelo teto.')+'</small>'+
+      '</div>'
+    : (contagemFalhou
+      ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
+      : '');
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
@@ -28858,6 +28936,7 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    usoBloco+linhaVersaoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
@@ -28975,11 +29054,9 @@ if(typeof document!=='undefined'){
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cloudflare_sync_patch.js", e); }
 ;
 
-/* ===== cloudflare_data_sync_patch.js ===== */
-try{
+/* ===== cloudflare_data_sync_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // DIGICOPY CLOUD DATA v5.20.30 — sincronização incremental local-first
 // • Nuvem ausente/vazia NUNCA apaga o PC.
@@ -29178,6 +29255,16 @@ function applyRemote(change){
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
     const arr=db[change.entity],idx=arr.findIndex(x=>x&&String(x.id)===String(change.recordId));
+    // v5.22.92 — ORÇAMENTO NUNCA SOME POR MANDADO DA NUVEM.
+    // Orçamento sumindo foi o bug de "cliquei e não achei". Mesmo que outro
+    // aparelho mande apagar, aqui o orçamento fica marcado como excluído
+    // (sai das listas de trabalho, mas segue no banco e volta em Estornar)
+    // em vez de desaparecer de verdade.
+    if(change.operation==='delete'&&change.entity==='orcamentos'){
+      if(idx>=0){ arr[idx].status='excluido'; arr[idx].excluidoEm=arr[idx].excluidoEm||new Date().toISOString(); changed=true; }
+      state.versions[k]=Number(change.version);state.known[k]=true;state.hashes[k]=hash(arr[idx]);
+      return changed;
+    }
     if(change.operation==='delete'){if(idx>=0){arr.splice(idx,1);changed=true;}}
     else if(change.data){if(idx>=0)arr[idx]=change.data;else arr.push(change.data);changed=true;}
   }else if(mode==='root'){
@@ -29248,6 +29335,11 @@ function decideReinstallGuard(opts){
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
+  // v5.24.0 — só remove "sobras locais" quando o puxamento da nuvem terminou
+  // DE VERDADE. Se a internet caiu no meio, state.known fica incompleto e a
+  // reconciliação APAGARIA dados legítimos deste computador (e a remoção
+  // local vira delete na fila de envio → apagaria na nuvem também).
+  if(!state.initialPull)return 0;
   let removed=0;
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
@@ -29346,7 +29438,7 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
-    if(!PODE_EXCLUIR.has(entity))continue;
+    if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue; // v5.22.92 — este PC nunca manda apagar orçamento
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
     if(!missing.length)continue;
     if(!houveIntencaoDeExcluir()){
@@ -29497,8 +29589,20 @@ async function pushOutbox(){
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
         remove.add(item.mutation.mutationId);sent++;
       }else if(result.conflict){
-        rememberConflict(item,result);
+        // v5.24.0 — conflito NÃO descarta mais a edição local de cara. Antes:
+        // aceitava o estado da nuvem e jogava a mutação fora em silêncio —
+        // era um caminho de "salvei e sumiu" quando dois PCs mexiam juntos.
+        // Agora: aplica o estado atual da nuvem e REENVIA a mesma intenção
+        // uma vez, com baseVersion atualizada. Só cede se mudarem de novo
+        // (concorrência real — última escrita vence), e avisa no sino.
         if(result.current)applyRemote({entity:result.current.entity,recordId:result.current.recordId,data:result.current.data,version:result.current.version,operation:result.current.deletedAt?'delete':'upsert'});
+        if(!item.retryV5240){
+          item.retryV5240=true;
+          if(result.current){item.mutation=Object.assign({},item.mutation,{baseVersion:Number(result.current.version)||0});}
+          continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
+        }
+        rememberConflict(item,result);
+        try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);remove.add(item.mutation.mutationId);
@@ -29802,11 +29906,9 @@ if(authorized())schedule(1200);else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("cloudflare_data_sync_patch.js", e); }
 ;
 
-/* ===== ajustes_v5214_clientes_visiveis_patch.js ===== */
-try{
+/* ===== ajustes_v5214_clientes_visiveis_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.21.4 — clientes visíveis na tela
 // A nuvem/contagem usa db.clientes.length. A tela filtrava empresaId e
@@ -29893,11 +29995,9 @@ else setTimeout(aposBasePronta,400);
 console.log('[DIGICOPY] v5.21.4 clientes visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5214_clientes_visiveis_patch.js", e); }
 ;
 
-/* ===== ajustes_v5215_cnpj_inteligente_patch.js ===== */
-try{
+/* ===== ajustes_v5215_cnpj_inteligente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.21.5 — busca inteligente de CNPJ na loja e no cliente
 // Consulta BrasilAPI e, se falhar, ReceitaWS. Preenche razão, fantasia,
@@ -30117,11 +30217,9 @@ setTimeout(instalarBuscaLoja,800);
 console.log('[DIGICOPY] v5.21.5 busca inteligente de CNPJ');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5215_cnpj_inteligente_patch.js", e); }
 ;
 
-/* ===== ajustes_v5220_nfe_config_patch.js ===== */
-try{
+/* ===== ajustes_v5220_nfe_config_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.0 — preparação NF-e (sem emitir ainda)
 // • Card em Configurações: IE, regime, série, ambiente
@@ -30252,11 +30350,9 @@ setTimeout(renderNfeCard,800);
 console.log('[DIGICOPY] v5.22.0 preparação NF-e');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5220_nfe_config_patch.js", e); }
 ;
 
-/* ===== ajustes_v5221_nfe_emissao_patch.js ===== */
-try{
+/* ===== ajustes_v5221_nfe_emissao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.1 — conferência NF-e (modelo 55) da venda e da leitura
 // • Regime: Simples Nacional (CRT 1), não é MEI
@@ -30826,11 +30922,9 @@ setTimeout(function(){ try{ atualizarCardNfe(); }catch(e){} },900);
 console.log('[DIGICOPY] v5.22.1 conferência NF-e isolada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5221_nfe_emissao_patch.js", e); }
 ;
 
-/* ===== ajustes_v5227_nuvem_acompanhamento_patch.js ===== */
-try{
+/* ===== ajustes_v5227_nuvem_acompanhamento_patch.js (escopo global) ===== */
 // DIGICOPY v5.22.7 — acompanhamento dos dados dos outros PCs (só Admin)
 (function(){
 'use strict';
@@ -30967,11 +31061,9 @@ window.DIGICOPY_NUVEM_ACOMPANHAMENTO={entityName,opName,activityReady:true};
 console.log('[DIGICOPY] acompanhamento dos PCs na nuvem (Admin)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5227_nuvem_acompanhamento_patch.js", e); }
 ;
 
-/* ===== ajustes_v5228_nfe_assinatura_patch.js ===== */
-try{
+/* ===== ajustes_v5228_nfe_assinatura_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.8 — assinar NF-e com A1 (senha só na hora)
 // • Não grava a senha. Não envia para a SEFAZ. Não altera venda/leitura/nuvem.
@@ -31119,11 +31211,9 @@ window.NFE_ASSINATURA_UI={pedirSenhaA1:typeof document==='undefined'?undefined:p
 console.log('[DIGICOPY] v5.22.8 assinatura A1 isolada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5228_nfe_assinatura_patch.js", e); }
 ;
 
-/* ===== ajustes_v5229_nfe_atalho_historico_patch.js ===== */
-try{
+/* ===== ajustes_v5229_nfe_atalho_historico_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.9 — atalho NF-e no histórico da notinha e da leitura
 // • Usa o que estiver selecionado
@@ -31266,11 +31356,9 @@ window.NFE_ATALHO_HISTORICO={
 console.log('[DIGICOPY] v5.22.9 atalho NF-e no histórico');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5229_nfe_atalho_historico_patch.js", e); }
 ;
 
-/* ===== ajustes_v52210_historico_checkbox_nfe_patch.js ===== */
-try{
+/* ===== ajustes_v52210_historico_checkbox_nfe_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.10 — caixa + excluir no histórico de leituras; NF-e nas duas listas
 // • Histórico de leituras ganha caixa e Excluir (faturada não sai)
@@ -31454,11 +31542,9 @@ window.NFE_LISTA_CHECKBOX={
 console.log('[DIGICOPY] v5.22.10 caixa no histórico + NF-e com uma só');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52210_historico_checkbox_nfe_patch.js", e); }
 ;
 
-/* ===== ajustes_v52211_logo_impressao_unica_patch.js ===== */
-try{
+/* ===== ajustes_v52211_logo_impressao_unica_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.11 — uma logo só na impressão (notinha, leitura, chamado, relatório)
 // • Tira a logo extra que ia para o topo e comia espaço
@@ -31533,11 +31619,9 @@ window.open=function(){
 console.log('[DIGICOPY] v5.22.11 logo única na impressão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52211_logo_impressao_unica_patch.js", e); }
 ;
 
-/* ===== ajustes_v52212_celular_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52212_celular_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.12 — celular autoriza com código e puxa a nuvem
 // • NF-e continua só no PC da loja (A1 local)
@@ -31663,11 +31747,9 @@ setTimeout(ligar,600);
 console.log('[DIGICOPY] v5.22.12 celular autoriza e puxa a nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52212_celular_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52213_financeiro_receber_patch.js ===== */
-try{
+/* ===== ajustes_v52213_financeiro_receber_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.13 — Financeiro: só Contas e caixas; Receber junto da lixeira
 // • Some o submenu Novo recebimento
@@ -31971,11 +32053,9 @@ setTimeout(tirarSubmenuRecebimento, 1200);
 console.log('[DIGICOPY] v5.22.13 financeiro: Contas e caixas + Receber/baixa');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52213_financeiro_receber_patch.js", e); }
 ;
 
-/* ===== ajustes_v52213_menus_atalhos_patch.js ===== */
-try{
+/* ===== ajustes_v52213_menus_atalhos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.13 — Ordem/nome dos menus + atalhos do Início
 // • Só ordem e nome (menu e submenu). Limite de caracteres.
@@ -31999,7 +32079,6 @@ function menusPadrao(){
   return [
     {id:'inicio', icon:'ph-house', label:'Início', click:'navigateTo(\'dashboard\')'},
     {id:'atendimento', icon:'ph-cash-register', label:'Atendimento', click:'navigateTo(\'vendas\')', items:[
-      {id:'nova-venda', icon:'ph-shopping-cart-simple', label:'Nova venda', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
       {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Consultar notinhas', click:'navigateTo(\'vendas\')'},
       {id:'abrir-chamado', icon:'ph-wrench', label:'Abrir chamado', click:'openQuickOS()'}
     ]},
@@ -32026,7 +32105,7 @@ function menusPadrao(){
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
       {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
     ]},
-    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'exportBackup()', btnId:'btn-backup-top', title:'Baixar uma cópia de segurança de todos os dados'},
+    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
     {id:'sair', icon:'ph-sign-out', label:'Sair', click:'doLogout()', title:'Sair do sistema'}
   ];
@@ -32318,11 +32397,9 @@ setTimeout(tirarChamadosLocacao, 1800);
 console.log('[DIGICOPY] v5.22.13 menus editáveis + atalhos do Início');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52213_menus_atalhos_patch.js", e); }
 ;
 
-/* ===== ajustes_v52214_ordenacao_patch.js ===== */
-try{
+/* ===== ajustes_v52214_ordenacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.14 — Ordenação dos títulos: um sentido não trava; sem duas setas
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32372,11 +32449,11 @@ function wrapSort(nome, pegarEstado, seletor){
 
 function kauan(){ return window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {}); }
 
-wrapSort('produtosSortOperacional', function(){
-  var st = kauan();
-  st.prod = st.prod || { sort:'codigo', dir:'asc' };
-  return st.prod;
-}, '#view-produtos');
+// v5.22.84 — a ordenação de produtos ganhou sentido próprio guardado no mesmo
+// estado da lista (fluxos_operacionais_patch.js) e a trava antiga saiu: ela
+// guardava o sentido em objeto separado (nunca virava Z→A) e "invertia as
+// linhas" na tela, jogando a linha de contagem para o topo.
+
 
 wrapSort('contratosSortOperacional', function(){
   var st = kauan();
@@ -32407,11 +32484,9 @@ wrapSort('chamadosSortRefino', function(){
 console.log('[DIGICOPY] v5.22.14 ordenação: A→Z e Z→A, uma seta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52214_ordenacao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52214_recargas_patch.js ===== */
-try{
+/* ===== ajustes_v52214_recargas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.14 — Recargas fora de produtos: aba, submenu, venda puxa daqui, sem estoque
 // ═══════════════════════════════════════════════════════════════════════════
@@ -32722,11 +32797,9 @@ if(typeof window.vosAddItem==='function' && !window.vosAddItem.__v52214rec){
 console.log('[DIGICOPY] v5.22.14 recargas: aba + venda sem estoque');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52214_recargas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52216_menus_submenus_patch.js ===== */
-try{
+/* ===== ajustes_v52216_menus_submenus_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.16 — Submenus móveis, menus ocultos só no Admin, atalhos na faixa azul
 // • Setas sobem/descem submenu dentro do menu
@@ -33173,11 +33246,9 @@ setTimeout(function(){ if(typeof window.pintarAtalhos==='function') window.pinta
 console.log('[DIGICOPY] v5.22.16 submenus móveis + ocultos só Admin + atalhos na faixa azul');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52216_menus_submenus_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_menus_arrastar_visibilidade_patch.js ===== */
-try{
+/* ===== ajustes_v52217_menus_arrastar_visibilidade_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Menus arrastáveis + Nuvem/Backup só no Admin
 // • Editor: arrastar menu e submenu (além das setas)
@@ -33351,11 +33422,9 @@ if(typeof window.showApp==='function' && !window.showApp.__v52217vis){
 console.log('[DIGICOPY] v5.22.17 menus arrastáveis + Nuvem/Backup só Admin');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_menus_arrastar_visibilidade_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_print_sem_rodape_patch.js ===== */
-try{
+/* ===== ajustes_v52217_print_sem_rodape_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Tira o rodapé da loja em toda impressão/PDF
 // (o bloco cinza com razão, CNPJ e endereço que caía na outra metade da folha)
@@ -33415,11 +33484,9 @@ if(typeof window.vosGerarHtmlNotinha==='function' && !window.vosGerarHtmlNotinha
 console.log('[DIGICOPY] v5.22.17 impressão sem rodapé da loja na outra metade');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_print_sem_rodape_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_financeiro_recibo_patch.js ===== */
-try{
+/* ===== ajustes_v52217_financeiro_recibo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Imprimir recibo no financeiro (ao lado de Receber/Excluir)
 // • Só títulos do mesmo cliente
@@ -33636,11 +33703,9 @@ setTimeout(ajustarBotaoImprimir, 1400);
 console.log('[DIGICOPY] v5.22.17 recibo no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_financeiro_recibo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52217_cert_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52217_cert_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.17 — Certificado público na nuvem (não é o A1 .pfx)
 // • Sobe .p7b / .cer / .crt (arquivo da foto: Troca de Informações Pessoais)
@@ -33769,11 +33834,9 @@ setTimeout(garantirBloco, 900);
 console.log('[DIGICOPY] v5.22.17 certificado público na nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52217_cert_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52218_pix_prazo_print_venda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.18 — PIX baixa na hora; comprovante só no A prazo; imprimir só depois de faturar
 // ═══════════════════════════════════════════════════════════════════════════
@@ -33883,11 +33946,9 @@ setTimeout(esconderImprimirAntesDeFaturar, 600);
 console.log('[DIGICOPY] v5.22.18 PIX baixa na hora; comprovante no A prazo; imprimir só faturada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52218_pix_prazo_print_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52218_etiqueta_recarga_venda_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.18 — Etiqueta na recarga: sem botão cadastrar, duplicata bloqueada,
 // preenche cliente sozinha, some no estorno se não restar venda ativa
@@ -34050,11 +34111,9 @@ setTimeout(tirarBotaoCadastrar, 800);
 console.log('[DIGICOPY] v5.22.18 etiqueta recarga: cadastro no faturar, sem duplicar, some no estorno');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52218_etiqueta_recarga_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52219_filtros_busca_patch.js ===== */
-try{
+/* ===== ajustes_v52219_filtros_busca_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.19 — Filtro auxiliar ao lado da busca (cliente / produto / recarga)
 // • Cliente: mesmos campos do menu Clientes, em todo lugar que escolhe cliente
@@ -34447,11 +34506,9 @@ setTimeout(aplicarTudo, 1400);
 console.log('[DIGICOPY] v5.22.19 filtros auxiliares: cliente, produto (sem recarga) e recarga+etiqueta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52219_filtros_busca_patch.js", e); }
 ;
 
-/* ===== ajustes_v52219_pix_link_publico_patch.js ===== */
-try{
+/* ===== ajustes_v52219_pix_link_publico_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.19 — Link do comprovante/página Pix não depende do GitHack
 // O PDF usa a URL pública da nuvem. Se o repositório ficar privado, o cliente
@@ -34481,11 +34538,9 @@ window.pixPagamentoUrl = function(payload){
 console.log('[DIGICOPY] v5.22.19 PIX: página de pagamento na nuvem, sem GitHack');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52219_pix_link_publico_patch.js", e); }
 ;
 
-/* ===== ajustes_v52220_lupa_alinha_patch.js ===== */
-try{
+/* ===== ajustes_v52220_lupa_alinha_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.20 — Lupa no lugar certo (o filtro auxiliar não pode empurrar o botão)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -34639,11 +34694,9 @@ setTimeout(consertarTudo, 1600);
 console.log('[DIGICOPY] v5.22.20 lupa alinhada no campo');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52220_lupa_alinha_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_menus_dispositivo_patch.js ===== */
-try{
+/* ===== ajustes_v52221_menus_dispositivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Menus só deste dispositivo + editor nas Configurações
 // • Layout não sobe na nuvem e não muda os outros PCs
@@ -34817,11 +34870,9 @@ setTimeout(function(){
 console.log('[DIGICOPY] v5.22.21 menus só deste dispositivo');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_menus_dispositivo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_nfe_permissao_patch.js ===== */
-try{
+/* ===== ajustes_v52221_nfe_permissao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Caixa “pode emitir NF” em Usuários
 // • Só Admin ou Dono edita a caixa
@@ -34956,11 +35007,9 @@ setTimeout(injetarCaixas, 800);
 console.log('[DIGICOPY] v5.22.21 permissão de emitir NF');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_nfe_permissao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_import_produtos_patch.js ===== */
-try{
+/* ===== ajustes_v52221_import_produtos_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — Importação pontual PRODUTOS + PRODUTOS_CATEGORIA
 // • Dedupe só nesta importação, por código/SKU
@@ -35014,7 +35063,7 @@ function mapearProduto(row, cats){
     estoqueMin: parseInt(row && (row.ESTOQUE_MINIMO || row.ESTOQUE_MIN), 10) || 0,
     custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
     preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
-    local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    // v5.22.84 — "Local" do produto aposentado: nem importado ele entra na base
     ncm: txt(row && (row.NCM || row.PR_NCM || row.ncm)).replace(/\D/g,'').slice(0,8),
     status: 'ativo'
   };
@@ -35047,11 +35096,9 @@ window.IMPORT_PRODUTOS_PURE = {
 console.log('[DIGICOPY] v5.22.21 importação pontual de produtos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_import_produtos_patch.js", e); }
 ;
 
-/* ===== ajustes_v52221_cert_nuvem_a1_patch.js ===== */
-try{
+/* ===== ajustes_v52221_cert_nuvem_a1_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.21 — A1 .pfx na nuvem (sem senha) + some o carregamento local
 // • Senha continua só na hora de assinar. Ainda não envia à SEFAZ.
@@ -35174,11 +35221,9 @@ setTimeout(apagarA1LocalSeHouver, 1200);
 console.log('[DIGICOPY] v5.22.21 A1 na nuvem, sem senha gravada');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52221_cert_nuvem_a1_patch.js", e); }
 ;
 
-/* ===== ajustes_v52222_menus_arrastar_patch.js ===== */
-try{
+/* ===== ajustes_v52222_menus_arrastar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.22 — Editor de menus: só arrastar, sem setas
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35219,11 +35264,9 @@ if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52
 console.log('[DIGICOPY] v5.22.22 menus só arrastar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52222_menus_arrastar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52222_ncm_import_patch.js ===== */
-try{
+/* ===== ajustes_v52222_ncm_import_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.22 — Liga NCM no produto (tabela NCM do sistema antigo + campo no produto)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35288,11 +35331,9 @@ if(window.IMPORT_PRODUTOS_PURE && typeof window.IMPORT_PRODUTOS_PURE.mapearProdu
 console.log('[DIGICOPY] v5.22.22 NCM no produto');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52222_ncm_import_patch.js", e); }
 ;
 
-/* ===== ajustes_v52223_cat_letra_patch.js ===== */
-try{
+/* ===== ajustes_v52223_cat_letra_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.23 — Letras P/S/I/C/E no select: some a opção letra, entra o nome
 // • Chip, Original e o resto ficam.
@@ -35368,11 +35409,9 @@ setTimeout(aplicar, 1600);
 console.log('[DIGICOPY] v5.22.23 letras só no select (sem regra de categoria)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52223_cat_letra_patch.js", e); }
 ;
 
-/* ===== ajustes_v52223_menus_arraste_patch.js ===== */
-try{
+/* ===== ajustes_v52223_menus_arraste_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.23 — Menus: apaga as setas e o bloco segue o mouse
 // ═══════════════════════════════════════════════════════════════════════════
@@ -35472,11 +35511,9 @@ if(typeof window.abrirEditorMenus==='function' && !window.abrirEditorMenus.__v52
 console.log('[DIGICOPY] v5.22.23 menus seguem o mouse, sem seta');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52223_menus_arraste_patch.js", e); }
 ;
 
-/* ===== ajustes_v52224_cat_letra_uma_vez_patch.js ===== */
-try{
+/* ===== ajustes_v52224_cat_letra_uma_vez_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.24 — Correção pontual: P/S/I/C/E só no dado já importado, uma vez
 // • Não envolve unificaCat / categoriaUnificada (não vira regra).
@@ -35558,11 +35595,9 @@ setTimeout(tentar, 1800);
 console.log('[DIGICOPY] v5.22.24 letra no produto: uma vez, sem regra');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52224_cat_letra_uma_vez_patch.js", e); }
 ;
 
-/* ===== ajustes_v52225_import_pula_del_patch.js ===== */
-try{
+/* ===== ajustes_v52225_import_pula_del_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.25 — Nesta importação, produto com DEL = S não entra
 // • Só DEL. OCULTAR não decide.
@@ -35596,11 +35631,9 @@ if(window.IMPORT_PRODUTOS_PURE && !window.IMPORT_PRODUTOS_PURE.ehDel){
 console.log('[DIGICOPY] v5.22.25 importação pula DEL=S');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52225_import_pula_del_patch.js", e); }
 ;
 
-/* ===== ajustes_v52227_lupa_filtro_cli_patch.js ===== */
-try{
+/* ===== ajustes_v52227_lupa_filtro_cli_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.27 — Some a lupa enfeite em cima do filtro de cliente
 // • A lupa de pesquisar (botão) fica. Some só o ícone absoluto que cobria o select.
@@ -35664,11 +35697,9 @@ setTimeout(tiraLupaEnfeite, 1800);
 console.log('[DIGICOPY] v5.22.27 lupa enfeite do filtro de cliente removida');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52227_lupa_filtro_cli_patch.js", e); }
 ;
 
-/* ===== ajustes_v52227_ncm_origem_patch.js ===== */
-try{
+/* ===== ajustes_v52227_ncm_origem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.27 — NCM pesquisável (Enter/lupa) + origem ICMS 0 a 8
 // • Origem oficial da NF-e. Não inventa origem a partir do NCM.
@@ -35828,11 +35859,9 @@ if(typeof window.openModal==='function' && !window.openModal.__v52227ncm){
 console.log('[DIGICOPY] v5.22.27 NCM pesquisável e origem 0-8');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52227_ncm_origem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52228_a1_nuvem_lupa_ncm_patch.js ===== */
-try{
+/* ===== ajustes_v52228_a1_nuvem_lupa_ncm_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.28 — A1 da nuvem vale na conferência/assinatura + lupa NCM no meio da caixa
 // • Senha só na hora. Ainda não envia à SEFAZ.
@@ -36008,11 +36037,9 @@ setTimeout(aplicarLupa, 900);
 console.log('[DIGICOPY] v5.22.28 A1 da nuvem + lupa NCM no centro da caixa');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52228_a1_nuvem_lupa_ncm_patch.js", e); }
 ;
 
-/* ===== ajustes_v52229_nfe_ie_im_cnae_patch.js ===== */
-try{
+/* ===== ajustes_v52229_nfe_ie_im_cnae_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.29 — Dados fiscais da loja: IE, Inscrição Municipal e CNAE
 // • Grava em db.config.fiscal. Ainda não emite na SEFAZ.
@@ -36190,11 +36217,9 @@ setTimeout(aplicar, 900);
 console.log('[DIGICOPY] v5.22.29 IE, Inscrição Municipal e CNAE');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52229_nfe_ie_im_cnae_patch.js", e); }
 ;
 
-/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js ===== */
-try{
+/* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.30 — Modo escuro só neste aparelho
 // • Liga/desliga em Configurações. Não sobe na nuvem. Não muda outros PCs.
@@ -36319,11 +36344,9 @@ setTimeout(cardEscuro, 800);
 console.log('[DIGICOPY] v5.22.30 modo escuro só neste aparelho');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52230_modo_escuro_dispositivo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52233_escuro_login_nuvem_patch.js ===== */
-try{
+/* ===== ajustes_v52233_escuro_login_nuvem_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.33 — Modo escuro no login e no painel Nuvem
 // • Só essas duas telas. Não mexe no resto do visual da 5.22.30.
@@ -36375,11 +36398,9 @@ setTimeout(aplicar, 80);
 console.log('[DIGICOPY] v5.22.33 escuro no login e na Nuvem');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52233_escuro_login_nuvem_patch.js", e); }
 ;
 
-/* ===== ajustes_v52234_config_aviso_salvou_patch.js ===== */
-try{
+/* ===== ajustes_v52234_config_aviso_salvou_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.34 — Aviso de salvo nas Configurações
 // • Qualquer botão Salvar do menu Configurações abre o aviso do sistema.
@@ -36458,11 +36479,9 @@ if(!window.__v52234salvoClick){
 console.log('[DIGICOPY] v5.22.34 aviso de salvo nas Configurações');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52234_config_aviso_salvou_patch.js", e); }
 ;
 
-/* ===== ajustes_v52234_ncm_produto_existente_patch.js ===== */
-try{
+/* ===== ajustes_v52234_ncm_produto_existente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.34 — Reimportação: produto que já existe só ganha o NCM
 // • Não duplica. Não mexe estoque/preço. DEL=S continua pulado.
@@ -36490,11 +36509,9 @@ window.NCM_PRODUTO_EXISTENTE_PURE = {
 console.log('[DIGICOPY] v5.22.34 NCM no produto que já existe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52234_ncm_produto_existente_patch.js", e); }
 ;
 
-/* ===== ajustes_v52235_codigo_sem_sku_patch.js ===== */
-try{
+/* ===== ajustes_v52235_codigo_sem_sku_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.35 — Na tela aparece Código, não SKU
 // • Só o texto. O campo interno continua sku.
@@ -36563,11 +36580,9 @@ setTimeout(aplicar, 600);
 console.log('[DIGICOPY] v5.22.35 código no lugar de SKU');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52235_codigo_sem_sku_patch.js", e); }
 ;
 
-/* ===== ajustes_v52236_codigo_cliente_exato_patch.js ===== */
-try{
+/* ===== ajustes_v52236_codigo_cliente_exato_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.36 — Filtro Código do cliente é exato
 // • 48 acha só 48. Não pega 480, 481, 1048.
@@ -36626,11 +36641,9 @@ setTimeout(function(){
 console.log('[DIGICOPY] v5.22.36 código do cliente é exato');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52236_codigo_cliente_exato_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_vendas_os_visual_patch.js ===== */
-try{
+/* ===== ajustes_v52237_vendas_os_visual_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Vendas / OS: rótulos azuis, série com lupa, garantia escreve,
 //            some valor/desconto OS, técnico obrigatório, aviso EPSON
@@ -36881,11 +36894,9 @@ setTimeout(function(){ wrapColetar(); wrapGravar(); }, 300);
 console.log('[DIGICOPY] v5.22.37 vendas/OS visual, série, garantia, técnico, EPSON');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_vendas_os_visual_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_estoque_zero_volta_patch.js ===== */
-try{
+/* ===== ajustes_v52237_estoque_zero_volta_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Produto zerado: avisa, abre cadastro na aba Estoque e volta
 //            na mesma venda (nada some). Não adiciona o item sozinho.
@@ -37062,11 +37073,9 @@ if(typeof window.closeModal==='function' && !window.closeModal.__v52237est){
 console.log('[DIGICOPY] v5.22.37 estoque zerado volta na venda');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_estoque_zero_volta_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_contratos_filtros_patch.js ===== */
-try{
+/* ===== ajustes_v52237_contratos_filtros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Filtros de busca em Locação → Contratos
 // ═══════════════════════════════════════════════════════════════════════════
@@ -37295,11 +37304,9 @@ setTimeout(injetar, 500);
 console.log('[DIGICOPY] v5.22.37 filtros de contratos');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_contratos_filtros_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_orcamentos_menu_patch.js ===== */
-try{
+/* ===== ajustes_v52237_orcamentos_menu_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Menu Orçamentos (cadastro separado do Digicopy, NÃO é o
 //            Buscador Escola). Lista, novo, excluir, estornar, filtros.
@@ -37482,6 +37489,9 @@ window.renderOrcamentos=function(){
   var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
     return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
   });
+  // v5.22.91 — guarda os ids que a tela mostrou agora; o aviso de "não achei"
+  // compara com isso e diz se o clicado ESTAVA na lista (fecha o diagnóstico)
+  try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x.id); }).slice(0,80))); }catch(e){}
   view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
     +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
     +'<div class="neo-actions">'
@@ -37504,13 +37514,13 @@ window.renderOrcamentos=function(){
     +(list.map(function(o){
       var cl=clienteDe(o);
       var fech=ehFechado(o);
-      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
+      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
         +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
         +'<td><b class="text-[#0a1e8a]">'+esc(o.numero||'')+'</b>'+(fech?' <span class="text-[10px] text-emerald-700 font-bold">FECHADO</span>':'')+'</td>'
         +'<td>'+dataBR(o.data)+'</td>'
         +'<td><b>'+esc(cl.nome||'(sem cliente)')+'</b></td>'
         +'<td><b>'+money(o.total)+'</b></td>'
-        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
+        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
         +'</tr>';
     }).join('') || '<tr><td colspan="6" class="text-center text-slate-400 py-12">Nenhum orçamento</td></tr>')
     +'</tbody></table></div></div></div>';
@@ -37604,10 +37614,66 @@ function formNovo(existente){
 }
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
-window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+window.abrirOrcamento=function(id, _origem){
+  // v5.24.9 — ETIQUETA DE ORIGEM: todo chamador conta QUEM clicou. Quando o
+  // orçamento não existe, o aviso já diz "o clique veio de: ..." — a foto do
+  // dono vira resposta, não charada.
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    // v5.22.91 — diagnóstico completo: quantos tem, qual clicou, se o clicado
+    // ESTAVA na lista que a tela mostrou, e os códigos que existem agora
+    var _qtd = 0; try{ _qtd = store().length; }catch(e){}
+    var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
+    var _estava = '?'; try{
+      var _snap = JSON.parse(localStorage.getItem('__orc_render_ids')||'[]');
+      _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
+    }catch(e){}
+    var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
+    // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
+    // que conta quem tirou o orçamento do banco entre a lista e o clique
+    var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
+    try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
@@ -37644,10 +37710,10 @@ window.abrirTelaOrcamento=function(existente){
     +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div></label>'
     +'<label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
-    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold"></label>'
     +'</div>'
-    +'<div class="flex justify-end"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+    +'<div class="flex justify-end"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
     +'</div>'
     +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
     +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -37726,7 +37792,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){
@@ -37747,6 +37813,10 @@ window.orcCalcItem=function(){
   var de=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
   var el=document.getElementById('orc-item-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  var btn=document.getElementById('orc-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim());
 };
 window.orcAddItem=function(){
   var f=ST.form; if(!f) return;
@@ -37770,6 +37840,8 @@ window.orcAddItem=function(){
   }
   var preco=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
   var descV=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  // v5.22.84 — sem valor unitário numérico, não adiciona
+  if(!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim())){ if(typeof toast==='function') toast('Informe um valor unitário numérico para adicionar o item','error'); return; }
   f.itens.push({
     produtoId:p?p.id:null, descricao:p?(p.nome||''):desc, sku:p?(p.sku||''):'',
     tipo:(document.getElementById('orc-item-tipo')||{}).value||'Produto',
@@ -37779,7 +37851,7 @@ window.orcAddItem=function(){
   document.getElementById('orc-prod-search').value='';
   document.getElementById('orc-item-qtd').value=1;
   document.getElementById('orc-item-vunit').value='';
-  document.getElementById('orc-item-desc').value=0;
+  document.getElementById('orc-item-desc').value='';
   window.orcRenderItens();
 };
 window.orcRenderItens=function(){
@@ -37846,11 +37918,9 @@ garantirNuvem();
 console.log('[DIGICOPY] v5.22.37 menu orçamentos (ERP, não buscador)');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_orcamentos_menu_patch.js", e); }
 ;
 
-/* ===== ajustes_v52237_orcamentos_aprovacao_patch.js ===== */
-try{
+/* ===== ajustes_v52237_orcamentos_aprovacao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.37 — Impressão do orçamento (meia folha) + link público para o
 //            cliente aprovar/recusar. Aprovar gera venda SALVA (não
@@ -38132,11 +38202,9 @@ setTimeout(puxarAprovacoes, 4000);
 console.log('[DIGICOPY] v5.22.37 orçamento impressão + aprovação pública');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52237_orcamentos_aprovacao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52238_orcamentos_ajustes_patch.js ===== */
-try{
+/* ===== ajustes_v52238_orcamentos_ajustes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.38 — Orçamentos: filtro de produto/recarga, avisos, sair pergunta,
 //            link SEPARADO do Pix, autorizar/recusar, WhatsApp nos dois
@@ -38144,7 +38212,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -38395,11 +38463,9 @@ if(window.ORCAMENTOS_APROVACAO_PURE){
 console.log('[DIGICOPY] v5.22.38 orçamentos: filtros, avisos, link separado do Pix');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52238_orcamentos_ajustes_patch.js", e); }
 ;
 
-/* ===== ajustes_v52238_vendas_os_ajustes_patch.js ===== */
-try{
+/* ===== ajustes_v52238_vendas_os_ajustes_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.38 — Vendas/OS: lupa da série ao lado da caixa, OS sai na impressão
 //            quando tem dados, aviso EPSON só na OS, técnico vazio, * nos
@@ -38596,11 +38662,9 @@ setTimeout(pintar, 400);
 console.log('[DIGICOPY] v5.22.38 vendas/OS: série, impressão OS, EPSON só na OS, salvar só cliente');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52238_vendas_os_ajustes_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_print_escolha_patch.js ===== */
-try{
+/* ===== ajustes_v52239_print_escolha_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Imprimir venda: escolhe Vendas ou OS, depois 1 ou 2 vias
 // • Venda: sem aviso EPSON. 2 vias = duas meias folhas (uma folha se couber)
@@ -38826,11 +38890,9 @@ if(typeof window.imprimirNotinha==='function' && !window.imprimirNotinha.__v5223
 console.log('[DIGICOPY] v5.22.39 impressão: escolhe venda/OS e 1 ou 2 vias');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_print_escolha_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_patri_nao_obrigatorio_patch.js ===== */
-try{
+/* ===== ajustes_v52239_patri_nao_obrigatorio_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Patrimônio da OS não é obrigatório (some o *)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -38911,11 +38973,9 @@ setTimeout(tirarAstPatri, 500);
 console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_patri_nao_obrigatorio_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_avisos_erro_auditoria_patch.js ===== */
-try{
+/* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
 //            O foco é funcionar sem erro; o aviso é só se der problema.
@@ -39006,11 +39066,9 @@ window.addEventListener('unhandledrejection', function(ev){
 console.log('[DIGICOPY] v5.22.39 avisos de erro na tela, detalhe na auditoria');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_avisos_erro_auditoria_patch.js", e); }
 ;
 
-/* ===== ajustes_v52239_menus_imediato_patch.js ===== */
-try{
+/* ===== ajustes_v52239_menus_imediato_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Menus aparecem na hora (não somem e voltam depois).
 //            Continua oculto só o que é por permissão (Backup/Nuvem) ou
@@ -39112,11 +39170,9 @@ pintarAgora(true);
 console.log('[DIGICOPY] v5.22.39 menus na hora, locação completa, sem piscar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52239_menus_imediato_patch.js", e); }
 ;
 
-/* ===== ajustes_v52240_orcamento_pages_patch.js ===== */
-try{
+/* ===== ajustes_v52240_orcamento_pages_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.40 — Link público do orçamento no Pages separado do Pix
 //            https://digicopy-orcament.pages.dev/
@@ -39177,11 +39233,9 @@ if(typeof window.gerarHtmlOrcamento==='function' && !window.gerarHtmlOrcamento._
 console.log('[DIGICOPY] v5.22.40 orçamento no Pages digicopy-orcament.pages.dev');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52240_orcamento_pages_patch.js", e); }
 ;
 
-/* ===== ajustes_v52241_venda_salvar_fechar_patch.js ===== */
-try{
+/* ===== ajustes_v52241_venda_salvar_fechar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.41 — Venda: Salvar grava e fecha. Sair/Fechar também grava.
 //            Sem pergunta. Só precisa do cliente.
@@ -39267,11 +39321,9 @@ if(typeof window.closeModal==='function' && !window.closeModal.__v52241venda){
 console.log('[DIGICOPY] v5.22.41 venda: salvar fecha, fechar salva');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52241_venda_salvar_fechar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_orcamentos_status_patch.js ===== */
-try{
+/* ===== ajustes_v52243_orcamentos_status_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Orçamentos: Status Autorizado / Não autorizado na lista e na
 //            tela. Sem botão Faturar. FECHADO vira Autorizado.
@@ -39390,11 +39442,9 @@ if(typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento._
 console.log('[DIGICOPY] v5.22.43 orçamentos: status Autorizado / Não autorizado');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_orcamentos_status_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_contratos_sort_patch.js ===== */
-try{
+/* ===== ajustes_v52243_contratos_sort_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Sort dos contratos pelos títulos: 1º A→Z, 2º Z→A, uma seta.
 //            Ordena as linhas pelo texto da coluna. Não inverte tbody
@@ -39501,11 +39551,9 @@ if(typeof window.renderContratos==='function' && !window.renderContratos.__v5224
 console.log('[DIGICOPY] v5.22.43 contratos: sort A→Z / Z→A sem piscar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_contratos_sort_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_impressora_remanejar_patch.js ===== */
-try{
+/* ===== ajustes_v52243_impressora_remanejar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Impressora no contrato (tela do contrato):
 //            novo cadastro começa só no serial; aviso de remanejo só no
@@ -39754,11 +39802,9 @@ if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDo
 console.log('[DIGICOPY] v5.22.43 impressora: remanejo + ativas/remanejadas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_impressora_remanejar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_financeiro_filtros_patch.js ===== */
-try{
+/* ===== ajustes_v52243_financeiro_filtros_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Financeiro: some saldos; filtros da lista; lupa/Enter;
 //            padrão Hoje; Abertos / Todos; De/Até só em Abertos.
@@ -39983,11 +40029,9 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 console.log('[DIGICOPY] v5.22.43 financeiro: filtros, lupa, hoje, faturadas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_financeiro_filtros_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_financeiro_menu_patch.js ===== */
-try{
+/* ===== ajustes_v52243_financeiro_menu_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Menu Financeiro único: some o submenu "Contas e caixas".
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40037,11 +40081,9 @@ if(typeof window.pintarMenus==='function' && !window.pintarMenus.__v52243fin){
 console.log('[DIGICOPY] v5.22.43 financeiro: menu único');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_financeiro_menu_patch.js", e); }
 ;
 
-/* ===== ajustes_v52243_menu_versao_boleto_patch.js ===== */
-try{
+/* ===== ajustes_v52243_menu_versao_boleto_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.43 — Menu da faixa aberta em azul; versão no rodapé; forma Boleto
 //            (baixa automática, igual Pix/Dinheiro).
@@ -40210,11 +40252,9 @@ if(typeof window.vosAbrirRecebimento==='function' && !window.vosAbrirRecebimento
 console.log('[DIGICOPY] v5.22.43 menu azul, versão rodapé, Boleto');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52243_menu_versao_boleto_patch.js", e); }
 ;
 
-/* ===== ajustes_v52244_orcamentos_autorizar_patch.js ===== */
-try{
+/* ===== ajustes_v52244_orcamentos_autorizar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.44 — Link do cliente: Autorizar gera venda salva; Recusar some o
 //            orçamento. O sistema consulta a nuvem mesmo quando o GET
@@ -40371,11 +40411,9 @@ setTimeout(puxarAprovacoes, 2500);
 console.log('[DIGICOPY] v5.22.44 orçamento: autorizar gera venda, recusar exclui');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52244_orcamentos_autorizar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52244_financeiro_datas_patch.js ===== */
-try{
+/* ===== ajustes_v52244_financeiro_datas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.44 — Financeiro: De / Até sempre visíveis. Não filtram em Hoje.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -40480,11 +40518,9 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
 console.log('[DIGICOPY] v5.22.44 financeiro: De/Até visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52244_financeiro_datas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_impressora_serial_ocultar_patch.js ===== */
-try{
+/* ===== ajustes_v52245_impressora_serial_ocultar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Impressora no contrato:
 //            1) pesquisa só o serial; 2) abre a tela completa (com ou sem
@@ -40833,11 +40869,9 @@ if(window.CONTRATOS_REFINO_PURE && typeof window.CONTRATOS_REFINO_PURE.parquesDo
 console.log('[DIGICOPY] v5.22.45 impressora: serial, remanejo no salvar, ocultar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_impressora_serial_ocultar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_leitura_apagar_patch.js ===== */
-try{
+/* ===== ajustes_v52245_leitura_apagar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Apagar leitura: confirma no popup do sistema e devolve o
 //            contador da impressora ao valor de antes do lançamento.
@@ -40893,11 +40927,9 @@ window.deleteLeituraContrato = function(leiId, contratoId){
 console.log('[DIGICOPY] v5.22.45 leitura: apagar devolve contador');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_leitura_apagar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_financeiro_hist_datas_patch.js ===== */
-try{
+/* ===== ajustes_v52245_financeiro_hist_datas_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Financeiro: histórico mostra código da venda, da leitura e do
 //            chamado; De / Até sempre visíveis (em Hoje não filtram).
@@ -41080,11 +41112,9 @@ if(typeof window.historicoLancamento==='function' && !window.historicoLancamento
 console.log('[DIGICOPY] v5.22.45 financeiro: códigos no histórico, De/Até visíveis');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_financeiro_hist_datas_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_rodape_versao_patch.js ===== */
-try{
+/* ===== ajustes_v52245_rodape_versao_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Versão sozinha no meio do rodapé.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41135,11 +41165,9 @@ setTimeout(pintarRodape, 800);
 console.log('[DIGICOPY] v5.22.45 rodapé: versão no meio');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_rodape_versao_patch.js", e); }
 ;
 
-/* ===== ajustes_v52245_venda_salvar_print_patch.js ===== */
-try{
+/* ===== ajustes_v52245_venda_salvar_print_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.45 — Venda: Salvar grava e fecha (sem aviso no mesmo modal);
 //            some o botão Sair (fica só o X); faturar não abre impressão.
@@ -41237,11 +41265,9 @@ if(typeof window.vosConcluirFaturamento==='function' && !window.vosConcluirFatur
 console.log('[DIGICOPY] v5.22.45 venda: salvar fecha, sem Sair, faturar sem imprimir');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52245_venda_salvar_print_patch.js", e); }
 ;
 
-/* ===== ajustes_v52246_nuvem_nao_autorizar_patch.js ===== */
-try{
+/* ===== ajustes_v52246_nuvem_nao_autorizar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.46 — Nuvem: botão para NÃO autorizar os dados atuais deste PC.
 //            A nuvem não apaga. Este PC passa a usar a nuvem. O que só
@@ -41341,11 +41367,9 @@ if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuv
 console.log('[DIGICOPY] v5.22.46 nuvem: não autorizar dados atuais deste PC');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52246_nuvem_nao_autorizar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52247_exe_atualiza_patch.js ===== */
-try{
+/* ===== ajustes_v52247_exe_atualiza_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.47 — .exe passa a usar pasta (sem asar) + limpa cache na versão nova
 //            para a atualização aparecer depois de gerar o instalador.
@@ -41377,11 +41401,9 @@ setTimeout(pintar, 900);
 console.log('[DIGICOPY] v5.22.47 exe: pasta sem asar, cache limpo na versão');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52247_exe_atualiza_patch.js", e); }
 ;
 
-/* ===== ajustes_v52248_exe_cache_patch.js ===== */
-try{
+/* ===== ajustes_v52248_exe_cache_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.48 — .exe: desliga cache V8 e apaga Cache/Code Cache na versão nova
 // ═══════════════════════════════════════════════════════════════════════════
@@ -41408,11 +41430,9 @@ setTimeout(pintar, 900);
 console.log('[DIGICOPY] v5.22.48 exe: sem cache V8');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52248_exe_cache_patch.js", e); }
 ;
 
-/* ===== ajustes_v52249_relatorio_patch.js ===== */
-try{
+/* ===== ajustes_v52249_relatorio_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.49 — Relatório (1.2–1.4, 2.2, 2.3, 3.4, 3.6, 5.1–5.3) de verdade
 //            no .exe e no link do cliente.
@@ -41421,7 +41441,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -41733,11 +41753,9 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52249ver){
 console.log('[DIGICOPY] v5.22.49 relatório: orçamento no GitHack + punch list no exe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52249_relatorio_patch.js", e); }
 ;
 
-/* ===== ajustes_v52250_exe_bundle_patch.js ===== */
-try{
+/* ===== ajustes_v52250_exe_bundle_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.50 — Correção definitiva do empacotamento para o .exe:
 //            Garante que o bundle contenha todas as atualizações recentes,
@@ -41783,11 +41801,9 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52250ver){
 console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o .exe');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52250_exe_bundle_patch.js", e); }
 ;
 
-/* ===== ajustes_v52251_exe_resiliencia_patch.js ===== */
-try{
+/* ===== ajustes_v52251_exe_resiliencia_patch.js (escopo global) ===== */
 // PATCH v5.22.51 — Resiliência de inicialização do .exe, guardas anti-tela branca e sincronização de versão
 (function(){
   'use strict';
@@ -41924,11 +41940,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52251_exe_resiliencia_patch.js", e); }
 ;
 
-/* ===== ajustes_v52252_resolucao_loop_patch.js ===== */
-try{
+/* ===== ajustes_v52252_resolucao_loop_patch.js (escopo global) ===== */
 // PATCH v5.22.52 — Resolução definitiva de loops de MutationObserver, boot instantâneo e versão 5.22.52
 (function(){
   'use strict';
@@ -42026,11 +42040,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52252_resolucao_loop_patch.js", e); }
 ;
 
-/* ===== ajustes_v52253_login_tela_branca_patch.js ===== */
-try{
+/* ===== ajustes_v52253_login_tela_branca_patch.js (escopo global) ===== */
 // PATCH v5.22.53 — Correção definitiva da inicialização, login instantâneo e guarda anti-tela branca
 (function(){
   'use strict';
@@ -42284,11 +42296,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52253_login_tela_branca_patch.js", e); }
 ;
 
-/* ===== ajustes_v52254_orcamentos_pages_patch.js ===== */
-try{
+/* ===== ajustes_v52254_orcamentos_pages_patch.js (escopo global) ===== */
 // PATCH v5.22.54 — Integração oficial da página de orçamento no Cloudflare Pages: https://digicopy-orcamentos.pages.dev/
 (function(){
   'use strict';
@@ -42299,7 +42309,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -42434,11 +42444,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52254_orcamentos_pages_patch.js", e); }
 ;
 
-/* ===== ajustes_v52255_orcamento_aprovacao_venda_patch.js ===== */
-try{
+/* ===== ajustes_v52255_orcamento_aprovacao_venda_patch.js (escopo global) ===== */
 // PATCH v5.22.55 — Conversão garantida de Orçamento em Venda Salva e Sincronização de Status
 (function(){
   'use strict';
@@ -42757,11 +42765,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52255_orcamento_aprovacao_venda_patch.js", e); }
 ;
 
-/* ===== ajustes_v52256_orcamento_venda_limpa_patch.js ===== */
-try{
+/* ===== ajustes_v52256_orcamento_venda_limpa_patch.js (escopo global) ===== */
 // PATCH v5.22.56 — Orçamento 100% via link do cliente, conversão em Venda Salva e Sincronização v5.22.56
 (function(){
   'use strict';
@@ -43188,11 +43194,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52256_orcamento_venda_limpa_patch.js", e); }
 ;
 
-/* ===== ajustes_v52257_orcamento_sync_total_patch.js ===== */
-try{
+/* ===== ajustes_v52257_orcamento_sync_total_patch.js (escopo global) ===== */
 // PATCH v5.22.57 — Sincronização Total e Resiliente de Orçamentos e Vendas Salvas v5.22.57
 (function(){
   'use strict';
@@ -43548,11 +43552,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52257_orcamento_sync_total_patch.js", e); }
 ;
 
-/* ===== ajustes_v52258_orcamento_os_revalidar_patch.js ===== */
-try{
+/* ===== ajustes_v52258_orcamento_os_revalidar_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.58 — Orçamentos com Ordem de Serviço (OS), Revalidação de Link,
 //                  Sincronização Perfeita com Vendas Salvas e Versão v5.22.58
@@ -43877,7 +43879,7 @@ try{
 
       // Se a tela do orçamento estiver aberta, recarrega
       if(typeof window !== 'undefined' && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id === o.id){
-        window.abrirOrcamento(o.id);
+        window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o id acabou de ser revalidado aqui, não precisa re-caçar
       }
       return true;
     }
@@ -44124,14 +44126,14 @@ try{
         +'<option value="nome">Descrição</option>'
         +'<option value="marca">Marca</option>'
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
         +'</div>'
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
         +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -44141,7 +44143,7 @@ try{
         +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div></label>'
         +'</div>'
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
         +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -44258,7 +44260,7 @@ try{
 
       window.__ORC_ST.form.id = o.id;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o orçamento acabou de nascer aqui, não precisa re-caçar
     };
 
     // Renderizador de listagem de Orçamentos garantindo que NUNCA suma e exiba o status correto
@@ -44284,7 +44286,8 @@ try{
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -44306,10 +44309,13 @@ try{
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -44327,7 +44333,7 @@ try{
           var badgeCls = (st === 'aprovado' || o.vendaId) ? 'neo-status ok' : (st === 'recusado' ? 'neo-status wait' : (st === 'estornado' ? 'neo-status info' : 'neo-status info'));
           var temOS = o.os && Object.keys(o.os).some(function(k){ return txt(o.os[k]); });
 
-          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer">'
+          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer">'
             +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
             +'<td><b class="text-[#0a1e8a]">'+esc(o.numero || '')+'</b>'+(temOS ? ' <span class="text-[10px]" title="Contém Ordem de Serviço">🔧 OS</span>' : '')+'</td>'
             +'<td>'+(o.data ? o.data.slice(0, 10).split('-').reverse().join('/') : '-')+'</td>'
@@ -44335,7 +44341,7 @@ try{
             +'<td><b>'+money(o.total)+'</b></td>'
             +'<td><span class="'+badgeCls+'">'+esc(rotulo)+'</span></td>'
             +'<td><div class="flex items-center gap-1.5" onclick="event.stopPropagation()">'
-            +'<button onclick="window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
+            +'<button onclick="window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
             +'<button onclick="window.revalidarLinkOrcamento(\''+o.id+'\')" class="neo-btn !px-2 text-amber-700" title="Revalidar Link"><i class="ph ph-arrows-counter-clockwise"></i></button>'
             +'</div></td>'
             +'</tr>';
@@ -44354,6 +44360,15 @@ try{
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };
@@ -44420,11 +44435,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52258_orcamento_os_revalidar_patch.js", e); }
 ;
 
-/* ===== ajustes_v52259_orcamento_filtros_item_patch.js ===== */
-try{
+/* ===== ajustes_v52259_orcamento_filtros_item_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.59 — Orçamentos: Remoção da opção inválida 'Serviço' do tipo de item,
 //                  Restauração Completa dos Filtros de Busca (Cliente, Categorias de Produto,
@@ -44512,7 +44525,7 @@ try{
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -44728,7 +44741,7 @@ try{
         +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
         +CAMPOS_RECARGA.map(function(rc){ return '<option value="'+esc(rc[0])+'">'+esc(rc[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar item"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
@@ -44736,7 +44749,7 @@ try{
 
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
 
@@ -44749,7 +44762,7 @@ try{
         +'</div></label>'
         +'</div>'
 
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
 
         // Tabela de itens
@@ -44837,8 +44850,27 @@ try{
       }
 
       var qtd = n(document.getElementById('orc-item-qtd') && document.getElementById('orc-item-qtd').value) || 1;
+      // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+      var vuRaw = String((document.getElementById('orc-item-vunit')||{}).value||'').trim();
+      if(!/^\d+(?:[.,]\d+)?$/.test(vuRaw)){ if(typeof toast === 'function') toast('Informe um valor unitário numérico para adicionar o item', 'error'); return; }
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
+
+      // v5.22.85 — regra do orçamento: NÃO baixa estoque (continua assim), mas
+      // pra LANÇAR um produto físico tem que ter estoque. Avisa e não deixa
+      // entrar: precisa de no mínimo a quantidade que vai pro orçamento.
+      if(p && !isRec){
+        var ehServicoItem = /servi[cç]o|recarga/i.test(String(p.categoria || '') + ' ' + String(p.tipo || ''));
+        if(!ehServicoItem && !p.estoqueInfinito){
+          var temEstoque = n(p.estoque);
+          if(temEstoque < qtd){
+            if(typeof toast === 'function'){
+              toast('Sem estoque: ' + esc(p.nome || 'produto') + ' tem ' + Math.max(0, temEstoque) + '. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento.', 'error');
+            }
+            return;
+          }
+        }
+      }
 
       var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
       if(cartucho && !descricaoFinal.includes(cartucho)){
@@ -44862,7 +44894,7 @@ try{
       var ci = document.getElementById('orc-item-cartucho'); if(ci) ci.value = '';
       var qi = document.getElementById('orc-item-qtd'); if(qi) qi.value = 1;
       var vi = document.getElementById('orc-item-vunit'); if(vi) vi.value = '';
-      var di = document.getElementById('orc-item-desc'); if(di) di.value = 0;
+      var di = document.getElementById('orc-item-desc'); if(di) di.value = '';
       var ti = document.getElementById('orc-item-total'); if(ti) ti.value = '';
 
       if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
@@ -44913,11 +44945,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52259_orcamento_filtros_item_patch.js", e); }
 ;
 
-/* ===== ajustes_v52260_orcamento_trava_venda_atalho_patch.js ===== */
-try{
+/* ===== ajustes_v52260_orcamento_trava_venda_atalho_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.22.60 — Orçamentos: Trava de Edição em Autorizados, Atalho para Venda Salva,
 //                  Exclusão Funcional com Cancelamento Seguro e Seleção Confiável de Cliente
@@ -45004,7 +45034,7 @@ try{
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -45151,7 +45181,7 @@ try{
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 
@@ -45276,17 +45306,101 @@ try{
   if(typeof window !== 'undefined'){
     window.orcOnTipoItem = orcOnTipoItem;
     window.orcBuscarCliente = orcBuscarCliente;
-    window.orcSelCliente = orcSelCliente;
-    window.orcLimparCliente = orcLimparCliente;
+    window.orcSelCliente = function(id){
+      orcSelCliente(id);
+      // v5.22.87 — escolheu: some o campo de busca, fica só o cartão do cliente
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.add('hidden');
+    };
+    window.orcLimparCliente = function(){
+      orcLimparCliente();
+      // v5.22.87 — tirou o cliente: volta a mostrar a busca
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.remove('hidden');
+    };
     window.orcBuscarProd = orcBuscarProd;
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
     window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.orcBuscarSerial = orcBuscarSerial;
     window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
     window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
     window.excluirOrcamento = excluirOrcamentosMarcados;
 
     // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+  // v5.22.85 — Busca por número de série no orçamento: IGUAL às vendas.
+  // Puxa a última notinha/venda com esse serial e já preenche modelo,
+  // patrimônio, contador e o cliente sozinho (mesmas regras da aba OS).
+  function orcBuscarSerial(serial){
+    var s = getSess(); if(!s) return;
+    var srl = txt(serial).toLowerCase();
+    var info = document.getElementById('orc-serial-info');
+    if(!srl){ if(info) info.classList.add('hidden'); return; }
+    var _db = getDb();
+    var normSerie = function(o){ return txt(o && (o.numeroSerie || o.serie)).toLowerCase(); };
+    // 1) vendas com esse serial (a mais recente manda)
+    var hist = (_db.vendas || []).filter(function(v){
+      return v && v.empresaId === s.empresaId && v.os && normSerie(v.os) === srl;
+    }).sort(function(a, b){ return new Date(b.data || 0) - new Date(a.data || 0); });
+    // 2) chamados/OS com esse serial
+    var chamado = (_db.os || []).filter(function(o){
+      return o && o.empresaId === s.empresaId && normSerie(o) === srl;
+    }).sort(function(a, b){ return new Date(b.abertura || b.criadoEm || 0) - new Date(a.abertura || a.criadoEm || 0); })[0];
+    // 3) cadastro de equipamentos
+    var eq = (_db.equipamentos || []).find(function(e){ return e && e.empresaId === s.empresaId && normSerie(e) === srl; });
+    var ult = hist[0];
+    var preencheu = 0;
+    var setSeVazio = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && !el.value.trim() && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var setSempre = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var fonte = ult ? ult.os : (chamado || null);
+    if(fonte){
+      setSeVazio('orc-os-modelo', fonte.modelo || fonte.equipamentoModelo || '');
+      setSeVazio('orc-os-patri', fonte.patrimonio || '');
+      setSeVazio('orc-os-contador', fonte.contador != null ? fonte.contador : '');
+    }
+    if(eq){
+      setSeVazio('orc-os-modelo', eq.modelo);
+      setSeVazio('orc-os-patri', eq.patrimonio);
+      setSeVazio('orc-os-contador', eq.contadorPB);
+    }
+    // cliente: última notinha > chamado > máquina instalada (parque)
+    var cliId = ult ? ult.clienteId : (chamado ? chamado.clienteId : null);
+    if(!cliId && eq){
+      var inst = (_db.parque || []).find(function(p){ return p && p.empresaId === s.empresaId && p.equipamentoId === eq.id; });
+      if(inst) cliId = inst.clienteId;
+    }
+    var f = window.__ORC_ST && window.__ORC_ST.form;
+    var autoCli = false;
+    if(cliId && !(f && f.cliente)){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === cliId; });
+      if(c){ orcSelCliente(c.id); autoCli = true; }
+    }
+    // regra das vendas: a última notinha encontrada comanda os dados do aparelho
+    if(ult && ult.os){
+      setSempre('orc-os-modelo', ult.os.modelo || ult.os.equipamentoModelo || '');
+      setSempre('orc-os-patri', ult.os.patrimonio || '');
+      if(ult.clienteId && !(f && f.cliente)){
+        var c2 = (_db.clientes || []).find(function(x){ return x && x.id === ult.clienteId; });
+        if(c2){ orcSelCliente(c2.id); autoCli = true; }
+      }
+    }
+    if(info){
+      var fmt = function(d){ return typeof fmtDate === 'function' ? fmtDate(d) : (d || '-'); };
+      if(ult || chamado || eq){
+        var clNome = ((_db.clientes || []).find(function(x){ return x && x.id === (ult ? ult.clienteId : cliId); }) || {}).nome || '-';
+        info.className = 'col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900 block';
+        info.innerHTML = '<p class="font-bold mb-1"><i class="ph ph-clock-counter-clockwise"></i> Última notinha encontrada para este equipamento:</p>'
+          + (ult ? 'Data: <b>' + fmt(ult.data) + '</b> • Cliente: <b>' + esc(clNome) + '</b> • Modelo: <b>' + esc(ult.os.modelo || '-') + '</b> • Venda/OS: <b>' + esc(ult.numero) + '</b>'
+            : chamado ? 'Chamado <b>' + esc(chamado.numero || '-') + '</b> de <b>' + fmt(chamado.abertura || chamado.criadoEm) + '</b> • Cliente: <b>' + esc(clNome) + '</b>'
+            : 'Equipamento cadastrado: <b>' + esc(eq.modelo || '-') + '</b> (patrimônio ' + esc(eq.patrimonio || '-') + ')')
+          + (preencheu || autoCli ? '<p class="mt-1 text-emerald-800 font-semibold"><i class="ph ph-magic-wand"></i> Preenchido automaticamente' + (autoCli ? ' (incluindo cliente)' : '') + ' — confira antes de salvar.</p>' : '');
+      } else {
+        info.className = 'col-span-12 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-500 block';
+        info.innerHTML = '<i class="ph ph-info"></i> Nenhuma notinha anterior encontrada para este número de série.';
+      }
+    }
+  }
+
     window.abrirTelaOrcamento = function(existente){
       var s = getSess(); if(!s) return;
       var _db = getDb();
@@ -45337,15 +45451,17 @@ try{
 
         // Linha do Cliente com Filtro de Campos
         +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
-        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">'+(f.cliente ? 'Cliente' : 'Cliente * — selecione o filtro e busque com Enter ou lupa')+'</label>'
+        +'<div id="orc-cli-busca" class="'+(f.cliente || isAutorizado ? 'hidden' : '')+'">'
         +'<div class="flex flex-wrap items-center gap-2 mt-1">'
-        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
         +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
-        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'</div>'
         +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
         +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
         +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
@@ -45353,13 +45469,8 @@ try{
         +'</div>'
         +'</div>'
 
-        // Barra de Abas (Itens / Ordem de Serviço)
-        +'<div class="flex border-b border-slate-200">'
-        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
-        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
-        +'</div>'
-
-        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        // v5.22.87 — nada de abas: Itens e Ordem de Serviço ficam na MESMA
+        // tela, um embaixo do outro (a "tela 2" sempre aparece agora)
         +'<div id="orc-aba-itens" class="space-y-3">'
         +(!isAutorizado ? (
           '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
@@ -45377,14 +45488,14 @@ try{
           +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
           +CAMPOS_RECARGA.map(function(r){ return '<option value="'+esc(r[0])+'">'+esc(r[1])+'</option>'; }).join('')
           +'</select>'
-          +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+          +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
           +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div>'
           +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
           +'</div>'
           +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
           +'</div>'
           +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -45394,7 +45505,7 @@ try{
           +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div></label>'
           +'</div>'
-          +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+          +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
           +'</div>'
         ) : '')
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
@@ -45404,13 +45515,17 @@ try{
         +'<tbody id="orc-itens-body"></tbody></table></div>'
         +'</div>'
 
-        // ABA 2: ORDEM DE SERVIÇO
-        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        // ABA 2: ORDEM DE SERVIÇO (sempre visível, logo abaixo dos itens)
+        +'<div id="orc-aba-os" class="space-y-3 pt-3 border-t-2 border-[#0a1e8a]/15 mt-2">'
         +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
         +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
-        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : 'onchange="window.orcBuscarSerial && window.orcBuscarSerial(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.orcBuscarSerial && window.orcBuscarSerial(this.value);}"')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série... (Enter ou lupa puxa o histórico)" class="flex-1 h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcBuscarSerial && window.orcBuscarSerial(document.getElementById(\'orc-os-serie\').value)" class="shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Buscar histórico desse serial"><i class="ph ph-magnifying-glass"></i></button>' : '')
+        +'</div></label>'
+        +'<div id="orc-serial-info" class="col-span-12 hidden"></div>'
         +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
         +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
         +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
@@ -45444,8 +45559,9 @@ try{
         +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
         +'</div>';
 
+      // v5.22.87 — a aba fecha pelo X do canto superior: nada de botão Sair no rodapé
       document.getElementById('modal-footer').innerHTML =
-        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        ''
         +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
@@ -45500,6 +45616,18 @@ try{
 
       var totalEl = document.getElementById('orc-total');
       if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // v5.22.86 — remove um item da lista do orçamento. A lixeira da tabela
+    // chama essa função e ela não existia (erro "orcDelItem is not a function").
+    window.orcDelItem = function(idx){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f || !f.itens) return;
+      idx = n(idx);
+      if(idx < 0 || idx >= f.itens.length) return;
+      if(f.status === 'aprovado' || f.vendaId){ if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error'); return; }
+      f.itens.splice(idx, 1);
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
     };
 
     // Override do salvarOrcamentoTela com bloqueio em autorizados
@@ -45594,9 +45722,11 @@ try{
       if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
       if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
 
-      window.__ORC_ST.form.id = o.id;
+      window.__ORC_ST.form = null;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      // v5.22.87 — salvou, fechou! A aba do orçamento não fica aberta depois
+      // do salvar; volta direto para a lista de orçamentos
+      if(typeof closeModal === 'function') closeModal();
     };
 
     // Sincronização de versão visual
@@ -45644,11 +45774,9 @@ try{
   }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52260_orcamento_trava_venda_atalho_patch.js", e); }
 ;
 
-/* ===== ajustes_v52261_orcamento_nao_volta_patch.js ===== */
-try{
+/* ===== ajustes_v52261_orcamento_nao_volta_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.61 — Orçamento: apagou não volta. Aviso no sino do PC, sem popup.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -45902,22 +46030,19 @@ if(typeof window.excluirOrcamentosMarcados==='function' && !window.excluirOrcame
 }
 
 function varrerRessuscitadas(){
-  var _db = getDb();
-  if(!_db) return;
-  bloqueio(_db);
-  var mudou = false;
-  if(Array.isArray(_db.vendas)){
-    var nv = _db.vendas.filter(function(v){ return vendaPodeFicar(v, _db); });
-    if(nv.length!==_db.vendas.length){ _db.vendas = nv; mudou = true; }
-  }
-  if(Array.isArray(_db.orcamentos)){
-    var no = _db.orcamentos.filter(function(o){ return orcamentoPodeFicar(o, _db); });
-    if(no.length!==_db.orcamentos.length){ _db.orcamentos = no; mudou = true; }
-  }
-  if(mudou && typeof saveDB==='function') saveDB();
+  // v5.24.0 — DESATIVADO DE VEZ. Esta varredura REMOVIA vendas/orçamentos do
+  // array com base em guardas gravadas SÓ neste computador (__orcBloqueio) e
+  // em seguida dava saveDB(): a remoção virava DELETE na fila de envio para a
+  // nuvem e apagava o registro DE VERDADE em todos os PCs. Era a causa de
+  // "criei a venda e ela sumiu" e de cada computador mostrar dados diferentes.
+  // Exclusões reais já chegam pela nuvem como operação delete (e orçamento,
+  // desde a 5.22.92, nunca some — vira status 'excluido' no applyRemote).
+  if(window.__V5240_DEBUG){ try{ console.log('[DIGICOPY] varrerRessuscitadas desativado na v5.24.0'); }catch(e){} }
+  return;
 }
 
-setTimeout(varrerRessuscitadas, 800);
+/* v5.24.0 — sem agendamento da varredura (era setTimeout(..., 800)): nada de
+   filtrar os arrays por guarda local. */
 /* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){
@@ -45941,11 +46066,9 @@ if(typeof window.navigateTo==='function' && !window.navigateTo.__v52261ver){
 console.log('[DIGICOPY] v5.22.61 orçamento: apagou não volta, aviso no sino');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52261_orcamento_nao_volta_patch.js", e); }
 ;
 
-/* ===== ajustes_v52262_orcamento_uma_vez_loop_patch.js ===== */
-try{
+/* ===== ajustes_v52262_orcamento_uma_vez_loop_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.62 — Orçamento gera venda UMA vez. Apagou não volta.
 //            Para o loop de carregar (poll 3s + saveDB).
@@ -46001,11 +46124,9 @@ if(typeof window.aprovarOrcamentoInterno==='function' && !window.aprovarOrcament
 console.log('[DIGICOPY] v5.22.62 orçamento: uma vez, sem loop de carregar');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52262_orcamento_uma_vez_loop_patch.js", e); }
 ;
 
-/* ===== ajustes_v52263_exe_completo_patch.js ===== */
-try{
+/* ===== ajustes_v52263_exe_completo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.63 — .exe COMPLETO: nenhuma atualização fica de fora do instalador
 //
@@ -46073,11 +46194,9 @@ if(typeof window.navigateTo === 'function' && !window.navigateTo.__v52263ver){
 console.log('[DIGICOPY] v5.22.63: empacotamento do .exe verificado — nada fica de fora');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52263_exe_completo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52264_exe_numero_novo_patch.js ===== */
-try{
+/* ===== ajustes_v52264_exe_numero_novo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.64 — Cada entrega tem um número novo + diagnóstico do .exe
 //
@@ -46148,11 +46267,9 @@ if (typeof console !== 'undefined' && console.log) {
 }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52264_exe_numero_novo_patch.js", e); }
 ;
 
-/* ===== ajustes_v52265_script_isolado_patch.js ===== */
-try{
+/* ===== ajustes_v52265_script_isolado_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.65 — Um script quebrado não derruba mais o sistema inteiro
 //
@@ -46249,11 +46366,110 @@ if (typeof console !== 'undefined' && console.log) {
 }
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
 ;
 
-/* ===== menus_tela_pequena_patch.js ===== */
-try{
+/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.89 — caça ao aviso "orçamento não encontrado" + autocura da lista
+//
+// 1) CARIMBO DE ORIGEM: qualquer aviso (popup central ou toast) que contenha
+//    a palavra "encontrad" (encontrado/encontrada) ganha uma linha cinza no
+//    final dizendo DE ONDE ele saiu: função @ arquivo : linha. Se o aviso
+//    misterioso do orçamento aparecer de novo, é só mandar esse código —
+//    acha-se a causa raiz na hora. Avisos sem "encontrad" ficam intactos.
+// 2) AUTOCURA: orçamentos antigos SEM id (salvos por versões velhas) ganham
+//    um id estável na renderização da lista e quando alguém tenta abrir —
+//    sem isso, a linha da lista chamava abrirOrcamento('undefined').
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+window.AJUSTES_V52289_PURE = {
+  interessa: function(msg){ return /encontrad/i.test(String(msg == null ? '' : msg)); }
+};
+
+if(typeof document === 'undefined') return;
+
+// ── 1) carimbo de origem ────────────────────────────────────────────────────
+function origemDoAviso(){
+  try{
+    var st = String((new Error()).stack || '');
+    var linhas = st.split('\n').filter(function(l){
+      return l.indexOf('ajustes_v52289') < 0 && l.indexOf('Error') < 0;
+    });
+    for(var i = 0; i < linhas.length; i++){
+      var l = linhas[i];
+      // Chrome: "at funcao (arquivo.js:123:45)" | Firefox: "funcao@arquivo.js:123:45"
+      var m = l.match(/at\s+([^\s(]+)[^(]*\(([^()\s]+\.js)[^()\s]*?:(\d+):\d+\)/);
+      if(!m) m = l.match(/([A-Za-z0-9_.$\[\]-]+)@([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(!m) m = l.match(/at\s+([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(m){
+        var fn = m.length >= 4 ? (m[1] || 'anon') : 'anon';
+        var arq = (m[m.length - 2] || '').split('/').pop();
+        var lin = m[m.length - 1] || '?';
+        if(arq){ return fn + ' @ ' + arq + ' : ' + lin; }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+
+function carimbo(msg){
+  if(!window.AJUSTES_V52289_PURE.interessa(msg)) return msg;
+  var o = origemDoAviso();
+  if(!o) return msg;
+  return String(msg) + '<br><span style="display:block;margin-top:6px;font-size:10px;color:#94a3b8">código: ' + o + ' — mande ao suporte</span>';
+}
+
+if(typeof window.lfbAlert === 'function' && !window.lfbAlert.__v52289){
+  var oldAlert = window.lfbAlert;
+  window.lfbAlert = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAlert.apply(this, a); };
+  window.lfbAlert.__v52289 = true;
+}
+if(typeof window.avisoSistema === 'function' && !window.avisoSistema.__v52289){
+  var oldAviso = window.avisoSistema;
+  window.avisoSistema = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAviso.apply(this, a); };
+  window.avisoSistema.__v52289 = true;
+}
+if(typeof window.toast === 'function' && !window.toast.__v52289){
+  var oldToast = window.toast;
+  window.toast = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldToast.apply(this, a); };
+  window.toast.__v52289 = true;
+}
+
+// ── 2) orçamentos antigos sem id ganham id estável na renderização da lista ──
+function garantirIdsOrcamentos(){
+  try{
+    var _db = (typeof db !== 'undefined') ? db : (window.db || null);
+    if(!_db || !Array.isArray(_db.orcamentos)) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(o && !o.id){
+        o.id = 'orc_legado_' + (o.token || ('n' + (String(o.numero || '').replace(/\D/g, '') || Math.random().toString(36).slice(2, 8))));
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }catch(e){}
+}
+
+if(typeof window.renderOrcamentos === 'function' && !window.renderOrcamentos.__v52289ids){
+  var oldRender = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    garantirIdsOrcamentos();
+    return oldRender.apply(this, arguments);
+  };
+  window.renderOrcamentos.__v52289ids = true;
+}
+// Roda uma vez na carga também (a lista pode nem ter sido aberta ainda)
+setTimeout(garantirIdsOrcamentos, 1500);
+
+console.log('[DIGICOPY] v5.22.89 carimbo de avisos + autocura da lista de orçamentos');
+})();
+
+;
+
+/* ===== menus_tela_pequena_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // MENUS EM TELA PEQUENA (v5.22.67)
 //
@@ -46458,11 +46674,9 @@ try{
   console.log('[DIGICOPY] menus e faixa de módulos se ajustam a telas pequenas');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menus_tela_pequena_patch.js", e); }
 ;
 
-/* ===== vendas_financeiro_pendente_patch.js ===== */
-try{
+/* ===== vendas_financeiro_pendente_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // VENDA SALVA TAMBÉM APARECE NO FINANCEIRO (v5.22.67)
 //
@@ -46603,18 +46817,1756 @@ try{
   console.log('[DIGICOPY] venda salva também aparece no financeiro');
 })();
 
-}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_financeiro_pendente_patch.js", e); }
+;
+
+/* ===== ajustes_v52293_orcamento_guardiao_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.93 — guardião do banco de orçamentos
+//
+// Três dias de diagnóstico mostraram: o orçamento ESTÁ na lista e, na hora do
+// clique, já NÃO está no banco. Alguém tira ele do array entre uma coisa e a
+// outra — e os nomes conhecidos não confessaram. Então agora ninguém precisa
+// confessar: este guardião anota TODA SAÍDA de registro do array db.orcamentos
+// com horário e trilha (quem chamou), num anel no próprio PC (__orc_saiu).
+// O aviso de "não achei" (v5.22.91/92) passa a mostrar a última baixa — o
+// usuário manda o texto e a causa aparece escrita.
+//
+// Também corrige onde o retrato da lista é guardado: a listagem que o usuário
+// VÊ é a definição mais nova de renderOrcamentos; este arquivo roda por último
+// e amarra o retrato nela (antes o retrato ficava na listagem velha e dizia
+// sempre "NÃO estava", mesmo quando estava).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CHAVE_LOG = '__orc_saiu';
+var MAX_LOG = 12;
+
+function anotarSaida(tinham, ficaram, origem){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var foram = tinham.filter(function(x){ return ficaram.indexOf(x) < 0; });
+    log.push({
+      quando: new Date().toISOString(),
+      saiu: foram.join(',').slice(0, 120),
+      origem: String(origem || '').slice(0, 140)
+    });
+    if(log.length > MAX_LOG) log = log.slice(-MAX_LOG);
+    localStorage.setItem(CHAVE_LOG, JSON.stringify(log));
+  }catch(e){}
+}
+
+function idsOrc(){
+  try{
+    if(typeof db === 'undefined' || !Array.isArray(db.orcamentos)) return null;
+    return db.orcamentos.map(function(x){ return String(x && x.id); });
+  }catch(e){ return null; }
+}
+
+// Cão de guarda leve: a cada 400 ms compara os ids. Se alguém tirou registro
+// (splice, filter, replace do array), anota com a pilha da chamada seguinte.
+var ultimoRetrato = null;
+function vigia(){
+  if(typeof document === 'undefined') return;
+  ultimoRetrato = idsOrc();
+  setInterval(function(){
+    var agora = idsOrc();
+    if(!agora) return;
+    if(ultimoRetrato && agora.length < ultimoRetrato.length){
+      anotarSaida(ultimoRetrato, agora, (new Error('vigia')).stack);
+    }
+    ultimoRetrato = agora;
+  }, 400);
+}
+
+// Retrato da listagem VISÍVEL (a última versão de renderOrcamentos que existir)
+function amarrarRetratoDaLista(){
+  if(typeof window.renderOrcamentos !== 'function' || window.renderOrcamentos.__v52293) return;
+  var antiga = window.renderOrcamentos;
+  var embrulhada = function(){
+    var r = antiga.apply(this, arguments);
+    try{
+      var base = idsOrc() || [];
+      localStorage.setItem('__orc_render_ids', JSON.stringify(base.slice(0, 80)));
+      ultimoRetrato = base;
+    }catch(e){}
+    return r;
+  };
+  embrulhada.__v52293 = true;
+  embrulhada.__v52243status = antiga.__v52243status;
+  embrulhada.__v52244orc = antiga.__v52244orc;
+  window.renderOrcamentos = embrulhada;
+}
+
+// A trilha da última baixa entra no aviso "não achei"
+function resumoUltimaBaixa(){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var u = log[log.length - 1];
+    if(!u) return 'nenhuma baixa anotada ainda';
+    return 'última baixa: saiu [' + (u.saiu || '?') + '] às ' + String(u.quando || '').slice(11, 19);
+  }catch(e){ return '?'; }
+}
+window.__orcResumoUltimaBaixa = resumoUltimaBaixa;
+
+if(typeof document !== 'undefined'){
+  vigia();
+  amarrarRetratoDaLista();
+  // Se a listagem for trocada depois por outro módulo carregando tarde, reamarra
+  setTimeout(amarrarRetratoDaLista, 1500);
+  setTimeout(amarrarRetratoDaLista, 5000);
+}
+
+})();
+
+;
+
+/* ===== ajustes_v52295_venda_volta_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.95 — a venda em andamento sempre te espera
+//
+// Pedido do usuário: dentro da venda, se ele abrir QUALQUER COISA (cadastrar
+// produto no "+", cliente, impressora...), ao fechar aquilo — salvando OU
+// cancelando — a tela tem que voltar PRA VENDA que ele estava montando, com
+// TUDO intacto: cliente, itens, descontos, observação, data/hora e até o
+// item que ele estava digitando pela metade.
+//
+// Como funciona (simples e à prova de ordem de carregamento — este arquivo
+// fica por último no bundle):
+// 1) No openModal: se a venda nova está na tela (o código vos-codigo está
+//    visível no modal), o sistema tira uma FOTO da venda antes da outra
+//    tela tomar o lugar (guarda em window.__vosVendaPendente).
+// 2) No closeModal: se tem foto pendente, remonta a venda com a foto e
+//    devolve ela pro lugar. Salvar e cancelar passam por closeModal, então
+//    os dois voltam igual.
+// 3) Finalizar a venda não toma foto (nenhuma outra tela foi aberta), então
+//    fechar a venda continua fechando normal.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function vendaNaTela(){
+  var b = document.getElementById('vos-codigo');
+  if(!b) return false;
+  var root = document.getElementById('modal-root');
+  return !!(root && !root.classList.contains('hidden'));
+}
+
+function val(id){ var el = document.getElementById(id); return el ? el.value : null; }
+function porVal(id, v){ if(v == null) return; var el = document.getElementById(id); if(el) el.value = v; }
+
+function tirarFoto(){
+  var campos = {};
+  ['vos-cli-search','vos-destino','vos-data-saida','vos-prazo-entrega',
+   'vos-obs','vos-desc-venda','vos-os-valor','vos-os-desc',
+   'vos-item-tipo','vos-prod-search','vos-item-qtd','vos-item-vunit','vos-item-desc','vos-item-total',
+   'vos-item-cartucho','vos-item-identificacao','vos-item-tecnico'
+  ].forEach(function(id){ campos[id] = val(id); });
+  var abaOs = document.getElementById('vos-aba-os');
+  var extra = document.getElementById('vos-item-extra');
+  return {
+    form: (window.__vosForm ? JSON.parse(JSON.stringify(window.__vosForm)) : null),
+    codigoTexto: (document.getElementById('vos-codigo')||{}).textContent || '',
+    titulo: (document.getElementById('modal-title')||{}).textContent || 'Nova venda / Notinha',
+    abaOs: !!(abaOs && !abaOs.classList.contains('hidden')),
+    extraAberto: !!(extra && !extra.classList.contains('hidden')),
+    campos: campos
+  };
+}
+
+function devolverVenda(){
+  var foto = window.__vosVendaPendente;
+  if(!foto) return;
+  window.__vosVendaPendente = null;
+  if(typeof window.novaVenda !== 'function' || !foto.form) return;
+  window.novaVenda(); // reconstrói a tela e todas as amarrações
+  window.__vosForm = foto.form; // tudo que estava no formulário volta
+  var cod = document.getElementById('vos-codigo');
+  if(cod && foto.codigoTexto) cod.textContent = foto.codigoTexto;
+  var tit = document.getElementById('modal-title');
+  if(tit && foto.titulo) tit.textContent = foto.titulo;
+  if(foto.form.cliente && foto.form.cliente.id && typeof window.vosVendaSelectCliente === 'function'){
+    window.vosVendaSelectCliente(foto.form.cliente.id);
+  }
+  Object.keys(foto.campos || {}).forEach(function(id){ porVal(id, foto.campos[id]); });
+  if(typeof window.vosRenderItens === 'function') window.vosRenderItens();
+  if(typeof window.vosItemCalcTotal === 'function') window.vosItemCalcTotal();
+  if(typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
+  if(typeof window.vosOsRuleHint === 'function') { try{ window.vosOsRuleHint(); }catch(e){} }
+  if(foto.abaOs && typeof window.vosSetAba === 'function') { try{ window.vosSetAba('os'); }catch(e){} }
+  var ps = document.getElementById('vos-prod-search');
+  if(ps) ps.focus();
+}
+
+// 1) Fotografa a venda quando QUALQUER outro modal abre a partir dela
+if(typeof window.openModal === 'function' && !window.openModal.__v52295){
+  var _open = window.openModal;
+  window.openModal = function(){
+    try{
+      if(vendaNaTela() && !window.__vosVendaPendente){
+        window.__vosVendaPendente = tirarFoto();
+      }
+    }catch(e){}
+    return _open.apply(this, arguments);
+  };
+  window.openModal.__v52295 = true;
+}
+
+// 2) Devolve a venda quando qualquer modal fecha (salvar OU cancelar)
+if(typeof window.closeModal === 'function' && !window.closeModal.__v52295){
+  var _close = window.closeModal;
+  window.closeModal = function(){
+    var r = _close.apply(this, arguments);
+    if(window.__vosVendaPendente){ try{ setTimeout(devolverVenda, 40); }catch(e){} }
+    return r;
+  };
+  window.closeModal.__v52295 = true;
+}
+
+// Telas que fecham SEM passar por closeModal (caso exista alguma): um olho
+// leve percebe o modal sumido com a venda pendente e devolve mesmo assim.
+if(typeof document !== 'undefined'){
+  setInterval(function(){
+    if(!window.__vosVendaPendente) return;
+    var root = document.getElementById('modal-root');
+    if(root && root.classList.contains('hidden')) devolverVenda();
+  }, 900);
+}
+
+window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
+})();
+
+;
+
+/* ===== ajustes_v52296_backups_nuvem_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
+// o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
+// abas, nada de gaveta voadora) com os 3 botões diretos dentro:
+// 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
+// 🗑️ Excluir o histórico + seção do backup clássico do PC.
+// ═══════════════════════════════════════════════════════════════════════════
+// Em "Nuvem" há agora um card "Backups na nuvem" com:
+//   • a lista do que a nuvem guardou, separado nas pastas:
+//       📁 Backup diario (todo dia 18:30 sozinho)
+//       📁 Backup atualizações (sozinho a cada versão nova, foto da anterior)
+//       📁 Backup manual (botão 📸 Backup manual — faz os dois: guarda na nuvem e baixa no PC);
+//   • 📥 Baixar todos os backups (um .zip pronto pra guardar no HD externo);
+//   • 🗑️ Excluir os backups (apaga SÓ os backups da nuvem — os dados do
+//     sistema nunca, e o ciclo continua: amanhã 18:30 sai outro diário).
+// O card só aparece para o aparelho/usuário administrador (mesmo lugar dos
+// outros botões de administração da nuvem) e já abre sozinho, de cara, com:
+//   • último backup de TUDO;
+//   • último de cada modalidade (diário / atualizações / manual);
+//   • quanto falta pro próximo diário — tempo CONGELADO na abertura da
+//     janela (nada de reloginho rodando sem parar: PC da loja não sofre).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function api(){ return window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api; }
+
+function dataBR(iso){
+  try{ const d = new Date(iso); return isNaN(+d) ? '' : d.toLocaleString('pt-BR'); }catch(e){ return ''; }
+}
+function tamanhoBR(bytes){
+  const n = Number(bytes)||0;
+  if(n >= 1048576) return (n/1048576).toFixed(1).replace('.', ',') + ' MB';
+  if(n >= 1024) return (n/1024).toFixed(0) + ' KB';
+  return n + ' B';
+}
+
+function escap(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function aviso(el, texto, cor){
+  if(!el) return;
+  el.innerHTML = '<div class="bk-msg bk-msg-' + cor + '" style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
+    (cor === 'erro' ? '#fef2f2' : cor === 'ok' ? '#ecfdf5' : '#eff6ff') +
+    ';color:' + (cor === 'erro' ? '#991b1b' : cor === 'ok' ? '#047857' : '#1d4ed8') +
+    ';border:1px solid ' + (cor === 'erro' ? '#fecaca' : cor === 'ok' ? '#a7f3d0' : '#bfdbfe') + '">' + texto + '</div>';
+}
+
+function traduzErro(e){
+  const codigo = e && (e.code || '') + '|' + (e.message || '');
+  if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
+    return 'A nuvem do plano grátis atingiu o LIMITE DIÁRIO de gravações de hoje (100 mil). Libera sozinho às 21h — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
+  if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
+    return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
+  if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin (ex.: Kauan) em qualquer computador para ver, baixar ou apagar backups.';
+  return e && e.message || String(e);
+}
+
+// ─── ZIP simples (sem compressão): suficiente e leve pra qualquer PC ───────
+const CRC_TABELA = (function(){
+  const t = new Uint32Array(256);
+  for(let n = 0; n < 256; n++){
+    let c = n;
+    for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes){
+  let c = 0xFFFFFFFF;
+  for(let i = 0; i < bytes.length; i++) c = CRC_TABELA[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function dataDos(agora){
+  const d = agora || new Date();
+  const hora = (d.getHours() << 11) | (d.getMinutes() << 5) | ((d.getSeconds() / 2) | 0);
+  const data = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  return { hora, data };
+}
+function montarZip(arquivos){ // arquivos: [{nome, bytes(Uint8Array)}]
+  const partes = [];
+  const central = [];
+  let offset = 0;
+  const agora = dataDos();
+  arquivos.forEach(function(arq){
+    const nome = arq.nome.replace(/\\/g, '/'); // mantém as pastas dentro do zip
+    const nomeBytes = new TextEncoder().encode(nome);
+    const crc = crc32(arq.bytes);
+    const cab = new DataView(new ArrayBuffer(30));
+    cab.setUint32(0, 0x04034b50, true);      // assinatura local
+    cab.setUint16(4, 20, true);              // versão mínima
+    cab.setUint16(6, 0x0800, true);          // UTF-8
+    cab.setUint16(8, 0, true);               // store (sem compressão)
+    cab.setUint16(10, agora.hora, true);
+    cab.setUint16(12, agora.data, true);
+    cab.setUint32(14, crc, true);
+    cab.setUint32(18, arq.bytes.length, true);
+    cab.setUint32(22, arq.bytes.length, true);
+    cab.setUint16(26, nomeBytes.length, true);
+    cab.setUint16(28, 0, true);
+    partes.push(new Uint8Array(cab.buffer), nomeBytes, arq.bytes);
+
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true);
+    cen.setUint16(4, 20, true);
+    cen.setUint16(6, 20, true);
+    cen.setUint16(8, 0x0800, true);
+    cen.setUint16(10, 0, true);
+    cen.setUint16(12, agora.hora, true);
+    cen.setUint16(14, agora.data, true);
+    cen.setUint32(16, crc, true);
+    cen.setUint32(20, arq.bytes.length, true);
+    cen.setUint32(24, arq.bytes.length, true);
+    cen.setUint16(28, nomeBytes.length, true);
+    cen.setUint32(42, offset, true);
+    central.push(new Uint8Array(cen.buffer), nomeBytes);
+    offset += 30 + nomeBytes.length + arq.bytes.length;
+  });
+  let tamCentral = 0;
+  central.forEach(function(p){ tamCentral += p.length; });
+  const fim = new DataView(new ArrayBuffer(22));
+  fim.setUint32(0, 0x06054b50, true);
+  fim.setUint16(8, arquivos.length, true);
+  fim.setUint16(10, arquivos.length, true);
+  fim.setUint32(12, tamCentral, true);
+  fim.setUint32(16, offset, true);
+  partes.push.apply(partes, central);
+  partes.push(new Uint8Array(fim.buffer));
+  return new Blob(partes, { type: 'application/zip' });
+}
+
+function baixarArquivo(nome, blob){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
+}
+// v5.24.2 — cargo do USUÁRIO logado: SOMENTE Admin (pedido final do dono:
+// "somente o admin vai ver os menus de nuvem e de backup; o cargo Dono não
+// vê nem a nuvem nem o backup"). Dono e os demais cargos ficam de fora.
+function usuarioAtualEhAdminBackup(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess) return false;
+    const cargo=String(sess.perfil||'').trim().toLowerCase();
+    if(cargo==='admin') return true;
+    // sessão pode ser mais velha que o cadastro (trocaram o cargo depois do login)
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&x.id===sess.usuarioId;});
+    const cargo2=String((u&&u.perfil)||'').trim().toLowerCase();
+    return cargo2==='admin';
+  }catch(e){ return false; }
+}
+// Prova do usuário para o download direto abaixo (fetch cru; os outros
+// endpoints passam pelo api() global, que já anexa a prova desde a v5.24.1).
+async function bkCabUsuario(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess||!sess.login) return {};
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&String(x.login||'').toLowerCase()===String(sess.login).toLowerCase();});
+    if(!u||!u.senha||typeof crypto==='undefined'||!crypto.subtle) return {};
+    const dados=new TextEncoder().encode(String(sess.login).toLowerCase()+'|'+String(u.senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    const prova=Array.from(new Uint8Array(digest),function(b){return b.toString(16).padStart(2,'0');}).join('');
+    return {'x-digicopy-usuario-login':String(sess.login).toLowerCase(),'x-digicopy-usuario-prova':prova};
+  }catch(e){ return {}; }
+}
+
+async function baixarUmBackup(chave){
+  const call = api(); if(!call) throw new Error('API da nuvem não carregada.');
+  const cabUsuario = await bkCabUsuario();
+  const resp = await fetch(window.DIGICOPY_CLOUD.API + '/v1/backup?key=' + encodeURIComponent(chave), {
+    headers: Object.assign({ authorization: 'Bearer ' + window.DIGICOPY_CLOUD.token() }, cabUsuario)
+  });
+  if(!resp.ok){
+    let msg = 'Erro HTTP ' + resp.status;
+    try{ const d = await resp.json(); if(d && d.message) msg = d.message; }catch(e){}
+    throw new Error(msg);
+  }
+  const corte = chave.indexOf('/');
+  return { chave: chave, nome: corte > 0 ? chave.slice(corte + 1) : chave, bytes: new Uint8Array(await resp.arrayBuffer()) };
+}
+
+async function backupAgora(){
+  const call = api(); if(!call) throw new Error('API da nuvem não carregada.');
+  return call('/v1/backup/agora', { method: 'POST', body: JSON.stringify({ tipo: 'manual' }) });
+}
+
+// ─── Funções do painel ─────────────────────────────────────────────────────
+async function listar(){ const call = api(); if(!call) throw new Error('API da nuvem não carregada.'); return call('/v1/backups'); }
+
+// ─── Resumo (últimos + contagem CONGELADA na abertura da janela) ───────────
+// Nada de setInterval: o tempo até o próximo diário é calculado UMA vez,
+// no momento em que a janela da Nuvem é aberta — PC da loja não sofre.
+function horaSPde(ms){ // retorna {dia, mes, ano, hora, min} no horário de São Paulo
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date(ms));
+  const o = {};
+  partes.forEach(function(p){ if(p.type !== 'literal') o[p.type] = parseInt(p.value, 10); });
+  return { dia: o.day, mes: o.month, ano: o.year, hora: o.hour % 24, min: o.minute };
+}
+const ALVO_DIARIO_HORA_UTC = 21, ALVO_DIARIO_MIN_UTC = 30; // 18:30 SP = 21:30 UTC (Brasil sem horário de verão)
+
+function proximaDiaria(ms){
+  // Próxima 18:30 de São Paulo: hoje se ainda não passou, senão amanhã.
+  const hoje = horaSPde(ms);
+  let alvo = Date.UTC(hoje.ano, hoje.mes - 1, hoje.dia, ALVO_DIARIO_HORA_UTC, ALVO_DIARIO_MIN_UTC);
+  let ehHoje = true;
+  if (ms >= alvo){ alvo += 86400000; ehHoje = false; }
+  const falta = alvo - ms;
+  const faltamH = Math.floor(falta / 3600000);
+  const faltamM = Math.floor((falta % 3600000) / 60000);
+  return {
+    ehHoje: ehHoje,
+    alvoMs: alvo,
+    faltaTexto: faltamH > 0 ? (faltamH + 'h ' + String(faltamM).padStart(2, '0') + 'min') : (faltamM + ' min'),
+    alvoSP: horaSPde(alvo)
+  };
+}
+
+function rotuloDataHora(iso){
+  if(!iso) return '—';
+  try{
+    const ms = new Date(iso).getTime();
+    const sp = horaSPde(ms);
+    return pad2(sp.dia) + '/' + pad2(sp.mes) + ' ' + pad2(sp.hora) + 'h' + pad2(sp.min);
+  }catch(e){ return dataBR(iso); }
+}
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function linhaResumo(titulo, valor, vazio){
+  return '<div style="display:flex;gap:6px;font-size:11px;line-height:1.55">' +
+    '<span style="min-width:118px;font-weight:900;color:#334155">' + titulo + '</span>' +
+    '<span style="color:' + (vazio ? '#94a3b8' : '#1e293b') + ';font-weight:700">' + (valor || vazio) + '</span></div>';
+}
+
+function preencherResumo(card, itens){
+  const box = card.querySelector('#bk-resumo'); if(!box) return;
+  const porPasta = {};
+  itens.forEach(function(b){ const p = b.pasta || ''; if(!porPasta[p]) porPasta[p] = b; }); // já vem do mais novo pro mais velho
+  const ultimo = itens[0];
+  const prox = proximaDiaria(Date.now());
+  let h = '<div style="background:#fff;border:1px solid #dbe3f5;border-radius:10px;padding:10px 12px">';
+  h += linhaResumo('🕐 Último backup:', ultimo
+    ? '<b>' + ultimo.nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(ultimo.geradoEm) + ' • ' + tamanhoBR(ultimo.tamanho)
+    : null, 'nenhum ainda');
+  h += linhaResumo('📁 Último DIÁRIO:', porPasta['Backup diario']
+    ? '<b>' + porPasta['Backup diario'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup diario'].geradoEm)
+    : null, 'o primeiro sai sozinho 18:30');
+  h += linhaResumo('📁 Último ATUALIZAÇÃO:', porPasta['Backup atualizações']
+    ? '<b>' + porPasta['Backup atualizações'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup atualizações'].geradoEm)
+    : null, 'sai sozinho quando subir versão nova');
+  h += linhaResumo('📁 Último MANUAL:', porPasta['Backup manual']
+    ? '<b>' + porPasta['Backup manual'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup manual'].geradoEm)
+    : null, 'aperta 📸 Backup agora pra fazer');
+  h += '<div style="border-top:1px dashed #dbe3f5;margin:7px 0"></div>';
+  h += linhaResumo('⏳ Próximo diário:',
+    '<b>' + (prox.ehHoje ? 'hoje' : 'amanhã') + ' às 18:30</b> — faltam <b>' + prox.faltaTexto + '</b>');
+  h += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">tempo contado quando esta janela abriu — não fica atualizando sozinho; reabra pra atualizar.</div>';
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+async function baixarTodos(avisoEl, botao){
+  const d = await listar();
+  const itens = (d && d.backups) || [];
+  if(!itens.length){ aviso(avisoEl, 'Ainda não há backups guardados. O primeiro diário sai 18:30, e o de sistema sai na próxima atualização.', 'info'); return 0; }
+  aviso(avisoEl, 'Baixando ' + itens.length + ' backup(s) da nuvem... aguarde.', 'info');
+  const arquivos = [];
+  for(let i = 0; i < itens.length; i++){
+    if(botao) botao.innerText = '📥 ' + (i + 1) + '/' + itens.length + '...';
+    const arq = await baixarUmBackup(itens[i].chave);
+    arquivos.push({ nome: itens[i].chave, bytes: arq.bytes }); // "Backup diario/Backup 08-09-2026.json" vira pasta no zip
+  }
+  const agora = new Date();
+  const nomeZip = 'backups-digicopy-' +
+    agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0') +
+    '-' + String(agora.getHours()).padStart(2, '0') + 'h' + String(agora.getMinutes()).padStart(2, '0') + '.zip';
+  baixarArquivo(nomeZip, montarZip(arquivos));
+  aviso(avisoEl, '✅ Pronto! Baixei <b>' + itens.length + ' backup(s)</b> no arquivo <b>' + nomeZip + '</b>. Guarde no HD externo.', 'ok');
+  return itens.length;
+}
+
+async function excluirTodos(avisoEl){
+  const d = await listar();
+  const qtd = ((d && d.backups) || []).length;
+  if(!qtd){ aviso(avisoEl, 'Não há backups para apagar.', 'info'); return 0; }
+  const ok1 = await window.confirmSistema(
+    'Excluir <b>' + qtd + ' backup(s)</b> da nuvem? Isso apaga <b>somente os backups</b> — os dados atuais do sistema <b>continuam intactos</b>.',
+    'Excluir backups da nuvem');
+  if(!ok1) return 0;
+  const ok2 = await window.confirmSistema(
+    'Última confirmação: tem certeza? Se baixar tudo no HD primeiro, lembre de guardar o arquivo <b>.zip</b>. Depois de apagar, o ciclo continua normal (amanhã 18:30 sai o diário e a cada atualização sai o de sistema).',
+    'Tem certeza?');
+  if(!ok2) return 0;
+  const call = api();
+  const r = await call('/v1/backups', { method: 'DELETE' });
+  aviso(avisoEl, '🗑️ Apaguei <b>' + (r.apagados || qtd) + ' backup(s)</b> da nuvem. Os dados do sistema não foram tocados — amanhã 18:30 tem diário novo.', 'ok');
+  return r.apagados || qtd;
+}
+
+// ─── A tela (card dentro do painel Nuvem) ──────────────────────────────────
+function estiloBtn(principal){
+  return 'height:38px;padding:0 14px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;' +
+    (principal ? 'background:#0a1e8a;color:#fff;border:0' : 'background:#fff;color:#334155;border:1px solid #cbd5e1');
+}
+
+function renderLista(box, itens){
+  if(!itens.length){
+    box.innerHTML = '<div style="font-size:12px;color:#64748b;font-weight:700">Ainda não há backups. O diário sai 18:30 todo dia e o de sistema sai sozinho a cada atualização.</div>';
+    return;
+  }
+  // Separa nas pastas do desenho do dono: diário, atualizações e manual.
+  const pastas = ['Backup diario', 'Backup atualizações', 'Backup manual'];
+  const grupos = {};
+  itens.forEach(function(b){ const p = b.pasta || ''; (grupos[p] = grupos[p] || []).push(b); });
+  let html = '';
+  pastas.concat(Object.keys(grupos).filter(function(p){ return pastas.indexOf(p) < 0; })).forEach(function(p){
+    const lista = grupos[p]; if(!lista || !lista.length) return;
+    html += '<div style="font-size:11px;font-weight:900;color:#0a1e8a;margin:4px 0 2px">📁 ' + p.replace(/</g, '&lt;') + '</div>';
+    html += lista.map(function(b){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc">' +
+        '<span style="font-size:15px">📝</span>' +
+        '<span style="flex:1;min-width:0"><b style="font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + b.nome.replace(/</g, '&lt;') + '</b>' +
+        '<small style="color:#64748b;font-size:10px">' + dataBR(b.geradoEm) + ' • ' + tamanhoBR(b.tamanho) + (b.registros ? ' • ' + b.registros + ' registros' : '') + '</small></span>' +
+        '<button type="button" data-bk-baixar="' + b.chave.replace(/"/g, '&quot;') + '" title="Baixar este backup" style="' + estiloBtn(false) + ';height:30px;padding:0 9px">⬇️</button>' +
+        '<button type="button" data-bk-apagar="' + b.chave.replace(/"/g, '&quot;') + '" title="Apagar este backup" style="' + estiloBtn(false) + ';height:30px;padding:0 9px">🗑️</button>' +
+      '</div>';
+    }).join('');
+  });
+  box.innerHTML = html;
+
+  box.querySelectorAll('[data-bk-baixar]').forEach(function(btn){
+    btn.onclick = async function(){
+      try{
+        const arq = await baixarUmBackup(btn.getAttribute('data-bk-baixar'));
+        baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
+      }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backups'); }
+    };
+  });
+  box.querySelectorAll('[data-bk-apagar]').forEach(function(btn){
+    btn.onclick = async function(){
+      const chave = btn.getAttribute('data-bk-apagar');
+      const ok = await window.confirmSistema('Apagar o backup <b>' + chave + '</b> da nuvem? Os dados do sistema continuam intactos.', 'Apagar um backup');
+      if(!ok) return;
+      try{
+        const call = api();
+        await call('/v1/backup?key=' + encodeURIComponent(chave), { method: 'DELETE' });
+        carregar(box);
+      }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backups'); }
+    };
+  });
+}
+
+async function carregar(card){
+  const lista = card.querySelector('#bk-lista');
+  const rodape = card.querySelector('#bk-aviso');
+  if(lista) lista.innerHTML = '<div style="font-size:12px;color:#64748b;font-weight:700">Procurando backups na nuvem...</div>';
+  try{
+    const d = await listar();
+    const itens = (d && d.backups) || [];
+    const cont = card.querySelector('#bk-contador');
+    if(cont) cont.innerText = itens.length + ' guardado(s)';
+    preencherResumo(card, itens);
+    renderLista(lista, itens);
+    aviso(rodape, '', 'apagar');
+    if(rodape) rodape.innerHTML = '';
+  }catch(e){
+    if(lista) lista.innerHTML = '';
+    aviso(rodape, traduzErro(e), 'erro');
+  }
+}
+
+async function abrir(painelBody){
+  const card = painelBody.querySelector('#dc-backups');
+  if(!card) return;
+  // v5.24.1 — backup da nuvem depende do USUÁRIO (cargo Admin/Dono), não do
+  // aparelho. Sem cargo, a seção da nuvem mostra o cadeado e nem chama a API;
+  // a restauração por arquivo (seção de baixo) continua liberada para todos.
+  if(!usuarioAtualEhAdminBackup()){
+    card.innerHTML =
+      '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
+        '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin (ex.: Kauan) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+      '</div>';
+    return;
+  }
+  card.innerHTML =
+    '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
+      '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+        '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
+        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir todos os backups da nuvem</button>' +
+      '</div>' +
+      '<div id="bk-resumo" style="margin-top:10px"></div>' +
+      '<div id="bk-aviso" style="margin-top:10px"></div>' +
+      '<div id="bk-lista" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:260px;overflow:auto"></div>' +
+    '</div>';
+
+  const btnB = card.querySelector('#bk-baixar-todos');
+  const btnE = card.querySelector('#bk-excluir-todos');
+  const avisoEl = card.querySelector('#bk-aviso');
+  card.querySelector('#bk-agora').onclick = async function(){
+    const b = this;
+    await acaoBackupManual(b, card);
+    carregar(card);
+  };
+  btnB.onclick = async function(){
+    try{ await baixarTodos(avisoEl, btnB); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ btnB.innerText = '📥 Baixar todos os backups'; carregar(card); }
+  };
+  btnE.onclick = async function(){
+    try{ await excluirTodos(avisoEl); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ carregar(card); }
+  };
+  carregar(card);
+}
+
+// ─── Menu lateral BACKUP: abre a TELA NORMAL "Backup do sistema" ───────────
+// (igual às outras abas — nada de gaveta/dropdown bugado por cima da tela).
+// v5.23.2 — RESTAURAR backup: volta a valer dentro da aba (modo seguro)
+const LISTAS_DB = ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'];
+function ehFormatoBackup(obj){
+  if(!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(listas.length < 3) return null; // backup de verdade traz várias listas
+  return listas;
+}
+function resumoBackup(obj, listas){
+  return listas.map(k => k + ': ' + obj[k].length).join('  •  ');
+}
+function preencherBanco(obj, modo){ // modo: 'substituir' (exato como o arquivo) | 'somar' (junta sem apagar)
+  if(typeof db === 'undefined' || !db) throw new Error('Banco local não carregado.');
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(modo === 'substituir'){
+    listas.forEach(k => { db[k] = obj[k].map(x => Object.assign({}, x)); });
+  }else{
+    listas.forEach(k => {
+      if(!Array.isArray(db[k])) db[k] = [];
+      const ja = new Set(db[k].map(x => x && x.id).filter(Boolean));
+      obj[k].forEach(x => {
+        if(x && x.id && ja.has(x.id)){ // mesmo id: o do backup entra só se for mais novo
+          const alvo = db[k].find(y => y && y.id === x.id);
+          if(alvo && String(x.atualizadoEm || x.criadoEm || '') > String(alvo.atualizadoEm || alvo.criadoEm || '')) Object.assign(alvo, x);
+        }else db[k].push(Object.assign({}, x));
+      });
+    });
+  }
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof window.renderApp === 'function') try{ window.renderApp(); }catch(e){}
+}
+function lerArquivoJSON(inp){
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  const leitor = new FileReader();
+  leitor.onload = function(){
+    const caixa = document.getElementById('bk-rest-prev');
+    try{
+      const obj = JSON.parse(String(leitor.result || ''));
+      const listas = ehFormatoBackup(obj);
+      if(!listas){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Esse arquivo não é um backup do Digicopy (não achei as listas de dados).</div>'; window.__bkRestaurar = null; return; }
+      window.__bkRestaurar = obj;
+      caixa.innerHTML = '<div style="font-size:12px;color:#166534;font-weight:800">✅ Backup reconhecido (' + escap(f.name) + ')</div>' +
+        '<div style="font-size:11px;color:#475569;margin-top:3px">' + escap(resumoBackup(obj, listas)) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+        '<button type="button" id="bk-rest-substituir" style="' + estiloBtn(true) + '">🔄 Substitui tudo (fica exato como o backup)</button>' +
+        '<button type="button" id="bk-rest-somar" style="' + estiloBtn(false) + '">➕ Soma nos dados (não apaga nada)</button></div>';
+      caixa.querySelector('#bk-rest-substituir').onclick = function(){ confirmarRestauracao('substituir'); };
+      caixa.querySelector('#bk-rest-somar').onclick = function(){ confirmarRestauracao('somar'); };
+    }catch(e){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Arquivo inválido: ' + escap(e && e.message || e) + '</div>'; window.__bkRestaurar = null; }
+  };
+  leitor.readAsText(f);
+}
+async function confirmarRestauracao(modo){
+  const obj = window.__bkRestaurar;
+  if(!obj) return;
+  const perg = modo === 'substituir'
+    ? 'Isso SUBSTITUI todos os dados deste PC pelos dados do backup. O que estiver aqui e não estiver no backup some deste PC. Continuar?'
+    : 'Isso SOMA os dados do backup nos dados deste PC (linhas com o mesmo código são atualizadas se o backup for mais novo). Continuar?';
+  const ok = typeof window.confirmSistema === 'function' ? await window.confirmSistema(perg, 'Restaurar backup') : true;
+  if(!ok) return;
+  try{
+    preencherBanco(obj, modo);
+    if(typeof toast === 'function') toast(modo === 'substituir' ? 'Backup restaurado: o PC ficou exato como o arquivo ✔' : 'Backup somado aos dados ✔', 'success');
+    const caixa = document.getElementById('bk-rest-prev'); if(caixa) caixa.innerHTML = '';
+    const inp = document.getElementById('bk-rest-arq'); if(inp) inp.value = '';
+    window.__bkRestaurar = null;
+  }catch(e){ window.lfbAlert && window.lfbAlert('Falha ao restaurar: ' + (e && e.message || e), 'Restaurar backup'); }
+}
+
+// v5.23.6 — modal próprio garantido. No bundle final, cada patch vai dentro de
+// um bloco try{} do isolamento: declarações "function setModal" dos outros
+// patches ficam PRESAS no bloco e nunca viram globais. Resultado real: o botão
+// do menu Backup chamava abrirTelaBackup, que caía no fallback chamando
+// window.exportBackup — que desde a 5.23.2 É o próprio abrirTelaBackup →
+// recursão infinita, engolida pelo try/catch da captura → "botão clicável que
+// não faz nada". Agora a tela usa o esqueleto de modal nativo do app
+// (#modal-root) e, se nem isso existir, cria um overlay próprio.
+function bkSetModal(titulo, corpo, rodape, max){
+  const raiz = document.getElementById('modal-root');
+  if(raiz){
+    const box = document.getElementById('modal-box');
+    if(box) box.className = 'w-full max-w-[' + (max || '940px') + '] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+    const t = document.getElementById('modal-title'); if(t) t.innerText = titulo;
+    const b = document.getElementById('modal-body'); if(b) b.innerHTML = corpo;
+    const f = document.getElementById('modal-footer'); if(f) f.innerHTML = rodape || '';
+    raiz.classList.remove('hidden');
+    return true;
+  }
+  let ov = document.getElementById('bk-overlay');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'bk-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = '<div style="background:#fff;border-radius:18px;max-width:' + (max || '940px') + ';width:100%;max-height:94vh;overflow:auto;box-shadow:0 25px 60px rgba(0,0,0,.35)"><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0"><b class="bk-ov-t" style="font-size:15px"></b><button type="button" class="bk-ov-x" style="font-size:18px;line-height:1;padding:4px 10px">✕</button></div><div class="bk-ov-b" style="padding:16px 18px"></div><div class="bk-ov-f" style="padding:12px 18px;border-top:1px solid #e2e8f0;text-align:right"></div></div>';
+    ov.querySelector('.bk-ov-x').onclick = function(){ window.bkFecharTelaBackup(); };
+    ov.onclick = function(ev){ if(ev.target === ov) window.bkFecharTelaBackup(); };
+    document.body.appendChild(ov);
+  }
+  ov.querySelector('.bk-ov-t').innerText = titulo;
+  ov.querySelector('.bk-ov-b').innerHTML = corpo;
+  ov.querySelector('.bk-ov-f').innerHTML = rodape || '';
+  ov.style.display = 'flex';
+  return true;
+}
+window.bkFecharTelaBackup = function(){
+  const raiz = document.getElementById('modal-root'); if(raiz){ try{ raiz.classList.add('hidden'); }catch(e){} }
+  const ov = document.getElementById('bk-overlay'); if(ov) ov.style.display = 'none';
+};
+
+// v5.23.7 — modo escuro da tela Backup: o conteúdo usa cores claras fixas
+// (estilo inline). Como inline ganha de tudo, a regra escura precisa de
+// !important — e só vale quando o app está em digi-escuro. Injetada UMA vez.
+function garantirCssBk(){
+  if(document.getElementById('bk-aba-css')) return;
+  const s = document.createElement('style'); s.id = 'bk-aba-css';
+  s.textContent = "html.digi-escuro .bk-aba div{background-color:transparent !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-aba,html.digi-escuro .bk-aba b,html.digi-escuro .bk-aba p,html.digi-escuro .bk-aba span,html.digi-escuro .bk-aba small,html.digi-escuro .bk-aba h3,html.digi-escuro .bk-aba h4{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-intro{color:#cbd5e1 !important}\nhtml.digi-escuro .bk-sec{background:#1e293b !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-sec-head{background:#0f172a !important;color:#93c5fd !important}\nhtml.digi-escuro .bk-sec-head .bk-sub{color:#94a3b8 !important}\nhtml.digi-escuro .bk-card{background:#16203a !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-card h4{color:#93c5fd !important}\nhtml.digi-escuro .bk-card small{color:#94a3b8 !important}\nhtml.digi-escuro .bk-note{color:#94a3b8 !important}\nhtml.digi-escuro .bk-title{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-dashed{border-color:#475569 !important}\nhtml.digi-escuro .bk-msg-erro{background:rgba(220,38,38,.16) !important;color:#fca5a5 !important;border-color:#7f1d1d !important}\nhtml.digi-escuro .bk-msg-ok{background:rgba(16,185,129,.14) !important;color:#6ee7b7 !important;border-color:#065f46 !important}\nhtml.digi-escuro .bk-msg-info{background:rgba(59,130,246,.15) !important;color:#93c5fd !important;border-color:#1e3a8a !important}";
+  document.head.appendChild(s);
+}
+
+function abrirTelaBackup(){
+  garantirCssBk();
+  bkSetModal('Backup do sistema',
+    '<div class="bk-aba"><div class="bk-intro" style="font-size:12px;color:#475569;margin-bottom:12px">São <b>3 jeitos</b> de guardar seus dados: 📸 <b>manual</b> (aperta o botão — salva na nuvem E baixa no PC), 📁 <b>diário</b> (sozinho, todo dia <b>18:30</b>) e 📁 <b>a cada atualização</b> (sozinho, foto da versão anterior). Tudo fica na nuvem, organizado em pastas.</div>' +
+    '<div class="bk-sec" style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small class="bk-sub" style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
+      '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
+    '</div>' +
+    // v5.24.0 — o "💾 Baixar backup para este PC" (manual SÓ local, que não ia
+    // pra nuvem) foi REMOVIDO a pedido do dono: era o botão duplicado. Ficam os
+    // 3 da nuvem (📸 manual nuvem+PC, 📥 .zip de todos, 🗑️ excluir todos) e,
+    // aqui embaixo, só a RESTAURAÇÃO a partir de arquivo — a porta de entrada
+    // dos dados, que nunca pode sumir.
+    '<div class="bk-sec" style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">📥 Restaurar a partir de um arquivo de backup</div>' +
+      '<div style="padding:12px">' +
+        '<div style="margin-top:2px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div>' +
+        '<small class="bk-note" style="color:#64748b">Escolha aqui um arquivo de backup baixado antes (o manual .json ou o conteúdo do .zip) para restaurar os dados neste computador.</small>' +
+      '</div>' +
+    '</div>' + '</div>',
+    '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
+  const restInp = document.getElementById('bk-rest-arq');
+  if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
+  const raiz = document.getElementById('modal-box') || document.body;
+  setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+  // v5.23.4 — dono pediu: medir o uso oficial quando ELE abre o menu (sem cronômetro)
+  if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
+}
+
+// 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
+async function acaoBackupManual(btn, raiz){
+  btn.innerText = '📸 fazendo...';
+  btn.disabled = true;
+  try{
+    const r = await backupAgora(); // 1) guarda na pasta Backup manual da nuvem
+    const chave = r && r.backup;
+    if(typeof toast === 'function') toast('Backup guardado na nuvem ✔', 'success');
+    try{
+      const arq = await baixarUmBackup(chave); // 2) e já baixa pro PC
+      baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
+      if(typeof toast === 'function') toast('E baixado neste PC também ✔', 'success');
+    }catch(e){ window.lfbAlert && window.lfbAlert('Guardei na nuvem, mas o download falhou: ' + traduzErro(e), 'Backup manual'); }
+  }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backup manual'); }
+  finally{ btn.innerText = '📸 Backup manual (nuvem + baixa no PC)'; btn.disabled = false; }
+}
+
+window.abrirTelaBackup = abrirTelaBackup;
+
+// v5.23.2 — o clássico separado do menu: baixar o JSON bruto ganhou nome próprio
+// (window.exportarBackupJSON) e TODA chamada a exportBackup() abre esta aba.
+// Assim qualquer pintura/personalização antiga do menu abre a tela certa.
+if(typeof window.exportBackup === 'function' && !window.exportBackup.__v52302){
+  const _exporJSON = window.exportBackup;
+  if(!window.exportarBackupJSON) window.exportarBackupJSON = function(){ return _exporJSON.apply(this, arguments); };
+  window.exportBackup = function(){ abrirTelaBackup(); };
+  window.exportBackup.__v52302 = true;
+}
+if(typeof window.importBackup !== 'function' || !window.importBackup.__v52302){
+  window.importBackup = function(){ abrirTelaBackup(); };
+  window.importBackup.__v52302 = true;
+}
+
+// O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
+// CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
+// clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
+if(typeof document !== 'undefined' && !document.__v52301bkClick){
+  document.addEventListener('click', function(ev){
+    try{
+      let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+      if(!alvo){
+        const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '')){
+          // v5.23.1 — é menu se estiver no topo fixo OU dentro de um painel de menu
+          const r = b.getBoundingClientRect ? b.getBoundingClientRect() : null;
+          const noTopo = r && r.top < 90 && r.bottom > 0;
+          const noMenu = b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(noTopo || noMenu) alvo = b;
+        }
+      }
+      if(!alvo){
+        // v5.23.1 — botão re-pintado por outro sistema (título antigo ou texto "Backup" no topo)
+        const b2 = ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+        if(b2){
+          const titulo = (b2.getAttribute && b2.getAttribute('title')) || '';
+          const rotulo = ((b2.textContent || '').trim() + ' ' + titulo).toLowerCase();
+          const dentroDoTopo = b2.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(dentroDoTopo && /(^|\s)backup($|\s|c[oó]pia)/.test(rotulo)) alvo = b2;
+        }
+      }
+      if(!alvo) return;
+      ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){ return; }
+    try{ abrirTelaBackup(); }catch(e){}
+  }, true);
+  document.__v52301bkClick = true;
+}
+
+function alternar(painelBody){
+  const card = painelBody.querySelector('#dc-backups');
+  if(!card) return;
+  if(card.innerHTML && card.innerHTML.length > 0){ card.innerHTML = ''; return; }
+  abrir(painelBody);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// v5.24.2 — VISIBILIDADE DOS MENUS Nuvem e Backup: só o cargo ADMIN vê os
+// dois menus (pedido final do dono: "somente o admin vai ver os menus de
+// nuvem e de backup; o Dono não vê nem a nuvem nem o backup"). IMPORTANTE: o
+// MOTOR de sincronização continua rodando em silêncio para TODO mundo —
+// escondemos só os botões, os dados dos outros caixas/PCs continuam fluindo.
+function aplicarVisibilidadeMenusNuvemBackup(){
+  try{
+    if(typeof document==='undefined') return true;
+    const ok=usuarioAtualEhAdminBackup();
+    const btnN=document.getElementById('btn-nuvem');
+    if(btnN){ const w1=btnN.closest('.module')||btnN; w1.style.display=ok?'':'none'; }
+    const btnB=document.getElementById('btn-backup-top');
+    if(btnB){ const w2=btnB.closest('.module')||btnB; w2.style.display=ok?'':'none'; }
+    // ícone de download direto no cabeçalho (exportBackup puro) — também é backup
+    const icones=document.querySelectorAll('button[onclick="exportBackup()"]');
+    for(let i=0;i<icones.length;i++){ icones[i].style.display=ok?'':'none'; }
+    return ok;
+  }catch(e){ return true; } // em dúvida não esconde: evita sumir o menu do Admin por erro bobo
+}
+try{
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aplicarVisibilidadeMenusNuvemBackup);
+  else aplicarVisibilidadeMenusNuvemBackup();
+}catch(e){}
+// guarda permanente: login/logout/troca de usuário repinta a tela — reavalia sempre
+if(!window.__v5242visMenus){ window.__v5242visMenus=setInterval(aplicarVisibilidadeMenusNuvemBackup,2000); }
+// trava extra: mesmo que alguém force a tela da Nuvem sem cargo Admin, ela não abre
+(function travaTelaNuvem(){
+  if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuvem.__v5242){
+    const antiga=window.abrirCloudflareNuvem;
+    window.abrirCloudflareNuvem=async function(){
+      if(!usuarioAtualEhAdminBackup()){
+        if(typeof window.toast==='function') window.toast('🔒 O menu Nuvem é só para usuário com cargo Admin.');
+        return;
+      }
+      return antiga.apply(this,arguments);
+    };
+    window.abrirCloudflareNuvem.__v5242=true;
+  }
+  if(!(typeof window.abrirCloudflareNuvem==='function' && window.abrirCloudflareNuvem.__v5242)) setTimeout(travaTelaNuvem,800);
+})();
+
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, aplicarVisibilidadeMenus: aplicarVisibilidadeMenusNuvemBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
+console.log('[DIGICOPY] menu Backup (aba normal) carregado');
+})();
+
+;
+
+/* ===== ajustes_v5240_relatorio_grande_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES v5.24.0 — RELATÓRIO GRANDE DO DONO
+//
+// Cobre, junto com as edições nas fontes já existentes:
+//   1.2 Backup: tela sem o botão local duplicado (edição no ajustes_v52296) e
+//       numeração sequencial no worker ("Backup manual 1, 2, 3...").
+//   2.1 Atalho "Nova venda" removido do menu (index.html).
+//   2.2 Extorno ESTE ARQUIVO: window.estornarVenda (o botão do detalhe chamava
+//       uma função que não existia — botão morto) + estornarVendasSelecionadas
+//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Extornar" na barra.
+//       Modo escolhido pelo dono: marca "Extornada" (fica no histórico), desfaz
+//       o financeiro (contas a receber da venda), NÃO mexe no estoque (o
+//       faturamento também não mexia — ele baixa quando a venda nasce).
+//   3.x Perda de dados: varrerRessuscitadas desativado (ajustes_v52261),
+//       conflito de push com 1 reenvio (cloudflare_data_sync), reconciliação
+//       só com pull completo (cloudflare_data_sync), backup antes de zerar a
+//       nuvem (worker).
+//   4.1 "cliente não encontrado" ao salvar cliente com id velho → vira
+//       cadastro novo em vez de abortar (clientes_patch).
+//   4.2 Orçamento não encontrado neste PC → busca na nuvem e tenta de novo.
+//   5.1 Botão "Importar clientes" e funções removidos (finalizacao_sistema).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.24.0';
+
+function low(v){ return String(v==null?'':v).toLowerCase(); }
+function DB(){ if(typeof db!=='undefined' && db) return db; if(typeof window!=='undefined' && window.db) return window.db; return {}; }
+
+// ── 2.2 EXTORNO ─────────────────────────────────────────────────────────────
+function ehFaturada(st){
+  var s = low(st);
+  return s==='faturado' || s==='finalizada' || s==='concluido' || s==='pago';
+}
+
+// Espelho do faturamento (vosConcluirFaturamento): o faturar só mexia em
+// status + contas a receber (parcelas ou à vista). O estorno desfaz só isso.
+function estornarUmaVenda(v){
+  if(!v || !ehFaturada(v.status)) return null;
+  var sess = typeof getSession==='function' ? getSession() : null;
+  var antes = low(v.status);
+  var arr = (DB().contasReceber || []);
+  var titulos = arr.filter(function(c){ return c && c.vendaId === v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  DB().contasReceber = arr.filter(function(c){ return !(c && c.vendaId === v.id); });
+  v.status = 'estornada';
+  v.estornoDe = antes;
+  v.estornadoEm = new Date().toISOString();
+  v.estornadoPor = (sess && sess.usuarioNome) || '-';
+  v.parcelas = [];
+  v.formaPagamento = 'Não faturado';
+  if(typeof logAction==='function') logAction('venda','estornar',v.id,'Estornada venda '+v.numero+' (era '+antes+') — '+titulos.length+' título(s) desfeito(s), '+pagos+' já pago(s), por '+v.estornadoPor);
+  return { titulos: titulos.length, pagos: pagos };
+}
+
+function acharVenda(id){
+  var v = (DB().vendas || []).find(function(x){ return x && x.id===id; });
+  if(!v && typeof vosLegadosVendas==='function'){
+    try{
+      var sess = typeof getSession==='function' ? getSession() : null;
+      v = (vosLegadosVendas(sess) || []).find(function(x){ return x && x.id===id; });
+    }catch(e){}
+  }
+  return v || null;
+}
+
+function renderDepois(){
+  if(typeof saveDB==='function') saveDB();
+  if(typeof renderVendas==='function') renderVendas();
+  if(typeof renderFinanceiro==='function') renderFinanceiro();
+  if(typeof renderAuditoria==='function') renderAuditoria();
+}
+
+function aviso(txt, titulo){
+  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Extornar'); return; }
+  if(typeof toast==='function'){ toast(txt, 'info'); return; }
+  if(typeof alert==='function') alert(txt);
+}
+function confirma(txt, titulo, cb){
+  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Extornar venda').then(cb); return; }
+  cb(typeof confirm==='function' ? confirm(txt) : true);
+}
+
+// Individual — o botão "Estornar" do detalhe da venda já CHAMAVA
+// estornarVenda(...), mas a função não existia em lugar nenhum: botão morto.
+window.estornarVenda = function(id){
+  var v = acharVenda(id);
+  if(!v){ aviso('Venda não encontrada.', 'Extornar'); return; }
+  if(!ehFaturada(v.status)){
+    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para extornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Extornar');
+    return;
+  }
+  var titulos = (DB().contasReceber || []).filter(function(c){ return c && c.vendaId===v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  confirma('Extornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela serão desfeitas (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + ').\n• Ela fica marcada como "Extornada" no histórico.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Extornar venda', function(ok){
+    if(!ok) return;
+    estornarUmaVenda(v);
+    renderDepois();
+    if(typeof showVenda==='function') showVenda(v.id);
+    if(typeof toast==='function') toast('Venda extornada', 'success');
+  });
+};
+
+// Em lote — a mesma caixa de seleção do Excluir (checkboxes venda-check-lote
+// ou a linha selecionada). Só vendas FATURADAS entram; o resto é avisado.
+window.estornarVendasSelecionadas = function(){
+  var checks = Array.prototype.slice.call(document.querySelectorAll('input[name="venda-check-lote"]:checked'));
+  var alvos = [];
+  if(checks.length){
+    alvos = checks.map(function(ch){ return acharVenda(ch.value); }).filter(Boolean);
+  }else{
+    var selId = window.neoVendaSelecionada || window.vendaSelecionadaId;
+    if(selId){ var unica = acharVenda(selId); if(unica) alvos = [unica]; }
+  }
+  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para extornar.', 'Extornar vendas'); return; }
+  var faturadas = alvos.filter(function(x){ return ehFaturada(x.status); });
+  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Extornar vendas'); return; }
+  var puladas = alvos.length - faturadas.length;
+  confirma('Extornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas serão desfeitas (as já pagas/à vista também — confira o caixa depois).\n• Ficam marcadas como "Extornada" no histórico.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Extornar vendas', function(ok){
+    if(!ok) return;
+    var n = 0, tit = 0, pagos = 0;
+    faturadas.forEach(function(v){
+      var r = estornarUmaVenda(v);
+      if(r){ n++; tit += r.titulos; pagos += r.pagos; }
+    });
+    renderDepois();
+    window.neoVendaSelecionada = null; window.vendaSelecionadaId = null;
+    if(typeof toast==='function') toast(n + ' venda(s) extornada(s) • ' + tit + ' título(s) desfeito(s)' + (pagos ? ' (' + pagos + ' à vista — confira o caixa)' : ''), 'success');
+  });
+};
+
+// Botão "Extornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
+// que é injetado como #btn-excluir-venda-unificado na .neo-actions).
+function garantirBotaoExtornar(){
+  try{
+    if(typeof document==='undefined') return;
+    var view = document.getElementById('view-vendas');
+    if(!view) return;
+    var actions = view.querySelector('.neo-actions');
+    if(!actions) return;
+    if(actions.querySelector('#btn-estornar-venda')) return;
+    var btn = document.createElement('button');
+    btn.id = 'btn-estornar-venda';
+    btn.className = 'neo-btn';
+    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Extornar';
+    btn.onclick = window.estornarVendasSelecionadas;
+    var exc = actions.querySelector('#btn-excluir-venda-unificado');
+    if(exc) actions.insertBefore(btn, exc); else actions.appendChild(btn);
+  }catch(e){}
+}
+if(typeof window!=='undefined' && typeof window.renderVendas==='function' && !window.renderVendas.__v5240ext){
+  var _renderVendasAntes = window.renderVendas;
+  window.renderVendas = function(){
+    var r = _renderVendasAntes.apply(this, arguments);
+    try{ setTimeout(garantirBotaoExtornar, 60); }catch(e){}
+    return r;
+  };
+  window.renderVendas.__v5240ext = true;
+}
+if(typeof document!=='undefined'){
+  setTimeout(garantirBotaoExtornar, 1600);
+  setInterval(garantirBotaoExtornar, 3000);
+}
+
+// ── 4.2 ORÇAMENTO NÃO ENCONTRADO NESTE PC ───────────────────────────────────
+// Antes de declarar que não achou, puxa a nuvem (tick da sincronização) e
+// tenta de novo até 2 vezes. Resolve o "existe no outro PC, aqui não abre".
+if(typeof window!=='undefined' && typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v5240){
+  var _abrirOrcAntes = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(){
+    var arg = arguments[0] || {};
+    var id = arg && arg.id;
+    if(!id) return _abrirOrcAntes.apply(this, arguments);
+    var existe = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+    if(existe) return _abrirOrcAntes.apply(this, arguments);
+    var self = this, args = arguments, tent = 0;
+    if(typeof toast==='function') toast('Buscando o orçamento na nuvem…', 'info');
+    (function tente(){
+      var chegou = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+      if(chegou){ _abrirOrcAntes.apply(self, args); return; }
+      if(tent >= 2){
+        if(typeof window.lfbAlert==='function') window.lfbAlert('Orçamento não encontrado neste computador — nem depois de buscar na nuvem. Confira a internet e tente de novo em alguns segundos; se ele foi EXCLUÍDO em outro aparelho, ele não volta.', 'Orçamento');
+        return;
+      }
+      tent++;
+      var p = null;
+      try{ if(window.DIGICOPY_CLOUD_SYNC && window.DIGICOPY_CLOUD_SYNC.tick) p = window.DIGICOPY_CLOUD_SYNC.tick('orc-nao-achado'); }catch(e){}
+      Promise.resolve(p).catch(function(){}).then(function(){ setTimeout(tente, 900); });
+    })();
+    return undefined;
+  };
+  window.abrirTelaOrcamento.__v5240 = true;
+}
+
+window.V5240_RELATORIO_PURE = { VERSAO: VERSAO, ehFaturada: ehFaturada, estornarUmaVenda: estornarUmaVenda };
+if(typeof module!=='undefined' && module.exports){ module.exports = window.V5240_RELATORIO_PURE; }
+
+if(typeof document!=='undefined' && typeof console!=='undefined' && console.log){
+  console.log('[DIGICOPY] v' + VERSAO + ': extorno individual + em lote (botão nas notinhas), orçamento com retry de nuvem');
+}
+})();
+
+;
+
+/* ===== ajustes_v5243_cliente_abas_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// ajustes_v5243_cliente_abas_patch.js — v5.24.3
+//
+// Item 5.2 do relatório: o cadastro do cliente ganha ABAS —
+//   [Dados] (o formulário de sempre) | [Vendas] | [Financeiro] |
+//   [Orçamentos] | [Chamados] | [Leituras]
+// Cada aba lista TUDO que existe daquele cliente no módulo correspondente.
+//
+// v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
+// do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
+// Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
+// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
+// da v5.24.3 foi aposentado a pedido dele.)
+//
+// Reforço 4.1: qualquer erro inesperado ao salvar o cliente NÃO fecha a tela
+// e NÃO perde o digitado — mostra o motivo exato num aviso vermelho.
+//
+// v5.24.5 (nova rodada dele):
+//  • Excluir é DE VEZ (some da tela, do PC e da nuvem — orçamento inclusive,
+//    sem marca-fantasma); o que estava excluído NUNCA mais aparece na lista;
+//  • cada linha mostra o STATUS igual ao módulo de origem (Salva, Faturada,
+//    Estornada, Em aberto...);
+//  • a ficha sempre abre em Dados — o botão Salvar nunca mais some;
+//  • clicar num registro que já não existe atualiza a lista e avisa, em vez
+//    de abrir o módulo às cegas;
+//  • 4.1 curado de vez: a busca de cliente da venda refaz o índice sozinha
+//    quando a base troca por baixo, e o clique se CURA com o dado da própria
+//    busca (1ª tentativa não falha mais).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── núcleo puro (testável no Node, sem tela) ────────────────────────────────
+const CLITAB_PURE = {
+  filtra: function(db, colecao, clienteId, empresaId){
+    return (((db||{})[colecao])||[]).filter(function(x){
+      if(!x || x.clienteId!==clienteId || (empresaId && x.empresaId!==empresaId)) return false;
+      if(x.deletedAt || x.excluido===true) return false;                 // v5.24.5: apagado de vez não aparece
+      if(String(x.status||'').toLowerCase()==='excluido') return false;  // idem marcações antigas
+      return true;
+    });
+  },
+  // rótulo + cor do status IGUAIS ao módulo de origem (v5.24.5)
+  chipStatus: function(status){
+    const s=String(status==null||status===''?'salvo':status).toLowerCase();
+    const map={faturado:['Faturada','bg-green-100 text-green-700'],faturada:['Faturada','bg-green-100 text-green-700'],pago:['Pago','bg-green-100 text-green-700'],quitado:['Pago','bg-green-100 text-green-700'],finalizado:['Finalizado','bg-green-100 text-green-700'],aprovado:['Aprovado','bg-green-100 text-green-700'],estornada:['Estornada','bg-amber-100 text-amber-700'],estornado:['Estornado','bg-amber-100 text-amber-700'],aguardando:['Aguardando','bg-amber-100 text-amber-700'],andamento:['Em andamento','bg-amber-100 text-amber-700'],analise:['Em análise','bg-amber-100 text-amber-700'],vencido:['Vencido','bg-red-100 text-red-700'],cancelado:['Cancelado','bg-red-100 text-red-700'],orcamento:['Orçamento','bg-sky-100 text-sky-700'],aberto:['Em aberto','bg-blue-100 text-blue-700'],aberta:['Aberta','bg-blue-100 text-blue-700'],salvo:['Salva','bg-blue-100 text-blue-700'],rascunho:['Salva','bg-blue-100 text-blue-700'],pendente:['Pendente','bg-blue-100 text-blue-700']};
+    return map[s]||[String(status),'bg-slate-100 text-slate-600'];
+  },
+  contagens: function(db, clienteId, empresaId){
+    const f=CLITAB_PURE.filtra;
+    return {
+      vendas:     f(db,'vendas',clienteId,empresaId).length,
+      financeiro: f(db,'contasReceber',clienteId,empresaId).length,
+      orcamentos: f(db,'orcamentos',clienteId,empresaId).length,
+      chamados:   f(db,'os',clienteId,empresaId).length,
+      leituras:   f(db,'leituras',clienteId,empresaId).length
+    };
+  },
+  totalOrc: function(o){
+    if(!o) return 0;
+    if(typeof o.total==='number') return o.total;
+    return ((o.itens)||[]).reduce(function(s,it){
+      const sub=(it&&it.subtotal!=null)?Number(it.subtotal):(Number((it||{}).qtd)||0)*(Number((it||{}).preco)||0);
+      return s+(isFinite(sub)?sub:0);
+    },0);
+  },
+  ordenaPorDataDesc: function(lista, campoData){
+    return (lista||[]).slice().sort(function(a,b){
+      const da=new Date((a&&(a[campoData]||a.criadoEm||a.data))||0).getTime()||0;
+      const dbb=new Date((b&&(b[campoData]||b.criadoEm||b.data))||0).getTime()||0;
+      return dbb-da;
+    });
+  }
+};
+if(typeof module!=='undefined' && module.exports) module.exports = CLITAB_PURE;
+
+(function(){
+'use strict';
+if(typeof window==='undefined') return;
+window.CLITAB_PURE = CLITAB_PURE;
+
+// ── formatadores com fallback (os oficiais moram no app.js) ────────────────
+function _money(v){ try{ if(typeof fmtMoney==='function') return fmtMoney(v); }catch(e){} const n=Number(v||0); return 'R$ '+(isFinite(n)?n.toFixed(2).replace('.',','):String(v)); }
+function _data(d){ try{ if(typeof fmtDate==='function') return fmtDate(d); }catch(e){} return String(d||'').slice(0,10); }
+function _dataHora(d){ try{ if(typeof fmtDateTime==='function') return fmtDateTime(d); }catch(e){} return _data(d); }
+function _esc(s){ try{ if(typeof escapeHtml==='function') return escapeHtml(String(s==null?'':s)); }catch(e){} return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function _sess(){ try{ return (typeof getSession==='function'?getSession():null)||{}; }catch(e){ return {}; } }
+function chipStatusHtml(status){ const m=CLITAB_PURE.chipStatus(status); return '<span class="px-1.5 py-0.5 rounded '+m[1]+' font-bold text-[10px] uppercase tracking-wide shrink-0">'+_esc(m[0])+'</span>'; }
+function _dbx(){ return (typeof db!=='undefined'&&db)||{}; }
+
+const ABAS = [
+  ['dados','Dados','ph-identification-card'],
+  ['historico','Histórico do sistema','ph-clock-counter-clockwise']
+];
+// 5.2.2 — dentro do Histórico, os sub-menus; por padrão abre em VENDAS.
+const SUBABAS = [
+  ['vendas','Vendas','ph-shopping-cart'],
+  ['financeiro','Financeiro','ph-money'],
+  ['orcamentos','Orçamentos','ph-file-text'],
+  ['chamados','Chamados','ph-wrench'],
+  ['leituras','Leituras','ph-gauge']
+];
+
+// ── barra de abas dentro do cadastro do cliente ─────────────────────────────
+function montarAbasCliente(id){
+  if(!id) return; // cadastro NOVO: ainda não existe histórico para listar
+  if(typeof document==='undefined') return;
+  const body=document.getElementById('modal-body'); if(!body) return;
+  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab : null;
+  // v5.24.5: a ficha SEMPRE abre em Dados (o botão Salvar nunca some de novo);
+  // só o sub-menu do Histórico lembra a última escolha — isso não esconde botão.
+  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
+
+  // embrulha o formulário que a tela já montou como a aba "Dados"
+  const paneDados=document.createElement('div');
+  paneDados.id='clitab-pane-dados';
+  while(body.firstChild) paneDados.appendChild(body.firstChild);
+
+  const bar=document.createElement('div');
+  bar.id='clitab-bar';
+  bar.className='flex flex-wrap gap-1.5 mb-4 border-b pb-3';
+
+  const holder=document.createElement('div');
+  holder.id='clitab-holder';
+  holder.appendChild(paneDados);
+
+  const paneHist=document.createElement('div');
+  paneHist.id='clitab-pane-historico';
+  paneHist.className='hidden';
+  paneHist.innerHTML=
+    '<div id="clitab-subbar" class="flex flex-wrap gap-1.5 mb-3"></div>'+
+    '<div id="clitab-sub-holder"></div>'+
+    '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
+      '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
+      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
+      '<button type="button" onclick="clitabAbrirClienteNaLista()" class="h-9 px-4 rounded-xl bg-white border border-[#0a1e8a] text-[#0a1e8a] font-bold text-[12px]"><i class="ph ph-users"></i> Este cliente na lista</button>'+
+      '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
+    '</div>';
+  holder.appendChild(paneHist);
+
+  body.appendChild(bar);
+  body.appendChild(holder);
+
+  window.clitabAbrir('dados');
+}
+
+
+function pintarBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-bar'); if(!bar) return;
+  bar.innerHTML=ABAS.map(function(a){
+    const ativo=st.aba===a[0];
+    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+'</button>';
+  }).join('');
+}
+
+function pintarSubBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-subbar'); if(!bar) return;
+  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
+  bar.innerHTML=SUBABAS.map(function(a){
+    const ativo=st.sub===a[0];
+    return '<button type="button" onclick="clitabSub(\''+a[0]+'\')" class="h-8 px-3 rounded-xl text-[11.5px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+' <b>'+(n[a[0]]||0)+'</b></button>';
+  }).join('');
+}
+
+window.clitabAbrir=function(aba){
+  const st=window.__clitab; if(!st) return;
+  st.aba=aba;
+  const pd=document.getElementById('clitab-pane-dados');
+  const ph=document.getElementById('clitab-pane-historico');
+  if(pd) pd.classList.toggle('hidden', aba!=='dados');
+  if(ph) ph.classList.toggle('hidden', aba!=='historico');
+  // o botão Salvar só faz sentido na aba Dados
+  const foot=document.getElementById('modal-footer');
+  if(foot) foot.style.display=(aba==='dados')?'':'none';
+  if(aba==='historico'){ window.clitabSub(st.sub||'vendas'); } // 5.2.2: padrão = vendas
+  pintarBarra();
+};
+
+window.clitabSub=function(sub){
+  const st=window.__clitab; if(!st) return;
+  st.sub=sub;
+  st.sel[sub]=st.sel[sub]||{};
+  renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
+  pintarSubBarra();
+  const btnExt=document.getElementById('clitab-btn-extornar');
+  if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
+  atualizarBotoes();
+};
+
+// ── listagem com caixas de múltipla escolha (5.2.1 novo modelo) ────────────
+function linha(tipo, id, colEsq, colDir, detalhe){
+  return '<div class="clitab-row flex items-center gap-2 px-2 py-2 rounded-xl border bg-white hover:bg-[#f4f6ff] transition cursor-pointer" '
+    +'data-tipo="'+tipo+'" data-id="'+id+'" onclick="clitabToggleSel(this)" '
+    +'oncontextmenu="event.preventDefault(); clitabAbrirRegistro(\''+tipo+'\',\''+id+'\')" '
+    +'title="Botão direito do mouse: abrir este registro no módulo de origem">'
+    +'<input type="checkbox" class="clitab-sel w-4 h-4 shrink-0 cursor-pointer" onclick="event.stopPropagation(); clitabToggleSel(this.parentNode, true)">'
+    +'<div class="min-w-0 flex-1"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
+    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b></div></div>';
+}
+function vazioAba(rotulo){
+  return '<div class="p-10 text-center text-slate-400 text-[12.5px]"><i class="ph ph-tray text-[26px] block mb-2 opacity-40"></i>Nenhum(a) '+rotulo+' para este cliente ainda.</div>';
+}
+function renderSub(sub){
+  const st=window.__clitab; const pane=document.getElementById('clitab-sub-holder');
+  if(!st||!pane) return;
+  const banco=_dbx();
+  const f=function(col){ return CLITAB_PURE.filtra(banco,col,st.id,st.empresaId); };
+  let html='';
+  if(sub==='vendas'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('vendas'),'data');
+    html=list.map(function(v){
+      return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), chipStatusHtml(v.status)+' '+_esc(v.formaPagamento||'')+' • por '+_esc(v.criadoPorNome||'-'));
+    }).join('')||vazioAba('venda');
+  }else if(sub==='financeiro'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('contasReceber'),'vencimento');
+    html=list.map(function(c){
+      return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), chipStatusHtml(c.status)+' vence '+_data(c.vencimento)+' • '+_esc(c.origem||''));
+    }).join('')||vazioAba('conta a receber');
+  }else if(sub==='orcamentos'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('orcamentos'),'data');
+    html=list.map(function(o){
+      return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), chipStatusHtml(o.status)+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
+    }).join('')||vazioAba('orçamento');
+  }else if(sub==='chamados'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('os'),'dataAbertura');
+    html=list.map(function(o){
+      return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), chipStatusHtml(o.status)+' '+_esc(String(o.descricao||'').slice(0,60)));
+    }).join('')||vazioAba('chamado');
+  }else if(sub==='leituras'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('leituras'),'dataLeitura');
+    html=list.map(function(l){
+      const eq=((banco.equipamentos)||[]).find(function(e){ return e.id===l.equipamentoId; })||{};
+      return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), chipStatusHtml(l.status)+' PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-'));
+    }).join('')||vazioAba('leitura');
+  }
+  pane.innerHTML='<div class="space-y-2 max-h-[52vh] overflow-auto pr-1">'+html+'</div>';
+}
+
+// ── seleção múltipla + botões de lote ───────────────────────────────────────
+window.clitabToggleSel=function(row, doCheckbox){
+  try{
+    const st=window.__clitab; if(!st||!row) return;
+    const cb=row.querySelector('.clitab-sel'); if(!cb) return;
+    const marcado = doCheckbox ? cb.checked : !cb.checked;
+    cb.checked = marcado;
+    row.classList.toggle('border-[#0a1e8a]', marcado);
+    row.classList.toggle('bg-[#eef2ff]', marcado);
+    const sub=st.sub; st.sel[sub]=st.sel[sub]||{};
+    if(marcado) st.sel[sub][row.dataset.id]=true; else delete st.sel[sub][row.dataset.id];
+    atualizarBotoes();
+  }catch(e){}
+};
+function atualizarBotoes(){
+  const st=window.__clitab; if(!st) return;
+  const n=Object.keys(st.sel[st.sub]||{}).length;
+  const be=document.getElementById('clitab-btn-excluir');
+  const bx=document.getElementById('clitab-btn-extornar');
+  if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
+  const bl=document.getElementById('clitab-btn-lista');
+  if(bl){ bl.innerHTML='<i class="ph ph-arrow-square-out"></i> '+(n?('Abrir selecionado(s) ('+n+')'):'Abrir lista de origem'); }
+}
+function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('cliente-hist',acao,id,det); }catch(e){} }
+function removerRegistro(sub, id){
+  const banco=_dbx();
+  if(sub==='venda'){
+    const v=((banco.vendas)||[]).find(function(x){return String(x.id)===String(id);}); if(!v) return false;
+    const stt=String(v.status||'').toLowerCase();
+    if(/faturad|finalizad|conclu|pago/.test(stt)) return 'pula'; // faturada: só sai estornando antes (regra do sistema)
+    try{ (v.itens||[]).forEach(function(it){ const p=((banco.produtos)||[]).find(function(x){return x.id===it.produtoId;}); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque=(p.estoque||0)+(Number(it.qtd)||0); }); }catch(e){}
+    db.vendas=(banco.vendas||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_venda',id,'Venda '+_esc(v.numero||'')+' excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='financeiro'){
+    db.contasReceber=((banco.contasReceber)||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_conta',id,'Conta a receber excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='orcamento'){
+    const o=((banco.orcamentos)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
+    // v5.24.5 — ordem dele: deletar é DE VEZ. Sai daqui, a nuvem recebe o
+    // comando de apagar e os outros PCs apagam também (sem marca-fantasma).
+    db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_orcamento',id,'Orçamento excluído de vez pela ficha do cliente');
+    return true;
+  }
+  if(sub==='chamado'){
+    const o=((banco.os)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
+    db.os=(banco.os||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_chamado',id,'Chamado excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='leitura'){
+    const l=((banco.leituras)||[]).find(function(x){return String(x.id)===String(id);}); if(!l) return false;
+    db.leituras=(banco.leituras||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_leitura',id,'Leitura excluída pela ficha do cliente');
+    return true;
+  }
+  return false;
+}
+window.clitabExcluir=function(){
+  const st=window.__clitab; if(!st) return;
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{}); if(!ids.length) return;
+  const pergunta='Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'? É DE VEZ: some da tela, deste PC e dos outros PCs pela nuvem.';
+  function executar(){
+    // v5.24.6 — avisa o motor da nuvem que a exclusão é INTENCIONAL: se um
+    // puxão trouxer o registro de volta nos próximos 60s, ele é apagado de
+    // novo automaticamente (era o "não exclui" da foto 3).
+    try{ if(window.DIGICOPY_EXCLUSAO_INTENCIONAL) window.DIGICOPY_EXCLUSAO_INTENCIONAL(); }catch(_){}
+    let feitos=0, pulados=0;
+    ids.forEach(function(id){
+      try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
+      catch(e){ pulados++; }
+    });
+    st.sel[sub]={};
+    try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+    try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
+    try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
+    try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+    // v5.24.12 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
+    // clique nela caía no aviso "não achei" (o 4.2 da foto).
+    try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+    try{ if(sub==='chamados'&&typeof renderOs==='function') renderOs(); }catch(e){}
+    try{ if(sub==='leituras'&&typeof renderLeituras==='function') renderLeituras(); }catch(e){}
+    window.clitabSub(sub);
+    if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':' — já não estava neste PC (lista atualizada)')) : ''), feitos?'success':'info');
+  }
+  // popup do PRÓPRIO sistema (pedido dele — nunca o cinza do navegador)
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(pergunta,'Excluir de vez').then(function(ok){ if(ok) executar(); }); return; }
+  if(typeof confirm==='function' && confirm(pergunta)) executar();
+};
+window.clitabExtornar=function(){
+  const st=window.__clitab; if(!st||st.sub!=='vendas') return;
+  const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabExtornarAgora(ids); }); return; }
+  window.__clitabExtornarAgora(ids);
+};
+window.__clitabExtornarAgora=function(ids){
+  const st=window.__clitab; if(!st) return;
+  let feitas=0, puladas=0;
+  ids.forEach(function(id){
+    const v=((_dbx().vendas)||[]).find(function(x){return String(x.id)===String(id);});
+    const stt=String((v&&v.status)||'').toLowerCase();
+    if(stt!=='faturado' || typeof window.estornarVenda!=='function'){ puladas++; return; }
+    try{ window.estornarVenda(id); feitas++; }catch(e){ puladas++; }
+  });
+  st.sel.vendas={};
+  try{ if(typeof renderVendas==='function') renderVendas(); }catch(e){}
+  window.clitabSub('vendas');
+  if(typeof toast==='function') toast(feitas+' venda(s) estornada(s)'+(puladas?' • '+puladas+' pulada(s) (só faturadas estornam)':''), feitas?'success':'info');
+};
+
+// ── atalhos para o módulo de origem ─────────────────────────────────────────
+window.clitabAbrirLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{});
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  // v5.24.12 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
+  // navega com sub conhecido; fora disso, explica e fica quieto.
+  if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
+    if(typeof toast==='function') toast('Essa parte não tem lista de origem — use uma das abas do Histórico.', 'info');
+    return;
+  }
+  if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
+  setTimeout(function(){
+    try{
+      // o módulo abre já filtrado pelo cliente: a lista mostra o grupo escolhido
+      if(sub==='vendas'){ const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); } }
+      else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
+      else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
+    }catch(e){}
+    // v5.24.12 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
+    // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
+    if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
+  },250);
+};
+
+// v5.24.12 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
+// CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
+// nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
+window.clitabAbrirClienteNaLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  if(typeof navigateTo==='function') navigateTo('clientes');
+  setTimeout(function(){
+    try{
+      const b=document.getElementById('search-clientes');
+      const q=String((cli&&(cli.nome||cli.razao||cli.fantasia||cli.codigo))||'').trim();
+      if(b&&q){ b.value=q; if(typeof renderClientes==='function') renderClientes(); }
+    }catch(e){}
+  },250);
+};
+
+// v5.24.12 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// que abra onde é a lista que mostra todos, mas só mostrando os selecionados
+// que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
+// os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
+// são os MESMOS objetos (nada se perde), e durante a troca a gravação
+// automática fica de molho — o banco nunca é salvo pela metade. Depois, no
+// próximo desenho natural da lista (digitou na busca, navegou), ela volta a
+// mostrar o grupo do cliente, como sempre.
+window.clitabRenderSoSelecionados=function(sub, ids){
+  const MAP={
+    vendas:{arr:'vendas', render:function(){ if(typeof renderVendas==='function') renderVendas(); }},
+    financeiro:{arr:'contasReceber', render:function(){ if(typeof renderFinanceiro==='function') renderFinanceiro(); }},
+    orcamentos:{arr:'orcamentos', render:function(){ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }},
+    chamados:{arr:'os', render:function(){ if(typeof renderOs==='function') renderOs(); }},
+    leituras:{arr:'leituras', render:function(){ if(typeof renderLeituras==='function') renderLeituras(); }}
+  };
+  const def=MAP[sub]; if(!def) return;
+  const want={}; (ids||[]).forEach(function(i){ want[String(i)]=true; });
+  const _db=_dbx(); if(!_db||!Array.isArray(_db[def.arr])) return;
+  const orig=_db[def.arr];
+  const sdB=window.saveDB, sdA=window.saveDBAgora;
+  try{ window.saveDB=function(){}; window.saveDBAgora=function(){}; }catch(e){}
+  _db[def.arr]=orig.filter(function(x){ return x && want[String(x.id)]; });
+  try{ def.render(); }
+  finally{
+    _db[def.arr]=orig;
+    if(typeof sdB==='function') window.saveDB=sdB;
+    if(typeof sdA==='function') window.saveDBAgora=sdA;
+  }
+};
+
+// botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
+window.clitabAbrirRegistro=function(tipo, id){
+  // v5.24.6/7 — valida na hora do clique: se a nuvem trocou a base depois da
+  // lista aparecer, atualiza e avisa em vez de abrir o módulo às cegas.
+  try{
+    const col=(tipo==='venda')?'vendas':(tipo==='financeiro')?'contasReceber':(tipo==='orcamento')?'orcamentos':(tipo==='chamado')?'os':'leituras';
+    const existe=(((_dbx())[col])||[]).find(function(x){ return x && String(x.id)===String(id); });
+    if(!existe){
+      try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+      if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+      return;
+    }
+  }catch(e){}
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  window.clitabAbrirDireto(tipo, id, false);
+};
+
+// v5.24.12 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
+// silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
+window.clitabAbrirDireto=function(tipo, id, silencioso){
+  const Dx=_dbx();
+  function acha(col){ return ((Dx[col])||[]).find(function(x){ return x && String(x.id)===String(id); }); }
+  function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
+  function fantasma(){
+    try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+    if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+    return false;
+  }
+  if(tipo==='venda'||tipo==='vendas'){
+    const v=acha('vendas'); if(!v) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('vendas');
+    depois(silencioso?10:200,function(){ if(typeof window.showVenda==='function') window.showVenda(v.id); });
+    return true;
+  }
+  if(tipo==='financeiro'){
+    const c=acha('contasReceber'); if(!c) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('financeiro');
+    depois(silencioso?10:250,function(){
+      if(typeof setFinTab==='function') setFinTab('receber');
+      // abre a conta de verdade (pedido dele: não só o menu)
+      if(typeof openModal==='function') openModal('contaReceber', c.id);
+    });
+    return true;
+  }
+  if(tipo==='orcamento'||tipo==='orcamentos'){
+    const o=acha('orcamentos'); if(!o) return fantasma();
+    // direto pelo objeto — não passa pelo caçador por id (o popup do 4.2)
+    if(typeof window.abrirTelaOrcamento==='function') window.abrirTelaOrcamento(o);
+    else if(typeof navigateTo==='function') navigateTo('orcamentos');
+    return true;
+  }
+  if(tipo==='chamado'||tipo==='chamados'){
+    const o=acha('os'); if(!o) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('manutencao');
+    depois(silencioso?10:200,function(){ if(typeof openModal==='function') openModal('os', o.id); });
+    return true;
+  }
+  const l=acha('leituras'); if(!l) return fantasma();
+  if(!silencioso && typeof navigateTo==='function') navigateTo('leituras');
+  depois(silencioso?10:200,function(){
+    if(typeof window.abrirLeituraDetalhada==='function') window.abrirLeituraDetalhada(l.id);
+    else if(typeof openModal==='function') openModal('leitura', l.id);
+  });
+  return true;
+};
+
+// ── conexão com o cadastro (embrulha a montagem do modal do cliente) ───────
+if(typeof window.renderModalCliente==='function' && !window.renderModalCliente.__v5243){
+  const _renderCli=window.renderModalCliente;
+  window.renderModalCliente=function(id){
+    const r=_renderCli.apply(this,arguments);
+    try{ montarAbasCliente(id); }catch(e){}
+    return r;
+  };
+  window.renderModalCliente.__v5243=true;
+}
+
+// ── reforço 4.1: salvar NUNCA fecha a tela nem perde o digitado por erro ───
+if(typeof window.saveCliente==='function' && !window.saveCliente.__v5243){
+  const _saveCli=window.saveCliente;
+  window.saveCliente=function(){
+    try{ return _saveCli.apply(this,arguments); }
+    catch(e){
+      try{ if(typeof toast==='function') toast('Não consegui salvar: '+((e&&e.message)||e)+' — os dados continuam na tela. Me avise essa mensagem!', 'error'); }catch(_){}
+      try{ if(window.console&&console.error) console.error('[DIGICOPY][saveCliente]',e); }catch(_){}
+    }
+  };
+  window.saveCliente.__v5243=true;
+}
+
+// ── 4.1 RAIZ (cenário exato do dono): "escolho o cliente, vou adicionar um
+// item e pede pra escolher o cliente; dá cliente não encontrado" ────────────
+// A ponte automática pós-cadastro chamava a função da tela ANTIGA de venda
+// (selectClienteVenda, ids nv-*), que NÃO existe mais: ela estourava na
+// primeira linha de tela e o cliente recém-escolhido/cadastrado NUNCA era
+// amarrado na venda VOS (a tela atual, ids vos-*). Resultado: na hora de
+// lançar item ou salvar, a venda achava que não tinha cliente.
+// Ponte 1: qualquer chamada à seleção antiga é desviada para a tela VOS.
+if(typeof window.selectClienteVenda==='function' && !window.selectClienteVenda.__v5243){
+  const _selClienteLegado = window.selectClienteVenda;
+  window.selectClienteVenda = function(id){
+    try{
+      const telaVosAberta = (typeof document!=='undefined') && document.getElementById('vos-codigo');
+      if(telaVosAberta && typeof window.vosVendaSelectCliente==='function'){
+        window.vosVendaSelectCliente(id);
+        return;
+      }
+    }catch(e){}
+    try{ return _selClienteLegado.apply(this, arguments); }catch(e){}
+  };
+  window.selectClienteVenda.__v5243 = true;
+}
+// Ponte 2 + cura 4.1 (v5.24.5) — POR QUE a 1ª tentativa falhava e a 2ª ia:
+// a busca usava um índice feito uma vez só e a nuvem trocava a base por baixo
+// dele; a linha aparecia na tela, mas o clique não achava o cliente na base
+// nova. Agora: (a) a busca refaz o índice sozinha sempre que a base troca e
+// guarda o que mostrou em __vosUltBusca; (b) o clique procura na base atual e,
+// se não achar, SE CURA com o dado da própria busca — devolve o cliente à
+// base, marca para subir e amarra na hora.
+window.__vosUltBusca = window.__vosUltBusca || {};
+if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCliente.__v5245){
+  window.__vosCliIdxBase = null; window.__vosCliIdxFresco = null;
+  window.vosVendaSearchCliente = function(q){
+    const sessf=(typeof getSession==='function'?getSession():null)||{};
+    const el = document.getElementById('vos-cli-results'); if(!el) return;
+    const low = (q||'').toLowerCase().trim();
+    if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    const base = (typeof db!=='undefined' && db.clientes)||[];
+    if(window.__vosCliIdxBase !== base){
+      window.__vosCliIdxBase = base;
+      window.__vosCliIdxFresco = base.map(function(c){
+        const doc=String(c.documento||'');
+        return { c:c, hay:[c.codigo,c.nome,c.fantasia,c.documento,(typeof onlyDigits==='function'?onlyDigits(c.documento):doc.replace(/\D/g,'')),c.endereco,c.telefone,c.cidade,c.estado].filter(function(x){return x!=null&&x!=='';}).join(' ').toLowerCase() };
+      });
+    }
+    const list = window.__vosCliIdxFresco
+      .filter(function(x){ return x.c.empresaId===sessf.empresaId && x.hay.indexOf(low)>=0; })
+      .map(function(x){ return x.c; }).slice(0,15);
+    window.__vosUltBusca = {};
+    el.innerHTML = list.map(function(c){
+      window.__vosUltBusca[c.id]=c;
+      return '<button type="button" onclick="vosVendaSelectCliente(\''+String(c.id).replace(/'/g,'')+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">'
+        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
+        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
+    }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
+    el.classList.remove('hidden');
+  };
+  window.vosVendaSearchCliente.__v5245 = true;
+}
+if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5245){
+  const _selClienteVos5245 = window.vosVendaSelectCliente;
+  window.vosVendaSelectCliente = function(id){
+    let cura=false;
+    try{
+      let c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
+      if(!c && window.__vosUltBusca && window.__vosUltBusca[id]){
+        try{ db.clientes=(db.clientes||[]).concat([window.__vosUltBusca[id]]); if(typeof saveDB==='function') saveDB(); }catch(_e){}
+        c = ((db.clientes)||[]).find(function(x){ return x && x.id===id; });
+        cura = !!c;
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('cura-cliente'); }catch(_){}
+      }
+      if(!c){
+        try{ if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error'); }catch(_){}
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_2){}
+        return;
+      }
+    }catch(e){}
+    try{ _selClienteVos5245.apply(this, arguments); }catch(e){}
+    try{
+      const c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
+      if(c && window.__vosForm && !window.__vosForm.cliente){ window.__vosForm.cliente = c; }
+      if(c && typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||'')+(cura?' (recuperado da busca)':''), 'success');
+    }catch(e){}
+  };
+  window.vosVendaSelectCliente.__v5245 = true;
+}
+
+try{ console.log('[DIGICOPY] v5.24.5 — ficha sempre abre em Dados (Salvar garantido) + histórico com status, exclusão de vez e listas à prova de nuvem + 4.1 curado (clique se cura com o dado da busca)'); }catch(e){}
+})();
+
 ;
 
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 190;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 196;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 190 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 196 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

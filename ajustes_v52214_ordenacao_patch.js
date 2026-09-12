@@ -47,11 +47,11 @@ function wrapSort(nome, pegarEstado, seletor){
 
 function kauan(){ return window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {}); }
 
-wrapSort('produtosSortOperacional', function(){
-  var st = kauan();
-  st.prod = st.prod || { sort:'codigo', dir:'asc' };
-  return st.prod;
-}, '#view-produtos');
+// v5.22.84 — a ordenação de produtos ganhou sentido próprio guardado no mesmo
+// estado da lista (fluxos_operacionais_patch.js) e a trava antiga saiu: ela
+// guardava o sentido em objeto separado (nunca virava Z→A) e "invertia as
+// linhas" na tela, jogando a linha de contagem para o topo.
+
 
 wrapSort('contratosSortOperacional', function(){
   var st = kauan();

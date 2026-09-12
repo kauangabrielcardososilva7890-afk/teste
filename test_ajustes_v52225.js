@@ -17,6 +17,6 @@ ok('OCULTAR sozinho não pula', D.ehDel({OCULTAR:'S',DEL:'N'})===false);
 ok('filtra lista', D.linhasSemDel([{DEL:'S',COD_PRODUTO:1},{DEL:'N',COD_PRODUTO:2}]).length===1);
 ok('página define ehDel', /function ehDel\s*\(/.test(env) && /Pulados DEL=S/.test(env));
 ok('patch no bundle', manifest.includes('ajustes_v52225_import_pula_del_patch.js'));
-ok('versão 5.22.25+', /^5\.22\.(2[5-9]|\d{2,})$/.test(pkg.version) && html.includes('app.bundle.js?v='+pkg.version));
+ok('versão 5.22.25+', (/^5\.\d+\.\d+$/.test(pkg.version) && (parseInt(pkg.version.split('.')[1],10)>=23 || parseInt(pkg.version.split('.')[2],10)>=25)) && html.includes('app.bundle.js?v='+pkg.version));
 ok('APK quieto', !/mobile\//.test(del+env));
 console.log('\nRESULTADO: v5.22.25 passou!');

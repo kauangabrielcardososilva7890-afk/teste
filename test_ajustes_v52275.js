@@ -11,7 +11,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.75 ==');
-ok('versão continua na família 5.22',/^5\.22\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 
 // ── nada de adivinhação ──
 ok('acabou o teto de exclusões',!/MAX_EXCLUSOES/.test(code));
