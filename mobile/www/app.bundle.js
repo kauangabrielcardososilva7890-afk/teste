@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 999c8229a66eb5d8
+ * scripts: 196 | sha256: 398806752f7c13ba
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -20589,7 +20589,20 @@ window.imprimirChamado = function(id){
       const t = (btn.textContent || '').trim().toLowerCase();
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
-      if (/adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa')) {
+      const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
+      // v5.24.12 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // pegava o botão Imprimir por engano (a função dele tem "salvar" no
+      // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
+      // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
+      // leitura, sem tentar salvar coisa nenhuma.
+      if (iaDesligar && (/imprim|print/i.test(t) || /impressao|imprimir|print/i.test(oc))) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.setAttribute('onclick', "imprimirNotinha('" + String(vendaId) + "')");
+        btn.title = 'Imprimir notinha (não altera nada)';
+        return;
+      }
+      if (iaDesligar) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
         if (!btn.__fatPatched) {
@@ -48250,7 +48263,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.11 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.12 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -48291,7 +48304,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.11 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.12 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -48306,9 +48319,9 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.11 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.12 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // 1 marcado: abre o registro. Vários: módulo filtrado + o 1º abre na hora.
-    // v5.24.11 — correção dele: NÃO abrir nenhum registro por cima da lista.
+    // v5.24.12 — correção dele: NÃO abrir nenhum registro por cima da lista.
     // Quem mostra o escolhido é A PRÓPRIA LISTA DO MÓDULO, só com as linhas
     // marcadas (1, vários ou todos). A notinha/o orçamento abrem só se ELE
     // clicar neles ali na lista.
@@ -48316,7 +48329,7 @@ window.clitabAbrirLista=function(){
   },250);
 };
 
-// v5.24.11 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.12 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -48334,7 +48347,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.11 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.12 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -48382,7 +48395,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.11 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.12 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){

@@ -3,11 +3,11 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.11**  
+**Última versão:** **v5.24.12**  
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.11>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.12>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -16,6 +16,35 @@ Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.12 (2026-09-12)
+
+Tema: **bug testado por ele** — aba Vendas → dentro de uma notinha
+FATURADA, o botão Imprimir "fica inacessível" (cinza).
+
+1. **Causa, com nome**: a trava anti-EDIÇÃO da notinha faturada
+   (`lockVendaFaturadaUI`, vendas_notinhas_fix_patch.js) desliga botões cujo
+   texto/onclick tenha "salvar|faturar|item|...". O Imprimir do editor chama
+   `vosAbrirImpressaoESalvar()` — tem **"salvar" no NOME da função**. A trava
+   confundia impressão (leitura) com edição e desligava o botão.
+2. **Remédio cirúrgico dentro da própria varredura**: antes de desligar
+   qualquer botão, a trava pergunta se ele é de impressão (texto ou função).
+   Se for: botão fica LIGADO e passa a imprimir DIRETO a notinha
+   (`imprimirNotinha(vendaId)`) — pura leitura, sem tentar salvar nada, sem
+   mexer na venda. Dica no botão: "Imprimir notinha (não altera nada)".
+3. **O que NÃO muda**: adicionar item / salvar / faturar / excluir / buscar
+   continuam travados com o aviso do sistema "venda faturada... só estornar",
+   e o botão Estornar segue. Impressão nunca altera dados — estornar continua
+   sendo o único jeito de voltar a editar.
+4. **Campos ainda travados** (inputs/selects) — leitura livre, edição não.
+   PC e celular: o mesmo bundle corrigido vai nos dois (mesma origem).
+5. Trava de testes aplicada de novo: `package.json` entra NA LISTA de
+   carimbos (o grep por extensão .js/.html/.md o perdeu nesta rodada; vários
+   testes leem a versão de lá — falharam em cadeia até o carimbo subir).
+   Suíte oficial (`npm test`): **147 passaram, 0 aceita, 2 de ambiente**
+   (node-forge e acorn ausentes no sandbox — nunca do código).
 
 ---
 

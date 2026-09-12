@@ -143,7 +143,20 @@
       const t = (btn.textContent || '').trim().toLowerCase();
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
-      if (/adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa')) {
+      const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
+      // v5.24.12 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // pegava o botão Imprimir por engano (a função dele tem "salvar" no
+      // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
+      // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
+      // leitura, sem tentar salvar coisa nenhuma.
+      if (iaDesligar && (/imprim|print/i.test(t) || /impressao|imprimir|print/i.test(oc))) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.setAttribute('onclick', "imprimirNotinha('" + String(vendaId) + "')");
+        btn.title = 'Imprimir notinha (não altera nada)';
+        return;
+      }
+      if (iaDesligar) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
         if (!btn.__fatPatched) {

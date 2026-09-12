@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.11';
+const WORKER_VERSION = '5.24.12';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -934,7 +934,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.11 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.12 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as

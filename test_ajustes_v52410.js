@@ -1,9 +1,9 @@
-// Teste v5.24.11 — "o clientes não abre a lista que mostra os que eu quero":
+// Teste v5.24.12 — "o clientes não abre a lista que mostra os que eu quero":
 //  • botão novo "Este cliente na lista" (ficha → módulo Clientes já filtrado
 //    por este cadastro: ele + quem tem nome parecido, o grupinho dele);
 //  • trava de segurança: sub desconhecido NÃO cai mais mudo em Leituras
 //    (antes qualquer tropeço abria a lista errada sem avisar);
-//  • carimbos 5.24.11.
+//  • carimbos 5.24.12.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, nome){ if(cond){ console.log('  ✔ ' + nome); } else { falhas++; console.error('  ✘ FALHOU: ' + nome); } }
@@ -26,11 +26,11 @@ ok(patch.indexOf("Essa parte não tem lista de origem — use uma das abas do Hi
 ok(patch.indexOf("sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'") >= 0, 'guarda dos 5 subs conhecidos');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.11'") >= 0, 'worker carimba v5.24.11');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.12'") >= 0, 'worker carimba v5.24.12');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('clitabAbrirClienteNaLista') >= 0, 'função dentro do bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.11') >= 0, 'index.html na v5.24.11');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.11'") >= 0, 'mobile/www/index.html na v5.24.11');
-ok(pkg.version === '5.24.11', 'package.json v5.24.11');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.11'); process.exit(1); }
-console.log('\nTudo certo v5.24.11!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.12'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.12') >= 0, 'index.html na v5.24.12');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.12'") >= 0, 'mobile/www/index.html na v5.24.12');
+ok(pkg.version === '5.24.12', 'package.json v5.24.12');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.12'); process.exit(1); }
+console.log('\nTudo certo v5.24.12!');
