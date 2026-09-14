@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.12**  
+**Última versão:** **v5.24.13**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.12>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.13>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -109,6 +109,33 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.13 (2026-09-14)
+
+Tema: **LOTE 1 da poda** — as 14 perguntas aplicadas nos arquivos já
+existentes (autorizado por ele: "pode realizar, nem precisa de ordem").
+
+1. **Auditoria virou corte:** `imprimirChamadoPDF` tinha 20 definições sendo
+   carregadas; só a última é viva. **17 cópias mortas removidas** (locacao_contratos,
+   fluxos_operacionais, contratos_refino, locacao_chamados_fix, ajustes_v5171/72/74/75/76/77/78/79/80/81/82/84/85)
+   = **74.995 bytes** de peso morto. app.bundle.js: 3.128.878 → **3.053.866 B**
+   (−75.012). PC fraco agradece: menos 73 KB pra baixar, parsear e jogar fora.
+2. **Protocolo anti-quebra honrado em cada corte:** optei antes quem é o elo
+   vivo — ficaram **3 peças**: v5189 (definição final), v5186 (é a que a
+   captura `_imp` do v5187 segura) e v5187 (dono da clausura viva). Cada um dos
+   17 cortes passou por: sem IIFE no topo, sem chamada no topo, remoção por
+   máquina de estados (não corta `}` dentro de string/template) e node --check.
+3. **Lição nova do cinto de segurança:** gerar o bundle DEPOIS dos carimbos —
+   nesta rodada o bundle subiu antes do sed e 3 testes acusaram (suite caiu a
+   144/5); re-gerado na ordem certa, voltou a **147/0 com os 2 de ambiente
+   (node-forge, acorn)**. Ordem selada: editar → carimbar → buildar → testar.
+4. test_ajustes_v52413.js guarda o lote (17 arquivos sem a cópia, 3 defs no
+   bundle, captura intacta, bundle MENOR que a linha de base, carimbos).
+5. **Próximos lotes (fila da poda):** renderClientes (5 suspeitas),
+   renderContratos (4), renderVendas (3), renderProdutos (3), singles
+   renderConfig/renderFinanceiro/vosGerarHtmlNotinha (1 cada). Mesmo ritual.
 
 ---
 

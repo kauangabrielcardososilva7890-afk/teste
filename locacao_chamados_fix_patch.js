@@ -496,60 +496,6 @@ if(typeof _selCliAv==='function'){
 }
 
 // ── 4.1 / 4.2 impressão ──
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId);
-  if(!o){ toastMsg('Salve o chamado antes de imprimir.','error'); return; }
-  const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
-  const deContrato = chamadoDeContrato(o);
-  const p = (db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const temColor = !deContrato || impressoraTemColor(p, eq);
-  const pecas = Array.isArray(o.pecas)&&o.pecas.length
-    ? o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''}))
-    : String(o.pecasTexto||'').split('\n').filter(Boolean).map(line=>{
-        const m=line.match(/^(.*?)(?:\s+x\s*(\d+))?$/i); return {d:(m&&m[1])||line,q:(m&&m[2])||''};
-      });
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const fill = (v, blank)=>{
-    if(fin) return esc(v==null||v===''?'-':v);
-    return blank || '&nbsp;';
-  };
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:18px;color:#111;font-size:12px}
-    .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:12px}
-    .cab h1{color:#0a1e8a;font-size:18px;margin:0}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;letter-spacing:.08em;padding:7px 10px;margin:12px 0 6px}
-    .linha{border:1px solid #bbb;min-height:28px;padding:6px 8px;margin-bottom:8px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    table{width:100%;border-collapse:collapse;margin-top:4px}
-    th,td{border:1px solid #bbb;padding:7px;height:22px}
-    th{background:#eef2ff;color:#0a1e8a;text-align:left}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:92px;text-align:center;letter-spacing:2px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="cab"><div><h1>DIGICOPY — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${esc(cli.nome||'')}</p></div><div style="text-align:right"><p><b>OS:</b> ${esc(o.numero||'')}</p><p><b>Status:</b> ${esc(o.status||'')}</p></div></div>
-  ${!deContrato?`<div class="grid2"><div class="linha"><b>Impressora</b><div>${fill(o.modelo)}</div></div><div class="linha"><b>Serial</b><div>${fill(o.serie)}</div></div></div>`:''}
-  <div class="grid2">
-    <div class="linha"><b>Contador preto atual</b><div>${fill(o.contadorAtual)}</div></div>
-    ${temColor?`<div class="linha"><b>Contador color atual</b><div>${fill(o.contadorColor)}</div></div>`:'<div></div>'}
-  </div>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="linha" style="min-height:42px">${fill(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d||''):'&nbsp;'}</td><td>${fin?esc(it.q||''):'&nbsp;'}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="linha" style="min-height:48px">${fill(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w = window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 const _impCham = window.imprimirChamado;
 // wrap print buttons to ask save

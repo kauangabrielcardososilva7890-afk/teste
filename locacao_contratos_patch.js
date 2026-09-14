@@ -1268,43 +1268,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   toast('Chamado salvo com sucesso!', 'success');
 };
 
-window.imprimirChamadoPDF = function(osId){
-  const o = db.os.find(x => x.id === osId);
-  if(!o) return toast('Chamado não encontrado', 'error');
-  const cli = db.clientes.find(x => x.id === o.clienteId) || {};
-  const html = `
-    <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico — ${o.numero}</title>
-    <style>
-      body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}
-      .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}
-      .cab h1{color:#0a1e8a;font-size:20px;margin:0}
-      .box{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px;background:#f9fafc}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      @media print{.no-print{display:none}}
-    </style></head><body>
-      <div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF 1.1</button></div>
-      <div class="cab">
-        <div><h1>DIGICOPY ERP — CHAMADO TÉCNICO (MOD. 1.1)</h1><p><b>Cliente:</b> ${escapeHtml(cli.nome||'Sem Cliente')} (${escapeHtml(cli.documento||'')})</p></div>
-        <div style="text-align:right"><p><b>OS:</b> ${o.numero}</p><p><b>Data:</b> ${fmtDate(o.dataAbertura)}</p><p><b>Prioridade:</b> ${String(o.prioridade||'normal').toUpperCase()}</p></div>
-      </div>
-      <div class="box">
-        <p><b>Motivo do Chamado:</b> ${escapeHtml(o.descricao||'-')}</p>
-        <p style="margin-top:5px"><b>Técnico Atribuído:</b> ${escapeHtml(o.tecnico||'—')}</p>
-      </div>
-      <div class="box grid">
-        <div><p><b>Serial:</b> ${escapeHtml(o.serie||'-')}</p><p><b>Patrimônio:</b> ${escapeHtml(o.patrimonio||'-')}</p></div>
-        <div><p><b>Contador Antigo:</b> ${o.contadorAntigo||0}</p><p><b>Contador Atual:</b> ${o.contadorAtual||0}</p><p><b>Qtd. Impressas:</b> <b>${o.quantidadeImpressos||0}</b></p></div>
-      </div>
-      ${o.servicos ? `<div class="box"><p><b>Serviços Executados:</b></p><p>${escapeHtml(o.servicos)}</p></div>` : ''}
-      <div style="margin-top:50px;display:flex;justify-content:space-between">
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Técnico</div>
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Cliente</div>
-      </div>
-    </body></html>
-  `;
-  const win = window.open('','_blank');
-  if(win){ win.document.write(html); win.document.close(); }
-};
 
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();

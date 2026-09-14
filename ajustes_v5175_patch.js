@@ -420,65 +420,6 @@ function criarVendaSeFinalizado(o){
 }
 
 // ── PDF: linhas + contadores maiores ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=cli(o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#0f172a;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px;letter-spacing:.06em}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #cbd5e1;padding:10px;text-align:left}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px);background-size:100% 24px}
-    .cnt{min-height:52px;font-size:18px;font-family:monospace}
-    .data{border-bottom:1px solid #334155;min-width:110px;display:inline-block;text-align:center}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td><div class="box-write cnt">${cell(o.contadorAtual)}</div></td>
-  ${showColor?`<td><div class="box-write cnt">${cell(o.contadorColor)}</div></td>`:''}</tr></table>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:16px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // X de peça NÃO fecha o chamado
 document.addEventListener('click', function(ev){

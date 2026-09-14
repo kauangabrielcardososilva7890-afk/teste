@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 1f5ea20d6721e32b
+ * scripts: 196 | sha256: 1657003fc662721a
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -9951,43 +9951,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   toast('Chamado salvo com sucesso!', 'success');
 };
 
-window.imprimirChamadoPDF = function(osId){
-  const o = db.os.find(x => x.id === osId);
-  if(!o) return toast('Chamado não encontrado', 'error');
-  const cli = db.clientes.find(x => x.id === o.clienteId) || {};
-  const html = `
-    <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico — ${o.numero}</title>
-    <style>
-      body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}
-      .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}
-      .cab h1{color:#0a1e8a;font-size:20px;margin:0}
-      .box{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px;background:#f9fafc}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      @media print{.no-print{display:none}}
-    </style></head><body>
-      <div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF 1.1</button></div>
-      <div class="cab">
-        <div><h1>DIGICOPY ERP — CHAMADO TÉCNICO (MOD. 1.1)</h1><p><b>Cliente:</b> ${escapeHtml(cli.nome||'Sem Cliente')} (${escapeHtml(cli.documento||'')})</p></div>
-        <div style="text-align:right"><p><b>OS:</b> ${o.numero}</p><p><b>Data:</b> ${fmtDate(o.dataAbertura)}</p><p><b>Prioridade:</b> ${String(o.prioridade||'normal').toUpperCase()}</p></div>
-      </div>
-      <div class="box">
-        <p><b>Motivo do Chamado:</b> ${escapeHtml(o.descricao||'-')}</p>
-        <p style="margin-top:5px"><b>Técnico Atribuído:</b> ${escapeHtml(o.tecnico||'—')}</p>
-      </div>
-      <div class="box grid">
-        <div><p><b>Serial:</b> ${escapeHtml(o.serie||'-')}</p><p><b>Patrimônio:</b> ${escapeHtml(o.patrimonio||'-')}</p></div>
-        <div><p><b>Contador Antigo:</b> ${o.contadorAntigo||0}</p><p><b>Contador Atual:</b> ${o.contadorAtual||0}</p><p><b>Qtd. Impressas:</b> <b>${o.quantidadeImpressos||0}</b></p></div>
-      </div>
-      ${o.servicos ? `<div class="box"><p><b>Serviços Executados:</b></p><p>${escapeHtml(o.servicos)}</p></div>` : ''}
-      <div style="margin-top:50px;display:flex;justify-content:space-between">
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Técnico</div>
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Cliente</div>
-      </div>
-    </body></html>
-  `;
-  const win = window.open('','_blank');
-  if(win){ win.document.write(html); win.document.close(); }
-};
 
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();
@@ -11479,14 +11442,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   if(typeof renderProdutos === 'function') renderProdutos();
 };
 
-window.imprimirChamadoPDF = function(osId){
-  if(!osId) return toastMsg('Salve o chamado antes de imprimir', 'info');
-  const o = (db.os || []).find(x => x.id === osId); if(!o) return toastMsg('Chamado não encontrado', 'error');
-  const cli = getCliente(o.clienteId) || {};
-  const pecas = (o.pecas || []).map(it => `<tr><td>${html(it.descricao || ((db.produtos || []).find(p => p.id === it.produtoId)?.nome) || '')}</td><td>${toNumber(it.qtd,0)}</td><td>${money(it.preco || 0)}</td><td>${money(it.subtotal || 0)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const htmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico ${o.numero}</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}.cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}.cab h1{color:#0a1e8a;font-size:20px;margin:0}.box{border:1px solid #ccc;border-radius:8px;padding:10px;margin-bottom:10px;background:#fafafa}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f4f6f9;color:#0a1e8a}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF</button></div><div class="cab"><div><h1>DIGICOPY ERP — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${html(cli.nome || '')} (${html(cli.documento || '')})</p><p>${html(cli.endereco || '')} ${html(cli.numero || '')} - ${html(cli.cidade || '')}/${html(cli.estado || '')}</p></div><div style="text-align:right"><p><b>OS:</b> ${html(o.numero || '')}</p><p><b>Data:</b> ${dateBR(o.dataAbertura)}</p><p><b>Status:</b> ${html(o.status || '')}</p></div></div><div class="box"><p><b>Motivo:</b> ${html(o.descricao || '-')}</p><p><b>Técnico:</b> ${html(o.tecnico || '-')}</p></div><div class="box grid"><div><p><b>Modelo:</b> ${html(o.modelo || '-')}</p><p><b>Serial:</b> ${html(o.serie || '-')}</p><p><b>Patrimônio:</b> ${html(o.patrimonio || '-')}</p><p><b>Local:</b> ${html(o.local || '-')}</p></div><div><p><b>Contador Antigo:</b> ${toNumber(o.contadorAntigo,0)}</p><p><b>Contador Atual:</b> ${toNumber(o.contadorAtual,0)}</p><p><b>Qtd. Impressos:</b> ${toNumber(o.quantidadeImpressos,0)}</p></div></div><div class="box"><p><b>Serviços Executados:</b></p><p>${html(o.servicos || '-')}</p></div><div class="box"><p><b>Produtos / Peças:</b></p><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="margin-top:50px;display:flex;justify-content:space-between"><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Técnico</div><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Cliente</div></div></body></html>`;
-  const win = window.open('', '_blank'); if(win){ win.document.write(htmlDoc); win.document.close(); }
-};
 
 window.imprimirContratoLocacaoOperacional = function(contratoId, tipo){
   const c = getContrato(contratoId); if(!c) return;
@@ -12094,14 +12049,6 @@ function printWindow(htmlDoc, slug){
   setTimeout(() => { try{ win.history.replaceState(null, '', slug || 'relatorio.html'); }catch(_e){} }, 50);
 }
 function basePrintCSS(){ return `@page{size:A4;margin:8mm}body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px;background:white}.page{padding:16px}.top{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0a1e8a;padding-bottom:12px;margin-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand h1{margin:0;color:#0a1e8a;font-size:19px}.muted{color:#64748b;font-size:11px}.box{border:1px solid #d7dce2;border-radius:10px;padding:10px;margin:8px 0;background:#fafbff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #d7dce2;padding:6px;text-align:left}th{background:#eef2ff;color:#0a1e8a;font-size:10px;text-transform:uppercase}.sig{border-top:1px solid #111;width:220px;text-align:center;padding-top:6px;margin-top:46px}.no-print{margin:14px}.no-print button{padding:10px 18px;background:#0a1e8a;color:white;border:0;border-radius:8px;font-weight:bold}@media print{.no-print{display:none}.page{padding:0}}`; }
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId); if(!o) return aviso('Chamado não encontrado','error');
-  const cli = getCli(o.clienteId) || {};
-  const pecas = (o.pecas||[]).map(it => `<tr><td>${esc(it.descricao||'')}</td><td>${n(it.qtd)}</td><td>${dinheiro(it.preco)}</td><td>${dinheiro(it.subtotal)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const title = `Chamado ${codigoOS(o)}`;
-  const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>${basePrintCSS()}</style></head><body><script>document.title=${JSON.stringify(title)};try{history.replaceState(null,'',${JSON.stringify('chamado-'+codigoOS(o)+'.html')});}catch(e){}</script><div class="no-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div><div class="page"><div class="top"><div class="brand">${logoHTML()}<div><h1>Ordem de Serviço Técnica</h1><div class="muted">DIGICOPY • Assistência e locação de impressoras</div></div></div><div style="text-align:right"><div class="muted">Código</div><h1 style="margin:0;color:#0a1e8a">${esc(codigoOS(o))}</h1><div class="muted">${dataBR(o.dataAbertura)}</div></div></div><div class="grid"><div class="box"><b>Cliente</b><p>${esc(cli.nome||'')}</p><p class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</p><p class="muted">${esc(cli.endereco||'')} ${esc(cli.numero||'')} - ${esc(cli.cidade||'')}/${esc(cli.estado||'')}</p></div><div class="box"><b>Atendimento</b><p><b>Criado por:</b> ${esc(o.criadoPorNome||'-')}</p><p><b>Técnico:</b> ${esc(o.tecnico||'-')}</p><p><b>Status:</b> ${esc(o.status||'aberto')}</p></div></div><div class="box"><b>Impressora</b><p>${esc(o.modelo||'-')} • Patrimônio ${esc(o.patrimonio||'-')} • Serial ${esc(o.serie||'-')}</p><p class="muted">Local: ${esc(o.local||'-')}</p></div><div class="box"><b>Motivo / Defeito informado</b><p>${esc(o.descricao||'-')}</p></div><div class="box"><b>Serviços executados / observações</b><p>${esc(o.servicos||o.observacao||'-')}</p></div><div class="box"><b>Produtos / Peças aplicadas</b><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="display:flex;justify-content:space-between"><div class="sig">Assinatura Técnico</div><div class="sig">Assinatura Cliente</div></div></div></body></html>`;
-  printWindow(doc, `chamado-${codigoOS(o)}.html`);
-};
 window.imprimirRelatorioLeiturasPDF = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
   const cli = getCli(c.clienteId) || {};
@@ -20590,7 +20537,7 @@ window.imprimirChamado = function(id){
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.12 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.13 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
@@ -22188,60 +22135,6 @@ if(typeof _selCliAv==='function'){
 }
 
 // ── 4.1 / 4.2 impressão ──
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId);
-  if(!o){ toastMsg('Salve o chamado antes de imprimir.','error'); return; }
-  const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
-  const deContrato = chamadoDeContrato(o);
-  const p = (db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const temColor = !deContrato || impressoraTemColor(p, eq);
-  const pecas = Array.isArray(o.pecas)&&o.pecas.length
-    ? o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''}))
-    : String(o.pecasTexto||'').split('\n').filter(Boolean).map(line=>{
-        const m=line.match(/^(.*?)(?:\s+x\s*(\d+))?$/i); return {d:(m&&m[1])||line,q:(m&&m[2])||''};
-      });
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const fill = (v, blank)=>{
-    if(fin) return esc(v==null||v===''?'-':v);
-    return blank || '&nbsp;';
-  };
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:18px;color:#111;font-size:12px}
-    .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:12px}
-    .cab h1{color:#0a1e8a;font-size:18px;margin:0}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;letter-spacing:.08em;padding:7px 10px;margin:12px 0 6px}
-    .linha{border:1px solid #bbb;min-height:28px;padding:6px 8px;margin-bottom:8px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    table{width:100%;border-collapse:collapse;margin-top:4px}
-    th,td{border:1px solid #bbb;padding:7px;height:22px}
-    th{background:#eef2ff;color:#0a1e8a;text-align:left}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:92px;text-align:center;letter-spacing:2px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="cab"><div><h1>DIGICOPY — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${esc(cli.nome||'')}</p></div><div style="text-align:right"><p><b>OS:</b> ${esc(o.numero||'')}</p><p><b>Status:</b> ${esc(o.status||'')}</p></div></div>
-  ${!deContrato?`<div class="grid2"><div class="linha"><b>Impressora</b><div>${fill(o.modelo)}</div></div><div class="linha"><b>Serial</b><div>${fill(o.serie)}</div></div></div>`:''}
-  <div class="grid2">
-    <div class="linha"><b>Contador preto atual</b><div>${fill(o.contadorAtual)}</div></div>
-    ${temColor?`<div class="linha"><b>Contador color atual</b><div>${fill(o.contadorColor)}</div></div>`:'<div></div>'}
-  </div>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="linha" style="min-height:42px">${fill(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d||''):'&nbsp;'}</td><td>${fin?esc(it.q||''):'&nbsp;'}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="linha" style="min-height:48px">${fill(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w = window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 const _impCham = window.imprimirChamado;
 // wrap print buttons to ask save
@@ -22719,55 +22612,6 @@ window.renderEquipamentos = function(){
 };
 
 // PDF chamado
-window.imprimirChamadoPDF = function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq=(db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const deContrato=!!o.contratoId;
-  const showColor=!deContrato || temColor(p,eq);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||it.nome||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const v=(x)=> fin ? esc(x==null||x===''?'':x) : '';
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:16px;color:#111;font-size:12px}
-    .top{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #0a1e8a;padding-bottom:10px}
-    .top img{height:64px;width:auto}
-    .loja{flex:1}
-    .loja h1{margin:0;color:#0a1e8a;font-size:18px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid #bbb;padding:5px 7px;text-align:left}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;padding:6px;margin:12px 0 4px;letter-spacing:.06em}
-    .blank{min-height:22px}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:96px;text-align:center;letter-spacing:1px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="top"><img src="${logoSrc()}" alt="logo"><div class="loja"><h1>${esc(loja.fantasia)}</h1><div>${esc(loja.nome)}</div><div>${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div><div>${esc(loja.end)}</div></div>
-    <div style="text-align:right"><b>OS ${esc(o.numero||'')}</b><br>${fin?'Finalizado':'Aberto'}</div></div>
-  <table><tr><th>Cliente</th><th>Documento</th><th>Telefone</th><th>Cidade</th></tr>
-  <tr><td>${esc(cli.nome||'')}</td><td>${esc(cli.documento||'')}</td><td>${esc(cli.telefone||'')}</td><td>${esc((cli.cidade||'')+(cli.estado?('/'+cli.estado):''))}</td></tr></table>
-  ${!deContrato?`<table><tr><th>Impressora</th><th>Serial</th></tr><tr><td class="blank">${v(o.modelo)}</td><td class="blank">${v(o.serie)}</td></tr></table>`:''}
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td class="blank">${v(o.contadorAtual)}</td>${showColor?`<td class="blank">${v(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div style="border:1px solid #bbb;min-height:36px;padding:8px">${v(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td class="blank">${fin?esc(it.d):''}</td><td class="blank">${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div style="border:1px solid #bbb;min-height:40px;padding:8px">${v(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // logo em relatórios (menos rtf/etiqueta)
 function injetarLogoNoDoc(html){
@@ -23182,62 +23026,6 @@ if(typeof _sav==='function' && !_sav.__v5172){
 }
 
 // ── 4.2 PDF inspirado, mais limpo ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId || temColor(p,(db.equipamentos||[]).find(e=>e.id===o.equipamentoId));
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataAt=fin&&o.dataAtendimento?dia(o.dataAtendimento).split('-').reverse().join('/'):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:14mm}
-    body{font-family:Inter,Arial,sans-serif;margin:0;color:#0f172a;font-size:12px;background:#fff}
-    .sheet{max-width:760px;margin:0 auto;padding:8px 4px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}
-    .head h1{margin:0;font-size:20px;color:#0a1e8a;letter-spacing:-.02em}
-    .muted{color:#64748b;font-size:11px}
-    .os{margin-left:auto;text-align:right}
-    .os b{font-size:18px;color:#0a1e8a}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .faixa{background:linear-gradient(90deg,#0a1e8a,#1d4ed8);color:#fff;border-radius:8px;text-align:center;font-weight:800;padding:7px;margin:14px 0 6px;letter-spacing:.08em;font-size:11px}
-    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px;border:1px solid #e2e8f0}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px;text-align:left;padding:8px}
-    td{padding:9px 8px;border-top:1px solid #eef2f7;min-height:26px}
-    .line{border:1px dashed #cbd5e1;border-radius:10px;min-height:40px;padding:10px;background:#fff}
-    .foot{margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end}
-    .data{border-bottom:1px solid #334155;min-width:110px;text-align:center;letter-spacing:1px;display:inline-block}
-    @media print{.no-print{display:none}}
-  </style></head><body><div class="sheet">
-  <div class="no-print" style="margin-bottom:10px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}" alt="logo"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div></div>
-    <div class="os"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><h3>Cliente</h3><div><b>${esc(cli.nome||'')}</b></div><div class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</div><div class="muted">${esc(cli.cidade||'')} ${esc(cli.estado||'')}</div></div>
-    <div class="card"><h3>Atendimento</h3><div>Técnico: <b>${esc(o.tecnico||'')}</b></div><div class="muted">${!o.contratoId?('Impressora: '+esc(o.modelo||'')+' • Serial '+esc(o.serie||'')):'Contrato'}</div></div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td>${cell(o.contadorAtual)}</td>${showColor?`<td>${cell(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="line">${cell(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}</td><td>${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="line">${cell(o.observacao||o.servicos)}</div>
-  <div class="foot"><div><b>Data do atendimento</b><br><span class="data">${dataAt}</span></div><div class="muted">DIGICOPY</div></div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // ── 4.5 / 7 sair SEM loop, volta para lista do contrato ──
 window.__lcAskLock=false;
@@ -23545,67 +23333,6 @@ if(typeof _open==='function'){
 }
 
 // ── 4.2 PDF ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId || temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
-    body{font-family:Inter,Arial,sans-serif;margin:0;color:#0f172a;font-size:12px}
-    .sheet{max-width:760px;margin:0 auto}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}
-    .head h1{margin:0;font-size:20px;color:#0a1e8a}
-    .muted{color:#64748b;font-size:11px}
-    .os{margin-left:auto;text-align:right}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .faixa{background:#0a1e8a !important;color:#fff !important;border-radius:8px;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;letter-spacing:.08em;font-size:11px}
-    table{width:100%;border-collapse:collapse;border:1px solid #cbd5e1}
-    th{background:#eef2ff !important;color:#0a1e8a;font-size:11px;text-align:left;padding:8px;border:1px solid #cbd5e1}
-    td{padding:8px;border:1px solid #e2e8f0;height:26px}
-    .lined{border:1px solid #cbd5e1;border-radius:10px;min-height:72px;padding:8px 10px;
-      background-image:repeating-linear-gradient(#fff,#fff 21px,#e2e8f0 22px);background-size:100% 22px}
-    .data{border-bottom:1px solid #334155;min-width:110px;text-align:center;display:inline-block;letter-spacing:1px}
-    @media print{.no-print{display:none!important}.faixa{background:#0a1e8a!important;color:#fff!important}}
-  </style></head><body><div class="sheet">
-  <div class="no-print" style="margin-bottom:10px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}" alt="logo"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div></div>
-    <div class="os"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><h3>Cliente</h3><div><b>${esc(cli.nome||'')}</b></div><div class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</div><div class="muted">${esc(cli.cidade||'')} ${esc(cli.estado||'')}</div></div>
-    <div class="card"><h3>Atendimento</h3>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td>${cell(o.contadorAtual)}</td>${showColor?`<td>${cell(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="lined">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="lined">${cell(o.observacao)}</div>
-  <p style="margin-top:16px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // ── 5 Todos leituras com aviso ──
 window.lcLeiturasTodos=function(){
@@ -24045,65 +23772,6 @@ function criarVendaSeFinalizado(o){
 }
 
 // ── PDF: linhas + contadores maiores ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=cli(o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#0f172a;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px;letter-spacing:.06em}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #cbd5e1;padding:10px;text-align:left}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px);background-size:100% 24px}
-    .cnt{min-height:52px;font-size:18px;font-family:monospace}
-    .data{border-bottom:1px solid #334155;min-width:110px;display:inline-block;text-align:center}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td><div class="box-write cnt">${cell(o.contadorAtual)}</div></td>
-  ${showColor?`<td><div class="box-write cnt">${cell(o.contadorColor)}</div></td>`:''}</tr></table>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:16px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // X de peça NÃO fecha o chamado
 document.addEventListener('click', function(ev){
@@ -24365,73 +24033,6 @@ if(typeof _av==='function'){
 }
 
 // ── 4.2 PDF: contadores ao lado da data + assinaturas ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom">&nbsp;'+cell('')+'</span>';
-  const linhaVal=function(v){ return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom;padding:0 6px">'+cell(v)+'</span>'; };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .assin{margin-top:36px;display:flex;justify-content:space-between;gap:40px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:18px;line-height:2.1;font-size:14px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5176_patch.js');
 })();
@@ -24595,77 +24196,6 @@ const mo=new MutationObserver(()=>{
 if(document.body) mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['oninput']});
 
 // PDF: contadores em branco até finalizar; assinaturas afastadas
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom">&nbsp;</span>';
-  const linhaVal=function(v){
-    const t=v==null||v===''?'':String(v);
-    return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom;padding:0 6px">'+esc(t)+'</span>';
-  };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .rodape{margin-top:28px;line-height:2.2;font-size:14px}
-    .assin{margin-top:88px;display:flex;justify-content:space-between;gap:56px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:8px}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5177_patch.js');
 })();
@@ -24746,84 +24276,6 @@ document.addEventListener('click', delFromEvent, true);
 document.addEventListener('pointerdown', delFromEvent, true);
 
 // PDF: página A4, assinaturas coladas no rodapé da folha
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom">&nbsp;</span>';
-  const linhaVal=function(v){
-    const t=v==null||v===''?'':String(v);
-    return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom;padding:0 6px">'+esc(t)+'</span>';
-  };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{min-height:273mm;display:flex;flex-direction:column;box-sizing:border-box}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .rodape{margin-top:22px;line-height:2.2;font-size:14px}
-    .foot{margin-top:auto;padding-top:48px}
-    .assin{display:flex;justify-content:space-between;gap:64px;padding-bottom:8px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:8px}
-    @media print{.no-print{display:none!important}.page{min-height:273mm}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="foot">
-    <div class="assin">
-      <div>Assinatura do técnico</div>
-      <div>Assinatura do cliente</div>
-    </div>
-  </div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5178_patch.js');
 })();
@@ -24949,80 +24401,6 @@ if(typeof _av==='function'){
   };
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=o.status==='concluido';
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId || temColor(p,o);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:150px;height:18px;vertical-align:bottom">&nbsp;</span>';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  // contadores: NADA escrito se não finalizado
-  const pb = fin && o.contadorAtual!=null && o.contadorAtual!=='' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor!=null && o.contadorColor!=='' ? esc(String(o.contadorColor)) : '';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{min-height:auto;display:flex;flex-direction:column;box-sizing:border-box}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:52px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:10px 0 5px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:6px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:64px;padding:8px 10px;
-      background-image:repeating-linear-gradient(#fff 0 21px,#cbd5e1 21px 22px)}
-    .rodape{margin-top:14px;line-height:2;font-size:13px}
-    .assin{margin-top:42px;display:flex;justify-content:space-between;gap:48px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{margin-top:18px;border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div><div class="muted">${esc(loja.cnpj)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5179_patch.js');
 })();
@@ -25082,86 +24460,6 @@ function lojaRodape(){
   };
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId || temColor(p,o);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  // NUNCA número no contador se não estiver finalizado
-  const pb = fin && o.contadorAtual!=null && String(o.contadorAtual).trim()!=='' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor!=null && String(o.contadorColor).trim()!=='' ? esc(String(o.contadorColor)) : '';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a;flex-shrink:0}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;flex-shrink:0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px;flex-shrink:0}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:52px;padding:6px 10px;
-      background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .mid{flex:0 1 auto}
-    .rodape-cnt{margin-top:10px;line-height:1.9;font-size:13px;flex-shrink:0}
-    .foot{margin-top:auto;padding-top:12px;flex-shrink:0}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:14px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}.page{height:277mm}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="mid">
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape-cnt">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span class="cnt-line" style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span class="cnt-line" style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  </div>
-  <div class="foot">
-    <div class="assin">
-      <div>Assinatura do técnico</div>
-      <div>Assinatura do cliente</div>
-    </div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 if(typeof window.imprimirChamado==='function'){
   window.imprimirChamado=function(id){ return window.imprimirChamadoPDF(id); };
@@ -25416,77 +24714,6 @@ function lojaRodape(){
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||s.cnpj||'',tel:d.telefone||d.fone||'',whats:d.whatsapp||'',email:d.email||'',end:end||''};
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(it=>normItem(Object.assign({d:it.descricao,q:it.qtd},it))):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',preco:'',desconto:'',subtotal:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
-  const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const totFin=fin?money(totalPecas(o.pecas||[])):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th>Descrição</th><th>Qtd</th><th>Valor</th><th>Desc.</th><th>Valor final</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao||it.d)}&nbsp;</td><td>${cell(it.qtd||it.q)}&nbsp;</td><td>${it.preco===''?'':cellM(it.preco)}&nbsp;</td><td>${it.desconto===''?'':cellM(it.desconto)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  <tr><td colspan="4" style="text-align:right"><b>Total</b></td><td><b>${totFin}</b></td></tr>
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5181_patch.js');
 })();
@@ -25733,75 +24960,6 @@ function lojaRodape(){
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||s.cnpj||'',tel:d.telefone||d.fone||'',whats:d.whatsapp||'',email:d.email||'',end:end||''};
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(normItem):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',subtotal:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
-  const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();
@@ -26046,77 +25204,6 @@ function lojaRodape(){
   return { fantasia: d.fantasia || 'DIGICOPY', razao: d.razaoSocial || d.nome || '', cnpj: d.cnpj || s.cnpj || '', tel: d.telefone || d.fone || '', whats: d.whatsapp || '', email: d.email || '', end: end || '' };
 }
 
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os || []).find(function(x){ return x.id === osId; });
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl = (db.clientes || []).find(function(c){ return c.id === o.clienteId; }) || {};
-  const loja = lojaRodape();
-  const fin = chamadoFinalizado(o);
-  const p = parqueDaOs(o);
-  const showColor = !o.contratoId || temColor(p, o);
-  let pecas = Array.isArray(o.pecas) ? o.pecas.map(normItem) : [];
-  while(pecas.length < 5) pecas.push({ descricao:'', qtd:'', subtotal:'' });
-  const cell = function(x){ return fin ? esc(x == null || x === '' ? '' : x) : ''; };
-  const cellM = function(x){ return fin && x !== '' && x != null ? esc(money(x)) : ''; };
-  const dataCad = dataBR(o.criadoEm || o.dataAbertura);
-  const dataAt = fin && o.dataAtendimento ? dataBR(o.dataAtendimento) : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb = fin && o.contadorAtual != null && String(o.contadorAtual).trim() !== '' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor != null && String(o.contadorColor).trim() !== '' ? esc(String(o.contadorColor)) : '';
-  const endCli = [cl.endereco || cl.rua || cl.logradouro, cl.numero, cl.bairro, cl.cidade, cl.uf || cl.estado, cl.cep].filter(Boolean).join(' • ');
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .card .t{color:#0a1e8a;font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="t">Dados do Cliente</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div>${endCli?`<div class="muted">${esc(endCli)}</div>`:''}</div>
-    <div class="card"><div class="t">Dados de Atendimento</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Cadastro: ${esc(dataCad)} • Atendimento: ${dataAt}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(function(it){ return `<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`; }).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w = window.open('', '_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5184_patch.js');
 })();
@@ -26265,81 +25352,6 @@ function lojaRodape(){
   return { fantasia: d.fantasia || 'DIGICOPY', razao: d.razaoSocial || d.nome || '', cnpj: d.cnpj || s.cnpj || '', tel: d.telefone || d.fone || '', whats: d.whatsapp || '', email: d.email || '', end: end || '' };
 }
 
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os || []).find(function(x){ return x.id === osId; });
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl = (db.clientes || []).find(function(c){ return c.id === o.clienteId; }) || {};
-  const loja = lojaRodape();
-  const fin = chamadoFinalizado(o);
-  const p = parqueDaOs(o);
-  const showColor = !o.contratoId || temColor(p, o);
-  let pecas = Array.isArray(o.pecas) ? o.pecas.map(normItem) : [];
-  while(pecas.length < 5) pecas.push({ descricao:'', qtd:'', subtotal:'' });
-  const cell = function(x){ return fin ? esc(x == null || x === '' ? '' : x) : ''; };
-  const cellM = function(x){ return fin && x !== '' && x != null ? esc(money(x)) : ''; };
-  const dataCad = dataBR(o.criadoEm || o.dataAbertura);
-  const dataAt = fin && o.dataAtendimento ? dataBR(o.dataAtendimento) : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb = fin && o.contadorAtual != null && String(o.contadorAtual).trim() !== '' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor != null && String(o.contadorColor).trim() !== '' ? esc(String(o.contadorColor)) : '';
-  const endCli = [cl.endereco || cl.rua || cl.logradouro, cl.numero, cl.bairro, cl.cidade, cl.uf || cl.estado, cl.cep].filter(Boolean).join(' • ');
-  const impressora = window.AJUSTES_V5185_PURE.impressoraLinha(o);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .card .t{color:#0a1e8a;font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="t">Dados do Cliente</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div>${endCli?`<div class="muted">${esc(endCli)}</div>`:''}</div>
-    <div class="card"><div class="t">Dados de Atendimento</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Cadastro: ${esc(dataCad)} • Atendimento: ${dataAt}</div>
-    </div>
-  </div>
-  <div class="card" style="margin:0 0 8px"><div class="t">Impressora</div>
-    <div><b>${impressora ? esc(impressora) : '-'}</b>${o.local ? ` <span class="muted">• Local: ${esc(o.local)}</span>` : ''}</div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(function(it){ return `<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`; }).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w = window.open('', '_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5185_patch.js');
 })();
@@ -48263,7 +47275,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.12 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.13 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -48304,7 +47316,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.12 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.13 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -48319,14 +47331,14 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.12 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.13 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
     // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
 
-// v5.24.12 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.13 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -48344,7 +47356,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.12 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.13 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -48392,7 +47404,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.12 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.13 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){
