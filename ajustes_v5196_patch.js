@@ -234,7 +234,18 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  toastMsg('Usuário salvo', 'success');
+  // v5.24.14 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
+  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
+  // por onde "salvei e o login não entra" escapava em silêncio.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
+  if(provaLogin){
+    toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+  } else if(typeof window.lfbAlert === 'function'){
+    window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
+  } else {
+    toastMsg('O usuário NÃO ficou gravado — tenta salvar de novo.', 'error');
+  }
 };
 
 // Sobrescreve o saveUsuario antigo (app.js) — remove a exigência de senha CNPJ.

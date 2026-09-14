@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.13**  
+**Última versão:** **v5.24.14**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.13>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.14>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -115,6 +115,58 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.14 (2026-09-14)
+
+Tema: **BUG RELATADO POR ELE** (primeiro modelo de relatório preenchido direitinho):
+"Configurações > Usuários e permissões > novo usuário > preenchi > salvei > testei
+→ 'Informe usuário e senha'". Pedido extra dele: auditar os OUTROS botões da tela.
+
+1. **Recon até o osso:** fiação íntegra — formulário (v5196) renderiza u-nome/
+   u-login/u-senha, saveUsuarioFinal lê os mesmos ids e grava
+   {login:fold,senha:txt,ativo:true,empresaId}; login vivo (v52253,
+   loginFlexivel) procura exatamente esses campos. main.js/IPC era do
+   Buscador Escola (caixaEscolarAPI) — inocentado. A falha era SILENCIOSA por
+   desenho: salvar sem provar e login com erro genérico não deixam saber onde
+   quebrou. Remédio de raiz em vez de chute (perguntas 9°/10°/11° dele).
+2. **(A) Prova de gravação:** ao salvar usuário, o sistema CONFERE o registro
+   com os mesmos olhos do login (login+senha+ativo) e: sucesso → toast com o
+   login exato pra testar; falha → lfbAlert "NÃO ficou gravado... me manda foto".
+   Silêncio nunca mais.
+3. **(B) Diagnóstico partido no login:** o erro genérico "Usuário ou senha
+   incorreto" virou três falas honestas — usuário não existe neste PC / está
+   INATIVO / senha não confere (mesmo fold do compare). Carimbo de fala.
+4. **Auditoria da tela toda (pedida):** 9 chamadas da tela usuários (criar/
+   editar/excluir usuário, técnico novo/editar/salvar/excluir, closeModal,
+   openModal) — **todas com definição viva; nenhum botão morto**. excluirUsuario
+   blindado: só Admin/Dono, não exclui a si mesmo, não exclui o último
+   Admin/Dono, confirma via confirmSistema. Helpers do save (sess, fold, txt,
+   esc, uidSafe...) todos presentes; logAction atrás de typeof-guard.
+5. test_ajustes_v52414 (21 asserts) + suíte 147/0 com os 2 de ambiente.
+
+### Outras inteligências desta rodada (não-código):
+- **Raio-x da nuvem (fotos dele, 2026-09-14):** uso_diario: hoje ~11,4 mil
+  escritas / 15,2 mil leituras — DENTRO do grátis D1 (teto 100 mil/5 mi por
+  dia). Pico 36 mil escritas em 09-10. Mudanças de hoje: escolaIt 81.395,
+  produtos 80.340 (ressincronia de migração concentrada nesses dois tanques),
+  clientes 4.103. Worker NO AR = versao 5.24.8 (constante dele mesma) — repo já
+  está 5.24.14 → deploy dele (npm do digicopy-cloud-api) atualiza quando rolar.
+  devices: 11; "PC PESSOAL KAUAN" aparece 2× (higiene menor de cadastro, não
+  urgente). Fluxo dele = scripts npm com `wrangler d1 execute --remote` (4.131.2).
+- **Pages NO AR: https://teste-60f.pages.dev** — criado por ele hoje. GitHack
+  aposentado quando ele validar o rodapé 5.24.14 lá. **Pergunta dele: "chat
+  novo = branch nova, e aí?" → Protocolo Pages x branch (anotar sempre):** o
+  Pages publica a branch `arena/01a0683d-teste`. Em chat novo com branch nova:
+  dash.cloudflare.com → Workers e Pages → projeto teste-60f → Settings →
+  Builds & deployments → trocar Production branch pro nome da branch nova →
+  Save. 30 segundos, sem mexer em mais nada.
+- **Certificado dele:** o duplo clique abriu o assistente e INSTALOU sem
+  mostrar data. Próximo tutorial quando na loja: Win+R → certmgr.msc → Pessoal
+  → Certificados → duplo clique no certificado da loja → linha "Válido de/até"
+  → me manda SÓ a data final.
+- Workers Paid $5: ele PULOU por enquanto (passo 3 suspenso por decisão).
 
 ---
 

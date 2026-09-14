@@ -166,8 +166,31 @@
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          if(typeof toast === 'function') toast('Usuário ou senha incorreto', 'error');
-          else alert('Usuário ou senha incorreto');
+          // v5.24.14 — diagnóstico partido (carimbo de fala): diz SE é o
+          // usuário que não existe, se está inativo, ou se é a senha. Antes
+          // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
+          // fold do loginFlexivel pra comparar igualzinho.
+          var ff = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
+          var foldL = ff(loginVal);
+          var cand = null;
+          for (var ci = 0; ci < usuarios.length; ci++){
+            var cu = usuarios[ci];
+            if(!cu) continue;
+            var cL = ff(cu.login);
+            var cN = ff(cu.nome);
+            var cF = cN.split(/\s+/)[0] || '';
+            if (foldL === cL || foldL === cN || foldL === cF){ cand = cu; break; }
+          }
+          var msgLogin;
+          if(!cand){
+            msgLogin = 'Usuário "' + loginVal + '" não existe neste PC. Confere a digitação ou cria ele em Configurações > Usuários.';
+          } else if(!cand.ativo){
+            msgLogin = 'O usuário "' + loginVal + '" está INATIVO. Ativa em Configurações > Usuários.';
+          } else {
+            msgLogin = 'Senha não confere para "' + loginVal + '". Cuidado: maiúsculas e minúsculas contam.';
+          }
+          if(typeof toast === 'function') toast(msgLogin, 'error');
+          else alert(msgLogin);
           return;
         }
 
