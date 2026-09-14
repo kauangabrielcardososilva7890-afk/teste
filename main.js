@@ -612,7 +612,7 @@ function registerBackupIPC(){
 }
 
 // ──────────────────────────────────────────────
-// ERRO.TXT IPC (v5.24.16) — pedido dele: erro indevido vira linha num
+// ERRO.TXT IPC (v5.24.17) — pedido dele: erro indevido vira linha num
 // erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
 // (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
 // (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB

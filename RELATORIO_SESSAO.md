@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.16**  
+**Última versão:** **v5.24.17**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.16>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.17>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -115,6 +115,31 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.17 (2026-09-14)
+
+Tema: **pergunta direta dele**: "o aviso do erro aparece só uma vez? se eu
+perder, como baixo de novo?"
+
+1. Resposta dada + implementada: no .exe o `erro.txt` real fica no %APPDATA%
+   pra sempre (basta abrir a pasta); no navegador/celular a memória do download
+   morria num F5 → agora **persiste em localStorage** (`digicopy_erros_txt`,
+   mesmo lugar do banco, teto 500 linhas) e ainda sobra um resgate direto:
+   `window.digicopyBaixarErroTxt` invocável fora do aviso.
+2. **Prestação de contas do "vê TODOS OS OUTROS" (quando ele achou o bug do
+   usuário novo, ele mandou auditar os demais):** o que foi feito de fato —
+   (a) auditoria de fiação das 9 funções da tela Usuários/Técnicos: todas
+   vivas, nenhum botão morto; (b) excluirUsuario conferido: só Admin/Dono,
+   não se autoexclui, não apaga o último Admin/Dono, confirma com popup do
+   sistema; (c) save×login×form nos mesmos ids/campos (sem desencontro);
+   (d) todas as funções auxiliares do save presentes. (e) os dois cintos
+   estruturais da v5.24.14: prova de gravação + diagnóstico partido.
+   (f) e agora a v5.24.16/17 transforma QUALQUER botão morto do sistema
+   inteiro em denunciante automático: errou → avisa, grava no erro.txt, e
+   ele me manda. Auditoria manual de tela a tela fica como opção sob demanda.
+3. test_ajustes_v52417 (14 asserts). Suíte 147/0 com os 2 de ambiente.
 
 ---
 
