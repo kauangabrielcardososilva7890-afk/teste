@@ -58,6 +58,60 @@ A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.2
 
 ---
 
+## NUVEM: GitHack → Cloudflare Pages (decisão dele, 2026-09-12)
+
+Ele pediu a migração: repo vai poder ficar **privado** e o link de teste **nunca
+muda** (cada push na branch republica sozinho). Sandbox NÃO tem wrangler
+autenticado → o caminho é a **integração GitHub no dashboard DELE** (cliques
+dele, detalhados na conversa): Workers e Pages → Create → Pages → Connect to
+Git → repo `kauangabrielcardososilva7890-afk/teste` → Production branch
+`arena/01a0683d-teste` → Framework: **Nenhum** → Build command: **vazio** →
+Output directory: **`/`**. Repo é estático-puro e seguro pro root deploy:
+515 arquivos versionados (limite Pages = 20 mil), node_modules NÃO commitado,
+e index.html só precisa de app.bundle.js + assets/vendor/* + logo_2.png +
+manifest.webmanifest (tudo na raiz). Após o 1º deploy: validar rodapé
+v5.24.12 no link pages.dev, aposentar GitHack, e eu passo a mandar só o link
+fixo em toda atualização. Números atuais verificados: Pages grátis =
+requisições estáticas ILIMITADAS; R2 grátis = 10GB/1M escritas/10M leituras,
+egress sempre zero; Workers Pago $5 = requisições sem limite (D1: 25B
+leituras / 50M escritas por mês). Pendente DELE na nuvem: foto da janela/arq.
+que abre o CMD (revela o fluxo de deploy atual), foto ver_gasto, "me avisa"
+do Workers $5.
+
+## AUDITORIA DAS 14 PERGUNTAS NOS ARQUIVO JÁ EXISTENTES (pedido dele, 2026-09-12)
+
+Entendido como: aplicar a régua em TODOS os arquivos existentes, "sem quebrar
+nada" → AUDITORIA primeiro (leitura), PODA depois, por lotes e só com OK dele.
+Nada é deletado sem ler o arquivo inteiro (o corpo "morto" pode ter efeitos
+colaterais — ligar listeners, registrar atalhos).
+
+Linha de base medida: 515 arquivos versionados, 196 scripts no bundle,
+app.bundle.js = 3.128.878 bytes. Funções window.* com múltiplas definições
+(só a última é viva; vivas em "cadeia" = o arquivo captura a anterior num
+const antes de redefinir):
+
+| função | defs | cadeia-viva | suspeitas de peso-morto |
+|---|---|---|---|
+| navigateTo | 27 | 27 | 0 |
+| showApp | 21 | 21 | 0 |
+| imprimirChamadoPDF | 20 | 1 | **≈19** (cópias inteiras do gerador de PDF/HTML) |
+| renderConfig | 19 | 18 | 1 |
+| renderFinanceiro | 15 | 14 | 1 |
+| renderVendas | 14 | 11 | 3 |
+| renderClientes | 11 | 6 | 5 |
+| renderContratos | 11 | 7 | 4 |
+| renderProdutos | 10 | 7 | 3 |
+| closeModal | 12 | 12 | 0 |
+| vosGerarHtmlNotinha | 11 | 10 | 1 |
+
+Protocolo da poda (aguardando ok dele por lote): (1) dossiê por função
+lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
+(3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
+fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
+demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
 ## O QUE FOI ENTREGUE — v5.24.12 (2026-09-12)
 
 Tema: **bug testado por ele** — aba Vendas → dentro de uma notinha
