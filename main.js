@@ -150,6 +150,21 @@ app.whenReady().then(() => {
   registerPrintIPC();
   registerBackupIPC();
   registerErroTxtIPC();
+  // v5.24.22 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
+  // Word/LibreOffice, o que estiver associado ao .rtf).
+  ipcMain.handle('rtf:abrir', async (_e, payload) => {
+    try{
+      const osMod = require('os');
+      const dir = app.getPath('temp');
+      const nome = String((payload && payload.nome) || 'contrato.rtf').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 80) || 'contrato.rtf';
+      const conteudo = String((payload && payload.conteudo) || '');
+      const full = path.join(dir, 'digicopy-' + Date.now().toString(36) + '-' + nome);
+      fs.writeFileSync(full, conteudo, 'utf8');
+      const res = await shell.openPath(full);
+      return { ok: !res, erro: res || null, arquivo: full };
+    }catch(e){ return { ok:false, erro:String(e && e.message || e) }; }
+  });
   registerOpenExternalIPC();
   registerNfeCertIPC();
   registerEscolaLoginIPC();
@@ -612,7 +627,7 @@ function registerBackupIPC(){
 }
 
 // ──────────────────────────────────────────────
-// ERRO.TXT IPC (v5.24.21) — pedido dele: erro indevido vira linha num
+// ERRO.TXT IPC (v5.24.22) — pedido dele: erro indevido vira linha num
 // erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
 // (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
 // (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB

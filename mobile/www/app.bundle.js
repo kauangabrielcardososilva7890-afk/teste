@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 600dbfb0664468f2
+ * scripts: 196 | sha256: 93f6978a6befb0ee
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -3812,7 +3812,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
     const input=document.getElementById('classic-search-clientes');
-  // v5.24.21 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
+  // v5.24.22 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
   // (ou no botão Filtrar da tela neo). Não redesenha mais a cada letra.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
@@ -3889,7 +3889,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   if(input){
     input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
     input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
-    // v5.24.21 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
+    // v5.24.22 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
     if(document.activeElement?.id==='neo-search-clientes') input.focus();
   }
   const btnF=document.getElementById('cli-btn-filtrar');
@@ -3943,7 +3943,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   window.renderOs=function(){
     const sess=getSession(); if(!sess) return; const q=document.getElementById('neo-search-os')?.value||''; const low=q.toLowerCase();
     let list=db.os.filter(o=>o.empresaId===sess.empresaId).filter(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return !low||(cli.nome||'').toLowerCase().includes(low)||(o.numero||'').toLowerCase().includes(low)||(o.problema||'').toLowerCase().includes(low);}).sort((a,b)=>new Date(b.abertura)-new Date(a.abertura));
-    (document.getElementById('view-manutencao')||ensureView('manutencao')).innerHTML=neoPage('Chamados', 'Atendimento técnico, manutenção e ordens de serviço', `<button onclick="openModal('os')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo chamado</button>`, `${inputSearch('neo-search-os',q,'renderOs','Pesquisar cliente, OS ou problema...')}<button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Cadastrar cliente</button><button onclick="addTecnico && navigateTo('config')" class="neo-btn"><i class="ph ph-user-gear"></i>Cadastrar técnico</button>`, `<table class="neo-table"><thead><tr><th>OS</th><th>Cliente</th><th>Problema</th><th>Técnico</th><th>Abertura</th><th>Prioridade</th><th>Status</th></tr></thead><tbody>${list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return `<tr><td><b class="text-[#0a1e8a]">${escapeHtml(o.numero||'')}</b></td><td><b>${escapeHtml(cli.nome||'')}</b></td><td>${escapeHtml(o.problema||o.descricao||'')}</td><td>${escapeHtml(o.tecnicoNome||o.tecnico||'-')}</td><td>${fmtDate(o.abertura||o.criadoEm)}</td><td>${escapeHtml(o.prioridade||'Normal')}</td><td>${statusPill(o.status,o.status==='concluido'?'ok':'wait')}</td></tr>`}).join('')||emptyRow(7,'Nenhum chamado aberto')}</tbody></table>`);
+    (document.getElementById('view-manutencao')||ensureView('manutencao')).innerHTML=neoPage('Chamados', 'Atendimento técnico, manutenção e ordens de serviço', `<button onclick="openModal('os')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo chamado</button>`, `${inputSearch('neo-search-os',q,'renderOs','Pesquisar cliente, OS ou problema...')}<button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Cadastrar cliente</button><button onclick="addTecnico && navigateTo('config')" class="neo-btn"><i class="ph ph-user-gear"></i>Cadastrar técnico</button>`, `<table class="neo-table"><thead><tr><th>OS</th><th>Cliente</th><th>Problema</th><th>Técnico</th><th>Abertura</th><th>Prioridade</th><th>Status</th><th class="text-right">Ações</th></tr></thead><tbody>${list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return `<tr><td><b class="text-[#0a1e8a]">${escapeHtml(o.numero||'')}</b></td><td><b>${escapeHtml(cli.nome||'')}</b></td><td>${escapeHtml(o.problema||o.descricao||'')}</td><td>${escapeHtml(o.tecnicoNome||o.tecnico||'-')}</td><td>${fmtDate(o.abertura||o.criadoEm)}</td><td>${escapeHtml(o.prioridade||'Normal')}</td><td>${statusPill(o.status,o.status==='concluido'?'ok':'wait')}</td><td class="text-right whitespace-nowrap" onclick="event.stopPropagation()"><button onclick="window.imprimirChamadoAgoraV52422&&window.imprimirChamadoAgoraV52422('${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-[#0a1e8a]" title="Imprimir direto"><i class="ph ph-printer"></i></button><button onclick="window.excluirChamadoV52422&&window.excluirChamadoV52422('${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir chamado"><i class="ph ph-trash"></i></button></td></tr>`}).join('')||emptyRow(8,'Nenhum chamado aberto')}</tbody></table>`);
   };
 
   window.renderFinanceiro=function(){
@@ -5467,7 +5467,7 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    // v5.24.21 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // v5.24.22 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
     // opcional... notinha normal" SOME. Os estados completa/incompleta
     // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
     el.style.display='none'; el.innerHTML='';
@@ -7921,7 +7921,7 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
-  // v5.24.21 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  // v5.24.22 — RELATORIO dele (P11): idem — só aplicado no Enter.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
@@ -12644,6 +12644,15 @@ function campos(contratoId){
     DATA_INICIO: dataBR(c.dataInicio),
     DATA_TERMINO: dataBR(c.dataFim),
     QTD_MAQUINAS: maqs.length,
+    CTR_CODIGO: String((c && (c.numero || c.codigoAntigo || c.id)) || '').replace(/\D+/g,'').replace(/^0+/,'') || '0',
+    DATA_INICIO: dataBR(c.dataInicio),
+    DATA_FIM: dataBR(c.dataFim),
+    DATA_HOJE: dataBR(new Date().toISOString().slice(0,10)),
+    CLI_TELEFONE: cli.telefone || '',
+    CLI_CELULAR: cli.celular || '',
+    CLI_ENDCOMPLETO: [cli.endereco, cli.numero, cli.bairro, cli.cidade, cli.estado, cli.cep].filter(Boolean).join(', '),
+    EMP_TELEFONE: emp.telefone || '',
+    EMP_EMAIL: emp.email || '',
     CTR_VALOR_MENSAL: dinheiro(c.valorMensalFixo || 0),
     CTR_FRANQUIA: `${n(c.franquiaPB,0).toLocaleString('pt-BR')} páginas`,
     CTR_PERIODO: `${dataBR(c.dataInicio)} a ${dataBR(c.dataFim)}`,
@@ -12687,7 +12696,18 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const conf = cfg();
   const template = tipo === 'proposta' ? (conf.proposta || DEFAULT_PROPOSTA_RTF) : (conf.contrato || DEFAULT_CONTRATO_RTF);
   const rtfFinal = aplicarTemplate(template, contratoId);
-  baixar(`${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`, rtfFinal);
+  const nome = `${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`;
+  // v5.24.22 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
+  // pré-preenchido — dados completos vêm do mapa de campos acima).
+  // Navegador/celular mantêm o download de antes.
+  if(window.rtfAPI && typeof window.rtfAPI.abrir==='function'){
+    window.rtfAPI.abrir({ nome: nome, conteudo: rtfFinal }).then(function(r){
+      if(!r || !r.ok){ baixar(nome, rtfFinal); }
+      else if(typeof toast==='function'){ toast('Abrindo no Word: '+nome); }
+    }).catch(function(){ baixar(nome, rtfFinal); });
+    return;
+  }
+  baixar(nome, rtfFinal);
 };
 
 function renderCardConfig(){
@@ -20556,7 +20576,7 @@ window.imprimirChamado = function(id){
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.21 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.22 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
@@ -21860,6 +21880,10 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
     <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+      <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
+      <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
+    </td>
   </tr>`;
 }
 
@@ -21887,14 +21911,47 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-title').innerText = 'Chamados';
   document.getElementById('modal-body').innerHTML = `<div class="space-y-3 text-[13px]">
     ${htmlFiltrosChamado('lcg')}
-    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th></tr></thead><tbody>
-    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="7" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
+    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Ações</th></tr></thead><tbody>
+    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="8" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
     </tbody></table></div>
   </div>`;
   document.getElementById('modal-footer').innerHTML =
     `<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>
      <button onclick="novoChamadoAvulsoGuard()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold">+ Novo chamado (fora de contrato)</button>`;
   document.getElementById('modal-root')?.classList.remove('hidden');
+};
+
+// v5.24.22 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+window.imprimirChamadoAgoraV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id);
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  if(typeof window.imprimirChamadoPDF==='function'){ window.imprimirChamadoPDF(id); return; }
+  if(typeof window.imprimirChamado==='function'){ window.imprimirChamado(id); return; }
+};
+
+window.excluirChamadoV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id)||null;
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  var deCtr = !!(o && typeof chamadoDeContrato==='function' ? chamadoDeContrato(o) : (o.contratoId));
+  var msg = deCtr
+    ? 'Esse chamado é DE CONTRATO. Excluir aqui também exclui na lista de chamados dentro do contrato. Tem certeza que deseja excluir?'
+    : 'Excluir este chamado? Apaga SEM volta — nem aqui nem em nenhuma outra lista do sistema.';
+  var segue = function(ok){
+    if(!ok) return;
+    var i=(db.os||[]).findIndex(x=>x.id===id);
+    if(i>=0){ db.os.splice(i,1); }
+    if(typeof saveDB==='function') saveDB();
+    if(typeof toast==='function') toast('Chamado excluído','success');
+    // repinta onde estiver aberto
+    try{
+      if(typeof window.abrirChamadosContrato==='function' && window.__ctrChamadosAberto){ window.abrirChamadosContrato(window.__ctrChamadosAberto); }
+      else if(typeof window.abrirHistoricoChamadosGeral==='function' && document.getElementById('modal-root')&&!document.getElementById('modal-root').classList.contains('hidden') && /Chamados/.test((document.getElementById('modal-title')||{}).textContent||'')){
+        window.abrirHistoricoChamadosGeral();
+      }
+    }catch(e){}
+  };
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(msg, 'Excluir chamado').then(segue); return; }
+  segue(confirm(msg));
 };
 
 window.novoChamadoAvulsoGuard = function(){
@@ -21918,8 +21975,16 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
+    // v5.24.22 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // da impressora (e a Ações abriga imprimir-direto + excluir).
+    const ths = body.querySelectorAll('thead th');
+    ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });
+    const lastTh = ths[ths.length-1];
+    if(lastTh && !/a[çc][aã]o/i.test(String(lastTh.textContent||'')) && !lastTh.querySelector('.ph')){
+      // mantém 8 colunas: se a tabela original tinha o th-PDF, ele já virou ícone
+    }
     const tb = body.querySelector('tbody');
-    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
+    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="8" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
   }, 40);
 };
 
@@ -26727,7 +26792,7 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.21 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // v5.24.22 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
   // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
   // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
   // por onde "salvei e o login não entra" escapava em silêncio.
@@ -26862,7 +26927,7 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // v5.24.21 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // v5.24.22 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
   // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
   // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
   return !!sess();
@@ -28759,7 +28824,7 @@ function viradaDoLimite(){
 function recadoDoLimite(){
   const falta=Math.max(0,viradaDoLimite()-Date.now());
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
-  // v5.24.21 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
+  // v5.24.22 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
   return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
@@ -30080,7 +30145,7 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.21 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // v5.24.22 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
   // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
   // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
   // porque as listas só mostram a empresa logada. Duas empresas no banco =
@@ -30351,7 +30416,7 @@ function injetarNaBarra(root,id,texto,fn){
 function injetarVendas(){
   const view=document.getElementById('view-vendas');
   if(!view) return;
-  // v5.24.21 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
+  // v5.24.22 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
   // consultar notinha. Atalho continua nos históricos de leitura.
   (function(){ var morto=document.getElementById('btn-nfe-venda-lista'); if(morto) morto.remove(); })();
   return;
@@ -30555,7 +30620,7 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    // v5.24.21 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // v5.24.22 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
     // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
     // e o botão das leituras/histórico continuam vivos normalmente.
     // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.
@@ -36172,6 +36237,7 @@ console.log('[DIGICOPY] v5.22.37 estoque zerado volta na venda');
 'use strict';
 
 var FILTROS = [
+  ['hoje','Hoje (criados ou mexidos hoje)'],
   ['todos','Todos'],
   ['nome','Nome'],
   ['cidade','Cidade'],
@@ -36260,6 +36326,32 @@ function modalidadeDe(c){
   return out.join(' ').toLowerCase();
 }
 
+// v5.24.22 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
+// contrato hoje OU mexeu nele hoje (impressora, chamado ou leitura). A conta
+// é viva: não depende de carimbo passado — vale até pros contratos antigos.
+function dataDe(x, campos){
+  for(var i=0;i<campos.length;i++){ var v=x && x[campos[i]]; if(v) return String(v).slice(0,10); }
+  return '';
+}
+window.__ctrMexeuHoje = function(c, hoje){
+  if(!c) return false;
+  if(dataDe(c,['atualizadoEm','criadoEm'])===hoje) return true;
+  if(typeof db==='undefined') return false;
+  var empId = c.empresaId || null;
+  var tenta = function(arr, link, camposData){
+    return (arr||[]).some(function(x){
+      if(!x) return false;
+      if(empId && x.empresaId && x.empresaId!==empId) return false;
+      if(String(x[link]||'')!==String(c.id)) return false;
+      return dataDe(x, camposData)===hoje;
+    });
+  };
+  if(tenta(db.parque, 'contratoId', ['atualizadoEm','criadoEm'])) return true;
+  if(tenta(db.os, 'contratoId', ['atualizadoEm','criadoEm','dataAbertura'])) return true;
+  if(tenta(db.leituras, 'contratoId', ['atualizadoEm','criadoEm','dataLeitura'])) return true;
+  return false;
+};
+
 function filtraContratos(list, campo, q){
   var arr=list||[];
   var termo=up(q);
@@ -36302,7 +36394,15 @@ function filtraContratos(list, campo, q){
       var lim=new Date(); lim.setDate(lim.getDate()+30);
       return f2>=hoje && f2<=lim.toISOString().slice(0,10);
     }
-    if(campo==='leituras_hoje'){
+    if(campo==='hoje'){
+    var base = window.__ctrMexeuHoje(c, hoje);
+    if(!base) return false;
+    if(!termo) return true;
+    var clh=clienteDe(c);
+    return up(c.numero||c.codigoAntigo||'').indexOf(termo)>=0
+      || (clh && (up(clh.nome||'').indexOf(termo)>=0 || up(clh.fantasia||'').indexOf(termo)>=0));
+  }
+  if(campo==='leituras_hoje'){
       return !temLeituraMes(c, mes) || leiturasDo(c).some(function(l){ return String(l.dataLeitura||l.criadoEm||'').slice(0,10)===hoje; });
     }
     if(campo==='nao_faturados_mes') return !temFaturadaMes(c, mes);
@@ -36318,7 +36418,7 @@ window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContr
 
 if(typeof document==='undefined') return;
 
-var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'todos', q:'' });
+var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'hoje', q:'' });
 
 function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
@@ -36352,6 +36452,24 @@ function injetar(){
   };
   var pai=busca.parentNode;
   if(pai) pai.insertBefore(sel, busca);
+
+  // v5.24.22 — F1: o "Mostrar todos" com a mesma vida dos outros botões
+  // (visível sempre; a tela já começa no "Hoje" por padrão).
+  if(pai && !document.getElementById('ctr-mostrar-todos')){
+    var btnTodos = document.createElement('button');
+    btnTodos.id='ctr-mostrar-todos';
+    btnTodos.type='button';
+    btnTodos.className='h-10 px-4 rounded-xl bg-white border text-[13px] font-bold';
+    btnTodos.innerHTML='<i class="ph ph-list"></i> Mostrar todos';
+    btnTodos.title='Mostra todos os contratos (o padrão novo da tela é só os de hoje)';
+    btnTodos.onclick=function(){
+      STATE.campo='todos'; STATE.q='';
+      var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
+      var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
+      if(typeof window.renderContratos==='function') window.renderContratos();
+    };
+    pai.insertBefore(btnTodos, busca);
+  }
 }
 
 if(typeof window.renderContratos==='function' && !window.renderContratos.__v52237fil){
@@ -36743,7 +36861,7 @@ window.abrirOrcamento=function(id, _origem){
     if(alterou && typeof saveDB==='function') saveDB();
     if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
   }
-  // v5.24.21 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // v5.24.22 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
   // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
   // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
   // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.
@@ -38092,7 +38210,7 @@ console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 /* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.21 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.22 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -38122,7 +38240,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.21 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.22 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38130,7 +38248,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.21 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.22 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -38182,7 +38300,7 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.21 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.22 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
 function abrirOuBaixarErroTxt(){
@@ -38226,7 +38344,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.21 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.22 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 
@@ -39108,7 +39226,7 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
-// v5.24.21 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// v5.24.22 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
 // Remover filtro zera data/tipo/ordem e reaplica limpo.
 window.finAplicarFiltroV52421 = function(){
   var f=document.getElementById('fin-btn-filtrar');
@@ -39223,7 +39341,7 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
-    // v5.24.21 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // v5.24.22 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
     // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
     // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
     // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).
@@ -40270,7 +40388,7 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    // v5.24.21 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // v5.24.22 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
     // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
     // novos, checa se o irmão antes do campo não É o rótulo certo.
     var irmaoDe = de.previousElementSibling;
@@ -41432,7 +41550,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          // v5.24.21 — diagnóstico partido (carimbo de fala): diz SE é o
+          // v5.24.22 — diagnóstico partido (carimbo de fala): diz SE é o
           // usuário que não existe, se está inativo, ou se é a senha. Antes
           // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
           // fold do loginFlexivel pra comparar igualzinho.
@@ -43544,7 +43662,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         return nb - na;
       });
 
-      // v5.24.21 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // v5.24.22 — RELATORIO dele (orçamento 38 sumiu do banco depois de
       // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
       // (além dos ids). Se um clique chagar num id que o banco perdeu entre
       // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio
@@ -46344,7 +46462,7 @@ function aviso(el, texto, cor){
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
   if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
-    // v5.24.21 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // v5.24.22 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
     // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
     // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
     return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
@@ -47522,7 +47640,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.21 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.22 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -47563,7 +47681,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.21 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.22 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -47578,14 +47696,14 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.21 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.22 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
     // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
 
-// v5.24.21 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.22 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -47603,7 +47721,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.21 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.22 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -47651,7 +47769,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.21 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.22 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){

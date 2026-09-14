@@ -2781,3 +2781,37 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
   sobreposição do fluxo_corrigido) como wrap final e adaptar ao vencedor.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
+
+## O QUE FOI ENTREGUE — v5.24.22 (2026-09-14, pacote 2A do RELATORIO GRANDE)
+
+**F1 — Contratos "mostrar todos" + padrão hoje:** nova opção "Hoje (criados
+ou mexidos hoje)" na faixa de filtros (v5.22.37); estado inicial da tela =
+hoje; botão "Mostrar todos" plantado na barra (limpa campo+busca e lista
+tudo). O cálculo "mexeu hoje" é VIVO (__ctrMexeuHoje): vale criou o contrato
+hoje OU editou impressora/chamado/leitura embaixo dele — sem depender de
+carimbo passado (cobre contratos antigos de graça).
+**F2 — Chamados excluir + impressão direta:** no arquivo VENCEDOR
+(locacao_chamados_fix_patch, que repinta ambas as listas): cada linha ganha
+[AÇÕES] = impressorinha (imprime DIRETO sem abrir, via imprimirChamadoPDF
+vencedor) + lixeira. O aviso do excluir é ESCOLHIDO pela origem: chamado
+DE CONTRATO usa o texto que ele sugeriu ("Esse chamado é DE CONTRATO.
+Excluir aqui também exclui na lista de chamados dentro do contrato..."),
+fora-de-contrato avisa "Apaga SEM volta". Deleta de verdade na fonte
+(db.os.splice + saveDB), repinta onde estiver aberto. E onde o cabeçalho
+havia ficado com a palavra "PDF", nasce o ÍCONE de impressora
+(ph-printer) — como ele pediu. A tela neo de manutenção (view-manutencao,
+a "fora de contratos") ganhou a mesma dupla de ações.
+**P6 — Contrato RTF direto no Word:** main.js ganha ipcMain rtf:abrir
+(grava temp com nome sorríEditado + shell.openPath → Word associao);
+preload expõe rtfAPI; o gerador baixarContratoRTF é desktop-route com
+fallback de download (navegador/celular = baixa como antes, igual erro.txt).
+E o MAPA DE CAMPOS foi completado a pedido dele ("já tem todos os dados?"):
+adicionados DATA_INICIO, DATA_FIM, DATA_HOJE (o help antigo citava
+{DATA_INICIO} e ele NÃO tinha mapping — buraco encontrado e tampado),
+CTR_CODIGO, CLI_TELEFONE/CLI_CELULAR/CLI_ENDCOMPLETO, EMP_TELEFONE/EMP_EMAIL.
+Resposta completa no reply da sessão (inclui o que falta caso use tokens
+diferentes).
+test_ajustes_v52422 (29 asserts); suíte 147/0/2.
+Restantes do pacote 2 pedindo mira dele: P5 (foto da aba certa) e os
+maiores P7 (serial-first+voltar do remanejo, wrap final ressuscitado) e
+P8 (hub de histórico da impressora).

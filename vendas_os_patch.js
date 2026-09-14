@@ -542,7 +542,7 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    // v5.24.21 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // v5.24.22 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
     // opcional... notinha normal" SOME. Os estados completa/incompleta
     // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
     el.style.display='none'; el.innerHTML='';

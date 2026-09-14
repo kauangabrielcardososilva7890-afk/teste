@@ -202,6 +202,10 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
     <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+      <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
+      <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
+    </td>
   </tr>`;
 }
 
@@ -229,14 +233,47 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-title').innerText = 'Chamados';
   document.getElementById('modal-body').innerHTML = `<div class="space-y-3 text-[13px]">
     ${htmlFiltrosChamado('lcg')}
-    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th></tr></thead><tbody>
-    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="7" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
+    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Ações</th></tr></thead><tbody>
+    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="8" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
     </tbody></table></div>
   </div>`;
   document.getElementById('modal-footer').innerHTML =
     `<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>
      <button onclick="novoChamadoAvulsoGuard()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold">+ Novo chamado (fora de contrato)</button>`;
   document.getElementById('modal-root')?.classList.remove('hidden');
+};
+
+// v5.24.22 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+window.imprimirChamadoAgoraV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id);
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  if(typeof window.imprimirChamadoPDF==='function'){ window.imprimirChamadoPDF(id); return; }
+  if(typeof window.imprimirChamado==='function'){ window.imprimirChamado(id); return; }
+};
+
+window.excluirChamadoV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id)||null;
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  var deCtr = !!(o && typeof chamadoDeContrato==='function' ? chamadoDeContrato(o) : (o.contratoId));
+  var msg = deCtr
+    ? 'Esse chamado é DE CONTRATO. Excluir aqui também exclui na lista de chamados dentro do contrato. Tem certeza que deseja excluir?'
+    : 'Excluir este chamado? Apaga SEM volta — nem aqui nem em nenhuma outra lista do sistema.';
+  var segue = function(ok){
+    if(!ok) return;
+    var i=(db.os||[]).findIndex(x=>x.id===id);
+    if(i>=0){ db.os.splice(i,1); }
+    if(typeof saveDB==='function') saveDB();
+    if(typeof toast==='function') toast('Chamado excluído','success');
+    // repinta onde estiver aberto
+    try{
+      if(typeof window.abrirChamadosContrato==='function' && window.__ctrChamadosAberto){ window.abrirChamadosContrato(window.__ctrChamadosAberto); }
+      else if(typeof window.abrirHistoricoChamadosGeral==='function' && document.getElementById('modal-root')&&!document.getElementById('modal-root').classList.contains('hidden') && /Chamados/.test((document.getElementById('modal-title')||{}).textContent||'')){
+        window.abrirHistoricoChamadosGeral();
+      }
+    }catch(e){}
+  };
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(msg, 'Excluir chamado').then(segue); return; }
+  segue(confirm(msg));
 };
 
 window.novoChamadoAvulsoGuard = function(){
@@ -260,8 +297,16 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
+    // v5.24.22 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // da impressora (e a Ações abriga imprimir-direto + excluir).
+    const ths = body.querySelectorAll('thead th');
+    ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });
+    const lastTh = ths[ths.length-1];
+    if(lastTh && !/a[çc][aã]o/i.test(String(lastTh.textContent||'')) && !lastTh.querySelector('.ph')){
+      // mantém 8 colunas: se a tabela original tinha o th-PDF, ele já virou ícone
+    }
     const tb = body.querySelector('tbody');
-    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
+    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="8" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
   }, 40);
 };
 

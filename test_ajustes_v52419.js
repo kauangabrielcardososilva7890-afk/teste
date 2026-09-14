@@ -1,4 +1,4 @@
-// test_ajustes_v52419.js — v5.24.21: pedido dele "muda as informações da
+// test_ajustes_v52419.js — v5.24.22: pedido dele "muda as informações da
 // nuvem" — limpeza dos textos visíveis que ainda falavam do mundo GRÁTIS
 // (teto diário, zera 21h, "não ser pego de surpresa"). Plano pago ativo:
 // o painel passa a dizer a verdade nova ($5 fixos, teto por mês e gigante).
@@ -27,9 +27,9 @@ ok(dsyn.includes('Nada foi perdido: o envio recomeça sozinho'), 'ficha: a prome
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('por mês e gigantesco'), 'bundle: texto do plano pago presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('por mês e gigantesco'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.21'"), 'index: versão 5.24.21');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.21<'), 'index: rodapé v5.24.21');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.21"'), 'package.json 5.24.21');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.22'"), 'index: versão 5.24.22');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.22<'), 'index: rodapé v5.24.22');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.22"'), 'package.json 5.24.22');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.21 (informações da nuvem no idioma do plano pago).');
+console.log('\nTudo OK — v5.24.22 (informações da nuvem no idioma do plano pago).');
