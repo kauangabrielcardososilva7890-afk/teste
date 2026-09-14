@@ -4,6 +4,38 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
 **Última versão:** **v5.24.12**  
+
+---
+
+## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
+
+Antes de responder ou criar qualquer código, AUTO-RESPONDER em voz baixa:
+
+1. Esse código realmente precisa existir?
+2. Já não tem um código que faz isso dentro do sistema?
+3. A própria linguagem já não resolve isso de forma nativa?
+4. Dá para escrever isso em uma só linha?
+5. Dá para otimizar para deixar o mais leve possível?
+6. Separar arquivos é bom, mas preciso MESMO criar arquivo novo para atualizar um que já existe?
+7. Esse código realmente vai funcionar de forma adequada?
+8. O que escrevi não vai gerar bug, travamento ou exclusão de dados?
+9. Eu realmente entendi o que o usuário quis dizer?
+10. Tenho todas as ferramentas e contexto para executar como solicitado?
+11. Preciso fazer mais perguntas para obter informações ANTES de executar?
+12. Escrevi tudo no .md? Falta algo extremamente importante para continuar em outro chat?
+13. Tem alguma linha de código desnecessária que não deveria estar aqui?
+14. Estou fazendo o que foi solicitado (ou outra coisa)? Se houver jeito melhor, cabe dentro da base que ele pediu?
+
+**Estado do projeto nas palavras dele:** "falta somente a parte de NF".
+**Suspeita aberta:** o certificado A1 da loja do pai (CNPJ 08.385.589/0001-03,
+Janaúba MG) provavelmente EXPIROU. Recon feito (v5.24.12): o sistema NÃO
+verifica nem mostra a validade do certificado em lugar nenhum — nfe_assinatura.js
+já abre o .pfx (loadPfx via node-forge) e o objeto `cert.validity.notAfter` está
+ali, mas ninguém lê. Remédio proposto quando a sessão de NF abrir: ler o
+notAfter dentro do próprio nfe_assinatura.js (arquivo existente, pergunta 6°)
+e avisar com popup do sistema "Certificado A1 vence em dd/mm/aaaa / VENCIDO".
+Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
+"Válido de ... até ...".
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
