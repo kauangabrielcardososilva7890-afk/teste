@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.14**  
+**Última versão:** **v5.24.15**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.14>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.15>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -115,6 +115,45 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.15 (2026-09-14)
+
+Tema: **PROBLEMA NOVO dele (2º modelo preenchido)** — "grava na nuvem mas alguns
+dados não aparecem no PC: usuários/permissões, técnico, vendas, orçamentos...;
+e se eu deletar é pra deletar de verdade".
+
+1. **Certificado RESOLVIDO (foto certmgr dele):** A1 do Denivaldo (AC SOLUTI
+   Múltipla v5), "Data de validade **10/09/2026**" → **EXPIROU dia 10/09/2026**
+   (hoje 14/09, estourou há 4 dias). A suspeita dele estava certa. Caminho:
+   renovar com a AC SOLUTI; sem isso, NF-e não emite. NF session fica depois.
+2. **Teoria número 1 do sumiço (provada EM CÓDIGO, não em produção):** as
+   listas filtram por empresaId da sessão (renderUsuarios filtra
+   u.empresaId===s.empresaId; mesmo padrão em vendas/orçamentos). PC novo que
+   sincronizou pode ter criado SUA PRÓPRIA empresa → os 16 mil registros dele
+   subiram carimbados com outro id → chegam na nuvem, baixam nos PCs, mas
+   nenhuma tela mostra (filtro invisível). Bate 100% com o sintoma.
+3. **Em vez de chutar a correção: DIAGNÓSTICO no app** (regra: não adivinhar;
+   evidência primeiro). Botão "Por que dados não aparecem?" no painel
+   Acompanhar dados dos PCs (Sincronização/Nuvem do admin): varre as entidades
+   citadas por ele SEM gastar 1 leitura de nuvem (economia do medidor), conta
+   o que está invisível por empresa e LISTA os ids de empresa encontrados. Se
+   sair ">>> A CHAVE DO MISTÉRIO", a cura é unir/normalizar as empresas — fix
+   de 1 versão a partir da foto.
+4. test_ajustes_v52415 (19 asserts, incl. "diagnóstico não chama API").
+   Suíte 147/0 com os 2 de ambiente. Ordem selada mantida (carimba→builda→testa).
+5. **Pendente (aguardando GO dele, pedido com "me fale antes"):** recurso
+   erro.txt + auditoria visível pra todos os usuários + popup de erro indevido
+   com botão "abrir arquivo" e OK. PROPOSTA desenhada na conversa: arquivo em
+   %APPDATA%\digicopy-erp\erro.txt (pasta do sistema pode ser protegida contra
+   gravação; no navegador não existe arquivo — oferecer download), rotação
+   (2MB → vira erro.1.txt), cada linha com versão/data/usuário/tela, auditoria
+   deixa de receber erros e volta a aparecer pra todos. Ele decide.
+6. Ele vai PRIVAR o repo: GitHack morre → usar só https://teste-60f.pages.dev.
+   Pages com Git-integration lê repo privado normal.
+7. Resposta dada a ele: leituras 30k→56k = o segundo PC empurrou seus 16 mil
+   registros na primeira sincronia (tabela changes) + baixou a base toda;
 
 ---
 

@@ -110,7 +110,46 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
+  // v5.24.15 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
+  // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
+  // porque as listas só mostram a empresa logada. Duas empresas no banco =
+  // dois mundos invisíveis entre si (a suspeita número 1 deste caso).
+  const dx=document.createElement('button');
+  dx.id='dc-diag-invisiveis';
+  dx.textContent='Por que dados não aparecem?';
+  dx.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;margin-left:6px';
+  list.parentNode.insertBefore(dx,btn.nextSibling);
+  dx.onclick=window.dcDiagnosticoInvisiveis;
 }
+
+window.dcDiagnosticoInvisiveis=function(){
+  const alvoSess=(typeof sess==='function')?sess():null;
+  const empAtual=(alvoSess&&alvoSess.empresaId)||'';
+  const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
+  const linhas=[];
+  let totalInvis=0;
+  const idsEstranhos={};
+  for(const e of ENTS){
+    const arr=(window.db&&Array.isArray(window.db[e])) ? window.db[e] : [];
+    let inv=0;
+    for(const x of arr){
+      const eid=x&&x.empresaId;
+      if(eid && empAtual && eid!==empAtual){ inv++; idsEstranhos[eid]=true; totalInvis++; }
+    }
+    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':' • todos visíveis'));
+  }
+  const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
+  const outros=Object.keys(idsEstranhos);
+  let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
+  if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
+  const corpo = totalInvis
+    ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
+    : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
+  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;
+  if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
+  else alert(msg);
+};
 
 function watchModal(){
   const modal=document.getElementById('digicopy-cloud-modal');
