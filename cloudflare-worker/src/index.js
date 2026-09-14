@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.19';
+const WORKER_VERSION = '5.24.20';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -934,7 +934,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.19 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.20 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -959,11 +959,14 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.19 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.20 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
     // — é assim mesmo: o sufoco dos 4.947.140/5.000.000 acabou.
+    // TESTE DE 1 MÊS — se ele resolver voltar pro grátis, o PONTO DE RECUO é
+    // trocar aqui de (50000000, 25000000000) para (100000, 5000000) e rodar
+    // `npm run deploy` nesta pasta (recuo completo no RELATORIO_SESSAO.md).
     const r = await env.DB.prepare('SELECT dia, escritas, leituras FROM uso_diario WHERE dia = ?').bind(hojeUTC()).first();
     return {
       dia: hojeUTC(),

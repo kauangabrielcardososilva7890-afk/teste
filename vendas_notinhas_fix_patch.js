@@ -144,7 +144,7 @@
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.19 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.20 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura

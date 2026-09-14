@@ -2688,3 +2688,39 @@ visíveis do mundo grátis (teto diário/21h/susto), agora no idioma do plano pa
    worker quando puder (só muda o número exibido; o bloqueio diário já morreu
    no servidor). Nem site, nem link, nem banco mudam.
 5. test_ajustes_v52419 (13 asserts). Suíte 147/0 com os 2 de ambiente.
+
+## O QUE FOI ENTREGUE — v5.24.20 (2026-09-14)
+
+Tema: **"muda a estrutura completa pro pago + deixa anotado: é teste de 1
+mês"** — exigência dele, registrada AQUI e no próprio código.
+
+1. FECHO do idioma grátis: o último texto visível do mundo gratuito era a
+   ficha do backup diário ("plano grátis atingiu o LIMITE DIÁRIO (100 mil).
+   Libera às 21h...") — reescrita: "do período (bem raro no plano pado)...",
+   com a promessa dos 18:30 e o "me avise" intactos. Varredura final GARANTE:
+   nenhuma string visível fala grátis/21h/diária como regra (assertado).
+2. PONTO DE RECUO DE 1 MÊS (exigência dele — gravado no worker ao lado dos
+   tetos e aqui): se no fim do mês o pago não valer a pena, o recuo total é:
+   NO WORKER: trocar (tetoEscritas, tetoLeituras) de (50000000, 25000000000)
+   para (100000, 5000000) e na pasta cloudflare-worker rodar `npm run deploy`;
+   NA TELA: os textos do painel seguem honestos nos dois mundos (não há o que
+   reverter); o D1 pago cancelável no painel em 1 clique. Prazo do recuo:
+   5 minutos + deploy.
+3. REGISTRO do teste de 1 mês: período da fatura atual inicia 2026-09-14 e
+   vence 2026-10-14. Critério contigo: sobe o mês tranquilo, olha a tela
+   Usage dele (4.35k requests, CPU 6s, faturável $0 hoje) + os 25 bilhões de
+   leituras, e decide continua/volta — a estrutura obedece qualquer um dos
+   dois mundos.
+4. DADOS DA IMAGEM QUE ELE MANDOU (o que o sistema precisava saber):
+   Workers & Pages = teste (Pages), digicopy-sync-api (sync worker, 4.3k
+   req / 50 erros / 35.3ms — são respostas brutas, incluem rejeições 401/426,
+   zero tela madura), digicopy-contador-uso (mini-medidor, 17 req). USO do
+   período: Requests 4.35k de 10M incluídos (0,044%), CPU 5.931ms, faturável
+   $0.00 — o plano está gigantesco pra escala dele, conforme previsto.
+5. ONDE DÁ DEPLOY (resposta a ele, guardada): pasta **cloudflare-worker/**,
+   que é o digicopy-sync-api (wrangler.jsonc "name": "digicopy-sync-api").
+   Comando: `npm run deploy` (faz migrations + sobe o worker). O mini-
+   medidor pasta cloudflare-contador/ (digicopy-contador-uso) NÃO mudou em
+   v5.24.18→20 — deploy dele é só se `/v1/uso` do medidor precisar (não é o
+   caso hoje).
+6. test_ajustes_v52420 (14 asserts); suite 147/0/2.

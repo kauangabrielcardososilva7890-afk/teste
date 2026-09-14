@@ -47,7 +47,10 @@ function aviso(el, texto, cor){
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
   if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
-    return 'A nuvem do plano grátis atingiu o LIMITE DIÁRIO de gravações de hoje (100 mil). Libera sozinho às 21h — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
+    // v5.24.20 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
+    // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
+    return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
   if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
     return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
   if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
