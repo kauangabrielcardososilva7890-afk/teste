@@ -74,7 +74,13 @@ v5.24.12 no link pages.dev, aposentar GitHack, e eu passo a mandar só o link
 fixo em toda atualização. Números atuais verificados: Pages grátis =
 requisições estáticas ILIMITADAS; R2 grátis = 10GB/1M escritas/10M leituras,
 egress sempre zero; Workers Pago $5 = requisições sem limite (D1: 25B
-leituras / 50M escritas por mês). Pendente DELE na nuvem: foto da janela/arq.
+leituras / 50M escritas por mês). **ARMADILHA ANOTADA (2026-09-14):** Cloudflare
+tem 3 famílias de plano — Sites (Free/Pro $20/Business $200: CDN+segurança de
+site, NÃO é o nosso), Workers & Pages (Free vs **Paid US$5/mês**: este é o
+nosso; fatura = $5 fixo na nossa escala) e R2 (pede cartão pra ativar, cobra
+$0 dentro do grátis). Regra pra ele: tela mostrando $20 ou $200 = porta
+errada; só $5 é o nosso número. Após ele assinar: flip tetoEscritas
+100000 → 50M (teto display) + Cron+R2 backup diário (plano já desenhado). Pendente DELE na nuvem: foto da janela/arq.
 que abre o CMD (revela o fluxo de deploy atual), foto ver_gasto, "me avisa"
 do Workers $5.
 
