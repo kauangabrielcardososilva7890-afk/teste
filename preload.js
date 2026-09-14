@@ -59,6 +59,13 @@ const pontes = {
     isElectron: true
   },
 
+  // API do erro.txt (v5.24.16) — só existe dentro do .exe; no navegador/celular
+  // o mesmo aviso oferece BAIXAR o arquivo (regra PC+celular).
+  erroTxtAPI: {
+    append: (linha) => ipcRenderer.invoke('errotxt:append', linha),
+    abrir: () => ipcRenderer.invoke('errotxt:abrir')
+  },
+
   nfeCertAPI: {
     status: () => ipcRenderer.invoke('nfe:cert-status'),
     importar: () => ipcRenderer.invoke('nfe:cert-import'),

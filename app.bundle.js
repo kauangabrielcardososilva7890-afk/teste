@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: b149f3af0d623cd6
+ * scripts: 196 | sha256: bf3004bfae07abc8
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -20537,7 +20537,7 @@ window.imprimirChamado = function(id){
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.15 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.16 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
@@ -26708,7 +26708,7 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.15 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // v5.24.16 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
   // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
   // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
   // por onde "salvei e o login não entra" escapava em silêncio.
@@ -26843,11 +26843,10 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // Reaproveita a lógica do v5.19.6 se existir, senão usa a local.
-  if(window.AJUSTES_V5196_PURE && typeof window.AJUSTES_V5196_PURE.temPermissaoTotal === 'function'){
-    return window.AJUSTES_V5196_PURE.temPermissaoTotal(sess());
-  }
-  return temPermissaoTotal(sess());
+  // v5.24.16 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
+  // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
+  return !!sess();
 }
 
 // Mostra/esconde os itens de menu de auditoria conforme a permissão.
@@ -30060,7 +30059,7 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.15 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // v5.24.16 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
   // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
   // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
   // porque as listas só mostram a empresa logada. Duas empresas no banco =
@@ -38040,7 +38039,11 @@ console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 /* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-//            O foco é funcionar sem erro; o aviso é só se der problema.
+// v5.24.16 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+//            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
+//            download no navegador/celular) e o aviso ganha botão pra abrir
+//            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
+//            pra todos os logins outra vez (ajustes_v5197).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -38066,51 +38069,98 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
+// v5.24.16 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
+// aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
+// de "quem fez o quê", visível pra todos os logins (v5197).
 var ultimoAviso=0;
+var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
+var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-function gravarAuditoria(det){
+function montarLinhaErroTxt(det){
+  var agora=new Date();
+  function p2(n){ return (n<10?'0':'')+n; }
+  var stamp=agora.getFullYear()+'-'+p2(agora.getMonth()+1)+'-'+p2(agora.getDate())+' '+p2(agora.getHours())+':'+p2(agora.getMinutes())+':'+p2(agora.getSeconds());
+  var versao=(typeof window.DIGICOPY_APP_VERSION==='string')?window.DIGICOPY_APP_VERSION:'?';
+  var sess=null; try{ sess=(typeof getSession==='function')?getSession():null; }catch(e){}
+  var usuario=(sess&&(sess.usuarioNome||sess.login))||'sem login';
+  var tela='';
   try{
-    if(typeof db==='undefined' || !db) return;
-    db.logs=db.logs||[];
-    var sess=typeof getSession==='function'?getSession():null;
-    db.logs.unshift({
-      id: typeof uid==='function'?uid('log'):('log_'+Date.now()),
-      dataHora: new Date().toISOString(),
-      empresaId: sess&&sess.empresaId,
-      usuarioId: sess&&sess.usuarioId,
-      usuarioNome: (sess&&sess.usuarioNome)||'sistema',
-      usuarioLogin: (sess&&sess.login)||'',
-      entidade: 'sistema',
-      acao: 'erro',
-      entidadeId: null,
-      detalhes: det
-    });
-    if(db.logs.length>500) db.logs=db.logs.slice(0,500);
-    try{
-      if(typeof saveDB==='function' && !window.__v52239salvandoErro){
-        window.__v52239salvandoErro=true;
-        saveDB();
-        window.__v52239salvandoErro=false;
-      }
-    }catch(e){ window.__v52239salvandoErro=false; }
+    var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+    if(at) tela=String(at.getAttribute('data-nav')||'');
+  }catch(e){}
+  return '['+stamp+' | v'+versao+' | '+usuario+(tela?' | tela: '+tela:'')+'] '+det;
+}
+
+function gravarErroTxt(linha){
+  bufferErros.push(linha);
+  if(bufferErros.length>500) bufferErros=bufferErros.slice(-500);
+  try{
+    if(window.erroTxtAPI && typeof window.erroTxtAPI.append==='function'){
+      window.erroTxtAPI.append(linha).catch(function(){});
+    }
   }catch(e){}
 }
 
-function avisarTela(){
+function baixarErroTxt(){
+  try{
+    var corpo=bufferErros.join('\n')+'\n';
+    var blob=new Blob([corpo],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='erro.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      try{ a.remove(); }catch(e){}
+    },1200);
+  }catch(e){}
+}
+
+function avisarErroNaTela(){
   var agora=Date.now();
-  if(agora-ultimoAviso<8000) return;
+  if(agora-ultimoAviso<8000) return;  // anti-formiga: um aviso a cada 8s, nunca uma chuva
   ultimoAviso=agora;
   try{
-    if(typeof window.lfbAlert==='function') window.lfbAlert('Ocorreu um problema. O detalhe foi gravado na auditoria.','Aviso');
-    else if(typeof toast==='function') toast('Ocorreu um problema. Veja a auditoria.','error');
+    var antigo=document.getElementById('aviso-erro-txt');
+    if(antigo) antigo.remove();
+    var ehDesktop=!!(window.erroTxtAPI && typeof window.erroTxtAPI.abrir==='function');
+    var div=document.createElement('div');
+    div.id='aviso-erro-txt';
+    div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+    div.innerHTML='<div style="background:#fff;border-radius:16px;padding:26px 30px;max-width:430px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35)">'
+      +'<div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><span style="font-size:26px">⚠️</span></div>'
+      +'<p style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 6px">Ocorreu um erro indevido no sistema</p>'
+      +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
+      +'</div></div>';
+    document.body.appendChild(div);
+    document.getElementById('aviso-erro-txt-abrir').onclick=function(){
+      try{
+        if(ehDesktop){ window.erroTxtAPI.abrir().catch(function(){ baixarErroTxt(); }); }
+        else baixarErroTxt();
+      }catch(e){ baixarErroTxt(); }
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    document.getElementById('aviso-erro-txt-ok').onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
   }catch(e){}
 }
 
 window.registrarErroSistema=function(msg, extra){
   var det=detalheErro(msg, extra);
   if(ignoraRuido(det)) return;
-  gravarAuditoria(det);
-  avisarTela();
+  if(REGISTRANDO) return;  // erro dentro do próprio registro não vira loop infinito
+  REGISTRANDO=true;
+  try{
+    gravarErroTxt(montarLinhaErroTxt(det));   // era: gravarAuditoria — não vai mais
+    avisarErroNaTela();
+  }catch(e){}
+  REGISTRANDO=false;
 };
 
 window.addEventListener('error', function(ev){
@@ -41273,7 +41323,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          // v5.24.15 — diagnóstico partido (carimbo de fala): diz SE é o
+          // v5.24.16 — diagnóstico partido (carimbo de fala): diz SE é o
           // usuário que não existe, se está inativo, ou se é a senha. Antes
           // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
           // fold do loginFlexivel pra comparar igualzinho.
@@ -47348,7 +47398,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.15 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.16 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -47389,7 +47439,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.15 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.16 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -47404,14 +47454,14 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.15 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.16 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
     // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
 
-// v5.24.15 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.16 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -47429,7 +47479,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.15 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.16 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -47477,7 +47527,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.15 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.16 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){

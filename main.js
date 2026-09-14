@@ -149,6 +149,7 @@ app.whenReady().then(() => {
   registerEscolaIPC();
   registerPrintIPC();
   registerBackupIPC();
+  registerErroTxtIPC();
   registerOpenExternalIPC();
   registerNfeCertIPC();
   registerEscolaLoginIPC();
@@ -607,6 +608,42 @@ function registerBackupIPC(){
       fs.writeFileSync(fpath, content, 'utf8');
       return { ok:true, path: fpath, dir };
     }catch(e){ return { ok:false, error: e.message || String(e) }; }
+  });
+}
+
+// ──────────────────────────────────────────────
+// ERRO.TXT IPC (v5.24.16) — pedido dele: erro indevido vira linha num
+// erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
+// (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
+// (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB
+// vira erro.1.txt e recomeça (PC fraco, arquivo nunca incha).
+// ──────────────────────────────────────────────
+function erroTxtPath(){
+  return path.join(app.getPath('userData'), 'erro.txt');
+}
+function registerErroTxtIPC(){
+  ipcMain.handle('errotxt:append', async (_evt, linha) => {
+    try{
+      const p = erroTxtPath();
+      try{
+        if(fs.existsSync(p) && fs.statSync(p).size > 2*1024*1024){
+          const antigo = path.join(app.getPath('userData'), 'erro.1.txt');
+          try{ if(fs.existsSync(antigo)) fs.unlinkSync(antigo); }catch(e){}
+          fs.renameSync(p, antigo);
+        }
+      }catch(e){}
+      const limpa = String(linha == null ? '' : linha).replace(/[\r\n]+/g, ' | ').slice(0, 1200);
+      fs.appendFileSync(p, limpa + '\n', 'utf8');
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
+  });
+  ipcMain.handle('errotxt:abrir', async () => {
+    try{
+      const p = erroTxtPath();
+      if(!fs.existsSync(p)) fs.writeFileSync(p, '', 'utf8');
+      shell.showItemInFolder(p); // abre o Explorador já com o erro.txt selecionado
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
   });
 }
 

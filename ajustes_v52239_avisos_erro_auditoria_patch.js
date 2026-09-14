@@ -1,6 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-//            O foco é funcionar sem erro; o aviso é só se der problema.
+// v5.24.16 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+//            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
+//            download no navegador/celular) e o aviso ganha botão pra abrir
+//            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
+//            pra todos os logins outra vez (ajustes_v5197).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -26,51 +30,98 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
+// v5.24.16 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
+// aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
+// de "quem fez o quê", visível pra todos os logins (v5197).
 var ultimoAviso=0;
+var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
+var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-function gravarAuditoria(det){
+function montarLinhaErroTxt(det){
+  var agora=new Date();
+  function p2(n){ return (n<10?'0':'')+n; }
+  var stamp=agora.getFullYear()+'-'+p2(agora.getMonth()+1)+'-'+p2(agora.getDate())+' '+p2(agora.getHours())+':'+p2(agora.getMinutes())+':'+p2(agora.getSeconds());
+  var versao=(typeof window.DIGICOPY_APP_VERSION==='string')?window.DIGICOPY_APP_VERSION:'?';
+  var sess=null; try{ sess=(typeof getSession==='function')?getSession():null; }catch(e){}
+  var usuario=(sess&&(sess.usuarioNome||sess.login))||'sem login';
+  var tela='';
   try{
-    if(typeof db==='undefined' || !db) return;
-    db.logs=db.logs||[];
-    var sess=typeof getSession==='function'?getSession():null;
-    db.logs.unshift({
-      id: typeof uid==='function'?uid('log'):('log_'+Date.now()),
-      dataHora: new Date().toISOString(),
-      empresaId: sess&&sess.empresaId,
-      usuarioId: sess&&sess.usuarioId,
-      usuarioNome: (sess&&sess.usuarioNome)||'sistema',
-      usuarioLogin: (sess&&sess.login)||'',
-      entidade: 'sistema',
-      acao: 'erro',
-      entidadeId: null,
-      detalhes: det
-    });
-    if(db.logs.length>500) db.logs=db.logs.slice(0,500);
-    try{
-      if(typeof saveDB==='function' && !window.__v52239salvandoErro){
-        window.__v52239salvandoErro=true;
-        saveDB();
-        window.__v52239salvandoErro=false;
-      }
-    }catch(e){ window.__v52239salvandoErro=false; }
+    var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+    if(at) tela=String(at.getAttribute('data-nav')||'');
+  }catch(e){}
+  return '['+stamp+' | v'+versao+' | '+usuario+(tela?' | tela: '+tela:'')+'] '+det;
+}
+
+function gravarErroTxt(linha){
+  bufferErros.push(linha);
+  if(bufferErros.length>500) bufferErros=bufferErros.slice(-500);
+  try{
+    if(window.erroTxtAPI && typeof window.erroTxtAPI.append==='function'){
+      window.erroTxtAPI.append(linha).catch(function(){});
+    }
   }catch(e){}
 }
 
-function avisarTela(){
+function baixarErroTxt(){
+  try{
+    var corpo=bufferErros.join('\n')+'\n';
+    var blob=new Blob([corpo],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='erro.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      try{ a.remove(); }catch(e){}
+    },1200);
+  }catch(e){}
+}
+
+function avisarErroNaTela(){
   var agora=Date.now();
-  if(agora-ultimoAviso<8000) return;
+  if(agora-ultimoAviso<8000) return;  // anti-formiga: um aviso a cada 8s, nunca uma chuva
   ultimoAviso=agora;
   try{
-    if(typeof window.lfbAlert==='function') window.lfbAlert('Ocorreu um problema. O detalhe foi gravado na auditoria.','Aviso');
-    else if(typeof toast==='function') toast('Ocorreu um problema. Veja a auditoria.','error');
+    var antigo=document.getElementById('aviso-erro-txt');
+    if(antigo) antigo.remove();
+    var ehDesktop=!!(window.erroTxtAPI && typeof window.erroTxtAPI.abrir==='function');
+    var div=document.createElement('div');
+    div.id='aviso-erro-txt';
+    div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+    div.innerHTML='<div style="background:#fff;border-radius:16px;padding:26px 30px;max-width:430px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35)">'
+      +'<div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><span style="font-size:26px">⚠️</span></div>'
+      +'<p style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 6px">Ocorreu um erro indevido no sistema</p>'
+      +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
+      +'</div></div>';
+    document.body.appendChild(div);
+    document.getElementById('aviso-erro-txt-abrir').onclick=function(){
+      try{
+        if(ehDesktop){ window.erroTxtAPI.abrir().catch(function(){ baixarErroTxt(); }); }
+        else baixarErroTxt();
+      }catch(e){ baixarErroTxt(); }
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    document.getElementById('aviso-erro-txt-ok').onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
   }catch(e){}
 }
 
 window.registrarErroSistema=function(msg, extra){
   var det=detalheErro(msg, extra);
   if(ignoraRuido(det)) return;
-  gravarAuditoria(det);
-  avisarTela();
+  if(REGISTRANDO) return;  // erro dentro do próprio registro não vira loop infinito
+  REGISTRANDO=true;
+  try{
+    gravarErroTxt(montarLinhaErroTxt(det));   // era: gravarAuditoria — não vai mais
+    avisarErroNaTela();
+  }catch(e){}
+  REGISTRANDO=false;
 };
 
 window.addEventListener('error', function(ev){

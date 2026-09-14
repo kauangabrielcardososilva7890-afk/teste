@@ -1,9 +1,9 @@
-// Teste v5.24.15 — "quero a LISTA do módulo mostrando SÓ os selecionados":
+// Teste v5.24.16 — "quero a LISTA do módulo mostrando SÓ os selecionados":
 //  • o botão da ficha NÃO abre mais o registro por cima — a lista do módulo
 //    é desenhada somente com as linhas marcadas (troca-segura do tanque:
 //    mesmos objetos, gravação de molho durante o desenho, tanque devolvido);
 //  • sem seleção, continua como antes (módulo filtrado pelo cliente);
-//  • carimbos 5.24.15.
+//  • carimbos 5.24.16.
 const fs = require('fs');
 let falhas = 0;
 function ok(cond, nome){ if(cond){ console.log('  ✔ ' + nome); } else { falhas++; console.error('  ✘ FALHOU: ' + nome); } }
@@ -30,11 +30,11 @@ ok(patch.indexOf('clitabAbrirClienteNaLista') >= 0, '"Este cliente na lista" da 
 ok(patch.indexOf('Abrir selecionado(s)') >= 0, 'botão continua contando os marcados');
 
 console.log('-- integridade --');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.15'") >= 0, 'worker carimba v5.24.15');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.16'") >= 0, 'worker carimba v5.24.16');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('clitabRenderSoSelecionados') >= 0, 'novo fluxo dentro do bundle');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.15'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.15') >= 0, 'index.html na v5.24.15');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.15'") >= 0, 'mobile/www/index.html na v5.24.15');
-ok(pkg.version === '5.24.15', 'package.json v5.24.15');
-if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.15'); process.exit(1); }
-console.log('\nTudo certo v5.24.15!');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.16'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.16') >= 0, 'index.html na v5.24.16');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.16'") >= 0, 'mobile/www/index.html na v5.24.16');
+ok(pkg.version === '5.24.16', 'package.json v5.24.16');
+if(falhas){ console.error('\n' + falhas + ' FALHA(S) v5.24.16'); process.exit(1); }
+console.log('\nTudo certo v5.24.16!');

@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.15**  
+**Última versão:** **v5.24.16**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.15>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.16>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -115,6 +115,40 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.16 (2026-09-14)
+
+Tema: **NOVA FUNÇÃO aprovada por ele** (desenho mostrado antes, GO: "pode fazer
+do jeito que daria certo"; pergunta dele sobre celular respondida: download):
+
+1. **erro.txt existe e é do usuário.** Qualquer erro indevido (trava de tela,
+   promessa rejeitada, exceção solta) vira uma linha legível:
+   `[data/hora | versão | usuário | tela] detalhe`. No .exe: o arquivo mora em
+   `%APPDATA%\<app>\erro.txt` (userData — a "pasta do sistema" podia ser
+   protegida contra gravação e o arquivo morreria mudo; decisão explicada a
+   ele). No NAVEGADOR e no CELULAR (resposta à pergunta dele): o mesmo aviso
+   oferece **baixar o erro.txt** — memória com teto de 500 linhas alimenta o
+   download. Rotação: passou de 2 MB, o antigo vira `erro.1.txt` e recomeça.
+2. **Aviso na tela, do jeito que ele pediu:** "Ocorreu um erro indevido no
+   sistema. Foi criado/atualizado um arquivo erro.txt falando sobre o erro.
+   Mande esse arquivo ao técnico do sistema." Botões: **[Abrir o erro.txt]**
+   (.exe abre o Explorador com o arquivo selecionado; web/celular = **Baixar**)
+   e **[OK]**. Anti-formiga (1 aviso/8s) e anti-recursão (erro dentro do
+   registro não vira loop) mantidos/reforçados.
+3. **Auditoria:** erros NÃO entram mais nela (rota `acao:'erro'` removida do
+   ajustes_v52239; a função gravarAuditoria morreu junto — pergunta 13°). E o
+   portão do v5197 foi aberto: **visível pra TODOS os logins ativos**, como ele
+   pediu ("novamente").
+4. Arquivos tocados (só os que já existiam, pergunta 6°):
+   ajustes_v52239_avisos_erro_auditoria (motor+aviso), main.js (2 IPCs:
+   errotxt:append/abrir + rotação + showItemInFolder), preload.js (erroTxtAPI),
+   ajustes_v5197 (portão). test_ajustes_v52416 (33 asserts). Suíte 147/0 com
+   os 2 de ambiente. Ordem selada: editar→carimbar→buildar→testar.
+5. Detalhe de régua anotado: teste NUNCA trava por palavra em comentário
+   histórico — mede função/definição (o 1º assert desta rodada caiu nisso e a
+   régua foi corrigida na hora).
 
 ---
 

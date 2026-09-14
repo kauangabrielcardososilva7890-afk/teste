@@ -1,4 +1,4 @@
-// test_ajustes_v52413.js — v5.24.15: LOTE 1 da poda (as 14 perguntas aplicadas
+// test_ajustes_v52413.js — v5.24.16: LOTE 1 da poda (as 14 perguntas aplicadas
 // nos arquivos que já existem, autorizada por ele, "sem quebrar nada").
 // imprimirChamadoPDF era definido 20× (só a última é viva): 17 cópias mortas
 // removidas (~75KB). Ficam: elo v5186 (capturado), v5187 (dono da captura
@@ -36,12 +36,12 @@ const mbundle = fs.readFileSync('mobile/www/app.bundle.js', 'utf8');
 ok((mbundle.match(/window\.imprimirChamadoPDF *= *function/g) || []).length === 3, 'bundle do CELULAR igual: 3 definições');
 
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.15'"), 'index: versão 5.24.15');
-ok(idx.includes('>v5.24.15<'), 'index: rodapé v5.24.15');
-ok(idx.includes('app.bundle.js?v=5.24.15'), 'index: cache-bust v5.24.15');
-ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.15'"), 'mobile: versão 5.24.15');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.15"'), 'package.json: 5.24.15');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.15'"), 'worker: 5.24.15');
+ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.16'"), 'index: versão 5.24.16');
+ok(idx.includes('>v5.24.16<'), 'index: rodapé v5.24.16');
+ok(idx.includes('app.bundle.js?v=5.24.16'), 'index: cache-bust v5.24.16');
+ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.16'"), 'mobile: versão 5.24.16');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.16"'), 'package.json: 5.24.16');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.16'"), 'worker: 5.24.16');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.15 (lote 1: ~75KB de peso morto fora, zero código morto chamável).');
+console.log('\nTudo OK — v5.24.16 (lote 1: ~75KB de peso morto fora, zero código morto chamável).');
