@@ -9,6 +9,13 @@
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 
+> **ADICIONAIS, NÃO SUBSTITUTIVAS (ordem dele, literal):** estas 14 se SOMAM
+> às REGRAS FIXAS DA SESSÃO (seção no fim deste arquivo) e a tudo que já
+> estava combinado — popups exclusivamente do sistema (confirmSistema/lfbAlert),
+> mesma base PC+celular, senha do certificado = segredo do cofre (nunca em
+> chat), modelo de relatório validado, NF = NF de PRODUTOS da loja do pai
+> (CNPJ 08.385.589/0001-03, Janaúba MG). Nada do que veio antes se apaga.
+
 Antes de responder ou criar qualquer código, AUTO-RESPONDER em voz baixa:
 
 1. Esse código realmente precisa existir?
