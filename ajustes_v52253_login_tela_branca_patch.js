@@ -166,7 +166,7 @@
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          // v5.24.18 — diagnóstico partido (carimbo de fala): diz SE é o
+          // v5.24.19 — diagnóstico partido (carimbo de fala): diz SE é o
           // usuário que não existe, se está inativo, ou se é a senha. Antes
           // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
           // fold do loginFlexivel pra comparar igualzinho.

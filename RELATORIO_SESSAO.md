@@ -2665,3 +2665,26 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ## v5.20.26 — botão Teste nuvem realmente visível
 - **Causa encontrada:** o botão da v5.20.25 foi colocado dentro de `#side
+## O QUE FOI ENTREGUE — v5.24.19 (2026-09-14)
+
+Tema: **pedido dele "muda as informações da nuvem"** — limpeza dos textos
+visíveis do mundo grátis (teto diário/21h/susto), agora no idioma do plano pago.
+
+1. Painel Nuvem (cloudflare_sync_patch): o selo "o teto grátis zera às 21h"
+   virou "plano pago ativo ($5 fixos): o teto virou por mês e gigantesco —
+   esse número agora é só curiosidade"; o rabinho "pra não ser pego de
+   surpresa pelo teto" virou "vira só curiosidade de uso, sem risco de susto".
+   Cabeçalho "Uso da nuvem hoje" preservado (assert do v5.22.96 intacto).
+2. Ficha do limite (cloudflare_data_sync_patch): "A nuvem grátis atingiu o
+   limite de gravação de hoje" → "A nuvem atingiu o limite de gravação do
+   período (raro no plano pago)" — promessa "Nada foi perdido / recomeça
+   sozinho" intacta. test_ajustes_v52280.L15 SUPERSEDIDO (pin "de hoje" →
+   "do período", com nota).
+3. PERGUNTA DELE SOBRE VERSÃO — fixa aqui a regra: o número só anda pra
+   frente (v5.22.65 tinha 65 números; não existe trava de 9). Um dia cabe
+   fechar a fase 5.24 e abrir 5.25, mas é cosmética, não trava nada.
+4. PERGUNTA DELE "preciso fazer alguma coisa?" — respondida: conferir 1x que
+   o Workers Paid figura ativo no painel da Cloudflare + rodar o deploy do
+   worker quando puder (só muda o número exibido; o bloqueio diário já morreu
+   no servidor). Nem site, nem link, nem banco mudam.
+5. test_ajustes_v52419 (13 asserts). Suíte 147/0 com os 2 de ambiente.

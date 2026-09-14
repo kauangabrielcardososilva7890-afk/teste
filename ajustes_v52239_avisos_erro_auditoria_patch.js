@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.18 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.19 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -30,7 +30,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.18 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.19 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38,7 +38,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.18 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.19 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -90,7 +90,7 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.18 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.19 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
 function abrirOuBaixarErroTxt(){
@@ -134,7 +134,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.18 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.19 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 
