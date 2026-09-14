@@ -345,6 +345,27 @@ window.abrirOrcamento=function(id, _origem){
     if(alterou && typeof saveDB==='function') saveDB();
     if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
   }
+  // v5.24.21 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
+  // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
+  // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.
+  if(!o && idStr){
+    try{
+      var mapa = window.__orcUltimaLista || {};
+      var achado = mapa[idStr] || null;
+      if(achado && achado.id){
+        var existe = store().find(function(x){ return x && x.id === achado.id; });
+        if(!existe){
+          store().push(achado);
+          if(typeof saveDB==='function') saveDB();
+          window.__orcResgates = window.__orcResgates || [];
+          window.__orcResgates.push({ id: achado.id, numero: achado.numero, quando: new Date().toISOString() });
+          localStorage.setItem('__orc_resgates', JSON.stringify(window.__orcResgates.slice(-20)));
+        }
+        o = achado.id ? store().find(function(x){ return x && x.id === achado.id; }) : null;
+      }
+    }catch(e){}
+  }
   if(o){ window.abrirTelaOrcamento(o); return; }
   // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
   try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -361,6 +382,10 @@ window.abrirOrcamento=function(id, _origem){
     // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
     // que conta quem tirou o orçamento do banco entre a lista e o clique
     var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    try{
+      var _rg = JSON.parse(localStorage.getItem('__orc_resgates')||'[]');
+      if(_rg && _rg.length) _baixa += ' Resgates feitos pela autocura nestas horas: ' + _rg.map(function(r){ return (r.numero||'?') + ' às ' + String(r.quando||'').slice(11,19); }).join(', ') + '.';
+    }catch(e){}
     var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
     try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
     window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');

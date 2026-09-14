@@ -2728,3 +2728,56 @@ mês"** — exigência dele, registrada AQUI e no próprio código.
    .cmd baixaria o wrangler mais novo do registro (funciona, mas fora da
    versão testada). pasta cloudflare-contador/ NÃO precisa deploy agora.
 6. test_ajustes_v52420 (14 asserts); suite 147/0/2.
+
+## O QUE FOI ENTREGUE — v5.24.21 (2026-09-14, RELATORIO GRANDE dele — PACOTE 1 de 2)
+
+**P1 — Orçamento fantasma (FOTO DELE, orçamento 38):** o render vivo
+(v5.22.58) passa a GUARDAR os objetos das linhas exibidas
+(window.__orcUltimaLista, chave por id E token) e atualiza o retrato de ids;
+o abrirOrcamento (v5.22.37, o único ganhador) GANHOU RESGATE SILENCIOSO:
+se o id sumiu do banco entre lista e clique, devolve a linha pro banco +
+saveDB + abre normal, sem popup. Resgates ficam anotados (__orcResgates +
+localStorage __orc_resgates) e o diagnóstico antigo CONTA os resgates se
+algum dia voltar a aparecer. CAUSA RAIZ (quem apagou a linha) segue na
+investigação-mãe do mistério empresaId/dados-invisíveis — a foto do botão
+"Por que dados não aparecem?" continua pendente dele.
+**P2 — Aba OS:** plaquinha neutra "Aba OS opcional... notinha normal (meia
+folha)" SOME (display:none); os estados verde (OS completa) e âmbar
+(OS incompleta) ficam, porque são os que realmente avisam.
+**P3 — Consultar notinha:** "Pré-visualizar NF-e" não injeta mais nessa tela
+(v52210 e v5229 ambos blindados, com remoção defensiva); o botão continua
+vivo nos históricos de LEITURAS (ele não pediu pra tirar dali).
+**P4 — Produtos:** "Mostrando 300 de 1029..." só renderiza quando a lista
+está visível (vis.length>0) — entrada limpa sem aviso solto.
+**P9 — Financeiro DE DE:** CAUSA = v5.22.45 (garantirCamposData) colava
+rótulos De/Até novos sem olhar que o v5.22.43 já tinha desenhado. Fix:
+confere previousElementSibling (irmao é label 'De'/'Até'?) e marcas
+neo-fin-*-lab antes de criar. resolve os dois modos (abertos com labels
+próprios e hoje/todos com inputs ocultos).
+**P10 — Financeiro:** datas/tipo/ordenação NÃO aplicam mais sozinhos.
+Botões FILTRAR (azul; fica LARANJA pulsando quando há escolha pendente) e
+REMOVER FILTRO (zera data/tipo/ordem + pesquisa legal: o texto também vai).
+**P11 — Clientes:** mesma régua — Enter ou FILTRAR aplicam (botões na barra),
+REMOVER FILTRO saindo a pesquisa E esvaziando a lista (como ele pediu
+expressamente); a lista só nasce depois do primeiro filtro da visita
+(__cliFoiFiltrado). Classic skins (notinha/clientes_patch) perderam o
+oninput-vivo igualmente (Enter aplica).
+test_ajustes_v52421 (36 asserts); suíte 147/0/2.
+
+## PACOTE 2 (próximo, já mapeado): — pendências
+- P5 "Editar" que ordena: nenhum 'Editar' de cabeçalho do projeto é
+  ordenável (todos são <th> puros); preciso da ABA EXATA onde clicou
+  (print) pra pescar o módulo certo (suspeita: algum th() de outra tabela).
+- F1 contratos "mostrar todos" + padrão hoje: depende de carimbo
+  criadoEm/atualizadoEm nos contratos (v5.24 já carimba criadoEm; o
+  "modificado hoje" exige gravar atualizadoEm em CADA edição — auditor
+  das donas das modalidades/chamados/leituras antes de mexer).
+- F2 excluir chamado (dentro e fora de contratos) + ícone de impressora
+  onde está escrito PDF: a lista-fora-de-contratos que ele cita precisa
+  ser identificada por ele (que tela é essa? Atendimento? uma aba da OS?)
+- P6 RTF abrir no Word: usar o padrão erro.txt (Electron shell.openPath +
+  rtf:abrir IPC) + auditoria do preenchimento do template.
+- P7 serial-first + remanejo: RESSUSCITAR o wrap v5.22.43/45 (morto pela
+  sobreposição do fluxo_corrigido) como wrap final e adaptar ao vencedor.
+- P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
+  + botão para o contrato atual).

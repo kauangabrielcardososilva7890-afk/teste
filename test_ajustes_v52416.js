@@ -1,4 +1,4 @@
-// test_ajustes_v52416.js — v5.24.20: NOVA FUNÇÃO aprovada por ele (desenho
+// test_ajustes_v52416.js — v5.24.21: NOVA FUNÇÃO aprovada por ele (desenho
 // mostrado antes, "pode fazer do jeito que daria certo" + pergunta do celular):
 // erro indevido vira linha no erro.txt (userData no .exe / DOWNLOAD no
 // navegador E no celular — mesma resposta), aviso com [Abrir/Baixar] e [OK],
@@ -11,7 +11,7 @@ function ok(cond, msg) {
 }
 
 const av = fs.readFileSync('ajustes_v52239_avisos_erro_auditoria_patch.js', 'utf8');
-ok(av.includes('v5.24.20'), 'avisos: carimbo v5.24.20');
+ok(av.includes('v5.24.21'), 'avisos: carimbo v5.24.21');
 ok(av.includes('montarLinhaErroTxt'), 'avisos: linha do erro com data/versão/usuário/tela');
 ok(av.includes('DIGICOPY_APP_VERSION'), 'avisos: linha carrega a versão do sistema');
 ok(av.includes('bufferErros.length>500'), 'avisos: memória do download tem teto (500 linhas)');
@@ -42,7 +42,7 @@ ok(pre.includes("ipcRenderer.invoke('errotxt:append'"), 'preload: append ligado'
 ok(pre.includes("ipcRenderer.invoke('errotxt:abrir'"), 'preload: abrir ligado');
 
 const v5197 = fs.readFileSync('ajustes_v5197_patch.js', 'utf8');
-ok(v5197.includes('v5.24.20'), 'v5197: carimbo da auditoria visível');
+ok(v5197.includes('v5.24.21'), 'v5197: carimbo da auditoria visível');
 ok(v5197.includes('return !!sess();'), 'v5197: auditoria aberta a qualquer login ativo');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
@@ -50,10 +50,10 @@ ok(bundle.includes('montarLinhaErroTxt'), 'bundle: motor do erro.txt presente');
 ok(bundle.includes('aviso-erro-txt-abrir'), 'bundle: aviso de 2 botões presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('montarLinhaErroTxt'), 'bundle do CELULAR igual (download)');
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.20'"), 'index: versão 5.24.20');
-ok(idx.includes('>v5.24.20<'), 'index: rodapé 5.24.20');
-ok(idx.includes('app.bundle.js?v=5.24.20'), 'index: cache-bust 5.24.20');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.20"'), 'package.json 5.24.20');
+ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.21'"), 'index: versão 5.24.21');
+ok(idx.includes('>v5.24.21<'), 'index: rodapé 5.24.21');
+ok(idx.includes('app.bundle.js?v=5.24.21'), 'index: cache-bust 5.24.21');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.21"'), 'package.json 5.24.21');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.20 (erro.txt visível + aviso 2 botões + auditoria pra todos).');
+console.log('\nTudo OK — v5.24.21 (erro.txt visível + aviso 2 botões + auditoria pra todos).');

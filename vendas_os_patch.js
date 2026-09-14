@@ -542,13 +542,15 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    el.className = 'rounded-xl border p-3 text-[12px] bg-slate-50 text-slate-600';
-    el.innerHTML = '<i class="ph ph-info"></i> Aba OS opcional. Se ficar vazia, a venda sai como <b>notinha normal (meia folha)</b>.';
+    // v5.24.21 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // opcional... notinha normal" SOME. Os estados completa/incompleta
+    // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
+    el.style.display='none'; el.innerHTML='';
   } else if(completa){
-    el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
+    el.style.display=''; el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
     el.innerHTML = '<i class="ph ph-check-circle"></i> <b>OS completa!</b> Modelo + Nº série + Patrimônio/Contador preenchidos → a notinha sairá em <b>folha inteira (venda + OS)</b>.';
   } else {
-    el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+    el.style.display=''; el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
     el.innerHTML = '<i class="ph ph-warning"></i> <b>OS incompleta.</b> Para sair na notinha (folha inteira) preencha: ' +
       [!os.modelo&&'Modelo do equipamento', !os.numeroSerie&&'Número de série', (!os.patrimonio&&!os.contador)&&'Patrimônio ou contador de cópias'].filter(Boolean).map(s=>'<b>'+s+'</b>').join(', ') +
       '. Os dados serão salvos, mas a notinha sairá como venda normal (meia folha).';

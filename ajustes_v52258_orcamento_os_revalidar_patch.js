@@ -743,6 +743,18 @@
         return nb - na;
       });
 
+      // v5.24.21 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
+      // (além dos ids). Se um clique chagar num id que o banco perdeu entre
+      // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio
+      // em vez de travar naquele aviso de diagonal.
+      try{
+        var mapa = {};
+        list.forEach(function(o){ if(o && o.id){ mapa[String(o.id)] = o; } if(o && o.token){ mapa[String(o.token)] = o; } });
+        window.__orcUltimaLista = mapa;
+      }catch(e){}
+      try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x && x.id); }).slice(0,80))); }catch(e){}
+
       view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
         +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Propostas ao cliente com aprovação online e ordem de serviço</p></div>'
         +'<div class="neo-actions">'

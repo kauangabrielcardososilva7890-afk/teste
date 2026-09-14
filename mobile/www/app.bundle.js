@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 1651fdc1f2da969e
+ * scripts: 196 | sha256: 600dbfb0664468f2
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -3798,7 +3798,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
           <button onclick="alterarClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-pencil-simple"></i>Alterar</button>
           <button onclick="excluirClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-x-circle text-red-600"></i>Excluir</button>
           <select class="classic-select ml-2 w-[150px]"><option>Pesquisar</option><option>Nome</option><option>Código</option><option>CPF/CNPJ</option></select>
-          <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" class="classic-input h-[28px] w-[330px] ml-2">
+          <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}"  class="classic-input h-[28px] w-[330px] ml-2">
           <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
         </div>
         <div class="bg-[#f7f7f7] border-b px-2 py-1 text-[11px]"><button class="px-2 py-1 bg-white border">Consultas</button><button class="px-2 py-1 border">Gráficos</button></div>
@@ -3811,7 +3811,11 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         </div>
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
-    const input=document.getElementById('classic-search-clientes'); if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
+    const input=document.getElementById('classic-search-clientes');
+  // v5.24.21 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
+  // (ou no botão Filtrar da tela neo). Não redesenha mais a cada letra.
+  if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
+  if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
   };
   window.alterarClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); openModal('cliente',window.clienteSelecionadoClassic); };
   window.excluirClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); deleteCliente(window.clienteSelecionadoClassic); window.clienteSelecionadoClassic=null; };
@@ -3881,7 +3885,18 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   window.neoTogglePagamento=function(){document.getElementById('neo-pagamento-box')?.classList.toggle('hidden',document.getElementById('neo-venda-status').value!=='faturado');};
   window.neoSalvarVenda=function(){const sess=getSession(); if(!window.neoVendaCliente) return toast('Selecione o cliente','error'); if(!window.neoVendaItens?.length) return toast('Adicione ao menos um item','error'); const desc=parseFloat(document.getElementById('neo-venda-desc').value)||0; const total=Math.max(0,window.neoVendaItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=document.getElementById('neo-venda-status').value; const pag=status==='faturado'?(document.getElementById('neo-venda-pag').value||'Prazo'):'Não faturado'; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:window.neoVendaCliente.id,data:new Date().toISOString(),itens:[...window.neoVendaItens],desconto:desc,total,formaPagamento:pag,status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId&&x.empresaId===sess.empresaId); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)}`); if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:pag}); saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success'); setTimeout(()=>imprimirNotinha(venda.id),250);};
 
-  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3"><input id="neo-search-clientes" value="${escapeHtml(q)}" oninput="renderClientes()" class="neo-input flex-1" placeholder="Pesquisar nome, CNPJ, telefone ou código"><span class="text-[12px] text-slate-500 self-center"><b class="text-[#0a1e8a]">${list.length}</b> clientes</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes'); if(input&&document.activeElement?.id==='neo-search-clientes') input.focus();};
+  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(!window.__cliFoiFiltrado) list=[]; if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3 flex-wrap items-center"><input id="neo-search-clientes" value="${escapeHtml(q)}" class="neo-input flex-1 min-w-[220px]" placeholder="Digite nome, CNPJ, telefone ou código — aperte Enter ou Filtrar"><button id="cli-btn-filtrar" type="button" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold"><i class="ph ph-funnel"></i> Filtrar</button><button id="cli-btn-remover-filtro" type="button" class="h-10 px-4 rounded-xl bg-white border text-[13px] font-bold"><i class="ph ph-x-circle"></i> Remover filtro</button><span class="text-[12px] text-slate-500 self-center">${window.__cliFoiFiltrado?("<b class='text-[#0a1e8a]'>"+list.length+"</b> cliente(s)"):("Escolha e aperte Filtrar — a lista só aparece depois do filtro")}</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes');
+  if(input){
+    input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
+    input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
+    // v5.24.21 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
+    if(document.activeElement?.id==='neo-search-clientes') input.focus();
+  }
+  const btnF=document.getElementById('cli-btn-filtrar');
+  if(btnF) btnF.onclick=function(){ window.__cliFoiFiltrado=true; renderClientes(); };
+  const btnL=document.getElementById('cli-btn-remover-filtro');
+  if(btnL) btnL.onclick=function(){ window.__cliFoiFiltrado=false; document.getElementById('neo-search-clientes').value=''; renderClientes(); };
+};
 })();
 
 // PATCH v4.0 - Aplica visual neo/animado nos módulos principais e reduz caixas fechadas
@@ -5452,13 +5467,15 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    el.className = 'rounded-xl border p-3 text-[12px] bg-slate-50 text-slate-600';
-    el.innerHTML = '<i class="ph ph-info"></i> Aba OS opcional. Se ficar vazia, a venda sai como <b>notinha normal (meia folha)</b>.';
+    // v5.24.21 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // opcional... notinha normal" SOME. Os estados completa/incompleta
+    // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
+    el.style.display='none'; el.innerHTML='';
   } else if(completa){
-    el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
+    el.style.display=''; el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
     el.innerHTML = '<i class="ph ph-check-circle"></i> <b>OS completa!</b> Modelo + Nº série + Patrimônio/Contador preenchidos → a notinha sairá em <b>folha inteira (venda + OS)</b>.';
   } else {
-    el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+    el.style.display=''; el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
     el.innerHTML = '<i class="ph ph-warning"></i> <b>OS incompleta.</b> Para sair na notinha (folha inteira) preencha: ' +
       [!os.modelo&&'Modelo do equipamento', !os.numeroSerie&&'Número de série', (!os.patrimonio&&!os.contador)&&'Patrimônio ou contador de cópias'].filter(Boolean).map(s=>'<b>'+s+'</b>').join(', ') +
       '. Os dados serão salvos, mas a notinha sairá como venda normal (meia folha).';
@@ -7887,7 +7904,7 @@ window.renderClientes = function(){
         <select id="classic-campo-clientes" onchange="renderClientes()" class="classic-select ml-2 w-[170px]">
           ${CLI_PURE.CAMPOS_BUSCA.map(([k,rotulo])=>`<option value="${k}" ${campo===k?'selected':''}>${rotulo}</option>`).join('')}
         </select>
-        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
+        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}"  placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
         <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
         <span class="ml-auto pr-2 text-[11.5px] text-slate-500"><b class="text-[#0a1e8a]">${list.length}</b> cliente(s)</span>
       </div>
@@ -7904,6 +7921,8 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
+  // v5.24.21 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
 
@@ -10526,7 +10545,7 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
               }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              ${list.length > vis.length && vis.length > 0 ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -20537,7 +20556,7 @@ window.imprimirChamado = function(id){
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.20 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.21 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
@@ -26708,7 +26727,7 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.20 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // v5.24.21 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
   // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
   // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
   // por onde "salvei e o login não entra" escapava em silêncio.
@@ -26843,7 +26862,7 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // v5.24.20 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // v5.24.21 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
   // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
   // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
   return !!sess();
@@ -28740,7 +28759,7 @@ function viradaDoLimite(){
 function recadoDoLimite(){
   const falta=Math.max(0,viradaDoLimite()-Date.now());
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
-  // v5.24.20 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
+  // v5.24.21 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
   return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
@@ -30061,7 +30080,7 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.20 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // v5.24.21 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
   // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
   // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
   // porque as listas só mostram a empresa logada. Duas empresas no banco =
@@ -30332,7 +30351,10 @@ function injetarNaBarra(root,id,texto,fn){
 function injetarVendas(){
   const view=document.getElementById('view-vendas');
   if(!view) return;
-  injetarNaBarra(view,'btn-nfe-venda-lista','Pré-visualizar NF-e',function(){ nfeAtalhoDoHistorico('venda'); });
+  // v5.24.21 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
+  // consultar notinha. Atalho continua nos históricos de leitura.
+  (function(){ var morto=document.getElementById('btn-nfe-venda-lista'); if(morto) morto.remove(); })();
+  return;
 }
 
 function marcarLeituras(){
@@ -30533,7 +30555,11 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    b=botao('btn-nfe-venda-lista','neo-btn','<i class="ph ph-file-text"></i>Pré-visualizar NF-e',function(){ nfeDaSelecao('venda'); });
+    // v5.24.21 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
+    // e o botão das leituras/histórico continuam vivos normalmente.
+    // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.
+    return;
     const excluir=actions.querySelector('#btn-excluir-venda-unificado')||Array.from(actions.querySelectorAll('button')).find(function(x){ return /excluir/i.test(x.textContent||''); });
     if(excluir) actions.insertBefore(b, excluir);
     else actions.appendChild(b);
@@ -36717,6 +36743,27 @@ window.abrirOrcamento=function(id, _origem){
     if(alterou && typeof saveDB==='function') saveDB();
     if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
   }
+  // v5.24.21 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
+  // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
+  // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.
+  if(!o && idStr){
+    try{
+      var mapa = window.__orcUltimaLista || {};
+      var achado = mapa[idStr] || null;
+      if(achado && achado.id){
+        var existe = store().find(function(x){ return x && x.id === achado.id; });
+        if(!existe){
+          store().push(achado);
+          if(typeof saveDB==='function') saveDB();
+          window.__orcResgates = window.__orcResgates || [];
+          window.__orcResgates.push({ id: achado.id, numero: achado.numero, quando: new Date().toISOString() });
+          localStorage.setItem('__orc_resgates', JSON.stringify(window.__orcResgates.slice(-20)));
+        }
+        o = achado.id ? store().find(function(x){ return x && x.id === achado.id; }) : null;
+      }
+    }catch(e){}
+  }
   if(o){ window.abrirTelaOrcamento(o); return; }
   // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
   try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -36733,6 +36780,10 @@ window.abrirOrcamento=function(id, _origem){
     // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
     // que conta quem tirou o orçamento do banco entre a lista e o clique
     var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    try{
+      var _rg = JSON.parse(localStorage.getItem('__orc_resgates')||'[]');
+      if(_rg && _rg.length) _baixa += ' Resgates feitos pela autocura nestas horas: ' + _rg.map(function(r){ return (r.numero||'?') + ' às ' + String(r.quando||'').slice(11,19); }).join(', ') + '.';
+    }catch(e){}
     var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
     try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
     window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');
@@ -38041,7 +38092,7 @@ console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 /* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.20 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.21 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -38071,7 +38122,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.20 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.21 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38079,7 +38130,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.20 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.21 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -38131,7 +38182,7 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.20 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.21 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
 function abrirOuBaixarErroTxt(){
@@ -38175,7 +38226,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.20 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.21 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 
@@ -39057,6 +39108,19 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
+// v5.24.21 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// Remover filtro zera data/tipo/ordem e reaplica limpo.
+window.finAplicarFiltroV52421 = function(){
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
+window.finRemoverFiltroV52421 = function(){
+  ST.de=''; ST.ate=''; ST.tipo='todos'; ST.ordem='venc-asc'; ST.q='';
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
 window.finModoV52243 = function(modo){
   ST.modo = modo||'hoje';
   if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
@@ -39140,6 +39204,8 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
           +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
         : '<input id="neo-fin-de" type="hidden" value=""><input id="neo-fin-ate" type="hidden" value="">')
       +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<button id="fin-btn-filtrar" type="button" onclick="window.finAplicarFiltroV52421()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold" title="Aplicar os filtros escolhidos"><i class="ph ph-funnel"></i> Filtrar</button>'
+      +'<button id="fin-btn-limpar-filtro" type="button" onclick="window.finRemoverFiltroV52421()" class="h-9 px-4 rounded-xl bg-white border text-[12px] font-bold" title="Limpa data, tipo e tipo de ordenação (a pesquisa de texto continua como está)"><i class="ph ph-x-circle"></i> Remover filtro</button>'
       +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
       +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
       +'</div></div>'
@@ -39157,8 +39223,16 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
+    // v5.24.21 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
+    // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
+    // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).
     ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem','neo-fin-de','neo-fin-ate'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52243(); };
+      var el=document.getElementById(id);
+      if(el) el.onchange=function(){
+        var f=document.getElementById('fin-btn-filtrar');
+        if(f){ f.className='h-9 px-4 rounded-xl bg-amber-500 text-white text-[12px] font-bold animate-pulse'; }
+      };
     });
   };
   window.renderFinanceiro.__v52243fin = true;
@@ -40196,14 +40270,21 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    if(!document.getElementById('neo-fin-de-lab') && de.parentNode){
+    // v5.24.21 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
+    // novos, checa se o irmão antes do campo não É o rótulo certo.
+    var irmaoDe = de.previousElementSibling;
+    var jaTemDe = irmaoDe && /^label$/i.test(irmaoDe.tagName||'') && /^\s*de\s*$/i.test(irmaoDe.textContent||'');
+    if(!jaTemDe && !document.getElementById('neo-fin-de-lab') && de.parentNode){
       var labDe=document.createElement('label');
       labDe.id='neo-fin-de-lab';
       labDe.className='text-[11px] font-bold text-slate-500 uppercase';
       labDe.textContent='De';
       de.parentNode.insertBefore(labDe, de);
     }
-    if(!document.getElementById('neo-fin-ate-lab') && ate.parentNode){
+    var irmaoAte = ate.previousElementSibling;
+    var jaTemAte = irmaoAte && /^label$/i.test(irmaoAte.tagName||'') && /^\s*at[ée]\s*$/i.test(irmaoAte.textContent||'');
+    if(!jaTemAte && !document.getElementById('neo-fin-ate-lab') && ate.parentNode){
       var labAte=document.createElement('label');
       labAte.id='neo-fin-ate-lab';
       labAte.className='text-[11px] font-bold text-slate-500 uppercase';
@@ -41351,7 +41432,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          // v5.24.20 — diagnóstico partido (carimbo de fala): diz SE é o
+          // v5.24.21 — diagnóstico partido (carimbo de fala): diz SE é o
           // usuário que não existe, se está inativo, ou se é a senha. Antes
           // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
           // fold do loginFlexivel pra comparar igualzinho.
@@ -43462,6 +43543,18 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         var nb = parseInt(String(b.numero || '').replace(/\D/g, ''), 10) || 0;
         return nb - na;
       });
+
+      // v5.24.21 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
+      // (além dos ids). Se um clique chagar num id que o banco perdeu entre
+      // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio
+      // em vez de travar naquele aviso de diagonal.
+      try{
+        var mapa = {};
+        list.forEach(function(o){ if(o && o.id){ mapa[String(o.id)] = o; } if(o && o.token){ mapa[String(o.token)] = o; } });
+        window.__orcUltimaLista = mapa;
+      }catch(e){}
+      try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x && x.id); }).slice(0,80))); }catch(e){}
 
       view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
         +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Propostas ao cliente com aprovação online e ordem de serviço</p></div>'
@@ -46251,7 +46344,7 @@ function aviso(el, texto, cor){
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
   if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
-    // v5.24.20 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // v5.24.21 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
     // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
     // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
     return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
@@ -47429,7 +47522,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.20 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.21 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -47470,7 +47563,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.20 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.21 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -47485,14 +47578,14 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.20 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.21 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
     // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
 
-// v5.24.20 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.21 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -47510,7 +47603,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.20 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.21 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -47558,7 +47651,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.20 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.21 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){
