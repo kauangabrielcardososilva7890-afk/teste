@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.17**  
+**Última versão:** **v5.24.18**  
 
 ---
 
@@ -46,7 +46,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
 **1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.17>
+<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.18>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
 <https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
@@ -115,6 +115,41 @@ lendo cada arquivo definição; (2) remover só cópias comprovadamente mortas;
 (3) suíte `npm test` verde antes e depois; (4) bundle re-gerado e menor = PC
 fraco agradece; (5) 1 lote = 1 versão + rodapé + teste dele. Etiquetas e
 demais itens da lista não-tocar seguem CONGELADOS fora de qualquer lote.
+
+---
+
+## O QUE FOI ENTREGUE — v5.24.18 (2026-09-14)
+
+Tema: **ele PAGOU o Workers Paid US$5** 🎉 + pedido dele: botão visível do erro.txt.
+
+1. **DESTRAVA DO TETO INTERNO (a tarefa guardada pra este dia):** worker
+   `tetoEscritas: 100000 → 50000000` e `tetoLeituras: 5000000 → 25000000000`
+   (D1 pago inclui 50M escritas e 25 BILHÕES leituras por MÊS; os tetos
+   diários do grátis — "4.947.140/5.000.000" que o assustou hoje — viraram
+   passado). A barra de uso vai parecer sempre quase vazia — é assim mesmo.
+   test_ajustes_v52296 SUPERSEDIDO (assert do teto grátis reescrito pro teto
+   pago com nota para nunca rebaixar). NOTA DE IMPLANTAÇÃO: o teto novo só
+   vale no ar quando ele rodar o deploy do worker (npm do digicopy-cloud-api
+   no PC dele) — até lá o DISPLAY pode ainda mostrar teto velho, mas o D1
+   pago em si já para de bloquear (limite mensal,reset 00:00 UTC cobre).
+2. **Botão visível do erro.txt** (veto dele ao resgate por console): botãozinho
+   `erro.txt` no RODAPÉ de todas as telas (PC + celular, index.html e
+   mobile/www). Ação única `digicopyAbrirOuBaixarErroTxt`: .exe abre o
+   Explorador com o arquivo; web/celular baixa. O botão do AVISO agora usa a
+   MESMA função (uma fonte só, perguntas 2°/13°).
+3. **Resposta de cobrança (anotada nas perguntas da conversa):** Workers Paid =
+   US$5/mês MÍNIMO, com cotas incluídas gigantes (10M requests, D1 mensal
+   acima). Uso dele: ~5M leituras/dia ≈ 150M/mês = 0,6% do incluído → fatura
+   sai sempre $5. "Por centavo do que usar": só acima do incluído ($ por
+   milhão de requisições) — terra distante pra ele. Pages estático: ilimitado,
+   NUNCA cobra. Alertas de uso configuráveis existem em Account > Notifications
+   (opcional).
+4. test_ajustes_v52418 (21 asserts). Suíte 147/0 com os 2 de ambiente.
+   Ordem selada respeitada (editar→carimbar→buildar→testar).
+5. Sobre os 4.947.140/5.000.000 de hoje: o número era DO PLANO GRÁTIS por dia
+   e zera às 21h SP (00:00 UTC); com o plano pago ativo, o D1 passa a contar
+   POR MÊS (teto mensal acima) — a conta dele ~150M/mês de leituras está a
+   milhares de vezes do teto.
 
 ---
 
