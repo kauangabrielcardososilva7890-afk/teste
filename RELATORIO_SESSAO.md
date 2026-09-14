@@ -2717,10 +2717,14 @@ mês"** — exigência dele, registrada AQUI e no próprio código.
    zero tela madura), digicopy-contador-uso (mini-medidor, 17 req). USO do
    período: Requests 4.35k de 10M incluídos (0,044%), CPU 5.931ms, faturável
    $0.00 — o plano está gigantesco pra escala dele, conforme previsto.
-5. ONDE DÁ DEPLOY (resposta a ele, guardada): pasta **cloudflare-worker/**,
-   que é o digicopy-sync-api (wrangler.jsonc "name": "digicopy-sync-api").
-   Comando: `npm run deploy` (faz migrations + sobe o worker). O mini-
-   medidor pasta cloudflare-contador/ (digicopy-contador-uso) NÃO mudou em
-   v5.24.18→20 — deploy dele é só se `/v1/uso` do medidor precisar (não é o
-   caso hoje).
+5. ONDE DÁ DEPLOY — CORRIGIDO (ele achou o atalho apertando o erro):
+   não é `npm run deploy` pelado (o zip não traz node_modules; 'wrangler
+   não é reconhecido' no PowerShell dele = faltavam as peças do motor).
+   CAMINHO OFICIAL = arquivo **atualizar_motor_nuvem.cmd** na RAIZ da
+   pasta do sistema (duplo clique): faz migrations + publicação + prova
+   /health mostrando a versão no ar. Recomendação de 1ª vez após extrair
+   zip novo: `cd cloudflare-worker && npm install && cd ..` (fixa o
+   wrangler 4.123.0 pinado), depois só o .cmd. Sem node_modules, o npx do
+   .cmd baixaria o wrangler mais novo do registro (funciona, mas fora da
+   versão testada). pasta cloudflare-contador/ NÃO precisa deploy agora.
 6. test_ajustes_v52420 (14 asserts); suite 147/0/2.
