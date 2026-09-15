@@ -2855,6 +2855,15 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Tipo de Impressora: 1-LASER/TINTA (Spooler)** (opção 0 = MINI IMPRESSORA térmica) + Selecionar Impressora ✓ + Imprimir DANFE sem pré-visualização (desmarcado) + Imprimir QRCode Lateral ✓.
 - Pergunta dele sobre a virada respondida: **não perde nada** — a troca só muda o ENDEREÇO; D1 (banco), R2 (arquivos), worker, aparelhos cadastrados e dados sincronizados ficam exatamente onde estão (são recursos da conta, não do endereço). Único 'risco real': PCs com exe velho ficam mudos até instalar o novo — e nome ocupado o painel avisa e a gente troca no código em 1 minuto.
 
+## NF submenu MANIFESTAÇÃO DESTINATÁRIO catalogado (7 fotos) — 2026-09-14
+
+- **Tela 'Consulta Notas Destinadas' (botão Obter Notas):** 3 formas de pesquisa — (a) a partir do último registro consultado (retoma do NSU salvo — o marcador de página), (b) últimos 3 meses (primeira carga), (c) a partir de um NSU específico. Botão 'Consultar Destinadas'.
+- **Tela principal (grade):** Tipo de Filtro — Cadastradas Hoje / Nome do Emitente / Chave / Valor (+caixa de texto p/ digitar o valor do filtro); Status NF — Todas/Autorizadas/Canceladas/Denegadas; Modelo NF — Todas/NF-e/NFC-e; Status Manifestação — Todos/Operação Confirmada/Ciência da Operação/Operação Desconhecida/Operação Não Realizada; período (17/06/2026–15/09/2026 nas fotos dele); 'Não se Aplica'. Colunas: Sel, Código, NSU, Nome/Razão Social, IE, CNPJ, Chave da Nota, Tipo de Valor, Valor, Série, Número DFe, Dh. Emissão, Status Nota, Status Manifestação, Protocolo Nota.
+- **Ações da grade:** Obter Notas / Manifestar / Baixar XML. Botão Manifestar abre 4 eventos legais: Ciência da Operação / Desconheço esta Operação / Operação Não Foi Realizada / Operação Realizada com Sucesso.
+- **Rodapé dele:** Banco 'Servidor Google', Usuário RECEPCAO, Código SisPrinter 1421, empresa DIGICOPY CNPJ 08.385.589/0001-03 (contexto dele em produção).
+- **No nosso desenho:** mesmos 4 eventos (em português-gente), busca automática agendada, NSU-marcador por empresa, grade com mesmos filtros, Baixar XML → pasta nfe_xmls/AAAA-MM e pacote pro escritório.
+- **NCM:** ele lembrou bem — era do 1° pacote (submenu lista); se quiser fotos da tela NCM aberta com filtros, manda quando abrir.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
