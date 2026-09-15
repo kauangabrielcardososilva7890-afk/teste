@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// v5.24.30 — Fase 1 do "programa de monitorar impressoras" (pedido
+// v5.24.31 — Fase 1 do "programa de monitorar impressoras" (pedido
 // do dono: 'faz'). SNMPv2c mínimo escrito na veia via UDP (dgram),
 // SEM dependência de npm: dá pra ler contador, toner e ERROS reais
 // (papel atolado, sem papel, tampa aberta, toner...) das impressoras

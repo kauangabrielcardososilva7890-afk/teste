@@ -94,7 +94,7 @@ function modalidadeDe(c){
   return out.join(' ').toLowerCase();
 }
 
-// v5.24.30 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
+// v5.24.31 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
 // contrato hoje OU mexeu nele hoje (impressora, chamado ou leitura). A conta
 // é viva: não depende de carimbo passado — vale até pros contratos antigos.
 function dataDe(x, campos){
@@ -221,7 +221,7 @@ function injetar(){
   var pai=busca.parentNode;
   if(pai) pai.insertBefore(sel, busca);
 
-  // v5.24.30 — F1: o "Mostrar todos" com a mesma vida dos outros botões
+  // v5.24.31 — F1: o "Mostrar todos" com a mesma vida dos outros botões
   // (visível sempre; a tela já começa no "Hoje" por padrão).
   if(pai && !document.getElementById('ctr-mostrar-todos')){
     var btnTodos = document.createElement('button');

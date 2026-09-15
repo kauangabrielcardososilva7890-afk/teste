@@ -28,7 +28,7 @@ call npx.cmd wrangler d1 execute digicopy-erp --remote --command "SELECT name, r
 echo.
 echo [extra] Qual versao do motor esta no ar agora (tem que ser 5.24.8 ou mais novo):
 echo.
-curl -s "https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/health"
+curl -s "https://digicopy-sync-api.digicopyonline.workers.dev/health"
 echo.
 echo.
 echo ==========================================================

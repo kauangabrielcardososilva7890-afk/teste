@@ -103,7 +103,7 @@ async function assinarUltimo(){
     const r=await api.assinar(xml, senha);
     if(r&&r.ok&&r.xmlAssinado){
       mostrarXmlAssinado(r.xmlAssinado, r.chave||doc.chave, r.certificado||'');
-      // v5.24.30 — deixa REGISTRO permanente da nota no histórico da Central
+      // v5.24.31 — deixa REGISTRO permanente da nota no histórico da Central
       // (ele pediu: cada nota emitida tem que aparecer numa lista depois).
       try{ if(typeof window.registrarNfeEmitida==='function') window.registrarNfeEmitida(r, doc); }catch(e){}
     }else{

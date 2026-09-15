@@ -1,4 +1,4 @@
-// test_ajustes_v52425.js — v5.24.30: resposta ao "os menus de NF não estão acessando".
+// test_ajustes_v52425.js — v5.24.31: resposta ao "os menus de NF não estão acessando".
 // Regra do tópico C: tudo FUNCIONA ou para LIMPO no "falta certificado válido".
 const fs = require('fs');
 let falhas = 0;
@@ -41,10 +41,10 @@ ok(leitura.stdout.trim() === 'function function', 'assinatura: funções novas e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('central-nfe-modal') && bundle.includes('NFE_CENTRAL_V52425'), 'bundle: Central dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-modal'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.30'"), 'index 5.24.30');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.30<'), 'rodapé v5.24.30');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.30"'), 'package.json 5.24.30');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.30'"), 'worker carimbado');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.31'"), 'index 5.24.31');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.31<'), 'rodapé v5.24.31');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.31"'), 'package.json 5.24.31');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.31'"), 'worker carimbado');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.30 (menu NF abre de verdade + certificado para limpo com data).');
+console.log('\nTudo OK — v5.24.31 (menu NF abre de verdade + certificado para limpo com data).');

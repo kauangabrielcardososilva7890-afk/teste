@@ -133,7 +133,7 @@
 
 ### Ação única do dono
 1. Baixar o ZIP desta versão → `cd cloudflare-worker` → `npx wrangler deploy`.
-2. Abrir <https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/health> no navegador: tem que aparecer `"versao":"5.23.3"`.
+2. Abrir <https://digicopy-sync-api.digicopyonline.workers.dev/health> no navegador: tem que aparecer `"versao":"5.23.3"`.
 
 ### Testes
 - Estático v52296: 33 asserts (+ carimbo de versão,avisos, preferências); suite 149/149; bundle 194 scripts.

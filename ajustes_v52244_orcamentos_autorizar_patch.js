@@ -6,7 +6,7 @@
 (function(){
 'use strict';
 
-var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 

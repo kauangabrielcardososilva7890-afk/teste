@@ -10,7 +10,7 @@
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
   var PAGINA_CLIENTE = 'https://digicopy-orcamentos.pages.dev/';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
@@ -743,7 +743,7 @@
         return nb - na;
       });
 
-      // v5.24.30 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // v5.24.31 — RELATORIO dele (orçamento 38 sumiu do banco depois de
       // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
       // (além dos ids). Se um clique chagar num id que o banco perdeu entre
       // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio

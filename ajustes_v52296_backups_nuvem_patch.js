@@ -47,7 +47,7 @@ function aviso(el, texto, cor){
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
   if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
-    // v5.24.30 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // v5.24.31 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
     // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
     // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
     return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';

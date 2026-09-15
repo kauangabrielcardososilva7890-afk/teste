@@ -2828,6 +2828,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **GERAR_EXE v2:** npm install antes + 'aperte qualquer tecla abre a DIST' (EXCEÇÃO documentada à regra no-pause, pedido explícito dele só pra este arquivo).
 - **Decisões do SITE anotadas:** (1) nome na URL = subdomínio da conta workers.dev — opções dele: domínio próprio (recomendado) ou trocar subdomínio (grátis, mexe na URL da nuvem inteira → exige atualizar exe em todas as máquinas da loja logo depois); (2) imagens no tutorial = feature nova da fila (anexar no card de publicar, R2, [img] no texto); (3) 4 sistemas → arquitetura de CANAIS (coluna canal em app_releases: loja/comercial/celular/amostra) cada um com sua porta; (4) garantia: a edição LOJA nunca vai parar para download público — hoje o site é VAZIO até ele publicar, e quando canais chegarem, canal loja fica restrito (distribuição de mão em mão) e o público só ve o canal comercial.
 
+## v5.24.31 — 2026-09-14 — MUDANÇA DE ENDEREÇO DA NUVEM (decisão dele)
+
+- **Subdomínio da conta Cloudflare trocado de kauangabrielcardososilva7890 → digicopyonline** (escolhido por ele no cartão de opções; grátis). Todas as referências do código (16 arquivos) + teste endpoint atualizados p/ digicopy-sync-api.digicopyonline.workers.dev.
+- **Sequência obrigatória passada a ele (qualquer inversão apaga a nuvem das máquinas):** 1º trocar no painel (Workers & Pages → canto direito workers.dev → Manage/Change subdomain → digicopyonline) → esperar ok; 2º abrir https://digicopy-sync-api.digicopyonline.workers.dev/v1/status no navegador (tem que responder ok:true — NÃO precisa redeploy, a URL é da conta); 3º rodar o cmd do motor; 4º GERAR_EXE v5.24.31; 5º instalar em TODOS os PCs da loja na sequência (até isso a sincronização fica cega nos PCs velhos).
+- **v52265 volta a figurar como falha-aceita de infra (acorn ausente no sandbox) — baseline preservado 153/0/2.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
