@@ -2872,6 +2872,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Dashboard dele (contexto, não sensível):** conta com teste (Pages teste-60f), digicopy-sync-api (~4,5k req), digicopy-contador-uso (23 req), digicopy-orcamentos (Pages); uso do mês $0,00 faturável — tudo dentro do incluído.
 - **NOTA-MEMÓRIA (pergunta dele 'não é muita informação? e se o chat quebrar?'):** a memória de verdade desta obra NÃO é o chat — é este RELATORIO_SESSAO.md + os testes + o código, tudo versionado no repositório privado. Chat quebrando não perde nada: o que importa está anotado/aplicado aqui a cada entrega. Tokens/senhas (CSC, certificado etc.) NUNCA são registrados — ele já manda riscado e continua assim.
 
+## NF menu NOTA FISCAL (listagem) catalogado (8 fotos) + correção do caminho da virada — 2026-09-15
+
+- **Caminho da virada CORRIGIDO:** wrangler 4.132 NÃO tem mais `wrangler subdomain` (log dele comprovou — 'Unknown arguments'). Caminho oficial (docs 08/2026): Workers & Pages → coluna direita → 'Your subdomain' → Change. `trocar_endereco_nuvem.cmd` virou GUIA: abre https://dash.cloudflare.com/?to=/:account/workers-and-pages e imprime o passo a passo (dica do Ctrl+- se a coluna estiver cortada, como na foto dele).
+- **Listagem de Notas (produção dele):** barra — modelo do ambiente [Todos/Produção/Homologação], situação [Todos/Autorizadas/Corrigidas/Canceladas/Não Geradas], modelo doc [Todas/NF-e/NFC-e], período (15/09/2026–15/09/2026 nas fotos), tipo de data [Dt. Cadastro/Dt. Autorização/Dt. Cancelamento], 'Agrupar Filtros', pesquisar + imprimir. Filtro texto (combo): Hoje/Abertas, Hoje, Núm Nota, Canceladas, Cód Cliente, Nome Cliente, Chave, Valor, Cód Venda.
+- **Colunas da grade:** Data, Modelo (55/65), Tipo (Saída), Email (✉ ícone de enviado), Núm. Nota, Natureza Op. (VENDA/REMESSA/DEVOLUCAO/RETORNO — bate com os CFOPs do perfil dele), Cliente, Valor, Situação (Não Gerada nas fotos — listagem inclui a pré-nota ainda não transmitida). Botões: Novo/Alterar/Excluir/**Clonar**.
+- **Menu 'Novo' abre:** Gerar NFe Avulsa / Gerar de NFe **Devolução para Cliente** / Gerar de NFe **Devolução para Fornecedor** / Gerar NFCe / Importar Declaração de Importação. No nosso: mesmos 4 caminhos + importação DI como v2.
+- **Responder a ele:** Enviar XML — ainda NÃO chegou a tela em si (só o nome no submenu); falta foto da tela aberta (destino escritório/cliente, campos). Venda-NF ele já avisou que manda na próxima.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
