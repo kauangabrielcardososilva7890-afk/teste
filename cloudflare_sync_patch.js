@@ -325,8 +325,8 @@ async function renderConnected(body){
       try{
         const data=await api('/v1/devices',{method:'GET'});
         adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')
-          /* v5.24.28 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
-          +(x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
+          /* v5.24.29 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
+          +(x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
         adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');
           if(!ok)return;
@@ -334,7 +334,7 @@ async function renderConnected(body){
           catch(e){adminResult.innerHTML=message(e.message,'error');}
         });
         adminResult.querySelectorAll('.dc-del-device').forEach(btn=>btn.onclick=async()=>{
-          const ok=await window.confirmSistema('Apagar o aparelho '+btn.dataset.name+' DA LISTA? Ele está bloqueado e sairá da nuvem por completo. Nenhum DADO de cliente/produto é apagado — só o aparelho some.','Excluir aparelho de vez');
+          const ok=await window.confirmSistema('Apagar o aparelho '+btn.dataset.name+' DA LISTA? Ele perde o acesso e SOME da nuvem na hora. Nenhum DADO de cliente/produto é apagado — só o aparelho some.','Excluir aparelho de vez');
           if(!ok)return;
           try{
             await api('/v1/devices/delete-forever',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id,nome:btn.dataset.name})});

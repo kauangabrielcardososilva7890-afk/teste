@@ -59,20 +59,20 @@ const pontes = {
     isElectron: true
   },
 
-  // API do erro.txt (v5.24.28) — só existe dentro do .exe; no navegador/celular
+  // API do erro.txt (v5.24.29) — só existe dentro do .exe; no navegador/celular
   // o mesmo aviso oferece BAIXAR o arquivo (regra PC+celular).
   erroTxtAPI: {
     append: (linha) => ipcRenderer.invoke('errotxt:append', linha),
     abrir: () => ipcRenderer.invoke('errotxt:abrir')
   },
 
-  // Abrir o contrato RTF já abrindo no Word (v5.24.28 — P6 do relatório dele).
+  // Abrir o contrato RTF já abrindo no Word (v5.24.29 — P6 do relatório dele).
   // Fora do .exe essa ponte não existe e o jogo cai para o download de navegador/celular.
   rtfAPI: {
     abrir: (payload) => ipcRenderer.invoke('rtf:abrir', payload)
   },
 
-  // API do monitor de impressoras (v5.24.28 — Fase 1): só dentro do .exe,
+  // API do monitor de impressoras (v5.24.29 — Fase 1): só dentro do .exe,
   // porque SNMP é UDP e navegador/celular não falam isso.
   prtAPI: {
     lerStatus: (ip, community) => ipcRenderer.invoke('prt:snmp-status', { ip, community })

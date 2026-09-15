@@ -110,7 +110,7 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.28 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // v5.24.29 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
   // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
   // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
   // porque as listas só mostram a empresa logada. Duas empresas no banco =

@@ -2792,6 +2792,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 **Ordem dele:** mexe agora só no 4° e acaba de desenhar o 3°; os outros ficam travados até esses dois estarem perfeitos.
 **Sobre o 5° (pergunta dele 'é realmente necessário?'):** minha resposta anotada = hoje NÃO como sistema separado. Quando precisar, vira um MODO dentro do 1° (banco de brinquedo, selo 'VERSÃO DE DEMONSTRAÇÃO', sem sincronizar com a nuvem real) — muito mais barato que manter uma 5ª fonte.
 
+## v5.24.29 — 2026-09-14 — Excluir aparelho DIRETO (desempate da 2ª cobrança dele)
+
+- **Posição do dono:** 'continua a mesma coisa de não poder excluir, somente bloquear'. A freio de mão que exigia bloquear ANTES de apagar virou só opção: o botão **Excluir de vez** aparece em QUALQUER aparelho (menos o próprio), remove da nuvem na hora, nada acontece no PC do aparelho e dados de cliente/produto nunca são tocados. Bloquear continua existindo pra quem quer só afastar.
+- **Bastonete do deploy dele confirmado:** motor no ar com env.R2 (digicopy-downloads) e versao 5.24.28 — portal de atualizações ATIVO de fato.
+- **Teste v52427 supersedido com motivo anotado. Suíte: 153/0/2.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.

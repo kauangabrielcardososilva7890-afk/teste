@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.28';
+const WORKER_VERSION = '5.24.29';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -786,7 +786,7 @@ async function handleActivity(request, env) {
 }
 
 async function handleDeleteDevice(request, env) {
-  // v5.24.28 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
+  // v5.24.29 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
   // só apaga APARELHO JÁ BLOQUEADO e nunca o próprio; dados sincronizados
   // ficam intactos (a tabela devices é só cadastro de autorização).
   const admin = await requireAdmin(request, env);
@@ -794,9 +794,11 @@ async function handleDeleteDevice(request, env) {
   const deviceId = cleanText(body.deviceId, 80);
   if (!deviceId) throw new ApiError(400, 'DEVICE_ID_REQUIRED', 'Informe o aparelho.');
   if (deviceId === admin.id) throw new ApiError(400, 'CANNOT_DELETE_SELF', 'Este computador não pode apagar a si mesmo.');
-  const result = await env.DB.prepare('DELETE FROM devices WHERE id = ? AND revoked_at IS NOT NULL').bind(deviceId).run();
+  // v5.24.29 relaxado a pedido dele (2ª cobrança: 'continua a mesma coisa,
+  // só consigo bloquear'): exclui DIRETO qualquer aparelho, menos o próprio.
+  const result = await env.DB.prepare('DELETE FROM devices WHERE id = ?').bind(deviceId).run();
   if (!result.meta || Number(result.meta.changes) !== 1) {
-    throw new ApiError(409, 'DEVICE_NOT_BLOCKED', 'Só apago aparelho já bloqueado. Bloqueie antes (é o freio de mão).');
+    throw new ApiError(404, 'DEVICE_NOT_FOUND', 'Aparelho não encontrado na nuvem.');
   }
   return json({ ok: true, deleted: deviceId });
 }
@@ -931,18 +933,18 @@ async function resumoDaNuvem(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
-// v5.24.28 — sininho de atualização nova (pedido dele): 1 linha com a versão
+// v5.24.29 — sininho de atualização nova (pedido dele): 1 linha com a versão
 // publicada + url do .exe + notas. Leitura pública; escrita = aparelho
 // matriculado (mesma trava do sync). Recuo se algum dia irritar: apagar a
 // linha e o sininho some, sem mexer no resto.
 async function garantirTabelaAppVersao(env){
   if (env.__APP_VERSAO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_versao (id INTEGER PRIMARY KEY CHECK (id = 1), versao TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.28 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
+  // v5.24.29 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
   // as versões publicadas (uma linha por versão; republicar mesma versão
   // atualiza a linha, sem duplicar). O sininho continua lendo só a atual.
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_releases (versao TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.28 — PORTAL DE ATUALIZAÇÕES dele: ativa/desativa link, oculta,
+  // v5.24.29 — PORTAL DE ATUALIZAÇÕES dele: ativa/desativa link, oculta,
   // tutorial por versão, expiração escolhida, marca se o .exe já subiu.
   const addCol = async (sql)=>{ try{ await env.DB.exec(sql); }catch(e){ /* coluna já existe */ } };
   await addCol(`ALTER TABLE app_releases ADD COLUMN ativa INTEGER NOT NULL DEFAULT 1`);
@@ -972,7 +974,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.28 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.29 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -997,7 +999,7 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.28 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.29 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
@@ -1289,7 +1291,7 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
-// v5.24.28 — publicação "viva" = ativa, não oculta e não vencida nas opções
+// v5.24.29 — publicação "viva" = ativa, não oculta e não vencida nas opções
 async function publicacaoViva(env){
   const r = await env.DB.prepare(`SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC LIMIT 1`).bind(Date.now()).first();
   return r || null;
@@ -1297,13 +1299,13 @@ async function publicacaoViva(env){
 function linkDownload(origin, versao){ return origin + '/dl/' + encodeURIComponent(versao) + '.exe'; }
 
   if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
-    // v5.24.28 — histórico em JSON também (pras telas do sistema, se quiser).
+    // v5.24.29 — histórico em JSON também (pras telas do sistema, se quiser).
     await garantirTabelaAppVersao(env);
     const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, ativa, oculta, expira_em AS expiraEm, tem_arquivo AS temArquivo FROM app_releases ORDER BY publicado_em DESC').all();
     return json({ ok: true, releases: lista.results || [] });
   }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
-    // v5.24.28 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.24.29 — leitura pública do sininho de atualização (versão + link + notas).
     await garantirTabelaAppVersao(env);
     const viva = await publicacaoViva(env);
     if (viva) {
@@ -1313,13 +1315,13 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
   }
   if (request.method === 'POST' && url.pathname === '/v1/app-release') {
-    // v5.24.28 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
+    // v5.24.29 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
     const adminUser = await requireAdmin(request, env);
     const body = await request.json();
     const origin = new URL(request.url).origin;
     const acao = String((body && body.action) || 'publicar').toLowerCase();
     const versao = String((body && body.versao) || '').trim().replace(/^v/i, '');
-    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.28.');
+    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.29.');
     const horas = Number((body && body.expiraHoras) || 0) || 0; // 0 = ilimitado
     const expira = horas > 0 ? Date.now() + horas * 3600 * 1000 : 0;
     await garantirTabelaAppVersao(env);
@@ -1362,7 +1364,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'POST' && url.pathname === '/v1/release-file') {
-    // v5.24.28 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
+    // v5.24.29 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
     const admin2 = await requireAdmin(request, env);
     if (!env.R2) throw new ApiError(503, 'R2_NAO_LIGADO', 'O bucket digicopy-downloads não está ligado no motor. Crie-o no painel (R2) e rode o atualizar_motor_nuvem.cmd.');
     const v = String(url.searchParams.get('versao') || '').replace(/^v/i, '');
@@ -1378,7 +1380,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'GET' && url.pathname.startsWith('/dl/')) {
-    // v5.24.28 — DOWNLOAD direto do .exe, porta da própria nuvem.
+    // v5.24.29 — DOWNLOAD direto do .exe, porta da própria nuvem.
     if (!env.R2) return new Response('Arquivos ainda não ligados (falta criar o bucket R2 no painel).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     const nome = decodeURIComponent(url.pathname.slice(4));
     const v = nome.replace(/\.exe$/i, '');
@@ -1392,7 +1394,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'GET' && url.pathname === '/atualizacoes') {
-    // v5.24.28 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
+    // v5.24.29 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
     // Só aparece o que está VIVO (ativo, não oculto, não vencido) — normalmente
     // a versão atual. Histórico fica só dentro do sistema (portal é só dele).
     await garantirTabelaAppVersao(env);
