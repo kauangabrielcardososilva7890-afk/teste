@@ -1,4 +1,4 @@
-// test_ajustes_v52420.js — v5.24.25: pedido dele "muda a estrutura completa
+// test_ajustes_v52420.js — v5.24.26: pedido dele "muda a estrutura completa
 // pro pago + deixa anotado que é teste de 1 mês". Fecho do idioma "grátis"
 // (último texto visível: a ficha do backup diário) + PONTO DE RECUO escrito
 // no próprio worker (trocar 2 números + npm run deploy = volta ao grátis em
@@ -34,9 +34,9 @@ ok(/tetoEscritas: 50000000/.test(wk) && /tetoLeituras: 25000000000/.test(wk), 'w
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('bem raro no plano pago'), 'bundle: ficha nova dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('bem raro no plano pago'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.25'"), 'index: versão 5.24.25');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.25<'), 'index: rodapé v5.24.25');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.25"'), 'package.json 5.24.25');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.26'"), 'index: versão 5.24.26');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.26<'), 'index: rodapé v5.24.26');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.26"'), 'package.json 5.24.26');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.25 (estrutura no idioma pago + ponto de recuo de 1 mês).');
+console.log('\nTudo OK — v5.24.26 (estrutura no idioma pago + ponto de recuo de 1 mês).');

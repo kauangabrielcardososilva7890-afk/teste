@@ -109,7 +109,7 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    // v5.24.25 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // v5.24.26 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
     // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
     // e o botão das leituras/histórico continuam vivos normalmente.
     // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.

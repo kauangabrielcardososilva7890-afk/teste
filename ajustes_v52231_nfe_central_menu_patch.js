@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.24.25 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
+// v5.24.26 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
 // estão acessando"). O menu lateral de NF chamava toasts de "em breve" —
 // agora abre a Central, uma sala própria (DOM fora do miolo, ids fora de
 // qualquer tela) com:
@@ -65,7 +65,7 @@ async function pintarStatusCert(){
 async function conferirValidadeAgora(){
   var api=window.nfeCertAPI;
   if(!api||typeof api.validade!=='function'){
-    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.25.','info'); return;
+    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.26.','info'); return;
   }
   var senha=null;
   try{
@@ -97,6 +97,58 @@ async function conferirValidadeAgora(){
   }catch(e){
     el.style.background='#fef3c7'; el.style.color='#92400e';
     el.textContent='Não li a validade desta vez.';
+  }
+}
+
+// ── Histórico das notas assinadas neste PC (v5.24.26 — pedido dele) ──────────
+// Guarda LOCAL de propósito: a emissão só acontece no PC que tem o certificado
+// instalado — então a lista "minhas notas" mora aqui mesmo, sem custar nuvem.
+var HIST_KEY='digicopy_nfe_historico';
+function historicoNfe(){
+  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')||[]; }
+  catch(e){ return []; }
+}
+function registrarNfeEmitida(r, doc){
+  try{
+    var lista=historicoNfe();
+    var cli=(doc&&doc.cliente&&(doc.cliente.nome||doc.cliente.fantasia||doc.cliente.razao))||(doc&&doc.clienteNome)||'';
+    lista.unshift({
+      numero:(doc&&doc.numero)||'',
+      chave:(r&&r.chave)||(doc&&doc.chave)||'',
+      cliente:cli,
+      data:Date.now(),
+      origem:(doc&&doc.origem)||''
+    });
+    if(lista.length>200) lista=lista.slice(0,200);
+    localStorage.setItem(HIST_KEY, JSON.stringify(lista));
+  }catch(e){ /* histórico é melhoria, nunca trava emissão */ }
+}
+window.registrarNfeEmitida=registrarNfeEmitida;
+function pintarHistoricoNfe(){
+  var box=document.getElementById('cnfe-historico');
+  if(!box) return;
+  var lista=historicoNfe();
+  if(!lista.length){
+    box.innerHTML='<p style="margin:0;font-size:11.5px;color:#94a3b8;font-style:italic">Nenhuma nota assinada neste PC ainda — as próximas aparecem aqui, com a chave.</p>';
+    return;
+  }
+  var linhas=lista.slice(0,8).map(function(n,i){
+    var dt=n.data?new Date(n.data).toLocaleDateString('pt-BR'):'';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;">'+
+      '<i class="ph ph-file-check" style="color:#166534;font-size:16px"></i>'+
+      '<div style="flex:1;min-width:0;"><b style="font-size:12px;color:#0f172a">'+(n.numero?('Nº '+esc(n.numero)):'NF assinada')+'</b>'+
+      '<span style="font-size:11px;color:#64748b"> • '+esc(dt)+'</span>'+
+      '<div style="font-size:10.5px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(n.cliente||'sem cliente')+'</div></div>'+
+      (n.chave?'<button type="button" data-cnfecopi="'+esc(n.chave)+'" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:4px 8px;font-size:10.5px;font-weight:700;color:#0a1e8a;cursor:pointer">copiar chave</button>':'')+
+    '</div>';
+  }).join('');
+  box.innerHTML='<p style="margin:0 0 2px;font-size:11px;color:#64748b;font-weight:700">'+lista.length+' nota(s) assinada(s) neste PC — últimas 8:</p>'+linhas;
+  var bts=box.querySelectorAll('[data-cnfecopi]');
+  for(var i=0;i<bts.length;i++){
+    bts[i].onclick=function(){
+      try{ navigator.clipboard.writeText(this.getAttribute('data-cnfecopi')); tn('Chave copiada.','success'); }
+      catch(e){ tn('Chave: '+this.getAttribute('data-cnfecopi'),'info'); }
+    };
   }
 }
 
@@ -135,6 +187,10 @@ function abrirCentralNfe(){
         '<button id="cnfe-config" type="button" style="flex:1;height:44px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;color:#475569;font-weight:800;font-size:12.5px;cursor:pointer">Configuração fiscal</button>'+
       '</div>'+
       '<p style="margin:12px 0 0;font-size:10.5px;color:#94a3b8;text-align:center">A emissão para LIMPO se o certificado estiver vencido — a mensagem diz a data certa. Nada some: notinha e leitura seguem iguais.</p>'+
+      '<div style="margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px;">'+
+        '<h4 style="margin:0;font-size:12.5px;font-weight:800;color:#0f172a"><i class="ph ph-clock-counter-clockwise"></i> Histórico das notas assinadas</h4>'+
+        '<div id="cnfe-historico" style="margin-top:6px;"></div>'+
+      '</div>'+
       '<button id="cnfe-fechar" type="button" style="margin-top:8px;width:100%;height:34px;border:0;background:none;color:#64748b;font-weight:700;font-size:12px;cursor:pointer">Fechar</button>'+
     '</div>';
   document.body.appendChild(box);
@@ -153,6 +209,7 @@ function abrirCentralNfe(){
     });
   };
   pintarStatusCert();
+  pintarHistoricoNfe();
 }
 window.abrirCentralNfe=abrirCentralNfe;
 
@@ -171,6 +228,7 @@ function abrirPerfilTributario(focoNcm){
 }
 window.abrirPerfilTributario=abrirPerfilTributario;
 
-window.NFE_CENTRAL_V52425={ abrirCentralNfe:abrirCentralNfe, abrirPerfilTributario:abrirPerfilTributario, vendasRecentes:vendasRecentes, leiturasRecentes:leiturasRecentes };
-console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.25) — menu NF abre de verdade');
+window.NFE_CENTRAL_V52425={ abrirCentralNfe:abrirCentralNfe, abrirPerfilTributario:abrirPerfilTributario, vendasRecentes:vendasRecentes, leiturasRecentes:leiturasRecentes, historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
+window.NFE_CENTRAL_V52426={ historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
+console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.26) — menu NF abre de verdade');
 })();

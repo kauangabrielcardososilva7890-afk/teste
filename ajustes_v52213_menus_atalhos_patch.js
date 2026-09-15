@@ -28,7 +28,7 @@ function menusPadrao(){
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
-    // v5.24.25 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
+    // v5.24.26 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
     // acessando'). Saiu o 'em breve' do caminho: tudo abre a Central de Nota
     // Fiscal ou a Configuração fiscal de verdade.
     {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'abrirCentralNfe()', items:[

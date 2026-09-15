@@ -2782,6 +2782,15 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.26 (2026-09-14, sprint NF 'faz logo': histórico das notas assinadas)
+
+**Pedido dele (item 7 da lista, 'faz logo'):** fechar o pacote NF. O que faltava de utilidade visível: lista permanente das notas emitidas (antes, assinou e sumiu).
+
+- **Histórico na Central:** quadro 'Histórico das notas assinadas' — número, cliente, data e botão **copiar chave** (últimas 8 à vista, teto de 200 guardadas). Estado vazio honesto ('as próximas aparecem aqui').
+- **Gatilho de verdade:** o registro só acontece no SUCESSO da assinatura (v5228 chama window.registrarNfeEmitida DEPOIS do XML assinado). Falha no histórico nunca atrapalha a emissão (try/catch no chamador e no próprio registrador).
+- **Local de propósito, por explicado:** a emissão só roda no PC que tem o certificado instalado → a lista mora ali (localStorage digicopy_nfe_historico), sem pesar na nuvem.
+- **Testes:** test_ajustes_v52426.js (23 asserts + 1 funcional: grava e lê de verdade). **Suíte: 151/0/2** + sync_build --check verde.
+
 ## O QUE FOI ENTREGUE — v5.24.25 (2026-09-14, menu de NF abre de verdade + certificado para LIMPO)
 
 **Relato dele:** 'ué, os menus de NF não estão acessando'. Causa achada *sem* precisar de relatório detalhado: no catálogo do menu lateral (v52213), NF-e/NFC-e e os 3 subitens apontavam pra toasts falsos de 'em breve'. As telas reais existiam escondidas: preparação na Config (v5220), conferência/emissão dentro de venda e leitura (v5221→v5228), histórico por atalho (v5229/52210).

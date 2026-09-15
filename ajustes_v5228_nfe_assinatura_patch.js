@@ -103,6 +103,9 @@ async function assinarUltimo(){
     const r=await api.assinar(xml, senha);
     if(r&&r.ok&&r.xmlAssinado){
       mostrarXmlAssinado(r.xmlAssinado, r.chave||doc.chave, r.certificado||'');
+      // v5.24.26 — deixa REGISTRO permanente da nota no histórico da Central
+      // (ele pediu: cada nota emitida tem que aparecer numa lista depois).
+      try{ if(typeof window.registrarNfeEmitida==='function') window.registrarNfeEmitida(r, doc); }catch(e){}
     }else{
       if(typeof window.lfbAlert==='function') window.lfbAlert((r&&r.error)||'Não foi possível assinar.','Assinatura');
       else if(typeof toast==='function') toast((r&&r.error)||'Não foi possível assinar.','error');

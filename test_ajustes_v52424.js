@@ -1,4 +1,4 @@
-// test_ajustes_v52424.js — v5.24.25: pedido dele "site próprio de atualizações".
+// test_ajustes_v52424.js — v5.24.26: pedido dele "site próprio de atualizações".
 // Nuvem guarda o HISTÓRICO (app_releases, 1 linha por versão) e o worker serve
 // a página pública /atualizacoes: cada versão com as notas (o patch escrito)
 // e o botão "Baixar esta versão". Sininho continua anunciando só uma vez.
@@ -38,10 +38,10 @@ ok(av.includes('Seu site próprio de atualizações'), 'app: texto explicando qu
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes("'/atualizacoes'") && bundle.includes('pub-upd-site'), 'bundle: link do site dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.25'"), 'index 5.24.25');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.25<'), 'rodapé v5.24.25');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.25"'), 'package.json 5.24.25');
-ok(wk.includes("'5.24.25'"), 'worker carimbado 5.24.25');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.26'"), 'index 5.24.26');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.26<'), 'rodapé v5.24.26');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.26"'), 'package.json 5.24.26');
+ok(wk.includes("'5.24.26'"), 'worker carimbado 5.24.26');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.25 (site próprio de atualizações + histórico na nuvem).');
+console.log('\nTudo OK — v5.24.26 (site próprio de atualizações + histórico na nuvem).');
