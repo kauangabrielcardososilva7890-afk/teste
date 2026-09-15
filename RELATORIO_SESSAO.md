@@ -2910,6 +2910,13 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **DANFE PRÉ-VISUALIZAÇÃO (foto completa):** layout DANFE retrato com selo 'NF-E EM PRÉ-VISUALIZAÇÃO SEM VALOR FISCAL' + vermelho CANCELAZ? (na foto: marca d'água); blocos emitente/destinatário/cálculo/transportador/dados adicionais com o texto IBPT + tomador — **a 1ª foto da sessão ('NOTA FISCAL IMPRESSA') era a versão autorizada (com Protocolo); esta é a prévia. Os dois estados provados.**
 - **Pedidos extras respondidos p/ próxima leva (poucos e cirúrgicos):** (a) sub-aba **Tributação** do item na nota (impostos por item); (b) o que abre na **engrenagem** do rodapé; (c) 'Pesquisar por' do Destinatário (quais opções além de Cliente); (d) 'Outras Opções' da aba Reforma Tributária.
 
+## Micro-prints respondidos (2026-09-15)
+
+- **Engrenagem do rodapé da nota** = abre as Configurações de NF (o set completo já catalogado — Geral/Outras/Tributação/...). FECHADO.
+- **'Pesquisar por' do Destinatário** = Cliente e Fornecedor. FECHADO (nota pode sair pra fornecedor — devolução).
+- **'Outras Opções' da aba Reforma Tributária** = submenu 'Alterar NFe → Cidades / Datas' (parâmetros de vigência da reforma por UF/data). FECHADO.
+- **Falta só 1 (ele não entendeu — explicado de novo):** dentro da aba 'Itens da Nota', no cantinho superior esquerdo ficam duas mini-abas juntas: **Itens | Tributação**. Quero a foto da mini-aba **Tributação** aberta (com um item selecionado) — é onde o sistema velho mostra PIS/COFINS/ICMS/IPI **por item**.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
