@@ -48,6 +48,8 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('pub-upd-tutorial') && bundle.includes('/v1/release-file?'), 'bundle: portal do gerente dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-tutorial'), 'bundle do CELULAR igual');
 ok(fs.readFileSync('GERAR_EXE.cmd','utf8').includes('npm run build:win'), 'GERAR_EXE.cmd: gera o instalador com um duplo clique (v5.24.30)');
+for (const cmd of ['GERAR_EXE.cmd','atualizar_motor_nuvem.cmd','ver_gasto_nuvem.cmd']) ok(fs.readFileSync(cmd,'latin1').includes('\r\n'), cmd + ': CRLF (bug achado: LF puro faz o .cmd engasgar/fechar no Windows)');
+
 ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.30: só o nome do site + animações + faixa 1-2-3 explicativa');
 
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.30'"), 'index 5.24.30');

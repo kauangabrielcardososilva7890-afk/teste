@@ -2809,6 +2809,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Próximo de verdade (decreto dele '4 = faz logo'): P7** serial-primeiro + remaneio, na versão seguinte.
 - **Suíte: 153/0/2.**
 
+## HOTFIX .cmd CRLF — 2026-09-14 — 'o cmd fecha sozinho'
+
+- Causa achada: os .cmd estavam com quebra de linha LF (Linux) pura; o interpretador cmd do Windows engasga/fecha. Convertidos GERAR_EXE.cmd, atualizar_motor_nuvem.cmd e ver_gasto_nuvem.cmd para CRLF + teste da suíte trava CRLF pra sempre.
+- Processo dele (apagar pasta → baixar zip → extrair completo) está CERTÍSSIMO — o problema era o arquivo, não ele.
+- NF aba OUTRAS recebida e catalogada (outras.png): opções de finalização/agrupamento, margens DANFE, fuso UTC, caminho secundário PDF/XML, Email pro Escritório (CC contador = denivaldocs@hotmail.com — o fluxo-excelente dele que virou 'Enviar pro Escritório' no nosso desenho). Explicação filtro a filtro entregue no reply.
+- Lupa do CRT abre site de ajuda do fornecedor antigo (arpulse/acsoluti 'emitir certificado') — inofensivo; no sistema novo esses campos terão explicação embutida, sem site externo.
+- Suíte após hotfix: 153/0/2 (3 novos asserts CRLF somados).
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
