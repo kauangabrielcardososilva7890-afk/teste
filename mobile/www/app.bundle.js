@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 196 | sha256: 389a64d1da2aa276
+ * scripts: 197 | sha256: eea7437d373c071e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -3812,7 +3812,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
     const input=document.getElementById('classic-search-clientes');
-  // v5.24.24 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
+  // v5.24.25 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
   // (ou no botão Filtrar da tela neo). Não redesenha mais a cada letra.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
@@ -3889,7 +3889,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   if(input){
     input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
     input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
-    // v5.24.24 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
+    // v5.24.25 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
     if(document.activeElement?.id==='neo-search-clientes') input.focus();
   }
   const btnF=document.getElementById('cli-btn-filtrar');
@@ -5467,7 +5467,7 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    // v5.24.24 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // v5.24.25 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
     // opcional... notinha normal" SOME. Os estados completa/incompleta
     // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
     el.style.display='none'; el.innerHTML='';
@@ -7921,7 +7921,7 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
-  // v5.24.24 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  // v5.24.25 — RELATORIO dele (P11): idem — só aplicado no Enter.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
@@ -12697,7 +12697,7 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const template = tipo === 'proposta' ? (conf.proposta || DEFAULT_PROPOSTA_RTF) : (conf.contrato || DEFAULT_CONTRATO_RTF);
   const rtfFinal = aplicarTemplate(template, contratoId);
   const nome = `${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`;
-  // v5.24.24 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
+  // v5.24.25 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
   // pré-preenchido — dados completos vêm do mapa de campos acima).
   // Navegador/celular mantêm o download de antes.
   if(window.rtfAPI && typeof window.rtfAPI.abrir==='function'){
@@ -20576,7 +20576,7 @@ window.imprimirChamado = function(id){
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
       const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
-      // v5.24.24 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // v5.24.25 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
       // pegava o botão Imprimir por engano (a função dele tem "salvar" no
       // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
       // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
@@ -21921,7 +21921,7 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-root')?.classList.remove('hidden');
 };
 
-// v5.24.24 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+// v5.24.25 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
 window.imprimirChamadoAgoraV52422 = function(id){
   var o=(db.os||[]).find(x=>x.id===id);
   if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
@@ -21975,7 +21975,7 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
-    // v5.24.24 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // v5.24.25 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
     // da impressora (e a Ações abriga imprimir-direto + excluir).
     const ths = body.querySelectorAll('thead th');
     ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });
@@ -26792,7 +26792,7 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.24 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // v5.24.25 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
   // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
   // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
   // por onde "salvei e o login não entra" escapava em silêncio.
@@ -26927,7 +26927,7 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // v5.24.24 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // v5.24.25 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
   // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
   // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
   return !!sess();
@@ -28824,7 +28824,7 @@ function viradaDoLimite(){
 function recadoDoLimite(){
   const falta=Math.max(0,viradaDoLimite()-Date.now());
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
-  // v5.24.24 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
+  // v5.24.25 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
   return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
@@ -30145,7 +30145,7 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
-  // v5.24.24 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // v5.24.25 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
   // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
   // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
   // porque as listas só mostram a empresa logada. Duas empresas no banco =
@@ -30416,7 +30416,7 @@ function injetarNaBarra(root,id,texto,fn){
 function injetarVendas(){
   const view=document.getElementById('view-vendas');
   if(!view) return;
-  // v5.24.24 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
+  // v5.24.25 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
   // consultar notinha. Atalho continua nos históricos de leitura.
   (function(){ var morto=document.getElementById('btn-nfe-venda-lista'); if(morto) morto.remove(); })();
   return;
@@ -30620,7 +30620,7 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    // v5.24.24 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // v5.24.25 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
     // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
     // e o botão das leituras/histórico continuam vivos normalmente.
     // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.
@@ -31240,10 +31240,13 @@ function menusPadrao(){
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
-    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'toast(\'Módulo fiscal em preparação\',\'info\')', items:[
-      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'toast(\'Em breve: emissão de nota fiscal\',\'info\')'},
-      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'toast(\'Em breve: perfil tributário\',\'info\')'},
-      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'toast(\'Em breve: NCM e configurações fiscais\',\'info\')'}
+    // v5.24.25 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
+    // acessando'). Saiu o 'em breve' do caminho: tudo abre a Central de Nota
+    // Fiscal ou a Configuração fiscal de verdade.
+    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'abrirCentralNfe()', items:[
+      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'abrirCentralNfe()'},
+      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'abrirPerfilTributario()'},
+      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'abrirPerfilTributario(1)'}
     ]},
     {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
       {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},
@@ -35373,6 +35376,186 @@ console.log('[DIGICOPY] v5.22.29 IE, Inscrição Municipal e CNAE');
 
 ;
 
+/* ===== ajustes_v52231_nfe_central_menu_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.25 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
+// estão acessando"). O menu lateral de NF chamava toasts de "em breve" —
+// agora abre a Central, uma sala própria (DOM fora do miolo, ids fora de
+// qualquer tela) com:
+//   1. O ESTADO DO CERTIFICADO neste PC (instalado/ausente) + botão "Conferir
+//      validade" que pede a senha do cofre UMA VEZ e mostra a data — fim da
+//      era "o sistema não sabe que o cert venceu".
+//   2. Emissão de verdade: escolhe a notinha OU a leitura e abre a conferência
+//      da nota (window.conferirNfe, mesma ponte da v5.22.1→v5.22.8).
+//   3. Atalho pra Configuração fiscal (certificado, IE, regime, série...).
+// Tudo funciona; onde precisa do certificado válido, para LIMPO com aviso
+// explicado — que é o combinado do tópico C ("só falta o certificado").
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function tn(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+
+function vendasRecentes(){
+  var v=(typeof db!=='undefined' && db && db.vendas)||[];
+  return v.slice(-40).reverse();
+}
+function leiturasRecentes(){
+  var l=(typeof db!=='undefined' && db && db.leituras)||[];
+  return l.slice(-40).reverse();
+}
+function clientNome(id){
+  var cs=(typeof db!=='undefined' && db && db.clientes)||[];
+  var c=cs.find(function(x){return x.id===id;});
+  return c?String(c.nome||c.fantasia||c.razao||'Cliente'):'sem cliente';
+}
+function dataBr(d){
+  try{ var x=new Date(d||''); return isNaN(x)?'':x.toLocaleDateString('pt-BR'); }
+  catch(e){ return ''; }
+}
+
+// ── Estado do certificado neste PC + conferência de validade com a senha ──
+async function pintarStatusCert(){
+  var el=document.getElementById('cnfe-cert-selo');
+  if(!el) return;
+  var api=window.nfeCertAPI;
+  if(!api||typeof api.status!=='function'){
+    el.style.background='#f1f5f9'; el.style.color='#64748b';
+    el.textContent='Certificado: abra o programinha (.exe) do PC da loja — no navegador/celular não dá pra instalar nem conferir.';
+    var bv=document.getElementById('cnfe-validade'); if(bv) bv.style.display='none';
+    return;
+  }
+  try{
+    var st=await api.status();
+    if(st&&st.installed){
+      el.style.background='#dcfce7'; el.style.color='#166534';
+      el.textContent='Certificado A1 instalado neste PC. A validade de verdade só aparece com a senha do cofre — clique em "Conferir validade".';
+    }else{
+      el.style.background='#fee2e2'; el.style.color='#991b1b';
+      el.textContent='Nenhum certificado A1 neste PC. Instale na Configuração fiscal (botão lá embaixo) ou a nota para aqui — limpo e avisado, nunca travado.';
+    }
+  }catch(e){
+    el.style.background='#fef3c7'; el.style.color='#92400e';
+    el.textContent='Não consegui ler o estado do certificado agora.';
+  }
+}
+
+async function conferirValidadeAgora(){
+  var api=window.nfeCertAPI;
+  if(!api||typeof api.validade!=='function'){
+    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.25.','info'); return;
+  }
+  var senha=null;
+  try{
+    if(window.NFE_ASSINATURA_UI && typeof window.NFE_ASSINATURA_UI.pedirSenhaA1==='function'){
+      senha=await window.NFE_ASSINATURA_UI.pedirSenhaA1();
+    }else{
+      senha=(typeof prompt==='function')?prompt('Senha do certificado (não guardo — uso só pra ler a data):',''):null;
+    }
+  }catch(e){ senha=null; }
+  if(!senha) return; // desistiu, sem drama
+  var el=document.getElementById('cnfe-cert-selo'); if(!el) return;
+  el.style.background='#e2e8f0'; el.style.color='#334155';
+  el.textContent='Lendo o certificado com a senha...';
+  try{
+    var r=await Promise.resolve(api.validade(senha));
+    if(r&&r.ok){
+      var dt=r.validoAte?new Date(r.validoAte).toLocaleDateString('pt-BR'):'?';
+      if(r.vencido){
+        el.style.background='#fee2e2'; el.style.color='#991b1b';
+        el.textContent='Certificado VENCIDO em '+dt+' ('+(r.titular||'')+'). Renove na ANACERT/AC e instale o novo .pfx aqui. Atualizado assim que trocar.';
+      }else{
+        el.style.background='#dcfce7'; el.style.color='#166534';
+        el.textContent='Certificado válido até '+dt+' ('+(r.titular||'')+').';
+      }
+    }else{
+      el.style.background='#fef3c7'; el.style.color='#92400e';
+      el.textContent='Não li a validade: '+((r&&r.error)||'senha não confere?');
+    }
+  }catch(e){
+    el.style.background='#fef3c7'; el.style.color='#92400e';
+    el.textContent='Não li a validade desta vez.';
+  }
+}
+
+// ── A Central ──
+function abrirCentralNfe(){
+  var root=document.getElementById('central-nfe-modal');
+  if(root){ root.remove(); }
+  var vOpts=vendasRecentes().map(function(v){
+    return '<option value="'+esc(v.id)+'">'+(esc(v.numero||v.codigo||'sem nº'))+' • '+esc(dataBr(v.data||v.criadoEm))+' • '+esc(clientNome(v.clienteId)).slice(0,38)+'</option>';
+  }).join('');
+  var lOpts=leiturasRecentes().map(function(l){
+    return '<option value="'+esc(l.id)+'">'+(esc(l.numero||l.codigo||'sem nº'))+' • '+esc(dataBr(l.data||l.dataLeitura))+' • '+esc(clientNome(l.clienteId)).slice(0,38)+'</option>';
+  }).join('');
+  var box=document.createElement('div');
+  box.id='central-nfe-modal';
+  box.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(10,20,60,.45);display:flex;align-items:center;justify-content:center;padding:14px;';
+  box.innerHTML=
+    '<div style="background:#fff;border-radius:20px;max-width:520px;width:100%;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.25);font-family:inherit;max-height:92vh;overflow:auto;">'+
+      '<div style="display:flex;align-items:center;gap:10px;">'+
+        '<div style="width:46px;height:46px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;"><i class="ph ph-file-text" style="font-size:24px;color:#0a1e8a"></i></div>'+
+        '<div><h3 style="margin:0;font-size:17px;font-weight:900;color:#0a1e8a">Central de Nota Fiscal</h3>'+
+        '<p style="margin:2px 0 0;font-size:11.5px;color:#64748b">Tudo de NF num lugar só — o que falta é o certificado renovado, e a tela avisa onde parar.</p></div>'+
+      '</div>'+
+      '<div id="cnfe-cert-selo" style="margin-top:12px;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:600;background:#f1f5f9;color:#64748b">Lendo o certificado...</div>'+
+      '<button id="cnfe-validade" type="button" style="margin-top:8px;width:100%;height:38px;border:1px dashed #94a3b8;border-radius:12px;background:#fff;color:#334155;font-weight:700;font-size:12px;cursor:pointer">Conferir validade do certificado (pede a senha do cofre)</button>'+
+      '<div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px;">'+
+        '<h4 style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0f172a">Emitir a partir de uma notinha</h4>'+
+        '<select id="cnfe-venda" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:12px;padding:0 10px;font-size:12.5px;"><option value="">— escolha a notinha —</option>'+vOpts+'</select>'+
+      '</div>'+
+      '<div style="margin-top:12px;">'+
+        '<h4 style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0f172a">Emitir a partir de uma leitura</h4>'+
+        '<select id="cnfe-leitura" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:12px;padding:0 10px;font-size:12.5px;"><option value="">— escolha a leitura —</option>'+lOpts+'</select>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;margin-top:16px;">'+
+        '<button id="cnfe-emitir" type="button" style="flex:1;height:44px;border:0;border-radius:14px;background:#0a1e8a;color:#fff;font-weight:800;font-size:13px;cursor:pointer">Conferir e emitir</button>'+
+        '<button id="cnfe-config" type="button" style="flex:1;height:44px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;color:#475569;font-weight:800;font-size:12.5px;cursor:pointer">Configuração fiscal</button>'+
+      '</div>'+
+      '<p style="margin:12px 0 0;font-size:10.5px;color:#94a3b8;text-align:center">A emissão para LIMPO se o certificado estiver vencido — a mensagem diz a data certa. Nada some: notinha e leitura seguem iguais.</p>'+
+      '<button id="cnfe-fechar" type="button" style="margin-top:8px;width:100%;height:34px;border:0;background:none;color:#64748b;font-weight:700;font-size:12px;cursor:pointer">Fechar</button>'+
+    '</div>';
+  document.body.appendChild(box);
+  document.getElementById('cnfe-fechar').onclick=function(){ var d=document.getElementById('central-nfe-modal'); if(d) d.remove(); };
+  box.addEventListener('click',function(ev){ if(ev.target===box) box.remove(); });
+  document.getElementById('cnfe-validade').onclick=conferirValidadeAgora;
+  document.getElementById('cnfe-config').onclick=function(){ var d=document.getElementById('central-nfe-modal'); if(d) d.remove(); abrirPerfilTributario(); };
+  document.getElementById('cnfe-emitir').onclick=function(){
+    var vid=document.getElementById('cnfe-venda').value;
+    var lid=document.getElementById('cnfe-leitura').value;
+    if(!vid&&!lid){ tn('Escolha a notinha ou a leitura pra emitir.','info'); return; }
+    var d=document.getElementById('central-nfe-modal'); if(d) d.remove();
+    // v5221 entrega: a mesma ponte da notinha/leitura — venda vence se as duas vierem
+    Promise.resolve(window.conferirNfe(vid?'venda':'leitura', vid||lid)).catch(function(){
+      tn('Não foi possível abrir a conferência agora. Notinha e leitura seguem iguais.','error');
+    });
+  };
+  pintarStatusCert();
+}
+window.abrirCentralNfe=abrirCentralNfe;
+
+function abrirPerfilTributario(focoNcm){
+  if(typeof navigateTo==='function') navigateTo('config');
+  var tent=0;
+  var t=setInterval(function(){
+    tent++;
+    var card=document.getElementById('nfe-config-card');
+    if(card){
+      clearInterval(t);
+      try{ card.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+      tn(focoNcm?'NCM mora na ficha de cada produto; aqui embaixo ficam as fiscais da NF.':'(Configuração fiscal e certificado aqui embaixo.)','info');
+    }else if(tent>10){ clearInterval(t); }
+  },300);
+}
+window.abrirPerfilTributario=abrirPerfilTributario;
+
+window.NFE_CENTRAL_V52425={ abrirCentralNfe:abrirCentralNfe, abrirPerfilTributario:abrirPerfilTributario, vendasRecentes:vendasRecentes, leiturasRecentes:leiturasRecentes };
+console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.25) — menu NF abre de verdade');
+})();
+
+;
+
 /* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.30 — Modo escuro só neste aparelho
@@ -36326,7 +36509,7 @@ function modalidadeDe(c){
   return out.join(' ').toLowerCase();
 }
 
-// v5.24.24 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
+// v5.24.25 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
 // contrato hoje OU mexeu nele hoje (impressora, chamado ou leitura). A conta
 // é viva: não depende de carimbo passado — vale até pros contratos antigos.
 function dataDe(x, campos){
@@ -36453,7 +36636,7 @@ function injetar(){
   var pai=busca.parentNode;
   if(pai) pai.insertBefore(sel, busca);
 
-  // v5.24.24 — F1: o "Mostrar todos" com a mesma vida dos outros botões
+  // v5.24.25 — F1: o "Mostrar todos" com a mesma vida dos outros botões
   // (visível sempre; a tela já começa no "Hoje" por padrão).
   if(pai && !document.getElementById('ctr-mostrar-todos')){
     var btnTodos = document.createElement('button');
@@ -36861,7 +37044,7 @@ window.abrirOrcamento=function(id, _origem){
     if(alterou && typeof saveDB==='function') saveDB();
     if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
   }
-  // v5.24.24 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // v5.24.25 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
   // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
   // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
   // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.
@@ -38210,7 +38393,7 @@ console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 /* ===== ajustes_v52239_avisos_erro_auditoria_patch.js (escopo global) ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.24 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.25 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -38240,7 +38423,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.24 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.25 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38248,7 +38431,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.24 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.25 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -38300,10 +38483,10 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.24 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.25 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
-// v5.24.24 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
+// v5.24.25 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
 // existir versão nova publicada na nuvem, mostra UMA ÚNICA VEZ (por versão,
 // por aparelho) o aviso com [Abrir pra baixar] + [Baixar depois]. Qualquer
 // um dos dois marca a versão como vista — o resto é silêncio até a próxima.
@@ -38380,7 +38563,7 @@ function agendarChecagemInicial(){
 }
 if(typeof document!=='undefined') agendarChecagemInicial();
 
-// v5.24.24 — o card publicador nas Configurações (ele marca a versão, cola o
+// v5.24.25 — o card publicador nas Configurações (ele marca a versão, cola o
 // link do .exe, escreve as notas — ou me pede pra escrever, como ele disse).
 function aplicarCardPublicarAtualizacao(){
   if(document.getElementById('card-publicar-atualizacao')) return;
@@ -38393,14 +38576,14 @@ function aplicarCardPublicarAtualizacao(){
     '<h4 class="font-bold text-[14px]"><i class="ph ph-rocket-launch"></i> Publicar nova atualização</h4>'+
     '<p class="mt-1 text-[11.5px] text-slate-500">Marque a versão nova, cole o link do arquivo (.exe) e escreva as notas (se quiser, me pede que eu monto a redação pra você). Cada aparelho vê o aviso UMA única vez.</p>'+
     '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
-      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.24"></div>'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.25"></div>'+
       '<div class="md:col-span-2"><label class="text-[11px] uppercase font-bold text-slate-500">Link do arquivo (.exe — https)</label><input id="pub-upd-url" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="https://..."></div>'+
       '<div class="md:col-span-3"><label class="text-[11px] uppercase font-bold text-slate-500">Notas da atualização (o que mudou)</label><textarea id="pub-upd-notas" class="mt-1 w-full h-28 p-3 rounded-xl border text-[12.5px]" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>'+
     '</div>'+
     '<div class="mt-3 flex items-center gap-3"><button id="pub-upd-enviar" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold">Publicar atualização</button><small class="text-[11px] text-slate-500">Apaga e refaz quando quiser — o aviso só aparece quando a versão nova for MAIOR que a do aparelho.</small></div>'+
     '<div class="mt-3 pt-3 border-t"><small class="text-[11px] text-slate-500">Seu site próprio de atualizações (histórico completo com as notas e o link de cada versão):</small> <a id="pub-upd-site" href="#" target="_blank" rel="noopener" class="text-[12px] font-bold text-[#0a1e8a] underline break-all">abrir site</a></div>';
   grid.appendChild(card);
-  // v5.24.24 — aponta o "seu site" usando a mesma URL da nuvem já configurada
+  // v5.24.25 — aponta o "seu site" usando a mesma URL da nuvem já configurada
   // no app (cloudflare_sync_patch.js expõe window.DIGICOPY_CLOUD.API).
   try{
     var apiBase=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
@@ -38479,7 +38662,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.24 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.25 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 
@@ -39361,7 +39544,7 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
-// v5.24.24 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// v5.24.25 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
 // Remover filtro zera data/tipo/ordem e reaplica limpo.
 window.finAplicarFiltroV52421 = function(){
   var f=document.getElementById('fin-btn-filtrar');
@@ -39476,7 +39659,7 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
-    // v5.24.24 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // v5.24.25 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
     // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
     // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
     // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).
@@ -40523,7 +40706,7 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    // v5.24.24 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // v5.24.25 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
     // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
     // novos, checa se o irmão antes do campo não É o rótulo certo.
     var irmaoDe = de.previousElementSibling;
@@ -41685,7 +41868,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          // v5.24.24 — diagnóstico partido (carimbo de fala): diz SE é o
+          // v5.24.25 — diagnóstico partido (carimbo de fala): diz SE é o
           // usuário que não existe, se está inativo, ou se é a senha. Antes
           // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
           // fold do loginFlexivel pra comparar igualzinho.
@@ -43797,7 +43980,7 @@ console.log('[DIGICOPY] v5.22.50: bundle completo unificado + cache limpo para o
         return nb - na;
       });
 
-      // v5.24.24 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // v5.24.25 — RELATORIO dele (orçamento 38 sumiu do banco depois de
       // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
       // (além dos ids). Se um clique chagar num id que o banco perdeu entre
       // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio
@@ -46597,7 +46780,7 @@ function aviso(el, texto, cor){
 function traduzErro(e){
   const codigo = e && (e.code || '') + '|' + (e.message || '');
   if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
-    // v5.24.24 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // v5.24.25 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
     // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
     // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
     return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
@@ -47775,7 +47958,7 @@ window.clitabExcluir=function(){
     try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
     try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
     try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
-    // v5.24.24 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // v5.24.25 — varre os fantasmas das telas dos módulos: sem isso, a tela de
     // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
     // clique nela caía no aviso "não achei" (o 4.2 da foto).
     try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
@@ -47816,7 +47999,7 @@ window.clitabAbrirLista=function(){
   const sub=st.sub;
   const ids=Object.keys(st.sel[sub]||{});
   try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
-  // v5.24.24 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // v5.24.25 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
   // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
   // navega com sub conhecido; fora disso, explica e fica quieto.
   if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
@@ -47831,14 +48014,14 @@ window.clitabAbrirLista=function(){
       else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
       else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
     }catch(e){}
-    // v5.24.24 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // v5.24.25 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
     // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
     // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
     if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
   },250);
 };
 
-// v5.24.24 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// v5.24.25 — pedido dele: "o clientes não abre a lista que mostra os que eu
 // quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
 // CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
 // nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
@@ -47856,7 +48039,7 @@ window.clitabAbrirClienteNaLista=function(){
   },250);
 };
 
-// v5.24.24 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// v5.24.25 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
 // que abra onde é a lista que mostra todos, mas só mostrando os selecionados
 // que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
 // os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
@@ -47904,7 +48087,7 @@ window.clitabAbrirRegistro=function(tipo, id){
   window.clitabAbrirDireto(tipo, id, false);
 };
 
-// v5.24.24 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// v5.24.25 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
 // sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
 // silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
 window.clitabAbrirDireto=function(tipo, id, silencioso){
@@ -48074,11 +48257,11 @@ try{ console.log('[DIGICOPY] v5.24.5 — ficha sempre abre em Dados (Salvar gara
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 196;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 197;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 196 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 197 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

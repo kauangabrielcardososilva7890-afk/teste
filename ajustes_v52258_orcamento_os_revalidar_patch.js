@@ -743,7 +743,7 @@
         return nb - na;
       });
 
-      // v5.24.24 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // v5.24.25 — RELATORIO dele (orçamento 38 sumiu do banco depois de
       // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
       // (além dos ids). Se um clique chagar num id que o banco perdeu entre
       // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio

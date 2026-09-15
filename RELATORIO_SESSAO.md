@@ -2782,6 +2782,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.25 (2026-09-14, menu de NF abre de verdade + certificado para LIMPO)
+
+**Relato dele:** 'ué, os menus de NF não estão acessando'. Causa achada *sem* precisar de relatório detalhado: no catálogo do menu lateral (v52213), NF-e/NFC-e e os 3 subitens apontavam pra toasts falsos de 'em breve'. As telas reais existiam escondidas: preparação na Config (v5220), conferência/emissão dentro de venda e leitura (v5221→v5228), histórico por atalho (v5229/52210).
+
+- **Menu amarrado aonde presta:** NF-e/NFC-e e 'Nota fiscal' abrem a **Central de Nota Fiscal** (sala própria, DOM fora do miolo): estado do certificado neste PC (instalado/ausente com selos coloridos), botão **'Conferir validade'** (pede a senha do cofre UMA VEZ, mostra até quando vale — fim da era 'o sistema não sabe que venceu'), seletores de notinha OU leitura (últimas 40) que abrem a **mesma** conferência da v5221, e atalho pra Configuração fiscal com rolagem certa. 'Perfil tributário' e 'NCM e fiscal' vão pra Config fiscal real.
+- **Certificado para LIMPO, com data:** assinar com A1 vencido joga mensagem clara ('Certificado A1 VENCIDO em dd/mm/aaaa — renove...') em vez de erro criptografado; a leitura da validade vive no main.js (IPC 'nfe:cert-validade') + nfe_assinatura.js (lerValidadePfx) + preload (nfeCertAPI.validade). Senha pedida sempre, nunca guardada.
+- **Guardas do repo cumpridas:** bundle-manifest +1 (197 scripts) com os 4 testes de guarda atualizados na regra ('v5.24.25 soma a Central de Nota Fiscal'); npm run sync (scripts.check); test_ajustes_v52425.js (27 asserts). **Suíte: 150/0/2** (as 2 = acorn/node-forge ausentes só no sandbox — mesmas de sempre).
+
 ## O QUE FOI ENTREGUE — v5.24.24 (2026-09-14, site próprio de atualizações)
 
 **Pedido dele:** 'um site próprio isso, onde terá o histórico completo de atualizações que lancei, com o patch escrito e o link dele pra eu poder baixar'.

@@ -1,4 +1,4 @@
-// test_ajustes_v52418.js — v5.24.24: (A) pedido dele "botão visível pra baixar"
+// test_ajustes_v52418.js — v5.24.25: (A) pedido dele "botão visível pra baixar"
 // → botãozinho erro.txt NO RODAPÉ de todas as telas (mesma ação do aviso,
 // fonte única). (B) ele PAGOU o Workers Paid $5 — destrava do teto interno:
 // 100 mil escritas / 5 milhões de leituras por dia (grátis) → 50 milhões de
@@ -34,11 +34,11 @@ ok(wk.includes('ASSINATURA PAGA CONFIRMADA'), 'worker: comentário registra a vi
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('digicopyAbrirOuBaixarErroTxt'), 'bundle: ação pública presente');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('digicopyAbrirOuBaixarErroTxt'), 'bundle do CELULAR igual');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.24'"), 'index: versão 5.24.24');
-ok(idx.includes('>v5.24.24<'), 'index: rodapé v5.24.24');
-ok(idx.includes('app.bundle.js?v=5.24.24'), 'index: cache-bust v5.24.24');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.24"'), 'package.json 5.24.24');
-ok(wk.includes("'5.24.24'"), 'worker carimbado 5.24.24');
+ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.25'"), 'index: versão 5.24.25');
+ok(idx.includes('>v5.24.25<'), 'index: rodapé v5.24.25');
+ok(idx.includes('app.bundle.js?v=5.24.25'), 'index: cache-bust v5.24.25');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.25"'), 'package.json 5.24.25');
+ok(wk.includes("'5.24.25'"), 'worker carimbado 5.24.25');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.24 (botão erro.txt no rodapé + teto do plano pago destravado).');
+console.log('\nTudo OK — v5.24.25 (botão erro.txt no rodapé + teto do plano pago destravado).');

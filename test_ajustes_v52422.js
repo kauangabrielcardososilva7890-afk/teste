@@ -1,4 +1,4 @@
-// test_ajustes_v52422.js — v5.24.24: pacote 2A do RELATORIO GRANDE.
+// test_ajustes_v52422.js — v5.24.25: pacote 2A do RELATORIO GRANDE.
 // F1 contratos padrão "Hoje (criados ou mexidos hoje)" + botão Mostrar todos.
 // F2 chamados: imprimir direto (sem abrir) + excluir com aviso escolhido;
 //    cabeçalho "PDF" vira ícone de impressora; neo externa (view-manutencao)
@@ -50,11 +50,11 @@ ok(rtfp.includes('CLI_TELEFONE') && rtfp.includes('CLI_ENDCOMPLETO') && rtfp.inc
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('__ctrMexeuHoje') && bundle.includes('excluirChamadoV52422'), 'bundle: F1+F2 presentes');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('__ctrMexeuHoje'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.24'"), 'index: versão 5.24.24');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.24<'), 'index: rodapé v5.24.24');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.24"'), 'package.json 5.24.24');
-ok(main.includes('v5.24.24'), 'main.js com o comentário da versão');
-ok(prel.includes("'5.24.24'") || prel.includes("v5.24.24") || prel.includes('5.24.24'), 'preload carimbado');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.25'"), 'index: versão 5.24.25');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.25<'), 'index: rodapé v5.24.25');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.25"'), 'package.json 5.24.25');
+ok(main.includes('v5.24.25'), 'main.js com o comentário da versão');
+ok(prel.includes("'5.24.25'") || prel.includes("v5.24.25") || prel.includes('5.24.25'), 'preload carimbado');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.24 pacote 2A (F1 contratos-hoje, F2 chamados excluir+imprimir, P6 RTF no Word).');
+console.log('\nTudo OK — v5.24.25 pacote 2A (F1 contratos-hoje, F2 chamados excluir+imprimir, P6 RTF no Word).');

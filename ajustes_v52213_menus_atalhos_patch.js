@@ -28,10 +28,13 @@ function menusPadrao(){
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
-    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'toast(\'Módulo fiscal em preparação\',\'info\')', items:[
-      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'toast(\'Em breve: emissão de nota fiscal\',\'info\')'},
-      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'toast(\'Em breve: perfil tributário\',\'info\')'},
-      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'toast(\'Em breve: NCM e configurações fiscais\',\'info\')'}
+    // v5.24.25 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
+    // acessando'). Saiu o 'em breve' do caminho: tudo abre a Central de Nota
+    // Fiscal ou a Configuração fiscal de verdade.
+    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'abrirCentralNfe()', items:[
+      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'abrirCentralNfe()'},
+      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'abrirPerfilTributario()'},
+      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'abrirPerfilTributario(1)'}
     ]},
     {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
       {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},

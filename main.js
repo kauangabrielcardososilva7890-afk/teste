@@ -150,7 +150,7 @@ app.whenReady().then(() => {
   registerPrintIPC();
   registerBackupIPC();
   registerErroTxtIPC();
-  // v5.24.24 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // v5.24.25 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
   // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
   // Word/LibreOffice, o que estiver associado ao .rtf).
   ipcMain.handle('rtf:abrir', async (_e, payload) => {
@@ -461,6 +461,20 @@ function registerNfeCertIPC(){
       return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs, path:p };
     }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
+  ipcMain.handle('nfe:cert-validade', async (_evt, payload) => {
+    // v5.24.25 — conferir a validade do certificado SEM assinar nada: pede a
+    // senha do cofre só pra isso, lê a data e devolve. Fim da era "o sistema
+    // não sabe que o cert venceu".
+    try{
+      const senha = payload && payload.senha;
+      if(!senha) return { ok:false, error:'Informe a senha do certificado.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Nenhum certificado A1 instalado neste PC.' };
+      const sign = require('./nfe_assinatura.js');
+      const info = sign.lerValidadePfx(fs.readFileSync(p), senha);
+      return { ok:true, titular:info.titular, validoAte:info.validoAte, validoDe:info.validoDe, vencido:info.vencido };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
   ipcMain.handle('nfe:cert-import', async () => {
     try{
       const result = await dialog.showOpenDialog(mainWindow, {
@@ -627,7 +641,7 @@ function registerBackupIPC(){
 }
 
 // ──────────────────────────────────────────────
-// ERRO.TXT IPC (v5.24.24) — pedido dele: erro indevido vira linha num
+// ERRO.TXT IPC (v5.24.25) — pedido dele: erro indevido vira linha num
 // erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
 // (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
 // (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB
