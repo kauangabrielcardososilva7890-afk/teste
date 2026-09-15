@@ -2847,6 +2847,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Ele CONFIRMOU:'sem comprar nada, quero o de graça'** → virada para o subdomínio digicopyonline REFEITA (16 arquivos + testes; inclui MEDIDOR_OFICIAL da conta também). Sequência única passada no reply: painel (Workers & Pages → workers.dev → Manage/Change → digicopyonline) → /health responde → cmd motor → GERAR_EXE → instala em TODOS os PCs. Domínio próprio fica só pra fase comercial.
 - **NF menu INUTILIZAR catalogado (2 fotos):** Número Inicial / Número Final a inutilizar, Ano da numeração (dele: 26), Modelo 55-NFe/65-NFCe, Motivo obrigatório (dele usa 'NUMERAÇÃO FALHOU NA EMISSÃO'), botão Enviar Solicitação. Serve p/ APOSENTAR junto à Receita números que sobraram/emperraram — numeração de nota não pode ficar com buraco contábil. No nosso: mesma tela com validação (intervalo>0, motivo>=15 chars) e confirmação forte + protocolo da Resposta registrado na nota-fantasma.
 
+## NF aba NFCe catalogada (3 fotos) — 2026-09-14 — SET FECHADO de configurações
+
+- Checkboxes: Adicionar Tag de QRCode em Informações Suplementares ✓; Gerar NFC-e ao Finalizar Venda no PDV (desmarcado — ele não emite NFC-e automático no caixa); Imprimir Logo no DANFE ✓; Logo sobre os dados da empresa (desmarcado).
+- **Id CSC / Token: 00001 + CSC/Token preenchido (parcialmente riscado por ele — NUNCA registrar o valor lá fora/nem aqui):** o Código de Segurança do Contribuinte é emetido no portal da SEFAZ-MG e é o que ASSINA o QRCode da NFC-e. Sem ele, cupom não valida.
+- **Versão do QRCode: veqr200** (opções veqr000/veqr100/veqr200/veqr300 — 200 é o padrão v2 vigente).
+- **Tipo de Impressora: 1-LASER/TINTA (Spooler)** (opção 0 = MINI IMPRESSORA térmica) + Selecionar Impressora ✓ + Imprimir DANFE sem pré-visualização (desmarcado) + Imprimir QRCode Lateral ✓.
+- Pergunta dele sobre a virada respondida: **não perde nada** — a troca só muda o ENDEREÇO; D1 (banco), R2 (arquivos), worker, aparelhos cadastrados e dados sincronizados ficam exatamente onde estão (são recursos da conta, não do endereço). Único 'risco real': PCs com exe velho ficam mudos até instalar o novo — e nome ocupado o painel avisa e a gente troca no código em 1 minuto.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
