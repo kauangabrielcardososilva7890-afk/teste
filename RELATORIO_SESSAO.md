@@ -2782,6 +2782,16 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.23 (2026-09-14, sininho de atualização + publicador)
+
+**Pedido dele (tópico D):** 'função de publicar atualizações' — ele marca a versão, cola o link do .exe e escreva as notas (ou me pede que eu monte); todo mundo que abrir vê o aviso UMA ÚNICA VEZ por versão por aparelho com [Abrir pra baixar] + [Baixar depois]. No celular: mesmo código, mesmo comportamento.
+
+- **Nuvem (worker):** endpoint `/v1/app-release` — GET público (o app consulta ao abrir; sem release publicado responde versão vazia = silêncio) e POST só de aparelho matriculado (valida formato de versão, link obrigatoriamente https, notas ≤4000). Tabela `app_versao` de 1 linha (o sistema guarda só a atual), criada sozinha no deploy.
+- **App:** card próprio `aviso-update-card` (DOM próprio, não encosta em nada); comparador de versão que entende 5.25.0 > 5.24.99; chave 'visto' por versão no aparelho; qualquer um dos dois botões marca como visto — o resto é silêncio até a próxima publicação. Se a nuvem estiver fora ou sem release: nada aparece, ninguém percebe.
+- **Configurações:** card 'Publicar nova atualização' (versão + link https + notas) — publica pela nuvem com a trava do aparelho, sem console.
+- **Testes:** test_ajustes_v52423.js (28 asserts: worker, sininho, comparador funcional, publicador, bundle PC + CELULAR, carimbos). **Suíte: 148/0/2** (as 2 = infra ausente no sandbox, de sempre).
+- **Receita de uso (sem console):** (1) eu empurro a versão nova; (2) ele roda `atualizar_motor_nuvem.cmd` 1x; (3) sobe o .exe num lugar com link https fixo; (4) em Configurações preenche o card e clica Publicar. Detalhe a combinar: onde hospedar o .exe — Pages não leva >25MB com folga e o repo vai ficar privado (mata link do GitHub Releases); a porta certa é um bucket R2 criado UMA VEZ (5 min, rasoável). Fica pro próximo passo com o ok dele.
+
 ## O QUE FOI ENTREGUE — v5.24.22 (2026-09-14, pacote 2A do RELATORIO GRANDE)
 
 **F1 — Contratos "mostrar todos" + padrão hoje:** nova opção "Hoje (criados
