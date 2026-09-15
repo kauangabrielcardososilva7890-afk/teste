@@ -345,7 +345,7 @@ window.abrirOrcamento=function(id, _origem){
     if(alterou && typeof saveDB==='function') saveDB();
     if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
   }
-  // v5.24.31 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // v5.24.32 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
   // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
   // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
   // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.

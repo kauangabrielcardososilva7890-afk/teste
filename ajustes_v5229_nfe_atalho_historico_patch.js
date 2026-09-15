@@ -53,7 +53,7 @@ function injetarNaBarra(root,id,texto,fn){
 function injetarVendas(){
   const view=document.getElementById('view-vendas');
   if(!view) return;
-  // v5.24.31 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
+  // v5.24.32 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
   // consultar notinha. Atalho continua nos históricos de leitura.
   (function(){ var morto=document.getElementById('btn-nfe-venda-lista'); if(morto) morto.remove(); })();
   return;

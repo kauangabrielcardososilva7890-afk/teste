@@ -1,4 +1,4 @@
-// test_ajustes_v52427.js — v5.24.31: leva do pedido dele:
+// test_ajustes_v52427.js — v5.24.32: leva do pedido dele:
 // P5 (cabeçalho 'Editar' não ordena mais), .cmd não fecha com tecla,
 // excluir aparelho-lixo DE VEZ (bloqueado primeiro, nunca a si mesmo),
 // MONITOR DE IMPRESSORAS fase 1 (SNMP no .exe) + HUB P8 no Parque.
@@ -60,8 +60,8 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('hub-impressora-modal') && bundle.includes('PARQUE_MONITOR_V52427'), 'bundle: monitor+hub dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('hub-impressora-modal'), 'bundle do CELULAR igual');
 ok(JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8')).includes('ajustes_v52232_parque_monitor_hub_patch.js'), 'manifest: novo patch registrado');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.31'"), 'index 5.24.31');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.31<'), 'rodapé v5.24.31');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.32'"), 'index 5.24.32');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.32<'), 'rodapé v5.24.32');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.31 (P5 + .cmd sem fechar + excluir lixo + monitor SNMP + hub P8).');
+console.log('\nTudo OK — v5.24.32 (P5 + .cmd sem fechar + excluir lixo + monitor SNMP + hub P8).');

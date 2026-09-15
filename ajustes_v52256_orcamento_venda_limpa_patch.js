@@ -7,7 +7,7 @@
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }

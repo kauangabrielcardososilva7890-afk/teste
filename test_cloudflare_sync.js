@@ -5,7 +5,7 @@ const html=fs.readFileSync('index.html','utf8');
 const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 console.log('== CLOUDFLARE SYNC UI ==');
-ok("usa endpoint workers.dev correto (v5.24.31: subdominio virou digicopyonline — nome pessoal saiu da URL a pedido dele)",/digicopy-sync-api\.digicopyonline\.workers\.dev/.test(code));
+ok("usa endpoint workers.dev correto (v5.24.32: REVERTIDO a pedido dele — subdominio abandonado, endereco original)",/digicopy-sync-api\.kauangabrielcardososilva7890\.workers\.dev/.test(code));
 ok('token individual fica em chave local própria',/digicopy_cloud_device_token_v1/.test(code));
 ok('segredo não é salvo no localStorage',!/setItem\([^\n]*secret/i.test(code));
 ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test(code)&&/\/v1\/invites/.test(code)&&/\/v1\/enroll/.test(code)&&/\/v1\/recover/.test(code));

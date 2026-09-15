@@ -1,4 +1,4 @@
-// test_ajustes_v52424.js — v5.24.31: pedido dele "site próprio de atualizações".
+// test_ajustes_v52424.js — v5.24.32: pedido dele "site próprio de atualizações".
 // Nuvem guarda o HISTÓRICO (app_releases, 1 linha por versão) e o worker serve
 // a página pública /atualizacoes: cada versão com as notas (o patch escrito)
 // e o botão "Baixar esta versão". Sininho continua anunciando só uma vez.
@@ -20,7 +20,7 @@ ok(wk.includes("url.pathname === '/v1/app-releases'") && wk.includes("url.pathna
 
 // SITE PÚBLICO
 ok(wk.includes("url.pathname === '/atualizacoes'"), 'site: rota pública /atualizacoes');
-ok(wk.includes('DigiCopy Downloads'), 'site: título = só o nome do site (supersede v5.24.31: pedido dele, página animada DigiCopy Downloads)');
+ok(wk.includes('DigiCopy Downloads'), 'site: título = só o nome do site (supersede v5.24.32: pedido dele, página animada DigiCopy Downloads)');
 ok(wk.includes('Baixar a atualização (.exe)'), 'site: botão de baixar grande e direto (supersede v52428)');
 ok(wk.includes("text/html; charset=utf-8"), 'site: responde HTML de verdade');
 ok(wk.includes('Nenhuma atualização disponível agora'), 'site: estado vazio bonitinho (supersede v52428)');
@@ -38,10 +38,10 @@ ok(av.includes('Site onde baixam (mostra só o que está ativo)'), 'app: texto e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes("'/atualizacoes'") && bundle.includes('pub-upd-site'), 'bundle: link do site dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.31'"), 'index 5.24.31');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.31<'), 'rodapé v5.24.31');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.31"'), 'package.json 5.24.31');
-ok(wk.includes("'5.24.31'"), 'worker carimbado 5.24.31');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.32'"), 'index 5.24.32');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.32<'), 'rodapé v5.24.32');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.32"'), 'package.json 5.24.32');
+ok(wk.includes("'5.24.32'"), 'worker carimbado 5.24.32');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.31 (site próprio de atualizações + histórico na nuvem).');
+console.log('\nTudo OK — v5.24.32 (site próprio de atualizações + histórico na nuvem).');

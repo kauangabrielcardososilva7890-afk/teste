@@ -2834,6 +2834,13 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Sequência obrigatória passada a ele (qualquer inversão apaga a nuvem das máquinas):** 1º trocar no painel (Workers & Pages → canto direito workers.dev → Manage/Change subdomain → digicopyonline) → esperar ok; 2º abrir https://digicopy-sync-api.digicopyonline.workers.dev/v1/status no navegador (tem que responder ok:true — NÃO precisa redeploy, a URL é da conta); 3º rodar o cmd do motor; 4º GERAR_EXE v5.24.31; 5º instalar em TODOS os PCs da loja na sequência (até isso a sincronização fica cega nos PCs velhos).
 - **v52265 volta a figurar como falha-aceita de infra (acorn ausente no sandbox) — baseline preservado 153/0/2.**
 
+## v5.24.32 — 2026-09-14 — REVERSÃO do endereço + diagnóstico do Passo 4 em branco + aba Certificados catalogada
+
+- **Causa do 'Passo 4 vazio' (log dele):** o meu varre trocou até o curl de checagem dentro do atualizar_motor_nuvem.cmd pra digicopyonline (que ainda não existia) — deploy estava OK, só a CHECAGEM mirava endereço fantasma. Não foi falha dele nem do motor.
+- **REVERSÃO COMPLETA a pedido dele ('ehh... não é só criar um site novo?'):** subdomínio volta a kauangabrielcardososilva7890 em tudo (16 arquivos+testes). Nome bonito passa a ser: **domínio próprio quando vender**. Ele NÃO vai ao painel de subdomínio — caminho arquivado.
+- **IDEIA DELE ADOTADA COMO O DESENHO OFICIAL (substitui 'canais'):** no card Publicar Atualização, destino escolhido na hora: [para todos] / [escolher clientes numa LISTA com CNPJ+nome] / [só meu pessoal da loja]. Site passa a pedir identificação (ou link dedicado) e só libera o que for pra você. Vira versão dedicada depois do P7. Garantia repetida: edição loja nunca baixável por terceiros.
+- **NF aba CERTIFICADOS catalogada (6 fotos):** A3 por Número de Série (token/smartcard; o dele tem serial preenchido — é o certificado renovado); A1 por arquivo PFX+senha (campos vazios); e as 5 bibliotecas do motor ACBr — SSLType LT_TLSv1_2 ✓ (TLS 1.2, o exigido pela SEFAZ), SSLLib libWinCrypt, CryptLib cryWinCrypt, HttpLib httpWinHttp, XMLSignLib xsLibXml2 = o combo moderno 'Windows cuida do certificado criptografia e assinatura' + botões Padrão Cert. A3/A1. No nosso: cert A3 do Windows + fallback A1 pfx, senha no cofre do sistema, TLS 1.2 fixo.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.

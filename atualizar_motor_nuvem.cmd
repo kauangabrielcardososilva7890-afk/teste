@@ -45,7 +45,7 @@ if errorlevel 1 (
 echo.
 echo Passo 4/4 - Qual versao ficou no ar AGORA:
 echo.
-curl -s "https://digicopy-sync-api.digicopyonline.workers.dev/health"
+curl -s "https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/health"
 echo.
 echo.
 echo ^(Tem que aparecer "versao":"5.24.8" ou mais novo na linha de cima.^)

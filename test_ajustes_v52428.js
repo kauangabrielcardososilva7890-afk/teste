@@ -1,4 +1,4 @@
-// test_ajustes_v52428.js — v5.24.31: pedido dele (item 4 da foto-rodada):
+// test_ajustes_v52428.js — v5.24.32: pedido dele (item 4 da foto-rodada):
 // O PORTAL DE ATUALIZAÇÕES vira dele e só dele — anexa o .exe do próprio PC,
 // notas + tutorial opcional, histórico completo SÓ NO SISTEMA (o site fora
 // mostra só o que tá vivo), reativar por tempo (1d/7d/∞) ou desligar, editar,
@@ -50,10 +50,10 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-tutoria
 ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm install') && fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm run build:win') && fs.readFileSync('GERAR_EXE.cmd','latin1').includes('explorer'), 'GERAR_EXE.cmd v2: npm install primeiro + tecla qualquer abre DIST (pedido condicionado dele: EXCEÇÃO liberada ao pause nele)');
 for (const cmd of ['GERAR_EXE.cmd','atualizar_motor_nuvem.cmd','ver_gasto_nuvem.cmd']) ok(fs.readFileSync(cmd,'latin1').includes('\r\n'), cmd + ': CRLF (bug achado: LF puro faz o .cmd engasgar/fechar no Windows)');
 
-ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.31: só o nome do site + animações + faixa 1-2-3 explicativa');
+ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.32: só o nome do site + animações + faixa 1-2-3 explicativa');
 
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.31'"), 'index 5.24.31');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.31<'), 'rodapé v5.24.31');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.32'"), 'index 5.24.32');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.32<'), 'rodapé v5.24.32');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.31 (portal de atualizações só dele + arquivo no R2 + site vivo).');
+console.log('\nTudo OK — v5.24.32 (portal de atualizações só dele + arquivo no R2 + site vivo).');
