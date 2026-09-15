@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.29';
+const WORKER_VERSION = '5.24.30';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -786,7 +786,7 @@ async function handleActivity(request, env) {
 }
 
 async function handleDeleteDevice(request, env) {
-  // v5.24.29 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
+  // v5.24.30 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
   // só apaga APARELHO JÁ BLOQUEADO e nunca o próprio; dados sincronizados
   // ficam intactos (a tabela devices é só cadastro de autorização).
   const admin = await requireAdmin(request, env);
@@ -794,7 +794,7 @@ async function handleDeleteDevice(request, env) {
   const deviceId = cleanText(body.deviceId, 80);
   if (!deviceId) throw new ApiError(400, 'DEVICE_ID_REQUIRED', 'Informe o aparelho.');
   if (deviceId === admin.id) throw new ApiError(400, 'CANNOT_DELETE_SELF', 'Este computador não pode apagar a si mesmo.');
-  // v5.24.29 relaxado a pedido dele (2ª cobrança: 'continua a mesma coisa,
+  // v5.24.30 relaxado a pedido dele (2ª cobrança: 'continua a mesma coisa,
   // só consigo bloquear'): exclui DIRETO qualquer aparelho, menos o próprio.
   const result = await env.DB.prepare('DELETE FROM devices WHERE id = ?').bind(deviceId).run();
   if (!result.meta || Number(result.meta.changes) !== 1) {
@@ -933,18 +933,18 @@ async function resumoDaNuvem(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
-// v5.24.29 — sininho de atualização nova (pedido dele): 1 linha com a versão
+// v5.24.30 — sininho de atualização nova (pedido dele): 1 linha com a versão
 // publicada + url do .exe + notas. Leitura pública; escrita = aparelho
 // matriculado (mesma trava do sync). Recuo se algum dia irritar: apagar a
 // linha e o sininho some, sem mexer no resto.
 async function garantirTabelaAppVersao(env){
   if (env.__APP_VERSAO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_versao (id INTEGER PRIMARY KEY CHECK (id = 1), versao TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.29 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
+  // v5.24.30 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
   // as versões publicadas (uma linha por versão; republicar mesma versão
   // atualiza a linha, sem duplicar). O sininho continua lendo só a atual.
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_releases (versao TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.29 — PORTAL DE ATUALIZAÇÕES dele: ativa/desativa link, oculta,
+  // v5.24.30 — PORTAL DE ATUALIZAÇÕES dele: ativa/desativa link, oculta,
   // tutorial por versão, expiração escolhida, marca se o .exe já subiu.
   const addCol = async (sql)=>{ try{ await env.DB.exec(sql); }catch(e){ /* coluna já existe */ } };
   await addCol(`ALTER TABLE app_releases ADD COLUMN ativa INTEGER NOT NULL DEFAULT 1`);
@@ -974,7 +974,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.29 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.30 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -999,7 +999,7 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.29 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.30 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
@@ -1291,7 +1291,7 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
-// v5.24.29 — publicação "viva" = ativa, não oculta e não vencida nas opções
+// v5.24.30 — publicação "viva" = ativa, não oculta e não vencida nas opções
 async function publicacaoViva(env){
   const r = await env.DB.prepare(`SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC LIMIT 1`).bind(Date.now()).first();
   return r || null;
@@ -1299,13 +1299,13 @@ async function publicacaoViva(env){
 function linkDownload(origin, versao){ return origin + '/dl/' + encodeURIComponent(versao) + '.exe'; }
 
   if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
-    // v5.24.29 — histórico em JSON também (pras telas do sistema, se quiser).
+    // v5.24.30 — histórico em JSON também (pras telas do sistema, se quiser).
     await garantirTabelaAppVersao(env);
     const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, ativa, oculta, expira_em AS expiraEm, tem_arquivo AS temArquivo FROM app_releases ORDER BY publicado_em DESC').all();
     return json({ ok: true, releases: lista.results || [] });
   }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
-    // v5.24.29 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.24.30 — leitura pública do sininho de atualização (versão + link + notas).
     await garantirTabelaAppVersao(env);
     const viva = await publicacaoViva(env);
     if (viva) {
@@ -1315,13 +1315,13 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
   }
   if (request.method === 'POST' && url.pathname === '/v1/app-release') {
-    // v5.24.29 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
+    // v5.24.30 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
     const adminUser = await requireAdmin(request, env);
     const body = await request.json();
     const origin = new URL(request.url).origin;
     const acao = String((body && body.action) || 'publicar').toLowerCase();
     const versao = String((body && body.versao) || '').trim().replace(/^v/i, '');
-    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.29.');
+    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.30.');
     const horas = Number((body && body.expiraHoras) || 0) || 0; // 0 = ilimitado
     const expira = horas > 0 ? Date.now() + horas * 3600 * 1000 : 0;
     await garantirTabelaAppVersao(env);
@@ -1364,7 +1364,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'POST' && url.pathname === '/v1/release-file') {
-    // v5.24.29 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
+    // v5.24.30 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
     const admin2 = await requireAdmin(request, env);
     if (!env.R2) throw new ApiError(503, 'R2_NAO_LIGADO', 'O bucket digicopy-downloads não está ligado no motor. Crie-o no painel (R2) e rode o atualizar_motor_nuvem.cmd.');
     const v = String(url.searchParams.get('versao') || '').replace(/^v/i, '');
@@ -1380,7 +1380,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'GET' && url.pathname.startsWith('/dl/')) {
-    // v5.24.29 — DOWNLOAD direto do .exe, porta da própria nuvem.
+    // v5.24.30 — DOWNLOAD direto do .exe, porta da própria nuvem.
     if (!env.R2) return new Response('Arquivos ainda não ligados (falta criar o bucket R2 no painel).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     const nome = decodeURIComponent(url.pathname.slice(4));
     const v = nome.replace(/\.exe$/i, '');
@@ -1394,7 +1394,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
 
   if (request.method === 'GET' && url.pathname === '/atualizacoes') {
-    // v5.24.29 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
+    // v5.24.30 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
     // Só aparece o que está VIVO (ativo, não oculto, não vencido) — normalmente
     // a versão atual. Histórico fica só dentro do sistema (portal é só dele).
     await garantirTabelaAppVersao(env);
@@ -1406,15 +1406,15 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     const blocos = itens.map((r, i) => {
       const href = (r.temArquivo ? linkDownload(origin, r.versao) : (r.url || ''));
       return `
-      <section class="rel ${i === 0 ? 'atual' : ''}">
+      <section class="rel ${i === 0 ? 'atual' : ''}" style="animation-delay:${i * 120}ms">
         <div class="rel-head">
-          <span class="v">Atualização v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">mais recente</span>' : ''}
+          <span class="v">v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">mais recente</span>' : ''}
           <span class="data">${esc(fmt(r.publicadoEm))}</span>
         </div>
         ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : ''}
         ${r.tutorial ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4><pre class="passo">${esc(r.tutorial)}</pre></div>` : ''}
-        ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener">⬇ Baixar a atualização (.exe)</a>` : '<p class="sem-arq">O arquivo ainda não subiu — tente em alguns minutos.</p>'}
-        <p class="depois">É só baixar e executar por cima da instalação atual — sem extrair, sem perder nada.</p>
+        ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener">⬇ Baixar a atualização (.exe)</a>` : '<p class="sem-arq">⏳ O arquivo ainda não subiu — volte em alguns minutos.</p>'}
+        <p class="depois">É só baixar e executar <b>por cima</b> da instalação atual — sem extrair, sem perder nada.</p>
       </section>`;
     }).join('\n');
     const html = `<!DOCTYPE html>
@@ -1422,41 +1422,67 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DigiCopy — Baixar atualização</title>
+<title>DigiCopy Downloads</title>
 <style>
   :root{color-scheme:light}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f1f5ff;color:#0f172a;padding:0 0 48px}
-  header{background:#0a1e8a;color:#fff;padding:28px 20px 24px;text-align:center}
-  header h1{font-size:22px;font-weight:900;letter-spacing:.2px}
-  header p{opacity:.85;font-size:12.5px;margin-top:6px}
-  main{max-width:720px;margin:24px auto 0;padding:0 14px;display:flex;flex-direction:column;gap:14px}
-  .rel{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(10,30,138,.06)}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#eef2ff,#f8fafc 55%,#ecfeff);min-height:100vh;color:#0f172a;padding:0 0 48px}
+  header{position:relative;overflow:hidden;color:#fff;padding:44px 20px 90px;text-align:center;background:linear-gradient(115deg,#1e1b4b,#0a1e8a 45%,#155e75)}
+  header::before,header::after{content:'';position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:float 9s ease-in-out infinite}
+  header::before{width:280px;height:280px;background:#6366f1;top:-90px;left:-70px}
+  header::after{width:240px;height:240px;background:#22d3ee;bottom:-110px;right:-60px;animation-delay:-4.5s}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(26px,18px) scale(1.12)}}
+  header .in{position:relative;z-index:1}
+  header h1{font-size:clamp(24px,5vw,34px);font-weight:900;letter-spacing:.4px;animation:entra .7s ease both}
+  header p{opacity:.9;font-size:14px;margin-top:8px;animation:entra .7s .15s ease both}
+  @keyframes entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .passos{max-width:760px;margin:-56px auto 0;padding:0 14px;position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .passo-card{flex:1 1 150px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 12px;text-align:center;box-shadow:0 12px 30px rgba(10,30,138,.10);animation:entra .7s .3s ease both}
+  .passo-card:nth-child(2){animation-delay:.42s}.passo-card:nth-child(3){animation-delay:.54s}
+  .passo-card .num{display:inline-flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;background:#0a1e8a;color:#fff;font-weight:900;font-size:14px}
+  .passo-card b{display:block;margin-top:8px;font-size:13.5px}
+  .passo-card span.d{display:block;margin-top:3px;font-size:11.5px;color:#64748b;line-height:1.4}
+  main{max-width:760px;margin:22px auto 0;padding:0 14px;display:flex;flex-direction:column;gap:16px}
+  .rel{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:20px;box-shadow:0 10px 28px rgba(10,30,138,.06);animation:entra .7s both;transition:transform .25s ease,box-shadow .25s ease}
+  .rel:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(10,30,138,.13)}
   .rel.atual{border:2px solid #0a1e8a}
   .rel-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .v{font-size:17px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
-  .selo-novo{background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .v{font-size:19px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
+  .selo-novo{position:relative;background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;animation:pisca 2.4s ease infinite}
+  @keyframes pisca{0%,100%{box-shadow:0 0 0 0 rgba(10,30,138,.35)}50%{box-shadow:0 0 0 7px rgba(10,30,138,0)}}
   .data{margin-left:auto;font-size:11.5px;color:#64748b}
-  .notas{margin-top:12px;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.55;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
-  .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px}
-  .tutorial h4{font-size:12.5px;color:#92400e;margin-bottom:8px}
-  .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:12.5px;line-height:1.6;color:#334155}
-  .baixar{display:flex;align-items:center;justify-content:center;margin-top:14px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:16px;padding:16px 22px;border-radius:14px;box-shadow:0 10px 24px rgba(22,163,74,.25)}
-  .depois{margin-top:10px;font-size:11.5px;color:#64748b;text-align:center}
-  .sem-arq{margin-top:12px;font-size:12px;color:#b45309;font-style:italic}
-  .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:34px;text-align:center;color:#64748b;font-size:14px}
-  footer{text-align:center;margin-top:26px;font-size:11px;color:#94a3b8}
+  .notas{margin-top:12px;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13.5px;line-height:1.6;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+  .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px}
+  .tutorial h4{font-size:13px;color:#92400e;margin-bottom:8px}
+  .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.65;color:#334155}
+  .baixar{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:18px 24px;border-radius:16px;box-shadow:0 12px 26px rgba(22,163,74,.30);animation:pulsa 2.2s ease-in-out infinite;transition:transform .18s ease}
+  .baixar:hover{transform:scale(1.022)}
+  .baixar::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);animation:brilho 2.8s ease infinite}
+  @keyframes pulsa{0%,100%{box-shadow:0 12px 26px rgba(22,163,74,.30),0 0 0 0 rgba(22,163,74,.35)}50%{box-shadow:0 12px 26px rgba(22,163,74,.30),0 0 0 12px rgba(22,163,74,0)}}
+  @keyframes brilho{0%{left:-80%}60%,100%{left:120%}}
+  .depois{margin-top:12px;font-size:12.5px;color:#64748b;text-align:center}
+  .sem-arq{margin-top:12px;font-size:12.5px;color:#b45309;font-style:italic}
+  .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:20px;padding:40px;text-align:center;color:#64748b;font-size:14.5px;animation:entra .7s both}
+  footer{text-align:center;margin-top:30px;font-size:11.5px;color:#94a3b8;line-height:1.6}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>DigiCopy — Baixar atualização</h1>
-  <p>Baixou, executou, atualizou. Se tiver passo a passo ele aparece aqui antes do botão.</p>
+  <div class="in">
+    <h1>DigiCopy Downloads</h1>
+    <p>Aqui você baixa a atualização oficial do sistema. Baixou, executou, atualizou.</p>
+  </div>
 </header>
+<div class="passos">
+  <div class="passo-card"><span class="num">1</span><b>Baixar</b><span class="d">Aperte o botão verde da versão mais recente.</span></div>
+  <div class="passo-card"><span class="num">2</span><b>Executar por cima</b><span class="d">Abra o arquivo baixado. Instala em cima da versão atual, sem apagar nada.</span></div>
+  <div class="passo-card"><span class="num">3</span><b>Pronto</b><span class="d">Abra o sistema normal: seus dados continuam todos no lugar.</span></div>
+</div>
 <main>
-  ${blocos || '<div class="vazio">Nenhuma atualização disponível agora. Quando sair uma nova, ela aparece aqui com o botão de baixar.</div>'}
+  ${blocos || '<div class="vazio">🕓 Nenhuma atualização disponível agora.<br>Quando sair uma nova, ela aparece aqui com o botão verde de baixar.</div>'}
 </main>
-<footer>Página mostrada pela própria nuvem do sistema. Versões antigas não aparecem aqui.</footer>
+<footer>Página mostrada pela própria nuvem do sistema.<br>Só aparece o que está vigente — versões antigas e desligadas não ficam aqui.</footer>
 </body>
 </html>`;
     return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });

@@ -95,7 +95,7 @@ function inserirAssinatura(xml, signature){
 }
 
 function certInfoBasicas(cert){
-  // v5.24.29 — o funil para LIMPO no certificado: quem tenta assinar com A1
+  // v5.24.30 — o funil para LIMPO no certificado: quem tenta assinar com A1
   // vencido recebe essa mensagem em letras miúdas, com a data exata do vencimento.
   const val = cert && cert.validity;
   return {

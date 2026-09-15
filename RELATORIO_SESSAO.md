@@ -2798,6 +2798,17 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Bastonete do deploy dele confirmado:** motor no ar com env.R2 (digicopy-downloads) e versao 5.24.28 — portal de atualizações ATIVO de fato.
 - **Teste v52427 supersedido com motivo anotado. Suíte: 153/0/2.**
 
+## v5.24.30 — 2026-09-14 — Site repaginado (só DigiCopy Downloads) + GERAR_EXE.cmd + certificado instalado ✅ + NF aba Geral catalogada
+
+- **SITE NO FOGUETE:** a página /atualizacoes virou **DigiCopy Downloads** (só o nome do site, pedido dele): header animado, 3 cartões '1 Baixar → 2 Executar por cima → 3 Pronto', card da atualização com selo pulsante, botão verde com brilho/pulsação, prévia honesta quando o arquivo não subiu, prefers-reduced-motion respeitado.
+- **GERAR_EXE.cmd:** um duplo clique na pasta gera o instalador (npm run build:win), diz onde está (dist/) e lembra o passo seguinte (subir pelo card 'Publicar atualização' no sistema). Era a resposta certa do 'não exclui ainda': o Excluir de vez direto é app+nuvem de v5.24.29+ → roda cmd + gera .exe + instala.
+- **CERTIFICADO RENOVADO E INSTALADO ✅ (foto dele):** fim da pendência 'esquece'. Confirma SEFAZ em produção autorizada e destrava o caminho de emissão quando a fase chegar.
+- **R2 URL pública pub-e1a98843...r2.dev:** isso é o Public Access do bucket; avisado a ele pra DESLIGAR (Settings → Public Access → Disable) — os downloads passam pelo /dl do worker com controle; o público nunca deve bater direto no bucket.
+- **NF aba GERAL catalogada (12 fotos dele):** Ambiente 1-Produção/2-Homologação; DANFE 0-sem geração / 1-normal retrato / 2-paisagem / 3-simplificado / 4-NFC-e / 5-NFC-e msg; Frete Padrão 9-Sem Frete (opções 0-4,9 por emitente/destinatário/terceiros); Modelo 55-NF-e / 65-NFC-e (padrão 55); Processamento 0-Assíncrono/1-Síncrono (dele=Síncrono); Processo de Emissão 0-3 (dele=0 app do contribuinte); CRT 1-Simples Nacional (opções 1-4 incl. MEI); Regime Especial 1-Microempresa (lista 0-6 incl. MEI/Soc. Profissionais); Tipo de Emissão 1-Normal (contingências FS-IA/SCAN/DPEC/FS-DA/SVC-AN/SVC-RS/off-line 9); Tipo de Operação 0-Não se aplica (lista 0-9 incl. presencial/internet/entrega fora); Versão 4.00 (opção 3.10 legada); Série 1. Todos os campos+valores viram preset da config NF do sistema, com homologação como porta de teste.
+- **Próximas fotos (pedidas):** abas Outras, Tributação, Mensagens, FCP, Inutilizar, NFCe, Autorizações, Reforma Tributária — depois os menus.
+- **Próximo de verdade (decreto dele '4 = faz logo'): P7** serial-primeiro + remaneio, na versão seguinte.
+- **Suíte: 153/0/2.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
