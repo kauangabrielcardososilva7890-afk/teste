@@ -2880,6 +2880,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Menu 'Novo' abre:** Gerar NFe Avulsa / Gerar de NFe **Devolução para Cliente** / Gerar de NFe **Devolução para Fornecedor** / Gerar NFCe / Importar Declaração de Importação. No nosso: mesmos 4 caminhos + importação DI como v2.
 - **Responder a ele:** Enviar XML — ainda NÃO chegou a tela em si (só o nome no submenu); falta foto da tela aberta (destino escritório/cliente, campos). Venda-NF ele já avisou que manda na próxima.
 
+## NF menu ENVIAR XML ('Preparar Arquivos Fiscais') catalogado (1 foto) + aviso da virada confirmado — 2026-09-15
+
+- **Aviso do painel ao renomear subdomínio (foto/log dele):** o antigo para de rotear NA HORA e o novo pode levar alguns minutos pra aceitar — comportamento ESPERADO, está tudo bem; confirmar e seguir.
+- **Tela 'Preparar Arquivos Fiscais':** Selecione o Mês (agosto/2026), checkbox 'Incluir PDFs', botão Preparar Arquivos + link 'Acessar Pasta'. Matriz NFe/NFCe × contadores: Geradas / Canceladas / Corrigidas (NF-e só; NFC-e = 'Não Suportado') / **XML Não Encontrados** (com 'Ver' por coluna). Aviso: se houver XML não encontrado na consulta, procurar em OUTROS TERMINAIS antes de enviar (multi-PC manual!). Botão final cinza: **Enviar para Escritório**.
+- **É exatamente o fluxo 'zip do mês pro contador' que já estava no desenho — E o aviso de outros terminais é a prova viva do problema que nossa sincronização resolve: no nosso, os XMLs de TODOS os PCs caem na mesma nuvem/pasta do mês automaticamente, e o pacote pro escritório sai completo sem caça ao terminal.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
