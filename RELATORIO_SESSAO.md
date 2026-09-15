@@ -2782,6 +2782,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
+
+- **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
+- **A versão SÓ ANDA PRA FRENTE.** Não existe 'prendeu no 9': 5.24.9 → 5.24.10 → 5.25.0. A 2ª casa é o relatório grande; a 3ª anda no dia a dia dele.
+- **TODA atualização sai com os 3 links na resposta: (1) link teste Pages, (2) zip da branch, (3) site de download das atualizações** (+ lembrete do deploy quando o motor mudar). Sem exceção — esquecimento histórico 5.24.25–5.24.28 reconhecido e anotado.
+
 ## O QUE FOI ENTREGUE — v5.24.28 (2026-09-14, portal de atualizações SÓ DELE, do jeito que ele desenhou)
 
 **Pedido dele (item 4 da rodada de fotos):** portal de publicar atualizações só pra ele — anexar o .exe do próprio PC, escrever notas e (opcional) tutorial; histórico completo pra ele; site de fora só pra baixar a atual; links antigos MORTOS; reativar por tempo (1d/7d) ou ilimitado, e desligar quando quiser; editar/ocultar/excluir.
