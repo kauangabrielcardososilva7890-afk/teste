@@ -2817,6 +2817,17 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - Lupa do CRT abre site de ajuda do fornecedor antigo (arpulse/acsoluti 'emitir certificado') — inofensivo; no sistema novo esses campos terão explicação embutida, sem site externo.
 - Suíte após hotfix: 153/0/2 (3 novos asserts CRLF somados).
 
+## NF — mais 5 abas catalogadas (2026-09-14) + decisões do site + GERAR_EXE v2
+
+- **AUTORIZAÇÕES:** campo único 'CNPJ/CPF de quem pode baixar XML' (até 10, vírgula) = terceiros autorizados junto à SEFAZ a baixar seus XMLs (uso típico: contador). No nosso desenho: config simples 'CNPJ/CPF autorizados'.
+- **FCP:** Fundo de Combate à Pobreza por UF (tabela estado×alíquota, padrão 2%, NT 003.2015 v1.10) + 'Alterar Alíquota' por estado. Aplica só venda interestadual a consumidor final; contador confirma. No nosso: tabela-estado embutida padrão 2%.
+- **MENSAGENS (Textos Padrões):** 3 caixas — (a) Informações Adicionais do Interesse do Contribuinte (texto livre que sai em toda nota), (b) Texto Obrigatório da Carta de Correção (o dele tem o modelo de crédito de ICMS Simples Nacional com valor/alíquota — personalizado com juízo do contador), (c) Justificativa da entrada em contingência (texto que explica porque emitiu fora do ar). No nosso: 3 campos idênticos, alertando que carta de correção NÃO altera valor/item.
+- **TRIBUTAÇÃO:** perfil tributário PADRÃO dentro do estado (1) e fora do estado (2) com lupa para cadastrar perfis; opção 'Exibir Valor Aproximado Total dos Tributos nas Informações Adicionais dos Itens' + 2 formatos de mensagem (Federal/Estadual/Municipal junto vs separado). No nosso: seletor dentro/fora + perfis do contador.
+- **REFORMA TRIBUTÁRIA:** ativar reforma + Indicador de Intermediador (0=site próprio/teleatendimento/venda direta; 1=marketplace/plataforma/app parceiro). Antecipação CBS/IBS 2026 — dele vende direto (0).
+- **Ainda faltam:** Inutilizar, NFCe, Certificados + menus operacionais (Nota Fiscal com filtros, Perfil Tributário, Manifestação, NCM, Enviar XML, Venda-NF). Ele avisou: alguns menus são 1 foto só, outros vêm depois.
+- **GERAR_EXE v2:** npm install antes + 'aperte qualquer tecla abre a DIST' (EXCEÇÃO documentada à regra no-pause, pedido explícito dele só pra este arquivo).
+- **Decisões do SITE anotadas:** (1) nome na URL = subdomínio da conta workers.dev — opções dele: domínio próprio (recomendado) ou trocar subdomínio (grátis, mexe na URL da nuvem inteira → exige atualizar exe em todas as máquinas da loja logo depois); (2) imagens no tutorial = feature nova da fila (anexar no card de publicar, R2, [img] no texto); (3) 4 sistemas → arquitetura de CANAIS (coluna canal em app_releases: loja/comercial/celular/amostra) cada um com sua porta; (4) garantia: a edição LOJA nunca vai parar para download público — hoje o site é VAZIO até ele publicar, e quando canais chegarem, canal loja fica restrito (distribuição de mão em mão) e o público só ve o canal comercial.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
