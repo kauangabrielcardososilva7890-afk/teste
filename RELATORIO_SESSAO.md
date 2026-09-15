@@ -2782,6 +2782,16 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## MAPA DOS 5 SISTEMAS (anotado por pedido dele, 2026-09-14 — sem construir nada)
+
+1° **Principal** — o sistema normal de PC (o comercializável).
+2° **Celular** — o sistema de celular.
+3° **Atualizações** — programa separado só pra lançar/baixar atualização (extraído na prática em v5.24.28+ como infra; virá com nome/atualizador próprio).
+4° **Pessoal da loja** — o principal adaptado: tem funções que o comerciável não tem e vice-versa. **É NESTE QUE TOCO HOJE** (v5.24.28 em diante = edição loja).
+5° **Amostra/teste** — demo pra cliente testar.
+**Ordem dele:** mexe agora só no 4° e acaba de desenhar o 3°; os outros ficam travados até esses dois estarem perfeitos.
+**Sobre o 5° (pergunta dele 'é realmente necessário?'):** minha resposta anotada = hoje NÃO como sistema separado. Quando precisar, vira um MODO dentro do 1° (banco de brinquedo, selo 'VERSÃO DE DEMONSTRAÇÃO', sem sincronizar com a nuvem real) — muito mais barato que manter uma 5ª fonte.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
