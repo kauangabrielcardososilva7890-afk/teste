@@ -234,7 +234,7 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  // v5.24.22 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // v5.24.23 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
   // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
   // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
   // por onde "salvei e o login não entra" escapava em silêncio.
