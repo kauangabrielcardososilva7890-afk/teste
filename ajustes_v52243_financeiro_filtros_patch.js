@@ -110,7 +110,7 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
-// v5.24.26 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// v5.24.27 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
 // Remover filtro zera data/tipo/ordem e reaplica limpo.
 window.finAplicarFiltroV52421 = function(){
   var f=document.getElementById('fin-btn-filtrar');
@@ -225,7 +225,7 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
-    // v5.24.26 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // v5.24.27 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
     // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
     // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
     // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).

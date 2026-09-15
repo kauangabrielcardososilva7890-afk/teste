@@ -10,7 +10,8 @@ cd /d "%~dp0cloudflare-worker"
 if errorlevel 1 (
   echo NAO ACHEI a pasta cloudflare-worker aqui do lado.
   echo Rode este arquivo dentro da pasta do sistema, por favor.
-  pause
+  echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+  cmd /k >nul
   exit /b 1
 )
 echo [1/3] Escritas e leituras por dia (ultimos 7 dias):
@@ -33,4 +34,6 @@ echo.
 echo ==========================================================
 echo  Pronto! Tira uma foto desta tela INTEIRA e me manda.
 echo ==========================================================
-pause
+echo.
+echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+cmd /k >nul

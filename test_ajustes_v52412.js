@@ -1,4 +1,4 @@
-// test_ajustes_v52412.js — v5.24.26: notinha FATURADA → Imprimir inacessível
+// test_ajustes_v52412.js — v5.24.27: notinha FATURADA → Imprimir inacessível
 // Causa (diagnosticada no código): a trava anti-editção lockVendaFaturadaUI
 // (vendas_notinhas_fix_patch.js) desliga botões cujo onclick contenha
 // "salvar|faturar|item|..." — e o Imprimir do editor chama
@@ -13,7 +13,7 @@ function ok(cond, msg) {
 
 const fix = fs.readFileSync('vendas_notinhas_fix_patch.js', 'utf8');
 
-ok(fix.includes('v5.24.26'), 'carimbo v5.24.26 na trava corrigida');
+ok(fix.includes('v5.24.27'), 'carimbo v5.24.27 na trava corrigida');
 ok(fix.includes('IMPRIMIR NUNCA É EDI'), 'comentário explica a isenção (imprimir não é edição)');
 ok(fix.includes('const iaDesligar'), 'sweep refatorada para decidir duas vezes (iaDesligar)');
 ok(fix.includes('if (iaDesligar && ('), 'isenção só se aplica a quem IA ser desligado');
@@ -36,21 +36,21 @@ ok(fix.includes('Estornar'), 'botão Estornar da faturada mantido');
 
 // Fix realmente dentro do bundle que ele baixa (PC + celular = mesma origem).
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
-ok(bundle.includes('v5.24.26'), 'bundle carrega o carimbo da correção');
+ok(bundle.includes('v5.24.27'), 'bundle carrega o carimbo da correção');
 ok(bundle.includes('const iaDesligar'), 'bundle CONTÉM a isenção corrigida');
 const mBundle = fs.readFileSync('mobile/www/app.bundle.js', 'utf8');
 ok(mBundle.includes('const iaDesligar'), 'bundle do CELULAR contém a isenção');
 
 // Carimbos de versão (rodapé = prova que ele exige em cada teste).
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.26'"), 'index: DIGICOPY_APP_VERSION 5.24.26');
-ok(idx.includes('>v5.24.26<'), 'index: rodapé v5.24.26');
-ok(idx.includes('app.bundle.js?v=5.24.26'), 'index: cache-bust do bundle v5.24.26');
+ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.27'"), 'index: DIGICOPY_APP_VERSION 5.24.27');
+ok(idx.includes('>v5.24.27<'), 'index: rodapé v5.24.27');
+ok(idx.includes('app.bundle.js?v=5.24.27'), 'index: cache-bust do bundle v5.24.27');
 ok(!idx.includes('5.24.11'), 'index: nenhum carimbo velho sobrou');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
-ok(mob.includes("DIGICOPY_APP_VERSION = '5.24.26'"), 'mobile: DIGICOPY_APP_VERSION 5.24.26');
+ok(mob.includes("DIGICOPY_APP_VERSION = '5.24.27'"), 'mobile: DIGICOPY_APP_VERSION 5.24.27');
 const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
-ok(worker.includes("'5.24.26'"), 'worker carimbado 5.24.26');
+ok(worker.includes("'5.24.27'"), 'worker carimbado 5.24.27');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.26 (Imprimir na faturada destravado).');
+console.log('\nTudo OK — v5.24.27 (Imprimir na faturada destravado).');

@@ -150,7 +150,7 @@ app.whenReady().then(() => {
   registerPrintIPC();
   registerBackupIPC();
   registerErroTxtIPC();
-  // v5.24.26 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // v5.24.27 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
   // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
   // Word/LibreOffice, o que estiver associado ao .rtf).
   ipcMain.handle('rtf:abrir', async (_e, payload) => {
@@ -165,6 +165,7 @@ app.whenReady().then(() => {
       return { ok: !res, erro: res || null, arquivo: full };
     }catch(e){ return { ok:false, erro:String(e && e.message || e) }; }
   });
+  registerPrinterMonitorIPC();
   registerOpenExternalIPC();
   registerNfeCertIPC();
   registerEscolaLoginIPC();
@@ -462,7 +463,7 @@ function registerNfeCertIPC(){
     }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
   ipcMain.handle('nfe:cert-validade', async (_evt, payload) => {
-    // v5.24.26 — conferir a validade do certificado SEM assinar nada: pede a
+    // v5.24.27 — conferir a validade do certificado SEM assinar nada: pede a
     // senha do cofre só pra isso, lê a data e devolve. Fim da era "o sistema
     // não sabe que o cert venceu".
     try{
@@ -522,6 +523,20 @@ function registerNfeCertIPC(){
     }catch(e){
       return { ok:false, error:e.message||String(e) };
     }
+  });
+}
+
+function registerPrinterMonitorIPC(){
+  // v5.24.27 — Fase 1 do MONITOR DE IMPRESSORAS (pedido dele, 'ue faz'):
+  // lê via SNMP a impressora que está na MESMA rede deste PC. Só existe no
+  // .exe; no navegador/celular a chamada da ponte nem aparece (honesto).
+  ipcMain.handle('prt:snmp-status', async (_evt, payload) => {
+    try{
+      const ip = String((payload && payload.ip) || '').trim();
+      if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return { ok:false, error:'IP inválido.' };
+      const snmp = require('./snmp_printer.js');
+      return await snmp.lerStatusUmaVez(ip, (payload && payload.community) || 'public', 2500);
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
 }
 
@@ -641,7 +656,7 @@ function registerBackupIPC(){
 }
 
 // ──────────────────────────────────────────────
-// ERRO.TXT IPC (v5.24.26) — pedido dele: erro indevido vira linha num
+// ERRO.TXT IPC (v5.24.27) — pedido dele: erro indevido vira linha num
 // erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
 // (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
 // (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB

@@ -12,7 +12,8 @@ cd /d "%~dp0cloudflare-worker"
 if errorlevel 1 (
   echo NAO ACHEI a pasta cloudflare-worker aqui do lado.
   echo Rode este arquivo dentro da pasta do sistema, por favor.
-  pause
+  echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+  cmd /k >nul
   exit /b 1
 )
 echo Passo 1/4 - O que ainda falta aplicar no banco (so olhando):
@@ -26,7 +27,8 @@ call npx.cmd wrangler d1 migrations apply DB --remote
 if errorlevel 1 (
   echo.
   echo Algo travou nas migracoes. Tira uma foto e me manda.
-  pause
+  echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+  cmd /k >nul
   exit /b 1
 )
 echo.
@@ -36,7 +38,8 @@ call npx.cmd wrangler deploy
 if errorlevel 1 (
   echo.
   echo Algo travou na publicacao. Tira uma foto e me manda.
-  pause
+  echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+  cmd /k >nul
   exit /b 1
 )
 echo.
@@ -49,4 +52,6 @@ echo ^(Tem que aparecer "versao":"5.24.8" ou mais novo na linha de cima.^)
 echo ==========================================================
 echo  Pronto! Tira uma foto desta tela e me manda.
 echo ==========================================================
-pause
+echo.
+echo  [a janela fica aberta ^— copie/tire foto a vontade ^— feche no X]
+cmd /k >nul

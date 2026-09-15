@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.26';
+const WORKER_VERSION = '5.24.27';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -785,6 +785,22 @@ async function handleActivity(request, env) {
   return json({ ok: true, events });
 }
 
+async function handleDeleteDevice(request, env) {
+  // v5.24.27 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
+  // só apaga APARELHO JÁ BLOQUEADO e nunca o próprio; dados sincronizados
+  // ficam intactos (a tabela devices é só cadastro de autorização).
+  const admin = await requireAdmin(request, env);
+  const body = await readBody(request);
+  const deviceId = cleanText(body.deviceId, 80);
+  if (!deviceId) throw new ApiError(400, 'DEVICE_ID_REQUIRED', 'Informe o aparelho.');
+  if (deviceId === admin.id) throw new ApiError(400, 'CANNOT_DELETE_SELF', 'Este computador não pode apagar a si mesmo.');
+  const result = await env.DB.prepare('DELETE FROM devices WHERE id = ? AND revoked_at IS NOT NULL').bind(deviceId).run();
+  if (!result.meta || Number(result.meta.changes) !== 1) {
+    throw new ApiError(409, 'DEVICE_NOT_BLOCKED', 'Só apago aparelho já bloqueado. Bloqueie antes (é o freio de mão).');
+  }
+  return json({ ok: true, deleted: deviceId });
+}
+
 async function handleRevokeDevice(request, env) {
   const admin = await requireAdmin(request, env);
   const body = await readBody(request);
@@ -915,14 +931,14 @@ async function resumoDaNuvem(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
-// v5.24.26 — sininho de atualização nova (pedido dele): 1 linha com a versão
+// v5.24.27 — sininho de atualização nova (pedido dele): 1 linha com a versão
 // publicada + url do .exe + notas. Leitura pública; escrita = aparelho
 // matriculado (mesma trava do sync). Recuo se algum dia irritar: apagar a
 // linha e o sininho some, sem mexer no resto.
 async function garantirTabelaAppVersao(env){
   if (env.__APP_VERSAO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_versao (id INTEGER PRIMARY KEY CHECK (id = 1), versao TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.26 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
+  // v5.24.27 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
   // as versões publicadas (uma linha por versão; republicar mesma versão
   // atualiza a linha, sem duplicar). O sininho continua lendo só a atual.
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_releases (versao TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
@@ -948,7 +964,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.26 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.27 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -973,7 +989,7 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.26 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.27 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
@@ -1266,13 +1282,13 @@ async function route(request, env, ctx) {
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
-    // v5.24.26 — histórico em JSON também (pras telas do sistema, se quiser).
+    // v5.24.27 — histórico em JSON também (pras telas do sistema, se quiser).
     await garantirTabelaAppVersao(env);
     const lista = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_releases ORDER BY publicado_em DESC').all();
     return json({ ok: true, releases: lista.results || [] });
   }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
-    // v5.24.26 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.24.27 — leitura pública do sininho de atualização (versão + link + notas).
     await garantirTabelaAppVersao(env);
     const row = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_versao WHERE id = 1').first();
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
@@ -1281,20 +1297,20 @@ async function route(request, env, ctx) {
     await authenticate(request, env);
     const body = await request.json();
     const versao = String((body && body.versao) || '').trim().replace(/^v/i, '');
-    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.26.');
+    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.27.');
     const urlRel = String((body && body.url) || '').trim();
     if (!/^https:\/\//.test(urlRel)) throw new ApiError(400, 'URL_INVALIDA', 'A URL de download precisa começar com https:// (boa regra: bucket público do R2).');
     const notas = String((body && body.notas) || '').slice(0, 4000);
     await garantirTabelaAppVersao(env);
     await env.DB.prepare('INSERT INTO app_versao (id, versao, url, notas, publicado_em) VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET versao = excluded.versao, url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
       .bind(versao, urlRel, notas, Date.now()).run();
-    // v5.24.26 — além de virar a atual (sininho), entra no histórico do site.
+    // v5.24.27 — além de virar a atual (sininho), entra no histórico do site.
     await env.DB.prepare('INSERT INTO app_releases (versao, url, notas, publicado_em) VALUES (?, ?, ?, ?) ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
       .bind(versao, urlRel, notas, Date.now()).run();
     return json({ ok: true, versao, url: urlRel, notas, publicadoEm: Date.now() });
   }
   if (request.method === 'GET' && url.pathname === '/atualizacoes') {
-    // v5.24.26 — SITE PRÓPRIO (pedido dele): página pública com o histórico
+    // v5.24.27 — SITE PRÓPRIO (pedido dele): página pública com o histórico
     // completo de atualizações — cada versão com as notas (o "patch escrito")
     // e o botão de baixar. Sininho continua anunciando só uma vez; aqui fica
     // a vitrine permanente, inclusive pra ele mesmo baixar versões antigas.
@@ -1360,6 +1376,7 @@ async function route(request, env, ctx) {
   }
   if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
+  if (request.method === 'POST' && url.pathname === '/v1/devices/delete-forever') return handleDeleteDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/admin/reset-cloud') return handleResetCloud(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/status') return handleStatus(request, env, ctx);
   // Backups (somente aparelho administrador)

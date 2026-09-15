@@ -76,12 +76,12 @@ ok(worker.indexOf('waitUntil') >= 0, 'worker: anota\u00e7\u00e3o de uso em segun
 ok(sync.indexOf('📊 Uso da nuvem hoje') >= 0 && sync.indexOf('usoHoje') >= 0, 'bloco "Uso da nuvem hoje" no painel Nuvem');
 ok(sync.indexOf("'+fmtNum(uso.tetoEscritas)+'") >= 0 && sync.indexOf('uso.tetoLeituras') >= 0, 'mostra X de 100.000 e Y de 5.000.000');
 ok(worker.indexOf('uso_diario') >= 0 && worker.indexOf('somarUso') >= 0, 'worker conta gravações/leituras por dia (tabela autocriada)');
-// v5.24.26 — SUPERSESSÃO: ele assinou o Workers Paid US$5 (confirmado em
+// v5.24.27 — SUPERSESSÃO: ele assinou o Workers Paid US$5 (confirmado em
 // 2026-09-14). O D1 no plano pago inclui 50 milhões de escritas e 25 BILHÕES
 // de leituras POR MÊS — os tetos diários do grátis (100 mil / 5 milhões por
 // dia, "vira 21h SP") viraram passado. Assert atualizado pra travar o NOVO
 // mundo: ninguém rebaixa de volta por engano.
-ok(worker.indexOf('tetoEscritas: 50000000') >= 0 && worker.indexOf('tetoLeituras: 25000000000') >= 0, 'tetos do plano PAGO (50M escritas / 25B leituras por mês) — supersede o grátis desde v5.24.26');
+ok(worker.indexOf('tetoEscritas: 50000000') >= 0 && worker.indexOf('tetoLeituras: 25000000000') >= 0, 'tetos do plano PAGO (50M escritas / 25B leituras por mês) — supersede o grátis desde v5.24.27');
 ok(worker.indexOf('usoHoje:') >= 0 && worker.indexOf('uso_real') >= 0 && worker.indexOf('fonte: \'estimada\'') >= 0, 'status da nuvem devolve o uso do dia (oficial > estimada)');
 
 // 11) tranca inline no index.html (antes do bundle carregar — à prova de cache)
@@ -109,7 +109,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.24.26'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.27'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 

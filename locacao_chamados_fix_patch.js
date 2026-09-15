@@ -243,7 +243,7 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-root')?.classList.remove('hidden');
 };
 
-// v5.24.26 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+// v5.24.27 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
 window.imprimirChamadoAgoraV52422 = function(id){
   var o=(db.os||[]).find(x=>x.id===id);
   if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
@@ -297,7 +297,7 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
-    // v5.24.26 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // v5.24.27 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
     // da impressora (e a Ações abriga imprimir-direto + excluir).
     const ths = body.querySelectorAll('thead th');
     ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });

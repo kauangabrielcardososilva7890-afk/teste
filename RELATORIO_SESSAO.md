@@ -2782,6 +2782,16 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.27 (2026-09-14, leva de pedidos: P5 + .cmd + excluir lixo + monitor SNMP fase 1 + hub P8)
+
+- **P5 (lápis que ordenava):** o ordenador global de tabelas (historico_sort_patch.js) agora ignora cabeçalho 'Editar' — clique perdido não reordena mais a lista de impressoras do contrato. Foto/desenho dele confirmaram a lista: contratos_final_patch.js.
+- **.cmd não fecha mais com tecla (pedido direto):** os dois wrappers (atualizar_motor_nuvem, ver_gasto_nuvem) ficam abertos até o X — dá pra ler e copiar pra foto sem pressa (pause → cmd /k com aviso).
+- **Excluir aparelho-lixo DE VEZ:** worker ganha /v1/devices/delete-forever (admin; SÓ aparelho já bloqueado; nunca a si mesmo; dados não são tocados — devices é só cadastro de autorização). No painel, aparelho bloqueado ganha botão vermelho 'Excluir de vez' com confirmação que explica.
+- **Monitor de impressoras FASE 1 (tópico A):** snmp_printer.js — SNMPv2c escrito na veia (dgram, ZERO npm): contador, toner% e erros (sem papel/atolou/tampa/toner) em bom português. IPC main 'prt:snmp-status' (IP validado) + preload prtAPI. No Parque: [Ler status (rede)] por impressora — IP perguntado 1x, grava no cadastro (sincroniza com o registro, zero tabela nova); selo coloredo de status + última leitura guardada. Navegador/celular: avisa limpo que SNMP é coisa de .exe (UDP).
+- **P8 — Hub da impressora:** [Histórico] por impressora no Parque: ficha, selo de status, botão pro contrato atual (openContratoCompleto), últimas 6 leituras e chamados — tudo do banco local, sem custar nuvem.
+- **P7 (serial-first + remaneio) FICA PRA v5.24.28 (de propósito):** é cirurgia no fluxo de contrato — ressuscitar o wrap v5.22.43/45 em cima do fluxo vencedor atual. Mapeado; não vou abrir o contrato no bisturi na mesmíssima leva de 5 pedidos.
+- **Testes:** test_ajustes_v52427.js (32 asserts, incl. SNMP funcional sem rede: pacote GET válido, parser, tradução de bits). Guardas do bundle atualizadas (198 scripts). **Suíte: 152/0/2.**
+
 ## O QUE FOI ENTREGUE — v5.24.26 (2026-09-14, sprint NF 'faz logo': histórico das notas assinadas)
 
 **Pedido dele (item 7 da lista, 'faz logo'):** fechar o pacote NF. O que faltava de utilidade visível: lista permanente das notas emitidas (antes, assinou e sumiu).
