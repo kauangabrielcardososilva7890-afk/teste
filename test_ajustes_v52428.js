@@ -51,6 +51,8 @@ ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm install') && fs.
 for (const cmd of ['GERAR_EXE.cmd','atualizar_motor_nuvem.cmd','ver_gasto_nuvem.cmd']) ok(fs.readFileSync(cmd,'latin1').includes('\r\n'), cmd + ': CRLF (bug achado: LF puro faz o .cmd engasgar/fechar no Windows)');
 
 ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.33: só o nome do site + animações + faixa 1-2-3 explicativa');
+ok(fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('wrangler subdomain digicopyonline'), 'trocar_endereco_nuvem.cmd: virada grátis sem caçar clique no painel (pedido dele: ele me manda foto do painel perdido)');
+
 
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.33'"), 'index 5.24.33');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.33<'), 'rodapé v5.24.33');

@@ -2864,6 +2864,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **No nosso desenho:** mesmos 4 eventos (em português-gente), busca automática agendada, NSU-marcador por empresa, grade com mesmos filtros, Baixar XML → pasta nfe_xmls/AAAA-MM e pacote pro escritório.
 - **NCM:** ele lembrou bem — era do 1° pacote (submenu lista); se quiser fotos da tela NCM aberta com filtros, manda quando abrir.
 
+## NF submenu PERFIL TRIBUTÁRIO catalogado (11 fotos) + caminho da virada sem caça ao clique + nota-memória — 2026-09-15
+
+- **Tela lista (dele, produção):** 5 perfis reais da loja — 00001 VENDA DENTRO DO ESTADO (CFOP 5102), 00002 VENDA FORA DO ESTADO (6102), 00003 DEV/REMESSA DE MERCADORIA P/ CONSERTO (5915), 00005 RETORNO DE CONSERTO (5916), 00004 TROCA DE MERCADORIA (6949). Botões Novo/Alterar/Excluir. **É o mapa das operações REAIS da loja de foto-cópia/assistência: venda local, venda interestadual, ciclo de conserto e troca.**
+- **Tela 'Configurar Tributação' (ao criar novo):** Tipo Tributação — ICMS/ISSQN; descrição livre; CFOP Padrão (dele 5102 c/ lupa); abas: **ICMS** (CSTs do Simples Nacional: 101 c/ crédito, 102 sem crédito, 103 isenção faixa, 201/202 c/d ST+crédito, 203, 300 imune, 400 não tributada, 500 ST anterior, 900 outros); **PIS** (01-09 + 49 + Alíquota %, dele 0); **COFINS** (mesma lista + alíquota); **IPI** (50-56, 99 + Alíquota %, dele 0); **Reforma Tributária** (Código CST novo modelo: 000 trib integral, 200 alíq reduzida, 410 imunidade/não incidência, 510/515 diferimento, 550 suspensão, 800 transferência crédito, 810/811 anexos, 830 exclusão base + Classificação + Alíquotas IBS UF/IBS MUN/CBS).
+- **Caminho da virada agora = duplo clique:** ele mandou foto do painel novo da Cloudflare e pediu o caminho; ao invés de caçar o clique, entreguei **trocar_endereco_nuvem.cmd** (roda `npx wrangler subdomain digicopyonline` em cloudflare-worker e confere o /health novo). Fallback se nome ocupado: foto → troco o nome no código em 1 min.
+- **Dashboard dele (contexto, não sensível):** conta com teste (Pages teste-60f), digicopy-sync-api (~4,5k req), digicopy-contador-uso (23 req), digicopy-orcamentos (Pages); uso do mês $0,00 faturável — tudo dentro do incluído.
+- **NOTA-MEMÓRIA (pergunta dele 'não é muita informação? e se o chat quebrar?'):** a memória de verdade desta obra NÃO é o chat — é este RELATORIO_SESSAO.md + os testes + o código, tudo versionado no repositório privado. Chat quebrando não perde nada: o que importa está anotado/aplicado aqui a cada entrega. Tokens/senhas (CSC, certificado etc.) NUNCA são registrados — ele já manda riscado e continua assim.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
