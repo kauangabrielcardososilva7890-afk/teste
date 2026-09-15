@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.24.27 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
+// v5.24.28 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
 // estão acessando"). O menu lateral de NF chamava toasts de "em breve" —
 // agora abre a Central, uma sala própria (DOM fora do miolo, ids fora de
 // qualquer tela) com:
@@ -65,7 +65,7 @@ async function pintarStatusCert(){
 async function conferirValidadeAgora(){
   var api=window.nfeCertAPI;
   if(!api||typeof api.validade!=='function'){
-    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.27.','info'); return;
+    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.28.','info'); return;
   }
   var senha=null;
   try{
@@ -100,7 +100,7 @@ async function conferirValidadeAgora(){
   }
 }
 
-// ── Histórico das notas assinadas neste PC (v5.24.27 — pedido dele) ──────────
+// ── Histórico das notas assinadas neste PC (v5.24.28 — pedido dele) ──────────
 // Guarda LOCAL de propósito: a emissão só acontece no PC que tem o certificado
 // instalado — então a lista "minhas notas" mora aqui mesmo, sem custar nuvem.
 var HIST_KEY='digicopy_nfe_historico';
@@ -230,5 +230,5 @@ window.abrirPerfilTributario=abrirPerfilTributario;
 
 window.NFE_CENTRAL_V52425={ abrirCentralNfe:abrirCentralNfe, abrirPerfilTributario:abrirPerfilTributario, vendasRecentes:vendasRecentes, leiturasRecentes:leiturasRecentes, historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
 window.NFE_CENTRAL_V52426={ historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
-console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.27) — menu NF abre de verdade');
+console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.28) — menu NF abre de verdade');
 })();

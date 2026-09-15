@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.27';
+const WORKER_VERSION = '5.24.28';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -786,7 +786,7 @@ async function handleActivity(request, env) {
 }
 
 async function handleDeleteDevice(request, env) {
-  // v5.24.27 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
+  // v5.24.28 — pedido dele: 'excluir os lixo antigo'. Seguro por desenho:
   // só apaga APARELHO JÁ BLOQUEADO e nunca o próprio; dados sincronizados
   // ficam intactos (a tabela devices é só cadastro de autorização).
   const admin = await requireAdmin(request, env);
@@ -931,17 +931,25 @@ async function resumoDaNuvem(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
-// v5.24.27 — sininho de atualização nova (pedido dele): 1 linha com a versão
+// v5.24.28 — sininho de atualização nova (pedido dele): 1 linha com a versão
 // publicada + url do .exe + notas. Leitura pública; escrita = aparelho
 // matriculado (mesma trava do sync). Recuo se algum dia irritar: apagar a
 // linha e o sininho some, sem mexer no resto.
 async function garantirTabelaAppVersao(env){
   if (env.__APP_VERSAO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_versao (id INTEGER PRIMARY KEY CHECK (id = 1), versao TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
-  // v5.24.27 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
+  // v5.24.28 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
   // as versões publicadas (uma linha por versão; republicar mesma versão
   // atualiza a linha, sem duplicar). O sininho continua lendo só a atual.
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_releases (versao TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
+  // v5.24.28 — PORTAL DE ATUALIZAÇÕES dele: ativa/desativa link, oculta,
+  // tutorial por versão, expiração escolhida, marca se o .exe já subiu.
+  const addCol = async (sql)=>{ try{ await env.DB.exec(sql); }catch(e){ /* coluna já existe */ } };
+  await addCol(`ALTER TABLE app_releases ADD COLUMN ativa INTEGER NOT NULL DEFAULT 1`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN oculta INTEGER NOT NULL DEFAULT 0`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN tutorial TEXT NOT NULL DEFAULT ''`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN expira_em INTEGER NOT NULL DEFAULT 0`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN tem_arquivo INTEGER NOT NULL DEFAULT 0`);
   env.__APP_VERSAO_TABELA_OK = true;
 }
 
@@ -964,7 +972,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.27 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.28 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -989,7 +997,7 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.27 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.28 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
@@ -1281,64 +1289,138 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
+// v5.24.28 — publicação "viva" = ativa, não oculta e não vencida nas opções
+async function publicacaoViva(env){
+  const r = await env.DB.prepare(`SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC LIMIT 1`).bind(Date.now()).first();
+  return r || null;
+}
+function linkDownload(origin, versao){ return origin + '/dl/' + encodeURIComponent(versao) + '.exe'; }
+
   if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
-    // v5.24.27 — histórico em JSON também (pras telas do sistema, se quiser).
+    // v5.24.28 — histórico em JSON também (pras telas do sistema, se quiser).
     await garantirTabelaAppVersao(env);
-    const lista = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_releases ORDER BY publicado_em DESC').all();
+    const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, ativa, oculta, expira_em AS expiraEm, tem_arquivo AS temArquivo FROM app_releases ORDER BY publicado_em DESC').all();
     return json({ ok: true, releases: lista.results || [] });
   }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
-    // v5.24.27 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.24.28 — leitura pública do sininho de atualização (versão + link + notas).
     await garantirTabelaAppVersao(env);
+    const viva = await publicacaoViva(env);
+    if (viva) {
+      return json({ ok: true, versao: viva.versao, url: linkDownload(new URL(request.url).origin, viva.versao), notas: viva.notas || '', tutorial: viva.tutorial || '', publicadoEm: viva.publicadoEm || 0 });
+    }
     const row = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_versao WHERE id = 1').first();
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
   }
   if (request.method === 'POST' && url.pathname === '/v1/app-release') {
-    await authenticate(request, env);
+    // v5.24.28 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
+    const adminUser = await requireAdmin(request, env);
     const body = await request.json();
+    const origin = new URL(request.url).origin;
+    const acao = String((body && body.action) || 'publicar').toLowerCase();
     const versao = String((body && body.versao) || '').trim().replace(/^v/i, '');
-    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.27.');
-    const urlRel = String((body && body.url) || '').trim();
-    if (!/^https:\/\//.test(urlRel)) throw new ApiError(400, 'URL_INVALIDA', 'A URL de download precisa começar com https:// (boa regra: bucket público do R2).');
-    const notas = String((body && body.notas) || '').slice(0, 4000);
+    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.28.');
+    const horas = Number((body && body.expiraHoras) || 0) || 0; // 0 = ilimitado
+    const expira = horas > 0 ? Date.now() + horas * 3600 * 1000 : 0;
     await garantirTabelaAppVersao(env);
+
+    if (acao === 'excluir') {
+      await env.DB.prepare('DELETE FROM app_releases WHERE versao = ?').bind(versao).run();
+      try{ if (env.R2) await env.R2.delete('exe/' + versao + '.exe'); }catch(e){}
+      return json({ ok: true, acao, versao });
+    }
+    if (acao === 'desativar') {
+      await env.DB.prepare('UPDATE app_releases SET ativa = 0 WHERE versao = ?').bind(versao).run();
+      return json({ ok: true, acao, versao });
+    }
+    if (acao === 'ativar') {
+      await env.DB.prepare('UPDATE app_releases SET ativa = 1, expira_em = ? WHERE versao = ?').bind(expira, versao).run();
+      return json({ ok: true, acao, versao, expiraEm: expira });
+    }
+    if (acao === 'ocultar' || acao === 'mostrar') {
+      await env.DB.prepare('UPDATE app_releases SET oculta = ? WHERE versao = ?').bind(acao === 'ocultar' ? 1 : 0, versao).run();
+      return json({ ok: true, acao, versao });
+    }
+    if (acao === 'editar') {
+      const notasE = String((body && body.notas) || '').slice(0, 4000);
+      const tutE = String((body && body.tutorial) || '').slice(0, 4000);
+      await env.DB.prepare('UPDATE app_releases SET notas = ?, tutorial = ? WHERE versao = ?').bind(notasE, tutE, versao).run();
+      return json({ ok: true, acao, versao });
+    }
+    // publicar — o link padrão agora é o /dl entregue pela própria nuvem
+    const notas = String((body && body.notas) || '').slice(0, 4000);
+    const tutorial = String((body && body.tutorial) || '').slice(0, 4000);
+    let urlRel = String((body && body.url) || '').trim();
+    if (urlRel && !/^https:\/\//.test(urlRel)) throw new ApiError(400, 'URL_INVALIDA', 'A URL de download precisa começar com https:// .');
+    if (!urlRel) urlRel = linkDownload(origin, versao);
     await env.DB.prepare('INSERT INTO app_versao (id, versao, url, notas, publicado_em) VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET versao = excluded.versao, url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
       .bind(versao, urlRel, notas, Date.now()).run();
-    // v5.24.27 — além de virar a atual (sininho), entra no histórico do site.
-    await env.DB.prepare('INSERT INTO app_releases (versao, url, notas, publicado_em) VALUES (?, ?, ?, ?) ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
-      .bind(versao, urlRel, notas, Date.now()).run();
-    return json({ ok: true, versao, url: urlRel, notas, publicadoEm: Date.now() });
+    await env.DB.prepare(`INSERT INTO app_releases (versao, url, notas, tutorial, publicado_em, ativa, oculta, expira_em) VALUES (?, ?, ?, ?, ?, 1, 0, ?)
+      ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, tutorial = excluded.tutorial, publicado_em = excluded.publicado_em, ativa = 1, oculta = 0, expira_em = excluded.expira_em`)
+      .bind(versao, urlRel, notas, tutorial, Date.now(), expira).run();
+    return json({ ok: true, acao: 'publicar', versao, url: urlRel, notas, tutorial, expiraEm: expira, publicadoEm: Date.now() });
   }
-  if (request.method === 'GET' && url.pathname === '/atualizacoes') {
-    // v5.24.27 — SITE PRÓPRIO (pedido dele): página pública com o histórico
-    // completo de atualizações — cada versão com as notas (o "patch escrito")
-    // e o botão de baixar. Sininho continua anunciando só uma vez; aqui fica
-    // a vitrine permanente, inclusive pra ele mesmo baixar versões antigas.
+
+  if (request.method === 'POST' && url.pathname === '/v1/release-file') {
+    // v5.24.28 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
+    const admin2 = await requireAdmin(request, env);
+    if (!env.R2) throw new ApiError(503, 'R2_NAO_LIGADO', 'O bucket digicopy-downloads não está ligado no motor. Crie-o no painel (R2) e rode o atualizar_motor_nuvem.cmd.');
+    const v = String(url.searchParams.get('versao') || '').replace(/^v/i, '');
+    if (!/^\d+(\.\d+)+$/.test(v)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Informe a versão do arquivo.');
+    const tamanho = Number(request.headers.get('content-length') || 0) || 0;
+    if (tamanho > 150 * 1024 * 1024) throw new ApiError(413, 'ARQUIVO_GRANDE', 'Maior que 150MB: suba direto pelo painel do R2 em Objetos → pasta exe/ (o site continua servindo).');
+    const buf = await request.arrayBuffer();
+    if (!buf || buf.byteLength < 1000) throw new ApiError(400, 'ARQUIVO_VAZIO', 'O arquivo chegou vazio.');
     await garantirTabelaAppVersao(env);
-    const lista = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_releases').all();
-    const itens = (lista.results || []).slice().sort((x, y) => {
-      const pa = String(x.versao || '').split('.').map(n => parseInt(n, 10) || 0);
-      const pb = String(y.versao || '').split('.').map(n => parseInt(n, 10) || 0);
-      for (let i = 0; i < Math.max(pa.length, pb.length); i++) { if ((pa[i] || 0) !== (pb[i] || 0)) return (pb[i] || 0) - (pa[i] || 0); }
-      return 0;
-    });
+    await env.R2.put('exe/' + v + '.exe', buf, { httpMetadata: { contentType: 'application/x-msdownload' } });
+    await env.DB.prepare('UPDATE app_releases SET tem_arquivo = 1, url = ? WHERE versao = ?').bind(linkDownload(new URL(request.url).origin, v), v).run();
+    return json({ ok: true, versao: v, bytes: buf.byteLength });
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/dl/')) {
+    // v5.24.28 — DOWNLOAD direto do .exe, porta da própria nuvem.
+    if (!env.R2) return new Response('Arquivos ainda não ligados (falta criar o bucket R2 no painel).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    const nome = decodeURIComponent(url.pathname.slice(4));
+    const v = nome.replace(/\.exe$/i, '');
+    await garantirTabelaAppVersao(env);
+    const essa = await env.DB.prepare('SELECT ativa, oculta, expira_em FROM app_releases WHERE versao = ?').bind(v).first();
+    const liberada = essa && (essa.ativa === 1 && essa.oculta === 0 && (essa.expira_em === 0 || essa.expira_em > Date.now()));
+    if (!liberada) return new Response('Esta versão foi DESLIGADA do site pelo administrador. A atual continua em /atualizacoes', { status: 410, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    const obj = await env.R2.get('exe/' + v + '.exe');
+    if (!obj) return new Response('O arquivo desta versão ainda não subiu — o administrador já foi avisado por sinal de fumaça.', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    return new Response(obj.body, { headers: { 'content-type': 'application/x-msdownload', 'content-disposition': 'attachment; filename="digicopy-' + v + '.exe"', 'cache-control': 'no-store' } });
+  }
+
+  if (request.method === 'GET' && url.pathname === '/atualizacoes') {
+    // v5.24.28 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
+    // Só aparece o que está VIVO (ativo, não oculto, não vencido) — normalmente
+    // a versão atual. Histórico fica só dentro do sistema (portal é só dele).
+    await garantirTabelaAppVersao(env);
+    const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, tem_arquivo AS temArquivo FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC').bind(Date.now()).all();
+    const itens = (lista.results || []);
+    const origin = new URL(request.url).origin;
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] || c));
-    const fmt = (ms) => { try { return ms ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(ms)) : ''; } catch (e) { return ''; } };
-    const blocos = itens.map((r, i) => `
+    const fmt = (ms) => { try { return ms ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ms)) : ''; } catch (e) { return ''; } };
+    const blocos = itens.map((r, i) => {
+      const href = (r.temArquivo ? linkDownload(origin, r.versao) : (r.url || ''));
+      return `
       <section class="rel ${i === 0 ? 'atual' : ''}">
         <div class="rel-head">
-          <span class="v">v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">versão atual</span>' : ''}
+          <span class="v">Atualização v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">mais recente</span>' : ''}
           <span class="data">${esc(fmt(r.publicadoEm))}</span>
         </div>
-        ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : '<p class="sem-notas">Publicado sem notas.</p>'}
-        ${r.url ? `<a class="baixar" href="${esc(r.url)}" target="_blank" rel="noopener">Baixar esta versão</a>` : ''}
-      </section>`).join('\n');
+        ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : ''}
+        ${r.tutorial ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4><pre class="passo">${esc(r.tutorial)}</pre></div>` : ''}
+        ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener">⬇ Baixar a atualização (.exe)</a>` : '<p class="sem-arq">O arquivo ainda não subiu — tente em alguns minutos.</p>'}
+        <p class="depois">É só baixar e executar por cima da instalação atual — sem extrair, sem perder nada.</p>
+      </section>`;
+    }).join('\n');
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DigiCopy — Atualizações</title>
+<title>DigiCopy — Baixar atualização</title>
 <style>
   :root{color-scheme:light}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -1354,26 +1436,30 @@ async function route(request, env, ctx) {
   .selo-novo{background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
   .data{margin-left:auto;font-size:11.5px;color:#64748b}
   .notas{margin-top:12px;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.55;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
-  .sem-notas{margin-top:10px;font-size:12px;color:#94a3b8;font-style:italic}
-  .baixar{display:inline-flex;align-items:center;justify-content:center;margin-top:14px;background:#0a1e8a;color:#fff;text-decoration:none;font-weight:800;font-size:13.5px;padding:12px 22px;border-radius:12px;width:100%}
-  @media(min-width:520px){.baixar{width:auto}}
+  .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px}
+  .tutorial h4{font-size:12.5px;color:#92400e;margin-bottom:8px}
+  .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:12.5px;line-height:1.6;color:#334155}
+  .baixar{display:flex;align-items:center;justify-content:center;margin-top:14px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:16px;padding:16px 22px;border-radius:14px;box-shadow:0 10px 24px rgba(22,163,74,.25)}
+  .depois{margin-top:10px;font-size:11.5px;color:#64748b;text-align:center}
+  .sem-arq{margin-top:12px;font-size:12px;color:#b45309;font-style:italic}
   .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:34px;text-align:center;color:#64748b;font-size:14px}
   footer{text-align:center;margin-top:26px;font-size:11px;color:#94a3b8}
 </style>
 </head>
 <body>
 <header>
-  <h1>DigiCopy — Atualizações</h1>
-  <p>Histórico completo das versões publicadas, com o que mudou e o link pra baixar.</p>
+  <h1>DigiCopy — Baixar atualização</h1>
+  <p>Baixou, executou, atualizou. Se tiver passo a passo ele aparece aqui antes do botão.</p>
 </header>
 <main>
-  ${blocos || '<div class="vazio">Nenhuma atualização publicada ainda. Assim que a primeira sair, aparece aqui com o link de download.</div>'}
+  ${blocos || '<div class="vazio">Nenhuma atualização disponível agora. Quando sair uma nova, ela aparece aqui com o botão de baixar.</div>'}
 </main>
-<footer>Atualizado automaticamente toda vez que uma versão nova é publicada no sistema.</footer>
+<footer>Página mostrada pela própria nuvem do sistema. Versões antigas não aparecem aqui.</footer>
 </body>
 </html>`;
     return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
   }
+
   if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/delete-forever') return handleDeleteDevice(request, env);

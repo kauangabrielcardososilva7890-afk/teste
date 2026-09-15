@@ -1,4 +1,4 @@
-// test_ajustes_v52424.js — v5.24.27: pedido dele "site próprio de atualizações".
+// test_ajustes_v52424.js — v5.24.28: pedido dele "site próprio de atualizações".
 // Nuvem guarda o HISTÓRICO (app_releases, 1 linha por versão) e o worker serve
 // a página pública /atualizacoes: cada versão com as notas (o patch escrito)
 // e o botão "Baixar esta versão". Sininho continua anunciando só uma vez.
@@ -20,28 +20,28 @@ ok(wk.includes("url.pathname === '/v1/app-releases'") && wk.includes("url.pathna
 
 // SITE PÚBLICO
 ok(wk.includes("url.pathname === '/atualizacoes'"), 'site: rota pública /atualizacoes');
-ok(wk.includes('DigiCopy — Atualizações'), 'site: título em letra de gente');
-ok(wk.includes('Baixar esta versão'), 'site: cada versão tem botão de baixar');
+ok(wk.includes('DigiCopy — Baixar atualização'), 'site: título em letra de gente (supersede v52428: página de download, não vitrine)');
+ok(wk.includes('Baixar a atualização (.exe)'), 'site: botão de baixar grande e direto (supersede v52428)');
 ok(wk.includes("text/html; charset=utf-8"), 'site: responde HTML de verdade');
-ok(wk.includes('Nenhuma atualização publicada ainda'), 'site: estado vazio bonitinho (antes da 1ª publicação)');
-ok(wk.includes('versão atual') && wk.includes('selo-novo'), 'site: a mais nova ganha selo "versão atual"');
+ok(wk.includes('Nenhuma atualização disponível agora'), 'site: estado vazio bonitinho (supersede v52428)');
+ok(wk.includes('selo-novo') && wk.includes('mais recente'), 'site: a mais nova ganha selo (supersede v52428)');
 ok(/replace\(\/[&<>"]'\//.test(wk) || wk.includes('[&<>"\']'), 'site: notas escapadas (texto dele nunca vira HTML)');
 ok(wk.includes("Intl.DateTimeFormat('pt-BR'"), 'site: data em português');
-ok(wk.includes('.sort((x, y) => {') && wk.includes("(pb[i] || 0) - (pa[i] || 0)"), 'site: ordenação MAIS NOVA primeiro por número (5.25.0 > 5.24.99)');
+ok(wk.includes('WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC'), 'site: só o VIVO, mais novo primeiro (supersede v52428: site virou porta de download; histórico fica só dele no portal)');
 ok(!/atualizacoes[\s\S]{0,400}authenticate/.test(wk.slice(wk.indexOf("url.pathname === '/atualizacoes'"), wk.indexOf("url.pathname === '/atualizacoes'") + 500)), 'site: página é PÚBLICA (sem pedir aparelho matriculado)');
 
 // INTERFACE no app: card aponta pro site dele
 ok(av.includes("'/atualizacoes'"), 'app: card do publicador tem o link do site');
 ok(av.includes('pub-upd-site'), 'app: link com id próprio (own DOM)');
-ok(av.includes('Seu site próprio de atualizações'), 'app: texto explicando que é o site dele');
+ok(av.includes('Site onde baixam (mostra só o que está ativo)'), 'app: texto explicando o site (supersede v52428)');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes("'/atualizacoes'") && bundle.includes('pub-upd-site'), 'bundle: link do site dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.27'"), 'index 5.24.27');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.27<'), 'rodapé v5.24.27');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.27"'), 'package.json 5.24.27');
-ok(wk.includes("'5.24.27'"), 'worker carimbado 5.24.27');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.28'"), 'index 5.24.28');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.28<'), 'rodapé v5.24.28');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.28"'), 'package.json 5.24.28');
+ok(wk.includes("'5.24.28'"), 'worker carimbado 5.24.28');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.27 (site próprio de atualizações + histórico na nuvem).');
+console.log('\nTudo OK — v5.24.28 (site próprio de atualizações + histórico na nuvem).');

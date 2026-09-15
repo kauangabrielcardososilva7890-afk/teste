@@ -2782,6 +2782,17 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.28 (2026-09-14, portal de atualizações SÓ DELE, do jeito que ele desenhou)
+
+**Pedido dele (item 4 da rodada de fotos):** portal de publicar atualizações só pra ele — anexar o .exe do próprio PC, escrever notas e (opcional) tutorial; histórico completo pra ele; site de fora só pra baixar a atual; links antigos MORTOS; reativar por tempo (1d/7d) ou ilimitado, e desligar quando quiser; editar/ocultar/excluir.
+
+- **R2 = depósito invisível:** bucket `digicopy-downloads` declarado no wrangler (binding R2). Nada de 'Public Access': o .exe é servido pela PRÓPRIA NUVEM em `/dl/<versao>.exe` (attachment digicopy-<v>.exe), respeitando o estado (desligada=410, oculta=não serve). Teto 150MB com rota de fuga (Objectos do painel). Resolver o item 3 dele: a seção Public Access NÃO era necessária.
+- **Gerente é só dele (requireAdmin):** ações publicar (com expiraHoras 0/24/168/720), ativar (com tempo), desativar, ocultar/mostrar, editar (notas+tutorial), excluir (remove linha E o .exe do R2). Colunas novas idempotentes (ativa/oculta/tutorial/expira_em/tem_arquivo) auto-migradas.
+- **Sininho esperto:** GET /v1/app-release agora devolve a publicação VIVA (ativa+visível+não-vencida). Botão do aviso leva pro SITE `/atualizacoes` — que virou página de download limpa: mostra SÓ o vivo, tutorial (se ele escreveu) ANTES do botão verde 'Baixar a atualização (.exe)', rodapé honesto ('versões antigas não aparecem').
+- **Card 'Portal de atualizações' (Config):** versão + período no ar + .exe do PC + notas + tutorial + Publicar; lista do HISTÓRICO com chips (✅ no ar / ⛔ desligada / ⌛ venceu / 👁 oculta / 📦 .exe anexado), botões por publicação (Ativar 1d/7d/∞, Desligar, Ocultar/Revelar, Editar, Excluir, Anexar/trocar .exe), recarregar, copiar link do site.
+- **Testes:** test_ajustes_v52428.js (24 asserts); v52423/v52424/v52296 superseded annotados (portal evoluiu; guarda anti-R2 da era grátis invertida sob justificativa escrita). **Suíte: 153/0/2** (2 = node-forge/acorn infra sandbox, de sempre).
+- **P7 (serial-first) empurrado de novo UMA VEZ só:** ficou atrás do portal por decisão de sequência dele (item 4 veio com 'mal explicado, constrói'). Próxima versão é P7 sem desvio.
+
 ## O QUE FOI ENTREGUE — v5.24.27 (2026-09-14, leva de pedidos: P5 + .cmd + excluir lixo + monitor SNMP fase 1 + hub P8)
 
 - **P5 (lápis que ordenava):** o ordenador global de tabelas (historico_sort_patch.js) agora ignora cabeçalho 'Editar' — clique perdido não reordena mais a lista de impressoras do contrato. Foto/desenho dele confirmaram a lista: contratos_final_patch.js.

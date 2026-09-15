@@ -6,6 +6,15 @@
   "observability": {
     "enabled": true
   },
+  // v5.24.28 — depósito dos .exe das atualizações (pedido dele: anexa o .exe
+  // DIRETO no portal). Se o deploy falhar com erro de R2: crie o bucket
+  // "digicopy-downloads" no painel (R2 → Create bucket, Standard) e rode de novo.
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "digicopy-downloads"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

@@ -659,7 +659,7 @@ function viradaDoLimite(){
 function recadoDoLimite(){
   const falta=Math.max(0,viradaDoLimite()-Date.now());
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
-  // v5.24.27 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
+  // v5.24.28 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
   // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
   return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
