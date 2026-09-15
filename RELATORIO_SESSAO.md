@@ -2886,6 +2886,13 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Tela 'Preparar Arquivos Fiscais':** Selecione o Mês (agosto/2026), checkbox 'Incluir PDFs', botão Preparar Arquivos + link 'Acessar Pasta'. Matriz NFe/NFCe × contadores: Geradas / Canceladas / Corrigidas (NF-e só; NFC-e = 'Não Suportado') / **XML Não Encontrados** (com 'Ver' por coluna). Aviso: se houver XML não encontrado na consulta, procurar em OUTROS TERMINAIS antes de enviar (multi-PC manual!). Botão final cinza: **Enviar para Escritório**.
 - **É exatamente o fluxo 'zip do mês pro contador' que já estava no desenho — E o aviso de outros terminais é a prova viva do problema que nossa sincronização resolve: no nosso, os XMLs de TODOS os PCs caem na mesma nuvem/pasta do mês automaticamente, e o pacote pro escritório sai completo sem caça ao terminal.**
 
+## MARCO DE FIM DE DIA — 2026-09-15 — Virada praticamente concluída
+
+- **VIRADA GRÁTIS DO ENDEREÇO = FEITA por ele** ✅: subdomínio trocado no painel, /health no novo endereço respondendo {"ok":true...,"versao":"5.24.33"}. Aviso de DNS dele era só propagação (resolveu). Motor cmd comprovadamente atualizando (Passo 4 correto: exe instalado era pré-troca → batia no endereço morto por isso o aviso de 'nuvem ANTIGA').
+- **Faltando dele (pendências oficiais às 18h):** (1) GERAR_EXE + instalar nos PCs da loja → tela da nuvem mostra 'v5.24.33' e testa Excluir de vez direto; (2) **Venda-NF — adiado por ele**, talvez não venha hoje (esperar sem cobrar); demais menus fiscais 100% catalogados.
+- **Sets NF catalogados até aqui (100% do configuracional):** Geral, Outras, Tributação, Mensagens, Certificados, FCP, Inutilizar, NFCe, Autorizações, Reforma Tributária, Perfil Tributário (5 perfis reais dele), Manifestação Destinatário completa, Listagem NF completa + 4 gerações do Novo, Enviar XML (Preparar Arquivos Fiscais). Falta só: **Venda-NF**.
+- **Fila minha (ordem travada com ele):** v5.24.34 = P7 (serial primeiro + remaneio) → publicar-por-destinatário (ideia dele: todos/lista CNPJ+nome/só loja) → imagens no tutorial → sistema Atualizador separado (3° dele) quando o 4° estiver redondo.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
