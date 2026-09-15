@@ -17,7 +17,7 @@ var AVISO_EPSON = (window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.
 ].join('\n');
 
 var PAGES = 'https://digicopy-pix.pages.dev/orcamento.html';
-var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }

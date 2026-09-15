@@ -1,4 +1,4 @@
-// test_ajustes_v52423.js — v5.24.32: pedido dele "função de publicar atualizações".
+// test_ajustes_v52423.js — v5.24.33: pedido dele "função de publicar atualizações".
 // WORKER: GET/POST /v1/app-release + tabela app_versao (1 linha; leitura
 // pública; escrita = aparelho matriculado).
 // APP: ao abrir, se versão nova > instalada e ainda NÃO vista, aparece UMA
@@ -53,19 +53,19 @@ function cmpVersaoMaior(nova, atual){
   }
   return false;
 }
-ok(cmpVersaoMaior('5.24.32','5.24.22')===true, 'cmp: 5.24.32 > 5.24.22');
+ok(cmpVersaoMaior('5.24.33','5.24.22')===true, 'cmp: 5.24.33 > 5.24.22');
 ok(cmpVersaoMaior('5.25.0','5.24.99')===true, 'cmp: 5.25.0 > 5.24.99 (não trava no 9)');
-ok(cmpVersaoMaior('5.24.32','5.24.32')===false, 'cmp: igual não avisa de novo');
-ok(cmpVersaoMaior('5.24.0','5.24.32')===false, 'cmp: publique velha = silêncio');
+ok(cmpVersaoMaior('5.24.33','5.24.33')===false, 'cmp: igual não avisa de novo');
+ok(cmpVersaoMaior('5.24.0','5.24.33')===false, 'cmp: publique velha = silêncio');
 
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('aviso-update-card'), 'bundle: sininho dentro');
 ok(bundle.includes('card-publicar-atualizacao'), 'bundle: publicador dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-card'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.32'"), 'index: versão 5.24.32');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.32<'), 'index: rodapé v5.24.32');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.32"'), 'package.json 5.24.32');
-ok(wk.includes("'5.24.32'"), 'worker carimbado 5.24.32');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.33'"), 'index: versão 5.24.33');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.33<'), 'index: rodapé v5.24.33');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.33"'), 'package.json 5.24.33');
+ok(wk.includes("'5.24.33'"), 'worker carimbado 5.24.33');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.32 (sininho de atualização + publicador na config).');
+console.log('\nTudo OK — v5.24.33 (sininho de atualização + publicador na config).');

@@ -6,14 +6,14 @@
 (function(){
 'use strict';
 
-const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 // v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
 // mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
 // público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
 // próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
 // Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
-const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.kauangabrielcardososilva7890.workers.dev/v1/medir';
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.digicopyonline.workers.dev/v1/medir';
 async function chamarMedidorOficial(){
   const agora = Date.now();
   if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
@@ -325,7 +325,7 @@ async function renderConnected(body){
       try{
         const data=await api('/v1/devices',{method:'GET'});
         adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')
-          /* v5.24.32 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
+          /* v5.24.33 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
           +(x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
         adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');

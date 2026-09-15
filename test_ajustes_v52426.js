@@ -1,4 +1,4 @@
-// test_ajustes_v52426.js — v5.24.32: pedido dele "faz logo" (sprint NF): a
+// test_ajustes_v52426.js — v5.24.33: pedido dele "faz logo" (sprint NF): a
 // Central ganha HISTÓRICO permanente das notas assinadas neste PC (número,
 // cliente, data, chave + copiar chave). Local de propósito: a emissão só roda
 // no PC que tem o A1, então a lista mora ali mesmo, sem custar nuvem.
@@ -26,7 +26,7 @@ ok(cn.includes('Nenhuma nota assinada neste PC ainda'), 'histórico: estado vazi
 ok(cn.includes('copiar'  === 'copiar' && 'data-cnfecopi'), 'histórico: botão copiar chave');
 ok(cn.includes('slice(0,8)'), 'histórico: mostra últimas 8 (teto de tela)');
 ok(cn.includes('histórico é melhoria, nunca trava emissão'), 'histórico: falha no registro NUNCA atrapalha emitir');
-ok(cn.includes('NFE_CENTRAL_V52426'), 'central: exportação pure v5.24.32');
+ok(cn.includes('NFE_CENTRAL_V52426'), 'central: exportação pure v5.24.33');
 ok(cn.includes('pintarHistoricoNfe();'), 'central: histórico pinta ao abrir');
 
 // teste funcional do guarda/lê (sem DOM)
@@ -45,9 +45,9 @@ if (typeof registrar === 'function') {
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('cnfe-historico') && bundle.includes('registrarNfeEmitida'), 'bundle: histórico dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('cnfe-historico'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.32'"), 'index 5.24.32');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.32<'), 'rodapé v5.24.32');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.32"'), 'package.json 5.24.32');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.33'"), 'index 5.24.33');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.33<'), 'rodapé v5.24.33');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.33"'), 'package.json 5.24.33');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.32 (histórico das notas assinadas na Central NF).');
+console.log('\nTudo OK — v5.24.33 (histórico das notas assinadas na Central NF).');

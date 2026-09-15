@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.24.32 — DOIS PEDIDOS NUM SÓ LUGAR (Parque de Impressoras):
+// v5.24.33 — DOIS PEDIDOS NUM SÓ LUGAR (Parque de Impressoras):
 //
 // FASE 1 DO MONITOR (tópico A, 'ue faz'): em cada impressora do Parque, botão
 //   [Ler status (rede)] que pergunta o IP UMA VEZ (fica gravado no cadastro do
@@ -180,5 +180,5 @@ function armarScannerParque(){
 if(typeof document!=='undefined') armarScannerParque();
 
 window.PARQUE_MONITOR_V52427={ lerStatusRede:lerStatusRede, abrirHubImpressora:abrirHubImpressora, injetarBotoesParque:injetarBotoesParque };
-console.log('[DIGICOPY] v5.24.32 — monitor SNMP fase 1 + hub da impressora no Parque');
+console.log('[DIGICOPY] v5.24.33 — monitor SNMP fase 1 + hub da impressora no Parque');
 })();

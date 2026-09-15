@@ -356,7 +356,7 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
-  // v5.24.32 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  // v5.24.33 — RELATORIO dele (P11): idem — só aplicado no Enter.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
