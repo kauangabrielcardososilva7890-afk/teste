@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.23 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.24 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -30,7 +30,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.23 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.24 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38,7 +38,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.23 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.24 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -90,10 +90,10 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.23 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.24 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
-// v5.24.23 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
+// v5.24.24 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
 // existir versão nova publicada na nuvem, mostra UMA ÚNICA VEZ (por versão,
 // por aparelho) o aviso com [Abrir pra baixar] + [Baixar depois]. Qualquer
 // um dos dois marca a versão como vista — o resto é silêncio até a próxima.
@@ -170,7 +170,7 @@ function agendarChecagemInicial(){
 }
 if(typeof document!=='undefined') agendarChecagemInicial();
 
-// v5.24.23 — o card publicador nas Configurações (ele marca a versão, cola o
+// v5.24.24 — o card publicador nas Configurações (ele marca a versão, cola o
 // link do .exe, escreve as notas — ou me pede pra escrever, como ele disse).
 function aplicarCardPublicarAtualizacao(){
   if(document.getElementById('card-publicar-atualizacao')) return;
@@ -183,12 +183,20 @@ function aplicarCardPublicarAtualizacao(){
     '<h4 class="font-bold text-[14px]"><i class="ph ph-rocket-launch"></i> Publicar nova atualização</h4>'+
     '<p class="mt-1 text-[11.5px] text-slate-500">Marque a versão nova, cole o link do arquivo (.exe) e escreva as notas (se quiser, me pede que eu monto a redação pra você). Cada aparelho vê o aviso UMA única vez.</p>'+
     '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
-      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.23"></div>'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.24"></div>'+
       '<div class="md:col-span-2"><label class="text-[11px] uppercase font-bold text-slate-500">Link do arquivo (.exe — https)</label><input id="pub-upd-url" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="https://..."></div>'+
       '<div class="md:col-span-3"><label class="text-[11px] uppercase font-bold text-slate-500">Notas da atualização (o que mudou)</label><textarea id="pub-upd-notas" class="mt-1 w-full h-28 p-3 rounded-xl border text-[12.5px]" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>'+
     '</div>'+
-    '<div class="mt-3 flex items-center gap-3"><button id="pub-upd-enviar" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold">Publicar atualização</button><small class="text-[11px] text-slate-500">Apaga e refaz quando quiser — o aviso só aparece quando a versão nova for MAIOR que a do aparelho.</small></div>';
+    '<div class="mt-3 flex items-center gap-3"><button id="pub-upd-enviar" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold">Publicar atualização</button><small class="text-[11px] text-slate-500">Apaga e refaz quando quiser — o aviso só aparece quando a versão nova for MAIOR que a do aparelho.</small></div>'+
+    '<div class="mt-3 pt-3 border-t"><small class="text-[11px] text-slate-500">Seu site próprio de atualizações (histórico completo com as notas e o link de cada versão):</small> <a id="pub-upd-site" href="#" target="_blank" rel="noopener" class="text-[12px] font-bold text-[#0a1e8a] underline break-all">abrir site</a></div>';
   grid.appendChild(card);
+  // v5.24.24 — aponta o "seu site" usando a mesma URL da nuvem já configurada
+  // no app (cloudflare_sync_patch.js expõe window.DIGICOPY_CLOUD.API).
+  try{
+    var apiBase=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
+    var siteEl=document.getElementById('pub-upd-site');
+    if(siteEl&&apiBase){ siteEl.href=apiBase+'/atualizacoes'; siteEl.textContent=apiBase+'/atualizacoes'; }
+  }catch(e){}
   document.getElementById('pub-upd-enviar').onclick=function(){
     var versao=String(document.getElementById('pub-upd-versao').value||'').trim();
     var url=String(document.getElementById('pub-upd-url').value||'').trim();
@@ -261,7 +269,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.23 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.24 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 

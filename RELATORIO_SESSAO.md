@@ -2782,6 +2782,16 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - P8 hub de histórico da impressora (chamados/leituras/contratos bonitinho
   + botão para o contrato atual).
 
+## O QUE FOI ENTREGUE — v5.24.24 (2026-09-14, site próprio de atualizações)
+
+**Pedido dele:** 'um site próprio isso, onde terá o histórico completo de atualizações que lancei, com o patch escrito e o link dele pra eu poder baixar'.
+
+- **Nuvem:** além da versão atual (sininho v5.24.23), cada publicação entra no HISTÓRICO — tabela `app_releases` (1 linha por versão; republicar a mesma versão ATUALIZA em vez de duplicar). Rota JSON `/v1/app-releases` (pro sistema, se quiser usar um dia).
+- **O site:** rota pública **`/atualizacoes` no próprio worker** (mesmo endereço da nuvem dele, zero hospedagem extra): página limpa, celular-pronto, versão mais nova com selo 'versão atual', cada bloco com data em português, as notas (o patch escrito) e o botão **Baixar esta versão**. Estado vazio educado antes da 1ª publicação. Notas escapadas (texto dele nunca vira HTML no site).
+- **App:** no card 'Publicar nova atualização' agora aparece o link do site pronto (montado da URL da nuvem já configurada) — clicou, abriu o histórico.
+- **Receita de uso:** publica pelo card -> o site atualiza SOZINHO no mesmo instante; qualquer versão antiga continua lá com seu link.
+- **Testes:** test_ajustes_v52424.js (23 asserts). **Suíte: 149/0/2** (as 2 = infra ausente no sandbox, de sempre).
+
 ## O QUE FOI ENTREGUE — v5.24.23 (2026-09-14, sininho de atualização + publicador)
 
 **Pedido dele (tópico D):** 'função de publicar atualizações' — ele marca a versão, cola o link do .exe e escreva as notas (ou me pede que eu monte); todo mundo que abrir vê o aviso UMA ÚNICA VEZ por versão por aparelho com [Abrir pra baixar] + [Baixar depois]. No celular: mesmo código, mesmo comportamento.

@@ -124,7 +124,7 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    // v5.24.23 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // v5.24.24 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
     // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
     // novos, checa se o irmão antes do campo não É o rótulo certo.
     var irmaoDe = de.previousElementSibling;

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.23';
+const WORKER_VERSION = '5.24.24';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -915,13 +915,17 @@ async function resumoDaNuvem(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 let __USO_TABELA_OK = false;
 let ultimoErroUso = '';
-// v5.24.23 — sininho de atualização nova (pedido dele): 1 linha com a versão
+// v5.24.24 — sininho de atualização nova (pedido dele): 1 linha com a versão
 // publicada + url do .exe + notas. Leitura pública; escrita = aparelho
 // matriculado (mesma trava do sync). Recuo se algum dia irritar: apagar a
 // linha e o sininho some, sem mexer no resto.
 async function garantirTabelaAppVersao(env){
   if (env.__APP_VERSAO_TABELA_OK) return;
   await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_versao (id INTEGER PRIMARY KEY CHECK (id = 1), versao TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
+  // v5.24.24 — SITE PRÓPRIO de atualizações (pedido dele): histórico de TODAS
+  // as versões publicadas (uma linha por versão; republicar mesma versão
+  // atualiza a linha, sem duplicar). O sininho continua lendo só a atual.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS app_releases (versao TEXT PRIMARY KEY, url TEXT NOT NULL DEFAULT '', notas TEXT NOT NULL DEFAULT '', publicado_em INTEGER NOT NULL DEFAULT 0)`);
   env.__APP_VERSAO_TABELA_OK = true;
 }
 
@@ -944,7 +948,7 @@ async function _somar(env, escritas, leituras){
     ).bind(hojeUTC(), escritas, leituras, escritas, leituras).run();
   }catch(e){ ultimoErroUso = String(e && e.message || e); console.error('USO_DIARIO_FALHOU', e); }
 }
-// v5.24.23 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
+// v5.24.24 — ECONOMIA DO MEDIDOR: medir a cota não pode GASTAR cota.
 // Antes, CADA chamada gravava a linha do medidor — inclusive as leituras, que
 // são a maioria (o sistema confere novidades ~1x por minuto por PC aberto).
 // Só o medidor tomava ~1.400 gravações/dia por aparelho parado. Agora as
@@ -969,7 +973,7 @@ function somarUso(env, escritas, leituras, ctx){
 async function usoHoje(env){
   try{
     await garantirTabelaUso(env);
-    // v5.24.23 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
+    // v5.24.24 — ASSINATURA PAGA CONFIRMADA POR ELE (2026-09-14, Workers Paid
     // US$5): o teto deixa de ser o do grátis (100 mil escritas / 5 milhões de
     // leituras POR DIA) e vira o incluído do plano (50 MILHÕES de escritas /
     // 25 BILHÕES de leituras POR MÊS). A barra vai sempre parecer quase vazia
@@ -1261,8 +1265,14 @@ async function route(request, env, ctx) {
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/review/remove-revoked') return handleRemoveRevokedDeviceRecords(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/devices') return handleDevices(request, env);
+  if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
+    // v5.24.24 — histórico em JSON também (pras telas do sistema, se quiser).
+    await garantirTabelaAppVersao(env);
+    const lista = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_releases ORDER BY publicado_em DESC').all();
+    return json({ ok: true, releases: lista.results || [] });
+  }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
-    // v5.24.23 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.24.24 — leitura pública do sininho de atualização (versão + link + notas).
     await garantirTabelaAppVersao(env);
     const row = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_versao WHERE id = 1').first();
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
@@ -1271,14 +1281,82 @@ async function route(request, env, ctx) {
     await authenticate(request, env);
     const body = await request.json();
     const versao = String((body && body.versao) || '').trim().replace(/^v/i, '');
-    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.23.');
+    if (!/^\d+(\.\d+)+$/.test(versao)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Versão precisa estar no formato 5.24.24.');
     const urlRel = String((body && body.url) || '').trim();
     if (!/^https:\/\//.test(urlRel)) throw new ApiError(400, 'URL_INVALIDA', 'A URL de download precisa começar com https:// (boa regra: bucket público do R2).');
     const notas = String((body && body.notas) || '').slice(0, 4000);
     await garantirTabelaAppVersao(env);
     await env.DB.prepare('INSERT INTO app_versao (id, versao, url, notas, publicado_em) VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET versao = excluded.versao, url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
       .bind(versao, urlRel, notas, Date.now()).run();
+    // v5.24.24 — além de virar a atual (sininho), entra no histórico do site.
+    await env.DB.prepare('INSERT INTO app_releases (versao, url, notas, publicado_em) VALUES (?, ?, ?, ?) ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
+      .bind(versao, urlRel, notas, Date.now()).run();
     return json({ ok: true, versao, url: urlRel, notas, publicadoEm: Date.now() });
+  }
+  if (request.method === 'GET' && url.pathname === '/atualizacoes') {
+    // v5.24.24 — SITE PRÓPRIO (pedido dele): página pública com o histórico
+    // completo de atualizações — cada versão com as notas (o "patch escrito")
+    // e o botão de baixar. Sininho continua anunciando só uma vez; aqui fica
+    // a vitrine permanente, inclusive pra ele mesmo baixar versões antigas.
+    await garantirTabelaAppVersao(env);
+    const lista = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_releases').all();
+    const itens = (lista.results || []).slice().sort((x, y) => {
+      const pa = String(x.versao || '').split('.').map(n => parseInt(n, 10) || 0);
+      const pb = String(y.versao || '').split('.').map(n => parseInt(n, 10) || 0);
+      for (let i = 0; i < Math.max(pa.length, pb.length); i++) { if ((pa[i] || 0) !== (pb[i] || 0)) return (pb[i] || 0) - (pa[i] || 0); }
+      return 0;
+    });
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] || c));
+    const fmt = (ms) => { try { return ms ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(ms)) : ''; } catch (e) { return ''; } };
+    const blocos = itens.map((r, i) => `
+      <section class="rel ${i === 0 ? 'atual' : ''}">
+        <div class="rel-head">
+          <span class="v">v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">versão atual</span>' : ''}
+          <span class="data">${esc(fmt(r.publicadoEm))}</span>
+        </div>
+        ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : '<p class="sem-notas">Publicado sem notas.</p>'}
+        ${r.url ? `<a class="baixar" href="${esc(r.url)}" target="_blank" rel="noopener">Baixar esta versão</a>` : ''}
+      </section>`).join('\n');
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DigiCopy — Atualizações</title>
+<style>
+  :root{color-scheme:light}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f1f5ff;color:#0f172a;padding:0 0 48px}
+  header{background:#0a1e8a;color:#fff;padding:28px 20px 24px;text-align:center}
+  header h1{font-size:22px;font-weight:900;letter-spacing:.2px}
+  header p{opacity:.85;font-size:12.5px;margin-top:6px}
+  main{max-width:720px;margin:24px auto 0;padding:0 14px;display:flex;flex-direction:column;gap:14px}
+  .rel{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(10,30,138,.06)}
+  .rel.atual{border:2px solid #0a1e8a}
+  .rel-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .v{font-size:17px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
+  .selo-novo{background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .data{margin-left:auto;font-size:11.5px;color:#64748b}
+  .notas{margin-top:12px;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.55;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
+  .sem-notas{margin-top:10px;font-size:12px;color:#94a3b8;font-style:italic}
+  .baixar{display:inline-flex;align-items:center;justify-content:center;margin-top:14px;background:#0a1e8a;color:#fff;text-decoration:none;font-weight:800;font-size:13.5px;padding:12px 22px;border-radius:12px;width:100%}
+  @media(min-width:520px){.baixar{width:auto}}
+  .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:34px;text-align:center;color:#64748b;font-size:14px}
+  footer{text-align:center;margin-top:26px;font-size:11px;color:#94a3b8}
+</style>
+</head>
+<body>
+<header>
+  <h1>DigiCopy — Atualizações</h1>
+  <p>Histórico completo das versões publicadas, com o que mudou e o link pra baixar.</p>
+</header>
+<main>
+  ${blocos || '<div class="vazio">Nenhuma atualização publicada ainda. Assim que a primeira sair, aparece aqui com o link de download.</div>'}
+</main>
+<footer>Atualizado automaticamente toda vez que uma versão nova é publicada no sistema.</footer>
+</body>
+</html>`;
+    return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
   }
   if (request.method === 'GET' && url.pathname === '/v1/admin/activity') return handleActivity(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/devices/revoke') return handleRevokeDevice(request, env);

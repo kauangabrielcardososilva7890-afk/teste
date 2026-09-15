@@ -150,7 +150,7 @@ app.whenReady().then(() => {
   registerPrintIPC();
   registerBackupIPC();
   registerErroTxtIPC();
-  // v5.24.23 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // v5.24.24 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
   // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
   // Word/LibreOffice, o que estiver associado ao .rtf).
   ipcMain.handle('rtf:abrir', async (_e, payload) => {
@@ -627,7 +627,7 @@ function registerBackupIPC(){
 }
 
 // ──────────────────────────────────────────────
-// ERRO.TXT IPC (v5.24.23) — pedido dele: erro indevido vira linha num
+// ERRO.TXT IPC (v5.24.24) — pedido dele: erro indevido vira linha num
 // erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
 // (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
 // (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB

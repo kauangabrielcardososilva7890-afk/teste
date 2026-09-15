@@ -1,4 +1,4 @@
-// test_ajustes_v52415.js — v5.24.23: relato dele "salvou na nuvem mas alguns
+// test_ajustes_v52415.js — v5.24.24: relato dele "salvou na nuvem mas alguns
 // dados não aparecem no PC (usuários, técnico, vendas, orçamentos...)".
 // Suspeita número 1 provada em código: as listas filtram por empresaId da
 // sessão (renderUsuarios: u.empresaId===s.empresaId) — dois PCs com duas
@@ -13,7 +13,7 @@ function ok(cond, msg) {
 }
 
 const p = fs.readFileSync('ajustes_v5227_nuvem_acompanhamento_patch.js', 'utf8');
-ok(p.includes('v5.24.23'), 'carimbo v5.24.23 no painel de nuvem');
+ok(p.includes('v5.24.24'), 'carimbo v5.24.24 no painel de nuvem');
 ok(p.includes('window.dcDiagnosticoInvisiveis'), 'função de diagnóstico exposta');
 ok(p.includes('dc-diag-invisiveis'), 'botão injetado no painel (id dc-diag-invisiveis)');
 ok(p.includes('Por que dados não aparecem?'), 'título do diagnóstico na língua dele');
@@ -31,11 +31,11 @@ ok(bundle.includes('dcDiagnosticoInvisiveis'), 'bundle contém o diagnóstico');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('dcDiagnosticoInvisiveis'), 'bundle do CELULAR contém');
 
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.23'"), 'index: versão 5.24.23');
-ok(idx.includes('>v5.24.23<'), 'index: rodapé 5.24.23');
-ok(idx.includes('app.bundle.js?v=5.24.23'), 'index: cache-bust 5.24.23');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.23"'), 'package.json 5.24.23');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.23'"), 'worker 5.24.23');
+ok(idx.includes("DIGICOPY_APP_VERSION = '5.24.24'"), 'index: versão 5.24.24');
+ok(idx.includes('>v5.24.24<'), 'index: rodapé 5.24.24');
+ok(idx.includes('app.bundle.js?v=5.24.24'), 'index: cache-bust 5.24.24');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.24.24"'), 'package.json 5.24.24');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.24'"), 'worker 5.24.24');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.23 (diagnóstico "por que dados não aparecem", custo zero de nuvem).');
+console.log('\nTudo OK — v5.24.24 (diagnóstico "por que dados não aparecem", custo zero de nuvem).');
