@@ -1,13 +1,17 @@
 @echo off
 chcp 65001 >nul
+if /i "%~1"=="interno" goto :dentro
+start "DIGICOPY - Gerar o .exe" cmd /k "%~f0" interno
+exit /b
+:dentro
 cd /d "%~dp0"
-title DIGICOPY - Gerar o .exe (instala tudo + monta)
+title DIGICOPY - Gerar o .exe (fique tranquilo: esta janela NAO fecha sozinha)
 echo ==========================================================
 echo  DIGICOPY - Gerar o instalador (.exe)
 echo  Passo 1: instala as pecas (npm install)
 echo  Passo 2: monta o instalador (npm run build:win)
-echo  No fim, voce mesmo abre a pasta DIST (o .exe fica la).
-echo  Pode fechar esta janela no X quando quiser.
+echo  No fim, voce mesmo abre a pasta DIST ao lado.
+echo  ESTA JANELA NUNCA FECHA SOZINHA - fecha so no X.
 echo ==========================================================
 echo.
 echo Passo 1/2 - Instalando as pecas (demora na 1a vez):
@@ -19,7 +23,7 @@ echo.
 if exist dist\*.exe (
   echo ==========================================================
   echo  PRONTO! O instalador esta na pasta DIST ao lado.
-  echo  Abre a pasta dist no Explorador de Arquivos e instala.
+  echo  Abre a pasta dist e instala por cima em cada PC.
   echo ==========================================================
 ) else (
   echo ==========================================================
@@ -27,4 +31,6 @@ if exist dist\*.exe (
   echo  Tira uma foto desta tela e me manda (o erro esta acima).
   echo ==========================================================
 )
+echo.
+echo  [a janela fica ABERTA ate voce fechar no X]
 cmd /k

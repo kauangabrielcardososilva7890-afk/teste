@@ -2950,6 +2950,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **P7 andou pra v5.24.35** (a numerologia é só-para-frente).
 - **Suíte: 153/0/2.**
 
+## v5.24.34 (continuação) — FK resolvida + GERAR v4 + REGRA DAS PERGUNTAS — 2026-09-15
+
+- **FOREIGN KEY (erro real dele):** records.updated_by, changes.device_id e enrollment_codes.created_by apontam pro aparelho sem cascata → delete físico estoura SQLITE_CONSTRAINT. Correção: migração **0005_soft_delete_aparelhos.sql** (coluna excluido_em, schemaVersion 3) + todas as leituras (auth, listas, contagens) filtram excluídos + delete vira carimbo. Aparelho some da lista na hora, perde o acesso na hora, dados sincronizados intactos pra sempre. **ELE PRECISA: rodar o atualizar_motor_nuvem.cmd 1x (migra+publica) e só depois testar o Excluir.** Exe não muda (bundle sha igual — z-index já dentro do v5.24.34 que ele tem que instalar).
+- **GERAR_EXE v4:** janela filha independente (start cmd /k ... interno) — filho travado não derruba mais a janela (o crash UV_HANDLE_CLOSING do node dele era a suspeita do fechamento). Nunca mais fecha sozinha; sai só no X.
+- **REGRA NOVA (decreto dele):** os cartões de pergunta não são enfeite — **são a via oficial de toda decisão daqui pra frente** (sempre que houver pergunta/opção, cartão).
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.

@@ -91,7 +91,7 @@ async function authenticate(request, env) {
   const tokenHash = await sha256(token);
   const device = await env.DB.prepare(
     `SELECT id, name, role, created_at AS createdAt, last_seen_at AS lastSeenAt
-       FROM devices WHERE token_hash = ? AND revoked_at IS NULL LIMIT 1`
+       FROM devices WHERE token_hash = ? AND revoked_at IS NULL AND excluido_em IS NULL LIMIT 1`
   ).bind(tokenHash).first();
   if (!device) throw new ApiError(401, 'INVALID_TOKEN', 'Token de aparelho inválido ou revogado.');
 
@@ -239,7 +239,7 @@ async function handleSetup(request, env) {
   if (!(await sameSecret(supplied, env.SETUP_SECRET))) {
     throw new ApiError(403, 'INVALID_SETUP_SECRET', 'Segredo de ativação incorreto.');
   }
-  const existing = await env.DB.prepare('SELECT COUNT(*) AS total FROM devices').first();
+  const existing = await env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE excluido_em IS NULL').first();
   if (Number(existing && existing.total) > 0) {
     throw new ApiError(409, 'ALREADY_INITIALIZED', 'A nuvem já possui um aparelho administrador.');
   }
@@ -721,7 +721,7 @@ async function handleDevices(request, env) {
               d.last_seen_at AS lastSeenAt, d.revoked_at AS revokedAt,
               (SELECT COUNT(*) FROM records r WHERE r.updated_by = d.id AND r.deleted_at IS NULL) AS activeRecords,
               (SELECT COUNT(*) FROM changes c WHERE c.device_id = d.id) AS totalChanges
-       FROM devices d ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
+       FROM devices d WHERE d.excluido_em IS NULL ORDER BY d.revoked_at IS NOT NULL, d.created_at ASC`
     ),
     env.DB.prepare(
       `SELECT c.device_id AS deviceId, c.entity AS lastEntity, c.operation AS lastOperation,
@@ -796,9 +796,15 @@ async function handleDeleteDevice(request, env) {
   if (deviceId === admin.id) throw new ApiError(400, 'CANNOT_DELETE_SELF', 'Este computador não pode apagar a si mesmo.');
   // v5.24.34 relaxado a pedido dele (2ª cobrança: 'continua a mesma coisa,
   // só consigo bloquear'): exclui DIRETO qualquer aparelho, menos o próprio.
-  const result = await env.DB.prepare('DELETE FROM devices WHERE id = ?').bind(deviceId).run();
+  // v5.24.34 — ERRO REAL dele: D1_ERROR FOREIGN KEY. Records/changes/códigos
+  // apontam pro aparelho (sem cascata) e o delete físico estoura a regra.
+  // Saída: exclusão por carimbo (soft-delete) — some da lista inteira, perde
+  // o acesso na hora, e nenhum dado sincronizado é tocado.
+  const result = await env.DB.prepare(
+    "UPDATE devices SET excluido_em = ?, revoked_at = COALESCE(revoked_at, ?) WHERE id = ? AND excluido_em IS NULL"
+  ).bind(Date.now(), Date.now(), deviceId).run();
   if (!result.meta || Number(result.meta.changes) !== 1) {
-    throw new ApiError(404, 'DEVICE_NOT_FOUND', 'Aparelho não encontrado na nuvem.');
+    throw new ApiError(404, 'DEVICE_NOT_FOUND', 'Aparelho não encontrado na nuvem (ou já excluído).');
   }
   return json({ ok: true, deleted: deviceId });
 }
@@ -832,7 +838,7 @@ async function handleResetCloud(request, env) {
     throw new ApiError(400, 'RESET_CONFIRMATION_REQUIRED', 'Digite APAGAR NUVEM para confirmar.');
   }
   const active = await env.DB.prepare(
-    'SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL'
+    'SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL AND excluido_em IS NULL'
   ).first();
   if (Number(active && active.total) !== 1) {
     throw new ApiError(409, 'RESET_REQUIRES_SINGLE_DEVICE', 'Bloqueie os outros aparelhos antes de zerar a nuvem.');
@@ -907,7 +913,7 @@ async function resumoDaNuvem(env) {
     return null;
   }
   try {
-    const devices = await env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL').first();
+    const devices = await env.DB.prepare('SELECT COUNT(*) AS total FROM devices WHERE revoked_at IS NULL AND excluido_em IS NULL').first();
     totais.devices = Number(devices && devices.total) || 0;
     const changes = await env.DB.prepare('SELECT COALESCE(MAX(seq), 0) AS total FROM changes').first();
     totais.cursor = Number(changes && changes.total) || 0;
@@ -1615,7 +1621,7 @@ async function gerarBackup(env, chave, meta){
     pulados += linhas.length;
   }
   const devices = await env.DB.prepare(
-    `SELECT id, name, role, created_at, last_seen_at, revoked_at FROM devices ORDER BY created_at ASC`
+    `SELECT id, name, role, created_at, last_seen_at, revoked_at FROM devices WHERE excluido_em IS NULL ORDER BY created_at ASC`
   ).all();
   const totals = await env.DB.prepare(
     `SELECT (SELECT COUNT(*) FROM records WHERE deleted_at IS NULL) AS records_vivos,
