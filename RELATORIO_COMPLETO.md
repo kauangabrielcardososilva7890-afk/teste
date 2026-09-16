@@ -1,3 +1,16 @@
+# RELATÓRIO COMPLETO — diário do sistema
+
+## ESTADO ATUAL DAS REGRAS (atualizado 2026-09-16 — sobrepõe regras velhas do corpo)
+- **Versão da verdade (rodapé): v5.24.36.** Número só anda pra frente; 2ª casa = relatório grande.
+- **Links oficiais:** teste = site próprio https://teste-60f.pages.dev · zip = branch no GitHub · download público = https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes. **GitHack MORTO** (repo privado) — menções abaixo são histórico.
+- **Decisões chegam por cartões clicáveis** (canal oficial de pergunta dele).
+- **Ritual de qualquer arquivo novo no bundle:** sync_build + 4 guards + testes + cópia celular + carimbo (index/mobile/package.json; GERAR_EXE fora do carimbo e do bundle).
+- **Suíte atual: 157/157 verde.** Bundle: 200 scripts com isolamento de erro.
+- **Mapa dos 5 sistemas:** mexe-se SÓ no 4 (loja) e 3 (atualizador futuro); 1/2/5 = futuro.
+- O corpo abaixo é o diário antigo (v5.22.x→v5.24.3): mantido íntegro por utilidade; em divergência de REGRA, vale este cabeçalho.
+
+---
+
 
 ## Aba Backup normal (acabou a gaveta bugada) + painel Nuvem mostra o uso, e a regra de versão do ERP — v5.22.101 🤝
 

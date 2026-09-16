@@ -58,7 +58,9 @@ const REPO = (pkg.digicopy && pkg.digicopy.repo) || 'kauangabrielcardososilva789
 const BRANCH = (pkg.digicopy && pkg.digicopy.branch) || '';
 if (!BRANCH) { console.error('package.json sem "digicopy.branch".'); process.exit(1); }
 
-const LINK_GITHACK = `https://raw.githack.com/${REPO}/${BRANCH}/index.html?v=${versao}`;
+// Link de teste OFICIAL = site próprio (Pages). GitHack MORREU quando o repo
+// ficou privado — não serve mais nem de plano B (não oferecer nunca).
+const LINK_SITE = 'https://teste-60f.pages.dev';
 const LINK_ZIP = `https://github.com/${REPO}/archive/refs/heads/${BRANCH}.zip`;
 
 // Aviso se a branch configurada não for a que está em uso (não bloqueia build).
@@ -224,8 +226,8 @@ if (problemas.length) {
 
 function imprimirLinks(){
   console.log('');
-  console.log('  Teste no navegador (GitHack):');
-  console.log('    ' + LINK_GITHACK);
+  console.log('  Teste no navegador (site próprio — Pages):');
+  console.log('    ' + LINK_SITE);
   console.log('  Baixar tudo (zip do GitHub):');
   console.log('    ' + LINK_ZIP);
 }

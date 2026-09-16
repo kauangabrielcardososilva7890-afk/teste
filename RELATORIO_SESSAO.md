@@ -3012,11 +3012,55 @@ de ponta a ponta com DOM fake — pergunta só no salvar, congela antiga,
 anti-duplicata, mesmo cliente sem pergunta). Registrado no runner.
 **Suíte: 156 passaram / 0 falha aceita / 0 falharam.**
 
+## v5.24.36 — leitura: UMA ABERTA POR VEZ (decreto dele) + contador anterior certo pós-estorno + link oficial corrigido (2026-09-16)
+
+**Bug relatado (caminho exato dele):** contrato → leituras → novo → novo
+lançamento → salvar → faturar → extornar → lápis → muda contador → salvar → a
+lista mostra o ANTERIOR como o contador que foi faturado, não o de verdade.
+
+**Causa raiz (cadeia factual):** `salvarLancamentoContador` calcula
+`anterior = p.contadores[key]` VIVO. Após o 1º lançamento o parque já segura o
+atual; a edição RECALCULAVA o anterior pelo parque (ex.: 1150) em vez do
+congelado do item (1000). O faturar/estornar não tocam contador — o estorno só
+reabre a edição; o deslize era o recálculo pelo estado vivo.
+
+**Decisão DELE (virou decreto):** "só vai poder criar uma nova leitura se
+fechar a leitura que já está aberta".
+
+**O que entrou (`ajustes_v52436_leitura_uma_aberta_patch.js`, pos 200, último):**
+1. **Guarda nos 3 criadores de leitura** (novaLeituraContrato do contrato,
+   criarLeituraDetalhada avulsa, criarLeituraDefinitiva): se o contrato tem
+   leitura do formato novo NÃO faturada ('aberta' ou 'estornada'), o Novo é
+   BLOQUEADO com aviso citando a leitura — "Fature (feche) ela antes de criar
+   outra" (estornada: "ou apague") — e abre a leitura existente na hora.
+   Leituras do formato antigo (parqueId simples) não travam o fluxo novo.
+2. **Anterior certo na edição:** antes do salvar original rodar, o contador
+   vivo do medidor editado é alinhado ao anterior CONGELADO do item — o
+   original recalcula certo e devolve o parque ao novo atual. Wrap cirúrgico,
+   sem duplicar template.
+
+**Resposta à cobrança do link (ele: "porque voltou com o githack?"):** a REGRA
+VIVA já dizia "link teste Pages" — o deslize nasceu no sync_build.js, que
+IMPRIMIA o link do GitHack. Repo privado matou o GitHack (não serve arquivo de
+repo privado). Fix na fonte: sync_build imprime SÓ https://teste-60f.pages.dev
++ zip; test_ajustes_v52263 reescrito pra travar (assert anti-LINK_GITHACK).
+Auditado sem achismo: em runtime NADA depende de githack — Pix é nuvem desde
+v5.22.19 e o orçamento público vai de digicopy-orcamentos.pages.dev (vencedor
+pos 182 rebinta as vars velhas dos patches das pos 149/173, que ficam mortas).
+
+**Ritual:** manifest 199→200; carimbo 5.24.35→5.24.36; sync+bundle 200 + 4
+guards + celular; murais (allowlist 200, fila final +leitura, pinos 5.24.36 em
+v52423–28 e v52435); test_ajustes_v52436.js (32 asserts, funcional com DOM
+fake: bloqueia aberta/estornada, legado passa livre, anterior 1000 e parque
+1180 provados). .md regrados: BUILD_EXE (versão + links oficiais),
+RELATORIO_COMPLETO (cabeçalho ESTADO ATUAL), ANDAMENTO e ETIQUETA (status).
+Conteúdo útil de todos preservado. **Suíte: 157 passaram / 0 falharam.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
 - **A versão SÓ ANDA PRA FRENTE.** Não existe 'prendeu no 9': 5.24.9 → 5.24.10 → 5.25.0. A 2ª casa é o relatório grande; a 3ª anda no dia a dia dele.
-- **TODA atualização sai com os 3 links na resposta: (1) link teste Pages, (2) zip da branch, (3) site de download das atualizações** (+ lembrete do deploy quando o motor mudar). Sem exceção — esquecimento histórico 5.24.25–5.24.28 reconhecido e anotado.
+- **TODA atualização sai com os 3 links na resposta: (1) link teste = SITE PRÓPRIO https://teste-60f.pages.dev (NUNCA githack — repo privado matou ele; ele cobrou e a correção entrou no sync_build), (2) zip da branch, (3) site de download das atualizações** (+ lembrete do deploy quando o motor mudar). Sem exceção — esquecimento histórico 5.24.25–5.24.28 e o deslize do githack (v5.24.35) reconhecidos e anotados.
 
 ## O QUE FOI ENTREGUE — v5.24.28 (2026-09-14, portal de atualizações SÓ DELE, do jeito que ele desenhou)
 

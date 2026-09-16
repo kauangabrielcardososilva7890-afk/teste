@@ -116,14 +116,14 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
 
   // ── 4. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man[man.length-1] === 'ajustes_v52435_impressora_remanejo_final_patch.js', 'manifest: wrap final é o ÚLTIMO (carrega depois de todos, vence sempre)');
+  ok(man[man.length-2] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length-1] === 'ajustes_v52436_leitura_uma_aberta_patch.js', 'manifest: remanejo penúltimo, guarda de leitura fecha a fila (v5.24.36 depois dele e vence sempre)');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('IMPRESSORA_REMANEJO_V52435_PURE') && bundle.includes('impf-avancar'), 'bundle: wrap final dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('IMPRESSORA_REMANEJO_V52435_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.35'"), 'index 5.24.35');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.35<'), 'rodapé v5.24.35');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.35'"), 'celular 5.24.35');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.24.35', 'package.json 5.24.35');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.36'"), 'index 5.24.36');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.36<'), 'rodapé v5.24.36');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.36'"), 'celular 5.24.36');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.24.36', 'package.json 5.24.36');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.24.35 (P7: serial primeiro + remanejo sem duplicar + remanejada congelada).');
