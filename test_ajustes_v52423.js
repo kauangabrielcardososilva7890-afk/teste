@@ -65,7 +65,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-ca
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index: versão 5.25.0');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'index: rodapé v5.26.0');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.26.0"'), 'package.json 5.26.0');
-ok(wk.includes("'5.26.0'"), 'worker carimbado 5.26.0 (re-ancorado: o motor ganhou CNPJ+gerente e saiu do 5.24.34)')
+ok(wk.includes("'5.26.1'"), 'worker carimbado 5.26.1 (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (sininho de atualização + publicador na config).');

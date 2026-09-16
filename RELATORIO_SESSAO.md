@@ -3189,6 +3189,18 @@ pin do gerente, carimbos).
 pendentes de rodada de campo dele — o caminho do convite relâmpago do patch v5.25.0 fica
 intacto como plano B e coberto pela suíte.
 
+## v5.26.1 — SITE PROFISSIONAL DE VERDADE + FIX GERENTE (artworkUrl) + imagens fiéis ao site (2026-09-16)
+
+**Reporte dele (foto do painel + log do GERAR_GERENTE_EXE):**
+1. **"Rota não encontrada" no passo 2** (salvar senhas): era o MOTOR VELHO ainda no ar — o connect-pass só existe depois de rodar o atualizar_motor_nuvem.cmd. Sem achismo: o 404 vinha da 404 genérica do worker antigo.
+2. **Builder do Gerente quebrava:** `configuration.win has an unknown property 'artworkUrl'` — propriedade que eu botei errada no package.json do gerente. REMOVIDA; versão do gerente carimbada 5.26.1. Bônus: o npm do PC dele BLOQUEIA o postinstall do electron ("install-scripts blocked") — o GERAR_GERENTE_EXE.cmd ganhou passo próprio (approve + rebuild + install.js direto, tudo goto-safe) antes do build.
+3. **Rodapé do site:** removidas as 2 linhas que ele mandou tirar ("Página mostrada pela própria nuvem do sistema." / "Só aparece o que está vigente..."). No lugar, rodapé informativo: canal oficial + "fale com quem instalou o sistema na sua loja".
+4. **"Queria o site bem bonito e bem informativo, tipo os profissionais":** REDESIGN COMPLETO do /atualizacoes e da página /a/<slug> — faixa gradiente, marca (logo D + "Sistema DigiCopy · Portal oficial de atualizações"), selos de confiança (conexão segura · versão oficial verificada · dados preservados), chip de sessão (CNPJ autorizado + sair), trilha 1-2-3, cards com notas+tutorial+imagens, botão verde gigante com **tamanho do arquivo** (lido do R2, ex.: "82 MB") + data de publicação + texto "instala por cima". Meta description + theme-color (visual profissional até no preview do WhatsApp).
+5. **BUG REAL PEGO PELO DEMO:** a rota /a/<slug> tinha perdido o `return` no replace — dava 404 de verdade em produção. Descoberto rodando o próprio worker em Node com banco simulado (as 3 páginas renderizadas e verificadas: /a/, /atualizacoes logado, login — todas 200). Guarda nova no test_5260 trava os dois returns pra sempre.
+6. **Imagens do tutorial — resposta à pergunta dele:** "faz mais real ou tiro print?" → As telas do SITE agora têm versões fiéis geradas (site-01-login-restrito, site-02-pagina-da-atualizacao, site-03-portal-restrito-logado em exemplos-tutorial/) — concebidas do design REAL novo. Prints 100% exatos do sistema/sininho/instalador dependem do PC dele (não dá pra desenhar o que só existe no Windows dele); ele pode trocar qualquer uma pelos prints reais na hora de publicar, no próprio Gerente.
+7. **Futuro do Gerente (registrado como roadmap):** o programa foi feito pra crescer — a concha Electron com login seguro e IPC já suporta novas abas; quando ele pedir, o Gerente vira PAINEL DE GESTÃO (clientes/empresas, pagamentos dos planos, suspender/liberar loja) com rotas novas na nuvem. Não codificado agora.
+**Ritual:** WORKER_VERSION 5.26.1 (app intocado: sem release de sistema nova); pins re-ancorados (v52296/52423/52424/52425 worker; v52424/52428 murais do site — o visual novo supera os pins do vitrine antigo; v5260 com 5 asserts novos). Suíte: 158/0/0.
+
 ## MAPA DE VISIBILIDADE DO SISTEMA — o que esconde/apaga menus e telas (resposta: "tem mais menus ocultos desde o login até o final?")
 
 - **Login:** textos "Sistema Digicopy / Vendas, locação... / © 2026" são

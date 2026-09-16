@@ -20,10 +20,10 @@ ok(wk.includes("url.pathname === '/v1/app-releases'") && wk.includes("url.pathna
 
 // SITE PÚBLICO
 ok(wk.includes("url.pathname === '/atualizacoes'"), 'site: rota pública /atualizacoes');
-ok(wk.includes('DigiCopy Downloads'), 'site: título = só o nome do site (supersede v5.24.34: pedido dele, página animada DigiCopy Downloads)');
-ok(wk.includes('Baixar a atualização (.exe)'), 'site: botão de baixar grande e direto (supersede v52428)');
+ok(wk.includes('Sistema DigiCopy') && wk.includes('Portal oficial de atualizações'), 'site: título = portal oficial dele (supersede v5.26.1: visual profissional pedido dele — "bem bonito e bem informativo")');
+ok(wk.includes('Baixar a atualização agora'), 'site: botão de baixar grande e direto (supersede v5.26.1: botão novo do visual profissional)');
 ok(wk.includes("text/html; charset=utf-8"), 'site: responde HTML de verdade');
-ok(wk.includes('Nenhuma atualização disponível agora'), 'site: estado vazio bonitinho (supersede v52428)');
+ok(wk.includes('Nenhuma atualização disponível para você agora'), 'site: estado vazio bonitinho EXPLICANDO o destinatário (supersede v5.26.1)');
 ok(wk.includes('selo-novo') && wk.includes('mais recente'), 'site: a mais nova ganha selo (supersede v52428)');
 ok(/replace\(\/[&<>"]'\//.test(wk) || wk.includes('[&<>"\']'), 'site: notas escapadas (texto dele nunca vira HTML)');
 ok(wk.includes("Intl.DateTimeFormat('pt-BR'"), 'site: data em português');
@@ -41,7 +41,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'),
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0 (re-ancorado)');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0 (re-ancorado)');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.26.0"'), 'package.json 5.26.0 (re-ancorado)');
-ok(wk.includes("'5.26.0'"), 'worker carimbado 5.26.0 (re-ancorado)');
+ok(wk.includes("'5.26.1'"), 'worker carimbado 5.26.1 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (site próprio de atualizações + histórico na nuvem).');

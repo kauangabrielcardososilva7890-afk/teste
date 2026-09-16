@@ -8,18 +8,22 @@ cd /d "%~dp0"
 title DIGICOPY - Gerar o Gerente de Atualizacoes (esta janela NAO fecha sozinha)
 echo ==========================================================
 echo  DIGICOPY - Gerar o GERENTE DE ATUALIZACOES
+echo  v5.26.1 - corrigido o erro do instalador (artworkUrl)
 echo  Este e o programa SEPARADO que fica so no SEU PC.
-echo  E ele quem joga as atualizacoes pra nuvem:
-echo  sobe o .exe, escreve notas/tutorial, anexa imagens
-echo  e escolhe PRA QUEM cada atualizacao aparece.
-echo  Passo 1: instala as pecas. Passo 2: monta o instalador.
+echo  Passo 1: instala as pecas. Passo 2: libera o electron.
+echo  Passo 3: monta o instalador.
 echo  ESTA JANELA NUNCA FECHA SOZINHA - fecha so no X.
 echo ==========================================================
 echo.
-echo Passo 1/2 - Instalando as pecas (pode demorar na primeira vez):
+echo Passo 1/3 - Instalando as pecas (pode demorar na primeira vez):
 call npm install
 echo.
-echo Passo 2/2 - Montando o instalador:
+echo Passo 2/3 - Liberando o electron (o npm do seu PC pode barrar a peca):
+call npm install-scripts approve electron >nul 2>nul
+call npm rebuild electron >nul 2>nul
+call node node_modules\electron\install.js >nul 2>nul
+echo.
+echo Passo 3/3 - Montando o instalador:
 call npm run build:win
 echo.
 if exist dist\*.exe goto :sucesso

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.0';
+const WORKER_VERSION = '5.26.1';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -1695,30 +1695,61 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
       return '<img class="zi" src="/' + encodeURI(k) + '" alt="passo a passo" loading="lazy">';
     }).join('');
     const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
-    const htmlA = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DigiCopy Downloads — v${escA(relA.versao)}</title><style>
-    *{box-sizing:border-box;margin:0}body{font-family:system-ui,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#eef2ff,#f8fafc 55%,#ecfeff);min-height:100vh;color:#0f172a;padding:0 0 48px}
-    header{color:#fff;padding:38px 20px 70px;text-align:center;background:linear-gradient(115deg,#1e1b4b,#0a1e8a 45%,#155e75)}
-    header h1{font-size:clamp(22px,5vw,32px);font-weight:900}header p{opacity:.9;font-size:13px;margin-top:6px}
-    main{max-width:720px;margin:-40px auto 0;padding:0 14px}
-    .card{background:#fff;border:2px solid #0a1e8a;border-radius:20px;padding:22px;box-shadow:0 18px 44px rgba(10,30,138,.13)}
-    .notas{margin-top:12px;white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
-    .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px}
-    .tutorial h4{font-size:13px;color:#92400e;margin-bottom:8px}
-    .passo{white-space:pre-wrap;font-size:13px;line-height:1.65;color:#334155}
+    let tamA = '';
+    try {
+      if (env.R2 && relA.temArquivo) { const hA = await env.R2.head('exe/' + relA.versao + '.exe'); if (hA && hA.size) tamA = (hA.size / 1048576).toFixed(hA.size >= 10485760 ? 0 : 1) + ' MB'; }
+    } catch (e) { tamA = ''; }
+    const htmlA = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Atualização oficial v${escA(relA.versao)} do Sistema DigiCopy."><meta name="theme-color" content="#0a1e8a"><title>DigiCopy — Atualização v${escA(relA.versao)}</title><style>
+    *{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f1f4fb;min-height:100vh;color:#0f172a;padding:0 0 52px}
+    .faixa-topo{height:5px;background:linear-gradient(90deg,#0a1e8a,#06b6d4)}
+    header{position:relative;overflow:hidden;color:#fff;padding:34px 20px 76px;text-align:center;background:linear-gradient(120deg,#101449 0%,#0a1e8a 48%,#0e7490 100%)}
+    header::before{content:'';position:absolute;inset:0;background:radial-gradient(560px 210px at 20% -40px, rgba(139,152,255,.35), transparent 65%),radial-gradient(460px 190px at 85% -30px, rgba(34,211,238,.28), transparent 60%)}
+    header .in{position:relative;z-index:1}
+    .marca{display:inline-flex;align-items:center;gap:11px}
+    .marca .logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#4f5bff,#0a1e8a);display:grid;place-items:center;font-size:20px;font-weight:900;border:1px solid rgba(255,255,255,.25);box-shadow:0 10px 24px rgba(0,0,0,.28)}
+    .marca b{font-size:clamp(18px,4.4vw,25px);font-weight:900;text-align:left;line-height:1.1;display:block}
+    .marca small{display:block;font-size:11px;opacity:.85;font-weight:600;text-align:left;margin-top:2px}
+    header h1{font-size:clamp(20px,4.6vw,29px);font-weight:900;margin-top:20px}
+    header p{opacity:.92;font-size:13px;margin-top:8px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.55}
+    .confianca{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+    .confianca span{font-size:11px;font-weight:700;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);padding:6px 12px;border-radius:999px}
+    @keyframes entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    main{max-width:720px;margin:-42px auto 0;padding:0 14px}
+    .card{background:#fff;border:2px solid #0a1e8a;border-radius:20px;padding:24px 22px;box-shadow:0 18px 44px rgba(10,30,138,.13);animation:entra .6s ease both}
+    .selo{display:inline-flex;align-items:center;gap:7px;background:#dcfce7;color:#15803d;font-size:11px;font-weight:900;padding:6px 14px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+    .selo .p{width:8px;height:8px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.18)}
+    .vtit{font-size:23px;font-weight:900;color:#0a1e8a;margin-top:12px;font-variant-numeric:tabular-nums}
+    .meta{font-size:12px;color:#64748b;font-weight:600;margin-top:4px}
+    .notas{margin-top:14px;white-space:pre-wrap;word-wrap:break-word;font-size:13.5px;line-height:1.65;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:15px;font-family:inherit}
+    .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:15px}
+    .tutorial h4{font-size:13px;color:#92400e;margin-bottom:9px}
+    .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.7;color:#334155}
     .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
     .imgs img{width:100%;border-radius:12px;border:1px solid #e2e8f0;cursor:zoom-in;transition:transform .18s ease}.imgs img:hover{transform:scale(1.03)}
     .zi-dica{margin-top:8px;font-size:11px;color:#92400e}
-    .baixar{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:18px 24px;border-radius:16px;box-shadow:0 12px 26px rgba(22,163,74,.30)}
-    .depois{margin-top:12px;font-size:12.5px;color:#64748b;text-align:center}
-    .rodape{margin-top:14px;text-align:center;font-size:11px;color:#94a3b8}</style></head><body>
-    <header><h1>Atualização DigiCopy — v${escA(relA.versao)}</h1><p>Baixe e instale por cima da atual. Nada é perdido.</p></header>
+    .baixar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:19px 22px;border-radius:16px;box-shadow:0 12px 28px rgba(22,163,74,.32);transition:transform .18s ease}
+    .baixar:hover{transform:scale(1.018)}
+    .baixar .big{font-size:26px}.baixar b{display:block;font-size:17px;font-weight:900}
+    .baixar small{display:block;font-size:11.5px;opacity:.92;font-weight:600;margin-top:2px}
+    .depois{margin-top:13px;font-size:12.5px;color:#64748b;text-align:center;line-height:1.6}
+    .rodape{text-align:center;margin-top:26px;font-size:11.5px;color:#94a3b8;line-height:1.8;padding:12px 16px;border-top:1px solid #e2e8f0;max-width:520px;margin-left:auto;margin-right:auto}</style></head><body>
+    <div class="faixa-topo"></div>
+    <header><div class="in">
+      <div class="marca"><span class="logo">D</span><b>Sistema DigiCopy<small>Portal oficial de atualizações</small></b></div>
+      <h1>Atualização v${escA(relA.versao)} pronta pra baixar</h1>
+      <p>Você chegou pela notificação do seu sistema — este endereço é exclusivo desta versão.</p>
+      <div class="confianca"><span>🔒 Conexão segura</span><span>✅ Versão oficial verificada</span><span>🗂 Seus dados são preservados</span></div>
+    </div></header>
     <main><div class="card">
+      <span class="selo"><span class="p"></span>versão atual, liberada</span>
+      <div class="vtit">v${escA(relA.versao)}</div>
+      <div class="meta">${(relA.publicadoEm ? 'Publicada em ' + escA((function(){ try { return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(relA.publicadoEm)); } catch(e){ return ''; } })()) : '')}${tamA ? (relA.publicadoEm ? ' · ' : '') + escA(tamA) : ''}</div>
       ${relA.notas ? `<pre class="notas">${escA(relA.notas)}</pre>` : ''}
       ${relA.tutorial || imgsA ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4>${relA.tutorial ? `<pre class="passo">${escA(relA.tutorial)}</pre>` : ''}${imgsA ? `<div class="imgs">${imgsA}</div><p class="zi-dica">Toque na imagem para ampliar.</p>` : ''}</div>` : ''}
-      ${relA.temArquivo ? `<a class="baixar" href="/dl/${encodeURIComponent(relA.versao)}.exe?s=${encodeURIComponent(slugA)}">⬇ Baixar a atualização (.exe)</a>` : '<p class="depois">⏳ O arquivo ainda não subiu — volte em alguns minutos.</p>'}
-      <p class="depois">É só baixar e executar <b>por cima</b> da instalação atual.</p>
-      <p class="rodape">Versões antigas não aparecem aqui.</p>
+      ${relA.temArquivo ? `<a class="baixar" href="/dl/${encodeURIComponent(relA.versao)}.exe?s=${encodeURIComponent(slugA)}"><span class="big">⬇</span><span><b>Baixar a atualização agora</b><small>${tamA ? 'Arquivo de ' + escA(tamA) + ' · ' : ''}instala por cima, sem perder nada</small></span></a>` : '<p class="depois">⏳ O arquivo ainda está subindo — volte em alguns minutos.</p>'}
+      <p class="depois">Depois de baixar: abra o arquivo e avance a instalação. O sistema abre atualizado com <b>todos os seus dados no lugar</b>.</p>
     </div></main>
+    <p class="rodape">Sistema DigiCopy — atualização oficial deste canal.<br>Precisa de ajuda? Fale com quem instalou o sistema na sua loja.</p>
     <div id="lbz" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.93);z-index:99;align-items:center;justify-content:center;cursor:zoom-out;padding:18px"><img id="lbzi" alt="imagem ampliada" style="max-width:96vw;max-height:94vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.5)"></div>
     <script>(function(){document.addEventListener('click',function(ev){var t=ev.target;if(t&&t.tagName==='IMG'&&t.classList&&t.classList.contains('zi')){var b=document.getElementById('lbz'),i=document.getElementById('lbzi');i.src=t.getAttribute('src');b.style.display='flex';}else if(t&&(t.id==='lbz'||t.id==='lbzi')){document.getElementById('lbz').style.display='none';}},true);})();</script>
     </body></html>`;
@@ -1727,12 +1758,12 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
 
   if (request.method === 'GET' && url.pathname === '/atualizacoes') {
     // v5.24.34 — SITE DE DOWNLOAD (porta pública): NÃO é vitrine de histórico.
-    // Só aparece o que está VIVO (ativo, não oculto, não vencido) — normalmente
-    // a versão atual. Histórico fica só dentro do sistema (portal é só dele).
+    // v5.26.0 — SITE RESTRITO: CNPJ + senha de conexão (cookie 30 dias); cada
+    // empresa só vê as atualizações destinadas a ela.
+    // v5.26.1 — VISUAL PROFISSIONAL (pedido dele: "bem bonito e bem
+    // informativo, tipo os sites profissionais"): marca, confiança, passos em
+    // trilha, tamanho do arquivo, data, tutorial ilustrado com zoom.
     await garantirTabelaAppVersao(env);
-    // v5.26.0 — SITE RESTRITO: pediu "bloqueado para pessoas sem permissão".
-    // Entra com CNPJ + senha de conexão (cookie 30 dias). E cada empresa só vê
-    // as atualizações destinadas a ela (todos / lista / só a loja do dono).
     if (url.searchParams.get('logout')) {
       return new Response(null, { status: 303, headers: { 'set-cookie': 'site_sess=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax', 'location': '/atualizacoes' } });
     }
@@ -1743,8 +1774,16 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     const itens = ((lista.results || [])).filter(function(r){ r.ownerCnpj = (segAt && segAt.owner_cnpj) || ''; return destinoOk(r, sessaoAt.cnpj); });
     const cnpjHum = sessaoAt.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     const origin = new URL(request.url).origin;
-    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] || c));
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
     const fmt = (ms) => { try { return ms ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ms)) : ''; } catch (e) { return ''; } };
+    if (env.R2) {
+      for (const r of itens) {
+        r._tam = '';
+        try {
+          if (r.temArquivo) { const h = await env.R2.head('exe/' + r.versao + '.exe'); if (h && h.size) r._tam = (h.size / 1048576).toFixed(h.size >= 10485760 ? 0 : 1) + ' MB'; }
+        } catch (e) { r._tam = ''; }
+      }
+    }
     const blocos = itens.map((r, i) => {
       let imgsR = [];
       try { imgsR = r.imagens ? JSON.parse(r.imagens) : []; } catch (e) { imgsR = []; }
@@ -1755,85 +1794,103 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
       return `
       <section class="rel ${i === 0 ? 'atual' : ''}" style="animation-delay:${i * 120}ms">
         <div class="rel-head">
-          <span class="v">v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">mais recente</span>' : ''}
-          <span class="data">${esc(fmt(r.publicadoEm))}</span>
+          <span class="v">v${esc(r.versao)}</span>${i === 0 ? '<span class="selo-novo">● mais recente</span>' : ''}
+          <span class="meta">${esc(fmt(r.publicadoEm))}${r._tam ? ' · ' + esc(r._tam) : ''}</span>
         </div>
-        ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : ''}
+        ${r.notas ? `<div class="notas"><h4>O que mudou nesta versão</h4><pre>${esc(r.notas)}</pre></div>` : ''}
         ${(r.tutorial || imgsHtml) ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4>${r.tutorial ? `<pre class="passo">${esc(r.tutorial)}</pre>` : ''}${imgsHtml ? `<div class="imgs">${imgsHtml}</div><p class="zi-dica">Toque na imagem para ampliar.</p>` : ''}</div>` : ''}
-        ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener">⬇ Baixar a atualização (.exe)</a>` : '<p class="sem-arq">⏳ O arquivo ainda não subiu — volte em alguns minutos.</p>'}
-        <p class="depois">É só baixar e executar <b>por cima</b> da instalação atual — sem extrair, sem perder nada.</p>
+        ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener"><span class="big">⬇</span><span><b>Baixar a atualização agora</b><small>${r._tam ? 'Arquivo de ' + esc(r._tam) + ' · ' : ''}instala por cima, sem perder nada</small></span></a>` : '<p class="sem-arq">⏳ O arquivo ainda está subindo — volte em alguns minutos.</p>'}
+        <p class="depois">Depois de baixar: abra o arquivo e avance a instalação. O sistema abre atualizado com <b>todos os seus dados no lugar</b>.</p>
       </section>`;
     }).join('\n');
+    const vazio = `<div class="vazio"><div class="vz-ico">🕓</div><b>Nenhuma atualização disponível para você agora.</b><br>Quando sair uma nova destinada à sua loja, ela aparece aqui — e o sistema também avisa pelo sininho.</div>`;
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DigiCopy Downloads</title>
+<meta name="description" content="Portal oficial de atualizações do Sistema DigiCopy — baixe a versão mais recente com segurança.">
+<meta name="theme-color" content="#0a1e8a">
+<title>DigiCopy — Portal de Atualizações</title>
 <style>
   :root{color-scheme:light}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#eef2ff,#f8fafc 55%,#ecfeff);min-height:100vh;color:#0f172a;padding:0 0 48px}
-  header{position:relative;overflow:hidden;color:#fff;padding:44px 20px 90px;text-align:center;background:linear-gradient(115deg,#1e1b4b,#0a1e8a 45%,#155e75)}
-  header::before,header::after{content:'';position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:float 9s ease-in-out infinite}
-  header::before{width:280px;height:280px;background:#6366f1;top:-90px;left:-70px}
-  header::after{width:240px;height:240px;background:#22d3ee;bottom:-110px;right:-60px;animation-delay:-4.5s}
-  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(26px,18px) scale(1.12)}}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#f1f4fb;min-height:100vh;color:#0f172a;padding:0 0 56px}
+  .faixa-topo{height:5px;background:linear-gradient(90deg,#0a1e8a,#06b6d4)}
+  header{position:relative;overflow:hidden;color:#fff;padding:38px 20px 84px;text-align:center;background:linear-gradient(120deg,#101449 0%,#0a1e8a 48%,#0e7490 100%)}
+  header::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 220px at 18% -40px, rgba(139,152,255,.35), transparent 65%),radial-gradient(500px 200px at 85% -30px, rgba(34,211,238,.28), transparent 60%)}
   header .in{position:relative;z-index:1}
-  header h1{font-size:clamp(24px,5vw,34px);font-weight:900;letter-spacing:.4px;animation:entra .7s ease both}
-  header p{opacity:.9;font-size:14px;margin-top:8px;animation:entra .7s .15s ease both}
+  .marca{display:inline-flex;align-items:center;gap:12px;animation:entra .6s ease both}
+  .marca .logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#4f5bff,#0a1e8a);display:grid;place-items:center;font-size:22px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.25)}
+  .marca b{font-size:clamp(20px,4.6vw,28px);font-weight:900;letter-spacing:.3px;text-align:left;line-height:1.1;display:block}
+  .marca small{display:block;font-size:11.5px;opacity:.85;font-weight:600;text-align:left;margin-top:2px}
+  header h1{font-size:clamp(21px,4.4vw,30px);font-weight:900;margin-top:22px;animation:entra .6s .1s ease both}
+  header .sub{opacity:.92;font-size:13.5px;margin-top:8px;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.55;animation:entra .6s .18s ease both}
+  .confianca{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px;animation:entra .6s .26s ease both}
+  .confianca span{font-size:11px;font-weight:700;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);padding:6px 12px;border-radius:999px;backdrop-filter:blur(4px)}
   @keyframes entra{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-  .passos{max-width:760px;margin:-56px auto 0;padding:0 14px;position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-  .passo-card{flex:1 1 150px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 12px;text-align:center;box-shadow:0 12px 30px rgba(10,30,138,.10);animation:entra .7s .3s ease both}
-  .passo-card:nth-child(2){animation-delay:.42s}.passo-card:nth-child(3){animation-delay:.54s}
+  .chip-sessao{position:relative;z-index:2;max-width:760px;margin:-46px auto 0;padding:0 14px}
+  .chip-sessao .c{background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 14px 34px rgba(10,30,138,.12);padding:13px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:#334155}
+  .chip-sessao .ponto{width:9px;height:9px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 4px rgba(22,163,74,.18)}
+  .chip-sessao b{color:#0a1e8a}
+  .chip-sessao a{margin-left:auto;font-size:12px;font-weight:800;color:#0a1e8a;text-decoration:none;padding:6px 12px;border:1px solid #c7d2fe;border-radius:10px}
+  .chip-sessao a:hover{background:#eef2ff}
+  .passos{max-width:760px;margin:16px auto 0;padding:0 14px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .passo-card{flex:1 1 160px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px 14px;text-align:center;box-shadow:0 8px 22px rgba(10,30,138,.06)}
   .passo-card .num{display:inline-flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;background:#0a1e8a;color:#fff;font-weight:900;font-size:14px}
-  .passo-card b{display:block;margin-top:8px;font-size:13.5px}
-  .passo-card span.d{display:block;margin-top:3px;font-size:11.5px;color:#64748b;line-height:1.4}
-  main{max-width:760px;margin:22px auto 0;padding:0 14px;display:flex;flex-direction:column;gap:16px}
-  .rel{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:20px;box-shadow:0 10px 28px rgba(10,30,138,.06);animation:entra .7s both;transition:transform .25s ease,box-shadow .25s ease}
+  .passo-card b{display:block;margin-top:9px;font-size:13.5px}
+  .passo-card span.d{display:block;margin-top:4px;font-size:11.5px;color:#64748b;line-height:1.5}
+  main{max-width:760px;margin:22px auto 0;padding:0 14px;display:flex;flex-direction:column;gap:18px}
+  .rel{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:22px;box-shadow:0 10px 28px rgba(10,30,138,.06);animation:entra .6s both;transition:transform .22s ease,box-shadow .22s ease}
   .rel:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(10,30,138,.13)}
-  .rel.atual{border:2px solid #0a1e8a}
+  .rel.atual{border:2px solid #0a1e8a;box-shadow:0 14px 38px rgba(10,30,138,.12)}
   .rel-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .v{font-size:19px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
-  .selo-novo{position:relative;background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;animation:pisca 2.4s ease infinite}
-  @keyframes pisca{0%,100%{box-shadow:0 0 0 0 rgba(10,30,138,.35)}50%{box-shadow:0 0 0 7px rgba(10,30,138,0)}}
-  .data{margin-left:auto;font-size:11.5px;color:#64748b}
-  .notas{margin-top:12px;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13.5px;line-height:1.6;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
-  .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px}
-  .tutorial h4{font-size:13px;color:#92400e;margin-bottom:8px}
-  .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.65;color:#334155}
+  .v{font-size:20px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
+  .selo-novo{background:#0a1e8a;color:#fff;font-size:10.5px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+  .meta{margin-left:auto;font-size:11.5px;color:#64748b;font-weight:600}
+  .notas{margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:15px}
+  .notas h4{font-size:12px;color:#0a1e8a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .notas pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13.5px;line-height:1.65;color:#334155}
+  .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:15px}
+  .tutorial h4{font-size:13px;color:#92400e;margin-bottom:9px}
+  .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.7;color:#334155}
   .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
   .zi{width:100%;border-radius:12px;border:1px solid #e2e8f0;cursor:zoom-in;transition:transform .18s ease;animation:entra .5s ease both}.zi:hover{transform:scale(1.03)}
   .zi-dica{margin-top:8px;font-size:11px;color:#92400e}
-  .baixar{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:18px 24px;border-radius:16px;box-shadow:0 12px 26px rgba(22,163,74,.30);animation:pulsa 2.2s ease-in-out infinite;transition:transform .18s ease}
-  .baixar:hover{transform:scale(1.022)}
-  .baixar::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);animation:brilho 2.8s ease infinite}
-  @keyframes pulsa{0%,100%{box-shadow:0 12px 26px rgba(22,163,74,.30),0 0 0 0 rgba(22,163,74,.35)}50%{box-shadow:0 12px 26px rgba(22,163,74,.30),0 0 0 12px rgba(22,163,74,0)}}
-  @keyframes brilho{0%{left:-80%}60%,100%{left:120%}}
-  .depois{margin-top:12px;font-size:12.5px;color:#64748b;text-align:center}
+  .baixar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;padding:18px 22px;border-radius:16px;box-shadow:0 12px 28px rgba(22,163,74,.32);transition:transform .18s ease,box-shadow .18s ease}
+  .baixar:hover{transform:scale(1.018);box-shadow:0 16px 34px rgba(22,163,74,.38)}
+  .baixar .big{font-size:26px}
+  .baixar b{display:block;font-size:17px;font-weight:900}
+  .baixar small{display:block;font-size:11.5px;opacity:.92;font-weight:600;margin-top:2px}
+  .depois{margin-top:12px;font-size:12.5px;color:#64748b;text-align:center;line-height:1.6}
   .sem-arq{margin-top:12px;font-size:12.5px;color:#b45309;font-style:italic}
-  .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:20px;padding:40px;text-align:center;color:#64748b;font-size:14.5px;animation:entra .7s both}
-  footer{text-align:center;margin-top:30px;font-size:11.5px;color:#94a3b8;line-height:1.6}
+  .vazio{background:#fff;border:1px dashed #cbd5e1;border-radius:20px;padding:44px 24px;text-align:center;color:#64748b;font-size:13.5px;line-height:1.7;animation:entra .6s both}
+  .vazio .vz-ico{font-size:34px;margin-bottom:10px}
+  footer{text-align:center;margin-top:34px;font-size:11.5px;color:#94a3b8;line-height:1.8}
+  footer .linha{max-width:520px;margin:0 auto;padding:12px 16px;border-top:1px solid #e2e8f0}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="faixa-topo"></div>
 <header>
   <div class="in">
-    <h1>DigiCopy Downloads</h1>
-    <p>Aqui você baixa a atualização oficial do sistema. Baixou, executou, atualizou.</p>
-    <p style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.14);display:inline-block;padding:6px 14px;border-radius:999px">🔒 Área restrita — ${esc(cnpjHum)} · <a href="/atualizacoes?logout=1" style="color:#fff;font-weight:700">sair</a></p>
+    <div class="marca"><span class="logo">D</span><b>Sistema DigiCopy<small>Portal oficial de atualizações</small></b></div>
+    <h1>Atualize seu sistema com segurança</h1>
+    <p class="sub">Aqui você baixa a versão oficial mais recente, com o passo a passo em imagens. Baixou, executou, atualizou — seus dados continuam todos no lugar.</p>
+    <div class="confianca"><span>🔒 Conexão segura</span><span>✅ Versão oficial verificada</span><span>🗂 Seus dados são preservados</span></div>
   </div>
 </header>
+<div class="chip-sessao"><div class="c"><span class="ponto"></span><span>Entrada autorizada para <b>${esc(cnpjHum)}</b></span><a href="/atualizacoes?logout=1">sair</a></div></div>
 <div class="passos">
   <div class="passo-card"><span class="num">1</span><b>Baixar</b><span class="d">Aperte o botão verde da versão mais recente.</span></div>
-  <div class="passo-card"><span class="num">2</span><b>Executar por cima</b><span class="d">Abra o arquivo baixado. Instala em cima da versão atual, sem apagar nada.</span></div>
+  <div class="passo-card"><span class="num">2</span><b>Executar por cima</b><span class="d">Abra o arquivo baixado e avance — instala em cima da versão atual.</span></div>
   <div class="passo-card"><span class="num">3</span><b>Pronto</b><span class="d">Abra o sistema normal: seus dados continuam todos no lugar.</span></div>
 </div>
 <main>
-  ${blocos || '<div class="vazio">🕓 Nenhuma atualização disponível agora.<br>Quando sair uma nova, ela aparece aqui com o botão verde de baixar.</div>'}
+  ${blocos || vazio}
 </main>
-<footer>Página mostrada pela própria nuvem do sistema.<br>Só aparece o que está vigente — versões antigas e desligadas não ficam aqui.</footer>
+<footer><div class="linha">Sistema DigiCopy — atualizações oficiais deste canal.<br>Precisa de ajuda? Fale com quem instalou o sistema na sua loja.</div></footer>
 <div id="lbz" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.93);z-index:99;align-items:center;justify-content:center;cursor:zoom-out;padding:18px"><img id="lbzi" alt="imagem ampliada" style="max-width:96vw;max-height:94vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.5)"></div>
 <script>(function(){document.addEventListener('click',function(ev){var t=ev.target;if(t&&t.tagName==='IMG'&&t.classList&&t.classList.contains('zi')){var b=document.getElementById('lbz'),i=document.getElementById('lbzi');i.src=t.getAttribute('src');b.style.display='flex';}else if(t&&(t.id==='lbz'||t.id==='lbzi')){document.getElementById('lbz').style.display='none';}},true);})();</script>
 </body>

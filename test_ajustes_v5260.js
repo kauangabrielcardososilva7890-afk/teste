@@ -83,11 +83,12 @@ ok('worker: login do site com cookie HttpOnly 30 dias + 303', wk.indexOf('site_s
 ok('worker: sair do site (logout limpa o cookie)', wk.indexOf("logout") >= 0 && wk.indexOf('site_sess=; Max-Age=0') >= 0);
 ok('worker: /atualizacoes filtra itens pelo CNPJ da sessão', wk.indexOf('destinoOk(r, sessaoAt.cnpj)') >= 0);
 ok('worker: página secreta /a/<slug> (abre direto, sem digitar CNPJ)', wk.indexOf("url.pathname.startsWith('/a/')") >= 0 && wk.indexOf('.exe?s=') >= 0);
+ok('worker: rota /a/ RETORNA htmlA (bug pego no demo: replace sem return = 404 em produção)', wk.indexOf('return new Response(htmlA,') >= 0 && wk.indexOf('return new Response(html,') >= 0);
 ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.pathname.startsWith('/img/')") >= 0 && wk.indexOf('liberadaImg') >= 0);
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.26.0', wk.indexOf("WORKER_VERSION = '5.26.0'") >= 0);
+ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.1'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);
@@ -100,7 +101,7 @@ ok('patch: cartão do admin define senha de conexão + senha do gerente', patch.
 ok('sininho: abre a página secreta /a/<slug> quando existe', sin.indexOf("rel.slug?apiB+'/a/'+encodeURIComponent(rel.slug)") >= 0);
 
 console.log('== GERENTE (3º sistema — .exe separado no PC dele) ==');
-ok('gerente: productName próprio + versão carimbada', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.0');
+ok('gerente: productName próprio + versão carimbada 5.26.1', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.1');
 ok('gerente: login por CNPJ da dona + senha do gerente', gHtml.indexOf('/v1/gerente-login') >= 0 && gHtml.indexOf('gerenteToken') >= 0);
 ok('gerente: token vai no header x-gerente-token (main process)', gMain.indexOf("'x-gerente-token'") >= 0);
 ok('gerente: tela isolada (preload + contextIsolation, sem node na tela)', gPre.indexOf('contextBridge.exposeInMainWorld') >= 0 && gMain.indexOf('contextIsolation: true') >= 0 && gMain.indexOf('nodeIntegration: false') >= 0);
@@ -111,6 +112,9 @@ ok('gerente: histórico com desligar/ocultar/editar/excluir/copiar link', ['desa
 ok('gerente: anexar/trocar .exe e tirar imagem pelo histórico', gHtml.indexOf("data-ac=\"exe\"") >= 0 && gHtml.indexOf("'remover-imagem'") >= 0);
 ok('gerente: NÃO baixa nada nos clientes (só publica; quem baixa é o sininho/site)', gHtml.indexOf('quem baixa é sempre o cliente') >= 0 && gMain.indexOf('autoUpdater') < 0);
 ok('gerente: GERAR_GERENTE_EXE.cmd goto-only, CRLF, janela que não fecha', gCmd.indexOf('goto :sucesso') >= 0 && gCmd.indexOf('goto :fim') >= 0 && gCmd.indexOf('cmd /k') >= 0 && /\r\n/.test(gCmd) && gCmd.indexOf('start "DIGICOPY - Gerar o Gerente') >= 0);
+ok('gerente: .cmd libera o electron se o npm do PC barrar (artworkUrl removido do build)', gPkg.build && gPkg.build.win && !('artworkUrl' in gPkg.build.win) && gCmd.indexOf('rebuild electron') >= 0);
+ok('worker: rodapé novo do site (sem as 2 linhas que ele mandou tirar; informativo)', wk.indexOf('Página mostrada pela própria nuvem') < 0 && wk.indexOf('Só aparece o que está vigente') < 0 && wk.indexOf('Fale com quem instalou o sistema na sua loja') >= 0);
+ok('worker: site v5.26.1 bonito e informativo (marca, confiança, tamanho do arquivo)', wk.indexOf('Portal oficial de atualizações') >= 0 && wk.indexOf('confianca') >= 0 && wk.indexOf('R2.head') >= 0);
 ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.build.nsis && gCmd.indexOf('é') < 0 && gCmd.indexOf('ã') < 0);
 
 console.log('== CARIMBO + MANIFESTO ==');

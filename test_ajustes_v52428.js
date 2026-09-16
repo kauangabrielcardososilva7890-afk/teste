@@ -32,7 +32,7 @@ ok(wk.includes('DESLIGADA do site pelo administrador') && wk.includes('410'), 'w
 // Site público: SÓ o vivo + tutorial antes do botão
 ok(wk.includes("WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?)"), 'site: só mostra o que está vivo');
 ok(wk.includes('Como baixar e instalar (passo a passo)'), 'site: tutorial renderiza antes do botão');
-ok(wk.includes('Baixar a atualização (.exe)') && wk.includes('#16a34a'), 'site: botão verde de baixar');
+ok(wk.includes('baixar') && wk.includes('#16a34a') && wk.includes('Baixar a atualização agora'), 'site: botão verde de baixar (texto novo da v5.26.1, cor preservada)');
 ok(!wk.includes('selo-novo">versão atual'), 'site: histórico antigo NÃO aparece mais no público');
 
 // Portal no app
@@ -50,7 +50,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-tutoria
 ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm install') && fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm run build:win') && !fs.readFileSync('GERAR_EXE.cmd','latin1').includes('explorer'), 'GERAR_EXE.cmd v3: npm install + monta; SEM auto-abrir DIST (ele pediu pra tirar: nao funcionaba na maquina dele) e fecha no X');
 for (const cmd of ['GERAR_EXE.cmd','atualizar_motor_nuvem.cmd','ver_gasto_nuvem.cmd']) ok(fs.readFileSync(cmd,'latin1').includes('\r\n'), cmd + ': CRLF (bug achado: LF puro faz o .cmd engasgar/fechar no Windows)');
 
-ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.34: só o nome do site + animações + faixa 1-2-3 explicativa');
+ok(wk.includes('Portal oficial de atualizações') && wk.includes('@keyframes entra') && wk.includes('passo-card'), 'site: nome oficial + animações + faixa 1-2-3 explicativa (visual profissional v5.26.1 supera o vitrine v5.24.34)');
 ok(fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('digicopyonline') && fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('workers-and-pages'), 'trocar_endereco_nuvem.cmd v2: guia clique-a-clique + abre a pagina certa (wrangler 4 removeu o comando - confirmado no log dele)');
 const pop=fs.readFileSync('popup_sistema_patch.js','utf8'); const nuv=fs.readFileSync('cloudflare_sync_patch.js','utf8');
 ok(pop.includes('z-index:2147483000') && nuv.includes('z-index:100000'), 'v5.24.34: pop-up do sistema SEMPRE na frente (bug real: Excluir de vez parecia morto porque a confirmacao nascia atras da janela da nuvem 100000 > 99999)');
