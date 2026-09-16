@@ -130,7 +130,7 @@ ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também di
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 5] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 4] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 3] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 2] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 1] === 'ajustes_v52436_leitura_uma_aberta_patch.js', 'patch de backups no fim do bundle (5º a partir do fim; v5.24.0 depois, v5.24.3 em seguida, v5.24.35 remanejo, v5.24.36 guarda de leitura fecha a fila)');
+ok(man[man.length - 6] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 5] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 4] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 3] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 2] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 1] === 'ajustes_v5250_leitura_overhaul_patch.js', 'patch de backups no fim do bundle (6º a partir do fim; v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão de leituras fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 

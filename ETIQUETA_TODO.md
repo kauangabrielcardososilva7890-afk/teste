@@ -1,4 +1,4 @@
-> **Status 2026-09-16 (v5.24.36):** continua pendente e valendo — revisar quando atualizar o módulo VENDAS. Parcial já implementado em etiqueta_busca_patch.js.
+> **Status 2026-09-16 (v5.25.0):** continua pendente e valendo — revisar quando atualizar o módulo VENDAS. Parcial já implementado em etiqueta_busca_patch.js.
 
 # TODO - Etiqueta busca na Inicio
 

@@ -1,6 +1,6 @@
 # Gerar o .exe — guia definitivo
 
-**Versão atual:** v5.24.36
+**Versão atual:** v5.25.0
 **Link de teste OFICIAL:** site próprio https://teste-60f.pages.dev (GitHack
 MORREU quando o repositório ficou privado — não serve nem de plano B)
 **Portal público de atualizações:** https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes

@@ -154,6 +154,7 @@ const tests=[
   "test_ajustes_v52428.js",
   "test_ajustes_v52435.js",
   "test_ajustes_v52436.js",
+  "test_ajustes_v5250.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",
   "test_mobile_apk.js"

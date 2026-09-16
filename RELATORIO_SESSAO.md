@@ -3056,10 +3056,80 @@ fake: bloqueia aberta/estornada, legado passa livre, anterior 1000 e parque
 RELATORIO_COMPLETO (cabeçalho ESTADO ATUAL), ANDAMENTO e ETIQUETA (status).
 Conteúdo útil de todos preservado. **Suíte: 157 passaram / 0 falharam.**
 
-## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
+## v5.25.0 — REVISÃO COMPLETA DE LEITURAS (relatório dele + decreto de versão) (2026-09-16)
+
+**Decreto de versão novo (virou lei, anotado nas REGRAS VIVAS):** esta correção
+grande vai pro **5.25.xx**; as partes de NF (praticamente um menu novo) irão
+pro **6.xx.xx** quando chegarem. Relatório dele foi na v5.24.28 — o bug do
+contador anterior já estava corrigido na v5.24.36 (ele ainda não tinha testado).
+
+**Arqueologia da área de leituras (mapa do que ele realmente vê):**
+listagem/histórico = detalhada(49)+v5172(68); detalhe = detalhada(49)+v5183(78);
+lançamento = detalhada(49)+v5183(78) (o X do LANÇAMENTO já tinha guarda
+"salvar?" desde v5.18.3 — o da leitura inteira é que não tinha); estornar usa
+confirm nativo do navegador; "Conferir NF-e" injetado no rodapé pelo v5221.
+E DUAS telas vivas: a nova do contrato + a ANTIGA "Leituras" do menu Locação
+(formato parque simples, fora do contrato) — ele não conhecia a antiga.
+
+**O que entrou (`ajustes_v5250_leitura_overhaul_patch.js`, pos 201, último):**
+1. **Contador anterior visível de volta (avulso 1)** — nunca foi portado da
+   coleta rápida antiga pro modal novo (factual: nenhum histórico de remoção
+   neste repo — o modal novo nasceu sem). Agora chip azul somente-leitura
+   "Contador anterior registrado: N" acompanhando impressora+tipo; em edição
+   mostra o congelado do item.
+2. **Faturar/Estornar/Remover com pop-up do SISTEMA (avulsos 2+4)** —
+   confirmSistema com número da leitura + valor (faturar), aviso de reabertura
+   (estornar), nome da impressora (remover). Nativos extintos dessa área.
+3. **Ações na LISTAGEM (avulso 2)** — cada leitura do histórico ganha botão
+   Faturar (não faturada) / Estornar (faturada) sem precisar abrir; após a
+   ação volta pra lista.
+4. **Rodapé da leitura (avulso 3)** — removidos "Voltar ao histórico" e
+   "Conferir NF-e" (NF segue acessível pela Central de NF; fase NF irá pro 6).
+   Ficam: **Salvar** (salva e VOLTA À LISTAGEM — opção dele no cartão), o X
+   do cabeçalho agora **pergunta "salvar antes de fechar?"** com o pop-up do
+   sistema (Confirmar = salva e volta à listagem; Cancelar = fecha sem salvar,
+   lançamentos não se perdem), e **Imprimir notinha** em padrão vendas
+   (azul/ícone, h-11).
+5. **Tela antiga APOSENTADA (decreto)** — item "Leituras" some do menu lateral;
+   a view vira um cartão explicativo com botão pros contratos. RISCO checado:
+   leituras velhas pendentes de faturar NÃO ficam órfãs — o cartão traz botão
+   "Faturar pendências antigas (N)" enquanto houver alguma. Dados intactos,
+   openModal('leitura') redirecionado com aviso.
+
+**Auditoria de menus ocultos (pergunta dele):** mapa completo na entrada abaixo
+("MAPA DE VISIBILIDADE", corpo desta sessão).
+**Ritual:** manifest 200→201; carimbo 5.24.36→**5.25.0** (lei nova); bundle 201
++ 4 guards + celular; murais (allowlist 201, fila final, pinos 5.25.0);
+test_ajustes_v5250.js (38 asserts, funcional com DOM fake). **Suíte 158/0/0.**
+
+## MAPA DE VISIBILIDADE DO SISTEMA — o que esconde/apaga menus e telas (resposta: "tem mais menus ocultos desde o login até o final?")
+
+- **Login:** textos "Sistema Digicopy / Vendas, locação... / © 2026" são
+  DELETADOS (delete_hidden_patch) — não é CSS, é remoção do DOM. O aviso de
+  rawgithub (#rawgh-warn) idem.
+- **Menu "migrados":** removido permanentemente (mesmo patch).
+- **Tranca do Backup:** o menu Backup tem interceptação por CAPTURA no
+  index.html — clicar NÃO baixa arquivo; abre a tela de Backup (trava colocada
+  depois do bug "clicou e baixou").
+- **Menus por dispositivo (o grande invisível):** o sistema de menus por
+  aparelho (v5.22.17–22.23) permite esconder/reordenar itens do menu POR PC —
+  ou seja, um PC da loja pode ter menos menus que outro, por escolha ali na
+  tela de organização de menus. É a única "invisibilidade configurável" do
+  sistema.
+- **Gate de render (render_gate):** telas fechadas não re-renderizam em
+  segundo plano (performance; não muda menu, mas explica "telas vivas" só
+  quando abertas).
+- **Buscador Escola:** congelado por decreto dele — fora do ciclo até reavivar.
+- **Leituras antiga:** aposentada nesta v5.25.0 (ver acima).
+- **NF-e:** subitens existem e abrem a Central (v5.24.25); a fase grande irá
+  pro 6.xx.xx por decreto.
+- Fora isso: **não há outros menus escondidos por código** — todo o restante é
+  catálogo visível administrável (arrastar/esconder por dispositivo, acima).
+
+## REGRAS VIVAS — versão do rodapé + links a cada atualização## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
-- **A versão SÓ ANDA PRA FRENTE.** Não existe 'prendeu no 9': 5.24.9 → 5.24.10 → 5.25.0. A 2ª casa é o relatório grande; a 3ª anda no dia a dia dele.
+- **A versão SÓ ANDA PRA FRENTE.** Não existe 'prendeu no 9': 5.24.9 → 5.24.10 → 5.25.0. A 2ª casa é o relatório grande; a 3ª anda no dia a dia dele. **Lei dele (2026-09-16):** a revisão de leituras marcou **5.25.xx**; as partes de NF (praticamente um menu novo) irão pro **6.xx.xx** quando entrarem.
 - **TODA atualização sai com os 3 links na resposta: (1) link teste = SITE PRÓPRIO https://teste-60f.pages.dev (NUNCA githack — repo privado matou ele; ele cobrou e a correção entrou no sync_build), (2) zip da branch, (3) site de download das atualizações** (+ lembrete do deploy quando o motor mudar). Sem exceção — esquecimento histórico 5.24.25–5.24.28 e o deslize do githack (v5.24.35) reconhecidos e anotados.
 
 ## O QUE FOI ENTREGUE — v5.24.28 (2026-09-14, portal de atualizações SÓ DELE, do jeito que ele desenhou)
