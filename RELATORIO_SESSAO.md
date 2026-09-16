@@ -2917,6 +2917,11 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **'Outras Opções' da aba Reforma Tributária** = submenu 'Alterar NFe → Cidades / Datas' (parâmetros de vigência da reforma por UF/data). FECHADO.
 - **Falta só 1 (ele não entendeu — explicado de novo):** dentro da aba 'Itens da Nota', no cantinho superior esquerdo ficam duas mini-abas juntas: **Itens | Tributação**. Quero a foto da mini-aba **Tributação** aberta (com um item selecionado) — é onde o sistema velho mostra PIS/COFINS/ICMS/IPI **por item**.
 
+## Foto bônus dos Itens (2026-09-15) — Perfil Tributário POR ITEM confirmado
+
+- A foto (dele, sem lançar, só exemplo) mostra o **combo 'Perfil Tributário' da linha de lançamento do item aberto com os 5 perfis reais da loja** (VENDA DENTRO DO ESTADO / DEV+REMESSA CONSERTO / RETORNO CONSERTO / VENDA FORA DO ESTADO / TROCA DE MERCADORIA) + atalho 'Novo Perfil'. Confirma o desenho: o item herda o perfil que decide CFOP/CSOSN na hora (na linha já apareceram 5102 + CSOSN 102). No nosso: mesma escolha, vindo sugerido pelo vínculo produto↔natureza.
+- A mini-aba 'Tributação' propriamente dita AINDA não veio (a foto dela ficou pela metade — fica pra próxima visita dele à tela, sem cobrança).
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
