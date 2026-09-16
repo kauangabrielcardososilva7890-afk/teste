@@ -2922,6 +2922,20 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - A foto (dele, sem lançar, só exemplo) mostra o **combo 'Perfil Tributário' da linha de lançamento do item aberto com os 5 perfis reais da loja** (VENDA DENTRO DO ESTADO / DEV+REMESSA CONSERTO / RETORNO CONSERTO / VENDA FORA DO ESTADO / TROCA DE MERCADORIA) + atalho 'Novo Perfil'. Confirma o desenho: o item herda o perfil que decide CFOP/CSOSN na hora (na linha já apareceram 5102 + CSOSN 102). No nosso: mesma escolha, vindo sugerido pelo vínculo produto↔natureza.
 - A mini-aba 'Tributação' propriamente dita AINDA não veio (a foto dela ficou pela metade — fica pra próxima visita dele à tela, sem cobrança).
 
+## NF — tributação POR ITEM catalogada COMPLETA (18 fotos) — MEGA-RELATÓRIO 100% FECHADO — 2026-09-15
+
+- **Barra 'Dados do Produto':** GTIN/EAN, C.Prod (1186), Descrição, Valor, NCM, **CEST**, CFOP 5102 + 'Alterar para Todos'.
+- **Sub-abas do item: Tributação | Importação | Outros | Reforma Tributária.**
+- **Tributação:** ICMS (combo Simples 101/102/103/201/202/203/300/400/500/900 + Base% + Valor + 'Zerar'), ICMS ST (Base/% /Valor+Zerar), IPI (50-56, 99 + Valor+Zerar), PIS (01-09 + 49; dele mostra 07-Isenta), COFINS (idem; 06-Alíquota Zero também na lista).
+- **Importação:** DI/DSI/DA/DRI-E, Data Registro, Cód Exportador, Via de Transporte, AFRMM, Forma de Importação, Desembaraço (Data/UF/Local), Adições (Nº/Fabricante/Desconto), IOF/Desp.Aduan./II, Dados do País (1058 BRASIL default).
+- **Outros → CSOSN ICMS:** Valor Icms Deson., Valor DIF., Valor UF Remetente/Destinatário, **Cód. Benefício Fiscal**.
+- **Outros → Icms ST:** Valor ST Retido/Dest., %FCP+%ST, Valor Substituído.
+- **Outros → Fcp:** B.C./%/Valor ×3 (normal, UF Destino, ST).
+- **Outros → Efetivo:** Base %, Valor Efetivo, %Redução.
+- **Outros → Outros:** Nº do Pedido + Item; par Comercial/Tributável (UN × 4,0000 × 90,00 = 360,00).
+- **Reforma Tributária (por item):** Tributação Padrão — CST (000 integral, 200 alíq. reduzida, 410 imunidade, 510/515 diferimento, 550 suspensão, 800 transferência, 811 ajustes, 830 exclusão de base) + **Classificação (000001 integral IBS/CBS; 000003/000004 regime automotivo...)** + Base R$360; painel Padrão com os 3 cofrinhos **verdes calculados: IBS Estadual 0,1% = R$0,36 · IBS Municipal 0% = R$0,00 · CBS 0,9% = R$3,24**; aba Devolução de Tributos (IBS Est./IBS Mun./CBS devolvidos).
+- **Conclusão:** com essa leva o inventário do sistema velho está 100% mapeado (config 10 abas + perfis + manifestação + listagem/gerações + preparar arquivos + nota de venda completa + tributação por item + reforma por item). FASE DE DESIGN FECHADA; a construção entra quando P7 e o Atualizador estiverem prontos, na ordem dele: primeiro perfeito o essencial.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
