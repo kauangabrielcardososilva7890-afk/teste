@@ -22,7 +22,7 @@ ok(wk.includes('ALTER TABLE app_releases ADD COLUMN ativa'), 'worker: coluna ati
 ok(wk.includes('ALTER TABLE app_releases ADD COLUMN oculta') && wk.includes('ALTER TABLE app_releases ADD COLUMN tutorial') && wk.includes('ALTER TABLE app_releases ADD COLUMN expira_em') && wk.includes('ALTER TABLE app_releases ADD COLUMN tem_arquivo'), 'worker: ocultar, tutorial, expiração e marca de .exe');
 ok(wk.includes('publicacaoViva(env)'), 'worker: noção de publicação VIVA (ativa + visível + não vencida)');
 ok(wk.includes("acao === 'desativar'") && wk.includes("acao === 'ativar'") && wk.includes("acao === 'ocultar'") && wk.includes("acao === 'editar'") && wk.includes("acao === 'excluir'"), 'worker: ações do gerente (ativar/desativar/ocultar/editar/excluir)');
-ok(wk.includes('const adminUser = await requireAdmin(request, env);'), 'worker: gerente só de admin (portal é SÓ dele)');
+ok(wk.includes('const adminUser = await requireAdminOuGerente(request, env);'), 'worker: gerindo só admin do painel OU gerente do dono (portal FECHADO; v5.26.0 abriu o papel gerente — credencial própria do dono)');
 ok(wk.includes("url.pathname === '/v1/release-file'"), 'worker: rota de subir o .exe');
 ok(wk.includes("url.pathname.startsWith('/dl/')"), 'worker: rota /dl/<versao>.exe entrega o arquivo');
 ok(wk.includes('content-disposition\': \'attachment'), 'worker: download vem como ANEXO .exe (nome digicopy-<v>.exe)');
@@ -60,8 +60,8 @@ ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('interno') && fs.readFileS
 
 
 
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'index 5.25.0');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.25.0<'), 'rodapé v5.25.0');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (portal de atualizações só dele + arquivo no R2 + site vivo).');

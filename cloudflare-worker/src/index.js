@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.24.34';
+const WORKER_VERSION = '5.26.0';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -958,7 +958,103 @@ async function garantirTabelaAppVersao(env){
   await addCol(`ALTER TABLE app_releases ADD COLUMN tutorial TEXT NOT NULL DEFAULT ''`);
   await addCol(`ALTER TABLE app_releases ADD COLUMN expira_em INTEGER NOT NULL DEFAULT 0`);
   await addCol(`ALTER TABLE app_releases ADD COLUMN tem_arquivo INTEGER NOT NULL DEFAULT 0`);
+  // v5.26.0 — GERENTE + CNPJ: destinatário por publicação (todos / lista de
+  // CNPJs / só loja), slug secreto por publicação (o link que aparece como
+  // notificação dentro do sistema) e imagens do tutorial (chaves no R2).
+  await addCol(`ALTER TABLE app_releases ADD COLUMN destino_tipo TEXT NOT NULL DEFAULT 'todos'`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN destino_cnpjs TEXT NOT NULL DEFAULT '[]'`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN slug TEXT NOT NULL DEFAULT ''`);
+  await addCol(`ALTER TABLE app_releases ADD COLUMN imagens TEXT NOT NULL DEFAULT '[]'`);
+  // senhas de conexão (hash, nunca em claro) + empresas conhecidas (CNPJ/nome)
+  // + sessões do site (30 dias) + sessões do GERENTE .exe separado.
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS connect_secrets (id TEXT PRIMARY KEY, conn_hash TEXT NOT NULL DEFAULT '', gerente_hash TEXT NOT NULL DEFAULT '', owner_cnpj TEXT NOT NULL DEFAULT '', owner_nome TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL DEFAULT 0)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS empresas (cnpj TEXT PRIMARY KEY, nome TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL DEFAULT 0, last_seen_at INTEGER NOT NULL DEFAULT 0)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS site_sessions (token TEXT PRIMARY KEY, cnpj TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL DEFAULT 0, expires_at INTEGER NOT NULL DEFAULT 0)`);
+  await env.DB.exec(`CREATE TABLE IF NOT EXISTS gerente_sessions (token TEXT PRIMARY KEY, cnpj TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL DEFAULT 0, expires_at INTEGER NOT NULL DEFAULT 0)`);
   env.__APP_VERSAO_TABELA_OK = true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// v5.26.0 — CNPJ + GERENTE separado + destinatário + imagens no tutorial
+// ─────────────────────────────────────────────────────────────────────────────
+function soDigitos(v){ return String(v == null ? '' : v).replace(/\D+/g, ''); }
+function cnpjValido(cnpj){ return /^\d{14}$/.test(cnpj); }
+async function senhaHash(env, cnpj, senha){
+  const pepper = (env && env.SETUP_SECRET) || 'digicopy';
+  return sha256(pepper + '|' + soDigitos(cnpj) + '|' + String(senha || ''));
+}
+async function lerSegredos(env){
+  await garantirTabelaAppVersao(env);
+  const r = await env.DB.prepare(`SELECT conn_hash, gerente_hash, owner_cnpj, owner_nome FROM connect_secrets WHERE id = 'main'`).first();
+  return r || null;
+}
+async function conferirSenha(env, cnpj, senha, campo){
+  const seg = await lerSegredos(env);
+  if (!seg || !seg[campo]) return false;
+  return (await senhaHash(env, cnpj, senha)) === seg[campo];
+}
+async function upsertEmpresa(env, cnpj, nome){
+  cnpj = soDigitos(cnpj); if (!cnpjValido(cnpj)) return;
+  const now = Date.now();
+  await env.DB.prepare(`INSERT INTO empresas (cnpj, nome, created_at, last_seen_at) VALUES (?, ?, ?, ?)
+    ON CONFLICT(cnpj) DO UPDATE SET nome = CASE WHEN excluded.nome <> '' THEN excluded.nome ELSE empresas.nome END,
+    last_seen_at = excluded.last_seen_at`).bind(cnpj, String(nome||'').slice(0,120), now, now).run();
+}
+function destinoOk(r, cnpj){
+  const tipo = String(r && r.destino_tipo || r && r.destinoTipo || 'todos');
+  if (tipo === 'todos') return true;
+  if (!cnpj) return false;
+  if (tipo === 'so_loja') return !!(r.ownerCnpj) ? (cnpj === r.ownerCnpj) : true; // ownerCnpj vem do join
+  try {
+    const lista = Array.isArray(r.destino_cnpjs) ? r.destino_cnpjs : JSON.parse(String(r.destino_cnpjs || r.destinoCnpjs || '[]'));
+    return lista.map(soDigitos).indexOf(cnpj) >= 0;
+  } catch(e) { return false; }
+}
+function linkSlug(origin, slug){ return origin + '/a/' + encodeURIComponent(slug); }
+async function sessaoSite(request, env){
+  const cookie = String(request.headers.get('cookie') || '');
+  const m = cookie.match(/(?:^|;\s*)site_sess=([A-Za-z0-9_.-]+)/);
+  if (!m) return null;
+  await garantirTabelaAppVersao(env);
+  const now = Date.now();
+  const r = await env.DB.prepare('SELECT cnpj, expires_at FROM site_sessions WHERE token = ?').bind(m[1]).first();
+  if (!r || r.expires_at <= now) return null;
+  return { cnpj: r.cnpj };
+}
+async function gerenteDaRequisicao(request, env){
+  const tok = cleanText(request.headers.get('x-gerente-token') || '', 200);
+  if (!tok) return null;
+  await garantirTabelaAppVersao(env);
+  const now = Date.now();
+  const r = await env.DB.prepare('SELECT cnpj, expires_at FROM gerente_sessions WHERE token = ?').bind(tok).first();
+  if (!r || r.expires_at <= now) return null;
+  return { cnpj: r.cnpj };
+}
+async function requireAdminOuGerente(request, env){
+  try { return await requireAdmin(request, env); } catch (e) {}
+  const g = await gerenteDaRequisicao(request, env);
+  if (!g) throw new ApiError(403, 'GERENTE_OU_ADMIN_REQUERIDO', 'Ação permitida somente ao gerente de atualizações ou ao aparelho administrador.');
+  return g;
+}
+function paginaLoginSite(msg){
+  const aviso = msg ? `<p style="margin-top:12px;color:#b91c1c;font-weight:700;font-size:13px">${msg}</p>` : '';
+  return new Response(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DigiCopy Downloads — Entrar</title><style>
+  *{box-sizing:border-box;margin:0}body{font-family:system-ui,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#eef2ff,#f8fafc 55%,#ecfeff);min-height:100vh;display:grid;place-items:center;padding:20px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:30px 26px;max-width:400px;width:100%;box-shadow:0 24px 70px rgba(10,30,138,.14)}
+  .icone{width:60px;height:60px;margin:0 auto 12px;border-radius:18px;background:#0a1e8a;display:grid;place-items:center;color:#fff;font-size:28px}
+  h1{font-size:19px;color:#0a1e8a;text-align:center;margin:0 0 4px}p.sub{font-size:12.5px;color:#64748b;text-align:center;margin-bottom:16px}
+  label{display:block;font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;margin:12px 0 5px;letter-spacing:.4px}
+  input{width:100%;height:46px;border:1px solid #cbd5e1;border-radius:12px;padding:0 14px;font-size:15px}
+  button{width:100%;margin-top:18px;height:50px;border:0;border-radius:14px;background:#0a1e8a;color:#fff;font-weight:900;font-size:15px;cursor:pointer}
+  .nota{margin-top:14px;font-size:11px;color:#94a3b8;text-align:center}</style></head><body>
+  <form class="card" method="POST" action="/v1/site-login">
+  <div class="icone">⬇</div><h1>Downloads DigiCopy</h1><p class="sub">Área restrita — entre com o CNPJ e a senha de conexão da loja.</p>
+  <label>CNPJ (somente números)</label><input name="cnpj" inputmode="numeric" autocomplete="off" placeholder="00.000.000/0000-00" required>
+  <label>Senha de conexão</label><input name="senha" type="password" autocomplete="off" required>
+  ${aviso}
+  <button type="submit">Entrar</button>
+  <p class="nota">O acesso fica lembrado neste navegador por 30 dias. Esqueceu a senha? Peça ao administrador do sistema.</p>
+  </form></body></html>`, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 
 async function garantirTabelaUso(env){
@@ -1304,25 +1400,170 @@ async function publicacaoViva(env){
 }
 function linkDownload(origin, versao){ return origin + '/dl/' + encodeURIComponent(versao) + '.exe'; }
 
+  // ── v5.26.0 — CNPJ no lugar do convite + login do site + login do GERENTE ──
+  if (request.method === 'POST' && url.pathname === '/v1/connect-pass') {
+    // Admin define (ou troca) as senhas. Guardadas SÓ como hash com pepper.
+    const admin = await requireAdmin(request, env);
+    const body = await readBody(request);
+    const senha = String((body && body.senha) || '');
+    const senhaG = String((body && body.senhaGerente) || '');
+    const cnpj = soDigitos((body && body.cnpj) || '');
+    const nome = cleanText((body && body.nome) || '', 120);
+    if (senha.length < 4) throw new ApiError(400, 'SENHA_CURTA', 'A senha de conexão precisa de pelo menos 4 caracteres.');
+    if (cnpj && !cnpjValido(cnpj)) throw new ApiError(400, 'CNPJ_INVALIDO', 'CNPJ precisa ter 14 dígitos.');
+    const seg = await lerSegredos(env);
+    const conn = await senhaHash(env, cnpj || (seg && seg.owner_cnpj) || '', senha);
+    const gerente = senhaG ? await senhaHash(env, cnpj || (seg && seg.owner_cnpj) || '', senhaG) : (seg && seg.gerente_hash) || conn;
+    await env.DB.prepare(`INSERT INTO connect_secrets (id, conn_hash, gerente_hash, owner_cnpj, owner_nome, updated_at) VALUES ('main', ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET conn_hash = excluded.conn_hash, gerente_hash = excluded.gerente_hash,
+      owner_cnpj = CASE WHEN excluded.owner_cnpj <> '' THEN excluded.owner_cnpj ELSE connect_secrets.owner_cnpj END,
+      owner_nome = CASE WHEN excluded.owner_nome <> '' THEN excluded.owner_nome ELSE connect_secrets.owner_nome END,
+      updated_at = excluded.updated_at`)
+      .bind(conn, gerente, cnpj || (seg && seg.owner_cnpj) || '', nome || (seg && seg.owner_nome) || '', Date.now()).run();
+    if (cnpj) await upsertEmpresa(env, cnpj, nome);
+    return json({ ok: true, definida: true, gerenteDefinida: !!gerente });
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/enroll-cnpj') {
+    // v5.26.0 — PC novo entra com CNPJ + senha de conexão (sem código de convite).
+    const body = await readBody(request);
+    const cnpj = soDigitos((body && body.cnpj) || '');
+    const nome = cleanText((body && body.empresaNome) || (body && body.nome) || '', 120);
+    const senha = String((body && body.senha) || '');
+    const name = cleanText((body && body.deviceName) || '', 80);
+    if (!cnpjValido(cnpj) || !senha || !name) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe CNPJ (14 dígitos), senha de conexão e o nome do computador.');
+    if (!(await conferirSenha(env, cnpj, senha, 'conn_hash'))) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');
+    const seg = await lerSegredos(env);
+    if (seg && seg.owner_cnpj && cnpj !== seg.owner_cnpj && !(await env.DB.prepare('SELECT cnpj FROM empresas WHERE cnpj = ?').bind(cnpj).first())) {
+      throw new ApiError(403, 'CNPJ_NAO_CADASTRADO', 'Este CNPJ ainda não consta como empresa conhecida. Peça ao administrador para cadastrar.');
+    }
+    await upsertEmpresa(env, cnpj, nome);
+    const now = Date.now();
+    const id = crypto.randomUUID();
+    const token = randomToken('dcp_');
+    const tokenHash = await sha256(token);
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at) VALUES (?, ?, ?, 'device', ?, ?)`).bind(id, name, tokenHash, now, now),
+      env.DB.prepare(`INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at) VALUES ('device_enrolled', ?, ?, ?, ?)`).bind(id, id, JSON.stringify({ name, role: 'device', via: 'cnpj', cnpj }), now)
+    ]);
+    return json({ ok: true, activation: 'cnpj', device: { id, name, role: 'device' }, token }, 201);
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/site-login') {
+    // v5.26.0 — entrada do site restrito (CNPJ + senha de conexão).
+    let cnpj = '', senha = '';
+    const ct = String(request.headers.get('content-type') || '');
+    if (ct.indexOf('application/x-www-form-urlencoded') >= 0) {
+      const form = await request.formData();
+      cnpj = soDigitos(form.get('cnpj')); senha = String(form.get('senha') || '');
+    } else {
+      const body = await readBody(request);
+      cnpj = soDigitos((body && body.cnpj) || ''); senha = String((body && body.senha) || '');
+    }
+    const okc = cnpjValido(cnpj) && (await conferirSenha(env, cnpj, senha, 'conn_hash'));
+    if (!okc) return paginaLoginSite('CNPJ ou senha de conexão incorretos.');
+    await upsertEmpresa(env, cnpj, '');
+    const token = randomToken('ss_');
+    const now = Date.now();
+    const expira = now + 30 * 24 * 3600 * 1000;
+    await env.DB.prepare('INSERT INTO site_sessions (token, cnpj, created_at, expires_at) VALUES (?, ?, ?, ?)').bind(token, cnpj, now, expira).run();
+    await env.DB.prepare('DELETE FROM site_sessions WHERE expires_at <= ?').bind(now).run();
+    const cookie = 'site_sess=' + token + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + (30 * 24 * 3600);
+    if (ct.indexOf('application/x-www-form-urlencoded') >= 0) {
+      return new Response(null, { status: 303, headers: { location: '/atualizacoes', 'set-cookie': cookie } });
+    }
+    return json({ ok: true, cnpj, expiraEm: expira }, 200, { 'set-cookie': cookie });
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/gerente-login') {
+    // v5.26.0 — entrada do GERENTE .exe separado (senha de GERENTE, não a de conexão).
+    const body = await readBody(request);
+    const cnpj = soDigitos((body && body.cnpj) || '');
+    const senha = String((body && body.senha) || '');
+    if (!cnpjValido(cnpj) || !senha) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe CNPJ e a senha do gerente.');
+    const seg = await lerSegredos(env);
+    if (seg && seg.owner_cnpj && cnpj !== seg.owner_cnpj) throw new ApiError(403, 'GERENTE_SO_DONO', 'O gerente de atualizações só entra com o CNPJ da empresa dona do sistema.');
+    if (!(await conferirSenha(env, cnpj, senha, 'gerente_hash'))) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha do gerente incorretos.');
+    const token = randomToken('gr_');
+    const now = Date.now();
+    const expira = now + 7 * 24 * 3600 * 1000;
+    await env.DB.prepare('INSERT INTO gerente_sessions (token, cnpj, created_at, expires_at) VALUES (?, ?, ?, ?)').bind(token, cnpj, now, expira).run();
+    await env.DB.prepare('DELETE FROM gerente_sessions WHERE expires_at <= ?').bind(now).run();
+    return json({ ok: true, gerenteToken: token, expiraEm: expira });
+  }
+  if ((request.method === 'GET' || request.method === 'POST') && url.pathname === '/v1/gerente/empresas') {
+    await requireAdminOuGerente(request, env);
+    await garantirTabelaAppVersao(env);
+    if (request.method === 'POST') {
+      // v5.26.0 — cadastro manual: o gerente junta empresa nova na lista de
+      // destino antes de ela conectar qualquer PC.
+      const b2 = await readBody(request);
+      const cnpj2 = soDigitos((b2 && b2.cnpj) || '');
+      const nome2 = cleanText((b2 && b2.nome) || '', 120);
+      if (!cnpjValido(cnpj2) || !nome2) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe o CNPJ (14 dígitos) e o nome da empresa.');
+      await upsertEmpresa(env, cnpj2, nome2);
+      return json({ ok: true, cnpj: cnpj2, nome: nome2 });
+    }
+    const lista = await env.DB.prepare('SELECT cnpj, nome, last_seen_at AS ultimaVez FROM empresas ORDER BY nome COLLATE NOCASE').all();
+    return json({ ok: true, empresas: lista.results || [] });
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/release-image') {
+    // v5.26.0 — imagens do tutorial sobem cruas pro R2 (pedido: anexar prints do PC).
+    await requireAdminOuGerente(request, env);
+    if (!env.R2) throw new ApiError(503, 'R2_NAO_LIGADO', 'O bucket digicopy-downloads não está ligado no motor.');
+    const v = String(url.searchParams.get('versao') || '').replace(/^v/i, '');
+    if (!/^\d+(\.\d+)+$/.test(v)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Informe a versão da imagem.');
+    const tipo = String(request.headers.get('x-imagem-tipo') || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+    const tamanho = Number(request.headers.get('content-length') || 0) || 0;
+    if (tamanho > 4 * 1024 * 1024) throw new ApiError(413, 'IMAGEM_GRANDE', 'Imagem maior que 4MB — exporte menor (print em JPG fica pequeno).');
+    const buf = await request.arrayBuffer();
+    if (!buf || buf.byteLength < 200) throw new ApiError(400, 'IMAGEM_VAZIA', 'A imagem chegou vazia.');
+    await garantirTabelaAppVersao(env);
+    const key = 'img/' + v + '/' + randomToken('i_') + '.' + tipo;
+    await env.R2.put(key, buf, { httpMetadata: { contentType: 'image/' + (tipo === 'jpg' ? 'jpeg' : tipo) } });
+    const rel = await env.DB.prepare('SELECT imagens FROM app_releases WHERE versao = ?').bind(v).first();
+    let imgs = [];
+    try { imgs = rel && rel.imagens ? JSON.parse(rel.imagens) : []; } catch (e) { imgs = []; }
+    imgs = Array.isArray(imgs) ? imgs : [];
+    if (imgs.length >= 8) throw new ApiError(400, 'IMAGENS_DEMAIS', 'Máximo de 8 imagens por tutorial.');
+    imgs.push(key);
+    await env.DB.prepare('UPDATE app_releases SET imagens = ? WHERE versao = ?').bind(JSON.stringify(imgs), v).run();
+    return json({ ok: true, key, total: imgs.length });
+  }
+
   if (request.method === 'GET' && url.pathname === '/v1/app-releases') {
     // v5.24.34 — histórico em JSON também (pras telas do sistema, se quiser).
+    // v5.26.0 — FECHADO: só admin (painel Nuvem do sistema) ou gerente (o
+    // programa separado no PC dele). Em aberto, vazava slug e destinatários
+    // de versões ocultas.
+    await requireAdminOuGerente(request, env);
     await garantirTabelaAppVersao(env);
-    const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, ativa, oculta, expira_em AS expiraEm, tem_arquivo AS temArquivo FROM app_releases ORDER BY publicado_em DESC').all();
+    const lista = await env.DB.prepare("SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, ativa, oculta, expira_em AS expiraEm, tem_arquivo AS temArquivo, destino_tipo AS destinoTipo, destino_cnpjs AS destinoCnpjs, slug, imagens FROM app_releases ORDER BY publicado_em DESC").all();
     return json({ ok: true, releases: lista.results || [] });
   }
   if (request.method === 'GET' && url.pathname === '/v1/app-release') {
     // v5.24.34 — leitura pública do sininho de atualização (versão + link + notas).
+    // v5.26.0 — DESTINATÁRIO: o app manda ?cnpj= e recebe a publicação viva
+    // DESTINADA a esse CNPJ ("tiver versão nova vai aparecer pra ele; não
+    // tiver, não aparece"). Sem cnpj (apps velhos), só enxerga as de "todos".
     await garantirTabelaAppVersao(env);
-    const viva = await publicacaoViva(env);
+    const cnpjQ = soDigitos(url.searchParams.get('cnpj') || '') || null;
+    const vivas = await env.DB.prepare(`SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, destino_tipo, destino_cnpjs, slug FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC`).bind(Date.now()).all();
+    const seg0 = await lerSegredos(env);
+    const viva = ((vivas && vivas.results) || []).map(function(r){ r.ownerCnpj = (seg0 && seg0.owner_cnpj) || ''; return r; }).find(function(r){ return destinoOk(r, cnpjQ); }) || null;
     if (viva) {
-      return json({ ok: true, versao: viva.versao, url: linkDownload(new URL(request.url).origin, viva.versao), notas: viva.notas || '', tutorial: viva.tutorial || '', publicadoEm: viva.publicadoEm || 0 });
+      const slugUrl = viva.slug ? linkSlug(new URL(request.url).origin, viva.slug) : linkDownload(new URL(request.url).origin, viva.versao);
+      return json({ ok: true, versao: viva.versao, url: slugUrl, slug: viva.slug || '', linkDireto: slugUrl, notas: viva.notas || '', tutorial: viva.tutorial || '', publicadoEm: viva.publicadoEm || 0 });
     }
+    if (cnpjQ) return json({ ok: true, versao: '', url: '', notas: '', publicadoEm: 0 }); // nada destinado a esse CNPJ = mudo, como ele pediu
+    const legado = await publicacaoViva(env);
+    if (legado) {
+      return json({ ok: true, versao: legado.versao, url: linkDownload(new URL(request.url).origin, legado.versao), notas: legado.notas || '', tutorial: legado.tutorial || '', publicadoEm: legado.publicadoEm || 0 });
+    }
+    return json({ ok: true, versao: '', url: '', notas: '', publicadoEm: 0 });
     const row = await env.DB.prepare('SELECT versao, url, notas, publicado_em AS publicadoEm FROM app_versao WHERE id = 1').first();
     return json({ ok: true, versao: (row && row.versao) || '', url: (row && row.url) || '', notas: (row && row.notas) || '', publicadoEm: (row && row.publicadoEm) || 0 });
   }
   if (request.method === 'POST' && url.pathname === '/v1/app-release') {
     // v5.24.34 — O PORTAL É SÓ DELE: todo gerenciamento exige aparelho ADMIN.
-    const adminUser = await requireAdmin(request, env);
+    const adminUser = await requireAdminOuGerente(request, env);
     const body = await request.json();
     const origin = new URL(request.url).origin;
     const acao = String((body && body.action) || 'publicar').toLowerCase();
@@ -1353,25 +1594,45 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
       const notasE = String((body && body.notas) || '').slice(0, 4000);
       const tutE = String((body && body.tutorial) || '').slice(0, 4000);
       await env.DB.prepare('UPDATE app_releases SET notas = ?, tutorial = ? WHERE versao = ?').bind(notasE, tutE, versao).run();
+      if (body && Object.prototype.hasOwnProperty.call(body, 'destinoTipo')) {
+        const dT = ['todos','lista','so_loja'].indexOf(body.destinoTipo) >= 0 ? body.destinoTipo : 'todos';
+        const dL = Array.isArray(body.destinoCnpjs) ? body.destinoCnpjs.map(soDigitos).filter(function(c){ return /^\d{14}$/.test(c); }).slice(0, 50) : [];
+        await env.DB.prepare('UPDATE app_releases SET destino_tipo = ?, destino_cnpjs = ? WHERE versao = ?').bind(dT, JSON.stringify(dL), versao).run();
+      }
       return json({ ok: true, acao, versao });
+    }
+    if (acao === 'remover-imagem') {
+      // v5.26.0 — tirar uma imagem do tutorial (gerente).
+      const keyX = cleanText((body && body.key) || '', 300);
+      const relX = await env.DB.prepare('SELECT imagens FROM app_releases WHERE versao = ?').bind(versao).first();
+      let imgsX = [];
+      try { imgsX = relX && relX.imagens ? JSON.parse(relX.imagens) : []; } catch (e) { imgsX = []; }
+      const nova = (Array.isArray(imgsX) ? imgsX : []).filter(function(k){ return k !== keyX; });
+      await env.DB.prepare('UPDATE app_releases SET imagens = ? WHERE versao = ?').bind(JSON.stringify(nova), versao).run();
+      try { if (env.R2 && keyX) await env.R2.delete(keyX); } catch (e) {}
+      return json({ ok: true, acao, versao, total: nova.length });
     }
     // publicar — o link padrão agora é o /dl entregue pela própria nuvem
     const notas = String((body && body.notas) || '').slice(0, 4000);
     const tutorial = String((body && body.tutorial) || '').slice(0, 4000);
+    const destinoTipo = ['todos','lista','so_loja'].indexOf((body && body.destinoTipo) || 'todos') >= 0 ? (body.destinoTipo || 'todos') : 'todos';
+    const destinoCnpjs = Array.isArray(body && body.destinoCnpjs) ? body.destinoCnpjs.map(soDigitos).filter(function(c){ return /^\d{14}$/.test(c); }).slice(0, 50) : [];
     let urlRel = String((body && body.url) || '').trim();
     if (urlRel && !/^https:\/\//.test(urlRel)) throw new ApiError(400, 'URL_INVALIDA', 'A URL de download precisa começar com https:// .');
     if (!urlRel) urlRel = linkDownload(origin, versao);
     await env.DB.prepare('INSERT INTO app_versao (id, versao, url, notas, publicado_em) VALUES (1, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET versao = excluded.versao, url = excluded.url, notas = excluded.notas, publicado_em = excluded.publicado_em')
       .bind(versao, urlRel, notas, Date.now()).run();
-    await env.DB.prepare(`INSERT INTO app_releases (versao, url, notas, tutorial, publicado_em, ativa, oculta, expira_em) VALUES (?, ?, ?, ?, ?, 1, 0, ?)
-      ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, tutorial = excluded.tutorial, publicado_em = excluded.publicado_em, ativa = 1, oculta = 0, expira_em = excluded.expira_em`)
-      .bind(versao, urlRel, notas, tutorial, Date.now(), expira).run();
-    return json({ ok: true, acao: 'publicar', versao, url: urlRel, notas, tutorial, expiraEm: expira, publicadoEm: Date.now() });
+    const relAntiga = await env.DB.prepare('SELECT slug FROM app_releases WHERE versao = ?').bind(versao).first();
+    const slugV = (relAntiga && relAntiga.slug) || randomToken('a_');
+    await env.DB.prepare(`INSERT INTO app_releases (versao, url, notas, tutorial, publicado_em, ativa, oculta, expira_em, destino_tipo, destino_cnpjs, slug) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, ?, ?)
+      ON CONFLICT(versao) DO UPDATE SET url = excluded.url, notas = excluded.notas, tutorial = excluded.tutorial, publicado_em = excluded.publicado_em, ativa = 1, oculta = 0, expira_em = excluded.expira_em, destino_tipo = excluded.destino_tipo, destino_cnpjs = excluded.destino_cnpjs, slug = excluded.slug`)
+      .bind(versao, urlRel, notas, tutorial, Date.now(), expira, destinoTipo, JSON.stringify(destinoCnpjs), slugV).run();
+    return json({ ok: true, acao: 'publicar', versao, url: urlRel, slug: slugV, linkDireto: linkSlug(origin, slugV), notas, tutorial, destinoTipo, destinoCnpjs, expiraEm: expira, publicadoEm: Date.now() });
   }
 
   if (request.method === 'POST' && url.pathname === '/v1/release-file') {
     // v5.24.34 — o .exe em si sobe aqui (corpo = arquivo cru) e dorme no R2.
-    const admin2 = await requireAdmin(request, env);
+    const admin2 = await requireAdminOuGerente(request, env);
     if (!env.R2) throw new ApiError(503, 'R2_NAO_LIGADO', 'O bucket digicopy-downloads não está ligado no motor. Crie-o no painel (R2) e rode o atualizar_motor_nuvem.cmd.');
     const v = String(url.searchParams.get('versao') || '').replace(/^v/i, '');
     if (!/^\d+(\.\d+)+$/.test(v)) throw new ApiError(400, 'VERSAO_INVALIDA', 'Informe a versão do arquivo.');
@@ -1391,12 +1652,77 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     const nome = decodeURIComponent(url.pathname.slice(4));
     const v = nome.replace(/\.exe$/i, '');
     await garantirTabelaAppVersao(env);
-    const essa = await env.DB.prepare('SELECT ativa, oculta, expira_em FROM app_releases WHERE versao = ?').bind(v).first();
+    const essa = await env.DB.prepare('SELECT ativa, oculta, expira_em, slug FROM app_releases WHERE versao = ?').bind(v).first();
     const liberada = essa && (essa.ativa === 1 && essa.oculta === 0 && (essa.expira_em === 0 || essa.expira_em > Date.now()));
     if (!liberada) return new Response('Esta versão foi DESLIGADA do site pelo administrador. A atual continua em /atualizacoes', { status: 410, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    // v5.26.0 — /dl não é endereço decorável: entra com sessão do site (CNPJ),
+    // com o slug secreto (?s=) igual ao da versão, ou com token de gerente/admin.
+    const slugQ = String(url.searchParams.get('s') || '');
+    const sessaoDl = await sessaoSite(request, env);
+    if (!(sessaoDl || (slugQ && essa.slug && slugQ === essa.slug) || (await gerenteDaRequisicao(request, env)))) {
+      return new Response('Área restrita: entre em /atualizacoes com o CNPJ e a senha de conexão.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    }
     const obj = await env.R2.get('exe/' + v + '.exe');
     if (!obj) return new Response('O arquivo desta versão ainda não subiu — o administrador já foi avisado por sinal de fumaça.', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     return new Response(obj.body, { headers: { 'content-type': 'application/x-msdownload', 'content-disposition': 'attachment; filename="digicopy-' + v + '.exe"', 'cache-control': 'no-store' } });
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/img/')) {
+    // v5.26.0 — imagens do tutorial: chave aleatória no R2, só de versão viva.
+    if (!env.R2) return new Response('Arquivos ainda não ligados (falta criar o bucket R2 no painel).', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    const keyImg = url.pathname.slice(1);
+    await garantirTabelaAppVersao(env);
+    const relImg = await env.DB.prepare('SELECT ativa, oculta, expira_em FROM app_releases WHERE versao = ?').bind(keyImg.split('/')[1] || '').first();
+    const liberadaImg = relImg && relImg.ativa === 1 && relImg.oculta === 0 && (relImg.expira_em === 0 || relImg.expira_em > Date.now());
+    if (!liberadaImg) return new Response('404', { status: 404 });
+    const objImg = await env.R2.get(keyImg);
+    if (!objImg) return new Response('404', { status: 404 });
+    const ext = (keyImg.split('.').pop() || 'png').toLowerCase();
+    return new Response(objImg.body, { headers: { 'content-type': 'image/' + (ext === 'jpg' ? 'jpeg' : ext), 'cache-control': 'public, max-age=3600' } });
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/a/')) {
+    // v5.26.0 — PÁGINA DO SLUG: o link secreto que aparece como notificação no
+    // sistema. Abre DIRETO (sem digitar CNPJ) a página daquela publicação.
+    await garantirTabelaAppVersao(env);
+    const slugA = cleanText(decodeURIComponent(url.pathname.slice(3)), 120);
+    const relA = await env.DB.prepare('SELECT versao, notas, tutorial, publicado_em AS publicadoEm, tem_arquivo AS temArquivo, ativa, oculta, expira_em, imagens FROM app_releases WHERE slug = ?').bind(slugA).first();
+    const vivaA = relA && relA.ativa === 1 && relA.oculta === 0 && (relA.expira_em === 0 || relA.expira_em > Date.now());
+    if (!vivaA) return new Response('Esta página saiu do ar (a versão foi desligada ou venceu). Abrindo a área restrita: /atualizacoes', { status: 410, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    let listaA = [];
+    try { listaA = relA.imagens ? JSON.parse(relA.imagens) : []; } catch (e) { listaA = []; }
+    const imgsA = (Array.isArray(listaA) ? listaA : []).filter(Boolean).slice(0, 8).map(function(k){
+      return '<img class="zi" src="/' + encodeURI(k) + '" alt="passo a passo" loading="lazy">';
+    }).join('');
+    const escA = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
+    const htmlA = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DigiCopy Downloads — v${escA(relA.versao)}</title><style>
+    *{box-sizing:border-box;margin:0}body{font-family:system-ui,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#eef2ff,#f8fafc 55%,#ecfeff);min-height:100vh;color:#0f172a;padding:0 0 48px}
+    header{color:#fff;padding:38px 20px 70px;text-align:center;background:linear-gradient(115deg,#1e1b4b,#0a1e8a 45%,#155e75)}
+    header h1{font-size:clamp(22px,5vw,32px);font-weight:900}header p{opacity:.9;font-size:13px;margin-top:6px}
+    main{max-width:720px;margin:-40px auto 0;padding:0 14px}
+    .card{background:#fff;border:2px solid #0a1e8a;border-radius:20px;padding:22px;box-shadow:0 18px 44px rgba(10,30,138,.13)}
+    .notas{margin-top:12px;white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+    .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px}
+    .tutorial h4{font-size:13px;color:#92400e;margin-bottom:8px}
+    .passo{white-space:pre-wrap;font-size:13px;line-height:1.65;color:#334155}
+    .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+    .imgs img{width:100%;border-radius:12px;border:1px solid #e2e8f0;cursor:zoom-in;transition:transform .18s ease}.imgs img:hover{transform:scale(1.03)}
+    .zi-dica{margin-top:8px;font-size:11px;color:#92400e}
+    .baixar{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:18px 24px;border-radius:16px;box-shadow:0 12px 26px rgba(22,163,74,.30)}
+    .depois{margin-top:12px;font-size:12.5px;color:#64748b;text-align:center}
+    .rodape{margin-top:14px;text-align:center;font-size:11px;color:#94a3b8}</style></head><body>
+    <header><h1>Atualização DigiCopy — v${escA(relA.versao)}</h1><p>Baixe e instale por cima da atual. Nada é perdido.</p></header>
+    <main><div class="card">
+      ${relA.notas ? `<pre class="notas">${escA(relA.notas)}</pre>` : ''}
+      ${relA.tutorial || imgsA ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4>${relA.tutorial ? `<pre class="passo">${escA(relA.tutorial)}</pre>` : ''}${imgsA ? `<div class="imgs">${imgsA}</div><p class="zi-dica">Toque na imagem para ampliar.</p>` : ''}</div>` : ''}
+      ${relA.temArquivo ? `<a class="baixar" href="/dl/${encodeURIComponent(relA.versao)}.exe?s=${encodeURIComponent(slugA)}">⬇ Baixar a atualização (.exe)</a>` : '<p class="depois">⏳ O arquivo ainda não subiu — volte em alguns minutos.</p>'}
+      <p class="depois">É só baixar e executar <b>por cima</b> da instalação atual.</p>
+      <p class="rodape">Versões antigas não aparecem aqui.</p>
+    </div></main>
+    <div id="lbz" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.93);z-index:99;align-items:center;justify-content:center;cursor:zoom-out;padding:18px"><img id="lbzi" alt="imagem ampliada" style="max-width:96vw;max-height:94vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.5)"></div>
+    <script>(function(){document.addEventListener('click',function(ev){var t=ev.target;if(t&&t.tagName==='IMG'&&t.classList&&t.classList.contains('zi')){var b=document.getElementById('lbz'),i=document.getElementById('lbzi');i.src=t.getAttribute('src');b.style.display='flex';}else if(t&&(t.id==='lbz'||t.id==='lbzi')){document.getElementById('lbz').style.display='none';}},true);})();</script>
+    </body></html>`;
+    return new Response(htmlA, { headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
 
   if (request.method === 'GET' && url.pathname === '/atualizacoes') {
@@ -1404,12 +1730,27 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     // Só aparece o que está VIVO (ativo, não oculto, não vencido) — normalmente
     // a versão atual. Histórico fica só dentro do sistema (portal é só dele).
     await garantirTabelaAppVersao(env);
-    const lista = await env.DB.prepare('SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, tem_arquivo AS temArquivo FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC').bind(Date.now()).all();
-    const itens = (lista.results || []);
+    // v5.26.0 — SITE RESTRITO: pediu "bloqueado para pessoas sem permissão".
+    // Entra com CNPJ + senha de conexão (cookie 30 dias). E cada empresa só vê
+    // as atualizações destinadas a ela (todos / lista / só a loja do dono).
+    if (url.searchParams.get('logout')) {
+      return new Response(null, { status: 303, headers: { 'set-cookie': 'site_sess=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax', 'location': '/atualizacoes' } });
+    }
+    const sessaoAt = await sessaoSite(request, env);
+    if (!sessaoAt) return paginaLoginSite();
+    const lista = await env.DB.prepare("SELECT versao, url, notas, tutorial, publicado_em AS publicadoEm, tem_arquivo AS temArquivo, destino_tipo, destino_cnpjs, slug, imagens FROM app_releases WHERE ativa = 1 AND oculta = 0 AND (expira_em = 0 OR expira_em > ?) ORDER BY publicado_em DESC").bind(Date.now()).all();
+    const segAt = await lerSegredos(env);
+    const itens = ((lista.results || [])).filter(function(r){ r.ownerCnpj = (segAt && segAt.owner_cnpj) || ''; return destinoOk(r, sessaoAt.cnpj); });
+    const cnpjHum = sessaoAt.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     const origin = new URL(request.url).origin;
     const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] || c));
     const fmt = (ms) => { try { return ms ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ms)) : ''; } catch (e) { return ''; } };
     const blocos = itens.map((r, i) => {
+      let imgsR = [];
+      try { imgsR = r.imagens ? JSON.parse(r.imagens) : []; } catch (e) { imgsR = []; }
+      const imgsHtml = (Array.isArray(imgsR) ? imgsR : []).filter(Boolean).slice(0, 8).map(function(k){
+        return '<img class="zi" src="/' + encodeURI(k) + '" alt="passo a passo" loading="lazy">';
+      }).join('');
       const href = (r.temArquivo ? linkDownload(origin, r.versao) : (r.url || ''));
       return `
       <section class="rel ${i === 0 ? 'atual' : ''}" style="animation-delay:${i * 120}ms">
@@ -1418,7 +1759,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
           <span class="data">${esc(fmt(r.publicadoEm))}</span>
         </div>
         ${r.notas ? `<pre class="notas">${esc(r.notas)}</pre>` : ''}
-        ${r.tutorial ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4><pre class="passo">${esc(r.tutorial)}</pre></div>` : ''}
+        ${(r.tutorial || imgsHtml) ? `<div class="tutorial"><h4>📖 Como baixar e instalar (passo a passo)</h4>${r.tutorial ? `<pre class="passo">${esc(r.tutorial)}</pre>` : ''}${imgsHtml ? `<div class="imgs">${imgsHtml}</div><p class="zi-dica">Toque na imagem para ampliar.</p>` : ''}</div>` : ''}
         ${href ? `<a class="baixar" href="${esc(href)}" target="_blank" rel="noopener">⬇ Baixar a atualização (.exe)</a>` : '<p class="sem-arq">⏳ O arquivo ainda não subiu — volte em alguns minutos.</p>'}
         <p class="depois">É só baixar e executar <b>por cima</b> da instalação atual — sem extrair, sem perder nada.</p>
       </section>`;
@@ -1461,6 +1802,9 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   .tutorial{margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:14px}
   .tutorial h4{font-size:13px;color:#92400e;margin-bottom:8px}
   .passo{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:13px;line-height:1.65;color:#334155}
+  .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+  .zi{width:100%;border-radius:12px;border:1px solid #e2e8f0;cursor:zoom-in;transition:transform .18s ease;animation:entra .5s ease both}.zi:hover{transform:scale(1.03)}
+  .zi-dica{margin-top:8px;font-size:11px;color:#92400e}
   .baixar{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;background:#16a34a;color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:18px 24px;border-radius:16px;box-shadow:0 12px 26px rgba(22,163,74,.30);animation:pulsa 2.2s ease-in-out infinite;transition:transform .18s ease}
   .baixar:hover{transform:scale(1.022)}
   .baixar::after{content:'';position:absolute;top:0;left:-80%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);animation:brilho 2.8s ease infinite}
@@ -1478,6 +1822,7 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   <div class="in">
     <h1>DigiCopy Downloads</h1>
     <p>Aqui você baixa a atualização oficial do sistema. Baixou, executou, atualizou.</p>
+    <p style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.14);display:inline-block;padding:6px 14px;border-radius:999px">🔒 Área restrita — ${esc(cnpjHum)} · <a href="/atualizacoes?logout=1" style="color:#fff;font-weight:700">sair</a></p>
   </div>
 </header>
 <div class="passos">
@@ -1489,6 +1834,8 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   ${blocos || '<div class="vazio">🕓 Nenhuma atualização disponível agora.<br>Quando sair uma nova, ela aparece aqui com o botão verde de baixar.</div>'}
 </main>
 <footer>Página mostrada pela própria nuvem do sistema.<br>Só aparece o que está vigente — versões antigas e desligadas não ficam aqui.</footer>
+<div id="lbz" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,.93);z-index:99;align-items:center;justify-content:center;cursor:zoom-out;padding:18px"><img id="lbzi" alt="imagem ampliada" style="max-width:96vw;max-height:94vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.5)"></div>
+<script>(function(){document.addEventListener('click',function(ev){var t=ev.target;if(t&&t.tagName==='IMG'&&t.classList&&t.classList.contains('zi')){var b=document.getElementById('lbz'),i=document.getElementById('lbzi');i.src=t.getAttribute('src');b.style.display='flex';}else if(t&&(t.id==='lbz'||t.id==='lbzi')){document.getElementById('lbz').style.display='none';}},true);})();</script>
 </body>
 </html>`;
     return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });

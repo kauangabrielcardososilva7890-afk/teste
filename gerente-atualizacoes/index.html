@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DIGICOPY Gerente de Atualizações</title>
+<style>
+  :root{color-scheme:light}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#eef2ff;color:#0f172a;min-height:100vh}
+  header{background:linear-gradient(115deg,#1e1b4b,#0a1e8a 45%,#155e75);color:#fff;padding:18px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:19px;font-weight:900;letter-spacing:.3px}
+  header .sub{font-size:12px;opacity:.85}
+  header .sp{flex:1}
+  .btn-sair{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:12px}
+  .btn-sair:hover{background:rgba(255,255,255,.28)}
+  .tabs{display:flex;gap:8px;padding:14px 22px 0}
+  .tab{border:1px solid #c7d2fe;background:#fff;color:#1e1b4b;border-radius:12px 12px 0 0;padding:10px 20px;font-weight:900;font-size:13.5px;cursor:pointer}
+  .tab.ativa{background:#0a1e8a;color:#fff;border-color:#0a1e8a}
+  main{padding:0 22px 40px;max-width:1060px;margin:0 auto}
+  .painel{background:#fff;border:1px solid #c7d2fe;border-top:3px solid #0a1e8a;border-radius:0 14px 14px 14px;padding:22px;box-shadow:0 14px 34px rgba(10,30,138,.08)}
+  h2{font-size:16px;font-weight:900;color:#0a1e8a;margin-bottom:4px}
+  .dica{font-size:12px;color:#64748b;line-height:1.55;margin-bottom:14px}
+  label{display:block;font-size:11px;font-weight:800;letter-spacing:.3px;color:#334155;margin-top:12px;text-transform:uppercase}
+  input[type=text],input[type=password],input[type=number],textarea{width:100%;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;margin-top:4px;font-family:inherit;background:#f8fafc}
+  textarea{height:auto;min-height:88px;padding:10px 12px;resize:vertical;line-height:1.5}
+  input:focus,textarea:focus{outline:2px solid #6366f1;border-color:#6366f1;background:#fff}
+  .btn{border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:900;font-size:14px;padding:12px 22px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(10,30,138,.28)}
+  .btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
+  .btn-verde{background:#16a34a}
+  .btn-cinza{background:#475569}
+  .btn-mini{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:9px;padding:6px 11px;font-weight:800;font-size:11.5px;cursor:pointer}
+  .btn-mini:hover{background:#f1f5f9}
+  .btn-mini.perigo{color:#b91c1c;border-color:#fecaca;background:#fef2f2}
+  .btn-mini.ok{color:#15803d;border-color:#bbf7d0;background:#f0fdf4}
+  .msg{border-radius:12px;padding:11px 14px;font-size:13px;margin-top:12px;line-height:1.5}
+  .msg.erro{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+  .msg.bom{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
+  .msg.info{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+  .dest-box{border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:6px;background:#f8fafc}
+  .dest-box label{display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;font-weight:700;margin-top:6px;cursor:pointer;color:#0f172a}
+  .emp-lista{max-height:170px;overflow:auto;margin-top:8px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;padding:8px}
+  .emp-lista label{display:flex;gap:8px;align-items:center;font-size:12.5px;font-weight:600;margin-top:4px;text-transform:none;color:#0f172a;cursor:pointer}
+  .emp-add{display:flex;gap:8px;margin-top:8px}
+  .emp-add input{height:34px;margin-top:0;font-size:12.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .exe-box{display:flex;align-items:center;gap:12px;border:1px dashed #a5b4fc;border-radius:12px;padding:14px;margin-top:6px;background:#eef2ff}
+  .exe-box .nome{font-size:13px;font-weight:800;color:#0a1e8a}
+  .imgs-pre{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-top:10px}
+  .imgs-pre .imgc{position:relative;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff}
+  .imgs-pre img{width:100%;height:86px;object-fit:cover;display:block}
+  .imgs-pre .nm{font-size:10px;color:#64748b;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .imgs-pre .x{position:absolute;top:4px;right:4px;background:rgba(15,23,42,.78);color:#fff;border:0;border-radius:8px;width:22px;height:22px;font-weight:900;cursor:pointer}
+  .passos-envio{margin-top:12px;border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;font-size:13px;color:#1e3a8a;display:none;line-height:1.9}
+  .passos-envio.on{display:block}
+  .rel{border:1px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-top:12px;background:#fff}
+  .rel.cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .rel .v{font-size:16px;font-weight:900;color:#0a1e8a;font-variant-numeric:tabular-nums}
+  .selo{font-size:10px;font-weight:900;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px}
+  .selo.vigente{background:#dcfce7;color:#15803d}
+  .selo.desligada{background:#fee2e2;color:#b91c1c}
+  .selo.oculta{background:#fef3c7;color:#b45309}
+  .selo.vencida{background:#e2e8f0;color:#475569}
+  .selo.dest{background:#e0e7ff;color:#3730a3;text-transform:none;letter-spacing:0}
+  .rel .meta{margin-left:auto;font-size:11.5px;color:#64748b}
+  .rel .notas{margin-top:8px;font-size:12.5px;color:#475569;white-space:pre-wrap;max-height:60px;overflow:hidden}
+  .rel .acoes{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .edit-box{border:1px solid #c7d2fe;background:#eef2ff;border-radius:14px;padding:16px;margin-top:12px;display:none}
+  .edit-box.on{display:block}
+  .login-wrap{max-width:440px;margin:8vh auto 0;background:#fff;border:1px solid #c7d2fe;border-radius:18px;padding:30px 26px;box-shadow:0 20px 50px rgba(10,30,138,.14)}
+  .login-wrap .logo{width:58px;height:58px;border-radius:16px;background:#0a1e8a;color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900;margin-bottom:12px}
+  footer{text-align:center;font-size:11px;color:#94a3b8;padding:10px 0 26px}
+  .aviso-bloq{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:11px 14px;font-size:12.5px;color:#92400e;margin-top:14px;line-height:1.6}
+  .status-topo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .status-topo .pill{font-size:11px;font-weight:800;background:#eef2ff;color:#3730a3;border-radius:999px;padding:5px 12px}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="tela-login">
+  <div class="login-wrap">
+    <div class="logo">G</div>
+    <h2 style="margin-bottom:6px">Gerente de Atualizações</h2>
+    <p class="dica">Este programa só roda no PC do dono. Entre com o <b>CNPJ da empresa dona</b> e a <b>senha do gerente</b> (credencial própria — não é a senha de conexão dos computadores).</p>
+    <label>CNPJ da empresa dona</label>
+    <input type="text" id="lg-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00">
+    <label>Senha do gerente</label>
+    <input type="password" id="lg-senha" placeholder="definida no painel Nuvem do sistema">
+    <div style="margin-top:16px"><button class="btn" id="lg-entrar" style="width:100%">Entrar</button></div>
+    <div id="lg-msg"></div>
+    <div class="aviso-bloq"><b>Não sabe a senha?</b> Abra o sistema → painel <b>Nuvem</b> (como administrador) → cartão <b>"Senhas de conexão (CNPJ) e do Gerente"</b>.</div>
+    <p style="font-size:10.5px;color:#94a3b8;margin-top:12px">Quem entra aqui decide pra quem cada atualização aparece. Loja-cliente não vira gerente: só o CNPJ da empresa dona passa.</p>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="tela-app" style="display:none">
+  <header>
+    <div>
+      <h1>DIGICOPY — Gerente de Atualizações</h1>
+      <div class="sub" id="hd-quem">conectado</div>
+    </div>
+    <div class="sp"></div>
+    <button class="btn-sair" id="hd-sair">Sair</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab ativa" id="tab-pub" data-tab="pub">📤 Jogar atualização</button>
+    <button class="tab" id="tab-hist" data-tab="hist">🗂 Atualizações já jogadas</button>
+  </div>
+
+  <main>
+    <!-- ── PUBLICAR ── -->
+    <section class="painel" id="painel-pub">
+      <h2>Jogar uma atualização nova</h2>
+      <p class="dica">Preenche aqui, aperta o botão verde e pronto: <b>quem tem que baixar recebe aviso no sininho do sistema</b> (ou entra pelo site com CNPJ + senha de conexão). Este programa NÃO instala nada nos PCs dos clientes.</p>
+
+      <div class="grid2">
+        <div>
+          <label>Versão (número novo)</label>
+          <input type="text" id="pb-versao" placeholder="ex.: 5.26.0">
+        </div>
+        <div>
+          <label>Valendo por (dias) — 0 = sem prazo</label>
+          <input type="number" id="pb-dias" min="0" value="0">
+        </div>
+      </div>
+
+      <label>O que mudou (aparece no sininho e no site)</label>
+      <textarea id="pb-notas" placeholder="ex.: novo plano pós-pago; impressora térmica 80mm; correção do relatório..."></textarea>
+
+      <label>Tutorial do site — como baixar e instalar (passo a passo)</label>
+      <textarea id="pb-tutorial" placeholder="1. Aperte o botão verde de baixar&#10;2. Abra o arquivo baixado&#10;3. Avance a instalação — instala por cima, sem perder nada"></textarea>
+
+      <label>Imagens do tutorial (prints do PC — opcional, até 8)</label>
+      <div class="exe-box" style="border-style:dashed;background:#f8fafc">
+        <button class="btn-mini" id="pb-imgs-escolher">🖼 Escolher imagens no PC</button>
+        <span id="pb-imgs-txt" style="font-size:12px;color:#64748b">nenhuma imagem escolhida (vão aparecer dentro do tutorial, antes do botão de baixar)</span>
+      </div>
+      <div class="imgs-pre" id="pb-imgs-pre"></div>
+
+      <label>Pra quem aparece</label>
+      <div class="dest-box">
+        <label><input type="radio" name="pb-dest" value="todos" checked> <b>Todo mundo</b>&nbsp;— qualquer loja conectada vê e baixa</label>
+        <label><input type="radio" name="pb-dest" value="lista"> <b>Só algumas empresas</b>&nbsp;— marque quem recebe (empresa nova: adicione o CNPJ + nome embaixo)</label>
+        <div class="emp-lista" id="pb-emp-lista" style="display:none"></div>
+        <div class="emp-add" id="pb-emp-add" style="display:none">
+          <input type="text" id="pb-emp-cnpj" inputmode="numeric" placeholder="CNPJ 14 dígitos" style="max-width:220px">
+          <input type="text" id="pb-emp-nome" placeholder="Nome da empresa" style="flex:1">
+          <button class="btn-mini" id="pb-emp-btn">+ empresa</button>
+        </div>
+        <label><input type="radio" name="pb-dest" value="so_loja"> <b>Só a minha loja</b>&nbsp;— teste primeiro aqui; ninguém mais vê</label>
+      </div>
+
+      <label>Arquivo .exe da atualização (opcional agora — dá pra anexar depois no histórico)</label>
+      <div class="exe-box">
+        <button class="btn-mini" id="pb-exe-escolher">📦 Escolher o .exe no PC</button>
+        <div><div class="nome" id="pb-exe-nome">nenhum arquivo escolhido</div><div style="font-size:11px;color:#64748b" id="pb-exe-tam"></div></div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-verde" id="pb-jogar">🚀 Jogar a atualização</button>
+        <button class="btn-mini" id="pb-limpar">limpar o formulário</button>
+      </div>
+      <div class="passos-envio" id="pb-passos"></div>
+      <div id="pb-msg"></div>
+    </section>
+
+    <!-- ── HISTÓRICO ── -->
+    <section class="painel" id="painel-hist" style="display:none">
+      <div class="status-topo">
+        <h2 style="margin:0">Atualizações já jogadas</h2>
+        <button class="btn-mini" id="hs-recarregar">🔄 recarregar</button>
+        <span class="pill" id="hs-total"></span>
+      </div>
+      <p class="dica" style="margin-top:8px">Aqui você <b>liga/desliga</b>, <b>oculta/mostra</b>, <b>edita</b> (notas, tutorial, pra quem aparece), <b>exclui</b> e copia o <b>link do sininho</b> de cada versão. Versão desligada some do sininho e do site na hora.</p>
+
+      <div class="edit-box" id="ed-box">
+        <h2>Editar a v<span id="ed-versao-txt"></span></h2>
+        <p class="dica">Mexe só no que precisa. As imagens atuais do tutorial estão embaixo: tire ou ponha novas.</p>
+        <label>O que mudou</label>
+        <textarea id="ed-notas"></textarea>
+        <label>Tutorial (passo a passo)</label>
+        <textarea id="ed-tutorial"></textarea>
+        <label>Pra quem aparece</label>
+        <div class="dest-box">
+          <label><input type="radio" name="ed-dest" value="todos"> <b>Todo mundo</b></label>
+          <label><input type="radio" name="ed-dest" value="lista"> <b>Só algumas empresas</b> — marque embaixo</label>
+          <div class="emp-lista" id="ed-emp-lista" style="display:none"></div>
+          <label><input type="radio" name="ed-dest" value="so_loja"> <b>Só a minha loja</b></label>
+        </div>
+        <label>Imagens do tutorial (atuais)</label>
+        <div class="imgs-pre" id="ed-imgs"></div>
+        <button class="btn-mini" id="ed-img-add">🖼 adicionar imagem</button>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn" id="ed-salvar">💾 Salvar edição</button>
+          <button class="btn btn-cinza" id="ed-cancelar">cancelar</button>
+        </div>
+        <div id="ed-msg"></div>
+      </div>
+
+      <div id="hs-lista"></div>
+      <div id="hs-msg"></div>
+    </section>
+  </main>
+</div>
+
+<footer>DIGICOPY Gerente de Atualizações · v5.26.0 · as senhas viajam só como embaralhado (hash) · quem baixa é sempre o cliente, este programa só publica</footer>
+
+<script>
+'use strict';
+var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+var TK = 'digicopy_gerente_token_v2';
+var token = '';
+var exeEscolhido = null;              // {caminho, nome, tamanho}
+var imgsEscolhidas = [];              // [{caminho, nome, tamanho}]
+var empresasCache = [];               // picker
+var releasesCache = [];
+var editando = null;                  // versao em edição
+
+function $(id){ return document.getElementById(id); }
+function soDig(v){ return String(v||'').replace(/\D/g,''); }
+function fmtCnpj(c){ c=soDig(c); return c.length===14 ? c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5') : c; }
+function fmtData(ms){ try{ return ms ? new Date(Number(ms)).toLocaleDateString('pt-BR') : ''; }catch(e){ return ''; } }
+function msg(id, texto, tipo){ var d=$(id); d.innerHTML = texto ? '<div class="msg '+tipo+'">'+texto+'</div>' : ''; }
+function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function apiChama(path, method, body){
+  return window.gerente.api({ path:path, method:method||'GET', token:token || undefined, body:body }).then(function(r){
+    if(!r || !r.ok){ var e = new Error((r && r.erro) || 'Falhou.'); throw e; }
+    return r.dados;
+  });
+}
+
+// ── login ────────────────────────────────────────────────────────────
+function entrarTela(cnpj){
+  $('tela-login').style.display = 'none';
+  $('tela-app').style.display = 'block';
+  $('hd-quem').textContent = 'empresa dona: ' + fmtCnpj(cnpj);
+  carregarEmpresas();
+  carregarHistorico();
+}
+$('lg-entrar').onclick = function(){
+  var cnpj = soDig($('lg-cnpj').value);
+  var senha = $('lg-senha').value;
+  if(cnpj.length !== 14 || !senha){ msg('lg-msg','Informe o CNPJ (14 dígitos) e a senha do gerente.','erro'); return; }
+  var b = $('lg-entrar'); b.disabled = true; b.textContent = 'Entrando...';
+  window.gerente.api({ path:'/v1/gerente-login', method:'POST', body:{ cnpj:cnpj, senha:senha } }).then(function(r){
+    if(!r || !r.ok || !r.dados || !r.dados.gerenteToken){
+      msg('lg-msg', esc((r && r.erro) || 'Não entrou.'), 'erro');
+      b.disabled = false; b.textContent = 'Entrar'; return;
+    }
+    token = r.dados.gerenteToken;
+    try{ localStorage.setItem(TK, JSON.stringify({ token:token, cnpj:cnpj })); }catch(e){}
+    b.disabled = false; b.textContent = 'Entrar';
+    entrarTela(cnpj);
+  });
+};
+$('lg-senha').addEventListener('keydown', function(ev){ if(ev.key==='Enter') $('lg-entrar').click(); });
+$('hd-sair').onclick = function(){
+  try{ localStorage.removeItem(TK); }catch(e){}
+  token = ''; $('tela-app').style.display='none'; $('tela-login').style.display='block';
+};
+(function tentarEntrarDireto(){
+  try{
+    var salvo = JSON.parse(localStorage.getItem(TK) || 'null');
+    if(!salvo || !salvo.token) return;
+    token = salvo.token;
+    apiChama('/v1/gerente/empresas').then(function(){ entrarTela(salvo.cnpj); })
+      .catch(function(){ token=''; localStorage.removeItem(TK); });
+  }catch(e){}
+})();
+
+// ── abas ─────────────────────────────────────────────────────────────
+function marcarAba(qual){
+  $('tab-pub').classList.toggle('ativa', qual==='pub');
+  $('tab-hist').classList.toggle('ativa', qual==='hist');
+  $('painel-pub').style.display = qual==='pub' ? 'block' : 'none';
+  $('painel-hist').style.display = qual==='hist' ? 'block' : 'none';
+  if(qual==='hist') carregarHistorico();
+}
+$('tab-pub').onclick = function(){ marcarAba('pub'); };
+$('tab-hist').onclick = function(){ marcarAba('hist'); };
+
+// ── destino: picker de empresas ──────────────────────────────────────
+function carregarEmpresas(){
+  apiChama('/v1/gerente/empresas').then(function(r){
+    empresasCache = (r && r.empresas) || [];
+    renderEmpPickers();
+  }).catch(function(){});
+}
+function renderEmpPickers(){
+  var html = empresasCache.map(function(e){
+    return '<label><input type="checkbox" data-cnpj="'+esc(e.cnpj)+'"> <b>'+esc(e.nome||'(sem nome)')+'</b>&nbsp;·&nbsp;'+esc(fmtCnpj(e.cnpj))+'</label>';
+  }).join('') || '<p style="font-size:12px;color:#64748b;padding:4px 0">Nenhuma empresa cadastrada ainda. Adicione embaixo (CNPJ + nome) — empresa nova entra na lista antes mesmo de conectar o primeiro PC.</p>';
+  $('pb-emp-lista').innerHTML = html;
+  $('ed-emp-lista').innerHTML = html;
+}
+document.querySelectorAll('input[name=pb-dest]').forEach(function(rd){
+  rd.addEventListener('change', function(){
+    var lista = document.querySelector('input[name=pb-dest]:checked').value === 'lista';
+    $('pb-emp-lista').style.display = lista ? 'block' : 'none';
+    $('pb-emp-add').style.display = lista ? 'flex' : 'none';
+  });
+});
+document.querySelectorAll('input[name=ed-dest]').forEach(function(rd){
+  rd.addEventListener('change', function(){
+    var lista = document.querySelector('input[name=ed-dest]:checked').value === 'lista';
+    $('ed-emp-lista').style.display = lista ? 'block' : 'none';
+  });
+});
+$('pb-emp-btn').onclick = function(){
+  var cnpj = soDig($('pb-emp-cnpj').value);
+  var nome = $('pb-emp-nome').value.trim();
+  if(cnpj.length !== 14 || !nome){ msg('pb-msg','Pra cadastrar empresa nova: CNPJ com 14 dígitos e o nome.','erro'); return; }
+  apiChama('/v1/gerente/empresas','POST',{ cnpj:cnpj, nome:nome }).then(function(){
+    $('pb-emp-cnpj').value=''; $('pb-emp-nome').value='';
+    msg('pb-msg','Empresa cadastrada. Já dá pra marcar ela na lista.','bom');
+    carregarEmpresas();
+  }).catch(function(e){ msg('pb-msg', esc(e.message), 'erro'); });
+};
+function cnpjsMarcados(prefixoLista){
+  var marcados = [];
+  $(prefixoLista).querySelectorAll('input[type=checkbox][data-cnpj]').forEach(function(cb){
+    if(cb.checked) marcados.push(cb.getAttribute('data-cnpj'));
+  });
+  return marcados;
+}
+
+// ── escolha de arquivos ──────────────────────────────────────────────
+$('pb-exe-escolher').onclick = function(){
+  window.gerente.pickExe().then(function(r){
+    if(!r || !r.ok) return;
+    exeEscolhido = r;
+    $('pb-exe-nome').textContent = r.nome;
+    $('pb-exe-tam').textContent = (r.tamanho ? (Math.round(r.tamanho/1024/1024) + ' MB') : '');
+  });
+};
+function desenharPrevia(){
+  $('pb-imgs-txt').textContent = imgsEscolhidas.length ? (imgsEscolhidas.length + ' imagem(ns) — vão pro tutorial nesta ordem') : 'nenhuma imagem escolhida (vão aparecer dentro do tutorial, antes do botão de baixar)';
+  var pre = $('pb-imgs-pre'); pre.innerHTML = '';
+  imgsEscolhidas.forEach(function(img, i){
+    var c = document.createElement('div');
+    c.className = 'imgc';
+    c.innerHTML = '<button class="x" title="tirar">×</button><div class="nm">'+esc(img.nome)+'</div>';
+    pre.appendChild(c);
+    var im = document.createElement('img');
+    c.insertBefore(im, c.querySelector('.nm'));
+    window.gerente.thumb({ caminho: img.caminho }).then(function(t){ if(t && t.ok) im.src = t.dataUrl; });
+    c.querySelector('.x').onclick = function(){ imgsEscolhidas.splice(i,1); desenharPrevia(); };
+  });
+}
+$('pb-imgs-escolher').onclick = function(){
+  window.gerente.pickImgs().then(function(r){
+    if(!r || !r.ok) return;
+    (r.arquivos || []).forEach(function(a){ if(imgsEscolhidas.length < 8) imgsEscolhidas.push(a); });
+    desenharPrevia();
+  });
+};
+
+function passo(txt){
+  var p = $('pb-passos');
+  p.classList.add('on');
+  p.innerHTML += '<div>• ' + esc(txt) + '</div>';
+}
+
+// ── JOGAR ────────────────────────────────────────────────────────────
+$('pb-limpar').onclick = function(){
+  ['pb-versao','pb-notas','pb-tutorial'].forEach(function(id){ $(id).value=''; });
+  $('pb-dias').value = '0';
+  exeEscolhido = null; imgsEscolhidas = []; desenharPrevia();
+  $('pb-exe-nome').textContent = 'nenhum arquivo escolhido'; $('pb-exe-tam').textContent = '';
+  document.querySelector('input[name=pb-dest][value=todos]').checked = true;
+  $('pb-emp-lista').style.display='none'; $('pb-emp-add').style.display='none';
+  $('pb-passos').innerHTML=''; $('pb-passos').classList.remove('on'); msg('pb-msg','','info');
+};
+
+$('pb-jogar').onclick = async function(){
+  var v = $('pb-versao').value.trim().replace(/^v/i,'');
+  if(!/^\d+(\.\d+)+$/.test(v)){ msg('pb-msg','A versão precisa ser tipo 5.26.0.','erro'); return; }
+  var destTipo = document.querySelector('input[name=pb-dest]:checked').value;
+  var destCnpjs = destTipo === 'lista' ? cnpjsMarcados('pb-emp-lista') : [];
+  if(destTipo==='lista' && !destCnpjs.length){ msg('pb-msg','Você escolheu "só algumas empresas" mas não marcou nenhuma: a atualização apareceria pra ninguém.','erro'); return; }
+  var dias = Math.max(0, parseInt($('pb-dias').value,10) || 0);
+
+  var btn = $('pb-jogar');
+  btn.disabled = true; btn.textContent = 'Jogando...';
+  $('pb-passos').innerHTML=''; msg('pb-msg','','info');
+
+  try{
+    passo('1/4 — registrando a v'+v+' na nuvem (notas, tutorial e pra quem aparece)...');
+    var pub = await apiChama('/v1/app-release','POST',{
+      action:'publicar', versao:v,
+      notas:$('pb-notas').value, tutorial:$('pb-tutorial').value,
+      expiraHoras: dias*24, destinoTipo:destTipo, destinoCnpjs:destCnpjs
+    });
+    passo('registrado ✔ — o link do sininho desta versão ficou: ' + API + '/a/' + pub.slug);
+
+    if(exeEscolhido){
+      passo('2/4 — subindo o arquivo ' + exeEscolhido.nome + ' (' + Math.round(exeEscolhido.tamanho/1024/1024) + 'MB)... pode demorar alguns minutos conforme a internet.');
+      var up = await window.gerente.uploadExe({ caminho: exeEscolhido.caminho, versao: v, token: token });
+      if(!up || !up.ok) throw new Error((up && up.erro) || 'Não subiu o .exe.');
+      passo('arquivo subiu ✔ — botão de baixar do site já funciona.');
+    } else {
+      passo('2/4 — sem .exe agora (o site mostra "o arquivo ainda não subiu"). Anexe depois pelo histórico.');
+    }
+
+    if(imgsEscolhidas.length){
+      passo('3/4 — subindo ' + imgsEscolhidas.length + ' imagem(ns) do tutorial...');
+      for(var i=0;i<imgsEscolhidas.length;i++){
+        var ui = await window.gerente.uploadImg({ caminho: imgsEscolhidas[i].caminho, versao: v, token: token });
+        if(!ui || !ui.ok) throw new Error((ui && ui.erro) || ('Não subiu a imagem ' + imgsEscolhidas[i].nome));
+        passo('imagem ' + (i+1) + ' de ' + imgsEscolhidas.length + ' ✔');
+      }
+    } else {
+      passo('3/4 — sem imagens desta vez.');
+    }
+
+    passo('4/4 — conferindo...');
+    await carregarHistorico(true);
+    passo('PRONTO ✅ — quem deve receber vê o sininho no sistema (uma vez por versão) e baixa por lá ou pelo site.');
+    msg('pb-msg','A v'+v+' foi jogada. Destino: <b>' +
+      (destTipo==='todos' ? 'todo mundo' : destTipo==='so_loja' ? 'só a sua loja (teste)' : destCnpjs.length + ' empresa(s) marcadas') + '</b>.' +
+      (dias>0 ? ' Valendo por ' + dias + ' dia(s).' : ' Sem prazo pra vencer.'),'bom');
+  }catch(e){
+    msg('pb-msg','Deu problema: ' + esc(e.message) + '<br>Se o motor da nuvem estiver velho, rode o <b>atualizar_motor_nuvem.cmd</b> na pasta do sistema e tente de novo.','erro');
+  }
+  btn.disabled = false; btn.textContent = '🚀 Jogar a atualização';
+};
+
+// ── HISTÓRICO ────────────────────────────────────────────────────────
+function seloEstado(r, agora){
+  if(!r.ativa) return '<span class="selo desligada">desligada</span>';
+  if(r.oculta) return '<span class="selo oculta">oculta</span>';
+  if(r.expiraEm && r.expiraEm < agora) return '<span class="selo vencida">vencida</span>';
+  return '<span class="selo vigente">vigente</span>';
+}
+function seloDestino(r){
+  var t = r.destinoTipo || 'todos';
+  if(t === 'so_loja') return '<span class="selo dest">só a sua loja</span>';
+  if(t === 'lista'){
+    var n = 0; try{ n = JSON.parse(r.destinoCnpjs || '[]').length; }catch(e){}
+    return '<span class="selo dest">' + n + ' empresa(s)</span>';
+  }
+  return '<span class="selo dest">todo mundo</span>';
+}
+function carregarHistorico(silencioso){
+  return apiChama('/v1/app-releases').then(function(r){
+    releasesCache = (r && r.releases) || [];
+    $('hs-total').textContent = releasesCache.length + ' versão(ões) já jogadas';
+    var agora = Date.now();
+    var html = releasesCache.map(function(rel){
+      var imgs = []; try{ imgs = rel.imagens ? JSON.parse(rel.imagens) : []; }catch(e){ imgs=[]; }
+      return '<div class="rel" data-v="'+esc(rel.versao)+'">' +
+        '<div class="cab rel"><span class="v">v'+esc(rel.versao)+'</span>' + seloEstado(rel, agora) + seloDestino(rel) +
+        (rel.temArquivo ? '<span class="pill" style="font-size:10px">📦 .exe anexado</span>' : '<span class="pill" style="font-size:10px;color:#b45309;background:#fef3c7">⏳ sem .exe</span>') +
+        (imgs.length ? '<span class="pill" style="font-size:10px">🖼 '+imgs.length+' img</span>' : '') +
+        '<span class="meta">'+esc(fmtData(rel.publicadoEm))+'</span></div>' +
+        (rel.notas ? '<div class="notas">'+esc(rel.notas)+'</div>' : '') +
+        '<div class="acoes">' +
+        (!rel.ativa ? '<button class="btn-mini ok" data-ac="ativar">▶ ligar</button>' : '<button class="btn-mini perigo" data-ac="desativar">⏸ desligar</button>') +
+        (rel.oculta ? '<button class="btn-mini" data-ac="mostrar">👁 mostrar no site</button>' : '<button class="btn-mini" data-ac="ocultar">🙈 ocultar do site</button>') +
+        '<button class="btn-mini" data-ac="editar">✏ editar</button>' +
+        '<button class="btn-mini" data-ac="link">🔗 copiar link do sininho</button>' +
+        (!rel.temArquivo ? '<button class="btn-mini" data-ac="exe">📦 anexar .exe</button>' : '<button class="btn-mini" data-ac="exe">📦 trocar .exe</button>') +
+        '<button class="btn-mini perigo" data-ac="excluir">🗑 excluir</button>' +
+        '</div></div>';
+    }).join('');
+    $('hs-lista').innerHTML = html || '<p style="font-size:13px;color:#64748b;margin-top:14px">Nenhuma atualização jogada ainda. Use a aba "Jogar atualização".</p>';
+    amarrarAcoes();
+    if(!silencioso) msg('hs-msg','','info');
+  }).catch(function(e){ if(!silencioso) msg('hs-msg', esc(e.message), 'erro'); });
+}
+$('hs-recarregar').onclick = function(){ carregarHistorico(); };
+
+function copiarTexto(t){
+  try{ if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t); }catch(e){}
+  var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  ta.remove(); return Promise.resolve();
+}
+
+function amarrarAcoes(){
+  $('hs-lista').querySelectorAll('.rel[data-v]').forEach(function(box){
+    var v = box.getAttribute('data-v');
+    box.querySelectorAll('[data-ac]').forEach(function(b){
+      b.onclick = async function(){
+        var ac = b.getAttribute('data-ac');
+        var rel = releasesCache.find(function(x){ return String(x.versao) === String(v); }) || {};
+        if(ac === 'excluir'){
+          if(!confirm('Excluir de verdade a v' + v + '? Apaga o registro E o arquivo da nuvem. Não tem volta.')) return;
+          if(!confirm('Última confirmação: excluir a v' + v + '?')) return;
+        }
+        if(ac === 'link'){
+          var slug = rel.slug || '';
+          if(!slug){ msg('hs-msg','Esta versão ainda não tem link (foi feita antes do sistema novo). Edite e salve pra gerar.','erro'); return; }
+          await copiarTexto(API + '/a/' + slug);
+          msg('hs-msg','Link da v' + v + ' copiado: é o MESMO link que aparece como notificação no sistema dos destinatários.','bom'); return;
+        }
+        if(ac === 'editar'){ abrirEdicao(rel); return; }
+        if(ac === 'exe'){
+          var pick = await window.gerente.pickExe();
+          if(!pick || !pick.ok) return;
+          msg('hs-msg','Subindo ' + esc(pick.nome) + ' (' + Math.round(pick.tamanho/1024/1024) + 'MB) pra v' + esc(v) + '...','info');
+          var up = await window.gerente.uploadExe({ caminho: pick.caminho, versao: v, token: token });
+          if(!up || !up.ok){ msg('hs-msg', esc((up && up.erro) || 'Não subiu.'), 'erro'); return; }
+          msg('hs-msg','.exe anexado à v' + esc(v) + ' ✔','bom'); carregarHistorico(true); return;
+        }
+        try{
+          await apiChama('/v1/app-release','POST',{ action: ac, versao: v });
+          msg('hs-msg','Feito: ' + ac + ' na v' + esc(v) + '.','bom');
+          carregarHistorico(true);
+        }catch(e){ msg('hs-msg', esc(e.message), 'erro'); }
+      };
+    });
+  });
+}
+
+// ── EDIÇÃO ───────────────────────────────────────────────────────────
+function abrirEdicao(rel){
+  editando = rel;
+  $('ed-versao-txt').textContent = rel.versao;
+  $('ed-notas').value = rel.notas || '';
+  $('ed-tutorial').value = rel.tutorial || '';
+  var t = rel.destinoTipo || 'todos';
+  var rd = document.querySelector('input[name=ed-dest][value=' + t + ']') || document.querySelector('input[name=ed-dest][value=todos]');
+  rd.checked = true;
+  $('ed-emp-lista').style.display = (t === 'lista') ? 'block' : 'none';
+  var marcados = []; try{ marcados = JSON.parse(rel.destinoCnpjs || '[]'); }catch(e){ marcados=[]; }
+  $('ed-emp-lista').querySelectorAll('input[type=checkbox][data-cnpj]').forEach(function(cb){
+    cb.checked = marcados.indexOf(cb.getAttribute('data-cnpj')) >= 0;
+  });
+  desenharImgsEdicao();
+  $('ed-box').classList.add('on');
+  msg('ed-msg','','info');
+  $('ed-box').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+function desenharImgsEdicao(){
+  var imgs = []; try{ imgs = editando && editando.imagens ? JSON.parse(editando.imagens) : []; }catch(e){ imgs=[]; }
+  var pre = $('ed-imgs'); pre.innerHTML = '';
+  imgs.forEach(function(k){
+    var c = document.createElement('div');
+    c.className = 'imgc';
+    c.innerHTML = '<button class="x" title="tirar do tutorial">×</button><div class="nm">'+esc(k.split('/').pop())+'</div>';
+    var im = document.createElement('img');
+    im.src = API + '/' + encodeURI(k);
+    c.insertBefore(im, c.querySelector('.nm'));
+    pre.appendChild(c);
+    c.querySelector('.x').onclick = async function(){
+      try{
+        await apiChama('/v1/app-release','POST',{ action:'remover-imagem', versao: editando.versao, key: k });
+        editando.imagens = JSON.stringify(imgs.filter(function(x){ return x !== k; }));
+        desenharImgsEdicao(); msg('ed-msg','Imagem tirada do tutorial.','bom');
+      }catch(e){ msg('ed-msg', esc(e.message), 'erro'); }
+    };
+  });
+}
+$('ed-img-add').onclick = async function(){
+  if(!editando) return;
+  var pick = await window.gerente.pickImgs();
+  if(!pick || !pick.ok) return;
+  for(var i=0; i<(pick.arquivos||[]).length; i++){
+    var a = pick.arquivos[i];
+    msg('ed-msg','Subindo ' + esc(a.nome) + '...','info');
+    var up = await window.gerente.uploadImg({ caminho: a.caminho, versao: editando.versao, token: token });
+    if(!up || !up.ok){ msg('ed-msg', esc((up && up.erro) || 'Não subiu.'), 'erro'); return; }
+    try{ var arr = JSON.parse(editando.imagens || '[]'); arr.push(null); editando.imagens = JSON.stringify(arr); }catch(e){}
+  }
+  await carregarHistorico(true);
+  var rel = releasesCache.find(function(x){ return editando && String(x.versao) === String(editando.versao); });
+  if(rel) abrirEdicao(rel);
+  msg('ed-msg','Imagem(ns) no ar ✔','bom');
+};
+$('ed-cancelar').onclick = function(){ $('ed-box').classList.remove('on'); editando = null; };
+$('ed-salvar').onclick = async function(){
+  if(!editando) return;
+  var t = document.querySelector('input[name=ed-dest]:checked').value;
+  var cnps = t === 'lista' ? cnpjsMarcados('ed-emp-lista') : [];
+  if(t==='lista' && !cnps.length){ msg('ed-msg','Marcou "só algumas empresas" mas não escolheu nenhuma.','erro'); return; }
+  var btn = $('ed-salvar'); btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    await apiChama('/v1/app-release','POST',{
+      action:'editar', versao: editando.versao,
+      notas: $('ed-notas').value, tutorial: $('ed-tutorial').value,
+      destinoTipo: t, destinoCnpjs: cnps
+    });
+    msg('ed-msg','Edição salva ✔ — já vale no sininho e no site.','bom');
+    carregarHistorico(true);
+  }catch(e){ msg('ed-msg', esc(e.message), 'erro'); }
+  btn.disabled = false; btn.textContent = '💾 Salvar edição';
+};
+</script>
+</body>
+</html>

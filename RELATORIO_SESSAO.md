@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.24.18**  
+**Última versão:** **v5.26.0**  
 
 ---
 
@@ -3101,6 +3101,93 @@ E DUAS telas vivas: a nova do contrato + a ANTIGA "Leituras" do menu Locação
 **Ritual:** manifest 200→201; carimbo 5.24.36→**5.25.0** (lei nova); bundle 201
 + 4 guards + celular; murais (allowlist 201, fila final, pinos 5.25.0);
 test_ajustes_v5250.js (38 asserts, funcional com DOM fake). **Suíte 158/0/0.**
+
+## v5.26.0 — O 3º SISTEMA: GERENTE DE ATUALIZAÇÕES (CNPJ + senha única · site restrito · sininho por destinatário · imagens do tutorial) (2026-09-16)
+
+**Pedidos dele (decisões que ele bateu nos cartões desta leva):**
+1. **PC novo conecta com CNPJ + senha de conexão ÚNICA** (definida 1x no painel
+   Nuvem; trocar a senha só bloqueia acessos NOVOS — PCs já conectados seguem).
+   O convite relâmpago (uses_left=1, 5–60min) fica como plano B, não some.
+2. **Site de atualizações RESTRITO dos dois jeitos:** tela de CNPJ+senha
+   (lembrada 30 dias por cookie HttpOnly) **E** link secreto que "aparece como
+   notificação do sistema baixado": o sininho só acende se houver versão mais
+   nova **destinada** ao CNPJ daquela instalação. Destinatário por publicação:
+   **todo mundo / lista de CNPJ+nome (empresas cadastradas) / só a loja do
+   dono** (teste primeiro). Sem versão pra ele = silêncio total.
+3. **Atualizador = programa .exe SEPARADO no PC do dono** (não página na
+   nuvem): o "DIGICOPY Gerente de Atualizações" joga o .exe, escreve
+   notas/tutorial, anexa imagens, edita, desliga, oculta, exclui e escolhe
+   PRA QUEM cada atualização aparece. **Ele NÃO instala nada nos clientes** —
+   quem baixa é sempre o cliente, pelo sininho ou pelo site.
+4. **Imagens no tutorial:** anexadas do PC no formulário de publicar/editar
+   sobem para o cofre R2 (`img/<versao>/i_....`) e aparecem **dentro do
+   tutorial, antes do botão de baixar**, com ZOOM ao clicar (lightbox na
+   página restrita e na página secreta /a/). Máx 8 por versão, até 4MB cada.
+
+**O que amarra tudo (arquitetura):**
+- **Worker (motor da nuvem) ganhou:** 4 tabelas (`connect_secrets` — senhas
+  SÓ em hash com pimenta `SETUP_SECRET|área|cnpj|senha`, nunca em texto;
+  `empresas`; `site_sessions` 30d; `gerente_sessions` 7d), 4 colunas em
+  `app_releases` (`destino_tipo` todos|lista|so_loja, `destino_cnpjs` JSON,
+  `slug` do link secreto a_..., `imagens` JSON de chaves R2), e as rotas
+  `/v1/connect-pass` (só admin define), `/v1/enroll-cnpj`,
+  `/v1/site-login` (303 + cookie), `/v1/gerente-login` (só o CNPJ da empresa
+  dona passa; token gr_ de 7 dias), GET/POST `/v1/gerente/empresas`,
+  `/v1/release-image`, página secreta `GET /a/<slug>` (abre direto, sem
+  digitar CNPJ), `GET /img/<v>/<arq>` (só de versão viva) e a ação
+  `remover-imagem`. **Gateways novos:** GET `/v1/app-release?cnpj=` filtra por
+  destinatário (sem cnpj → só publicações "todos", back-compat com apps
+  velhos); `/v1/app-releases` FECHOU (era aberto: vazava slug/destinatário);
+  `/dl/` não é endereço decorável (sessão do site OU slug da versão OU
+  gerente/admin); POST `/v1/app-release` e `/v1/release-file` aceitam
+  `requireAdminOuGerente` (admin do painel OU gerente — credencial SEPARADA,
+  loja-cliente não vira gerente).
+- **App (patch 202 `ajustes_v5260_cnpj_gerente_patch.js`):** (a) o sininho
+  pergunta com `?cnpj=` (CNPJ da sessão/login por CNPJ, volta por
+  db.empresas) e abre a página secreta `/a/<slug>`; (b) a tela de autorizar
+  computador ganha a aba **"Entrar com CNPJ"** (CNPJ da loja + senha de
+  conexão + nome do PC → conecta sem código que vence); (c) o painel Nuvem
+  (admin) ganha o cartão **"Senhas de conexão (CNPJ) e do Gerente"** (define
+  1x: CNPJ+nome da empresa dona, senha de conexão, senha do gerente — vão SÓ
+  como hash pra nuvem).
+- **Gerente (subprojeto `gerente-atualizacoes/`):** Electron mini (janela
+  1180×900, tela isolada por preload/contextBridge, uploads pelo processo
+  principal), abas **Jogar atualização** (versão·notas·tutorial·imagens·
+  destino·prazo·.exe → registrar→subir exe→subir imagens) e **Já jogadas**
+  (ligar/desligar · ocultar/mostrar · editar notas+tutorial+destino · excluir
+  com 2 confirmações · copiar link do sininho · anexar/trocar .exe · tirar
+  imagem) + `GERAR_GERENTE_EXE.cmd` (goto-only, CRLF, janela que nunca fecha,
+  sem acento = cp850-safe).
+- **Migration oficial:** `cloudflare-worker/migrations/0006_cnpj_gerente.sql`
+  (o motor também cria tudo sozinho/idempotente; NÃO mexe em
+  system_meta.'schema_version' — o /health exige '2').
+
+**Ritual:** manifest 201→202; carimbo **5.26.0** (entrega grande/sistema novo
+→ 2ª casa, pela lei de versão dele) em package.json/index.html/worker/celular;
+bundle 202 (isolamento de erro intacto: 199 isolados) + sync do celular +
+guards (test_app_bundle, test_build_sync, test_mobile_apk, test_versao_visual)
++ murais re-ancorados (fila final do v52293 -8→-9, cadeias v52295/96/52435/36,
+"um arquivo por módulo" 201→202 nos v52284-87, carimbos fixos 5.25.0/5.24.34
+→ 5.26.0 onde eram pin vivos). **Suíte: 158/0/0** — inclui o novo
+test_ajustes_v5260.js (55 asserts: hash-único de senha, destinoOk simulado
+com as funções puras extraídas do worker, gateways fechados, rotas novas,
+pin do gerente, carimbos).
+
+**Passos DELE quando empacotar (na ordem):**
+1. `atualizar_motor_nuvem.cmd` 1x (o MOTOR mudou: rotas/tabelas novas).
+2. No sistema (admin) → Nuvem → cartão senhas: definir CNPJ+ nome da dona,
+   senha de conexão, senha do gerente (1x só; troca futura = mesmo cartão).
+3. Na pasta `gerente-atualizacoes/`, rodar `GERAR_GERENTE_EXE.cmd` → instalar
+   o Gerente SÓ no PC dele (nunca nas lojas-clientes).
+4. Publicar uma versão de teste marcando **"só a minha loja"** → conferir o
+   sininho no PC dele e o site restrito (CNPJ+senha / link do sininho).
+5. Quando gostar: republicar pra "todo mundo" ou pra lista de empresas.
+6. PCs novos a partir daí entram com CNPJ + senha de conexão (aba nova na
+   tela de autorizar) — sem código que vence.
+
+**Testes da v5.25.0 que ele GUARDOU** (adiou até este sistema sair): continuam
+pendentes de rodada de campo dele — o caminho do convite relâmpago do patch v5.25.0 fica
+intacto como plano B e coberto pela suíte.
 
 ## MAPA DE VISIBILIDADE DO SISTEMA — o que esconde/apaga menus e telas (resposta: "tem mais menus ocultos desde o login até o final?")
 

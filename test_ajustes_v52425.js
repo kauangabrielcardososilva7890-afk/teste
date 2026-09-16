@@ -41,10 +41,10 @@ ok(leitura.stdout.trim() === 'function function', 'assinatura: funções novas e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('central-nfe-modal') && bundle.includes('NFE_CENTRAL_V52425'), 'bundle: Central dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-modal'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'index 5.25.0');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.25.0<'), 'rodapé v5.25.0');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.25.0"'), 'package.json 5.25.0');
-ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.24.34'"), 'worker carimbado');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.26.0"'), 'package.json 5.26.0');
+ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.26.0'"), 'worker carimbado (re-ancorado v5.26.0)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (menu NF abre de verdade + certificado para limpo com data).');

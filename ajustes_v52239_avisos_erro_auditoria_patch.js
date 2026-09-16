@@ -138,9 +138,11 @@ function mostrarAvisoAtualizacao(rel){
     marcarVisto();
     // v5.24.34 — pedido dele: o botão leva pro SITE (tutorial dele, se houver,
     // aparece ANTES do botão de baixar). Site nasce na própria nuvem.
+    // v5.26.0 — com destinatário, a notificação abre a PÁGINA SECRETA daquela
+    // publicação (/a/<slug>): entra direto, sem precisar digitar CNPJ de novo.
     try{
       var apiB=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
-      window.open(apiB?apiB+'/atualizacoes':url,'_blank');
+      window.open(apiB?(rel.slug?apiB+'/a/'+encodeURIComponent(rel.slug):apiB+'/atualizacoes'):url,'_blank');
     }catch(e){ try{ window.open(url,'_blank'); }catch(e2){} }
     var d=document.getElementById('aviso-update-card'); if(d) d.remove();
   };

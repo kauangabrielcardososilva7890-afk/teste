@@ -1,0 +1,37 @@
+{
+  "name": "digicopy-gerente-atualizacoes",
+  "version": "5.26.0",
+  "description": "Programa separado (no PC do dono) para publicar, editar, destinar e excluir atualizações do DIGICOPY.",
+  "main": "main.js",
+  "private": true,
+  "productName": "DIGICOPY Gerente de Atualizacoes",
+  "author": "DIGICOPY",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "br.com.digicopy.gerente-atualizacoes",
+    "productName": "DIGICOPY Gerente de Atualizacoes",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "index.html", "package.json"],
+    "win": {
+      "target": "nsis",
+      "artworkUrl": null,
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Gerente de Atualizacoes",
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

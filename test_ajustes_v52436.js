@@ -86,14 +86,14 @@ ok((patch.match(/__v52436lei/g) || []).length >= 4, 'guards __v52436lei nos 4 wr
 
   // ── 3. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man.length === 201 && man[man.length-2] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-1] === 'ajustes_v5250_leitura_overhaul_patch.js', 'manifest: 201 scripts, guarda de leitura penúltima, revisão fecha a fila');
+  ok(man.length === 202 && man[man.length-3] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-2] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-1] === 'ajustes_v5260_cnpj_gerente_patch.js', 'manifest: 202 scripts, guarda de leitura antepenúltima, revisão penúltima, CNPJ+gerente fecha a fila');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_UMA_ABERTA_V52436_PURE') && bundle.includes('Fature (feche) ela antes de criar outra'), 'bundle: guarda dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_UMA_ABERTA_V52436_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'index 5.25.0');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.25.0<'), 'rodapé v5.25.0');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'celular 5.25.0');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.25.0', 'package.json 5.25.0');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'celular 5.26.0');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.0', 'package.json 5.26.0');
 
   // ── 4. Link oficial (githack morto — ele cobrou) ──────────────────────────
   const sync = fs.readFileSync('sync_build.js', 'utf8');

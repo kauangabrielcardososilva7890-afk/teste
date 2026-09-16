@@ -116,14 +116,14 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
 
   // ── 4. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man[man.length-3] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length-1] === 'ajustes_v5250_leitura_overhaul_patch.js', 'manifest: remanejo terceiro a partir do fim; revisão de leituras v5.25.0 fecha a fila (vence sempre)');
+  ok(man[man.length-4] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length-2] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-1] === 'ajustes_v5260_cnpj_gerente_patch.js', 'manifest: remanejo quarto a partir do fim; revisão de leituras v5.25.0 penúltima; CNPJ+gerente v5.26.0 fecha a fila (vence sempre)');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('IMPRESSORA_REMANEJO_V52435_PURE') && bundle.includes('impf-avancar'), 'bundle: wrap final dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('IMPRESSORA_REMANEJO_V52435_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'index 5.25.0');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.25.0<'), 'rodapé v5.25.0');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.25.0'"), 'celular 5.25.0');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.25.0', 'package.json 5.25.0');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'celular 5.26.0');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.0', 'package.json 5.26.0');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.24.35 (P7: serial primeiro + remanejo sem duplicar + remanejada congelada).');
