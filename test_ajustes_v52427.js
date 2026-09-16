@@ -60,8 +60,8 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('hub-impressora-modal') && bundle.includes('PARQUE_MONITOR_V52427'), 'bundle: monitor+hub dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('hub-impressora-modal'), 'bundle do CELULAR igual');
 ok(JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8')).includes('ajustes_v52232_parque_monitor_hub_patch.js'), 'manifest: novo patch registrado');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index 5.24.34');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'rodapé v5.24.34');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.35'"), 'index 5.24.35');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.35<'), 'rodapé v5.24.35');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (P5 + .cmd sem fechar + excluir lixo + monitor SNMP + hub P8).');

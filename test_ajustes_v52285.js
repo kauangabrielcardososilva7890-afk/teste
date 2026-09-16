@@ -44,7 +44,7 @@ ok('função exposta pra tela', /window\.orcBuscarSerial = orcBuscarSerial;/.tes
 ok('mesmos campos que as vendas guardam no save', /numeroSerie: txt\(document\.getElementById\('orc-os-serie'\)/.test(o60));
 
 console.log('== 4. CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups; v5.24.0 soma o relatório grande; v5.24.3 soma as abas do cliente; v5.24.25 soma a Central de Nota Fiscal; v5.24.34 soma o monitor+hub do Parque)', manifest.length === 198);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups; v5.24.0 soma o relatório grande; v5.24.3 soma as abas do cliente; v5.24.25 soma a Central de Nota Fiscal; v5.24.34 soma o monitor+hub do Parque; v5.24.35 soma o remanejo final)', manifest.length === 199);
 ok('versão 5.22.x', /^5\.\d+\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.85 passaram!');

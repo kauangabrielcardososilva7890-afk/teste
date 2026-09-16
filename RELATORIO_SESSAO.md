@@ -2961,6 +2961,57 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Log dele = build OK:** exe v5.24.34 gerado e verificado (30.7MB, raio-x). O '. foi inesperado neste momento.' = blocos if(...) no batch; **v5 = zero parênteses de bloco** (goto :sucesso/:fim) + janela filha (v4) mantida → nunca mais fecha e nunca mais engasga.
 - **Cadeia FACTUAL do FK (pedido dele 'sem achismo'):** o app novo já fala certo com a API; o motor no ar ainda é o velho (sem a migração 0005); a nuvem só muda quando ELE roda o atualizar_motor_nuvem.cmd (Passo 1/2 mostra '0005_soft_delete_aparelhos'). Não é deploy automático porque a conta é dele — é assim por segurança desde o primeiro dia. Passo seguinte dele: motor cmd 1x → Excluir → print da lista limpa.
 
+## v5.24.35 — P7 FINAL: serial primeiro + remanejo sem duplicar (2026-09-16)
+
+**O que entrou (o último pedido grande do pacote "impressora no contrato"):**
+
+1. **Serial primeiro no cadastro novo** — o modal de equipamento do contrato
+   (fluxo vencedor, ids `impf-*`) abre mostrando SÓ o serial + banner azul
+   "Passo 1" + botão Avançar (Salvar do modal-footer fica escondido). Avançar
+   busca o serial/patrimônio em TODO o sistema; achando, preenche modelo e
+   patrimônio sozinhos e reexibe o resto.
+2. **Remanejo com aviso SÓ no salvar** — cadastro novo cujo serial já tem parque
+   ATIVO em OUTRO cliente dispara, na hora de salvar, o confirm do sistema
+   (z-index máximo, sempre na frente): "impressora cadastrada em <cliente> com
+   o contador <n>, deseja remanejar essa impressora pra esse cadastro?". Sim:
+   o parque antigo vira `status='remanejada'` com `frozen` (snapshot de
+   modelo/serie/patrimônio/setor + data) e rastro `remanejadoParaContratoId/
+   ClienteId`.
+3. **Nunca duplica serial no sistema** — fixup anti-duplicata: snapshot dos ids
+   antes do salvar original, detecta o equipamento novo criado, transfere os
+   campos pro cadastro JÁ existente, reponta o parque novo, dedup o contrato e
+   remove a sobra (save + re-render).
+4. **Remanejada = histórico congelado** — não abre edição (aviso "Histórico
+   congelado — não edita"), não salva, contrato exibe o bloco "Remanejadas
+   (histórico congelado — não edita, não entra no mensal)". O vencedor
+   (`fluxo_contrato_leitura_corrigido_patch.js`, pos 47) teve seus 3 filtros
+   (máquinas do contrato, valor mensal fixo, máquinas da leitura) ajustados pra
+   excluir `remanejada` além de `inativo`.
+
+**Arqueologia (por que P7 precisou de wrap NOVO):** a cadeia de carregamento é
+locacao_contratos(19) → fluxos_operacionais(20) → contratos_refino(21) →
+definitivo(46) → **vencedor pos 47** → v5176(71) → remanejar(159) +
+serial_ocultar(165). Os wraps 159/165 estavam MORTOS: miram `kr-imp-busca/
+serie`, ids que só existem no refino (pos 21) — o vencedor usa `impf-*` e não
+tem campo de busca. Solução: wrap final NOVO (`ajustes_v52435_impressora_
+remanejo_final_patch.js`, pos 199, ÚLTIMO do manifest — carrega depois de
+todos, vence sempre) adaptado aos ids reais, não ressurreição da ordem antiga.
+
+**Ritual:** manifest 198→199; carimbo 5.24.34→5.24.35 (index 5x, mobile 4x,
+package.json — GERAR_EXE fora); sync_build + bundle 199 scripts + 4 guards +
+cópia celular. **Bônus ambiental:** npm install mirado (acorn + node-forge,
+--ignore-scripts contorna o download do electron que morre no TLS do sandbox)
+→ bundle volta a nascer COM isolamento de erro (196/199 envolvidos em
+try/catch) e `node-forge` disponível. Isso zerou as 2 falhas ambientais
+crônicas (test_ajustes_v52265 isolamento, test_ajustes_v5228 assinatura) —
+eram a baseline 153/0/2. 13 testes antigos tinham mural congelado (pinos
+5.24.34 em v52423–28, posições da fila final em v52293/95/96, allowlist
+"tamanho 198" em v52284–87): todos atualizados pra nova realidade.
+test_ajustes_v52435.js novo (31 asserts: marcadores, PURE, fluxo de remanejo
+de ponta a ponta com DOM fake — pergunta só no salvar, congela antiga,
+anti-duplicata, mesmo cliente sem pergunta). Registrado no runner.
+**Suíte: 156 passaram / 0 falha aceita / 0 falharam.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
