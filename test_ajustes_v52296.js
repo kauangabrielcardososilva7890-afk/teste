@@ -117,7 +117,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.26.1'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.26.1 = site profissional (visual+rodapé novo); v5.26.0 = motor do CNPJ+gerente)');
+ok(worker.indexOf("const WORKER_VERSION = '5.26.2'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem (re-ancorado: v5.26.1 = site profissional (visual+rodapé novo); v5.26.0 = motor do CNPJ+gerente)');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 
@@ -130,7 +130,7 @@ ok(patch.indexOf('window.DC_chamarMedidorOficial') >= 0, 'menu Backup também di
 
 // regressão: bundle mantém o módulo por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 7] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 6] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 5] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 4] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 3] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 2] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 1] === 'ajustes_v5260_cnpj_gerente_patch.js', 'patch de backups no fim do bundle (7º a partir do fim; v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão de leituras, e v5.26.0 CNPJ+gerente fecha a fila)');
+ok(man[man.length - 8] === 'ajustes_v52296_backups_nuvem_patch.js' && man[man.length - 7] === 'ajustes_v5240_relatorio_grande_patch.js' && man[man.length - 6] === 'ajustes_v5243_cliente_abas_patch.js' && man[man.length - 5] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length - 4] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length - 3] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length - 2] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length - 1] === 'ajustes_v5262_login_nuvem_primeiro_patch.js', 'patch de backups no fim do bundle (8º a partir do fim; v5.24.0 depois, v5.24.3, v5.24.35, v5.24.36, v5.25.0 revisão, v5.26.0 CNPJ+gerente, e v5.26.2 login da nuvem primeiro fecha a fila)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('DIGICOPY_BACKUPS') >= 0, 'card presente no app.bundle.js');
 

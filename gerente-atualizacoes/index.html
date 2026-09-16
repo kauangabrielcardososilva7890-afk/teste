@@ -244,6 +244,19 @@ function entrarTela(cnpj){
   carregarEmpresas();
   carregarHistorico();
 }
+// v5.26.2 — cada erro do login vira um aviso CLARO com o que fazer
+// (pedido dele: "não consigo acessar, não contém os avisos").
+function avisoLoginGerente(r){
+  var cod = (r && r.codigo) || '';
+  var bruto = (r && r.erro) || 'Não entrou.';
+  if(cod === 'GERENTE_NAO_DEFINIDO') return bruto + '<br><br><b>Resumo:</b> defina as senhas no sistema primeiro (painel Nuvem). Se o sistema responder "rota não encontrada" ao salvar, rode o <b>atualizar_motor_nuvem.cmd</b> e tente de novo.';
+  if(cod === 'GERENTE_SO_DONO') return bruto + '<br><br>Dica: confira se o CNPJ digitado é o que você cadastrou como <b>empresa dona</b> no cartão de senhas.';
+  if(cod === 'SENHA_GERENTE_INVALIDA') return bruto;
+  if(cod === 'NOT_FOUND' || /404/.test(cod)) return 'O motor da nuvem ainda é o antigo (não conhece o Gerente).<br><br><b>Resolva assim:</b> rode o <b>atualizar_motor_nuvem.cmd</b> na pasta do sistema, espere o "PRONTO" e tente entrar de novo.';
+  if(/HTTP_50|INTERNAL/.test(cod)) return 'A nuvem tropeçou agora (' + esc(bruto) + ').<br><br>Tente de novo em alguns segundos — se repetir, rode o <b>atualizar_motor_nuvem.cmd</b>.';
+  if(/Sem conex/.test(String(bruto))) return 'Sem conexão com a nuvem.<br><br>Verifique a internet deste PC e tente de novo.';
+  return esc(bruto);
+}
 $('lg-entrar').onclick = function(){
   var cnpj = soDig($('lg-cnpj').value);
   var senha = $('lg-senha').value;
@@ -251,7 +264,8 @@ $('lg-entrar').onclick = function(){
   var b = $('lg-entrar'); b.disabled = true; b.textContent = 'Entrando...';
   window.gerente.api({ path:'/v1/gerente-login', method:'POST', body:{ cnpj:cnpj, senha:senha } }).then(function(r){
     if(!r || !r.ok || !r.dados || !r.dados.gerenteToken){
-      msg('lg-msg', esc((r && r.erro) || 'Não entrou.'), 'erro');
+      var d = $('lg-entrar');
+      $('lg-msg').innerHTML = '<div class="msg erro">' + avisoLoginGerente(r) + '</div>';
       b.disabled = false; b.textContent = 'Entrar'; return;
     }
     token = r.dados.gerenteToken;
@@ -271,7 +285,10 @@ $('hd-sair').onclick = function(){
     if(!salvo || !salvo.token) return;
     token = salvo.token;
     apiChama('/v1/gerente/empresas').then(function(){ entrarTela(salvo.cnpj); })
-      .catch(function(){ token=''; localStorage.removeItem(TK); });
+      .catch(function(e){
+        token=''; localStorage.removeItem(TK);
+        setTimeout(function(){ if($('lg-msg')) msg('lg-msg','A sessão antiga venceu — entre de novo com o CNPJ da dona e a senha do gerente.','info'); }, 300);
+      });
   }catch(e){}
 })();
 

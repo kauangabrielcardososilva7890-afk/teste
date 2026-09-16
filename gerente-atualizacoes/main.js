@@ -53,7 +53,10 @@ ipcMain.handle('g:api', async (_ev, args) => {
     try { data = await r.json(); } catch (e) { data = null; }
     if (!r.ok) {
       const msg = (data && data.message) || ('Erro da nuvem (HTTP ' + r.status + ').');
-      return { ok: false, erro: msg };
+      // v5.26.2 — além da mensagem, repassa o CÓDIGO do erro: a tela usa pra
+      // mostrar o aviso certo (senha não definida / CNPJ que não é da dona /
+      // senha errada / motor velho).
+      return { ok: false, erro: msg, codigo: (data && data.error) || ('HTTP_' + r.status), status: r.status };
     }
     return { ok: true, dados: data };
   } catch (e) {

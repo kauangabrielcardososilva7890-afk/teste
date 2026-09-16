@@ -79,7 +79,7 @@ ok('a trava velha de ordenação saiu do v52214', !/wrapSort\('produtosSortOpera
 ok('a função pura do v52214 continua', /ORDENACAO_TITULO_PURE/.test(ord) && /proximaDir/.test(ord));
 
 console.log('== 4. CONSISTÊNCIA ==');
-ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups; v5.24.0 soma o relatório grande; v5.24.3 soma as abas do cliente; v5.24.25 soma a Central de Nota Fiscal; v5.24.34 soma o monitor+hub do Parque; v5.24.35 soma o remanejo final; v5.24.36 soma a guarda de leitura; v5.25.0 soma a revisão de leituras; v5.26.0 soma o CNPJ+gerente)', manifest.length === 202);
+ok('nenhum arquivo novo no bundle (um arquivo por módulo; v5.22.93 soma o guardião; v5.22.95 soma o volta-venda; v5.22.96 soma backups; v5.24.0 soma o relatório grande; v5.24.3 soma as abas do cliente; v5.24.25 soma a Central de Nota Fiscal; v5.24.34 soma o monitor+hub do Parque; v5.24.35 soma o remanejo final; v5.24.36 soma a guarda de leitura; v5.25.0 soma a revisão de leituras; v5.26.0 soma o CNPJ+gerente; v5.26.2 soma o login da nuvem primeiro)', manifest.length === 203);
 ok('versão 5.22.x', /^5\.\d+\./.test(pkg.version));
 
 console.log('\nRESULTADO: ajustes v5.22.84 passaram!');

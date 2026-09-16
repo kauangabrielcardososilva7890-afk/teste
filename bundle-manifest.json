@@ -200,5 +200,6 @@
   "ajustes_v52435_impressora_remanejo_final_patch.js",
   "ajustes_v52436_leitura_uma_aberta_patch.js",
   "ajustes_v5250_leitura_overhaul_patch.js",
-  "ajustes_v5260_cnpj_gerente_patch.js"
+  "ajustes_v5260_cnpj_gerente_patch.js",
+  "ajustes_v5262_login_nuvem_primeiro_patch.js"
 ]

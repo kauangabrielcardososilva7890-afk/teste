@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.1';
+const WORKER_VERSION = '5.26.2';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -1423,6 +1423,23 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     if (cnpj) await upsertEmpresa(env, cnpj, nome);
     return json({ ok: true, definida: true, gerenteDefinida: !!gerente });
   }
+  if (request.method === 'POST' && url.pathname === '/v1/check-pass') {
+    // v5.26.2 — etapa 1 do "login da nuvem" (pedido dele): só CONFERE o
+    // CNPJ + senha de conexão, sem criar nada. O sistema pergunta o nome do
+    // PC DEPOIS de a senha estar certa ("é mais uma segurança").
+    const body0 = await readBody(request);
+    const cnpj0 = soDigitos((body0 && body0.cnpj) || '');
+    const senha0 = String((body0 && body0.senha) || '');
+    if (!cnpjValido(cnpj0) || !senha0) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe o CNPJ da loja e a senha de conexão.');
+    const seg0 = await lerSegredos(env);
+    if (!seg0 || !seg0.conn_hash) {
+      return json({ ok: false, senhaDefinida: false, aviso: 'A senha de conexão ainda não foi definida. O administrador define no painel Nuvem, cartão "Senhas de conexão (CNPJ) e do Gerente".' });
+    }
+    const passa = await conferirSenha(env, cnpj0, senha0, 'conn_hash');
+    if (!passa) return json({ ok: false, senhaDefinida: true, aviso: 'CNPJ ou senha de conexão incorretos. Confira e tente de novo.' }, 403);
+    return json({ ok: true, senhaDefinida: true, empresa: ((seg0.owner_cnpj === cnpj0) ? (seg0.owner_nome || '') : '') });
+  }
+
   if (request.method === 'POST' && url.pathname === '/v1/enroll-cnpj') {
     // v5.26.0 — PC novo entra com CNPJ + senha de conexão (sem código de convite).
     const body = await readBody(request);
@@ -1474,13 +1491,19 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   }
   if (request.method === 'POST' && url.pathname === '/v1/gerente-login') {
     // v5.26.0 — entrada do GERENTE .exe separado (senha de GERENTE, não a de conexão).
+    // v5.26.2 — respostas ESPECÍFICAS (pedido dele: "não contém os avisos"):
+    // senha não definida / CNPJ que não é o da dona / senha errada, com
+    // orientação do que fazer. O .exe mostra cada uma direitinho.
     const body = await readBody(request);
     const cnpj = soDigitos((body && body.cnpj) || '');
     const senha = String((body && body.senha) || '');
     if (!cnpjValido(cnpj) || !senha) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe CNPJ e a senha do gerente.');
     const seg = await lerSegredos(env);
-    if (seg && seg.owner_cnpj && cnpj !== seg.owner_cnpj) throw new ApiError(403, 'GERENTE_SO_DONO', 'O gerente de atualizações só entra com o CNPJ da empresa dona do sistema.');
-    if (!(await conferirSenha(env, cnpj, senha, 'gerente_hash'))) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha do gerente incorretos.');
+    if (!seg || !seg.owner_cnpj || !seg.gerente_hash) {
+      throw new ApiError(409, 'GERENTE_NAO_DEFINIDO', 'A senha do gerente ainda não foi definida. Abra o sistema como administrador → Nuvem → cartão "Senhas de conexão (CNPJ) e do Gerente" → Salvar senhas na nuvem.');
+    }
+    if (cnpj !== seg.owner_cnpj) throw new ApiError(403, 'GERENTE_SO_DONO', 'O gerente de atualizações só entra com o CNPJ da empresa dona (' + seg.owner_nome + '). Este CNPJ digitado não é o dela.');
+    if (!(await conferirSenha(env, cnpj, senha, 'gerente_hash'))) throw new ApiError(403, 'SENHA_GERENTE_INVALIDA', 'Senha do gerente incorreta. Confira e tente de novo — é a senha definida no cartão de senhas do painel Nuvem.');
     const token = randomToken('gr_');
     const now = Date.now();
     const expira = now + 7 * 24 * 3600 * 1000;

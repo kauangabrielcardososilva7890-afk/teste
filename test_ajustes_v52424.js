@@ -38,10 +38,10 @@ ok(av.includes('Site onde baixam (mostra só o que está ativo)'), 'app: texto e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes("'/atualizacoes'") && bundle.includes('pub-upd-site'), 'bundle: link do site dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.0'"), 'index 5.26.0 (re-ancorado)');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.0<'), 'rodapé v5.26.0 (re-ancorado)');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.26.0"'), 'package.json 5.26.0 (re-ancorado)');
-ok(wk.includes("'5.26.1'"), 'worker carimbado 5.26.1 (re-ancorado)');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.2'"), 'index 5.26.2 (re-ancorado)');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.2<'), 'rodapé v5.26.2 (re-ancorado)');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "5.26.2"'), 'package.json 5.26.2 (re-ancorado)');
+ok(wk.includes("'5.26.2'"), 'worker carimbado 5.26.2 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (site próprio de atualizações + histórico na nuvem).');

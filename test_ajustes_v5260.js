@@ -88,7 +88,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.1'") >= 0);
+ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.2'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);
@@ -101,7 +101,7 @@ ok('patch: cartão do admin define senha de conexão + senha do gerente', patch.
 ok('sininho: abre a página secreta /a/<slug> quando existe', sin.indexOf("rel.slug?apiB+'/a/'+encodeURIComponent(rel.slug)") >= 0);
 
 console.log('== GERENTE (3º sistema — .exe separado no PC dele) ==');
-ok('gerente: productName próprio + versão carimbada 5.26.1', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.1');
+ok('gerente: productName próprio + versão carimbada 5.26.2', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.2');
 ok('gerente: login por CNPJ da dona + senha do gerente', gHtml.indexOf('/v1/gerente-login') >= 0 && gHtml.indexOf('gerenteToken') >= 0);
 ok('gerente: token vai no header x-gerente-token (main process)', gMain.indexOf("'x-gerente-token'") >= 0);
 ok('gerente: tela isolada (preload + contextIsolation, sem node na tela)', gPre.indexOf('contextBridge.exposeInMainWorld') >= 0 && gMain.indexOf('contextIsolation: true') >= 0 && gMain.indexOf('nodeIntegration: false') >= 0);
@@ -118,9 +118,9 @@ ok('worker: site v5.26.1 bonito e informativo (marca, confiança, tamanho do arq
 ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.build.nsis && gCmd.indexOf('é') < 0 && gCmd.indexOf('ã') < 0);
 
 console.log('== CARIMBO + MANIFESTO ==');
-ok('manifesto fecha com o patch v5.26.0 (posição 202)', manifest.length === 202 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js');
-ok('package.json na 5.26.0', pkg.version === '5.26.0');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.0'") >= 0 && html.indexOf('>v5.26.0<') >= 0);
+ok('manifesto fecha com o patch login-nuvem (posição 203; v5.26.0 segue na 202)', manifest.length === 203 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js');
+ok('package.json na 5.26.0', pkg.version === '5.26.2');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.2'") >= 0 && html.indexOf('>v5.26.2<') >= 0);
 ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');
