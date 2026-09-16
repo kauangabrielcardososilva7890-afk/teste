@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-// v5.24.33 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+// v5.24.34 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
 //            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
 //            download no navegador/celular) e o aviso ganha botão pra abrir
 //            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
@@ -30,7 +30,7 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
-// v5.24.33 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// v5.24.34 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
 // num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
 // aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
 // de "quem fez o quê", visível pra todos os logins (v5197).
@@ -38,7 +38,7 @@ var ultimoAviso=0;
 var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
 var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-// v5.24.33 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// v5.24.34 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
 // novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
 // (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
 // continua lá e volta no próximo aviso... e dá pra chamar o download direto
@@ -90,10 +90,10 @@ function baixarErroTxt(){
   }catch(e){}
 }
 
-// v5.24.33 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// v5.24.34 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
 // resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
 // o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
-// v5.24.33 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
+// v5.24.34 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
 // existir versão nova publicada na nuvem, mostra UMA ÚNICA VEZ (por versão,
 // por aparelho) o aviso com [Abrir pra baixar] + [Baixar depois]. Qualquer
 // um dos dois marca a versão como vista — o resto é silêncio até a próxima.
@@ -136,7 +136,7 @@ function mostrarAvisoAtualizacao(rel){
   document.getElementById('aviso-update-depois').onclick=function(){ marcarVisto(); var d=document.getElementById('aviso-update-card'); if(d) d.remove(); };
   document.getElementById('aviso-update-baixar').onclick=function(){
     marcarVisto();
-    // v5.24.33 — pedido dele: o botão leva pro SITE (tutorial dele, se houver,
+    // v5.24.34 — pedido dele: o botão leva pro SITE (tutorial dele, se houver,
     // aparece ANTES do botão de baixar). Site nasce na própria nuvem.
     try{
       var apiB=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
@@ -175,10 +175,10 @@ function agendarChecagemInicial(){
 }
 if(typeof document!=='undefined') agendarChecagemInicial();
 
-// v5.24.33 — o card publicador nas Configurações (ele marca a versão, cola o
+// v5.24.34 — o card publicador nas Configurações (ele marca a versão, cola o
 // link do .exe, escreve as notas — ou me pede pra escrever, como ele disse).
 function aplicarCardPublicarAtualizacao(){
-  // v5.24.33 — O PORTAL É SÓ DELE (antes era só "publicar"): publicar com
+  // v5.24.34 — O PORTAL É SÓ DELE (antes era só "publicar"): publicar com
   // upload do .exe direto do PC, editar, ocultar/mostrar, ativar por tempo
   // (1 dia / 7 dias / ilimitado), desativar e excluir. O site fora mostra
   // SÓ o que está vivo (normalmente a atual).
@@ -196,7 +196,7 @@ function aplicarCardPublicarAtualizacao(){
     '<h4 class="font-bold text-[14px]"><i class="ph ph-rocket-launch"></i> Portal de atualizações <small style="font-weight:600;color:#64748b">(só você vê esta parte)</small></h4>'+
     '<p class="mt-1 text-[11.5px] text-slate-500">Publique: anexe o .exe do PC, escreva as notas da atualização e (se quiser) um passo a passo de como baixar. Versões antigas ficam no histórico com o link DESLIGADO — você reativa por tempo ou pra sempre, quando quiser.</p>'+
     '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
-      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.33"></div>'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.34"></div>'+
       '<div><label class="text-[11px] uppercase font-bold text-slate-500">Link no ar por</label><select id="pub-upd-expira" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"><option value="0">Ilimitado (até eu desativar)</option><option value="24">1 dia</option><option value="168">7 dias</option><option value="720">30 dias</option></select></div>'+
       '<div><label class="text-[11px] uppercase font-bold text-slate-500">Arquivo .exe (do próprio PC)</label><input id="pub-upd-file" type="file" accept=".exe" class="mt-1 w-full h-10 px-2 py-2 rounded-xl border text-[12px]"></div>'+
       '<div class="md:col-span-3"><label class="text-[11px] uppercase font-bold text-slate-500">Notas da atualização (o que mudou — aparece nos PCs)</label><textarea id="pub-upd-notas" class="mt-1 w-full h-24 p-3 rounded-xl border text-[12.5px]" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>'+
@@ -382,7 +382,7 @@ function avisarErroNaTela(){
   }catch(e){}
 }
 
-// v5.24.33 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// v5.24.34 — caminho de resgate: baixar o erro.txt por fora do aviso (console
 // ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
 window.digicopyBaixarErroTxt=baixarErroTxt;
 

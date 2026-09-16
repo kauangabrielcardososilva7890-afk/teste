@@ -2942,6 +2942,14 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Print da nuvem dele = v5.24.33 CONECTADO** (linha 'Código da nuvem: v5.24.33') — exe novo fala com o endereço novo ✅. Uso mostrado: 0/50mi gravações • 60/25bi leituras (curiosidade), 8 aparelhos.
 - **Caminho exato do Excluir:** janela ☁️ Nuvem DIGICOPY → rola até 'Administração da nuvem' → botão **'Ver aparelhos e dados enviados'** → cada aparelho da lista tem [Bloquear] e **[Excluir de vez]** (não precisa bloquear mais). Se clicar e der erro, a mensagem aparece na hora — mandar foto (suspeita-0: ele só não achou o botão).
 
+## v5.24.34 — 2026-09-15 — BUG DO Z-INDEX: pop-ups sempre na frente (o 'Excluir não faz nada' resolvido de vez)
+
+- **Causa-raiz (denúncia dupla dele = um problema só):** janela da nuvem z-index 100000 × pop-ups do sistema z-index 99999 → TODA confirmação nascia atrás da aba de nuvem. O botão Excluir de vez abria a pergunta escondida → parecia morto.
+- **Correção:** pop-ups do sistema (confirmar/aviso/alert) agora em z-index 2147483000 (teto seguro CSS) — por cima de qualquer janela do sistema, hoje e sempre. Guardado por assert na suíte.
+- **Para ele valer:** GERAR_EXE v5.24.34 + instalar por cima. Aí: Nuvem → 'Ver aparelhos e dados enviados' → Excluir de vez → a pergunta aparece NA FRENTE → confirma → aparelho some.
+- **P7 andou pra v5.24.35** (a numerologia é só-para-frente).
+- **Suíte: 153/0/2.**
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.

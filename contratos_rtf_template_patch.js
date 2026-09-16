@@ -206,7 +206,7 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const template = tipo === 'proposta' ? (conf.proposta || DEFAULT_PROPOSTA_RTF) : (conf.contrato || DEFAULT_CONTRATO_RTF);
   const rtfFinal = aplicarTemplate(template, contratoId);
   const nome = `${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`;
-  // v5.24.33 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
+  // v5.24.34 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
   // pré-preenchido — dados completos vêm do mapa de campos acima).
   // Navegador/celular mantêm o download de antes.
   if(window.rtfAPI && typeof window.rtfAPI.abrir==='function'){

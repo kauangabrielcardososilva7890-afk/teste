@@ -1,4 +1,4 @@
-// test_ajustes_v52428.js — v5.24.33: pedido dele (item 4 da foto-rodada):
+// test_ajustes_v52428.js — v5.24.34: pedido dele (item 4 da foto-rodada):
 // O PORTAL DE ATUALIZAÇÕES vira dele e só dele — anexa o .exe do próprio PC,
 // notas + tutorial opcional, histórico completo SÓ NO SISTEMA (o site fora
 // mostra só o que tá vivo), reativar por tempo (1d/7d/∞) ou desligar, editar,
@@ -50,12 +50,15 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-tutoria
 ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm install') && fs.readFileSync('GERAR_EXE.cmd','latin1').includes('call npm run build:win') && !fs.readFileSync('GERAR_EXE.cmd','latin1').includes('explorer'), 'GERAR_EXE.cmd v3: npm install + monta; SEM auto-abrir DIST (ele pediu pra tirar: nao funcionaba na maquina dele) e fecha no X');
 for (const cmd of ['GERAR_EXE.cmd','atualizar_motor_nuvem.cmd','ver_gasto_nuvem.cmd']) ok(fs.readFileSync(cmd,'latin1').includes('\r\n'), cmd + ': CRLF (bug achado: LF puro faz o .cmd engasgar/fechar no Windows)');
 
-ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.33: só o nome do site + animações + faixa 1-2-3 explicativa');
+ok(wk.includes('DigiCopy Downloads') && wk.includes('@keyframes brilho') && wk.includes('passo-card'), 'site v5.24.34: só o nome do site + animações + faixa 1-2-3 explicativa');
 ok(fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('digicopyonline') && fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('workers-and-pages'), 'trocar_endereco_nuvem.cmd v2: guia clique-a-clique + abre a pagina certa (wrangler 4 removeu o comando - confirmado no log dele)');
+const pop=fs.readFileSync('popup_sistema_patch.js','utf8'); const nuv=fs.readFileSync('cloudflare_sync_patch.js','utf8');
+ok(pop.includes('z-index:2147483000') && nuv.includes('z-index:100000'), 'v5.24.34: pop-up do sistema SEMPRE na frente (bug real: Excluir de vez parecia morto porque a confirmacao nascia atras da janela da nuvem 100000 > 99999)');
 
 
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.33'"), 'index 5.24.33');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.33<'), 'rodapé v5.24.33');
+
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.24.34'"), 'index 5.24.34');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v5.24.34<'), 'rodapé v5.24.34');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
-console.log('\nTudo OK — v5.24.33 (portal de atualizações só dele + arquivo no R2 + site vivo).');
+console.log('\nTudo OK — v5.24.34 (portal de atualizações só dele + arquivo no R2 + site vivo).');

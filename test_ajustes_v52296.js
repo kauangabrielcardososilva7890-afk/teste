@@ -20,7 +20,7 @@ ok(worker.indexOf("const PASTA_MANUAL = 'Backup manual'") >= 0, 'pasta "Backup m
 ok(worker.indexOf("PASTA_DIARIO + '/Backup '") >= 0 && worker.indexOf("PASTA_ATUALIZACOES + '/Backup sistema '") >= 0, 'cada ciclo grava na SUA pasta');
 
 // 2) guarda dentro da nuvem que ele já usa (sem precisar habilitar R2)
-// v5.24.33 SUPERSEDIDO com MOTIVO ANOTADO: na época R2 assustava (pedir cartão
+// v5.24.34 SUPERSEDIDO com MOTIVO ANOTADO: na época R2 assustava (pedir cartão
 // de conta grátis). Hoje ELE JÁ PAGA Workers Paid e R2 grátis (10GB) bastaria
 // pro .exe — e o pedido do dono foi o contrário: 'anexar o .exe no portal'.
 // A guarda inverte: se R2 existir, tem que ser SÓ o digicopy-downloads.
@@ -84,12 +84,12 @@ ok(worker.indexOf('waitUntil') >= 0, 'worker: anota\u00e7\u00e3o de uso em segun
 ok(sync.indexOf('📊 Uso da nuvem hoje') >= 0 && sync.indexOf('usoHoje') >= 0, 'bloco "Uso da nuvem hoje" no painel Nuvem');
 ok(sync.indexOf("'+fmtNum(uso.tetoEscritas)+'") >= 0 && sync.indexOf('uso.tetoLeituras') >= 0, 'mostra X de 100.000 e Y de 5.000.000');
 ok(worker.indexOf('uso_diario') >= 0 && worker.indexOf('somarUso') >= 0, 'worker conta gravações/leituras por dia (tabela autocriada)');
-// v5.24.33 — SUPERSESSÃO: ele assinou o Workers Paid US$5 (confirmado em
+// v5.24.34 — SUPERSESSÃO: ele assinou o Workers Paid US$5 (confirmado em
 // 2026-09-14). O D1 no plano pago inclui 50 milhões de escritas e 25 BILHÕES
 // de leituras POR MÊS — os tetos diários do grátis (100 mil / 5 milhões por
 // dia, "vira 21h SP") viraram passado. Assert atualizado pra travar o NOVO
 // mundo: ninguém rebaixa de volta por engano.
-ok(worker.indexOf('tetoEscritas: 50000000') >= 0 && worker.indexOf('tetoLeituras: 25000000000') >= 0, 'tetos do plano PAGO (50M escritas / 25B leituras por mês) — supersede o grátis desde v5.24.33');
+ok(worker.indexOf('tetoEscritas: 50000000') >= 0 && worker.indexOf('tetoLeituras: 25000000000') >= 0, 'tetos do plano PAGO (50M escritas / 25B leituras por mês) — supersede o grátis desde v5.24.34');
 ok(worker.indexOf('usoHoje:') >= 0 && worker.indexOf('uso_real') >= 0 && worker.indexOf('fonte: \'estimada\'') >= 0, 'status da nuvem devolve o uso do dia (oficial > estimada)');
 
 // 11) tranca inline no index.html (antes do bundle carregar — à prova de cache)
@@ -117,7 +117,7 @@ ok(patch.indexOf('bk-rest-arq') >= 0 && patch.indexOf('preencherBanco') >= 0, 'a
 ok(patch.indexOf('LISTAS_DB') >= 0 && patch.indexOf('ehFormatoBackup') >= 0, 'restauro valida formato do backup antes de restaurar');
 
 // 16) v5.23.8 — nuvem responde qual código roda nela (/health e /v1/status)
-ok(worker.indexOf("const WORKER_VERSION = '5.24.33'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
+ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0 && worker.indexOf('versao: WORKER_VERSION') >= 0, '/health carimba a versão da nuvem');
 ok(worker.indexOf('workerVersao: WORKER_VERSION') >= 0, '/v1/status também devolve a versão do worker');
 ok(sync.indexOf('linhaVersaoNuvem') >= 0 && sync.indexOf('código da nuvem está ANTIGO') >= 0, 'painel avisa quando a nuvem está velha (falta deploy)');
 

@@ -12,7 +12,7 @@ ok('versão continua na família 5.22',/^5\.\d+\.\d+/.test(pkg.version));
 const recado="D1_ERROR: Your account has exceeded D1's free tier daily row write limit. Upgrade to a paid plan or wait until tomorrow (midnight UTC) to continue.";
 ok('o sistema reconhece o limite diário do banco grátis',S.ehLimiteDiario(recado)===true);
 ok('erro comum não é confundido com limite',S.ehLimiteDiario('Falha de rede')===false&&S.ehLimiteDiario('')===false);
-// v5.24.33 — SUPERSESSÃO: o recado do limite parou de falar "de hoje/grátis"
+// v5.24.34 — SUPERSESSÃO: o recado do limite parou de falar "de hoje/grátis"
 // (era o mundo gratuito); no plano pago o limite é do PERÍODO (mensal).
 ok('o aviso é em português e diz que nada se perdeu',/Nada foi perdido/.test(S.recadoDoLimite())&&/limite de gravação do período/.test(S.recadoDoLimite()));
 ok('o aviso diz a hora de Brasília',/21h, horário de Brasília/.test(S.recadoDoLimite()));

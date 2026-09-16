@@ -205,7 +205,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
     const input=document.getElementById('classic-search-clientes');
-  // v5.24.33 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
+  // v5.24.34 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
   // (ou no botão Filtrar da tela neo). Não redesenha mais a cada letra.
   if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
@@ -282,7 +282,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   if(input){
     input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
     input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
-    // v5.24.33 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
+    // v5.24.34 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
     if(document.activeElement?.id==='neo-search-clientes') input.focus();
   }
   const btnF=document.getElementById('cli-btn-filtrar');
