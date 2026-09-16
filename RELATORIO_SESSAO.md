@@ -2936,6 +2936,12 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **Reforma Tributária (por item):** Tributação Padrão — CST (000 integral, 200 alíq. reduzida, 410 imunidade, 510/515 diferimento, 550 suspensão, 800 transferência, 811 ajustes, 830 exclusão de base) + **Classificação (000001 integral IBS/CBS; 000003/000004 regime automotivo...)** + Base R$360; painel Padrão com os 3 cofrinhos **verdes calculados: IBS Estadual 0,1% = R$0,36 · IBS Municipal 0% = R$0,00 · CBS 0,9% = R$3,24**; aba Devolução de Tributos (IBS Est./IBS Mun./CBS devolvidos).
 - **Conclusão:** com essa leva o inventário do sistema velho está 100% mapeado (config 10 abas + perfis + manifestação + listagem/gerações + preparar arquivos + nota de venda completa + tributação por item + reforma por item). FASE DE DESIGN FECHADA; a construção entra quando P7 e o Atualizador estiverem prontos, na ordem dele: primeiro perfeito o essencial.
 
+## GERAR_EXE v3 + caminho exato do Excluir de vez (2026-09-15)
+
+- Pedido dele: tirar o passo 3 (tecla→abre DIST) porque não funcionou na máquina dele → removido; agora: instala peças, monta, e ele mesmo abre a pasta dist. Fecha no X direto.
+- **Print da nuvem dele = v5.24.33 CONECTADO** (linha 'Código da nuvem: v5.24.33') — exe novo fala com o endereço novo ✅. Uso mostrado: 0/50mi gravações • 60/25bi leituras (curiosidade), 8 aparelhos.
+- **Caminho exato do Excluir:** janela ☁️ Nuvem DIGICOPY → rola até 'Administração da nuvem' → botão **'Ver aparelhos e dados enviados'** → cada aparelho da lista tem [Bloquear] e **[Excluir de vez]** (não precisa bloquear mais). Se clicar e der erro, a mensagem aparece na hora — mandar foto (suspeita-0: ele só não achou o botão).
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
