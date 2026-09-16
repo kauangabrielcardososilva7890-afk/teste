@@ -55,7 +55,7 @@ ok(fs.readFileSync('trocar_endereco_nuvem.cmd','latin1').includes('digicopyonlin
 const pop=fs.readFileSync('popup_sistema_patch.js','utf8'); const nuv=fs.readFileSync('cloudflare_sync_patch.js','utf8');
 ok(pop.includes('z-index:2147483000') && nuv.includes('z-index:100000'), 'v5.24.34: pop-up do sistema SEMPRE na frente (bug real: Excluir de vez parecia morto porque a confirmacao nascia atras da janela da nuvem 100000 > 99999)');
 ok(wk.includes('UPDATE devices SET excluido_em') && wk.includes('excluido_em IS NULL') && fs.existsSync('cloudflare-worker/migrations/0005_soft_delete_aparelhos.sql'), 'v5.24.34: soft-delete do aparelho (FOREIGN KEY dele quebrava o delete físico; some da lista, perde acesso, dados intocados)');
-ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('interno'), 'GERAR_EXE.cmd v4: janela FILHA independente - nunca fecha sozinha (goto interno + cmd /k duplo)');
+ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('interno') && fs.readFileSync('GERAR_EXE.cmd','latin1').includes('goto :sucesso') && !fs.readFileSync('GERAR_EXE.cmd','latin1').includes('if exist dist\\*.exe ('), 'GERAR_EXE.cmd v5: sem bloco de parenteses (o "." inesperado do log dele) + janela filha que nao fecha sozinha');
 
 
 

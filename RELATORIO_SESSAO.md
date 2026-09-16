@@ -2956,6 +2956,11 @@ test_ajustes_v52421 (36 asserts); suíte 147/0/2.
 - **GERAR_EXE v4:** janela filha independente (start cmd /k ... interno) — filho travado não derruba mais a janela (o crash UV_HANDLE_CLOSING do node dele era a suspeita do fechamento). Nunca mais fecha sozinha; sai só no X.
 - **REGRA NOVA (decreto dele):** os cartões de pergunta não são enfeite — **são a via oficial de toda decisão daqui pra frente** (sempre que houver pergunta/opção, cartão).
 
+## GERAR_EXE v5 + cadeia factual do FK (2026-09-15)
+
+- **Log dele = build OK:** exe v5.24.34 gerado e verificado (30.7MB, raio-x). O '. foi inesperado neste momento.' = blocos if(...) no batch; **v5 = zero parênteses de bloco** (goto :sucesso/:fim) + janela filha (v4) mantida → nunca mais fecha e nunca mais engasga.
+- **Cadeia FACTUAL do FK (pedido dele 'sem achismo'):** o app novo já fala certo com a API; o motor no ar ainda é o velho (sem a migração 0005); a nuvem só muda quando ELE roda o atualizar_motor_nuvem.cmd (Passo 1/2 mostra '0005_soft_delete_aparelhos'). Não é deploy automático porque a conta é dele — é assim por segurança desde o primeiro dia. Passo seguinte dele: motor cmd 1x → Excluir → print da lista limpa.
+
 ## REGRAS VIVAS — versão do rodapé + links a cada atualização (reafirmadas por cobrança dele "você está esquecendo as regras?")
 
 - **Rodapé = versão da verdade.** É a única régua que vale: relato dele começa por aquela marca. Toda versão recebe o carimbo (index.html, sw/pwa, main, worker, package.json, patches tocados) e o build sai DEPOIS dos carimbos.
