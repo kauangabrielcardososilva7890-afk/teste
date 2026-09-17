@@ -209,7 +209,7 @@
   </main>
 </div>
 
-<footer>DIGICOPY Gerente de Atualizações · v5.26.0 · as senhas viajam só como embaralhado (hash) · quem baixa é sempre o cliente, este programa só publica</footer>
+<footer id="ft">DIGICOPY Gerente de Atualizações · v5.26.3 · as senhas viajam só como embaralhado (hash) · quem baixa é sempre o cliente, este programa só publica</footer>
 
 <script>
 'use strict';
@@ -257,28 +257,60 @@ function avisoLoginGerente(r){
   if(/Sem conex/.test(String(bruto))) return 'Sem conexão com a nuvem.<br><br>Verifique a internet deste PC e tente de novo.';
   return esc(bruto);
 }
+// máscara de CNPJ: só aceita números e pontua sozinho (00.000.000/0000-00)
+function mascararCnpj(inp){
+  if(!inp) return;
+  inp.setAttribute('maxlength', '18');
+  inp.addEventListener('input', function(){
+    var d = soDig(inp.value).slice(0, 14);
+    var out = d;
+    if(d.length > 12) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+    else if(d.length > 8) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4');
+    else if(d.length > 5) out = d.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3');
+    else if(d.length > 2) out = d.replace(/(\d{2})(\d{1,3})/, '$1.$2');
+    if(inp.value !== out) inp.value = out;
+  });
+}
+mascararCnpj($('lg-cnpj'));
+mascararCnpj($('pb-emp-cnpj'));
 $('lg-entrar').onclick = function(){
   var cnpj = soDig($('lg-cnpj').value);
   var senha = $('lg-senha').value;
   if(cnpj.length !== 14 || !senha){ msg('lg-msg','Informe o CNPJ (14 dígitos) e a senha do gerente.','erro'); return; }
+  // v5.26.3 — se a ponte do programa falhar, o clique avisa em vez de parecer morto
+  if(!window.gerente || typeof window.gerente.api !== 'function'){
+    msg('lg-msg','A ponte de segurança do programa falhou ao abrir (window.gerente ausente).<br><br>Feche o Gerente e abra de novo. Se continuar, gere o .exe de novo com o zip mais novo.','erro');
+    return;
+  }
   var b = $('lg-entrar'); b.disabled = true; b.textContent = 'Entrando...';
-  window.gerente.api({ path:'/v1/gerente-login', method:'POST', body:{ cnpj:cnpj, senha:senha } }).then(function(r){
-    if(!r || !r.ok || !r.dados || !r.dados.gerenteToken){
-      var d = $('lg-entrar');
-      $('lg-msg').innerHTML = '<div class="msg erro">' + avisoLoginGerente(r) + '</div>';
-      b.disabled = false; b.textContent = 'Entrar'; return;
-    }
-    token = r.dados.gerenteToken;
-    try{ localStorage.setItem(TK, JSON.stringify({ token:token, cnpj:cnpj })); }catch(e){}
-    b.disabled = false; b.textContent = 'Entrar';
-    entrarTela(cnpj);
-  });
+  function destravar(){ b.disabled = false; b.textContent = 'Entrar'; }
+  function falhar(r){ $('lg-msg').innerHTML = '<div class="msg erro">' + avisoLoginGerente(r) + '</div>'; destravar(); }
+  try{
+    window.gerente.api({ path:'/v1/gerente-login', method:'POST', body:{ cnpj:cnpj, senha:senha } }).then(function(r){
+      if(!r || !r.ok || !r.dados || !r.dados.gerenteToken){ falhar(r); return; }
+      token = r.dados.gerenteToken;
+      try{ localStorage.setItem(TK, JSON.stringify({ token:token, cnpj:cnpj })); }catch(e){}
+      destravar();
+      entrarTela(cnpj);
+    }).catch(function(e){ falhar({ ok:false, erro:'Erro inesperado ao falar com a nuvem: ' + ((e && e.message) || e) }); });
+  }catch(e){ falhar({ ok:false, erro:'Erro inesperado no clique: ' + ((e && e.message) || e) }); }
 };
 $('lg-senha').addEventListener('keydown', function(ev){ if(ev.key==='Enter') $('lg-entrar').click(); });
 $('hd-sair').onclick = function(){
   try{ localStorage.removeItem(TK); }catch(e){}
   token = ''; $('tela-app').style.display='none'; $('tela-login').style.display='block';
 };
+// v5.26.3 — rodapé puxa a versão REAL do programa (nada de texto desatualizado)
+try{
+  if(window.gerente && typeof window.gerente.versao === 'function'){
+    window.gerente.versao().then(function(r){
+      var ft = $('ft');
+      if(r && r.ok && r.versao && ft){
+        ft.textContent = 'DIGICOPY Gerente de Atualizações · v' + String(r.versao) + ' · as senhas viajam só como embaralhado (hash) · quem baixa é sempre o cliente, este programa só publica';
+      }
+    });
+  }
+}catch(e){}
 (function tentarEntrarDireto(){
   try{
     var salvo = JSON.parse(localStorage.getItem(TK) || 'null');

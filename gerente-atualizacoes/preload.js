@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('gerente', {
   pickImgs: () => ipcRenderer.invoke('g:pick-imgs'),
   uploadExe: (args) => ipcRenderer.invoke('g:upload-exe', args),
   uploadImg: (args) => ipcRenderer.invoke('g:upload-img', args),
-  thumb: (args) => ipcRenderer.invoke('g:thumb', args)
+  thumb: (args) => ipcRenderer.invoke('g:thumb', args),
+  versao: () => ipcRenderer.invoke('g:versao')   // v5.26.3 — rodapé sempre na versão real
 });

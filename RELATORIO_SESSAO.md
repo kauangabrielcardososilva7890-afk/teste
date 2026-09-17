@@ -3212,6 +3212,16 @@ intacto como plano B e coberto pela suíte.
 5. **Infra do sandbox pegada pelo caminho:** node_modules vazio (acorn/node-forge ausentes → bundle saía SEM isolamento de erro e testes morriam por MODULE_NOT_FOUND); restaurado do cache npm. E o git local estava no commit-base c7918d7 (a branch real segue em 0d97c36): reconciliado com reset --soft antes de commitar.
 **Ritual:** APP+WORKER+GERENTE carimbados 5.26.2; manifesto 203 (fila final: ...v5250 → v5260 → v5262); bundle 203/200 isolados; mobile sincronizado (sync-www); murais re-ancorados (v52284-87/2293/2295/2296/52423-2428/52435/52436/5250/5260); test_ajustes_v5260.js REGISTRADO no test_runner (estava só solto) + test_ajustes_v5262.js novo (34 asserts). Demo real do worker em Node com D1 mock confirmou /v1/check-pass (3 casos) + /atualizacoes 200 + /a/ 410 controlado. Suíte: **160/0/0**.
 
+## v5.26.3 — BOTÃO ENTRAR BLINDADO + MÁSCARA DE CNPJ + RODAPÉ VIVO no Gerente (2026-09-17)
+
+**Reportes dele (testando o Gerente .exe):**
+1. **"clico em Entrar e nada acontece, nem aviso, parece que o botão não funciona":** handler blindado — ANTES de chamar a nuvem ele checa se a ponte (window.gerente) vive; sem ela, mostra aviso claro ("feche e reabra; se repetir, gere o .exe de novo"). Promessa agora tem .catch e o try/catch cobre erro síncrono; o botão DESTRAVA em todos os caminhos. Nenhum clique fica mudo nunca mais.
+2. **"CNPJ com pontuação automática enquanto digita":** função mascararCnpj no Gerente (só aceita dígitos, pontua 00.000.000/0000-00 sozinha, máx 14) aplicada no login (lg-cnpj) E no cadastro de empresa (pb-emp-cnpj).
+3. **"o da nuvem igual":** mesma máscara no campo CNPJ do portão v5262 (input maxlength 18 + listener input), sem mexer no enrol/check-pass (sempre envia só os dígitos, como antes).
+4. **"rodapé v5.26.0 desatualizado":** era TEXTO FIXO no HTML — agora o rodapé puxa a versão REAL do programa (preload versao() → main g:versao → app.getVersion()), com fallback no texto carimbado. Nunca mais desatualiza.
+**Infra sandbox:** npm CLI sem TLS aqui, mas curl funciona — acorn+node-forge baixados do registry e guardados em ~/_arena_deps/restore.sh (node_modules é purgado pelo snapshot entre turnos; restaurar antes de builds). Bundle regenerado e provado byte-a-byte (sha 741c0e6e5c2a0dba: build offline manual == build oficial com acorn). Git local tinha voltado ao commit-base de novo → reconciliado com fetch + reset --soft antes de commitar.
+**Ritual:** app+gerente 5.26.3 (WORKER segue 5.26.2 — motor sem mudança); test_ajustes_v5263.js novo (25 asserts: sintaxe do script embutido, botão, máscaras testadas de verdade, rodapé vivo) registrado no runner; murais de versão re-ancorados (v52423-2428/v52435/52436/v5250/v5260/v5262). Suíte: **161/0/0**.
+
 ## MAPA DE VISIBILIDADE DO SISTEMA — o que esconde/apaga menus e telas (resposta: "tem mais menus ocultos desde o login até o final?")
 
 - **Login:** textos "Sistema Digicopy / Vendas, locação... / © 2026" são

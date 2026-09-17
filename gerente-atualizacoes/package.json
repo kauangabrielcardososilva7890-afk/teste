@@ -1,6 +1,6 @@
 {
   "name": "digicopy-gerente-atualizacoes",
-  "version": "5.26.2",
+  "version": "5.26.3",
   "description": "Programa separado (no PC do dono) para publicar, editar, destinar e excluir atualizações do DIGICOPY.",
   "main": "main.js",
   "private": true,

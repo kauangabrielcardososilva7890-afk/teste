@@ -101,7 +101,7 @@ ok('patch: cartão do admin define senha de conexão + senha do gerente', patch.
 ok('sininho: abre a página secreta /a/<slug> quando existe', sin.indexOf("rel.slug?apiB+'/a/'+encodeURIComponent(rel.slug)") >= 0);
 
 console.log('== GERENTE (3º sistema — .exe separado no PC dele) ==');
-ok('gerente: productName próprio + versão carimbada 5.26.2', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.2');
+ok('gerente: productName próprio + versão carimbada 5.26.3', gPkg.productName === 'DIGICOPY Gerente de Atualizacoes' && gPkg.version === '5.26.3');
 ok('gerente: login por CNPJ da dona + senha do gerente', gHtml.indexOf('/v1/gerente-login') >= 0 && gHtml.indexOf('gerenteToken') >= 0);
 ok('gerente: token vai no header x-gerente-token (main process)', gMain.indexOf("'x-gerente-token'") >= 0);
 ok('gerente: tela isolada (preload + contextIsolation, sem node na tela)', gPre.indexOf('contextBridge.exposeInMainWorld') >= 0 && gMain.indexOf('contextIsolation: true') >= 0 && gMain.indexOf('nodeIntegration: false') >= 0);
@@ -119,8 +119,8 @@ ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.
 
 console.log('== CARIMBO + MANIFESTO ==');
 ok('manifesto fecha com o patch login-nuvem (posição 203; v5.26.0 segue na 202)', manifest.length === 203 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js');
-ok('package.json na 5.26.0', pkg.version === '5.26.2');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.2'") >= 0 && html.indexOf('>v5.26.2<') >= 0);
+ok('package.json na 5.26.0', pkg.version === '5.26.3');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.3'") >= 0 && html.indexOf('>v5.26.3<') >= 0);
 ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');

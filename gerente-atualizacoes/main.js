@@ -148,6 +148,11 @@ ipcMain.handle('g:upload-img', async (_ev, args) => {
   }
 });
 
+// ── versão real do programa (rodapé da tela — nunca mais fica velho) ────────
+ipcMain.handle('g:versao', async () => {
+  try { return { ok: true, versao: app.getVersion() }; } catch (e) { return { ok: false }; }
+});
+
 // ── ler um pedaço de imagem local como miniatura (só na prévia da tela) ─────
 ipcMain.handle('g:thumb', async (_ev, args) => {
   try {

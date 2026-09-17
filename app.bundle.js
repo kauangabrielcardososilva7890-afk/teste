@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 203 | sha256: b0432a335a8ab31e
+ * scripts: 203 | sha256: 741c0e6e5c2a0dba
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -50044,7 +50044,20 @@ try{
       '</div>';
     document.body.appendChild(box);
 
-    try{ var cp = box.querySelector('#v5262-cnpj'); if(base.cnpj) cp.value = fmtCnpj(base.cnpj); }catch(e){}
+    try{
+      var cp = box.querySelector('#v5262-cnpj');
+      cp.setAttribute('maxlength','18');
+      // v5.26.3 — máscara: só entram números e a pontuação sai sozinha
+      cp.addEventListener('input', function(){
+        var d = soDigitos(cp.value).slice(0,14), out = d;
+        if(d.length > 12) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/,'$1.$2.$3/$4-$5');
+        else if(d.length > 8) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/,'$1.$2.$3/$4');
+        else if(d.length > 5) out = d.replace(/(\d{2})(\d{3})(\d{1,3})/,'$1.$2.$3');
+        else if(d.length > 2) out = d.replace(/(\d{2})(\d{1,3})/,'$1.$2');
+        if(cp.value !== out) cp.value = out;
+      });
+      if(base.cnpj) cp.value = fmtCnpj(base.cnpj);
+    }catch(e){}
 
     function mostrarMsg(html, tipo){
       var d = box.querySelector('#v5262-msg');
