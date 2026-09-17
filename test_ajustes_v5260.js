@@ -118,9 +118,9 @@ ok('worker: site v5.26.1 bonito e informativo (marca, confiança, tamanho do arq
 ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.build.nsis && gCmd.indexOf('é') < 0 && gCmd.indexOf('ã') < 0);
 
 console.log('== CARIMBO + MANIFESTO ==');
-ok('manifesto fecha com a data grande do chamado (posição 204; login-nuvem na 203, v5.26.0 na 202)', manifest.length === 207 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
-ok('package.json na 5.26.0', pkg.version === '6.0.1');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.1'") >= 0 && html.indexOf('>v6.0.1<') >= 0);
+ok('manifesto fecha com a data grande do chamado (posição 204; login-nuvem na 203, v5.26.0 na 202)', manifest.length === 208 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
+ok('package.json na 5.26.0', pkg.version === '6.0.2');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.2'") >= 0 && html.indexOf('>v6.0.2<') >= 0);
 ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');

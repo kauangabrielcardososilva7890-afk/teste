@@ -113,10 +113,10 @@ console.log('== HISTÓRICO + CARIMBO 6.0.1 ==');
 ok('histórico na Central: tabela com DANFE/XML/Cancelar por nota', src.indexOf('nfxRenderHistorico') >= 0 && src.indexOf("data-nfx=\"danfe\"") >= 0 && src.indexOf("data-nfx=\"xml\"") >= 0 && src.indexOf("data-nfx=\"cancelar\"") >= 0);
 ok('histórico herda a trava: render só quando a central abre (wrap do abrirCentralNfe)', src.indexOf('window.abrirCentralNfe=function') >= 0 && src.indexOf('_cen1.apply') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6001nfx') >= 0);
-ok('patch fecha a fila do manifesto (posição 207)', manifest.length === 207 && manifest[206] === 'nf_transmissao_patch.js');
+ok('patch é o antepenúltimo (autocura fecha a fila)', manifest.length === 208 && manifest[206] === 'nf_transmissao_patch.js' && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js');
 ok('motor no bundle gerado', bundle.indexOf('MOTOR FISCAL v6.0.1') >= 0);
-ok('package.json na 6.0.1', pkg.version === '6.0.1');
-ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '6.0.1'") >= 0 && html.indexOf('>v6.0.1<') >= 0);
+ok('package.json na 6.0.1', pkg.version === '6.0.2');
+ok('index.html carimbado 6.0.1', html.indexOf("DIGICOPY_APP_VERSION = '6.0.2'") >= 0 && html.indexOf('>v6.0.2<') >= 0);
 ok('worker SEGUE 5.26.2 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.1 (MOTOR FISCAL COMPLETO: transmissão SEFAZ-MG, DANFE A4, cancelamento, inutilização, QR NFC-e — tudo em homologação primeiro, provedor de provas nos retornos reais).');

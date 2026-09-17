@@ -129,21 +129,31 @@ window.dcDiagnosticoInvisiveis=function(){
   const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
   const linhas=[];
   let totalInvis=0;
+  let totalOrfaos=0; const orfaosPor={};
   const idsEstranhos={};
   for(const e of ENTS){
     const arr=(window.db&&Array.isArray(window.db[e])) ? window.db[e] : [];
     let inv=0;
+    let orfaos=0; // v6.0.2 — registros SEM carimbo de empresa (causa real dos "dados sumidos")
     for(const x of arr){
       const eid=x&&x.empresaId;
       if(eid && empAtual && eid!==empAtual){ inv++; idsEstranhos[eid]=true; totalInvis++; }
+      if(eid===undefined||eid===null||eid==='') orfaos++;
     }
-    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':' • todos visíveis'));
+    if(orfaos) { totalOrfaos+=orfaos; orfaosPor[e]=orfaos; }
+    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':'')+(orfaos?' • '+orfaos+' SEM CARIMBO (órfãos)':(!inv?' • todos visíveis':'')));
   }
   const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
   const outros=Object.keys(idsEstranhos);
   let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
   if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
-  const corpo = totalInvis
+  const corpo = totalOrfaos
+    ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
+      Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+
+      '). Quem criou estava com sessão sem empresa — por isso "sumia" nos outros PCs. '+
+      (empAtual? 'A CURA v6.0.2 já carimba sozinho na abertura. Se essa contagem continuar subindo, manda foto.'
+               : '>>> SUA PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA (cabeçalho acima). A cura carimba quando há UMA empresa no banco. Se continuar, manda foto.')
+    : totalInvis
     ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
     : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
   const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;

@@ -3264,6 +3264,21 @@ intacto como plano B e coberto pela suíte.
 6. **Kit do testador:** `GUIA_DO_TESTE_NF_v6.0.1.md` (roteiro A navegador + B emissão real, regras de ouro, tabela erro→o que copiar, como escrever o relatório, SEM instrução de cache) + `RELATORIO_DE_TESTE_NF_EM_BRANCO.md` (cabeçalho, checklists A/B, teste livre, bloco Correções com modelo de preenchimento, bloco Adições, veredicto e assinatura).
 **Ritual:** app 6.0.1 (worker 5.26.2, gerente 5.26.3); manifesto 207 (transmissão fecha a fila); fila de ancoras reposicionada (v52293/295/296/2435/2436/5260/5262/5263/5264/5265/5266/6000); test_ajustes_v6001.js (48 asserts: envelopes, parse com retornos reais, evento/inutilização, SHA-1×crypto, DANFE, travas) no runner. Bug achado PELO TESTE: QR montava com `q.csc` undefined → corrigido. Suíte: **167/0/0**.
 
+## v6.0.2 — CURA DOS "DADOS SUMIDOS" + Central NF vira MENU + popups próprios (2026-09-18)
+
+**Bug de produção resolvido (relato de usuário real):** vendas/impressoras "desapareciam" em todos os PCs. Causa provada: **sessão SEM empresaId** no PC que criou o dado (o diagnóstico v5.22.7 escapava disso — contava "todos visíveis" quando a sessão estava vazia). Registro sem carimbo de empresa é invisível pra todo mundo com empresa na sessão. Correção determinística (sem chute):
+1. Sessão sem empresa + banco com EXATAMENTE UMA → sessão é carimbada com ela (com toast explicando, e registro em db.logs). Com 2+ empresas: não chuta, orienta a relogar.
+2. Todos os registros órfãos (`empresaId` vazio) nas 16 entidades de negócio são carimbados na empresa única — dados somem nunca mais.
+3. Diagnóstico v5.22.7 passa a contar "SEM CARIMBO (órfãos)" por entidade e aponta a CAUSA PROVÁVEL DOS SUMIÇOS + repara se a própria sessão estiver vazia.
+
+**Central de Nota Fiscal sai do modal flutuante** (ele achou feio "esses menus na 6.0.0"): vira view/menu de verdade (botão "Nota Fiscal" no nav-gest + barra clássica; abrirCentralNfe antiga redireciona pra navigateTo), placa de ambiente sempre no topo, histórico rende nela, CSC da NFC-e salva ali, inutilização com popups em sequência.
+
+**Popup próprio do sistema (com X) em TODO o fiscal:** `nfx-modal` (nfxPedirTexto com mínimo+máscara, nfxConfirmar) — senha, justificativas, confirmações de produção e duplicidade agora abrem popup personalizado; prompt/confirm nativo só fallback se por algum motivo a popup não existir.
+
+**Infra de deps:** descoberta a causa-raiz dos sumiços do vendor/acorn — o SNAPSHOT do ambiente ignora qualquer pasta chamada `dist/` (mesmo commitada; o .gitignore `!vendor/**` não salva do snapshot). Solução definitiva: acorn agora é arquivo de **primeiro nível** em `vendor/acorn/acorn.js` (`main` ajustado, sem `dist/`). Build volta a isolar 205 scripts automaticamente em qualquer restauração.
+
+**Ritual:** app 6.0.2 (worker 5.26.2, gerente 5.26.3); manifesto 208 (autocura/central fecha a fila); re-ancoragem completa da fila (v2284-87, 2293/95/96, 2435/36, 5260/62/63/64/65/66, 6000/6001); test_ajustes_v6002.js (31 asserts: puros da cura, diagnóstico, tela, popups, travas) no runner. Suíte: **168/0/0**.
+
 **Respostas dele que definem a linha 6.xx:** as DUAS notas no código (NFC-e 65 existe, mas operacionalmente ele só usa A4 → NF-e 55 primeiro); certificado A1 + senha EM MÃOS; térmica não compra ("mas quero que tenha o código"); ordem de construção: EU escolho → **NF-e 55 (A4) primeiro, NFC-e 65 em seguida**, sempre homologação antes de produção.
 
 **As 3 garantias de confiança que ele exigiu, viradas lei de código (fiscal_guard_patch.js, posição 206):**

@@ -236,8 +236,12 @@ function nfxInstruirSemPonte(alvoMsg){
   if(alvoMsg) alvoMsg.textContent=txt; else nfxToast(txt,'error');
 }
 function nfxPedirSenha(){
+  // v6.0.2 — popup próprio do sistema (X de fechar). Fallback pro nativo se faltar.
+  if(typeof window.nfxPedirTexto==='function'){
+    return window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.', {mascara:true});
+  }
   const s=(typeof window.prompt==='function') ? window.prompt('Senha do certificado A1 (usada agora e NÃO fica salva):') : null;
-  return s||null;
+  return Promise.resolve(s||null);
 }
 // Registra/atualiza a vida de uma nota no histórico fiscal
 function nfxGravarNota(rec){
@@ -262,7 +266,7 @@ window.nfEmitirCompleta=async function(origem, id, docConferido){
     // Duplicidade: mesma origem já autorizada?
     const d=nfxDb();
     const ja=d.config.nfRegistro.find(n=>n.origemId===id && n.status==='autorizada');
-    if(ja){ const abrirDanfe=(typeof window.confirm==='function') ? window.confirm('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'.\nOK = abrir o DANFE dela · Cancelar = não fazer nada') : true; if(abrirDanfe){ window.nfAbrirDanfe(ja.id); } return {ok:false, error:'duplicada', nota:ja}; }
+    if(ja){ const abrirDanfe=(typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('Nota já autorizada','Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'. Abrir o DANFE dela?', {botao:'Abrir DANFE'}) : ((typeof window.confirm==='function') ? window.confirm('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'.\nOK = abrir o DANFE dela · Cancelar = não fazer nada') : true); if(abrirDanfe){ window.nfAbrirDanfe(ja.id); } return {ok:false, error:'duplicada', nota:ja}; }
     const amb=passo.ambiente;
     // 1) XML final: confere + number lock + selo de homologação dentro do XML
     const numero=window.nfProximoNumero('55', docConferido.serie||1);
@@ -270,7 +274,7 @@ window.nfEmitirCompleta=async function(origem, id, docConferido){
     let xml=window.NFE_EMISSAO_PURE.montarXml(docConferido);
     xml=window.NFG_PURE.nfgSeloTeste(xml, amb);
     // 2) Assinar com o A1 (pede a senha SÓ agora)
-    const senha=nfxPedirSenha(); if(!senha){ nfxToast('Sem a senha do certificado não assina — emissão cancelada.','error'); return {ok:false, error:'sem-senha'}; }
+    const senha=await nfxPedirSenha(); if(!senha){ nfxToast('Sem a senha do certificado não assina — emissão cancelada.','error'); return {ok:false, error:'sem-senha'}; }
     nfxAudit('emitir-inicio',{origem:origem,id:id,numero:numero});
     const ass=await ponte.assinar(xml, senha, docConferido.pfxB64||null);
     if(!ass || !ass.ok){ nfxToast('Falha ao assinar: '+((ass&&ass.error)||'erro desconhecido'),'error'); nfxAudit('emitir-assinatura-falha',{numero:numero, erro:ass&&ass.error}); return {ok:false, error:'assinatura'}; }
@@ -339,10 +343,11 @@ window.nfCancelarNota=async function(notaId){
     if(nota.status!=='autorizada'){ nfxToast('Só se cancela nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
     if(!nota.protocolo){ nfxToast('Nota sem protocolo não cancela.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just=(typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null;
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null);
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
-    if(nota.ambiente==='producao' && !(typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)? Isto fica registrado na SEFAZ para sempre.'))){ return {ok:false, error:'desistiu'}; }
-    const senha=nfxPedirSenha(); if(!senha) return {ok:false, error:'sem-senha'};
+    const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
+    if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
+    const senha=await nfxPedirSenha(); if(!senha) return {ok:false, error:'sem-senha'};
     const amb=nota.ambiente || nfxAmb();
     const cnpj=String(nota.cnpj||'').replace(/\D/g,'');
     const evt=nfxEventoCancelamento({ chave:nota.chave, protocolo:nota.protocolo, justificativa:just.trim(), cnpj:cnpj, cOrgao:'31', tpAmb:nfxTpAmb(amb), dhEvento:new Date().toISOString() });
@@ -371,9 +376,9 @@ window.nfInutilizarFaixa=async function(opts){
   try{
     if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just=(typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null;
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null);
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa curta — não enviado.','error'); return {ok:false}; }
-    const senha=nfxPedirSenha(); if(!senha) return {ok:false};
+    const senha=await nfxPedirSenha(); if(!senha) return {ok:false};
     const amb=nfxAmb();
     const ano=String(new Date().getFullYear()).slice(-2);
     const cnpj=String(opts.cnpj||'').replace(/\D/g,'');
@@ -396,7 +401,8 @@ window.nfInutilizarFaixa=async function(opts){
 };
 // ══ HISTÓRICO FISCAL na Central (tabela viva) ══
 window.nfxRenderHistorico=function(){
-  const central=document.getElementById('central-nfe-modal');
+  // v6.0.2 — rende na TELA da Central (menu de verdade); modal antigo é só fallback
+  const central=document.getElementById('cnf-hist')||window.__nfxHistAlvo||document.getElementById('central-nfe-modal');
   if(!central) return;
   const lista=nfxDb().config.nfRegistro.slice().sort((a,b)=>(b.atualizadoEm||'').localeCompare(a.atualizadoEm||''));
   let box=central.querySelector('.nfx-hist');
@@ -427,8 +433,8 @@ window.nfxRenderHistorico=function(){
     if(btn.getAttribute('data-nfx')==='xml') window.nfBaixarXml(id);
     if(btn.getAttribute('data-nfx')==='cancelar') window.nfCancelarNota(id);
   });
-  const ancora=central.querySelector('.nfg-placa')||central.children[1]||central.firstChild;
-  central.insertBefore(box, ancora && ancora.nextSibling || central.firstChild);
+  if(central.id==='cnf-hist'){ central.innerHTML=''; central.appendChild(box); }
+  else { const ancora=central.querySelector('.nfg-placa')||central.children[1]||central.firstChild; central.insertBefore(box, ancora && ancora.nextSibling || central.firstChild); }
 };
 // Rende o histórico toda vez que a Central abre (herda a trava do portão: só clique)
 if(typeof window.abrirCentralNfe==='function'){

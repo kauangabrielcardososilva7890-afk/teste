@@ -205,5 +205,6 @@
   "ajustes_v5264_chamado_data_grande_patch.js",
   "painel_gerente_patch.js",
   "fiscal_guard_patch.js",
-  "nf_transmissao_patch.js"
+  "nf_transmissao_patch.js",
+  "autocura_empresa_central_nf_tela_patch.js"
 ]
