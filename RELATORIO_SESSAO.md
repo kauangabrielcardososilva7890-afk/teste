@@ -3251,6 +3251,19 @@ intacto como plano B e coberto pela suíte.
 
 **Decisões dele nesta rodada (registradas):** domínio próprio NÃO (fica o grátis pra sempre); prévia via Android Studio oficial (mobile/android já é projeto pronto — tutorial entregue); migração de dados: nada de forçar agora; "relatório do jeito certo" riscado (nem ele lembra); imagens do tutorial: depois; **NF-e: "pode já fazer ela agora"** → trilha 6.xx aberta, perguntas-chave enviadas (modelo da nota, certificado A1, regime tributário).
 
+## v6.0.0 — PORTÃO FISCAL (abre a linha NF) + respostas dele (2026-09-17)
+
+**Respostas dele que definem a linha 6.xx:** as DUAS notas no código (NFC-e 65 existe, mas operacionalmente ele só usa A4 → NF-e 55 primeiro); certificado A1 + senha EM MÃOS; térmica não compra ("mas quero que tenha o código"); ordem de construção: EU escolho → **NF-e 55 (A4) primeiro, NFC-e 65 em seguida**, sempre homologação antes de produção.
+
+**As 3 garantias de confiança que ele exigiu, viradas lei de código (fiscal_guard_patch.js, posição 206):**
+1. **Nasce tudo em HOMOLOGAÇÃO** (modo teste, sem valor fiscal). Produção só liga por ação humana explícita: digitar PRODUCAO + usuário com `podeEmitirNfe` (regra v5.22.21). Voltar p/ teste = 1 clique.
+2. **Nada automático**: o patch tem ZERO setInterval/setTimeout — provado pela suíte (varre o arquivo atrás de temporizadores). Conferir/selar NF só acontece por clique.
+3. **Sem caminho silencioso**: toda conferência NF grava trilha de auditoria em db.logs (quem, quando, ambiente). Duplicidade (mesmo modelo+série+número+origem) bloqueada por detector puro pronto pro emissor 6.0.1. Selo anti-fraude: em homologação o XML carrega no infCpl "NOTA DE TESTE, SEM VALOR FISCAL" (contabilidade nunca confunde).
+
+**Decisões novas registradas (fila):** permissões por usuário (sem fiscal, sem Buscador Escola, links de cobrança com cota total/dia configurável no gerente.exe) → próxima v6.0.x, quando ele mandar; "migração" = importar dados do OUTRO sistema que ele usa hoje (não a legacy local) → só quando ele pedir, com mapa de campos e prévia; login 1x/dia confirmado em produção ("tá funcionando normalmente") ✅.
+
+**Ritual:** app abre a linha **6.0.0** (lei da versão: NF = sistema novo); worker segue 5.26.2, gerente 5.26.3; 61 murais antigos re-ancorados de "família 5.x" para "[56].x" (a 6.0.0 não podia romper os guardas de versão — ampliados com major>=6 sempre válido); fiscal_guard no manifesto posição 206 (fecha a fila); build 203 isolados; test_ajustes_v6000.js (25 asserts) no runner. Suíte: **166/0/0**. Próxima parada: v6.0.1 = emissor SEFAZ-MG homologação (XML assinado → autorização), depois DANFE A4, cancelamento, NFC-e 65 (QR/CSC).
+
 ## DECISÕES DELE registradas (2026-09-17, pós-v5.26.4)
 
 1. **Filtros avançados:** ele confirmou "todos esses já estão feitos" → assunto FECHADO, nenhuma tela recebe filtro novo. (O levantamento da v5.26.4 fica arquivado se ele voltar atrás.)
