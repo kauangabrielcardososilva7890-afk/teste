@@ -75,9 +75,9 @@ ok('janela aberta 1x e documento escrito', openChamadas === 1 && fakeDoc.written
 ok('o que foi pro papel já é a versão caixa grande', /min-width:170px/.test(fakeDoc.written) && /font-size:12.5px/.test(fakeDoc.written));
 ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 
-console.log('== CARIMBO 5.26.4 (app; worker e gerente intactos) ==');
-ok('package.json na 5.26.4', pkg.version === '5.26.4');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.4'") >= 0 && html.indexOf('>v5.26.4<') >= 0);
+console.log('== CARIMBO (app agora em 5.26.5 após a escola; worker e gerente intactos) ==');
+ok('package.json na 5.26.5', pkg.version === '5.26.5');
+ok('index.html carimbado 5.26.5 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.5'") >= 0 && html.indexOf('>v5.26.5<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('worker SEGUE 5.26.2 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');

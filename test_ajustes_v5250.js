@@ -87,10 +87,10 @@ ok((patch.match(/__v5250lo/g) || []).length >= 10, 'guards __v5250lo em todos os
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_OVERHAUL_V5250_PURE') && bundle.includes('Contador anterior registrado') && bundle.includes('Leituras agora vivem dentro do contrato'), 'bundle: revisão dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_OVERHAUL_V5250_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'index 5.26.4 (re-ancorado: v5.26.0 = CNPJ + gerente)');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.4<'), 'rodapé v5.26.4 (re-ancorado: entrega grande ganhou a 2ª casa)');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'celular 5.26.4');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.4', 'package.json 5.26.4');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'index 5.26.5 (re-ancorado: v5.26.0 = CNPJ + gerente)');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.5<'), 'rodapé v5.26.5 (re-ancorado: entrega grande ganhou a 2ª casa)');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'celular 5.26.5');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.5', 'package.json 5.26.5');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.25.0 (revisão completa de leituras: anterior visível, confirmações do sistema, ações na listagem, rodapé novo, tela antiga aposentada com resgate).');

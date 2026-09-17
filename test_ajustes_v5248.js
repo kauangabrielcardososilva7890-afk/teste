@@ -19,10 +19,12 @@ const pkg    = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('-- escola: rédea no automático --');
 ok(escola.indexOf('function esAutoTique()') >= 0, 'esAutoTique existe');
-ok(escola.indexOf('setInterval(esAutoTique,10*60*1000)') >= 0, 'relógio agora é de 10 em 10 minutos (era 60 segundos)');
+ok(escola.indexOf('setInterval(esAutoTique,10*60*1000)') >= 0, 'relógio barato de 10 em 10 minutos (sem rede fora da aba; era 60 segundos no começo)');
 ok(escola.indexOf('sync({auto:true,incremental:true})') >= 0, 'automático nunca limpa a base (incremental sempre)');
 ok(escola.indexOf('if(window.__esSync) return;') >= 0 && escola.indexOf("if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'}") >= 0, 'nunca duas buscas ao mesmo tempo');
 ok(escola.indexOf('if(!loginDaNuvem()&&!loginDoNavegador()) return;') >= 0, 'sem login salvo, nem tenta');
+ok(escola.indexOf('function esAbaAberta()') >= 0 && escola.indexOf('if(!esAbaAberta()) return;') >= 0, 'v5.26.5: automático SÓ trabalha com a aba do buscador aberta (decreto: consumia até fora dela)');
+ok(escola.indexOf('try{ esAutoTique(); }catch(e){}') >= 0, 'v5.26.5: abrir a aba já confere dados velhos na hora');
 ok(escola.indexOf('||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})') === -1, 'lista vazia NÃO dispara mais sincronização a cada minuto');
 ok(escola.indexOf('limpar:vazio') === -1, 'automático sem modo limpar em lugar nenhum');
 ok(escola.indexOf('Baixar Tudo') >= 0 && escola.indexOf('Atualizar') >= 0, 'botões manuais da tela continuam (Atualizar / Baixar Tudo)');
@@ -37,10 +39,10 @@ ok(cmd.indexOf('digicopy-erp') >= 0 && cmd.indexOf('FROM changes') >= 0 && cmd.i
 const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
-ok(worker.indexOf("const WORKER_VERSION = '5.24.34'") >= 0, 'worker carimba v5.24.34');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');
-ok(pkg.version === '5.24.34', 'package.json v5.24.34');
+ok(worker.indexOf("const WORKER_VERSION = '5.26.2'") >= 0, 'worker carimbado (re-ancorado v5.26.2; o carimbo original era 5.24.34)');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.26.5'") >= 0, 'index.html carimbado (re-ancorado v5.26.5)');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.26.5'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v5.26.5)');
+ok(pkg.version === '5.26.5', 'package.json carimbado (re-ancorado v5.26.5)');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('esAutoTique') >= 0, 'freio da escola está dentro do bundle');
 

@@ -120,10 +120,10 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('IMPRESSORA_REMANEJO_V52435_PURE') && bundle.includes('impf-avancar'), 'bundle: wrap final dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('IMPRESSORA_REMANEJO_V52435_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'index 5.26.4');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.4<'), 'rodapé v5.26.4');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'celular 5.26.4');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.4', 'package.json 5.26.4');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'index 5.26.5');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.5<'), 'rodapé v5.26.5');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'celular 5.26.5');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.5', 'package.json 5.26.5');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.24.35 (P7: serial primeiro + remanejo sem duplicar + remanejada congelada).');

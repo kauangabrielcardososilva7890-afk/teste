@@ -3232,6 +3232,15 @@ intacto como plano B e coberto pela suíte.
 5. **"Algo oculto que pediu pra deletar e não deletou?":** revisado o mapa de visibilidade — textos do login, aviso rawgithub e menu migrados já estão deletados de verdade (remoção do DOM, não CSS). O que segue vivo propositalmente: Buscador Escola (congelado por decreto, não deletado) e menus-por-dispositivo (configurável). Perguntado a ele qual item quer morto de vez.
 **Ritual:** app 5.26.4 (worker 5.26.2 / gerente 5.26.3 intocados); manifesto 204; murais re-ancorados (52284-87/2293/2295/2296/52435/52436 e pins de versão); test_ajustes_v5264.js novo (22 asserts: pura testada com HTML real do relatório + wrap testado com window.open falsa) no runner. Suíte: **162/0/0**.
 
+## v5.26.5 — RALO DO BUSCADOR ESCOLA FECHADO (só atualiza com a aba aberta) + deps vendorizadas (2026-09-17)
+
+**Contexto dele:** "o buscador escolar eu USO, pedi pra congelar porque consumia muita leitura da nuvem — e fazia isso ATÉ QUANDO NÃO ESTAVA NA ABA. Agora tenho plano pago." Decisão tomada: plano pago é pra uso, não pra robô invisível. O decreto antigo (congelar) morre; o módulo fica VIVO de novo, com o ralo fechado:
+1. **Causa raiz:** o relógio v5.24.8 (10 em 10 min) disparava a busca automática quando os dados passavam de 1h — rodando com o sistema aberto em QUALQUER tela (o setInterval nasce no load do bundle, não na aba).
+2. **Correção (arquivo vivo buscador_escola_patch.js, comentado v5.26.5):** `esAbaAberta()` (procura o h3 "Buscador Escola" na tela agora) + guarda no tique: **fora da aba, sai antes de qualquer rede** (zero login/página/gravação). **Abrir a aba já confere a idade dos dados na hora** (uso de verdade). Freios da v5.24.8 todos mantidos (1h, incremental, sem login nem tenta, nunca limpa base, nunca duas buscas juntas). Botões Atualizar/Baixar Tudo intactos.
+3. **Testado de verdade (simulação):** sem h3 na tela → ZERO sync; com h3 e dados velhos → 1 sync. Mural do freio v5.24.34 (test_ajustes_v5248) RE-ANCORADO para a versão atual + 2 asserts novos do "só na aba" e ADICIONADO ao runner (estava solto, com pins de v5.24.34 vencidos).
+4. **Deps vendorizadas (fim da fragilidade):** acorn + node-forge agora existem em vendor/ DENTRO do repo; build_bundle.js cai no vendor quando npm faltar; test_runner recria node_modules a partir do vendor no boot (ensureDeps). Build e suíte não quebram mais com node_modules purgado — nem aqui, nem em CI.
+**Ritual:** app 5.26.5 (worker 5.26.2 / gerente 5.26.3); carimbos e pins re-ancorados (v52223-28/52435/52436/5250/5260/5262/5263/5264); script check passa a validar buscador_escola_patch.js; npm run sync gravado; test_ajustes_v5265.js novo (23 asserts) + test_ajustes_v5248.js no runner. Suíte: **164/0/0**.
+
 ## DECISÕES DELE registradas (2026-09-17, pós-v5.26.4)
 
 1. **Filtros avançados:** ele confirmou "todos esses já estão feitos" → assunto FECHADO, nenhuma tela recebe filtro novo. (O levantamento da v5.26.4 fica arquivado se ele voltar atrás.)

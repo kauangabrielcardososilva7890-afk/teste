@@ -71,8 +71,8 @@ ok('tela preenche o rodapé com a versão real no load', gHtml.indexOf('window.g
 
 console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.4) ==');
 ok('gerente package 5.26.3', gPkg.version === '5.26.3');
-ok('app (package.json) na 5.26.4 (a v5.26.3 era o gerente; app subiu de 5.26.3 pra 5.26.4 na entrega do chamado)', pkg.version === '5.26.4');
-ok('index.html carimbado 5.26.4 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.4'") >= 0 && html.indexOf('>v5.26.4<') >= 0);
+ok('app (package.json) na 5.26.5 (escola: ralo fechado)', pkg.version === '5.26.5');
+ok('index.html carimbado 5.26.5 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.5'") >= 0 && html.indexOf('>v5.26.5<') >= 0);
 ok('worker SEGUE 5.26.2 (sem mudança de motor nesta entrega)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0);
 ok('manifesto sobe pra 204 e fecha com a data grande do chamado', manifest.length === 204 && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('bundle contém o patch com a máscara nova', bundle.indexOf('__v5262ln') >= 0 && bundle.indexOf('$1.$2.$3/$4-$5') >= 0);

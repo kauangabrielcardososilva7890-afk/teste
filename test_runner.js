@@ -1,4 +1,18 @@
 const {spawnSync}=require('child_process');
+// v5.26.5 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
+// (sandbox de CI sem npm install), recria a partir do vendor antes de rodar.
+(function ensureDeps(){
+  const fs=require('fs'), path=require('path');
+  for(const pkg of ['acorn','node-forge']){
+    if(fs.existsSync(path.join('node_modules', pkg, 'package.json'))) continue;
+    try{
+      const dst=path.join('node_modules', pkg);
+      fs.mkdirSync(dst, {recursive:true});
+      fs.cpSync(path.join('vendor', pkg), dst, {recursive:true});
+      console.log('deps recriadas a partir do vendor/: ' + pkg);
+    }catch(e){}
+  }
+})();
 const tests=[
   "test_vos.js",
   "test_perf.js",
@@ -159,6 +173,8 @@ const tests=[
   "test_ajustes_v5262.js",
   "test_ajustes_v5263.js",
   "test_ajustes_v5264.js",
+  "test_ajustes_v5265.js",
+  "test_ajustes_v5248.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",
   "test_mobile_apk.js"

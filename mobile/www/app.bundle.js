@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 204 | sha256: a7345b091f60c539
+ * scripts: 204 | sha256: 055a5ee6e66f5b11
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -19692,29 +19692,41 @@ window.esRest=function(id){
   }
 };
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
-window.renderBuscadorEscola=render;
+window.renderBuscadorEscola=function(){
+  render();
+  // v5.26.5 — abriu a aba? confere a idade dos dados na hora (uso de verdade)
+  try{ esAutoTique(); }catch(e){}
+};
 
-// v5.24.8 — O RALO DAS GRAVAÇÕES: o automático do Caixa Escolar agora tem rédea.
-// Antes: se a lista estivesse vazia (vazio=true), essa busca rodava a CADA 60
-// SEGUNDOS, o dia inteiro, com o sistema parado na tela. Cada volta carimbava a
-// hora na config, a config subia para a nuvem, a nuvem regravava linhas — milhares
-// de gravações por dia sem ninguém fazer nada. E rodava com 'limpar', que apaga
-// e refaz a base escolar de graça. Agora:
-//  • automático só a cada 1 HORA de dados velhos (e o relógio só olha isso de
-//    10 em 10 minutos, em vez de a cada 60 segundos);
-//  • lista vazia NÃO é emergência: espera a hora certa (o botão Atualizar da
-//    tela continua instantâneo, na mão de quem está olhando);
-//  • sem login salvo, nem tenta (não tem o que buscar);
-//  • limpar/refazer a base é só pelo botão "Baixar Tudo" da tela.
+// v5.26.5 — O RALO FECHADO DE VEZ (ele com plano pago, decreto: "ele fazia isso
+// ATÉ QUANDO NÃO ESTAVA NA ABA"). Plano pago é pra uso, não pra robô invisível:
+//  • o relógio automático SÓ trabalha se a ABA DO BUSCADOR estiver aberta na
+//    tela AGORA (fora dela: zero login, zero página, zero gravação — silêncio);
+//  • ABRIR a aba já checa a idade dos dados: se passou de 1 hora, a busca
+//    automática começa na hora (uso de verdade, não desperdício);
+//  • botões Atualizar / Baixar Tudo continuam manuais como sempre foram;
+//  • os freios da v5.24.8 continuam todos (1h de dados velhos, incremental,
+//    sem login nem tenta, nunca limpa a base, nunca duas buscas juntas).
+function esAbaAberta(){
+  try{
+    var hs=document.querySelectorAll('h3');
+    for(var i=0;i<hs.length;i++){
+      if(hs[i] && hs[i].textContent && hs[i].textContent.indexOf('Buscador Escola')>=0) return true;
+    }
+  }catch(e){}
+  return false;
+}
 function esAutoTique(){
   try{
     if(window.__esSync) return;
+    if(!esAbaAberta()) return;              // v5.26.5 — fora da aba: não consome NADA
     if(!loginDaNuvem()&&!loginDoNavegador()) return;
     const c=(db.config&&db.config.escolaSync)||{};
     if(!c.at||elapsed(c.at)>60*60*1000) sync({auto:true,incremental:true});
   }catch(_e){}
 }
 if(typeof document!=='undefined'){
+  // relógio barato: só o "estou na aba? dados velhos?" a cada 10 min — sem rede fora da aba
   setTimeout(esAutoTique,15000);
   setInterval(esAutoTique,10*60*1000);
 }
