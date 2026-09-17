@@ -84,6 +84,7 @@ const pontes = {
     remover: () => ipcRenderer.invoke('nfe:cert-remove'),
     validade: (senha) => ipcRenderer.invoke('nfe:cert-validade', { senha }),
     assinar: (xml, senha, pfxB64) => ipcRenderer.invoke('nfe:sign-xml', { xml, senha, pfxB64 }),
+    transmitir: (dados) => ipcRenderer.invoke('nfe:transmitir', dados),
     isElectron: true
   }
 };

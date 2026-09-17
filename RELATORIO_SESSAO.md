@@ -3251,7 +3251,18 @@ intacto como plano B e coberto pela suíte.
 
 **Decisões dele nesta rodada (registradas):** domínio próprio NÃO (fica o grátis pra sempre); prévia via Android Studio oficial (mobile/android já é projeto pronto — tutorial entregue); migração de dados: nada de forçar agora; "relatório do jeito certo" riscado (nem ele lembra); imagens do tutorial: depois; **NF-e: "pode já fazer ela agora"** → trilha 6.xx aberta, perguntas-chave enviadas (modelo da nota, certificado A1, regime tributário).
 
-## v6.0.0 — PORTÃO FISCAL (abre a linha NF) + respostas dele (2026-09-17)
+## v6.0.1 — MOTOR FISCAL COMPLETO ("de NF já FAÇA TUDO") + kit do testador (2026-09-17/18)
+
+**Pedido dele:** todas as fases do NF de uma vez, porque um TERCEIRO testa amanhã — mais 2 relatórios (guia + em branco) em linguagem simples, sem Ctrl+Shift+R, com bloco de adições e de correções.
+
+**Entregue (tudo sobre o Portão 6.0.0 — homologação primeiro, senha nunca salva, tudo auditado):**
+1. **Transmissão real (main.js):** handler `nfe:transmitir` com lista-branca SEFAZ-MG (nfe/nfce, hom+prod), TLS 1.2, pfx lido do cert importado, senha vem da janela na hora (NÃO salva), 3 tentativas só em 5xx/timeout (4xx não repete), retorna o XML de resposta. Preload expõe `transmitir` ao lado de `assinar`.
+2. **Motor front (nf_transmissao_patch.js, posição 207):** pipeline completo `nfEmitirCompleta` (permissão → duplicidade → número travado pra cima → selo de teste no XML em homologação → assina A1 → envelope SOAP 1.2 → SEFAZ-MG → parse sem lib → registro → DANFE/XML). Duplicidade de origem abre o DANFE da existente; sem ponte = instrução honesta (NUNCA sucesso falso).
+3. **DANFE + contabilidade:** DANFE A4 (chave mascarada, protocolo, itens, totais, marca d'água "SEM VALOR FISCAL" em teste), botão Baixar XML (é o que vai pra contabilidade), histórico completo na Central (status colorido, DANFE/XML/Cancelar por nota).
+4. **Eventos:** cancelamento (evento 110111, justificativa ≥15, confirmação extra em produção, protocolo obrigatório) e inutilização de faixa (todos os campos oficiais, protocolo registrado) — os dois assinam e transmitem.
+5. **NFC-e 65 no código:** URL própria MG (nfce.fazenda...), QR Code layout 2 com SHA-1 (vetor conferido com crypto do Node), DANFE NFC-e em A4 (80mm, sem térmica — decisão dele), campos CSC prontos na config.
+6. **Kit do testador:** `GUIA_DO_TESTE_NF_v6.0.1.md` (roteiro A navegador + B emissão real, regras de ouro, tabela erro→o que copiar, como escrever o relatório, SEM instrução de cache) + `RELATORIO_DE_TESTE_NF_EM_BRANCO.md` (cabeçalho, checklists A/B, teste livre, bloco Correções com modelo de preenchimento, bloco Adições, veredicto e assinatura).
+**Ritual:** app 6.0.1 (worker 5.26.2, gerente 5.26.3); manifesto 207 (transmissão fecha a fila); fila de ancoras reposicionada (v52293/295/296/2435/2436/5260/5262/5263/5264/5265/5266/6000); test_ajustes_v6001.js (48 asserts: envelopes, parse com retornos reais, evento/inutilização, SHA-1×crypto, DANFE, travas) no runner. Bug achado PELO TESTE: QR montava com `q.csc` undefined → corrigido. Suíte: **167/0/0**.
 
 **Respostas dele que definem a linha 6.xx:** as DUAS notas no código (NFC-e 65 existe, mas operacionalmente ele só usa A4 → NF-e 55 primeiro); certificado A1 + senha EM MÃOS; térmica não compra ("mas quero que tenha o código"); ordem de construção: EU escolho → **NF-e 55 (A4) primeiro, NFC-e 65 em seguida**, sempre homologação antes de produção.
 

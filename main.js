@@ -524,6 +524,54 @@ function registerNfeCertIPC(){
       return { ok:false, error:e.message||String(e) };
     }
   });
+
+  // v6.0.1 — TRANSMISSÃO SEFAZ (só dentro do .exe; o navegador não faz TLS com A1).
+  // Mesmos freios do Buscador Escola: URL em lista-branca (só MG), pfx lido do
+  // certificado já importado no PC, senha NÃO fica salva (vem da janela na hora),
+  // tenta 3x em falha de servidor, devolve o XML de retorno pra conferência.
+  ipcMain.handle('nfe:transmitir', async (_evt, payload) => {
+    try{
+      const url = String((payload && payload.url) || '');
+      const envelope = String((payload && payload.envelope) || '');
+      const soapAction = String((payload && payload.soapAction) || '');
+      const senhaCert = String((payload && payload.senhaCert) || '');
+      if(!/^https:\/\/(hnfe\.nfe|nfe|hnfce|nfce)\.fazenda\.mg\.gov\.br\/(nfe2|nfce)\/services\//.test(url)){
+        return { ok:false, error:'URL fora da lista branca (só SEFAZ-MG NF-e/NFC-e).' };
+      }
+      if(!envelope) return { ok:false, error:'Envelope vazio.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Certificado A1 não importado neste PC (Central de Nota Fiscal → certificado).' };
+      if(!senhaCert) return { ok:false, error:'Senha do certificado obrigatória na hora de transmitir (não fica salva).' };
+      const https = require('https');
+      const u = new URL(url);
+      const fazerUmaVez = () => new Promise((resolve) => {
+        const req = https.request({
+          hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+          pfx: fs.readFileSync(p), passphrase: senhaCert,
+          minVersion: 'TLSv1.2', timeout: 25000, rejectUnauthorized: true,
+          headers: { 'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': soapAction,
+                     'Content-Length': Buffer.byteLength(envelope), 'Connection': 'close' }
+        }, (resp) => {
+          let corpo = '';
+          resp.setEncoding('utf8');
+          resp.on('data', (c) => { corpo += c; });
+          resp.on('end', () => resolve({ ok: resp.statusCode >= 200 && resp.statusCode < 300, status: resp.statusCode, xml: corpo }));
+        });
+        req.on('timeout', () => { req.destroy(new Error('Tempo esgotado (25s) — SEFAZ não respondeu.')); });
+        req.on('error', (e) => resolve({ ok:false, status:0, error:e.message || String(e) }));
+        req.write(envelope);
+        req.end();
+      });
+      let ultima = null;
+      for(let tent = 0; tent < 3; tent++){
+        ultima = await fazerUmaVez();
+        if(ultima.ok) return ultima;
+        if(ultima.status && ultima.status >= 400 && ultima.status < 500 && ultima.status !== 408) return ultima; // 4xx = rejeição técnica, não adianta repetir
+        await new Promise(r => setTimeout(r, 700 * (tent + 1)));
+      }
+      return ultima || { ok:false, error:'Falha desconhecida na transmissão.' };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
 }
 
 function registerPrinterMonitorIPC(){

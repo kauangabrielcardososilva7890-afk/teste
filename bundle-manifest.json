@@ -204,5 +204,6 @@
   "ajustes_v5262_login_nuvem_primeiro_patch.js",
   "ajustes_v5264_chamado_data_grande_patch.js",
   "painel_gerente_patch.js",
-  "fiscal_guard_patch.js"
+  "fiscal_guard_patch.js",
+  "nf_transmissao_patch.js"
 ]

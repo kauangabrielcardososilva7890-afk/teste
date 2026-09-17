@@ -23,8 +23,8 @@ ok(escola.indexOf('setInterval(esAutoTique,10*60*1000)') >= 0, 'relógio barato 
 ok(escola.indexOf('sync({auto:true,incremental:true})') >= 0, 'automático nunca limpa a base (incremental sempre)');
 ok(escola.indexOf('if(window.__esSync) return;') >= 0 && escola.indexOf("if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'}") >= 0, 'nunca duas buscas ao mesmo tempo');
 ok(escola.indexOf('if(!loginDaNuvem()&&!loginDoNavegador()) return;') >= 0, 'sem login salvo, nem tenta');
-ok(escola.indexOf('function esAbaAberta()') >= 0 && escola.indexOf('if(!esAbaAberta()) return;') >= 0, 'v6.0.0: automático SÓ trabalha com a aba do buscador aberta (decreto: consumia até fora dela)');
-ok(escola.indexOf('try{ esAutoTique(); }catch(e){}') >= 0, 'v6.0.0: abrir a aba já confere dados velhos na hora');
+ok(escola.indexOf('function esAbaAberta()') >= 0 && escola.indexOf('if(!esAbaAberta()) return;') >= 0, 'v6.0.1: automático SÓ trabalha com a aba do buscador aberta (decreto: consumia até fora dela)');
+ok(escola.indexOf('try{ esAutoTique(); }catch(e){}') >= 0, 'v6.0.1: abrir a aba já confere dados velhos na hora');
 ok(escola.indexOf('||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})') === -1, 'lista vazia NÃO dispara mais sincronização a cada minuto');
 ok(escola.indexOf('limpar:vazio') === -1, 'automático sem modo limpar em lugar nenhum');
 ok(escola.indexOf('Baixar Tudo') >= 0 && escola.indexOf('Atualizar') >= 0, 'botões manuais da tela continuam (Atualizar / Baixar Tudo)');
@@ -40,9 +40,9 @@ const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
 ok(worker.indexOf("const WORKER_VERSION = '5.26.2'") >= 0, 'worker carimbado (re-ancorado v5.26.2; o carimbo original era 5.24.34)');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '6.0.0'") >= 0, 'index.html carimbado (re-ancorado v6.0.0)');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '6.0.0'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.0)');
-ok(pkg.version === '6.0.0', 'package.json carimbado (re-ancorado v6.0.0)');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '6.0.1'") >= 0, 'index.html carimbado (re-ancorado v6.0.1)');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '6.0.1'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.1)');
+ok(pkg.version === '6.0.1', 'package.json carimbado (re-ancorado v6.0.1)');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('esAutoTique') >= 0, 'freio da escola está dentro do bundle');
 
