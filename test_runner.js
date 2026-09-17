@@ -1,5 +1,5 @@
 const {spawnSync}=require('child_process');
-// v5.26.5 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
+// v5.26.6 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
 // (sandbox de CI sem npm install), recria a partir do vendor antes de rodar.
 (function ensureDeps(){
   const fs=require('fs'), path=require('path');
@@ -174,6 +174,7 @@ const tests=[
   "test_ajustes_v5263.js",
   "test_ajustes_v5264.js",
   "test_ajustes_v5265.js",
+  "test_ajustes_v5266.js",
   "test_ajustes_v5248.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",

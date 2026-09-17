@@ -116,14 +116,14 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
 
   // ── 4. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man[man.length-6] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length-4] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-3] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-2] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-1] === 'ajustes_v5264_chamado_data_grande_patch.js', 'manifest: remanejo sexto a partir do fim; depois revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2, e a data grande do chamado v5.26.4 fecha a fila (vence sempre)');
+  ok(man[man.length-7] === 'ajustes_v52435_impressora_remanejo_final_patch.js' && man[man.length-5] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-4] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-3] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-2] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length-1] === 'painel_gerente_patch.js', 'manifest: remanejo sexto a partir do fim; depois revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2, a data grande do chamado v5.26.4 e o Painel do Gerente v5.26.6 fecha a fila (vence sempre)');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('IMPRESSORA_REMANEJO_V52435_PURE') && bundle.includes('impf-avancar'), 'bundle: wrap final dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('IMPRESSORA_REMANEJO_V52435_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'index 5.26.5');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.5<'), 'rodapé v5.26.5');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.5'"), 'celular 5.26.5');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.5', 'package.json 5.26.5');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.6'"), 'index 5.26.6');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.6<'), 'rodapé v5.26.6');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.6'"), 'celular 5.26.6');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.6', 'package.json 5.26.6');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.24.35 (P7: serial primeiro + remanejo sem duplicar + remanejada congelada).');

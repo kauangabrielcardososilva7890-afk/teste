@@ -27,7 +27,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 
 console.log('== PATCH: existência, guarda e trilha ==');
 ok('patch existe com guard próprio (__v5264cd)', patch.indexOf('window.__v5264cd') >= 0);
-ok('manifesto fecha com o patch v5.26.4 (posição 204; login-nuvem na 203)', manifest.length === 204 && manifest[203] === PATCH);
+ok('manifesto fecha com o Painel do Gerente v5.26.6 (posição 205; chamado na 204; login-nuvem na 203)', manifest.length === 205 && manifest[203] === PATCH);
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5264cd') >= 0);
 ok('patch do relatório v5.18.6 intocado (nada some)', antigo.indexOf('Atendimento:') >= 0 && antigo.indexOf('Dados de Atendimento') >= 0);
 ok('wrap SÓ durante a impressão + window.open restaurada (finally)', patch.indexOf('finally') >= 0 && patch.indexOf('window.open = _open') >= 0);
@@ -75,9 +75,9 @@ ok('janela aberta 1x e documento escrito', openChamadas === 1 && fakeDoc.written
 ok('o que foi pro papel já é a versão caixa grande', /min-width:170px/.test(fakeDoc.written) && /font-size:12.5px/.test(fakeDoc.written));
 ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 
-console.log('== CARIMBO (app agora em 5.26.5 após a escola; worker e gerente intactos) ==');
-ok('package.json na 5.26.5', pkg.version === '5.26.5');
-ok('index.html carimbado 5.26.5 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.5'") >= 0 && html.indexOf('>v5.26.5<') >= 0);
+console.log('== CARIMBO (app agora em 5.26.6 após a escola; worker e gerente intactos) ==');
+ok('package.json na 5.26.6', pkg.version === '5.26.6');
+ok('index.html carimbado 5.26.6 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '5.26.6'") >= 0 && html.indexOf('>v5.26.6<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('worker SEGUE 5.26.2 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');

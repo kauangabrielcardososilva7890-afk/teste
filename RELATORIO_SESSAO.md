@@ -3241,6 +3241,16 @@ intacto como plano B e coberto pela suíte.
 4. **Deps vendorizadas (fim da fragilidade):** acorn + node-forge agora existem em vendor/ DENTRO do repo; build_bundle.js cai no vendor quando npm faltar; test_runner recria node_modules a partir do vendor no boot (ensureDeps). Build e suíte não quebram mais com node_modules purgado — nem aqui, nem em CI.
 **Ritual:** app 5.26.5 (worker 5.26.2 / gerente 5.26.3); carimbos e pins re-ancorados (v52223-28/52435/52436/5250/5260/5262/5263/5264); script check passa a validar buscador_escola_patch.js; npm run sync gravado; test_ajustes_v5265.js novo (23 asserts) + test_ajustes_v5248.js no runner. Suíte: **164/0/0**.
 
+## v5.26.6 — PAINEL DO GERENTE (ordem dele: "faz logo") (2026-09-17)
+
+**Contexto:** na lista de pendências ele mandou o painel do gerente na nuvem **agora** ("o que tenho que fazer? só dizer pra fazer? faz logo"). Entregue:
+1. **Tela nova "Painel Gerente"** (painel_gerente_patch.js, posição 205 — fecha a fila do bundle): cards de notinhas de hoje (qtd + R$), OS hoje/abertas, a receber no mês, **ATRASADAS em vermelho**, máquinas nos clientes, contratos ativos; bloco "Quem vendeu hoje" (por pessoa); alerta "OS parada há mais de 7 dias"; linha do tempo com as 10 últimas movimentações (venda+OS juntas) com cliente e vendedor.
+2. **Decretos travados em mural próprio:** só LÊ o banco já sincronizado (zero escrita, zero ache — teste prova que não há push nem db.save); multi-empresa respeitado (empresaId da sessão filtra tudo — venda cancelada, de outra empresa e OS concluída provadas fora); datas por criadoEm/data; conta paga nunca aparece como atrasada; instalação de menu espelha o Buscador Escola (nav-gest + topbar + reinstala se o menu redesenhar) e o navigateTo aprende a view via wrap — **miolo do app.js intocado**.
+3. **Infra consertada de vez:** o .gitignore global ignorava `dist/` → apagava o vendor/acorn/dist no restore. Blindado com `!vendor/**`; acorn re-extraído; build volta a isolar **202 scripts**.
+**Ritual:** app 5.26.6 (worker 5.26.2 / gerente 5.26.3); 16 murais re-ancorados (versões + fila do manifesto 205); test_ajustes_v5266.js novo (26 asserts com puras testadas em dados reais simulados, tempo congelado determinístico) no runner. Suíte: **165/0/0**.
+
+**Decisões dele nesta rodada (registradas):** domínio próprio NÃO (fica o grátis pra sempre); prévia via Android Studio oficial (mobile/android já é projeto pronto — tutorial entregue); migração de dados: nada de forçar agora; "relatório do jeito certo" riscado (nem ele lembra); imagens do tutorial: depois; **NF-e: "pode já fazer ela agora"** → trilha 6.xx aberta, perguntas-chave enviadas (modelo da nota, certificado A1, regime tributário).
+
 ## DECISÕES DELE registradas (2026-09-17, pós-v5.26.4)
 
 1. **Filtros avançados:** ele confirmou "todos esses já estão feitos" → assunto FECHADO, nenhuma tela recebe filtro novo. (O levantamento da v5.26.4 fica arquivado se ele voltar atrás.)

@@ -202,5 +202,6 @@
   "ajustes_v5250_leitura_overhaul_patch.js",
   "ajustes_v5260_cnpj_gerente_patch.js",
   "ajustes_v5262_login_nuvem_primeiro_patch.js",
-  "ajustes_v5264_chamado_data_grande_patch.js"
+  "ajustes_v5264_chamado_data_grande_patch.js",
+  "painel_gerente_patch.js"
 ]
