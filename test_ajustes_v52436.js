@@ -86,14 +86,14 @@ ok((patch.match(/__v52436lei/g) || []).length >= 4, 'guards __v52436lei nos 4 wr
 
   // ── 3. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man.length === 203 && man[man.length-4] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-3] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-2] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-1] === 'ajustes_v5262_login_nuvem_primeiro_patch.js', 'manifest: 203 scripts, guarda de leitura 4ª do fim, revisão antepenúltima, CNPJ+gerente penúltimo, login da nuvem primeiro fecha a fila');
+  ok(man.length === 204 && man[man.length-5] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-4] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-3] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-2] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-1] === 'ajustes_v5264_chamado_data_grande_patch.js', 'manifest: 204 scripts, guarda quinta do fim, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2, data grande do chamado v5.26.4 fecha a fila');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_UMA_ABERTA_V52436_PURE') && bundle.includes('Fature (feche) ela antes de criar outra'), 'bundle: guarda dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_UMA_ABERTA_V52436_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.3'"), 'index 5.26.3');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.3<'), 'rodapé v5.26.3');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.3'"), 'celular 5.26.3');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.3', 'package.json 5.26.3');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'index 5.26.4');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v5.26.4<'), 'rodapé v5.26.4');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '5.26.4'"), 'celular 5.26.4');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '5.26.4', 'package.json 5.26.4');
 
   // ── 4. Link oficial (githack morto — ele cobrou) ──────────────────────────
   const sync = fs.readFileSync('sync_build.js', 'utf8');
