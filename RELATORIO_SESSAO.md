@@ -3232,6 +3232,12 @@ intacto como plano B e coberto pela suíte.
 5. **"Algo oculto que pediu pra deletar e não deletou?":** revisado o mapa de visibilidade — textos do login, aviso rawgithub e menu migrados já estão deletados de verdade (remoção do DOM, não CSS). O que segue vivo propositalmente: Buscador Escola (congelado por decreto, não deletado) e menus-por-dispositivo (configurável). Perguntado a ele qual item quer morto de vez.
 **Ritual:** app 5.26.4 (worker 5.26.2 / gerente 5.26.3 intocados); manifesto 204; murais re-ancorados (52284-87/2293/2295/2296/52435/52436 e pins de versão); test_ajustes_v5264.js novo (22 asserts: pura testada com HTML real do relatório + wrap testado com window.open falsa) no runner. Suíte: **162/0/0**.
 
+## DECISÕES DELE registradas (2026-09-17, pós-v5.26.4)
+
+1. **Filtros avançados:** ele confirmou "todos esses já estão feitos" → assunto FECHADO, nenhuma tela recebe filtro novo. (O levantamento da v5.26.4 fica arquivado se ele voltar atrás.)
+2. **Nomes de arquivos:** ele perguntou "esses nomes estão bons pra você? se facilitar pode modificar, mas antes anota no .md o mapeamento e só se não der problema". RESPOSTA REGISTRADA: manter tudo como está — o padrão descritivo por versão (ajustes_v5<num>_<o-que-faz>_patch.js / test_ajustes_<idêntico>.js) é legível e está costurado em dezenas de murais + bundle-manifest + script check; renomear não facilita e cria risco. REGRA pra nome NOVO daqui pra frente: sempre descritivo-e-único por versão, espelhado no teste. Se algum dia um renome acontecer, é obrigatório .md com mapa antes/depois ANTES do commit.
+3. **Varredura de "oculto não deletado" (ele não lembrava qual era):** pesquisa completa no código e no histórico — os DELETADOS de verdade constam no mapa de visibilidade (textos do login, aviso rawgithub, menu migrados: remoção de DOM). Vivos intencionalmente: **Buscador Escola** (módulo completo da Caixa Escolar/MG, com login e orçamentos, atalho "topmod-buscador-escola-fixo" na Início — foi CONGELADO por decreto dele, não deletado) e **Caixa "Ocultar" do serial no Parque/Remanejo** (feature ativa v5.22.45 — ocultar não é lixo: vira remanejada e a chave desoculta; decisão daquela versão). TODO/FIXME: nenhum pendente real. PRÓXIMA AÇÃO ESPERANDO ELE: dizer se o Buscador Escola morre DE VEZ (apago módulo + atalho + dados) ou segue congelado.
+
 ## MAPA DE VISIBILIDADE DO SISTEMA — o que esconde/apaga menus e telas (resposta: "tem mais menus ocultos desde o login até o final?")
 
 - **Login:** textos "Sistema Digicopy / Vendas, locação... / © 2026" são
