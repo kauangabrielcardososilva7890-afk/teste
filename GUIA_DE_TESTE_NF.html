@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.6</title>
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.7</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +36,7 @@
 <body>
 
 <header>
-  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.4</h1>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.7</h1>
   <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
      Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
 </header>
@@ -46,7 +46,7 @@
 <h2>Antes de começar (2 minutos)</h2>
 <ol>
   <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
-  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.4</code>.<br>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.7</code>.<br>
       Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
   <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
 </ol>
@@ -90,6 +90,22 @@
   <li>Na tela Nuvem (PC administrador): <b>Administração da nuvem → Ver aparelhos e dados enviados → botão verde "Reparar sessão agora"</b>. Clique.</li>
   <li>Tem que responder ou <i>"Sessão: já estava com empresa"</i> ou <i>"carimbada com emp_digicopy"</i>. Se responder outra coisa, anote a frase exata no relatório.</li>
   <li>Depois abra Clientes/Produtos: as listas continuam cheias como sempre.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A6. Tela Início: nada de "undefined" e itens clicáveis (novidade da v6.0.7)</b>
+<ul class="check">
+  <li>Abra a tela <b>Início</b>. Nos blocos <b>Chamados &amp; OS Recentes</b> e <b>Leituras Pendentes</b>: <b>NÃO pode aparecer</b> a palavra <i>undefined</i> em lugar nenhum (cliente apagado vira <i>"cliente removido"</i>; consumo sem lançamento vira <i>"consumo não informado"</i>).</li>
+  <li>Passe o mouse em cima de um chamado: aparece mãozinha e uma seta <b>→</b> com a dica <i>"Abrir a origem"</i>.</li>
+  <li>Clique num chamado: o sistema vai pra tela <b>Manutenção</b> e já abre a OS correspondente num modal. Feche o modal → você está na lista de chamados (a origem).</li>
+  <li>Clique numa leitura pendente: o sistema vai pra tela <b>Leituras</b> e abre aquela leitura. Se não houver leituras pendências, marque no relatório como "sem massa pra testar".</li>
+</ul></div>
+
+<div class="passo"><b class="t">A7. Permissões no editor do usuário + estorno abrindo a aba (v6.0.5, confirmação)</b>
+<ul class="check">
+  <li>Em <b>Usuários</b>, <b>NÃO existe mais coluna solta</b> de "Emitir NF" na tabela — a permissão mora DENTRO do cadastro: clique no ✏️ de um usuário → bloco <b>Permissões</b> com 3 caixas: <b>Emitir NF</b>, <b>Apagar registros</b>, <b>Estornar registros</b>.</li>
+  <li>Logado como funcionário comum (sem ser Admin/Dono): as 3 caixas aparecem <b>bloqueadas</b> (dá pra ver, não dá pra mexer).</li>
+  <li>Desmarque <b>Apagar registros</b> de um usuário teste e tente apagar algo com ele: o sistema barra e anota na <b>Auditoria</b>.</li>
+  <li>Estorne uma notinha (venda de teste): ela <b>abre na aba da venda já carregada</b> (mesmo número), e no Financeiro o título fica com a tarja <b>EXTORNADO</b> (não some, não entra nas somas).</li>
 </ul></div>
 
 <h2>Parte B — Computador com o .exe + certificado A1 (homologação)</h2>
@@ -141,8 +157,8 @@
 <div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
 
 <footer>
-  Guia do testador · Sistema Digicopy <b>v6.0.6</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
-  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.6, este guia ainda não é o que você está testando.
+  Guia do testador · Sistema Digicopy <b>v6.0.7</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.7, este guia ainda não é o que você está testando.
 </footer>
 
 </body>
