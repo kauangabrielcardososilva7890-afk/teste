@@ -41,9 +41,9 @@ ok(leitura.stdout.trim() === 'function function', 'assinatura: funções novas e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('central-nfe-modal') && bundle.includes('NFE_CENTRAL_V52425'), 'bundle: Central dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-modal'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.6'"), 'index 6.0.6');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.6<'), 'rodapé v6.0.6');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.6"'), 'package.json 6.0.6');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.7'"), 'index 6.0.7');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.7<'), 'rodapé v6.0.7');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.7"'), 'package.json 6.0.6');
 ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.26.3'"), 'worker carimbado (re-ancorado v5.26.3)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

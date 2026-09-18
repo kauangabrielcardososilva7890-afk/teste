@@ -182,6 +182,7 @@ const tests=[
   "test_ajustes_v6004.js",
   "test_ajustes_v6005.js",
   "test_ajustes_v6006.js",
+  "test_ajustes_v6007.js",
   "test_ajustes_v5248.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",

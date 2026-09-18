@@ -74,11 +74,11 @@ ok('duplicidade usa nfxConfirmar (abrir DANFE)', trx.indexOf("nfxConfirmar('Nota
 ok('senha pedida com await (popup assim é Promise)', trx.indexOf('await nfxPedirSenha()') >= 3);
 
 console.log('== INTEGRAÇÃO + CARIMBO 6.0.2 ==');
-ok('patch na 208; perfis 209; permissões 210; menu fiscal v6.0.6 fecha a fila (211)', manifest.length === 211 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js');
+ok('patch na 208; perfis 209; permissões 210; menu fiscal v6.0.6; Início clicável v6.0.7 fecha a fila (212)', manifest.length === 212 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js' && manifest[211] === 'dashboard_inicio_clicavel_patch.js');
 ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.indexOf('Curei ') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
-ok('package.json na 6.0.2', pkg.version === '6.0.6');
-ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.6'") >= 0 && html.indexOf('>v6.0.6<') >= 0);
+ok('package.json na 6.0.2', pkg.version === '6.0.7');
+ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0 && html.indexOf('>v6.0.7<') >= 0);
 ok('worker SEGUE 5.26.3 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.2 (dados sumidos CURADOS: sessão e registros carimbados quando há UMA empresa; Central NF vira menu de verdade; popups próprios com X em todo o fiscal).');
