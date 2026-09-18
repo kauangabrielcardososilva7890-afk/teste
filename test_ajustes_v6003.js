@@ -51,9 +51,9 @@ ok('try/catch envolve o save (nenhum TypeError volta a vazar)', src.indexOf("cat
 ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('saveConfig blindado') >= 0 && bundle.indexOf('v6.0.3 — fiscal no modo escuro + saveConfig blindado') >= 0);
 
 console.log('== CARIMBO 6.0.3 ==');
-ok('package.json na 6.0.3', pkg.version === '6.0.8');
-ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && html.indexOf('>v6.0.8<') >= 0);
-ok('manifesto sobe pra 211 (correção visual vive no patch da central; v6.0.6 fecha a fila)', manifest.length === 213 && manifest[manifest.length - 6] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 5] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 4] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 3] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 2] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 1] === 'menus_fiscais_separados_patch.js');
+ok('package.json na 6.0.3', pkg.version === '6.0.9');
+ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.9'") >= 0 && html.indexOf('>v6.0.9<') >= 0);
+ok('manifesto sobe pra 211 (correção visual vive no patch da central; v6.0.6 fecha a fila)', manifest.length === 214 && manifest[manifest.length - 7] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 6] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 5] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 4] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 3] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 2] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 1] === 'permissoes_override_menus_fiscais_patch.js');
 ok('worker SEGUE 5.26.3 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');

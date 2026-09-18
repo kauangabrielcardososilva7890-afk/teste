@@ -77,12 +77,12 @@ ok('botão no nav-gest (Painel Gerente, primeiro da gestão)', src.indexOf("nav-
 ok('botão na tool bar clássica (topmod-painel-gerente)', src.indexOf('topmod-painel-gerente') >= 0);
 ok('navigateTo envolvido (core intocado) e render chama no view novo', src.indexOf('window.navigateTo=function(view)') >= 0 && src.indexOf('_navPG.apply') >= 0);
 ok('reinstala a cada 2s se o menu for redesenhado (padrão escola)', src.indexOf('setInterval(') >= 0 && src.indexOf('pgInstalarMenu') >= 0);
-ok('painel na 205, fila fecha com menus fiscais separados v6.0.8', manifest[manifest.length - 9] === 'painel_gerente_patch.js' && manifest[manifest.length - 8] === 'fiscal_guard_patch.js' && manifest[manifest.length - 7] === 'nf_transmissao_patch.js' && manifest[manifest.length - 6] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 5] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 4] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 3] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 2] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 1] === 'menus_fiscais_separados_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
+ok('painel na 205, fila fecha com override+menus fiscais v6.0.9', manifest[manifest.length - 10] === 'painel_gerente_patch.js' && manifest[manifest.length - 9] === 'fiscal_guard_patch.js' && manifest[manifest.length - 8] === 'nf_transmissao_patch.js' && manifest[manifest.length - 7] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 6] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 5] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 4] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 3] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 2] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 1] === 'permissoes_override_menus_fiscais_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
 ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasReceber|parque|contratos|clientes)\.push/.test(src) && src.indexOf('db.save(') < 0);
 
-console.log('== CARIMBO 6.0.8 ==');
-ok('package.json na 6.0.8', pkg.version === '6.0.8');
-ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && html.indexOf('>v6.0.8<') >= 0);
+console.log('== CARIMBO 6.0.9 ==');
+ok('package.json na 6.0.9', pkg.version === '6.0.9');
+ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.9'") >= 0 && html.indexOf('>v6.0.9<') >= 0);
 ok('worker SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('guard ativo (anti dupla-instalação)', src.indexOf('__v5266pg') >= 0);

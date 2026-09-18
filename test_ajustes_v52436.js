@@ -86,14 +86,14 @@ ok((patch.match(/__v52436lei/g) || []).length >= 4, 'guards __v52436lei nos 4 wr
 
   // ── 3. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man.length === 213 && man[man.length-14] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-13] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-12] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-11] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-10] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length-9] === 'painel_gerente_patch.js' && man[man.length-8] === 'fiscal_guard_patch.js' && man[man.length-7] === 'nf_transmissao_patch.js' && man[man.length-6] === 'autocura_empresa_central_nf_tela_patch.js' && man[man.length-5] === 'perfis_nuvem_cura_sessao_patch.js' && man[man.length-4] === 'permissoes_estorno_venda_patch.js' && man[man.length-3] === 'fiscal_menu_completo_patch.js' && man[man.length-2] === 'dashboard_inicio_clicavel_patch.js' && man[man.length-1] === 'menus_fiscais_separados_patch.js', 'manifest: 213 scripts, guarda v5.24.36, revisao v5.25.0, CNPJ v5.26.0, login v5.26.2, chamado v5.26.4, painel, portao v6.0.0, transmissao; v6.0.6 perfis+cura; v6.0.6 permissões estorno; menus fiscais separados v6.0.8 fecha a fila (213)');
+  ok(man.length === 214 && man[man.length-15] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-14] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-13] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-12] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-11] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length-10] === 'painel_gerente_patch.js' && man[man.length-9] === 'fiscal_guard_patch.js' && man[man.length-8] === 'nf_transmissao_patch.js' && man[man.length-7] === 'autocura_empresa_central_nf_tela_patch.js' && man[man.length-6] === 'perfis_nuvem_cura_sessao_patch.js' && man[man.length-5] === 'permissoes_estorno_venda_patch.js' && man[man.length-4] === 'fiscal_menu_completo_patch.js' && man[man.length-3] === 'dashboard_inicio_clicavel_patch.js' && man[man.length-2] === 'menus_fiscais_separados_patch.js' && man[man.length-1] === 'permissoes_override_menus_fiscais_patch.js', 'manifest: 214 scripts; override de supervisor + menus fiscais de verdade v6.0.9 fecha a fila');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_UMA_ABERTA_V52436_PURE') && bundle.includes('Fature (feche) ela antes de criar outra'), 'bundle: guarda dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_UMA_ABERTA_V52436_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.8'"), 'index 6.0.8');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.8<'), 'rodapé v6.0.8');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.8'"), 'celular 6.0.8');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.0.8', 'package.json 6.0.8');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.9'"), 'index 6.0.9');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.9<'), 'rodapé v6.0.9');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.9'"), 'celular 6.0.9');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.0.9', 'package.json 6.0.9');
 
   // ── 4. Link oficial (githack morto — ele cobrou) ──────────────────────────
   const sync = fs.readFileSync('sync_build.js', 'utf8');
