@@ -10,9 +10,9 @@ ok('token individual fica em chave local própria',/digicopy_cloud_device_token_
 ok('segredo não é salvo no localStorage',!/setItem\([^\n]*secret/i.test(code));
 ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test(code)&&/\/v1\/invites/.test(code)&&/\/v1\/enroll/.test(code)&&/\/v1\/recover/.test(code));
 ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuvem/.test(html));
-ok('Nuvem aparece para TODO PC (v6.0.4: o papel blinda o conteúdo, não o botão)',/if\(cloud\)cloud\.style\.display='';/.test(code));
+ok('Nuvem aparece para TODO PC (v6.0.5: o papel blinda o conteúdo, não o botão)',/if\(cloud\)cloud\.style\.display='';/.test(code));
 ok('Backup fica sempre só para Admin',/backup\.style\.display=admin/.test(code));
-ok('gastos e zona de admin trancados pelo PAPEL DO APARELHO (v6.0.4: PC comum só desconecta a si)',/d\.role==='admin'/.test(code)&&code.indexOf("(isAdmin?usoBloco:'')")>=0&&code.indexOf('Desconectar ESTE computador')>=0);
+ok('gastos e zona de admin trancados pelo PAPEL DO APARELHO (v6.0.5: PC comum só desconecta a si)',/d\.role==='admin'/.test(code)&&code.indexOf("(isAdmin?usoBloco:'')")>=0&&code.indexOf('Desconectar ESTE computador')>=0);
 ok('token revogado libera nova autorização',/forgetAuth/.test(code)&&/refreshVisibility/.test(code));
 ok('exportação também valida Admin',/Somente o administrador pode exportar/.test(code));
 ok('painel compara clientes locais e nuvem',/CLIENTES NESTE PC/.test(code)&&/CLIENTES NA NUVEM/.test(code));

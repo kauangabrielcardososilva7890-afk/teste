@@ -1,4 +1,4 @@
-// test_ajustes_v5265.js — v6.0.4: O RALO DO BUSCADOR ESCOLA FECHADO DE VEZ.
+// test_ajustes_v5265.js — v6.0.5: O RALO DO BUSCADOR ESCOLA FECHADO DE VEZ.
 //
 // Causa raiz confirmada por ele: "o buscador consumia muita leitura da nuvem,
 // FAZIA ISSO ATÉ QUANDO NÃO ESTAVA NA ABA". Agora ele tem plano pago — mas
@@ -64,12 +64,12 @@ ok('vendor/node-forge presente', fs.existsSync('vendor/node-forge/package.json')
 ok('build_bundle cai no vendor se npm faltar', build.indexOf("require('./vendor/acorn')") >= 0 && build.indexOf("require('acorn')") >= 0);
 ok('runner recria node_modules a partir do vendor (ensureDeps)', runner.indexOf('ensureDeps') >= 0 && runner.indexOf("path.join('vendor', pkg)") >= 0);
 
-console.log('== CARIMBO 6.0.4 (app; worker e gerente intactos) ==');
-ok('package.json na 6.0.4', pkg.version === '6.0.4');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
+console.log('== CARIMBO 6.0.5 (app; worker e gerente intactos) ==');
+ok('package.json na 6.0.5', pkg.version === '6.0.5');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.5'") >= 0 && html.indexOf('>v6.0.5<') >= 0);
 ok('script check valida o buscador_escola', pkg.scripts.check.indexOf('buscador_escola_patch.js') >= 0);
 ok('worker SEGUE 5.26.3 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
-console.log('\nTudo OK — v6.0.4 (ralo da escola FECHADO: automático só trabalha com a aba aberta; abriu a aba já busca; deps vendorizadas, build e testes à prova de node_modules sumido).');
+console.log('\nTudo OK — v6.0.5 (ralo da escola FECHADO: automático só trabalha com a aba aberta; abriu a aba já busca; deps vendorizadas, build e testes à prova de node_modules sumido).');

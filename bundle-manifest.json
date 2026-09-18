@@ -207,5 +207,6 @@
   "fiscal_guard_patch.js",
   "nf_transmissao_patch.js",
   "autocura_empresa_central_nf_tela_patch.js",
-  "perfis_nuvem_cura_sessao_patch.js"
+  "perfis_nuvem_cura_sessao_patch.js",
+  "permissoes_estorno_venda_patch.js"
 ]

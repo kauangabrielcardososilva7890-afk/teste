@@ -1,4 +1,4 @@
-// test_ajustes_v5266.js — v6.0.4: PAINEL DO GERENTE (ordem dele: "faz logo").
+// test_ajustes_v5266.js — v6.0.5: PAINEL DO GERENTE (ordem dele: "faz logo").
 // Tela única do dono com os dados já sincronizados da nuvem: notinhas de hoje,
 // OS abertas/paradas, a receber no mês, atrasadas, quem vendeu, linha do tempo.
 // Decretos travados aqui:
@@ -77,14 +77,14 @@ ok('botão no nav-gest (Painel Gerente, primeiro da gestão)', src.indexOf("nav-
 ok('botão na tool bar clássica (topmod-painel-gerente)', src.indexOf('topmod-painel-gerente') >= 0);
 ok('navigateTo envolvido (core intocado) e render chama no view novo', src.indexOf('window.navigateTo=function(view)') >= 0 && src.indexOf('_navPG.apply') >= 0);
 ok('reinstala a cada 2s se o menu for redesenhado (padrão escola)', src.indexOf('setInterval(') >= 0 && src.indexOf('pgInstalarMenu') >= 0);
-ok('painel na 205, fila fecha com perfis+cura v6.0.4', manifest[manifest.length - 5] === 'painel_gerente_patch.js' && manifest[manifest.length - 4] === 'fiscal_guard_patch.js' && manifest[manifest.length - 3] === 'nf_transmissao_patch.js' && manifest[manifest.length - 2] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 1] === 'perfis_nuvem_cura_sessao_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
+ok('painel na 205, fila fecha com permissões+estorno v6.0.5', manifest[manifest.length - 6] === 'painel_gerente_patch.js' && manifest[manifest.length - 5] === 'fiscal_guard_patch.js' && manifest[manifest.length - 4] === 'nf_transmissao_patch.js' && manifest[manifest.length - 3] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 2] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 1] === 'permissoes_estorno_venda_patch.js' && bundle.indexOf('PAINEL_GERENTE v5.26.6') >= 0);
 ok('só lê: nenhum db.*.push nem db.save no patch', !/db\.(vendas|os|contasReceber|parque|contratos|clientes)\.push/.test(src) && src.indexOf('db.save(') < 0);
 
-console.log('== CARIMBO 6.0.4 ==');
-ok('package.json na 6.0.4', pkg.version === '6.0.4');
-ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
+console.log('== CARIMBO 6.0.5 ==');
+ok('package.json na 6.0.5', pkg.version === '6.0.5');
+ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.5'") >= 0 && html.indexOf('>v6.0.5<') >= 0);
 ok('worker SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('guard ativo (anti dupla-instalação)', src.indexOf('__v5266pg') >= 0);
 
-console.log('\nTudo OK — v6.0.4 (Painel do Gerente no ar: o dono vê tudo, de todos os PCs, numa tela só — lendo só a nuvem já sincronizada).');
+console.log('\nTudo OK — v6.0.5 (Painel do Gerente no ar: o dono vê tudo, de todos os PCs, numa tela só — lendo só a nuvem já sincronizada).');

@@ -1,5 +1,5 @@
 ════════════════════════════════════════════════════════════════════════
-RELATÓRIO DE TESTE — NOTA FISCAL (NF-e) · Sistema Digicopy v6.0.4
+RELATÓRIO DE TESTE — NOTA FISCAL (NF-e) · Sistema Digicopy v6.0.5
 Preencha em qualquer editor de texto e devolva COLANDO NA CONVERSA
 (ou mande este arquivo). Escreva do seu jeito, sem cerimônia:
 quanto mais direto e detalhado, mais rápido a correção sai.
@@ -9,7 +9,7 @@ quanto mais direto e detalhado, mais rápido a correção sai.
 Nome: ______________________
 Data: ____/____/______
 Testou em:  ( ) navegador    ( ) programa .exe    ( ) os dois
-Versão no rodapé da página: v________  (tem que ser v6.0.4)
+Versão no rodapé da página: v________  (tem que ser v6.0.5)
 
 ────────────────────────────────────────────────────────────────────────
 2) O QUE DEU CERTO (marque com X o que passou de verdade)
