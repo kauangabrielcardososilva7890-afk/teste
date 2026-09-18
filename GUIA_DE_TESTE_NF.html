@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.4</title>
+<style>
+  :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#1e293b;background:#fff;line-height:1.55;font-size:14px;max-width:900px;margin:0 auto;padding:24px}
+  header{border:2px solid var(--azul);border-radius:14px;padding:16px 20px;margin-bottom:18px;background:linear-gradient(135deg,#eef2ff,#fff)}
+  header h1{font-size:20px;color:var(--azul)}
+  header p{font-size:12.5px;color:var(--cinza);margin-top:4px}
+  h2{font-size:16px;color:var(--azul);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--borda);text-transform:uppercase;letter-spacing:.4px}
+  h3{font-size:13.5px;margin:14px 0 6px;color:#0f172a}
+  p{margin:6px 0;font-size:13.5px}
+  ul,ol{margin:6px 0 10px 22px;font-size:13.5px}
+  li{margin:4px 0}
+  .aviso{background:#fff7ed;border:1px solid #fdba74;color:var(--laranja);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .regra{background:#fef2f2;border:1px solid #fecaca;color:var(--vermelho);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .okverde{background:#f0fdf4;border:1px solid #bbf7d0;color:var(--verde);border-radius:10px;padding:10px 14px;font-size:13px;margin:10px 0}
+  .passo{border:1px solid var(--borda);border-radius:12px;padding:12px 14px;margin:10px 0;background:#fff}
+  .passo b.t{display:block;font-size:13.5px;margin-bottom:4px}
+  .passo .caminho{font-family:Consolas,monospace;background:var(--fundo);border:1px solid var(--borda);border-radius:7px;padding:2px 7px;font-size:12.5px;color:#0f172a}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12.5px}
+  th{background:var(--fundo);border:1px solid var(--borda);padding:7px 9px;text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
+  td{border:1px solid var(--borda);padding:7px 9px;vertical-align:top}
+  .check{list-style:none;margin-left:0}
+  .check li{padding-left:26px;position:relative;margin:6px 0}
+  .check li::before{content:"☐";position:absolute;left:2px;top:0;font-size:16px;color:var(--azul)}
+  code{font-family:Consolas,monospace;background:var(--fundo);border:1px solid var(--borda);border-radius:5px;padding:1px 5px;font-size:12px}
+  footer{margin-top:28px;border-top:2px solid var(--borda);padding-top:10px;font-size:11.5px;color:var(--cinza)}
+  @media print{body{max-width:none;padding:8mm}.passo,.aviso,.regra,.okverde{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.4</h1>
+  <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
+     Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
+</header>
+
+<div class="regra"><b>Regra de ouro do teste:</b> tudo nasce em <b>HOMOLOGAÇÃO</b> (modo teste, sem valor fiscal). A tela mostra uma placa vermelha escrita <b>HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL</b> o tempo todo. Se em algum momento aparecer <b>PRODUÇÃO</b> sem ninguém ter habilitado de propósito, anote como ERRO GRAVE. Nada aqui emite nota de verdade: emitir exige clique, senha na hora e a palavra PRODUCAO digitada.</div>
+
+<h2>Antes de começar (2 minutos)</h2>
+<ol>
+  <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.4</code>.<br>
+      Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
+  <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
+</ol>
+
+<h2>Parte A — Navegador (sem certificado, sem emitir nada)</h2>
+<p>Objetivo: provar que o menu fiscal funciona como MENU (não aba flutuante), que os popups são os do sistema (caixa própria com X), e que nada some no modo escuro.</p>
+
+<div class="passo"><b class="t">A1. A Central de Nota Fiscal é um menu de verdade</b>
+<ul class="check">
+  <li>No menu de cima, clique em <span class="caminho">NF-e/NFC-e</span> (ou <span class="caminho">Nota Fiscal</span>). Abre uma TELA inteira, não uma janelinha flutuante.</li>
+  <li>No topo da tela: a placa vermelha <b>HOMOLOGAÇÃO</b> com o contador <code>0 autorizadas</code>.</li>
+  <li>Três botões na primeira linha: <b>Habilitar PRODUÇÃO</b> · <b>Dados fiscais (CNPJ/IE/NCM)</b> · <b>Inutilizar faixa</b>.</li>
+  <li>Card <b>Certificado A1</b> e card <b>NFC-e — código CSC</b> lado a lado, com campos ID do CSC e CSC (senha) e botão Salvar CSC.</li>
+  <li>Seção <b>EMISSÕES DESTA EMPRESA</b> UMA vez só (nada de título duplicado).</li>
+</ul></div>
+
+<div class="passo"><b class="t">A2. Popups são do sistema (têm X, nunca janela feia do navegador)</b>
+<ul class="check">
+  <li>Clique em <b>Habilitar PRODUÇÃO</b>. Abre uma caixa do próprio sistema pedindo para escrever <code>PRODUCAO</code>. Tem <b>X</b> no canto e botão Cancelar.</li>
+  <li>Escreva qualquer outra coisa e confirme: tem que recusar com aviso. Escreva <code>PRODUCAO</code> de teste e confirme: a placa fica verde escrita <b>PRODUÇÃO — a nota gerada aqui VALE DE VERDADE</b>.</li>
+  <li>Clique em <b>Voltar p/ HOMOLOGAÇÃO</b>: caixa de confirmação do sistema, confirme, a placa volta a ficar vermelha.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A3. Modo escuro da Central (foi refeito na v6.0.3)</b>
+<ul class="check">
+  <li>Ative o modo escuro do sistema e reabra a Central: fundo escuro uniforme, cards escuros, textos legíveis, botões com contraste. Nada de texto fantasma nem card branco pendurado.</li>
+  <li>Abra de novo o popup de Produção no escuro: caixa escura, campos legíveis.</li>
+</ul></div>
+
+<div class="passo"><b class="t">A4. Nuvem com papéis (novidade da v6.0.4)</b>
+<ul class="check">
+  <li>O botão <b>Nuvem</b> aparece no topo para qualquer usuário.</li>
+  <li>PC <b>comum</b> (entrou com a senha de conexão): a tela Nuvem abre, mas o bloco <b>📊 Uso da nuvem hoje</b> (gastos) <b>não aparece</b>; no fim existe <b>Desconectar ESTE computador</b> — e ele só tira este PC (confirmar e cancelar).</li>
+  <li>PC que entrou com <b>CNPJ + senha do gerente</b>: aparece Perfil <b>Administrador</b>, o bloco de uso, e a zona <b>Administração da nuvem</b> (aparelhos, excluídos, convites).</li>
+</ul></div>
+
+<div class="passo"><b class="t">A5. O caso dos "dados que sumiam" (cura da sessão, v6.0.4)</b>
+<ul class="check">
+  <li>Na tela Nuvem (PC administrador): <b>Administração da nuvem → Ver aparelhos e dados enviados → botão verde "Reparar sessão agora"</b>. Clique.</li>
+  <li>Tem que responder ou <i>"Sessão: já estava com empresa"</i> ou <i>"carimbada com emp_digicopy"</i>. Se responder outra coisa, anote a frase exata no relatório.</li>
+  <li>Depois abra Clientes/Produtos: as listas continuam cheias como sempre.</li>
+</ul></div>
+
+<h2>Parte B — Computador com o .exe + certificado A1 (homologação)</h2>
+<p>Objetivo: emitir notas em <b>modo teste</b> de verdade contra a SEFAZ-MG, usando o certificado A1 instalado no PC. A senha do certificado é pedida na hora de cada transmissão e <b>não fica salva</b>.</p>
+
+<div class="aviso"><b>Pré-requisitos:</b> sistema aberto pelo <b>.exe</b> (não pelo navegador) · certificado A1 importado uma vez na Central (botão da área do certificado) · dados fiscais preenchidos em <b>Dados fiscais (CNPJ/IE/NCM)</b> · placa vermelha de HOMOLOGAÇÃO no topo · produto de teste com NCM preenchido.</div>
+
+<div class="passo"><b class="t">B1. Emitir NF-e de teste (modelo 55)</b>
+<ul class="check">
+  <li>Faça uma venda (ou finalização) de valor baixo para um cliente de teste e mande emitir a NF-e.</li>
+  <li>O sistema constrói o XML, assina com o A1, transmite para a SEFAZ-MG de homologação e mostra o resultado na hora.</li>
+  <li>Sucesso: a nota aparece em <b>EMISSÕES DESTA EMPRESA</b> como autorizada (em homologação a chave ainda é de teste).</li>
+  <li>Abra o <b>DANFE (A4)</b>: confira cabeçalho, itens, totais e o selo <b>NOTA DE TESTE, SEM VALOR FISCAL</b> nas informações complementares.</li>
+  <li><b>Baixar XML</b>: salva o arquivo assinado (é o que iria para a contabilidade).</li>
+</ul></div>
+
+<div class="passo"><b class="t">B2. Cancelar e inutilizar (ainda em homologação)</b>
+<ul class="check">
+  <li>Na nota de teste, botão <b>Cancelar</b>: pede justificativa com no mínimo 15 letras; transmite o evento 110111 e marca a nota como cancelada.</li>
+  <li><b>Inutilizar faixa</b>: informe modelo 55, série 1, um número que pulou; confirme na caixa do sistema e confira a resposta da SEFAZ.</li>
+</ul></div>
+
+<div class="passo"><b class="t">B3. Proteções que têm que estar de pé</b>
+<ul class="check">
+  <li>Nada é emitido sozinho: sem clique não sai nota (não existe temporizador escondido — isso é provado por teste automático).</li>
+  <li>Duplicidade: tentar emitir a mesma venda duas vezes é bloqueado com aviso.</li>
+  <li>Tudo fica registrado em <b>Auditoria</b> (quem emitiu, cancelou, quando).</li>
+</ul></div>
+
+<h2>Se der erro: o que copiar</h2>
+<table>
+  <tr><th>Onde apareceu</th><th>O que copiar pro relatório</th></tr>
+  <tr><td>Caixa vermelha de erro na tela</td><td>O texto inteiro da caixa (pode copiar com o mouse)</td></tr>
+  <tr><td>Console do navegador (F12)</td><td>A linha vermelha começando com a data/hora e a versão</td></tr>
+  <tr><td>Resposta da SEFAZ</td><td>O código e a mensagem (ex.: "Rejeição 539: ...")</td></tr>
+  <tr><td>Sistema travou/tela branca</td><td>O que você clicou antes + foto da tela</td></tr>
+</table>
+
+<h2>Como entregar o resultado</h2>
+<ol>
+  <li>Abra o arquivo <b>RELATORIO_DE_TESTE_NF.txt</b> (está junto com este guia) em qualquer editor de texto.</li>
+  <li>Preencha o que deu certo, o que deu errado, as <b>correções</b> que pede e as <b>adições</b> que sentiu falta.</li>
+  <li>Mande de volta <b>colando o conteúdo na conversa</b> (ou enviando o arquivo). Não precisa formatar nada bonito — o texto puro serve.</li>
+</ol>
+
+<div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
+
+<footer>
+  Guia do testador · Sistema Digicopy <b>v6.0.4</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.4, este guia ainda não é o que você está testando.
+</footer>
+
+</body>
+</html>

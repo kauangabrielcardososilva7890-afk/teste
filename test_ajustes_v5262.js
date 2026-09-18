@@ -32,7 +32,7 @@ const gHtml = fs.readFileSync('gerente-atualizacoes/index.html', 'utf8');
 
 console.log('== PATCH: portão da nuvem antes do login de usuário ==');
 ok('patch existe com guard próprio (__v5262ln)', patch.indexOf("window.__v5262ln") >= 0);
-ok('manifesto: patch v5.26.2 na 203 (v5.26.0 na 202; fecha com a data grande do chamado na 204)', manifest.length === 208 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === PATCH && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
+ok('manifesto: patch v5.26.2 na 203 (v5.26.0 na 202; fecha com a data grande do chamado na 204)', manifest.length === 209 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === PATCH && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5262ln') >= 0);
 ok('portão cobre a tela inteira só quando NÃO tem token (conectou 1x some)', patch.indexOf("if (tokenNuvem()) return;") >= 0 && patch.indexOf('v5262-portao') >= 0);
 ok('ordem certa: etapa 1 = CNPJ+senha via /v1/check-pass', patch.indexOf("'/v1/check-pass'") >= 0 && patch.indexOf('v5262-etapa1') >= 0);
@@ -71,7 +71,7 @@ ok('PURA sessaoDoDiaExpirada: login de hoje = válida; de ontem = expira',
   (sandbox.localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({loginAt:'2026-09-01T10:00:00'})), P.sessaoDoDiaExpirada() === true));
 
 console.log('== WORKER: /v1/check-pass + erros específicos do gerente ==');
-ok('worker carimbado 5.26.2', wk.indexOf("WORKER_VERSION = '5.26.2'") >= 0);
+ok('worker carimbado 5.26.3', wk.indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 ok('rota POST /v1/check-pass existe', wk.indexOf("'/v1/check-pass'") >= 0 && wk.indexOf("request.method === 'POST' && url.pathname === '/v1/check-pass'") >= 0);
 ok('check-pass NÃO cria nada (sem INSERT nesse trecho)', (function(){ const t = wk.split("'/v1/check-pass'")[1].split("'/v1/enroll-cnpj'")[0]; return t.indexOf('INSERT') < 0 && t.indexOf('INSERT INTO devices') < 0 && t.indexOf('randomToken') < 0; })());
 ok('check-pass diz quando a senha ainda não foi definida (senhaDefinida:false)', wk.indexOf('senhaDefinida: false') >= 0 && wk.indexOf('Senhas de conexão (CNPJ) e do Gerente') >= 0);
@@ -87,8 +87,8 @@ ok('tela tem avisoLoginGerente mapeando os códigos', gHtml.indexOf('avisoLoginG
 ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem internet)', gHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0 && /sem (internet|conexão)/i.test(gHtml));
 
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
-ok('package.json na 6.0.3', pkg.version === '6.0.3');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
+ok('package.json na 6.0.4', pkg.version === '6.0.4');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 

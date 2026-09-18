@@ -71,7 +71,7 @@ console.log('== WORKER: rotas novas (conexão CNPJ, site restrito, gerente, imag
 ['/v1/connect-pass', '/v1/enroll-cnpj', '/v1/site-login', '/v1/gerente-login', '/v1/gerente/empresas', '/v1/release-image'].forEach((r) => {
   ok('worker: rota ' + r, wk.indexOf("'" + r + "'") >= 0);
 });
-ok('worker: definição de senhas só pra ADMIN do painel', wk.indexOf("'/v1/connect-pass'") >= 0 && /connect-pass[\s\S]{0,220}requireAdmin\(request, env\)/.test(wk));
+ok('worker: definição de senhas só pra ADMIN do painel OU gerente provado (eclusa v5.26.3)', wk.indexOf("'/v1/connect-pass'") >= 0 && /connect-pass[\s\S]{0,1200}requireAdminOuGerente\(request, env\)/.test(wk));
 ok('worker: gerente-login EXIGE CNPJ da empresa dona', /gerente-login[\s\S]{0,900}owner_cnpj/.test(wk));
 ok('worker: requireAdminOuGerente = admin OU gerente', wk.indexOf('requireAdminOuGerente') >= 0 && /GERENTE_OU_ADMIN_REQUERIDO/.test(wk));
 ok('worker: histórico /v1/app-releases FECHADO (sem vazar slug/destinatário)', /v1\/app-releases'\) \{[\s\S]{0,400}requireAdminOuGerente/.test(wk));
@@ -88,7 +88,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.2'") >= 0);
+ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);
@@ -118,9 +118,9 @@ ok('worker: site v5.26.1 bonito e informativo (marca, confiança, tamanho do arq
 ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.build.nsis && gCmd.indexOf('é') < 0 && gCmd.indexOf('ã') < 0);
 
 console.log('== CARIMBO + MANIFESTO ==');
-ok('manifesto fecha com a data grande do chamado (posição 204; login-nuvem na 203, v5.26.0 na 202)', manifest.length === 208 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
-ok('package.json na 5.26.0', pkg.version === '6.0.3');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
+ok('manifesto fecha com a data grande do chamado (posição 204; login-nuvem na 203, v5.26.0 na 202)', manifest.length === 209 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
+ok('package.json na 5.26.0', pkg.version === '6.0.4');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
 ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');

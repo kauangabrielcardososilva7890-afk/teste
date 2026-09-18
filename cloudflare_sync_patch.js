@@ -108,10 +108,14 @@ function systemAdmin(){
   try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
 }
 function applyAdminVisibility(){
-  const admin=systemAdmin(),needsAuthorization=!token();
+  const admin=systemAdmin();
   const cloud=document.getElementById('btn-nuvem');
   const backup=document.getElementById('btn-backup-top');
-  if(cloud)cloud.style.display=(admin||needsAuthorization)?'':'none';
+  // v6.0.4 — pedido dele: o botão Nuvem aparece em TODO PC (conectado ou não).
+  // O que muda é o CONTEÚDO lá dentro: PC administrador (entrou com a senha do
+  // gerente) vê gastos e a zona de administração; PC comum vê a nuvem SEM os
+  // gastos e só desconecta a própria sessão.
+  if(cloud)cloud.style.display='';
   if(backup)backup.style.display=admin?'':'none';
 }
 window.DIGICOPY_CLOUD.refreshVisibility=applyAdminVisibility;
@@ -281,13 +285,13 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
-    usoBloco+linhaVersaoNuvem+
+    (isAdmin?usoBloco:'')+linhaVersaoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
-    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
+    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Para ter acesso de administrador, desconecte e entre de novo com o CNPJ + a <b>senha do gerente</b>.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');
@@ -384,7 +388,10 @@ async function renderConnected(body){
 }
 
 window.abrirCloudflareNuvem=async function(){
-  if(!systemAdmin()&&token()){if(typeof window.lfbAlert==='function')window.lfbAlert('Este computador já está autorizado. Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
+  // v6.0.4 — a tela Nuvem ABRE para qualquer usuário. O que é de administrador
+  // (gastos, aparelhos, convite, zerar nuvem, acompanhamento dos PCs) continua
+  // trancado lá dentro pelo PAPEL DO APARELHO (role admin = entrou com a senha
+  // do gerente), não pelo login da pessoa.
   const root=modalShell(),body=root.querySelector('#dc-body');
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);

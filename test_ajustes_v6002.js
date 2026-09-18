@@ -51,7 +51,7 @@ console.log('== DIAGNÓSTICO passa a enxergar órfãos (a prova que escapava) ==
 ok('conta "SEM CARIMBO (órfãos)"  por entidade', diag.indexOf('orfaos++') >= 0 && diag.indexOf('SEM CARIMBO (órfãos)') >= 0);
 ok('diagnóstico aponta a causa provável dos sumiços', diag.indexOf('CAUSA PROVÁVEL DOS SUMIÇOS') >= 0);
 ok('diagnóstico percebe sessão sem empresa como fator', diag.indexOf('PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA') >= 0);
-ok('cura garante "recarregar não resolve — carimbar resolve"', diag.indexOf('A CURA v6.0.2') >= 0);
+ok('cura garante "recarregar não resolve — carimbar resolve" (v6.0.4: insiste 10min + botão Reparar)', diag.indexOf('v6.0.4') >= 0 && diag.indexOf('Reparar sessão agora') >= 0);
 ok('o diagnóstico continua só LENDO (não escreve no banco)', diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') >= 0);
 
 console.log('== CENTRAL NF VIRA MENU (aba flutuante morta) ==');
@@ -74,11 +74,11 @@ ok('duplicidade usa nfxConfirmar (abrir DANFE)', trx.indexOf("nfxConfirmar('Nota
 ok('senha pedida com await (popup assim é Promise)', trx.indexOf('await nfxPedirSenha()') >= 3);
 
 console.log('== INTEGRAÇÃO + CARIMBO 6.0.2 ==');
-ok('patch fecha a fila (posição 208)', manifest.length === 208 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js');
+ok('patch na 208; perfis+cura v6.0.4 fecha a fila (209)', manifest.length === 209 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js');
 ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.indexOf('Curei ') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
-ok('package.json na 6.0.2', pkg.version === '6.0.3');
-ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
-ok('worker SEGUE 5.26.2 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('package.json na 6.0.2', pkg.version === '6.0.4');
+ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
+ok('worker SEGUE 5.26.3 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.2 (dados sumidos CURADOS: sessão e registros carimbados quando há UMA empresa; Central NF vira menu de verdade; popups próprios com X em todo o fiscal).');

@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.7';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.2';
+const WORKER_VERSION = '5.26.3';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -1403,7 +1403,13 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
   // ── v5.26.0 — CNPJ no lugar do convite + login do site + login do GERENTE ──
   if (request.method === 'POST' && url.pathname === '/v1/connect-pass') {
     // Admin define (ou troca) as senhas. Guardadas SÓ como hash com pepper.
-    const admin = await requireAdmin(request, env);
+    // v5.26.3 — eclusa anti-trancamento: se TODOS os PCs viraram "device" (ex.:
+    // o navegador do PC admin foi limpo e ele reentrou pela senha de conexão),
+    // o dono continua conseguindo separar as senhas provando ser o GERENTE
+    // (mesmo caminho do programa Gerente de Atualizações). Sem isso, ninguém
+    // mais conseguiria definir senha do gerente diferente → ninguém virava
+    // admin nunca mais.
+    const adminOuGerente = await requireAdminOuGerente(request, env);
     const body = await readBody(request);
     const senha = String((body && body.senha) || '');
     const senhaG = String((body && body.senhaGerente) || '');
@@ -1442,14 +1448,33 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
 
   if (request.method === 'POST' && url.pathname === '/v1/enroll-cnpj') {
     // v5.26.0 — PC novo entra com CNPJ + senha de conexão (sem código de convite).
+    // v5.26.3 — pedido dele: a SENHA DO GERENTE também entra aqui. O PC que
+    // entra com ela nasce ADMINISTRADOR (os menus oficiais de admin aparecem:
+    // gastos da nuvem, aparelhos, convites, bloqueios, acompanhamento). Quem
+    // entra com a senha de conexão segue PC COMUM: vê a tela Nuvem SEM os
+    // gastos e só consegue desconectar a própria sessão.
+    // Regras de segurança:
+    //  • senha errada recebe SEMPRE a mesma mensagem (a nuvem não vira oráculo
+    //    dizendo “o CNPJ existe mas a senha não”).
+    //  • só vira admin se a senha do gerente for DIFERENTE da de conexão — se o
+    //    dono deixou as duas iguais, ninguém vira admin por este caminho.
     const body = await readBody(request);
     const cnpj = soDigitos((body && body.cnpj) || '');
     const nome = cleanText((body && body.empresaNome) || (body && body.nome) || '', 120);
     const senha = String((body && body.senha) || '');
     const name = cleanText((body && body.deviceName) || '', 80);
     if (!cnpjValido(cnpj) || !senha || !name) throw new ApiError(400, 'DADOS_NECESSARIOS', 'Informe CNPJ (14 dígitos), senha de conexão e o nome do computador.');
-    if (!(await conferirSenha(env, cnpj, senha, 'conn_hash'))) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');
     const seg = await lerSegredos(env);
+    let role = 'device';
+    let via = 'cnpj';
+    if (!(await conferirSenha(env, cnpj, senha, 'conn_hash'))) {
+      const gerOk = !!(seg && seg.gerente_hash && seg.conn_hash && seg.gerente_hash !== seg.conn_hash
+        && cnpj === seg.owner_cnpj
+        && (await conferirSenha(env, cnpj, senha, 'gerente_hash')));
+      if (!gerOk) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');
+      role = 'admin';
+      via = 'cnpj-gerente';
+    }
     if (seg && seg.owner_cnpj && cnpj !== seg.owner_cnpj && !(await env.DB.prepare('SELECT cnpj FROM empresas WHERE cnpj = ?').bind(cnpj).first())) {
       throw new ApiError(403, 'CNPJ_NAO_CADASTRADO', 'Este CNPJ ainda não consta como empresa conhecida. Peça ao administrador para cadastrar.');
     }
@@ -1459,10 +1484,10 @@ function linkDownload(origin, versao){ return origin + '/dl/' + encodeURICompone
     const token = randomToken('dcp_');
     const tokenHash = await sha256(token);
     await env.DB.batch([
-      env.DB.prepare(`INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at) VALUES (?, ?, ?, 'device', ?, ?)`).bind(id, name, tokenHash, now, now),
-      env.DB.prepare(`INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at) VALUES ('device_enrolled', ?, ?, ?, ?)`).bind(id, id, JSON.stringify({ name, role: 'device', via: 'cnpj', cnpj }), now)
+      env.DB.prepare(`INSERT INTO devices(id, name, token_hash, role, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(id, name, tokenHash, role, now, now),
+      env.DB.prepare(`INSERT INTO device_events(event_type, device_id, actor_id, details_json, created_at) VALUES ('device_enrolled', ?, ?, ?, ?)`).bind(id, id, JSON.stringify({ name, role: role, via: via, cnpj: cnpj }), now)
     ]);
-    return json({ ok: true, activation: 'cnpj', device: { id, name, role: 'device' }, token }, 201);
+    return json({ ok: true, activation: via, device: { id, name, role: role }, token }, 201);
   }
   if (request.method === 'POST' && url.pathname === '/v1/site-login') {
     // v5.26.0 — entrada do site restrito (CNPJ + senha de conexão).

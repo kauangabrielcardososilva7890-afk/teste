@@ -7,7 +7,7 @@ Este arquivo é o **mapa de decisões** — o dump bruto **NÃO** fica no reposi
 
 O dump contém valores sensíveis de verdade. Ficam **só com o dono**, fora do repositório:
 
-- `NFCE_CSC_TOKEN` / `NFCE_ID_CSC_TOKEN` (=000001) — **CSC de produção** da NFC-e. É a peça que falta para a NFC-e valer de verdade. Quando for ativar: colar nos campos **NFC-e — Código CSC** da Central de Notas (já existem desde a 6.0.2), no PC emissor, nunca em commit.
+- `NFCE_CSC_TOKEN` / `NFCE_ID_CSC_TOKEN` (=000001) — **CSC de produção** da NFC-e. **A pedido dele (18/09/2026): DESCARTADO — não usar, não copiar, não guardar** ("não sabia que tinha tipo uma senha envolvida; esqueça isso"). Quando formos ativar NFC-e de verdade, ele mesmo gera/confere o CSC no portal da SEFAZ-MG e cola nos campos **NFC-e — Código CSC** da Central de Notas (já existem desde a 6.0.2), no PC emissor, nunca em commit.
 - `NFE_CERT_NUMEROSERIE` — nº de série do certificado A1 dele. Serve só para ele conferir se o .pfx é o certo na hora de subir na Central.
 - E-mails do escritório de contabilidade (`NFE_EMAIL_ESCRITORIO`, `EMAIL_INFO_CAIXA_EMAIL`) — dados pessoais de terceiro; usar só quando ele confirmar.
 
@@ -56,3 +56,37 @@ Ele avisou que tem mensagens aí que não quer. Candidatas óbvias a pular: **ME
 1. QR NFC-e: formato v1 vs v2 (do dump: v2) — alinhar antes do 1º teste do modelo 65.
 2. CSOSN padrão por operação (Simples) — confirmar com a contabilidade dele qual CSOSN usa em venda dentro/fora do estado (`NFE_TRIB_VENDA_DENTRO` 1 / `_FORA` 2 eram apontadores de tributação no velho).
 3. NCM por tipo de item — decidir tela (categoria de produto vs produto individual).
+
+## 7. INVENTÁRIO do banco antigo (7 fotos recebidas 18/09/2026 — "as fotos anexadas são tudo o que tem")
+
+Ele tem o banco inteiro do sistema velho exportado como **arquivos JSON (um por tabela)**, datados de 21/08/2026. É o material da futura **migração com mapa de campos + prévia** (decisão permanente). Inventário transcrito das fotos (tamanhos em KB):
+
+**Núcleo (migra primeiro — é o coração do negócio):**
+| Tabela antiga | KB | Destino no nosso sistema |
+|---|---|---|
+| CLIENTES | 3.347 | clientes |
+| ENDERECOS 569 · RUAS 109 · BAIRROS 36 · CIDADES 1.031 · ESTADOS 2 | — | endereços dos clientes (normalizar na prévia) |
+| PRODUTOS | 2.992 | produtos |
+| PRODUTOS_VALORES · PRODUTOS_CATEGORIA · PRODUTOS_VARIACAO 88 · CATEGORIA · FABRICANTE · UNIDADE_MEDIDA | 1–88 | campos auxiliares de produto (preço/categoria/variação) |
+| FUNCIONARIOS 17 | 17 | usuários (mapear cargo → perfil nosso) |
+| FORNECEDORES 6 | 6 | fornecedores |
+| CARTUCHOS 91 · CARTUCHO_VALOR · CARTUCHO_DEFEITO | 91+ | recargas/cartuchos (domínio dele) |
+| EQUIPAMENTOS | 111 | equipamentos (impressoras) |
+
+**Operação/histórico (migra depois do núcleo, com prévia de amostra):**
+- VENDAS **36.577** + ITENS_VENDA **25.396** + VENDAS_PAGAMENTO + ESTORNOS 798 + CUPONS_ITENS 39 → vendas e itens (maior bloco; importar por lotes)
+- CONTAS_RECEBER **18.277** + RECEBIMENTO_CONTAS_RECEBER 5.547 + CONTAS_RECEBER_AVULSA + CONTAS_PAGAR 111 + CONTAS 12 + BANCOS → financeiro
+- LOCACAO 276 + ITENS_LOCACAO 4.045 + DESPESAS_LOCACAO 2.239 + LOCACAO_ESTOQUE 24 + LOCACAO_ESTOQUE_HISTORICO 262 → contratos/locação
+- LEITURAS 1.847 · VISITAS **9.180** · MOVIMENTACAO 1.328 · ITENS_INSUMOS 19 · ITENS_INSUMOS_GASTOS 1.357 · CAIXA 162 · RETIRADA_CAIXA 38 · RECEBIMENTO(_ITENS) 1.638 · ORCAMENTO 142 + ITENS_ORCAMENTO 145 · ITENS_COMPRA 5
+- OBS: não aparece tabela "ordem de serviço" literal. OS do velho pode ser VISITAS, REGISTROS ou CARTUCHO_DEFEITO/MOTIVO_DEFEITO — **decidir na prévia, não chutar**.
+
+**Fiscal (ouro pra linha 6.x):**
+- NOTA_FISCAL 2.107 + ITENS_NOTA 5.224 + FATURA_NFE 4 + ITENS_RECEBIMENTO_NFE 64 + MANIFESTACAO_DFE → histórico de notas emitidas no velho (consulta/arquivo morto; também valida numeração para continuar sequência!)
+- **NCM 4.439** — tabela NCM completa: serve de **dicionário** no nosso sistema (já temos lupa NCM desde a v5.22.28; importar como referência, não como cadastro)
+- TAB_CEST 163 — tabela CEST de referência (idem NCM)
+- TRIBUTOS_PRODUTOS 5 · ICMS_INTERNO 1 · NFSE 1 · CONFIG 8 · CONFIGURACAO 11 (o dump já mapeado acima)
+
+**Referência/lixo (não migra):**
+- IBE_LOG_* (logs internos do velho), CONTADOR_PAGINAS 7.906 (cache de páginas web), LOG 231, SELECIONADOS 14, EMAIL_* / ENQUETES_* / CHAT / LIGACOES / TELEMARKETING / SHOP_* / PUBLICIDADE / PIX_HISTORICO / BOLETOS* / CARTAO_* / CARTÃO fidelidade / AGENDA_* / ANEXOS / ATUALIZACAO_REDE / AVALIACAO / ENCOMENDAS / EMPRESA 26.588 (provavelmente logo/blob, confirmar na prévia antes de descartar).
+
+**Regras da migração (permanentes):** importar DENTRO do app (arquivos ficam no PC dele; >130 MB não vão pro repositório) · mapa de campos com prévia ANTES de gravar · nada lê senha/segredo do velho · ordem: núcleo → fiscal de referência → histórico por lotes.

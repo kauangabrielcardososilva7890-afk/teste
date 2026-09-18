@@ -51,9 +51,9 @@ ok('try/catch envolve o save (nenhum TypeError volta a vazar)', src.indexOf("cat
 ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('saveConfig blindado') >= 0 && bundle.indexOf('v6.0.3 — fiscal no modo escuro + saveConfig blindado') >= 0);
 
 console.log('== CARIMBO 6.0.3 ==');
-ok('package.json na 6.0.3', pkg.version === '6.0.3');
-ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
-ok('manifesto segue 208 (correção visual NÃO cria arquivo novo — vive no patch vivo da central)', manifest.length === 208 && manifest[manifest.length - 1] === 'autocura_empresa_central_nf_tela_patch.js');
-ok('worker SEGUE 5.26.2 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
+ok('package.json na 6.0.3', pkg.version === '6.0.4');
+ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.4'") >= 0 && html.indexOf('>v6.0.4<') >= 0);
+ok('manifesto sobe pra 209 (correção visual vive no patch da central; v6.0.4 fecha a fila)', manifest.length === 209 && manifest[manifest.length - 2] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 1] === 'perfis_nuvem_cura_sessao_patch.js');
+ok('worker SEGUE 5.26.3 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');
