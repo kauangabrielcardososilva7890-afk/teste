@@ -60,8 +60,8 @@ ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('interno') && fs.readFileS
 
 
 
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.7'"), 'index 6.0.7');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.7<'), 'rodapé v6.0.7');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.8'"), 'index 6.0.8');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.8<'), 'rodapé v6.0.8');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (portal de atualizações só dele + arquivo no R2 + site vivo).');

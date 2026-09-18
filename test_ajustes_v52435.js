@@ -116,14 +116,14 @@ ok(filtros >= 3, 'vencedor: remanejada fora de máquinas do contrato + mensal fi
 
   // ── 4. Bundle / versão / celular ───────────────────────────────────────────
   const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-  ok(man[man.length-13] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-12] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-11] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-10] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-9] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length-8] === 'painel_gerente_patch.js' && man[man.length-7] === 'fiscal_guard_patch.js' && man[man.length-6] === 'nf_transmissao_patch.js' && man[man.length-5] === 'autocura_empresa_central_nf_tela_patch.js' && man[man.length-4] === 'perfis_nuvem_cura_sessao_patch.js' && man[man.length-3] === 'permissoes_estorno_venda_patch.js' && man[man.length-2] === 'fiscal_menu_completo_patch.js' && man[man.length-1] === 'dashboard_inicio_clicavel_patch.js', 'manifest: remanejo, depois guarda, revisao v5.25.0, CNPJ v5.26.0, login v5.26.2, chamado v5.26.4, painel, portao v6.0.0, transmissao; perfis+cura; permissões+estorno; menu fiscal v6.0.6; Início clicável v6.0.7 fecha a fila (vence sempre)');
+  ok(man[man.length-14] === 'ajustes_v52436_leitura_uma_aberta_patch.js' && man[man.length-13] === 'ajustes_v5250_leitura_overhaul_patch.js' && man[man.length-12] === 'ajustes_v5260_cnpj_gerente_patch.js' && man[man.length-11] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && man[man.length-10] === 'ajustes_v5264_chamado_data_grande_patch.js' && man[man.length-9] === 'painel_gerente_patch.js' && man[man.length-8] === 'fiscal_guard_patch.js' && man[man.length-7] === 'nf_transmissao_patch.js' && man[man.length-6] === 'autocura_empresa_central_nf_tela_patch.js' && man[man.length-5] === 'perfis_nuvem_cura_sessao_patch.js' && man[man.length-4] === 'permissoes_estorno_venda_patch.js' && man[man.length-3] === 'fiscal_menu_completo_patch.js' && man[man.length-2] === 'dashboard_inicio_clicavel_patch.js' && man[man.length-1] === 'menus_fiscais_separados_patch.js', 'manifest: remanejo, depois guarda, revisao v5.25.0, CNPJ v5.26.0, login v5.26.2, chamado v5.26.4, painel, portao v6.0.0, transmissao; perfis+cura; permissões+estorno; menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 fecha a fila (vence sempre)');
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('IMPRESSORA_REMANEJO_V52435_PURE') && bundle.includes('impf-avancar'), 'bundle: wrap final dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('IMPRESSORA_REMANEJO_V52435_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.7'"), 'index 6.0.7');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.7<'), 'rodapé v6.0.7');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.7'"), 'celular 6.0.7');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.0.7', 'package.json 6.0.7');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.8'"), 'index 6.0.8');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.8<'), 'rodapé v6.0.8');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.8'"), 'celular 6.0.8');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.0.8', 'package.json 6.0.8');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.24.35 (P7: serial primeiro + remanejo sem duplicar + remanejada congelada).');

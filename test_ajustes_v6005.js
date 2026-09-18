@@ -14,7 +14,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 211; permissões/estorno na 210, menu fiscal na 211; Início clicável v6.0.7 fecha a fila', man.length === 212 && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[205] === 'fiscal_guard_patch.js');
+ok('manifesto sobe pra 211; permissões/estorno na 210, menu fiscal 211; Início clicável 212; menus fiscais separados v6.0.8 fecha a fila', man.length === 213 && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)', bundle.indexOf('P605_PURE_START') >= 0 && bundle.indexOf('v6.0.5 — permissões no editor') >= 0);
 
 console.log('== PERMISSÕES (editor do usuário) ==');
@@ -65,9 +65,9 @@ delete global.db;
 delete global.window;
 
 console.log('== CARIMBO 6.0.5 ==');
-ok('package.json na 6.0.5', pkg.version === '6.0.7');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0 && html.indexOf('>v6.0.7<') >= 0 && html.indexOf('app.bundle.js?v=6.0.7') >= 0);
-ok('celular carimbado 6.0.5', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0 && mob.indexOf('>v6.0.7<') >= 0);
+ok('package.json na 6.0.5', pkg.version === '6.0.8');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && html.indexOf('>v6.0.8<') >= 0 && html.indexOf('app.bundle.js?v=6.0.8') >= 0);
+ok('celular carimbado 6.0.5', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && mob.indexOf('>v6.0.8<') >= 0);
 
 console.log('\n' + pass + ' passaram, ' + fail + ' falharam.');
 if (fail > 0) process.exit(1);

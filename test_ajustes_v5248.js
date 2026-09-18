@@ -40,9 +40,9 @@ const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
 ok(worker.indexOf("const WORKER_VERSION = '5.26.3'") >= 0, 'worker carimbado (re-ancorado v5.26.3 = gerente vira PC admin; o carimbo original era 5.24.34)');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0, 'index.html carimbado (re-ancorado v6.0.7)');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.7)');
-ok(pkg.version === '6.0.7', 'package.json carimbado (re-ancorado v6.0.7)');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0, 'index.html carimbado (re-ancorado v6.0.8)');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.8)');
+ok(pkg.version === '6.0.8', 'package.json carimbado (re-ancorado v6.0.8)');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('esAutoTique') >= 0, 'freio da escola está dentro do bundle');
 

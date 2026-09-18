@@ -15,7 +15,7 @@ const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 const P = require('./fiscal_menu_completo_patch.js');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 212; menu fiscal completo na 211, Início clicável fecha a fila', man.length === 212 && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
+ok('manifesto sobe pra 213; Início clicável na 212, menus fiscais separados fecha a fila', man.length === 213 && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)', bundle.indexOf('FMC606_PURE_START') >= 0 && bundle.indexOf('v6.0.6 — MENU FISCAL COMPLETO') >= 0);
 
 console.log('== CC-e (110110) ==');
@@ -65,10 +65,10 @@ ok('linha de operações (Testar SEFAZ + Pacote) na Central', fmc.indexOf("ops.i
 ok('card configuração fiscal com 4 NCMs/descrição + textarea + salvar na nuvem', fmc.indexOf("card.id='fmc-config'") >= 0 && fmc.indexOf('#fmc-cfg-salvar') >= 0 && fmc.indexOf("db.config.nfTextoSimples=") >= 0);
 ok('classes fiscais reaproveitadas (claro/escuro da 6.0.3)', fmc.indexOf('cnf-card') >= 0 && fmc.indexOf('cnf-input') >= 0 && fmc.indexOf('cnf-btn') >= 0);
 
-console.log('== CARIMBO 6.0.7 ==');
-ok('package.json na 6.0.7', pkg.version === '6.0.7');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0 && html.indexOf('>v6.0.7<') >= 0 && html.indexOf('app.bundle.js?v=6.0.7') >= 0);
-ok('celular carimbado 6.0.7', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.7'") >= 0 && mob.indexOf('>v6.0.7<') >= 0);
+console.log('== CARIMBO 6.0.8 ==');
+ok('package.json na 6.0.8', pkg.version === '6.0.8');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && html.indexOf('>v6.0.8<') >= 0 && html.indexOf('app.bundle.js?v=6.0.8') >= 0);
+ok('celular carimbado 6.0.8', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.8'") >= 0 && mob.indexOf('>v6.0.8<') >= 0);
 
 console.log('\n' + pass + ' passaram, ' + fail + ' falharam.');
 if (fail > 0) process.exit(1);
