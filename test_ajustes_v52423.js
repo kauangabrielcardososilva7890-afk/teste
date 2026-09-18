@@ -62,9 +62,9 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('aviso-update-card'), 'bundle: sininho dentro');
 ok(bundle.includes('card-publicar-atualizacao'), 'bundle: publicador dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-card'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.2'"), 'index: versão 5.25.0');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.2<'), 'index: rodapé v6.0.2');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.2"'), 'package.json 6.0.2');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.3'"), 'index: versão 5.25.0');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.3<'), 'index: rodapé v6.0.3');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.3"'), 'package.json 6.0.3');
 ok(wk.includes("'5.26.2'"), 'worker carimbado 5.26.2 (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

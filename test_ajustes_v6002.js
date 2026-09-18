@@ -77,8 +77,8 @@ console.log('== INTEGRAÇÃO + CARIMBO 6.0.2 ==');
 ok('patch fecha a fila (posição 208)', manifest.length === 208 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js');
 ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.indexOf('Curei ') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
-ok('package.json na 6.0.2', pkg.version === '6.0.2');
-ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.2'") >= 0 && html.indexOf('>v6.0.2<') >= 0);
+ok('package.json na 6.0.2', pkg.version === '6.0.3');
+ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
 ok('worker SEGUE 5.26.2 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.2'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.2 (dados sumidos CURADOS: sessão e registros carimbados quando há UMA empresa; Central NF vira menu de verdade; popups próprios com X em todo o fiscal).');

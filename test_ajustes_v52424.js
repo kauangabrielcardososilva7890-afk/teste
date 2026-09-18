@@ -38,9 +38,9 @@ ok(av.includes('Site onde baixam (mostra só o que está ativo)'), 'app: texto e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes("'/atualizacoes'") && bundle.includes('pub-upd-site'), 'bundle: link do site dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.2'"), 'index 6.0.2 (re-ancorado)');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.2<'), 'rodapé v6.0.2 (re-ancorado)');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.2"'), 'package.json 6.0.2 (re-ancorado)');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.0.3'"), 'index 6.0.3 (re-ancorado)');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v6.0.3<'), 'rodapé v6.0.3 (re-ancorado)');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.0.3"'), 'package.json 6.0.3 (re-ancorado)');
 ok(wk.includes("'5.26.2'"), 'worker carimbado 5.26.2 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

@@ -3279,6 +3279,15 @@ intacto como plano B e coberto pela suíte.
 
 **Ritual:** app 6.0.2 (worker 5.26.2, gerente 5.26.3); manifesto 208 (autocura/central fecha a fila); re-ancoragem completa da fila (v2284-87, 2293/95/96, 2435/36, 5260/62/63/64/65/66, 6000/6001); test_ajustes_v6002.js (31 asserts: puros da cura, diagnóstico, tela, popups, travas) no runner. Suíte: **168/0/0**.
 
+## v6.0.3 — FISCAL NO ESCURO (print dele provou) + saveConfig blindado (2026-09-18)
+
+**Causa provada pelo print dele e pelo log do console:** o menu fiscal com fundo escuro tinha cards brancos soltos, botão com texto invisível e título "EMISSÕES DESTA EMPRESA" duplicado; e o console flagrava `TypeError: reading 'value' of null` no saveConfig.
+1. **CSS próprio do módulo fiscal (cnf-aba-css):** classes cnf-* (card/btn/btn-d/input/txt/sub) com regras claras e escuras (`html.digi-escuro` + `!important` sobrepõe o inline claro). Toda a tela da Central, inputs da NFC-e e o popup nfx-modal cobertos. Nada mais de texto fantasma nem card pendurado.
+2. **Título duplicado eliminado:** o box do histórico tem cabeçalho próprio único; a tela não repete "Emissões desta empresa" fora dele.
+3. **saveConfig blindado (erro real reportado por ele):** a tela "neo" de Configuração tem Salvar SEM os inputs `cfg-emp-*` → saveConfig original lia `.value` de null. Agora o save só roda quando os inputs existem; senão salva o db e avisa (nunca mais TypeError, com try/catch explícito).
+4. **Sobre as imagens:** ele reenviou UMA foto (documentava o problema do escuro, não um exemplo de design). Direção adotada: padrão visual do próprio sistema (telas como Painel Gerente/Buscador) — onde ele deixar comigo, sigo esse padrão. As "imagens de exemplo" originais seguem NUNCA recebidas (relatado honesto).
+**Ritual:** manifesto segue 208 (correção visual VIVE no patch vivo da central, sem arquivo novo); test_ajustes_v6003.js (25 asserts: css claro/escuro, classes, sem duplicidade, saveConfig) no runner; 16 murais re-ancorados pra 6.0.3. Suíte: **169/0/0**.
+
 **Respostas dele que definem a linha 6.xx:** as DUAS notas no código (NFC-e 65 existe, mas operacionalmente ele só usa A4 → NF-e 55 primeiro); certificado A1 + senha EM MÃOS; térmica não compra ("mas quero que tenha o código"); ordem de construção: EU escolho → **NF-e 55 (A4) primeiro, NFC-e 65 em seguida**, sempre homologação antes de produção.
 
 **As 3 garantias de confiança que ele exigiu, viradas lei de código (fiscal_guard_patch.js, posição 206):**

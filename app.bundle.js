@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 208 | sha256: f6e521ba768e0441
+ * scripts: 208 | sha256: 90dc8e07e858a219
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -51010,23 +51010,23 @@ window.nfxRenderHistorico=function(){
   if(box) box.remove();
   box=document.createElement('div');
   box.className='nfx-hist';
-  box.style.cssText='margin:8px 10px;max-height:220px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px';
+  box.style.cssText='max-height:220px;overflow:auto;border-radius:10px'; // as cores vêm da classe cnf-* (claro/escuro)
   const linhas=lista.map(n=>{
     const cor = n.status==='autorizada' ? '#16a34a' : (n.status==='cancelada' ? '#7c3aed' : (n.status==='inutilizada' ? '#64748b' : '#dc2626'));
     const rotulo = n.modelo==='65' ? 'NFC-e' : 'NF-e';
     const amb = n.ambiente==='producao' ? '' : ' <span style="color:#b91c1c;font-size:10px">(teste)</span>';
     const acoes = n.status==='autorizada'
-      ? '<button data-nfx="danfe" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer">DANFE</button> '+
-        '<button data-nfx="xml" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer">XML</button> '+
-        '<button data-nfx="cancelar" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #fca5a5;background:#fff;color:#b91c1c;cursor:pointer">Cancelar</button>'
-      : '<span style="font-size:10px;color:#94a3b8">'+escPure(n.xMotivo||'')+'</span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px">'+
+      ? '<button data-nfx="danfe" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">DANFE</button> '+
+        '<button data-nfx="xml" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">XML</button> '+
+        '<button data-nfx="cancelar" class="nfx-btn-mini nfx-btn-cancel" style="font-size:11px;padding:3px 8px;border-radius:6px">Cancelar</button>'
+      : '<span style="font-size:10px" class="nfx-vazio">'+escPure(n.xMotivo||'')+'</span>';
+    return '<div class="nfx-linha" style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px">'+
       '<b style="color:'+cor+'">'+escPure(n.status||'')+'</b>'+
       '<span style="font-family:monospace">'+escPure(rotulo)+' nº '+escPure(n.numero||'')+'</span>'+amb+
-      '<span style="color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escPure(n.destinatario||n.emitente||'')+' · '+escPure(String(n.totalDaNota?nfxBRL(n.totalDaNota):''))+'</span>'+
+      '<span class="nfx-quem" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escPure(n.destinatario||n.emitente||'')+' · '+escPure(String(n.totalDaNota?nfxBRL(n.totalDaNota):''))+'</span>'+
       '<span data-id="'+escPure(n.id)+'">'+acoes+'</span></div>';
-  }).join('') || '<div style="padding:12px;font-size:12px;color:#94a3b8">Nenhuma nota transmitida ainda. As emissões aparecem aqui.</div>';
-  box.innerHTML='<div style="padding:8px 10px;font-size:11px;font-weight:800;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0">EMISSÕES DESTA EMPRESA (ficam salvas na nuvem)</div>'+linhas;
+  }).join('') || '<div class="nfx-vazio" style="padding:12px;font-size:12px">Nenhuma nota transmitida ainda. As emissões aparecem aqui.</div>';
+  box.innerHTML='<div class="nfx-hist-cab" style="padding:8px 10px;font-size:11px;font-weight:800;letter-spacing:.3px">EMISSÕES DESTA EMPRESA (ficam salvas na nuvem)</div>'+linhas;
   box.addEventListener('click', function(ev){
     const btn=ev.target.closest('button[data-nfx]'); if(!btn) return;
     const id=ev.target.closest('[data-id]') ? ev.target.closest('[data-id]').getAttribute('data-id') : null; if(!id) return;
@@ -51217,6 +51217,7 @@ window.nfxConfirmar=function(titulo, aviso, op){
 function centralRender(){
   const v=typeof ensureView==='function'?ensureView('central-nf'):null;
   if(!v) return;
+  cnfGarantirCss(); // v6.0.3 — aplica as regras claro/escuro do módulo antes de pintar
   const sess=typeof getSession==='function'?getSession():null;
   if(!sess){ v.innerHTML='<div class="p-8 text-center text-slate-500 text-[13px]">Entre com login para usar o fiscal.</div>'; return; }
   const amb=(window.NFG_PURE&&window.NFG_PURE.nfgAmbiente(db))||'homologacao';
@@ -51233,26 +51234,26 @@ function centralRender(){
   html+='<div style="padding:10px 14px;border-radius:14px;font-weight:800;font-size:13px;color:#fff;background:'+(prod?'#14532d':'#7f1d1d')+'">'+
       '🏛️ '+(prod?'PRODUÇÃO — a nota gerada aqui VALE DE VERDADE':'HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL')+
       ' <span style="font-weight:500;opacity:.9">· '+autorizadas+' autorizadas</span></div>';
-  // Linha de ações
+  // Linha de ações — classes fiscais (claro/escuro). v6.0.3: nada de inline claro fantasma
   html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+
-    '<button id="cnf-amb" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;font-weight:800;font-size:12.5px;cursor:pointer">'+(prod?'⬇ Voltar p/ HOMOLOGAÇÃO (teste)':'⬆ Habilitar PRODUÇÃO (vale de verdade)')+'</button>'+
-    '<button id="cnf-config" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⚙️ Dados fiscais (CNPJ/IE/NCM)</button>'+
-    '<button id="cnf-inut" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #fca5a5;background:#fff;color:#b91c1c;font-weight:800;font-size:12.5px;cursor:pointer">🧹 Inutilizar faixa</button></div>';
+    '<button id="cnf-amb" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">'+(prod?'⬇ Voltar p/ HOMOLOGAÇÃO (teste)':'⬆ Habilitar PRODUÇÃO (vale de verdade)')+'</button>'+
+    '<button id="cnf-config" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">⚙️ Dados fiscais (CNPJ/IE/NCM)</button>'+
+    '<button id="cnf-inut" class="cnf-btn-d" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🧹 Inutilizar faixa</button></div>';
   if(!pode){
     html+='<p style="margin-top:10px;font-size:12px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;padding:8px 12px;border-radius:10px">Seu usuário pode OLHAR tudo aqui, mas só quem tem <b>permissão de emitir NF</b> transmite/inutiliza/cancela (Admin/Dono libera na tela Usuários).</p>';
   }
-  // Certificado + CSC
+  // Certificado + CSC — cards com classe fiscal (o escuro cobre via cnf-aba-css)
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px">'+
-    '<div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff"><p style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px">Certificado A1</p>'+
-    '<p style="font-size:13px;color:#334155;margin:0">Importe pelo computador (.exe) — a SEFAZ só aceita certificado no PC emissor.</p>'+
-    '<p style="font-size:12px;color:#64748b;margin:6px 0 0">A senha é pedida na hora de cada transmissão e <b>não fica salva</b>.</p></div>'+
-    '<div style="border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff"><p style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px">NFC-e — código CSC (SEFAZ-MG)</p>'+
-    '<label style="font-size:11px;font-weight:800;color:#475569">ID do CSC</label><input id="cnf-cscid" value="'+String(cscID).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
-    '<label style="font-size:11px;font-weight:800;color:#475569">CSC</label><input id="cnf-csc" type="password" value="'+String(csc).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border:1px solid #cbd5e1;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
-    '<button id="cnf-cscsalvar" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-weight:800;font-size:12px;cursor:pointer">Salvar CSC</button>'+
-    '<p style="font-size:11.5px;color:#64748b;margin:8px 0 0">'+(teste?teste+' em modo teste — treine à vontade.':'NFC-e pronto no código; gera o CSC no portal da SEFAZ-MG quando for usar de verdade.')+'</p></div></div>';
-  // Emissões (render vivo)
-  html+='<div style="margin-top:12px"><p style="font-size:12px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px">Emissões desta empresa</p><div id="cnf-hist"></div></div>';
+    '<div class="cnf-card"><p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px" class="cnf-sub">Certificado A1</p>'+
+    '<p style="font-size:13px;margin:0" class="cnf-txt">Importe pelo computador (.exe) — a SEFAZ só aceita certificado no PC emissor.</p>'+
+    '<p style="font-size:12px;margin:6px 0 0" class="cnf-sub">A senha é pedida na hora de cada transmissão e <b>não fica salva</b>.</p></div>'+
+    '<div class="cnf-card"><p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px" class="cnf-sub">NFC-e — código CSC (SEFAZ-MG)</p>'+
+    '<label style="font-size:11px;font-weight:800">ID do CSC</label><input id="cnf-cscid" class="cnf-input" value="'+String(cscID).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
+    '<label style="font-size:11px;font-weight:800">CSC</label><input id="cnf-csc" class="cnf-input" type="password" value="'+String(csc).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
+    '<button id="cnf-cscsalvar" class="cnf-btn" style="height:32px;padding:0 12px;border-radius:8px;font-size:12px">Salvar CSC</button>'+
+    '<p style="font-size:11.5px;margin:8px 0 0" class="cnf-sub">'+(teste?teste+' em modo teste — treine à vontade.':'NFC-e pronto no código; gera o CSC no portal da SEFAZ-MG quando for usar de verdade.')+'</p></div></div>';
+  // Emissões (render vivo) — NOME ÚNICO (o histórico já tem cabeçalho próprio: adeus título duplicado)
+  html+='<div style="margin-top:12px"><div id="cnf-hist"></div></div>';
   v.innerHTML=html;
 
   v.querySelector('#cnf-amb').onclick=async function(){
@@ -51336,6 +51337,74 @@ if(typeof window.abrirCentralNfe==='function'){
   };
 }
 try{ cnfInstalarMenu(); }catch(e){}
+
+// ══ v6.0.3a — GUARDA do saveConfig (erro real do console: saveConfig lia
+// cfg-emp-nome mesmo quando a tela de Configuração antiga não está na DOM —
+// a tela "neo" tem botão Salvar SEM esses campos → TypeError 'value' de null).
+// Regra: lê só o que EXISTE; se nada existe aqui, não quebra e avisa. ═══════
+if(typeof window.saveConfig==='function'){
+  const _saveConfig0=window.saveConfig;
+  window.saveConfig=function(){
+    try{
+      const algum=['cfg-emp-nome','cfg-emp-cnpj','cfg-emp-fone','cfg-emp-email'].some(id=>document.getElementById(id));
+      if(!algum){
+        try{ if(typeof db!=='undefined'&&typeof db.save==='function') db.save(); }catch(e){}
+        acToast('Nada de empresa para salvar nesta tela — dados já estão salvos automático.','info');
+        return;
+      }
+      return _saveConfig0.apply(this,arguments);
+    }catch(e){ acToast('Falha ao salvar configuração: '+(e.message||e),'error'); }
+  };
+}
+
+// ══ v6.0.3b — CSS PRÓPRIO do módulo fiscal (claro E escuro). O print dele
+// mostrou: card branco pendurado no fundo escuro + texto fantasma. Regra: │
+// todo elemento fiscal ganha classe cnf-*, e no modo escuro (html.digi-escuro)
+// as cores vêm por CSS com !important (sobrepõe o inline claro). ══════════
+function cnfGarantirCss(){
+  if(document.getElementById('cnf-aba-css')) return;
+  const st=document.createElement('style');
+  st.id='cnf-aba-css';
+  st.textContent=[
+    '#view-central-nf .cnf-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff;color:#1f2937}',
+    '#view-central-nf label{color:#475569}',
+    '#view-central-nf .cnf-txt{color:#334155}',
+    '#view-central-nf .cnf-sub{color:#64748b}',
+    '#view-central-nf .cnf-input{border:1px solid #cbd5e1;background:#fff;color:#0f172a}',
+    '#view-central-nf .cnf-btn{border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-weight:800;cursor:pointer}',
+    '#view-central-nf .cnf-btn:hover{background:#f1f5f9}',
+    '#view-central-nf .cnf-btn-d{border:1px solid #fca5a5;background:#fff;color:#b91c1c;font-weight:800;cursor:pointer}',
+    '#view-central-nf .nfx-hist{border:1px solid #e2e8f0;background:#fff;color:#1f2937}',
+    '#view-central-nf .nfx-hist .nfx-hist-cab{background:#f8fafc;color:#475569;border-bottom:1px solid #e2e8f0}',
+    '#view-central-nf .nfx-hist .nfx-linha{border-bottom:1px solid #f1f5f9}',
+    '#view-central-nf .nfx-hist .nfx-vazio{color:#94a3b8}',
+    '#view-central-nf .nfx-hist .nfx-quem{color:#64748b}',
+    '#view-central-nf .nfx-hist .nfx-btn-mini{border:1px solid #cbd5e1;background:#fff;color:#1e293b;cursor:pointer}',
+    // O popup nfx-modal nasce com inline claro — o escuro sobrepõe por important
+    'html.digi-escuro #nfx-modal>div{background:#101a30 !important;color:#dbe3f0 !important;border:1px solid #2b3b5c !important}',
+    'html.digi-escuro #nfx-modal #nfx-corpo,html.digi-escuro #nfx-modal p,html.digi-escuro #nfx-modal label{color:#c9d6ef !important}',
+    'html.digi-escuro #nfx-modal input{background:#0d1830 !important;color:#e5ecfa !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #nfx-modal button#nfx-cancel,html.digi-escuro #nfx-modal button#nfx-x{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    // MODO ESCURO do menu fiscal propriamente dito
+    'html.digi-escuro #view-central-nf .cnf-card{background:#101a30 !important;border-color:#2b3b5c !important;color:#dbe3f0 !important}',
+    'html.digi-escuro #view-central-nf label{color:#94a7cf !important}',
+    'html.digi-escuro #view-central-nf .cnf-txt{color:#c9d6ef !important}',
+    'html.digi-escuro #view-central-nf .cnf-sub{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .cnf-input{background:#0d1830 !important;color:#e5ecfa !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn:hover{background:#1d2d50 !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn-d{background:#3f1620 !important;color:#f0a8a8 !important;border-color:#6b2b2b !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist{background:#101a30 !important;border-color:#2b3b5c !important;color:#dbe3f0 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-hist-cab{background:#0d1830 !important;color:#94a7cf !important;border-bottom-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-linha{border-bottom-color:#1e2c4a !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-vazio{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-quem{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-btn-mini{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-btn-cancel{background:#3f1620 !important;color:#f0a8a8 !important;border-color:#6b2b2b !important}'
+  ].join('\n');
+  document.head.appendChild(st);
+}
+console.log('v6.0.3 — fiscal no modo escuro + saveConfig blindado');
 console.log('v6.0.2 — cura dados sumidos + Central NF virou MENU + popups próprios com X');
 })();
 

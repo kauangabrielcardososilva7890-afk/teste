@@ -409,23 +409,23 @@ window.nfxRenderHistorico=function(){
   if(box) box.remove();
   box=document.createElement('div');
   box.className='nfx-hist';
-  box.style.cssText='margin:8px 10px;max-height:220px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px';
+  box.style.cssText='max-height:220px;overflow:auto;border-radius:10px'; // as cores vêm da classe cnf-* (claro/escuro)
   const linhas=lista.map(n=>{
     const cor = n.status==='autorizada' ? '#16a34a' : (n.status==='cancelada' ? '#7c3aed' : (n.status==='inutilizada' ? '#64748b' : '#dc2626'));
     const rotulo = n.modelo==='65' ? 'NFC-e' : 'NF-e';
     const amb = n.ambiente==='producao' ? '' : ' <span style="color:#b91c1c;font-size:10px">(teste)</span>';
     const acoes = n.status==='autorizada'
-      ? '<button data-nfx="danfe" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer">DANFE</button> '+
-        '<button data-nfx="xml" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer">XML</button> '+
-        '<button data-nfx="cancelar" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #fca5a5;background:#fff;color:#b91c1c;cursor:pointer">Cancelar</button>'
-      : '<span style="font-size:10px;color:#94a3b8">'+escPure(n.xMotivo||'')+'</span>';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px">'+
+      ? '<button data-nfx="danfe" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">DANFE</button> '+
+        '<button data-nfx="xml" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">XML</button> '+
+        '<button data-nfx="cancelar" class="nfx-btn-mini nfx-btn-cancel" style="font-size:11px;padding:3px 8px;border-radius:6px">Cancelar</button>'
+      : '<span style="font-size:10px" class="nfx-vazio">'+escPure(n.xMotivo||'')+'</span>';
+    return '<div class="nfx-linha" style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px">'+
       '<b style="color:'+cor+'">'+escPure(n.status||'')+'</b>'+
       '<span style="font-family:monospace">'+escPure(rotulo)+' nº '+escPure(n.numero||'')+'</span>'+amb+
-      '<span style="color:#64748b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escPure(n.destinatario||n.emitente||'')+' · '+escPure(String(n.totalDaNota?nfxBRL(n.totalDaNota):''))+'</span>'+
+      '<span class="nfx-quem" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escPure(n.destinatario||n.emitente||'')+' · '+escPure(String(n.totalDaNota?nfxBRL(n.totalDaNota):''))+'</span>'+
       '<span data-id="'+escPure(n.id)+'">'+acoes+'</span></div>';
-  }).join('') || '<div style="padding:12px;font-size:12px;color:#94a3b8">Nenhuma nota transmitida ainda. As emissões aparecem aqui.</div>';
-  box.innerHTML='<div style="padding:8px 10px;font-size:11px;font-weight:800;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0">EMISSÕES DESTA EMPRESA (ficam salvas na nuvem)</div>'+linhas;
+  }).join('') || '<div class="nfx-vazio" style="padding:12px;font-size:12px">Nenhuma nota transmitida ainda. As emissões aparecem aqui.</div>';
+  box.innerHTML='<div class="nfx-hist-cab" style="padding:8px 10px;font-size:11px;font-weight:800;letter-spacing:.3px">EMISSÕES DESTA EMPRESA (ficam salvas na nuvem)</div>'+linhas;
   box.addEventListener('click', function(ev){
     const btn=ev.target.closest('button[data-nfx]'); if(!btn) return;
     const id=ev.target.closest('[data-id]') ? ev.target.closest('[data-id]').getAttribute('data-id') : null; if(!id) return;

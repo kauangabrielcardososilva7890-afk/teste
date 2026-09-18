@@ -87,8 +87,8 @@ ok('tela tem avisoLoginGerente mapeando os códigos', gHtml.indexOf('avisoLoginG
 ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem internet)', gHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0 && /sem (internet|conexão)/i.test(gHtml));
 
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
-ok('package.json na 6.0.2', pkg.version === '6.0.2');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.2'") >= 0 && html.indexOf('>v6.0.2<') >= 0);
+ok('package.json na 6.0.3', pkg.version === '6.0.3');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.3'") >= 0 && html.indexOf('>v6.0.3<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
