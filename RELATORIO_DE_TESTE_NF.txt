@@ -1,5 +1,5 @@
 ════════════════════════════════════════════════════════════════════════
-RELATÓRIO DE TESTE — NOTA FISCAL (NF-e) · Sistema Digicopy v6.0.5
+RELATÓRIO DE TESTE — NOTA FISCAL (NF-e) · Sistema Digicopy v6.0.6
 Preencha em qualquer editor de texto e devolva COLANDO NA CONVERSA
 (ou mande este arquivo). Escreva do seu jeito, sem cerimônia:
 quanto mais direto e detalhado, mais rápido a correção sai.
@@ -9,7 +9,7 @@ quanto mais direto e detalhado, mais rápido a correção sai.
 Nome: ______________________
 Data: ____/____/______
 Testou em:  ( ) navegador    ( ) programa .exe    ( ) os dois
-Versão no rodapé da página: v________  (tem que ser v6.0.5)
+Versão no rodapé da página: v________  (tem que ser v6.0.6)
 
 ────────────────────────────────────────────────────────────────────────
 2) O QUE DEU CERTO (marque com X o que passou de verdade)
@@ -28,6 +28,9 @@ Parte B — .exe + certificado A1 (homologação)
 [ ] B1 Baixar XML salvou o arquivo assinado
 [ ] B2 Cancelamento com justificativa (15+ letras) registrou na nota
 [ ] B2 Inutilização de número respondeu certo da SEFAZ
+[ ] B2 Carta de Correção (CC-e) registrada na nota de teste
+[ ] B2 Testar SEFAZ respondeu cStat 107 (em operação)
+[ ] B2 Pacote do mês baixou o .zip com XMLs + indice.txt
 [ ] B3 Nada emite sozinho / duplicidade bloqueada / auditoria registrou
 
 ────────────────────────────────────────────────────────────────────────

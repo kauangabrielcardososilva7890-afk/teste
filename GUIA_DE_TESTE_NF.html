@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.5</title>
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.6</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -61,6 +61,8 @@
   <li>Três botões na primeira linha: <b>Habilitar PRODUÇÃO</b> · <b>Dados fiscais (CNPJ/IE/NCM)</b> · <b>Inutilizar faixa</b>.</li>
   <li>Card <b>Certificado A1</b> e card <b>NFC-e — código CSC</b> lado a lado, com campos ID do CSC e CSC (senha) e botão Salvar CSC.</li>
   <li>Seção <b>EMISSÕES DESTA EMPRESA</b> UMA vez só (nada de título duplicado).</li>
+  <li>Linha de operações (v6.0.6): <b>📡 Testar SEFAZ agora</b> e <b>🗂 Pacote do mês p/ contador (zip)</b>.</li>
+  <li>Card <b>Configuração fiscal</b>: NCM padrão / recarga / locação + descrição locação + <b>Texto do Simples</b> (nasce vazio). Salvar e ver o aviso verde.</li>
 </ul></div>
 
 <div class="passo"><b class="t">A2. Popups são do sistema (têm X, nunca janela feia do navegador)</b>
@@ -97,6 +99,7 @@
 
 <div class="passo"><b class="t">B1. Emitir NF-e de teste (modelo 55)</b>
 <ul class="check">
+  <li>Antes de emitir a primeira: botão <b>📡 Testar SEFAZ agora</b> na Central — tem que vir <b>cStat 107 (serviço em operação)</b>. Se vier outro código, anote o código e a mensagem.</li>
   <li>Faça uma venda (ou finalização) de valor baixo para um cliente de teste e mande emitir a NF-e.</li>
   <li>O sistema constrói o XML, assina com o A1, transmite para a SEFAZ-MG de homologação e mostra o resultado na hora.</li>
   <li>Sucesso: a nota aparece em <b>EMISSÕES DESTA EMPRESA</b> como autorizada (em homologação a chave ainda é de teste).</li>
@@ -108,6 +111,8 @@
 <ul class="check">
   <li>Na nota de teste, botão <b>Cancelar</b>: pede justificativa com no mínimo 15 letras; transmite o evento 110111 e marca a nota como cancelada.</li>
   <li><b>Inutilizar faixa</b>: informe modelo 55, série 1, um número que pulou; confirme na caixa do sistema e confira a resposta da SEFAZ.</li>
+  <li><b>Carta de Correção (CC-e)</b> numa nota autorizada de teste: texto com 15+ letras (nunca mexe em valores/impostos nem em quem emite/recebe). Confirme o registrado e o contadorzinho <code>CC-e (1)</code> na linha da nota.</li>
+  <li><b>Pacote do mês p/ contador</b>: escolha o mês atual — baixa um <code>.zip</code> com os XMLs + indice.txt. Abra o zip e veja os arquivos dentro.</li>
 </ul></div>
 
 <div class="passo"><b class="t">B3. Proteções que têm que estar de pé</b>
@@ -136,8 +141,8 @@
 <div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
 
 <footer>
-  Guia do testador · Sistema Digicopy <b>v6.0.5</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
-  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.5, este guia ainda não é o que você está testando.
+  Guia do testador · Sistema Digicopy <b>v6.0.6</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.6, este guia ainda não é o que você está testando.
 </footer>
 
 </body>

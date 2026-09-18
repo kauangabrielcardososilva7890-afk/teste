@@ -51,9 +51,9 @@ ok('try/catch envolve o save (nenhum TypeError volta a vazar)', src.indexOf("cat
 ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('saveConfig blindado') >= 0 && bundle.indexOf('v6.0.3 — fiscal no modo escuro + saveConfig blindado') >= 0);
 
 console.log('== CARIMBO 6.0.3 ==');
-ok('package.json na 6.0.3', pkg.version === '6.0.5');
-ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.5'") >= 0 && html.indexOf('>v6.0.5<') >= 0);
-ok('manifesto sobe pra 210 (correção visual vive no patch da central; v6.0.5 fecha a fila)', manifest.length === 210 && manifest[manifest.length - 3] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 2] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 1] === 'permissoes_estorno_venda_patch.js');
+ok('package.json na 6.0.3', pkg.version === '6.0.6');
+ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '6.0.6'") >= 0 && html.indexOf('>v6.0.6<') >= 0);
+ok('manifesto sobe pra 211 (correção visual vive no patch da central; v6.0.6 fecha a fila)', manifest.length === 211 && manifest[manifest.length - 4] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 3] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 2] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 1] === 'fiscal_menu_completo_patch.js');
 ok('worker SEGUE 5.26.3 · gerente SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');

@@ -27,7 +27,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 
 console.log('== PATCH: existência, guarda e trilha ==');
 ok('patch existe com guard próprio (__v5264cd)', patch.indexOf('window.__v5264cd') >= 0);
-ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.5 fecha a fila (210; login-nuvem na 203)', manifest.length === 210 && manifest[203] === PATCH && manifest[204] === 'painel_gerente_patch.js' && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js');
+ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.6 fecha a fila (210; login-nuvem na 203)', manifest.length === 211 && manifest[203] === PATCH && manifest[204] === 'painel_gerente_patch.js' && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js');
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5264cd') >= 0);
 ok('patch do relatório v5.18.6 intocado (nada some)', antigo.indexOf('Atendimento:') >= 0 && antigo.indexOf('Dados de Atendimento') >= 0);
 ok('wrap SÓ durante a impressão + window.open restaurada (finally)', patch.indexOf('finally') >= 0 && patch.indexOf('window.open = _open') >= 0);
@@ -75,9 +75,9 @@ ok('janela aberta 1x e documento escrito', openChamadas === 1 && fakeDoc.written
 ok('o que foi pro papel já é a versão caixa grande', /min-width:170px/.test(fakeDoc.written) && /font-size:12.5px/.test(fakeDoc.written));
 ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 
-console.log('== CARIMBO (app agora em 6.0.5 após a escola; worker e gerente intactos) ==');
-ok('package.json na 6.0.5', pkg.version === '6.0.5');
-ok('index.html carimbado 6.0.5 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.5'") >= 0 && html.indexOf('>v6.0.5<') >= 0);
+console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente intactos) ==');
+ok('package.json na 6.0.6', pkg.version === '6.0.6');
+ok('index.html carimbado 6.0.6 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.6'") >= 0 && html.indexOf('>v6.0.6<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('worker SEGUE 5.26.3 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');

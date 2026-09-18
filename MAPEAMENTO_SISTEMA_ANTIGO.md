@@ -26,9 +26,9 @@ O dump contém valores sensíveis de verdade. Ficam **só com o dono**, fora do 
 | `NFE_VERSAO` | 4.00 | Layout 4.00 — é o que usamos |
 | `NFE_GERAR_NF_VENDA_FIN` | "N" | **Confirma a lei dele: nada emite sozinho ao finalizar venda** — só clique + senha |
 | `NFCE_VERSAOQRCODE` | 2 | **Verificação aberta:** alinhar nosso QR NFC-e ao formato v2 se hoje estiver v1 (motor 6.0.1, checar antes do 1º teste 65) |
-| `NFE_NCM_CARTUCHO` / `_TINTA` / `_LOCACAO` | 37079021 / 32151100 / 37079021 | **Melhoria anotada p/ 6.x:** NCM por tipo de item (cartucho ≠ tinta ≠ locação). Hoje temos NCM padrão; evoluir para NCM por categoria + descrição de locação (`NFE_DESCRICAO_LOCACAO` = "CARTUCHO TONER") |
+| `NFE_NCM_CARTUCHO` / `_TINTA` / `_LOCACAO` | 37079021 / 32151100 / 37079021 | **ENTREGUE v6.0.6:** campos na Central (NCM padrão/tinta/locação + descrição locação). Prioridade no XML: produto.ncm → Recarga sem NCM→tinta · leitura/locação→ncm locação → padrão |
 | `NFE_ENQ_IPI_*` | 325 | Enquadramento IPI 325 — aplicar nos itens se IPI for cobrado |
-| `NFE_COND_USO_CCE` | texto art. 23 LC 123/2006 | **Candidato a `infCpl`/`infAdFisco` das notas REAIS** (crédito de ICMS do Simples). Reescrever sem o `&amp;quot;` lixo do dump. Entra junto com a fase de produção |
+| `NFE_COND_USO_CCE` | texto art. 23 LC 123/2006 | **ENTREGUE v6.0.6 com ressalva:** o texto do dump trazia valores prontos (R$ 34,47 · 2,75%...) que mudam por nota — julgado provável lixo do velho (regra: conferir antes de concordar). Na Central existe o campo **Texto do Simples** que nasce VAZIO (nada entra na nota sem ele preencher) com os 2 modelos legais de sugestão; vale só em produção (homologação já tem o selo) |
 | `NFE_ENVIAR_EMAIL_ESCRITORIO` "S" + e-mail | — | Semente p/ "enviar XML ao contador" (hoje já existe **Baixar XML** na Central) |
 
 ## 3. Útil DEPOIS — fila (migração / novos módulos)
@@ -53,7 +53,7 @@ Ele avisou que tem mensagens aí que não quer. Candidatas óbvias a pular: **ME
 
 ## 6. Verificações abertas (quando a linha 6.x andar)
 
-1. QR NFC-e: formato v1 vs v2 (do dump: v2) — alinhar antes do 1º teste do modelo 65.
+1. ~~QR NFC-e: formato v1 vs v2~~ — **FECHADO na v6.0.6**: nosso QR já estava no layout 2 (`chave|2|tpAmb|idCSC|SHA1`, hash maiúsculo), com teste de vetor contra o crypto do Node.
 2. CSOSN padrão por operação (Simples) — confirmar com a contabilidade dele qual CSOSN usa em venda dentro/fora do estado (`NFE_TRIB_VENDA_DENTRO` 1 / `_FORA` 2 eram apontadores de tributação no velho).
 3. NCM por tipo de item — decidir tela (categoria de produto vs produto individual).
 
