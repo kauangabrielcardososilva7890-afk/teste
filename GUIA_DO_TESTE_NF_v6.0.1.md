@@ -10,7 +10,7 @@
 
 | # | Teste | Esperado |
 |---|---|---|
-| A1 | Abrir a tela de login | Rodapé mostrando **v6.0.2** |
+| A1 | Abrir a tela de login | Rodapé mostrando **v6.0.3** |
 | A2 | Menu → **Nota Fiscal** (Geral/Gestão) | Tela em **menu** (não janela flutuante), com placa vermelha no topo: "HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL" |
 | A3 | Clicar **⬆ Habilitar PRODUÇÃO** | Sem permissão: recusa. Com permissão: pede digitar "PRODUCAO" — **cancele** |
 | A4 | Revisar **Auditoria** com o dono | Seus acessos e tentativas registrados com data/hora |
