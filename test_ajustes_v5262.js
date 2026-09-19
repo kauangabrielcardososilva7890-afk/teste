@@ -32,7 +32,7 @@ const gHtml = fs.readFileSync('gerente-atualizacoes/index.html', 'utf8');
 
 console.log('== PATCH: portão da nuvem antes do login de usuário ==');
 ok('patch existe com guard próprio (__v5262ln)', patch.indexOf("window.__v5262ln") >= 0);
-ok('manifesto: patch v5.26.2 na 203 (v5.26.0 na 202; data grande do chamado na 204; fila hoje fecha na 215 com os 6 submenus do sistema antigo v6.0.10)', manifest.length === 215 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === PATCH && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
+ok('manifesto: patch v5.26.2 na 203 (v5.26.0 na 202; data grande do chamado na 204; fila hoje fecha na 216 com o hover NF-e/NFC-e v6.0.11', manifest.length === 216 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === PATCH && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5262ln') >= 0);
 ok('portão cobre a tela inteira só quando NÃO tem token (conectou 1x some)', patch.indexOf("if (tokenNuvem()) return;") >= 0 && patch.indexOf('v5262-portao') >= 0);
 ok('ordem certa: etapa 1 = CNPJ+senha via /v1/check-pass', patch.indexOf("'/v1/check-pass'") >= 0 && patch.indexOf('v5262-etapa1') >= 0);
@@ -87,8 +87,8 @@ ok('tela tem avisoLoginGerente mapeando os códigos', gHtml.indexOf('avisoLoginG
 ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem internet)', gHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0 && /sem (internet|conexão)/i.test(gHtml));
 
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
-ok('package.json na 6.0.9', pkg.version === '6.0.10');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.10'") >= 0 && html.indexOf('>v6.0.10<') >= 0);
+ok('package.json na 6.0.9', pkg.version === '6.0.11');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && html.indexOf('>v6.0.11<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 

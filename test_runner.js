@@ -186,6 +186,7 @@ const tests=[
   "test_ajustes_v6008.js",
   "test_ajustes_v6009.js",
   "test_ajustes_v60010.js",
+  "test_ajustes_v60011.js",
   "test_ajustes_v5248.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",

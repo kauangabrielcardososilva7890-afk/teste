@@ -213,5 +213,6 @@
   "dashboard_inicio_clicavel_patch.js",
   "menus_fiscais_separados_patch.js",
   "permissoes_override_menus_fiscais_patch.js",
-  "seis_submenus_velho_patch.js"
+  "seis_submenus_velho_patch.js",
+  "submenu_hover_nfe_patch.js"
 ]
