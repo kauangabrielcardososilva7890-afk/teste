@@ -317,28 +317,53 @@
   function txt(v){ return String(v==null?'':v).trim(); }
   function primeiro(row,nomes){ for(var i=0;i<nomes.length;i++){ if(row[nomes[i]]!==undefined&&row[nomes[i]]!==null&&txt(row[nomes[i]])!=='') return row[nomes[i]]; } return ''; }
   function ehDelC(row){ return txt(primeiro(row,['DEL','del','EXCLUIDO','excluido'])).toUpperCase()==='S'; }
+  /* v6.1.1 — campos EXATOS do banco dele (amostra CLIENTES: COD_CLIENTE, NOME_RAZAOSOCIAL, CPF_CNPJ, RG_IE, RUA…, cobrança separada, fiscais NFE_*) */
+  function soDigC(v){ return txt(v).replace(/\D/g,''); }
   function mapearCliente(row){
-    var nome=txt(primeiro(row,['NOME','RAZAO','RAZAO_SOCIAL','CLIENTE','nome','razao']));
-    var doc=txt(primeiro(row,['CNPJ','CPF','DOCUMENTO','DOC','cnpj','cpf','documento'])).replace(/\D/g,'');
-    return {
-      codigo:txt(primeiro(row,['CODIGO','COD_CLI','COD_CLIENTE','CLI_CODIGO','ID','codigo','id'])),
-      nome:nome,
-      fantasia:txt(primeiro(row,['FANTASIA','NOME_FANTASIA','fantasia'])),
+    var doc=soDigC(row.CPF_CNPJ);
+    var c={
+      codigo:txt(row.COD_CLIENTE),
+      nome:txt(row.NOME_RAZAOSOCIAL)||txt(row.NOME)||txt(row.RAZAO),
+      fantasia:txt(row.NOME_FANTASIA),
+      contato:txt(row.CONTATO),
+      tipo:txt(row.TIPO).toUpperCase()==='J'?'J':(txt(row.TIPO).toUpperCase()==='F'?'F':''),
+      documento:doc,
       cnpj:doc.length>11?doc:'',
       cpf:(doc&&doc.length<=11)?doc:'',
-      documento:doc,
-      ie:txt(primeiro(row,['IE','INSCRICAO','INSC_ESTADUAL','ie','inscricaoEstadual'])),
-      endereco:txt(primeiro(row,['ENDERECO','LOGRADOURO','endereco','logradouro'])),
-      numero:txt(primeiro(row,['NUMERO','NUM','numero'])),
-      complemento:txt(primeiro(row,['COMPLEMENTO','complemento'])),
-      bairro:txt(primeiro(row,['BAIRRO','bairro'])),
-      cidade:txt(primeiro(row,['CIDADE','MUNICIPIO','cidade','municipio'])),
-      uf:txt(primeiro(row,['UF','ESTADO','uf','estado'])).toUpperCase().slice(0,2),
-      cep:txt(primeiro(row,['CEP','cep'])).replace(/\D/g,'').slice(0,8),
-      fone:txt(primeiro(row,['FONE','TELEFONE','CELULAR','fone','telefone','celular'])),
-      email:txt(primeiro(row,['EMAIL','E_MAIL','email'])),
+      ie:txt(row.RG_IE)||txt(row.IE),
+      endereco:txt(row.RUA)||txt(row.ENDERECO),
+      numero:txt(row.NUMERO),
+      complemento:txt(row.COMPLEMENTO),
+      bairro:txt(row.BAIRRO),
+      cidade:txt(row.CIDADE)||txt(row.MUNICIPIO),
+      uf:txt(row.UF).toUpperCase().slice(0,2),
+      cep:soDigC(row.CEP).slice(0,8),
+      referencia:txt(row.REFERENCIA),
+      fone:txt(row.TELEFONE),
+      celular:txt(row.CELULAR),
+      whatsapp:txt(row.CLI_WHATSAPP),
+      email:txt(row.EMAIL),
+      bloqueado:txt(row.BLOQUEADO).toUpperCase()==='S',
+      limiteCredito:Number(row.CLI_LIMITE_CREDITO)||0,
+      desconto:Number(row.DESCONTO)||0,
+      criadoEm:txt(row.DT_CADASTRO),
+      latitude:txt(row.LATITUDE),
+      longitude:txt(row.LONGITUDE),
+      cobranca:(txt(row.RUA_COBRANCA)||txt(row.CIDADE_COBRANCA))?{
+        endereco:txt(row.RUA_COBRANCA), numero:txt(row.NUMERO_COBRANCA),
+        complemento:txt(row.COMPLEMENTO_COBRANCA), bairro:txt(row.BAIRRO_COBRANCA),
+        cidade:txt(row.CIDADE_COBRANCA), uf:txt(row.UF_COBRANCA).toUpperCase().slice(0,2),
+        cep:soDigC(row.CEP_COBRANCA).slice(0,8), referencia:txt(row.REFERENCIA_COBRANCA)
+      }:null,
+      nfe:{
+        indIeDest:row.NFE_INDIEDEST!=null?Number(row.NFE_INDIEDEST):9,
+        indFinal:row.NFE_INDFINAL!=null?Number(row.NFE_INDFINAL):1,
+        obrigatorioNfe:Number(row.NFE_OBRIGATORIO)===1,
+        governamental:Number(row.NFE_GOVERNAMENTAL)===1
+      },
       status:'ativo'
     };
+    return c;
   }
   function chaveCliente(c){
     if(c.documento) return 'doc:'+c.documento;
@@ -370,9 +395,11 @@
         var n=novos[i]; var k=chaveCliente(n); var hit=vistos[k]; var rec, id, ver;
         if(hit){
           var mudou=false; rec=Object.assign({},hit.data);
-          ['nome','fantasia','documento','cnpj','cpf','ie','endereco','numero','complemento','bairro','cidade','uf','cep','fone','email'].forEach(function(campo){
+          ['nome','fantasia','documento','cnpj','cpf','ie','endereco','numero','complemento','bairro','cidade','uf','cep','fone','celular','whatsapp','contato','email','referencia','latitude','longitude'].forEach(function(campo){
             if(!txt(rec[campo]) && txt(n[campo])){ rec[campo]=n[campo]; mudou=true; }
           });
+          if(!rec.cobranca && n.cobranca){ rec.cobranca=n.cobranca; mudou=true; }
+          if(!rec.nfe && n.nfe){ rec.nfe=n.nfe; mudou=true; }
           if(!mudou){ iguais++; continue; }
           rec.atualizadoEm=new Date().toISOString();
           id=hit.id; ver=hit.version||0; completados++;

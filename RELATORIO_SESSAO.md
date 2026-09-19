@@ -3497,3 +3497,19 @@ Ele não queria prévia de meio de caminho: pediu o cardápio inteiro de uma vez
 **Validação:** `test_ajustes_v6100.js` 20/20 (rótulo oficial, observer/CSS, preservação da faixa, beleza, PURE do mapeador, dedupe/fundir, card na página, PRODUTOS intocado, convívio) + re-âncora geral (carimbos 6.0.14→6.1.0 em 155 pontos, lengths 219→220, caudas relativas +1 — fixer auto-validante de novo, incluindo grafia colada `length-19` e o guardião -26→-27) + suíte **181/0/0 duas vezes** (a 1ª rodada pós-sync marcou 19 espúrias de I/O; isoladas passavam — padrão conhecido). Carimbos: index (4) + package + mobile (3, via sync) + guia (3 + seção A10) + docx (4 subs).
 
 **Falou que "já tinha mandado" CLIENTES/PRODUTOS:** a REGRA 18 foi seguida (varri tudo antes de dizer algo) — os arquivos dele passam pelo anexo da conversa, mas o conteúdo binário não chega no disco do sandbox; pedi pela página de envio que deixei pronta, ou 3 linhas de amostra no chat se o importador não reconhecer os campos.
+
+---
+
+## ENTREGA v6.1.1 (19/09) — MENU FISCAL DO JEITO CERTO: nada na tela, os 6 ficam no SUBMENU do Fiscal
+
+**Explosão compreensível dele:** "dos menus fiscal e da aba fiscal… não está mudando nada, continua feio e não adicionou nos submenu do fiscal que vai virar novo. EU NÃO QUERO QUE APAREÇA QUANDO EU CLICAR EM NOTA FISCAL entendeu?" — a leitura errada das 6.0.13/6.1.0 (faixa ribbon no topo das TELAS) foi revertida de vez.
+
+**O que entrou (`submenu_fiscal_oficial_patch.js`, 221º):**
+1. **`.wxr-bar{display:none !important;overflow:hidden}`** — a faixa não aparece MAIS nas telas fiscais. Patches 6.0.13/6.1.0 intactos nos arquivos (padrão da casa), só não mostram nada.
+2. **Aba oficial "Fiscal"** (era "NF-e/NFC-e") na barra do index E no pai da lateral (runtime + observer tardio). **Clique na aba ABRE E FIXA o submenu dos 6 (sfo-pin)** via listener de CAPTURA (impede o navigate direto do onclick inline; o botão não navega mais ao abrir — a Central abre pelo item "Nota Fiscal" dentro do menu); clique num item → fecha e navega; clique fora → fecha. Hover nativo do `.module-menu` intocado (funciona de graça). Flyout lateral pin idem (`#sxvm-nav-pai.sfo-pin` + `#sxvm-flyout-nav.sfo-pin`) + título "Fiscal" no ::before.
+3. **CLIENTES: NADA é importado** ("vai dar b.o; já coloquei alguns clientes") — o que ele quis foi dar a AMOSTRA do banco; o mapeador (página de envio inline + `SFO611_PURE.mapearCliente`) agora segue os campos REAIS: COD_CLIENTE, NOME_RAZAOSOCIAL, NOME_FANTASIA, CONTATO, TIPO F/J, CPF_CNPJ (14 = CNPJ), RG_IE (é a IE!), RUA/NUMERO/COMPLEMENTO/BAIRRO/CIDADE/UF/CEP + **endereço de COBRANCA separado** (só quando veio), TELEFONE/CELULAR/CLI_WHATSAPP, EMAIL, BLOQUEADO, CLI_LIMITE_CREDITO, DESCONTO, REFERENCIA, LATITUDE/LONGITUDE, DT_CADASTRO, e os fiscais NFE_INDIEDEST (9=isento) / NFE_INDFINAL / NFE_OBRIGATORIO / NFE_GOVERNAMENTAL. `DEL=S` pula. O card fica parado até ele clicar, e o fundir NUNCA pisa no cadastro feito à mão (só completa vazios).
+4. **Re-âncora supersede:** v60011 "clicar no pai abre a Central" → "(supersede v6.1.1) aba oficial é **Fiscal**; clicar ABRE o submenu; a Central sai pelo item Nota Fiscal". Carimbos 6.1.0→6.1.1 (158 pts), lengths 220→221, caudas +1, grafia `.version ===` de novo.
+
+**Validação:** mural `test_ajustes_v6101.js` 18/18 (inclui a amostra real EDSON/INSTITUTO) + suíte **182/0/0 duas vezes**. Carimbos: index/package/mobile/guia(A11)/docx.
+
+**Comprometimento de leitura:** quando ele manda duas correções seguidas no MESMO ponto (menu), a segunda é a definitiva — menu-oficial = submenu do módulo, nunca overlay dentro de tela.

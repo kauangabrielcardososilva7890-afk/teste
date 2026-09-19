@@ -16,11 +16,11 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto já é 220 (Menu Fiscal oficial v6.1.0 por último); o catálogo da 6.0.14 ficou na posição histórica 218 (por cima do ribbon)',
-  man.length === 220 && man[218] === 'fiscal_catalogo_completo_patch.js' && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js');
+  man.length === 221 && man[218] === 'fiscal_catalogo_completo_patch.js' && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js');
 ok('bundle contém o patch (guards + PURE + fxAcao + fx614-css)',
   bundle.indexOf('__v6014fxc') >= 0 && bundle.indexOf('FX614_PURE') >= 0 && bundle.indexOf('fxAcao') >= 0 && bundle.indexOf('fx614-css') >= 0);
 ok('carimbo v6.0.14 (package + index + query do bundle)',
-  pkg.version === '6.1.0' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.0'") >= 0 && html.indexOf('v6.1.0</title>') >= 0 && html.indexOf('app.bundle.js?v=6.1.0') >= 0);
+  pkg.version === '6.1.1' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.1'") >= 0 && html.indexOf('v6.1.1</title>') >= 0 && html.indexOf('app.bundle.js?v=6.1.1') >= 0);
 
 console.log('== PURE: fábricas e constantes do catálogo ==');
 global.window = global;
