@@ -4,8 +4,8 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a0bb58-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/27  
-**Última versão:** **v5.21.3**  
-**Commit:** `97e8162`  
+**Última versão:** **v5.21.4**  
+**Commit:** `e21c5db`  
 **Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
 **Site:** endereço Cloudflare do usuário (pedir o link)
 
@@ -16,8 +16,8 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 ## Como o usuário trabalha
 
 - Português, direto. **Perguntar antes** se houver dúvida.
-- Cada atualização: link GitHack `?v=...`, PR, commit, resumo objetivo + **atualizar este `.md`**.
-- Remover = deletar de verdade. Avisos: `lfbAlert` / `confirmSistema`. `window.confirm` nativo quebrado.
+- Cada atualização: link do site Cloudflare + PR + commit + resumo objetivo + **atualizar o `.md`** (reenviar os links toda vez; NUNCA GitHack). Regras completas em **REGRAS.md**.
+- Remover = deletar de verdade. Avisos: `lfbAlert` / `confirmSistema`. `window.confirm` nativo: era quebrado, **já corrigido** no popup_sistema_patch v2.
 - Chamados: o que pedir vale **nos dois** (contrato e submenu), salvo se disser que é só de um.
 
 ---
@@ -28,6 +28,16 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## v5.21.4 — Fiscal: Imprimir de volta + sem trava + CI passando no PR
+- **Imprimir de volta no detalhe do Fiscal** (`modulos_neo_visual_patch.js`): a troca do modal na v5.21.3 derrubou o rodapé com o botão Imprimir do `migrados_print` (o wrapper dele parou de rodar porque a função foi substituída). O detalhe agora tem rodapé padrão (`p-4 border-t`) com **Imprimir** (chama `imprimirRegistroMigrado`) + Fechar em estilo neo.
+- **Fiscal não trava em tabela grande**: a busca usava `dados.indexOf(row)` para cada registro filtrado (lento ao quadrado) — nova função pura `filtrarComIndice` carrega o índice junto, sem varredura repetida. Teste novo garante o índice e proíbe `indexOf` na lista toda.
+- **Modo escuro**: botão perigo (Excluir módulo) com hover vermelho no escuro + bordas do rodapé do detalhe no escuro. (Verificado: o seletor do azul estava certo; sem bug de escape.)
+- **CI funcionando**: usuário criou `.github/workflows/ci.yml` no `main` pelo site (a primeira tentativa veio vazia e falhou; a segunda, com o conteúdo, passou). Merge do `main` na branch trouxe o CI para o PR #27: **check-test passando** + Cloudflare Pages passando.
+- **Modo escuro "existente"**: procurado no código atual E nos 433 commits da história — nunca existiu alternador de tema neste repositório (só "azul escuro"/"sidebar escura" = cor da marca). Aguardando o usuário dizer onde viu (qual site/tela) para não duplicar (regra 4 de REGRAS.md).
+- **Regras**: lista única numerada em `REGRAS.md`; relatório antigo de automações movido para `docs/`; linha do GitHack removida das regras; texto do `window.confirm` atualizado (já corrigido).
+- Validação: `npm run check` OK (Bundle 100 scripts, sha256 5c8fd19ea996a438); `npm test` **55 passaram, 1 falha aceita (etiquetas), 0 falharam**.
+- Pendente do usuário: endereço do site Cloudflare; confirmar remoção do banner rawgh; sintoma exato da fiscal (se restar algo além do Imprimir/trava); quais "regras recentes" ele quer ouvir.
+
 ## v5.21.3 — Fiscal bonito + modo escuro + Dono na nuvem + duplo clique
 - **Fiscal no padrão neo** (`modulos_neo_visual_patch.js`): as abas das tabelas migradas (as 6 do Fiscal e as demais) saíram do layout roxo antigo e usam o mesmo padrão dos outros menus (neo-shell/panel/head/table). Busca só no Enter/lupa (regra), botão Limpar, ordenar clicando na coluna (▲▼), duplo clique abre o detalhe, "Mostrar mais" de 50 em 50, Exportar/Excluir mantidos, chip de categoria no cabeçalho. Mantida a classe `text-white/80` para o chip v4.3 continuar funcionando.
 - **Modo escuro** (`modo_escuro_patch.js`): botão lua/sol na barra azul do topo (ao lado do sino). Cobre menus, telas neo, tabelas, modais, login e painel da nuvem. Escolha salva em `digicopy_theme_v1` (padrão claro). Impressão força claro sozinha.
@@ -35,7 +45,7 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - **Duplo clique global** (`duplo_clique_patch.js` + correção na origem no `app.js`): duplo clique na linha abre o cadastro/detalhe em todas as grades (usuário, equipamento, leitura, OS, auditoria abre a origem, demais via botão da linha). Blocklist garante que NUNCA aciona excluir/baixar/pagar/estornar/faturar/salvar. Vendas e modais mantêm a lógica própria.
 - **Testes quebrados corrigidos**: deletados `test_correcoes_relatorio.js` e `test_vendas_chamados_reparo.js` (testavam patches que nunca existiram no git); `test_ajustes_v5188.js` atualizado (digicopyLoja removida na v5.20.11). Três testes novos na suíte.
 - `worker/README.md`: branch de produção em desenvolvimento atualizada para `arena/01a0bb58-teste`; PR #22 já unido ao `main`.
-- **Limitação repetida**: workflow de CI (`.github/workflows/ci.yml`) não pôde ser enviado — token do GitHub App sem permissão `workflows` (mesmo bloqueio da v5.20.28). Validação segue manual: `npm run check` + `npm test`.
+- **Limitação repetida**: workflow de CI (`.github/workflows/ci.yml`) não pôde ser enviado — token do GitHub App sem permissão `workflows` (mesmo bloqueio da v5.20.28). Validação segue manual: `npm run check` + `npm test`. **(RESOLVIDO na v5.21.4: workflow criado no main pelo usuário, merge na branch, check-test passando no PR #27.)**
 - Validação: `npm run check` OK (Bundle 100 scripts, sha256 f2a2e24f25b45525); `npm test` **55 passaram, 1 falha aceita (etiquetas), 0 falharam**; smoke runtime com DOM falso OK (render neo, ordenação, tema, duplo clique).
 
 ## v5.21.2 — autorização possível antes de esconder Nuvem
