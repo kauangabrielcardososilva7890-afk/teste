@@ -38,7 +38,7 @@ ok(p.indexOf("window.__V52295_PURE") >= 0, 'marca de diagnóstico/teste presente
 
 // regressão: bundle contém o patch por último
 const man = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(man[man.length - 23] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6)');
+ok(man[man.length - 24] === 'ajustes_v52295_venda_volta_patch.js', 'patch fica logo antes dos de backups (depois vêm backups v5.22.96, relatório grande v5.24.0, abas do cliente v5.24.3, remanejo final v5.24.35, guarda de leitura v5.24.36, revisão v5.25.0, CNPJ+gerente v5.26.0, login da nuvem v5.26.2 data grande do chamado v5.26.4 e Painel do Gerente v6.0.6)');
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.indexOf('__vosVendaPendente') >= 0, 'lógica presente no app.bundle.js');
 

@@ -215,5 +215,6 @@
   "permissoes_override_menus_fiscais_patch.js",
   "seis_submenus_velho_patch.js",
   "submenu_hover_nfe_patch.js",
-  "navegacao_sem_tela_branca_patch.js"
+  "navegacao_sem_tela_branca_patch.js",
+  "ribbon_fiscal_estilo_antigo_patch.js"
 ]

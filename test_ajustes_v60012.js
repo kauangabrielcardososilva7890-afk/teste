@@ -19,7 +19,7 @@ const P = require('./navegacao_sem_tela_branca_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 217; anti-tela-branca fecha a fila (é o último, wrap por cima de todos)',
-  man.length === 217 && man[216] === 'navegacao_sem_tela_branca_patch.js' && man[215] === 'submenu_hover_nfe_patch.js');
+  man.length === 218 && man[216] === 'navegacao_sem_tela_branca_patch.js' && man[215] === 'submenu_hover_nfe_patch.js');
 ok('bundle contém o patch (guard + PURE)',
   bundle.indexOf('__v60012nav') >= 0 && bundle.indexOf('NAV612_PURE') >= 0);
 
@@ -58,10 +58,10 @@ ok('menu-nfe da barra continua real com os 6 (regressão da 6.0.11)',
 
 console.log('== CARIMBOS v6.0.12 ==');
 ok('index.html carimbado (4 pontos)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && html.indexOf('>v6.0.12<') >= 0 && html.indexOf('app.bundle.js?v=6.0.12') >= 0 && html.indexOf('v6.0.12</title>') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && html.indexOf('>v6.0.13<') >= 0 && html.indexOf('app.bundle.js?v=6.0.13') >= 0 && html.indexOf('v6.0.13</title>') >= 0);
 ok('mobile carimbado (3 pontos)',
-  mob.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && mob.indexOf('>v6.0.12<') >= 0 && mob.indexOf('v6.0.12</title>') >= 0);
-ok('package.json cravado', pkg.version === '6.0.12');
+  mob.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && mob.indexOf('>v6.0.13<') >= 0 && mob.indexOf('v6.0.13</title>') >= 0);
+ok('package.json cravado', pkg.version === '6.0.13');
 
 console.log('');
 console.log('RESUMO: ' + pass + ' passaram, ' + fail + ' falharam.');

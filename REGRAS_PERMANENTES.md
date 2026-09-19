@@ -29,3 +29,12 @@ Ficheiro criado 18/09/2026 juntando as ordens dele desta sessão e das anteriore
 - **NCM por tipo de item** (cartucho/tinta/locação — do dump) e **texto do Simples (art. 23 LC 123)** no infCpl das notas reais.
 - **Etiquetas folha A4** na grade 7×18 do sistema antigo.
 - **Sistemas 3 e 4** do roadmap (gerente já foi; restantes quando ele puxar).
+
+## 17. O que ele PASSA é pra IMPLEMENTAR — a não ser que ele diga "só anotar" (18/09)
+
+Regra dele, textual: "vc ja implementa as coisas que eu vou te passando a não ser que eu falo pra vc so anotar".
+Então: chegou pedido/material → implementa na mesma versão. Se ele disser "só anota/
+anotar/guarda isso", NÃO implementa — registra por escrito em arquivo do repositório
+(foi o caso das fotos do velho: o que chegou está anotado no MAPEAMENTO_SISTEMA_ANTIGO.md).
+E na dúvida se chegou ou não chegou, CONFERIR a evidência antes de responder — nunca
+chutar de memória.

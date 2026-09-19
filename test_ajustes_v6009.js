@@ -23,7 +23,7 @@ const pode = (u, a) => { if (u.perfil === 'Admin' || u.perfil === 'Dono') return
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 214; override+menus fecha a fila',
-  man.length === 217 && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length === 218 && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('POM609_PURE_START') >= 0 && bundle.indexOf('v6.0.9 — PERMISSÃO SÓ NO EDITAR + AUTORIZAÇÃO NA HORA') >= 0);
 
@@ -76,9 +76,9 @@ ok('placa de ambiente no topo das 3 telas novas (HOMOLOGAÇÃO vermelha/PRODUÇ�
   (src.split('pomAmbTxt()').length - 1) >= 4 && src.indexOf('HOMOLOGAÇÃO — modo teste') >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.0.12');
-ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && html.indexOf('>v6.0.12<') >= 0 && html.indexOf('app.bundle.js?v=6.0.12') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && mob.indexOf('>v6.0.12<') >= 0);
+ok('package.json na 6.0.9', pkg.version === '6.0.13');
+ok('index.html carimbado', html.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && html.indexOf('>v6.0.13<') >= 0 && html.indexOf('app.bundle.js?v=6.0.13') >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && mob.indexOf('>v6.0.13<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');
