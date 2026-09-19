@@ -737,7 +737,7 @@ function confirmarExcluirModulo(nomeTabela){
   const modulo = db.modulosDinamicos[nomeTabela];
   if(!modulo) return;
   const label = modulo.label || formatarNomeTabela(nomeTabela);
-  // v5.20.23: confirm() nativo é quebrado neste sistema (sempre falso) — usa o popup do sistema.
+  // confirm() nativo: era quebrado (popup v1 retornava falso); popup_sistema_patch v2 já corrigiu. Usa o popup do sistema.
   const executar=function(){ delete db.modulosDinamicos[nomeTabela]; saveDB(); buildNav(); navigateTo('dashboard'); toast('Módulo excluído com sucesso','success'); };
   if(typeof window.confirmSistema==='function'){
     window.confirmSistema('Tem certeza que deseja excluir o módulo "'+label+'"?\n\nIsso removerá '+modulo.dados.length+' registros permanentemente.','Excluir módulo').then(function(ok){ if(ok) executar(); });

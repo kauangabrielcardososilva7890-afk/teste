@@ -19,4 +19,8 @@ ok('usa data-theme no html', /dataset\.theme/.test(code));
 ok('botão na barra do topo', /tema-btn/.test(code) && /ntf-btn/.test(code));
 ok('cobre menus e neo', /module-menu/.test(code) && /neo-table/.test(code) && /neo-panel/.test(code));
 ok('impressão volta ao claro', /@media print/.test(code));
+ok('azul vira claro no escuro', /#9dbcff/.test(code));
+ok('sem escape duplo no seletor', !/\\\\\\\\\[/.test(code));
+ok('botão perigo visível no escuro', /\.neo-btn\.danger/.test(code));
+ok('bordas do detalhe no escuro', /modal-root \.border-t/.test(code));
 console.log('\nRESULTADO: Testes do modo escuro passaram!');

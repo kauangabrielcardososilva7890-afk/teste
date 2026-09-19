@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.21.3 — Modo escuro (claro/escuro com um clique)
+// v5.21.4 — botão perigo (Excluir módulo) e bordas do detalhe no escuro.
 // • Botão lua/sol na barra azul do topo (ao lado do sino). Vale para o
 //   sistema inteiro, incluindo as abas do Fiscal e os outros menus.
 // • A escolha fica salva neste navegador/PC (claro é o padrão).
@@ -75,6 +76,8 @@ const CSS =
 'html[data-theme="dark"] .neo-btn{background:var(--dc-panel2);border-color:var(--dc-border);color:var(--dc-text);}\n' +
 'html[data-theme="dark"] .neo-btn:hover{border-color:#8fb4ff;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.35);}\n' +
 'html[data-theme="dark"] .neo-btn.primary{background:#2b4acb;border-color:#2b4acb;color:#fff;}\n' +
+'html[data-theme="dark"] .neo-btn.danger:hover{border-color:#f87171;color:#f87171;box-shadow:0 8px 18px rgba(0,0,0,.35);}\n' +
+'html[data-theme="dark"] #modal-root .border-t,html[data-theme="dark"] #modal-root .border-b{border-color:var(--dc-border)!important;}\n' +
 'html[data-theme="dark"] .neo-input,html[data-theme="dark"] .neo-select{background:var(--dc-input);border-color:var(--dc-border);color:var(--dc-text);}\n' +
 'html[data-theme="dark"] .neo-input::placeholder{color:var(--dc-muted);}\n' +
 'html[data-theme="dark"] .neo-table th{background:#0e1730;color:var(--dc-muted);border-bottom-color:var(--dc-border);}\n' +

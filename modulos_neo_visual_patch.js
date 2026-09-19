@@ -1,5 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.21.3 — Módulos migrados (Fiscal e demais) no visual neo padrão
+// v5.21.4 — detalhe do registro volta a ter rodapé com Imprimir (o botão do
+//           migrados_print sumiu na troca do modal) + busca sem indexOf na
+//           lista toda (tabela grande do Fiscal não trava mais).
 // • As abas das tabelas migradas (ex.: as 6 do Fiscal) usavam o layout roxo
 //   antigo, com busca filtrando a cada tecla. Agora usam o mesmo padrão neo
 //   dos outros menus: cabeçalho, KPIs, lupa, ordenação e duplo clique.
@@ -49,8 +52,21 @@ function fatiar(lista, limite){
   const arr = Array.isArray(lista) ? lista : [];
   return { visiveis: arr.slice(0, lim), total: arr.length, mostrando: Math.min(lim, arr.length) };
 }
+function filtrarComIndice(dados, colunas, q, coluna){
+  const busca = String(q == null ? '' : q).trim().toLowerCase();
+  const lista = Array.isArray(dados) ? dados : [];
+  const cols = Array.isArray(colunas) && colunas.length ? colunas : [];
+  return lista.map((row, i) => ({ row, i })).filter(x => {
+    const row = x.row;
+    if(!row || typeof row !== 'object') return false;
+    if(!busca) return true;
+    if(coluna) return String(row[coluna] == null ? '' : row[coluna]).toLowerCase().includes(busca);
+    const chaves = cols.length ? cols : Object.keys(row);
+    return chaves.some(c => String(row[c] == null ? '' : row[c]).toLowerCase().includes(busca));
+  });
+}
 
-window.MODULOS_NEO_PURE = { cmpValor, filtrar, ordenar, fatiar };
+window.MODULOS_NEO_PURE = { cmpValor, filtrar, ordenar, fatiar, filtrarComIndice };
 
 if(typeof document === 'undefined') return; // modo teste (node)
 
@@ -131,9 +147,7 @@ window.renderModuloDinamico = function(nomeTabela){
   const colunasVisiveis = colunas.slice(0, maxColunas);
   const limite = limiteState(nomeTabela);
 
-  const comIndice = dados.map((row, i) => ({ row, i }));
-  const filtrados = filtrar(comIndice.map(x => x.row), colunas, ui.busca, ui.coluna)
-    .map(row => ({ row, i: dados.indexOf(row) }));
+  const filtrados = filtrarComIndice(dados, colunas, ui.busca, ui.coluna);
   const ordenados = ord.col
     ? filtrados.slice().sort((a, b) => (ord.dir === 'desc' ? -1 : 1) * cmpValor(a.row ? a.row[ord.col] : '', b.row ? b.row[ord.col] : ''))
     : filtrados;
@@ -205,6 +219,10 @@ window.visualizarRegistroDinamico = function(nomeTabela, idx){
           '<p class="text-[14px]">' + (value === null || value === undefined || value === '' ? '<span class="text-slate-400 italic">vazio</span>' : esc(String(value))) + '</p></div>'
         ).join('') +
       '</div></div>' +
+      '<div class="p-4 border-t flex justify-end gap-2">' +
+        '<button data-mig-print="1" onclick="if(typeof imprimirRegistroMigrado===\'function\'){imprimirRegistroMigrado(\' + nomeTabela + \',\' + idx + \')}else if(typeof toast===\'function\'){toast(\'Impressão indisponível\',\'error\')}" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button>' +
+        '<button onclick="closeModal()" class="neo-btn primary"><i class="ph ph-x"></i>Fechar</button>' +
+      '</div>' +
     '</div></div>';
   modalRoot.classList.remove('hidden');
 };
