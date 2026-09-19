@@ -15,7 +15,7 @@ const P = require('./dashboard_inicio_clicavel_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 213; menus fiscais separados v6.0.8 fecha a fila',
-  man.length === 216 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length === 217 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('DHC607_PURE_START') >= 0 && bundle.indexOf('v6.0.7 — INÍCIO SEM UNDEFINED + CLICÁVEL') >= 0);
 
@@ -79,10 +79,10 @@ ok('exporta PURE p/ testes e guarda anti-duplo (__v6007dhc)',
   src.indexOf('DHC607_PURE') >= 0 && src.indexOf('__v6007dhc') >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.0.11');
+ok('package.json na 6.0.9', pkg.version === '6.0.12');
 ok('index.html carimbado (versão real + rodapé + query)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && html.indexOf('>v6.0.11<') >= 0 && html.indexOf('app.bundle.js?v=6.0.11') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && mob.indexOf('>v6.0.11<') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && html.indexOf('>v6.0.12<') >= 0 && html.indexOf('app.bundle.js?v=6.0.12') >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && mob.indexOf('>v6.0.12<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

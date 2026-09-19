@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.11</title>
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.12</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +36,7 @@
 <body>
 
 <header>
-  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.11</h1>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.12</h1>
   <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
      Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
 </header>
@@ -46,7 +46,7 @@
 <h2>Antes de começar (2 minutos)</h2>
 <ol>
   <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
-  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.11</code>.<br>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.12</code>.<br>
       Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
   <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
 </ol>
@@ -108,9 +108,10 @@
   <li>Estorne uma notinha (venda de teste): ela <b>abre na aba da venda já carregada</b> (mesmo número), e no Financeiro o título fica com a tarja <b>EXTORNADO</b> (não some, não entra nas somas).</li>
 </ul></div>
 
-<div class="passo"><b class="t">A8. Menu fiscal IGUAL ao sistema antigo — o item "NF-e/NFC-e" mostra os 6 submenus no hover (v6.0.11)</b>
+<div class="passo"><b class="t">A8. Menu fiscal IGUAL ao sistema antigo — o item "NF-e/NFC-e" mostra os 6 submenus no hover (v6.0.11). E a tela branca morreu (v6.0.12)</b>
 <ul class="check">
   <li>Na <b>barra de módulos</b> (e também no <b>menu lateral</b>) procure o item <b>NF-e/NFC-e</b>. Não existe mais nenhum botão fiscal solto avulso.</li>
+  <li><b>Novidade da v6.0.12 (correção que você apontou):</b> clicar em qualquer menu abre <b>de primeira</b> agora — antes a primeira abertura de certas telas (fiscais e Buscador Escola) caía numa tela branca. Se alguma tela abrir vazia, ela mostra aviso com botão de voltar em vez de branco — se vir isso, anote o nome da tela e me avise.</li>
   <li><b>Passe o mouse por cima</b> de NF-e/NFC-e: abre o submenu com EXATAMENTE <b>6 itens, nesta ordem</b>: <b>Nota Fiscal</b> · <b>Perfil Tributário</b> · <b>Manifestação</b> · <b>NCM</b> · <b>Enviar XML</b> · <b>Configurações</b>. Tirar o mouse fecha (ele dá uma folguinha de fração de segundo).</li>
   <li><b>Clicar</b> no item NF-e/NFC-e abre direto a <b>Central (Nota Fiscal)</b>.</li>
   <li><b>Perfil Tributário</b>: preencha Regime (Simples Nacional), CNAE, IE/IM, CFOP dentro (5.102) e fora (6.102), CSOSN (102) e as alíquotas que a contabilidade passou → <b>Salvar perfil tributário</b>. Se digitar letra no CNAE ou CFOP começando com 4, o sistema <b>barra com mensagem</b> (teste e anote).</li>
@@ -170,8 +171,8 @@
 <div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
 
 <footer>
-  Guia do testador · Sistema Digicopy <b>v6.0.11</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
-  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.11, este guia ainda não é o que você está testando.
+  Guia do testador · Sistema Digicopy <b>v6.0.12</b> (app) · worker da nuvem v5.26.3 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.0.12, este guia ainda não é o que você está testando.
 </footer>
 
 </body>

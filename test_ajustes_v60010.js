@@ -15,7 +15,7 @@ const P = require('./seis_submenus_velho_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 215; 6 submenus do antigo fecha a fila',
-  man.length === 216 && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length === 217 && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60010sxv') >= 0 && bundle.indexOf('SXV_PURE_START') >= 0 && bundle.indexOf('SEIS_SUBMENUS_VELHO_PATCH v6.0.10 ativo') >= 0);
 
@@ -101,9 +101,9 @@ ok('Admin sempre; funcionário só com caixa; senha confere; login maiúsculo; e
   P.sxvAutorizacaoValida(us, 'e1', 'fantasma', 'x').ok === false);
 
 console.log('== CARIMBO 6.0.10 ==');
-ok('package.json na 6.0.10', pkg.version === '6.0.11');
-ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && html.indexOf('>v6.0.11<') >= 0 && html.indexOf('app.bundle.js?v=6.0.11') >= 0 && html.indexOf('v6.0.11</title>') >= 0);
-ok('celular carimbado 6.0.10', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && mob.indexOf('>v6.0.11<') >= 0);
+ok('package.json na 6.0.10', pkg.version === '6.0.12');
+ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && html.indexOf('>v6.0.12<') >= 0 && html.indexOf('app.bundle.js?v=6.0.12') >= 0 && html.indexOf('v6.0.12</title>') >= 0);
+ok('celular carimbado 6.0.10', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && mob.indexOf('>v6.0.12<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

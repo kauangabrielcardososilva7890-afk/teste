@@ -17,7 +17,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
 
 console.log('== FILA / BUNDLE ==');
-ok('manifesto sobe pra 216; override v6.0.9 (214), 6 submenus v6.0.10 (215), hover NF-e/NFC-e v6.0.11 fecha a fila', man.length === 216 && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[205] === 'fiscal_guard_patch.js' && man[206] === 'nf_transmissao_patch.js' && man[207] === 'autocura_empresa_central_nf_tela_patch.js');
+ok('manifesto sobe pra 216; override v6.0.9 (214), 6 submenus v6.0.10 (215), hover NF-e/NFC-e v6.0.11 fecha a fila', man.length === 217 && man[208] === 'perfis_nuvem_cura_sessao_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[205] === 'fiscal_guard_patch.js' && man[206] === 'nf_transmissao_patch.js' && man[207] === 'autocura_empresa_central_nf_tela_patch.js');
 ok('bundle contém o patch da cura (PURE + banner)', bundle.indexOf('pncProximoPasso') >= 0 && bundle.indexOf('v6.0.4 — cura da sessão DEFINITIVA') >= 0);
 ok('bundle contém o botão Reparar (5227)', bundle.indexOf('dc-reparar-sessao') >= 0 && bundle.indexOf('Reparar sessão agora') >= 0);
 
@@ -63,9 +63,9 @@ ok('role entra VÁRIAVEL no INSERT do device (nada fixo)', segEnroll.indexOf("VA
 ok('eclusa anti-trancamento: connect-pass aceita prova de GERENTE (v5.26.3)', wk.slice(wk.indexOf("/v1/connect-pass"), wk.indexOf("/v1/connect-pass") + 1200).indexOf('requireAdminOuGerente(request, env)') >= 0 && wk.indexOf('eclusa anti-trancamento') >= 0);
 
 console.log('== CARIMBO 6.0.4 ==');
-ok('package.json na 6.0.4', pkg.version === '6.0.11');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && html.indexOf('>v6.0.11<') >= 0 && html.indexOf('app.bundle.js?v=6.0.11') >= 0);
-ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.11'") >= 0 && mob.indexOf('>v6.0.11<') >= 0);
+ok('package.json na 6.0.4', pkg.version === '6.0.12');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && html.indexOf('>v6.0.12<') >= 0 && html.indexOf('app.bundle.js?v=6.0.12') >= 0);
+ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.12'") >= 0 && mob.indexOf('>v6.0.12<') >= 0);
 
 console.log('\n' + pass + ' passaram, ' + fail + ' falharam.');
 if (fail > 0) process.exit(1);
