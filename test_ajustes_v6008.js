@@ -16,7 +16,7 @@ const P = require('./menus_fiscais_separados_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 213; menus separados fecha a fila',
-  man.length === 218 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length === 219 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('MFS608_PURE_START') >= 0 && bundle.indexOf('v6.0.8 — MENUS FISCAIS SEPARADOS') >= 0);
 
@@ -64,10 +64,10 @@ ok('salva refaz db.config via PURE + db.save + auditoria logAction',
   src.indexOf('mfsCfgCsc(db.config||{}') >= 0 && src.indexOf('mfsCfgNotas(db.config||{}') >= 0 && src.indexOf("db.save()") >= 0 && src.indexOf("logAction('fiscal'") >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.0.13');
+ok('package.json na 6.0.9', pkg.version === '6.0.14');
 ok('index.html carimbado (versão real + rodapé + query)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && html.indexOf('>v6.0.13<') >= 0 && html.indexOf('app.bundle.js?v=6.0.13') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && mob.indexOf('>v6.0.13<') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && html.indexOf('>v6.0.14<') >= 0 && html.indexOf('app.bundle.js?v=6.0.14') >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && mob.indexOf('>v6.0.14<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

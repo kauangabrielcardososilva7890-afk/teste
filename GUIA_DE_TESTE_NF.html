@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.13</title>
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.0.14</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +36,7 @@
 <body>
 
 <header>
-  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.13</h1>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.0.14</h1>
   <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
      Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
 </header>
@@ -46,7 +46,7 @@
 <h2>Antes de começar (2 minutos)</h2>
 <ol>
   <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
-  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.13</code>.<br>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.0.14</code>.<br>
       Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
   <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
 </ol>
@@ -107,6 +107,17 @@
   <li>Desmarque <b>Apagar registros</b> de um usuário teste e tente apagar algo com ele: o sistema barra e anota na <b>Auditoria</b>.</li>
   <li>Estorne uma notinha (venda de teste): ela <b>abre na aba da venda já carregada</b> (mesmo número), e no Financeiro o título fica com a tarja <b>EXTORNADO</b> (não some, não entra nas somas).</li>
 </ul></div>
+
+<div class="passo"><b class="t">A9. As 6 telas fiscais COMPLETAS, iguais às fotos do sistema antigo (v6.0.14 — tudo de uma vez, do jeito que você mandou)</b>
+  <ul><li><b>Nota Fiscal:</b> listagem igual (filtros de ambiente/situação/modelo/período + combo "Hoje / Abertas", número da nota, canceladas, código/nome do cliente, chave, valor, código da venda) e o botão <b>Novo</b> abre o <b>editor VENDA-NF de 9 abas</b> (Gerais · Destinatário · Itens da Nota · Informações Adicionais · Transporte · Correções · Reforma Tributária · Referenciar · Log) — igual às suas fotos: pagamentos e duplicatas na Gerais, destinatário puxa do cadastro sem redigitar, itens com tributação em 4 sub-abas (18 fotos), cofrinhos IBS/CBS verdes, <b>Alterar para Todos</b>.</li>
+  <li><b>Pré-Visualizar:</b> DANFE completo com o selo vermelho deitado <b>"NF-E EM PRÉ-VISUALIZAÇÃO — SEM VALOR FISCAL"</b> (igual ao seu) + botão Imprimir.</li>
+  <li><b>Regras que protegem a loja:</b> nota <b>Autorizada não pode ser alterada nem excluída</b> (aparece o aviso explicando CC-e/cancelamento); excluir rascunho, gerar e manifestar pedem a permissão <b>Emitir NF</b> (Admin/Dono); <b>Clonar</b> cria uma nota Não Gerada igual.</li>
+  <li><b>Perfil Tributário:</b> grade igual + edição em 5 abas (ICMS/PIS/COFINS/IPI/Reforma) — já nasce com os <b>5 perfis da loja</b> (00001 VENDA DENTRO DO ESTADO · 00002 VENDA FORA DO ESTADO · 00003 DEV-REMESSA CONSERTO · 00005 RETORNO DE CONSERTO · 00004 TROCA DE MERCADORIA, com os CFOPs de verdade).</li>
+  <li><b>Manifestação do Destinatário:</b> 3 modos de busca (NSU específico até virar o marcador), filtros por tipo (Cadastradas Hoje…), grade de 15 colunas, botões Obter Notas / <b>Manifestar</b> (4 eventos: ciência, confirmação, desconhecimento, operação não realizada com justificativa) / Baixar XML.</li>
+  <li><b>NCM:</b> favoritos com atalhos pros padrões da loja (Padrão / Tinta / Locação) — mesmas chaves que o PDV usa.</li>
+  <li><b>Enviar XML virou "Preparar Arquivos Fiscais":</b> matriz do mês (Geradas / Canceladas / Corrigidas / <b>XML Não Encontrados</b>), aviso amarelo explicando que <b>a nuvem junta os XMLs de TODOS os PCs</b> (sem correr de máquina em máquina), "Não Suportado" pra NFC-e, mês escolhido por calendário, opção de incluir PDFs, e-mail do escritório + <b>Enviar para Escritório</b> com o nome do mês por extenso.</li>
+  <li><b>Configurações em 10 abas</b> (Geral · Impressão · NFCe · Tributação · Nuvem · Outras · Mensagens · FCP · Autorizações · Reforma) já com os presets lidos das fotos: série 1, DANFE retrato, frete 9, síncrono, CRT 1, FCP 2%, versão QR veqr200, CSC mascarado.</li>
+  <li><b>Honestidade (importante):</b> Gerar NF-e de verdade, manifestar e consultar a SEFAZ precisam do <b>PC emissor com o certificado (.exe)</b>. Sem ele, a nota fica salva como <b>Não Gerada</b> com aviso claro — <b>nada de sucesso falso</b>. Toda pergunta sai no popup do sistema (nunca aquele quadradinho sequinho do navegador).</li></ul></div>
 
 <div class="passo"><b class="t">A8. Menu fiscal IGUAL ao sistema antigo — o item "NF-e/NFC-e" mostra os 6 submenus no hover (v6.0.11). A tela branca morreu (v6.0.12). E o menu ficou BONITO (v6.0.13)</b>
 <ul class="check">

@@ -118,9 +118,9 @@ ok('worker: site v5.26.1 bonito e informativo (marca, confiança, tamanho do arq
 ok('gerente: NSIS + título sem acento no cmd (cp850-safe)', gPkg.build && gPkg.build.nsis && gCmd.indexOf('é') < 0 && gCmd.indexOf('ã') < 0);
 
 console.log('== CARIMBO + MANIFESTO ==');
-ok('manifesto: posições históricas intactas (204 chamado, 203 login-nuvem, 202 v5.26.0); fila hoje fecha na 217 (anti-tela-branca v6.0.12)', manifest.length === 218 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
-ok('package.json na 5.26.0', pkg.version === '6.0.13');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.13'") >= 0 && html.indexOf('>v6.0.13<') >= 0);
+ok('manifesto: posições históricas intactas (204 chamado, 203 login-nuvem, 202 v5.26.0); fila hoje fecha na 218 (as 6 telas fiscais completas v6.0.14)', manifest.length === 219 && manifest[201] === 'ajustes_v5260_cnpj_gerente_patch.js' && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
+ok('package.json na 5.26.0', pkg.version === '6.0.14');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && html.indexOf('>v6.0.14<') >= 0);
 ok('script check do package.json valida o patch novo', pkg.scripts.check.indexOf('ajustes_v5260_cnpj_gerente_patch.js') >= 0);
 
 console.log('\nTudo OK — v5.26.0 (CNPJ+senha única · site restrito · sininho por destinatário com link secreto · gerente separado no PC do dono · imagens do tutorial no R2).');
