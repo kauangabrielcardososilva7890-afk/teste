@@ -7,8 +7,8 @@ API local-first isolada do aplicativo Electron/web.
 - Root directory: `cloudflare-worker`
 - Build command: deixe vazio
 - Deploy command: `npm run deploy` (aplica migrações pendentes e só depois publica)
-- Production branch durante o desenvolvimento: `arena/01a00cfb-teste`
-- Production branch após aprovação do PR: `main`
+- Production branch durante o desenvolvimento: `arena/01a0bb58-teste`
+- Production branch após aprovação do PR: `main` (o PR #22 da v5.21.2 já foi aprovado e unido)
 
 ## Banco D1
 

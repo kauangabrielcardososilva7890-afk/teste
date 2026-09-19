@@ -62,7 +62,7 @@ window.syncEnviarParaNuvem=async function(){ return {ok:false,desligado:true,clo
 if(typeof document==='undefined') return;
 
 function systemAdmin(){
-  try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
+  try{const s=typeof getSession==='function'?getSession():null;const p=String((s&&s.perfil)||'').toLowerCase();return !!(s&&(p==='admin'||p==='dono'));}catch(e){return false;}
 }
 function applyAdminVisibility(){
   const admin=systemAdmin(),needsAuthorization=!token();

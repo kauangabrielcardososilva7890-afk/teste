@@ -51,6 +51,9 @@ const tests=[
   "test_indexeddb_persistence.js",
   "test_offline_assets.js",
   "test_confirm_compat.js",
+  "test_modulos_neo_visual.js",
+  "test_modo_escuro.js",
+  "test_duplo_clique.js",
   "test_app_bundle.js",
   "test_electron_security.js"
 ];

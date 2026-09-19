@@ -19,8 +19,7 @@ new Function('window', 'db', 'getSession', code)(g.window, g.db, g.getSession);
 
 console.log('== AJUSTES_V5188: logo padrão + dados da loja ==');
 ok('digicopyLogo usa SEMPRE a logo padrão (ignora custom)', g.window.digicopyLogo() === 'data:image/png;base64,ORIGINAL');
-ok('digicopyLoja mescla empresa + loja (loja vence)', g.window.digicopyLoja().fantasia === 'Minha Loja');
-ok('digicopyLoja traz razão social', g.window.digicopyLoja().razaoSocial === 'Minha Loja LTDA');
+ok('digicopyLoja não existe mais (upload removido v5.20.11)', typeof g.window.digicopyLoja === 'undefined');
 
 // Sem logo customizada => usa a original
 const g2 = { window: { DIGICOPY_LOGO: 'data:image/png;base64,ORIGINAL' }, db: { empresas: [], config: { loja: {} } }, getSession: () => null };

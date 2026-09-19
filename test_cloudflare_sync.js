@@ -12,6 +12,7 @@ ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test
 ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuvem/.test(html));
 ok('Nuvem aparece antes de autorizar e depois fica só para Admin',/needsAuthorization=!token\(\)/.test(code)&&/admin\|\|needsAuthorization/.test(code));
 ok('Backup fica sempre só para Admin',/backup\.style\.display=admin/.test(code));
+ok('Dono também gerencia a nuvem (entra como admin)',/p==='admin'\|\|p==='dono'/.test(code));
 ok('acesso direto pós-autorização é bloqueado para não-Admin',/!systemAdmin\(\)&&token\(\)/.test(code));
 ok('token revogado libera nova autorização',/forgetAuth/.test(code)&&/refreshVisibility/.test(code));
 ok('exportação também valida Admin',/Somente o administrador pode exportar/.test(code));

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 97 | sha256: b3f3d90f324acdb5
+ * scripts: 100 | sha256: f2a2e24f25b45525
  */
 
 /* ===== lz.js ===== */
@@ -1178,17 +1178,25 @@ function renderDashboard(){
 function renderUsuarios(){
   const sess=getSession(); if(!sess) return;
   const list=db.usuarios.filter(u=>u.empresaId===sess.empresaId);
-  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
+  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('usuario','${u.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
   const perfis={}; list.forEach(u=>{perfis[u.perfil]=(perfis[u.perfil]||0)+1}); document.getElementById('usuarios-por-perfil').innerHTML=Object.entries(perfis).map(([k,v])=>`<div class="flex justify-between p-2 rounded-xl bg-slate-50 border"><span>${k}</span><b>${v}</b></div>`).join('')||'<p class="text-[12px] text-slate-500">Nenhum</p>';
 }
 function deleteUsuario(id){const sess=getSession(); const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!u) return; if(u.login==='admin' && db.usuarios.filter(x=>x.empresaId===sess.empresaId && x.login==='admin').length===1) return toast('Não pode excluir único admin','error'); if(confirm('Excluir usuário '+u.nome+'?')){db.usuarios=db.usuarios.filter(x=>x.id!==id); logAction('usuario','excluir',id,`Excluído usuário ${u.login}`); saveDB(); renderUsuarios(); renderAuditoria(); toast('Usuário excluído','success');}}
 
 // AUDITORIA RENDER
+// Duplo clique na auditoria: abre o cadastro de origem do registro (quando existe tela).
+function abrirLogAuditoria(entidade,id){
+  const mapa={cliente:'cliente',produto:'produto',equipamento:'equipamento',contrato:'contrato',leitura:'leitura',os:'os',usuario:'usuario',contaReceber:'contaReceber',contaPagar:'contaPagar'};
+  if(entidade==='venda'&&id&&typeof showVenda==='function'){showVenda(id);return;}
+  const tipo=mapa[entidade];
+  if(tipo&&id&&typeof openModal==='function'){openModal(tipo,id);return;}
+  if(typeof toast==='function') toast('Sem tela de detalhe para este registro','info');
+}
 function renderAuditoria(){
   const sess=getSession(); if(!sess) return;
   const entidade=document.getElementById('filter-aud-entidade')?.value||''; const search=(document.getElementById('search-auditoria')?.value||'').toLowerCase();
   let list=db.logs.filter(l=>l.empresaId===sess.empresaId && (!entidade||l.entidade===entidade) && (!search||l.usuarioNome.toLowerCase().includes(search)||l.usuarioLogin.toLowerCase().includes(search)||l.acao.toLowerCase().includes(search)||l.entidade.toLowerCase().includes(search)||l.detalhes.toLowerCase().includes(search))).slice(0,100);
-  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
+  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr ondblclick="abrirLogAuditoria('${l.entidade}','${l.entidadeId}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
 }
 
 // REUSAR FUNÇÕES DE MODAIS E RENDERS ANTERIORES ADAPTADAS COM FILTRO EMPRESA - simplificado chamando versões anteriores se existirem, senão stub
@@ -1257,7 +1265,7 @@ function renderEquipamentos(){
   const search=(document.getElementById('search-equip')?.value||'').toLowerCase(); const status=document.getElementById('filter-equip-status')?.value||'';
   let list=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && (e.modelo+e.patrimonio+e.serie+e.fabricante).toLowerCase().includes(search) && (!status||e.status===status));
   document.getElementById('grid-equipamentos').innerHTML=list.map(e=>{const sm={disponivel:'bg-emerald-50 text-emerald-700 border-emerald-100', locado:'bg-[#e8eaf8] text-[#0a1e8a] border-[#c9ceef]', manutencao:'bg-amber-50 text-amber-700 border-amber-100', inativo:'bg-slate-100 text-slate-600'}; const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<div class="rounded-[18px] bg-white border p-5 hover:shadow-md transition"><div class="flex justify-between items-start"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-printer text-[22px]"></i></div><div><p class="font-bold text-[13.5px] leading-tight">${e.modelo}</p><p class="text-[11.5px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></div></div><span class="text-[10.5px] font-bold uppercase px-2.5 py-1 rounded-full border ${sm[e.status]||''}">${e.status}</span></div><div class="mt-4 grid grid-cols-2 gap-3 text-[11.5px]"><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Patrimônio</p><p class="font-mono font-semibold mt-0.5">${e.patrimonio}</p></div><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Série</p><p class="font-mono font-semibold mt-0.5 truncate">${e.serie}</p></div></div><div class="mt-3 flex gap-2 text-[11.5px]"><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">PB</p><p class="font-mono font-bold">${e.contadorPB.toLocaleString('pt-BR')}</p></div><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">COR</p><p class="font-mono font-bold">${e.contadorCor.toLocaleString('pt-BR')}</p></div></div><div class="mt-3 text-[11.5px]">${cli?`<p class="text-slate-600"><i class="ph ph-map-pin"></i> ${cli.nome} • ${parque.setor}</p>`:`<p class="text-slate-400 italic">Sem alocação • disponível</p>`}</div><div class="mt-4 flex gap-2"><button onclick="openModal('equipamento','${e.id}')" class="flex-1 h-9 rounded-xl bg-white border text-[12px] font-semibold">Editar</button><button onclick="toast('Histórico auditado por ${e.criadoPorNome||'-'}','info')" class="h-9 px-3 rounded-xl bg-slate-900 text-white text-[12px] font-semibold">Histórico</button></div></div>`;}).join('')||'<div class="col-span-full p-12 text-center text-slate-500">Nenhum equipamento</div>';
-  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('equipamento','${e.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
 }
 let equipView='grid';
 function setEquipView(v){equipView=v; document.getElementById('btn-view-grid').className=v==='grid'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('btn-view-list').className=v==='list'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('grid-equipamentos').classList.toggle('hidden', v!=='grid'); document.getElementById('list-equipamentos').classList.toggle('hidden', v!=='list');}
@@ -1302,7 +1310,7 @@ function renderParque(){
 }
 function renderLeituras(){
   const sess=getSession(); if(!sess) return;
-  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
+  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('leitura','${l.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
   document.getElementById('list-divergencias').innerHTML='<p class="text-[12px] text-amber-800">Nenhuma divergência</p>';
   const sel=document.getElementById('coleta-contrato'); if(sel && !sel.innerHTML.includes('CT-')){sel.innerHTML='<option value="">Selecione o contrato</option>'+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').map(c=>{const cli=db.clientes.find(cl=>cl.id===c.clienteId); return `<option value="${c.id}">${c.numero} - ${cli?.nome}</option>`}).join('');}
 }
@@ -1330,7 +1338,7 @@ function renderOs(){
     const cols=[{id:'aberto',label:'Aberto',color:'border-slate-200 bg-slate-50'},{id:'em_atendimento',label:'Em atendimento',color:'border-blue-200 bg-blue-50/50'},{id:'aguardando_peca',label:'Aguardando peça',color:'border-amber-200 bg-amber-50/50'},{id:'concluido',label:'Concluído',color:'border-emerald-200 bg-emerald-50/50'}];
     document.getElementById('os-kanban').innerHTML=cols.map(col=>{const items=list.filter(o=>o.status===col.id); return `<div class="rounded-[16px] border ${col.color} p-3 flex flex-col"><div class="flex items-center justify-between mb-3"><h4 class="font-bold text-[12px] uppercase">${col.label}</h4><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white border">${items.length}</span></div><div class="space-y-3 flex-1 overflow-auto" style="min-height:400px">${items.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); return `<div class="rounded-xl bg-white border p-3 shadow-sm hover:shadow-md cursor-pointer" onclick="openModal('os','${o.id}')"><div class="flex justify-between"><span class="font-mono text-[11px] font-bold text-slate-500">${o.numero}</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold uppercase">${o.prioridade}</span></div><p class="font-semibold text-[13px] mt-2">${cli?.nome}</p><p class="text-[11px] text-slate-600 mt-1 line-clamp-2">${o.descricao}</p><p class="text-[11px] text-slate-400 mt-2">por ${o.criadoPorNome||'-'} • ${fmtDate(o.dataAbertura)}</p></div>`;}).join('')||'<p class="text-[12px] text-slate-400 p-4 text-center">Vazio</p>'}</div></div>`;}).join('');
   } else {
-    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('os','${o.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
   }
 }
 function renderModalOS(id){
@@ -27996,6 +28004,454 @@ console.log('[DIGICOPY] ajustes_v52024_patch.js carregado — sem filtro de tipo
 
 ;
 
+/* ===== modulos_neo_visual_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.21.3 — Módulos migrados (Fiscal e demais) no visual neo padrão
+// • As abas das tabelas migradas (ex.: as 6 do Fiscal) usavam o layout roxo
+//   antigo, com busca filtrando a cada tecla. Agora usam o mesmo padrão neo
+//   dos outros menus: cabeçalho, KPIs, lupa, ordenação e duplo clique.
+// • Busca SÓ no Enter ou na lupa (regra oficial). Botão "Limpar".
+// • Ordenação clicando no título da coluna (▲▼), como nos outros menus.
+// • Duplo clique na linha abre o detalhe do registro.
+// • Paginação "Mostrar mais" de 50 em 50 (não trava com tabela grande).
+// • Botões Exportar / Excluir módulo mantidos no cabeçalho.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+/* ---------------- LÓGICA PURA (testável em node) ---------------- */
+
+function cmpValor(a, b){
+  const sa = String(a == null ? '' : a).trim(), sb = String(b == null ? '' : b).trim();
+  const na = parseFloat(sa.replace(',', '.')), nb = parseFloat(sb.replace(',', '.'));
+  const aNum = sa !== '' && !isNaN(na) && /^-?[\d.,]+$/.test(sa);
+  const bNum = sb !== '' && !isNaN(nb) && /^-?[\d.,]+$/.test(sb);
+  if(aNum && bNum) return na - nb;
+  if(/\d{4}-\d{2}-\d{2}/.test(sa) && /\d{4}-\d{2}-\d{2}/.test(sb)){
+    const da = Date.parse(sa), dbb = Date.parse(sb);
+    if(!isNaN(da) && !isNaN(dbb)) return da - dbb;
+  }
+  try{ return sa.localeCompare(sb, 'pt-BR', { sensitivity: 'base' }); }
+  catch(e){ return sa < sb ? -1 : (sa > sb ? 1 : 0); }
+}
+function filtrar(dados, colunas, q, coluna){
+  const busca = String(q == null ? '' : q).trim().toLowerCase();
+  const lista = Array.isArray(dados) ? dados : [];
+  if(!busca) return lista.slice();
+  const cols = Array.isArray(colunas) && colunas.length ? colunas : [];
+  return lista.filter(row => {
+    if(!row || typeof row !== 'object') return false;
+    if(coluna) return String(row[coluna] == null ? '' : row[coluna]).toLowerCase().includes(busca);
+    const chaves = cols.length ? cols : Object.keys(row);
+    return chaves.some(c => String(row[c] == null ? '' : row[c]).toLowerCase().includes(busca));
+  });
+}
+function ordenar(dados, coluna, dir){
+  if(!coluna) return Array.isArray(dados) ? dados.slice() : [];
+  const mult = dir === 'desc' ? -1 : 1;
+  return dados.slice().sort((a, b) => mult * cmpValor(a ? a[coluna] : '', b ? b[coluna] : ''));
+}
+function fatiar(lista, limite){
+  const lim = Math.max(1, parseInt(limite, 10) || 50);
+  const arr = Array.isArray(lista) ? lista : [];
+  return { visiveis: arr.slice(0, lim), total: arr.length, mostrando: Math.min(lim, arr.length) };
+}
+
+window.MODULOS_NEO_PURE = { cmpValor, filtrar, ordenar, fatiar };
+
+if(typeof document === 'undefined') return; // modo teste (node)
+
+/* ---------------- Visual neo (navegador) ---------------- */
+
+function esc(v){
+  if(typeof escapeHtml === 'function') return escapeHtml(v);
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+function uiState(nomeTabela){
+  window.__modUi = window.__modUi || {};
+  return window.__modUi[nomeTabela] || (window.__modUi[nomeTabela] = { busca: '', coluna: '' });
+}
+function ordState(nomeTabela){
+  window.__modOrdem = window.__modOrdem || {};
+  return window.__modOrdem[nomeTabela] || (window.__modOrdem[nomeTabela] = {});
+}
+function limiteState(nomeTabela){
+  window.__modNeoLimite = window.__modNeoLimite || {};
+  if(!window.__modNeoLimite[nomeTabela]) window.__modNeoLimite[nomeTabela] = 50;
+  return window.__modNeoLimite[nomeTabela];
+}
+function fmtDataHora(v){
+  if(typeof fmtDateTime === 'function'){ try{ return fmtDateTime(v); }catch(e){} }
+  try{ const d = new Date(v); return isNaN(d) ? String(v || '-') : d.toLocaleString('pt-BR'); }catch(e){ return '-'; }
+}
+function categoriaDaTabela(nomeTabela){
+  try{
+    if(typeof categoriaModulo === 'function') return categoriaModulo(nomeTabela);
+  }catch(e){}
+  return { id: 'outros', rotulo: 'Outros módulos', icone: 'ph-table' };
+}
+
+window.ordenarModuloDinamico = function(nomeTabela, col){
+  const s = ordState(nomeTabela);
+  if(s.col === col) s.dir = (s.dir === 'asc' ? 'desc' : 'asc');
+  else { s.col = col; s.dir = 'asc'; }
+  window.renderModuloDinamico(nomeTabela);
+};
+window.filtrarModuloDinamico = function(nomeTabela){
+  const ui = uiState(nomeTabela);
+  const inp = document.getElementById('search-mod-' + nomeTabela);
+  const sel = document.getElementById('coluna-mod-' + nomeTabela);
+  if(inp) ui.busca = inp.value;
+  if(sel) ui.coluna = sel.value;
+  window.__modNeoLimite = window.__modNeoLimite || {};
+  window.__modNeoLimite[nomeTabela] = 50;
+  window.renderModuloDinamico(nomeTabela);
+};
+window.limparBuscaModulo = function(nomeTabela){
+  const ui = uiState(nomeTabela);
+  ui.busca = ''; ui.coluna = '';
+  window.__modNeoLimite = window.__modNeoLimite || {};
+  window.__modNeoLimite[nomeTabela] = 50;
+  window.renderModuloDinamico(nomeTabela);
+};
+window.mostrarMaisModulo = function(nomeTabela){
+  window.__modNeoLimite = window.__modNeoLimite || {};
+  window.__modNeoLimite[nomeTabela] = (window.__modNeoLimite[nomeTabela] || 50) + 50;
+  window.renderModuloDinamico(nomeTabela);
+};
+
+window.renderModuloDinamico = function(nomeTabela){
+  const modulo = (typeof db !== 'undefined' && db.modulosDinamicos) ? db.modulosDinamicos[nomeTabela] : null;
+  if(!modulo){ if(typeof toast === 'function') toast('Módulo não encontrado', 'error'); return; }
+  const ui = uiState(nomeTabela), ord = ordState(nomeTabela);
+  const el = (typeof ensureView === 'function')
+    ? ensureView('mod_' + String(nomeTabela).toLowerCase().replace(/[^a-z0-9]/g, '_'))
+    : document.getElementById('view-mod_' + String(nomeTabela).toLowerCase().replace(/[^a-z0-9]/g, '_'));
+  if(!el) return;
+  const dados = Array.isArray(modulo.dados) ? modulo.dados : [];
+  const colunas = (Array.isArray(modulo.colunas) && modulo.colunas.length)
+    ? modulo.colunas
+    : (dados.length ? Object.keys(dados[0]) : []);
+  const label = modulo.label || (typeof formatarNomeTabela === 'function' ? formatarNomeTabela(nomeTabela) : String(nomeTabela));
+  const cat = categoriaDaTabela(nomeTabela);
+  const maxColunas = Math.min(colunas.length, 8);
+  const colunasVisiveis = colunas.slice(0, maxColunas);
+  const limite = limiteState(nomeTabela);
+
+  const comIndice = dados.map((row, i) => ({ row, i }));
+  const filtrados = filtrar(comIndice.map(x => x.row), colunas, ui.busca, ui.coluna)
+    .map(row => ({ row, i: dados.indexOf(row) }));
+  const ordenados = ord.col
+    ? filtrados.slice().sort((a, b) => (ord.dir === 'desc' ? -1 : 1) * cmpValor(a.row ? a.row[ord.col] : '', b.row ? b.row[ord.col] : ''))
+    : filtrados;
+  const pagina = fatiar(ordenados, limite);
+  const seta = c => (ord.col === c ? (ord.dir === 'asc' ? ' ▲' : ' ▼') : '');
+
+  el.innerHTML =
+  '<div class="neo-shell"><div class="neo-panel">' +
+    '<div class="neo-head"><div>' +
+      '<h3>' + esc(label) + '</h3>' +
+      '<p><span class="text-white/80">Tabela ' + esc(nomeTabela) + ' • ' + dados.length + ' registros</span> ' +
+      '<span class="neo-status info"><i class="ph ' + esc(cat.icone || 'ph-table') + '"></i> ' + esc(cat.rotulo || '') + '</span></p>' +
+    '</div><div class="neo-actions">' +
+      '<button onclick="exportarModuloDinamico(\'' + nomeTabela + '\')" class="neo-btn"><i class="ph ph-export"></i>Exportar</button>' +
+      '<button onclick="confirmarExcluirModulo(\'' + nomeTabela + '\')" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir módulo</button>' +
+    '</div></div>' +
+    '<div class="neo-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">' +
+      '<div class="neo-card"><p class="neo-label">Registros</p><p class="neo-total" style="font-size:26px">' + dados.length + '</p></div>' +
+      '<div class="neo-card"><p class="neo-label">Campos</p><p class="neo-total" style="font-size:26px">' + colunas.length + '</p></div>' +
+      '<div class="neo-card"><p class="neo-label">Origem</p><p style="font-size:14px;font-weight:800;margin-top:6px">' + esc(modulo.origem || 'Firebird') + '</p></div>' +
+      '<div class="neo-card"><p class="neo-label">Importado em</p><p style="font-size:14px;font-weight:800;margin-top:6px">' + (modulo.importadoEm ? esc(fmtDataHora(modulo.importadoEm)) : '-') + '</p></div>' +
+    '</div>' +
+    '<div class="p-4 border-b flex gap-2 flex-wrap items-center">' +
+      '<input id="search-mod-' + nomeTabela + '" value="' + esc(ui.busca || '') + '" onkeydown="if(event.key===\'Enter\'){filtrarModuloDinamico(\'' + nomeTabela + '\')}" class="neo-input flex-1 min-w-[220px]" placeholder="Pesquisar e apertar Enter...">' +
+      '<select id="coluna-mod-' + nomeTabela + '" class="neo-select"><option value="">Todas as colunas</option>' +
+        colunas.map(c => '<option value="' + esc(c) + '"' + (ui.coluna === c ? ' selected' : '') + '>' + esc(c) + '</option>').join('') +
+      '</select>' +
+      '<button onclick="filtrarModuloDinamico(\'' + nomeTabela + '\')" class="neo-btn primary" title="Pesquisar"><i class="ph ph-magnifying-glass"></i></button>' +
+      '<button onclick="limparBuscaModulo(\'' + nomeTabela + '\')" class="neo-btn">Limpar</button>' +
+      '<span class="self-center text-[12px] text-slate-500" id="mod-count-' + nomeTabela + '"><b>' + pagina.total + '</b> registros' + (ui.busca ? ' (filtrados de ' + dados.length + ')' : '') + '</span>' +
+    '</div>' +
+    '<div class="overflow-auto max-h-[calc(100vh-340px)]"><table class="neo-table"><thead><tr>' +
+      '<th style="width:44px">#</th>' +
+      colunasVisiveis.map(c => '<th><a href="javascript:void(0)" onclick="ordenarModuloDinamico(\'' + nomeTabela + '\',\'' + esc(c) + '\')" style="color:inherit;text-decoration:none">' + esc(c) + seta(c) + '</a></th>').join('') +
+      (colunas.length > maxColunas ? '<th>+' + (colunas.length - maxColunas) + '</th>' : '') +
+      '<th style="width:70px">Ações</th>' +
+    '</tr></thead><tbody id="mod-tbody-' + nomeTabela + '">' +
+      (pagina.visiveis.map((item, k) =>
+        '<tr ondblclick="visualizarRegistroDinamico(\'' + nomeTabela + '\',' + item.i + ')" title="Duplo clique para ver o detalhe">' +
+        '<td>' + (k + 1) + '</td>' +
+        colunasVisiveis.map(c => '<td>' + esc(String(item.row && item.row[c] != null ? item.row[c] : '').substring(0, 60)) + '</td>').join('') +
+        (colunas.length > maxColunas ? '<td>...</td>' : '') +
+        '<td><button onclick="visualizarRegistroDinamico(\'' + nomeTabela + '\',' + item.i + ')" class="neo-btn" title="Visualizar"><i class="ph ph-eye"></i></button></td>' +
+        '</tr>'
+      ).join('') || '<tr><td colspan="' + (colunasVisiveis.length + 3) + '" class="text-center text-slate-500 py-8">Nenhum registro encontrado</td></tr>') +
+    '</tbody></table></div>' +
+    (pagina.total > pagina.mostrando
+      ? '<div class="p-3 border-t text-center"><button onclick="mostrarMaisModulo(\'' + nomeTabela + '\')" class="neo-btn">Mostrar mais (' + pagina.mostrando + ' de ' + pagina.total + ')</button></div>'
+      : '<div class="p-3 border-t text-center text-[12px] text-slate-500">Mostrando ' + pagina.mostrando + ' de ' + pagina.total + ' registros • duplo clique abre o detalhe</div>') +
+  '</div></div>';
+};
+
+window.visualizarRegistroDinamico = function(nomeTabela, idx){
+  const modulo = (typeof db !== 'undefined' && db.modulosDinamicos) ? db.modulosDinamicos[nomeTabela] : null;
+  if(!modulo || !modulo.dados || !modulo.dados[idx]) return;
+  const row = modulo.dados[idx];
+  const label = modulo.label || (typeof formatarNomeTabela === 'function' ? formatarNomeTabela(nomeTabela) : String(nomeTabela));
+  const modalRoot = document.getElementById('modal-root');
+  if(!modalRoot) return;
+  const entradas = Object.entries(row);
+  modalRoot.innerHTML =
+    '<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onclick="if(event.target===this)closeModal()">' +
+    '<div class="neo-panel neo-float-in" style="max-width:640px;width:100%;max-height:90vh;display:flex;flex-direction:column">' +
+      '<div class="neo-head"><div><h3>' + esc(label) + ' — #' + (idx + 1) + '</h3><p>Tabela: ' + esc(nomeTabela) + ' • ' + entradas.length + ' campos</p></div>' +
+      '<div class="neo-actions"><button onclick="closeModal()" class="neo-btn"><i class="ph ph-x"></i>Fechar</button></div></div>' +
+      '<div class="flex-1 overflow-y-auto p-4"><div class="neo-card">' +
+        entradas.map(([key, value]) =>
+          '<div class="border-b pb-2 mb-2"><p class="neo-label">' + esc(key) + '</p>' +
+          '<p class="text-[14px]">' + (value === null || value === undefined || value === '' ? '<span class="text-slate-400 italic">vazio</span>' : esc(String(value))) + '</p></div>'
+        ).join('') +
+      '</div></div>' +
+    '</div></div>';
+  modalRoot.classList.remove('hidden');
+};
+
+console.log('[DIGICOPY] modulos_neo_visual_patch.js v5.21.3 carregado — migrados/Fiscal no padrão neo');
+})();
+
+;
+
+/* ===== modo_escuro_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.21.3 — Modo escuro (claro/escuro com um clique)
+// • Botão lua/sol na barra azul do topo (ao lado do sino). Vale para o
+//   sistema inteiro, incluindo as abas do Fiscal e os outros menus.
+// • A escolha fica salva neste navegador/PC (claro é o padrão).
+// • Na impressão, o sistema volta sozinho para o claro (não gasta tinta).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+/* ---------------- LÓGICA PURA (testável em node) ---------------- */
+
+const TEMA_KEY = 'digicopy_theme_v1';
+function resolve(valorSalvo){
+  return String(valorSalvo || '').toLowerCase() === 'dark' ? 'dark' : 'light';
+}
+function next(tema){
+  return resolve(tema) === 'dark' ? 'light' : 'dark';
+}
+function isDark(tema){ return resolve(tema) === 'dark'; }
+
+window.MODO_ESCURO_PURE = { KEY: TEMA_KEY, resolve, next, isDark };
+
+if(typeof document === 'undefined') return; // modo teste (node)
+
+/* ---------------- Tema (navegador) ---------------- */
+
+function ler(){
+  try{ return resolve(localStorage.getItem(TEMA_KEY)); }catch(e){ return 'light'; }
+}
+function aplicar(tema){
+  const t = resolve(tema);
+  try{ document.documentElement.dataset.theme = t; }catch(e){}
+  try{ document.documentElement.style.colorScheme = t; }catch(e){}
+  const btn = document.getElementById('tema-btn-icone');
+  if(btn) btn.className = t === 'dark' ? 'ph ph-sun text-[15px]' : 'ph ph-moon text-[15px]';
+  const wrap = document.getElementById('tema-btn');
+  if(wrap) wrap.title = t === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro';
+  return t;
+}
+window.temaAtual = function(){ return ler(); };
+window.alternarTema = function(){
+  const t = next(ler());
+  try{ localStorage.setItem(TEMA_KEY, t); }catch(e){}
+  aplicar(t);
+  return t;
+};
+
+const CSS =
+':root{--dc-bg:#f1f5f9;--dc-panel:#ffffff;--dc-panel2:#f8fafc;--dc-text:#0f172a;--dc-muted:#64748b;--dc-border:#e2e8f0;--dc-input:#ffffff;--dc-hover:#f5f9ff;--dc-menu:#ffffff;--dc-shadow:rgba(15,23,42,.07);}\n' +
+'html[data-theme="dark"]{--dc-bg:#0b1220;--dc-panel:#111c33;--dc-panel2:#0e1730;--dc-text:#e6edf7;--dc-muted:#93a3bd;--dc-border:#233252;--dc-input:#0e1730;--dc-hover:#1a2a4a;--dc-menu:#101b34;--dc-shadow:rgba(0,0,0,.45);}\n' +
+'html[data-theme="dark"] body{background:var(--dc-bg)!important;color:var(--dc-text);}\n' +
+'html[data-theme="dark"] #app-shell{background:var(--dc-bg);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .modern-topnav{background:var(--dc-menu);border-bottom-color:var(--dc-border);box-shadow:0 1px 8px var(--dc-shadow);}\n' +
+'html[data-theme="dark"] .module-row{background:linear-gradient(180deg,#131f3a,#0e1730);}\n' +
+'html[data-theme="dark"] .module>button{color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .module>button i{color:#8fb4ff;}\n' +
+'html[data-theme="dark"] .module>button:hover{background:#1a2a4a;color:#fff;}\n' +
+'html[data-theme="dark"] .module-menu{background:var(--dc-menu);border-color:var(--dc-border);box-shadow:0 18px 45px var(--dc-shadow);}\n' +
+'html[data-theme="dark"] .module-menu button{color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .module-menu button:hover{background:var(--dc-hover);color:#fff;}\n' +
+'html[data-theme="dark"] .module-menu i{color:#8fb4ff;}\n' +
+'html[data-theme="dark"] .module-menu small{color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] .dynamic-menu-heading{color:var(--dc-muted)!important;}\n' +
+'html[data-theme="dark"] .command-row{background:var(--dc-menu);border-top-color:var(--dc-border);}\n' +
+'html[data-theme="dark"] .command-row .quick{background:var(--dc-panel);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .command-search{background:var(--dc-input);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .statusbar{background:#0e1730;border-top-color:var(--dc-border);color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] .statusbar span{border-right-color:var(--dc-border);}\n' +
+'html[data-theme="dark"] .neo-shell{background:linear-gradient(180deg,#0b1220 0,#0b1220 72%);}\n' +
+'html[data-theme="dark"] .neo-panel{background:var(--dc-panel);border-color:var(--dc-border);box-shadow:0 12px 35px var(--dc-shadow);}\n' +
+'html[data-theme="dark"] .neo-card{background:var(--dc-panel2);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-label{color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] .neo-total{color:#9dbcff;}\n' +
+'html[data-theme="dark"] .neo-btn{background:var(--dc-panel2);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-btn:hover{border-color:#8fb4ff;color:#fff;box-shadow:0 8px 18px rgba(0,0,0,.35);}\n' +
+'html[data-theme="dark"] .neo-btn.primary{background:#2b4acb;border-color:#2b4acb;color:#fff;}\n' +
+'html[data-theme="dark"] .neo-input,html[data-theme="dark"] .neo-select{background:var(--dc-input);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-input::placeholder{color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] .neo-table th{background:#0e1730;color:var(--dc-muted);border-bottom-color:var(--dc-border);}\n' +
+'html[data-theme="dark"] .neo-table td{border-bottom-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-table tbody tr:hover{background:var(--dc-hover);}\n' +
+'html[data-theme="dark"] .neo-selected{background:#1e3a8a!important;}\n' +
+'html[data-theme="dark"] .neo-suggest{background:var(--dc-menu);border-color:var(--dc-border);}\n' +
+'html[data-theme="dark"] .neo-suggest button{border-bottom-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-suggest button:hover{background:var(--dc-hover);color:#fff;}\n' +
+'html[data-theme="dark"] .neo-tab{background:var(--dc-panel2);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .neo-tab.active,html[data-theme="dark"] .neo-tab:hover{background:#2b4acb;border-color:#2b4acb;color:#fff;}\n' +
+'html[data-theme="dark"] .neo-status.ok{background:#14532d;color:#bbf7d0;}\n' +
+'html[data-theme="dark"] .neo-status.wait{background:#713f12;color:#fde68a;}\n' +
+'html[data-theme="dark"] .neo-status.info{background:#1e3a8a;color:#bfdbfe;}\n' +
+'html[data-theme="dark"] #app-shell .bg-white{background-color:var(--dc-panel)!important;}\n' +
+'html[data-theme="dark"] #app-shell .bg-slate-50,html[data-theme="dark"] #app-shell .bg-slate-100{background-color:var(--dc-panel2)!important;}\n' +
+'html[data-theme="dark"] #app-shell .text-slate-500,html[data-theme="dark"] #app-shell .text-slate-400{color:var(--dc-muted)!important;}\n' +
+'html[data-theme="dark"] #app-shell .text-slate-600,html[data-theme="dark"] #app-shell .text-slate-700,html[data-theme="dark"] #app-shell .text-slate-800{color:var(--dc-text)!important;}\n' +
+'html[data-theme="dark"] #app-shell .text-\\[\\#0a1e8a\\]{color:#9dbcff!important;}\n' +
+'html[data-theme="dark"] #app-shell .border,html[data-theme="dark"] #app-shell .border-b,html[data-theme="dark"] #app-shell .border-t{border-color:var(--dc-border)!important;}\n' +
+'html[data-theme="dark"] #app-shell input,html[data-theme="dark"] #app-shell select,html[data-theme="dark"] #app-shell textarea{background:var(--dc-input);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] #app-shell input::placeholder,html[data-theme="dark"] #app-shell textarea::placeholder{color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] #app-shell table thead{background:var(--dc-panel2);}\n' +
+'html[data-theme="dark"] #modal-root .bg-white{background-color:var(--dc-panel)!important;}\n' +
+'html[data-theme="dark"] #modal-box{background:var(--dc-panel)!important;color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .clean-home{background:radial-gradient(circle at 52% 48%,#16213d 0,#0b1220 45%,#0b1220 100%);}\n' +
+'html[data-theme="dark"] .clean-logo{color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .clean-logo p{color:var(--dc-muted);}\n' +
+'html[data-theme="dark"] .clean-shortcuts button{background:rgba(17,28,51,.9);border-color:var(--dc-border);color:var(--dc-text);}\n' +
+'html[data-theme="dark"] .desktop-home{background:var(--dc-bg);}\n' +
+'html[data-theme="dark"] .desktop-logo{color:var(--dc-text);}\n' +
+'html[data-theme="dark"] #login-screen{background:var(--dc-bg)!important;}\n' +
+'html[data-theme="dark"] #digicopy-cloud-modal>div{background:var(--dc-panel)!important;color:var(--dc-text);}\n' +
+'html[data-theme="dark"] #digicopy-cloud-modal input,html[data-theme="dark"] #digicopy-cloud-modal select{background:var(--dc-input)!important;color:var(--dc-text)!important;border-color:var(--dc-border)!important;}\n' +
+'@media print{html[data-theme="dark"] body,html[data-theme="dark"] #app-shell{background:#fff!important;color:#000;}}\n';
+
+function instalarCss(){
+  if(document.getElementById('modo-escuro-css')) return;
+  const st = document.createElement('style');
+  st.id = 'modo-escuro-css';
+  st.textContent = CSS;
+  document.head.appendChild(st);
+}
+function instalarBotao(){
+  if(document.getElementById('tema-btn')) return true;
+  const sino = document.getElementById('ntf-btn');
+  if(!sino || !sino.parentNode) return false;
+  const btn = document.createElement('button');
+  btn.id = 'tema-btn';
+  btn.type = 'button';
+  btn.onclick = function(){ window.alternarTema(); };
+  btn.className = 'w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition';
+  btn.innerHTML = '<i id="tema-btn-icone" class="ph ph-moon text-[15px]"></i>';
+  sino.parentNode.insertBefore(btn, sino.nextSibling);
+  return true;
+}
+
+try{
+  instalarCss();
+  aplicar(ler());
+  if(!instalarBotao()){
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ instalarBotao(); aplicar(ler()); });
+    else setTimeout(function(){ instalarBotao(); aplicar(ler()); }, 300);
+  }
+}catch(e){}
+
+console.log('[DIGICOPY] modo_escuro_patch.js v5.21.3 carregado — tema: ' + ler());
+})();
+
+;
+
+/* ===== duplo_clique_patch.js ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.21.3 — Duplo clique abre o registro em todas as grades
+// • Pedido do usuário: duplo clique numa linha abre o cadastro/detalhe dela.
+// • Funciona em qualquer tabela do sistema: o duplo clique aciona o mesmo
+//   botão de abrir/editar que já existe na linha (lápis, olho, histórico).
+// • Segurança: NUNCA aciona botão de excluir, baixar, pagar, estornar ou
+//   faturar. Linhas que já têm duplo clique próprio continuam iguais.
+// • Telas com lógica própria de duplo clique (Vendas) não são alteradas.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+/* ---------------- LÓGICA PURA (testável em node) ---------------- */
+
+// onclick permitidos (abrir/editar/ver — nunca apagam nem mexem em dinheiro)
+const ACAO_OK = [
+  'openmodal(', 'opencontratocompleto(', 'openmodalchamadocompleto(',
+  'showvenda(', 'historicovenda(', 'visualizarregistrodinamico(',
+  'historicolancamento(', 'abrirchamadoscontrato(', 'abrirleituracontrato(',
+  'visualizaros(', 'veros(', 'abriros('
+];
+// onclick proibidos (destruir, pagar, baixar, faturar, confirmar)
+const ACAO_NAO = [
+  'excluir', 'delet', 'apagar', 'remover', 'baixar', 'pagar', 'receber',
+  'estornar', 'faturar', 'confirmar', 'salvar', 'gravar', 'enviar', 'imprimir',
+  'print', 'export'
+];
+function normalizar(fn){ return String(fn || '').toLowerCase().replace(/\s+/g, ''); }
+function ehAcaoSegura(onclick){
+  const fn = normalizar(onclick);
+  if(!fn) return false;
+  for(const ruim of ACAO_NAO){ if(fn.indexOf(ruim) >= 0) return false; }
+  for(const boa of ACAO_OK){ if(fn.indexOf(boa) >= 0) return true; }
+  return false;
+}
+// Recebe a lista de onclick dos botões da linha e devolve o índice do botão
+// que o duplo clique deve acionar (-1 = nenhum).
+function escolherBotao(onclicks){
+  const lista = Array.isArray(onclicks) ? onclicks : [];
+  for(let i = 0; i < lista.length; i++){
+    if(ehAcaoSegura(lista[i])) return i;
+  }
+  return -1;
+}
+
+window.DUPLO_CLIQUE_PURE = { ehAcaoSegura, escolherBotao, ACAO_OK: ACAO_OK.slice(), ACAO_NAO: ACAO_NAO.slice() };
+
+if(typeof document === 'undefined') return; // modo teste (node)
+
+/* ---------------- Duplo clique global (navegador) ---------------- */
+
+function deveIgnorar(e, tr){
+  if(!tr) return true;
+  if(tr.hasAttribute('ondblclick')) return true; // já tem duplo clique próprio
+  const alvo = e.target && e.target.closest ? e.target.closest('button,a,input,select,textarea') : null;
+  if(alvo) return true; // clique em cima de botão/campo: deixa o nativo agir
+  if(tr.closest('#modal-root')) return true; // dentro de janela: não mexe
+  if(tr.closest('#view-vendas')) return true; // vendas tem lógica própria
+  if(tr.closest('.neo-suggest')) return true; // lista de sugestão: não mexe
+  if(!tr.closest('#app-shell')) return true; // fora do sistema: não mexe
+  return false;
+}
+document.addEventListener('dblclick', function(e){
+  try{
+    if(e.defaultPrevented) return;
+    const tr = e.target && e.target.closest ? e.target.closest('tr') : null;
+    if(deveIgnorar(e, tr)) return;
+    const botoes = Array.prototype.slice.call(tr.querySelectorAll('button[onclick]'));
+    const idx = escolherBotao(botoes.map(b => b.getAttribute('onclick') || ''));
+    if(idx >= 0 && botoes[idx] && typeof botoes[idx].click === 'function'){
+      e.preventDefault();
+      botoes[idx].click();
+    }
+  }catch(err){}
+}, true);
+
+console.log('[DIGICOPY] duplo_clique_patch.js v5.21.3 carregado — duplo clique abre registros');
+})();
+
+;
+
 /* ===== indexeddb_persistence_patch.js ===== */
 // ═══════════════════════════════════════════════════════════════════════════
 // PERSISTÊNCIA INDEXEDDB v2 — incremental por entidade
@@ -28188,7 +28644,7 @@ window.syncEnviarParaNuvem=async function(){ return {ok:false,desligado:true,clo
 if(typeof document==='undefined') return;
 
 function systemAdmin(){
-  try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
+  try{const s=typeof getSession==='function'?getSession():null;const p=String((s&&s.perfil)||'').toLowerCase();return !!(s&&(p==='admin'||p==='dono'));}catch(e){return false;}
 }
 function applyAdminVisibility(){
   const admin=systemAdmin(),needsAuthorization=!token();
