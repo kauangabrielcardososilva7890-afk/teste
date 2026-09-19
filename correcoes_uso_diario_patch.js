@@ -24,15 +24,6 @@ function getSess(){ return typeof getSession==='function'?getSession():null; }
 function rows(nome){ return (((db.modulosDinamicos||{})[nome]||{}).dados)||[]; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c]!==undefined && r[c]!==null && txt(r[c])!=='') return r[c]; } return ''; }
 
-// 1) Remove aviso de endereço provisório.
-try{ localStorage.setItem('digicopy_rawgh_warn_ok','1'); }catch(e){}
-function removerAvisoProvisorio(){
-  if(typeof document==='undefined') return;
-  document.querySelectorAll('#rawgh-warn,[id*="rawgh"],.rawgh-warn').forEach(el=>el.remove());
-  [...document.querySelectorAll('div')].filter(el=>/endereço PROVISÓRIO|endereco PROVISORIO/i.test(el.textContent||'')).forEach(el=>el.remove());
-}
-setTimeout(removerAvisoProvisorio,100);
-setTimeout(removerAvisoProvisorio,1000);
 
 // 2) Menu: as tabelas migradas foram REMOVIDAS do sistema (não há mais
 //    módulos dinâmicos nem "Dados migrados"). Nada a esconder/adicionar.

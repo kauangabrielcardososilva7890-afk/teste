@@ -10,8 +10,6 @@
       '[data-nav="migrados"]',
       '#nav-dinamico', '#nav-dinamico-label',
       '[data-dynamic-category]',
-      '#rawgh-warn','[id*="rawgh"]',
-      '.rawgh-warn'
     ];
     sel.forEach(s=>{
       document.querySelectorAll(s).forEach(el=> el.remove());

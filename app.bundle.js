@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 100 | sha256: 5c8fd19ea996a438
+ * scripts: 100 | sha256: 029d7441c823d803
  */
 
 /* ===== lz.js ===== */
@@ -2491,36 +2491,6 @@ async function fbExportExtracted(){
     toast('Arquivo JSON baixado','success');
   }
 }
-
-
-// AVISO DE ENDEREÇO PROVISÓRIO (raw.githack.com ≠ rawcdn.githack.com = cofres separados!)
-// O localStorage é por domínio: dados salvos aqui NÃO aparecem no link oficial.
-window.addEventListener('DOMContentLoaded',function(){
-  try{
-    if(location.hostname!=='raw.githack.com') return;
-    if(document.getElementById('rawgh-banner')) return;
-    const bar=document.createElement('div');
-    bar.id='rawgh-banner';
-    bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:99999;max-width:660px;width:calc(100% - 28px);background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);padding:12px 14px;font-family:inherit;';
-    const urlOficial=location.href.replace('raw.githack.com','rawcdn.githack.com');
-    bar.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start">'
-      +'<div style="font-size:22px;line-height:1">⚠️</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;color:#92400e;font-size:13.5px">Você está no endereço PROVISÓRIO — os dados ficam separados do link oficial</div>'
-      +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
-      +'<button id="rawgh-copy" style="height:32px;padding:0 14px;border-radius:10px;background:#d97706;color:#fff;font-weight:700;font-size:12px;border:0;cursor:pointer">📋 Copiar link oficial</button>'
-      +'<button id="rawgh-close" style="height:32px;padding:0 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-weight:700;font-size:12px;border:1px solid #f59e0b;cursor:pointer">Entendi, fechar</button>'
-      +'</div></div></div>';
-    document.body.appendChild(bar);
-    const btnCopy=document.getElementById('rawgh-copy');
-    if(btnCopy) btnCopy.onclick=function(){
-      try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){ prompt('Copie o link oficial:', urlOficial); }
-    };
-    const btnClose=document.getElementById('rawgh-close');
-    if(btnClose) btnClose.onclick=function(){ bar.remove(); };
-  }catch(e){ /* silencioso */ }
-});
 
 ;
 
@@ -17033,15 +17003,6 @@ function getSess(){ return typeof getSession==='function'?getSession():null; }
 function rows(nome){ return (((db.modulosDinamicos||{})[nome]||{}).dados)||[]; }
 function pick(r, campos){ for(const c of campos){ if(r && r[c]!==undefined && r[c]!==null && txt(r[c])!=='') return r[c]; } return ''; }
 
-// 1) Remove aviso de endereço provisório.
-try{ localStorage.setItem('digicopy_rawgh_warn_ok','1'); }catch(e){}
-function removerAvisoProvisorio(){
-  if(typeof document==='undefined') return;
-  document.querySelectorAll('#rawgh-warn,[id*="rawgh"],.rawgh-warn').forEach(el=>el.remove());
-  [...document.querySelectorAll('div')].filter(el=>/endereço PROVISÓRIO|endereco PROVISORIO/i.test(el.textContent||'')).forEach(el=>el.remove());
-}
-setTimeout(removerAvisoProvisorio,100);
-setTimeout(removerAvisoProvisorio,1000);
 
 // 2) Menu: as tabelas migradas foram REMOVIDAS do sistema (não há mais
 //    módulos dinâmicos nem "Dados migrados"). Nada a esconder/adicionar.
@@ -19459,8 +19420,6 @@ console.log('[DIGICOPY] buscador_escola v1.0 carregado');
       '[data-nav="migrados"]',
       '#nav-dinamico', '#nav-dinamico-label',
       '[data-dynamic-category]',
-      '#rawgh-warn','[id*="rawgh"]',
-      '.rawgh-warn'
     ];
     sel.forEach(s=>{
       document.querySelectorAll(s).forEach(el=> el.remove());
