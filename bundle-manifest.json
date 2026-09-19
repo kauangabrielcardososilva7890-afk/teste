@@ -217,5 +217,6 @@
   "submenu_hover_nfe_patch.js",
   "navegacao_sem_tela_branca_patch.js",
   "ribbon_fiscal_estilo_antigo_patch.js",
-  "fiscal_catalogo_completo_patch.js"
+  "fiscal_catalogo_completo_patch.js",
+  "menu_fiscal_oficial_patch.js"
 ]

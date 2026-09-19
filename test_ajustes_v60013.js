@@ -18,7 +18,7 @@ const P = require('./ribbon_fiscal_estilo_antigo_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto já é 219 — a ribbon v6.0.13 ficou na posição histórica 217 (em cima dela, só o catálogo fiscal completo)',
-  man.length === 219 && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[216] === 'navegacao_sem_tela_branca_patch.js');
+  man.length === 220 && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[216] === 'navegacao_sem_tela_branca_patch.js');
 ok('bundle contém o patch (guard + PURE + css)',
   bundle.indexOf('__v60013wxr') >= 0 && bundle.indexOf('WXR613_PURE') >= 0 && bundle.indexOf('wxr-ribbon-css') >= 0);
 
@@ -55,10 +55,10 @@ ok('menu-nfe da barra segue real (regressão)',
 
 console.log('== CARIMBOS v6.0.13 ==');
 ok('index.html carimbado (4 pontos)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && html.indexOf('>v6.0.14<') >= 0 && html.indexOf('app.bundle.js?v=6.0.14') >= 0 && html.indexOf('v6.0.14</title>') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.1.0'") >= 0 && html.indexOf('>v6.1.0<') >= 0 && html.indexOf('app.bundle.js?v=6.1.0') >= 0 && html.indexOf('v6.1.0</title>') >= 0);
 ok('mobile carimbado (3 pontos)',
-  mob.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && mob.indexOf('>v6.0.14<') >= 0 && mob.indexOf('v6.0.14</title>') >= 0);
-ok('package.json cravado', pkg.version === '6.0.14');
+  mob.indexOf("DIGICOPY_APP_VERSION = '6.1.0'") >= 0 && mob.indexOf('>v6.1.0<') >= 0 && mob.indexOf('v6.1.0</title>') >= 0);
+ok('package.json cravado', pkg.version === '6.1.0');
 
 console.log('');
 console.log('RESUMO: ' + pass + ' passaram, ' + fail + ' falharam.');

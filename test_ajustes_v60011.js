@@ -15,7 +15,7 @@ const P = require('./submenu_hover_nfe_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 216; hover NF-e/NFC-e fecha a fila',
-  man.length === 219 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
+  man.length === 220 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60011sxvm') >= 0 && bundle.indexOf('SXVM_PURE_START') >= 0 && bundle.indexOf('SUBMENU_HOVER_NFE_PATCH v6.0.11 ativo') >= 0);
 
@@ -55,9 +55,9 @@ ok('sonda re-aplica tudo (lateral redesenha no login) igual ao padrão das vers�
   src.indexOf('setInterval') >= 0 && src.indexOf('sxvmTudo') >= 0 && src.indexOf('300') >= 0);
 
 console.log('== CARIMBO 6.0.11 ==');
-ok('package.json na 6.0.11', pkg.version === '6.0.14');
-ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && html.indexOf('>v6.0.14<') >= 0 && html.indexOf('app.bundle.js?v=6.0.14') >= 0 && html.indexOf('v6.0.14</title>') >= 0);
-ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.0.14'") >= 0 && mob.indexOf('>v6.0.14<') >= 0);
+ok('package.json na 6.0.11', pkg.version === '6.1.0');
+ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.0'") >= 0 && html.indexOf('>v6.1.0<') >= 0 && html.indexOf('app.bundle.js?v=6.1.0') >= 0 && html.indexOf('v6.1.0</title>') >= 0);
+ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.0'") >= 0 && mob.indexOf('>v6.1.0<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');
