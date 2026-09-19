@@ -37,12 +37,12 @@ function htmlPecasVendas(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -54,6 +54,10 @@ window.lcPecaCalc=function(prefix){
   const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
   const el=document.getElementById(prefix+'-prod-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  const btn=document.getElementById(prefix+'-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String(document.getElementById(prefix+'-prod-preco')?.value||'').trim());
 };
 
 window.lcBuscarPeca=function(prefix){
@@ -78,7 +82,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -87,6 +91,9 @@ window.lcAddPecaManual=function(prefix){
   const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
   const p=window.__lcPecaSel;
   if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+  const precoRaw=String(document.getElementById(prefix+'-prod-preco')?.value||'').trim();
+  if(!/^\d+(?:[.,]\d+)?$/.test(precoRaw)){ aviso('Informe um valor unitário numérico para adicionar o item'); return; }
   const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
   const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
   const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
@@ -100,7 +107,7 @@ window.lcAddPecaManual=function(prefix){
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
   const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
   const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
-  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value='';
   window.lcPecaCalc(prefix);
   window.lcRenderPecas(prefix);
 };
@@ -230,75 +237,6 @@ function lojaRodape(){
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||s.cnpj||'',tel:d.telefone||d.fone||'',whats:d.whatsapp||'',email:d.email||'',end:end||''};
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(normItem):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',subtotal:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
-  const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();

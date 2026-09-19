@@ -34,7 +34,7 @@ ok('nenhum módulo aparece em duas versões' +
 // ── 2. Nenhum par de arquivos com conteúdo igual ────────────────────────────
 // Copiar um patch e só trocar o número de versão é o erro que gerou o item 1.
 function normalizar(s){
-  return s.replace(/5\.22\.\d+/g, 'VER')
+  return s.replace(/5\.\d+\.\d+/g, 'VER')
           .replace(/[Vv]522\d\d/g, 'VER')
           .replace(/\s+/g, ' ')
           .trim();

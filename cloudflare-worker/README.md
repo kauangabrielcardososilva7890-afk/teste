@@ -46,5 +46,44 @@ npx wrangler d1 migrations apply DB --remote
 - `POST /v1/review/remove-revoked` — remove seleção validando novamente a origem bloqueada
 - `POST /v1/admin/reset-cloud` — zera somente dados de negócio, exigindo admin único e frase exata
 - `GET /v1/status` — diagnóstico autenticado
+- `GET /v1/backups` — admin lista os backups guardados
+- `GET /v1/backup?key=NOME` — admin baixa um backup (arquivo `.json`)
+- `DELETE /v1/backup?key=NOME` — admin apaga UM backup
+- `DELETE /v1/backups` — admin apaga TODOS os backups (só o balde; os dados do sistema nunca)
 
 Nenhuma rota substitui a base inteira.
+
+## Backups automáticos (v5.22.97)
+
+Dois ciclos independentes, feitos pela nuvem sozinha (não precisa PC ligado), e
+um reforço manual. Tudo organizado em **pastas dentro da nuvem do sistema**
+(tabela exclusiva de backups, criada sozinha — não mistura com os dados) e
+guardado **compactado** para economizar espaço:
+
+| 📁 Pasta | Quando sai sozinho | Exemplo de arquivo |
+|---|---|---|
+| **Backup diario** | Todo dia **18:30** (horário de São Paulo) | `Backup 08-09-2026.json` |
+| **Backup atualizações** | No primeiro sync de uma **versão nova** — foto da versão **anterior** | `Backup sistema 5.22.95.json` |
+| **Backup manual** | Quando o dono aperta **📸 Backup agora** na tela | `Backup 08-09-2026 19h20.json` |
+
+O backup de atualização só dispara quando a versão **sobe** (um PC antigo que
+sincronizar depois não dispara backup de tabela invertida). Mesmo dia/mesma
+versão = mesmo nome de arquivo: **não acumula duplicado**.
+
+Os backups **nunca são apagados sozinhos** — a limpeza é manual, pelos botões
+do administrador no painel "Nuvem" do sistema: **📥 Baixar todos** (um `.zip`
+com as pastas e um arquivo por backup, pronto pro HD externo) e
+**🗑️ Excluir backups** (confirmação dupla; apaga SÓ os backups, os dados do
+sistema nunca; o ciclo continua normal).
+
+### Ativando pela primeira vez (um comando só)
+
+```bash
+cd cloudflare-worker
+npx wrangler deploy
+```
+
+Pronto. A tabela de backups se cria sozinha no primeiro uso. **Não é preciso
+ativar R2, plano pago nem cartão** — os backups moram no mesmo banco D1 que o
+sistema já usa (dentro do limite grátis). `npx wrangler tail` mostra as linhas
+`BACKUP_DIARIO_OK` / `BACKUP_VERSAO_FALHOU` se quiser acompanhar.

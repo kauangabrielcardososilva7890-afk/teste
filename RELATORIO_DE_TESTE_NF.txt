@@ -1,0 +1,74 @@
+════════════════════════════════════════════════════════════════════════
+RELATÓRIO DE TESTE — NOTA FISCAL (NF-e) · Sistema Digicopy v6.0.6
+Preencha em qualquer editor de texto e devolva COLANDO NA CONVERSA
+(ou mande este arquivo). Escreva do seu jeito, sem cerimônia:
+quanto mais direto e detalhado, mais rápido a correção sai.
+════════════════════════════════════════════════════════════════════════
+
+1) QUEM TESTOU
+Nome: ______________________
+Data: ____/____/______
+Testou em:  ( ) navegador    ( ) programa .exe    ( ) os dois
+Versão no rodapé da página: v________  (tem que ser v6.0.6)
+
+────────────────────────────────────────────────────────────────────────
+2) O QUE DEU CERTO (marque com X o que passou de verdade)
+
+Parte A — navegador
+[ ] A1 Central de Nota Fiscal abre como MENU (tela inteira, não flutuante)
+[ ] A1 Placa vermelha HOMOLOGAÇÃO sempre no topo
+[ ] A2 Popups são do sistema (têm X) — produção pede a palavra PRODUCAO
+[ ] A3 Modo escuro da Central legível (sem texto fantasma, sem card pendurado)
+[ ] A4 Nuvem: PC comum vê sem os gastos; PC gerente vê tudo (Administrador)
+[ ] A5 Botão verde "Reparar sessão agora" respondeu certinho
+
+Parte B — .exe + certificado A1 (homologação)
+[ ] B1 NF-e modelo 55 transmitida e autorizada em MODO TESTE
+[ ] B1 DANFE A4 abriu bonito e com o selo NOTA DE TESTE, SEM VALOR FISCAL
+[ ] B1 Baixar XML salvou o arquivo assinado
+[ ] B2 Cancelamento com justificativa (15+ letras) registrou na nota
+[ ] B2 Inutilização de número respondeu certo da SEFAZ
+[ ] B2 Carta de Correção (CC-e) registrada na nota de teste
+[ ] B2 Testar SEFAZ respondeu cStat 107 (em operação)
+[ ] B2 Pacote do mês baixou o .zip com XMLs + indice.txt
+[ ] B3 Nada emite sozinho / duplicidade bloqueada / auditoria registrou
+
+────────────────────────────────────────────────────────────────────────
+3) CORREÇÕES — o que estava ERRADO, QUEBRADO ou FEIO
+   (um item por linha; se possível: onde estava → o que você fez → o que
+   aconteceu → texto do erro copiado)
+
+C1:
+C2:
+C3:
+C4:
+C5:
+
+────────────────────────────────────────────────────────────────────────
+4) ADIÇÕES — o que FALTOU ou você sentiu que podia ter
+   (botão que esperava, informação que não aparece, facilitador, etc.)
+
+A1:
+A2:
+A3:
+A4:
+A5:
+
+────────────────────────────────────────────────────────────────────────
+5) VEREDICTO (marque UM)
+
+[ ] APROVADO — Parte A toda OK + B1 autorizada + DANFE OK + B2 OK
+[ ] APROVADO COM RESSALVAS — funciona, mas tem os itens da seção 3
+[ ] REPROVADO — não dá pra usar assim; motivo principal:
+      ___________________________________________________________
+
+Assinatura: ______________________
+
+════════════════════════════════════════════════════════════════════════
+LEMBRETES
+· Erro na tela? Copie o texto inteiro da caixa vermelha.
+· Erro no console (F12)? Copie a linha com data/hora e versão.
+· Resposta da SEFAZ? Copie o código e a mensagem (ex.: "Rejeição 539").
+· A Nuvem avisar "código da nuvem está ANTIGO" não é falha sua: anote
+  na seção 3 que o dono precisa rodar o atualizador da nuvem.
+════════════════════════════════════════════════════════════════════════

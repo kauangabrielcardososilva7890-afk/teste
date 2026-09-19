@@ -202,6 +202,10 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
     <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+      <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
+      <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
+    </td>
   </tr>`;
 }
 
@@ -229,14 +233,47 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-title').innerText = 'Chamados';
   document.getElementById('modal-body').innerHTML = `<div class="space-y-3 text-[13px]">
     ${htmlFiltrosChamado('lcg')}
-    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th></tr></thead><tbody>
-    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="7" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
+    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Ações</th></tr></thead><tbody>
+    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="8" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
     </tbody></table></div>
   </div>`;
   document.getElementById('modal-footer').innerHTML =
     `<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>
      <button onclick="novoChamadoAvulsoGuard()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold">+ Novo chamado (fora de contrato)</button>`;
   document.getElementById('modal-root')?.classList.remove('hidden');
+};
+
+// v5.24.34 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+window.imprimirChamadoAgoraV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id);
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  if(typeof window.imprimirChamadoPDF==='function'){ window.imprimirChamadoPDF(id); return; }
+  if(typeof window.imprimirChamado==='function'){ window.imprimirChamado(id); return; }
+};
+
+window.excluirChamadoV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id)||null;
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  var deCtr = !!(o && typeof chamadoDeContrato==='function' ? chamadoDeContrato(o) : (o.contratoId));
+  var msg = deCtr
+    ? 'Esse chamado é DE CONTRATO. Excluir aqui também exclui na lista de chamados dentro do contrato. Tem certeza que deseja excluir?'
+    : 'Excluir este chamado? Apaga SEM volta — nem aqui nem em nenhuma outra lista do sistema.';
+  var segue = function(ok){
+    if(!ok) return;
+    var i=(db.os||[]).findIndex(x=>x.id===id);
+    if(i>=0){ db.os.splice(i,1); }
+    if(typeof saveDB==='function') saveDB();
+    if(typeof toast==='function') toast('Chamado excluído','success');
+    // repinta onde estiver aberto
+    try{
+      if(typeof window.abrirChamadosContrato==='function' && window.__ctrChamadosAberto){ window.abrirChamadosContrato(window.__ctrChamadosAberto); }
+      else if(typeof window.abrirHistoricoChamadosGeral==='function' && document.getElementById('modal-root')&&!document.getElementById('modal-root').classList.contains('hidden') && /Chamados/.test((document.getElementById('modal-title')||{}).textContent||'')){
+        window.abrirHistoricoChamadosGeral();
+      }
+    }catch(e){}
+  };
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(msg, 'Excluir chamado').then(segue); return; }
+  segue(confirm(msg));
 };
 
 window.novoChamadoAvulsoGuard = function(){
@@ -260,8 +297,16 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
+    // v5.24.34 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // da impressora (e a Ações abriga imprimir-direto + excluir).
+    const ths = body.querySelectorAll('thead th');
+    ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });
+    const lastTh = ths[ths.length-1];
+    if(lastTh && !/a[çc][aã]o/i.test(String(lastTh.textContent||'')) && !lastTh.querySelector('.ph')){
+      // mantém 8 colunas: se a tabela original tinha o th-PDF, ele já virou ícone
+    }
     const tb = body.querySelector('tbody');
-    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
+    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="8" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
   }, 40);
 };
 
@@ -496,60 +541,6 @@ if(typeof _selCliAv==='function'){
 }
 
 // ── 4.1 / 4.2 impressão ──
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId);
-  if(!o){ toastMsg('Salve o chamado antes de imprimir.','error'); return; }
-  const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
-  const deContrato = chamadoDeContrato(o);
-  const p = (db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const temColor = !deContrato || impressoraTemColor(p, eq);
-  const pecas = Array.isArray(o.pecas)&&o.pecas.length
-    ? o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''}))
-    : String(o.pecasTexto||'').split('\n').filter(Boolean).map(line=>{
-        const m=line.match(/^(.*?)(?:\s+x\s*(\d+))?$/i); return {d:(m&&m[1])||line,q:(m&&m[2])||''};
-      });
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const fill = (v, blank)=>{
-    if(fin) return esc(v==null||v===''?'-':v);
-    return blank || '&nbsp;';
-  };
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:18px;color:#111;font-size:12px}
-    .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:12px}
-    .cab h1{color:#0a1e8a;font-size:18px;margin:0}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;letter-spacing:.08em;padding:7px 10px;margin:12px 0 6px}
-    .linha{border:1px solid #bbb;min-height:28px;padding:6px 8px;margin-bottom:8px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    table{width:100%;border-collapse:collapse;margin-top:4px}
-    th,td{border:1px solid #bbb;padding:7px;height:22px}
-    th{background:#eef2ff;color:#0a1e8a;text-align:left}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:92px;text-align:center;letter-spacing:2px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="cab"><div><h1>DIGICOPY — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${esc(cli.nome||'')}</p></div><div style="text-align:right"><p><b>OS:</b> ${esc(o.numero||'')}</p><p><b>Status:</b> ${esc(o.status||'')}</p></div></div>
-  ${!deContrato?`<div class="grid2"><div class="linha"><b>Impressora</b><div>${fill(o.modelo)}</div></div><div class="linha"><b>Serial</b><div>${fill(o.serie)}</div></div></div>`:''}
-  <div class="grid2">
-    <div class="linha"><b>Contador preto atual</b><div>${fill(o.contadorAtual)}</div></div>
-    ${temColor?`<div class="linha"><b>Contador color atual</b><div>${fill(o.contadorColor)}</div></div>`:'<div></div>'}
-  </div>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="linha" style="min-height:42px">${fill(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d||''):'&nbsp;'}</td><td>${fin?esc(it.q||''):'&nbsp;'}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="linha" style="min-height:48px">${fill(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w = window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 const _impCham = window.imprimirChamado;
 // wrap print buttons to ask save

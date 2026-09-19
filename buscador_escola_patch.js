@@ -117,7 +117,10 @@ async function api(method,url,body,tk){
 }
 
 async function sync(opt={}){
-  window.__esSync=false; // Reset always before starting
+  // v5.24.8 — FREIO: duas buscas ao mesmo tempo = trabalho e GRAVAÇÃO de nuvem
+  // dobrados (o relógio automático podia atropelar uma busca longa da tela).
+  // Automático nunca atropela; o botão da tela continua podendo reiniciar na mão.
+  if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'};
   window.__esSync=true;
   window.__esLogs=[];
   // log apenas acumula — NÃO redesenha a tela (evita piscar)
@@ -343,11 +346,43 @@ window.esRest=function(id){
   }
 };
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
-window.renderBuscadorEscola=render;
+window.renderBuscadorEscola=function(){
+  render();
+  // v5.26.5 — abriu a aba? confere a idade dos dados na hora (uso de verdade)
+  try{ esAutoTique(); }catch(e){}
+};
 
+// v5.26.5 — O RALO FECHADO DE VEZ (ele com plano pago, decreto: "ele fazia isso
+// ATÉ QUANDO NÃO ESTAVA NA ABA"). Plano pago é pra uso, não pra robô invisível:
+//  • o relógio automático SÓ trabalha se a ABA DO BUSCADOR estiver aberta na
+//    tela AGORA (fora dela: zero login, zero página, zero gravação — silêncio);
+//  • ABRIR a aba já checa a idade dos dados: se passou de 1 hora, a busca
+//    automática começa na hora (uso de verdade, não desperdício);
+//  • botões Atualizar / Baixar Tudo continuam manuais como sempre foram;
+//  • os freios da v5.24.8 continuam todos (1h de dados velhos, incremental,
+//    sem login nem tenta, nunca limpa a base, nunca duas buscas juntas).
+function esAbaAberta(){
+  try{
+    var hs=document.querySelectorAll('h3');
+    for(var i=0;i<hs.length;i++){
+      if(hs[i] && hs[i].textContent && hs[i].textContent.indexOf('Buscador Escola')>=0) return true;
+    }
+  }catch(e){}
+  return false;
+}
+function esAutoTique(){
+  try{
+    if(window.__esSync) return;
+    if(!esAbaAberta()) return;              // v5.26.5 — fora da aba: não consome NADA
+    if(!loginDaNuvem()&&!loginDoNavegador()) return;
+    const c=(db.config&&db.config.escolaSync)||{};
+    if(!c.at||elapsed(c.at)>60*60*1000) sync({auto:true,incremental:true});
+  }catch(_e){}
+}
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
+  // relógio barato: só o "estou na aba? dados velhos?" a cada 10 min — sem rede fora da aba
+  setTimeout(esAutoTique,15000);
+  setInterval(esAutoTique,10*60*1000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();

@@ -1,4 +1,18 @@
 const {spawnSync}=require('child_process');
+// v6.0.6 — deps essenciais vendorizadas no repo (vendor/): se node_modules sumir
+// (sandbox de CI sem npm install), recria a partir do vendor antes de rodar.
+(function ensureDeps(){
+  const fs=require('fs'), path=require('path');
+  for(const pkg of ['acorn','node-forge']){
+    if(fs.existsSync(path.join('node_modules', pkg, 'package.json'))) continue;
+    try{
+      const dst=path.join('node_modules', pkg);
+      fs.mkdirSync(dst, {recursive:true});
+      fs.cpSync(path.join('vendor', pkg), dst, {recursive:true});
+      console.log('deps recriadas a partir do vendor/: ' + pkg);
+    }catch(e){}
+  }
+})();
 const tests=[
   "test_vos.js",
   "test_perf.js",
@@ -133,6 +147,53 @@ const tests=[
   "test_ajustes_v52280.js",
   "test_ajustes_v52281.js",
   "test_ajustes_v52282.js",
+  "test_ajustes_v52284.js",
+  "test_ajustes_v52285.js",
+  "test_ajustes_v52286.js",
+  "test_ajustes_v52287.js",
+  "test_ajustes_v52288.js",
+  "test_ajustes_v52289.js",
+  "test_ajustes_v52290.js",
+  "test_ajustes_v52291.js",
+  "test_ajustes_v52292.js",
+  "test_ajustes_v52293.js",
+  "test_ajustes_v52294.js",
+  "test_ajustes_v52295.js",
+  "test_ajustes_v52296.js",
+  "test_ajustes_v52423.js",
+  "test_ajustes_v52424.js",
+  "test_ajustes_v52425.js",
+  "test_ajustes_v52426.js",
+  "test_ajustes_v52427.js",
+  "test_ajustes_v52428.js",
+  "test_ajustes_v52435.js",
+  "test_ajustes_v52436.js",
+  "test_ajustes_v5250.js",
+  "test_ajustes_v5260.js",
+  "test_ajustes_v5262.js",
+  "test_ajustes_v5263.js",
+  "test_ajustes_v5264.js",
+  "test_ajustes_v5265.js",
+  "test_ajustes_v5266.js",
+  "test_ajustes_v6000.js",
+  "test_ajustes_v6001.js",
+  "test_ajustes_v6002.js",
+  "test_ajustes_v6003.js",
+  "test_ajustes_v6004.js",
+  "test_ajustes_v6005.js",
+  "test_ajustes_v6006.js",
+  "test_ajustes_v6007.js",
+  "test_ajustes_v6008.js",
+  "test_ajustes_v6009.js",
+  "test_ajustes_v60010.js",
+  "test_ajustes_v60011.js",
+  "test_ajustes_v60012.js",
+  "test_ajustes_v60013.js",
+  "test_ajustes_v60014.js",
+  "test_ajustes_v6100.js",
+  "test_ajustes_v6101.js",
+  "test_ajustes_v6102.js",
+  "test_ajustes_v5248.js",
   "test_ponte_electron.js",
   "test_versao_visual.js",
   "test_mobile_apk.js"

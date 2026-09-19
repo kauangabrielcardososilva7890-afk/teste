@@ -287,7 +287,12 @@ window.saveCliente = function(){
   let alvo = null;
   if(id){
     alvo = db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    if(!alvo) return toast('Cliente não encontrado','error');
+    // v5.24.0 — id velho/fantasma (o cliente sumiu da lista ou o modal ficou
+    // com referência antiga): em vez de abortar com "Cliente não encontrado"
+    // e PERDER tudo o que foi digitado, cai para o cadastro NOVO abaixo.
+    if(!alvo) id = null;
+  }
+  if(alvo){
     payload.codigo = alvo.codigo;
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);
@@ -334,7 +339,7 @@ window.renderClientes = function(){
         <select id="classic-campo-clientes" onchange="renderClientes()" class="classic-select ml-2 w-[170px]">
           ${CLI_PURE.CAMPOS_BUSCA.map(([k,rotulo])=>`<option value="${k}" ${campo===k?'selected':''}>${rotulo}</option>`).join('')}
         </select>
-        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
+        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}"  placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
         <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
         <span class="ml-auto pr-2 text-[11.5px] text-slate-500"><b class="text-[#0a1e8a]">${list.length}</b> cliente(s)</span>
       </div>
@@ -351,6 +356,8 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
+  // v5.24.34 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
 

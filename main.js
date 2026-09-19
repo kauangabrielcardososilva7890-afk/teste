@@ -149,6 +149,23 @@ app.whenReady().then(() => {
   registerEscolaIPC();
   registerPrintIPC();
   registerBackupIPC();
+  registerErroTxtIPC();
+  // v5.24.34 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
+  // Word/LibreOffice, o que estiver associado ao .rtf).
+  ipcMain.handle('rtf:abrir', async (_e, payload) => {
+    try{
+      const osMod = require('os');
+      const dir = app.getPath('temp');
+      const nome = String((payload && payload.nome) || 'contrato.rtf').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 80) || 'contrato.rtf';
+      const conteudo = String((payload && payload.conteudo) || '');
+      const full = path.join(dir, 'digicopy-' + Date.now().toString(36) + '-' + nome);
+      fs.writeFileSync(full, conteudo, 'utf8');
+      const res = await shell.openPath(full);
+      return { ok: !res, erro: res || null, arquivo: full };
+    }catch(e){ return { ok:false, erro:String(e && e.message || e) }; }
+  });
+  registerPrinterMonitorIPC();
   registerOpenExternalIPC();
   registerNfeCertIPC();
   registerEscolaLoginIPC();
@@ -445,6 +462,20 @@ function registerNfeCertIPC(){
       return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs, path:p };
     }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
+  ipcMain.handle('nfe:cert-validade', async (_evt, payload) => {
+    // v5.24.34 — conferir a validade do certificado SEM assinar nada: pede a
+    // senha do cofre só pra isso, lê a data e devolve. Fim da era "o sistema
+    // não sabe que o cert venceu".
+    try{
+      const senha = payload && payload.senha;
+      if(!senha) return { ok:false, error:'Informe a senha do certificado.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Nenhum certificado A1 instalado neste PC.' };
+      const sign = require('./nfe_assinatura.js');
+      const info = sign.lerValidadePfx(fs.readFileSync(p), senha);
+      return { ok:true, titular:info.titular, validoAte:info.validoAte, validoDe:info.validoDe, vencido:info.vencido };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
   ipcMain.handle('nfe:cert-import', async () => {
     try{
       const result = await dialog.showOpenDialog(mainWindow, {
@@ -492,6 +523,68 @@ function registerNfeCertIPC(){
     }catch(e){
       return { ok:false, error:e.message||String(e) };
     }
+  });
+
+  // v6.0.1 — TRANSMISSÃO SEFAZ (só dentro do .exe; o navegador não faz TLS com A1).
+  // Mesmos freios do Buscador Escola: URL em lista-branca (só MG), pfx lido do
+  // certificado já importado no PC, senha NÃO fica salva (vem da janela na hora),
+  // tenta 3x em falha de servidor, devolve o XML de retorno pra conferência.
+  ipcMain.handle('nfe:transmitir', async (_evt, payload) => {
+    try{
+      const url = String((payload && payload.url) || '');
+      const envelope = String((payload && payload.envelope) || '');
+      const soapAction = String((payload && payload.soapAction) || '');
+      const senhaCert = String((payload && payload.senhaCert) || '');
+      if(!/^https:\/\/(hnfe\.nfe|nfe|hnfce|nfce)\.fazenda\.mg\.gov\.br\/(nfe2|nfce)\/services\//.test(url)){
+        return { ok:false, error:'URL fora da lista branca (só SEFAZ-MG NF-e/NFC-e).' };
+      }
+      if(!envelope) return { ok:false, error:'Envelope vazio.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Certificado A1 não importado neste PC (Central de Nota Fiscal → certificado).' };
+      if(!senhaCert) return { ok:false, error:'Senha do certificado obrigatória na hora de transmitir (não fica salva).' };
+      const https = require('https');
+      const u = new URL(url);
+      const fazerUmaVez = () => new Promise((resolve) => {
+        const req = https.request({
+          hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+          pfx: fs.readFileSync(p), passphrase: senhaCert,
+          minVersion: 'TLSv1.2', timeout: 25000, rejectUnauthorized: true,
+          headers: { 'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': soapAction,
+                     'Content-Length': Buffer.byteLength(envelope), 'Connection': 'close' }
+        }, (resp) => {
+          let corpo = '';
+          resp.setEncoding('utf8');
+          resp.on('data', (c) => { corpo += c; });
+          resp.on('end', () => resolve({ ok: resp.statusCode >= 200 && resp.statusCode < 300, status: resp.statusCode, xml: corpo }));
+        });
+        req.on('timeout', () => { req.destroy(new Error('Tempo esgotado (25s) — SEFAZ não respondeu.')); });
+        req.on('error', (e) => resolve({ ok:false, status:0, error:e.message || String(e) }));
+        req.write(envelope);
+        req.end();
+      });
+      let ultima = null;
+      for(let tent = 0; tent < 3; tent++){
+        ultima = await fazerUmaVez();
+        if(ultima.ok) return ultima;
+        if(ultima.status && ultima.status >= 400 && ultima.status < 500 && ultima.status !== 408) return ultima; // 4xx = rejeição técnica, não adianta repetir
+        await new Promise(r => setTimeout(r, 700 * (tent + 1)));
+      }
+      return ultima || { ok:false, error:'Falha desconhecida na transmissão.' };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+}
+
+function registerPrinterMonitorIPC(){
+  // v5.24.34 — Fase 1 do MONITOR DE IMPRESSORAS (pedido dele, 'ue faz'):
+  // lê via SNMP a impressora que está na MESMA rede deste PC. Só existe no
+  // .exe; no navegador/celular a chamada da ponte nem aparece (honesto).
+  ipcMain.handle('prt:snmp-status', async (_evt, payload) => {
+    try{
+      const ip = String((payload && payload.ip) || '').trim();
+      if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return { ok:false, error:'IP inválido.' };
+      const snmp = require('./snmp_printer.js');
+      return await snmp.lerStatusUmaVez(ip, (payload && payload.community) || 'public', 2500);
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
   });
 }
 
@@ -607,6 +700,42 @@ function registerBackupIPC(){
       fs.writeFileSync(fpath, content, 'utf8');
       return { ok:true, path: fpath, dir };
     }catch(e){ return { ok:false, error: e.message || String(e) }; }
+  });
+}
+
+// ──────────────────────────────────────────────
+// ERRO.TXT IPC (v5.24.34) — pedido dele: erro indevido vira linha num
+// erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
+// (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
+// (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB
+// vira erro.1.txt e recomeça (PC fraco, arquivo nunca incha).
+// ──────────────────────────────────────────────
+function erroTxtPath(){
+  return path.join(app.getPath('userData'), 'erro.txt');
+}
+function registerErroTxtIPC(){
+  ipcMain.handle('errotxt:append', async (_evt, linha) => {
+    try{
+      const p = erroTxtPath();
+      try{
+        if(fs.existsSync(p) && fs.statSync(p).size > 2*1024*1024){
+          const antigo = path.join(app.getPath('userData'), 'erro.1.txt');
+          try{ if(fs.existsSync(antigo)) fs.unlinkSync(antigo); }catch(e){}
+          fs.renameSync(p, antigo);
+        }
+      }catch(e){}
+      const limpa = String(linha == null ? '' : linha).replace(/[\r\n]+/g, ' | ').slice(0, 1200);
+      fs.appendFileSync(p, limpa + '\n', 'utf8');
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
+  });
+  ipcMain.handle('errotxt:abrir', async () => {
+    try{
+      const p = erroTxtPath();
+      if(!fs.existsSync(p)) fs.writeFileSync(p, '', 'utf8');
+      shell.showItemInFolder(p); // abre o Explorador já com o erro.txt selecionado
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
   });
 }
 

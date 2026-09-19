@@ -285,7 +285,8 @@ window.FLUXOS_PURE = {
 if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
-  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo' },
+  // v5.22.84 — dir guarda o sentido A→Z / Z→A da ordenação da lista de produtos
+  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo', dir: 'asc' },
   ctr: { q: '', status: '', sort: 'codigo' },
   leiturasBusca: '',
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
@@ -326,6 +327,11 @@ function botaoBusca(onclick){
 
 function thSort(fn, col, label, active){
   return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? ' ▲' : ''}</th>`;
+}
+
+// v5.22.84 — título com seta nos DOIS sentidos (▲ A→Z, ▼ Z→A)
+function thSortDir(fn, col, label, active, dir){
+  return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? (dir === 'desc' ? ' ▼' : ' ▲') : ''}</th>`;
 }
 
 function bindBuscaEnter(id, callbackName){
@@ -426,8 +432,13 @@ window.aplicarBuscaProdutosOperacional = function(){
   window.renderProdutos();
 };
 
+// v5.22.84 — clicar na mesma coluna troca o sentido; coluna nova começa A→Z.
+// Antes o sentido ficava guardado em outro objeto de estado e a lista nunca
+// virava Z→A; quando virava, era "invertendo a linha" na tela (bugava).
 window.produtosSortOperacional = function(col){
-  STATE.prod.sort = col;
+  if(!STATE.prod.dir) STATE.prod.dir = 'asc';
+  if(STATE.prod.sort === col) STATE.prod.dir = STATE.prod.dir === 'asc' ? 'desc' : 'asc';
+  else { STATE.prod.sort = col; STATE.prod.dir = 'asc'; }
   window.renderProdutos();
 };
 
@@ -464,12 +475,19 @@ window.renderProdutos = function(){
   if(!view) return;
   if(adaptarProdutosMigrados(db, sess.empresaId)) saveSafe();
 
+  // v5.22.84 — o "Local" do produto deixou de existir (não era usado).
+  // Dados antigos já gravados são apagados aqui, uma varredura por abertura
+  // da tela; depois da primeira limpeza não encontra mais nada.
+  let purgeiLocal = false;
+  (db.produtos || []).forEach(p => { if(p && Object.prototype.hasOwnProperty.call(p, 'local')){ delete p.local; purgeiLocal = true; } });
+  if(purgeiLocal) saveSafe();
+
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
   if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
-    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
+    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
   }
 
@@ -479,10 +497,13 @@ window.renderProdutos = function(){
     categoria: p => p.categoria || '',
     estoque: p => toNumber(p.estoque),
     minimo: p => toNumber(p.estoqueMin),
-    valor: p => toNumber(p.preco),
-    local: p => p.local || ''
+    valor: p => toNumber(p.preco)
   };
-  list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
+  // v5.22.84 — ordena a lista INTEIRA no sentido certo antes de fatiar os 300
+  const prodGetter = sorters[STATE.prod.sort] || sorters.codigo;
+  list = STATE.prod.dir === 'desc'
+    ? [...list].sort((a, b) => compareSmart(prodGetter(b), prodGetter(a)))
+    : sortAsc(list, prodGetter);
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
@@ -522,13 +543,12 @@ window.renderProdutos = function(){
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500">
               <tr>
                 <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'produto-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
-                ${thSort('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'local', 'Local', STATE.prod.sort)}
+                ${thSortDir('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort, STATE.prod.dir)}
                 <th class="px-4 py-2.5 text-right">Ações</th>
               </tr>
             </thead>
@@ -543,11 +563,10 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
                   <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
-                  <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="9" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="9" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              ${list.length > vis.length && vis.length > 0 ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -561,7 +580,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? (db.produtos || []).find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: '', nome: '', categoria: 'Produto', fabricante: '', estoque: 0, estoqueMin: 0, estoqueIdeal: 0,
-    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
+    custo: 0, preco: 0, ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
   };
   if(!p) return toastMsg('Produto não encontrado', 'error');
   const cat = categoriaUnificada(p.categoria || p.tipoCadastro || p.tipo);
@@ -658,7 +677,6 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
@@ -1464,14 +1482,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   if(typeof renderProdutos === 'function') renderProdutos();
 };
 
-window.imprimirChamadoPDF = function(osId){
-  if(!osId) return toastMsg('Salve o chamado antes de imprimir', 'info');
-  const o = (db.os || []).find(x => x.id === osId); if(!o) return toastMsg('Chamado não encontrado', 'error');
-  const cli = getCliente(o.clienteId) || {};
-  const pecas = (o.pecas || []).map(it => `<tr><td>${html(it.descricao || ((db.produtos || []).find(p => p.id === it.produtoId)?.nome) || '')}</td><td>${toNumber(it.qtd,0)}</td><td>${money(it.preco || 0)}</td><td>${money(it.subtotal || 0)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const htmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico ${o.numero}</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}.cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}.cab h1{color:#0a1e8a;font-size:20px;margin:0}.box{border:1px solid #ccc;border-radius:8px;padding:10px;margin-bottom:10px;background:#fafafa}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f4f6f9;color:#0a1e8a}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF</button></div><div class="cab"><div><h1>DIGICOPY ERP — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${html(cli.nome || '')} (${html(cli.documento || '')})</p><p>${html(cli.endereco || '')} ${html(cli.numero || '')} - ${html(cli.cidade || '')}/${html(cli.estado || '')}</p></div><div style="text-align:right"><p><b>OS:</b> ${html(o.numero || '')}</p><p><b>Data:</b> ${dateBR(o.dataAbertura)}</p><p><b>Status:</b> ${html(o.status || '')}</p></div></div><div class="box"><p><b>Motivo:</b> ${html(o.descricao || '-')}</p><p><b>Técnico:</b> ${html(o.tecnico || '-')}</p></div><div class="box grid"><div><p><b>Modelo:</b> ${html(o.modelo || '-')}</p><p><b>Serial:</b> ${html(o.serie || '-')}</p><p><b>Patrimônio:</b> ${html(o.patrimonio || '-')}</p><p><b>Local:</b> ${html(o.local || '-')}</p></div><div><p><b>Contador Antigo:</b> ${toNumber(o.contadorAntigo,0)}</p><p><b>Contador Atual:</b> ${toNumber(o.contadorAtual,0)}</p><p><b>Qtd. Impressos:</b> ${toNumber(o.quantidadeImpressos,0)}</p></div></div><div class="box"><p><b>Serviços Executados:</b></p><p>${html(o.servicos || '-')}</p></div><div class="box"><p><b>Produtos / Peças:</b></p><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="margin-top:50px;display:flex;justify-content:space-between"><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Técnico</div><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Cliente</div></div></body></html>`;
-  const win = window.open('', '_blank'); if(win){ win.document.write(htmlDoc); win.document.close(); }
-};
 
 window.imprimirContratoLocacaoOperacional = function(contratoId, tipo){
   const c = getContrato(contratoId); if(!c) return;

@@ -5,6 +5,7 @@
 'use strict';
 
 var FILTROS = [
+  ['hoje','Hoje (criados ou mexidos hoje)'],
   ['todos','Todos'],
   ['nome','Nome'],
   ['cidade','Cidade'],
@@ -93,6 +94,32 @@ function modalidadeDe(c){
   return out.join(' ').toLowerCase();
 }
 
+// v5.24.34 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
+// contrato hoje OU mexeu nele hoje (impressora, chamado ou leitura). A conta
+// é viva: não depende de carimbo passado — vale até pros contratos antigos.
+function dataDe(x, campos){
+  for(var i=0;i<campos.length;i++){ var v=x && x[campos[i]]; if(v) return String(v).slice(0,10); }
+  return '';
+}
+window.__ctrMexeuHoje = function(c, hoje){
+  if(!c) return false;
+  if(dataDe(c,['atualizadoEm','criadoEm'])===hoje) return true;
+  if(typeof db==='undefined') return false;
+  var empId = c.empresaId || null;
+  var tenta = function(arr, link, camposData){
+    return (arr||[]).some(function(x){
+      if(!x) return false;
+      if(empId && x.empresaId && x.empresaId!==empId) return false;
+      if(String(x[link]||'')!==String(c.id)) return false;
+      return dataDe(x, camposData)===hoje;
+    });
+  };
+  if(tenta(db.parque, 'contratoId', ['atualizadoEm','criadoEm'])) return true;
+  if(tenta(db.os, 'contratoId', ['atualizadoEm','criadoEm','dataAbertura'])) return true;
+  if(tenta(db.leituras, 'contratoId', ['atualizadoEm','criadoEm','dataLeitura'])) return true;
+  return false;
+};
+
 function filtraContratos(list, campo, q){
   var arr=list||[];
   var termo=up(q);
@@ -135,7 +162,15 @@ function filtraContratos(list, campo, q){
       var lim=new Date(); lim.setDate(lim.getDate()+30);
       return f2>=hoje && f2<=lim.toISOString().slice(0,10);
     }
-    if(campo==='leituras_hoje'){
+    if(campo==='hoje'){
+    var base = window.__ctrMexeuHoje(c, hoje);
+    if(!base) return false;
+    if(!termo) return true;
+    var clh=clienteDe(c);
+    return up(c.numero||c.codigoAntigo||'').indexOf(termo)>=0
+      || (clh && (up(clh.nome||'').indexOf(termo)>=0 || up(clh.fantasia||'').indexOf(termo)>=0));
+  }
+  if(campo==='leituras_hoje'){
       return !temLeituraMes(c, mes) || leiturasDo(c).some(function(l){ return String(l.dataLeitura||l.criadoEm||'').slice(0,10)===hoje; });
     }
     if(campo==='nao_faturados_mes') return !temFaturadaMes(c, mes);
@@ -151,7 +186,7 @@ window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContr
 
 if(typeof document==='undefined') return;
 
-var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'todos', q:'' });
+var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'hoje', q:'' });
 
 function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
@@ -185,6 +220,24 @@ function injetar(){
   };
   var pai=busca.parentNode;
   if(pai) pai.insertBefore(sel, busca);
+
+  // v5.24.34 — F1: o "Mostrar todos" com a mesma vida dos outros botões
+  // (visível sempre; a tela já começa no "Hoje" por padrão).
+  if(pai && !document.getElementById('ctr-mostrar-todos')){
+    var btnTodos = document.createElement('button');
+    btnTodos.id='ctr-mostrar-todos';
+    btnTodos.type='button';
+    btnTodos.className='h-10 px-4 rounded-xl bg-white border text-[13px] font-bold';
+    btnTodos.innerHTML='<i class="ph ph-list"></i> Mostrar todos';
+    btnTodos.title='Mostra todos os contratos (o padrão novo da tela é só os de hoje)';
+    btnTodos.onclick=function(){
+      STATE.campo='todos'; STATE.q='';
+      var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
+      var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
+      if(typeof window.renderContratos==='function') window.renderContratos();
+    };
+    pai.insertBefore(btnTodos, busca);
+  }
 }
 
 if(typeof window.renderContratos==='function' && !window.renderContratos.__v52237fil){

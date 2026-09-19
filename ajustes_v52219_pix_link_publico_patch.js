@@ -6,7 +6,7 @@
 (function(){
 'use strict';
 
-var PIX_PUBLICO = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/pix';
+var PIX_PUBLICO = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
 
 function pixUrlPublico(payload){
   return PIX_PUBLICO + '?c=' + encodeURIComponent(String(payload||''));

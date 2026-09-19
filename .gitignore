@@ -1,6 +1,7 @@
 # Dependências e builds
 node_modules/
 dist/
+!vendor/**
 build/
 out/
 coverage/

@@ -110,6 +110,19 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
+// v5.24.34 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// Remover filtro zera data/tipo/ordem e reaplica limpo.
+window.finAplicarFiltroV52421 = function(){
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
+window.finRemoverFiltroV52421 = function(){
+  ST.de=''; ST.ate=''; ST.tipo='todos'; ST.ordem='venc-asc'; ST.q='';
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
 window.finModoV52243 = function(modo){
   ST.modo = modo||'hoje';
   if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
@@ -193,6 +206,8 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
           +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
         : '<input id="neo-fin-de" type="hidden" value=""><input id="neo-fin-ate" type="hidden" value="">')
       +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<button id="fin-btn-filtrar" type="button" onclick="window.finAplicarFiltroV52421()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold" title="Aplicar os filtros escolhidos"><i class="ph ph-funnel"></i> Filtrar</button>'
+      +'<button id="fin-btn-limpar-filtro" type="button" onclick="window.finRemoverFiltroV52421()" class="h-9 px-4 rounded-xl bg-white border text-[12px] font-bold" title="Limpa data, tipo e tipo de ordenação (a pesquisa de texto continua como está)"><i class="ph ph-x-circle"></i> Remover filtro</button>'
       +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
       +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
       +'</div></div>'
@@ -210,8 +225,16 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
+    // v5.24.34 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
+    // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
+    // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).
     ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem','neo-fin-de','neo-fin-ate'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52243(); };
+      var el=document.getElementById(id);
+      if(el) el.onchange=function(){
+        var f=document.getElementById('fin-btn-filtrar');
+        if(f){ f.className='h-9 px-4 rounded-xl bg-amber-500 text-white text-[12px] font-bold animate-pulse'; }
+      };
     });
   };
   window.renderFinanceiro.__v52243fin = true;

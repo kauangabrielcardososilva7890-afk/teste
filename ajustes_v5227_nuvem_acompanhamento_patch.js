@@ -110,7 +110,82 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
+  // v5.24.34 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
+  // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
+  // porque as listas só mostram a empresa logada. Duas empresas no banco =
+  // dois mundos invisíveis entre si (a suspeita número 1 deste caso).
+  const dx=document.createElement('button');
+  dx.id='dc-diag-invisiveis';
+  dx.textContent='Por que dados não aparecem?';
+  dx.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;margin-left:6px';
+  list.parentNode.insertBefore(dx,btn.nextSibling);
+  dx.onclick=window.dcDiagnosticoInvisiveis;
+  // v6.0.4 — REPARAR SESSÃO AGORA: o diagnóstico acima SÓ LÊ; este botão é o
+  // irmão que AGE (pedido dele: a sessão dele ficou "(nenhuma?!)" mesmo com 1
+  // empresa no banco). Usa o motor da cura (window.acForcarCura) e conta o
+  // resultado. Seguro: só carimba quando existe EXATAMENTE 1 empresa no banco.
+  const rp=document.createElement('button');
+  rp.id='dc-reparar-sessao';
+  rp.textContent='Reparar sessão agora';
+  rp.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;margin-left:6px';
+  if(rp.style) rp.style.marginLeft='6px';
+  list.parentNode.insertBefore(rp,dx.nextSibling);
+  rp.onclick=async function(){
+    if(typeof window.acForcarCura!=='function'){
+      const f='A cura v6.0.4 ainda não carregou nesta tela. Recarregue o sistema (F5) e tente de novo.';
+      if(typeof window.lfbAlert==='function')window.lfbAlert(f,'Reparar sessão'); else alert(f);
+      return;
+    }
+    let r=null;
+    try{ r=await window.acForcarCura(); }catch(e){ r={ok:false,motivo:(e&&e.message)||'erro inesperado'}; }
+    const msg=(r&&r.ok)
+      ? ('✅ Reparo feito.\n\n• Sessão: '+(r.sessaoMudou?('carimbada com '+r.empresaId):'já estava com empresa')+'\n• Registros órfãos carimbados: '+Number(r.orfaos||0)+'\n\nRecarregue as telas — os dados voltam a aparecer.')
+      : ('Nada reparado automaticamente: '+((r&&r.motivo)||'motivo desconhecido')+'\n\nSe o banco tiver 2 empresas ou mais, o sistema NÃO chuta — saia e entre escolhendo a empresa certa.');
+    if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Reparar sessão'); else alert(msg);
+  };
 }
+
+window.dcDiagnosticoInvisiveis=function(){
+  const alvoSess=(typeof sess==='function')?sess():null;
+  const empAtual=(alvoSess&&alvoSess.empresaId)||'';
+  const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
+  const linhas=[];
+  let totalInvis=0;
+  let totalOrfaos=0; const orfaosPor={};
+  const idsEstranhos={};
+  for(const e of ENTS){
+    const arr=(window.db&&Array.isArray(window.db[e])) ? window.db[e] : [];
+    let inv=0;
+    let orfaos=0; // v6.0.2 — registros SEM carimbo de empresa (causa real dos "dados sumidos")
+    for(const x of arr){
+      const eid=x&&x.empresaId;
+      if(eid && empAtual && eid!==empAtual){ inv++; idsEstranhos[eid]=true; totalInvis++; }
+      if(eid===undefined||eid===null||eid==='') orfaos++;
+    }
+    if(orfaos) { totalOrfaos+=orfaos; orfaosPor[e]=orfaos; }
+    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':'')+(orfaos?' • '+orfaos+' SEM CARIMBO (órfãos)':(!inv?' • todos visíveis':'')));
+  }
+  const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
+  const outros=Object.keys(idsEstranhos);
+  let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
+  if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
+  const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
+  const corpo = semSessaoComUmaEmpresa
+    ? '\n\n>>> A CAUSA ESTÁ AQUI EM CIMA: sua SESSÃO está SEM empresa, mas o banco tem exatamente 1 ('+empresas[0].id+'). É por isso que dados somem das telas: as listas só mostram a empresa da sessão. Resolva NA HORA clicando no botão verde «Reparar sessão agora» (ao lado deste) — depois recarregue as telas que tudo volta.\n\n(Detalhe técnico, v6.0.4: a sonda antiga só tentava carimbar por 30 segundos depois de abrir o sistema. Quem entrava depois disso ficava o dia inteiro sem carimbo — por isso às vezes aparecia, às vezes não. Agora a cura insiste por até 10 minutos e é rearmada a cada login.)'
+    : totalOrfaos
+    ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
+      Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+
+      '). Quem criou estava com sessão sem empresa — por isso "sumia" nos outros PCs. '+
+      (empAtual? 'A cura carimba sozinho na entrada (a v6.0.4 insiste até 10 minutos e rearma a cada login). Se essa contagem continuar subindo, manda foto.'
+               : '>>> SUA PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA (cabeçalho acima). Clique no botão verde «Reparar sessão agora». Se continuar, manda foto.')
+    : totalInvis
+    ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
+    : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
+  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;
+  if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
+  else alert(msg);
+};
 
 function watchModal(){
   const modal=document.getElementById('digicopy-cloud-modal');

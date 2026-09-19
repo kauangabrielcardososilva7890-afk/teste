@@ -251,22 +251,19 @@ if(typeof window.excluirOrcamentosMarcados==='function' && !window.excluirOrcame
 }
 
 function varrerRessuscitadas(){
-  var _db = getDb();
-  if(!_db) return;
-  bloqueio(_db);
-  var mudou = false;
-  if(Array.isArray(_db.vendas)){
-    var nv = _db.vendas.filter(function(v){ return vendaPodeFicar(v, _db); });
-    if(nv.length!==_db.vendas.length){ _db.vendas = nv; mudou = true; }
-  }
-  if(Array.isArray(_db.orcamentos)){
-    var no = _db.orcamentos.filter(function(o){ return orcamentoPodeFicar(o, _db); });
-    if(no.length!==_db.orcamentos.length){ _db.orcamentos = no; mudou = true; }
-  }
-  if(mudou && typeof saveDB==='function') saveDB();
+  // v5.24.0 — DESATIVADO DE VEZ. Esta varredura REMOVIA vendas/orçamentos do
+  // array com base em guardas gravadas SÓ neste computador (__orcBloqueio) e
+  // em seguida dava saveDB(): a remoção virava DELETE na fila de envio para a
+  // nuvem e apagava o registro DE VERDADE em todos os PCs. Era a causa de
+  // "criei a venda e ela sumiu" e de cada computador mostrar dados diferentes.
+  // Exclusões reais já chegam pela nuvem como operação delete (e orçamento,
+  // desde a 5.22.92, nunca some — vira status 'excluido' no applyRemote).
+  if(window.__V5240_DEBUG){ try{ console.log('[DIGICOPY] varrerRessuscitadas desativado na v5.24.0'); }catch(e){} }
+  return;
 }
 
-setTimeout(varrerRessuscitadas, 800);
+/* v5.24.0 — sem agendamento da varredura (era setTimeout(..., 800)): nada de
+   filtrar os arrays por guarda local. */
 /* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){

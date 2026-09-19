@@ -248,55 +248,6 @@ window.renderEquipamentos = function(){
 };
 
 // PDF chamado
-window.imprimirChamadoPDF = function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq=(db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const deContrato=!!o.contratoId;
-  const showColor=!deContrato || temColor(p,eq);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||it.nome||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const v=(x)=> fin ? esc(x==null||x===''?'':x) : '';
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:16px;color:#111;font-size:12px}
-    .top{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #0a1e8a;padding-bottom:10px}
-    .top img{height:64px;width:auto}
-    .loja{flex:1}
-    .loja h1{margin:0;color:#0a1e8a;font-size:18px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid #bbb;padding:5px 7px;text-align:left}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;padding:6px;margin:12px 0 4px;letter-spacing:.06em}
-    .blank{min-height:22px}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:96px;text-align:center;letter-spacing:1px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="top"><img src="${logoSrc()}" alt="logo"><div class="loja"><h1>${esc(loja.fantasia)}</h1><div>${esc(loja.nome)}</div><div>${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div><div>${esc(loja.end)}</div></div>
-    <div style="text-align:right"><b>OS ${esc(o.numero||'')}</b><br>${fin?'Finalizado':'Aberto'}</div></div>
-  <table><tr><th>Cliente</th><th>Documento</th><th>Telefone</th><th>Cidade</th></tr>
-  <tr><td>${esc(cli.nome||'')}</td><td>${esc(cli.documento||'')}</td><td>${esc(cli.telefone||'')}</td><td>${esc((cli.cidade||'')+(cli.estado?('/'+cli.estado):''))}</td></tr></table>
-  ${!deContrato?`<table><tr><th>Impressora</th><th>Serial</th></tr><tr><td class="blank">${v(o.modelo)}</td><td class="blank">${v(o.serie)}</td></tr></table>`:''}
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td class="blank">${v(o.contadorAtual)}</td>${showColor?`<td class="blank">${v(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div style="border:1px solid #bbb;min-height:36px;padding:8px">${v(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td class="blank">${fin?esc(it.d):''}</td><td class="blank">${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div style="border:1px solid #bbb;min-height:40px;padding:8px">${v(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // logo em relatórios (menos rtf/etiqueta)
 function injetarLogoNoDoc(html){

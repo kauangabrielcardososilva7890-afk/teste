@@ -94,8 +94,29 @@ function inserirAssinatura(xml, signature){
   return src.replace('</NFe>', signature+'</NFe>');
 }
 
+function certInfoBasicas(cert){
+  // v5.24.34 — o funil para LIMPO no certificado: quem tenta assinar com A1
+  // vencido recebe essa mensagem em letras miúdas, com a data exata do vencimento.
+  const val = cert && cert.validity;
+  return {
+    titular: (cert.subject.getField('CN') && cert.subject.getField('CN').value) || '',
+    validoAte: val && val.notAfter ? val.notAfter : null,
+    validoDe: val && val.notBefore ? val.notBefore : null
+  };
+}
+function lerValidadePfx(pfxBuf, password){
+  const {cert} = loadPfx(pfxBuf, password);
+  const info = certInfoBasicas(cert);
+  info.vencido = !!(info.validoAte && info.validoAte.getTime() < Date.now());
+  return info;
+}
 function assinarNfeXml(xml, pfxBuf, password){
   const {key, cert} = loadPfx(pfxBuf, password);
+  const info = certInfoBasicas(cert);
+  if(info.validoAte && info.validoAte.getTime() < Date.now()){
+    const quando = info.validoAte.toLocaleDateString('pt-BR');
+    throw new Error('Certificado A1 VENCIDO em ' + quando + '. Renove o certificado no escritório e instale o novo arquivo .pfx na tela de Configuração fiscal. Enquanto o novo não chegar, a nota não sai — essa é a trava de segurança, não é defeito.');
+  }
   const inf = extractInfNfe(xml);
   const idMatch = /Id="(NFe[0-9]{44})"/.exec(inf);
   if(!idMatch) throw new Error('infNFe sem chave.');
@@ -109,11 +130,12 @@ function assinarNfeXml(xml, pfxBuf, password){
     xmlAssinado,
     digest,
     chave:idMatch[1].slice(3),
-    certificado: (cert.subject.getField('CN')&&cert.subject.getField('CN').value)||''
+    certificado: info.titular,
+    certValidoAte: info.validoAte
   };
 }
 
 module.exports = {
   extractInfNfe, canonicalInfNfe, sha1b64, buildSignedInfo,
-  montarAssinatura, inserirAssinatura, assinarNfeXml, loadPfx
+  montarAssinatura, inserirAssinatura, assinarNfeXml, loadPfx, lerValidadePfx, certInfoBasicas
 };

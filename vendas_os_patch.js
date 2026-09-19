@@ -420,13 +420,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
@@ -538,13 +542,15 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    el.className = 'rounded-xl border p-3 text-[12px] bg-slate-50 text-slate-600';
-    el.innerHTML = '<i class="ph ph-info"></i> Aba OS opcional. Se ficar vazia, a venda sai como <b>notinha normal (meia folha)</b>.';
+    // v5.24.34 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // opcional... notinha normal" SOME. Os estados completa/incompleta
+    // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
+    el.style.display='none'; el.innerHTML='';
   } else if(completa){
-    el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
+    el.style.display=''; el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
     el.innerHTML = '<i class="ph ph-check-circle"></i> <b>OS completa!</b> Modelo + Nº série + Patrimônio/Contador preenchidos → a notinha sairá em <b>folha inteira (venda + OS)</b>.';
   } else {
-    el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+    el.style.display=''; el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
     el.innerHTML = '<i class="ph ph-warning"></i> <b>OS incompleta.</b> Para sair na notinha (folha inteira) preencha: ' +
       [!os.modelo&&'Modelo do equipamento', !os.numeroSerie&&'Número de série', (!os.patrimonio&&!os.contador)&&'Patrimônio ou contador de cópias'].filter(Boolean).map(s=>'<b>'+s+'</b>').join(', ') +
       '. Os dados serão salvos, mas a notinha sairá como venda normal (meia folha).';
@@ -1373,7 +1379,7 @@ window.renderVendas = function(){
   const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">

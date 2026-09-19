@@ -40,3 +40,48 @@ assert.equal(__test.activityLabel('{"senha":"x"}','cli_9'), 'cli_9');
 assert.ok(__test.activityLabel('{"nome":"'+('A'.repeat(90))+'"}','id').length<=80);
 console.log('  ✔ rótulo de acompanhamento sem vazar senha');
 console.log('\nRESULTADO: funções puras da API passaram!');
+
+console.log('== BACKUPS AUTOMÁTICOS v5.22.97 ==');
+
+// Duas pastas separadas, com os nomes do desenho do dono
+const dia = new Date('2026-09-08T21:30:00Z'); // 18:30 em São Paulo
+assert.equal(__test.nomeBackupDiario(dia), 'Backup diario/Backup 08-09-2026.json');
+console.log('  ✔ diário mora na pasta "Backup diario"');
+
+assert.equal(__test.nomeBackupSistema('5.22.95'), 'Backup atualizações/Backup sistema 5.22.95.json');
+console.log('  ✔ backup de atualização mora na pasta "Backup atualizações", nome da versão anterior');
+
+const manual = __test.nomeBackupManual(1);
+assert.equal(manual, 'Backup manual/Backup manual 1.json');
+assert.equal(__test.nomeBackupManual(12), 'Backup manual/Backup manual 12.json');
+console.log('  ✔ reforço manual numerado (v5.24.0): "Backup manual N.json" — o número nunca se repete');
+
+// v5.24.3 — o .exec() do D1 quebra os comandos por LINHA: DDL multilinha
+// virava "incomplete input" e backups/medidor nunca criavam as tabelas.
+const __src = (await import('node:fs')).readFileSync(new URL('./src/index.js', import.meta.url), 'utf8');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS backups (id TEXT PRIMARY KEY'), 'ddl backups em uma linha só (v5.24.3)');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS backups_chunks (id TEXT NOT NULL'), 'ddl backups_chunks em uma linha só (v5.24.3)');
+assert.ok(__src.includes('CREATE TABLE IF NOT EXISTS uso_diario (dia TEXT PRIMARY KEY'), 'ddl uso_diario em uma linha só (v5.24.3)');
+assert.ok(!/CREATE TABLE IF NOT EXISTS \w+ \(\s*\n/.test(__src), 'nenhum CREATE TABLE multilinha restante');
+console.log('  ✔ DDL de backups/medidor em uma linha (v5.24.3): D1 .exec() quebra por linha');
+
+// 00:30 UTC = 21:30 do DIA ANTERIOR em SP — não pode pular dia
+const madrugada = new Date('2026-09-09T00:30:00Z');
+assert.equal(__test.nomeBackupDiario(madrugada), 'Backup diario/Backup 08-09-2026.json');
+console.log('  ✔ madrugada UTC continua no dia certo de São Paulo');
+
+// Comparação de versões
+assert.equal(__test.compararVersao('5.22.96', '5.22.95'), 1);
+assert.equal(__test.compararVersao('5.22.95', '5.22.95'), 0);
+assert.equal(__test.compararVersao('v5.22.95', '5.22.96'), -1);
+assert.equal(__test.compararVersao('5.22.96', ''), 1);
+assert.equal(__test.compararVersao('5.9.9', '5.22.1'), -1);
+console.log('  ✔ versão nova só dispara backup quando é MAIOR (PC velho não dispara "desatualização")');
+
+// gzip de ida e volta (o que grava compactado volta idêntico ao baixar)
+const textoOriginal = JSON.stringify({a:1, nome:'Lojação'}) + ' bem longão '.repeat(5000);
+const gz = await __test.gzipTexto(textoOriginal);
+const de_volta = await __test.gunzipBytes(gz);
+assert.equal(de_volta, textoOriginal);
+assert.ok(gz.length < textoOriginal.length, 'compactou mesmo');
+console.log('  ✔ backup grava compactado e baixa idêntico ao original');

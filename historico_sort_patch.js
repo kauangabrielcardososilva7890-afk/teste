@@ -3,7 +3,7 @@
 (function(){
 'use strict';
 
-const SKIP = /pdf|a[cç][aã]o|excluir|sel\b|imprimir|^$/i;
+const SKIP = /pdf|a[cç][aã]o|excluir|editar|sel\b|imprimir|^$/i;  // v5.24.27 — P5 do relatório: clique no cabeçalho 'Editar' ordenava a lista à toa
 
 function cellKey(td){
   if(!td) return '';

@@ -109,7 +109,11 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    b=botao('btn-nfe-venda-lista','neo-btn','<i class="ph ph-file-text"></i>Pré-visualizar NF-e',function(){ nfeDaSelecao('venda'); });
+    // v5.24.34 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
+    // e o botão das leituras/histórico continuam vivos normalmente.
+    // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.
+    return;
     const excluir=actions.querySelector('#btn-excluir-venda-unificado')||Array.from(actions.querySelectorAll('button')).find(function(x){ return /excluir/i.test(x.textContent||''); });
     if(excluir) actions.insertBefore(b, excluir);
     else actions.appendChild(b);

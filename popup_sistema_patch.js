@@ -14,7 +14,11 @@
       const tid='aviso-system-modal-'+Date.now();
       const div=document.createElement('div');
       div.id=tid;
-      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      // v5.24.34 — BUG REAL apanhado por ele: 'Excluir de vez não faz nada / pop-ups
+  // aparecem ATRÁS da aba de nuvem'. Eram um problema só: a janela da nuvem usa
+  // z-index 100000 e as janelas de sistema 99999 — o pop-up nascia escondido
+  // atrás dela. Diálogos do sistema agora vivem acima de TUDO (teto CSS seguro).
+  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
       const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const isDel = /excluir|apagar|deletar|remover|sair|estornar/i.test((title||'')+' '+(msg||''));
       const icon = isDel ? '🗑️' : '⚠️';

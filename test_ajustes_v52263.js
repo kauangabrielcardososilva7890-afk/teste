@@ -21,7 +21,7 @@ const P = load(src).EXE_COMPLETO_V52263_PURE;
 
 console.log('== v5.22.63 — .EXE COMPLETO ==');
 
-ok('versao', P.VERSAO === '5.22.63' && /^5\.22\.\d+/.test(pkg.version));
+ok('versao', P.VERSAO === '5.22.63' && /^[56]\.\d+\.\d+/.test(pkg.version));
 ok('patch no bundle', manifest.includes('ajustes_v52263_exe_completo_patch.js'));
 ok('bundle carregado com cache-busting da versão',
    html.indexOf('app.bundle.js?v='+pkg.version) >= 0);
@@ -84,7 +84,7 @@ ok('atalho npm run verify:files', pkg.scripts['verify:files'] === 'node verify_p
 // ── 9. Links de teste e download (obrigatórios a cada atualização) ──────────
 const REPO = pkg.digicopy.repo, BRANCH = pkg.digicopy.branch;
 ok('package.json guarda repo e branch publicados', !!REPO && !!BRANCH);
-ok('sync monta o link do GitHack', /LINK_GITHACK/.test(sync) && /raw\.githack\.com/.test(sync));
+ok('sync monta o link OFICIAL do site próprio (githack morreu quando o repo ficou privado)', /LINK_SITE/.test(sync) && /teste-60f\.pages\.dev/.test(sync) && !/LINK_GITHACK/.test(sync));
 ok('sync monta o link do zip do GitHub', /LINK_ZIP/.test(sync) && /archive\/refs\/heads/.test(sync));
 ok('sync imprime os dois links', /imprimirLinks/.test(sync));
 ok('sync avisa se a branch do git divergir', /digicopy\.branch/.test(sync));
@@ -101,10 +101,11 @@ ok('link do cliente aponta para a branch atual (' + BRANCH + ')', branchErrada.l
 // os dois links precisam estar documentados
 const rel = fs.readFileSync('RELATORIO_SESSAO.md', 'utf8');
 const guia = fs.readFileSync('BUILD_EXE.md', 'utf8');
-ok('RELATORIO_SESSAO.md traz o link do GitHack', rel.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0);
+ok('RELATORIO_SESSAO.md traz o link OFICIAL do site próprio', rel.indexOf('teste-60f.pages.dev') >= 0);
 ok('RELATORIO_SESSAO.md traz o link do zip', rel.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
-ok('BUILD_EXE.md traz os dois links',
-   guia.indexOf('raw.githack.com/' + REPO + '/' + BRANCH) >= 0 &&
+ok('RELATORIO_SESSAO.md ainda documenta o githack como histórico morto', /githack/i.test(rel));
+ok('BUILD_EXE.md traz os links oficiais',
+   guia.indexOf('teste-60f.pages.dev') >= 0 &&
    guia.indexOf('archive/refs/heads/' + BRANCH + '.zip') >= 0);
 
 console.log('\nRESULTADO: v5.22.63 passou!');

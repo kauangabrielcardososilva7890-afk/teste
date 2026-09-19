@@ -124,14 +124,21 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    if(!document.getElementById('neo-fin-de-lab') && de.parentNode){
+    // v5.24.34 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
+    // novos, checa se o irmão antes do campo não É o rótulo certo.
+    var irmaoDe = de.previousElementSibling;
+    var jaTemDe = irmaoDe && /^label$/i.test(irmaoDe.tagName||'') && /^\s*de\s*$/i.test(irmaoDe.textContent||'');
+    if(!jaTemDe && !document.getElementById('neo-fin-de-lab') && de.parentNode){
       var labDe=document.createElement('label');
       labDe.id='neo-fin-de-lab';
       labDe.className='text-[11px] font-bold text-slate-500 uppercase';
       labDe.textContent='De';
       de.parentNode.insertBefore(labDe, de);
     }
-    if(!document.getElementById('neo-fin-ate-lab') && ate.parentNode){
+    var irmaoAte = ate.previousElementSibling;
+    var jaTemAte = irmaoAte && /^label$/i.test(irmaoAte.tagName||'') && /^\s*at[ée]\s*$/i.test(irmaoAte.textContent||'');
+    if(!jaTemAte && !document.getElementById('neo-fin-ate-lab') && ate.parentNode){
       var labAte=document.createElement('label');
       labAte.id='neo-fin-ate-lab';
       labAte.className='text-[11px] font-bold text-slate-500 uppercase';

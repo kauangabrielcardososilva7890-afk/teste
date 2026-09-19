@@ -1,6 +1,9 @@
 # Gerar o .exe — guia definitivo
 
-**Versão atual:** v5.22.63
+**Versão atual:** v5.25.0
+**Link de teste OFICIAL:** site próprio https://teste-60f.pages.dev (GitHack
+MORREU quando o repositório ficou privado — não serve nem de plano B)
+**Portal público de atualizações:** https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes
 
 Este documento existe por causa de um problema recorrente: **gerar o `.exe` e o
 sistema abrir sem as atualizações novas**. A causa foi encontrada e corrigida.
@@ -40,21 +43,26 @@ dando 404**.
 
 ## 1b. Links da versão (obrigatórios em toda atualização)
 
-Toda atualização precisa sair com **os dois links**:
+Toda atualização precisa sair com **os links oficiais** (regra desde que o
+repositório ficou privado — o GitHack parou de servir, era o link antigo aqui;
+apagado pra não induzir erro. Mantido o histórico no RELATORIO_SESSAO.md):
 
-**Testar no navegador (GitHack)** — não precisa instalar nada:
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/index.html?v=5.22.63>
+**Testar no navegador (site próprio — Pages)** — não precisa instalar nada:
+<https://teste-60f.pages.dev>
 
 **Baixar tudo (zip do próprio GitHub)** — não gerar `.zip` novo no repositório:
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0590a-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
 
-Os dois são impressos no final de `npm run sync`:
+**Site público de download (pra cliente/loja):**
+<https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes>
+
+Os dois primeiros são impressos no final de `npm run sync`:
 
 ```
-  Teste no navegador (GitHack):
-    https://raw.githack.com/.../arena/01a0590a-teste/index.html?v=5.22.63
+  Teste no navegador (site próprio — Pages):
+    https://teste-60f.pages.dev
   Baixar tudo (zip do GitHub):
-    https://github.com/.../archive/refs/heads/arena/01a0590a-teste.zip
+    https://github.com/.../archive/refs/heads/arena/01a0683d-teste.zip
 ```
 
 A branch fica em `package.json > digicopy.branch`. O `npm run sync` usa esse

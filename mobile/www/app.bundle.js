@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 190 | sha256: 9e9ca4b8fcf29aa1
+ * scripts: 222 | sha256: 831e9f968ffb964e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1072,7 +1072,6 @@ function initTemplates(){
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button onclick="if(typeof novaVenda==='function') novaVenda(); else navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white text-[#0a1e8a] font-bold text-[12.5px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-shopping-cart-simple text-[16px]"></i> Nova venda</button>
         <button onclick="navigateTo('vendas')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-list-magnifying-glass text-[16px]"></i> Notinhas</button>
         <button onclick="openQuickOS()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-wrench text-[16px]"></i> Chamado</button>
         <button onclick="navigateTo('clientes')" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-[12.5px] hover:bg-white/20 transition flex items-center gap-2"><i class="ph ph-users text-[16px]"></i> Clientes</button>
@@ -1163,13 +1162,13 @@ function initTemplates(){
 
   document.getElementById('view-manutencao').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div class="flex gap-2"><button onclick="openModal('os')" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow">+ Abrir chamado</button><button onclick="toggleOsView()" id="btn-os-kanban" class="h-11 px-4 rounded-xl bg-white border text-[13px]">Kanban</button></div><div class="flex gap-2"><select id="filter-os-status" onchange="renderOs()" class="h-11 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="aberto">Aberto</option><option value="em_atendimento">Em atendimento</option><option value="aguardando_peca">Aguard. peça</option><option value="concluido">Concluído</option></select><input id="search-os" oninput="renderOs()" placeholder="Buscar OS..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[280px]"></div></div><div id="os-kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"></div><div id="os-list" class="hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">OS / Cliente / Criado por</th><th class="px-5 py-3">Tipo / Prioridade</th><th class="px-5 py-3">Técnico</th><th class="px-5 py-3">SLA</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-os" class="divide-y"></tbody></table></div>`;
 
-  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><button onclick="novaVenda()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px]">+ Nova venda / Orçamento</button><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
+  document.getElementById('view-vendas').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-4"><div class="flex gap-2"><div class="flex items-center gap-2 ml-auto"><input id="search-vendas" oninput="renderVendas()" placeholder="Cliente, número..." class="h-11 px-4 rounded-xl bg-white border text-[13px] w-[260px]"></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Nº / Data / Cliente / Criado por</th><th class="px-5 py-3">Itens / Total</th><th class="px-5 py-3">Pagamento</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-vendas" class="divide-y"></tbody></table></div></div><div id="venda-detail" class="rounded-[20px] bg-white border shadow-sm p-6 min-h-[500px]"><div class="text-center py-20 text-slate-400"><i class="ph ph-shopping-cart text-[48px] mb-3 block opacity-30"></i><p class="text-[13px]">Selecione uma venda</p></div></div></div>`;
 
   document.getElementById('view-financeiro').innerHTML=`<div class="flex gap-2 overflow-auto pb-1"><button onclick="setFinTab('visao')" data-fintab="visao" class="fin-tab h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-semibold whitespace-nowrap">Visão geral</button><button onclick="setFinTab('receber')" data-fintab="receber" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Contas a receber</button><button onclick="setFinTab('fluxo')" data-fintab="fluxo" class="fin-tab h-10 px-5 rounded-xl bg-white border text-[13px] font-medium whitespace-nowrap">Fluxo de caixa</button></div><div id="fin-visao" class="fin-panel grid grid-cols-1 xl:grid-cols-3 gap-4"><div class="xl:col-span-2 space-y-4"><div class="grid grid-cols-3 gap-3"><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">A receber (mês)</p><p id="fin-receber-mes" class="text-[20px] font-bold mt-1">R$ 0</p></div><div class="rounded-[16px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Recebido (mês)</p><p id="fin-recebido-mes" class="text-[20px] font-bold mt-1 text-emerald-700">R$ 0</p></div><div class="rounded-[16px] bg-[#0a1e8a] text-white p-4"><p class="text-[11px] uppercase font-bold text-white/60">Saldo projetado</p><p id="fin-saldo" class="text-[20px] font-bold mt-1">R$ 0</p></div></div><div class="rounded-[16px] bg-white border p-6"><div class="flex justify-between"><h4 class="font-bold text-[14px]">Fluxo últimos 12 meses</h4></div><div class="h-[260px] mt-4"><canvas id="chartFluxo"></canvas></div></div></div><div class="space-y-4"><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Inadimplência</h4><div id="list-inadimplencia" class="space-y-2"></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13.5px] mb-3">Próximos vencimentos</h4><div id="list-vencimentos-fin" class="space-y-2"></div></div></div></div><div id="fin-receber" class="fin-panel hidden rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="p-4 flex flex-wrap gap-2 justify-between items-center border-b"><h4 class="font-bold text-[14px]">Contas a receber</h4><div class="flex flex-wrap gap-2 items-center"><select id="filter-cr-tipo" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="venda">Vendas</option><option value="chamado">Chamados</option><option value="leitura">Leituras</option></select><input id="search-cr" placeholder="Buscar..." class="h-9 px-3 rounded-xl bg-white border text-[12px] w-[180px]" oninput="renderFinanceiro()"><select id="filter-cr-status" onchange="renderFinanceiro()" class="h-9 px-3 rounded-xl bg-slate-50 border text-[12px]"><option value="">Todos</option><option value="aberto">Em aberto</option><option value="pago">Pago</option><option value="vencido">Vencido</option></select><button onclick="baixarMultiplasCR()" id="btn-baixa-multi" class="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-semibold hidden">Baixa múltipla</button></div></div><div class="overflow-auto max-h-[700px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-3 py-3 w-8"><input type="checkbox" id="cr-select-all" onchange="toggleSelectAllCR()"></th><th class="px-5 py-3">Datas / Cliente / Origem</th><th class="px-5 py-3">Descrição</th><th class="px-5 py-3">Valor</th><th class="px-5 py-3">Status</th></tr></thead><tbody id="tbody-cr" class="divide-y"></tbody></table></div></div><div id="fin-fluxo" class="fin-panel hidden"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px] mb-4">DRE Simplificado</h4><div id="dre-table" class="space-y-1"></div></div></div>`;
 
   document.getElementById('view-relatorios').innerHTML=`<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4"><button onclick="gerarRelatorio('consumo')" class="text-left rounded-[16px] bg-white border p-5 hover:border-[#0a1e8a]/30 hover:shadow-md"><div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-chart-bar"></i></div><p class="font-bold text-[13.5px] mt-4">Consumo por cliente</p><p class="text-[12px] text-slate-500 mt-1">Ranking PB/COR</p></button><button onclick="gerarRelatorio('faturamento')" class="text-left rounded-[16px] bg-white border p-5 hover:border-emerald-300"><div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 grid place-items-center"><i class="ph ph-currency-dollar"></i></div><p class="font-bold text-[13.5px] mt-4">Faturamento detalhado</p><p class="text-[12px] text-slate-500 mt-1">Contratos, excedentes, vendas</p></button><button onclick="gerarRelatorio('tecnica')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 grid place-items-center"><i class="ph ph-wrench"></i></div><p class="font-bold text-[13.5px] mt-4">Eficiência técnica</p><p class="text-[12px] text-slate-500 mt-1">OS por técnico</p></button><button onclick="gerarRelatorio('rentabilidade')" class="text-left rounded-[16px] bg-white border p-5"><div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 grid place-items-center"><i class="ph ph-trend-up"></i></div><p class="font-bold text-[13.5px] mt-4">Rentabilidade contrato</p><p class="text-[12px] text-slate-500 mt-1">Custo x receita</p></button></div><div id="relatorio-output" class="rounded-[20px] bg-white border shadow-sm p-8 min-h-[400px] flex items-center justify-center text-slate-400 text-[13px]">Selecione um relatório</div>`;
 
-  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="exportBackup()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Exportar backup JSON</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
+  document.getElementById('view-config').innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Empresa Logada</h4><div class="mt-4 space-y-4 text-[13px]"><div><label class="text-[11px] uppercase font-bold text-slate-500">Razão social</label><input id="cfg-emp-nome" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] uppercase font-bold text-slate-500">CNPJ</label><input id="cfg-emp-cnpj" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><div><label class="text-[11px] uppercase font-bold text-slate-500">Telefone</label><input id="cfg-emp-fone" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div></div><div><label class="text-[11px] uppercase font-bold text-slate-500">E-mail</label><input id="cfg-emp-email" class="mt-1 w-full h-11 px-3 rounded-xl border bg-slate-50"></div><button onclick="saveConfig()" class="w-full h-11 rounded-xl bg-[#0a1e8a] text-white font-semibold">Salvar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Técnicos de campo</h4><div id="list-tecnicos" class="mt-4 space-y-2"></div><div class="mt-4 flex gap-2"><input id="new-tecnico-nome" placeholder="Nome técnico" class="flex-1 h-10 px-3 rounded-xl border text-[13px]"><button onclick="addTecnico()" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-semibold">Adicionar</button></div></div><div class="rounded-[16px] bg-white border p-6"><h4 class="font-bold text-[14px]">Backup</h4><p class="text-[12px] text-slate-500 mt-1">Exporte seus dados para um arquivo JSON.</p><div class="mt-4"><button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="w-full h-11 rounded-xl bg-white border text-[13px] font-semibold">Backup do sistema</button><button onclick="abrirTelaBackup()" class="w-full h-11 mt-2 rounded-xl bg-white border text-[13px] font-semibold">📥 Restaurar a partir de um arquivo</button></div><div class="pt-4 text-[11px] text-slate-500 leading-relaxed">Sistema Digicopy</div></div></div>`;
 
   document.getElementById('view-usuarios').innerHTML=`<div class="flex flex-wrap justify-between gap-3"><div><h3 class="font-bold text-[18px]">Usuários e permissões</h3><p class="text-[13px] text-slate-500 mt-1">Hierarquia: Admin (Kauan) e Dono (Denivaldo) têm permissão total. Demais são Funcionários.</p></div><button onclick="openModalCriarUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold text-[13.5px] shadow">+ Novo usuário</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div class="lg:col-span-2 rounded-[16px] bg-white border shadow-sm overflow-hidden"><table class="w-full text-left text-[13px]"><thead class="bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-5 py-3">Usuário / Nome / Perfil</th><th class="px-5 py-3">Login</th><th class="px-5 py-3">Criado por / Quando</th><th class="px-5 py-3">Status</th><th></th></tr></thead><tbody id="tbody-usuarios" class="divide-y"></tbody></table></div><div class="space-y-4"><div class="rounded-[16px] bg-[#0a1e8a] text-white p-5"><h4 class="font-semibold text-[14px]">Como funciona?</h4><div class="mt-3 text-[12.5px] leading-relaxed text-white/80 space-y-2"><p><b class="text-white">Perfis:</b> Admin e Dono têm permissão total.</p><p><b class="text-white">Funcionários:</b> editam apenas o próprio cadastro.</p><p>Toda venda, leitura, OS e contrato mostra quem criou.</p></div></div><div class="rounded-[16px] bg-white border p-5"><h4 class="font-bold text-[13px] mb-3">Usuários por perfil</h4><div id="usuarios-por-perfil" class="space-y-2 text-[12px]"></div></div></div></div>`;
 
@@ -1203,9 +1202,11 @@ function saveCliente(){
   const sess=getSession(); const id=window.modalContext?.id;
   const payload={empresaId:sess.empresaId, nome:document.getElementById('f-cli-nome').value.trim(), documento:document.getElementById('f-cli-doc').value.trim(), tipo:document.getElementById('f-cli-tipo').value, email:document.getElementById('f-cli-email').value.trim(), telefone:document.getElementById('f-cli-tel').value.trim(), endereco:document.getElementById('f-cli-end').value.trim(), cidade:document.getElementById('f-cli-cidade').value.trim(), estado:document.getElementById('f-cli-estado').value.trim(), cep:document.getElementById('f-cli-cep').value.trim(), status:document.getElementById('f-cli-status').value};
   if(!payload.nome) return toast('Informe nome','error');
-  if(id){
-    const existing=db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    Object.assign(existing,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
+  // v5.24.3 — procura UMA vez: se o id está fantasma (cliente sumiu da base
+  // local), cai para o cadastro NOVO em vez de estourar e perder o digitado.
+  const existingCli=id?db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId):null;
+  if(existingCli){
+    Object.assign(existingCli,payload,{atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome}`);
   }else{
     const novo={id:uid('cli'),...payload,mensalidade:0,criadoEm:new Date().toISOString(),criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome};
@@ -1538,7 +1539,7 @@ function renderFinanceiro(){
     if(cr.contratoId) return "navigateTo('contratos')";
     return '';
   }
-  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3"><input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()"></td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
+  document.getElementById('tbody-cr').innerHTML=listCR.map(cr=>{const cli=__cliFind(cr.clienteId); const venc=new Date(cr.vencimento); const isVenc=venc < new Date() && cr.status!=='pago' && cr.status!=='estornado'; const status=isVenc?'vencido':cr.status; const sm={aberto:'bg-blue-50 text-blue-700 border-blue-100', pago:'bg-emerald-50 text-emerald-700 border-emerald-100', vencido:'bg-red-50 text-red-700 border-red-200', estornado:'bg-slate-100 text-slate-500 border-slate-200'}; const dbl=origemLink(cr); return '<tr class="hover:bg-slate-50 cursor-pointer"'+(dbl?' ondblclick="'+dbl+'"':'')+'><td class="px-3 py-3">'+(cr.status==='estornado'?'<span class="text-[10px] font-bold text-slate-400">EXTORNADO</span>':'<input type="checkbox" class="cr-check" data-id="'+cr.id+'" onchange="updateBaixaMulti()">')+'</td><td class="px-5 py-3"><p class="text-[12px] font-semibold">Vence '+fmtDate(cr.vencimento)+' '+(isVenc?'⚠️':'')+'</p><p class="text-[11px] text-slate-500">Criado '+fmtDate(dataCriacaoCR(cr))+'</p><p class="text-[12.5px] font-semibold">'+(cli?.nome||'-')+'</p><p class="text-[11px] text-slate-500">'+origemLabel(cr)+'</p></td><td class="px-5 py-3"><p class="text-[12.5px]">'+cr.descricao+'</p></td><td class="px-5 py-3"><p class="font-bold text-[13px]">'+fmtMoney(cr.valor)+'</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase '+(sm[status]||'')+'">'+status+'</span></td></tr>';}).join('')+(__crExced?'<tr><td colspan="5" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 200 de '+__crTotal+' títulos</td></tr>':'');
   const dreRows=[{label:'Receita Bruta - Locações', valor: db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0)*1.1},{label:'Receita - Excedentes', valor: db.leituras.filter(l=>l.empresaId===sess.empresaId).reduce((s,l)=>s+l.valorExcedente,0)},{label:'Receita - Vendas', valor: db.vendas.filter(v=>v.empresaId===sess.empresaId).reduce((s,v)=>s+v.total,0)},{label:'(=) Lucro Bruto', valor: 0, isTotal:true}];
   dreRows[3].valor=dreRows[0].valor+dreRows[1].valor+dreRows[2].valor;
   const dreEl=document.getElementById('dre-table'); if(dreEl) dreEl.innerHTML=dreRows.map(r=>'<div class="flex justify-between py-2 px-3 rounded-xl '+(r.isTotal?'bg-[#0a1e8a] text-white font-bold':'hover:bg-slate-50')+' text-[13px]"><span>'+r.label+'</span><span class="'+(r.isTotal?'text-white':'')+'">'+fmtMoney(r.valor)+'</span></div>').join('');
@@ -1693,7 +1694,7 @@ function renderBanco(){
         </div>
         <div class="flex flex-wrap gap-2">
           <button onclick="navigateTo('dashboard')" class="h-10 px-5 rounded-xl bg-white text-[#0a1e8a] font-bold text-[13px] hover:bg-white/90 transition flex items-center gap-2 shadow-sm"><i class="ph ph-house text-[18px]"></i> Ver Dashboard (Início)</button>
-          <button onclick="exportBackup()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Exportar JSON atual</button>
+          <button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="h-10 px-4 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-[12.5px]">Backup do sistema</button>
         </div>
       </div>
 
@@ -3806,7 +3807,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
           <button onclick="alterarClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-pencil-simple"></i>Alterar</button>
           <button onclick="excluirClienteClassic()" class="classic-toolbar-btn"><i class="ph ph-x-circle text-red-600"></i>Excluir</button>
           <select class="classic-select ml-2 w-[150px]"><option>Pesquisar</option><option>Nome</option><option>Código</option><option>CPF/CNPJ</option></select>
-          <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" class="classic-input h-[28px] w-[330px] ml-2">
+          <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}"  class="classic-input h-[28px] w-[330px] ml-2">
           <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
         </div>
         <div class="bg-[#f7f7f7] border-b px-2 py-1 text-[11px]"><button class="px-2 py-1 bg-white border">Consultas</button><button class="px-2 py-1 border">Gráficos</button></div>
@@ -3819,7 +3820,11 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
         </div>
         <div class="h-[64px] bg-[#f7f7f7] border-t flex items-center justify-center gap-4"><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-globe"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-gear"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-printer"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-envelope"></i></button><button class="classic-icon-btn !w-12 !h-12"><i class="ph ph-floppy-disk"></i></button><button onclick="navigateTo('dashboard')" class="ml-auto mr-4 h-10 px-5 bg-white border text-red-600"><i class="ph ph-x-circle"></i> Sair</button></div>
       </div>`;
-    const input=document.getElementById('classic-search-clientes'); if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
+    const input=document.getElementById('classic-search-clientes');
+  // v5.24.34 — RELATORIO dele (P11): a caixa classic também só aplica no Enter
+  // (ou no botão Filtrar da tela neo). Não redesenha mais a cada letra.
+  if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
+  if(input && document.activeElement?.id==='classic-search-clientes') input.focus();
   };
   window.alterarClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); openModal('cliente',window.clienteSelecionadoClassic); };
   window.excluirClienteClassic=function(){ if(!window.clienteSelecionadoClassic) return toast('Selecione um cliente','info'); deleteCliente(window.clienteSelecionadoClassic); window.clienteSelecionadoClassic=null; };
@@ -3846,7 +3851,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const total=list.reduce((s,v)=>s+(v.total||0),0);
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white flex flex-wrap items-center gap-3"><input type="hidden" id="neo-tab-vendas" value="${tab}"><div class="neo-tabs"><button onclick="setNeoVendasTab('todas')" class="neo-tab ${tab==='todas'?'active':''}">Todas</button><button onclick="setNeoVendasTab('hoje')" class="neo-tab ${tab==='hoje'?'active':''}">Hoje</button><button onclick="setNeoVendasTab('abertas')" class="neo-tab ${tab==='abertas'?'active':''}">Abertas</button><button onclick="setNeoVendasTab('orcamentos')" class="neo-tab ${tab==='orcamentos'?'active':''}">Orçamentos</button></div><input id="neo-search-vendas" value="${escapeHtml(qRaw)}" oninput="renderVendas()" class="neo-input ml-auto min-w-[280px]" placeholder="Pesquisar por código, cliente, usuário..."><div class="text-right text-[12px] text-slate-500 min-w-[130px]"><b class="text-[#0a1e8a]">${list.length}</b> registros<br>${fmtMoney(total)}</div></div>
         <div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Valor</th><th>Situação</th><th>Tipo</th><th>Usuário</th><th>Recebimento</th></tr></thead><tbody>${list.map(v=>{const c=db.clientes.find(x=>x.id===v.clienteId)||{}; return `<tr onclick="window.neoVendaSelecionada='${v.id}'; renderVendas()" ondblclick="showVenda('${v.id}')" class="cursor-pointer ${window.neoVendaSelecionada===v.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${escapeHtml((v.numero||'').replace('VD-',''))}</b></td><td>${fmtDate(v.data)}</td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">Cód. ${c.codigo||'-'} • ${escapeHtml(c.documento||'')}</span></td><td><b>${fmtMoney(v.total||0)}</b></td><td><span class="neo-status ${statusVendaClass(v)}">${statusVendaLabel(v)}</span></td><td>${vendaTipoNeo(v)}</td><td>${escapeHtml((v.criadoPorNome||'-').split(' ')[0])}</td><td>${escapeHtml(v.formaPagamento||'Prazo')}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-slate-500 py-12">Nenhuma notinha encontrada</td></tr>'}</tbody></table></div>
       </div>
@@ -3889,7 +3894,18 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   window.neoTogglePagamento=function(){document.getElementById('neo-pagamento-box')?.classList.toggle('hidden',document.getElementById('neo-venda-status').value!=='faturado');};
   window.neoSalvarVenda=function(){const sess=getSession(); if(!window.neoVendaCliente) return toast('Selecione o cliente','error'); if(!window.neoVendaItens?.length) return toast('Adicione ao menos um item','error'); const desc=parseFloat(document.getElementById('neo-venda-desc').value)||0; const total=Math.max(0,window.neoVendaItens.reduce((s,i)=>s+i.subtotal,0)-desc); const status=document.getElementById('neo-venda-status').value; const pag=status==='faturado'?(document.getElementById('neo-venda-pag').value||'Prazo'):'Não faturado'; const venda={id:uid('vda'),empresaId:sess.empresaId,numero:(window.proximoNumeroSimples?window.proximoNumeroSimples('venda',db.vendas,sess.empresaId):String(db.vendas.filter(v=>v.empresaId===sess.empresaId).length+1)),clienteId:window.neoVendaCliente.id,data:new Date().toISOString(),itens:[...window.neoVendaItens],desconto:desc,total,formaPagamento:pag,status,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,criadoEm:new Date().toISOString()}; venda.itens.forEach(it=>{const p=db.produtos.find(x=>x.id===it.produtoId&&x.empresaId===sess.empresaId); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque-=it.qtd;}); db.vendas.push(venda); logAction('venda','criar',venda.id,`Venda ${venda.numero} total ${fmtMoney(venda.total)}`); if(status==='faturado') db.contasReceber.push({id:uid('cr'),empresaId:sess.empresaId,origem:'venda',clienteId:venda.clienteId,descricao:`Venda ${venda.numero}`,valor:total,vencimento:new Date(Date.now()+1000*60*60*24*14).toISOString(),pagamentoData:null,status:'aberto',contratoId:null,leituraId:null,vendaId:venda.id,criadoPor:sess.usuarioId,criadoPorNome:sess.usuarioNome,formaPagamento:pag}); saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal(); toast('Venda salva','success'); setTimeout(()=>imprimirNotinha(venda.id),250);};
 
-  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3"><input id="neo-search-clientes" value="${escapeHtml(q)}" oninput="renderClientes()" class="neo-input flex-1" placeholder="Pesquisar nome, CNPJ, telefone ou código"><span class="text-[12px] text-slate-500 self-center"><b class="text-[#0a1e8a]">${list.length}</b> clientes</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes'); if(input&&document.activeElement?.id==='neo-search-clientes') input.focus();};
+  window.renderClientes=function(){const sess=getSession(); if(!sess) return; const view=document.getElementById('view-clientes')||ensureView('clientes'); const q=document.getElementById('neo-search-clientes')?.value||''; const low=q.toLowerCase(); let list=db.clientes.filter(c=>c.empresaId===sess.empresaId&&c.status!=='inativo'); if(!window.__cliFoiFiltrado) list=[]; if(low) list=list.filter(c=>(c.nome||'').toLowerCase().includes(low)||(c.documento||'').toLowerCase().includes(low)||(c.telefone||'').toLowerCase().includes(low)||String(c.codigo||'').includes(low)); list=list.sort((a,b)=>(a.nome||'').localeCompare(b.nome||'')); view.innerHTML=`<div class="neo-shell"><div class="neo-panel neo-float-in"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro e consulta com busca rápida</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo</button><button onclick="if(window.neoClienteSelecionado) openModal('cliente',window.neoClienteSelecionado)" class="neo-btn"><i class="ph ph-pencil"></i>Alterar</button><button onclick="if(window.neoClienteSelecionado) deleteCliente(window.neoClienteSelecionado)" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div><div class="p-4 border-b flex gap-3 flex-wrap items-center"><input id="neo-search-clientes" value="${escapeHtml(q)}" class="neo-input flex-1 min-w-[220px]" placeholder="Digite nome, CNPJ, telefone ou código — aperte Enter ou Filtrar"><button id="cli-btn-filtrar" type="button" class="h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold"><i class="ph ph-funnel"></i> Filtrar</button><button id="cli-btn-remover-filtro" type="button" class="h-10 px-4 rounded-xl bg-white border text-[13px] font-bold"><i class="ph ph-x-circle"></i> Remover filtro</button><span class="text-[12px] text-slate-500 self-center">${window.__cliFoiFiltrado?("<b class='text-[#0a1e8a]'>"+list.length+"</b> cliente(s)"):("Escolha e aperte Filtrar — a lista só aparece depois do filtro")}</span></div><div class="overflow-auto max-h-[calc(100vh-290px)]"><table class="neo-table"><thead><tr><th>Código</th><th>Cliente</th><th>Telefone</th><th>CPF/CNPJ</th><th>Cidade</th><th>Status</th></tr></thead><tbody>${list.map(c=>`<tr onclick="window.neoClienteSelecionado='${c.id}'; renderClientes()" ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer ${window.neoClienteSelecionado===c.id?'neo-selected':''}"><td><b class="text-[#0a1e8a]">${c.codigo||'-'}</b></td><td><b>${escapeHtml(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${escapeHtml(c.email||'')}</span></td><td>${escapeHtml(c.telefone||'')}</td><td>${escapeHtml(c.documento||'')}</td><td>${escapeHtml(c.cidade||'')} / ${escapeHtml(c.estado||'')}</td><td><span class="neo-status ${c.status==='ativo'?'ok':'wait'}">${escapeHtml(c.status||'ativo')}</span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-slate-500 py-12">Nenhum cliente encontrado</td></tr>'}</tbody></table></div></div></div>`; const input=document.getElementById('neo-search-clientes');
+  if(input){
+    input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
+    input.oninput=function(){ var f=document.getElementById('cli-btn-filtrar'); if(f) f.className='h-10 px-4 rounded-xl bg-amber-500 text-white text-[13px] font-bold animate-pulse'; };
+    // v5.24.34 — RELATORIO dele (P11): caixa só aplica no Enter ou no Filtrar.
+    if(document.activeElement?.id==='neo-search-clientes') input.focus();
+  }
+  const btnF=document.getElementById('cli-btn-filtrar');
+  if(btnF) btnF.onclick=function(){ window.__cliFoiFiltrado=true; renderClientes(); };
+  const btnL=document.getElementById('cli-btn-remover-filtro');
+  if(btnL) btnL.onclick=function(){ window.__cliFoiFiltrado=false; document.getElementById('neo-search-clientes').value=''; renderClientes(); };
+};
 })();
 
 // PATCH v4.0 - Aplica visual neo/animado nos módulos principais e reduz caixas fechadas
@@ -3936,7 +3952,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
   window.renderOs=function(){
     const sess=getSession(); if(!sess) return; const q=document.getElementById('neo-search-os')?.value||''; const low=q.toLowerCase();
     let list=db.os.filter(o=>o.empresaId===sess.empresaId).filter(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return !low||(cli.nome||'').toLowerCase().includes(low)||(o.numero||'').toLowerCase().includes(low)||(o.problema||'').toLowerCase().includes(low);}).sort((a,b)=>new Date(b.abertura)-new Date(a.abertura));
-    (document.getElementById('view-manutencao')||ensureView('manutencao')).innerHTML=neoPage('Chamados', 'Atendimento técnico, manutenção e ordens de serviço', `<button onclick="openModal('os')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo chamado</button>`, `${inputSearch('neo-search-os',q,'renderOs','Pesquisar cliente, OS ou problema...')}<button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Cadastrar cliente</button><button onclick="addTecnico && navigateTo('config')" class="neo-btn"><i class="ph ph-user-gear"></i>Cadastrar técnico</button>`, `<table class="neo-table"><thead><tr><th>OS</th><th>Cliente</th><th>Problema</th><th>Técnico</th><th>Abertura</th><th>Prioridade</th><th>Status</th></tr></thead><tbody>${list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return `<tr><td><b class="text-[#0a1e8a]">${escapeHtml(o.numero||'')}</b></td><td><b>${escapeHtml(cli.nome||'')}</b></td><td>${escapeHtml(o.problema||o.descricao||'')}</td><td>${escapeHtml(o.tecnicoNome||o.tecnico||'-')}</td><td>${fmtDate(o.abertura||o.criadoEm)}</td><td>${escapeHtml(o.prioridade||'Normal')}</td><td>${statusPill(o.status,o.status==='concluido'?'ok':'wait')}</td></tr>`}).join('')||emptyRow(7,'Nenhum chamado aberto')}</tbody></table>`);
+    (document.getElementById('view-manutencao')||ensureView('manutencao')).innerHTML=neoPage('Chamados', 'Atendimento técnico, manutenção e ordens de serviço', `<button onclick="openModal('os')" class="neo-btn primary"><i class="ph ph-plus"></i>Novo chamado</button>`, `${inputSearch('neo-search-os',q,'renderOs','Pesquisar cliente, OS ou problema...')}<button onclick="openModal('cliente')" class="neo-btn"><i class="ph ph-user-plus"></i>Cadastrar cliente</button><button onclick="addTecnico && navigateTo('config')" class="neo-btn"><i class="ph ph-user-gear"></i>Cadastrar técnico</button>`, `<table class="neo-table"><thead><tr><th>OS</th><th>Cliente</th><th>Problema</th><th>Técnico</th><th>Abertura</th><th>Prioridade</th><th>Status</th><th class="text-right">Ações</th></tr></thead><tbody>${list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId)||{}; return `<tr><td><b class="text-[#0a1e8a]">${escapeHtml(o.numero||'')}</b></td><td><b>${escapeHtml(cli.nome||'')}</b></td><td>${escapeHtml(o.problema||o.descricao||'')}</td><td>${escapeHtml(o.tecnicoNome||o.tecnico||'-')}</td><td>${fmtDate(o.abertura||o.criadoEm)}</td><td>${escapeHtml(o.prioridade||'Normal')}</td><td>${statusPill(o.status,o.status==='concluido'?'ok':'wait')}</td><td class="text-right whitespace-nowrap" onclick="event.stopPropagation()"><button onclick="window.imprimirChamadoAgoraV52422&&window.imprimirChamadoAgoraV52422('${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 hover:text-[#0a1e8a]" title="Imprimir direto"><i class="ph ph-printer"></i></button><button onclick="window.excluirChamadoV52422&&window.excluirChamadoV52422('${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir chamado"><i class="ph ph-trash"></i></button></td></tr>`}).join('')||emptyRow(8,'Nenhum chamado aberto')}</tbody></table>`);
   };
 
   window.renderFinanceiro=function(){
@@ -3946,7 +3962,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
 
   window.renderRelatorios=function(){
     const sess=getSession(); if(!sess) return; const cards=[['Clientes',db.clientes.filter(c=>c.empresaId===sess.empresaId).length],['Vendas',db.vendas.filter(v=>v.empresaId===sess.empresaId).length],['Contratos',db.contratos.filter(c=>c.empresaId===sess.empresaId).length],['Chamados',db.os.filter(o=>o.empresaId===sess.empresaId && o.status!=='concluido').length]];
-    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="exportBackup()" class="neo-btn primary"><i class="ph ph-download"></i>Exportar</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
+    document.getElementById('view-relatorios').innerHTML=neoPage('Relatórios', 'Resumo visual da operação', `<button onclick="window.abrirTelaBackup ? abrirTelaBackup() : exportarBackupJSON()" class="neo-btn primary"><i class="ph ph-download"></i>Backup</button>`, `<div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">${cards.map(c=>`<div class="neo-card"><p class="neo-label">${c[0]}</p><div class="neo-total !text-[28px]">${c[1]}</div></div>`).join('')}</div>`, `<div class="p-8 text-center text-slate-500">Relatórios detalhados serão conectados ao banco em nuvem na próxima etapa.</div>`);
   };
 
   window.renderAuditoria=function(){
@@ -4117,7 +4133,7 @@ console.log('PATCH notinha v4.1 - impressão de vendas e orçamentos');
     const situacoes=[...new Set(base.map(v=>v.status||'aguardar'))].sort();
     view.innerHTML=`<div class="neo-shell">
       <div class="neo-panel neo-float-in">
-        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+        <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta rápida, orçamento, ordem de serviço e faturamento — <b>duplo clique</b> (ou o olho 👁) abre o histórico completo</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada)" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
         <div class="p-4 border-b bg-white space-y-2">
           <input type="hidden" id="neo-tab-vendas" value="${tab}">
           <div class="flex flex-wrap items-center gap-3">
@@ -5342,13 +5358,17 @@ window.vosVendaSelectProd = function(id){
   const p = db.produtos.find(x=>x.id===id); if(!p) return;
   window.__vosForm.produtoSel = p;
   document.getElementById('vos-prod-search').value = p.nome||'';
-  document.getElementById('vos-item-vunit').value = '';
+  // v5.22.84 — escolher o produto traz o preço cadastrado (dá para mudar);
+  // o botão Adicionar habilita porque o valor unitário ficou preenchido.
+  document.getElementById('vos-item-vunit').value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — sem valor (0/vazio): caixa fica VAZIA (digitar 0 à mão continua valendo)
   document.getElementById('vos-item-desc').value = '';
   document.getElementById('vos-prod-results').classList.add('hidden');
   vosItemCalcTotal();
 };
+// v5.22.84 — o botão Adicionar só liga com algum valor no campo unitário
+// (a quantidade continua padrão 1 e não participa da liberação).
 window.vosAtualizarBotaoItem = function(){
-  const el=document.getElementById('vos-item-qtd');
+  const el=document.getElementById('vos-item-vunit');
   const btn=document.getElementById('vos-add-item');
   if(btn) btn.disabled = !el || !/^\d+(?:[.,]\d+)?$/.test((el.value||'').trim());
 };
@@ -5460,13 +5480,15 @@ window.vosOsRuleHint = function(){
   const algum = vosOsTemAlgumDado(os);
   document.getElementById('vos-tab-os-badge')?.classList.toggle('hidden', !completa);
   if(!algum){
-    el.className = 'rounded-xl border p-3 text-[12px] bg-slate-50 text-slate-600';
-    el.innerHTML = '<i class="ph ph-info"></i> Aba OS opcional. Se ficar vazia, a venda sai como <b>notinha normal (meia folha)</b>.';
+    // v5.24.34 — pedido dele (RELATORIO): a plaquinha neutra "Aba OS
+    // opcional... notinha normal" SOME. Os estados completa/incompleta
+    // continuam ajudando (verde/âmbar) — só essa caixinha era ruído.
+    el.style.display='none'; el.innerHTML='';
   } else if(completa){
-    el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
+    el.style.display=''; el.className = 'rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-[12px] text-emerald-900';
     el.innerHTML = '<i class="ph ph-check-circle"></i> <b>OS completa!</b> Modelo + Nº série + Patrimônio/Contador preenchidos → a notinha sairá em <b>folha inteira (venda + OS)</b>.';
   } else {
-    el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
+    el.style.display=''; el.className = 'rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900';
     el.innerHTML = '<i class="ph ph-warning"></i> <b>OS incompleta.</b> Para sair na notinha (folha inteira) preencha: ' +
       [!os.modelo&&'Modelo do equipamento', !os.numeroSerie&&'Número de série', (!os.patrimonio&&!os.contador)&&'Patrimônio ou contador de cópias'].filter(Boolean).map(s=>'<b>'+s+'</b>').join(', ') +
       '. Os dados serão salvos, mas a notinha sairá como venda normal (meia folha).';
@@ -6295,7 +6317,7 @@ window.renderVendas = function(){
   const advInput = (k,label,ph,type)=>`<label class="text-[10px] font-bold uppercase text-slate-500">${label}<input id="vosf-${k}" type="${type||'text'}" value="${escapeHtml(AF[k]||'')}" placeholder="${ph||''}" onchange="window.__vosAdvF['${k}']=this.value; window.__vosLimiteVendas=300; renderVendas()" class="mt-0.5 w-full h-[34px] px-2 rounded-lg border text-[12px] normal-case font-normal"></label>`;
   view.innerHTML = `<div class="neo-shell">
     <div class="neo-panel neo-float-in">
-      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="novaVenda()" class="neo-btn primary"><i class="ph ph-plus"></i>Nova venda</button><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
+      <div class="neo-head"><div><h3>Vendas e Notinhas</h3><p>Consulta de vendas novas e antigas — <b>clique no título da coluna</b> para ordenar • <b>duplo clique</b> abre o histórico</p></div><div class="neo-actions"><button onclick="if(window.neoVendaSelecionada) historicoVenda(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-clock-counter-clockwise"></i>Histórico</button><button onclick="if(window.neoVendaSelecionada) imprimirNotinha(window.neoVendaSelecionada); else toast('Selecione uma notinha','info')" class="neo-btn"><i class="ph ph-printer"></i>Imprimir</button><button onclick="vosExportarVendasCSV()" class="neo-btn" title="Baixa a listagem filtrada em planilha (abre no Excel)"><i class="ph ph-file-xls"></i>Excel/CSV</button><button onclick="excluirVendaNeo()" class="neo-btn danger"><i class="ph ph-trash"></i>Excluir</button></div></div>
       <div class="p-4 border-b bg-white space-y-2">
         <input type="hidden" id="neo-tab-vendas" value="${tab}">
         <div class="flex flex-wrap items-center gap-3">
@@ -7855,7 +7877,12 @@ window.saveCliente = function(){
   let alvo = null;
   if(id){
     alvo = db.clientes.find(c=>c.id===id && c.empresaId===sess.empresaId);
-    if(!alvo) return toast('Cliente não encontrado','error');
+    // v5.24.0 — id velho/fantasma (o cliente sumiu da lista ou o modal ficou
+    // com referência antiga): em vez de abortar com "Cliente não encontrado"
+    // e PERDER tudo o que foi digitado, cai para o cadastro NOVO abaixo.
+    if(!alvo) id = null;
+  }
+  if(alvo){
     payload.codigo = alvo.codigo;
     Object.assign(alvo, payload, {atualizadoPor:sess.usuarioId, atualizadoPorNome:sess.usuarioNome, atualizadoEm:new Date().toISOString()});
     logAction('cliente','editar',id,`Editado cliente ${payload.nome} (#${payload.codigo||'-'})`);
@@ -7902,7 +7929,7 @@ window.renderClientes = function(){
         <select id="classic-campo-clientes" onchange="renderClientes()" class="classic-select ml-2 w-[170px]">
           ${CLI_PURE.CAMPOS_BUSCA.map(([k,rotulo])=>`<option value="${k}" ${campo===k?'selected':''}>${rotulo}</option>`).join('')}
         </select>
-        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}" oninput="renderClientes()" placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
+        <input id="classic-search-clientes" value="${escapeHtml(searchRaw)}"  placeholder="Digite para pesquisar..." class="classic-input h-[28px] w-[300px] ml-2">
         <button class="classic-toolbar-btn !border-r-0" onclick="renderClientes()"><i class="ph ph-magnifying-glass"></i></button>
         <span class="ml-auto pr-2 text-[11.5px] text-slate-500"><b class="text-[#0a1e8a]">${list.length}</b> cliente(s)</span>
       </div>
@@ -7919,6 +7946,8 @@ window.renderClientes = function(){
       </div>
     </div>`;
   const input = document.getElementById('classic-search-clientes');
+  // v5.24.34 — RELATORIO dele (P11): idem — só aplicado no Enter.
+  if(input) input.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); window.__cliFoiFiltrado=true; renderClientes(); } };
   if(input && document.activeElement?.id==='classic-search-clientes'){ input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 };
 
@@ -9976,43 +10005,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   toast('Chamado salvo com sucesso!', 'success');
 };
 
-window.imprimirChamadoPDF = function(osId){
-  const o = db.os.find(x => x.id === osId);
-  if(!o) return toast('Chamado não encontrado', 'error');
-  const cli = db.clientes.find(x => x.id === o.clienteId) || {};
-  const html = `
-    <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico — ${o.numero}</title>
-    <style>
-      body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}
-      .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}
-      .cab h1{color:#0a1e8a;font-size:20px;margin:0}
-      .box{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px;background:#f9fafc}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      @media print{.no-print{display:none}}
-    </style></head><body>
-      <div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF 1.1</button></div>
-      <div class="cab">
-        <div><h1>DIGICOPY ERP — CHAMADO TÉCNICO (MOD. 1.1)</h1><p><b>Cliente:</b> ${escapeHtml(cli.nome||'Sem Cliente')} (${escapeHtml(cli.documento||'')})</p></div>
-        <div style="text-align:right"><p><b>OS:</b> ${o.numero}</p><p><b>Data:</b> ${fmtDate(o.dataAbertura)}</p><p><b>Prioridade:</b> ${String(o.prioridade||'normal').toUpperCase()}</p></div>
-      </div>
-      <div class="box">
-        <p><b>Motivo do Chamado:</b> ${escapeHtml(o.descricao||'-')}</p>
-        <p style="margin-top:5px"><b>Técnico Atribuído:</b> ${escapeHtml(o.tecnico||'—')}</p>
-      </div>
-      <div class="box grid">
-        <div><p><b>Serial:</b> ${escapeHtml(o.serie||'-')}</p><p><b>Patrimônio:</b> ${escapeHtml(o.patrimonio||'-')}</p></div>
-        <div><p><b>Contador Antigo:</b> ${o.contadorAntigo||0}</p><p><b>Contador Atual:</b> ${o.contadorAtual||0}</p><p><b>Qtd. Impressas:</b> <b>${o.quantidadeImpressos||0}</b></p></div>
-      </div>
-      ${o.servicos ? `<div class="box"><p><b>Serviços Executados:</b></p><p>${escapeHtml(o.servicos)}</p></div>` : ''}
-      <div style="margin-top:50px;display:flex;justify-content:space-between">
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Técnico</div>
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Cliente</div>
-      </div>
-    </body></html>
-  `;
-  const win = window.open('','_blank');
-  if(win){ win.document.write(html); win.document.close(); }
-};
 
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();
@@ -10309,7 +10301,8 @@ window.FLUXOS_PURE = {
 if(typeof window === 'undefined' || typeof document === 'undefined') return;
 
 const STATE = window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {
-  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo' },
+  // v5.22.84 — dir guarda o sentido A→Z / Z→A da ordenação da lista de produtos
+  prod: { q: '', cat: '', baixo: false, todos: false, sort: 'codigo', dir: 'asc' },
   ctr: { q: '', status: '', sort: 'codigo' },
   leiturasBusca: '',
   chamados: { q: '', status: 'abertos', sort: 'codigo' },
@@ -10350,6 +10343,11 @@ function botaoBusca(onclick){
 
 function thSort(fn, col, label, active){
   return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? ' ▲' : ''}</th>`;
+}
+
+// v5.22.84 — título com seta nos DOIS sentidos (▲ A→Z, ▼ Z→A)
+function thSortDir(fn, col, label, active, dir){
+  return `<th onclick="${fn}('${col}')" class="px-4 py-2.5 cursor-pointer select-none hover:text-[#0a1e8a]">${label}${active === col ? (dir === 'desc' ? ' ▼' : ' ▲') : ''}</th>`;
 }
 
 function bindBuscaEnter(id, callbackName){
@@ -10450,8 +10448,13 @@ window.aplicarBuscaProdutosOperacional = function(){
   window.renderProdutos();
 };
 
+// v5.22.84 — clicar na mesma coluna troca o sentido; coluna nova começa A→Z.
+// Antes o sentido ficava guardado em outro objeto de estado e a lista nunca
+// virava Z→A; quando virava, era "invertendo a linha" na tela (bugava).
 window.produtosSortOperacional = function(col){
-  STATE.prod.sort = col;
+  if(!STATE.prod.dir) STATE.prod.dir = 'asc';
+  if(STATE.prod.sort === col) STATE.prod.dir = STATE.prod.dir === 'asc' ? 'desc' : 'asc';
+  else { STATE.prod.sort = col; STATE.prod.dir = 'asc'; }
   window.renderProdutos();
 };
 
@@ -10488,12 +10491,19 @@ window.renderProdutos = function(){
   if(!view) return;
   if(adaptarProdutosMigrados(db, sess.empresaId)) saveSafe();
 
+  // v5.22.84 — o "Local" do produto deixou de existir (não era usado).
+  // Dados antigos já gravados são apagados aqui, uma varredura por abertura
+  // da tela; depois da primeira limpeza não encontra mais nada.
+  let purgeiLocal = false;
+  (db.produtos || []).forEach(p => { if(p && Object.prototype.hasOwnProperty.call(p, 'local')){ delete p.local; purgeiLocal = true; } });
+  if(purgeiLocal) saveSafe();
+
   const qNorm = filtroBusca(STATE.prod.q);
   let list = (db.produtos || []).filter(p => p.empresaId === sess.empresaId && p.status !== 'excluido');
   if(STATE.prod.cat) list = list.filter(p => categoriaUnificada(p.categoria) === STATE.prod.cat);
   if(STATE.prod.baixo) list = list.filter(p => !p.estoqueInfinito && estoqueBaixoEstrito(p.estoque, p.estoqueMin));
   if(qNorm){
-    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.local, p.ncm]
+    list = list.filter(p => [produtoCodigo(p), p.nome, p.descricao, p.fabricante, p.ncm]
       .some(v => normalizeText(v).includes(qNorm)));
   }
 
@@ -10503,10 +10513,13 @@ window.renderProdutos = function(){
     categoria: p => p.categoria || '',
     estoque: p => toNumber(p.estoque),
     minimo: p => toNumber(p.estoqueMin),
-    valor: p => toNumber(p.preco),
-    local: p => p.local || ''
+    valor: p => toNumber(p.preco)
   };
-  list = sortAsc(list, sorters[STATE.prod.sort] || sorters.codigo);
+  // v5.22.84 — ordena a lista INTEIRA no sentido certo antes de fatiar os 300
+  const prodGetter = sorters[STATE.prod.sort] || sorters.codigo;
+  list = STATE.prod.dir === 'desc'
+    ? [...list].sort((a, b) => compareSmart(prodGetter(b), prodGetter(a)))
+    : sortAsc(list, prodGetter);
   // Por padrão não lista nada (só aparece ao pesquisar, "Estoque baixo" ou "Mostrar todos")
   const temFiltro = !!(qNorm || STATE.prod.cat || STATE.prod.baixo || STATE.prod.todos);
   const vis = temFiltro ? list.slice(0, 300) : [];
@@ -10546,13 +10559,12 @@ window.renderProdutos = function(){
             <thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500">
               <tr>
                 <th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'produto-check-lote\']').forEach(c=>c.checked=this.checked)"></th>
-                ${thSort('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort)}
-                ${thSort('produtosSortOperacional', 'local', 'Local', STATE.prod.sort)}
+                ${thSortDir('produtosSortOperacional', 'codigo', 'Código', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'descricao', 'Descrição', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'categoria', 'Tipo / Categoria', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'estoque', 'Estoque', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'minimo', 'Mínimo', STATE.prod.sort, STATE.prod.dir)}
+                ${thSortDir('produtosSortOperacional', 'valor', 'Valor Venda', STATE.prod.sort, STATE.prod.dir)}
                 <th class="px-4 py-2.5 text-right">Ações</th>
               </tr>
             </thead>
@@ -10567,11 +10579,10 @@ window.renderProdutos = function(){
                   <td class="px-4 py-2.5"><b class="${p.estoqueInfinito ? 'text-blue-700' : (isLow ? 'text-red-600' : '')}">${p.estoqueInfinito ? '∞ Infinito' : toNumber(p.estoque)}</b></td>
                   <td class="px-4 py-2.5">${p.estoqueInfinito ? '—' : toNumber(p.estoqueMin)}</td>
                   <td class="px-4 py-2.5 font-bold text-emerald-700">${money(p.preco || 0)}</td>
-                  <td class="px-4 py-2.5"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${html(p.local || '-')}</span></td>
                   <td class="px-4 py-2.5"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Editar"><i class="ph ph-pencil"></i></button></div></td>
                 </tr>`;
-              }).join('') || '<tr><td colspan="9" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
-              ${list.length > vis.length ? `<tr><td colspan="9" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
+              }).join('') || '<tr><td colspan="8" class="px-5 py-14 text-center text-slate-500">Nenhum produto encontrado</td></tr>'}
+              ${list.length > vis.length && vis.length > 0 ? `<tr><td colspan="8" class="px-5 py-3 text-center text-[12px] text-slate-500">Mostrando 300 de ${list.length}. Use a busca para refinar.</td></tr>` : ''}
             </tbody>
           </table>
         </div>
@@ -10585,7 +10596,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? (db.produtos || []).find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: '', nome: '', categoria: 'Produto', fabricante: '', estoque: 0, estoqueMin: 0, estoqueIdeal: 0,
-    custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
+    custo: 0, preco: 0, ncm: '', origem: '0 - Nacional, exceto as indicadas nos códigos 3 a 5', status: 'ativo', estoqueInfinito: false
   };
   if(!p) return toastMsg('Produto não encontrado', 'error');
   const cat = categoriaUnificada(p.categoria || p.tipoCadastro || p.tipo);
@@ -10682,7 +10693,6 @@ window.salvarProdutoOperacional = function(id){
     estoqueIdeal: toInt(document.getElementById('kp-prd-ideal')?.value, 0),
     custo: toNumber(document.getElementById('kp-prd-custo')?.value, 0),
     preco: toNumber(document.getElementById('kp-prd-preco')?.value, 0),
-    local: '',
     ncm: normalizarNCM(document.getElementById('kp-prd-ncm')?.value || ''),
     origem: document.getElementById('kp-prd-origem')?.value || '0 - Nacional, exceto as indicadas nos códigos 3 a 5',
     status: 'ativo',
@@ -11488,14 +11498,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   if(typeof renderProdutos === 'function') renderProdutos();
 };
 
-window.imprimirChamadoPDF = function(osId){
-  if(!osId) return toastMsg('Salve o chamado antes de imprimir', 'info');
-  const o = (db.os || []).find(x => x.id === osId); if(!o) return toastMsg('Chamado não encontrado', 'error');
-  const cli = getCliente(o.clienteId) || {};
-  const pecas = (o.pecas || []).map(it => `<tr><td>${html(it.descricao || ((db.produtos || []).find(p => p.id === it.produtoId)?.nome) || '')}</td><td>${toNumber(it.qtd,0)}</td><td>${money(it.preco || 0)}</td><td>${money(it.subtotal || 0)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const htmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico ${o.numero}</title><style>body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}.cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}.cab h1{color:#0a1e8a;font-size:20px;margin:0}.box{border:1px solid #ccc;border-radius:8px;padding:10px;margin-bottom:10px;background:#fafafa}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f4f6f9;color:#0a1e8a}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF</button></div><div class="cab"><div><h1>DIGICOPY ERP — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${html(cli.nome || '')} (${html(cli.documento || '')})</p><p>${html(cli.endereco || '')} ${html(cli.numero || '')} - ${html(cli.cidade || '')}/${html(cli.estado || '')}</p></div><div style="text-align:right"><p><b>OS:</b> ${html(o.numero || '')}</p><p><b>Data:</b> ${dateBR(o.dataAbertura)}</p><p><b>Status:</b> ${html(o.status || '')}</p></div></div><div class="box"><p><b>Motivo:</b> ${html(o.descricao || '-')}</p><p><b>Técnico:</b> ${html(o.tecnico || '-')}</p></div><div class="box grid"><div><p><b>Modelo:</b> ${html(o.modelo || '-')}</p><p><b>Serial:</b> ${html(o.serie || '-')}</p><p><b>Patrimônio:</b> ${html(o.patrimonio || '-')}</p><p><b>Local:</b> ${html(o.local || '-')}</p></div><div><p><b>Contador Antigo:</b> ${toNumber(o.contadorAntigo,0)}</p><p><b>Contador Atual:</b> ${toNumber(o.contadorAtual,0)}</p><p><b>Qtd. Impressos:</b> ${toNumber(o.quantidadeImpressos,0)}</p></div></div><div class="box"><p><b>Serviços Executados:</b></p><p>${html(o.servicos || '-')}</p></div><div class="box"><p><b>Produtos / Peças:</b></p><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="margin-top:50px;display:flex;justify-content:space-between"><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Técnico</div><div style="border-top:1px solid #000;width:220px;text-align:center;padding-top:5px">Assinatura Cliente</div></div></body></html>`;
-  const win = window.open('', '_blank'); if(win){ win.document.write(htmlDoc); win.document.close(); }
-};
 
 window.imprimirContratoLocacaoOperacional = function(contratoId, tipo){
   const c = getContrato(contratoId); if(!c) return;
@@ -12038,7 +12040,35 @@ window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
   if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
   calcImpressoesChamado();
 };
-window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
+// v5.22.90 — a função que VALIA procurava só os ids kr-os-* (tela antiga)
+// e deixava o chamado atual (ko-*) sem calcular a quantidade impressa.
+// Agora atende TODOS os conjuntos de id usados pelas telas de chamado.
+window.calcImpressoesChamado = function(){
+  var pares = [
+    ['ko-cont-ant','ko-cont-atu','ko-qtd-imp'],
+    ['kr-os-cont-ant','kr-os-cont-atu','kr-os-qtd'],
+    ['o-cont-ant','o-cont-atu','o-qtd-imp'],
+    ['ca-cont-ant','ca-cont-atu','ca-qtd']
+  ];
+  for(var i = 0; i < pares.length; i++){
+    var a = document.getElementById(pares[i][0]);
+    var u = document.getElementById(pares[i][1]);
+    var q = document.getElementById(pares[i][2]);
+    if(!a && !u && !q) continue;
+    var ant = Number(a && a.value ? a.value : 0) || 0;
+    var atu = u && u.value !== '' && u.value != null ? (Number(u.value) || 0) : ant;
+    if(atu < ant) atu = ant;
+    if(q) q.value = atu - ant;
+  }
+};
+// v5.22.90 — além do oninput dos campos (que nem sempre existe), um ouvinte
+// garante o cálculo em QUALQUER campo de contador, em qualquer tela.
+if(typeof document !== 'undefined'){
+  document.addEventListener('input', function(e){
+    var id = (e && e.target && e.target.id) || '';
+    if(/-cont-atu$/.test(id) || /-cont-ant$/.test(id)) window.calcImpressoesChamado();
+  }, true);
+}
 function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
@@ -12077,14 +12107,6 @@ function printWindow(htmlDoc, slug){
   setTimeout(() => { try{ win.history.replaceState(null, '', slug || 'relatorio.html'); }catch(_e){} }, 50);
 }
 function basePrintCSS(){ return `@page{size:A4;margin:8mm}body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px;background:white}.page{padding:16px}.top{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0a1e8a;padding-bottom:12px;margin-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand h1{margin:0;color:#0a1e8a;font-size:19px}.muted{color:#64748b;font-size:11px}.box{border:1px solid #d7dce2;border-radius:10px;padding:10px;margin:8px 0;background:#fafbff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #d7dce2;padding:6px;text-align:left}th{background:#eef2ff;color:#0a1e8a;font-size:10px;text-transform:uppercase}.sig{border-top:1px solid #111;width:220px;text-align:center;padding-top:6px;margin-top:46px}.no-print{margin:14px}.no-print button{padding:10px 18px;background:#0a1e8a;color:white;border:0;border-radius:8px;font-weight:bold}@media print{.no-print{display:none}.page{padding:0}}`; }
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId); if(!o) return aviso('Chamado não encontrado','error');
-  const cli = getCli(o.clienteId) || {};
-  const pecas = (o.pecas||[]).map(it => `<tr><td>${esc(it.descricao||'')}</td><td>${n(it.qtd)}</td><td>${dinheiro(it.preco)}</td><td>${dinheiro(it.subtotal)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const title = `Chamado ${codigoOS(o)}`;
-  const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>${basePrintCSS()}</style></head><body><script>document.title=${JSON.stringify(title)};try{history.replaceState(null,'',${JSON.stringify('chamado-'+codigoOS(o)+'.html')});}catch(e){}</script><div class="no-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div><div class="page"><div class="top"><div class="brand">${logoHTML()}<div><h1>Ordem de Serviço Técnica</h1><div class="muted">DIGICOPY • Assistência e locação de impressoras</div></div></div><div style="text-align:right"><div class="muted">Código</div><h1 style="margin:0;color:#0a1e8a">${esc(codigoOS(o))}</h1><div class="muted">${dataBR(o.dataAbertura)}</div></div></div><div class="grid"><div class="box"><b>Cliente</b><p>${esc(cli.nome||'')}</p><p class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</p><p class="muted">${esc(cli.endereco||'')} ${esc(cli.numero||'')} - ${esc(cli.cidade||'')}/${esc(cli.estado||'')}</p></div><div class="box"><b>Atendimento</b><p><b>Criado por:</b> ${esc(o.criadoPorNome||'-')}</p><p><b>Técnico:</b> ${esc(o.tecnico||'-')}</p><p><b>Status:</b> ${esc(o.status||'aberto')}</p></div></div><div class="box"><b>Impressora</b><p>${esc(o.modelo||'-')} • Patrimônio ${esc(o.patrimonio||'-')} • Serial ${esc(o.serie||'-')}</p><p class="muted">Local: ${esc(o.local||'-')}</p></div><div class="box"><b>Motivo / Defeito informado</b><p>${esc(o.descricao||'-')}</p></div><div class="box"><b>Serviços executados / observações</b><p>${esc(o.servicos||o.observacao||'-')}</p></div><div class="box"><b>Produtos / Peças aplicadas</b><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="display:flex;justify-content:space-between"><div class="sig">Assinatura Técnico</div><div class="sig">Assinatura Cliente</div></div></div></body></html>`;
-  printWindow(doc, `chamado-${codigoOS(o)}.html`);
-};
 window.imprimirRelatorioLeiturasPDF = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
   const cli = getCli(c.clienteId) || {};
@@ -12667,6 +12689,15 @@ function campos(contratoId){
     DATA_INICIO: dataBR(c.dataInicio),
     DATA_TERMINO: dataBR(c.dataFim),
     QTD_MAQUINAS: maqs.length,
+    CTR_CODIGO: String((c && (c.numero || c.codigoAntigo || c.id)) || '').replace(/\D+/g,'').replace(/^0+/,'') || '0',
+    DATA_INICIO: dataBR(c.dataInicio),
+    DATA_FIM: dataBR(c.dataFim),
+    DATA_HOJE: dataBR(new Date().toISOString().slice(0,10)),
+    CLI_TELEFONE: cli.telefone || '',
+    CLI_CELULAR: cli.celular || '',
+    CLI_ENDCOMPLETO: [cli.endereco, cli.numero, cli.bairro, cli.cidade, cli.estado, cli.cep].filter(Boolean).join(', '),
+    EMP_TELEFONE: emp.telefone || '',
+    EMP_EMAIL: emp.email || '',
     CTR_VALOR_MENSAL: dinheiro(c.valorMensalFixo || 0),
     CTR_FRANQUIA: `${n(c.franquiaPB,0).toLocaleString('pt-BR')} páginas`,
     CTR_PERIODO: `${dataBR(c.dataInicio)} a ${dataBR(c.dataFim)}`,
@@ -12710,7 +12741,18 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const conf = cfg();
   const template = tipo === 'proposta' ? (conf.proposta || DEFAULT_PROPOSTA_RTF) : (conf.contrato || DEFAULT_CONTRATO_RTF);
   const rtfFinal = aplicarTemplate(template, contratoId);
-  baixar(`${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`, rtfFinal);
+  const nome = `${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`;
+  // v5.24.34 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
+  // pré-preenchido — dados completos vêm do mapa de campos acima).
+  // Navegador/celular mantêm o download de antes.
+  if(window.rtfAPI && typeof window.rtfAPI.abrir==='function'){
+    window.rtfAPI.abrir({ nome: nome, conteudo: rtfFinal }).then(function(r){
+      if(!r || !r.ok){ baixar(nome, rtfFinal); }
+      else if(typeof toast==='function'){ toast('Abrindo no Word: '+nome); }
+    }).catch(function(){ baixar(nome, rtfFinal); });
+    return;
+  }
+  baixar(nome, rtfFinal);
 };
 
 function renderCardConfig(){
@@ -16912,6 +16954,7 @@ function renderImpressorasResultado(clienteId){
   let lista = parquesCliente(clienteId || window.__CHAMADO_AVULSO.clienteId);
   if(q) lista = lista.filter(p => { const e=equipamento(p.equipamentoId)||{}; return [e.patrimonio,e.modelo,e.serie,p.setor,p.localInstalacao].some(v=>norm(v).includes(q)); });
   out.innerHTML = lista.map(p => { const e=equipamento(p.equipamentoId)||{}; return `<button type="button" onclick="selecionarImpressoraChamadoAvulso('${p.equipamentoId}')" class="w-full text-left p-2 hover:bg-blue-50 border-b last:border-0"><b>Patr. ${esc(e.patrimonio||'-')}</b> — ${esc(e.modelo||'')}<br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • ${esc(p.setor||'Geral')} / ${esc(p.localInstalacao||'')}</span></button>`; }).join('') || '<p class="p-3 text-center text-slate-400">Nenhuma impressora para este cliente</p>';
+  if(window.__marcarImpAvulso) window.__marcarImpAvulso(window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId);
 }
 
 window.buscarClientesChamadoAvulso = renderClientesResultado;
@@ -16922,10 +16965,38 @@ window.selecionarClienteChamadoAvulso = function(id){
   const el = document.getElementById('ca-cliente-selecionado'); if(el) el.innerHTML = `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>`;
   renderImpressorasResultado(id);
 };
+// v5.22.88 — marca a impressora escolhida na lista do avulso (azul = escolhida)
+window.__marcarImpAvulso = function(equipId){
+  const lista = document.getElementById('ca-impressoras-result'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on = b.getAttribute('onclick')||'';
+    const marc = equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.selecionarImpressoraChamadoAvulso = function(equipId){
+  // v5.22.94 — troca: dados da impressora VELHA saem; motivo auto troca junto
+  const _antIdAv = (window.__CHAMADO_AVULSO && window.__CHAMADO_AVULSO.equipamentoId) || '';
+  const _trocaAv = !!_antIdAv && _antIdAv !== equipId;
+  const _eAntAv = _trocaAv ? (equipamento(_antIdAv) || {}) : {};
   window.__CHAMADO_AVULSO.equipamentoId = equipId;
   const e = equipamento(equipId) || {};
   const p = (db.parque || []).find(x => x.equipamentoId === equipId) || {};
+  if(_trocaAv){
+    const _motAv = document.getElementById('ca-desc');
+    const _nomeAntAv = String(_eAntAv.modelo || '').trim();
+    if(_motAv && _nomeAntAv && String(_motAv.value || '').trim().toLowerCase() === _nomeAntAv.toLowerCase()){
+      _motAv.value = e.modelo || '';
+    }
+  }
+  const selTxt = document.getElementById('ca-impressora-selecionada');
+  if(selTxt) selTxt.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(e.serie||'-')} • Patr. ${esc(e.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+  // v5.22.90 — ao escolher, a lista RECOLHE (fica só a escolhida + lápis)
+  const _res = document.getElementById('ca-impressoras-result'); if(_res) _res.classList.add('hidden');
+  window.__marcarImpAvulso(equipId);
   const ant = ultimoContador(equipId);
   ['modelo','patr','serie','local'].forEach(k => { const el=document.getElementById('ca-'+k); if(el){ if(k==='modelo') el.value=e.modelo||''; if(k==='patr') el.value=e.patrimonio||''; if(k==='serie') el.value=e.serie||''; if(k==='local') el.value=p.localInstalacao||p.setor||''; }});
   const antEl = document.getElementById('ca-cont-ant'); if(antEl) antEl.value = ant;
@@ -16944,6 +17015,7 @@ function renderChamadoAvulso(id){
     <div class="rounded-xl bg-blue-50 border border-blue-200 p-3"><b>Chamado fora de contrato</b><p class="text-[12px] text-blue-800 mt-1">Use para atendimento avulso. Para cliente de contrato, abra pelo contrato.</p></div>
     <div class="grid grid-cols-1 md:grid-cols-5 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Código</label><input id="ca-num" readonly value="${esc(codigo)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50 font-mono font-bold"></div><div><label class="block font-bold text-slate-600 mb-1">Data</label><input id="ca-data" type="date" value="${String(o?.dataAbertura || new Date().toISOString()).slice(0,10)}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Prioridade</label><select id="ca-prio" class="w-full h-10 px-3 rounded-xl border"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div><div><label class="block font-bold text-slate-600 mb-1">Criado por</label><input readonly value="${esc(o?.criadoPorNome || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border bg-slate-50"></div><div><label class="block font-bold text-slate-600 mb-1">Técnico</label><input id="ca-tec" value="${esc(o?.tecnico || s.usuarioNome)}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar cliente</label><div class="flex gap-2"><input id="ca-busca-cliente" placeholder="Digite código, nome, documento..." class="flex-1 h-10 px-3 rounded-xl border">${botaoBusca('buscarClientesChamadoAvulso()')}</div><div id="ca-cliente-selecionado" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]">${c ? `<b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.documento||'')} • ${esc(c.telefone||'')}</span>` : 'Nenhum cliente selecionado'}</div><div id="ca-clientes-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
+    <div class="rounded-xl border p-3"><label class="block font-bold text-slate-600 mb-1">Buscar impressora <span class="text-[11px] text-slate-400 font-normal">(do cliente escolhido — digite para filtrar; ao escolher, a lista fecha ✔)</span></label><div class="flex gap-2"><input id="ca-busca-impressora" placeholder="Digite modelo, patrimônio, serial, setor, local..." class="flex-1 h-10 px-3 rounded-xl border" oninput="buscarImpressorasChamadoAvulso()">${botaoBusca('buscarImpressorasChamadoAvulso()')}</div><div id="ca-impressora-selecionada" class="mt-2 rounded-lg bg-slate-50 p-2 text-[12px]"></div><div id="ca-impressoras-result" class="mt-2 max-h-[170px] overflow-auto rounded-lg border bg-white"></div></div>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div><label class="block font-bold text-slate-600 mb-1">Modelo</label><input id="ca-modelo" value="${esc(o?.modelo||'')}" class="w-full h-10 px-3 rounded-xl border"></div><div><label class="block font-bold text-slate-600 mb-1">Patrimônio</label><input id="ca-patr" value="${esc(o?.patrimonio||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Serial</label><input id="ca-serie" value="${esc(o?.serie||'')}" class="w-full h-10 px-3 rounded-xl border font-mono"></div><div><label class="block font-bold text-slate-600 mb-1">Local</label><input id="ca-local" value="${esc(o?.local||'')}" class="w-full h-10 px-3 rounded-xl border"></div></div>
     <div><label class="block font-bold text-slate-600 mb-1">Motivo / Defeito *</label><input id="ca-desc" value="${esc(o?.descricao||'')}" class="w-full h-10 px-3 rounded-xl border font-semibold"></div>
     <label class="bg-slate-50 border rounded-xl p-3 flex items-center gap-3 cursor-pointer"><input type="checkbox" id="ca-concluido" ${o?.status==='concluido'?'checked':''}><span class="font-bold">Este chamado já foi finalizado?</span></label>
@@ -16953,7 +17025,16 @@ function renderChamadoAvulso(id){
   document.getElementById('ca-prio').value = o?.prioridade || 'normal';
   bindEnter('ca-busca-cliente', renderClientesResultado);
   bindEnter('ca-busca-impressora', () => renderImpressorasResultado());
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  const _impQ = document.getElementById('ca-busca-impressora');
+  if(_impQ && !_impQ.__v52288){ _impQ.__v52288=1; _impQ.addEventListener('input', () => renderImpressorasResultado()); }
   if(c) renderImpressorasResultado(c.id);
+  if(o && o.equipamentoId){
+    const eX = equipamento(o.equipamentoId) || {};
+    const selX = document.getElementById('ca-impressora-selecionada');
+    if(selX) selX.innerHTML = `<div class="flex items-center gap-2"><span class="flex-1"><b>${esc(eX.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">Serial ${esc(eX.serie||'-')} • Patr. ${esc(eX.patrimonio||'-')}</span></span><button type="button" onclick="caEditarImpressoraAvulso()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div>`;
+    const _resX = document.getElementById('ca-impressoras-result'); if(_resX) _resX.classList.add('hidden');
+  }
 }
 window.fecharModalChamadoAvulso = fechar;
 window.salvarChamadoAvulso = function(id){
@@ -16976,6 +17057,14 @@ const oldOpenModal = window.openModal;
 window.openModal = function(type, id){
   if(type === 'os') return renderChamadoAvulso(id);
   if(oldOpenModal) return oldOpenModal.apply(this, arguments);
+};
+
+// v5.22.90 — lápis reabre a lista de impressoras do avulso (e FICA aberta)
+window.caEditarImpressoraAvulso = function(){
+  const q = document.getElementById('ca-busca-impressora'); if(q) q.value='';
+  const res = document.getElementById('ca-impressoras-result'); if(res) res.classList.remove('hidden');
+  renderImpressorasResultado();
+  if(q) q.focus();
 };
 
 console.log('[DIGICOPY] chamados_avulsos_aberto_patch.js v4.9.16 carregado');
@@ -17877,7 +17966,9 @@ function ajustarBuscaVenda(){
   const pi=document.getElementById('vos-prod-search'); if(pi&&!document.getElementById('vos-prod-lupa')){ pi.removeAttribute('oninput'); pi.oninput=null; pi.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); window.vosVendaSearchProd(pi.value);} }; pi.insertAdjacentHTML('afterend','<button id="vos-prod-lupa" type="button" onclick="vosVendaSearchProd(document.getElementById(\'vos-prod-search\').value)" class="absolute right-2 top-[30px] h-8 px-3 rounded-lg bg-[#0a1e8a] text-white"><i class="ph ph-magnifying-glass"></i></button>'); }
 }
 const oldNova=window.novaVenda; if(typeof oldNova==='function') window.novaVenda=function(){ const r=oldNova.apply(this,arguments); setTimeout(ajustarBuscaVenda,80); return r; };
-const oldImp=window.imprimirNotinha; window.imprimirNotinha=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(v && !['faturado','finalizada'].includes(low(v.status))){ toast('Fature a notinha antes de imprimir ou salvar em PDF','error'); return; } return oldImp?oldImp.apply(this,arguments):null; };
+// v5.22.84 — impressão livre: a venda imprime em qualquer situação (salva,
+// aberta, faturada, orçamento), no formato Vendas ou Ordem de Serviço.
+// A trava antiga ("Fature a notinha antes de imprimir") foi removida a pedido.
 window.estornarVendaParaEditar=function(id){ const v=(db.vendas||[]).find(x=>x.id===id); if(!v) return; if(!confirm('Estornar esta notinha para permitir edição?')) return; v.status='estornada'; v.estornada=true; (db.contasReceber||[]).forEach(c=>{ if(c.vendaId===v.id){ c.status='estornado'; c.estornado=true; c.pagamentoData=null; }}); salvar(); toast('Notinha estornada. Agora pode editar e faturar novamente.','success'); if(typeof renderVendas==='function') renderVendas(); };
 
 // ── bloqueio visual para faturados ────────────────────────────────────────
@@ -18116,7 +18207,7 @@ window.buscarClienteContratoLeitura=function(){ const s=sess(); const q=low(docu
 window.selecionarClienteContratoLeitura=function(id){ contratoClienteSelecionado=cli(id); const box=document.getElementById('ctrd-cli-sel'); if(box&&contratoClienteSelecionado){ box.classList.remove('hidden'); box.innerHTML=`<b>${esc(contratoClienteSelecionado.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(contratoClienteSelecionado.documento||'')} • ${esc(contratoClienteSelecionado.telefone||'')}</span>`;} document.getElementById('ctrd-cli-result')?.classList.add('hidden'); };
 window.salvarContratoLeituraSimples=function(id){ const s=sess(); if(!s) return; if(!contratoClienteSelecionado) return toastMsg('Escolha o cliente pela lupa','error'); let c=id?ctr(id):null; if(!c){ c={id:uidSafe('ctr'),empresaId:s.empresaId,criadoEm:new Date().toISOString(),criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome}; db.contratos.push(c); } Object.assign(c,{numero:cod(document.getElementById('ctrd-num')?.value)||document.getElementById('ctrd-num')?.value,clienteId:contratoClienteSelecionado.id,dataInicio:document.getElementById('ctrd-ini')?.value||'',dataFim:document.getElementById('ctrd-fim')?.value||'',diaVencimento:i(document.getElementById('ctrd-venc')?.value,10),status:document.getElementById('ctrd-status')?.value||'ativo'}); salvar(); toastMsg('Contrato salvo. Agora cadastre as impressoras.','success'); if(typeof renderContratos==='function') renderContratos(); if(typeof openContratoCompleto==='function') openContratoCompleto(c.id); };
 
-function maquinasContrato(c){ return (db.parque||[]).filter(p=>p.empresaId===c.empresaId&&p.contratoId===c.id&&p.status!=='inativo'); }
+function maquinasContrato(c){ return (db.parque||[]).filter(p=>p.empresaId===c.empresaId&&p.contratoId===c.id&&p.status!=='inativo'&&p.status!=='remanejada'); }
 window.openContratoCompleto=function(contratoId){
   const c=ctr(contratoId); if(!c) return toastMsg('Contrato não encontrado','error'); const cl=cli(c.clienteId)||{}; const maq=maquinasContrato(c); const leit=(db.leituras||[]).filter(l=>l.contratoId===c.id); const ch=(db.os||[]).filter(o=>o.contratoId===c.id&&!['concluido','cancelado','fechado'].includes(low(o.status))).length;
   setModal(`Contrato ${esc(c.numero||'')} — ${esc(cl.nome||'Cliente')}`,`<div class="space-y-5 text-[13px]"><div class="rounded-[18px] bg-[#0a1e8a] text-white p-5 flex justify-between"><div><p class="text-[11px] uppercase font-bold text-white/70">Cliente</p><h3 class="text-[20px] font-extrabold">${esc(cl.nome||'')}</h3><p class="text-white/80">${esc(cl.documento||'')} ${cl.cidade?('• '+esc(cl.cidade)+'/'+esc(cl.estado||'')):''}</p></div><div class="text-right"><p class="text-[11px] uppercase font-bold text-white/70">Código</p><p class="text-[26px] font-extrabold">${esc(c.numero||'')}</p><p>${dataBR(c.dataInicio)} até ${dataBR(c.dataFim)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="rounded-[16px] border bg-emerald-50 p-4"><p class="neo-label">Impressoras</p><p class="neo-total">${maq.length}</p></div><div class="rounded-[16px] border bg-amber-50 p-4"><p class="neo-label">Chamados abertos</p><p class="neo-total">${ch}</p></div><div class="rounded-[16px] border bg-blue-50 p-4"><p class="neo-label">Valor mensal</p><p class="neo-total !text-[22px]">${money(c.valorMensalFixo||0)}</p></div><div class="rounded-[16px] border bg-purple-50 p-4"><p class="neo-label">Leituras</p><p class="neo-total">${leit.length}</p></div></div><div class="flex flex-wrap gap-3"><button onclick="abrirLeiturasContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-speedometer"></i> Leituras</button><button onclick="abrirChamadosContrato&&abrirChamadosContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold"><i class="ph ph-wrench"></i> Chamados</button><button onclick="abrirModalEquipamentoContrato('${c.id}', null)" class="h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold ml-auto"><i class="ph ph-printer"></i> Nova Impressora</button>${typeof baixarContratoRTF==='function'?`<button onclick="baixarContratoRTF('${c.id}','contrato')" class="h-11 px-4 rounded-xl bg-white border font-bold">Contrato RTF</button>`:''}</div><div class="border rounded-xl overflow-hidden"><div class="bg-slate-50 px-4 py-3 border-b"><b>Impressoras locadas</b></div><table class="w-full text-left text-[12.5px]"><thead class="bg-slate-50 border-b"><tr><th class="px-4 py-2">Patrimônio</th><th>Modelo</th><th>Serial</th><th>Local</th><th>Medidores ativos</th><th></th></tr></thead><tbody>${maq.map(p=>{ const e=eq(p.equipamentoId)||{}; return `<tr ondblclick="abrirModalEquipamentoContrato('${c.id}','${p.id}')" class="border-b cursor-pointer hover:bg-slate-50"><td class="px-4 py-2 font-mono font-bold text-[#0a1e8a]">${esc(e.patrimonio||p.patrimonio||'-')}</td><td>${esc(e.modelo||'')}</td><td class="font-mono">${esc(e.serie||'')}</td><td>${esc(p.setor||'Geral')}<br><span class="text-[11px] text-slate-500">${esc(p.localInstalacao||'')}</span></td><td>${medAtivos(p).map(m=>esc(m.label)).join('<br>')||'<span class="text-slate-400">Nenhum</span>'}</td><td><button onclick="abrirModalEquipamentoContrato('${c.id}','${p.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`; }).join('')||'<tr><td colspan="6" class="text-center text-slate-400 py-8">Nenhuma impressora cadastrada</td></tr>'}</tbody></table></div></div>`,`<button onclick="closeModal&&closeModal(true)" class="neo-btn">Fechar</button>`,'1080px');
@@ -18144,7 +18235,7 @@ window.salvarImpressoraContrato=function(contratoId, parqueId){
   const dados={empresaId:s.empresaId,contratoId:c.id,clienteId:c.clienteId,equipamentoId:e.id,setor:txt(document.getElementById('impf-setor')?.value)||'Geral',localInstalacao:txt(document.getElementById('impf-local')?.value),patrimonio:e.patrimonio,status:'ativo',medidoresConfig,medidores:medidoresConfig,atualizadoEm:new Date().toISOString()};
   if(p) Object.assign(p,dados); else { p={id:uidSafe('prq'),criadoEm:new Date().toISOString(),criadoPor:s.usuarioId,criadoPorNome:s.usuarioNome,...dados}; db.parque.push(p); }
   c.equipamentos=c.equipamentos||[]; if(!c.equipamentos.includes(e.id)) c.equipamentos.push(e.id);
-  c.valorMensalFixo=(db.parque||[]).filter(x=>x.contratoId===c.id&&x.status!=='inativo').reduce((sum,x)=>sum+Object.values(getMedidores(x)).filter(m=>m.ativo).reduce((s,m)=>s+n(m.valorLocacao)+n(m.valorFranquia),0),0);
+  c.valorMensalFixo=(db.parque||[]).filter(x=>x.contratoId===c.id&&x.status!=='inativo'&&x.status!=='remanejada').reduce((sum,x)=>sum+Object.values(getMedidores(x)).filter(m=>m.ativo).reduce((s,m)=>s+n(m.valorLocacao)+n(m.valorFranquia),0),0);
   salvar(); toastMsg('Impressora salva','success'); openContratoCompleto(c.id);
 };
 
@@ -18163,7 +18254,7 @@ window.abrirLeituraContratoDetalhe=function(leituraId){
   setModal(`Leitura ${esc(l.numero||'')} — ${esc(cl.nome||'')}`,`<div class="space-y-4"><div class="grid grid-cols-1 md:grid-cols-4 gap-3"><div class="neo-card"><p class="neo-label">Total Utilizado</p><div class="neo-total">${r.usado}</div></div><div class="neo-card"><p class="neo-label">Total Excedentes</p><div class="neo-total">${r.exc}</div></div><div class="neo-card"><p class="neo-label">Soma Total</p><div class="neo-total">${money(r.total)}</div></div><div class="neo-card"><p class="neo-label">Status</p><div class="neo-total !text-[22px]">${esc(l.status||'aberta')}</div></div></div><div class="rounded-xl border overflow-hidden"><div class="p-3 bg-slate-50 border-b flex justify-between"><b>Impressoras lançadas nesta leitura</b><button onclick="abrirLancamentoContador('${l.id}')" class="neo-btn primary !h-9"><i class="ph ph-plus"></i>Novo lançamento</button></div><table class="w-full text-left text-[12px]"><thead class="bg-slate-50"><tr><th class="px-3 py-2">Impressora</th><th>Tipo</th><th>Anterior</th><th>Atual</th><th>Utilizado</th><th>Exced.</th><th>Total</th></tr></thead><tbody>${(l.itens||[]).map(it=>`<tr class="border-t"><td class="px-3 py-2">${esc(it.impressora)}</td><td>${esc(it.medidorLabel)}<br><span class="text-[10px] text-slate-500">${esc(it.modalidade)}</span></td><td>${it.anterior}</td><td>${it.atual}</td><td>${it.utilizado}</td><td>${it.excedente}</td><td><b>${money(it.valorTotal)}</b></td></tr>`).join('')||'<tr><td colspan="7" class="text-center text-slate-400 py-8">Nenhuma impressora lançada. Clique em Novo lançamento.</td></tr>'}</tbody></table></div><div class="rounded-xl border bg-emerald-50 border-emerald-200 p-3"><b>Faturamento</b><p class="text-[12px] text-emerald-800">Selecione esta leitura no histórico ou clique no botão abaixo para faturar ${money(r.total)}.</p><button onclick="faturarLeituraContrato('${l.id}')" class="mt-2 neo-btn primary">Faturar esta leitura</button></div></div>`,`<button onclick="abrirLeiturasContrato('${c.id}')" class="neo-btn">Voltar ao histórico</button><button onclick="imprimirLeituraContrato('${l.id}')" class="neo-btn primary">Imprimir notinha</button>`,'1080px');
 };
 window.abrirLancamentoContador=function(leituraId){
-  const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; const c=contratoLeitura(l); const maquinas=(db.parque||[]).filter(p=>p.contratoId===c.id&&p.status!=='inativo');
+  const l=(db.leituras||[]).find(x=>x.id===leituraId); if(!l) return; const c=contratoLeitura(l); const maquinas=(db.parque||[]).filter(p=>p.contratoId===c.id&&p.status!=='inativo'&&p.status!=='remanejada');
   setModal('Novo lançamento de contador',`<div class="space-y-4 text-[13px]"><label class="font-bold text-slate-600">Impressora<select id="lan-prq" onchange="atualizarTiposLancamento()" class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Selecione</option>${maquinas.map(p=>{ const e=eq(p.equipamentoId)||{}; return `<option value="${p.id}">${esc(e.patrimonio||'')} — ${esc(e.modelo||'')} (${medAtivos(p).map(m=>m.label).join(', ')||'sem medidor ativo'})</option>`; }).join('')}</select></label><label class="font-bold text-slate-600">Tipo de impressão ativo<select id="lan-med" class="mt-1 w-full h-10 px-3 rounded-xl border"><option value="">Escolha a impressora</option></select></label><label class="font-bold text-slate-600">Contador atual<input id="lan-cont" type="number" autofocus class="mt-1 w-full h-12 px-3 rounded-xl border text-[18px] font-mono font-bold" placeholder="Digite somente o contador"></label></div>`,`<button onclick="abrirLeituraContratoDetalhe('${l.id}')" class="neo-btn">Voltar</button><button onclick="salvarLancamentoContador('${l.id}')" class="neo-btn primary">Salvar lançamento</button>`,'680px');
 };
 window.atualizarTiposLancamento=function(){ const p=prq(document.getElementById('lan-prq')?.value); const sel=document.getElementById('lan-med'); if(sel) sel.innerHTML=p?medAtivos(p).map(m=>`<option value="${m.key}">${esc(m.label)} — ${esc(m.modalidade)}</option>`).join(''):'<option value="">Escolha a impressora</option>'; };
@@ -19075,29 +19166,8 @@ window.ordenarClientesFinal=function(col){
 };
 window.buscarClientesFinal=function(){ window.__clientesTodosFinal=false; window.__clientesBuscaFinal=txt(document.getElementById('clientes-busca-final')?.value); window.__clientesCampoFinal=txt(document.getElementById('clientes-campo-final')?.value)||'nome'; renderClientes(); };
 window.clientesMostrarTodos=function(){ window.__clientesTodosFinal=true; window.__clientesBuscaFinal=''; window.__clientesCampoFinal='nome'; window.__clientesStatusFinal='ativos'; window.__clientesSortFinal=window.__clientesSortFinal||{col:'codigo',dir:'asc'}; renderClientes(); };
-window.importarClientesJsonFinal=async function(){
-  const s=sess(); if(!s) return;
-  const input=document.getElementById('clientes-json-input');
-  const files=Array.from(input?.files||[]);
-  if(!files.length){ toastMsg('Selecione CLIENTES.json e/ou CLIENTES_FINAL.json','error'); return; }
-  const importer = (window.SISTEMA_CLIENTES_LOJA_PURE && window.SISTEMA_CLIENTES_LOJA_PURE.importarClientesDeObjetos);
-  if(typeof importer !== 'function'){ toastMsg('Importador indisponível nesta versão.','error'); return; }
-  const arquivos=[];
-  for(const f of files){
-    try{ arquivos.push({nome:f.name,json:JSON.parse(await f.text())}); }
-    catch(e){ toastMsg('Erro lendo '+f.name+': '+e.message,'error'); }
-  }
-  if(!arquivos.length) return;
-  const r=importer(db,arquivos,s.empresaId);
-  if(typeof saveDB==='function') saveDB();
-  if(typeof renderClientes==='function') renderClientes();
-  const st=document.getElementById('clientes-import-status');
-  if(st){ st.style.display='block'; st.innerHTML=`✅ <b>${r.importados}</b> importados • <b>${r.atualizados}</b> atualizados • <b>${r.ignorados}</b> ignorados • Próximo código: <b>${r.ultimoCodigo+1}</b>`; }
-  const msg='Importação concluída:\n\n• Importados: '+r.importados+'\n• Atualizados: '+r.atualizados+'\n• Ignorados: '+r.ignorados+'\n\nTotal de clientes agora: '+r.total;
-  if(typeof window.lfbAlert==='function') window.lfbAlert(msg,'Clientes importados');
-  else toastMsg(msg,'success');
-  input.value='';
-};
+/* v5.24.0 — botão "Importar clientes" e suas funções REMOVIDOS a pedido do
+   dono (cadastro > clientes fica só com cadastro manual). */
 
 window.renderClientes=function(){
   const s=sess(); if(!s) return;
@@ -19117,7 +19187,7 @@ window.renderClientes=function(){
   const seta=col=>sort.col===col?(sort.dir==='asc'?' ▲':' ▼'):'';
   const th=(col,label)=>`<th onclick="ordenarClientesFinal('${col}')" class="cursor-pointer select-none hover:text-[#0a1e8a]">${label}${seta(col)}</th>`;
   const vazioMsg=deveListar?'Nenhum cliente encontrado com esse filtro.':'Pesquise ou escolha um filtro para listar os clientes. A lista não abre tudo por padrão para ficar leve.';
-  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button><button onclick="document.getElementById('clientes-json-input').click()" class="neo-btn"><i class="ph ph-upload-simple"></i>Importar clientes</button><input id="clientes-json-input" type="file" accept=".json,application/json" multiple style="display:none" onchange="importarClientesJsonFinal()"></div></div><div id="clientes-import-status" class="mx-4 mt-2 text-[12px]" style="display:none"></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
+  view.innerHTML=`<div class="neo-shell"><div class="neo-panel"><div class="neo-head"><div><h3>Clientes</h3><p>Cadastro de clientes reais — padrão sem listar tudo. Pesquise ou filtre; depois clique nos títulos para organizar.</p></div><div class="neo-actions"><button onclick="openModal('cliente')" class="neo-btn primary"><i class="ph ph-user-plus"></i>Novo cliente</button></div></div><div class="p-4 border-b bg-white flex flex-wrap gap-2 items-center"><select id="clientes-campo-final" class="neo-select !h-10"><option value="nome">Nome</option><option value="codigo">Código</option><option value="fantasia">Fantasia</option><option value="documento">CPF/CNPJ</option><option value="telefone">Telefone</option><option value="cidade">Cidade</option><option value="bairro">Bairro</option></select><input id="clientes-busca-final" value="${esc(busca)}" onkeydown="if(event.key==='Enter')buscarClientesFinal()" placeholder="Buscar cliente por nome, código, telefone..." class="neo-input flex-1 min-w-[260px]"><button onclick="buscarClientesFinal()" class="neo-btn"><i class="ph ph-magnifying-glass"></i>Buscar</button><button onclick="clientesMostrarTodos()" class="neo-btn primary"><i class="ph ph-users"></i>Todos</button><select id="clientes-status-final" onchange="window.__clientesStatusFinal=this.value;renderClientes()" class="neo-select !h-10"><option value="ativos">Filtro: ativos</option><option value="inadimplente">Inadimplentes</option><option value="ocultos">Ocultos/inativos</option><option value="sem_telefone">Sem telefone</option><option value="sem_endereco">Sem endereço</option><option value="todos_status">Todos status</option></select><button onclick="window.__clientesTodosFinal=false;window.__clientesBuscaFinal='';window.__clientesCampoFinal='nome';window.__clientesStatusFinal='ativos';renderClientes()" class="neo-btn"><i class="ph ph-x"></i>Limpar</button><span class="text-[12px] text-slate-500 ml-auto">Mostrando <b>${list.length}</b> de <b>${totalGeral}</b></span></div><div class="overflow-auto max-h-[calc(100vh-280px)]"><table class="neo-table"><thead><tr>${th('codigo','Código')}${th('nome','Nome')}${th('fantasia','Fantasia')}${th('telefone','Telefone')}${th('documento','CPF/CNPJ')}${th('cidade','Cidade')}<th>Ações</th></tr></thead><tbody>${list.map(c=>`<tr ondblclick="openModal('cliente','${c.id}')" class="cursor-pointer hover:bg-slate-50"><td><b class="text-[#0a1e8a]">${esc(numCodigo(c.codigo)||c.codigo||'')}</b></td><td><b>${esc(c.nome||'')}</b><br><span class="text-[11px] text-slate-500">${esc(c.email||'')}</span></td><td>${esc(c.fantasia||'')}</td><td>${esc(c.telefone||c.whatsapp||'')}</td><td>${esc(c.documento||'')}</td><td>${esc(c.cidade||'')}${c.estado?'/'+esc(c.estado):''}</td><td><button onclick="openModal('cliente','${c.id}')" class="neo-btn !px-2"><i class="ph ph-pencil"></i></button></td></tr>`).join('')||`<tr><td colspan="7" class="text-center text-slate-400 py-10">${vazioMsg}</td></tr>`}</tbody></table></div></div></div>`;
   const csel=document.getElementById('clientes-campo-final'); if(csel) csel.value=campo;
   const ssel=document.getElementById('clientes-status-final'); if(ssel) ssel.value=status;
 };
@@ -19393,7 +19463,10 @@ async function api(method,url,body,tk){
 }
 
 async function sync(opt={}){
-  window.__esSync=false; // Reset always before starting
+  // v5.24.8 — FREIO: duas buscas ao mesmo tempo = trabalho e GRAVAÇÃO de nuvem
+  // dobrados (o relógio automático podia atropelar uma busca longa da tela).
+  // Automático nunca atropela; o botão da tela continua podendo reiniciar na mão.
+  if(window.__esSync && opt && opt.auto) return {ok:false,error:'em-andamento'};
   window.__esSync=true;
   window.__esLogs=[];
   // log apenas acumula — NÃO redesenha a tela (evita piscar)
@@ -19619,11 +19692,43 @@ window.esRest=function(id){
   }
 };
 window.esExcTog=function(){window.__esExc=!window.__esExc;render()};
-window.renderBuscadorEscola=render;
+window.renderBuscadorEscola=function(){
+  render();
+  // v5.26.5 — abriu a aba? confere a idade dos dados na hora (uso de verdade)
+  try{ esAutoTique(); }catch(e){}
+};
 
+// v5.26.5 — O RALO FECHADO DE VEZ (ele com plano pago, decreto: "ele fazia isso
+// ATÉ QUANDO NÃO ESTAVA NA ABA"). Plano pago é pra uso, não pra robô invisível:
+//  • o relógio automático SÓ trabalha se a ABA DO BUSCADOR estiver aberta na
+//    tela AGORA (fora dela: zero login, zero página, zero gravação — silêncio);
+//  • ABRIR a aba já checa a idade dos dados: se passou de 1 hora, a busca
+//    automática começa na hora (uso de verdade, não desperdício);
+//  • botões Atualizar / Baixar Tudo continuam manuais como sempre foram;
+//  • os freios da v5.24.8 continuam todos (1h de dados velhos, incremental,
+//    sem login nem tenta, nunca limpa a base, nunca duas buscas juntas).
+function esAbaAberta(){
+  try{
+    var hs=document.querySelectorAll('h3');
+    for(var i=0;i<hs.length;i++){
+      if(hs[i] && hs[i].textContent && hs[i].textContent.indexOf('Buscador Escola')>=0) return true;
+    }
+  }catch(e){}
+  return false;
+}
+function esAutoTique(){
+  try{
+    if(window.__esSync) return;
+    if(!esAbaAberta()) return;              // v5.26.5 — fora da aba: não consome NADA
+    if(!loginDaNuvem()&&!loginDoNavegador()) return;
+    const c=(db.config&&db.config.escolaSync)||{};
+    if(!c.at||elapsed(c.at)>60*60*1000) sync({auto:true,incremental:true});
+  }catch(_e){}
+}
 if(typeof document!=='undefined'){
-  setTimeout(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(!c.at||elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},15000);
-  setInterval(()=>{const c=(db.config&&db.config.escolaSync)||{};const st=store();const vazio=st.orc.length===0;if(elapsed(c.at)>60*60*1000||vazio)sync({auto:true,limpar:vazio,incremental:!vazio})},60000);
+  // relógio barato: só o "estou na aba? dados velhos?" a cada 10 min — sem rede fora da aba
+  setTimeout(esAutoTique,15000);
+  setInterval(esAutoTique,10*60*1000);
 }
 console.log('[DIGICOPY] buscador_escola v1.0 carregado');
 })();
@@ -19684,7 +19789,11 @@ try{
       const tid='aviso-system-modal-'+Date.now();
       const div=document.createElement('div');
       div.id=tid;
-      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      // v5.24.34 — BUG REAL apanhado por ele: 'Excluir de vez não faz nada / pop-ups
+  // aparecem ATRÁS da aba de nuvem'. Eram um problema só: a janela da nuvem usa
+  // z-index 100000 e as janelas de sistema 99999 — o pop-up nascia escondido
+  // atrás dela. Diálogos do sistema agora vivem acima de TUDO (teto CSS seguro).
+  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
       const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const isDel = /excluir|apagar|deletar|remover|sair|estornar/i.test((title||'')+' '+(msg||''));
       const icon = isDel ? '🗑️' : '⚠️';
@@ -20607,7 +20716,20 @@ try{
       const t = (btn.textContent || '').trim().toLowerCase();
       const oc = (btn.getAttribute('onclick') || '').toLowerCase();
       const id = (btn.id || '').toLowerCase();
-      if (/adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa')) {
+      const iaDesligar = /adicionar|item|faturar|salvar|excluir|remover|buscar/i.test(t) || /additem|salvar|faturar|delete|search/i.test(oc) || id.includes('lupa');
+      // v5.24.34 — IMPRIMIR NUNCA É EDIÇÃO. A trava anti-edição da faturada
+      // pegava o botão Imprimir por engano (a função dele tem "salvar" no
+      // nome: vosAbrirImpressaoESalvar) e ele ficava inacessível, cinza.
+      // Notinha faturada DEVE imprimir — e nela a impressão é direta, pura
+      // leitura, sem tentar salvar coisa nenhuma.
+      if (iaDesligar && (/imprim|print/i.test(t) || /impressao|imprimir|print/i.test(oc))) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        btn.setAttribute('onclick', "imprimirNotinha('" + String(vendaId) + "')");
+        btn.title = 'Imprimir notinha (não altera nada)';
+        return;
+      }
+      if (iaDesligar) {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
         if (!btn.__fatPatched) {
@@ -21901,6 +22023,10 @@ function linhaChamado(o, contratoId){
     <td class="px-3 py-2">${esc(o.modelo||o.serie||'')}</td>
     <td class="px-3 py-2">${esc(o.tecnico||'')}</td>
     <td class="px-3 py-2"><span class="neo-status ${fin?'ok':'wait'}">${fin?'Finalizado':'Aberto'}</span>${deContrato&&!contratoId?' <span class="text-[10px] text-amber-700">contrato</span>':''}</td>
+    <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+      <button onclick="window.imprimirChamadoAgoraV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-[#0a1e8a] hover:bg-blue-50" title="Imprimir direto, sem abrir o chamado"><i class="ph ph-printer"></i></button>
+      <button onclick="window.excluirChamadoV52422('${o.id}')" class="w-7 h-7 grid place-items-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50" title="Excluir chamado"><i class="ph ph-trash"></i></button>
+    </td>
   </tr>`;
 }
 
@@ -21928,14 +22054,47 @@ window.abrirHistoricoChamadosGeral = function(){
   document.getElementById('modal-title').innerText = 'Chamados';
   document.getElementById('modal-body').innerHTML = `<div class="space-y-3 text-[13px]">
     ${htmlFiltrosChamado('lcg')}
-    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th></tr></thead><tbody>
-    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="7" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
+    <div class="overflow-auto max-h-[520px] border rounded-xl"><table class="w-full text-left text-[12px]"><thead class="bg-slate-50 sticky top-0"><tr><th class="px-3 py-2">Cód</th><th class="px-3 py-2">Data</th><th class="px-3 py-2">Cliente</th><th class="px-3 py-2">Motivo</th><th class="px-3 py-2">Equipamento</th><th class="px-3 py-2">Técnico</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Ações</th></tr></thead><tbody>
+    ${list.map(o=>linhaChamado(o,null)).join('')||'<tr><td colspan="8" class="text-center py-10 text-slate-400">Nenhum chamado neste filtro</td></tr>'}
     </tbody></table></div>
   </div>`;
   document.getElementById('modal-footer').innerHTML =
     `<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>
      <button onclick="novoChamadoAvulsoGuard()" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold">+ Novo chamado (fora de contrato)</button>`;
   document.getElementById('modal-root')?.classList.remove('hidden');
+};
+
+// v5.24.34 — F2 do RELATORIO GRANDE: imprimir chamado sem abrir + excluir.
+window.imprimirChamadoAgoraV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id);
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  if(typeof window.imprimirChamadoPDF==='function'){ window.imprimirChamadoPDF(id); return; }
+  if(typeof window.imprimirChamado==='function'){ window.imprimirChamado(id); return; }
+};
+
+window.excluirChamadoV52422 = function(id){
+  var o=(db.os||[]).find(x=>x.id===id)||null;
+  if(!o){ if(window.toast) toast('Chamado não encontrado','error'); return; }
+  var deCtr = !!(o && typeof chamadoDeContrato==='function' ? chamadoDeContrato(o) : (o.contratoId));
+  var msg = deCtr
+    ? 'Esse chamado é DE CONTRATO. Excluir aqui também exclui na lista de chamados dentro do contrato. Tem certeza que deseja excluir?'
+    : 'Excluir este chamado? Apaga SEM volta — nem aqui nem em nenhuma outra lista do sistema.';
+  var segue = function(ok){
+    if(!ok) return;
+    var i=(db.os||[]).findIndex(x=>x.id===id);
+    if(i>=0){ db.os.splice(i,1); }
+    if(typeof saveDB==='function') saveDB();
+    if(typeof toast==='function') toast('Chamado excluído','success');
+    // repinta onde estiver aberto
+    try{
+      if(typeof window.abrirChamadosContrato==='function' && window.__ctrChamadosAberto){ window.abrirChamadosContrato(window.__ctrChamadosAberto); }
+      else if(typeof window.abrirHistoricoChamadosGeral==='function' && document.getElementById('modal-root')&&!document.getElementById('modal-root').classList.contains('hidden') && /Chamados/.test((document.getElementById('modal-title')||{}).textContent||'')){
+        window.abrirHistoricoChamadosGeral();
+      }
+    }catch(e){}
+  };
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(msg, 'Excluir chamado').then(segue); return; }
+  segue(confirm(msg));
 };
 
 window.novoChamadoAvulsoGuard = function(){
@@ -21959,8 +22118,16 @@ window.abrirChamadosContrato = function(contratoId){
       wrap.innerHTML = htmlFiltrosChamado('lcc', contratoId);
       body.prepend(wrap);
     }
+    // v5.24.34 — RELATORIO dele (F2): onde estava escrito "PDF" vai o ÍCONE
+    // da impressora (e a Ações abriga imprimir-direto + excluir).
+    const ths = body.querySelectorAll('thead th');
+    ths.forEach(th=>{ if(/pdf/i.test(String(th.textContent||''))) th.innerHTML='<i class="ph ph-printer text-slate-500" title="Imprimir chamado direto"></i>'; });
+    const lastTh = ths[ths.length-1];
+    if(lastTh && !/a[çc][aã]o/i.test(String(lastTh.textContent||'')) && !lastTh.querySelector('.ph')){
+      // mantém 8 colunas: se a tabela original tinha o th-PDF, ele já virou ícone
+    }
     const tb = body.querySelector('tbody');
-    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="7" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
+    if(tb) tb.innerHTML = list.map(o=>linhaChamado(o, contratoId)).join('') || '<tr><td colspan="8" class="text-center py-8 text-slate-400">Nenhum chamado deste contrato no filtro</td></tr>';
   }, 40);
 };
 
@@ -22195,60 +22362,6 @@ if(typeof _selCliAv==='function'){
 }
 
 // ── 4.1 / 4.2 impressão ──
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId);
-  if(!o){ toastMsg('Salve o chamado antes de imprimir.','error'); return; }
-  const cli = (db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const fin = o.status==='concluido';
-  const deContrato = chamadoDeContrato(o);
-  const p = (db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq = (db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const temColor = !deContrato || impressoraTemColor(p, eq);
-  const pecas = Array.isArray(o.pecas)&&o.pecas.length
-    ? o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''}))
-    : String(o.pecasTexto||'').split('\n').filter(Boolean).map(line=>{
-        const m=line.match(/^(.*?)(?:\s+x\s*(\d+))?$/i); return {d:(m&&m[1])||line,q:(m&&m[2])||''};
-      });
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const fill = (v, blank)=>{
-    if(fin) return esc(v==null||v===''?'-':v);
-    return blank || '&nbsp;';
-  };
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:18px;color:#111;font-size:12px}
-    .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:12px}
-    .cab h1{color:#0a1e8a;font-size:18px;margin:0}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;letter-spacing:.08em;padding:7px 10px;margin:12px 0 6px}
-    .linha{border:1px solid #bbb;min-height:28px;padding:6px 8px;margin-bottom:8px}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    table{width:100%;border-collapse:collapse;margin-top:4px}
-    th,td{border:1px solid #bbb;padding:7px;height:22px}
-    th{background:#eef2ff;color:#0a1e8a;text-align:left}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:92px;text-align:center;letter-spacing:2px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="cab"><div><h1>DIGICOPY — CHAMADO TÉCNICO</h1><p><b>Cliente:</b> ${esc(cli.nome||'')}</p></div><div style="text-align:right"><p><b>OS:</b> ${esc(o.numero||'')}</p><p><b>Status:</b> ${esc(o.status||'')}</p></div></div>
-  ${!deContrato?`<div class="grid2"><div class="linha"><b>Impressora</b><div>${fill(o.modelo)}</div></div><div class="linha"><b>Serial</b><div>${fill(o.serie)}</div></div></div>`:''}
-  <div class="grid2">
-    <div class="linha"><b>Contador preto atual</b><div>${fill(o.contadorAtual)}</div></div>
-    ${temColor?`<div class="linha"><b>Contador color atual</b><div>${fill(o.contadorColor)}</div></div>`:'<div></div>'}
-  </div>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="linha" style="min-height:42px">${fill(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d||''):'&nbsp;'}</td><td>${fin?esc(it.q||''):'&nbsp;'}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="linha" style="min-height:48px">${fill(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w = window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 const _impCham = window.imprimirChamado;
 // wrap print buttons to ask save
@@ -22404,7 +22517,7 @@ try{
 (function(){
 'use strict';
 
-const SKIP = /pdf|a[cç][aã]o|excluir|sel\b|imprimir|^$/i;
+const SKIP = /pdf|a[cç][aã]o|excluir|editar|sel\b|imprimir|^$/i;  // v5.24.27 — P5 do relatório: clique no cabeçalho 'Editar' ordenava a lista à toa
 
 function cellKey(td){
   if(!td) return '';
@@ -22730,55 +22843,6 @@ window.renderEquipamentos = function(){
 };
 
 // PDF chamado
-window.imprimirChamadoPDF = function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const eq=(db.equipamentos||[]).find(e=>e.id===o.equipamentoId)||{};
-  const deContrato=!!o.contratoId;
-  const showColor=!deContrato || temColor(p,eq);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||it.nome||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const v=(x)=> fin ? esc(x==null||x===''?'':x) : '';
-  const dataAt = fin && o.dataAtendimento ? dia(o.dataAtendimento).split('-').reverse().join('/') : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:16px;color:#111;font-size:12px}
-    .top{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #0a1e8a;padding-bottom:10px}
-    .top img{height:64px;width:auto}
-    .loja{flex:1}
-    .loja h1{margin:0;color:#0a1e8a;font-size:18px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid #bbb;padding:5px 7px;text-align:left}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px}
-    .faixa{background:#0a1e8a;color:#fff;text-align:center;font-weight:800;padding:6px;margin:12px 0 4px;letter-spacing:.06em}
-    .blank{min-height:22px}
-    .data{display:inline-block;border-bottom:1px solid #333;min-width:96px;text-align:center;letter-spacing:1px}
-    @media print{.no-print{display:none}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="top"><img src="${logoSrc()}" alt="logo"><div class="loja"><h1>${esc(loja.fantasia)}</h1><div>${esc(loja.nome)}</div><div>${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div><div>${esc(loja.end)}</div></div>
-    <div style="text-align:right"><b>OS ${esc(o.numero||'')}</b><br>${fin?'Finalizado':'Aberto'}</div></div>
-  <table><tr><th>Cliente</th><th>Documento</th><th>Telefone</th><th>Cidade</th></tr>
-  <tr><td>${esc(cli.nome||'')}</td><td>${esc(cli.documento||'')}</td><td>${esc(cli.telefone||'')}</td><td>${esc((cli.cidade||'')+(cli.estado?('/'+cli.estado):''))}</td></tr></table>
-  ${!deContrato?`<table><tr><th>Impressora</th><th>Serial</th></tr><tr><td class="blank">${v(o.modelo)}</td><td class="blank">${v(o.serie)}</td></tr></table>`:''}
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td class="blank">${v(o.contadorAtual)}</td>${showColor?`<td class="blank">${v(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div style="border:1px solid #bbb;min-height:36px;padding:8px">${v(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td class="blank">${fin?esc(it.d):''}</td><td class="blank">${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div style="border:1px solid #bbb;min-height:40px;padding:8px">${v(o.observacao||o.servicos)}</div>
-  <p style="margin-top:14px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // logo em relatórios (menos rtf/etiqueta)
 function injetarLogoNoDoc(html){
@@ -23195,62 +23259,6 @@ if(typeof _sav==='function' && !_sav.__v5172){
 }
 
 // ── 4.2 PDF inspirado, mais limpo ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId || temColor(p,(db.equipamentos||[]).find(e=>e.id===o.equipamentoId));
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataAt=fin&&o.dataAtendimento?dia(o.dataAtendimento).split('-').reverse().join('/'):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:14mm}
-    body{font-family:Inter,Arial,sans-serif;margin:0;color:#0f172a;font-size:12px;background:#fff}
-    .sheet{max-width:760px;margin:0 auto;padding:8px 4px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}
-    .head h1{margin:0;font-size:20px;color:#0a1e8a;letter-spacing:-.02em}
-    .muted{color:#64748b;font-size:11px}
-    .os{margin-left:auto;text-align:right}
-    .os b{font-size:18px;color:#0a1e8a}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .faixa{background:linear-gradient(90deg,#0a1e8a,#1d4ed8);color:#fff;border-radius:8px;text-align:center;font-weight:800;padding:7px;margin:14px 0 6px;letter-spacing:.08em;font-size:11px}
-    table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px;border:1px solid #e2e8f0}
-    th{background:#eef2ff;color:#0a1e8a;font-size:11px;text-align:left;padding:8px}
-    td{padding:9px 8px;border-top:1px solid #eef2f7;min-height:26px}
-    .line{border:1px dashed #cbd5e1;border-radius:10px;min-height:40px;padding:10px;background:#fff}
-    .foot{margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end}
-    .data{border-bottom:1px solid #334155;min-width:110px;text-align:center;letter-spacing:1px;display:inline-block}
-    @media print{.no-print{display:none}}
-  </style></head><body><div class="sheet">
-  <div class="no-print" style="margin-bottom:10px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}" alt="logo"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div></div>
-    <div class="os"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><h3>Cliente</h3><div><b>${esc(cli.nome||'')}</b></div><div class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</div><div class="muted">${esc(cli.cidade||'')} ${esc(cli.estado||'')}</div></div>
-    <div class="card"><h3>Atendimento</h3><div>Técnico: <b>${esc(o.tecnico||'')}</b></div><div class="muted">${!o.contratoId?('Impressora: '+esc(o.modelo||'')+' • Serial '+esc(o.serie||'')):'Contrato'}</div></div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td>${cell(o.contadorAtual)}</td>${showColor?`<td>${cell(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">MOTIVO / DEFEITO</div>
-  <div class="line">${cell(o.descricao)}</div>
-  <div class="faixa">PRODUTO / PEÇAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}</td><td>${fin?esc(it.q):''}</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="line">${cell(o.observacao||o.servicos)}</div>
-  <div class="foot"><div><b>Data do atendimento</b><br><span class="data">${dataAt}</span></div><div class="muted">DIGICOPY</div></div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // ── 4.5 / 7 sair SEM loop, volta para lista do contrato ──
 window.__lcAskLock=false;
@@ -23560,67 +23568,6 @@ if(typeof _open==='function'){
 }
 
 // ── 4.2 PDF ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cli=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId || temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
-    body{font-family:Inter,Arial,sans-serif;margin:0;color:#0f172a;font-size:12px}
-    .sheet{max-width:760px;margin:0 auto}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}
-    .head h1{margin:0;font-size:20px;color:#0a1e8a}
-    .muted{color:#64748b;font-size:11px}
-    .os{margin-left:auto;text-align:right}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .card h3{margin:0 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .faixa{background:#0a1e8a !important;color:#fff !important;border-radius:8px;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;letter-spacing:.08em;font-size:11px}
-    table{width:100%;border-collapse:collapse;border:1px solid #cbd5e1}
-    th{background:#eef2ff !important;color:#0a1e8a;font-size:11px;text-align:left;padding:8px;border:1px solid #cbd5e1}
-    td{padding:8px;border:1px solid #e2e8f0;height:26px}
-    .lined{border:1px solid #cbd5e1;border-radius:10px;min-height:72px;padding:8px 10px;
-      background-image:repeating-linear-gradient(#fff,#fff 21px,#e2e8f0 22px);background-size:100% 22px}
-    .data{border-bottom:1px solid #334155;min-width:110px;text-align:center;display:inline-block;letter-spacing:1px}
-    @media print{.no-print{display:none!important}.faixa{background:#0a1e8a!important;color:#fff!important}}
-  </style></head><body><div class="sheet">
-  <div class="no-print" style="margin-bottom:10px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}" alt="logo"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)} ${loja.fone?('• '+esc(loja.fone)):''}</div></div>
-    <div class="os"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><h3>Cliente</h3><div><b>${esc(cli.nome||'')}</b></div><div class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</div><div class="muted">${esc(cli.cidade||'')} ${esc(cli.estado||'')}</div></div>
-    <div class="card"><h3>Atendimento</h3>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td>${cell(o.contadorAtual)}</td>${showColor?`<td>${cell(o.contadorColor)}</td>`:''}</tr></table>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="lined">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="lined">${cell(o.observacao)}</div>
-  <p style="margin-top:16px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // ── 5 Todos leituras com aviso ──
 window.lcLeiturasTodos=function(){
@@ -23774,30 +23721,76 @@ function htmlBuscaImpressoraContrato(){
   return `<div class="rounded-xl bg-blue-50 border border-blue-200 p-3" id="lc-busca-imp-ctr">
     <b class="text-blue-900">Buscar impressora do contrato</b>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-      <select id="lc-imp-busca-campo" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
-      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite e Enter / lupa" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
+      <select id="lc-imp-busca-campo" onchange="lcBuscarImpressoraChamado()" class="h-10 px-2 rounded-xl border bg-white text-[12px]"><option value="impressora">Impressora</option><option value="serial">Serial</option><option value="patrimonio">Patrimônio</option><option value="departamento">Departamento</option><option value="localizacao">Localização</option></select>
+      <input id="lc-imp-busca-q" class="md:col-span-2 h-10 px-3 rounded-xl border" placeholder="Digite que a lista filtra na hora" oninput="lcBuscarImpressoraChamado()" onkeydown="if(event.key==='Enter'){event.preventDefault();lcBuscarImpressoraChamado()}">
       <button type="button" onclick="lcBuscarImpressoraChamado()" class="h-10 px-3 rounded-xl bg-[#0a1e8a] text-white font-bold"><i class="ph ph-magnifying-glass"></i></button>
     </div>
-    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px]"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="ko-equip-lista" class="mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
+    <input type="hidden" id="ko-equip" value=""><div id="ko-equip-selected" class="hidden mt-2 rounded-xl border bg-white px-3 py-2 flex items-center gap-2"><span id="ko-equip-selected-name" class="font-semibold text-[12px] flex-1"></span><button type="button" onclick="lcEditarImpressoraChamado()" class="shrink-0 rounded-lg border border-teal-600 bg-teal-50 px-2 py-1 text-[11px]" title="Trocar impressora">✏️ trocar</button></div><p class="text-[11px] text-blue-700 mt-2 mb-1">Digite para filtrar; ao tocar, só a escolhida fica. ✏️ abre a lista de novo.</p><div id="ko-equip-lista" class="mt-1 rounded-xl border bg-white max-h-48 overflow-y-auto"></div>
   </div>`;
 }
 
+// v5.22.88 — a escolhida fica marcada em azul DENTRO da lista (nada de esconder)
+window.lcMarcarImpressoraNaLista=function(equipId){
+  const lista=document.getElementById('ko-equip-lista'); if(!lista) return;
+  lista.querySelectorAll('button').forEach(function(b){
+    const on=b.getAttribute('onclick')||'';
+    const marc=equipId && on.indexOf("'"+equipId+"'")>=0;
+    b.classList.toggle('bg-blue-100', !!marc);
+    b.classList.toggle('font-bold', !!marc);
+    b.classList.toggle('border-l-4', !!marc);
+    b.classList.toggle('border-[#0a1e8a]', !!marc);
+  });
+};
 window.lcEscolherImpressoraChamado=function(equipId){
   const sel=document.getElementById('ko-equip'); if(!sel) return;
+  // v5.22.94 — TROCA deverdade: os dados da impressora VELHA saem da tela
+  const anteriorId=sel.value||'';
+  const troca=!!anteriorId && anteriorId!==equipId;
+  const eAnt=troca ? (eq(anteriorId)||{}) : {};
   sel.value=equipId;
   const e=eq(equipId)||{};
-  const chosen=document.getElementById('ko-equip-selected');
+  const pNovo=(db.parque||[]).find(x=>x.equipamentoId===equipId)||{};
   const name=document.getElementById('ko-equip-selected-name');
   const list=document.getElementById('ko-equip-lista');
   if(name) name.textContent=(e.modelo||'Impressora')+' — '+(e.serie||'')+' — Patr. '+(e.patrimonio||'-');
-  if(chosen) chosen.classList.remove('hidden');
+  // v5.22.90 — ao escolher, a lista RECOLHE e fica só a escolhida + lápis (modelo das leituras)
   if(list) list.classList.add('hidden');
-  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId);
+  const selBox=document.getElementById('ko-equip-selected'); if(selBox) selBox.classList.remove('hidden');
+  window.lcMarcarImpressoraNaLista(equipId);
+  // v5.22.94 — campos ligados à impressora escritos AQUI (não depende de quem
+  // ganha a ordem do bundle). Na TROCA: sobrescreve tudo; na ABERTURA: só o vazio.
+  function preenche(id, valor, soVazio){
+    const el=document.getElementById(id); if(!el) return;
+    if(soVazio && String(el.value||'').trim()!=='') return;
+    el.value=valor;
+  }
+  preenche('ko-modelo', e.modelo||'', !troca);
+  preenche('ko-serie', e.serie||'', !troca);
+  preenche('ko-patr', e.patrimonio||'', !troca);
+  preenche('ko-local', pNovo.localInstalacao||pNovo.setor||'', !troca);
+  preenche('ko-cont-ant', contadorOficial(equipId,false), !troca);
+  const corAnt=document.getElementById('lc-cont-color-ant');
+  if(corAnt && (troca || String(corAnt.value||'').trim()==='')) corAnt.value=contadorOficial(equipId,true);
+  const bloco=document.getElementById('ko-color-block'); if(bloco) bloco.style.display=temColor(pNovo)?'':'none';
+  if(troca){
+    const atu=document.getElementById('ko-cont-atu'); if(atu) atu.value='';
+    // Motivo: se era EXATAMENTE o modelo da impressora antiga (auto), vira o
+    // da nova. Se a pessoa escreveu outra coisa, o texto dela não se mexe.
+    const motivo=document.getElementById('ko-desc');
+    const nomeAntigo=String(eAnt.modelo||'').trim();
+    if(motivo && nomeAntigo && String(motivo.value||'').trim().toLowerCase()===nomeAntigo.toLowerCase()){
+      motivo.value=(e.modelo||'');
+    }
+  }
+  if(typeof calcImpressoesChamado==='function') calcImpressoesChamado();
+  if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, troca===true, undefined);
 };
+// Mantida por compat: agora só limpa a busca e mostra a lista completa de novo
 window.lcEditarImpressoraChamado=function(){
-  document.getElementById('ko-equip-selected')?.classList.add('hidden');
+  const q=document.getElementById('lc-imp-busca-q'); if(q) q.value='';
   document.getElementById('ko-equip-lista')?.classList.remove('hidden');
   lcBuscarImpressoraChamado();
+  if(q) q.focus();
 };
 
 window.lcBuscarImpressoraChamado=function(){
@@ -23813,8 +23806,9 @@ window.lcBuscarImpressoraChamado=function(){
     return low(alvo).includes(q);
   });
   const cur=sel.value;
+  listaEl.classList.remove('hidden');
   listaEl.innerHTML=opts.map(p=>{ const e=eq(p.equipamentoId)||{}; const id=esc(p.equipamentoId); return `<button type="button" onclick="lcEscolherImpressoraChamado('${id}')" class="w-full text-left px-3 py-2 border-b last:border-0 hover:bg-blue-50"><b>${esc(e.modelo||'Impressora')}</b><br><span class="text-[11px] text-slate-500">${esc(e.serie||'')} — Patr. ${esc(e.patrimonio||'-')}</span></button>`; }).join('') || '<p class="p-3 text-[12px] text-slate-500">Nenhuma impressora encontrada.</p>';
-  if(cur) lcEscolherImpressoraChamado(cur);
+  if(cur) window.lcMarcarImpressoraNaLista(cur);
 };
 
 function setModalSize(){
@@ -23874,6 +23868,13 @@ window.openModalChamadoCompleto=function(osId, contratoId){
   document.getElementById('modal-root')?.classList.remove('hidden');
   const pr=document.getElementById('ko-prio'); if(pr) pr.value=(o&&o.prioridade)||'normal';
   lcBuscarImpressoraChamado();
+  // v5.22.88 — filtro enquanto DIGITA: listener real (o oninput do HTML é reforço)
+  setTimeout(function(){
+    const qi=document.getElementById('lc-imp-busca-q');
+    if(qi && !qi.__v52288){ qi.__v52288=1; qi.addEventListener('input', function(){ lcBuscarImpressoraChamado(); }); }
+    const cs=document.getElementById('lc-imp-busca-campo');
+    if(cs && !cs.__v52288){ cs.__v52288=1; cs.addEventListener('change', function(){ lcBuscarImpressoraChamado(); }); }
+  }, 0);
   if(equipId){
     const sel=document.getElementById('ko-equip'); if(sel) lcEscolherImpressoraChamado(equipId);
     if(typeof autoPreencherDadosChamado==='function') autoPreencherDadosChamado(equipId, true, osId);
@@ -24008,65 +24009,6 @@ function criarVendaSeFinalizado(o){
 }
 
 // ── PDF: linhas + contadores maiores ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=cli(o.clienteId)||{};
-  const loja=dadosLoja();
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#0f172a;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px;letter-spacing:.06em}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #cbd5e1;padding:10px;text-align:left}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px);background-size:100% 24px}
-    .cnt{min-height:52px;font-size:18px;font-family:monospace}
-    .data{border-bottom:1px solid #334155;min-width:110px;display:inline-block;text-align:center}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.nome)}</div><div class="muted">${esc(loja.cnpj)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b><div class="muted">${fin?'Finalizado':'Em aberto'}</div></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <table><tr><th>Contador preto atual</th>${showColor?'<th>Contador color atual</th>':''}</tr>
-  <tr><td><div class="box-write cnt">${cell(o.contadorAtual)}</div></td>
-  ${showColor?`<td><div class="box-write cnt">${cell(o.contadorColor)}</div></td>`:''}</tr></table>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:16px"><b>Data do atendimento:</b> <span class="data">${dataAt}</span></p>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 // X de peça NÃO fecha o chamado
 document.addEventListener('click', function(ev){
@@ -24330,73 +24272,6 @@ if(typeof _av==='function'){
 }
 
 // ── 4.2 PDF: contadores ao lado da data + assinaturas ──
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom">&nbsp;'+cell('')+'</span>';
-  const linhaVal=function(v){ return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:160px;height:18px;vertical-align:bottom;padding:0 6px">'+cell(v)+'</span>'; };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .assin{margin-top:36px;display:flex;justify-content:space-between;gap:40px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:18px;line-height:2.1;font-size:14px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5176_patch.js');
 })();
@@ -24562,77 +24437,6 @@ const mo=new MutationObserver(()=>{
 if(document.body) mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['oninput']});
 
 // PDF: contadores em branco até finalizar; assinaturas afastadas
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom">&nbsp;</span>';
-  const linhaVal=function(v){
-    const t=v==null||v===''?'':String(v);
-    return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom;padding:0 6px">'+esc(t)+'</span>';
-  };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .rodape{margin-top:28px;line-height:2.2;font-size:14px}
-    .assin{margin-top:88px;display:flex;justify-content:space-between;gap:56px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:8px}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print"><button onclick="window.print()">Imprimir</button></div>
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5177_patch.js');
 })();
@@ -24715,84 +24519,6 @@ document.addEventListener('click', delFromEvent, true);
 document.addEventListener('pointerdown', delFromEvent, true);
 
 // PDF: página A4, assinaturas coladas no rodapé da folha
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const s=sess()||{};
-  const emp=(db.empresas||[]).find(e=>e.id===s.empresaId)||{};
-  const cfg=(db.config&&db.config.empresa)||{};
-  const fin=o.status==='concluido';
-  const p=(db.parque||[]).find(x=>x.equipamentoId===o.equipamentoId);
-  const showColor=!o.contratoId||temColor(p);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom">&nbsp;</span>';
-  const linhaVal=function(v){
-    const t=v==null||v===''?'':String(v);
-    return '<span style="display:inline-block;border-bottom:1px solid #111;min-width:170px;height:20px;vertical-align:bottom;padding:0 6px">'+esc(t)+'</span>';
-  };
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:12mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{min-height:273mm;display:flex;flex-direction:column;box-sizing:border-box}
-    .head{display:flex;gap:14px;align-items:center;padding-bottom:12px;border-bottom:3px solid #0a1e8a}
-    .head img{height:58px}.head h1{margin:0;color:#0a1e8a;font-size:20px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-    .card{border:1px solid #cbd5e1;border-radius:12px;padding:10px 12px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:8px;margin:14px 0 6px;border-radius:8px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:8px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:10px;min-height:88px;padding:10px 12px;
-      background-image:repeating-linear-gradient(#fff 0 23px,#cbd5e1 23px 24px)}
-    .rodape{margin-top:22px;line-height:2.2;font-size:14px}
-    .foot{margin-top:auto;padding-top:48px}
-    .assin{display:flex;justify-content:space-between;gap:64px;padding-bottom:8px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:8px}
-    @media print{.no-print{display:none!important}.page{min-height:273mm}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(emp.fantasia||'DIGICOPY')}</h1><div class="muted">${esc(emp.nome||cfg.nome||'')}</div><div class="muted">${esc(emp.cnpj||s.cnpj||'')}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:120px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;&nbsp;<b>Contador preto:</b> ${fin?linhaVal(o.contadorAtual):linha}
-    ${showColor?'&nbsp;&nbsp;&nbsp;<b>Contador color:</b> '+(fin?linhaVal(o.contadorColor):linha):''}
-  </p>
-  <div class="foot">
-    <div class="assin">
-      <div>Assinatura do técnico</div>
-      <div>Assinatura do cliente</div>
-    </div>
-  </div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5178_patch.js');
 })();
@@ -24920,80 +24646,6 @@ if(typeof _av==='function'){
   };
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=o.status==='concluido';
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId || temColor(p,o);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const linha='<span style="display:inline-block;border-bottom:1px solid #111;min-width:150px;height:18px;vertical-align:bottom">&nbsp;</span>';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  // contadores: NADA escrito se não finalizado
-  const pb = fin && o.contadorAtual!=null && o.contadorAtual!=='' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor!=null && o.contadorColor!=='' ? esc(String(o.contadorColor)) : '';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{min-height:auto;display:flex;flex-direction:column;box-sizing:border-box}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:52px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:10px 0 5px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:6px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:64px;padding:8px 10px;
-      background-image:repeating-linear-gradient(#fff 0 21px,#cbd5e1 21px 22px)}
-    .rodape{margin-top:14px;line-height:2;font-size:13px}
-    .assin{margin-top:42px;display:flex;justify-content:space-between;gap:48px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{margin-top:18px;border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div><div class="muted">${esc(loja.cnpj)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="assin">
-    <div>Assinatura do técnico</div>
-    <div>Assinatura do cliente</div>
-  </div>
-  <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5179_patch.js');
 })();
@@ -25055,86 +24707,6 @@ function lojaRodape(){
   };
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId || temColor(p,o);
-  const pecas=Array.isArray(o.pecas)&&o.pecas.length?o.pecas.map(it=>({d:it.descricao||'',q:it.qtd||''})):[];
-  while(pecas.length<5) pecas.push({d:'',q:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  // NUNCA número no contador se não estiver finalizado
-  const pb = fin && o.contadorAtual!=null && String(o.contadorAtual).trim()!=='' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor!=null && String(o.contadorColor).trim()!=='' ? esc(String(o.contadorColor)) : '';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0}
-    body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a;flex-shrink:0}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;flex-shrink:0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px;flex-shrink:0}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:52px;padding:6px 10px;
-      background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .mid{flex:0 1 auto}
-    .rodape-cnt{margin-top:10px;line-height:1.9;font-size:13px;flex-shrink:0}
-    .foot{margin-top:auto;padding-top:12px;flex-shrink:0}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:14px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}.page{height:277mm}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="mid">
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS USADAS</div>
-  <table><thead><tr><th style="width:78%">Descrição</th><th>Quantidade</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${fin?esc(it.d):''}&nbsp;</td><td>${fin?esc(it.q):''}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p class="rodape-cnt">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span class="cnt-line" style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span class="cnt-line" style="display:inline-block;border-bottom:1px solid #111;min-width:140px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  </div>
-  <div class="foot">
-    <div class="assin">
-      <div>Assinatura do técnico</div>
-      <div>Assinatura do cliente</div>
-    </div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div>
-  </body></html>`;
-  const w=window.open('','_blank');
-  if(w){ w.document.write(html); w.document.close(); }
-};
 
 if(typeof window.imprimirChamado==='function'){
   window.imprimirChamado=function(id){ return window.imprimirChamadoPDF(id); };
@@ -25391,77 +24963,6 @@ function lojaRodape(){
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||s.cnpj||'',tel:d.telefone||d.fone||'',whats:d.whatsapp||'',email:d.email||'',end:end||''};
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(it=>normItem(Object.assign({d:it.descricao,q:it.qtd},it))):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',preco:'',desconto:'',subtotal:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
-  const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const totFin=fin?money(totalPecas(o.pecas||[])):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th>Descrição</th><th>Qtd</th><th>Valor</th><th>Desc.</th><th>Valor final</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao||it.d)}&nbsp;</td><td>${cell(it.qtd||it.q)}&nbsp;</td><td>${it.preco===''?'':cellM(it.preco)}&nbsp;</td><td>${it.desconto===''?'':cellM(it.desconto)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  <tr><td colspan="4" style="text-align:right"><b>Total</b></td><td><b>${totFin}</b></td></tr>
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5181_patch.js');
 })();
@@ -25510,12 +25011,12 @@ function htmlPecasVendas(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -25527,6 +25028,10 @@ window.lcPecaCalc=function(prefix){
   const de=n(document.getElementById(prefix+'-prod-desc')?.value,0);
   const el=document.getElementById(prefix+'-prod-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  const btn=document.getElementById(prefix+'-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String(document.getElementById(prefix+'-prod-preco')?.value||'').trim());
 };
 
 window.lcBuscarPeca=function(prefix){
@@ -25551,7 +25056,7 @@ window.lcSelPeca=function(prefix,prodId){
   const p=(db.produtos||[]).find(x=>x.id===prodId); if(!p) return;
   window.__lcPecaSel=p;
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value=p.nome||'';
-  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=p.preco||0;
+  const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   const res=document.getElementById(prefix+'-prod-results'); if(res){ res.classList.add('hidden'); res.innerHTML=''; }
   window.lcPecaCalc(prefix);
 };
@@ -25560,6 +25065,9 @@ window.lcAddPecaManual=function(prefix){
   const desc=String(document.getElementById(prefix+'-prod-search')?.value||'').trim();
   const p=window.__lcPecaSel;
   if(!p && !desc){ aviso('Selecione um produto ou escreva a descrição'); return; }
+  // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+  const precoRaw=String(document.getElementById(prefix+'-prod-preco')?.value||'').trim();
+  if(!/^\d+(?:[.,]\d+)?$/.test(precoRaw)){ aviso('Informe um valor unitário numérico para adicionar o item'); return; }
   const qtd=Math.max(1,n(document.getElementById(prefix+'-prod-qtd')?.value,1));
   const preco=n(document.getElementById(prefix+'-prod-preco')?.value, p?n(p.preco):0);
   const desconto=Math.max(0,n(document.getElementById(prefix+'-prod-desc')?.value,0));
@@ -25573,7 +25081,7 @@ window.lcAddPecaManual=function(prefix){
   const inp=document.getElementById(prefix+'-prod-search'); if(inp) inp.value='';
   const q=document.getElementById(prefix+'-prod-qtd'); if(q) q.value=1;
   const pr=document.getElementById(prefix+'-prod-preco'); if(pr) pr.value='';
-  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value=0;
+  const d=document.getElementById(prefix+'-prod-desc'); if(d) d.value='';
   window.lcPecaCalc(prefix);
   window.lcRenderPecas(prefix);
 };
@@ -25703,75 +25211,6 @@ function lojaRodape(){
   return {fantasia:d.fantasia||'DIGICOPY',razao:d.razaoSocial||d.nome||'',cnpj:d.cnpj||s.cnpj||'',tel:d.telefone||d.fone||'',whats:d.whatsapp||'',email:d.email||'',end:end||''};
 }
 
-window.imprimirChamadoPDF=function(osId){
-  const o=(db.os||[]).find(x=>x.id===osId);
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl=(db.clientes||[]).find(c=>c.id===o.clienteId)||{};
-  const loja=lojaRodape();
-  const fin=chamadoFinalizado(o);
-  const p=parqueDaOs(o);
-  const showColor=!o.contratoId||temColor(p,o);
-  let pecas=Array.isArray(o.pecas)?o.pecas.map(normItem):[];
-  while(pecas.length<5) pecas.push({descricao:'',qtd:'',subtotal:''});
-  const cell=(x)=>fin?esc(x==null||x===''?'':x):'';
-  const cellM=(x)=>fin&&x!==''&&x!=null?esc(money(x)):'';
-  const dataCad=dataBR(o.criadoEm||o.dataAbertura);
-  const dataAt=fin&&o.dataAtendimento?dataBR(o.dataAtendimento):'&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb=fin&&o.contadorAtual!=null&&String(o.contadorAtual).trim()!==''?esc(String(o.contadorAtual)):'';
-  const cor=fin&&o.contadorColor!=null&&String(o.contadorColor).trim()!==''?esc(String(o.contadorColor)):'';
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="muted">CLIENTE</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div></div>
-    <div class="card"><div class="muted">ATENDIMENTO</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Data de cadastro: ${esc(dataCad)}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(it=>`<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Data do atendimento:</b> <span style="border-bottom:1px solid #111;min-width:110px;display:inline-block;text-align:center">${dataAt}</span>
-    &nbsp;&nbsp;<b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5182_patch.js');
 })();
@@ -26020,77 +25459,6 @@ function lojaRodape(){
   return { fantasia: d.fantasia || 'DIGICOPY', razao: d.razaoSocial || d.nome || '', cnpj: d.cnpj || s.cnpj || '', tel: d.telefone || d.fone || '', whats: d.whatsapp || '', email: d.email || '', end: end || '' };
 }
 
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os || []).find(function(x){ return x.id === osId; });
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl = (db.clientes || []).find(function(c){ return c.id === o.clienteId; }) || {};
-  const loja = lojaRodape();
-  const fin = chamadoFinalizado(o);
-  const p = parqueDaOs(o);
-  const showColor = !o.contratoId || temColor(p, o);
-  let pecas = Array.isArray(o.pecas) ? o.pecas.map(normItem) : [];
-  while(pecas.length < 5) pecas.push({ descricao:'', qtd:'', subtotal:'' });
-  const cell = function(x){ return fin ? esc(x == null || x === '' ? '' : x) : ''; };
-  const cellM = function(x){ return fin && x !== '' && x != null ? esc(money(x)) : ''; };
-  const dataCad = dataBR(o.criadoEm || o.dataAbertura);
-  const dataAt = fin && o.dataAtendimento ? dataBR(o.dataAtendimento) : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb = fin && o.contadorAtual != null && String(o.contadorAtual).trim() !== '' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor != null && String(o.contadorColor).trim() !== '' ? esc(String(o.contadorColor)) : '';
-  const endCli = [cl.endereco || cl.rua || cl.logradouro, cl.numero, cl.bairro, cl.cidade, cl.uf || cl.estado, cl.cep].filter(Boolean).join(' • ');
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .card .t{color:#0a1e8a;font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="t">Dados do Cliente</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div>${endCli?`<div class="muted">${esc(endCli)}</div>`:''}</div>
-    <div class="card"><div class="t">Dados de Atendimento</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Cadastro: ${esc(dataCad)} • Atendimento: ${dataAt}</div>
-    </div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(function(it){ return `<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`; }).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w = window.open('', '_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5184_patch.js');
 })();
@@ -26241,81 +25609,6 @@ function lojaRodape(){
   return { fantasia: d.fantasia || 'DIGICOPY', razao: d.razaoSocial || d.nome || '', cnpj: d.cnpj || s.cnpj || '', tel: d.telefone || d.fone || '', whats: d.whatsapp || '', email: d.email || '', end: end || '' };
 }
 
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os || []).find(function(x){ return x.id === osId; });
-  if(!o){ aviso('Salve o chamado antes de imprimir.'); return; }
-  const cl = (db.clientes || []).find(function(c){ return c.id === o.clienteId; }) || {};
-  const loja = lojaRodape();
-  const fin = chamadoFinalizado(o);
-  const p = parqueDaOs(o);
-  const showColor = !o.contratoId || temColor(p, o);
-  let pecas = Array.isArray(o.pecas) ? o.pecas.map(normItem) : [];
-  while(pecas.length < 5) pecas.push({ descricao:'', qtd:'', subtotal:'' });
-  const cell = function(x){ return fin ? esc(x == null || x === '' ? '' : x) : ''; };
-  const cellM = function(x){ return fin && x !== '' && x != null ? esc(money(x)) : ''; };
-  const dataCad = dataBR(o.criadoEm || o.dataAbertura);
-  const dataAt = fin && o.dataAtendimento ? dataBR(o.dataAtendimento) : '&nbsp;&nbsp;/&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;';
-  const pb = fin && o.contadorAtual != null && String(o.contadorAtual).trim() !== '' ? esc(String(o.contadorAtual)) : '';
-  const cor = fin && o.contadorColor != null && String(o.contadorColor).trim() !== '' ? esc(String(o.contadorColor)) : '';
-  const endCli = [cl.endereco || cl.rua || cl.logradouro, cl.numero, cl.bairro, cl.cidade, cl.uf || cl.estado, cl.cep].filter(Boolean).join(' • ');
-  const impressora = window.AJUSTES_V5185_PURE.impressoraLinha(o);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado ${esc(o.numero||'')}</title>
-  <style>
-    @page{size:A4;margin:10mm}
-    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    html,body{margin:0;padding:0} body{font-family:Arial,sans-serif;color:#111;font-size:12px}
-    .page{height:277mm;max-height:277mm;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden}
-    .head{display:flex;gap:12px;align-items:center;padding-bottom:8px;border-bottom:3px solid #0a1e8a}
-    .head img{height:50px}.head h1{margin:0;color:#0a1e8a;font-size:18px}
-    .muted{color:#64748b;font-size:11px}
-    .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-    .card{border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc}
-    .card .t{color:#0a1e8a;font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-    .faixa{background:#0a1e8a!important;color:#fff!important;text-align:center;font-weight:800;padding:6px;margin:8px 0 4px;border-radius:6px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cbd5e1;padding:5px}
-    th{background:#eef2ff!important;color:#0a1e8a}
-    .box-write{border:1px solid #94a3b8;border-radius:8px;min-height:48px;padding:6px 10px;background-image:repeating-linear-gradient(#fff 0 20px,#cbd5e1 20px 21px)}
-    .foot{margin-top:auto;padding-top:10px}
-    .assin{display:flex;justify-content:space-between;gap:48px;margin-bottom:12px}
-    .assin div{flex:1;text-align:center;border-top:1px solid #111;padding-top:6px}
-    .rodape-loja-final{border-top:1px solid #d8dee9;padding-top:4px;text-align:center;font-size:8.5px;color:#5b6472}
-    @media print{.no-print{display:none!important}}
-  </style></head><body>
-  <div class="no-print" style="padding:8px"><button onclick="window.print()">Imprimir</button></div>
-  <div class="page">
-  <div class="head"><img src="${logoSrc()}"><div><h1>${esc(loja.fantasia)}</h1><div class="muted">${esc(loja.razao)}</div></div>
-    <div style="margin-left:auto;text-align:right"><b>OS ${esc(o.numero||'')}</b></div></div>
-  <div class="cards">
-    <div class="card"><div class="t">Dados do Cliente</div><b>${esc(cl.nome||'')}</b><div class="muted">${esc(cl.documento||'')} • ${esc(cl.telefone||'')}</div>${endCli?`<div class="muted">${esc(endCli)}</div>`:''}</div>
-    <div class="card"><div class="t">Dados de Atendimento</div>
-      <div>Técnico: <b>${esc(o.tecnico||'')}</b></div>
-      <div>Motivo / Defeito: <b>${esc(o.descricao||'')}</b></div>
-      <div class="muted">Cadastro: ${esc(dataCad)} • Atendimento: ${dataAt}</div>
-    </div>
-  </div>
-  <div class="card" style="margin:0 0 8px"><div class="t">Impressora</div>
-    <div><b>${impressora ? esc(impressora) : '-'}</b>${o.local ? ` <span class="muted">• Local: ${esc(o.local)}</span>` : ''}</div>
-  </div>
-  <div class="faixa">SERVIÇOS EXECUTADOS</div>
-  <div class="box-write">${cell(o.servicos)}</div>
-  <div class="faixa">PRODUTOS / PEÇAS UTILIZADAS</div>
-  <table><thead><tr><th style="width:62%">Descrição</th><th>Quantidade</th><th>Valor</th></tr></thead><tbody>
-  ${pecas.slice(0,5).map(function(it){ return `<tr><td>${cell(it.descricao)}&nbsp;</td><td>${cell(it.qtd)}&nbsp;</td><td>${it.subtotal===''?'':cellM(it.subtotal)}&nbsp;</td></tr>`; }).join('')}
-  </tbody></table>
-  <div class="faixa">OBSERVAÇÃO</div>
-  <div class="box-write">${cell(o.observacao)}</div>
-  <p style="margin-top:10px;font-size:13px">
-    <b>Contador preto:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">${pb}</span>
-    ${showColor?'&nbsp;&nbsp;<b>Contador color:</b> <span style="display:inline-block;border-bottom:1px solid #111;min-width:130px;height:16px;text-align:center">'+cor+'</span>':''}
-  </p>
-  <div class="foot">
-    <div class="assin"><div>Assinatura do técnico</div><div>Assinatura do cliente</div></div>
-    <div class="rodape-loja-final"><b>${esc(loja.fantasia)}</b>${loja.razao?' • '+esc(loja.razao):''}${loja.cnpj?' • CNPJ '+esc(loja.cnpj):''}<br>${esc(loja.end||'Endereço não informado')}${loja.tel?' • Tel. '+esc(loja.tel):''}${loja.whats?' • WhatsApp '+esc(loja.whats):''}${loja.email?' • '+esc(loja.email):''}</div>
-  </div>
-  </div></body></html>`;
-  const w = window.open('', '_blank'); if(w){ w.document.write(html); w.document.close(); }
-};
 
 console.log('[DIGICOPY] ajustes_v5185_patch.js');
 })();
@@ -26550,12 +25843,12 @@ function htmlPecasVendas5186(prefix){
       <label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor
         <input id="${prefix}-prod-preco" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-3 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Desc. R$
-        <input id="${prefix}-prod-desc" type="number" step="0.01" value="0" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
+        <input id="${prefix}-prod-desc" type="number" step="0.01" value="" oninput="lcPecaCalc('${prefix}')" class="mt-1 w-full h-10 px-2 rounded-xl border bg-white"></label>
       <label class="col-span-6 md:col-span-2 text-[11px] font-bold uppercase text-slate-500">Valor final
         <input id="${prefix}-prod-total" readonly class="mt-1 w-full h-10 px-2 rounded-xl border bg-slate-100 font-bold"></label>
     </div>
     <div class="flex justify-end mt-2">
-      <button type="button" onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold">Adicionar item</button>
+      <button type="button" id="${prefix}-btn-add" disabled onclick="lcAddPecaManual('${prefix}')" class="h-10 px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">Adicionar item</button>
     </div>
     <div id="${prefix}-pecas-list" class="mt-3"></div>
   </div>`;
@@ -27690,7 +26983,18 @@ window.saveUsuarioFinal = function(id){
   if(typeof saveDB === 'function') saveDB();
   if(typeof renderUsuarios === 'function') renderUsuarios();
   if(typeof closeModal === 'function') closeModal();
-  toastMsg('Usuário salvo', 'success');
+  // v5.24.34 — PROVA DE GRAVAÇÃO. Depois de salvar, confere se o usuário está
+  // LÁ de verdade, do jeito exato que o login vai procurar (login + senha +
+  // ativo). Se não estiver, Grita em vez de fingir que salvou — era o buraco
+  // por onde "salvei e o login não entra" escapava em silêncio.
+  var provaLogin = (db.usuarios || []).some(function(x){ return x && fold(x.login) === login && txt(x.senha) === senha && x.ativo; });
+  if(provaLogin){
+    toastMsg('Usuário salvo. Login pra testar: ' + login + ' + a senha que você digitou.', 'success');
+  } else if(typeof window.lfbAlert === 'function'){
+    window.lfbAlert('O usuário NÃO ficou gravado como deveria. Tenta salvar de novo; se repetir, me manda foto desta tela.', 'Aviso');
+  } else {
+    toastMsg('O usuário NÃO ficou gravado — tenta salvar de novo.', 'error');
+  }
 };
 
 // Sobrescreve o saveUsuario antigo (app.js) — remove a exigência de senha CNPJ.
@@ -27816,11 +27120,10 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // Reaproveita a lógica do v5.19.6 se existir, senão usa a local.
-  if(window.AJUSTES_V5196_PURE && typeof window.AJUSTES_V5196_PURE.temPermissaoTotal === 'function'){
-    return window.AJUSTES_V5196_PURE.temPermissaoTotal(sess());
-  }
-  return temPermissaoTotal(sess());
+  // v5.24.34 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
+  // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
+  return !!sess();
 }
 
 // Mostra/esconde os itens de menu de auditoria conforme a permissão.
@@ -28669,7 +27972,25 @@ try{
 (function(){
 'use strict';
 
-const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+
+// v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
+// mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
+// público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
+// próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
+// Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.digicopyonline.workers.dev/v1/medir';
+async function chamarMedidorOficial(){
+  const agora = Date.now();
+  if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
+  window.__dcUltPingMedidor = agora;
+  try{
+    const r = await fetch(MEDIDOR_OFICIAL_URL, { cache: 'no-store' });
+    const j = await r.json().catch(() => null);
+    return !!(j && j.ok);
+  }catch(e){ return false; }
+}
+window.DC_chamarMedidorOficial = chamarMedidorOficial;
 const TOKEN_KEY = 'digicopy_cloud_device_token_v1';
 const DEVICE_KEY = 'digicopy_cloud_device_info_v1';
 
@@ -28692,10 +28013,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
+  // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
+  try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -28728,10 +28074,14 @@ function systemAdmin(){
   try{const s=typeof getSession==='function'?getSession():null;return !!(s&&String(s.perfil||'').toLowerCase()==='admin');}catch(e){return false;}
 }
 function applyAdminVisibility(){
-  const admin=systemAdmin(),needsAuthorization=!token();
+  const admin=systemAdmin();
   const cloud=document.getElementById('btn-nuvem');
   const backup=document.getElementById('btn-backup-top');
-  if(cloud)cloud.style.display=(admin||needsAuthorization)?'':'none';
+  // v6.0.4 — pedido dele: o botão Nuvem aparece em TODO PC (conectado ou não).
+  // O que muda é o CONTEÚDO lá dentro: PC administrador (entrou com a senha do
+  // gerente) vê gastos e a zona de administração; PC comum vê a nuvem SEM os
+  // gastos e só desconecta a própria sessão.
+  if(cloud)cloud.style.display='';
   if(backup)backup.style.display=admin?'':'none';
 }
 window.DIGICOPY_CLOUD.refreshVisibility=applyAdminVisibility;
@@ -28815,7 +28165,10 @@ async function renderDisconnected(body){
 }
 
 async function renderConnected(body){
-  body.innerHTML=message('Verificando autorização deste computador...','info');
+  body.innerHTML=message('Medindo o uso oficial e verificando autorização deste computador...','info');
+  // v5.23.4 — mede quando a tela abre (pedido do dono); se o medidor não
+  // estiver implantado/responder, segue a vida com a contagem estimada.
+  const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
@@ -28832,8 +28185,48 @@ async function renderConnected(body){
     const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
     if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
     status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
+  const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
+  const linhaVersaoNuvem = status.workerVersao
+    ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
+    : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  function garantirCssUso(){
+    if(document.getElementById('dc-uso-css')) return;
+    const s=document.createElement('style');
+    s.id='dc-uso-css';
+    s.textContent=[
+      'html.digi-escuro .dc-uso-nuvem{background:#1e293b!important;border-color:#334155!important}',
+      'html.digi-escuro .dc-uso-nuvem h3{color:#e5e7eb!important}',
+      'html.digi-escuro .dc-uso-nuvem .dc-uso-barra{background:#0f172a!important}',
+      'html.digi-escuro .dc-uso-nuvem small,html.digi-escuro .dc-uso-nuvem span{color:#94a3b8!important}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  garantirCssUso();
+  function barraUso(pct){
+    const p=Math.max(0,Math.min(100,pct));
+    const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
+    return '<div class="dc-uso-barra" style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+  }
+  function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
+  const usoBloco = uso
+    ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">plano pago ativo ($5 fixos): o teto virou por mês e gigantesco — esse número agora é só curiosidade</small></div>'+
+      '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
+      '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare'+(medidoAgora?' — medido agora, na abertura desta tela (ele remede sozinho a cada abertura).':(uso.medidoEm?' — o mesmo número do painel dela, medido agora mesmo.':' — o mesmo número do painel dela.')):'contagem estimada pela própria nuvem — no plano pago isso vira só curiosidade de uso, sem nenhum risco de susto.')+'</small>'+
+      '</div>'
+    : (contagemFalhou
+      ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
+      : '');
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
   const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
@@ -28858,12 +28251,13 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    (isAdmin?usoBloco:'')+linhaVersaoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
-    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
+    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Para ter acesso de administrador, desconecte e entre de novo com o CNPJ + a <b>senha do gerente</b>.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');
@@ -28900,11 +28294,22 @@ async function renderConnected(body){
       adminResult.innerHTML=message('Carregando aparelhos...','info');
       try{
         const data=await api('/v1/devices',{method:'GET'});
-        adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
+        adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')
+          /* v5.24.34 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
+          +(x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
         adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');
           if(!ok)return;
           try{await api('/v1/devices/revoke',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id})});body.querySelector('#dc-list-devices').click();}
+          catch(e){adminResult.innerHTML=message(e.message,'error');}
+        });
+        adminResult.querySelectorAll('.dc-del-device').forEach(btn=>btn.onclick=async()=>{
+          const ok=await window.confirmSistema('Apagar o aparelho '+btn.dataset.name+' DA LISTA? Ele perde o acesso e SOME da nuvem na hora. Nenhum DADO de cliente/produto é apagado — só o aparelho some.','Excluir aparelho de vez');
+          if(!ok)return;
+          try{
+            await api('/v1/devices/delete-forever',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id,nome:btn.dataset.name})});
+            body.querySelector('#dc-list-devices').click();
+          }
           catch(e){adminResult.innerHTML=message(e.message,'error');}
         });
       }catch(e){adminResult.innerHTML=message(e.message,'error');}
@@ -28949,7 +28354,10 @@ async function renderConnected(body){
 }
 
 window.abrirCloudflareNuvem=async function(){
-  if(!systemAdmin()&&token()){if(typeof window.lfbAlert==='function')window.lfbAlert('Este computador já está autorizado. Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
+  // v6.0.4 — a tela Nuvem ABRE para qualquer usuário. O que é de administrador
+  // (gastos, aparelhos, convite, zerar nuvem, acompanhamento dos PCs) continua
+  // trancado lá dentro pelo PAPEL DO APARELHO (role admin = entrou com a senha
+  // do gerente), não pelo login da pessoa.
   const root=modalShell(),body=root.querySelector('#dc-body');
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);
@@ -29178,6 +28586,16 @@ function applyRemote(change){
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
     const arr=db[change.entity],idx=arr.findIndex(x=>x&&String(x.id)===String(change.recordId));
+    // v5.22.92 — ORÇAMENTO NUNCA SOME POR MANDADO DA NUVEM.
+    // Orçamento sumindo foi o bug de "cliquei e não achei". Mesmo que outro
+    // aparelho mande apagar, aqui o orçamento fica marcado como excluído
+    // (sai das listas de trabalho, mas segue no banco e volta em Estornar)
+    // em vez de desaparecer de verdade.
+    if(change.operation==='delete'&&change.entity==='orcamentos'){
+      if(idx>=0){ arr[idx].status='excluido'; arr[idx].excluidoEm=arr[idx].excluidoEm||new Date().toISOString(); changed=true; }
+      state.versions[k]=Number(change.version);state.known[k]=true;state.hashes[k]=hash(arr[idx]);
+      return changed;
+    }
     if(change.operation==='delete'){if(idx>=0){arr.splice(idx,1);changed=true;}}
     else if(change.data){if(idx>=0)arr[idx]=change.data;else arr.push(change.data);changed=true;}
   }else if(mode==='root'){
@@ -29248,6 +28666,11 @@ function decideReinstallGuard(opts){
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
+  // v5.24.0 — só remove "sobras locais" quando o puxamento da nuvem terminou
+  // DE VERDADE. Se a internet caiu no meio, state.known fica incompleto e a
+  // reconciliação APAGARIA dados legítimos deste computador (e a remoção
+  // local vira delete na fila de envio → apagaria na nuvem também).
+  if(!state.initialPull)return 0;
   let removed=0;
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
@@ -29346,7 +28769,7 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
       pending.add(k);added++;
     }
-    if(!PODE_EXCLUIR.has(entity))continue;
+    if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue; // v5.22.92 — este PC nunca manda apagar orçamento
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
     if(!missing.length)continue;
     if(!houveIntencaoDeExcluir()){
@@ -29497,8 +28920,20 @@ async function pushOutbox(){
         else{state.known[item.key]=true;state.hashes[item.key]=item.hash;}
         remove.add(item.mutation.mutationId);sent++;
       }else if(result.conflict){
-        rememberConflict(item,result);
+        // v5.24.0 — conflito NÃO descarta mais a edição local de cara. Antes:
+        // aceitava o estado da nuvem e jogava a mutação fora em silêncio —
+        // era um caminho de "salvei e sumiu" quando dois PCs mexiam juntos.
+        // Agora: aplica o estado atual da nuvem e REENVIA a mesma intenção
+        // uma vez, com baseVersion atualizada. Só cede se mudarem de novo
+        // (concorrência real — última escrita vence), e avisa no sino.
         if(result.current)applyRemote({entity:result.current.entity,recordId:result.current.recordId,data:result.current.data,version:result.current.version,operation:result.current.deletedAt?'delete':'upsert'});
+        if(!item.retryV5240){
+          item.retryV5240=true;
+          if(result.current){item.mutation=Object.assign({},item.mutation,{baseVersion:Number(result.current.version)||0});}
+          continue; // não entra no "remove": fica na outbox e reenvia no próximo lote
+        }
+        rememberConflict(item,result);
+        try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('info','Havia uma alteração mais nova na nuvem ('+(item.mutation&&item.mutation.entity)+'). Se faltar algo, refaça a última edição.',{tipo:'sync'}); }catch(e){}
         remove.add(item.mutation.mutationId);
       }else if(result.error){
         rememberConflict(item,result);remove.add(item.mutation.mutationId);
@@ -29614,7 +29049,9 @@ function viradaDoLimite(){
 function recadoDoLimite(){
   const falta=Math.max(0,viradaDoLimite()-Date.now());
   const horas=Math.floor(falta/3600000),minutos=Math.round((falta%3600000)/60000);
-  return 'A nuvem grátis atingiu o limite de gravação de hoje. Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
+  // v5.24.34 — plano PAGO ativo: a ficha "grátis/diária" mudou pro teto mental
+  // do plano ($5 fixos, teto mensal gigantesco — praticamente inalcançável).
+  return 'A nuvem atingiu o limite de gravação do período (raro no plano pago). Nada foi perdido: o envio recomeça sozinho quando o limite virar, em '
     +(horas?horas+'h ':'')+minutos+'min (por volta das 21h, horário de Brasília).';
 }
 function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick('agendado'),Math.max(250,delay||800));}
@@ -30943,7 +30380,82 @@ function injectButton(root){
   btn.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:white;color:#334155;border:1px solid #cbd5e1';
   list.parentNode.insertBefore(btn,list.nextSibling);
   btn.onclick=()=>openWatch(box,'');
+  // v5.24.34 — DIAGNÓSTICO DOS "SALVOS MAS QUE NÃO APARECEM" (relato dele:
+  // dado está na nuvem e não desce "qualquer menu"). Custo ZERO de nuvem: só
+  // lê o banco DESTE pc e conta o que carrega empresaId diferente da sessão —
+  // porque as listas só mostram a empresa logada. Duas empresas no banco =
+  // dois mundos invisíveis entre si (a suspeita número 1 deste caso).
+  const dx=document.createElement('button');
+  dx.id='dc-diag-invisiveis';
+  dx.textContent='Por que dados não aparecem?';
+  dx.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;margin-left:6px';
+  list.parentNode.insertBefore(dx,btn.nextSibling);
+  dx.onclick=window.dcDiagnosticoInvisiveis;
+  // v6.0.4 — REPARAR SESSÃO AGORA: o diagnóstico acima SÓ LÊ; este botão é o
+  // irmão que AGE (pedido dele: a sessão dele ficou "(nenhuma?!)" mesmo com 1
+  // empresa no banco). Usa o motor da cura (window.acForcarCura) e conta o
+  // resultado. Seguro: só carimba quando existe EXATAMENTE 1 empresa no banco.
+  const rp=document.createElement('button');
+  rp.id='dc-reparar-sessao';
+  rp.textContent='Reparar sessão agora';
+  rp.style.cssText='height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#f0fdf4;color:#15803d;border:1px solid #86efac;margin-left:6px';
+  if(rp.style) rp.style.marginLeft='6px';
+  list.parentNode.insertBefore(rp,dx.nextSibling);
+  rp.onclick=async function(){
+    if(typeof window.acForcarCura!=='function'){
+      const f='A cura v6.0.4 ainda não carregou nesta tela. Recarregue o sistema (F5) e tente de novo.';
+      if(typeof window.lfbAlert==='function')window.lfbAlert(f,'Reparar sessão'); else alert(f);
+      return;
+    }
+    let r=null;
+    try{ r=await window.acForcarCura(); }catch(e){ r={ok:false,motivo:(e&&e.message)||'erro inesperado'}; }
+    const msg=(r&&r.ok)
+      ? ('✅ Reparo feito.\n\n• Sessão: '+(r.sessaoMudou?('carimbada com '+r.empresaId):'já estava com empresa')+'\n• Registros órfãos carimbados: '+Number(r.orfaos||0)+'\n\nRecarregue as telas — os dados voltam a aparecer.')
+      : ('Nada reparado automaticamente: '+((r&&r.motivo)||'motivo desconhecido')+'\n\nSe o banco tiver 2 empresas ou mais, o sistema NÃO chuta — saia e entre escolhendo a empresa certa.');
+    if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Reparar sessão'); else alert(msg);
+  };
 }
+
+window.dcDiagnosticoInvisiveis=function(){
+  const alvoSess=(typeof sess==='function')?sess():null;
+  const empAtual=(alvoSess&&alvoSess.empresaId)||'';
+  const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
+  const linhas=[];
+  let totalInvis=0;
+  let totalOrfaos=0; const orfaosPor={};
+  const idsEstranhos={};
+  for(const e of ENTS){
+    const arr=(window.db&&Array.isArray(window.db[e])) ? window.db[e] : [];
+    let inv=0;
+    let orfaos=0; // v6.0.2 — registros SEM carimbo de empresa (causa real dos "dados sumidos")
+    for(const x of arr){
+      const eid=x&&x.empresaId;
+      if(eid && empAtual && eid!==empAtual){ inv++; idsEstranhos[eid]=true; totalInvis++; }
+      if(eid===undefined||eid===null||eid==='') orfaos++;
+    }
+    if(orfaos) { totalOrfaos+=orfaos; orfaosPor[e]=orfaos; }
+    if(arr.length) linhas.push(e+': '+arr.length+' gravados'+(inv?' • '+inv+' INVISÍVEIS (outra empresa)':'')+(orfaos?' • '+orfaos+' SEM CARIMBO (órfãos)':(!inv?' • todos visíveis':'')));
+  }
+  const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
+  const outros=Object.keys(idsEstranhos);
+  let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
+  if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
+  const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
+  const corpo = semSessaoComUmaEmpresa
+    ? '\n\n>>> A CAUSA ESTÁ AQUI EM CIMA: sua SESSÃO está SEM empresa, mas o banco tem exatamente 1 ('+empresas[0].id+'). É por isso que dados somem das telas: as listas só mostram a empresa da sessão. Resolva NA HORA clicando no botão verde «Reparar sessão agora» (ao lado deste) — depois recarregue as telas que tudo volta.\n\n(Detalhe técnico, v6.0.4: a sonda antiga só tentava carimbar por 30 segundos depois de abrir o sistema. Quem entrava depois disso ficava o dia inteiro sem carimbo — por isso às vezes aparecia, às vezes não. Agora a cura insiste por até 10 minutos e é rearmada a cada login.)'
+    : totalOrfaos
+    ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
+      Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+
+      '). Quem criou estava com sessão sem empresa — por isso "sumia" nos outros PCs. '+
+      (empAtual? 'A cura carimba sozinho na entrada (a v6.0.4 insiste até 10 minutos e rearma a cada login). Se essa contagem continuar subindo, manda foto.'
+               : '>>> SUA PRÓPRIA SESSÃO TAMBÉM ESTÁ SEM EMPRESA (cabeçalho acima). Clique no botão verde «Reparar sessão agora». Se continuar, manda foto.')
+    : totalInvis
+    ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
+    : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
+  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;
+  if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
+  else alert(msg);
+};
 
 function watchModal(){
   const modal=document.getElementById('digicopy-cloud-modal');
@@ -31077,6 +30589,9 @@ async function assinarUltimo(){
     const r=await api.assinar(xml, senha);
     if(r&&r.ok&&r.xmlAssinado){
       mostrarXmlAssinado(r.xmlAssinado, r.chave||doc.chave, r.certificado||'');
+      // v5.24.34 — deixa REGISTRO permanente da nota no histórico da Central
+      // (ele pediu: cada nota emitida tem que aparecer numa lista depois).
+      try{ if(typeof window.registrarNfeEmitida==='function') window.registrarNfeEmitida(r, doc); }catch(e){}
     }else{
       if(typeof window.lfbAlert==='function') window.lfbAlert((r&&r.error)||'Não foi possível assinar.','Assinatura');
       else if(typeof toast==='function') toast((r&&r.error)||'Não foi possível assinar.','error');
@@ -31179,7 +30694,10 @@ function injetarNaBarra(root,id,texto,fn){
 function injetarVendas(){
   const view=document.getElementById('view-vendas');
   if(!view) return;
-  injetarNaBarra(view,'btn-nfe-venda-lista','Pré-visualizar NF-e',function(){ nfeAtalhoDoHistorico('venda'); });
+  // v5.24.34 — RELATORIO dele: nada de "Pré-visualizar NF-e" na tela de
+  // consultar notinha. Atalho continua nos históricos de leitura.
+  (function(){ var morto=document.getElementById('btn-nfe-venda-lista'); if(morto) morto.remove(); })();
+  return;
 }
 
 function marcarLeituras(){
@@ -31382,7 +30900,11 @@ function injetarVendas(){
   if(!actions) return;
   let b=actions.querySelector('#btn-nfe-venda-lista');
   if(!b){
-    b=botao('btn-nfe-venda-lista','neo-btn','<i class="ph ph-file-text"></i>Pré-visualizar NF-e',function(){ nfeDaSelecao('venda'); });
+    // v5.24.34 — RELATORIO dele: na telona de CONSULTAR NOTINHA, os botões
+    // de "Pré-visualizar NF-e" SAEM (eles atrapalham o fluxo dela). A função
+    // e o botão das leituras/histórico continuam vivos normalmente.
+    // b=botao('btn-nfe-venda-lista',...) — injeção desligada nesta tela.
+    return;
     const excluir=actions.querySelector('#btn-excluir-venda-unificado')||Array.from(actions.querySelectorAll('button')).find(function(x){ return /excluir/i.test(x.textContent||''); });
     if(excluir) actions.insertBefore(b, excluir);
     else actions.appendChild(b);
@@ -31999,7 +31521,6 @@ function menusPadrao(){
   return [
     {id:'inicio', icon:'ph-house', label:'Início', click:'navigateTo(\'dashboard\')'},
     {id:'atendimento', icon:'ph-cash-register', label:'Atendimento', click:'navigateTo(\'vendas\')', items:[
-      {id:'nova-venda', icon:'ph-shopping-cart-simple', label:'Nova venda', click:'if(typeof novaVenda===\'function\') novaVenda(); else navigateTo(\'vendas\')'},
       {id:'notinhas', icon:'ph-list-magnifying-glass', label:'Consultar notinhas', click:'navigateTo(\'vendas\')'},
       {id:'abrir-chamado', icon:'ph-wrench', label:'Abrir chamado', click:'openQuickOS()'}
     ]},
@@ -32007,10 +31528,13 @@ function menusPadrao(){
       {id:'contratos', icon:'ph-file-text', label:'Contratos', click:'navigateTo(\'contratos\')'},
       {id:'impressoras', icon:'ph-printer', label:'Impressoras', click:'navigateTo(\'impressoras\')'}
     ]},
-    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'toast(\'Módulo fiscal em preparação\',\'info\')', items:[
-      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'toast(\'Em breve: emissão de nota fiscal\',\'info\')'},
-      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'toast(\'Em breve: perfil tributário\',\'info\')'},
-      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'toast(\'Em breve: NCM e configurações fiscais\',\'info\')'}
+    // v5.24.34 — MENU DE NF DE VERDADE (relatório dele: 'os menus de NF não estão
+    // acessando'). Saiu o 'em breve' do caminho: tudo abre a Central de Nota
+    // Fiscal ou a Configuração fiscal de verdade.
+    {id:'nfe', icon:'ph-file-text', label:'NF-e/NFC-e', click:'abrirCentralNfe()', items:[
+      {id:'nota-fiscal', icon:'ph-file-plus', label:'Nota fiscal', click:'abrirCentralNfe()'},
+      {id:'perfil-trib', icon:'ph-scales', label:'Perfil tributário', click:'abrirPerfilTributario()'},
+      {id:'ncm', icon:'ph-list-checks', label:'NCM e fiscal', click:'abrirPerfilTributario(1)'}
     ]},
     {id:'cadastros', icon:'ph-users', label:'Cadastros', click:'navigateTo(\'clientes\')', menuId:'menu-cadastros', items:[
       {id:'clientes', icon:'ph-users-three', label:'Clientes', click:'navigateTo(\'clientes\')'},
@@ -32026,7 +31550,7 @@ function menusPadrao(){
       {id:'usuarios', icon:'ph-user-gear', label:'Usuários e permissões', click:'navigateTo(\'usuarios\')'},
       {id:'auditoria', icon:'ph-clipboard-text', label:'Auditoria', click:'navigateTo(\'auditoria\')'}
     ]},
-    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'exportBackup()', btnId:'btn-backup-top', title:'Baixar uma cópia de segurança de todos os dados'},
+    {id:'backup', icon:'ph-download-simple', label:'Backup', click:'window.abrirTelaBackup ? abrirTelaBackup() : exportBackup()', btnId:'btn-backup-top', title:'Aba Backup do sistema: manual (nuvem+PC), histórico e clássico do PC'},
     {id:'nuvem', icon:'ph-cloud-check', label:'Nuvem', click:'abrirCloudflareNuvem()', btnId:'btn-nuvem', title:'Configurar e verificar a nuvem DIGICOPY'},
     {id:'sair', icon:'ph-sign-out', label:'Sair', click:'doLogout()', title:'Sair do sistema'}
   ];
@@ -32372,11 +31896,11 @@ function wrapSort(nome, pegarEstado, seletor){
 
 function kauan(){ return window.__KAUAN_STATE__ || (window.__KAUAN_STATE__ = {}); }
 
-wrapSort('produtosSortOperacional', function(){
-  var st = kauan();
-  st.prod = st.prod || { sort:'codigo', dir:'asc' };
-  return st.prod;
-}, '#view-produtos');
+// v5.22.84 — a ordenação de produtos ganhou sentido próprio guardado no mesmo
+// estado da lista (fluxos_operacionais_patch.js) e a trava antiga saiu: ela
+// guardava o sentido em objeto separado (nunca virava Z→A) e "invertia as
+// linhas" na tela, jogando a linha de contagem para o topo.
+
 
 wrapSort('contratosSortOperacional', function(){
   var st = kauan();
@@ -34460,7 +33984,7 @@ try{
 (function(){
 'use strict';
 
-var PIX_PUBLICO = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev/pix';
+var PIX_PUBLICO = 'https://digicopy-sync-api.digicopyonline.workers.dev/pix';
 
 function pixUrlPublico(payload){
   return PIX_PUBLICO + '?c=' + encodeURIComponent(String(payload||''));
@@ -35014,7 +34538,7 @@ function mapearProduto(row, cats){
     estoqueMin: parseInt(row && (row.ESTOQUE_MINIMO || row.ESTOQUE_MIN), 10) || 0,
     custo: parseFloat(row && (row.CUSTO || row.PRECO_CUSTO)) || 0,
     preco: parseFloat(row && (row.PRECO || row.VALOR || row.PRECO_VENDA)) || 0,
-    local: txt(row && (row.LOCALIZACAO || row.LOCAL)),
+    // v5.22.84 — "Local" do produto aposentado: nem importado ele entra na base
     ncm: txt(row && (row.NCM || row.PR_NCM || row.ncm)).replace(/\D/g,'').slice(0,8),
     status: 'ativo'
   };
@@ -36193,6 +35717,436 @@ console.log('[DIGICOPY] v5.22.29 IE, Inscrição Municipal e CNAE');
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52229_nfe_ie_im_cnae_patch.js", e); }
 ;
 
+/* ===== ajustes_v52231_nfe_central_menu_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.34 — CENTRAL DE NOTA FISCAL (relatório dele: "os menus de NF não
+// estão acessando"). O menu lateral de NF chamava toasts de "em breve" —
+// agora abre a Central, uma sala própria (DOM fora do miolo, ids fora de
+// qualquer tela) com:
+//   1. O ESTADO DO CERTIFICADO neste PC (instalado/ausente) + botão "Conferir
+//      validade" que pede a senha do cofre UMA VEZ e mostra a data — fim da
+//      era "o sistema não sabe que o cert venceu".
+//   2. Emissão de verdade: escolhe a notinha OU a leitura e abre a conferência
+//      da nota (window.conferirNfe, mesma ponte da v5.22.1→v5.22.8).
+//   3. Atalho pra Configuração fiscal (certificado, IE, regime, série...).
+// Tudo funciona; onde precisa do certificado válido, para LIMPO com aviso
+// explicado — que é o combinado do tópico C ("só falta o certificado").
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function tn(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+
+function vendasRecentes(){
+  var v=(typeof db!=='undefined' && db && db.vendas)||[];
+  return v.slice(-40).reverse();
+}
+function leiturasRecentes(){
+  var l=(typeof db!=='undefined' && db && db.leituras)||[];
+  return l.slice(-40).reverse();
+}
+function clientNome(id){
+  var cs=(typeof db!=='undefined' && db && db.clientes)||[];
+  var c=cs.find(function(x){return x.id===id;});
+  return c?String(c.nome||c.fantasia||c.razao||'Cliente'):'sem cliente';
+}
+function dataBr(d){
+  try{ var x=new Date(d||''); return isNaN(x)?'':x.toLocaleDateString('pt-BR'); }
+  catch(e){ return ''; }
+}
+
+// ── Estado do certificado neste PC + conferência de validade com a senha ──
+async function pintarStatusCert(){
+  var el=document.getElementById('cnfe-cert-selo');
+  if(!el) return;
+  var api=window.nfeCertAPI;
+  if(!api||typeof api.status!=='function'){
+    el.style.background='#f1f5f9'; el.style.color='#64748b';
+    el.textContent='Certificado: abra o programinha (.exe) do PC da loja — no navegador/celular não dá pra instalar nem conferir.';
+    var bv=document.getElementById('cnfe-validade'); if(bv) bv.style.display='none';
+    return;
+  }
+  try{
+    var st=await api.status();
+    if(st&&st.installed){
+      el.style.background='#dcfce7'; el.style.color='#166534';
+      el.textContent='Certificado A1 instalado neste PC. A validade de verdade só aparece com a senha do cofre — clique em "Conferir validade".';
+    }else{
+      el.style.background='#fee2e2'; el.style.color='#991b1b';
+      el.textContent='Nenhum certificado A1 neste PC. Instale na Configuração fiscal (botão lá embaixo) ou a nota para aqui — limpo e avisado, nunca travado.';
+    }
+  }catch(e){
+    el.style.background='#fef3c7'; el.style.color='#92400e';
+    el.textContent='Não consegui ler o estado do certificado agora.';
+  }
+}
+
+async function conferirValidadeAgora(){
+  var api=window.nfeCertAPI;
+  if(!api||typeof api.validade!=='function'){
+    tn('A conferência de validade precisa do programinha (.exe) novo — atualize pra v5.24.34.','info'); return;
+  }
+  var senha=null;
+  try{
+    if(window.NFE_ASSINATURA_UI && typeof window.NFE_ASSINATURA_UI.pedirSenhaA1==='function'){
+      senha=await window.NFE_ASSINATURA_UI.pedirSenhaA1();
+    }else{
+      senha=(typeof prompt==='function')?prompt('Senha do certificado (não guardo — uso só pra ler a data):',''):null;
+    }
+  }catch(e){ senha=null; }
+  if(!senha) return; // desistiu, sem drama
+  var el=document.getElementById('cnfe-cert-selo'); if(!el) return;
+  el.style.background='#e2e8f0'; el.style.color='#334155';
+  el.textContent='Lendo o certificado com a senha...';
+  try{
+    var r=await Promise.resolve(api.validade(senha));
+    if(r&&r.ok){
+      var dt=r.validoAte?new Date(r.validoAte).toLocaleDateString('pt-BR'):'?';
+      if(r.vencido){
+        el.style.background='#fee2e2'; el.style.color='#991b1b';
+        el.textContent='Certificado VENCIDO em '+dt+' ('+(r.titular||'')+'). Renove na ANACERT/AC e instale o novo .pfx aqui. Atualizado assim que trocar.';
+      }else{
+        el.style.background='#dcfce7'; el.style.color='#166534';
+        el.textContent='Certificado válido até '+dt+' ('+(r.titular||'')+').';
+      }
+    }else{
+      el.style.background='#fef3c7'; el.style.color='#92400e';
+      el.textContent='Não li a validade: '+((r&&r.error)||'senha não confere?');
+    }
+  }catch(e){
+    el.style.background='#fef3c7'; el.style.color='#92400e';
+    el.textContent='Não li a validade desta vez.';
+  }
+}
+
+// ── Histórico das notas assinadas neste PC (v5.24.34 — pedido dele) ──────────
+// Guarda LOCAL de propósito: a emissão só acontece no PC que tem o certificado
+// instalado — então a lista "minhas notas" mora aqui mesmo, sem custar nuvem.
+var HIST_KEY='digicopy_nfe_historico';
+function historicoNfe(){
+  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')||[]; }
+  catch(e){ return []; }
+}
+function registrarNfeEmitida(r, doc){
+  try{
+    var lista=historicoNfe();
+    var cli=(doc&&doc.cliente&&(doc.cliente.nome||doc.cliente.fantasia||doc.cliente.razao))||(doc&&doc.clienteNome)||'';
+    lista.unshift({
+      numero:(doc&&doc.numero)||'',
+      chave:(r&&r.chave)||(doc&&doc.chave)||'',
+      cliente:cli,
+      data:Date.now(),
+      origem:(doc&&doc.origem)||''
+    });
+    if(lista.length>200) lista=lista.slice(0,200);
+    localStorage.setItem(HIST_KEY, JSON.stringify(lista));
+  }catch(e){ /* histórico é melhoria, nunca trava emissão */ }
+}
+window.registrarNfeEmitida=registrarNfeEmitida;
+function pintarHistoricoNfe(){
+  var box=document.getElementById('cnfe-historico');
+  if(!box) return;
+  var lista=historicoNfe();
+  if(!lista.length){
+    box.innerHTML='<p style="margin:0;font-size:11.5px;color:#94a3b8;font-style:italic">Nenhuma nota assinada neste PC ainda — as próximas aparecem aqui, com a chave.</p>';
+    return;
+  }
+  var linhas=lista.slice(0,8).map(function(n,i){
+    var dt=n.data?new Date(n.data).toLocaleDateString('pt-BR'):'';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;">'+
+      '<i class="ph ph-file-check" style="color:#166534;font-size:16px"></i>'+
+      '<div style="flex:1;min-width:0;"><b style="font-size:12px;color:#0f172a">'+(n.numero?('Nº '+esc(n.numero)):'NF assinada')+'</b>'+
+      '<span style="font-size:11px;color:#64748b"> • '+esc(dt)+'</span>'+
+      '<div style="font-size:10.5px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(n.cliente||'sem cliente')+'</div></div>'+
+      (n.chave?'<button type="button" data-cnfecopi="'+esc(n.chave)+'" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:4px 8px;font-size:10.5px;font-weight:700;color:#0a1e8a;cursor:pointer">copiar chave</button>':'')+
+    '</div>';
+  }).join('');
+  box.innerHTML='<p style="margin:0 0 2px;font-size:11px;color:#64748b;font-weight:700">'+lista.length+' nota(s) assinada(s) neste PC — últimas 8:</p>'+linhas;
+  var bts=box.querySelectorAll('[data-cnfecopi]');
+  for(var i=0;i<bts.length;i++){
+    bts[i].onclick=function(){
+      try{ navigator.clipboard.writeText(this.getAttribute('data-cnfecopi')); tn('Chave copiada.','success'); }
+      catch(e){ tn('Chave: '+this.getAttribute('data-cnfecopi'),'info'); }
+    };
+  }
+}
+
+// ── A Central ──
+function abrirCentralNfe(){
+  var root=document.getElementById('central-nfe-modal');
+  if(root){ root.remove(); }
+  var vOpts=vendasRecentes().map(function(v){
+    return '<option value="'+esc(v.id)+'">'+(esc(v.numero||v.codigo||'sem nº'))+' • '+esc(dataBr(v.data||v.criadoEm))+' • '+esc(clientNome(v.clienteId)).slice(0,38)+'</option>';
+  }).join('');
+  var lOpts=leiturasRecentes().map(function(l){
+    return '<option value="'+esc(l.id)+'">'+(esc(l.numero||l.codigo||'sem nº'))+' • '+esc(dataBr(l.data||l.dataLeitura))+' • '+esc(clientNome(l.clienteId)).slice(0,38)+'</option>';
+  }).join('');
+  var box=document.createElement('div');
+  box.id='central-nfe-modal';
+  box.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(10,20,60,.45);display:flex;align-items:center;justify-content:center;padding:14px;';
+  box.innerHTML=
+    '<div style="background:#fff;border-radius:20px;max-width:520px;width:100%;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.25);font-family:inherit;max-height:92vh;overflow:auto;">'+
+      '<div style="display:flex;align-items:center;gap:10px;">'+
+        '<div style="width:46px;height:46px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;"><i class="ph ph-file-text" style="font-size:24px;color:#0a1e8a"></i></div>'+
+        '<div><h3 style="margin:0;font-size:17px;font-weight:900;color:#0a1e8a">Central de Nota Fiscal</h3>'+
+        '<p style="margin:2px 0 0;font-size:11.5px;color:#64748b">Tudo de NF num lugar só — o que falta é o certificado renovado, e a tela avisa onde parar.</p></div>'+
+      '</div>'+
+      '<div id="cnfe-cert-selo" style="margin-top:12px;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:600;background:#f1f5f9;color:#64748b">Lendo o certificado...</div>'+
+      '<button id="cnfe-validade" type="button" style="margin-top:8px;width:100%;height:38px;border:1px dashed #94a3b8;border-radius:12px;background:#fff;color:#334155;font-weight:700;font-size:12px;cursor:pointer">Conferir validade do certificado (pede a senha do cofre)</button>'+
+      '<div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px;">'+
+        '<h4 style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0f172a">Emitir a partir de uma notinha</h4>'+
+        '<select id="cnfe-venda" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:12px;padding:0 10px;font-size:12.5px;"><option value="">— escolha a notinha —</option>'+vOpts+'</select>'+
+      '</div>'+
+      '<div style="margin-top:12px;">'+
+        '<h4 style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0f172a">Emitir a partir de uma leitura</h4>'+
+        '<select id="cnfe-leitura" style="width:100%;height:40px;border:1px solid #cbd5e1;border-radius:12px;padding:0 10px;font-size:12.5px;"><option value="">— escolha a leitura —</option>'+lOpts+'</select>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;margin-top:16px;">'+
+        '<button id="cnfe-emitir" type="button" style="flex:1;height:44px;border:0;border-radius:14px;background:#0a1e8a;color:#fff;font-weight:800;font-size:13px;cursor:pointer">Conferir e emitir</button>'+
+        '<button id="cnfe-config" type="button" style="flex:1;height:44px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;color:#475569;font-weight:800;font-size:12.5px;cursor:pointer">Configuração fiscal</button>'+
+      '</div>'+
+      '<p style="margin:12px 0 0;font-size:10.5px;color:#94a3b8;text-align:center">A emissão para LIMPO se o certificado estiver vencido — a mensagem diz a data certa. Nada some: notinha e leitura seguem iguais.</p>'+
+      '<div style="margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px;">'+
+        '<h4 style="margin:0;font-size:12.5px;font-weight:800;color:#0f172a"><i class="ph ph-clock-counter-clockwise"></i> Histórico das notas assinadas</h4>'+
+        '<div id="cnfe-historico" style="margin-top:6px;"></div>'+
+      '</div>'+
+      '<button id="cnfe-fechar" type="button" style="margin-top:8px;width:100%;height:34px;border:0;background:none;color:#64748b;font-weight:700;font-size:12px;cursor:pointer">Fechar</button>'+
+    '</div>';
+  document.body.appendChild(box);
+  document.getElementById('cnfe-fechar').onclick=function(){ var d=document.getElementById('central-nfe-modal'); if(d) d.remove(); };
+  box.addEventListener('click',function(ev){ if(ev.target===box) box.remove(); });
+  document.getElementById('cnfe-validade').onclick=conferirValidadeAgora;
+  document.getElementById('cnfe-config').onclick=function(){ var d=document.getElementById('central-nfe-modal'); if(d) d.remove(); abrirPerfilTributario(); };
+  document.getElementById('cnfe-emitir').onclick=function(){
+    var vid=document.getElementById('cnfe-venda').value;
+    var lid=document.getElementById('cnfe-leitura').value;
+    if(!vid&&!lid){ tn('Escolha a notinha ou a leitura pra emitir.','info'); return; }
+    var d=document.getElementById('central-nfe-modal'); if(d) d.remove();
+    // v5221 entrega: a mesma ponte da notinha/leitura — venda vence se as duas vierem
+    Promise.resolve(window.conferirNfe(vid?'venda':'leitura', vid||lid)).catch(function(){
+      tn('Não foi possível abrir a conferência agora. Notinha e leitura seguem iguais.','error');
+    });
+  };
+  pintarStatusCert();
+  pintarHistoricoNfe();
+}
+window.abrirCentralNfe=abrirCentralNfe;
+
+function abrirPerfilTributario(focoNcm){
+  if(typeof navigateTo==='function') navigateTo('config');
+  var tent=0;
+  var t=setInterval(function(){
+    tent++;
+    var card=document.getElementById('nfe-config-card');
+    if(card){
+      clearInterval(t);
+      try{ card.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+      tn(focoNcm?'NCM mora na ficha de cada produto; aqui embaixo ficam as fiscais da NF.':'(Configuração fiscal e certificado aqui embaixo.)','info');
+    }else if(tent>10){ clearInterval(t); }
+  },300);
+}
+window.abrirPerfilTributario=abrirPerfilTributario;
+
+window.NFE_CENTRAL_V52425={ abrirCentralNfe:abrirCentralNfe, abrirPerfilTributario:abrirPerfilTributario, vendasRecentes:vendasRecentes, leiturasRecentes:leiturasRecentes, historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
+window.NFE_CENTRAL_V52426={ historicoNfe:historicoNfe, registrarNfeEmitida:registrarNfeEmitida };
+console.log('[DIGICOPY] Central de Nota Fiscal pronta (v5.24.34) — menu NF abre de verdade');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52231_nfe_central_menu_patch.js", e); }
+;
+
+/* ===== ajustes_v52232_parque_monitor_hub_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// v5.24.34 — DOIS PEDIDOS NUM SÓ LUGAR (Parque de Impressoras):
+//
+// FASE 1 DO MONITOR (tópico A, 'ue faz'): em cada impressora do Parque, botão
+//   [Ler status (rede)] que pergunta o IP UMA VEZ (fica gravado no cadastro do
+//   equipamento, sincroniza na nuvem como parte do registro) e lê a impressora
+//   de verdade via SNMP — contador, toner e ERROS (sem papel, atolou, tampa,
+//   toner) já em bom português. Só roda no .exe e na MESMA rede da impressora;
+//   fora disso, avisa limpo em vez de quebrar.
+//
+// P8 — HUB DA IMPRESSORA (relatório grande): botão [Histórico] abre uma sala
+//   só dela: ficha, contrato atual (botão pula pro contrato), últimas leituras
+//   e chamados. Tudo do banco local que já existe — sem custar nuvem.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function tn(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+function dataBr(d){ try{ var x=new Date(d||''); return isNaN(x)?'—':x.toLocaleDateString('pt-BR'); }catch(e){ return '—'; } }
+function moneyBr(v){ try{ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }catch(e){ return 'R$ 0,00'; } }
+
+function eqById(id){ return ((typeof db!=='undefined'&&db.equipamentos)||[]).find(e=>e.id===id)||null; }
+function parqueById(id){ return ((typeof db!=='undefined'&&db.parque)||[]).find(p=>p.id===id)||null; }
+function cliNome(id){ var c=((typeof db!=='undefined'&&db.clientes)||[]).find(x=>x.id===id); return c?String(c.nome||c.fantasia||''):''; }
+function contratoDoParque(p){
+  var cs=(typeof db!=='undefined'&&db.contratos)||[];
+  if(!p) return null;
+  return cs.find(c=>c.id===p.contratoId)||null;
+}
+
+// ── FASE 1: leitura SNMP do equipamento ───────────────────────────────────
+async function lerStatusRede(parqueId){
+  var p=parqueById(parqueId); var eq=p?eqById(p.equipamentoId):null;
+  if(!p||!eq){ tn('Impressora não encontrada.','error'); return; }
+  var api=window.prtAPI;
+  if(!api||typeof api.lerStatus!=='function'){
+    tn('A leitura direta da impressora só roda no programinha (.exe) — navegador e celular não falam a língua dela (SNMP).','info');
+    return;
+  }
+  var ip=String(eq.ip||eq.enderecoIp||'').trim();
+  if(!ip){
+    var digitado=(typeof prompt==='function')?prompt('Qual o IP desta impressora na rede? (ex.: 192.168.0.50 — fica gravado no cadastro dela)',''):null;
+    if(!digitado) return;
+    digitado=digitado.trim();
+    if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(digitado)){ tn('IP não parece certo. Exemplo: 192.168.0.50','error'); return; }
+    eq.ip=digitado;
+    try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+    ip=digitado;
+    tn('IP gravado no cadastro da impressora.','success');
+  }
+  var selo=document.getElementById('status-mon-'+parqueId);
+  if(selo){ selo.style.background='#e2e8f0'; selo.style.color='#334155'; selo.textContent='Lendo a impressora...'; }
+  try{
+    var r=await Promise.resolve(api.lerStatus(ip));
+    if(!r){ if(selo){ selo.textContent='Sem resposta nenhuma.'; } return; }
+    if(!r.ok){
+      if(selo){ selo.style.background='#fef3c7'; selo.style.color='#92400e'; selo.textContent= r.offline? 'Desligada ou IP diferente ('+esc(r.erro||'')+')' : ('Leitura falhou: '+esc(r.erro||'?')); }
+      return;
+    }
+    var erros=(r.erros||[]);
+    if(selo){
+      if(erros.length){ selo.style.background='#fee2e2'; selo.style.color='#991b1b'; selo.textContent='⚠ '+erros.join(' • '); }
+      else{ selo.style.background='#dcfce7'; selo.style.color='#166534'; selo.textContent='Em dia'+(r.status?(' • '+r.status):'')+(r.tonerPct!=null?(' • toner ~'+r.tonerPct+'%'):'')+(r.contador!=null?(' • '+Number(r.contador).toLocaleString('pt-BR')+' páginas'):''); }
+    }
+    eq.snmp=eq.snmp||{};
+    eq.snmp.ultima={ quando:r.lidoEm||Date.now(), status:r.status||'', erros:erros, tonerPct:(r.tonerPct==null?null:r.tonerPct), contador:(r.contador==null?null:r.contador) };
+    try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  }catch(e){
+    if(selo){ selo.style.background='#fef3c7'; selo.style.color='#92400e'; selo.textContent='Não consegui ler agora.'; }
+  }
+}
+window.lerStatusImpressoraRede=lerStatusRede;
+
+// ── P8: hub da impressora ─────────────────────────────────────────────────
+function fecharHub(){ var d=document.getElementById('hub-impressora-modal'); if(d) d.remove(); }
+
+function abrirHubImpressora(parqueId){
+  var p=parqueById(parqueId); var eq=p?eqById(p.equipamentoId):null;
+  if(!p||!eq){ tn('Impressora não encontrada.','error'); return; }
+  var c=contratoDoParque(p);
+  var leits=((typeof db!=='undefined'&&db.leituras)||[]).filter(l=>l.parqueId===p.id||l.equipamentoId===eq.id).sort((a,b)=>new Date(b.dataLeitura||b.criadoEm||0)-new Date(a.dataLeitura||a.criadoEm||0));
+  var cham=((typeof db!=='undefined'&&db.os)||((typeof db!=='undefined'&&db.chamados)||[])).filter(o=>o.equipamentoId===eq.id||o.parqueId===p.id).sort((a,b)=>new Date(b.abertura||b.criadoEm||0)-new Date(a.abertura||a.criadoEm||0));
+  var leitHtml=leits.slice(0,6).map(function(l){
+    return '<div style="display:flex;justify-content:space-between;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;">'+
+      '<span style="font-weight:700;font-size:12px;color:#0a1e8a">'+(esc(l.numero||l.codigoAntigo||'leitura'))+'</span>'+
+      '<span style="font-size:11.5px;color:#475569">'+esc(dataBr(l.dataLeitura||l.criadoEm))+' • PB '+Number(l.contadorPB||0).toLocaleString('pt-BR')+(l.contadorCor?(' • COR '+Number(l.contadorCor).toLocaleString('pt-BR')):'')+'</span></div>';
+  }).join('')||'<p style="font-size:11.5px;color:#94a3b8;font-style:italic;margin:6px 0 0">Sem leituras ainda.</p>';
+  var chamHtml=cham.slice(0,6).map(function(o){
+    return '<div style="display:flex;justify-content:space-between;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;">'+
+      '<span style="font-weight:700;font-size:12px;color:#0a1e8a">'+(esc(o.numero||o.codigoAntigo||'chamado'))+'</span>'+
+      '<span style="font-size:11.5px;color:#475569">'+esc(dataBr(o.abertura||o.criadoEm))+' • '+esc(o.status||'aberto')+(o.motivo?(' — '+esc(String(o.motivo).slice(0,40))):'')+'</span></div>';
+  }).join('')||'<p style="font-size:11.5px;color:#94a3b8;font-style:italic;margin:6px 0 0">Nenhum chamado com esta impressora.</p>';
+
+  var box=document.createElement('div');
+  box.id='hub-impressora-modal';
+  box.style.cssText='position:fixed;inset:0;z-index:99997;background:rgba(10,20,60,.45);display:flex;align-items:center;justify-content:center;padding:14px;';
+  box.innerHTML=
+    '<div style="background:#fff;border-radius:20px;max-width:560px;width:100%;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.25);font-family:inherit;max-height:92vh;overflow:auto;">'+
+      '<div style="display:flex;align-items:center;gap:10px;">'+
+        '<div style="width:46px;height:46px;border-radius:14px;background:#eef2ff;display:grid;place-items:center;"><i class="ph ph-printer" style="font-size:24px;color:#0a1e8a"></i></div>'+
+        '<div style="flex:1;"><h3 style="margin:0;font-size:16.5px;font-weight:900;color:#0a1e8a">'+esc(eq.modelo||'Impressora')+'</h3>'+
+        '<p style="margin:2px 0 0;font-size:11.5px;color:#64748b">Patrimônio <b>'+esc(eq.patrimonio||p.patrimonio||'-')+'</b> • Série '+esc(eq.serie||'-')+' • '+(esc(cliNome(p.clienteId))||'sem cliente')+'</p></div>'+
+      '</div>'+
+      '<div id="status-mon-'+esc(p.id)+'" style="margin-top:12px;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:600;background:#f1f5f9;color:#64748b">Status da rede: aperte "Ler agora" (precisa estar na mesma rede que ela).</div>'+
+      '<div style="display:flex;gap:10px;margin-top:10px;">'+
+        '<button id="hub-mon" type="button" style="flex:1;height:40px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer"><i class="ph ph-pulse"></i> Ler status agora</button>'+
+        (c?('<button id="hub-contrato" type="button" style="flex:1;height:40px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0a1e8a;font-weight:800;font-size:12px;cursor:pointer">Contrato '+esc(c.numero||'')+'</button>'):'')+
+      '</div>'+
+      '<div style="margin-top:14px;border-top:1px solid #e2e8f0;padding-top:10px;">'+
+        '<h4 style="margin:0;font-size:12.5px;font-weight:800;color:#0f172a"><i class="ph ph-speedometer"></i> Últimas leituras</h4>'+leitHtml+
+      '</div>'+
+      '<div style="margin-top:12px;border-top:1px solid #e2e8f0;padding-top:10px;">'+
+        '<h4 style="margin:0;font-size:12.5px;font-weight:800;color:#0f172a"><i class="ph ph-wrench"></i> Chamados</h4>'+chamHtml+
+      '</div>'+
+      '<button id="hub-fechar" type="button" style="margin-top:14px;width:100%;height:36px;border:0;background:#f1f5f9;color:#475569;border-radius:12px;font-weight:800;font-size:12.5px;cursor:pointer">Fechar</button>'+
+    '</div>';
+  document.body.appendChild(box);
+  document.getElementById('hub-fechar').onclick=fecharHub;
+  box.addEventListener('click',function(ev){ if(ev.target===box) fecharHub(); });
+  document.getElementById('hub-mon').onclick=function(){ lerStatusRede(p.id); };
+  var bc=document.getElementById('hub-contrato');
+  if(bc) bc.onclick=function(){ fecharHub(); try{ if(typeof openContratoCompleto==='function') openContratoCompleto(c.id); else tn('Contrato: '+(c.numero||c.id),'info'); }catch(e){} };
+  // mostra a leitura SNMP salva (se houver) sem perguntar nada
+  if(eq.snmp&&eq.snmp.ultima){
+    var u=eq.snmp.ultima, selo=document.getElementById('status-mon-'+p.id);
+    if(selo){
+      if((u.erros||[]).length){ selo.style.background='#fee2e2'; selo.style.color='#991b1b'; selo.textContent='Última leitura ('+dataBr(u.quando)+'): ⚠ '+u.erros.join(' • '); }
+      else{ selo.style.background='#dcfce7'; selo.style.color='#166534'; selo.textContent='Última leitura ('+dataBr(u.quando)+'): em dia'+(u.tonerPct!=null?(' • toner ~'+u.tonerPct+'%'):''); }
+    }
+  }
+}
+window.abrirHubImpressora=abrirHubImpressora;
+
+// ── Botões na tela Parque (grid-parque): injeção cuidadosa, sem reescrever ──
+function injetarBotoesParque(){
+  var grid=document.getElementById('grid-parque');
+  if(!grid) return;
+  grid.querySelectorAll('[data-p8-hub]').forEach(b=>b.remove());
+  var items=grid.querySelectorAll('.p-4.flex.items-start');
+  items.forEach(function(el, idx){
+    var parques=(typeof db!=='undefined'&&db.parque)||[];
+    var eqs=(typeof db!=='undefined'&&db.equipamentos)||[];
+    // casamento por PATRIMÔNIO (o grid pinta "modelo • patrimônio" na linha) —
+    // nunca por índice: agrupamento por cliente mistura a ordem.
+    var titulo=el.querySelector('p.font-semibold');
+    var pat=titulo?String((titulo.textContent||'').split('•').pop()||'').trim():'';
+    var pck=parques.find(function(pp){ var ee=eqs.find(function(x){return x.id===pp.equipamentoId;})||{}; return pat && (String(ee.patrimonio||pp.patrimonio||'').trim()===pat); })||parques[idx];
+    if(!pck) return;
+    var wrap=el.querySelector('div:last-child');
+    if(!wrap) return;
+    var mk=function(txt,fn,cor){
+      var b=document.createElement('button');
+      b.type='button'; b.setAttribute('data-p8-hub','1');
+      b.textContent=txt;
+      b.style.cssText='margin-top:6px;margin-right:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:'+(cor||'#0a1e8a')+';font-weight:800;font-size:10.5px;cursor:pointer';
+      b.onclick=fn;
+      return b;
+    };
+    wrap.appendChild(mk('Histórico', function(){ abrirHubImpressora(pck.id); }));
+    wrap.appendChild(mk('Ler status (rede)', function(){ lerStatusRede(pck.id); }, '#166534'));
+    var selo=document.createElement('div');
+    selo.id='status-mon-'+pck.id;
+    selo.setAttribute('data-p8-hub','1');
+    selo.style.cssText='margin-top:4px;font-size:10.5px;color:#94a3b8';
+    wrap.appendChild(selo);
+  });
+}
+
+function armarScannerParque(){
+  if(window.__p8ScannerArmado) return;
+  window.__p8ScannerArmado=true;
+  var tent=0;
+  var t=setInterval(function(){ tent++; injetarBotoesParque(); if(tent>240) clearInterval(t); },1500);
+  try{
+    var mo=new MutationObserver(function(){ injetarBotoesParque(); });
+    mo.observe(document.body,{childList:true,subtree:false});
+  }catch(e){}
+}
+if(typeof document!=='undefined') armarScannerParque();
+
+window.PARQUE_MONITOR_V52427={ lerStatusRede:lerStatusRede, abrirHubImpressora:abrirHubImpressora, injetarBotoesParque:injetarBotoesParque };
+console.log('[DIGICOPY] v5.24.34 — monitor SNMP fase 1 + hub da impressora no Parque');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52232_parque_monitor_hub_patch.js", e); }
+;
+
 /* ===== ajustes_v52230_modo_escuro_dispositivo_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
@@ -37074,6 +37028,7 @@ try{
 'use strict';
 
 var FILTROS = [
+  ['hoje','Hoje (criados ou mexidos hoje)'],
   ['todos','Todos'],
   ['nome','Nome'],
   ['cidade','Cidade'],
@@ -37162,6 +37117,32 @@ function modalidadeDe(c){
   return out.join(' ').toLowerCase();
 }
 
+// v5.24.34 — NOVA FUNÇÃO dele (F1 do RELATORIO GRANDE): "Hoje" = criou o
+// contrato hoje OU mexeu nele hoje (impressora, chamado ou leitura). A conta
+// é viva: não depende de carimbo passado — vale até pros contratos antigos.
+function dataDe(x, campos){
+  for(var i=0;i<campos.length;i++){ var v=x && x[campos[i]]; if(v) return String(v).slice(0,10); }
+  return '';
+}
+window.__ctrMexeuHoje = function(c, hoje){
+  if(!c) return false;
+  if(dataDe(c,['atualizadoEm','criadoEm'])===hoje) return true;
+  if(typeof db==='undefined') return false;
+  var empId = c.empresaId || null;
+  var tenta = function(arr, link, camposData){
+    return (arr||[]).some(function(x){
+      if(!x) return false;
+      if(empId && x.empresaId && x.empresaId!==empId) return false;
+      if(String(x[link]||'')!==String(c.id)) return false;
+      return dataDe(x, camposData)===hoje;
+    });
+  };
+  if(tenta(db.parque, 'contratoId', ['atualizadoEm','criadoEm'])) return true;
+  if(tenta(db.os, 'contratoId', ['atualizadoEm','criadoEm','dataAbertura'])) return true;
+  if(tenta(db.leituras, 'contratoId', ['atualizadoEm','criadoEm','dataLeitura'])) return true;
+  return false;
+};
+
 function filtraContratos(list, campo, q){
   var arr=list||[];
   var termo=up(q);
@@ -37204,7 +37185,15 @@ function filtraContratos(list, campo, q){
       var lim=new Date(); lim.setDate(lim.getDate()+30);
       return f2>=hoje && f2<=lim.toISOString().slice(0,10);
     }
-    if(campo==='leituras_hoje'){
+    if(campo==='hoje'){
+    var base = window.__ctrMexeuHoje(c, hoje);
+    if(!base) return false;
+    if(!termo) return true;
+    var clh=clienteDe(c);
+    return up(c.numero||c.codigoAntigo||'').indexOf(termo)>=0
+      || (clh && (up(clh.nome||'').indexOf(termo)>=0 || up(clh.fantasia||'').indexOf(termo)>=0));
+  }
+  if(campo==='leituras_hoje'){
       return !temLeituraMes(c, mes) || leiturasDo(c).some(function(l){ return String(l.dataLeitura||l.criadoEm||'').slice(0,10)===hoje; });
     }
     if(campo==='nao_faturados_mes') return !temFaturadaMes(c, mes);
@@ -37220,7 +37209,7 @@ window.CONTRATOS_FILTROS_PURE = { FILTROS: FILTROS, filtraContratos: filtraContr
 
 if(typeof document==='undefined') return;
 
-var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'todos', q:'' });
+var STATE = window.__CTR_FILTRO_V52237 || (window.__CTR_FILTRO_V52237 = { campo:'hoje', q:'' });
 
 function ehStatus(campo){
   return /chamados_abertos|vencidos|vencer_30|leituras_hoje|nao_faturados|faturados_mes|mes_fixo|franquia/.test(campo||'');
@@ -37254,6 +37243,24 @@ function injetar(){
   };
   var pai=busca.parentNode;
   if(pai) pai.insertBefore(sel, busca);
+
+  // v5.24.34 — F1: o "Mostrar todos" com a mesma vida dos outros botões
+  // (visível sempre; a tela já começa no "Hoje" por padrão).
+  if(pai && !document.getElementById('ctr-mostrar-todos')){
+    var btnTodos = document.createElement('button');
+    btnTodos.id='ctr-mostrar-todos';
+    btnTodos.type='button';
+    btnTodos.className='h-10 px-4 rounded-xl bg-white border text-[13px] font-bold';
+    btnTodos.innerHTML='<i class="ph ph-list"></i> Mostrar todos';
+    btnTodos.title='Mostra todos os contratos (o padrão novo da tela é só os de hoje)';
+    btnTodos.onclick=function(){
+      STATE.campo='todos'; STATE.q='';
+      var selEl=document.getElementById('ctr-filtro-campo'); if(selEl) selEl.value='todos';
+      var bx=document.getElementById('search-contratos'); if(bx) bx.value='';
+      if(typeof window.renderContratos==='function') window.renderContratos();
+    };
+    pai.insertBefore(btnTodos, busca);
+  }
 }
 
 if(typeof window.renderContratos==='function' && !window.renderContratos.__v52237fil){
@@ -37482,6 +37489,9 @@ window.renderOrcamentos=function(){
   var list=filtraOrcamentos(base, campo, q).sort(function(a,b){
     return (parseInt(codigoNorm(b.numero),10)||0)-(parseInt(codigoNorm(a.numero),10)||0);
   });
+  // v5.22.91 — guarda os ids que a tela mostrou agora; o aviso de "não achei"
+  // compara com isso e diz se o clicado ESTAVA na lista (fecha o diagnóstico)
+  try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x.id); }).slice(0,80))); }catch(e){}
   view.innerHTML='<div class="neo-shell"><div class="neo-panel neo-float-in">'
     +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Cadastro separado. Não gera financeiro nem baixa estoque.</p></div>'
     +'<div class="neo-actions">'
@@ -37504,13 +37514,13 @@ window.renderOrcamentos=function(){
     +(list.map(function(o){
       var cl=clienteDe(o);
       var fech=ehFechado(o);
-      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
+      return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer '+(ST.sel===o.id?'neo-selected':'')+'">'
         +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
         +'<td><b class="text-[#0a1e8a]">'+esc(o.numero||'')+'</b>'+(fech?' <span class="text-[10px] text-emerald-700 font-bold">FECHADO</span>':'')+'</td>'
         +'<td>'+dataBR(o.data)+'</td>'
         +'<td><b>'+esc(cl.nome||'(sem cliente)')+'</b></td>'
         +'<td><b>'+money(o.total)+'</b></td>'
-        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
+        +'<td><button onclick="event.stopPropagation();window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2"><i class="ph ph-eye"></i></button></td>'
         +'</tr>';
     }).join('') || '<tr><td colspan="6" class="text-center text-slate-400 py-12">Nenhum orçamento</td></tr>')
     +'</tbody></table></div></div></div>';
@@ -37604,10 +37614,91 @@ function formNovo(existente){
 }
 
 window.novoOrcamento=function(){ window.abrirTelaOrcamento(null); };
-window.abrirOrcamento=function(id){
-  var o=store().find(function(x){ return x.id===id; });
-  if(!o){ if(typeof toast==='function') toast('Orçamento não encontrado','error'); return; }
-  window.abrirTelaOrcamento(o);
+window.abrirOrcamento=function(id, _origem){
+  // v5.24.9 — ETIQUETA DE ORIGEM: todo chamador conta QUEM clicou. Quando o
+  // orçamento não existe, o aviso já diz "o clique veio de: ..." — a foto do
+  // dono vira resposta, não charada.
+  // v5.22.89 — caça o orçamento de 7 jeitos antes de desistir e, no pior
+  // caso, ATUALIZA A LISTA sozinho e avisa com texto claro (nunca mais o
+  // toast vago). Essa função não emite mais "Orçamento não encontrado" —
+  // se esse texto aparecer em popup depois da v5.22.89, veio de outro lugar.
+  var idStr=String(id==null?'':id).trim();
+  var o=null;
+  // 1) pelo id exato
+  o=store().find(function(x){ return x && x.id===idStr; });
+  // 2) por token ou número
+  if(!o) o=store().find(function(x){ return x && (x.token===idStr || String(x.numero)===idStr); });
+  // 3) número normalizado (só dígitos, sem zeros à esquerda)
+  if(!o && idStr){
+    var dn=idStr.replace(/\D/g,'');
+    if(dn) o=store().find(function(x){ return x && String(x.numero)!=null && codigoNorm(x.numero)===codigoNorm(dn); });
+  }
+  // 4) o orçamento que já está aberto na tela
+  if(!o && window.__ORC_ST && window.__ORC_ST.form){
+    var f=window.__ORC_ST.form;
+    if(f.id===idStr || f.token===idStr || String(f.codigo)===idStr){
+      o={ id:f.id, numero:f.codigo||'-', empresaId:(sess()||{}).empresaId, data:f.data||hoje(), itens:(f.itens||[]).map(function(it){ return Object.assign({}, it); }), clienteId:f.cliente&&f.cliente.id, observacao:f.obs||'', os:f.os||{}, status:f.status||'aberto', vendaId:f.vendaId||'', vendaNumero:f.vendaNumero||'', token:f.token };
+    }
+  }
+  // 5) pelo último selecionado da lista (linha clicada ficou velha)
+  if(!o && window.neoOrcSel && String(window.neoOrcSel)!==idStr){
+    var sel=String(window.neoOrcSel);
+    o=store().find(function(x){ return x && (x.id===sel || x.token===sel || String(x.numero)===sel); });
+  }
+  // 6) autocura: orçamento velho sem id ganha um id agora e tenta de novo
+  if(!o){
+    var alterou=false;
+    store().forEach(function(x){
+      if(x && !x.id){ x.id='orc_legado_'+(x.token||('n'+(String(x.numero||'').replace(/\D/g,'')||Math.random().toString(36).slice(2,8)))); alterou=true; }
+    });
+    if(alterou && typeof saveDB==='function') saveDB();
+    if(idStr) o=store().find(function(x){ return x && (x.id===idStr || x.token===idStr || String(x.numero)===idStr); });
+  }
+  // v5.24.34 — RESGATE SILENCIOSO: se o id não está no banco, mas a TELA
+  // exibiu essa linha agora há pouco (mapa __orcUltimaLista do render), o
+  // objeto continua vivíssimo — devolve ele pro banco e abre direto, sem
+  // susto nenhum pra ele. Anota o resgate pro próximo diagnóstico contar.
+  if(!o && idStr){
+    try{
+      var mapa = window.__orcUltimaLista || {};
+      var achado = mapa[idStr] || null;
+      if(achado && achado.id){
+        var existe = store().find(function(x){ return x && x.id === achado.id; });
+        if(!existe){
+          store().push(achado);
+          if(typeof saveDB==='function') saveDB();
+          window.__orcResgates = window.__orcResgates || [];
+          window.__orcResgates.push({ id: achado.id, numero: achado.numero, quando: new Date().toISOString() });
+          localStorage.setItem('__orc_resgates', JSON.stringify(window.__orcResgates.slice(-20)));
+        }
+        o = achado.id ? store().find(function(x){ return x && x.id === achado.id; }) : null;
+      }
+    }catch(e){}
+  }
+  if(o){ window.abrirTelaOrcamento(o); return; }
+  // 7) não achou de jeito nenhum: atualiza a lista e avisa CLARO, no centro
+  try{ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+  if(typeof window.lfbAlert==='function'){
+    // v5.22.91 — diagnóstico completo: quantos tem, qual clicou, se o clicado
+    // ESTAVA na lista que a tela mostrou, e os códigos que existem agora
+    var _qtd = 0; try{ _qtd = store().length; }catch(e){}
+    var _cod = ''; try{ _cod = String(idStr||'').replace(/[\\/<>\"']/g,'').slice(0,24); }catch(e){}
+    var _estava = '?'; try{
+      var _snap = JSON.parse(localStorage.getItem('__orc_render_ids')||'[]');
+      _estava = (_snap.indexOf(String(idStr||'')) >= 0) ? 'ESTAVA sim' : 'NÃO estava';
+    }catch(e){}
+    var _ids = ''; try{ _ids = store().map(function(x){ return String(x.id||'?').slice(0,20); }).join(', '); }catch(e){}
+    // v5.22.93 — a última baixa anotada pelo guardião entra no aviso: é ela
+    // que conta quem tirou o orçamento do banco entre a lista e o clique
+    var _baixa = ''; try{ _baixa = (typeof window.__orcResumoUltimaBaixa==='function') ? window.__orcResumoUltimaBaixa() : ''; }catch(e){}
+    try{
+      var _rg = JSON.parse(localStorage.getItem('__orc_resgates')||'[]');
+      if(_rg && _rg.length) _baixa += ' Resgates feitos pela autocura nestas horas: ' + _rg.map(function(r){ return (r.numero||'?') + ' às ' + String(r.quando||'').slice(11,19); }).join(', ') + '.';
+    }catch(e){}
+    var _orig = 'lugar não identificado — mande a foto da tela inteira (essa é a pista que falta)';
+    try{ if(_origem) _orig = String(_origem).slice(0, 60); }catch(e){}
+    window.lfbAlert('Não achei esse orçamento neste PC agora. Já atualizei a lista na tela — se ele aparecer nela, abra de novo. Se acontecer todo dia, avise o suporte. (Diagnóstico: o banco deste PC tem ' + _qtd + ' orçamento(s); o código clicado foi "' + _cod + '"; esse código ' + _estava + ' na lista que a tela mostrou; códigos que existem agora: ' + _ids + '; ' + _baixa + '; o clique veio de: ' + _orig + '.)', 'Orçamento');
+  } else if(typeof toast==='function'){ toast('Orçamento não aberto — a lista foi atualizada','error'); }
 };
 
 window.abrirTelaOrcamento=function(existente){
@@ -37644,10 +37735,10 @@ window.abrirTelaOrcamento=function(existente){
     +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div></label>'
     +'<label class="col-span-3 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
-    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
+    +'<label class="col-span-5 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border"></label>'
     +'<label class="col-span-12 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold"></label>'
     +'</div>'
-    +'<div class="flex justify-end"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+    +'<div class="flex justify-end"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
     +'</div>'
     +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
     +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -37726,7 +37817,7 @@ window.orcSelProd=function(id){
   var p=(db.produtos||[]).find(function(x){ return x.id===id; }); if(!p||!ST.form) return;
   ST.form.produtoSel=p;
   document.getElementById('orc-prod-search').value=p.nome||'';
-  document.getElementById('orc-item-vunit').value=p.preco||0;
+  document.getElementById('orc-item-vunit').value=(p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? p.preco : ''; // v5.22.88 — produto sem valor: caixa vazia
   document.getElementById('orc-prod-results').classList.add('hidden');
   window.orcCalcItem();
   if(!ehServico(p) && n(p.estoque)<=0){
@@ -37747,6 +37838,10 @@ window.orcCalcItem=function(){
   var de=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
   var el=document.getElementById('orc-item-total');
   if(el) el.value=money(Math.max(0,qtd*vu-de));
+  // v5.22.84 — Adicionar só liga com valor unitário preenchido (qtd fica 1,
+  // desconto nasce vazio e não participa da liberação)
+  var btn=document.getElementById('orc-btn-add');
+  if(btn) btn.disabled=!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim());
 };
 window.orcAddItem=function(){
   var f=ST.form; if(!f) return;
@@ -37770,6 +37865,8 @@ window.orcAddItem=function(){
   }
   var preco=n(document.getElementById('orc-item-vunit')&&document.getElementById('orc-item-vunit').value);
   var descV=n(document.getElementById('orc-item-desc')&&document.getElementById('orc-item-desc').value);
+  // v5.22.84 — sem valor unitário numérico, não adiciona
+  if(!/^\d+(?:[.,]\d+)?$/.test(String((document.getElementById('orc-item-vunit')||{}).value||'').trim())){ if(typeof toast==='function') toast('Informe um valor unitário numérico para adicionar o item','error'); return; }
   f.itens.push({
     produtoId:p?p.id:null, descricao:p?(p.nome||''):desc, sku:p?(p.sku||''):'',
     tipo:(document.getElementById('orc-item-tipo')||{}).value||'Produto',
@@ -37779,7 +37876,7 @@ window.orcAddItem=function(){
   document.getElementById('orc-prod-search').value='';
   document.getElementById('orc-item-qtd').value=1;
   document.getElementById('orc-item-vunit').value='';
-  document.getElementById('orc-item-desc').value=0;
+  document.getElementById('orc-item-desc').value='';
   window.orcRenderItens();
 };
 window.orcRenderItens=function(){
@@ -37870,7 +37967,7 @@ var AVISO_EPSON = (window.V52237_VENDAS_OS_PURE && window.V52237_VENDAS_OS_PURE.
 ].join('\n');
 
 var PAGES = 'https://digicopy-pix.pages.dev/orcamento.html';
-var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -38144,7 +38241,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -38918,7 +39015,11 @@ console.log('[DIGICOPY] v5.22.39 patrimônio da OS não é obrigatório');
 try{
 // ═══════════════════════════════════════════════════════════════════════════
 // v5.22.39 — Se algo quebrar: aviso na tela. Detalhe técnico só na auditoria.
-//            O foco é funcionar sem erro; o aviso é só se der problema.
+// v5.24.34 — PEDIDO DELE (mudou o destino do detalhe): erro indevido NÃO vai
+//            mais pra auditoria — vai pro erro.txt visível (%APPDATA% no .exe,
+//            download no navegador/celular) e o aviso ganha botão pra abrir
+//            o arquivo + OK. Auditoria fica só com "quem fez o quê", visível
+//            pra todos os logins outra vez (ajustes_v5197).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -38944,51 +39045,374 @@ window.V52239_ERRO_PURE = {
 
 if(typeof document==='undefined') return;
 
+// v5.24.34 — PEDIDO DELE: o erro não mora mais na auditoria. Agora vira linha
+// num erro.txt visível (%APPDATA% no .exe; download no navegador/celular), com
+// aviso na tela "mande esse arquivo ao técnico". Auditoria volta a ser quadro
+// de "quem fez o quê", visível pra todos os logins (v5197).
 var ultimoAviso=0;
+var REGISTRANDO=false;   // anti-recursão: um erro dentro do registro não vira loop
+var bufferErros=[];      // memória que alimenta o download (navegador/celular)
 
-function gravarAuditoria(det){
+// v5.24.34 — resposta à pergunta dele: "e se eu perder o aviso, como baixo de
+// novo?" No navegador a memória morria num F5. Agora ela SOBREVIVE ao refresh
+// (fica salva local, mesmo lugar do banco): se ele deu OK sem baixar, o erro
+// continua lá e volta no próximo aviso... e dá pra chamar o download direto
+// por window.digicopyBaixarErroTxt().
+try{
+  var salvoTxt=JSON.parse((typeof localStorage!=='undefined'?localStorage.getItem('digicopy_erros_txt'):null)||'[]');
+  if(Array.isArray(salvoTxt)) bufferErros=salvoTxt.slice(-500);
+}catch(e){}
+
+function montarLinhaErroTxt(det){
+  var agora=new Date();
+  function p2(n){ return (n<10?'0':'')+n; }
+  var stamp=agora.getFullYear()+'-'+p2(agora.getMonth()+1)+'-'+p2(agora.getDate())+' '+p2(agora.getHours())+':'+p2(agora.getMinutes())+':'+p2(agora.getSeconds());
+  var versao=(typeof window.DIGICOPY_APP_VERSION==='string')?window.DIGICOPY_APP_VERSION:'?';
+  var sess=null; try{ sess=(typeof getSession==='function')?getSession():null; }catch(e){}
+  var usuario=(sess&&(sess.usuarioNome||sess.login))||'sem login';
+  var tela='';
   try{
-    if(typeof db==='undefined' || !db) return;
-    db.logs=db.logs||[];
-    var sess=typeof getSession==='function'?getSession():null;
-    db.logs.unshift({
-      id: typeof uid==='function'?uid('log'):('log_'+Date.now()),
-      dataHora: new Date().toISOString(),
-      empresaId: sess&&sess.empresaId,
-      usuarioId: sess&&sess.usuarioId,
-      usuarioNome: (sess&&sess.usuarioNome)||'sistema',
-      usuarioLogin: (sess&&sess.login)||'',
-      entidade: 'sistema',
-      acao: 'erro',
-      entidadeId: null,
-      detalhes: det
-    });
-    if(db.logs.length>500) db.logs=db.logs.slice(0,500);
-    try{
-      if(typeof saveDB==='function' && !window.__v52239salvandoErro){
-        window.__v52239salvandoErro=true;
-        saveDB();
-        window.__v52239salvandoErro=false;
-      }
-    }catch(e){ window.__v52239salvandoErro=false; }
+    var at=document.querySelector('[data-nav].bg-blue-50, [data-nav].active');
+    if(at) tela=String(at.getAttribute('data-nav')||'');
+  }catch(e){}
+  return '['+stamp+' | v'+versao+' | '+usuario+(tela?' | tela: '+tela:'')+'] '+det;
+}
+
+function gravarErroTxt(linha){
+  bufferErros.push(linha);
+  if(bufferErros.length>500) bufferErros=bufferErros.slice(-500);
+  try{ localStorage.setItem('digicopy_erros_txt', JSON.stringify(bufferErros)); }catch(e){}
+  try{
+    if(window.erroTxtAPI && typeof window.erroTxtAPI.append==='function'){
+      window.erroTxtAPI.append(linha).catch(function(){});
+    }
   }catch(e){}
 }
 
-function avisarTela(){
+function baixarErroTxt(){
+  try{
+    var corpo=bufferErros.join('\n')+'\n';
+    var blob=new Blob([corpo],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='erro.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try{ URL.revokeObjectURL(url); }catch(e){}
+      try{ a.remove(); }catch(e){}
+    },1200);
+  }catch(e){}
+}
+
+// v5.24.34 — pedido dele: BOTÃO visível pra abrir/baixar o erro.txt (o
+// resgate por console não serve pra ele). Mesma ação do aviso, agora pública:
+// o rodapé do sistema ganha um botãozinho "erro.txt" sempre à mão.
+// v5.24.34 — SININHO DE ATUALIZAÇÃO (pedido dele): quando abrir o sistema e
+// existir versão nova publicada na nuvem, mostra UMA ÚNICA VEZ (por versão,
+// por aparelho) o aviso com [Abrir pra baixar] + [Baixar depois]. Qualquer
+// um dos dois marca a versão como vista — o resto é silêncio até a próxima.
+function cmpVersaoMaior(nova, atual){
+  var a=String(nova||'').replace(/^v/i,'').split('.');
+  var b=String(atual||'').replace(/^v/i,'').split('.');
+  for(var i=0;i<Math.max(a.length,b.length);i++){
+    var x=parseInt(a[i],10)||0, y=parseInt(b[i],10)||0;
+    if(x!==y) return x>y;
+  }
+  return false;
+}
+window.AVISOS_V52423_PURE={ cmpVersaoMaior:cmpVersaoMaior };
+
+function chaveAtualizacaoVista(v){ return 'digicopy_upd_visto_'+String(v||'').replace(/^v/i,''); }
+
+function mostrarAvisoAtualizacao(rel){
+  if(document.getElementById('aviso-update-card')) return;
+  var versao=String(rel.versao||'').replace(/^v/i,'');
+  var notas=String(rel.notas||'').trim();
+  var url=String(rel.url||'').trim();
+  if(!versao||!url) return;
+  var marcarVisto=function(){ try{ localStorage.setItem(chaveAtualizacaoVista(versao),'1'); }catch(e){} };
+  var box=document.createElement('div');
+  box.id='aviso-update-card';
+  box.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,20,60,.45);display:flex;align-items:center;justify-content:center;padding:16px;';
+  box.innerHTML=
+    '<div style="background:#fff;border-radius:22px;max-width:430px;width:100%;padding:26px 24px 22px;box-shadow:0 24px 70px rgba(0,0,0,.25);font-family:inherit;text-align:center;">'+
+      '<div style="width:64px;height:64px;margin:0 auto 12px;border-radius:20px;background:#eef2ff;display:grid;place-items:center;"><i class="ph ph-download-simple" style="font-size:30px;color:#0a1e8a"></i></div>'+
+      '<h3 style="margin:0 0 4px;font-size:19px;font-weight:900;color:#0a1e8a">Atualização nova pra baixar</h3>'+
+      '<p style="margin:0 0 10px;font-size:12.5px;color:#334155">Versão <b>v'+versao+'</b> disponível. Baixar e instalar por cima, sem perder nada — o banco e a nuvem não mexem.</p>'+
+      (notas?'<div style="text-align:left;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px;font-size:12px;color:#475569;white-space:pre-wrap;max-height:180px;overflow:auto;word-wrap:break-word">'+String(notas).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</div>':'')+
+      '<div style="display:flex;gap:10px;margin-top:16px">'+
+        '<button id="aviso-update-baixar" style="flex:1;height:44px;border:0;border-radius:14px;background:#0a1e8a;color:#fff;font-weight:800;font-size:13.5px;cursor:pointer">Abrir pra baixar</button>'+
+        '<button id="aviso-update-depois" style="flex:1;height:44px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;color:#475569;font-weight:800;font-size:13.5px;cursor:pointer">Baixar depois</button>'+
+      '</div>'+
+      '<p style="margin:10px 0 0;font-size:10.5px;color:#94a3b8">Esse aviso aparece uma única vez nesta versão — na próxima, ele volta te avisar.</p>'+
+    '</div>';
+  document.body.appendChild(box);
+  document.getElementById('aviso-update-depois').onclick=function(){ marcarVisto(); var d=document.getElementById('aviso-update-card'); if(d) d.remove(); };
+  document.getElementById('aviso-update-baixar').onclick=function(){
+    marcarVisto();
+    // v5.24.34 — pedido dele: o botão leva pro SITE (tutorial dele, se houver,
+    // aparece ANTES do botão de baixar). Site nasce na própria nuvem.
+    // v5.26.0 — com destinatário, a notificação abre a PÁGINA SECRETA daquela
+    // publicação (/a/<slug>): entra direto, sem precisar digitar CNPJ de novo.
+    try{
+      var apiB=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
+      window.open(apiB?(rel.slug?apiB+'/a/'+encodeURIComponent(rel.slug):apiB+'/atualizacoes'):url,'_blank');
+    }catch(e){ try{ window.open(url,'_blank'); }catch(e2){} }
+    var d=document.getElementById('aviso-update-card'); if(d) d.remove();
+  };
+}
+
+function verificarAtualizacaoNova(){
+  try{
+    var api=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;
+    if(typeof api!=='function') return;
+    var atual=String(window.DIGICOPY_APP_VERSION||'');
+    Promise.resolve(api('/v1/app-release',{method:'GET'})).then(function(rel){
+      if(!rel||!rel.ok||!rel.versao) return;
+      if(!cmpVersaoMaior(rel.versao,atual)) return;
+      try{ if(localStorage.getItem(chaveAtualizacaoVista(rel.versao))) return; }catch(e){}
+      mostrarAvisoAtualizacao(rel);
+    }).catch(function(){ /* sem sininho sem nuvem — não atrapalha ninguém */ });
+  }catch(e){ /* idem */ }
+}
+window.digicopyVerificarAtualizacaoAgora=verificarAtualizacaoNova;
+
+function agendarChecagemInicial(){
+  if(window.__checagemAtualizacaoFeita) return;
+  window.__checagemAtualizacaoFeita=true;
+  var tent=0;
+  var t=setInterval(function(){
+    tent++;
+    var logado=false;
+    try{ logado=typeof getSession==='function' && !!getSession(); }catch(e){}
+    if(logado){ clearInterval(t); setTimeout(verificarAtualizacaoNova, 2500); }
+    else if(tent>60) clearInterval(t); /* ~2 min tentando e desiste em silêncio */
+  },2000);
+}
+if(typeof document!=='undefined') agendarChecagemInicial();
+
+// v5.24.34 — o card publicador nas Configurações (ele marca a versão, cola o
+// link do .exe, escreve as notas — ou me pede pra escrever, como ele disse).
+function aplicarCardPublicarAtualizacao(){
+  // v5.24.34 — O PORTAL É SÓ DELE (antes era só "publicar"): publicar com
+  // upload do .exe direto do PC, editar, ocultar/mostrar, ativar por tempo
+  // (1 dia / 7 dias / ilimitado), desativar e excluir. O site fora mostra
+  // SÓ o que está vivo (normalmente a atual).
+  if(document.getElementById('card-publicar-atualizacao')) return;
+  var grid=document.querySelector('#view-config .grid');
+  if(!grid) return;
+  var api=function(path,opts){ return window.DIGICOPY_CLOUD.api(path,opts); };
+  function escp(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function tn(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+  function dataBr(ms){ try{ return ms? new Date(ms).toLocaleString('pt-BR'):'—'; }catch(e){ return '—'; } }
+  var card=document.createElement('div');
+  card.id='card-publicar-atualizacao';
+  card.className='rounded-[16px] bg-white border p-6 lg:col-span-3';
+  card.innerHTML=
+    '<h4 class="font-bold text-[14px]"><i class="ph ph-rocket-launch"></i> Portal de atualizações <small style="font-weight:600;color:#64748b">(só você vê esta parte)</small></h4>'+
+    '<p class="mt-1 text-[11.5px] text-slate-500">Publique: anexe o .exe do PC, escreva as notas da atualização e (se quiser) um passo a passo de como baixar. Versões antigas ficam no histórico com o link DESLIGADO — você reativa por tempo ou pra sempre, quando quiser.</p>'+
+    '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Versão nova</label><input id="pub-upd-versao" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px] font-mono" placeholder="5.24.34"></div>'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Link no ar por</label><select id="pub-upd-expira" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"><option value="0">Ilimitado (até eu desativar)</option><option value="24">1 dia</option><option value="168">7 dias</option><option value="720">30 dias</option></select></div>'+
+      '<div><label class="text-[11px] uppercase font-bold text-slate-500">Arquivo .exe (do próprio PC)</label><input id="pub-upd-file" type="file" accept=".exe" class="mt-1 w-full h-10 px-2 py-2 rounded-xl border text-[12px]"></div>'+
+      '<div class="md:col-span-3"><label class="text-[11px] uppercase font-bold text-slate-500">Notas da atualização (o que mudou — aparece nos PCs)</label><textarea id="pub-upd-notas" class="mt-1 w-full h-24 p-3 rounded-xl border text-[12.5px]" placeholder="1. ...&#10;2. ...&#10;3. ..."></textarea></div>'+
+      '<div class="md:col-span-3"><label class="text-[11px] uppercase font-bold text-slate-500">Tutorial de como baixar (opcional — aparece no site ANTES do botão)</label><textarea id="pub-upd-tutorial" class="mt-1 w-full h-20 p-3 rounded-xl border text-[12.5px]" placeholder="1. Clique no botão verde&#10;2. Espere baixar&#10;3. Dê dois cliques no arquivo e confirme..."></textarea></div>'+
+    '</div>'+
+    '<div class="mt-3 flex items-center gap-3"><button id="pub-upd-enviar" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13px] font-bold">Publicar atualização</button><small id="pub-upd-msg" class="text-[11px] text-slate-500">O aviso nos PCs só aparece quando a versão nova for MAIOR que a instalada.</small></div>'+
+    '<div class="mt-3 pt-3 border-t"><small class="text-[11px] text-slate-500">Site onde baixam (mostra só o que está ativo):</small> <a id="pub-upd-site" href="#" target="_blank" rel="noopener" class="text-[12px] font-bold text-[#0a1e8a] underline break-all">abrir site</a> <button id="pub-upd-copiar-site" class="ml-2 h-7 px-3 rounded-lg border text-[11px] font-bold text-[#0a1e8a]">copiar link</button></div>'+
+    '<div class="mt-4 pt-3 border-t"><h5 class="font-bold text-[12.5px] mb-2"><i class="ph ph-clock-counter-clockwise"></i> Histórico de publicações <button id="pub-upd-recarregar" class="ml-2 h-7 px-3 rounded-lg border text-[11px] font-bold">recarregar</button></h5><div id="pub-upd-lista" class="space-y-2 text-[12px]"></div></div>';
+  grid.appendChild(card);
+  try{
+    var apiBase=String((window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.API)||'').replace(/\/+$/,'');
+    var siteEl=document.getElementById('pub-upd-site');
+    if(siteEl&&apiBase){ siteEl.href=apiBase+'/atualizacoes'; siteEl.textContent=apiBase+'/atualizacoes'; }
+    document.getElementById('pub-upd-copiar-site').onclick=function(){
+      try{ navigator.clipboard.writeText(siteEl.href); tn('Link do site copiado.','success'); }catch(e){}
+    };
+  }catch(e){}
+
+  function statusChips(r){
+    var agora=Date.now(), chips=[];
+    if(r.oculta){ chips.push('<span style="background:#f1f5f9;color:#64748b">👁 oculta</span>'); }
+    else if(r.ativa && (r.expiraEm===0||r.expiraEm>agora)){ chips.push('<span style="background:#dcfce7;color:#166534">✅ no ar</span>'); }
+    else if(r.ativa && r.expiraEm && r.expiraEm<=agora){ chips.push('<span style="background:#fef3c7;color:#92400e">⌛ venceu</span>'); }
+    else { chips.push('<span style="background:#fee2e2;color:#991b1b">⛔ desligada</span>'); }
+    if(r.ativa && r.expiraEm>agora) chips.push('<span style="background:#eef2ff;color:#3730a3">até '+dataBr(r.expiraEm)+'</span>');
+    chips.push(r.temArquivo?'<span style="background:#dcfce7;color:#166534">📦 .exe anexado</span>':'<span style="background:#fee2e2;color:#991b1b">📦 sem .exe</span>');
+    return chips.map(function(c){ return '<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;margin-right:4px;display:inline-block;margin-top:4px">'+c+'</span>'; }).join('');
+  }
+  function btnAcao(label, dataAttrs, cor){
+    return '<button type="button" '+dataAttrs+' style="height:26px;padding:0 9px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;font-weight:800;font-size:10.5px;margin:4px 4px 0 0;cursor:pointer;color:'+cor+'">'+label+'</button>';
+  }
+  function renderLista(lista){
+    var box=document.getElementById('pub-upd-lista');
+    if(!box) return;
+    if(!lista.length){ box.innerHTML='<p style="color:#94a3b8;font-style:italic">Nenhuma publicação ainda — a primeira aparece aqui assim que você publicar.</p>'; return; }
+    box.innerHTML=lista.map(function(r){
+      return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;">'+
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+          '<b style="font-size:13px;color:#0a1e8a">v'+escp(r.versao)+'</b><small style="color:#64748b">'+dataBr(r.publicadoEm)+'</small>'+
+          statusChips(r)+
+        '</div>'+
+        (r.notas?'<div style="margin-top:6px;background:#f8fafc;border-radius:8px;padding:8px;font-size:11px;color:#475569;white-space:pre-wrap">'+escp(r.notas).slice(0,300)+'</div>':'')+
+        '<div style="margin-top:6px">'+
+          btnAcao('Ativar 1 dia','data-ac="ativar" data-v="'+escp(r.versao)+'" data-h="24"','#166534')+
+          btnAcao('Ativar 7 dias','data-ac="ativar" data-v="'+escp(r.versao)+'" data-h="168"','#166534')+
+          btnAcao('Ativar ∞','data-ac="ativar" data-v="'+escp(r.versao)+'" data-h="0"','#166534')+
+          btnAcao('Desligar','data-ac="desativar" data-v="'+escp(r.versao)+'"','#991b1b')+
+          btnAcao(r.oculta?'Revelar':'Ocultar','data-ac="'+(r.oculta?'mostrar':'ocultar')+'" data-v="'+escp(r.versao)+'"','#475569')+
+          btnAcao('Editar notas/tutorial','data-ac="editar" data-v="'+escp(r.versao)+'"','#3730a3')+
+          btnAcao('Excluir','data-ac="excluir" data-v="'+escp(r.versao)+'"','#be123c')+
+          '<label style="display:inline-block;margin:4px 0 0 2px;font-size:10.5px;font-weight:800;color:#3730a3;cursor:pointer">Anexar/trocar .exe<input type="file" accept=".exe" data-ac="file" data-v="'+escp(r.versao)+'" style="display:none"></label>'+
+        '</div></div>';
+    }).join('');
+    box.querySelectorAll('button[data-ac]').forEach(function(b){
+      b.onclick=function(){
+        var ac=b.getAttribute('data-ac'), v=b.getAttribute('data-v'), h=b.getAttribute('data-h');
+        var run=function(){
+          var payload={action:ac, versao:v};
+          if(ac==='ativar') payload.expiraHoras=Number(h)||0;
+          if(ac==='editar'){
+            var notasN=(typeof prompt==='function')?prompt('Novas NOTAS da v'+v+':',''):null;
+            if(notasN==null) return;
+            var tutN=(typeof prompt==='function')?prompt('Novo TUTORIAL (deixe vazio pra tirar):',''):null;
+            payload.notas=notasN==null?'':notasN; payload.tutorial=tutN==null?'':tutN;
+          }
+          b.disabled=true; b.textContent='...';
+          Promise.resolve(api('/v1/app-release',{method:'POST',body:JSON.stringify(payload)})).then(function(){
+            tn('Fechado: '+ac+' v'+v,'success'); carregarLista();
+          }).catch(function(e){
+            b.disabled=false; b.textContent=ac;
+            tn((e&&e.message)||'Falhou.','error');
+            if(/denied|admin|401|403/i.test(String(e&&e.message)) && window.lfbAlert) window.lfbAlert('O portal é só de aparelho ADMINISTRADOR com usuário admin logado. Abra no seu PC principal.','Portal de atualizações');
+          });
+        };
+        if(ac==='excluir'){
+          var okc=(typeof window.confirmSistema==='function')?window.confirmSistema:'';
+          (typeof window.confirmSistema==='function'?
+            Promise.resolve(window.confirmSistema('Excluir a v'+v+' DE VEZ (some do histórico e o .exe é apagado)?','Excluir publicação')):
+            Promise.resolve(true)).then(function(c){ if(c) run(); });
+        } else run();
+      };
+    });
+    box.querySelectorAll('input[type=file][data-ac]').forEach(function(inp){
+      inp.onchange=function(){
+        if(!inp.files||!inp.files[0]) return;
+        subirArquivo(inp.getAttribute('data-v'), inp.files[0], inp);
+      };
+    });
+  }
+  function carregarLista(){
+    return Promise.resolve(api('/v1/app-releases',{method:'GET'})).then(function(r){
+      renderLista((r&&r.releases)||[]);
+    }).catch(function(){ var box=document.getElementById('pub-upd-lista'); if(box) box.innerHTML='<p style="color:#991b1b">Não consegui ler o histórico agora.</p>'; });
+  }
+  document.getElementById('pub-upd-recarregar').onclick=carregarLista;
+  function subirArquivo(versao, file, origem){
+    var msg=document.getElementById('pub-upd-msg');
+    if(msg) msg.textContent='Enviando o arquivo ('+Math.round(file.size/1024/1024)+'MB) pra nuvem... não feche esta tela.';
+    file.arrayBuffer().then(function(buf){
+      return api('/v1/release-file?versao='+encodeURIComponent(versao),{method:'POST',headers:{'content-type':'application/octet-stream'},body:buf});
+    }).then(function(){
+      if(msg) msg.textContent='Arquivo anexado à v'+versao+'. Botão de baixar do site já funciona.';
+      tn('.exe anexado à v'+versao,'success'); carregarLista();
+    }).catch(function(e){
+      if(msg) msg.textContent='Falha ao enviar: '+((e&&e.message)||'sem conexão');
+      if(window.lfbAlert) window.lfbAlert('Não subiu o arquivo: '+((e&&e.message)||'sem conexão')+' — se o motor da nuvem estiver velho, rode o atualizar_motor_nuvem.cmd.','Enviar .exe');
+    });
+  }
+  document.getElementById('pub-upd-enviar').onclick=function(){
+    var versao=String(document.getElementById('pub-upd-versao').value||'').trim();
+    var notas=String(document.getElementById('pub-upd-notas').value||'');
+    var tutorial=String(document.getElementById('pub-upd-tutorial').value||'');
+    var expira=Number(document.getElementById('pub-upd-expira').value||0)||0;
+    var fileInput=document.getElementById('pub-upd-file');
+    var file=fileInput.files&&fileInput.files[0];
+    if(!versao){ if(window.lfbAlert) window.lfbAlert('Preencha a versão.','Portal de atualizações'); return; }
+    var btn=document.getElementById('pub-upd-enviar');
+    btn.disabled=true; btn.textContent='Publicando...';
+    Promise.resolve(api('/v1/app-release',{method:'POST',body:JSON.stringify({action:'publicar',versao:versao,notas:notas,tutorial:tutorial,expiraHoras:expira})})).then(function(r){
+      if(r&&r.ok){
+        tn('v'+r.versao+' publicada — o site já mostra e os PCs avisam 1x.','success');
+        if(file) subirArquivo(versao, file, fileInput);
+        else { document.getElementById('pub-upd-msg').textContent='Publicada sem .exe (site mostra "arquivo ainda não subiu" até você anexar).'; carregarLista(); }
+      }
+      btn.disabled=false; btn.textContent='Publicar atualização';
+    }).catch(function(e){
+      btn.disabled=false; btn.textContent='Publicar atualização';
+      if(window.lfbAlert) window.lfbAlert('Não publicou: '+((e&&e.message)||'sem conexão')+((/denied|admin|401|403/i.test(String(e&&e.message)))?' — o portal é só seu (aparelho + usuário ADMIN).':''),'Portal de atualizações');
+    });
+  };
+  carregarLista();
+}
+function agendarCardPublicador(){
+  if(window.__cardPublicadorAgendado) return;
+  window.__cardPublicadorAgendado=true;
+  var tent=0;
+  var t=setInterval(function(){
+    tent++;
+    aplicarCardPublicarAtualizacao();
+    if(document.getElementById('card-publicar-atualizacao')||tent>120) clearInterval(t);
+  },1500);
+}
+if(typeof document!=='undefined') agendarCardPublicador();
+
+function abrirOuBaixarErroTxt(){
+  try{
+    if(window.erroTxtAPI && typeof window.erroTxtAPI.abrir==='function'){
+      window.erroTxtAPI.abrir().catch(function(){ baixarErroTxt(); });
+    }else{
+      baixarErroTxt();
+    }
+  }catch(e){ baixarErroTxt(); }
+}
+window.digicopyAbrirOuBaixarErroTxt=abrirOuBaixarErroTxt;
+
+function avisarErroNaTela(){
   var agora=Date.now();
-  if(agora-ultimoAviso<8000) return;
+  if(agora-ultimoAviso<8000) return;  // anti-formiga: um aviso a cada 8s, nunca uma chuva
   ultimoAviso=agora;
   try{
-    if(typeof window.lfbAlert==='function') window.lfbAlert('Ocorreu um problema. O detalhe foi gravado na auditoria.','Aviso');
-    else if(typeof toast==='function') toast('Ocorreu um problema. Veja a auditoria.','error');
+    var antigo=document.getElementById('aviso-erro-txt');
+    if(antigo) antigo.remove();
+    var ehDesktop=!!(window.erroTxtAPI && typeof window.erroTxtAPI.abrir==='function');
+    var div=document.createElement('div');
+    div.id='aviso-erro-txt';
+    div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+    div.innerHTML='<div style="background:#fff;border-radius:16px;padding:26px 30px;max-width:430px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35)">'
+      +'<div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><span style="font-size:26px">⚠️</span></div>'
+      +'<p style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 6px">Ocorreu um erro indevido no sistema</p>'
+      +'<p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.5">Foi criado/atualizado um arquivo <b>erro.txt</b> falando sobre o erro. Mande esse arquivo ao técnico do sistema.</p>'
+      +'<div style="display:flex;gap:10px;justify-content:center">'
+      +'<button id="aviso-erro-txt-abrir" style="height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:800;cursor:pointer">'+(ehDesktop?'Abrir o erro.txt':'Baixar o erro.txt')+'</button>'
+      +'<button id="aviso-erro-txt-ok" style="height:42px;padding:0 22px;border-radius:10px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:13px;font-weight:800;cursor:pointer">OK</button>'
+      +'</div></div>';
+    document.body.appendChild(div);
+    document.getElementById('aviso-erro-txt-abrir').onclick=function(){
+      abrirOuBaixarErroTxt();  // mesma ação do botão do rodapé (uma só fonte)
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
+    document.getElementById('aviso-erro-txt-ok').onclick=function(){
+      var d=document.getElementById('aviso-erro-txt'); if(d) d.remove();
+    };
   }catch(e){}
 }
+
+// v5.24.34 — caminho de resgate: baixar o erro.txt por fora do aviso (console
+// ou qualquer botão futuro). No .exe o arquivo real continua no %APPDATA%.
+window.digicopyBaixarErroTxt=baixarErroTxt;
 
 window.registrarErroSistema=function(msg, extra){
   var det=detalheErro(msg, extra);
   if(ignoraRuido(det)) return;
-  gravarAuditoria(det);
-  avisarTela();
+  if(REGISTRANDO) return;  // erro dentro do próprio registro não vira loop infinito
+  REGISTRANDO=true;
+  try{
+    gravarErroTxt(montarLinhaErroTxt(det));   // era: gravarAuditoria — não vai mais
+    avisarErroNaTela();
+  }catch(e){}
+  REGISTRANDO=false;
 };
 
 window.addEventListener('error', function(ev){
@@ -39871,6 +40295,19 @@ window.finBuscarV52243 = function(){
   lerCampos();
   window.renderFinanceiro();
 };
+// v5.24.34 — P10: Filtrar aplica tudo de uma vez (e volta o botão ao azul);
+// Remover filtro zera data/tipo/ordem e reaplica limpo.
+window.finAplicarFiltroV52421 = function(){
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
+window.finRemoverFiltroV52421 = function(){
+  ST.de=''; ST.ate=''; ST.tipo='todos'; ST.ordem='venc-asc'; ST.q='';
+  var f=document.getElementById('fin-btn-filtrar');
+  if(f) f.className='h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold';
+  window.finBuscarV52243();
+};
 window.finModoV52243 = function(modo){
   ST.modo = modo||'hoje';
   if(modo==='hoje' || modo==='todos'){ ST.de=''; ST.ate=''; }
@@ -39954,6 +40391,8 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
           +'<label class="text-[11px] font-bold text-slate-500 uppercase">Até</label><input id="neo-fin-ate" type="date" value="'+esc(ST.ate)+'" class="neo-input !w-[150px] !h-9">'
         : '<input id="neo-fin-de" type="hidden" value=""><input id="neo-fin-ate" type="hidden" value="">')
       +'<select id="neo-fin-tipo" class="neo-select !h-9"><option value="todos"'+(ST.tipo==='todos'?' selected':'')+'>Receber + Pagar</option><option value="Receber"'+(ST.tipo==='Receber'?' selected':'')+'>Só a receber</option><option value="Pagar"'+(ST.tipo==='Pagar'?' selected':'')+'>Só a pagar</option></select>'
+      +'<button id="fin-btn-filtrar" type="button" onclick="window.finAplicarFiltroV52421()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12px] font-bold" title="Aplicar os filtros escolhidos"><i class="ph ph-funnel"></i> Filtrar</button>'
+      +'<button id="fin-btn-limpar-filtro" type="button" onclick="window.finRemoverFiltroV52421()" class="h-9 px-4 rounded-xl bg-white border text-[12px] font-bold" title="Limpa data, tipo e tipo de ordenação (a pesquisa de texto continua como está)"><i class="ph ph-x-circle"></i> Remover filtro</button>'
       +'<select id="neo-fin-ordem" class="neo-select !h-9 font-bold text-[#0a1e8a]"><option value="venc-asc"'+(ST.ordem==='venc-asc'?' selected':'')+'>⇧ Vencimento</option><option value="venc-desc"'+(ST.ordem==='venc-desc'?' selected':'')+'>⇩ Vencimento</option><option value="valor-desc"'+(ST.ordem==='valor-desc'?' selected':'')+'>⇩ Valor</option><option value="valor-asc"'+(ST.ordem==='valor-asc'?' selected':'')+'>⇧ Valor</option></select>'
       +'<span class="text-[12px] text-slate-500"><b class="text-[#0a1e8a]">'+all.length+'</b> lançamentos</span>'
       +'</div></div>'
@@ -39971,8 +40410,16 @@ if(typeof window.renderFinanceiro==='function' && !window.renderFinanceiro.__v52
       inp.removeAttribute('oninput');
       inp.onkeydown = function(e){ if(e.key==='Enter'){ e.preventDefault(); window.finBuscarV52243(); } };
     }
+    // v5.24.34 — RELATORIO dele (P10): datas/tipo/ordenação NÃO aplicam mais
+    // sozinhos ao trocar. Escolhe primeiro, aperta "Filtrar" aí aplica. Para
+    // não esquecer o botão, o Filtrar ganha alerta laranja quando há escolha
+    // pendente. A caixa de texto segue no esquema Enter+lupa (como antes).
     ['neo-fin-campo','neo-fin-tipo','neo-fin-ordem','neo-fin-de','neo-fin-ate'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.onchange=function(){ window.finBuscarV52243(); };
+      var el=document.getElementById(id);
+      if(el) el.onchange=function(){
+        var f=document.getElementById('fin-btn-filtrar');
+        if(f){ f.className='h-9 px-4 rounded-xl bg-amber-500 text-white text-[12px] font-bold animate-pulse'; }
+      };
     });
   };
   window.renderFinanceiro.__v52243fin = true;
@@ -40223,7 +40670,7 @@ try{
 (function(){
 'use strict';
 
-var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 
@@ -41024,14 +41471,21 @@ function garantirDatas(){
     de = document.getElementById('neo-fin-de');
     ate = document.getElementById('neo-fin-ate');
   } else {
-    if(!document.getElementById('neo-fin-de-lab') && de.parentNode){
+    // v5.24.34 — BUG FOTO DELE ("DE DE / ATÉ ATÉ"): o v5.22.43 (modo Abertos)
+    // já desenha os rótulos De/Até no próprio HTML. Antes de colar rótulos
+    // novos, checa se o irmão antes do campo não É o rótulo certo.
+    var irmaoDe = de.previousElementSibling;
+    var jaTemDe = irmaoDe && /^label$/i.test(irmaoDe.tagName||'') && /^\s*de\s*$/i.test(irmaoDe.textContent||'');
+    if(!jaTemDe && !document.getElementById('neo-fin-de-lab') && de.parentNode){
       var labDe=document.createElement('label');
       labDe.id='neo-fin-de-lab';
       labDe.className='text-[11px] font-bold text-slate-500 uppercase';
       labDe.textContent='De';
       de.parentNode.insertBefore(labDe, de);
     }
-    if(!document.getElementById('neo-fin-ate-lab') && ate.parentNode){
+    var irmaoAte = ate.previousElementSibling;
+    var jaTemAte = irmaoAte && /^label$/i.test(irmaoAte.tagName||'') && /^\s*at[ée]\s*$/i.test(irmaoAte.textContent||'');
+    if(!jaTemAte && !document.getElementById('neo-fin-ate-lab') && ate.parentNode){
       var labAte=document.createElement('label');
       labAte.id='neo-fin-ate-lab';
       labAte.className='text-[11px] font-bold text-slate-500 uppercase';
@@ -41421,7 +41875,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -42199,8 +42653,31 @@ try{
         var user = LOGIN_TELA_BRANCA_V52253_PURE.loginFlexivel(loginVal, senhaVal, usuarios);
 
         if(!user){
-          if(typeof toast === 'function') toast('Usuário ou senha incorreto', 'error');
-          else alert('Usuário ou senha incorreto');
+          // v5.24.34 — diagnóstico partido (carimbo de fala): diz SE é o
+          // usuário que não existe, se está inativo, ou se é a senha. Antes
+          // era um erro genérico e ninguém sabia o que corrigir. Usa o MESMO
+          // fold do loginFlexivel pra comparar igualzinho.
+          var ff = (typeof fold === 'function') ? fold : function(s){ return String(s || '').toLowerCase().trim(); };
+          var foldL = ff(loginVal);
+          var cand = null;
+          for (var ci = 0; ci < usuarios.length; ci++){
+            var cu = usuarios[ci];
+            if(!cu) continue;
+            var cL = ff(cu.login);
+            var cN = ff(cu.nome);
+            var cF = cN.split(/\s+/)[0] || '';
+            if (foldL === cL || foldL === cN || foldL === cF){ cand = cu; break; }
+          }
+          var msgLogin;
+          if(!cand){
+            msgLogin = 'Usuário "' + loginVal + '" não existe neste PC. Confere a digitação ou cria ele em Configurações > Usuários.';
+          } else if(!cand.ativo){
+            msgLogin = 'O usuário "' + loginVal + '" está INATIVO. Ativa em Configurações > Usuários.';
+          } else {
+            msgLogin = 'Senha não confere para "' + loginVal + '". Cuidado: maiúsculas e minúsculas contam.';
+          }
+          if(typeof toast === 'function') toast(msgLogin, 'error');
+          else alert(msgLogin);
           return;
         }
 
@@ -42299,7 +42776,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0590a-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -42448,7 +42925,7 @@ try{
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -42771,7 +43248,7 @@ try{
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -43202,7 +43679,7 @@ try{
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -43565,7 +44042,7 @@ try{
     window.DIGICOPY_APP_VERSION = window.DIGICOPY_APP_VERSION || VERSAO;
   }
 
-  var API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+  var API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
   var PAGINA_CLIENTE = 'https://digicopy-orcamentos.pages.dev/';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
@@ -43877,7 +44354,7 @@ try{
 
       // Se a tela do orçamento estiver aberta, recarrega
       if(typeof window !== 'undefined' && window.__ORC_ST && window.__ORC_ST.form && window.__ORC_ST.form.id === o.id){
-        window.abrirOrcamento(o.id);
+        window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o id acabou de ser revalidado aqui, não precisa re-caçar
       }
       return true;
     }
@@ -44124,14 +44601,14 @@ try{
         +'<option value="nome">Descrição</option>'
         +'<option value="marca">Marca</option>'
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
         +'</div>'
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
         +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -44141,7 +44618,7 @@ try{
         +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div></label>'
         +'</div>'
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
         +'<thead class="bg-slate-50 border-b text-[10.5px] uppercase font-bold text-[#0a1e8a]"><tr><th class="px-3 py-2">Tipo</th><th class="px-3 py-2">Descrição</th><th class="px-3 py-2">Qtd</th><th class="px-3 py-2">V.Unit</th><th class="px-3 py-2">Desc</th><th class="px-3 py-2">Total</th><th></th></tr></thead>'
@@ -44258,7 +44735,7 @@ try{
 
       window.__ORC_ST.form.id = o.id;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      window.abrirTelaOrcamento(o); // v5.24.9 — recarrega PELO OBJETO: o orçamento acabou de nascer aqui, não precisa re-caçar
     };
 
     // Renderizador de listagem de Orçamentos garantindo que NUNCA suma e exiba o status correto
@@ -44284,7 +44761,8 @@ try{
         var cl = (_db.clientes || []).find(function(c){ return c && c.id === o.clienteId; }) || {};
         var st = txt(o.status).toLowerCase();
         if(campo === 'fechados') return st === 'aprovado' || o.vendaId;
-        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado';
+        if(campo === 'recusados') return st === 'recusado';
+        if(campo === 'nao_fechados') return st !== 'aprovado' && !o.vendaId && st !== 'estornado' && st !== 'recusado';
         if(campo === 'cod_orc') return !termo || String(o.numero || '').toLowerCase().includes(termo);
         if(campo === 'cliente') return !termo || String(cl.nome || '').toLowerCase().includes(termo) || String(cl.fantasia || '').toLowerCase().includes(termo);
         if(!termo) return true;
@@ -44297,6 +44775,18 @@ try{
         return nb - na;
       });
 
+      // v5.24.34 — RELATORIO dele (orçamento 38 sumiu do banco depois de
+      // salvar): a tela passa a GUARDAR os objetos das linhas que exibiu
+      // (além dos ids). Se um clique chagar num id que o banco perdeu entre
+      // a lista e o clique, o abrirOrcamento RESGATA desse mapa em silêncio
+      // em vez de travar naquele aviso de diagonal.
+      try{
+        var mapa = {};
+        list.forEach(function(o){ if(o && o.id){ mapa[String(o.id)] = o; } if(o && o.token){ mapa[String(o.token)] = o; } });
+        window.__orcUltimaLista = mapa;
+      }catch(e){}
+      try{ localStorage.setItem('__orc_render_ids', JSON.stringify(list.map(function(x){ return String(x && x.id); }).slice(0,80))); }catch(e){}
+
       view.innerHTML = '<div class="neo-shell"><div class="neo-panel neo-float-in">'
         +'<div class="neo-head"><div><h3>Orçamentos</h3><p>Propostas ao cliente com aprovação online e ordem de serviço</p></div>'
         +'<div class="neo-actions">'
@@ -44306,10 +44796,13 @@ try{
         +'</div></div>'
         +'<div class="p-4 border-b bg-white flex flex-wrap items-center gap-2">'
         +'<button type="button" onclick="window.orcMostrarTodos()" class="neo-btn '+(campo === 'todos' ? 'primary' : '')+'">Todos</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'fechados\')" class="neo-btn '+(campo === 'fechados' ? 'primary' : '')+'" title="Traz todos os orçamentos já aprovados/autorizados">Mostrar todos aprovados</button>'
+        +'<button type="button" onclick="window.orcFiltroLista(\'recusados\')" class="neo-btn '+(campo === 'recusados' ? 'primary' : '')+'" title="Traz todos os orçamentos desaprovados pelo cliente no link">Mostrar todos desaprovados</button>'
         +'<select id="orc-filtro-campo" class="h-10 px-3 rounded-xl border bg-white text-[13px] min-w-[180px]">'
         +'<option value="todos"'+(campo === 'todos' ? ' selected' : '')+'>Todos</option>'
         +'<option value="nao_fechados"'+(campo === 'nao_fechados' ? ' selected' : '')+'>Abertos (Não fechados)</option>'
         +'<option value="fechados"'+(campo === 'fechados' ? ' selected' : '')+'>Autorizados (Fechados)</option>'
+        +'<option value="recusados"'+(campo === 'recusados' ? ' selected' : '')+'>Desaprovados (Recusados)</option>'
         +'<option value="cod_orc"'+(campo === 'cod_orc' ? ' selected' : '')+'>Cód. Orçamento</option>'
         +'<option value="cliente"'+(campo === 'cliente' ? ' selected' : '')+'>Cliente</option>'
         +'</select>'
@@ -44327,7 +44820,7 @@ try{
           var badgeCls = (st === 'aprovado' || o.vendaId) ? 'neo-status ok' : (st === 'recusado' ? 'neo-status wait' : (st === 'estornado' ? 'neo-status info' : 'neo-status info'));
           var temOS = o.os && Object.keys(o.os).some(function(k){ return txt(o.os[k]); });
 
-          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\')" class="cursor-pointer">'
+          return '<tr onclick="window.neoOrcSel=\''+o.id+'\';window.abrirOrcamento(\''+o.id+'\',\'linha da lista de orcamentos\')" class="cursor-pointer">'
             +'<td class="px-2"><input type="checkbox" name="orc-check" value="'+o.id+'" onclick="event.stopPropagation()"></td>'
             +'<td><b class="text-[#0a1e8a]">'+esc(o.numero || '')+'</b>'+(temOS ? ' <span class="text-[10px]" title="Contém Ordem de Serviço">🔧 OS</span>' : '')+'</td>'
             +'<td>'+(o.data ? o.data.slice(0, 10).split('-').reverse().join('/') : '-')+'</td>'
@@ -44335,7 +44828,7 @@ try{
             +'<td><b>'+money(o.total)+'</b></td>'
             +'<td><span class="'+badgeCls+'">'+esc(rotulo)+'</span></td>'
             +'<td><div class="flex items-center gap-1.5" onclick="event.stopPropagation()">'
-            +'<button onclick="window.abrirOrcamento(\''+o.id+'\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
+            +'<button onclick="window.abrirOrcamento(\''+o.id+'\',\'botao de olho da lista\')" class="neo-btn !px-2" title="Abrir Orçamento"><i class="ph ph-eye"></i></button>'
             +'<button onclick="window.revalidarLinkOrcamento(\''+o.id+'\')" class="neo-btn !px-2 text-amber-700" title="Revalidar Link"><i class="ph ph-arrows-counter-clockwise"></i></button>'
             +'</div></td>'
             +'</tr>';
@@ -44354,6 +44847,15 @@ try{
     window.orcMostrarTodos = function(){
       if(!window.__ORC_ST) window.__ORC_ST = {};
       window.__ORC_ST.campo = 'todos';
+      window.__ORC_ST.q = '';
+      window.renderOrcamentos();
+    };
+
+    // v5.22.87 — botões ao lado de "Todos": mostrar todos aprovados e
+    // mostrar todos desaprovados (recusados pelo cliente no link)
+    window.orcFiltroLista = function(campo){
+      if(!window.__ORC_ST) window.__ORC_ST = {};
+      window.__ORC_ST.campo = campo || 'todos';
       window.__ORC_ST.q = '';
       window.renderOrcamentos();
     };
@@ -44512,7 +45014,7 @@ try{
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -44728,7 +45230,7 @@ try{
         +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
         +CAMPOS_RECARGA.map(function(rc){ return '<option value="'+esc(rc[0])+'">'+esc(rc[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
         +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar item"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
@@ -44736,7 +45238,7 @@ try{
 
         +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+        +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
         +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
         +'</div>'
 
@@ -44749,7 +45251,7 @@ try{
         +'</div></label>'
         +'</div>'
 
-        +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+        +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
         +'</div>'
 
         // Tabela de itens
@@ -44837,8 +45339,27 @@ try{
       }
 
       var qtd = n(document.getElementById('orc-item-qtd') && document.getElementById('orc-item-qtd').value) || 1;
+      // v5.22.84 — trava de segurança: sem valor unitário numérico, não adiciona
+      var vuRaw = String((document.getElementById('orc-item-vunit')||{}).value||'').trim();
+      if(!/^\d+(?:[.,]\d+)?$/.test(vuRaw)){ if(typeof toast === 'function') toast('Informe um valor unitário numérico para adicionar o item', 'error'); return; }
       var preco = n(document.getElementById('orc-item-vunit') && document.getElementById('orc-item-vunit').value) || 0;
       var descV = n(document.getElementById('orc-item-desc') && document.getElementById('orc-item-desc').value) || 0;
+
+      // v5.22.85 — regra do orçamento: NÃO baixa estoque (continua assim), mas
+      // pra LANÇAR um produto físico tem que ter estoque. Avisa e não deixa
+      // entrar: precisa de no mínimo a quantidade que vai pro orçamento.
+      if(p && !isRec){
+        var ehServicoItem = /servi[cç]o|recarga/i.test(String(p.categoria || '') + ' ' + String(p.tipo || ''));
+        if(!ehServicoItem && !p.estoqueInfinito){
+          var temEstoque = n(p.estoque);
+          if(temEstoque < qtd){
+            if(typeof toast === 'function'){
+              toast('Sem estoque: ' + esc(p.nome || 'produto') + ' tem ' + Math.max(0, temEstoque) + '. Precisa de no mínimo 1, ou da quantidade que for colocar no orçamento.', 'error');
+            }
+            return;
+          }
+        }
+      }
 
       var descricaoFinal = p ? (p.nome || '') : (desc || (isRec ? 'Recarga de toner' : 'Item'));
       if(cartucho && !descricaoFinal.includes(cartucho)){
@@ -44862,7 +45383,7 @@ try{
       var ci = document.getElementById('orc-item-cartucho'); if(ci) ci.value = '';
       var qi = document.getElementById('orc-item-qtd'); if(qi) qi.value = 1;
       var vi = document.getElementById('orc-item-vunit'); if(vi) vi.value = '';
-      var di = document.getElementById('orc-item-desc'); if(di) di.value = 0;
+      var di = document.getElementById('orc-item-desc'); if(di) di.value = '';
       var ti = document.getElementById('orc-item-total'); if(ti) ti.value = '';
 
       if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
@@ -45004,7 +45525,7 @@ try{
     if(recCampoEl) recCampoEl.style.display = isRec ? '' : 'none';
     if(extraEl) extraEl.classList.toggle('hidden', !isRec);
     if(prodSearch){
-      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Digite para buscar ou escreva a descrição…';
+      prodSearch.placeholder = isRec ? 'Busque a recarga (Enter ou lupa)…' : 'Buscar produto ou escrever a descrição…';
       prodSearch.value = '';
     }
     if(resEl){
@@ -45151,7 +45672,7 @@ try{
     var searchInp = document.getElementById('orc-prod-search');
     if(searchInp) searchInp.value = p.nome || '';
     var vu = document.getElementById('orc-item-vunit');
-    if(vu) vu.value = (p.preco || 0).toFixed(2);
+    if(vu) vu.value = (p.preco!=null && p.preco!=='' && Number(p.preco)!==0) ? Number(p.preco).toFixed(2) : ''; // v5.22.88 — produto sem valor: caixa vazia (lançar 0 manual continua valendo)
     if(typeof window.orcCalcItem === 'function') window.orcCalcItem();
   }
 
@@ -45276,17 +45797,101 @@ try{
   if(typeof window !== 'undefined'){
     window.orcOnTipoItem = orcOnTipoItem;
     window.orcBuscarCliente = orcBuscarCliente;
-    window.orcSelCliente = orcSelCliente;
-    window.orcLimparCliente = orcLimparCliente;
+    window.orcSelCliente = function(id){
+      orcSelCliente(id);
+      // v5.22.87 — escolheu: some o campo de busca, fica só o cartão do cliente
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.add('hidden');
+    };
+    window.orcLimparCliente = function(){
+      orcLimparCliente();
+      // v5.22.87 — tirou o cliente: volta a mostrar a busca
+      var busca = document.getElementById('orc-cli-busca');
+      if(busca) busca.classList.remove('hidden');
+    };
     window.orcBuscarProd = orcBuscarProd;
     window.orcSelProd = orcSelProd;
     window.orcSelRecarga = orcSelRecarga;
     window.orcBuscarEtiqueta = orcBuscarEtiqueta;
+    window.orcBuscarSerial = orcBuscarSerial;
     window.abrirVendaDeOrcamento = abrirVendaDeOrcamento;
     window.excluirOrcamentosMarcados = excluirOrcamentosMarcados;
     window.excluirOrcamento = excluirOrcamentosMarcados;
 
     // Override do Modal de Orçamento respeitando bloqueio quando Autorizado
+  // v5.22.85 — Busca por número de série no orçamento: IGUAL às vendas.
+  // Puxa a última notinha/venda com esse serial e já preenche modelo,
+  // patrimônio, contador e o cliente sozinho (mesmas regras da aba OS).
+  function orcBuscarSerial(serial){
+    var s = getSess(); if(!s) return;
+    var srl = txt(serial).toLowerCase();
+    var info = document.getElementById('orc-serial-info');
+    if(!srl){ if(info) info.classList.add('hidden'); return; }
+    var _db = getDb();
+    var normSerie = function(o){ return txt(o && (o.numeroSerie || o.serie)).toLowerCase(); };
+    // 1) vendas com esse serial (a mais recente manda)
+    var hist = (_db.vendas || []).filter(function(v){
+      return v && v.empresaId === s.empresaId && v.os && normSerie(v.os) === srl;
+    }).sort(function(a, b){ return new Date(b.data || 0) - new Date(a.data || 0); });
+    // 2) chamados/OS com esse serial
+    var chamado = (_db.os || []).filter(function(o){
+      return o && o.empresaId === s.empresaId && normSerie(o) === srl;
+    }).sort(function(a, b){ return new Date(b.abertura || b.criadoEm || 0) - new Date(a.abertura || a.criadoEm || 0); })[0];
+    // 3) cadastro de equipamentos
+    var eq = (_db.equipamentos || []).find(function(e){ return e && e.empresaId === s.empresaId && normSerie(e) === srl; });
+    var ult = hist[0];
+    var preencheu = 0;
+    var setSeVazio = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && !el.value.trim() && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var setSempre = function(id, val){ var el = document.getElementById(id); if(el && !el.readOnly && val != null && String(val).trim()){ el.value = String(val).trim(); preencheu++; } };
+    var fonte = ult ? ult.os : (chamado || null);
+    if(fonte){
+      setSeVazio('orc-os-modelo', fonte.modelo || fonte.equipamentoModelo || '');
+      setSeVazio('orc-os-patri', fonte.patrimonio || '');
+      setSeVazio('orc-os-contador', fonte.contador != null ? fonte.contador : '');
+    }
+    if(eq){
+      setSeVazio('orc-os-modelo', eq.modelo);
+      setSeVazio('orc-os-patri', eq.patrimonio);
+      setSeVazio('orc-os-contador', eq.contadorPB);
+    }
+    // cliente: última notinha > chamado > máquina instalada (parque)
+    var cliId = ult ? ult.clienteId : (chamado ? chamado.clienteId : null);
+    if(!cliId && eq){
+      var inst = (_db.parque || []).find(function(p){ return p && p.empresaId === s.empresaId && p.equipamentoId === eq.id; });
+      if(inst) cliId = inst.clienteId;
+    }
+    var f = window.__ORC_ST && window.__ORC_ST.form;
+    var autoCli = false;
+    if(cliId && !(f && f.cliente)){
+      var c = (_db.clientes || []).find(function(x){ return x && x.id === cliId; });
+      if(c){ orcSelCliente(c.id); autoCli = true; }
+    }
+    // regra das vendas: a última notinha encontrada comanda os dados do aparelho
+    if(ult && ult.os){
+      setSempre('orc-os-modelo', ult.os.modelo || ult.os.equipamentoModelo || '');
+      setSempre('orc-os-patri', ult.os.patrimonio || '');
+      if(ult.clienteId && !(f && f.cliente)){
+        var c2 = (_db.clientes || []).find(function(x){ return x && x.id === ult.clienteId; });
+        if(c2){ orcSelCliente(c2.id); autoCli = true; }
+      }
+    }
+    if(info){
+      var fmt = function(d){ return typeof fmtDate === 'function' ? fmtDate(d) : (d || '-'); };
+      if(ult || chamado || eq){
+        var clNome = ((_db.clientes || []).find(function(x){ return x && x.id === (ult ? ult.clienteId : cliId); }) || {}).nome || '-';
+        info.className = 'col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-3 text-[12px] text-amber-900 block';
+        info.innerHTML = '<p class="font-bold mb-1"><i class="ph ph-clock-counter-clockwise"></i> Última notinha encontrada para este equipamento:</p>'
+          + (ult ? 'Data: <b>' + fmt(ult.data) + '</b> • Cliente: <b>' + esc(clNome) + '</b> • Modelo: <b>' + esc(ult.os.modelo || '-') + '</b> • Venda/OS: <b>' + esc(ult.numero) + '</b>'
+            : chamado ? 'Chamado <b>' + esc(chamado.numero || '-') + '</b> de <b>' + fmt(chamado.abertura || chamado.criadoEm) + '</b> • Cliente: <b>' + esc(clNome) + '</b>'
+            : 'Equipamento cadastrado: <b>' + esc(eq.modelo || '-') + '</b> (patrimônio ' + esc(eq.patrimonio || '-') + ')')
+          + (preencheu || autoCli ? '<p class="mt-1 text-emerald-800 font-semibold"><i class="ph ph-magic-wand"></i> Preenchido automaticamente' + (autoCli ? ' (incluindo cliente)' : '') + ' — confira antes de salvar.</p>' : '');
+      } else {
+        info.className = 'col-span-12 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-500 block';
+        info.innerHTML = '<i class="ph ph-info"></i> Nenhuma notinha anterior encontrada para este número de série.';
+      }
+    }
+  }
+
     window.abrirTelaOrcamento = function(existente){
       var s = getSess(); if(!s) return;
       var _db = getDb();
@@ -45337,15 +45942,17 @@ try{
 
         // Linha do Cliente com Filtro de Campos
         +'<div class="rounded-[14px] border-2 border-[#0a1e8a]/20 bg-[#f8f9ff] p-3">'
-        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">Cliente * — selecione o filtro e busque com Enter ou lupa</label>'
+        +'<label class="text-[11px] font-bold uppercase text-[#0a1e8a]">'+(f.cliente ? 'Cliente' : 'Cliente * — selecione o filtro e busque com Enter ou lupa')+'</label>'
+        +'<div id="orc-cli-busca" class="'+(f.cliente || isAutorizado ? 'hidden' : '')+'">'
         +'<div class="flex flex-wrap items-center gap-2 mt-1">'
-        +'<select id="orc-cli-campo" '+(isAutorizado ? 'disabled' : '')+' class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
+        +'<select id="orc-cli-campo" class="h-[44px] px-2 rounded-xl border bg-white text-[12px] min-w-[155px] shrink-0">'
         +CAMPOS_CLIENTE.map(function(c){ return '<option value="'+esc(c[0])+'">'+esc(c[1])+'</option>'; }).join('')
         +'</select>'
-        +'<input id="orc-cli-search" '+(isAutorizado ? 'disabled placeholder="Orçamento autorizado (bloqueado para edição)"' : 'placeholder="Busque o cliente..."')+' class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
-        +'<button type="button" onclick="window.orcBuscarCliente()" '+(isAutorizado ? 'disabled class="h-[44px] px-4 rounded-xl bg-slate-300 text-white shrink-0 cursor-not-allowed"' : 'class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0"')+' title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
+        +'<input id="orc-cli-search" placeholder="Busque o cliente..." class="flex-1 min-w-[200px] h-[44px] px-3 rounded-xl border-2 border-[#0a1e8a]/20 bg-white text-[13px]">'
+        +'<button type="button" onclick="window.orcBuscarCliente()" class="h-[44px] px-4 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar cliente"><i class="ph ph-magnifying-glass"></i></button>'
         +'</div>'
         +'<div id="orc-cli-results" class="hidden mt-1 max-h-[220px] overflow-auto rounded-xl border bg-white shadow-xl text-[12.5px]"></div>'
+        +'</div>'
         +'<div id="orc-cli-sel" class="'+(f.cliente ? '' : 'hidden')+' mt-2 rounded-xl bg-white border p-3 flex justify-between items-center">'
         +'<div><p class="font-bold" id="orc-cli-nome">'+(f.cliente ? esc((f.cliente.codigo ? '#' + f.cliente.codigo + ' — ' : '') + (f.cliente.nome || f.cliente.fantasia || '')) : '')+'</p>'
         +'<p class="text-[11px] text-slate-500" id="orc-cli-info">'+(f.cliente ? esc([f.cliente.documento, f.cliente.telefone || f.cliente.whatsapp, f.cliente.cidade].filter(Boolean).join(' • ')) : '')+'</p></div>'
@@ -45353,13 +45960,8 @@ try{
         +'</div>'
         +'</div>'
 
-        // Barra de Abas (Itens / Ordem de Serviço)
-        +'<div class="flex border-b border-slate-200">'
-        +'<button id="orc-tab-itens" type="button" onclick="window.setAbaOrcamento(\'itens\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-[#0a1e8a] text-[#0a1e8a]"><i class="ph ph-shopping-cart"></i> Itens</button>'
-        +'<button id="orc-tab-os" type="button" onclick="window.setAbaOrcamento(\'os\')" class="px-5 py-2 text-[13px] font-bold border-b-2 border-transparent text-slate-500"><i class="ph ph-wrench"></i> Ordem de Serviço (Opcional)</button>'
-        +'</div>'
-
-        // ABA 1: ITENS COM FILTROS DE CATEGORIA / RECARGA / ETIQUETA
+        // v5.22.87 — nada de abas: Itens e Ordem de Serviço ficam na MESMA
+        // tela, um embaixo do outro (a "tela 2" sempre aparece agora)
         +'<div id="orc-aba-itens" class="space-y-3">'
         +(!isAutorizado ? (
           '<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
@@ -45377,14 +45979,14 @@ try{
           +'<select id="orc-rec-campo" class="hidden h-[40px] px-2 rounded-xl border bg-white text-[12px] min-w-[145px] shrink-0">'
           +CAMPOS_RECARGA.map(function(r){ return '<option value="'+esc(r[0])+'">'+esc(r[1])+'</option>'; }).join('')
           +'</select>'
-          +'<input id="orc-prod-search" placeholder="Digite para buscar ou escreva a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+          +'<input id="orc-prod-search" placeholder="Buscar produto ou escrever a descrição..." class="flex-1 min-w-[160px] h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
           +'<button id="orc-prod-lupa" type="button" onclick="window.orcBuscarProd()" class="h-[40px] px-3.5 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div>'
           +'<div id="orc-prod-results" class="hidden absolute z-30 left-0 right-0 top-full mt-1 max-h-[200px] overflow-auto rounded-xl border bg-white shadow-xl text-[12px]"></div>'
           +'</div>'
           +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">QTD<input id="orc-item-qtd" type="number" min="1" value="1" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-4 md:col-span-2 text-[11px] font-bold uppercase text-[#0a1e8a]">V. UNIT<input id="orc-item-vunit" type="number" step="0.01" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white"></label>'
-          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="0" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
+          +'<label class="col-span-4 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">DESC R$<input id="orc-item-desc" type="number" step="0.01" value="" class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-white text-center"></label>'
           +'<label class="col-span-12 md:col-span-1 text-[11px] font-bold uppercase text-[#0a1e8a]">TOTAL<input id="orc-item-total" readonly class="mt-1 w-full h-[40px] px-2 rounded-xl border bg-slate-100 font-bold text-center"></label>'
           +'</div>'
           +'<div id="orc-item-extra" class="hidden border-t border-[#0a1e8a]/10 pt-2 grid grid-cols-12 gap-2 items-end">'
@@ -45394,7 +45996,7 @@ try{
           +'<button id="orc-etq-lupa" type="button" onclick="window.orcBuscarEtiqueta && window.orcBuscarEtiqueta()" class="h-[38px] px-3 rounded-xl bg-[#0a1e8a] text-white shrink-0" title="Buscar etiqueta"><i class="ph ph-magnifying-glass"></i></button>'
           +'</div></label>'
           +'</div>'
-          +'<div class="flex justify-end pt-1"><button type="button" onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
+          +'<div class="flex justify-end pt-1"><button type="button" id="orc-btn-add" disabled onclick="window.orcAddItem()" class="h-[40px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"><i class="ph ph-plus-circle"></i> Adicionar item</button></div>'
           +'</div>'
         ) : '')
         +'<div class="rounded-[14px] border overflow-hidden bg-white"><table class="w-full text-left text-[12px]">'
@@ -45404,13 +46006,17 @@ try{
         +'<tbody id="orc-itens-body"></tbody></table></div>'
         +'</div>'
 
-        // ABA 2: ORDEM DE SERVIÇO
-        +'<div id="orc-aba-os" class="hidden space-y-3">'
+        // ABA 2: ORDEM DE SERVIÇO (sempre visível, logo abaixo dos itens)
+        +'<div id="orc-aba-os" class="space-y-3 pt-3 border-t-2 border-[#0a1e8a]/15 mt-2">'
         +'<div class="rounded-[14px] border bg-[#f8f9ff] p-3 space-y-2">'
         +'<p class="text-[11px] font-bold text-[#0a1e8a] flex items-center gap-1.5"><i class="ph ph-info"></i> Dados da Ordem de Serviço (preenchimento opcional):</p>'
         +'<div class="grid grid-cols-12 gap-2 items-end">'
         +'<label class="col-span-12 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Número de série'
-        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
+        +'<div class="flex gap-1 mt-1">'
+        +'<input id="orc-os-serie" '+(isAutorizado ? 'readonly' : 'onchange="window.orcBuscarSerial && window.orcBuscarSerial(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.orcBuscarSerial && window.orcBuscarSerial(this.value);}"')+' value="'+esc(osData.numeroSerie || osData.serie || '')+'" placeholder="Número de série... (Enter ou lupa puxa o histórico)" class="flex-1 h-[40px] px-3 rounded-xl border bg-white text-[12.5px]">'
+        +(!isAutorizado ? '<button type="button" onclick="window.orcBuscarSerial && window.orcBuscarSerial(document.getElementById(\'orc-os-serie\').value)" class="shrink-0 w-10 h-[40px] rounded-xl bg-[#0a1e8a] text-white grid place-items-center" title="Buscar histórico desse serial"><i class="ph ph-magnifying-glass"></i></button>' : '')
+        +'</div></label>'
+        +'<div id="orc-serial-info" class="col-span-12 hidden"></div>'
         +'<label class="col-span-12 md:col-span-4 text-[11px] font-bold uppercase text-[#0a1e8a]">Modelo do equipamento'
         +'<input id="orc-os-modelo" '+(isAutorizado ? 'readonly' : '')+' value="'+esc(osData.modelo || '')+'" placeholder="Opcional..." class="mt-1 w-full h-[40px] px-3 rounded-xl border bg-white text-[12.5px]"></label>'
         +'<label class="col-span-6 md:col-span-3 text-[11px] font-bold uppercase text-[#0a1e8a]">Tipo da OS'
@@ -45444,8 +46050,9 @@ try{
         +'<div class="rounded-[14px] bg-[#0a1e8a] text-white p-3 flex justify-between items-center"><span class="font-bold">TOTAL DO ORÇAMENTO</span><b id="orc-total" class="text-[18px]">R$ 0,00</b></div>'
         +'</div>';
 
+      // v5.22.87 — a aba fecha pelo X do canto superior: nada de botão Sair no rodapé
       document.getElementById('modal-footer').innerHTML =
-        '<button onclick="closeModal()" class="h-[46px] px-5 rounded-xl bg-white border text-red-600 font-bold">Sair</button>'
+        ''
         +(isAutorizado ? '<button type="button" onclick="window.abrirVendaDeOrcamento(\''+esc(f.vendaId || f.id)+'\')" class="h-[46px] px-5 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-2"><i class="ph ph-shopping-bag"></i> Abrir Venda Salva (nº '+(f.vendaNumero ? esc(f.vendaNumero) : '')+')</button>' : '')
         +(existente ? '<button type="button" onclick="window.revalidarLinkOrcamento(\''+existente.id+'\')" class="h-[46px] px-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-300 font-bold flex items-center gap-1.5" title="Reativa o link e cancela a venda se já tiver sido gerada"><i class="ph ph-arrows-counter-clockwise"></i> Revalidar link</button>' : '')
         +(existente ? '<button type="button" onclick="window.imprimirOrcamento(\''+existente.id+'\')" class="h-[46px] px-5 rounded-xl bg-white border font-bold"><i class="ph ph-printer"></i> Imprimir</button>' : '')
@@ -45500,6 +46107,18 @@ try{
 
       var totalEl = document.getElementById('orc-total');
       if(totalEl) totalEl.innerText = money(tot);
+    };
+
+    // v5.22.86 — remove um item da lista do orçamento. A lixeira da tabela
+    // chama essa função e ela não existia (erro "orcDelItem is not a function").
+    window.orcDelItem = function(idx){
+      var f = window.__ORC_ST && window.__ORC_ST.form;
+      if(!f || !f.itens) return;
+      idx = n(idx);
+      if(idx < 0 || idx >= f.itens.length) return;
+      if(f.status === 'aprovado' || f.vendaId){ if(typeof toast === 'function') toast('Orçamento autorizado não pode ser editado', 'error'); return; }
+      f.itens.splice(idx, 1);
+      if(typeof window.orcRenderItens === 'function') window.orcRenderItens();
     };
 
     // Override do salvarOrcamentoTela com bloqueio em autorizados
@@ -45594,9 +46213,11 @@ try{
       if(typeof toast === 'function') toast('Orçamento ' + o.numero + ' salvo!', 'success');
       if(typeof window.lfbAlert === 'function') window.lfbAlert('Orçamento ' + o.numero + ' salvo com sucesso.', 'Salvo');
 
-      window.__ORC_ST.form.id = o.id;
+      window.__ORC_ST.form = null;
       if(typeof window.renderOrcamentos === 'function') window.renderOrcamentos();
-      window.abrirOrcamento(o.id);
+      // v5.22.87 — salvou, fechou! A aba do orçamento não fica aberta depois
+      // do salvar; volta direto para a lista de orçamentos
+      if(typeof closeModal === 'function') closeModal();
     };
 
     // Sincronização de versão visual
@@ -45902,22 +46523,19 @@ if(typeof window.excluirOrcamentosMarcados==='function' && !window.excluirOrcame
 }
 
 function varrerRessuscitadas(){
-  var _db = getDb();
-  if(!_db) return;
-  bloqueio(_db);
-  var mudou = false;
-  if(Array.isArray(_db.vendas)){
-    var nv = _db.vendas.filter(function(v){ return vendaPodeFicar(v, _db); });
-    if(nv.length!==_db.vendas.length){ _db.vendas = nv; mudou = true; }
-  }
-  if(Array.isArray(_db.orcamentos)){
-    var no = _db.orcamentos.filter(function(o){ return orcamentoPodeFicar(o, _db); });
-    if(no.length!==_db.orcamentos.length){ _db.orcamentos = no; mudou = true; }
-  }
-  if(mudou && typeof saveDB==='function') saveDB();
+  // v5.24.0 — DESATIVADO DE VEZ. Esta varredura REMOVIA vendas/orçamentos do
+  // array com base em guardas gravadas SÓ neste computador (__orcBloqueio) e
+  // em seguida dava saveDB(): a remoção virava DELETE na fila de envio para a
+  // nuvem e apagava o registro DE VERDADE em todos os PCs. Era a causa de
+  // "criei a venda e ela sumiu" e de cada computador mostrar dados diferentes.
+  // Exclusões reais já chegam pela nuvem como operação delete (e orçamento,
+  // desde a 5.22.92, nunca some — vira status 'excluido' no applyRemote).
+  if(window.__V5240_DEBUG){ try{ console.log('[DIGICOPY] varrerRessuscitadas desativado na v5.24.0'); }catch(e){} }
+  return;
 }
 
-setTimeout(varrerRessuscitadas, 800);
+/* v5.24.0 — sem agendamento da varredura (era setTimeout(..., 800)): nada de
+   filtrar os arrays por guarda local. */
 /* v5.22.62 sem varrer 2.5s (loop saveDB) */
 
 function pintar(){
@@ -46250,6 +46868,109 @@ if (typeof console !== 'undefined' && console.log) {
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52265_script_isolado_patch.js", e); }
+;
+
+/* ===== ajustes_v52289_orcamento_carimbo_autocura_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.89 — caça ao aviso "orçamento não encontrado" + autocura da lista
+//
+// 1) CARIMBO DE ORIGEM: qualquer aviso (popup central ou toast) que contenha
+//    a palavra "encontrad" (encontrado/encontrada) ganha uma linha cinza no
+//    final dizendo DE ONDE ele saiu: função @ arquivo : linha. Se o aviso
+//    misterioso do orçamento aparecer de novo, é só mandar esse código —
+//    acha-se a causa raiz na hora. Avisos sem "encontrad" ficam intactos.
+// 2) AUTOCURA: orçamentos antigos SEM id (salvos por versões velhas) ganham
+//    um id estável na renderização da lista e quando alguém tenta abrir —
+//    sem isso, a linha da lista chamava abrirOrcamento('undefined').
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+window.AJUSTES_V52289_PURE = {
+  interessa: function(msg){ return /encontrad/i.test(String(msg == null ? '' : msg)); }
+};
+
+if(typeof document === 'undefined') return;
+
+// ── 1) carimbo de origem ────────────────────────────────────────────────────
+function origemDoAviso(){
+  try{
+    var st = String((new Error()).stack || '');
+    var linhas = st.split('\n').filter(function(l){
+      return l.indexOf('ajustes_v52289') < 0 && l.indexOf('Error') < 0;
+    });
+    for(var i = 0; i < linhas.length; i++){
+      var l = linhas[i];
+      // Chrome: "at funcao (arquivo.js:123:45)" | Firefox: "funcao@arquivo.js:123:45"
+      var m = l.match(/at\s+([^\s(]+)[^(]*\(([^()\s]+\.js)[^()\s]*?:(\d+):\d+\)/);
+      if(!m) m = l.match(/([A-Za-z0-9_.$\[\]-]+)@([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(!m) m = l.match(/at\s+([^()\s]+\.js)[^()\s]*?:(\d+):\d+/);
+      if(m){
+        var fn = m.length >= 4 ? (m[1] || 'anon') : 'anon';
+        var arq = (m[m.length - 2] || '').split('/').pop();
+        var lin = m[m.length - 1] || '?';
+        if(arq){ return fn + ' @ ' + arq + ' : ' + lin; }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+
+function carimbo(msg){
+  if(!window.AJUSTES_V52289_PURE.interessa(msg)) return msg;
+  var o = origemDoAviso();
+  if(!o) return msg;
+  return String(msg) + '<br><span style="display:block;margin-top:6px;font-size:10px;color:#94a3b8">código: ' + o + ' — mande ao suporte</span>';
+}
+
+if(typeof window.lfbAlert === 'function' && !window.lfbAlert.__v52289){
+  var oldAlert = window.lfbAlert;
+  window.lfbAlert = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAlert.apply(this, a); };
+  window.lfbAlert.__v52289 = true;
+}
+if(typeof window.avisoSistema === 'function' && !window.avisoSistema.__v52289){
+  var oldAviso = window.avisoSistema;
+  window.avisoSistema = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldAviso.apply(this, a); };
+  window.avisoSistema.__v52289 = true;
+}
+if(typeof window.toast === 'function' && !window.toast.__v52289){
+  var oldToast = window.toast;
+  window.toast = function(){ var a = Array.prototype.slice.call(arguments); a[0] = carimbo(a[0]); return oldToast.apply(this, a); };
+  window.toast.__v52289 = true;
+}
+
+// ── 2) orçamentos antigos sem id ganham id estável na renderização da lista ──
+function garantirIdsOrcamentos(){
+  try{
+    var _db = (typeof db !== 'undefined') ? db : (window.db || null);
+    if(!_db || !Array.isArray(_db.orcamentos)) return;
+    var alterou = false;
+    _db.orcamentos.forEach(function(o){
+      if(o && !o.id){
+        o.id = 'orc_legado_' + (o.token || ('n' + (String(o.numero || '').replace(/\D/g, '') || Math.random().toString(36).slice(2, 8))));
+        alterou = true;
+      }
+    });
+    if(alterou && typeof saveDB === 'function') saveDB();
+  }catch(e){}
+}
+
+if(typeof window.renderOrcamentos === 'function' && !window.renderOrcamentos.__v52289ids){
+  var oldRender = window.renderOrcamentos;
+  window.renderOrcamentos = function(){
+    garantirIdsOrcamentos();
+    return oldRender.apply(this, arguments);
+  };
+  window.renderOrcamentos.__v52289ids = true;
+}
+// Roda uma vez na carga também (a lista pode nem ter sido aberta ainda)
+setTimeout(garantirIdsOrcamentos, 1500);
+
+console.log('[DIGICOPY] v5.22.89 carimbo de avisos + autocura da lista de orçamentos');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52289_orcamento_carimbo_autocura_patch.js", e); }
 ;
 
 /* ===== menus_tela_pequena_patch.js ===== */
@@ -46606,15 +47327,8921 @@ try{
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("vendas_financeiro_pendente_patch.js", e); }
 ;
 
+/* ===== ajustes_v52293_orcamento_guardiao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.93 — guardião do banco de orçamentos
+//
+// Três dias de diagnóstico mostraram: o orçamento ESTÁ na lista e, na hora do
+// clique, já NÃO está no banco. Alguém tira ele do array entre uma coisa e a
+// outra — e os nomes conhecidos não confessaram. Então agora ninguém precisa
+// confessar: este guardião anota TODA SAÍDA de registro do array db.orcamentos
+// com horário e trilha (quem chamou), num anel no próprio PC (__orc_saiu).
+// O aviso de "não achei" (v5.22.91/92) passa a mostrar a última baixa — o
+// usuário manda o texto e a causa aparece escrita.
+//
+// Também corrige onde o retrato da lista é guardado: a listagem que o usuário
+// VÊ é a definição mais nova de renderOrcamentos; este arquivo roda por último
+// e amarra o retrato nela (antes o retrato ficava na listagem velha e dizia
+// sempre "NÃO estava", mesmo quando estava).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var CHAVE_LOG = '__orc_saiu';
+var MAX_LOG = 12;
+
+function anotarSaida(tinham, ficaram, origem){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var foram = tinham.filter(function(x){ return ficaram.indexOf(x) < 0; });
+    log.push({
+      quando: new Date().toISOString(),
+      saiu: foram.join(',').slice(0, 120),
+      origem: String(origem || '').slice(0, 140)
+    });
+    if(log.length > MAX_LOG) log = log.slice(-MAX_LOG);
+    localStorage.setItem(CHAVE_LOG, JSON.stringify(log));
+  }catch(e){}
+}
+
+function idsOrc(){
+  try{
+    if(typeof db === 'undefined' || !Array.isArray(db.orcamentos)) return null;
+    return db.orcamentos.map(function(x){ return String(x && x.id); });
+  }catch(e){ return null; }
+}
+
+// Cão de guarda leve: a cada 400 ms compara os ids. Se alguém tirou registro
+// (splice, filter, replace do array), anota com a pilha da chamada seguinte.
+var ultimoRetrato = null;
+function vigia(){
+  if(typeof document === 'undefined') return;
+  ultimoRetrato = idsOrc();
+  setInterval(function(){
+    var agora = idsOrc();
+    if(!agora) return;
+    if(ultimoRetrato && agora.length < ultimoRetrato.length){
+      anotarSaida(ultimoRetrato, agora, (new Error('vigia')).stack);
+    }
+    ultimoRetrato = agora;
+  }, 400);
+}
+
+// Retrato da listagem VISÍVEL (a última versão de renderOrcamentos que existir)
+function amarrarRetratoDaLista(){
+  if(typeof window.renderOrcamentos !== 'function' || window.renderOrcamentos.__v52293) return;
+  var antiga = window.renderOrcamentos;
+  var embrulhada = function(){
+    var r = antiga.apply(this, arguments);
+    try{
+      var base = idsOrc() || [];
+      localStorage.setItem('__orc_render_ids', JSON.stringify(base.slice(0, 80)));
+      ultimoRetrato = base;
+    }catch(e){}
+    return r;
+  };
+  embrulhada.__v52293 = true;
+  embrulhada.__v52243status = antiga.__v52243status;
+  embrulhada.__v52244orc = antiga.__v52244orc;
+  window.renderOrcamentos = embrulhada;
+}
+
+// A trilha da última baixa entra no aviso "não achei"
+function resumoUltimaBaixa(){
+  try{
+    var log = JSON.parse(localStorage.getItem(CHAVE_LOG) || '[]');
+    var u = log[log.length - 1];
+    if(!u) return 'nenhuma baixa anotada ainda';
+    return 'última baixa: saiu [' + (u.saiu || '?') + '] às ' + String(u.quando || '').slice(11, 19);
+  }catch(e){ return '?'; }
+}
+window.__orcResumoUltimaBaixa = resumoUltimaBaixa;
+
+if(typeof document !== 'undefined'){
+  vigia();
+  amarrarRetratoDaLista();
+  // Se a listagem for trocada depois por outro módulo carregando tarde, reamarra
+  setTimeout(amarrarRetratoDaLista, 1500);
+  setTimeout(amarrarRetratoDaLista, 5000);
+}
+
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52293_orcamento_guardiao_patch.js", e); }
+;
+
+/* ===== ajustes_v52295_venda_volta_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH v5.22.95 — a venda em andamento sempre te espera
+//
+// Pedido do usuário: dentro da venda, se ele abrir QUALQUER COISA (cadastrar
+// produto no "+", cliente, impressora...), ao fechar aquilo — salvando OU
+// cancelando — a tela tem que voltar PRA VENDA que ele estava montando, com
+// TUDO intacto: cliente, itens, descontos, observação, data/hora e até o
+// item que ele estava digitando pela metade.
+//
+// Como funciona (simples e à prova de ordem de carregamento — este arquivo
+// fica por último no bundle):
+// 1) No openModal: se a venda nova está na tela (o código vos-codigo está
+//    visível no modal), o sistema tira uma FOTO da venda antes da outra
+//    tela tomar o lugar (guarda em window.__vosVendaPendente).
+// 2) No closeModal: se tem foto pendente, remonta a venda com a foto e
+//    devolve ela pro lugar. Salvar e cancelar passam por closeModal, então
+//    os dois voltam igual.
+// 3) Finalizar a venda não toma foto (nenhuma outra tela foi aberta), então
+//    fechar a venda continua fechando normal.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function vendaNaTela(){
+  var b = document.getElementById('vos-codigo');
+  if(!b) return false;
+  var root = document.getElementById('modal-root');
+  return !!(root && !root.classList.contains('hidden'));
+}
+
+function val(id){ var el = document.getElementById(id); return el ? el.value : null; }
+function porVal(id, v){ if(v == null) return; var el = document.getElementById(id); if(el) el.value = v; }
+
+function tirarFoto(){
+  var campos = {};
+  ['vos-cli-search','vos-destino','vos-data-saida','vos-prazo-entrega',
+   'vos-obs','vos-desc-venda','vos-os-valor','vos-os-desc',
+   'vos-item-tipo','vos-prod-search','vos-item-qtd','vos-item-vunit','vos-item-desc','vos-item-total',
+   'vos-item-cartucho','vos-item-identificacao','vos-item-tecnico'
+  ].forEach(function(id){ campos[id] = val(id); });
+  var abaOs = document.getElementById('vos-aba-os');
+  var extra = document.getElementById('vos-item-extra');
+  return {
+    form: (window.__vosForm ? JSON.parse(JSON.stringify(window.__vosForm)) : null),
+    codigoTexto: (document.getElementById('vos-codigo')||{}).textContent || '',
+    titulo: (document.getElementById('modal-title')||{}).textContent || 'Nova venda / Notinha',
+    abaOs: !!(abaOs && !abaOs.classList.contains('hidden')),
+    extraAberto: !!(extra && !extra.classList.contains('hidden')),
+    campos: campos
+  };
+}
+
+function devolverVenda(){
+  var foto = window.__vosVendaPendente;
+  if(!foto) return;
+  window.__vosVendaPendente = null;
+  if(typeof window.novaVenda !== 'function' || !foto.form) return;
+  window.novaVenda(); // reconstrói a tela e todas as amarrações
+  window.__vosForm = foto.form; // tudo que estava no formulário volta
+  var cod = document.getElementById('vos-codigo');
+  if(cod && foto.codigoTexto) cod.textContent = foto.codigoTexto;
+  var tit = document.getElementById('modal-title');
+  if(tit && foto.titulo) tit.textContent = foto.titulo;
+  if(foto.form.cliente && foto.form.cliente.id && typeof window.vosVendaSelectCliente === 'function'){
+    window.vosVendaSelectCliente(foto.form.cliente.id);
+  }
+  Object.keys(foto.campos || {}).forEach(function(id){ porVal(id, foto.campos[id]); });
+  if(typeof window.vosRenderItens === 'function') window.vosRenderItens();
+  if(typeof window.vosItemCalcTotal === 'function') window.vosItemCalcTotal();
+  if(typeof window.vosResumoVenda === 'function') window.vosResumoVenda();
+  if(typeof window.vosOsRuleHint === 'function') { try{ window.vosOsRuleHint(); }catch(e){} }
+  if(foto.abaOs && typeof window.vosSetAba === 'function') { try{ window.vosSetAba('os'); }catch(e){} }
+  var ps = document.getElementById('vos-prod-search');
+  if(ps) ps.focus();
+}
+
+// 1) Fotografa a venda quando QUALQUER outro modal abre a partir dela
+if(typeof window.openModal === 'function' && !window.openModal.__v52295){
+  var _open = window.openModal;
+  window.openModal = function(){
+    try{
+      if(vendaNaTela() && !window.__vosVendaPendente){
+        window.__vosVendaPendente = tirarFoto();
+      }
+    }catch(e){}
+    return _open.apply(this, arguments);
+  };
+  window.openModal.__v52295 = true;
+}
+
+// 2) Devolve a venda quando qualquer modal fecha (salvar OU cancelar)
+if(typeof window.closeModal === 'function' && !window.closeModal.__v52295){
+  var _close = window.closeModal;
+  window.closeModal = function(){
+    var r = _close.apply(this, arguments);
+    if(window.__vosVendaPendente){ try{ setTimeout(devolverVenda, 40); }catch(e){} }
+    return r;
+  };
+  window.closeModal.__v52295 = true;
+}
+
+// Telas que fecham SEM passar por closeModal (caso exista alguma): um olho
+// leve percebe o modal sumido com a venda pendente e devolve mesmo assim.
+if(typeof document !== 'undefined'){
+  setInterval(function(){
+    if(!window.__vosVendaPendente) return;
+    var root = document.getElementById('modal-root');
+    if(root && root.classList.contains('hidden')) devolverVenda();
+  }, 900);
+}
+
+window.__V52295_PURE = { tirarFoto: tirarFoto, devolverVenda: devolverVenda };
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52295_venda_volta_patch.js", e); }
+;
+
+/* ===== ajustes_v52296_backups_nuvem_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES v5.22.103 — Menu BACKUP próprio (não dentro da Nuvem):
+// o botão Backup abre a TELA NORMAL "Backup do sistema" (igual às outras
+// abas, nada de gaveta voadora) com os 3 botões diretos dentro:
+// 📸 Backup manual (faz os dois), 📥 Baixar todo histórico,
+// 🗑️ Excluir o histórico + seção do backup clássico do PC.
+// ═══════════════════════════════════════════════════════════════════════════
+// Em "Nuvem" há agora um card "Backups na nuvem" com:
+//   • a lista do que a nuvem guardou, separado nas pastas:
+//       📁 Backup diario (todo dia 18:30 sozinho)
+//       📁 Backup atualizações (sozinho a cada versão nova, foto da anterior)
+//       📁 Backup manual (botão 📸 Backup manual — faz os dois: guarda na nuvem e baixa no PC);
+//   • 📥 Baixar todos os backups (um .zip pronto pra guardar no HD externo);
+//   • 🗑️ Excluir os backups (apaga SÓ os backups da nuvem — os dados do
+//     sistema nunca, e o ciclo continua: amanhã 18:30 sai outro diário).
+// O card só aparece para o aparelho/usuário administrador (mesmo lugar dos
+// outros botões de administração da nuvem) e já abre sozinho, de cara, com:
+//   • último backup de TUDO;
+//   • último de cada modalidade (diário / atualizações / manual);
+//   • quanto falta pro próximo diário — tempo CONGELADO na abertura da
+//     janela (nada de reloginho rodando sem parar: PC da loja não sofre).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function api(){ return window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api; }
+
+function dataBR(iso){
+  try{ const d = new Date(iso); return isNaN(+d) ? '' : d.toLocaleString('pt-BR'); }catch(e){ return ''; }
+}
+function tamanhoBR(bytes){
+  const n = Number(bytes)||0;
+  if(n >= 1048576) return (n/1048576).toFixed(1).replace('.', ',') + ' MB';
+  if(n >= 1024) return (n/1024).toFixed(0) + ' KB';
+  return n + ' B';
+}
+
+function escap(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function aviso(el, texto, cor){
+  if(!el) return;
+  el.innerHTML = '<div class="bk-msg bk-msg-' + cor + '" style="padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;background:' +
+    (cor === 'erro' ? '#fef2f2' : cor === 'ok' ? '#ecfdf5' : '#eff6ff') +
+    ';color:' + (cor === 'erro' ? '#991b1b' : cor === 'ok' ? '#047857' : '#1d4ed8') +
+    ';border:1px solid ' + (cor === 'erro' ? '#fecaca' : cor === 'ok' ? '#a7f3d0' : '#bfdbfe') + '">' + texto + '</div>';
+}
+
+function traduzErro(e){
+  const codigo = e && (e.code || '') + '|' + (e.message || '');
+  if(codigo.indexOf('D1_ERROR') >= 0 || codigo.indexOf('daily row write limit') >= 0)
+    // v5.24.34 — plano PAGO ativo: a liberação "às 21h / diária" era a vida do
+    // grátis. Teto agora é MENSAL e gigantesco — se essa ficha aparecer algum
+    // dia, é sinal de algo fora do lugar (avisar a ele, como sempre).
+    return 'A nuvem atingiu o limite de gravações do período (bem raro no plano pago). Libera sozinho — o backup diário das 18:30 tenta de novo sozinho. Se isso aparecer de novo, me avise.';
+  if(codigo.indexOf('404') >= 0 || codigo.indexOf('HTML') >= 0)
+    return 'O servidor da nuvem é antigo e ainda não tem a função de backups. Rode "npx wrangler deploy" na pasta cloudflare-worker (veja o README da nuvem).';
+  if(codigo.indexOf('ADMIN') >= 0 || codigo.indexOf('403') >= 0)
+    return 'Seu USUÁRIO não tem cargo Admin no sistema. O que vale é o usuário (não o aparelho): entre com um usuário de cargo Admin (ex.: Kauan) em qualquer computador para ver, baixar ou apagar backups.';
+  return e && e.message || String(e);
+}
+
+// ─── ZIP simples (sem compressão): suficiente e leve pra qualquer PC ───────
+const CRC_TABELA = (function(){
+  const t = new Uint32Array(256);
+  for(let n = 0; n < 256; n++){
+    let c = n;
+    for(let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes){
+  let c = 0xFFFFFFFF;
+  for(let i = 0; i < bytes.length; i++) c = CRC_TABELA[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function dataDos(agora){
+  const d = agora || new Date();
+  const hora = (d.getHours() << 11) | (d.getMinutes() << 5) | ((d.getSeconds() / 2) | 0);
+  const data = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  return { hora, data };
+}
+function montarZip(arquivos){ // arquivos: [{nome, bytes(Uint8Array)}]
+  const partes = [];
+  const central = [];
+  let offset = 0;
+  const agora = dataDos();
+  arquivos.forEach(function(arq){
+    const nome = arq.nome.replace(/\\/g, '/'); // mantém as pastas dentro do zip
+    const nomeBytes = new TextEncoder().encode(nome);
+    const crc = crc32(arq.bytes);
+    const cab = new DataView(new ArrayBuffer(30));
+    cab.setUint32(0, 0x04034b50, true);      // assinatura local
+    cab.setUint16(4, 20, true);              // versão mínima
+    cab.setUint16(6, 0x0800, true);          // UTF-8
+    cab.setUint16(8, 0, true);               // store (sem compressão)
+    cab.setUint16(10, agora.hora, true);
+    cab.setUint16(12, agora.data, true);
+    cab.setUint32(14, crc, true);
+    cab.setUint32(18, arq.bytes.length, true);
+    cab.setUint32(22, arq.bytes.length, true);
+    cab.setUint16(26, nomeBytes.length, true);
+    cab.setUint16(28, 0, true);
+    partes.push(new Uint8Array(cab.buffer), nomeBytes, arq.bytes);
+
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true);
+    cen.setUint16(4, 20, true);
+    cen.setUint16(6, 20, true);
+    cen.setUint16(8, 0x0800, true);
+    cen.setUint16(10, 0, true);
+    cen.setUint16(12, agora.hora, true);
+    cen.setUint16(14, agora.data, true);
+    cen.setUint32(16, crc, true);
+    cen.setUint32(20, arq.bytes.length, true);
+    cen.setUint32(24, arq.bytes.length, true);
+    cen.setUint16(28, nomeBytes.length, true);
+    cen.setUint32(42, offset, true);
+    central.push(new Uint8Array(cen.buffer), nomeBytes);
+    offset += 30 + nomeBytes.length + arq.bytes.length;
+  });
+  let tamCentral = 0;
+  central.forEach(function(p){ tamCentral += p.length; });
+  const fim = new DataView(new ArrayBuffer(22));
+  fim.setUint32(0, 0x06054b50, true);
+  fim.setUint16(8, arquivos.length, true);
+  fim.setUint16(10, arquivos.length, true);
+  fim.setUint32(12, tamCentral, true);
+  fim.setUint32(16, offset, true);
+  partes.push.apply(partes, central);
+  partes.push(new Uint8Array(fim.buffer));
+  return new Blob(partes, { type: 'application/zip' });
+}
+
+function baixarArquivo(nome, blob){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
+}
+// v5.24.2 — cargo do USUÁRIO logado: SOMENTE Admin (pedido final do dono:
+// "somente o admin vai ver os menus de nuvem e de backup; o cargo Dono não
+// vê nem a nuvem nem o backup"). Dono e os demais cargos ficam de fora.
+function usuarioAtualEhAdminBackup(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess) return false;
+    const cargo=String(sess.perfil||'').trim().toLowerCase();
+    if(cargo==='admin') return true;
+    // sessão pode ser mais velha que o cadastro (trocaram o cargo depois do login)
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&x.id===sess.usuarioId;});
+    const cargo2=String((u&&u.perfil)||'').trim().toLowerCase();
+    return cargo2==='admin';
+  }catch(e){ return false; }
+}
+// Prova do usuário para o download direto abaixo (fetch cru; os outros
+// endpoints passam pelo api() global, que já anexa a prova desde a v5.24.1).
+async function bkCabUsuario(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(!sess||!sess.login) return {};
+    const u=((typeof db!=='undefined'&&db.usuarios)||[]).find(function(x){return x&&String(x.login||'').toLowerCase()===String(sess.login).toLowerCase();});
+    if(!u||!u.senha||typeof crypto==='undefined'||!crypto.subtle) return {};
+    const dados=new TextEncoder().encode(String(sess.login).toLowerCase()+'|'+String(u.senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    const prova=Array.from(new Uint8Array(digest),function(b){return b.toString(16).padStart(2,'0');}).join('');
+    return {'x-digicopy-usuario-login':String(sess.login).toLowerCase(),'x-digicopy-usuario-prova':prova};
+  }catch(e){ return {}; }
+}
+
+async function baixarUmBackup(chave){
+  const call = api(); if(!call) throw new Error('API da nuvem não carregada.');
+  const cabUsuario = await bkCabUsuario();
+  const resp = await fetch(window.DIGICOPY_CLOUD.API + '/v1/backup?key=' + encodeURIComponent(chave), {
+    headers: Object.assign({ authorization: 'Bearer ' + window.DIGICOPY_CLOUD.token() }, cabUsuario)
+  });
+  if(!resp.ok){
+    let msg = 'Erro HTTP ' + resp.status;
+    try{ const d = await resp.json(); if(d && d.message) msg = d.message; }catch(e){}
+    throw new Error(msg);
+  }
+  const corte = chave.indexOf('/');
+  return { chave: chave, nome: corte > 0 ? chave.slice(corte + 1) : chave, bytes: new Uint8Array(await resp.arrayBuffer()) };
+}
+
+async function backupAgora(){
+  const call = api(); if(!call) throw new Error('API da nuvem não carregada.');
+  return call('/v1/backup/agora', { method: 'POST', body: JSON.stringify({ tipo: 'manual' }) });
+}
+
+// ─── Funções do painel ─────────────────────────────────────────────────────
+async function listar(){ const call = api(); if(!call) throw new Error('API da nuvem não carregada.'); return call('/v1/backups'); }
+
+// ─── Resumo (últimos + contagem CONGELADA na abertura da janela) ───────────
+// Nada de setInterval: o tempo até o próximo diário é calculado UMA vez,
+// no momento em que a janela da Nuvem é aberta — PC da loja não sofre.
+function horaSPde(ms){ // retorna {dia, mes, ano, hora, min} no horário de São Paulo
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date(ms));
+  const o = {};
+  partes.forEach(function(p){ if(p.type !== 'literal') o[p.type] = parseInt(p.value, 10); });
+  return { dia: o.day, mes: o.month, ano: o.year, hora: o.hour % 24, min: o.minute };
+}
+const ALVO_DIARIO_HORA_UTC = 21, ALVO_DIARIO_MIN_UTC = 30; // 18:30 SP = 21:30 UTC (Brasil sem horário de verão)
+
+function proximaDiaria(ms){
+  // Próxima 18:30 de São Paulo: hoje se ainda não passou, senão amanhã.
+  const hoje = horaSPde(ms);
+  let alvo = Date.UTC(hoje.ano, hoje.mes - 1, hoje.dia, ALVO_DIARIO_HORA_UTC, ALVO_DIARIO_MIN_UTC);
+  let ehHoje = true;
+  if (ms >= alvo){ alvo += 86400000; ehHoje = false; }
+  const falta = alvo - ms;
+  const faltamH = Math.floor(falta / 3600000);
+  const faltamM = Math.floor((falta % 3600000) / 60000);
+  return {
+    ehHoje: ehHoje,
+    alvoMs: alvo,
+    faltaTexto: faltamH > 0 ? (faltamH + 'h ' + String(faltamM).padStart(2, '0') + 'min') : (faltamM + ' min'),
+    alvoSP: horaSPde(alvo)
+  };
+}
+
+function rotuloDataHora(iso){
+  if(!iso) return '—';
+  try{
+    const ms = new Date(iso).getTime();
+    const sp = horaSPde(ms);
+    return pad2(sp.dia) + '/' + pad2(sp.mes) + ' ' + pad2(sp.hora) + 'h' + pad2(sp.min);
+  }catch(e){ return dataBR(iso); }
+}
+function pad2(n){ return String(n).padStart(2, '0'); }
+
+function linhaResumo(titulo, valor, vazio){
+  return '<div style="display:flex;gap:6px;font-size:11px;line-height:1.55">' +
+    '<span style="min-width:118px;font-weight:900;color:#334155">' + titulo + '</span>' +
+    '<span style="color:' + (vazio ? '#94a3b8' : '#1e293b') + ';font-weight:700">' + (valor || vazio) + '</span></div>';
+}
+
+function preencherResumo(card, itens){
+  const box = card.querySelector('#bk-resumo'); if(!box) return;
+  const porPasta = {};
+  itens.forEach(function(b){ const p = b.pasta || ''; if(!porPasta[p]) porPasta[p] = b; }); // já vem do mais novo pro mais velho
+  const ultimo = itens[0];
+  const prox = proximaDiaria(Date.now());
+  let h = '<div style="background:#fff;border:1px solid #dbe3f5;border-radius:10px;padding:10px 12px">';
+  h += linhaResumo('🕐 Último backup:', ultimo
+    ? '<b>' + ultimo.nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(ultimo.geradoEm) + ' • ' + tamanhoBR(ultimo.tamanho)
+    : null, 'nenhum ainda');
+  h += linhaResumo('📁 Último DIÁRIO:', porPasta['Backup diario']
+    ? '<b>' + porPasta['Backup diario'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup diario'].geradoEm)
+    : null, 'o primeiro sai sozinho 18:30');
+  h += linhaResumo('📁 Último ATUALIZAÇÃO:', porPasta['Backup atualizações']
+    ? '<b>' + porPasta['Backup atualizações'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup atualizações'].geradoEm)
+    : null, 'sai sozinho quando subir versão nova');
+  h += linhaResumo('📁 Último MANUAL:', porPasta['Backup manual']
+    ? '<b>' + porPasta['Backup manual'].nome.replace(/</g,'&lt;') + '</b> • ' + rotuloDataHora(porPasta['Backup manual'].geradoEm)
+    : null, 'aperta 📸 Backup agora pra fazer');
+  h += '<div style="border-top:1px dashed #dbe3f5;margin:7px 0"></div>';
+  h += linhaResumo('⏳ Próximo diário:',
+    '<b>' + (prox.ehHoje ? 'hoje' : 'amanhã') + ' às 18:30</b> — faltam <b>' + prox.faltaTexto + '</b>');
+  h += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">tempo contado quando esta janela abriu — não fica atualizando sozinho; reabra pra atualizar.</div>';
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+async function baixarTodos(avisoEl, botao){
+  const d = await listar();
+  const itens = (d && d.backups) || [];
+  if(!itens.length){ aviso(avisoEl, 'Ainda não há backups guardados. O primeiro diário sai 18:30, e o de sistema sai na próxima atualização.', 'info'); return 0; }
+  aviso(avisoEl, 'Baixando ' + itens.length + ' backup(s) da nuvem... aguarde.', 'info');
+  const arquivos = [];
+  for(let i = 0; i < itens.length; i++){
+    if(botao) botao.innerText = '📥 ' + (i + 1) + '/' + itens.length + '...';
+    const arq = await baixarUmBackup(itens[i].chave);
+    arquivos.push({ nome: itens[i].chave, bytes: arq.bytes }); // "Backup diario/Backup 08-09-2026.json" vira pasta no zip
+  }
+  const agora = new Date();
+  const nomeZip = 'backups-digicopy-' +
+    agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0') + '-' + String(agora.getDate()).padStart(2, '0') +
+    '-' + String(agora.getHours()).padStart(2, '0') + 'h' + String(agora.getMinutes()).padStart(2, '0') + '.zip';
+  baixarArquivo(nomeZip, montarZip(arquivos));
+  aviso(avisoEl, '✅ Pronto! Baixei <b>' + itens.length + ' backup(s)</b> no arquivo <b>' + nomeZip + '</b>. Guarde no HD externo.', 'ok');
+  return itens.length;
+}
+
+async function excluirTodos(avisoEl){
+  const d = await listar();
+  const qtd = ((d && d.backups) || []).length;
+  if(!qtd){ aviso(avisoEl, 'Não há backups para apagar.', 'info'); return 0; }
+  const ok1 = await window.confirmSistema(
+    'Excluir <b>' + qtd + ' backup(s)</b> da nuvem? Isso apaga <b>somente os backups</b> — os dados atuais do sistema <b>continuam intactos</b>.',
+    'Excluir backups da nuvem');
+  if(!ok1) return 0;
+  const ok2 = await window.confirmSistema(
+    'Última confirmação: tem certeza? Se baixar tudo no HD primeiro, lembre de guardar o arquivo <b>.zip</b>. Depois de apagar, o ciclo continua normal (amanhã 18:30 sai o diário e a cada atualização sai o de sistema).',
+    'Tem certeza?');
+  if(!ok2) return 0;
+  const call = api();
+  const r = await call('/v1/backups', { method: 'DELETE' });
+  aviso(avisoEl, '🗑️ Apaguei <b>' + (r.apagados || qtd) + ' backup(s)</b> da nuvem. Os dados do sistema não foram tocados — amanhã 18:30 tem diário novo.', 'ok');
+  return r.apagados || qtd;
+}
+
+// ─── A tela (card dentro do painel Nuvem) ──────────────────────────────────
+function estiloBtn(principal){
+  return 'height:38px;padding:0 14px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;' +
+    (principal ? 'background:#0a1e8a;color:#fff;border:0' : 'background:#fff;color:#334155;border:1px solid #cbd5e1');
+}
+
+function renderLista(box, itens){
+  if(!itens.length){
+    box.innerHTML = '<div style="font-size:12px;color:#64748b;font-weight:700">Ainda não há backups. O diário sai 18:30 todo dia e o de sistema sai sozinho a cada atualização.</div>';
+    return;
+  }
+  // Separa nas pastas do desenho do dono: diário, atualizações e manual.
+  const pastas = ['Backup diario', 'Backup atualizações', 'Backup manual'];
+  const grupos = {};
+  itens.forEach(function(b){ const p = b.pasta || ''; (grupos[p] = grupos[p] || []).push(b); });
+  let html = '';
+  pastas.concat(Object.keys(grupos).filter(function(p){ return pastas.indexOf(p) < 0; })).forEach(function(p){
+    const lista = grupos[p]; if(!lista || !lista.length) return;
+    html += '<div style="font-size:11px;font-weight:900;color:#0a1e8a;margin:4px 0 2px">📁 ' + p.replace(/</g, '&lt;') + '</div>';
+    html += lista.map(function(b){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc">' +
+        '<span style="font-size:15px">📝</span>' +
+        '<span style="flex:1;min-width:0"><b style="font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + b.nome.replace(/</g, '&lt;') + '</b>' +
+        '<small style="color:#64748b;font-size:10px">' + dataBR(b.geradoEm) + ' • ' + tamanhoBR(b.tamanho) + (b.registros ? ' • ' + b.registros + ' registros' : '') + '</small></span>' +
+        '<button type="button" data-bk-baixar="' + b.chave.replace(/"/g, '&quot;') + '" title="Baixar este backup" style="' + estiloBtn(false) + ';height:30px;padding:0 9px">⬇️</button>' +
+        '<button type="button" data-bk-apagar="' + b.chave.replace(/"/g, '&quot;') + '" title="Apagar este backup" style="' + estiloBtn(false) + ';height:30px;padding:0 9px">🗑️</button>' +
+      '</div>';
+    }).join('');
+  });
+  box.innerHTML = html;
+
+  box.querySelectorAll('[data-bk-baixar]').forEach(function(btn){
+    btn.onclick = async function(){
+      try{
+        const arq = await baixarUmBackup(btn.getAttribute('data-bk-baixar'));
+        baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
+      }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backups'); }
+    };
+  });
+  box.querySelectorAll('[data-bk-apagar]').forEach(function(btn){
+    btn.onclick = async function(){
+      const chave = btn.getAttribute('data-bk-apagar');
+      const ok = await window.confirmSistema('Apagar o backup <b>' + chave + '</b> da nuvem? Os dados do sistema continuam intactos.', 'Apagar um backup');
+      if(!ok) return;
+      try{
+        const call = api();
+        await call('/v1/backup?key=' + encodeURIComponent(chave), { method: 'DELETE' });
+        carregar(box);
+      }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backups'); }
+    };
+  });
+}
+
+async function carregar(card){
+  const lista = card.querySelector('#bk-lista');
+  const rodape = card.querySelector('#bk-aviso');
+  if(lista) lista.innerHTML = '<div style="font-size:12px;color:#64748b;font-weight:700">Procurando backups na nuvem...</div>';
+  try{
+    const d = await listar();
+    const itens = (d && d.backups) || [];
+    const cont = card.querySelector('#bk-contador');
+    if(cont) cont.innerText = itens.length + ' guardado(s)';
+    preencherResumo(card, itens);
+    renderLista(lista, itens);
+    aviso(rodape, '', 'apagar');
+    if(rodape) rodape.innerHTML = '';
+  }catch(e){
+    if(lista) lista.innerHTML = '';
+    aviso(rodape, traduzErro(e), 'erro');
+  }
+}
+
+async function abrir(painelBody){
+  const card = painelBody.querySelector('#dc-backups');
+  if(!card) return;
+  // v5.24.1 — backup da nuvem depende do USUÁRIO (cargo Admin/Dono), não do
+  // aparelho. Sem cargo, a seção da nuvem mostra o cadeado e nem chama a API;
+  // a restauração por arquivo (seção de baixo) continua liberada para todos.
+  if(!usuarioAtualEhAdminBackup()){
+    card.innerHTML =
+      '<div class="bk-card" style="border:1px solid #fecaca;background:#fef2f2;border-radius:12px;padding:14px;margin-top:8px">' +
+        '<b style="color:#b91c1c">🔒 Backups da nuvem: só usuário com cargo Admin</b>' +
+        '<small class="bk-note" style="color:#7f1d1d;display:block;margin-top:6px">Entre no sistema com um usuário de cargo Admin (ex.: Kauan) — em QUALQUER computador — para ver, baixar ou apagar os backups da nuvem. A restauração por arquivo, logo abaixo, continua liberada.</small>' +
+      '</div>';
+    return;
+  }
+  card.innerHTML =
+    '<div class="bk-card" style="border:1px solid #c9ceef;background:#f4f6ff;border-radius:12px;padding:12px;margin-top:8px">' +
+      '<small class="bk-note" style="color:#475569;display:block;margin-top:2px">📁 <b>Backup diario</b>: todo dia às <b>18:30</b> sozinho • 📁 <b>Backup atualizações</b>: sozinho a cada <b>atualização</b>, com a foto da versão anterior • 📁 <b>Backup manual</b>: quando você apertar aqui embaixo. Guarda tudo compactado dentro da nuvem, em tabela só de backups. <b id="bk-contador"></b></small>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        '<button type="button" id="bk-agora" style="' + estiloBtn(true) + '">📸 Backup manual (nuvem + baixa no PC)</button>' +
+        '<button type="button" id="bk-baixar-todos" style="' + estiloBtn(false) + '">📥 Baixar todos os backups (.zip)</button>' +
+        '<button type="button" id="bk-excluir-todos" style="' + estiloBtn(false) + ';color:#b91c1c;border-color:#fecaca">🗑️ Excluir todos os backups da nuvem</button>' +
+      '</div>' +
+      '<div id="bk-resumo" style="margin-top:10px"></div>' +
+      '<div id="bk-aviso" style="margin-top:10px"></div>' +
+      '<div id="bk-lista" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:260px;overflow:auto"></div>' +
+    '</div>';
+
+  const btnB = card.querySelector('#bk-baixar-todos');
+  const btnE = card.querySelector('#bk-excluir-todos');
+  const avisoEl = card.querySelector('#bk-aviso');
+  card.querySelector('#bk-agora').onclick = async function(){
+    const b = this;
+    await acaoBackupManual(b, card);
+    carregar(card);
+  };
+  btnB.onclick = async function(){
+    try{ await baixarTodos(avisoEl, btnB); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ btnB.innerText = '📥 Baixar todos os backups'; carregar(card); }
+  };
+  btnE.onclick = async function(){
+    try{ await excluirTodos(avisoEl); }catch(e){ aviso(avisoEl, traduzErro(e), 'erro'); }
+    finally{ carregar(card); }
+  };
+  carregar(card);
+}
+
+// ─── Menu lateral BACKUP: abre a TELA NORMAL "Backup do sistema" ───────────
+// (igual às outras abas — nada de gaveta/dropdown bugado por cima da tela).
+// v5.23.2 — RESTAURAR backup: volta a valer dentro da aba (modo seguro)
+const LISTAS_DB = ['clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','logs'];
+function ehFormatoBackup(obj){
+  if(!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(listas.length < 3) return null; // backup de verdade traz várias listas
+  return listas;
+}
+function resumoBackup(obj, listas){
+  return listas.map(k => k + ': ' + obj[k].length).join('  •  ');
+}
+function preencherBanco(obj, modo){ // modo: 'substituir' (exato como o arquivo) | 'somar' (junta sem apagar)
+  if(typeof db === 'undefined' || !db) throw new Error('Banco local não carregado.');
+  const listas = LISTAS_DB.filter(k => Array.isArray(obj[k]));
+  if(modo === 'substituir'){
+    listas.forEach(k => { db[k] = obj[k].map(x => Object.assign({}, x)); });
+  }else{
+    listas.forEach(k => {
+      if(!Array.isArray(db[k])) db[k] = [];
+      const ja = new Set(db[k].map(x => x && x.id).filter(Boolean));
+      obj[k].forEach(x => {
+        if(x && x.id && ja.has(x.id)){ // mesmo id: o do backup entra só se for mais novo
+          const alvo = db[k].find(y => y && y.id === x.id);
+          if(alvo && String(x.atualizadoEm || x.criadoEm || '') > String(alvo.atualizadoEm || alvo.criadoEm || '')) Object.assign(alvo, x);
+        }else db[k].push(Object.assign({}, x));
+      });
+    });
+  }
+  if(typeof saveDB === 'function') saveDB();
+  if(typeof window.renderApp === 'function') try{ window.renderApp(); }catch(e){}
+}
+function lerArquivoJSON(inp){
+  const f = inp && inp.files && inp.files[0];
+  if(!f) return;
+  const leitor = new FileReader();
+  leitor.onload = function(){
+    const caixa = document.getElementById('bk-rest-prev');
+    try{
+      const obj = JSON.parse(String(leitor.result || ''));
+      const listas = ehFormatoBackup(obj);
+      if(!listas){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Esse arquivo não é um backup do Digicopy (não achei as listas de dados).</div>'; window.__bkRestaurar = null; return; }
+      window.__bkRestaurar = obj;
+      caixa.innerHTML = '<div style="font-size:12px;color:#166534;font-weight:800">✅ Backup reconhecido (' + escap(f.name) + ')</div>' +
+        '<div style="font-size:11px;color:#475569;margin-top:3px">' + escap(resumoBackup(obj, listas)) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
+        '<button type="button" id="bk-rest-substituir" style="' + estiloBtn(true) + '">🔄 Substitui tudo (fica exato como o backup)</button>' +
+        '<button type="button" id="bk-rest-somar" style="' + estiloBtn(false) + '">➕ Soma nos dados (não apaga nada)</button></div>';
+      caixa.querySelector('#bk-rest-substituir').onclick = function(){ confirmarRestauracao('substituir'); };
+      caixa.querySelector('#bk-rest-somar').onclick = function(){ confirmarRestauracao('somar'); };
+    }catch(e){ caixa.innerHTML = '<div style="color:#b91c1c;font-size:12px;font-weight:700">Arquivo inválido: ' + escap(e && e.message || e) + '</div>'; window.__bkRestaurar = null; }
+  };
+  leitor.readAsText(f);
+}
+async function confirmarRestauracao(modo){
+  const obj = window.__bkRestaurar;
+  if(!obj) return;
+  const perg = modo === 'substituir'
+    ? 'Isso SUBSTITUI todos os dados deste PC pelos dados do backup. O que estiver aqui e não estiver no backup some deste PC. Continuar?'
+    : 'Isso SOMA os dados do backup nos dados deste PC (linhas com o mesmo código são atualizadas se o backup for mais novo). Continuar?';
+  const ok = typeof window.confirmSistema === 'function' ? await window.confirmSistema(perg, 'Restaurar backup') : true;
+  if(!ok) return;
+  try{
+    preencherBanco(obj, modo);
+    if(typeof toast === 'function') toast(modo === 'substituir' ? 'Backup restaurado: o PC ficou exato como o arquivo ✔' : 'Backup somado aos dados ✔', 'success');
+    const caixa = document.getElementById('bk-rest-prev'); if(caixa) caixa.innerHTML = '';
+    const inp = document.getElementById('bk-rest-arq'); if(inp) inp.value = '';
+    window.__bkRestaurar = null;
+  }catch(e){ window.lfbAlert && window.lfbAlert('Falha ao restaurar: ' + (e && e.message || e), 'Restaurar backup'); }
+}
+
+// v5.23.6 — modal próprio garantido. No bundle final, cada patch vai dentro de
+// um bloco try{} do isolamento: declarações "function setModal" dos outros
+// patches ficam PRESAS no bloco e nunca viram globais. Resultado real: o botão
+// do menu Backup chamava abrirTelaBackup, que caía no fallback chamando
+// window.exportBackup — que desde a 5.23.2 É o próprio abrirTelaBackup →
+// recursão infinita, engolida pelo try/catch da captura → "botão clicável que
+// não faz nada". Agora a tela usa o esqueleto de modal nativo do app
+// (#modal-root) e, se nem isso existir, cria um overlay próprio.
+function bkSetModal(titulo, corpo, rodape, max){
+  const raiz = document.getElementById('modal-root');
+  if(raiz){
+    const box = document.getElementById('modal-box');
+    if(box) box.className = 'w-full max-w-[' + (max || '940px') + '] rounded-[18px] bg-white shadow-2xl animate-slideIn overflow-hidden max-h-[94vh] flex flex-col';
+    const t = document.getElementById('modal-title'); if(t) t.innerText = titulo;
+    const b = document.getElementById('modal-body'); if(b) b.innerHTML = corpo;
+    const f = document.getElementById('modal-footer'); if(f) f.innerHTML = rodape || '';
+    raiz.classList.remove('hidden');
+    return true;
+  }
+  let ov = document.getElementById('bk-overlay');
+  if(!ov){
+    ov = document.createElement('div'); ov.id = 'bk-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = '<div style="background:#fff;border-radius:18px;max-width:' + (max || '940px') + ';width:100%;max-height:94vh;overflow:auto;box-shadow:0 25px 60px rgba(0,0,0,.35)"><div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #e2e8f0"><b class="bk-ov-t" style="font-size:15px"></b><button type="button" class="bk-ov-x" style="font-size:18px;line-height:1;padding:4px 10px">✕</button></div><div class="bk-ov-b" style="padding:16px 18px"></div><div class="bk-ov-f" style="padding:12px 18px;border-top:1px solid #e2e8f0;text-align:right"></div></div>';
+    ov.querySelector('.bk-ov-x').onclick = function(){ window.bkFecharTelaBackup(); };
+    ov.onclick = function(ev){ if(ev.target === ov) window.bkFecharTelaBackup(); };
+    document.body.appendChild(ov);
+  }
+  ov.querySelector('.bk-ov-t').innerText = titulo;
+  ov.querySelector('.bk-ov-b').innerHTML = corpo;
+  ov.querySelector('.bk-ov-f').innerHTML = rodape || '';
+  ov.style.display = 'flex';
+  return true;
+}
+window.bkFecharTelaBackup = function(){
+  const raiz = document.getElementById('modal-root'); if(raiz){ try{ raiz.classList.add('hidden'); }catch(e){} }
+  const ov = document.getElementById('bk-overlay'); if(ov) ov.style.display = 'none';
+};
+
+// v5.23.7 — modo escuro da tela Backup: o conteúdo usa cores claras fixas
+// (estilo inline). Como inline ganha de tudo, a regra escura precisa de
+// !important — e só vale quando o app está em digi-escuro. Injetada UMA vez.
+function garantirCssBk(){
+  if(document.getElementById('bk-aba-css')) return;
+  const s = document.createElement('style'); s.id = 'bk-aba-css';
+  s.textContent = "html.digi-escuro .bk-aba div{background-color:transparent !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-aba,html.digi-escuro .bk-aba b,html.digi-escuro .bk-aba p,html.digi-escuro .bk-aba span,html.digi-escuro .bk-aba small,html.digi-escuro .bk-aba h3,html.digi-escuro .bk-aba h4{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-intro{color:#cbd5e1 !important}\nhtml.digi-escuro .bk-sec{background:#1e293b !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-sec-head{background:#0f172a !important;color:#93c5fd !important}\nhtml.digi-escuro .bk-sec-head .bk-sub{color:#94a3b8 !important}\nhtml.digi-escuro .bk-card{background:#16203a !important;border-color:#334155 !important}\nhtml.digi-escuro .bk-card h4{color:#93c5fd !important}\nhtml.digi-escuro .bk-card small{color:#94a3b8 !important}\nhtml.digi-escuro .bk-note{color:#94a3b8 !important}\nhtml.digi-escuro .bk-title{color:#e2e8f0 !important}\nhtml.digi-escuro .bk-dashed{border-color:#475569 !important}\nhtml.digi-escuro .bk-msg-erro{background:rgba(220,38,38,.16) !important;color:#fca5a5 !important;border-color:#7f1d1d !important}\nhtml.digi-escuro .bk-msg-ok{background:rgba(16,185,129,.14) !important;color:#6ee7b7 !important;border-color:#065f46 !important}\nhtml.digi-escuro .bk-msg-info{background:rgba(59,130,246,.15) !important;color:#93c5fd !important;border-color:#1e3a8a !important}";
+  document.head.appendChild(s);
+}
+
+function abrirTelaBackup(){
+  garantirCssBk();
+  bkSetModal('Backup do sistema',
+    '<div class="bk-aba"><div class="bk-intro" style="font-size:12px;color:#475569;margin-bottom:12px">São <b>3 jeitos</b> de guardar seus dados: 📸 <b>manual</b> (aperta o botão — salva na nuvem E baixa no PC), 📁 <b>diário</b> (sozinho, todo dia <b>18:30</b>) e 📁 <b>a cada atualização</b> (sozinho, foto da versão anterior). Tudo fica na nuvem, organizado em pastas.</div>' +
+    '<div class="bk-sec" style="border:1px solid #c9ceef;border-radius:12px;padding:0 0 4px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#eef1ff;padding:8px 12px;font-weight:900;font-size:13px;color:#0a1e8a">☁️ Backups na nuvem <small class="bk-sub" style="color:#64748b;font-weight:700">(sozinha, com PC desligado)</small></div>' +
+      '<div style="padding:4px 12px 10px"><div id="dc-backups"></div></div>' +
+    '</div>' +
+    // v5.24.0 — o "💾 Baixar backup para este PC" (manual SÓ local, que não ia
+    // pra nuvem) foi REMOVIDO a pedido do dono: era o botão duplicado. Ficam os
+    // 3 da nuvem (📸 manual nuvem+PC, 📥 .zip de todos, 🗑️ excluir todos) e,
+    // aqui embaixo, só a RESTAURAÇÃO a partir de arquivo — a porta de entrada
+    // dos dados, que nunca pode sumir.
+    '<div class="bk-sec" style="border:1px solid #e2e8f0;border-radius:12px;margin-top:12px;overflow:hidden">' +
+      '<div class="bk-sec-head" style="background:#f8fafc;padding:8px 12px;font-weight:900;font-size:13px;color:#334155">📥 Restaurar a partir de um arquivo de backup</div>' +
+      '<div style="padding:12px">' +
+        '<div style="margin-top:2px"><input type="file" id="bk-rest-arq" accept=".json,application/json" style="font-size:12px"></div>' +
+        '<div id="bk-rest-prev" style="margin-top:6px"></div>' +
+        '<small class="bk-note" style="color:#64748b">Escolha aqui um arquivo de backup baixado antes (o manual .json ou o conteúdo do .zip) para restaurar os dados neste computador.</small>' +
+      '</div>' +
+    '</div>' + '</div>',
+    '<button type="button" onclick="bkFecharTelaBackup()" class="h-10 px-6 rounded-xl bg-white border font-bold">Fechar</button>', '940px');
+  const restInp = document.getElementById('bk-rest-arq');
+  if(restInp) restInp.onchange = function(){ lerArquivoJSON(restInp); };
+  const raiz = document.getElementById('modal-box') || document.body;
+  setTimeout(function(){ try{ abrir(raiz); }catch(e){} }, 60);
+  // v5.23.4 — dono pediu: medir o uso oficial quando ELE abre o menu (sem cronômetro)
+  if(typeof window.DC_chamarMedidorOficial === 'function'){ try{ window.DC_chamarMedidorOficial(); }catch(e){} }
+}
+
+// 📸 Backup manual — FAZ OS DOIS: guarda na nuvem E já baixa no PC.
+async function acaoBackupManual(btn, raiz){
+  btn.innerText = '📸 fazendo...';
+  btn.disabled = true;
+  try{
+    const r = await backupAgora(); // 1) guarda na pasta Backup manual da nuvem
+    const chave = r && r.backup;
+    if(typeof toast === 'function') toast('Backup guardado na nuvem ✔', 'success');
+    try{
+      const arq = await baixarUmBackup(chave); // 2) e já baixa pro PC
+      baixarArquivo(arq.nome, new Blob([arq.bytes], { type: 'application/json' }));
+      if(typeof toast === 'function') toast('E baixado neste PC também ✔', 'success');
+    }catch(e){ window.lfbAlert && window.lfbAlert('Guardei na nuvem, mas o download falhou: ' + traduzErro(e), 'Backup manual'); }
+  }catch(e){ window.lfbAlert && window.lfbAlert(traduzErro(e), 'Backup manual'); }
+  finally{ btn.innerText = '📸 Backup manual (nuvem + baixa no PC)'; btn.disabled = false; }
+}
+
+window.abrirTelaBackup = abrirTelaBackup;
+
+// v5.23.2 — o clássico separado do menu: baixar o JSON bruto ganhou nome próprio
+// (window.exportarBackupJSON) e TODA chamada a exportBackup() abre esta aba.
+// Assim qualquer pintura/personalização antiga do menu abre a tela certa.
+if(typeof window.exportBackup === 'function' && !window.exportBackup.__v52302){
+  const _exporJSON = window.exportBackup;
+  if(!window.exportarBackupJSON) window.exportarBackupJSON = function(){ return _exporJSON.apply(this, arguments); };
+  window.exportBackup = function(){ abrirTelaBackup(); };
+  window.exportBackup.__v52302 = true;
+}
+if(typeof window.importBackup !== 'function' || !window.importBackup.__v52302){
+  window.importBackup = function(){ abrirTelaBackup(); };
+  window.importBackup.__v52302 = true;
+}
+
+// O botão Backup do menu lateral abre ESSA aba SEMPRE — interceptação por
+// CAPTURA (document): mesmo que o menu seja re-pintado por outro trecho, o
+// clique nunca mais cai no "baixar cópia" antigo (v5.22.102).
+if(typeof document !== 'undefined' && !document.__v52301bkClick){
+  document.addEventListener('click', function(ev){
+    try{
+      let alvo = ev.target && ev.target.closest ? ev.target.closest('#btn-backup-top') : null;
+      if(!alvo){
+        const b = ev.target && ev.target.closest ? ev.target.closest('button[onclick]') : null;
+        if(b && /exportBackup\s*\(\s*\)/.test(b.getAttribute('onclick') || '')){
+          // v5.23.1 — é menu se estiver no topo fixo OU dentro de um painel de menu
+          const r = b.getBoundingClientRect ? b.getBoundingClientRect() : null;
+          const noTopo = r && r.top < 90 && r.bottom > 0;
+          const noMenu = b.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(noTopo || noMenu) alvo = b;
+        }
+      }
+      if(!alvo){
+        // v5.23.1 — botão re-pintado por outro sistema (título antigo ou texto "Backup" no topo)
+        const b2 = ev.target && ev.target.closest ? ev.target.closest('button,a,[role="button"]') : null;
+        if(b2){
+          const titulo = (b2.getAttribute && b2.getAttribute('title')) || '';
+          const rotulo = ((b2.textContent || '').trim() + ' ' + titulo).toLowerCase();
+          const dentroDoTopo = b2.closest('.module,.module-menu,.modern-topnav,.command-row,.topmod,[id^="menu-"],header,nav');
+          if(dentroDoTopo && /(^|\s)backup($|\s|c[oó]pia)/.test(rotulo)) alvo = b2;
+        }
+      }
+      if(!alvo) return;
+      ev.preventDefault(); if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+    }catch(e){ return; }
+    try{ abrirTelaBackup(); }catch(e){}
+  }, true);
+  document.__v52301bkClick = true;
+}
+
+function alternar(painelBody){
+  const card = painelBody.querySelector('#dc-backups');
+  if(!card) return;
+  if(card.innerHTML && card.innerHTML.length > 0){ card.innerHTML = ''; return; }
+  abrir(painelBody);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// v5.24.2 — VISIBILIDADE DOS MENUS Nuvem e Backup: só o cargo ADMIN vê os
+// dois menus (pedido final do dono: "somente o admin vai ver os menus de
+// nuvem e de backup; o Dono não vê nem a nuvem nem o backup"). IMPORTANTE: o
+// MOTOR de sincronização continua rodando em silêncio para TODO mundo —
+// escondemos só os botões, os dados dos outros caixas/PCs continuam fluindo.
+function aplicarVisibilidadeMenusNuvemBackup(){
+  try{
+    if(typeof document==='undefined') return true;
+    const ok=usuarioAtualEhAdminBackup();
+    const btnN=document.getElementById('btn-nuvem');
+    if(btnN){ const w1=btnN.closest('.module')||btnN; w1.style.display=ok?'':'none'; }
+    const btnB=document.getElementById('btn-backup-top');
+    if(btnB){ const w2=btnB.closest('.module')||btnB; w2.style.display=ok?'':'none'; }
+    // ícone de download direto no cabeçalho (exportBackup puro) — também é backup
+    const icones=document.querySelectorAll('button[onclick="exportBackup()"]');
+    for(let i=0;i<icones.length;i++){ icones[i].style.display=ok?'':'none'; }
+    return ok;
+  }catch(e){ return true; } // em dúvida não esconde: evita sumir o menu do Admin por erro bobo
+}
+try{
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',aplicarVisibilidadeMenusNuvemBackup);
+  else aplicarVisibilidadeMenusNuvemBackup();
+}catch(e){}
+// guarda permanente: login/logout/troca de usuário repinta a tela — reavalia sempre
+if(!window.__v5242visMenus){ window.__v5242visMenus=setInterval(aplicarVisibilidadeMenusNuvemBackup,2000); }
+// trava extra: mesmo que alguém force a tela da Nuvem sem cargo Admin, ela não abre
+(function travaTelaNuvem(){
+  if(typeof window.abrirCloudflareNuvem==='function' && !window.abrirCloudflareNuvem.__v5242){
+    const antiga=window.abrirCloudflareNuvem;
+    window.abrirCloudflareNuvem=async function(){
+      if(!usuarioAtualEhAdminBackup()){
+        if(typeof window.toast==='function') window.toast('🔒 O menu Nuvem é só para usuário com cargo Admin.');
+        return;
+      }
+      return antiga.apply(this,arguments);
+    };
+    window.abrirCloudflareNuvem.__v5242=true;
+  }
+  if(!(typeof window.abrirCloudflareNuvem==='function' && window.abrirCloudflareNuvem.__v5242)) setTimeout(travaTelaNuvem,800);
+})();
+
+window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, aplicarVisibilidadeMenus: aplicarVisibilidadeMenusNuvemBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
+console.log('[DIGICOPY] menu Backup (aba normal) carregado');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
+;
+
+/* ===== ajustes_v5240_relatorio_grande_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES v5.24.0 — RELATÓRIO GRANDE DO DONO
+//
+// Cobre, junto com as edições nas fontes já existentes:
+//   1.2 Backup: tela sem o botão local duplicado (edição no ajustes_v52296) e
+//       numeração sequencial no worker ("Backup manual 1, 2, 3...").
+//   2.1 Atalho "Nova venda" removido do menu (index.html).
+//   2.2 Extorno ESTE ARQUIVO: window.estornarVenda (o botão do detalhe chamava
+//       uma função que não existia — botão morto) + estornarVendasSelecionadas
+//       (lote, mesma caixa de seleção do Excluir) + botão "↩ Extornar" na barra.
+//       Modo escolhido pelo dono: marca "Extornada" (fica no histórico), desfaz
+//       o financeiro (contas a receber da venda), NÃO mexe no estoque (o
+//       faturamento também não mexia — ele baixa quando a venda nasce).
+//   3.x Perda de dados: varrerRessuscitadas desativado (ajustes_v52261),
+//       conflito de push com 1 reenvio (cloudflare_data_sync), reconciliação
+//       só com pull completo (cloudflare_data_sync), backup antes de zerar a
+//       nuvem (worker).
+//   4.1 "cliente não encontrado" ao salvar cliente com id velho → vira
+//       cadastro novo em vez de abortar (clientes_patch).
+//   4.2 Orçamento não encontrado neste PC → busca na nuvem e tenta de novo.
+//   5.1 Botão "Importar clientes" e funções removidos (finalizacao_sistema).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+var VERSAO = '5.24.0';
+
+function low(v){ return String(v==null?'':v).toLowerCase(); }
+function DB(){ if(typeof db!=='undefined' && db) return db; if(typeof window!=='undefined' && window.db) return window.db; return {}; }
+
+// ── 2.2 EXTORNO ─────────────────────────────────────────────────────────────
+function ehFaturada(st){
+  var s = low(st);
+  return s==='faturado' || s==='finalizada' || s==='concluido' || s==='pago';
+}
+
+// Espelho do faturamento (vosConcluirFaturamento): o faturar só mexia em
+// status + contas a receber (parcelas ou à vista). O estorno desfaz só isso.
+function estornarUmaVenda(v){
+  if(!v || !ehFaturada(v.status)) return null;
+  var sess = typeof getSession==='function' ? getSession() : null;
+  var antes = low(v.status);
+  var arr = (DB().contasReceber || []);
+  var titulos = arr.filter(function(c){ return c && c.vendaId === v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  // v6.0.5 — pedido dele: o título NÃO SOME mais do Financeiro. Fica marcado
+  // como EXTORNADO (visível com tarja própria, fora das somas de aberto/
+  // recebido/vencido — mesma regra que a leitura já usava desde a v5.25.0).
+  titulos.forEach(function(c){
+    c.estornoDe = c.status;
+    c.status = 'estornado';
+    c.estornadoEm = new Date().toISOString();
+    c.estornadoPor = (sess && sess.usuarioNome) || '-';
+  });
+  v.status = 'estornada';
+  v.estornoDe = antes;
+  v.estornadoEm = new Date().toISOString();
+  v.estornadoPor = (sess && sess.usuarioNome) || '-';
+  v.parcelas = [];
+  v.formaPagamento = 'Não faturado';
+  if(typeof logAction==='function') logAction('venda','estornar',v.id,'Estornada venda '+v.numero+' (era '+antes+') — '+titulos.length+' título(s) marcado(s) como extornado(s) no financeiro, '+pagos+' já pago(s), por '+v.estornadoPor);
+  return { titulos: titulos.length, pagos: pagos };
+}
+
+function acharVenda(id){
+  var v = (DB().vendas || []).find(function(x){ return x && x.id===id; });
+  if(!v && typeof vosLegadosVendas==='function'){
+    try{
+      var sess = typeof getSession==='function' ? getSession() : null;
+      v = (vosLegadosVendas(sess) || []).find(function(x){ return x && x.id===id; });
+    }catch(e){}
+  }
+  return v || null;
+}
+
+function renderDepois(){
+  if(typeof saveDB==='function') saveDB();
+  if(typeof renderVendas==='function') renderVendas();
+  if(typeof renderFinanceiro==='function') renderFinanceiro();
+  if(typeof renderAuditoria==='function') renderAuditoria();
+}
+
+function aviso(txt, titulo){
+  if(typeof window!=='undefined' && typeof window.lfbAlert==='function'){ window.lfbAlert(txt, titulo || 'Extornar'); return; }
+  if(typeof toast==='function'){ toast(txt, 'info'); return; }
+  if(typeof alert==='function') alert(txt);
+}
+function confirma(txt, titulo, cb){
+  if(typeof window!=='undefined' && typeof window.confirmSistema==='function'){ window.confirmSistema(txt, titulo || 'Extornar venda').then(cb); return; }
+  cb(typeof confirm==='function' ? confirm(txt) : true);
+}
+
+// Individual — o botão "Estornar" do detalhe da venda já CHAMAVA
+// estornarVenda(...), mas a função não existia em lugar nenhum: botão morto.
+window.estornarVenda = function(id){
+  var v = acharVenda(id);
+  if(!v){ aviso('Venda não encontrada.', 'Extornar'); return; }
+  if(!ehFaturada(v.status)){
+    aviso(low(v.status)==='estornada' ? 'Esta venda já está extornada.' : 'Só dá para extornar venda FATURADA (esta ainda está como "'+(v.status||'orçamento')+'").', 'Extornar');
+    return;
+  }
+  var titulos = (DB().contasReceber || []).filter(function(c){ return c && c.vendaId===v.id; });
+  var pagos = titulos.filter(function(c){ return low(c.status)==='pago'; }).length;
+  confirma('Extornar a venda ' + (v.numero||'') + '?\n\n• As contas a receber dela ficam marcadas como EXTORNADO no Financeiro (' + titulos.length + ' título(s)' + (pagos ? ', sendo ' + pagos + ' já pago(s) — confira o caixa' : '') + '); continuam visíveis com a tarja, fora das somas.\n• Ela fica marcada como "Extornada" no histórico — clicar nela reabre a aba da venda com os dados, ajusta e fatura de novo.\n• Depois disso, o botão Excluir passa a permitir apagar, se você quiser.', 'Extornar venda', function(ok){
+    if(!ok) return;
+    estornarUmaVenda(v);
+    renderDepois();
+    if(typeof showVenda==='function') showVenda(v.id);
+    if(typeof toast==='function') toast('Venda extornada', 'success');
+  });
+};
+
+// Em lote — a mesma caixa de seleção do Excluir (checkboxes venda-check-lote
+// ou a linha selecionada). Só vendas FATURADAS entram; o resto é avisado.
+window.estornarVendasSelecionadas = function(){
+  var checks = Array.prototype.slice.call(document.querySelectorAll('input[name="venda-check-lote"]:checked'));
+  var alvos = [];
+  if(checks.length){
+    alvos = checks.map(function(ch){ return acharVenda(ch.value); }).filter(Boolean);
+  }else{
+    var selId = window.neoVendaSelecionada || window.vendaSelecionadaId;
+    if(selId){ var unica = acharVenda(selId); if(unica) alvos = [unica]; }
+  }
+  if(!alvos.length){ aviso('Selecione uma venda na tabela ou marque as caixas de seleção para extornar.', 'Extornar vendas'); return; }
+  var faturadas = alvos.filter(function(x){ return ehFaturada(x.status); });
+  if(!faturadas.length){ aviso('Só vendas FATURADAS podem ser extornadas. Você selecionou ' + alvos.length + ' venda(s), nenhuma faturada.', 'Extornar vendas'); return; }
+  var puladas = alvos.length - faturadas.length;
+  confirma('Extornar ' + faturadas.length + ' venda(s) faturada(s)?\n\n• As contas a receber delas ficam marcadas como EXTORNADO no Financeiro (as já pagas/à vista também — confira o caixa depois); continuam visíveis com a tarja, fora das somas.\n• Ficam marcadas como "Extornada" no histórico — clicar nelas reabre a aba da venda com os dados.\n• Depois disso, o Excluir passa a permitir apagar, se você quiser.' + (puladas ? '\n\n(' + puladas + ' selecionada(s) não faturada(s) serão ignoradas.)' : ''), 'Extornar vendas', function(ok){
+    if(!ok) return;
+    var n = 0, tit = 0, pagos = 0;
+    faturadas.forEach(function(v){
+      var r = estornarUmaVenda(v);
+      if(r){ n++; tit += r.titulos; pagos += r.pagos; }
+    });
+    renderDepois();
+    window.neoVendaSelecionada = null; window.vendaSelecionadaId = null;
+    if(typeof toast==='function') toast(n + ' venda(s) extornada(s) • ' + tit + ' título(s) agora marcados como EXTORNADO no Financeiro' + (pagos ? ' (' + pagos + ' à vista — confira o caixa)' : ''), 'success');
+  });
+};
+
+// Botão "Extornar" na MESMA barra de ações das notinhas (ao lado do Excluir,
+// que é injetado como #btn-excluir-venda-unificado na .neo-actions).
+function garantirBotaoExtornar(){
+  try{
+    if(typeof document==='undefined') return;
+    var view = document.getElementById('view-vendas');
+    if(!view) return;
+    var actions = view.querySelector('.neo-actions');
+    if(!actions) return;
+    if(actions.querySelector('#btn-estornar-venda')) return;
+    var btn = document.createElement('button');
+    btn.id = 'btn-estornar-venda';
+    btn.className = 'neo-btn';
+    btn.innerHTML = '<i class="ph ph-arrow-u-up-left"></i>Extornar';
+    btn.onclick = window.estornarVendasSelecionadas;
+    var exc = actions.querySelector('#btn-excluir-venda-unificado');
+    if(exc) actions.insertBefore(btn, exc); else actions.appendChild(btn);
+  }catch(e){}
+}
+if(typeof window!=='undefined' && typeof window.renderVendas==='function' && !window.renderVendas.__v5240ext){
+  var _renderVendasAntes = window.renderVendas;
+  window.renderVendas = function(){
+    var r = _renderVendasAntes.apply(this, arguments);
+    try{ setTimeout(garantirBotaoExtornar, 60); }catch(e){}
+    return r;
+  };
+  window.renderVendas.__v5240ext = true;
+}
+if(typeof document!=='undefined'){
+  setTimeout(garantirBotaoExtornar, 1600);
+  setInterval(garantirBotaoExtornar, 3000);
+}
+
+// ── 4.2 ORÇAMENTO NÃO ENCONTRADO NESTE PC ───────────────────────────────────
+// Antes de declarar que não achou, puxa a nuvem (tick da sincronização) e
+// tenta de novo até 2 vezes. Resolve o "existe no outro PC, aqui não abre".
+if(typeof window!=='undefined' && typeof window.abrirTelaOrcamento==='function' && !window.abrirTelaOrcamento.__v5240){
+  var _abrirOrcAntes = window.abrirTelaOrcamento;
+  window.abrirTelaOrcamento = function(){
+    var arg = arguments[0] || {};
+    var id = arg && arg.id;
+    if(!id) return _abrirOrcAntes.apply(this, arguments);
+    var existe = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+    if(existe) return _abrirOrcAntes.apply(this, arguments);
+    var self = this, args = arguments, tent = 0;
+    if(typeof toast==='function') toast('Buscando o orçamento na nuvem…', 'info');
+    (function tente(){
+      var chegou = (DB().orcamentos || []).some(function(x){ return x && x.id===id; });
+      if(chegou){ _abrirOrcAntes.apply(self, args); return; }
+      if(tent >= 2){
+        if(typeof window.lfbAlert==='function') window.lfbAlert('Orçamento não encontrado neste computador — nem depois de buscar na nuvem. Confira a internet e tente de novo em alguns segundos; se ele foi EXCLUÍDO em outro aparelho, ele não volta.', 'Orçamento');
+        return;
+      }
+      tent++;
+      var p = null;
+      try{ if(window.DIGICOPY_CLOUD_SYNC && window.DIGICOPY_CLOUD_SYNC.tick) p = window.DIGICOPY_CLOUD_SYNC.tick('orc-nao-achado'); }catch(e){}
+      Promise.resolve(p).catch(function(){}).then(function(){ setTimeout(tente, 900); });
+    })();
+    return undefined;
+  };
+  window.abrirTelaOrcamento.__v5240 = true;
+}
+
+var _pureV5240 = { VERSAO: VERSAO, ehFaturada: ehFaturada, estornarUmaVenda: estornarUmaVenda };
+if(typeof window!=='undefined') window.V5240_RELATORIO_PURE = _pureV5240;
+if(typeof module!=='undefined' && module.exports){ module.exports = _pureV5240; }
+
+if(typeof document!=='undefined' && typeof console!=='undefined' && console.log){
+  console.log('[DIGICOPY] v' + VERSAO + ': extorno individual + em lote (botão nas notinhas), orçamento com retry de nuvem');
+}
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5240_relatorio_grande_patch.js", e); }
+;
+
+/* ===== ajustes_v5243_cliente_abas_patch.js (escopo global) ===== */
+// ═══════════════════════════════════════════════════════════════════════════
+// ajustes_v5243_cliente_abas_patch.js — v5.24.3
+//
+// Item 5.2 do relatório: o cadastro do cliente ganha ABAS —
+//   [Dados] (o formulário de sempre) | [Vendas] | [Financeiro] |
+//   [Orçamentos] | [Chamados] | [Leituras]
+// Cada aba lista TUDO que existe daquele cliente no módulo correspondente.
+//
+// v5.24.4 (redesenho dele): abas = [Dados] e [Histórico do sistema]; dentro
+// do Histórico há sub-menus (Vendas por padrão, Financeiro, Orçamentos,
+// Chamados, Leituras). A listagem tem caixas de múltipla escolha com botões
+// Excluir / Extornar / Abrir lista de origem; o registro específico abre com
+// o BOTÃO DIREITO do mouse direto no módulo de origem. (O resumo intermediário
+// da v5.24.3 foi aposentado a pedido dele.)
+//
+// Reforço 4.1: qualquer erro inesperado ao salvar o cliente NÃO fecha a tela
+// e NÃO perde o digitado — mostra o motivo exato num aviso vermelho.
+//
+// v5.24.5 (nova rodada dele):
+//  • Excluir é DE VEZ (some da tela, do PC e da nuvem — orçamento inclusive,
+//    sem marca-fantasma); o que estava excluído NUNCA mais aparece na lista;
+//  • cada linha mostra o STATUS igual ao módulo de origem (Salva, Faturada,
+//    Estornada, Em aberto...);
+//  • a ficha sempre abre em Dados — o botão Salvar nunca mais some;
+//  • clicar num registro que já não existe atualiza a lista e avisa, em vez
+//    de abrir o módulo às cegas;
+//  • 4.1 curado de vez: a busca de cliente da venda refaz o índice sozinha
+//    quando a base troca por baixo, e o clique se CURA com o dado da própria
+//    busca (1ª tentativa não falha mais).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── núcleo puro (testável no Node, sem tela) ────────────────────────────────
+const CLITAB_PURE = {
+  filtra: function(db, colecao, clienteId, empresaId){
+    return (((db||{})[colecao])||[]).filter(function(x){
+      if(!x || x.clienteId!==clienteId || (empresaId && x.empresaId!==empresaId)) return false;
+      if(x.deletedAt || x.excluido===true) return false;                 // v5.24.5: apagado de vez não aparece
+      if(String(x.status||'').toLowerCase()==='excluido') return false;  // idem marcações antigas
+      return true;
+    });
+  },
+  // rótulo + cor do status IGUAIS ao módulo de origem (v5.24.5)
+  chipStatus: function(status){
+    const s=String(status==null||status===''?'salvo':status).toLowerCase();
+    const map={faturado:['Faturada','bg-green-100 text-green-700'],faturada:['Faturada','bg-green-100 text-green-700'],pago:['Pago','bg-green-100 text-green-700'],quitado:['Pago','bg-green-100 text-green-700'],finalizado:['Finalizado','bg-green-100 text-green-700'],aprovado:['Aprovado','bg-green-100 text-green-700'],estornada:['Estornada','bg-amber-100 text-amber-700'],estornado:['Estornado','bg-amber-100 text-amber-700'],aguardando:['Aguardando','bg-amber-100 text-amber-700'],andamento:['Em andamento','bg-amber-100 text-amber-700'],analise:['Em análise','bg-amber-100 text-amber-700'],vencido:['Vencido','bg-red-100 text-red-700'],cancelado:['Cancelado','bg-red-100 text-red-700'],orcamento:['Orçamento','bg-sky-100 text-sky-700'],aberto:['Em aberto','bg-blue-100 text-blue-700'],aberta:['Aberta','bg-blue-100 text-blue-700'],salvo:['Salva','bg-blue-100 text-blue-700'],rascunho:['Salva','bg-blue-100 text-blue-700'],pendente:['Pendente','bg-blue-100 text-blue-700']};
+    return map[s]||[String(status),'bg-slate-100 text-slate-600'];
+  },
+  contagens: function(db, clienteId, empresaId){
+    const f=CLITAB_PURE.filtra;
+    return {
+      vendas:     f(db,'vendas',clienteId,empresaId).length,
+      financeiro: f(db,'contasReceber',clienteId,empresaId).length,
+      orcamentos: f(db,'orcamentos',clienteId,empresaId).length,
+      chamados:   f(db,'os',clienteId,empresaId).length,
+      leituras:   f(db,'leituras',clienteId,empresaId).length
+    };
+  },
+  totalOrc: function(o){
+    if(!o) return 0;
+    if(typeof o.total==='number') return o.total;
+    return ((o.itens)||[]).reduce(function(s,it){
+      const sub=(it&&it.subtotal!=null)?Number(it.subtotal):(Number((it||{}).qtd)||0)*(Number((it||{}).preco)||0);
+      return s+(isFinite(sub)?sub:0);
+    },0);
+  },
+  ordenaPorDataDesc: function(lista, campoData){
+    return (lista||[]).slice().sort(function(a,b){
+      const da=new Date((a&&(a[campoData]||a.criadoEm||a.data))||0).getTime()||0;
+      const dbb=new Date((b&&(b[campoData]||b.criadoEm||b.data))||0).getTime()||0;
+      return dbb-da;
+    });
+  }
+};
+if(typeof module!=='undefined' && module.exports) module.exports = CLITAB_PURE;
+
+(function(){
+'use strict';
+if(typeof window==='undefined') return;
+window.CLITAB_PURE = CLITAB_PURE;
+
+// ── formatadores com fallback (os oficiais moram no app.js) ────────────────
+function _money(v){ try{ if(typeof fmtMoney==='function') return fmtMoney(v); }catch(e){} const n=Number(v||0); return 'R$ '+(isFinite(n)?n.toFixed(2).replace('.',','):String(v)); }
+function _data(d){ try{ if(typeof fmtDate==='function') return fmtDate(d); }catch(e){} return String(d||'').slice(0,10); }
+function _dataHora(d){ try{ if(typeof fmtDateTime==='function') return fmtDateTime(d); }catch(e){} return _data(d); }
+function _esc(s){ try{ if(typeof escapeHtml==='function') return escapeHtml(String(s==null?'':s)); }catch(e){} return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function _sess(){ try{ return (typeof getSession==='function'?getSession():null)||{}; }catch(e){ return {}; } }
+function chipStatusHtml(status){ const m=CLITAB_PURE.chipStatus(status); return '<span class="px-1.5 py-0.5 rounded '+m[1]+' font-bold text-[10px] uppercase tracking-wide shrink-0">'+_esc(m[0])+'</span>'; }
+function _dbx(){ return (typeof db!=='undefined'&&db)||{}; }
+
+const ABAS = [
+  ['dados','Dados','ph-identification-card'],
+  ['historico','Histórico do sistema','ph-clock-counter-clockwise']
+];
+// 5.2.2 — dentro do Histórico, os sub-menus; por padrão abre em VENDAS.
+const SUBABAS = [
+  ['vendas','Vendas','ph-shopping-cart'],
+  ['financeiro','Financeiro','ph-money'],
+  ['orcamentos','Orçamentos','ph-file-text'],
+  ['chamados','Chamados','ph-wrench'],
+  ['leituras','Leituras','ph-gauge']
+];
+
+// ── barra de abas dentro do cadastro do cliente ─────────────────────────────
+function montarAbasCliente(id){
+  if(!id) return; // cadastro NOVO: ainda não existe histórico para listar
+  if(typeof document==='undefined') return;
+  const body=document.getElementById('modal-body'); if(!body) return;
+  const anterior=(window.__clitab && window.__clitab.id===id) ? window.__clitab : null;
+  // v5.24.5: a ficha SEMPRE abre em Dados (o botão Salvar nunca some de novo);
+  // só o sub-menu do Histórico lembra a última escolha — isso não esconde botão.
+  window.__clitab={ id:id, empresaId:_sess().empresaId||'', aba:'dados', sub:(anterior&&anterior.sub)||'vendas', sel:{}, feitas:{} };
+
+  // embrulha o formulário que a tela já montou como a aba "Dados"
+  const paneDados=document.createElement('div');
+  paneDados.id='clitab-pane-dados';
+  while(body.firstChild) paneDados.appendChild(body.firstChild);
+
+  const bar=document.createElement('div');
+  bar.id='clitab-bar';
+  bar.className='flex flex-wrap gap-1.5 mb-4 border-b pb-3';
+
+  const holder=document.createElement('div');
+  holder.id='clitab-holder';
+  holder.appendChild(paneDados);
+
+  const paneHist=document.createElement('div');
+  paneHist.id='clitab-pane-historico';
+  paneHist.className='hidden';
+  paneHist.innerHTML=
+    '<div id="clitab-subbar" class="flex flex-wrap gap-1.5 mb-3"></div>'+
+    '<div id="clitab-sub-holder"></div>'+
+    '<div id="clitab-acoes" class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t">'+
+      '<button type="button" id="clitab-btn-excluir" onclick="clitabExcluir()" class="h-9 px-4 rounded-xl bg-white border border-red-200 text-red-600 font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-trash"></i> Excluir selecionados</button>'+
+      '<button type="button" id="clitab-btn-extornar" onclick="clitabExtornar()" class="h-9 px-4 rounded-xl bg-amber-500 text-white font-bold text-[12px] disabled:opacity-40" disabled><i class="ph ph-arrow-u-up-left"></i> Extornar selecionados</button>'+
+      '<button type="button" id="clitab-btn-lista" onclick="clitabAbrirLista()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white font-bold text-[12px]"><i class="ph ph-arrow-square-out"></i> Abrir lista de origem</button>'+
+      '<button type="button" onclick="clitabAbrirClienteNaLista()" class="h-9 px-4 rounded-xl bg-white border border-[#0a1e8a] text-[#0a1e8a] font-bold text-[12px]"><i class="ph ph-users"></i> Este cliente na lista</button>'+
+      '<span class="text-[11px] text-slate-400 ml-auto">Marque as caixas para agir em lote • botão direito do mouse abre o registro no módulo</span>'+
+    '</div>';
+  holder.appendChild(paneHist);
+
+  body.appendChild(bar);
+  body.appendChild(holder);
+
+  window.clitabAbrir('dados');
+}
+
+
+function pintarBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-bar'); if(!bar) return;
+  bar.innerHTML=ABAS.map(function(a){
+    const ativo=st.aba===a[0];
+    return '<button type="button" onclick="clitabAbrir(\''+a[0]+'\')" class="h-9 px-4 rounded-xl text-[12px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+'</button>';
+  }).join('');
+}
+
+function pintarSubBarra(){
+  const st=window.__clitab; if(!st) return;
+  const bar=document.getElementById('clitab-subbar'); if(!bar) return;
+  const n=CLITAB_PURE.contagens(_dbx(), st.id, st.empresaId);
+  bar.innerHTML=SUBABAS.map(function(a){
+    const ativo=st.sub===a[0];
+    return '<button type="button" onclick="clitabSub(\''+a[0]+'\')" class="h-8 px-3 rounded-xl text-[11.5px] font-bold flex items-center gap-1.5 '+(ativo?'bg-[#0a1e8a] text-white shadow':'bg-white border text-slate-600 hover:bg-slate-50')+'"><i class="ph '+a[2]+'"></i>'+a[1]+' <b>'+(n[a[0]]||0)+'</b></button>';
+  }).join('');
+}
+
+window.clitabAbrir=function(aba){
+  const st=window.__clitab; if(!st) return;
+  st.aba=aba;
+  const pd=document.getElementById('clitab-pane-dados');
+  const ph=document.getElementById('clitab-pane-historico');
+  if(pd) pd.classList.toggle('hidden', aba!=='dados');
+  if(ph) ph.classList.toggle('hidden', aba!=='historico');
+  // o botão Salvar só faz sentido na aba Dados
+  const foot=document.getElementById('modal-footer');
+  if(foot) foot.style.display=(aba==='dados')?'':'none';
+  if(aba==='historico'){ window.clitabSub(st.sub||'vendas'); } // 5.2.2: padrão = vendas
+  pintarBarra();
+};
+
+window.clitabSub=function(sub){
+  const st=window.__clitab; if(!st) return;
+  st.sub=sub;
+  st.sel[sub]=st.sel[sub]||{};
+  renderSub(sub);            // v5.24.4: sempre fresco (exclusões/estornos)
+  pintarSubBarra();
+  const btnExt=document.getElementById('clitab-btn-extornar');
+  if(btnExt) btnExt.style.display=(sub==='vendas')?'':'none';
+  atualizarBotoes();
+};
+
+// ── listagem com caixas de múltipla escolha (5.2.1 novo modelo) ────────────
+function linha(tipo, id, colEsq, colDir, detalhe){
+  return '<div class="clitab-row flex items-center gap-2 px-2 py-2 rounded-xl border bg-white hover:bg-[#f4f6ff] transition cursor-pointer" '
+    +'data-tipo="'+tipo+'" data-id="'+id+'" onclick="clitabToggleSel(this)" '
+    +'oncontextmenu="event.preventDefault(); clitabAbrirRegistro(\''+tipo+'\',\''+id+'\')" '
+    +'title="Botão direito do mouse: abrir este registro no módulo de origem">'
+    +'<input type="checkbox" class="clitab-sel w-4 h-4 shrink-0 cursor-pointer" onclick="event.stopPropagation(); clitabToggleSel(this.parentNode, true)">'
+    +'<div class="min-w-0 flex-1"><p class="font-semibold text-[12.5px] truncate">'+colEsq+'</p><p class="text-[11px] text-slate-500 truncate">'+detalhe+'</p></div>'
+    +'<div class="text-right shrink-0"><b class="text-[12.5px]">'+colDir+'</b></div></div>';
+}
+function vazioAba(rotulo){
+  return '<div class="p-10 text-center text-slate-400 text-[12.5px]"><i class="ph ph-tray text-[26px] block mb-2 opacity-40"></i>Nenhum(a) '+rotulo+' para este cliente ainda.</div>';
+}
+function renderSub(sub){
+  const st=window.__clitab; const pane=document.getElementById('clitab-sub-holder');
+  if(!st||!pane) return;
+  const banco=_dbx();
+  const f=function(col){ return CLITAB_PURE.filtra(banco,col,st.id,st.empresaId); };
+  let html='';
+  if(sub==='vendas'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('vendas'),'data');
+    html=list.map(function(v){
+      return linha('venda',v.id, 'Nº '+_esc(v.numero||'-')+' — '+_data(v.data), _money(v.total), chipStatusHtml(v.status)+' '+_esc(v.formaPagamento||'')+' • por '+_esc(v.criadoPorNome||'-'));
+    }).join('')||vazioAba('venda');
+  }else if(sub==='financeiro'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('contasReceber'),'vencimento');
+    html=list.map(function(c){
+      return linha('financeiro',c.id, _esc(c.descricao||'-'), _money(c.valor), chipStatusHtml(c.status)+' vence '+_data(c.vencimento)+' • '+_esc(c.origem||''));
+    }).join('')||vazioAba('conta a receber');
+  }else if(sub==='orcamentos'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('orcamentos'),'data');
+    html=list.map(function(o){
+      return linha('orcamento',o.id, 'Nº '+_esc(o.numero||o.codigo||'-')+' — '+_data(o.data), _money(CLITAB_PURE.totalOrc(o)), chipStatusHtml(o.status)+((o.observacao||o.obs)?' • '+_esc(String(o.observacao||o.obs).slice(0,50)):''));
+    }).join('')||vazioAba('orçamento');
+  }else if(sub==='chamados'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('os'),'dataAbertura');
+    html=list.map(function(o){
+      return linha('chamado',o.id, 'OS '+_esc(o.numero||'-')+' — '+_esc(o.tipo||''), _esc(o.prioridade||''), chipStatusHtml(o.status)+' '+_esc(String(o.descricao||'').slice(0,60)));
+    }).join('')||vazioAba('chamado');
+  }else if(sub==='leituras'){
+    const list=CLITAB_PURE.ordenaPorDataDesc(f('leituras'),'dataLeitura');
+    html=list.map(function(l){
+      const eq=((banco.equipamentos)||[]).find(function(e){ return e.id===l.equipamentoId; })||{};
+      return linha('leitura',l.id, _data(l.dataLeitura)+' — '+_esc(eq.modelo||'equipamento'), _money(l.valorExcedente), chipStatusHtml(l.status)+' PB '+_esc(l.consumoPB!=null?l.consumoPB:'-')+' • COR '+_esc(l.consumoCor!=null?l.consumoCor:'-'));
+    }).join('')||vazioAba('leitura');
+  }
+  pane.innerHTML='<div class="space-y-2 max-h-[52vh] overflow-auto pr-1">'+html+'</div>';
+}
+
+// ── seleção múltipla + botões de lote ───────────────────────────────────────
+window.clitabToggleSel=function(row, doCheckbox){
+  try{
+    const st=window.__clitab; if(!st||!row) return;
+    const cb=row.querySelector('.clitab-sel'); if(!cb) return;
+    const marcado = doCheckbox ? cb.checked : !cb.checked;
+    cb.checked = marcado;
+    row.classList.toggle('border-[#0a1e8a]', marcado);
+    row.classList.toggle('bg-[#eef2ff]', marcado);
+    const sub=st.sub; st.sel[sub]=st.sel[sub]||{};
+    if(marcado) st.sel[sub][row.dataset.id]=true; else delete st.sel[sub][row.dataset.id];
+    atualizarBotoes();
+  }catch(e){}
+};
+function atualizarBotoes(){
+  const st=window.__clitab; if(!st) return;
+  const n=Object.keys(st.sel[st.sub]||{}).length;
+  const be=document.getElementById('clitab-btn-excluir');
+  const bx=document.getElementById('clitab-btn-extornar');
+  if(be){ be.disabled=!n; be.innerHTML='<i class="ph ph-trash"></i> Excluir'+(n?' ('+n+')':' selecionados'); }
+  if(bx){ bx.disabled=!n; bx.innerHTML='<i class="ph ph-arrow-u-up-left"></i> Extornar'+(n?' ('+n+')':' selecionados'); }
+  const bl=document.getElementById('clitab-btn-lista');
+  if(bl){ bl.innerHTML='<i class="ph ph-arrow-square-out"></i> '+(n?('Abrir selecionado(s) ('+n+')'):'Abrir lista de origem'); }
+}
+function logCli(acao,id,det){ try{ if(typeof logAction==='function') logAction('cliente-hist',acao,id,det); }catch(e){} }
+function removerRegistro(sub, id){
+  const banco=_dbx();
+  if(sub==='venda'){
+    const v=((banco.vendas)||[]).find(function(x){return String(x.id)===String(id);}); if(!v) return false;
+    const stt=String(v.status||'').toLowerCase();
+    if(/faturad|finalizad|conclu|pago/.test(stt)) return 'pula'; // faturada: só sai estornando antes (regra do sistema)
+    try{ (v.itens||[]).forEach(function(it){ const p=((banco.produtos)||[]).find(function(x){return x.id===it.produtoId;}); if(p&&p.categoria!=='Serviço'&&p.categoria!=='Recarga') p.estoque=(p.estoque||0)+(Number(it.qtd)||0); }); }catch(e){}
+    db.vendas=(banco.vendas||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_venda',id,'Venda '+_esc(v.numero||'')+' excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='financeiro'){
+    db.contasReceber=((banco.contasReceber)||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_conta',id,'Conta a receber excluída pela ficha do cliente');
+    return true;
+  }
+  if(sub==='orcamento'){
+    const o=((banco.orcamentos)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
+    // v5.24.5 — ordem dele: deletar é DE VEZ. Sai daqui, a nuvem recebe o
+    // comando de apagar e os outros PCs apagam também (sem marca-fantasma).
+    db.orcamentos=(banco.orcamentos||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_orcamento',id,'Orçamento excluído de vez pela ficha do cliente');
+    return true;
+  }
+  if(sub==='chamado'){
+    const o=((banco.os)||[]).find(function(x){return String(x.id)===String(id);}); if(!o) return false;
+    db.os=(banco.os||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_chamado',id,'Chamado excluído pela ficha do cliente');
+    return true;
+  }
+  if(sub==='leitura'){
+    const l=((banco.leituras)||[]).find(function(x){return String(x.id)===String(id);}); if(!l) return false;
+    db.leituras=(banco.leituras||[]).filter(function(x){return x.id!==id;});
+    logCli('excluir_leitura',id,'Leitura excluída pela ficha do cliente');
+    return true;
+  }
+  return false;
+}
+window.clitabExcluir=function(){
+  const st=window.__clitab; if(!st) return;
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{}); if(!ids.length) return;
+  const pergunta='Excluir '+ids.length+' registro(s) marcado(s) de '+sub+'? É DE VEZ: some da tela, deste PC e dos outros PCs pela nuvem.';
+  function executar(){
+    // v5.24.6 — avisa o motor da nuvem que a exclusão é INTENCIONAL: se um
+    // puxão trouxer o registro de volta nos próximos 60s, ele é apagado de
+    // novo automaticamente (era o "não exclui" da foto 3).
+    try{ if(window.DIGICOPY_EXCLUSAO_INTENCIONAL) window.DIGICOPY_EXCLUSAO_INTENCIONAL(); }catch(_){}
+    let feitos=0, pulados=0;
+    ids.forEach(function(id){
+      try{ const r=removerRegistro(sub==='vendas'?'venda':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamento':sub==='chamados'?'chamado':'leitura', id); if(r===true)feitos++; else pulados++; }
+      catch(e){ pulados++; }
+    });
+    st.sel[sub]={};
+    try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+    try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('ficha-exclui'); }catch(_){}
+    try{ if(sub==='vendas'&&typeof renderVendas==='function') renderVendas(); }catch(e){}
+    try{ if(sub==='financeiro'&&typeof renderFinanceiro==='function') renderFinanceiro(); }catch(e){}
+    // v5.24.34 — varre os fantasmas das telas dos módulos: sem isso, a tela de
+    // Orçamentos/Chamados/Leituras ficava mostrando linha já apagada, e o
+    // clique nela caía no aviso "não achei" (o 4.2 da foto).
+    try{ if(sub==='orcamentos'&&typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }catch(e){}
+    try{ if(sub==='chamados'&&typeof renderOs==='function') renderOs(); }catch(e){}
+    try{ if(sub==='leituras'&&typeof renderLeituras==='function') renderLeituras(); }catch(e){}
+    window.clitabSub(sub);
+    if(typeof toast==='function') toast(feitos+' excluído(s) de vez'+(pulados?(' • '+pulados+' pulado(s)'+(sub==='vendas'?' — faturada só sai estornando antes':' — já não estava neste PC (lista atualizada)')) : ''), feitos?'success':'info');
+  }
+  // popup do PRÓPRIO sistema (pedido dele — nunca o cinza do navegador)
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema(pergunta,'Excluir de vez').then(function(ok){ if(ok) executar(); }); return; }
+  if(typeof confirm==='function' && confirm(pergunta)) executar();
+};
+window.clitabExtornar=function(){
+  const st=window.__clitab; if(!st||st.sub!=='vendas') return;
+  const ids=Object.keys(st.sel.vendas||{}); if(!ids.length) return;
+  if(typeof window.confirmSistema==='function'){ window.confirmSistema('Estornar '+ids.length+' venda(s) faturada(s)? O financeiro ligado a elas é marcado como estornado.','Estornar').then(function(ok){ if(ok) window.__clitabExtornarAgora(ids); }); return; }
+  window.__clitabExtornarAgora(ids);
+};
+window.__clitabExtornarAgora=function(ids){
+  const st=window.__clitab; if(!st) return;
+  let feitas=0, puladas=0;
+  ids.forEach(function(id){
+    const v=((_dbx().vendas)||[]).find(function(x){return String(x.id)===String(id);});
+    const stt=String((v&&v.status)||'').toLowerCase();
+    if(stt!=='faturado' || typeof window.estornarVenda!=='function'){ puladas++; return; }
+    try{ window.estornarVenda(id); feitas++; }catch(e){ puladas++; }
+  });
+  st.sel.vendas={};
+  try{ if(typeof renderVendas==='function') renderVendas(); }catch(e){}
+  window.clitabSub('vendas');
+  if(typeof toast==='function') toast(feitas+' venda(s) estornada(s)'+(puladas?' • '+puladas+' pulada(s) (só faturadas estornam)':''), feitas?'success':'info');
+};
+
+// ── atalhos para o módulo de origem ─────────────────────────────────────────
+window.clitabAbrirLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  const sub=st.sub;
+  const ids=Object.keys(st.sel[sub]||{});
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  // v5.24.34 — TRAVA DE SEGURANÇA: antes, qualquer sub desconhecido caía no
+  // 'senão' e o botão abria LEITURAS sem avisar (a "lista errada"). Agora só
+  // navega com sub conhecido; fora disso, explica e fica quieto.
+  if(sub!=='vendas'&&sub!=='financeiro'&&sub!=='orcamentos'&&sub!=='chamados'&&sub!=='leituras'){
+    if(typeof toast==='function') toast('Essa parte não tem lista de origem — use uma das abas do Histórico.', 'info');
+    return;
+  }
+  if(typeof navigateTo==='function') navigateTo(sub==='vendas'?'vendas':sub==='financeiro'?'financeiro':sub==='orcamentos'?'orcamentos':sub==='chamados'?'manutencao':'leituras');
+  setTimeout(function(){
+    try{
+      // o módulo abre já filtrado pelo cliente: a lista mostra o grupo escolhido
+      if(sub==='vendas'){ const b=document.getElementById('search-vendas'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderVendas==='function') renderVendas(); } }
+      else if(sub==='financeiro'){ if(typeof setFinTab==='function') setFinTab('receber'); const b=document.getElementById('search-cr'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderFinanceiro==='function') renderFinanceiro(); } }
+      else if(sub==='chamados'){ const b=document.getElementById('search-os'); if(b&&cli.nome){ b.value=cli.nome; if(typeof renderOs==='function') renderOs(); } }
+    }catch(e){}
+    // v5.24.34 — pedido dele: "abrir já mostrando aquilo que eu escolhi".
+    // A LISTA do módulo abre só com os marcados (1, vários ou todos) e NADA
+    // abre por cima dela — a notinha/o orçamento abrem só se ELE clicar ali.
+    if(ids.length){ setTimeout(function(){ try{ window.clitabRenderSoSelecionados(sub, ids); }catch(e){} }, 320); }
+  },250);
+};
+
+// v5.24.34 — pedido dele: "o clientes não abre a lista que mostra os que eu
+// quero". Espelho do Abrir lista de origem: sai da ficha direto para o módulo
+// CLIENTES, já filtrado por este cadastro — a lista mostra ele (e quem tiver
+// nome parecido, um grupinho só, para achar "os que eu quero" de uma vez).
+window.clitabAbrirClienteNaLista=function(){
+  const st=window.__clitab; if(!st) return;
+  const cli=((_dbx().clientes)||[]).find(function(x){return x.id===st.id;})||{};
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  if(typeof navigateTo==='function') navigateTo('clientes');
+  setTimeout(function(){
+    try{
+      const b=document.getElementById('search-clientes');
+      const q=String((cli&&(cli.nome||cli.razao||cli.fantasia||cli.codigo))||'').trim();
+      if(b&&q){ b.value=q; if(typeof renderClientes==='function') renderClientes(); }
+    }catch(e){}
+  },250);
+};
+
+// v5.24.34 — A LISTA SÓ COM O QUE ELE MARCOU (pedido dele, literal: "quero
+// que abra onde é a lista que mostra todos, mas só mostrando os selecionados
+// que eu pedi"). O truque: o tanque do módulo é trocado por uma versão só com
+// os selecionados, a lista é desenhada, e o tanque volta inteiro. Os registros
+// são os MESMOS objetos (nada se perde), e durante a troca a gravação
+// automática fica de molho — o banco nunca é salvo pela metade. Depois, no
+// próximo desenho natural da lista (digitou na busca, navegou), ela volta a
+// mostrar o grupo do cliente, como sempre.
+window.clitabRenderSoSelecionados=function(sub, ids){
+  const MAP={
+    vendas:{arr:'vendas', render:function(){ if(typeof renderVendas==='function') renderVendas(); }},
+    financeiro:{arr:'contasReceber', render:function(){ if(typeof renderFinanceiro==='function') renderFinanceiro(); }},
+    orcamentos:{arr:'orcamentos', render:function(){ if(typeof window.renderOrcamentos==='function') window.renderOrcamentos(); }},
+    chamados:{arr:'os', render:function(){ if(typeof renderOs==='function') renderOs(); }},
+    leituras:{arr:'leituras', render:function(){ if(typeof renderLeituras==='function') renderLeituras(); }}
+  };
+  const def=MAP[sub]; if(!def) return;
+  const want={}; (ids||[]).forEach(function(i){ want[String(i)]=true; });
+  const _db=_dbx(); if(!_db||!Array.isArray(_db[def.arr])) return;
+  const orig=_db[def.arr];
+  const sdB=window.saveDB, sdA=window.saveDBAgora;
+  try{ window.saveDB=function(){}; window.saveDBAgora=function(){}; }catch(e){}
+  _db[def.arr]=orig.filter(function(x){ return x && want[String(x.id)]; });
+  try{ def.render(); }
+  finally{
+    _db[def.arr]=orig;
+    if(typeof sdB==='function') window.saveDB=sdB;
+    if(typeof sdA==='function') window.saveDBAgora=sdA;
+  }
+};
+
+// botão direito na linha: abre o REGISTRO ESPECÍFICO no módulo de origem
+window.clitabAbrirRegistro=function(tipo, id){
+  // v5.24.6/7 — valida na hora do clique: se a nuvem trocou a base depois da
+  // lista aparecer, atualiza e avisa em vez de abrir o módulo às cegas.
+  try{
+    const col=(tipo==='venda')?'vendas':(tipo==='financeiro')?'contasReceber':(tipo==='orcamento')?'orcamentos':(tipo==='chamado')?'os':'leituras';
+    const existe=(((_dbx())[col])||[]).find(function(x){ return x && String(x.id)===String(id); });
+    if(!existe){
+      try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+      if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+      return;
+    }
+  }catch(e){}
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  window.clitabAbrirDireto(tipo, id, false);
+};
+
+// v5.24.34 — O ABRIDOR DIRETO: abre o REGISTRO ESPECÍFICO no módulo de origem,
+// sempre pelo OBJETO (nunca re-caça por id na tela — adeus, fantasma 4.2).
+// silencioso=true: veio do "Abrir selecionados" (o módulo já foi aberto e filtrado).
+window.clitabAbrirDireto=function(tipo, id, silencioso){
+  const Dx=_dbx();
+  function acha(col){ return ((Dx[col])||[]).find(function(x){ return x && String(x.id)===String(id); }); }
+  function depois(ms,fn){ setTimeout(function(){ try{ fn(); }catch(e){} },ms); }
+  function fantasma(){
+    try{ const st=window.__clitab; if(st) window.clitabSub(st.sub||'vendas'); }catch(e){}
+    if(typeof toast==='function') toast('Esse registro já não existe mais neste PC — a lista foi atualizada.','info');
+    return false;
+  }
+  if(tipo==='venda'||tipo==='vendas'){
+    const v=acha('vendas'); if(!v) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('vendas');
+    depois(silencioso?10:200,function(){ if(typeof window.showVenda==='function') window.showVenda(v.id); });
+    return true;
+  }
+  if(tipo==='financeiro'){
+    const c=acha('contasReceber'); if(!c) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('financeiro');
+    depois(silencioso?10:250,function(){
+      if(typeof setFinTab==='function') setFinTab('receber');
+      // abre a conta de verdade (pedido dele: não só o menu)
+      if(typeof openModal==='function') openModal('contaReceber', c.id);
+    });
+    return true;
+  }
+  if(tipo==='orcamento'||tipo==='orcamentos'){
+    const o=acha('orcamentos'); if(!o) return fantasma();
+    // direto pelo objeto — não passa pelo caçador por id (o popup do 4.2)
+    if(typeof window.abrirTelaOrcamento==='function') window.abrirTelaOrcamento(o);
+    else if(typeof navigateTo==='function') navigateTo('orcamentos');
+    return true;
+  }
+  if(tipo==='chamado'||tipo==='chamados'){
+    const o=acha('os'); if(!o) return fantasma();
+    if(!silencioso && typeof navigateTo==='function') navigateTo('manutencao');
+    depois(silencioso?10:200,function(){ if(typeof openModal==='function') openModal('os', o.id); });
+    return true;
+  }
+  const l=acha('leituras'); if(!l) return fantasma();
+  if(!silencioso && typeof navigateTo==='function') navigateTo('leituras');
+  depois(silencioso?10:200,function(){
+    if(typeof window.abrirLeituraDetalhada==='function') window.abrirLeituraDetalhada(l.id);
+    else if(typeof openModal==='function') openModal('leitura', l.id);
+  });
+  return true;
+};
+
+// ── conexão com o cadastro (embrulha a montagem do modal do cliente) ───────
+if(typeof window.renderModalCliente==='function' && !window.renderModalCliente.__v5243){
+  const _renderCli=window.renderModalCliente;
+  window.renderModalCliente=function(id){
+    const r=_renderCli.apply(this,arguments);
+    try{ montarAbasCliente(id); }catch(e){}
+    return r;
+  };
+  window.renderModalCliente.__v5243=true;
+}
+
+// ── reforço 4.1: salvar NUNCA fecha a tela nem perde o digitado por erro ───
+if(typeof window.saveCliente==='function' && !window.saveCliente.__v5243){
+  const _saveCli=window.saveCliente;
+  window.saveCliente=function(){
+    try{ return _saveCli.apply(this,arguments); }
+    catch(e){
+      try{ if(typeof toast==='function') toast('Não consegui salvar: '+((e&&e.message)||e)+' — os dados continuam na tela. Me avise essa mensagem!', 'error'); }catch(_){}
+      try{ if(window.console&&console.error) console.error('[DIGICOPY][saveCliente]',e); }catch(_){}
+    }
+  };
+  window.saveCliente.__v5243=true;
+}
+
+// ── 4.1 RAIZ (cenário exato do dono): "escolho o cliente, vou adicionar um
+// item e pede pra escolher o cliente; dá cliente não encontrado" ────────────
+// A ponte automática pós-cadastro chamava a função da tela ANTIGA de venda
+// (selectClienteVenda, ids nv-*), que NÃO existe mais: ela estourava na
+// primeira linha de tela e o cliente recém-escolhido/cadastrado NUNCA era
+// amarrado na venda VOS (a tela atual, ids vos-*). Resultado: na hora de
+// lançar item ou salvar, a venda achava que não tinha cliente.
+// Ponte 1: qualquer chamada à seleção antiga é desviada para a tela VOS.
+if(typeof window.selectClienteVenda==='function' && !window.selectClienteVenda.__v5243){
+  const _selClienteLegado = window.selectClienteVenda;
+  window.selectClienteVenda = function(id){
+    try{
+      const telaVosAberta = (typeof document!=='undefined') && document.getElementById('vos-codigo');
+      if(telaVosAberta && typeof window.vosVendaSelectCliente==='function'){
+        window.vosVendaSelectCliente(id);
+        return;
+      }
+    }catch(e){}
+    try{ return _selClienteLegado.apply(this, arguments); }catch(e){}
+  };
+  window.selectClienteVenda.__v5243 = true;
+}
+// Ponte 2 + cura 4.1 (v5.24.5) — POR QUE a 1ª tentativa falhava e a 2ª ia:
+// a busca usava um índice feito uma vez só e a nuvem trocava a base por baixo
+// dele; a linha aparecia na tela, mas o clique não achava o cliente na base
+// nova. Agora: (a) a busca refaz o índice sozinha sempre que a base troca e
+// guarda o que mostrou em __vosUltBusca; (b) o clique procura na base atual e,
+// se não achar, SE CURA com o dado da própria busca — devolve o cliente à
+// base, marca para subir e amarra na hora.
+window.__vosUltBusca = window.__vosUltBusca || {};
+if(typeof window.vosVendaSearchCliente==='function' && !window.vosVendaSearchCliente.__v5245){
+  window.__vosCliIdxBase = null; window.__vosCliIdxFresco = null;
+  window.vosVendaSearchCliente = function(q){
+    const sessf=(typeof getSession==='function'?getSession():null)||{};
+    const el = document.getElementById('vos-cli-results'); if(!el) return;
+    const low = (q||'').toLowerCase().trim();
+    if(!low){ el.classList.add('hidden'); el.innerHTML=''; return; }
+    const base = (typeof db!=='undefined' && db.clientes)||[];
+    if(window.__vosCliIdxBase !== base){
+      window.__vosCliIdxBase = base;
+      window.__vosCliIdxFresco = base.map(function(c){
+        const doc=String(c.documento||'');
+        return { c:c, hay:[c.codigo,c.nome,c.fantasia,c.documento,(typeof onlyDigits==='function'?onlyDigits(c.documento):doc.replace(/\D/g,'')),c.endereco,c.telefone,c.cidade,c.estado].filter(function(x){return x!=null&&x!=='';}).join(' ').toLowerCase() };
+      });
+    }
+    const list = window.__vosCliIdxFresco
+      .filter(function(x){ return x.c.empresaId===sessf.empresaId && x.hay.indexOf(low)>=0; })
+      .map(function(x){ return x.c; }).slice(0,15);
+    window.__vosUltBusca = {};
+    el.innerHTML = list.map(function(c){
+      window.__vosUltBusca[c.id]=c;
+      return '<button type="button" onclick="vosVendaSelectCliente(\''+String(c.id).replace(/'/g,'')+'\')" class="w-full text-left px-3 py-2 hover:bg-[#f0f2ff] border-b last:border-0 flex justify-between gap-2">'
+        +'<span><b class="text-[#0a1e8a]">#'+_esc(c.codigo||'-')+'</b> <b>'+_esc(c.nome||'')+'</b><br><span class="text-slate-500 text-[11px]">'+_esc(c.documento||'')+' • '+_esc(c.telefone||'')+' • '+_esc(c.endereco||'')+'</span></span>'
+        +'<span class="text-[10px] text-slate-400 shrink-0">'+_esc(c.cidade||'')+'/'+_esc(c.estado||'')+'</span></button>';
+    }).join('') || '<p class="px-3 py-3 text-slate-400">Nenhum cliente encontrado — cadastre em "+ Novo cliente"</p>';
+    el.classList.remove('hidden');
+  };
+  window.vosVendaSearchCliente.__v5245 = true;
+}
+if(typeof window.vosVendaSelectCliente==='function' && !window.vosVendaSelectCliente.__v5245){
+  const _selClienteVos5245 = window.vosVendaSelectCliente;
+  window.vosVendaSelectCliente = function(id){
+    let cura=false;
+    try{
+      let c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
+      if(!c && window.__vosUltBusca && window.__vosUltBusca[id]){
+        try{ db.clientes=(db.clientes||[]).concat([window.__vosUltBusca[id]]); if(typeof saveDB==='function') saveDB(); }catch(_e){}
+        c = ((db.clientes)||[]).find(function(x){ return x && x.id===id; });
+        cura = !!c;
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('cura-cliente'); }catch(_){}
+      }
+      if(!c){
+        try{ if(typeof toast==='function') toast('Este cliente ainda não chegou neste PC — aguarde a nuvem e escolha de novo.', 'error'); }catch(_){}
+        try{ if(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.tick) window.DIGICOPY_CLOUD_SYNC.tick('busca-cliente'); }catch(_2){}
+        return;
+      }
+    }catch(e){}
+    try{ _selClienteVos5245.apply(this, arguments); }catch(e){}
+    try{
+      const c = ((typeof db!=='undefined' && db.clientes)||[]).find(function(x){ return x && x.id===id; });
+      if(c && window.__vosForm && !window.__vosForm.cliente){ window.__vosForm.cliente = c; }
+      if(c && typeof toast==='function') toast('Cliente vinculado à venda: '+(c.nome||'')+(cura?' (recuperado da busca)':''), 'success');
+    }catch(e){}
+  };
+  window.vosVendaSelectCliente.__v5245 = true;
+}
+
+try{ console.log('[DIGICOPY] v5.24.5 — ficha sempre abre em Dados (Salvar garantido) + histórico com status, exclusão de vez e listas à prova de nuvem + 4.1 curado (clique se cura com o dado da busca)'); }catch(e){}
+})();
+
+;
+
+/* ===== ajustes_v52435_impressora_remanejo_final_patch.js ===== */
+try{
+// ════════════════════════════════════════════════════════════════════════════
+// v5.24.35 — P7 FINAL (serial primeiro + remanejo) — ressuscita o desenho do
+// wrap v5.22.43/45 ADAPTADO ao fluxo vencedor (id impf-*, pos-47):
+// 1) novo cadastro começa SÓ no serial (Avançar) e preenche o resto se achar;
+// 2) reutiliza o equipamento existente (nunca duplica serial no sistema);
+// 3) se o serial está ativo em OUTRO cliente → ao salvar pergunta se remaneja;
+//    o antigo vira status 'remanejada' com snapshot congelado (não edita);
+// 4) contrato exibe o bloco "Remanejadas (histórico congelado)".
+// ════════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function up(v){ return txt(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function acharEquipPorSerial(dbRef, serie, empId){
+  var k = up(serie);
+  if(!k) return null;
+  return ((dbRef&&dbRef.equipamentos)||[]).find(function(e){
+    if(!e) return false;
+    if(empId && e.empresaId && e.empresaId!==empId) return false;
+    return up(e.serie)===k || up(e.patrimonio)===k;
+  })||null;
+}
+function parquesDoEquip(dbRef, eqId){
+  return ((dbRef&&dbRef.parque)||[]).filter(function(p){ return p && p.equipamentoId===eqId; });
+}
+function parqueAtivoOutroCliente(dbRef, eq, clienteId){
+  if(!eq) return null;
+  return parquesDoEquip(dbRef, eq.id).find(function(p){
+    return p && p.status==='ativo' && p.clienteId && p.clienteId!==clienteId;
+  })||null;
+}
+function snapshotFrozen(eq, p){
+  return {
+    modelo: (eq&&eq.modelo)||'',
+    serie: (eq&&eq.serie)||'',
+    patrimonio: (eq&&eq.patrimonio)||'',
+    setor: (p&&p.setor)||'',
+    localInstalacao: (p&&(p.localInstalacao||p.enderecoInstalacao))||'',
+    congeladoEm: new Date().toISOString()
+  };
+}
+function msgRemanejar(nomeCliente, contador){
+  return 'impressora cadastrada em '+(nomeCliente||'outro cliente')+' com o contador '+(contador==null?'-':contador)+', deseja remanejar essa impressora pra esse cadastro?';
+}
+
+window.IMPRESSORA_REMANEJO_V52435_PURE = {
+  acharEquipPorSerial: acharEquipPorSerial,
+  parqueAtivoOutroCliente: parqueAtivoOutroCliente,
+  snapshotFrozen: snapshotFrozen,
+  msgRemanejar: msgRemanejar
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Impressora'); if(typeof toast==='function') toast(m,'info'); }
+function sessao(){ return typeof getSession==='function'?(getSession()||{}):{}; }
+function nomeCli(id){
+  if(typeof db==='undefined') return '';
+  var c=(db.clientes||[]).find(function(x){ return x.id===id; });
+  return (c&&c.nome)||'outro cliente';
+}
+
+function reexibirTudo(){
+  document.querySelectorAll('.v52435-escondido').forEach(function(el){ el.style.display=''; el.classList.remove('v52435-escondido'); });
+  var ban=document.getElementById('impf-aviso-serial'); if(ban) ban.remove();
+  var foot=document.getElementById('modal-footer');
+  if(foot) foot.querySelectorAll('button[data-v52435="1"]').forEach(function(b){ b.style.display=''; b.removeAttribute('data-v52435'); });
+}
+function passoSerialNovo(){
+  if(document.getElementById('impf-avancar')) return;
+  var serie=document.getElementById('impf-serie');
+  if(!serie) return;
+  var lblSerie=serie.closest('label');
+  var grid=lblSerie?lblSerie.parentElement:null;
+  var body=grid?grid.parentElement:null;
+  if(grid){ Array.prototype.slice.call(grid.children).forEach(function(el){ if(el!==lblSerie){ el.classList.add('v52435-escondido'); el.style.display='none'; } }); }
+  if(body){ Array.prototype.slice.call(body.children).forEach(function(el){ if(el!==grid){ el.classList.add('v52435-escondido'); el.style.display='none'; } }); }
+  if(body && !document.getElementById('impf-aviso-serial')){
+    var d=document.createElement('div');
+    d.id='impf-aviso-serial';
+    d.style.cssText='margin:8px 0;padding:10px 12px;border-radius:11px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-size:12.5px;font-weight:700';
+    d.textContent='Passo 1: informe o serial da impressora e aperte Avançar. Se ela já existir no sistema, o restante se preenche sozinho.';
+    body.insertBefore(d, grid);
+  }
+  var foot=document.getElementById('modal-footer'); if(!foot) return;
+  var salvarBtn=null;
+  foot.querySelectorAll('button').forEach(function(b){ if(/salvar/i.test(b.textContent||'')) salvarBtn=b; });
+  if(salvarBtn){ salvarBtn.setAttribute('data-v52435','1'); salvarBtn.style.display='none'; }
+  var btn=document.createElement('button');
+  btn.id='impf-avancar';
+  btn.textContent='Avançar';
+  btn.className=(salvarBtn&&salvarBtn.className)||'neo-btn primary';
+  btn.onclick=function(){
+    var ch=txt(document.getElementById('impf-serie')&&document.getElementById('impf-serie').value);
+    if(!ch){ aviso('Informe o serial da impressora.','Serial primeiro'); return; }
+    var eq0=(typeof db!=='undefined')?acharEquipPorSerial(db, ch, sessao().empresaId):null;
+    reexibirTudo();
+    var bt=document.getElementById('impf-avancar'); if(bt) bt.remove();
+    if(eq0){
+      var mod=document.getElementById('impf-modelo'); if(mod && !txt(mod.value)) mod.value=eq0.modelo||'';
+      var pt=document.getElementById('impf-patr'); if(pt && !txt(pt.value)) pt.value=eq0.patrimonio||'';
+      document.getElementById('impf-serie').value=eq0.serie||ch;
+      aviso('Serial reconhecido — dados preenchidos. Confira, complete os medidores e salve.','Impressora encontrada');
+    }
+  };
+  foot.appendChild(btn);
+  if(serie.focus) serie.focus();
+}
+
+function injetaRemanejadas(contratoId){
+  if(document.getElementById('v52435-remanejadas')) return;
+  var body=document.getElementById('modal-body'); if(!body) return;
+  var lista=(typeof db!=='undefined'?(db.parque||[]):[]).filter(function(p){
+    return p && p.contratoId===contratoId && p.status==='remanejada';
+  });
+  if(!lista.length) return;
+  var div=document.createElement('div');
+  div.id='v52435-remanejadas';
+  div.className='border rounded-xl overflow-hidden';
+  var linhas=lista.map(function(p){
+    var fr=p.frozen||{};
+    var dest=p.remanejadoParaClienteId?(' → remanejada para '+esc(nomeCli(p.remanejadoParaClienteId))):'';
+    return '<tr style="border-top:1px solid #e2e8f0;height:38px">'
+      +'<td style="padding:6px 14px;font-family:monospace;font-weight:800;color:#64748b">'+esc(fr.patrimonio||'-')+'</td>'
+      +'<td style="padding:6px 14px;font-weight:700">'+esc(fr.modelo||'')+'</td>'
+      +'<td style="padding:6px 14px;font-family:monospace">'+esc(fr.serie||'')+'</td>'
+      +'<td style="padding:6px 14px;color:#64748b;font-size:12px">'+esc(fr.setor||'')+dest+'</td>'
+      +'<td style="padding:6px 14px"><span style="background:#e2e8f0;color:#475569;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;text-transform:uppercase">remanejada</span></td>'
+      +'</tr>';
+  }).join('');
+  div.innerHTML='<div style="background:#f8fafc;padding:11px 16px;border-bottom:1px solid #e2e8f0;font-weight:800;font-size:13px;color:#475569">Remanejadas (histórico congelado — não edita, não entra no mensal)</div>'
+    +'<div style="max-height:220px;overflow:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><tbody>'+linhas+'</tbody></table></div>';
+  body.appendChild(div);
+}
+
+if(typeof window.abrirModalEquipamentoContrato==='function' && !window.abrirModalEquipamentoContrato.__v52435rem){
+  var oldAbrir=window.abrirModalEquipamentoContrato;
+  window.abrirModalEquipamentoContrato=function(contratoId, parqueId){
+    if(parqueId && typeof db!=='undefined'){
+      var pv=(db.parque||[]).find(function(x){ return x.id===parqueId; });
+      if(pv && pv.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+    }
+    var r=oldAbrir.apply(this, arguments);
+    if(!parqueId){
+      setTimeout(passoSerialNovo, 0);
+      setTimeout(passoSerialNovo, 120);
+    }
+    return r;
+  };
+  window.abrirModalEquipamentoContrato.__v52435rem=true;
+}
+
+if(typeof window.salvarImpressoraContrato==='function' && !window.salvarImpressoraContrato.__v52435rem){
+  var oldSal=window.salvarImpressoraContrato;
+  window.salvarImpressoraContrato=function(contratoId, parqueId){
+    if(parqueId){
+      if(typeof db!=='undefined'){
+        var pp=(db.parque||[]).find(function(x){ return x.id===parqueId; });
+        if(pp && pp.status==='remanejada'){ aviso('Impressora remanejada. Histórico congelado — não edita.'); return; }
+      }
+      return oldSal.apply(this, arguments);
+    }
+    if(typeof db==='undefined') return oldSal.apply(this, arguments);
+    var c=(db.contratos||[]).find(function(x){ return x.id===contratoId; });
+    if(!c) return oldSal.apply(this, arguments);
+    var serie=txt(document.getElementById('impf-serie')&&document.getElementById('impf-serie').value);
+    if(!serie) return oldSal.apply(this, arguments);
+    var eqOld=acharEquipPorSerial(db, serie, sessao().empresaId);
+    if(!eqOld) return oldSal.apply(this, arguments);
+    var outro=parqueAtivoOutroCliente(db, eqOld, c.clienteId);
+    var executar=function(){
+      if(outro){
+        outro.status='remanejada';
+        outro.frozen=snapshotFrozen(eqOld, outro);
+        outro.remanejadoEm=new Date().toISOString();
+        outro.remanejadoParaContratoId=c.id;
+        outro.remanejadoParaClienteId=c.clienteId;
+      }
+      var idsAntes={};
+      (db.equipamentos||[]).forEach(function(x){ if(x) idsAntes[x.id]=1; });
+      var r=oldSal.apply(window, [contratoId, parqueId]);
+      var duplicata=(db.equipamentos||[]).find(function(x){ return x && x.id && !idsAntes[x.id]; });
+      if(duplicata){
+        eqOld.modelo=duplicata.modelo||eqOld.modelo;
+        eqOld.patrimonio=duplicata.patrimonio||eqOld.patrimonio;
+        eqOld.serie=duplicata.serie||eqOld.serie;
+        eqOld.tipo=duplicata.tipo||eqOld.tipo;
+        eqOld.status=duplicata.status||eqOld.status;
+        eqOld.atualizadoEm=new Date().toISOString();
+        var prqNovo=(db.parque||[]).find(function(x){ return x && x.equipamentoId===duplicata.id && x.contratoId===c.id; });
+        if(prqNovo) prqNovo.equipamentoId=eqOld.id;
+        c.equipamentos=(c.equipamentos||[]).map(function(id){ return id===duplicata.id?eqOld.id:id; });
+        db.equipamentos=(db.equipamentos||[]).filter(function(x){ return x!==duplicata; });
+        try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+        if(typeof openContratoCompleto==='function') openContratoCompleto(c.id);
+      }
+      if(outro) aviso('impressora remanejada com sucesso');
+      else aviso('impressora cadastrada com sucesso (serial reconhecido — sem duplicar)');
+      return r;
+    };
+    if(outro){
+      var cont=n(eqOld.contadorPB)||n(outro.medidores&&outro.medidores.pretoA4&&(outro.medidores.pretoA4.contadorAnterior||outro.medidores.pretoA4.contadorInicial));
+      if(typeof window.confirmSistema==='function'){
+        window.confirmSistema(msgRemanejar(nomeCli(outro.clienteId), cont),'Remanejar impressora').then(function(ok){ if(ok) executar(); });
+        return;
+      }
+      return;
+    }
+    return executar();
+  };
+  window.salvarImpressoraContrato.__v52435rem=true;
+}
+
+if(typeof window.openContratoCompleto==='function' && !window.openContratoCompleto.__v52435rem){
+  var oldCC=window.openContratoCompleto;
+  window.openContratoCompleto=function(contratoId){
+    var r=oldCC.apply(this, arguments);
+    setTimeout(function(){ injetaRemanejadas(contratoId); }, 0);
+    setTimeout(function(){ injetaRemanejadas(contratoId); }, 150);
+    return r;
+  };
+  window.openContratoCompleto.__v52435rem=true;
+}
+
+console.log('[DIGICOPY] ajustes_v52435_impressora_remanejo_final_patch.js v5.24.35 carregado — P7 (serial primeiro + remanejo) ativo');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52435_impressora_remanejo_final_patch.js", e); }
+;
+
+/* ===== ajustes_v52436_leitura_uma_aberta_patch.js ===== */
+try{
+// ════════════════════════════════════════════════════════════════════════════
+// v5.24.36 — Leitura: UMA ABERTA POR VEZ (decreto dele) + contador "anterior"
+// certo na edição pós-estorno.
+//
+// Relato dele (caminho exato): contrato → leituras → novo → novo lançamento →
+// salvar → faturar → extornar → lápis → muda o contador → salvar → a lista
+// mostra o ANTERIOR como o contador que foi faturado (não o anterior de
+// verdade). Causa raiz (cadeia factual, sem achismo):
+//   salvarLancamentoContador calcula anterior = p.contadores[key] VIVO; após o
+//   1º lançamento o parque já segura o atual; editar recalcula o anterior pelo
+//   parque — e não pelo congelado do item. Decisão DELE: só cria nova leitura
+//   quando a aberta estiver fechada (faturada) — estornada continua aberta e
+//   BLOQUEIA também (fature ou apague pra liberar).
+// ════════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function txt(v){ return String(v==null?'':v).trim(); }
+
+// Leitura "aberta" do contrato = formato novo (itens) e NÃO faturada.
+// ('aberta', 'estornada' ou sem status contam como abertas — formato antigo de
+// parqueId simples fica fora, é outro fluxo legado.)
+function leituraAbertaDoContrato(dbRef, contratoId){
+  if(!contratoId) return null;
+  return ((dbRef&&dbRef.leituras)||[]).find(function(l){
+    return l && l.contratoId===contratoId && Array.isArray(l.itens) && l.status!=='faturado';
+  })||null;
+}
+function rotuloStatus(l){
+  var s=(l&&l.status)||'aberta';
+  return s==='estornada'?'estornada':'aberta';
+}
+function msgBloqueioNovaLeitura(l){
+  return 'Já existe a leitura '+((l&&l.numero)||'?')+' '+rotuloStatus(l)+' neste contrato. '
+    +'Fature (feche) ela antes de criar outra'
+    +(rotuloStatus(l)==='estornada'?' — ou apague a leitura, se não for usar.':'.')
+    +' Abri ela pra você.';
+}
+
+window.LEITURA_UMA_ABERTA_V52436_PURE = {
+  leituraAbertaDoContrato: leituraAbertaDoContrato,
+  rotuloStatus: rotuloStatus,
+  msgBloqueioNovaLeitura: msgBloqueioNovaLeitura
+};
+
+if(typeof document==='undefined') return;
+
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Leitura'); if(typeof toast==='function') toast(m,'info'); }
+function abrirAberta(l, preferida){
+  var abridores = [preferida, 'abrirLeituraContratoDetalhe', 'abrirLeituraDetalhada', 'abrirLeituraDefinitiva'];
+  for(var i=0;i<abridores.length;i++){
+    var f = abridores[i] && window[abridores[i]];
+    if(typeof f==='function'){ try{ f(l.id); }catch(e){} return; }
+  }
+}
+
+// (1) Os 3 caminhos que criam leitura do formato novo — guarda do decreto.
+function guarda(nomeFn, abridor){
+  if(typeof window[nomeFn]!=='function' || window[nomeFn].__v52436lei) return;
+  var old = window[nomeFn];
+  window[nomeFn] = function(contratoId){
+    if(typeof db!=='undefined'){
+      var aberta = leituraAbertaDoContrato(db, contratoId);
+      if(aberta){
+        aviso(msgBloqueioNovaLeitura(aberta));
+        abrirAberta(aberta, abridor);
+        return;
+      }
+    }
+    return old.apply(this, arguments);
+  };
+  window[nomeFn].__v52436lei = true;
+}
+guarda('novaLeituraContrato', 'abrirLeituraContratoDetalhe');
+guarda('criarLeituraDetalhada', 'abrirLeituraDetalhada');
+guarda('criarLeituraDefinitiva', 'abrirLeituraDefinitiva');
+
+// (2) Edição pós-estorno: o "anterior" volta a ser o do LANÇAMENTO, não o do
+// parque vivo. Antes do salvar original rodar, alinhamos o contador vivo do
+// medidor editado ao anterior congelado do item — o original recalcula certo e
+// devolve o parque ao novo "atual". Sem duplicar template.
+if(typeof window.salvarLancamentoContador==='function' && !window.salvarLancamentoContador.__v52436lei){
+  var oldSalvar = window.salvarLancamentoContador;
+  window.salvarLancamentoContador = function(leituraId){
+    try{
+      var idxEl = document.getElementById('lan-edit-idx');
+      if(idxEl && txt(idxEl.value)!=='' && typeof db!=='undefined'){
+        var l = (db.leituras||[]).find(function(x){ return x.id===leituraId; });
+        var item = l && l.itens && l.itens[Number(idxEl.value)];
+        if(item){
+          var p = (db.parque||[]).find(function(x){ return x.id===item.parqueId; });
+          if(p){ p.contadores = p.contadores||{}; p.contadores[item.medidor] = n(item.anterior); }
+        }
+      }
+    }catch(e){}
+    return oldSalvar.apply(this, arguments);
+  };
+  window.salvarLancamentoContador.__v52436lei = true;
+}
+
+console.log('[DIGICOPY] ajustes_v52436_leitura_uma_aberta_patch.js v5.24.36 carregado — uma leitura aberta por vez + anterior certo na edição');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52436_leitura_uma_aberta_patch.js", e); }
+;
+
+/* ===== ajustes_v5250_leitura_overhaul_patch.js ===== */
+try{
+// ════════════════════════════════════════════════════════════════════════════
+// v5.25.0 — REVISÃO COMPLETA DA ÁREA DE LEITURAS (relatório dele + decreto de
+// versão: "nessa correção irá pro 5.25.xx; NF irá pro 6.xx.xx pois é
+// praticamente um menu novo"). Conteúdo:
+// 1) Avulso 1 — contador ANTERIOR visível de volta no novo lançamento (nunca
+//    foi portado da coleta rápida antiga pro modal novo: restaurado como chip
+//    somente-leitura que acompanha impressora+tipo escolhidos).
+// 2) Avulso 2 — Faturar/Estornar com pop-up do SISTEMA (confirmSistema, z-index
+//    máximo) e TAMBÉM na listagem (botões por leitura, sem precisar abrir).
+// 3) Avulso 3 — visual da leitura: some "Voltar ao histórico" e "Conferir NF-e";
+//    ficam só SALVAR (salva e volta pra listagem — escolha dele), o X (agora
+//    pergunta "salvar antes de fechar?") e IMPRIMIR bonito, padrão vendas.
+// 4) Avulso 4 — varredura de pop-ups nativos (confirm do navegador) na área de
+//    leituras → todos viram confirmSistema.
+// 5) Decreto — tela antiga "Leituras" do menu Locação (formato parque simples,
+//    fora do contrato) APOSENTADA: menu escondido e a view vira um cartão
+//    explicativo. DENSO DE RISCO checado: se existir leitura velha pendente de
+//    faturar, o cartão oferece o botão de faturar (nada fica órfão).
+// ════════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
+function txt(v){ return String(v==null?'':v).trim(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function money(v){ try{ return n(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }catch(e){ return 'R$ '+n(v).toFixed(2); } }
+
+function tituloEhLeitura(t){ return /^Leitura\b/.test(txt(t)); }
+function leituraPorId(dbRef,id){ return ((dbRef&&dbRef.leituras)||[]).find(function(l){ return l&&l.id===id; })||null; }
+function contratoDaLeitura(dbRef,l){
+  if(!l) return null;
+  return ((dbRef&&dbRef.contratos)||[]).find(function(c){ return c.id===l.contratoId; })
+      || ((dbRef&&dbRef.contratos)||[]).find(function(c){ return c.id && c.clienteId===l.clienteId && c.status==='ativo'; })
+      || null;
+}
+function valorLeitura(l){ return (l&&Array.isArray(l.itens)?l.itens:[]).reduce(function(s,x){ return s+n(x&&x.valorTotal); },0)||n(l&&l.valorTotal); }
+function contadorAnteriorInfo(dbRef, p, key, itemEmEdicao){
+  if(itemEmEdicao) return n(itemEmEdicao.anterior);
+  if(!p||!key) return null;
+  var cont = (p.contadores||{})[key];
+  if(cont==null){
+    var med = p.medidores && p.medidores[key];
+    cont = med && med.contadorInicial;
+  }
+  return n(cont);
+}
+function execEstorno(dbRef, l){
+  if(!l) return 0;
+  l.status='estornada';
+  var amarradas=0;
+  ((dbRef&&dbRef.contasReceber)||[]).forEach(function(c){ if(c&&c.leituraId===l.id){ c.status='estornado'; c.pagamentoData=null; amarradas++; } });
+  return amarradas;
+}
+function pendentesLegadas(dbRef, empresaId){
+  return ((dbRef&&dbRef.leituras)||[]).filter(function(l){
+    return l && !Array.isArray(l.itens) && l.status==='pendente' && (!empresaId || l.empresaId===empresaId);
+  });
+}
+
+window.LEITURA_OVERHAUL_V5250_PURE = {
+  tituloEhLeitura: tituloEhLeitura,
+  leituraPorId: leituraPorId,
+  valorLeitura: valorLeitura,
+  contadorAnteriorInfo: contadorAnteriorInfo,
+  execEstorno: execEstorno,
+  pendentesLegadas: pendentesLegadas
+};
+
+if(typeof document==='undefined') return;
+
+function salvarDB(){ try{ if(typeof saveDB==='function') saveDB(); }catch(e){} }
+function aviso(m,t){ if(typeof window.lfbAlert==='function') return window.lfbAlert(m,t||'Leitura'); if(typeof toast==='function') toast(m,'info'); }
+function okMsg(m){ if(typeof toastMsg==='function') toastMsg(m,'success'); else aviso(m); }
+function sessEmp(){ try{ return (typeof getSession==='function'?(getSession()||{}).empresaId:null); }catch(e){ return null; } }
+
+// ── (1) Avulso 1: chip "contador anterior" no novo lançamento ────────────────
+function oferecerChipAnterior(){
+  var body=document.getElementById('modal-body'); if(!body) return;
+  var inp=document.getElementById('lan-cont'); if(!inp) return;
+  if(document.getElementById('v5250-lan-ant')) return;
+  var box=document.createElement('div');
+  box.id='v5250-lan-ant';
+  box.style.cssText='margin:2px 0 0;padding:9px 13px;border-radius:11px;background:#eef2ff;border:1px solid #c7d2fe;color:#1e3a8a;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px';
+  box.innerHTML='<span>Contador anterior registrado:</span><b id="v5250-lan-ant-num" style="font-family:monospace;font-size:15px">—</b>';
+  var lbl=inp.closest('label');
+  (lbl&&lbl.parentElement?lbl.parentElement:body).insertBefore(box, lbl||inp);
+  atualizarChipAnterior();
+}
+function atualizarChipAnterior(){
+  var numEl=document.getElementById('v5250-lan-ant-num'); if(!numEl||typeof db==='undefined') return;
+  var prqId=(document.getElementById('lan-prq')||{}).value;
+  var key=(document.getElementById('lan-med')||{}).value;
+  var idxEl=document.getElementById('lan-edit-idx');
+  var item=null;
+  if(idxEl && txt(idxEl.value)!==''){
+    var l=leituraPorId(db,(document.getElementById('lan-leitura-id')||{}).value);
+    item=l&&l.itens?l.itens[Number(idxEl.value)]:null;
+  }
+  var p=prqId?((db.parque||[]).find(function(x){ return x&&x.id===prqId; })):null;
+  var v=contadorAnteriorInfo(db,p,key||'',item);
+  numEl.textContent=(v==null)?'—':v.toLocaleString('pt-BR');
+  numEl.parentElement.style.opacity=(v==null)?'0.55':'1';
+}
+if(typeof window.abrirLancamentoContador==='function' && !window.abrirLancamentoContador.__v5250lo){
+  var oldAbrirLanc=window.abrirLancamentoContador;
+  window.abrirLancamentoContador=function(){
+    var r=oldAbrirLanc.apply(this,arguments);
+    setTimeout(oferecerChipAnterior,0); setTimeout(oferecerChipAnterior,100); setTimeout(atualizarChipAnterior,180);
+    return r;
+  };
+  window.abrirLancamentoContador.__v5250lo=true;
+}
+if(typeof window.atualizarTiposLancamento==='function' && !window.atualizarTiposLancamento.__v5250lo){
+  var oldTipos=window.atualizarTiposLancamento;
+  window.atualizarTiposLancamento=function(){
+    var r=oldTipos.apply(this,arguments);
+    setTimeout(atualizarChipAnterior,0);
+    return r;
+  };
+  window.atualizarTiposLancamento.__v5250lo=true;
+}
+document.addEventListener('change', function(e){
+  var t=e&&e.target; if(!t) return;
+  if(t.id==='lan-med'||t.id==='lan-prq') atualizarChipAnterior();
+}, true);
+
+// ── (2) Avulso 2/4: confirmação do SISTEMA em faturar/estornar/remover ──────
+if(typeof window.faturarLeituraContrato==='function' && !window.faturarLeituraContrato.__v5250lo){
+  var oldFat=window.faturarLeituraContrato;
+  window.faturarLeituraContrato=function(leituraId){
+    var l=(typeof db!=='undefined')?leituraPorId(db,leituraId):null;
+    var valor=valorLeitura(l);
+    function seguir(){
+      var daLista=!!window.__v5250fatDaLista;
+      window.__v5250fatDaLista=false;
+      var r=oldFat.apply(window,[leituraId]);
+      if(daLista){
+        var c=contratoDaLeitura(db,l);
+        if(c && typeof window.abrirLeiturasContrato==='function') setTimeout(function(){ window.abrirLeiturasContrato(c.id); },40);
+      }
+      return r;
+    }
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema('Faturar a leitura '+((l&&l.numero)||leituraId)+' no valor de '+money(valor)+'?','Faturar leitura').then(function(ok){ if(ok) seguir(); });
+      return;
+    }
+    return seguir();
+  };
+  window.faturarLeituraContrato.__v5250lo=true;
+}
+function reimplementarEstorno(){
+  window.estornarLeituraContrato=function(leituraId){
+    if(typeof db==='undefined') return;
+    var l=leituraPorId(db,leituraId); if(!l) return;
+    var daLista=!!window.__v5250fatDaLista;
+    function run(){
+      execEstorno(db,l);
+      salvarDB();
+      okMsg('Leitura estornada — aberta para correção. A cobrança ficou estornada no financeiro.');
+      window.__v5250fatDaLista=false;
+      if(daLista){
+        var c=contratoDaLeitura(db,l);
+        if(c && typeof window.abrirLeiturasContrato==='function') return window.abrirLeiturasContrato(c.id);
+      }
+      if(typeof window.abrirLeituraContratoDetalhe==='function') window.abrirLeituraContratoDetalhe(leituraId);
+    }
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema('Estornar a leitura '+((l&&l.numero)||'')+'? Ela volta a ficar aberta para edição e a cobrança fica estornada.','Estornar leitura').then(function(ok){ if(ok) run(); });
+      return;
+    }
+    run();
+  };
+  window.estornarLeituraContrato.__v5250lo=true;
+}
+if(typeof window.estornarLeituraContrato==='function' && !window.estornarLeituraContrato.__v5250lo) reimplementarEstorno();
+window.__v5250reimpEstorno=reimplementarEstorno;
+
+function reimplementarRemover(){
+  window.removerLancamentoLeitura=function(leituraId, idx){
+    if(typeof db==='undefined') return;
+    var l=leituraPorId(db,leituraId); if(!l) return;
+    if(typeof leituraBloqueada==='function' && leituraBloqueada(l)) return aviso('Leitura faturada. Estorne para alterar.','Leitura');
+    var it=(l.itens||[])[idx];
+    function run(){
+      l.itens.splice(idx,1);
+      l.valorTotal=(l.itens||[]).reduce(function(s,x){ return s+n(x&&x.valorTotal); },0);
+      l.valorExcedente=l.valorTotal;
+      salvarDB();
+      okMsg('Lançamento removido — a impressora voltou para pendente.');
+      if(typeof window.abrirLeituraContratoDetalhe==='function') window.abrirLeituraContratoDetalhe(leituraId);
+    }
+    var msg='Remover o lançamento de '+((it&&it.impressora)||'esta impressora')+'? Ela volta para pendente nesta leitura.';
+    if(typeof window.confirmSistema==='function'){
+      window.confirmSistema(msg,'Remover lançamento').then(function(ok){ if(ok) run(); });
+      return;
+    }
+    run();
+  };
+  window.removerLancamentoLeitura.__v5250lo=true;
+}
+if(typeof window.removerLancamentoLeitura==='function' && !window.removerLancamentoLeitura.__v5250lo) reimplementarRemover();
+
+// ── (2b) Avulso 2: ações por leitura na LISTAGEM (sem precisar abrir) ────────
+function injetarAcoesListagem(contratoId){
+  if(typeof db==='undefined') return;
+  document.querySelectorAll('input[name="leitura-sel"]').forEach(function(radio){
+    var leiId=radio.value;
+    var tr=radio.closest('tr'); if(!tr||tr.getAttribute('data-v5250-acoes')==='1') return;
+    tr.setAttribute('data-v5250-acoes','1');
+    var l=leituraPorId(db,leiId); if(!l) return;
+    var box=document.createElement('span');
+    box.style.cssText='display:inline-flex;gap:5px;margin-left:8px;vertical-align:middle';
+    var btn=document.createElement('button');
+    btn.style.cssText='height:26px;padding:0 10px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;border:none;color:#fff';
+    if(l.status==='faturado'){
+      btn.textContent='Estornar';
+      btn.style.background='#b91c1c';
+      btn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); window.__v5250fatDaLista=true; window.estornarLeituraContrato(leiId); };
+    }else{
+      btn.textContent='Faturar';
+      btn.style.background='#0a1e8a';
+      btn.onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); window.__v5250fatDaLista=true; window.faturarLeituraContrato(leiId); };
+    }
+    box.appendChild(btn);
+    var status=tr.querySelector('.neo-status');
+    (status?status.parentElement:tr).appendChild(box);
+  });
+}
+if(typeof window.abrirLeiturasContrato==='function' && !window.abrirLeiturasContrato.__v5250lo){
+  var oldLista=window.abrirLeiturasContrato;
+  window.abrirLeiturasContrato=function(contratoId){
+    var r=oldLista.apply(this,arguments);
+    setTimeout(function(){ injetarAcoesListagem(contratoId); },0);
+    setTimeout(function(){ injetarAcoesListagem(contratoId); },140);
+    setTimeout(function(){ injetarAcoesListagem(contratoId); },300);
+    return r;
+  };
+  window.abrirLeiturasContrato.__v5250lo=true;
+}
+
+// ── (3) Avulso 3: rodapé da leitura — só SALVAR, X e IMPRIMIR bonito ────────
+function reconstruirRodapeLeitura(leituraId){
+  var foot=document.getElementById('modal-footer'); if(!foot) return;
+  var tit=(document.getElementById('modal-title')||{}).innerText;
+  if(!tituloEhLeitura(tit)) return;
+  foot.querySelectorAll('button').forEach(function(b){
+    var oc=String(b.getAttribute('onclick')||'');
+    if(oc.indexOf('abrirLeiturasContrato')>=0 || b.getAttribute('data-nfe-emit')) b.remove();
+  });
+  foot.querySelectorAll('[data-nfe-emit]').forEach(function(b){ b.remove(); });
+  if(document.getElementById('v5250-lei-salvar')) return;
+  var imp=null;
+  foot.querySelectorAll('button').forEach(function(b){
+    if(/imprimirLeituraContrato/.test(String(b.getAttribute('onclick')||''))) imp=b;
+  });
+  if(imp){
+    imp.className='mr-1 h-11 px-5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-[13px] inline-flex items-center gap-2 shadow-sm';
+    imp.innerHTML='<i class="ph ph-printer text-[17px]"></i> Imprimir notinha';
+    imp.style.marginLeft='auto';
+  }
+  var sal=document.createElement('button');
+  sal.id='v5250-lei-salvar';
+  sal.className='h-11 px-7 rounded-xl bg-[#0a1e8a] hover:bg-[#08176e] text-white font-bold text-[13px] inline-flex items-center gap-2 shadow-sm';
+  sal.innerHTML='<i class="ph ph-check text-[16px]"></i> Salvar';
+  sal.onclick=function(){ salvarEVoltarParaListagem(leituraId); };
+  foot.appendChild(sal);
+}
+function salvarEVoltarParaListagem(leituraId){
+  if(typeof db==='undefined') return;
+  var l=leituraPorId(db,leituraId);
+  salvarDB();
+  okMsg('Leitura '+((l&&l.numero)||'')+' salva.');
+  var c=contratoDaLeitura(db,l);
+  if(c && typeof window.abrirLeiturasContrato==='function') window.abrirLeiturasContrato(c.id);
+}
+if(typeof window.abrirLeituraContratoDetalhe==='function' && !window.abrirLeituraContratoDetalhe.__v5250lo){
+  var oldDet=window.abrirLeituraContratoDetalhe;
+  window.abrirLeituraContratoDetalhe=function(leituraId){
+    window.__v5250LeiAtual=leituraId;
+    var r=oldDet.apply(this,arguments);
+    setTimeout(function(){ reconstruirRodapeLeitura(leituraId); },0);
+    setTimeout(function(){ reconstruirRodapeLeitura(leituraId); },110);
+    setTimeout(function(){ reconstruirRodapeLeitura(leituraId); },290);
+    return r;
+  };
+  window.abrirLeituraContratoDetalhe.__v5250lo=true;
+}
+// X da janela da leitura → pergunta "salvar antes de fechar?" (popup do sistema)
+document.addEventListener('click', function(e){
+  var btn=e&&e.target&&e.target.closest?e.target.closest('#modal-root button[onclick*="closeModal"]'):null;
+  if(!btn) return;
+  if(window.__v5250leituraXBypass){ window.__v5250leituraXBypass=false; return; }
+  var tit=(document.getElementById('modal-title')||{}).innerText;
+  if(!tituloEhLeitura(tit)) return;
+  var liId=window.__v5250LeiAtual;
+  var l=(typeof db!=='undefined')?leituraPorId(db,liId):null;
+  if(!l) return;
+  e.preventDefault(); e.stopPropagation();
+  function fechar(){ window.__v5250leituraXBypass=true; if(typeof closeModal==='function') closeModal(); }
+  if(typeof window.confirmSistema==='function'){
+    window.confirmSistema('Salvar a leitura '+((l&&l.numero)||'')+' antes de fechar? (Confirmar salva e volta pra lista de leituras. Cancelar fecha sem salvar — os lançamentos já feitos NÃO se perdem.)','Fechar leitura').then(function(ok){
+      if(ok){ salvarEVoltarParaListagem(liId); } else { fechar(); }
+    });
+    return;
+  }
+  fechar();
+}, true);
+
+// ── (5) Decreto: tela antiga "Leituras" do menu APOSENTADA ──────────────────
+function cartaoAposentada(){
+  var view=document.getElementById('view-leituras'); if(!view) return;
+  var pend=pendentesLegadas((typeof db!=='undefined')?db:{}, sessEmp());
+  view.innerHTML='<div class="max-w-[760px] mx-auto mt-10"><div class="rounded-2xl border bg-white shadow-sm p-8 text-center">'
+    +'<div class="w-14 h-14 mx-auto rounded-2xl bg-[#eef2ff] grid place-items-center"><i class="ph ph-speedometer text-[28px] text-[#0a1e8a]"></i></div>'
+    +'<h3 class="mt-4 font-bold text-[17px] text-slate-800">Leituras agora vivem dentro do contrato</h3>'
+    +'<p class="mt-2 text-[13px] text-slate-500">Esta tela antiga (lançamento direto por impressora, sem contrato) foi aposentada. Abra o contrato do cliente → aba Leituras — lá tem uma leitura aberta por vez, lançamento por departamento, faturar/estornar com confirmação e notinha.</p>'
+    +'<button onclick="navigateTo(\'contratos\')" class="mt-5 h-11 px-6 rounded-xl bg-[#0a1e8a] hover:bg-[#08176e] text-white font-bold text-[13px]"><i class="ph ph-file-text mr-1"></i> Abrir contratos</button>'
+    +(pend.length?'<div class="mt-6 rounded-xl bg-amber-50 border border-amber-200 p-4 text-left"><p class="text-[12.5px] font-bold text-amber-900">Ainda existem '+pend.length+' leitura(s) no formato antigo pendentes de faturar.</p><p class="text-[12px] text-amber-800 mt-1">Nada foi apagado. Você pode faturar essas pendências daqui (uma vez, pra quitar o legado):</p><button onclick="gerarFaturasPendentes()" class="mt-2 h-9 px-4 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[12px]">Faturar pendências antigas ('+pend.length+')</button></div>':'')
+    +'</div></div>';
+}
+if(typeof window.renderLeituras==='function' && !window.renderLeituras.__v5250lo){
+  var oldRL=window.renderLeituras;
+  window.renderLeituras=function(){ var r; try{ r=oldRL.apply(this,arguments); }catch(e){} cartaoAposentada(); return r; };
+  window.renderLeituras.__v5250lo=true;
+}
+if(typeof window.openModal==='function' && !window.openModal.__v5250lo){
+  var oldOM=window.openModal;
+  window.openModal=function(tipo){
+    if(tipo==='leitura'){ aviso('Lançamento de leitura direto por impressora foi aposentado. Use o contrato do cliente → aba Leituras.','Leituras'); if(typeof navigateTo==='function') navigateTo('leituras'); return; }
+    return oldOM.apply(this,arguments);
+  };
+  window.openModal.__v5250lo=true;
+}
+function esconderMenuLeiturasAntigas(){
+  document.querySelectorAll('[data-nav="leituras"], button[onclick="navigateTo(\'leituras\')"]').forEach(function(b){
+    // Esconde só itens de MENU (sidebar). O "Ver todas →" do painel continua
+    // visível e cai no cartão explicativo.
+    if(b.getAttribute('data-nav')==='leituras') b.style.display='none';
+  });
+}
+if(typeof window.buildNav==='function' && !window.buildNav.__v5250lo){
+  var oldBN=window.buildNav;
+  window.buildNav=function(){ var r=oldBN.apply(this,arguments); setTimeout(esconderMenuLeiturasAntigas,0); setTimeout(esconderMenuLeiturasAntigas,200); return r; };
+  window.buildNav.__v5250lo=true;
+}
+setTimeout(esconderMenuLeiturasAntigas,600);
+
+console.log('[DIGICOPY] ajustes_v5250_leitura_overhaul_patch.js v5.25.0 carregado — revisão completa de leituras (anterior visível, confirmações do sistema, ações na listagem, rodapé novo, tela antiga aposentada)');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5250_leitura_overhaul_patch.js", e); }
+;
+
+/* ===== ajustes_v5260_cnpj_gerente_patch.js ===== */
+try{
+// v5.26.0 — CONEXÃO POR CNPJ + GERENTE (3º sistema) + sininho com link secreto.
+//
+// Três pedidos dele, entregues juntos porque são o mesmo motor na nuvem:
+//
+//  1) PC NOVO ENTRA COM CNPJ + SENHA DE CONEXÃO (única, definida uma vez no
+//     painel Nuvem). Acabou a dor do código de convite que vence em minutos
+//     ("dá problema direto"). O convite continua existindo como plano B.
+//     → injeta a aba "Entrar com CNPJ" na tela de autorizar computador.
+//
+//  2) SININHO COM DESTINATÁRIO: o sininho só aparece se existir versão mais
+//     nova DESTINADA ao CNPJ daquela instalação (todos / lista de CNPJs /
+//     só a loja de teste do dono). Aqui o app passa a mandar ?cnpj= na
+//     consulta — a nuvem decide por lá e responde muda quando não é pra ele.
+//     O botão "Abrir pra baixar" agora abre a PÁGINA SECRETA /a/<slug> da
+//     publicação (sem precisar digitar CNPJ de novo no site).
+//
+//  3) CARTÃO DO ADMIN "Senhas de conexão": dentro do painel Nuvem (tela
+//     conectada, só perfil admin), ele define UMA VEZ: senha de conexão
+//     (PCs novos entram com ela) e senha de GERENTE (abre o programa
+//     separado "DIGICOPY Gerente de Atualizações" no PC dele — só o CNPJ da
+//     empresa dona entra como gerente). Senhas vão SÓ como hash pra nuvem.
+//
+// Guard: __v5260cn. Não toca no funcionamento de quem já está conectado.
+(function(){
+  'use strict';
+  if(window.__v5260cn) return;
+  window.__v5260cn = true;
+
+  var TOKEN_KEY = 'digicopy_cloud_device_token_v1';
+  var DEVICE_KEY = 'digicopy_cloud_device_info_v1';
+
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function soDigitos(v){ return String(v==null?'':v).replace(/\D/g,''); }
+
+  // CNPJ da instalação: sessão do usuário logado (login por CNPJ+senha),
+  // com voltas pela primeira empresa cadastrada (instalações antigas).
+  function empresaCnpj(){
+    try{
+      var u = (typeof getCurrentUser==='function') ? getCurrentUser() : null;
+      var c = soDigitos(u && (u.cnpj||''));
+      if(c.length===14) return c;
+    }catch(e){}
+    try{
+      var emp = ((typeof db!=='undefined' && db.empresas) || [])[0];
+      var c2 = soDigitos(emp && (emp.cnpjDigits || emp.cnpj || ''));
+      if(c2.length===14) return c2;
+    }catch(e){}
+    return '';
+  }
+  function empresaNome(){
+    try{
+      var u = (typeof getCurrentUser==='function') ? getCurrentUser() : null;
+      if(u && u.empresaNome) return String(u.empresaNome);
+    }catch(e){}
+    try{
+      var emp = ((typeof db!=='undefined' && db.empresas) || [])[0];
+      if(emp && (emp.nome || emp.fantasia)) return String(emp.nome || emp.fantasia);
+    }catch(e){}
+    return '';
+  }
+  window.CNPJ_V5260_PURE = { empresaCnpj:empresaCnpj, empresaNome:empresaNome, soDigitos:soDigitos, cmpTipo:function(a,b){ return soDigitos(a)===soDigitos(b) && soDigitos(a).length>0; } };
+
+  // ── (2) a consulta do sininho passa a dizer QUEM está perguntando ──
+  function wrapApiAppRelease(){
+    try{
+      var C = window.DIGICOPY_CLOUD;
+      if(!C || typeof C.api!=='function' || C.__v5260wrap) return false;
+      var original = C.api;
+      var embrulhada = function(path, options){
+        try{
+          if(String(path)==='/v1/app-release' && (!options || !options.method || String(options.method).toUpperCase()==='GET')){
+            var c = empresaCnpj();
+            if(c.length===14) path = path + '?cnpj=' + encodeURIComponent(c);
+          }
+        }catch(e){}
+        return Promise.resolve(original(path, options)).then(function(rel){
+          // a nuvem devolve linkDireto (/a/<slug>) — amarramos em rel.url pra
+          // qualquer consumidor antigo abrir a página secreta certa.
+          try{ if(rel && rel.ok && rel.linkDireto && String(path).indexOf('/v1/app-release')===0) rel.url = rel.linkDireto; }catch(e){}
+          return rel;
+        });
+      };
+      embrulhada.__v5260wrapLen = true;
+      C.api = embrulhada;
+      C.__v5260wrap = true;
+      return true;
+    }catch(e){ return false; }
+  }
+
+  // ── (1) aba "Entrar com CNPJ" na tela de autorizar computador ──
+  function instalarAbaCnpj(){
+    var tabRecover = document.getElementById('dc-tab-recover');
+    if(!tabRecover || document.getElementById('v5260-tab-cnpj')) return;
+    var btn = document.createElement('button');
+    btn.id = 'v5260-tab-cnpj';
+    btn.textContent = 'Entrar com CNPJ';
+    btn.style.cssText = 'padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800';
+    tabRecover.insertAdjacentElement('afterend', btn);
+    btn.onclick = function(){
+      var form = document.getElementById('dc-form');
+      if(!form) return;
+      form.innerHTML =
+        '<h3 style="font-size:15px;font-weight:900">Conectar este computador com o CNPJ da loja</h3>'+
+        '<p style="font-size:12px;color:#64748b;margin-top:4px">Sem código que vence: é o CNPJ da loja + a senha de conexão que o administrador definiu no painel Nuvem. Vale pra sempre (até trocarem a senha).</p>'+
+        '<label style="display:block;font-size:11px;font-weight:800;margin-top:12px">CNPJ DA LOJA<br><input id="v5260-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+        '<label style="display:block;font-size:11px;font-weight:800;margin-top:10px">SENHA DE CONEXÃO (definida uma vez no painel Nuvem)<br><input id="v5260-senha" type="password" placeholder="senha de conexão" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+        '<label style="display:block;font-size:11px;font-weight:800;margin-top:10px">NOME DESTE COMPUTADOR<br><input id="v5260-pc" placeholder="Ex.: PC BALCÃO 2" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
+        '<div style="display:flex;gap:8px;margin-top:15px"><button id="v5260-entrar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Conectar computador</button></div>'+
+        '<div id="v5260-res" style="margin-top:12px"></div>'+
+        '<p style="font-size:10.5px;color:#94a3b8;margin-top:10px">Prefere o jeito antigo? A aba "Tenho um código" continua funcionando (código vence em minutos).</p>';
+      try{ var c0=empresaCnpj(); if(c0){ form.querySelector('#v5260-cnpj').value=c0.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'); } }catch(e){}
+      form.querySelector('#v5260-entrar').onclick = async function(){
+        var res = form.querySelector('#v5260-res');
+        var btnE = form.querySelector('#v5260-entrar');
+        var cnpj = soDigitos(form.querySelector('#v5260-cnpj').value);
+        var senha = form.querySelector('#v5260-senha').value;
+        var pc = form.querySelector('#v5260-pc').value.trim();
+        var apiC = window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api;
+        if(cnpj.length!==14 || !senha || !pc){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Preencha CNPJ (14 dígitos), senha de conexão e o nome do PC.</div>'; return; }
+        if(typeof apiC!=='function'){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Motor da nuvem não carregado.</div>'; return; }
+        btnE.disabled = true; btnE.textContent = 'Conectando...';
+        try{
+          var data = await apiC('/v1/enroll-cnpj',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, empresaNome:empresaNome(), senha:senha, deviceName:pc }) });
+          if(!data || !data.token || !data.device) throw new Error('Resposta de autorização incompleta.');
+          localStorage.setItem(TOKEN_KEY, data.token);
+          localStorage.setItem(DEVICE_KEY, JSON.stringify(Object.assign({}, data.device, { activation:'cnpj', cnpj:cnpj })));
+          res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Computador conectado! Abrindo o sistema...</div>';
+          setTimeout(function(){ try{ location.reload(); }catch(e){} }, 700);
+        }catch(err){
+          res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">'+esc((err&&err.message)||'Não conectou.')+'</div>';
+          btnE.disabled = false; btnE.textContent = 'Conectar computador';
+        }
+      };
+    };
+  }
+
+  // ── (3) cartão do admin: definir senha de conexão + senha de gerente ──
+  function instalarCardAdmin(){
+    var invite = document.getElementById('dc-invite');
+    if(!invite || document.getElementById('v5260-admin-card')) return;
+    var alvoPai = invite.closest('div[style*="border-top"]') || invite;
+    var card = document.createElement('div');
+    card.id = 'v5260-admin-card';
+    card.style.cssText = 'border-top:1px solid #e2e8f0;padding-top:14px;margin-top:14px';
+    card.innerHTML =
+      '<h3 style="font-size:14px;font-weight:900">Senhas de conexão (CNPJ) e do Gerente</h3>'+
+      '<p style="font-size:12px;color:#64748b;margin-top:4px">Defina UMA VEZ. <b>Senha de conexão</b>: computadores novos entram com CNPJ + ela (sem código que vence). <b>Senha do gerente</b>: abre o programa separado "DIGICOPY Gerente de Atualizações" no seu PC — só com o CNPJ da empresa dona. As senhas vão pra nuvem SÓ como embaralhado (hash): ninguém lê, nem o banco.</p>'+
+      '<div style="display:grid;gap:8px;margin-top:10px;max-width:560px">'+
+        '<label style="font-size:11px;font-weight:800">CNPJ DA EMPRESA DONA (é ele que vira gerente)<br><input id="v5260-a-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+        '<label style="font-size:11px;font-weight:800">NOME DA EMPRESA DONA<br><input id="v5260-a-nome" placeholder="Ex.: DIGICOPY" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+        '<label style="font-size:11px;font-weight:800">SENHA DE CONEXÃO (PCs novos + site de atualizações)<br><input id="v5260-a-conn" type="password" placeholder="mín. 4 caracteres" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+        '<label style="font-size:11px;font-weight:800">SENHA DO GERENTE (só entra com o CNPJ da dona acima)<br><input id="v5260-a-ger" type="password" placeholder="deixe vazio para usar a mesma de conexão" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:10px"><button id="v5260-a-salvar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Salvar senhas na nuvem</button></div>'+
+      '<div id="v5260-a-res" style="margin-top:10px"></div>';
+    alvoPai.insertAdjacentElement('beforebegin', card);
+    try{ var c1=empresaCnpj(); if(c1) card.querySelector('#v5260-a-cnpj').value=c1.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'); }catch(e){}
+    try{ var n1=empresaNome(); if(n1) card.querySelector('#v5260-a-nome').value=n1; }catch(e){}
+    card.querySelector('#v5260-a-salvar').onclick = async function(){
+      var res = card.querySelector('#v5260-a-res');
+      var btn = card.querySelector('#v5260-a-salvar');
+      var cnpj = soDigitos(card.querySelector('#v5260-a-cnpj').value);
+      var nome = card.querySelector('#v5260-a-nome').value.trim();
+      var conn = card.querySelector('#v5260-a-conn').value;
+      var ger = card.querySelector('#v5260-a-ger').value;
+      var apiC = window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api;
+      if(cnpj.length!==14 || conn.length<4){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">CNPJ precisa de 14 dígitos e a senha de conexão de no mínimo 4 caracteres.</div>'; return; }
+      if(typeof apiC!=='function'){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Motor da nuvem não carregado.</div>'; return; }
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try{
+        var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:(ger||conn) }) });
+        if(!r || !r.ok) throw new Error((r&&r.message)||'Não salvou.');
+        res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. PCs novos já entram com CNPJ + senha de conexão. Se trocar a senha, computadores já conectados continuam — só bloqueia os novos.</div>';
+        card.querySelector('#v5260-a-conn').value=''; card.querySelector('#v5260-a-ger').value='';
+      }catch(err){
+        res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">'+esc((err&&err.message)||'Não salvou.')+'</div>';
+      }
+      btn.disabled = false; btn.textContent = 'Salvar senhas na nuvem';
+    };
+  }
+
+  function varrerDOM(){
+    try{ instalarAbaCnpj(); }catch(e){}
+    try{ instalarCardAdmin(); }catch(e){}
+  }
+
+  if(typeof document !== 'undefined'){
+    // o wrap precisa existir ANTES do sininho consultar; a tela da nuvem é
+    // desenhada aos poucos → observador leve, se desliga quando nada muda.
+    if(!wrapApiAppRelease()){
+      var esperaWrap = setInterval(function(){ if(wrapApiAppRelease()) clearInterval(esperaWrap); }, 400);
+      setTimeout(function(){ clearInterval(esperaWrap); }, 30000);
+    }
+    var mo = null;
+    var ligado = 0;
+    function ligar(){
+      if(mo) return;
+      mo = new MutationObserver(function(){ clearTimeout(ligado); ligado = setTimeout(varrerDOM, 120); });
+      mo.observe(document.body, { childList:true, subtree:true });
+      varrerDOM();
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ligar);
+    else ligar();
+  }
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5260_cnpj_gerente_patch.js", e); }
+;
+
+/* ===== ajustes_v5262_login_nuvem_primeiro_patch.js ===== */
+try{
+// v5.26.2 — LOGIN DA NUVEM ANTES DO LOGIN DE USUÁRIO (pedido dele, literal):
+//
+//  "consegue deixar pra fazer ANTES de entrar no login de usuário? ai DEPOIS
+//   disso vai pro login de usuário. Ja tiver conectado uma vez não precisa —
+//   e essa parte NÃO fica oculta, fica mostrando pra todos. DEPOIS que colocar
+//   o CNPJ e a senha é que vai aparecer a parte de falar qual é esse
+//   computador — é mais uma segurança: acessa somente se fizer o login da
+//   nuvem primeiro e depois mais uma senha que é o de usuários. Vai ficar só
+//   uma vez: conectou uma vez já era, não precisa mais. O usuário precisa
+//   fazer o login UMA VEZ POR DIA automaticamente."
+//
+// Como funciona aqui dentro (sem encostar na tela antiga):
+// A) PORTÃO: se este PC não está autorizado na nuvem (token vazio), um
+//    painel cobre a tela inteira ANTES de qualquer login: CNPJ da loja +
+//    senha de conexão. Senha certa → SÓ ENTÃO pergunta "qual é este
+//    computador?" (etapa 2, mais uma tranca). Conclua → autoriza, recarrega
+//    e o fluxo segue para o login de usuário. Conectou 1x → nunca mais aparece.
+// B) SESSÃO DE USUÁRIO 1X POR DIA: a sessão vale só no dia em que entrou.
+//    Virou o dia e abriu o sistema → volta a pedir usuário+senha (1x ao dia);
+//    no resto do dia entra automático, como ele quer.
+// C) SEM SENHA DEFINIDA / motor velho / sem internet: o portão explica o que
+//    fazer e oferece um link discreto "entrar pelo jeito antigo (admin)" para
+//    o dono não ficar trancado pra fora do próprio sistema.
+//
+// Guard: __v5262ln. Nada some/conta: é sobreposição de tela + checagem de dia.
+(function(){
+  'use strict';
+  if (window.__v5262ln) return;
+  window.__v5262ln = true;
+
+  var SESSION_KEY = 'digicopy_session_v42_demo_apresentacao';
+  var TOKEN_KEY = 'digicopy_cloud_device_token_v1';
+  var DEVICE_KEY = 'digicopy_cloud_device_info_v1';
+  var FECHOU_KEY = 'digicopy_v5262_fechou_esta_sessao';
+
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function soDigitos(v){ return String(v==null?'':v).replace(/\D/g,''); }
+  function fmtCnpj(c){ c=soDigitos(c); return c.length===14 ? c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5') : c; }
+
+  // ── (B) sessão do usuário vale só no dia em que entrou ────────────────────
+  function mesmoDia(iso, agora){
+    try{
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return false;
+      var a = agora || new Date();
+      return d.getFullYear()===a.getFullYear() && d.getMonth()===a.getMonth() && d.getDate()===a.getDate();
+    }catch(e){ return false; }
+  }
+  function sessaoDoDiaExpirada(){
+    try{
+      var s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if(!s || !s.loginAt) return false;
+      return !mesmoDia(s.loginAt);
+    }catch(e){ return false; }
+  }
+  window.LOGIN_V5262_PURE = { mesmoDia:mesmoDia, sessaoDoDiaExpirada:sessaoDoDiaExpirada };
+
+  var avisoNovoDia = false;
+  try{
+    if(sessaoDoDiaExpirada()){
+      localStorage.removeItem(SESSION_KEY);
+      avisoNovoDia = true; // virou o dia: a senha de ontem expirou (1x por dia)
+    }
+  }catch(e){}
+
+  // ── (A) portão da nuvem ───────────────────────────────────────────────────
+  function tokenNuvem(){
+    try{ return localStorage.getItem(TOKEN_KEY) || ''; }catch(e){ return ''; }
+  }
+  function empresaCnpjNome(){
+    var c='', n='';
+    try{ if (window.CNPJ_V5260_PURE && window.CNPJ_V5260_PURE.empresaCnpj) c = window.CNPJ_V5260_PURE.empresaCnpj(); }catch(e){}
+    try{ if (window.CNPJ_V5260_PURE && window.CNPJ_V5260_PURE.empresaNome) n = window.CNPJ_V5260_PURE.empresaNome(); }catch(e){}
+    return { cnpj:c, nome:n };
+  }
+  function fechouNestaSessao(){
+    try{ return sessionStorage.getItem(FECHOU_KEY) === '1'; }catch(e){ return false; }
+  }
+
+  function montarPortao(){
+    if (document.getElementById('v5262-portao')) return;
+    if (tokenNuvem()) return;            // conectou uma vez → nunca mais aparece
+    if (fechouNestaSessao()) return;     // admin saiu pelo jeito antigo até recarregar
+
+    var base = empresaCnpjNome();
+    var box = document.createElement('div');
+    box.id = 'v5262-portao';
+    box.style.cssText = 'position:fixed;inset:0;z-index:2147482900;background:linear-gradient(135deg,#f1f4fb,#e8edfb);display:flex;align-items:center;justify-content:center;padding:18px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;';
+    box.innerHTML =
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 24px 70px rgba(10,30,138,.16);max-width:430px;width:100%;padding:30px 26px 24px;text-align:center">'+
+        '<div style="width:60px;height:60px;margin:0 auto 12px;border-radius:18px;background:linear-gradient(135deg,#4f5bff,#0a1e8a);display:grid;place-items:center;font-size:28px;font-weight:900;color:#fff">D</div>'+
+        '<h2 style="margin:0;font-size:19px;font-weight:900;color:#0a1e8a">Conexão da nuvem</h2>'+
+        '<p style="margin:8px 0 0;font-size:12.5px;color:#64748b;line-height:1.6">Este computador ainda não está conectado. <b>É só a primeira vez aqui</b> — depois some pra sempre. Sem a conexão, o sistema não abre (mais uma tranca de segurança sua).</p>'+
+        '<div id="v5262-etapa1">'+
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:16px">CNPJ DA LOJA<br><input id="v5262-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:10px">SENHA DE CONEXÃO (definida pelo dono no painel Nuvem)<br><input id="v5262-senha" type="password" placeholder="senha de conexão" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
+          '<button id="v5262-continuar" style="margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer">Continuar</button>'+
+        '</div>'+
+        '<div id="v5262-etapa2" style="display:none">'+
+          '<div id="v5262-ok-aviso" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:12px;padding:11px 14px;font-size:12.5px;margin-top:16px;text-align:left">✅ CNPJ e senha conferem! Agora diga qual é este computador.</div>'+
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:12px">QUAL É ESTE COMPUTADOR?<br><input id="v5262-pc" placeholder="Ex.: PC BALCÃO 1 / PC CAIXA / NOTEBOOK" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
+          '<button id="v5262-conectar" style="margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer">Conectar e entrar</button>'+
+          '<div style="margin-top:10px"><a href="#" id="v5262-voltar" style="font-size:12px;color:#64748b">← voltar</a></div>'+
+        '</div>'+
+        '<div id="v5262-msg" style="margin-top:14px"></div>'+
+        '<div id="v5262-jeito-antigo" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px"><a href="#" id="v5262-antigo" style="font-size:11.5px;color:#94a3b8">sou o administrador e ainda não defini a senha → entrar pelo jeito antigo</a></div>'+
+      '</div>';
+    document.body.appendChild(box);
+
+    try{
+      var cp = box.querySelector('#v5262-cnpj');
+      cp.setAttribute('maxlength','18');
+      // v5.26.3 — máscara: só entram números e a pontuação sai sozinha
+      cp.addEventListener('input', function(){
+        var d = soDigitos(cp.value).slice(0,14), out = d;
+        if(d.length > 12) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/,'$1.$2.$3/$4-$5');
+        else if(d.length > 8) out = d.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/,'$1.$2.$3/$4');
+        else if(d.length > 5) out = d.replace(/(\d{2})(\d{3})(\d{1,3})/,'$1.$2.$3');
+        else if(d.length > 2) out = d.replace(/(\d{2})(\d{1,3})/,'$1.$2');
+        if(cp.value !== out) cp.value = out;
+      });
+      if(base.cnpj) cp.value = fmtCnpj(base.cnpj);
+    }catch(e){}
+
+    function mostrarMsg(html, tipo){
+      var d = box.querySelector('#v5262-msg');
+      d.innerHTML = html ? '<div style="'+(tipo==='erro'?'background:#fef2f2;border:1px solid #fecaca;color:#b91c1c':tipo==='bom'?'background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d':'background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8')+';border-radius:12px;padding:11px 14px;font-size:12.5px;text-align:left;line-height:1.6">'+html+'</div>' : '';
+    }
+    function mostrarJeitoAntigo(){ box.querySelector('#v5262-jeito-antigo').style.display='block'; }
+    function apiNuvem(){
+      var C = window.DIGICOPY_CLOUD;
+      return (C && typeof C.api === 'function') ? C.api : null;
+    }
+
+    box.querySelector('#v5262-antigo').onclick = function(ev){
+      ev.preventDefault();
+      try{ sessionStorage.setItem(FECHOU_KEY,'1'); }catch(e){}
+      var d = document.getElementById('v5262-portao'); if(d) d.remove();
+      try{ if(typeof toast==='function') toast('Entrada administrativa: conecte o PC pela tela Nuvem e defina as senhas no cartão novo.','info'); }catch(e){}
+    };
+    box.querySelector('#v5262-voltar').onclick = function(ev){
+      ev.preventDefault();
+      box.querySelector('#v5262-etapa2').style.display='none';
+      box.querySelector('#v5262-etapa1').style.display='block';
+      mostrarMsg('');
+    };
+
+    // ETAPA 1 — confere CNPJ + senha (sem criar nada)
+    box.querySelector('#v5262-continuar').onclick = async function(){
+      var api = apiNuvem();
+      if(!api){ mostrarMsg('O motor da nuvem ainda está carregando... aguarde 2 segundos e aperte Continuar de novo.','erro'); return; }
+      var cnpj = soDigitos(box.querySelector('#v5262-cnpj').value);
+      var senha = box.querySelector('#v5262-senha').value;
+      if(cnpj.length!==14 || !senha){ mostrarMsg('Preencha o CNPJ (14 dígitos) e a senha de conexão.','erro'); return; }
+      var b = box.querySelector('#v5262-continuar');
+      b.disabled = true; b.textContent = 'Conferindo...'; mostrarMsg('');
+      try{
+        var r = await api('/v1/check-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, senha:senha }) });
+        if(r && r.ok === false && r.senhaDefinida === false){
+          mostrarMsg(esc(r.aviso || 'A senha de conexão ainda não foi definida.')+'<br>O dono define a senha no sistema → Nuvem → cartão <b>"Senhas de conexão (CNPJ) e do Gerente"</b>.','erro');
+          mostrarJeitoAntigo(); b.disabled=false; b.textContent='Continuar'; return;
+        }
+        if(r && r.ok === true){
+          box.querySelector('#v5262-etapa1').style.display='none';
+          box.querySelector('#v5262-etapa2').style.display='block';
+          box.dataset.v5262cnpj = cnpj;
+          box.dataset.v5262senha = senha;
+          try{ box.querySelector('#v5262-pc').focus(); }catch(e){}
+          b.disabled=false; b.textContent='Continuar'; return;
+        }
+        mostrarMsg(esc((r && r.aviso) || 'Não conferiu. Tente de novo.'),'erro');
+      }catch(err){
+        var em = (err && err.message) || 'Falhou.';
+        var aviso = (err && err.aviso) || '';
+        if(/CNPJ ou senha/.test(em) || /CNPJ ou senha/.test(aviso)){
+          mostrarMsg('CNPJ ou senha de conexão <b>incorretos</b>. Confira com calma e tente de novo.','erro');
+        }else if(/rota|404/i.test(em)){
+          mostrarMsg('O motor da nuvem ainda é o antigo. O dono precisa rodar o <b>atualizar_motor_nuvem.cmd</b> UMA vez e tentar de novo.','erro');
+          mostrarJeitoAntigo();
+        }else{
+          mostrarMsg('Sem conseguir falar com a nuvem agora: '+esc(em)+'<br>Verifique a internet. Se persistir, o dono roda o <b>atualizar_motor_nuvem.cmd</b>.','erro');
+          mostrarJeitoAntigo();
+        }
+      }
+      b.disabled = false; b.textContent = 'Continuar';
+    };
+    try{ box.querySelector('#v5262-senha').addEventListener('keydown', function(ev){ if(ev.key==='Enter') box.querySelector('#v5262-continuar').click(); }); }catch(e){}
+
+    // ETAPA 2 — nome do PC (só aparece depois da senha certa) → autoriza
+    box.querySelector('#v5262-conectar').onclick = async function(){
+      var api = apiNuvem();
+      if(!api){ mostrarMsg('Motor da nuvem ainda carregando... tente de novo em 2 segundos.','erro'); return; }
+      var pc = box.querySelector('#v5262-pc').value.trim();
+      if(!pc){ mostrarMsg('Diga qual é este computador (ex.: PC BALCÃO 1).','erro'); return; }
+      var b = box.querySelector('#v5262-conectar');
+      b.disabled = true; b.textContent = 'Conectando...';
+      try{
+        var data = await api('/v1/enroll-cnpj',{
+          method:'POST',
+          body:JSON.stringify({ cnpj: box.dataset.v5262cnpj, senha: box.dataset.v5262senha, empresaNome: empresaCnpjNome().nome, deviceName: pc })
+        });
+        if(!data || !data.token || !data.device) throw new Error('Resposta de autorização incompleta.');
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(DEVICE_KEY, JSON.stringify(Object.assign({}, data.device, { activation:'cnpj', cnpj: box.dataset.v5262cnpj })));
+        mostrarMsg('✅ Computador conectado! Abrindo o sistema...','bom');
+        setTimeout(function(){ try{ location.reload(); }catch(e){} }, 800);
+      }catch(err){
+        mostrarMsg(esc((err && err.message) || 'Não conectou. Tente de novo.'),'erro');
+        b.disabled = false; b.textContent = 'Conectar e entrar';
+      }
+    };
+    try{ box.querySelector('#v5262-pc').addEventListener('keydown', function(ev){ if(ev.key==='Enter') box.querySelector('#v5262-conectar').click(); }); }catch(e){}
+  }
+
+  // ── aviso "virou o dia" no topo da tela de login de usuário ───────────────
+  function avisarNovoDia(){
+    if(!avisoNovoDia) return;
+    var tela = document.getElementById('login-screen');
+    if(!tela || document.getElementById('v5262-aviso-dia')) return;
+    var a = document.createElement('div');
+    a.id = 'v5262-aviso-dia';
+    a.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147482899;background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:12px;padding:10px 16px;font-size:12.5px;font-weight:700;box-shadow:0 10px 26px rgba(0,0,0,.12);font-family:inherit';
+    a.textContent = '☀️ Virou o dia — por segurança, entre com usuário e senha de novo (é só 1x por dia).';
+    document.body.appendChild(a);
+    setTimeout(function(){ try{ var d=document.getElementById('v5262-aviso-dia'); if(d) d.remove(); }catch(e){} avisoNovoDia = false; }, 9000);
+  }
+
+  // ── vigilância leve: portão quando faltar nuvem; aviso quando aparecer login ─
+  function varrerDOM(){
+    try{ montarPortao(); }catch(e){}
+    try{ avisarNovoDia(); }catch(e){}
+  }
+  if (typeof document !== 'undefined'){
+    var mo = null, t = 0;
+    function ligar(){
+      if (mo) return;
+      mo = new MutationObserver(function(){ clearTimeout(t); t = setTimeout(varrerDOM, 140); });
+      mo.observe(document.body, { childList:true, subtree:true });
+      varrerDOM();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar);
+    else ligar();
+  }
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5262_login_nuvem_primeiro_patch.js", e); }
+;
+
+/* ===== ajustes_v5264_chamado_data_grande_patch.js ===== */
+try{
+// v5.26.4 — Relatório do chamado: DATA DE ATENDIMENTO EM CAIXA GRANDE
+// (pedido dele com print: "a parte onde escreve a data de atendimento é
+// pequena pra escrever, aumenta um pouco a largura e o tamanho").
+//
+// Como funciona (sem encostar no patch v5.18.6 que monta o relatório):
+// • embrulha window.imprimirChamadoPDF e, SÓ durante a chamada dela,
+//   intercepta o document.write da janela de impressão;
+// • no HTML do relatório, a linha "Cadastro: … • Atendimento: __/__/____"
+//   vira uma CAIXA com linha de assinatura grande (170px, letra 15px bold):
+//   dá pra escrever a data com caneta em cima — e quando já vem preenchida,
+//   fica bonita do mesmo jeito;
+// • o texto miúdo da linha (muted 11px) sobe pra 12.5px, como ele pediu
+//   ("aumenta o tamanho");
+// • se o relatório mudar e o padrão sumir, o wrap NÃO quebra nada: devolve o
+//   HTML original intacto.
+// Guard: __v5264cd. Função pura exportada pra teste (V5264_CH_DATA_PURE).
+(function(){
+  'use strict';
+  if (window.__v5264cd) return;
+  window.__v5264cd = true;
+
+  var CX = 'display:inline-block;border-bottom:1.5px solid #111;min-width:170px;min-height:22px;padding:1px 10px;text-align:center;font-size:15px;font-weight:700;letter-spacing:1px;vertical-align:bottom';
+  function melhorar(html){
+    try{
+      if(!html || html.indexOf('Atendimento:') < 0 || !/contador/i.test(html)) return html;
+      // 1) linha Cadastro • Atendimento → data dentro de caixa pra escrever
+      var out = String(html).replace(
+        /(<div class="muted">Cadastro: [^<]*?)\s*•\s*Atendimento:\s*([^<]*)(<\/div>)/,
+        '$1 &nbsp;•&nbsp; <span style="font-weight:800;color:#0f172a;font-size:13px">Atendimento:</span> <span style="' + CX + '">$2</span>$3'
+      );
+      // 2) texto miúdo do relatório sobe um clique (11px → 12.5px)
+      out = out.replace('.muted{color:#64748b;font-size:11px}', '.muted{color:#64748b;font-size:12.5px}');
+      return out;
+    }catch(e){ return html; }
+  }
+  window.V5264_CH_DATA_PURE = { melhorar: melhorar };
+
+  function embrulhar(){
+    if (typeof window.imprimirChamadoPDF !== 'function') return false;
+    if (window.imprimirChamadoPDF.__v5264cdWrapped) return true;
+    var _orig = window.imprimirChamadoPDF;
+    var f = function(osId){
+      var _open = window.open;
+      window.open = function(){
+        var w = _open.apply(window, arguments);
+        try{
+          if (w && w.document && typeof w.document.write === 'function'){
+            var _write = w.document.write.bind(w.document);
+            w.document.write = function(html){ return _write(melhorar(html)); };
+          }
+        }catch(e){}
+        return w;
+      };
+      try{ return _orig.apply(this, arguments); }
+      finally{ window.open = _open; }
+    };
+    f.__v5264cdWrapped = true;
+    window.imprimirChamadoPDF = f;
+    return true;
+  }
+
+  // a função do relatório vem do patch v5.18.6; se ainda não existir, tenta de novo
+  if (!embrulhar()){
+    var tent = 0;
+    var iv = setInterval(function(){
+      if (embrulhar() || ++tent > 40){ clearInterval(iv); }
+    }, 250);
+  }
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v5264_chamado_data_grande_patch.js", e); }
+;
+
+/* ===== painel_gerente_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PAINEL_GERENTE_PATCH v5.26.6 — "faz logo" (ordem dele)
+// Tela única do dono: tudo o que aconteceu HOJE (e o que está pendurado)
+// em TODAS as frentes — lê o banco já sincronizado pela nuvem, mesmos dados
+// de qualquer computador autorizado. Não escreve nada; só lê e mostra.
+// - Cards: notinhas de hoje (qtd + R$), OS em aberto, a receber no mês,
+//   contas ATRASADAS (vermelho), máquinas nos clientes, contratos ativos
+// - "Quem vendeu hoje" (por pessoa, do maior pro menor)
+// - Alerta: OS parada há mais de 7 dias
+// - Linha do tempo: últimas movimentações (venda + OS juntas)
+// - Botão "↻ Atualizar" = relê o banco agora (sync acontece no ritual do app)
+// Multi-empresa: mostra SÓ os dados da empresa logada (empresaId da sessão).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v5266pg) return;
+
+/* PG_PURE_START */
+// ── Helpers puros (sem DOM) — também usados pelo teste automatizado ─────────
+function pgHojeStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function pgMesStr(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function pgDataDe(x){ const dt=new Date(x && (x.criadoEm||x.data||x.cadastroEm||x.criado||'')); return isNaN(dt.getTime())?null:dt; }
+function pgFiltro(db, col, sess){
+  const list=(db && db[col]) || [];
+  const emp=sess && sess.empresaId;
+  if(!emp) return list.slice();
+  return list.filter(x=>x && x.empresaId===emp);
+}
+function pgValorVenda(v){ const n=Number(v && (v.total!=null?v.total:v.valor)); return isFinite(n)?n:0; }
+function pgOsViva(o){ const s=String(o && o.status || ''); return s!=='concluido' && s!=='cancelado' && s!=='excluido' && s!=='estornado'; }
+function pgVendaViva(v){ const s=String(v && v.status || ''); return s!=='cancelada' && s!=='excluida' && s!=='estornada'; }
+function pgContaAberta(c){ return String(c && c.status || '')!=='pago'; }
+function pgResumo(db, sess, agora){
+  agora=agora||new Date();
+  const hoje=pgHojeStr(agora), mes=pgMesStr(agora);
+  const vendas=pgFiltro(db,'vendas',sess);
+  const oss=pgFiltro(db,'os',sess);
+  const cr=pgFiltro(db,'contasReceber',sess);
+  const parque=pgFiltro(db,'parque',sess);
+  const contratos=pgFiltro(db,'contratos',sess);
+  const clientes=pgFiltro(db,'clientes',sess);
+
+  const vHoje=vendas.filter(v=>{ const dt=pgDataDe(v); return dt && pgHojeStr(dt)===hoje && pgVendaViva(v); });
+  const totalHoje=vHoje.reduce((s,v)=>s+pgValorVenda(v),0);
+  const osHoje=oss.filter(o=>{ const dt=pgDataDe(o); return dt && pgHojeStr(dt)===hoje; });
+  const osAbertas=oss.filter(pgOsViva);
+  const osParadas=osAbertas.filter(o=>{ const dt=pgDataDe(o); return dt && (agora.getTime()-dt.getTime())>7*24*60*60*1000; });
+
+  const receberMes=cr.filter(c=>pgContaAberta(c) && String(c.vencimento||'').slice(0,7)===mes)
+                     .reduce((s,c)=>s+(Number(c.valor)||0),0);
+  const atrasadas=cr.filter(c=>{ if(!pgContaAberta(c)) return false; const dt=new Date(c.vencimento||''); return !isNaN(dt.getTime()) && dt.getTime()<agora.getTime(); });
+  const atrasadoValor=atrasadas.reduce((s,c)=>s+(Number(c.valor)||0),0);
+
+  // Quem vendeu hoje (do maior pro menor)
+  const porPessoa={};
+  vHoje.forEach(v=>{ const n=String(v.criadoPorNome||v.criadoPor||'—'); if(!porPessoa[n]) porPessoa[n]={nome:n,qtd:0,total:0}; porPessoa[n].qtd++; porPessoa[n].total+=pgValorVenda(v); });
+  const pessoas=Object.values(porPessoa).sort((a,b)=>b.total-a.total);
+
+  // Linha do tempo: últimas movimentações (venda e OS juntas)
+  const cliNome={}; clientes.forEach(c=>cliNome[c.id]=c.nome||c.fantasia||'—');
+  const timeline=[]
+    .concat(vendas.filter(pgVendaViva).map(v=>({tipo:'VENDA',numero:v.numero,quem:v.criadoPorNome||v.criadoPor,cliente:cliNome[v.clienteId]||'',valor:pgValorVenda(v),status:v.status||'',dt:pgDataDe(v)})))
+    .concat(oss.map(o=>({tipo:'OS',numero:o.numero,quem:o.criadoPorNome||o.criadoPor,cliente:cliNome[o.clienteId]||'',valor:Number(o.valor)||0,status:o.status||'',dt:pgDataDe(o)})))
+    .filter(x=>x.dt)
+    .sort((a,b)=>b.dt.getTime()-a.dt.getTime())
+    .slice(0,10);
+
+  return {
+    qtdVendasHoje:vHoje.length, totalVendasHoje:totalHoje, qtdOsHoje:osHoje.length,
+    osAbertas:osAbertas.length, osParadas:osParadas.slice(0,5).map(o=>({numero:o.numero,cliente:cliNome[o.clienteId]||'',dias:Math.floor((agora.getTime()-pgDataDe(o).getTime())/86400000)})),
+    receberMes:receberMes, atrasadasQtd:atrasadas.length, atrasadoValor:atrasadoValor,
+    maquinas:parque.length, contratosAtivos:contratos.filter(c=>String(c.status||'ativo')!=='encerrado' && String(c.status||'ativo')!=='cancelado').length,
+    pessoas:pessoas, timeline:timeline
+  };
+}
+function pgBRL(n){ try{ return Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n||0); }catch(e){ return 'R$ '+(Number(n)||0).toFixed(2).replace('.',','); } }
+/* PG_PURE_END */
+
+if(typeof window==='undefined' || typeof document==='undefined'){ if(typeof module!=='undefined') module.exports={pgResumo:pgResumo,pgBRL:pgBRL,pgFiltro:pgFiltro,pgOsViva:pgOsViva}; return; }
+window.__v5266pg=true;
+
+function esc(s){ return typeof escapeHtml==='function'?escapeHtml(String(s==null?'':s)):String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pgCard(titulo, valor, sub, cor){
+  return '<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">'+
+    '<p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">'+esc(titulo)+'</p>'+
+    '<p class="text-[22px] font-extrabold '+(cor||'text-slate-800')+' mt-1">'+esc(valor)+'</p>'+
+    (sub?'<p class="text-[11.5px] text-slate-500 mt-0.5">'+esc(sub)+'</p>':'')+'</div>';
+}
+window.renderPainelGerente=function(){
+  const v=typeof ensureView==='function'?ensureView('painel-gerente'):document.getElementById('view-painel-gerente');
+  if(!v) return;
+  const sess=typeof getSession==='function'?getSession():null;
+  if(!sess){ v.innerHTML='<div class="p-8 text-center text-slate-500 text-[13px]">Entre com login para ver o painel.</div>'; return; }
+  const r=pgResumo(db, sess, new Date());
+  const agora=new Date();
+  const hh=String(agora.getHours()).padStart(2,'0')+':'+String(agora.getMinutes()).padStart(2,'0');
+
+  let html='<div class="flex items-center justify-between flex-wrap gap-2">'+
+    '<div><h2 class="text-[18px] font-extrabold text-slate-800">Painel do Gerente</h2>'+
+    '<p class="text-[12px] text-slate-500">Dados da nuvem desta empresa — os mesmos em todos os computadores.</p></div>'+
+    '<button onclick="renderPainelGerente()" class="h-9 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12.5px] font-bold hover:opacity-90">↻ Atualizar</button></div>';
+
+  html+='<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">'+
+    pgCard('Notinhas hoje', r.qtdVendasHoje+' · '+pgBRL(r.totalVendasHoje), 'vendas concluídas hoje')+
+    pgCard('OS hoje / abertas', r.qtdOsHoje+' / '+r.osAbertas, 'ordens de serviço')+
+    pgCard('A receber no mês', pgBRL(r.receberMes), 'títulos em aberto')+
+    pgCard('ATRASADAS', r.atrasadasQtd+' · '+pgBRL(r.atrasadoValor), 'passou do vencimento', r.atrasadasQtd?'text-red-600':'text-emerald-600')+
+    pgCard('Máquinas clientes', String(r.maquinas), 'parque total')+
+    pgCard('Contratos ativos', String(r.contratosAtivos), 'locação/outsourcing')+
+  '</div>';
+
+  html+='<div class="grid md:grid-cols-2 gap-3">';
+  // Quem vendeu hoje
+  html+='<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-[12px] font-bold uppercase tracking-wide text-slate-400 mb-2">Quem vendeu hoje</p>'+
+    (r.pessoas.length?r.pessoas.map(p=>'<div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0"><span class="text-[13px] font-semibold text-slate-700">'+esc(p.nome)+' <em class="not-italic text-[11px] text-slate-400">('+p.qtd+')</em></span><b class="text-[13px] text-slate-800">'+pgBRL(p.total)+'</b></div>').join(''):'<p class="text-[12.5px] text-slate-400 py-2">Nenhuma venda hoje ainda.</p>')+'</div>';
+  // Alertas de OS parada
+  html+='<div class="rounded-2xl border '+(r.osParadas.length?'border-amber-300 bg-amber-50':'border-slate-200 bg-white')+' p-4 shadow-sm"><p class="text-[12px] font-bold uppercase tracking-wide '+(r.osParadas.length?'text-amber-700':'text-slate-400')+' mb-2">OS parada há mais de 7 dias</p>'+
+    (r.osParadas.length?r.osParadas.map(o=>'<div class="flex items-center justify-between py-1.5 border-b border-amber-200/60 last:border-0"><span class="text-[13px] font-semibold text-slate-700">OS '+esc(o.numero)+' <em class="not-italic text-[11px] text-slate-500">'+esc(o.cliente)+'</em></span><b class="text-[12px] text-amber-700">'+o.dias+' dias</b></div>').join(''):'<p class="text-[12.5px] text-slate-400 py-2">Nada travado. 🎉</p>')+'</div>';
+  html+='</div>';
+
+  // Linha do tempo
+  html+='<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"><p class="text-[12px] font-bold uppercase tracking-wide text-slate-400 px-4 pt-4 pb-2">Últimas movimentações (vendas + OS)</p>'+
+    '<div class="divide-y divide-slate-100">'+(r.timeline.length?r.timeline.map(t=>'<div class="px-4 py-2.5 flex items-center gap-3 flex-wrap">'+
+      '<span class="text-[10px] font-extrabold px-2 py-1 rounded-lg '+(t.tipo==='VENDA'?'bg-blue-100 text-blue-800':'bg-purple-100 text-purple-800')+'">'+t.tipo+'</span>'+
+      '<b class="text-[13px] text-slate-700 font-mono">'+esc(t.numero||'—')+'</b>'+
+      '<span class="text-[12.5px] text-slate-600 truncate flex-1">'+esc(t.cliente)+'</span>'+
+      '<span class="text-[11.5px] text-slate-400">'+esc(t.quem||'—')+'</span>'+
+      '<b class="text-[13px] text-slate-800">'+(t.valor?pgBRL(t.valor):'')+'</b>'+
+      '<span class="text-[10.5px] text-slate-400">'+esc(t.dt.toLocaleDateString('pt-BR'))+'</span>'+
+    '</div>').join(''):'<p class="text-[12.5px] text-slate-400 px-4 pb-4">Sem movimentações ainda.</p>')+'</div>'+
+    '<p class="text-[11px] text-slate-400 px-4 py-3 border-t border-slate-100">Atualizado às '+hh+' · Empresa: '+esc(sess.empresaNome||sess.empresaId||'')+'</p></div>';
+
+  v.innerHTML=html;
+};
+
+// ── Instalação no menu (espelho do Buscador Escola: nav-gest + topbar) ──────
+function pgInstalarMenu(){
+  const nav=document.getElementById('nav-gest');
+  if(nav&&!nav.querySelector('[data-nav="painel-gerente"]')){
+    const btn=document.createElement('button');
+    if(btn.dataset) btn.dataset.nav='painel-gerente';
+    else btn.setAttribute('data-nav','painel-gerente');
+    btn.onclick=()=>window.navigateTo('painel-gerente');
+    btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    btn.innerHTML='<i class="ph ph-gauge text-[19px]"></i><span>Painel Gerente</span>';
+    nav.insertBefore(btn, nav.firstChild);
+  }
+  const toolbar=document.querySelector('.classic-toolbar-scroll');
+  if(toolbar&&!document.getElementById('topmod-painel-gerente')){
+    const mod=document.createElement('div'); mod.className='module'; mod.id='topmod-painel-gerente';
+    mod.innerHTML='<button onclick="navigateTo(\'painel-gerente\')"><i class="ph ph-gauge"></i>Painel Gerente</button>';
+    const dash=[...toolbar.querySelectorAll('.module')].find(m=>/Início|Dashboard/.test(m.innerText||''));
+    if(dash) toolbar.insertBefore(mod, dash.nextSibling); else toolbar.appendChild(mod);
+  }
+}
+// navigateTo: o core não conhece a view nova — envolvo e ensino (precedente: wraps v5.26.x)
+if(typeof window.navigateTo==='function'){
+  const _navPG=window.navigateTo;
+  window.navigateTo=function(view){
+    const r=_navPG.apply(this, arguments);
+    if(view==='painel-gerente'){
+      try{ if(typeof setPageHeader==='function') setPageHeader('Painel do Gerente','Tudo de hoje, de todos os computadores, numa tela só'); }catch(e){}
+      try{ window.renderPainelGerente(); }catch(e){}
+    }
+    return r;
+  };
+}
+// Garante o botão mesmo com menu redesenhado após o login (mesmo padrão do escola)
+setInterval(()=>{ if(typeof document!=='undefined'&&document.hidden) return; try{ pgInstalarMenu(); }catch(e){} },2000);
+try{ pgInstalarMenu(); }catch(e){}
+console.log('PAINEL_GERENTE v5.26.6 — ativo');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("painel_gerente_patch.js", e); }
+;
+
+/* ===== fiscal_guard_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// FISCAL_GUARD_PATCH v6.0.0 — "PORTÃO FISCAL" (primeira pedra da linha NF)
+// As três garantias que ele exigiu, virando LEI de código na 6.0.0:
+//  1) AMBIENTE: tudo nasce em HOMOLOGAÇÃO (teste, sem valor fiscal). Produção
+//     só habilita por ação humana explícita: digitar "PRODUCAO" + usuário com
+//     permissão de emitir NF. Voltar p/ homologação é um clique só.
+//  2) NADA AUTOMÁTICO: este patch NÃO tem nenhum setInterval/setTimeout e
+//     nenhuma emissão/conferência dispara sozinha — só clique. A suíte de
+//     testes PROVA isso (varre o arquivo atrás de temporizadores).
+//  3) SEM EMISSÃO FANTASMA: toda conferência NF gera registro de auditoria
+//     (quem, quando, em qual ambiente) — não existe caminho silencioso.
+// Selo anti-fraude p/ a fase de envio (6.0.1): em homologação o XML leva no
+// próprio infCpl "NOTA DE TESTE, SEM VALOR FISCAL" — a contabilidade nunca
+// confunde teste com nota oficial. Duplicidade: detector pronto p/ o emissor
+// (mesmo modelo+série+número+origem nunca passa duas vezes sem confirmação).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6000fg) return;
+
+/* NFG_PURE_START */
+// ── Funções puras (sem DOM/banco) — usadas também pelo teste automatizado ────
+function nfgAmbiente(dbInst){
+  const cfg=(dbInst && dbInst.config) || {};
+  const v=String(cfg.nfAmbiente||'').toLowerCase();
+  return v==='producao' ? 'producao' : 'homologacao'; // padrão SEGURO: homologação
+}
+function nfgRotulo(amb){
+  if(amb==='producao') return 'PRODUÇÃO — a nota gerada aqui VALE DE VERDADE';
+  return 'HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL';
+}
+function nfgCor(amb){ return amb==='producao' ? '#14532d' : '#7f1d1d'; }
+// Registro de notas da linha 6.xx (alimentado pelo emissor da 6.0.1+)
+function nfgRegistro(dbInst){ return ((dbInst && dbInst.config && dbInst.config.nfRegistro) || []); }
+function nfgChaveUnica(n){
+  return [String(n && n.modelo||''),String(n && n.serie||''),String(n && n.numero||''),String(n && n.origemId||'')].join('|');
+}
+function nfgJaRegistrada(dbInst, nota){
+  const k=nfgChaveUnica(nota);
+  return nfgRegistro(dbInst).some(x=>nfgChaveUnica(x)===k && String(x && x.status||'')!=='cancelada');
+}
+// Selo anti-fraude: em homologação o XML diz ALTO que é teste (fase 6.0.1 usa)
+function nfgSeloTeste(xml, amb){
+  if(!xml || amb==='producao') return xml;
+  const selo='AMBIENTE DE HOMOLOGACAO - NOTA DE TESTE, SEM VALOR FISCAL. ';
+  if(xml.indexOf('<infCpl>')>=0) return xml.replace('<infCpl>','<infCpl>'+selo);
+  return xml.replace('</infNFe>','<infAdic><infCpl>'+selo.slice(0,-2)+'</infCpl></infAdic></infNFe>');
+}
+/* NFG_PURE_END */
+
+// ── Exporta (testes + próximas fases da linha 6.xx) ─────────────────────────
+const api={ nfgAmbiente:nfgAmbiente, nfgRotulo:nfgRotulo, nfgCor:nfgCor,
+            nfgRegistro:nfgRegistro, nfgChaveUnica:nfgChaveUnica,
+            nfgJaRegistrada:nfgJaRegistrada, nfgSeloTeste:nfgSeloTeste };
+if(typeof module!=='undefined') module.exports=api;
+if(typeof window!=='undefined') window.NFG_PURE=api;
+else if(typeof global!=='undefined') global.NFG_PURE=api;
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6000fg=true;
+
+function nfgAudit(acao, dados){
+  try{
+    db.logs=db.logs||[];
+    const s=(typeof getSession==='function'?getSession():null)||{};
+    db.logs.push({ tipo:'nf-portao', acao:acao, ambiente:nfgAmbiente(db),
+      usuarioId:s.usuarioId||null, usuarioLogin:s.login||s.usuarioLogin||null,
+      dados:dados||{}, at:new Date().toISOString() });
+    if(db.logs.length>300){ db.logs.splice(0,db.logs.length-300); }
+    if(typeof db.save==='function') db.save();
+  }catch(e){}
+}
+// Selo visual: placa de ambiente presa nos dois modais fiscais
+function nfgPlaca(alvo){
+  try{
+    const root=document.getElementById(alvo); if(!root||root.querySelector('.nfg-placa')) return;
+    const amb=nfgAmbiente(db);
+    const d=document.createElement('div');
+    d.className='nfg-placa';
+    d.style.cssText='margin:8px 10px 0;padding:7px 10px;border-radius:10px;font-size:11.5px;font-weight:800;letter-spacing:.2px;color:#fff;background:'+nfgCor(amb);
+    d.textContent='🏛️ '+nfgRotulo(amb);
+    root.insertBefore(d, root.firstChild);
+  }catch(e){}
+}
+// Botão de troca de ambiente na Central de Nota Fiscal
+function nfgBotaoAmbiente(){
+  const central=document.getElementById('central-nfe-modal'); if(!central||central.querySelector('.nfg-amb-btn')) return;
+  const b=document.createElement('button');
+  b.className='nfg-amb-btn';
+  b.style.cssText='margin:8px 10px 6px;height:34px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;font-weight:800;font-size:12px;padding:0 12px;cursor:pointer';
+  b.textContent = nfgAmbiente(db)==='producao' ? '⬇ Voltar p/ HOMOLOGAÇÃO (teste)' : '⬆ Habilitar PRODUÇÃO (vale de verdade)';
+  b.onclick=function(){ window.nfgAlternarAmbiente(); };
+  central.insertBefore(b, central.children[1]||null);
+}
+window.nfgAlternarAmbiente=function(){
+  const amb=nfgAmbiente(db);
+  const pode=(typeof window.usuarioPodeEmitirNfe==='function') ? window.usuarioPodeEmitirNfe() : false;
+  if(amb==='homologacao'){
+    if(!pode){ if(typeof toast==='function') toast('Só usuário com permissão de emitir NF habilita produção','error'); return; }
+    const dig = (typeof window.prompt==='function') ? window.prompt('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null;
+    if(dig!=='PRODUCAO'){ if(dig!==null && typeof toast==='function') toast('Não habilitado — texto não confere','error'); return; }
+    db.config=db.config||{}; db.config.nfAmbiente='producao';
+    nfgAudit('ambiente->producao',{});
+  }else{
+    db.config=db.config||{}; db.config.nfAmbiente='homologacao';
+    nfgAudit('ambiente->homologacao',{});
+  }
+  try{ if(typeof db.save==='function') db.save(); }catch(e){}
+  // repinta placas
+  document.querySelectorAll('.nfg-placa,.nfg-amb-btn').forEach(el=>el.remove());
+  nfgPlaca('central-nfe-modal'); nfgPlaca('nfe-conf-modal'); nfgBotaoAmbiente();
+};
+// ── Trava anti-silêncio: conferência NF SEMPRE deixa rastro de auditoria ─────
+if(typeof window.conferirNfe==='function'){
+  const _conf0=window.conferirNfe;
+  window.conferirNfe=function(tipo,id){
+    nfgAudit('conferir',{origem:tipo, id:id});
+    const r=_conf0.apply(this, arguments);
+    Promise.resolve(r).then(function(){ nfgPlaca('nfe-conf-modal'); }, function(){});
+    return r;
+  };
+}
+if(typeof window.abrirCentralNfe==='function'){
+  const _cen0=window.abrirCentralNfe;
+  window.abrirCentralNfe=function(){
+    nfgAudit('abrir-central',{});
+    const r=_cen0.apply(this, arguments);
+    Promise.resolve(r).then(function(){ nfgPlaca('central-nfe-modal'); nfgBotaoAmbiente(); }, function(){});
+    return r;
+  };
+}
+console.log('PORTÃO FISCAL v6.0.0 — homologação obrigatória, zero automático, tudo auditado');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fiscal_guard_patch.js", e); }
+;
+
+/* ===== nf_transmissao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// NF_TRANSMISSAO_PATCH v6.0.1 — MOTOR FISCAL COMPLETO (pedido dele: "FAÇA TUDO")
+// Fases entregues de uma vez, todas SELO HOMOLOGAÇÃO do Portão Fiscal (6.0.0):
+//  • 6.0.1 TRANSMISSÃO NF-e 55: XML confere→selo de teste em homologação→
+//    assina com o A1 do PC (.exe)→envelope SOAP 1.2→SEFAZ-MG→lê autorização/
+//    rejeição→registra→baixa o XML final. Senha do cert NUNCA fica salva.
+//  • 6.0.2 DANFE A4 do autorizado + botão "Baixar XML" (é o que vai p/
+//    contabilidade) + histórico completo na Central de Nota Fiscal.
+//  • 6.0.3 EVENTOS: cancelamento (justificativa ≥15, prazo avisado) e
+//    inutilização de faixa — mesmos prumos: assina, transmite, registra.
+//  • 6.0.4 NFC-e 65 NO CÓDIGO: XML próprio de balcão + QR Code (SHA-1 do CSC)
+//    + DANFE NFC-e em A4 (sem térmica, como ele definiu) + campos CSC na
+//    Central. Não imprime em bobina — ele disse que não compra térmica.
+// Travas heredadas: sem ponte Electron = instrução clara, NUNCA sucesso falso;
+// números nunca repetem; auditoria nfgAudit em cada passo; só clique emite.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6001nfx) return;
+
+/* NFX_PURE_START */
+// ── Tabela de endereços da SEFAZ-MG (NFe 4.00). Um ponto só de verdade:
+// se algum dia a SEFAZ mudar o caminho, mexe AQUI (ou no campo de ajuste da
+// Central) — e o guia do testador já pede print de qualquer erro exótico.
+const NFX_WS = {
+  producao: {
+    nfe55:  'https://nfe.fazenda.mg.gov.br/nfe2/services/',
+    nfce65: 'https://nfce.fazenda.mg.gov.br/nfce/services/'
+  },
+  homologacao: {
+    nfe55:  'https://hnfe.nfe.fazenda.mg.gov.br/nfe2/services/',
+    nfce65: 'https://hnfce.fazenda.mg.gov.br/nfce/services/'
+  }
+};
+const NFX_SERVICO = {
+  autorizacao: { arquivo:'NFeAutorizacao4',     action:'http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4/nfeAutorizacaoLote' },
+  recibo:      { arquivo:'NFeRetAutorizacao4',  action:'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRetAutorizacao4/nfeRetAutorizacaoLote' },
+  evento:      { arquivo:'NFeRecepcaoEvento4',  action:'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEvento' },
+  inutiliza:   { arquivo:'NFeInutilizacao4',    action:'http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4/nfeInutilizacaoDados' },
+  status:      { arquivo:'NFeStatusServico4',   action:'http://www.portalfiscal.inf.br/nfe/wsdl/NFeStatusServico4/nfeStatusServicoNF' }
+};
+function nfxUrl(ambiente, modelo, servico){
+  const base=(NFX_WS[ambiente==='producao'?'producao':'homologacao']||NFX_WS.homologacao);
+  const raiz=(modelo==='65'?base.nfce65:base.nfe55);
+  const svc=NFX_SERVICO[servico]||NFX_SERVICO.autorizacao;
+  return { url: raiz+svc.arquivo, soapAction: svc.action };
+}
+function nfxTpAmb(ambiente){ return ambiente==='producao' ? '1' : '2'; }
+function nfxEnvelope(corpo){
+  return '<?xml version="1.0" encoding="utf-8"?>'+
+    '<soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
+    '<soap12:Body><nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/PLACEHOLDER">'+corpo+
+    '</nfeDadosMsg></soap12:Body></soap12:Envelope>';
+}
+function nfxLoteAutoriza(xmlAssinada){
+  const docId='L'+String(Date.now());
+  return '<enviNFe versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">'+
+    '<idLote>'+docId+'</idLote><indSinc>1</indSinc>'+xmlAssinada+'</enviNFe>';
+}
+function nfxTag(xml, tag){
+  const m=String(xml||'').match(new RegExp('<'+tag+'[^>]*>([\\s\\S]*?)</'+tag+'>'));
+  return m?m[1].trim():'';
+}
+// Lê a resposta da SEFAZ SEM biblioteca (mesmo formato no nó e no navegador)
+function nfxParseRetorno(xmlRet){
+  const t=(x)=>nfxTag(xmlRet,x);
+  const cStat=t('cStat'); const xMotivo=t('xMotivo'); const nProt=t('nProt');
+  const protBlock=(xmlRet.match(/<protNFe[\s\S]*?<\/protNFe>/)||[''])[0];
+  const chaveInProt=protBlock?nfxTag(protBlock,'chNFe'):'';
+  let classe='outro';
+  if(cStat==='100'||cStat==='150') classe='autorizada';
+  else if(cStat==='103'||cStat==='105'||cStat==='106') classe='processando';
+  else if(cStat==='101'||cStat==='151'||cStat==='155') classe='cancelada';
+  else if(cStat==='102') classe='inutilizada';
+  else if(cStat==='135'||cStat==='136') classe='evento-registrado';
+  else if(cStat) classe='rejeitada';
+  return { cStat:cStat, xMotivo:xMotivo, nProt:nProt, chave:chaveInProt,
+           dhRecbto:t('dhRecbto'), nRec:t('nRec'), classe:classe, xmlBruto:String(xmlRet||'') };
+}
+// Cancelamento (evento 110111) — justificativa ≥ 15 caracteres, cOrgao 31 (MG)
+function nfxEventoCancelamento(o){
+  return '<envEvento versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfe">'+
+    '<idLote>1</idLote><evento versao="1.00"><infEvento Id="ID110111'+o.chave+'01">'+
+    '<cOrgao>'+o.cOrgao+'</cOrgao><tpAmb>'+o.tpAmb+'</tpAmb><CNPJ>'+o.cnpj+'</CNPJ>'+
+    '<chNFe>'+o.chave+'</chNFe><dhEvento>'+o.dhEvento+'</dhEvento>'+
+    '<tpEvento>110111</tpEvento><nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento>'+
+    '<detEvento versao="1.00"><descEvento>Cancelamento</descEvento>'+
+    '<nProt>'+o.protocolo+'</nProt><xJust>'+o.justificativa+'</xJust>'+
+    '</detEvento></infEvento></evento></envEvento>';
+}
+function nfxInutilizacao(o){
+  return '<inutNFe versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">'
+    +'<infInut Id="ID'+o.cOrgao+o.ano+o.cnpj+o.modelo+String(o.serie).padStart(3,'0')+String(o.nNFIni).padStart(9,'0')+String(o.nNFFin).padStart(9,'0')+'">'
+    +'<tpAmb>'+o.tpAmb+'</tpAmb><xServ>INUTILIZAR</xServ><cUF>'+o.cUF+'</cUF>'
+    +'<ano>'+o.ano+'</ano><CNPJ>'+o.cnpj+'</CNPJ><modelo>'+o.modelo+'</modelo>'
+    +'<serie>'+o.serie+'</serie><nNFIni>'+o.nNFIni+'</nNFIni><nNFFin>'+o.nNFFin+'</nNFFin>'
+    +'<xJust>'+o.justificativa+'</xJust></infInut></inutNFe>';
+}
+// ── QR Code da NFC-e (layout 2): p = chave|2|tpAmb|idCSC + sha1(csc) ──
+function nfxUrlQrCodeNfce(o){
+  const chave=String(o.chave||'');
+  const semPrefixo=chave.replace(/^NFe/i,'');
+  const idCSC=String(o.idCSC||'');
+  const csc=String(o.csc||'');
+  const parte=semPrefixo+'|2|'+o.tpAmb+'|'+idCSC;
+  return { semHash: parte, urlBase:'https://portalsped.fazenda.mg.gov.br/portalnfce/sistema/qrcode.xhtml' };
+}
+function nfxHexSha1(texto){
+  // SHA-1 puro (sem dependência) — mesmo resultado no navegador e no Node
+  function rl(n,s){ return ((n<<s)|(n>>>(32-s)))>>>0; }
+  function utf8(str){ return unescape(encodeURIComponent(str)); }
+  const msg=utf8(texto);
+  const bytes=[]; for(let i=0;i<msg.length;i++) bytes.push(msg.charCodeAt(i));
+  bytes.push(0x80);
+  while(bytes.length%64!==56) bytes.push(0);
+  const bitLen=msg.length*8;
+  for(let i=7;i>=0;i--) bytes.push((bitLen/Math.pow(256,i))&255);
+  let h0=0x67452301,h1=0xEFCDAB89,h2=0x98BADCFE,h3=0x10325476,h4=0xC3D2E1F0;
+  for(let bloco=0;bloco<bytes.length;bloco+=64){
+    const w=new Array(80).fill(0);
+    for(let i=0;i<16;i++) w[i]=((bytes[bloco+i*4]<<24)|(bytes[bloco+i*4+1]<<16)|(bytes[bloco+i*4+2]<<8)|bytes[bloco+i*4+3])>>>0;
+    for(let i=16;i<80;i++) w[i]=rl(w[i-3]^w[i-8]^w[i-14]^w[i-16],1);
+    let a=h0,b=h1,c=h2,d=h3,e=h4;
+    for(let i=0;i<80;i++){
+      let f,k;
+      if(i<20){ f=(b&c)|((~b)&d); k=0x5A827999; }
+      else if(i<40){ f=b^c^d; k=0x6ED9EBA1; }
+      else if(i<60){ f=(b&c)|(b&d)|(c&d); k=0x8F1BBCDC; }
+      else{ f=b^c^d; k=0xCA62C1D6; }
+      const temp=(rl(a,5)+f+e+k+w[i])>>>0;
+      e=d; d=c; c=rl(b,30); b=a; a=temp;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0; h4=(h4+e)>>>0;
+  }
+  return [h0,h1,h2,h3,h4].map(h=>('00000000'+h.toString(16)).slice(-8)).join('');
+}
+function nfxQrCodeNfce(o){
+  const q=nfxUrlQrCodeNfce(o);
+  const csc=String(o && o.csc || '');
+  const hash=nfxHexSha1(q.semHash+csc);
+  return q.urlBase+'?p='+q.semHash+'|'+hash.toUpperCase();
+}
+// ── DANFE A4 (NF-e 55) — simplificado mas completo p/ conferir e imprimir ────
+function nfxMascaraChave(chave){
+  const c=String(chave||'').replace(/\D/g,'');
+  return c.replace(/(\d{4})(?=\d)/g,'$1 ').trim();
+}
+function nfxBRL(n){ try{ return Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n||0); }catch(e){ return 'R$ '+(Number(n)||0).toFixed(2).replace('.',','); } }
+function nfxDanfeHtml(nota){
+  const itens=(nota.itens||[]).map((it,i)=>
+    '<tr><td style="text-align:right">'+(i+1)+'</td><td>'+escPure(it.nome||it.descricao||'')+'</td>'+
+    '<td style="text-align:center">'+escPure(it.ncm||'')+'</td>'+
+    '<td style="text-align:right">'+escPure(it.qtd!=null?it.qtd:1)+'</td>'+
+    '<td style="text-align:right">'+nfxBRL(it.unit||it.preco||0)+'</td>'+
+    '<td style="text-align:right">'+nfxBRL(it.total!=null?it.total:((it.qtd||1)*(it.unit||it.preco||0)))+'</td></tr>').join('')||
+    '<tr><td colspan="6" style="text-align:center;color:#666">Sem itens detalhados nesta nota</td></tr>';
+  const teste=nota.ambiente!=='producao';
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>DANFE '+escPure(nota.numero||'')+'</title>'+
+  '<style>body{font-family:Arial;margin:18px;color:#111}table{width:100%;border-collapse:collapse;font-size:11px}td,th{border:1px solid #444;padding:4px 6px;text-align:left}.caixa{border:1px solid #444;padding:7px 9px;margin:6px 0}.chave{font-family:monospace;font-size:13px;letter-spacing:1px}.marca{position:fixed;inset:0;display:grid;place-items:center;font-size:46px;color:rgba(200,0,0,.12);transform:rotate(-25deg);pointer-events:none;font-weight:900}@media print{.nao-imprime{display:none}}</style></head><body>'+
+  (teste?'<div class="marca">SEM VALOR FISCAL<br>MODO TESTE</div>':'')+
+  '<div class="caixa"><b>DANFE — Documento Auxiliar da Nota Fiscal Eletrônica</b><br><span style="font-size:11px">Modelo '+escPure(nota.modelo||'55')+' · Série '+escPure(nota.serie||'1')+' · Nº '+escPure(nota.numero||'')+'</span></div>'+
+  '<div class="caixa"><b>Emitente</b><br>'+escPure(nota.emitente||'')+'<br><span style="font-size:11px">CNPJ: '+escPure(nota.cnpj||'')+' · IE: '+escPure(nota.ie||'')+'</span></div>'+
+  (nota.destinatario?'<div class="caixa"><b>Destinatário</b><br>'+escPure(nota.destinatario)+(nota.documentoDest?'<br><span style="font-size:11px">CPF/CNPJ: '+escPure(nota.documentoDest)+'</span>':'')+'</div>':'')+
+  '<div class="caixa"><b>Chave de acesso</b><br><span class="chave">'+nfxMascaraChave(nota.chave)+'</span><br>'+
+  '<span style="font-size:11px">Consulta em portal.fazenda.mg.gov.br · '+(teste?'AMBIENTE DE HOMOLOGAÇÃO (sem valor fiscal)':'Produção')+'</span></div>'+
+  '<div class="caixa"><b>Protocolo de autorização</b><br><span style="font-family:monospace;font-size:14px">'+escPure(nota.protocolo||'(sem protocolo)')+'</span> <span style="font-size:11px">em '+escPure(nota.dataAutorizacao||'')+'</span></div>'+
+  '<table><thead><tr><th>#</th><th>Produto/Serviço</th><th>NCM</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>'+itens+'</tbody>'+
+  '<tfoot><tr><td colspan="5" style="text-align:right"><b>TOTAL DA NOTA</b></td><td style="text-align:right"><b>'+nfxBRL(nota.totalDaNota||0)+'</b></td></tr></tfoot></table>'+
+  '<div class="caixa" style="font-size:11px"><b>Dados adicionais</b><br>'+escPure(nota.infAdic||'Documento emitido pelo Sistema Digicopy.')+'</div>'+
+  '<p class="nao-imprime" style="margin-top:12px"><button onclick="window.print()" style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #333;background:#0a1e8a;color:#fff;font-weight:bold;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'+
+  ' <button onclick="window.close()" style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #999;background:#fff;cursor:pointer">Fechar</button></p></body></html>';
+}
+function escPure(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// DANFE NFC-e em A4 (faixa central 80mm de cara, impresso em folha A4)
+function nfxDanfeNfceHtml(nota){
+  return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cupom NFC-e '+escPure(nota.numero||'')+'</title>'+
+  '<style>body{font-family:Arial;margin:18px;display:flex;flex-direction:column;align-items:center;color:#111}.cupom{width:80mm;border:1px dashed #555;padding:10px 8px;font-size:11px;font-family:monospace}h3{margin:2px 0;font-size:13px}.tot{font-size:14px;font-weight:bold}.chave{word-break:break-all;font-size:9.5px}@media print{.nao-imprime{display:none}}</style></head><body>'+
+  (nota.ambiente!=='producao'?'<div style="width:80mm;background:#7f1d1d;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:11px">MODO TESTE — SEM VALOR FISCAL</div>':'')+
+  '<div class="cupom">'+
+  '<h3>'+escPure(nota.emitente||'')+'</h3><div>CNPJ '+escPure(nota.cnpj||'')+' · IE '+escPure(nota.ie||'')+'</div><hr>'+
+  '<div><b>DANFE NFC-e</b> — Documento Auxiliar<br>Nota de Consumidor Eletrônica</div>'+
+  '<div>Nº '+escPure(nota.numero||'')+' Série '+escPure(nota.serie||'1')+' · '+escPure(nota.dataAutorizacao||'')+'</div><hr>'+
+  (nota.itens||[]).map(it=>'<div style="display:flex;justify-content:space-between"><span>'+escPure(it.nome||'')+' x'+escPure(it.qtd||1)+'</span><span>'+nfxBRL(it.total!=null?it.total:0)+'</span></div>').join('')+
+  '<hr><div class="tot" style="text-align:right">TOTAL '+nfxBRL(nota.totalDaNota||0)+'</div>'+
+  '<div>Pagamento: '+escPure(nota.pagamento||'Dinheiro')+'</div><hr>'+
+  '<div class="chave">Chave: '+nfxMascaraChave(nota.chave)+'</div>'+
+  '<div>Protocolo: <b>'+escPure(nota.protocolo||'')+'</b></div><hr>'+
+  '<div style="text-align:center"><canvas id="nfx-qr"></canvas><br><a href="'+escPure(nota.qrUrl||'')+'" style="word-break:break-all;font-size:9px">'+escPure(nota.qrUrl||'')+'</a></div>'+
+  '<div style="text-align:center;margin-top:6px;font-size:9px">Consulta pela chave em portalsped.fazenda.mg.gov.br</div>'+
+  '</div><p class="nao-imprime"><button onclick="window.print()" style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #333;background:#0a1e8a;color:#fff;font-weight:bold;cursor:pointer">🖨️ Imprimir em A4</button></p></body></html>';
+}
+/* NFX_PURE_END */
+
+const apiPura={ nfxUrl:nfxUrl, nfxTpAmb:nfxTpAmb, nfxEnvelope:nfxEnvelope, nfxLoteAutoriza:nfxLoteAutoriza,
+  nfxParseRetorno:nfxParseRetorno, nfxTag:nfxTag, nfxEventoCancelamento:nfxEventoCancelamento,
+  nfxInutilizacao:nfxInutilizacao, nfxQrCodeNfce:nfxQrCodeNfce, nfxUrlQrCodeNfce:nfxUrlQrCodeNfce,
+  nfxHexSha1:nfxHexSha1, nfxDanfeHtml:nfxDanfeHtml, nfxDanfeNfceHtml:nfxDanfeNfceHtml, nfxMascaraChave:nfxMascaraChave };
+if(typeof module!=='undefined') module.exports=apiPura;
+if(typeof window!=='undefined') window.NFX_PURE=apiPura; else if(typeof global!=='undefined') global.NFX_PURE=apiPura;
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6001nfx=true;
+
+// ── Registro permanente das notas (vida da linha 6.xx) ──────────────────────
+function nfxDb(){ if(typeof db==='undefined') return null; db.config=db.config||{}; db.config.nfRegistro=db.config.nfRegistro||[]; return db; }
+function nfxAmb(){ return (window.NFG_PURE && window.NFG_PURE.nfgAmbiente(db)) || 'homologacao'; }
+function nfxAudit(acao, dados){ try{ (function(){ const s=(typeof getSession==='function'?getSession():null)||{}; db.logs=db.logs||[]; db.logs.push({tipo:'nf-portao',acao:acao,ambiente:nfxAmb(),usuarioId:s.usuarioId||null,usuarioLogin:s.login||s.usuarioLogin||null,dados:dados||{},at:new Date().toISOString()}); if(db.logs.length>300) db.logs.splice(0,db.logs.length-300); if(typeof db.save==='function') db.save(); })(); }catch(e){} }
+function nfxToast(msg, tipo){ if(typeof toast==='function') toast(msg, tipo||'info'); else try{ alert(msg); }catch(e){} }
+
+// Próximo número da nota por modelo+série (nunca repete, cresce sempre)
+window.nfProximoNumero=function(modelo, serie){
+  const d=nfxDb(); d.config.nfSeq=d.config.nfSeq||{};
+  const k=String(modelo||'55')+'_'+String(serie||'1');
+  const maxReg=d.config.nfRegistro.reduce((m,n)=> (n.modelo===modelo&&String(n.serie)===String(serie)) ? Math.max(m, parseInt(n.numero,10)||0) : m, 0);
+  const atual=parseInt(d.config.nfSeq[k],10)||0;
+  const prox=Math.max(atual, maxReg)+1;
+  d.config.nfSeq[k]=prox;
+  return prox;
+};
+
+// Checagens do pipeline (todas no clique; nenhuma roda sozinha)
+function nfxChecagensEmitir(origem, id){
+  if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())) return {ok:false, error:'Seu usuário não tem permissão de emitir NF (Admin/Dono libera na tela Usuários).'};
+  const amb=nfxAmb();
+  return {ok:true, ambiente:amb};
+}
+// Requer a ponte do .exe — sem ela, instrução honesta (nunca sucesso falso)
+function nfxPonte(){
+  if(window.nfeCertAPI && window.nfeCertAPI.isElectron) return window.nfeCertAPI;
+  return null;
+}
+function nfxInstruirSemPonte(alvoMsg){
+  const txt='Emissão fiscal só roda no app de computador (.exe), porque a SEFAZ exige o certificado A1 no PC.\n\n'+
+    'Caminho: instale/abra o sistema pelo atalho do computador (não pelo navegador), importe o A1 na Central de Nota Fiscal e volte aqui.\n'+
+    'A conferência dos dados funciona normalmente no navegador — só a transmissão precisa do .exe.';
+  if(alvoMsg) alvoMsg.textContent=txt; else nfxToast(txt,'error');
+}
+function nfxPedirSenha(){
+  // v6.0.2 — popup próprio do sistema (X de fechar). Fallback pro nativo se faltar.
+  if(typeof window.nfxPedirTexto==='function'){
+    return window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.', {mascara:true});
+  }
+  const s=(typeof window.prompt==='function') ? window.prompt('Senha do certificado A1 (usada agora e NÃO fica salva):') : null;
+  return Promise.resolve(s||null);
+}
+// Registra/atualiza a vida de uma nota no histórico fiscal
+function nfxGravarNota(rec){
+  const d=nfxDb();
+  const i=d.config.nfRegistro.findIndex(n=>n.id===rec.id);
+  rec.atualizadoEm=new Date().toISOString();
+  if(i>=0) d.config.nfRegistro[i]=Object.assign(d.config.nfRegistro[i], rec);
+  else { rec.criadoEm=rec.criadoEm||rec.atualizadoEm; d.config.nfRegistro.push(rec); }
+  try{ if(typeof db.save==='function') db.save(); }catch(e){}
+  return rec;
+}
+window.nfgRegistroNotas=function(){ return nfxDb().config.nfRegistro; };
+
+// ══ FLUXO COMPLETO DE EMISSÃO (NF-e 55 — origem: venda/leitura já conferida) ══
+window.nfEmitirCompleta=async function(origem, id, docConferido){
+  try{
+    const passo=nfxChecagensEmitir(origem, id);
+    if(!passo.ok){ nfxToast(passo.error,'error'); return {ok:false, error:passo.error}; }
+    if(!docConferido){ nfxToast('Confira os dados primeiro (botão Conferir) — a emissão usa o documento conferido.','error'); return {ok:false, error:'sem-doc'}; }
+    const ponte=nfxPonte();
+    if(!ponte){ nfxInstruirSemPonte(); return {ok:false, error:'sem-ponte'}; }
+    // Duplicidade: mesma origem já autorizada?
+    const d=nfxDb();
+    const ja=d.config.nfRegistro.find(n=>n.origemId===id && n.status==='autorizada');
+    if(ja){ const abrirDanfe=(typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('Nota já autorizada','Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'. Abrir o DANFE dela?', {botao:'Abrir DANFE'}) : ((typeof window.confirm==='function') ? window.confirm('Já existe nota AUTORIZADA ('+ja.numero+') pra esta '+origem+'.\nOK = abrir o DANFE dela · Cancelar = não fazer nada') : true); if(abrirDanfe){ window.nfAbrirDanfe(ja.id); } return {ok:false, error:'duplicada', nota:ja}; }
+    const amb=passo.ambiente;
+    // 1) XML final: confere + number lock + selo de homologação dentro do XML
+    const numero=window.nfProximoNumero('55', docConferido.serie||1);
+    docConferido.numero=numero;
+    let xml=window.NFE_EMISSAO_PURE.montarXml(docConferido);
+    xml=window.NFG_PURE.nfgSeloTeste(xml, amb);
+    // 2) Assinar com o A1 (pede a senha SÓ agora)
+    const senha=await nfxPedirSenha(); if(!senha){ nfxToast('Sem a senha do certificado não assina — emissão cancelada.','error'); return {ok:false, error:'sem-senha'}; }
+    nfxAudit('emitir-inicio',{origem:origem,id:id,numero:numero});
+    const ass=await ponte.assinar(xml, senha, docConferido.pfxB64||null);
+    if(!ass || !ass.ok){ nfxToast('Falha ao assinar: '+((ass&&ass.error)||'erro desconhecido'),'error'); nfxAudit('emitir-assinatura-falha',{numero:numero, erro:ass&&ass.error}); return {ok:false, error:'assinatura'}; }
+    // 3) Envelope + transmissão SEFAZ-MG
+    const ws=nfxUrl(amb,'55','autorizacao');
+    const lote=nfxLoteAutoriza(ass.xmlAssinado);
+    const envelope=nfxEnvelope(lote).replace('PLACEHOLDER','NFeAutorizacao4');
+    nfxToast('Transmitindo pra SEFAZ-MG ('+(amb==='producao'?'PRODUÇÃO':'homologação')+')…');
+    const trx=await ponte.transmitir({url:ws.url, envelope:envelope, soapAction:ws.soapAction, senhaCert:senha});
+    if(!trx || !trx.ok){ nfxToast('Transmissão falhou: '+((trx&&trx.error)||('HTTP '+((trx&&trx.status)||'?'))),'error'); nfxAudit('emitir-transmissao-falha',{numero:numero, erro:trx&&(trx.error||trx.status)}); return {ok:false, error:'transmissao'}; }
+    // 4) Resposta da SEFAZ
+    const ret=nfxParseRetorno(trx.xml);
+    const rec={
+      id:'nf_'+Date.now(), modelo:'55', serie:String(docConferido.serie||1), numero:String(numero),
+      chave:ret.chave||docConferido.chave||'', origem:origem, origemId:id, ambiente:amb,
+      status:ret.classe, cStat:ret.cStat, xMotivo:ret.xMotivo, protocolo:ret.nProt||'',
+      dataAutorizacao:ret.dhRecbto||'', xmlAutorizado:trx.xml, xmlEnviado:ass.xmlAssinado,
+      emitente:docConferido.emitenteNome||(docConferido.loja&&docConferido.loja.nome)||'',
+      cnpj:docConferido.emitenteDoc||docConferido.cnpj||'', ie:docConferido.ie||'',
+      destinatario:docConferido.clienteNome||'', documentoDest:docConferido.clienteDoc||'',
+      itens:(docConferido.itens||[]).map(it=>({nome:it.nome||it.descricao, qtd:it.qtd, unit:it.unit||it.preco, total:it.total, ncm:it.ncm})),
+      totalDaNota:docConferido.total||0, infAdic:''
+    };
+    nfxGravarNota(rec);
+    nfxAudit('emitir-resposta',{numero:numero, cStat:ret.cStat, classe:ret.classe, protocolo:rec.protocolo});
+    if(ret.classe==='autorizada'){
+      nfxToast('✅ Autorizada! '+ret.xMotivo+' · Protocolo '+rec.protocolo,'success');
+      window.nfAbrirDanfe(rec.id);
+    }else{
+      nfxToast('A SEFAZ respondeu: '+ret.cStat+' — '+ret.xMotivo+(ret.classe==='rejeitada'?'\nA nota NÃO foi emitida (rejeitada). Corrija e confira de novo.':''),'error');
+    }
+    try{ if(typeof window.nfxRenderHistorico==='function') window.nfxRenderHistorico(); }catch(e){}
+    return {ok:ret.classe==='autorizada', retorno:ret, nota:rec};
+  }catch(e){
+    nfxAudit('emitir-excecao',{erro:e.message||String(e)});
+    nfxToast('Erro inesperado: '+(e.message||e),'error');
+    return {ok:false, error:e.message||String(e)};
+  }
+};
+// ══ DANFE (A4 p/ 55 · cupom A4 p/ 65) ══
+window.nfAbrirDanfe=function(notaId){
+  const nota=nfxDb().config.nfRegistro.find(n=>n.id===notaId);
+  if(!nota){ nfxToast('Nota não encontrada.','error'); return; }
+  const html= nota.modelo==='65' ? nfxDanfeNfceHtml(nota) : nfxDanfeHtml(nota);
+  const w=window.open('','_blank');
+  if(!w){ nfxToast('Navegador bloqueou a janela do DANFE — libere pop-ups.','error'); return; }
+  w.document.write(html); w.document.close();
+};
+window.nfBaixarXml=function(notaId){
+  const nota=nfxDb().config.nfRegistro.find(n=>n.id===notaId);
+  if(!nota){ nfxToast('Nota não encontrada.','error'); return; }
+  const conteudo=nota.xmlAutorizado || nota.xmlEnviado || '';
+  if(!conteudo){ nfxToast('Essa nota não tem XML guardado.','error'); return; }
+  const nome='NFe_'+(nota.chave||('n'+nota.numero))+'.xml';
+  const blob=new Blob([conteudo],{type:'application/xml'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  nfxAudit('baixar-xml',{numero:nota.numero, chave:nota.chave});
+};
+// ══ EVENTO: CANCELAMENTO ══
+window.nfCancelarNota=async function(notaId){
+  try{
+    if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão de emitir NF — cancelamento também exige.','error'); return {ok:false}; }
+    const nota=nfxDb().config.nfRegistro.find(n=>n.id===notaId);
+    if(!nota) { nfxToast('Nota não encontrada.','error'); return {ok:false}; }
+    if(nota.status!=='autorizada'){ nfxToast('Só se cancela nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
+    if(!nota.protocolo){ nfxToast('Nota sem protocolo não cancela.','error'); return {ok:false}; }
+    const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null);
+    if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
+    const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
+    if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
+    const senha=await nfxPedirSenha(); if(!senha) return {ok:false, error:'sem-senha'};
+    const amb=nota.ambiente || nfxAmb();
+    const cnpj=String(nota.cnpj||'').replace(/\D/g,'');
+    const evt=nfxEventoCancelamento({ chave:nota.chave, protocolo:nota.protocolo, justificativa:just.trim(), cnpj:cnpj, cOrgao:'31', tpAmb:nfxTpAmb(amb), dhEvento:new Date().toISOString() });
+    nfxAudit('cancelar-inicio',{numero:nota.numero, chave:nota.chave, just:just.trim().slice(0,40)});
+    const ass=await ponte.assinar(evt, senha, null);
+    if(!ass || !ass.ok){ nfxToast('Falha ao assinar o cancelamento: '+((ass&&ass.error)||'?'),'error'); return {ok:false}; }
+    const ws=nfxUrl(amb, nota.modelo, 'evento');
+    const envelope=nfxEnvelope(ass.xmlAssinado).replace('PLACEHOLDER','NFeRecepcaoEvento4');
+    const trx=await ponte.transmitir({url:ws.url, envelope:envelope, soapAction:ws.soapAction, senhaCert:senha});
+    if(!trx || !trx.ok){ nfxToast('Transmissão do cancelamento falhou: '+((trx&&trx.error)||'?'),'error'); return {ok:false}; }
+    const ret=nfxParseRetorno(trx.xml);
+    nfxAudit('cancelar-resposta',{numero:nota.numero, cStat:ret.cStat, motivo:ret.xMotivo});
+    if(ret.classe==='evento-registrado' || ret.classe==='cancelada'){
+      nota.status='cancelada'; nota.xmlCancelamento=trx.xml; nota.canceladoEm=new Date().toISOString();
+      nfxGravarNota(nota);
+      nfxToast('✅ Cancelamento registrado: '+ret.xMotivo,'success');
+    }else{
+      nfxToast('SEFAZ respondeu ao cancelamento: '+ret.cStat+' — '+ret.xMotivo,'error');
+    }
+    try{ if(typeof window.nfxRenderHistorico==='function') window.nfxRenderHistorico(); }catch(e){}
+    return {ok:ret.classe!=='rejeitada', retorno:ret};
+  }catch(e){ nfxAudit('cancelar-excecao',{erro:e.message||String(e)}); nfxToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
+};
+// ══ EVENTO: INUTILIZAÇÃO DE FAIXA ══
+window.nfInutilizarFaixa=async function(opts){
+  try{
+    if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão.','error'); return {ok:false}; }
+    const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null);
+    if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa curta — não enviado.','error'); return {ok:false}; }
+    const senha=await nfxPedirSenha(); if(!senha) return {ok:false};
+    const amb=nfxAmb();
+    const ano=String(new Date().getFullYear()).slice(-2);
+    const cnpj=String(opts.cnpj||'').replace(/\D/g,'');
+    const xml=nfxInutilizacao({ cOrgao:'31', cUF:'31', ano:ano, cnpj:cnpj, modelo:String(opts.modelo||'55'), serie:opts.serie||1, nNFIni:opts.nNFIni, nNFFin:opts.nNFFin||opts.nNFIni, tpAmb:nfxTpAmb(amb), justificativa:just.trim() });
+    nfxAudit('inutilizar-inicio',{modelo:opts.modelo, serie:opts.serie, ini:opts.nNFIni, fim:opts.nNFFin});
+    const ass=await ponte.assinar(xml, senha, null);
+    if(!ass || !ass.ok){ nfxToast('Falha ao assinar: '+((ass&&ass.error)||'?'),'error'); return {ok:false}; }
+    const ws=nfxUrl(amb, String(opts.modelo||'55'), 'inutiliza');
+    const envelope=nfxEnvelope(ass.xmlAssinado).replace('PLACEHOLDER','NFeInutilizacao4');
+    const trx=await ponte.transmitir({url:ws.url, envelope:envelope, soapAction:ws.soapAction, senhaCert:senha});
+    if(!trx || !trx.ok){ nfxToast('Transmissão falhou: '+((trx&&trx.error)||'?'),'error'); return {ok:false}; }
+    const ret=nfxParseRetorno(trx.xml);
+    nfxAudit('inutilizar-resposta',{cStat:ret.cStat, motivo:ret.xMotivo, nProtocolo:ret.nProt});
+    if(ret.classe==='inutilizada'){
+      nfxGravarNota({ id:'inut_'+Date.now(), modelo:String(opts.modelo||'55'), serie:String(opts.serie||1), numero:String(opts.nNFIni)+'-'+(opts.nNFFin||opts.nNFIni), chave:'', origem:'inutilizacao', origemId:'', ambiente:amb, status:'inutilizada', cStat:ret.cStat, xMotivo:ret.xMotivo, protocolo:ret.nProt, dataAutorizacao:ret.dhRecbto||'', xmlAutorizado:trx.xml });
+      nfxToast('✅ Faixa inutilizada: '+ret.xMotivo,'success');
+    }else{ nfxToast('SEFAZ respondeu: '+ret.cStat+' — '+ret.xMotivo,'error'); }
+    return {ok:ret.classe==='inutilizada', retorno:ret};
+  }catch(e){ nfxAudit('inutilizar-excecao',{erro:e.message||String(e)}); nfxToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
+};
+// ══ HISTÓRICO FISCAL na Central (tabela viva) ══
+window.nfxRenderHistorico=function(){
+  // v6.0.2 — rende na TELA da Central (menu de verdade); modal antigo é só fallback
+  const central=document.getElementById('cnf-hist')||window.__nfxHistAlvo||document.getElementById('central-nfe-modal');
+  if(!central) return;
+  const lista=nfxDb().config.nfRegistro.slice().sort((a,b)=>(b.atualizadoEm||'').localeCompare(a.atualizadoEm||''));
+  let box=central.querySelector('.nfx-hist');
+  if(box) box.remove();
+  box=document.createElement('div');
+  box.className='nfx-hist';
+  box.style.cssText='max-height:220px;overflow:auto;border-radius:10px'; // as cores vêm da classe cnf-* (claro/escuro)
+  const linhas=lista.map(n=>{
+    const cor = n.status==='autorizada' ? '#16a34a' : (n.status==='cancelada' ? '#7c3aed' : (n.status==='inutilizada' ? '#64748b' : '#dc2626'));
+    const rotulo = n.modelo==='65' ? 'NFC-e' : 'NF-e';
+    const amb = n.ambiente==='producao' ? '' : ' <span style="color:#b91c1c;font-size:10px">(teste)</span>';
+    const acoes = n.status==='autorizada'
+      ? '<button data-nfx="danfe" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">DANFE</button> '+
+        '<button data-nfx="xml" class="nfx-btn-mini" style="font-size:11px;padding:3px 8px;border-radius:6px">XML</button> '+
+        '<button data-nfx="cancelar" class="nfx-btn-mini nfx-btn-cancel" style="font-size:11px;padding:3px 8px;border-radius:6px">Cancelar</button>'
+      : '<span style="font-size:10px" class="nfx-vazio">'+escPure(n.xMotivo||'')+'</span>';
+    return '<div class="nfx-linha" style="display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px">'+
+      '<b style="color:'+cor+'">'+escPure(n.status||'')+'</b>'+
+      '<span style="font-family:monospace">'+escPure(rotulo)+' nº '+escPure(n.numero||'')+'</span>'+amb+
+      '<span class="nfx-quem" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escPure(n.destinatario||n.emitente||'')+' · '+escPure(String(n.totalDaNota?nfxBRL(n.totalDaNota):''))+'</span>'+
+      '<span data-id="'+escPure(n.id)+'">'+acoes+'</span></div>';
+  }).join('') || '<div class="nfx-vazio" style="padding:12px;font-size:12px">Nenhuma nota transmitida ainda. As emissões aparecem aqui.</div>';
+  box.innerHTML='<div class="nfx-hist-cab" style="padding:8px 10px;font-size:11px;font-weight:800;letter-spacing:.3px">EMISSÕES DESTA EMPRESA (ficam salvas na nuvem)</div>'+linhas;
+  box.addEventListener('click', function(ev){
+    const btn=ev.target.closest('button[data-nfx]'); if(!btn) return;
+    const id=ev.target.closest('[data-id]') ? ev.target.closest('[data-id]').getAttribute('data-id') : null; if(!id) return;
+    if(btn.getAttribute('data-nfx')==='danfe') window.nfAbrirDanfe(id);
+    if(btn.getAttribute('data-nfx')==='xml') window.nfBaixarXml(id);
+    if(btn.getAttribute('data-nfx')==='cancelar') window.nfCancelarNota(id);
+  });
+  if(central.id==='cnf-hist'){ central.innerHTML=''; central.appendChild(box); }
+  else { const ancora=central.querySelector('.nfg-placa')||central.children[1]||central.firstChild; central.insertBefore(box, ancora && ancora.nextSibling || central.firstChild); }
+};
+// Rende o histórico toda vez que a Central abre (herda a trava do portão: só clique)
+if(typeof window.abrirCentralNfe==='function'){
+  const _cen1=window.abrirCentralNfe;
+  window.abrirCentralNfe=function(){
+    const r=_cen1.apply(this, arguments);
+    Promise.resolve(r).then(function(){ try{ window.nfxRenderHistorico(); }catch(e){} }, function(){});
+    return r;
+  };
+}
+console.log('MOTOR FISCAL v6.0.1 — transmissão SEFAZ-MG + DANFE A4 + eventos + NFC-e(código) — homologação primeiro');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("nf_transmissao_patch.js", e); }
+;
+
+/* ===== autocura_empresa_central_nf_tela_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTOCURA_EMPRESA_CENTRAL_NF_TELA_PATCH v6.0.2
+// 1) CURA DOS "DADOS SUMIDOS" (relato real: venda/impressoras desaparecem):
+//    sessão SEM empresa (o próprio diagnóstico dele mostrou "(nenhuma?!)").
+//    Regra SEGURA e determinística: se o banco tem EXATAMENTE UMA empresa e a
+//    sessão está sem, a sessão ganha essa empresa (sem chutar nada) e TODO
+//    registro órfão (empresaId vazio) recebe o carimbo dela. Auditoria no
+//    db.logs + um toast contando o que curou. Com +1 empresa, NÃO chuta:
+//    orienta relogar. O diagnóstico v5227 também passa a ver órfãos (602).
+// 2) POPUPS NO ESTILO DO SISTEMA (X de fechar, caixa própria — nunca os
+//    prompt/confirm nativos feios do navegador):
+//    window.nfxPedirTexto(titulo, aviso, {senha, minimo, mascara}) → Promise
+//    window.nfxConfirmar(titulo, aviso, {botao}) → Promise<bool>
+// 3) CENTRAL DE NOTA FISCAL VIRA MENU DE VERDADE (view como Painel Gerente/Bus-
+//    cador Escola), nada mais de aba flutuante: abrirCentralNfe passa a abrir
+//    a TELA. Placa de ambiente + troca ambiente + emissões + certificado +
+//    NFC-e CSC moram nela. Modal antigo fica desligado (wrap redireciona).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6002ac) return;
+
+/* AC602_PURE_START */
+// Cura da SESSÃO (sem empresa). Só carimba com UMA empresa no banco — senão,
+// não chuta (decisão do pedido: zero achismo em produção).
+function acCuraSessao(sess, dbInst){
+  if(!sess || !dbInst) return {mudou:false, motivo:'sem sessao ou db'};
+  if(sess.empresaId) return {mudou:false, motivo:'sessao ja tinha empresa'};
+  const emps=(dbInst.empresas)||[];
+  if(emps.length!==1) return {mudou:false, motivo:'empresas='+emps.length+' (nao chuta)', precisaEscolher:true};
+  sess.empresaId=emps[0].id;
+  return {mudou:true, motivo:'empresa unica carimbada na sessao', empresaId:emps[0].id};
+}
+// Cura dos DADOS órfãos (empresaId vazio) — só carimba com UMA empresa no banco
+const AC_ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','chamados'];
+function acContarOrfaos(dbInst){
+  const conta={};
+  let total=0;
+  for(const e of AC_ENTS){
+    let c=0;
+    for(const x of ((dbInst&&dbInst[e])||[])){ if(x && (x.empresaId===undefined||x.empresaId===null||x.empresaId==='')) c++; }
+    if(c){ conta[e]=c; total+=c; }
+  }
+  return {total:total, porEntidade:conta};
+}
+function acCarimbarOrfaos(dbInst, empresaId){
+  const emps=(dbInst&&dbInst.empresas)||[];
+  if(emps.length!==1) return {total:0, motivo:'nao carimba com '+emps.length+' empresas'};
+  const alvo=empresaId||emps[0].id;
+  let total=0;
+  for(const e of AC_ENTS){
+    for(const x of (dbInst[e]||[])){
+      if(x && (x.empresaId===undefined||x.empresaId===null||x.empresaId==='')){ x.empresaId=alvo; total++; }
+    }
+  }
+  return {total:total, motivo: total? 'carimbados em '+alvo : 'nada a fazer'};
+}
+/* AC602_PURE_END */
+
+if(typeof module!=='undefined') module.exports={acCuraSessao:acCuraSessao, acContarOrfaos:acContarOrfaos, acCarimbarOrfaos:acCarimbarOrfaos};
+if(typeof window!=='undefined'){ window.AC602_PURE={acCuraSessao:acCuraSessao, acContarOrfaos:acContarOrfaos, acCarimbarOrfaos:acCarimbarOrfaos}; }
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6002ac=true;
+
+function acToast(msg,tipo){ if(typeof toast==='function') toast(msg,tipo||'info'); }
+function acAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{}; db.logs=db.logs||[]; db.logs.push({tipo:'autocura',acao:acao,dados:dados||{},usuarioId:s.usuarioId||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
+
+// ── Roda a cura (na entrada do sistema; re-tenta até o db estar na memória) ──
+let acJaFez=false;
+function acRodarCura(){
+  if(acJaFez) return;
+  if(typeof db==='undefined' || !db || typeof getSession!=='function') return;
+  const sess=getSession(); if(!sess) return; // login ainda não aconteceu; sem empresa pra curar mesmo
+  const cursSess=acCuraSessao(sess, db);
+  if(cursSess.mudou){
+    try{ setSession(sess); }catch(e){}
+    acAudit('sessao-ganhou-empresa',{empresaId:cursSess.empresaId, motivo:cursSess.motivo});
+    acToast('Sessão carimbada com a empresa '+(cursSess.empresaId||'')+' (estava sem — por isso dados "sumiam").','success');
+  }else if(cursSess.precisaEscolher && db && db.empresas && db.empresas.length>1 && !sess.empresaId){
+    acToast('Este PC está com sessão SEM empresa e o banco tem '+db.empresas.length+'. Saia e entre escolhendo a empresa certa — é por isso que dados somem aqui.','error');
+  }
+  const orf=acContarOrfaos(db);
+  if(orf.total>0){
+    const cura=acCarimbarOrfaos(db, sess && sess.empresaId);
+    if(cura.total>0){
+      acAudit('dados-orfaos-carimbados',{total:cura.total, porEntidade:orf.porEntidade});
+      acToast('Curei '+cura.total+' registro(s) que estavam sem carimbo de empresa — agora aparecem em todos os PCs.','success');
+    }
+  }
+  acJaFez=true;
+}
+// Sonda leve: roda quando o sistema estiver de pé (db carregado e sessão ativa)
+(function sonda(){
+  let tent=0;
+  const t=setInterval(()=>{
+    tent++;
+    try{ acRodarCura(); }catch(e){}
+    if(acJaFez || tent>30) clearInterval(t);
+  },1000);
+})();
+
+// ══ POPUPS NO ESTILO DO SISTEMA (X de fechar; Promise) ══════════════════════
+function nfxBaseModal(titulo){
+  const antigo=document.getElementById('nfx-modal');
+  if(antigo) antigo.remove();
+  const root=document.createElement('div');
+  root.id='nfx-modal';
+  root.style.cssText='position:fixed;inset:0;z-index:100090;background:rgba(15,23,42,.62);display:flex;align-items:center;justify-content:center;padding:18px';
+  root.innerHTML='<div style="width:min(460px,96vw);background:white;border-radius:16px;box-shadow:0 25px 80px rgba(0,0,0,.35);padding:18px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between"><b style="font-size:15px">'+String(titulo||'')+'</b>'+
+    '<button id="nfx-x" style="font-size:22px;line-height:1;padding:2px 9px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer" title="Fechar">×</button></div>'+
+    '<div id="nfx-corpo" style="margin-top:10px"></div></div>';
+  document.body.appendChild(root);
+  return root;
+}
+// Pede um texto (senha/justificativa etc). Promise resolve(string) ou null.
+window.nfxPedirTexto=function(titulo, aviso, op){
+  op=op||{};
+  return new Promise(function(resolve){
+    const root=nfxBaseModal(titulo);
+    const corpo=root.querySelector('#nfx-corpo');
+    corpo.innerHTML=
+      (aviso?'<p style="font-size:12px;color:#64748b;margin:0 0 10px;white-space:pre-line">'+String(aviso)+'</p>':'')+
+      '<input id="nfx-tx" '+(op.mascara?'type="password" ':'type="text" ')+'style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px">'+
+      (op.minimo?'<p id="nfx-aviso-min" style="font-size:11px;color:#b91c1c;display:none;margin:6px 0 0">Mínimo de '+op.minimo+' caracteres.</p>':'')+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">'+
+      '<button id="nfx-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800;cursor:pointer">Cancelar</button>'+
+      '<button id="nfx-ok" style="height:38px;padding:0 16px;border-radius:10px;border:0;background:#0a1e8a;color:white;font-weight:800;cursor:pointer">Confirmar</button></div>';
+    const fechar=(v)=>{ root.remove(); resolve(v); };
+    root.querySelector('#nfx-x').onclick=()=>fechar(null);
+    root.querySelector('#nfx-cancel').onclick=()=>fechar(null);
+    root.querySelector('#nfx-ok').onclick=()=>{
+      const v=root.querySelector('#nfx-tx').value;
+      if(op.minimo && String(v||'').trim().length<op.minimo){ root.querySelector('#nfx-aviso-min').style.display='block'; return; }
+      fechar(String(v||'').trim());
+    };
+    root.addEventListener('keydown',(ev)=>{ if(ev.key==='Enter') root.querySelector('#nfx-ok').click(); if(ev.key==='Escape') fechar(null); });
+    setTimeout(()=>{ try{ root.querySelector('#nfx-tx').focus(); }catch(e){} },60);
+  });
+};
+// Confirmação própria. Promise resolve(true/false).
+window.nfxConfirmar=function(titulo, aviso, op){
+  op=op||{};
+  return new Promise(function(resolve){
+    const root=nfxBaseModal(titulo);
+    const corpo=root.querySelector('#nfx-corpo');
+    corpo.innerHTML=
+      '<p style="font-size:13px;color:#334155;margin:0;white-space:pre-line">'+String(aviso||'')+'</p>'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">'+
+      '<button id="nfx-cancel" style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:white;font-weight:800;cursor:pointer">'+(op.botaoCancelar||'Voltar')+'</button>'+
+      '<button id="nfx-ok" style="height:38px;padding:0 16px;border-radius:10px;border:0;background:'+(op.cor||'#0a1e8a')+';color:white;font-weight:800;cursor:pointer">'+(op.botao||'Confirmar')+'</button></div>';
+    const fechar=(v)=>{ root.remove(); resolve(v); };
+    root.querySelector('#nfx-x').onclick=()=>fechar(false);
+    root.querySelector('#nfx-cancel').onclick=()=>fechar(false);
+    root.querySelector('#nfx-ok').onclick=()=>fechar(true);
+    root.addEventListener('keydown',(ev)=>{ if(ev.key==='Escape') fechar(false); });
+  });
+};
+
+// ══ CENTRAL DE NOTA FISCAL — TELA DE VERDADE (menu), não aba flutuante ══════
+function centralRender(){
+  const v=typeof ensureView==='function'?ensureView('central-nf'):null;
+  if(!v) return;
+  cnfGarantirCss(); // v6.0.3 — aplica as regras claro/escuro do módulo antes de pintar
+  const sess=typeof getSession==='function'?getSession():null;
+  if(!sess){ v.innerHTML='<div class="p-8 text-center text-slate-500 text-[13px]">Entre com login para usar o fiscal.</div>'; return; }
+  const amb=(window.NFG_PURE&&window.NFG_PURE.nfgAmbiente(db))||'homologacao';
+  const prod=amb==='producao';
+  const reg=((db.config&&db.config.nfRegistro)||[]);
+  const autorizadas=reg.filter(n=>n.status==='autorizada').length;
+  const teste=reg.filter(n=>n.ambiente!=='producao').length;
+  const cscID=(db.config&&db.config.nfCscId)||'';
+  const csc=(db.config&&db.config.nfCsc)||'';
+  const pode=(window.usuarioPodeEmitirNfe&&window.usuarioPodeEmitirNfe());
+
+  let html='';
+  // Placa de ambiente — SEMPRE no topo da tela
+  html+='<div style="padding:10px 14px;border-radius:14px;font-weight:800;font-size:13px;color:#fff;background:'+(prod?'#14532d':'#7f1d1d')+'">'+
+      '🏛️ '+(prod?'PRODUÇÃO — a nota gerada aqui VALE DE VERDADE':'HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL')+
+      ' <span style="font-weight:500;opacity:.9">· '+autorizadas+' autorizadas</span></div>';
+  // Linha de ações — classes fiscais (claro/escuro). v6.0.3: nada de inline claro fantasma
+  html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">'+
+    '<button id="cnf-amb" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">'+(prod?'⬇ Voltar p/ HOMOLOGAÇÃO (teste)':'⬆ Habilitar PRODUÇÃO (vale de verdade)')+'</button>'+
+    '<button id="cnf-config" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">⚙️ Dados fiscais (CNPJ/IE/NCM)</button>'+
+    '<button id="cnf-inut" class="cnf-btn-d" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🧹 Inutilizar faixa</button></div>';
+  if(!pode){
+    html+='<p style="margin-top:10px;font-size:12px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;padding:8px 12px;border-radius:10px">Seu usuário pode OLHAR tudo aqui, mas só quem tem <b>permissão de emitir NF</b> transmite/inutiliza/cancela (Admin/Dono libera na tela Usuários).</p>';
+  }
+  // Certificado + CSC — cards com classe fiscal (o escuro cobre via cnf-aba-css)
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px">'+
+    '<div class="cnf-card"><p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px" class="cnf-sub">Certificado A1</p>'+
+    '<p style="font-size:13px;margin:0" class="cnf-txt">Importe pelo computador (.exe) — a SEFAZ só aceita certificado no PC emissor.</p>'+
+    '<p style="font-size:12px;margin:6px 0 0" class="cnf-sub">A senha é pedida na hora de cada transmissão e <b>não fica salva</b>.</p></div>'+
+    '<div class="cnf-card"><p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px" class="cnf-sub">NFC-e — código CSC (SEFAZ-MG)</p>'+
+    '<label style="font-size:11px;font-weight:800">ID do CSC</label><input id="cnf-cscid" class="cnf-input" value="'+String(cscID).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
+    '<label style="font-size:11px;font-weight:800">CSC</label><input id="cnf-csc" class="cnf-input" type="password" value="'+String(csc).replace(/"/g,'&quot;')+'" style="width:100%;height:34px;border-radius:8px;padding:0 10px;margin:3px 0 8px;font-size:12.5px">'+
+    '<button id="cnf-cscsalvar" class="cnf-btn" style="height:32px;padding:0 12px;border-radius:8px;font-size:12px">Salvar CSC</button>'+
+    '<p style="font-size:11.5px;margin:8px 0 0" class="cnf-sub">'+(teste?teste+' em modo teste — treine à vontade.':'NFC-e pronto no código; gera o CSC no portal da SEFAZ-MG quando for usar de verdade.')+'</p></div></div>';
+  // Emissões (render vivo) — NOME ÚNICO (o histórico já tem cabeçalho próprio: adeus título duplicado)
+  html+='<div style="margin-top:12px"><div id="cnf-hist"></div></div>';
+  v.innerHTML=html;
+
+  v.querySelector('#cnf-amb').onclick=async function(){
+    if(!pode){ acToast('Sem permissão para mudar ambiente.','error'); return; }
+    if(!prod){
+      const dig=await window.nfxPedirTexto('Habilitar PRODUÇÃO','⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, escreva exatamente: PRODUCAO');
+      if(dig!=='PRODUCAO'){ if(dig!==null) acToast('Não habilitado — texto não confere.','error'); return; }
+      db.config=db.config||{}; db.config.nfAmbiente='producao';
+      window.NFG_PURE&&true; try{ if(typeof db.save==='function') db.save(); }catch(e){}
+    }else{
+      const ok=await window.nfxConfirmar('Voltar pra homologação?','Tudo volta a ser TESTE (sem valor fiscal). Nada do que já foi feito é apagado.');
+      if(!ok) return;
+      db.config=db.config||{}; db.config.nfAmbiente='homologacao';
+      try{ if(typeof db.save==='function') db.save(); }catch(e){}
+    }
+    acAudit('ambiente-troca',{para:prod?'homologacao':'producao'});
+    centralRender();
+  };
+  v.querySelector('#cnf-config').onclick=function(){ try{ if(typeof abrirPerfilTributario==='function') abrirPerfilTributario(); else acToast('Abra em Configurações → Fiscal.','info'); }catch(e){} };
+  v.querySelector('#cnf-inut').onclick=async function(){
+    if(!pode){ acToast('Sem permissão.','error'); return; }
+    const modelo=await window.nfxPedirTexto('Inutilizar faixa','Modelo da nota (55 = NF-e A4 · 65 = NFC-e cupom):');
+    if(modelo===null||!modelo) return;
+    const serie=await window.nfxPedirTexto('Inutilizar faixa','Série (normalmente 1):'); if(serie===null) return;
+    const numero=await window.nfxPedirTexto('Inutilizar faixa','Número a inutilizar (o que pulou, ex.: 9):'); if(numero===null) return;
+    window.nfInutilizarFaixa({modelo:modelo||'55', serie:parseInt(serie,10)||1, nNFIni:parseInt(numero,10)||0, nNFFin:parseInt(numero,10)||0, cnpj:''});
+  };
+  v.querySelector('#cnf-cscsalvar').onclick=function(){
+    db.config=db.config||{};
+    db.config.nfCscId=v.querySelector('#cnf-cscid').value.trim();
+    db.config.nfCsc=v.querySelector('#cnf-csc').value;
+    try{ if(typeof db.save==='function') db.save(); }catch(e){}
+    acToast('CSC salvo na nuvem (fica só nos PCs autorizados).','success');
+    acAudit('csc-salvo',{idCsc:db.config.nfCscId});
+  };
+  // Histórico na tela (a função já existe: agora rende AQUI, não no modal)
+  window.__nfxHistAlvo=v.querySelector('#cnf-hist');
+  try{ if(typeof window.nfxRenderHistorico==='function') window.nfxRenderHistorico(); }catch(e){}
+}
+window.renderCentralNf=centralRender;
+
+// Entrada da tela: mesma regra das outras telas (navigateTo aprende a view via wrap)
+if(typeof window.navigateTo==='function'){
+  const _nav=window.navigateTo;
+  window.navigateTo=function(view){
+    const r=_nav.apply(this,arguments);
+    if(view==='central-nf'){
+      try{ if(typeof setPageHeader==='function') setPageHeader('Central de Nota Fiscal','Emissão, histórico e configuração fiscal — modo teste primeiro'); }catch(e){}
+      try{ centralRender(); }catch(e){}
+    }
+    return r;
+  };
+}
+// Botões no menu (nav-gest + barra clássica) — espelho Painel Gerente/Buscador
+function cnfInstalarMenu(){
+  const nav=document.getElementById('nav-gest');
+  if(nav&&!nav.querySelector('[data-nav="central-nf"]')){
+    const btn=document.createElement('button');
+    if(btn.dataset) btn.dataset.nav='central-nf'; else btn.setAttribute('data-nav','central-nf');
+    btn.onclick=()=>window.navigateTo('central-nf');
+    btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    btn.innerHTML='<i class="ph ph-receipt text-[19px]"></i><span>Nota Fiscal</span>';
+    const painel=nav.querySelector('[data-nav="painel-gerente"]');
+    if(painel&&painel.nextSibling) nav.insertBefore(btn,painel.nextSibling); else nav.insertBefore(btn, nav.firstChild);
+  }
+  const toolbar=document.querySelector('.classic-toolbar-scroll');
+  if(toolbar&&!document.getElementById('topmod-central-nf')){
+    const mod=document.createElement('div'); mod.className='module'; mod.id='topmod-central-nf';
+    mod.innerHTML='<button onclick="navigateTo(\'central-nf\')"><i class="ph ph-receipt"></i>Nota Fiscal</button>';
+    const fin=[...toolbar.querySelectorAll('.module')].find(m=>/Financeiro/i.test(m.innerText||''));
+    if(fin) toolbar.insertBefore(mod, fin.nextSibling); else toolbar.appendChild(mod);
+  }
+}
+// SEGUE INSTALANDO (menu redesenha após login) — isso NÃO emite nota; só pinta botão
+setInterval(()=>{ if(typeof document!=='undefined'&&document.hidden) return; try{ cnfInstalarMenu(); }catch(e){} },2000);
+// A chamada antiga abrirCentralNfe abre a TELA agora (modal flutuante morto)
+if(typeof window.abrirCentralNfe==='function'){
+  const _cen2=window.abrirCentralNfe;
+  window.abrirCentralNfe=function(){
+    try{ window.navigateTo('central-nf'); }catch(e){ if(_cen2) _cen2.apply(this,arguments); }
+  };
+}
+try{ cnfInstalarMenu(); }catch(e){}
+
+// ══ v6.0.3a — GUARDA do saveConfig (erro real do console: saveConfig lia
+// cfg-emp-nome mesmo quando a tela de Configuração antiga não está na DOM —
+// a tela "neo" tem botão Salvar SEM esses campos → TypeError 'value' de null).
+// Regra: lê só o que EXISTE; se nada existe aqui, não quebra e avisa. ═══════
+if(typeof window.saveConfig==='function'){
+  const _saveConfig0=window.saveConfig;
+  window.saveConfig=function(){
+    try{
+      const algum=['cfg-emp-nome','cfg-emp-cnpj','cfg-emp-fone','cfg-emp-email'].some(id=>document.getElementById(id));
+      if(!algum){
+        try{ if(typeof db!=='undefined'&&typeof db.save==='function') db.save(); }catch(e){}
+        acToast('Nada de empresa para salvar nesta tela — dados já estão salvos automático.','info');
+        return;
+      }
+      return _saveConfig0.apply(this,arguments);
+    }catch(e){ acToast('Falha ao salvar configuração: '+(e.message||e),'error'); }
+  };
+}
+
+// ══ v6.0.3b — CSS PRÓPRIO do módulo fiscal (claro E escuro). O print dele
+// mostrou: card branco pendurado no fundo escuro + texto fantasma. Regra: │
+// todo elemento fiscal ganha classe cnf-*, e no modo escuro (html.digi-escuro)
+// as cores vêm por CSS com !important (sobrepõe o inline claro). ══════════
+function cnfGarantirCss(){
+  if(document.getElementById('cnf-aba-css')) return;
+  const st=document.createElement('style');
+  st.id='cnf-aba-css';
+  st.textContent=[
+    '#view-central-nf .cnf-card{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff;color:#1f2937}',
+    '#view-central-nf label{color:#475569}',
+    '#view-central-nf .cnf-txt{color:#334155}',
+    '#view-central-nf .cnf-sub{color:#64748b}',
+    '#view-central-nf .cnf-input{border:1px solid #cbd5e1;background:#fff;color:#0f172a}',
+    '#view-central-nf .cnf-btn{border:1px solid #cbd5e1;background:#fff;color:#1e293b;font-weight:800;cursor:pointer}',
+    '#view-central-nf .cnf-btn:hover{background:#f1f5f9}',
+    '#view-central-nf .cnf-btn-d{border:1px solid #fca5a5;background:#fff;color:#b91c1c;font-weight:800;cursor:pointer}',
+    '#view-central-nf .nfx-hist{border:1px solid #e2e8f0;background:#fff;color:#1f2937}',
+    '#view-central-nf .nfx-hist .nfx-hist-cab{background:#f8fafc;color:#475569;border-bottom:1px solid #e2e8f0}',
+    '#view-central-nf .nfx-hist .nfx-linha{border-bottom:1px solid #f1f5f9}',
+    '#view-central-nf .nfx-hist .nfx-vazio{color:#94a3b8}',
+    '#view-central-nf .nfx-hist .nfx-quem{color:#64748b}',
+    '#view-central-nf .nfx-hist .nfx-btn-mini{border:1px solid #cbd5e1;background:#fff;color:#1e293b;cursor:pointer}',
+    // O popup nfx-modal nasce com inline claro — o escuro sobrepõe por important
+    'html.digi-escuro #nfx-modal>div{background:#101a30 !important;color:#dbe3f0 !important;border:1px solid #2b3b5c !important}',
+    'html.digi-escuro #nfx-modal #nfx-corpo,html.digi-escuro #nfx-modal p,html.digi-escuro #nfx-modal label{color:#c9d6ef !important}',
+    'html.digi-escuro #nfx-modal input{background:#0d1830 !important;color:#e5ecfa !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #nfx-modal button#nfx-cancel,html.digi-escuro #nfx-modal button#nfx-x{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    // MODO ESCURO do menu fiscal propriamente dito
+    'html.digi-escuro #view-central-nf .cnf-card{background:#101a30 !important;border-color:#2b3b5c !important;color:#dbe3f0 !important}',
+    'html.digi-escuro #view-central-nf label{color:#94a7cf !important}',
+    'html.digi-escuro #view-central-nf .cnf-txt{color:#c9d6ef !important}',
+    'html.digi-escuro #view-central-nf .cnf-sub{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .cnf-input{background:#0d1830 !important;color:#e5ecfa !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn:hover{background:#1d2d50 !important}',
+    'html.digi-escuro #view-central-nf .cnf-btn-d{background:#3f1620 !important;color:#f0a8a8 !important;border-color:#6b2b2b !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist{background:#101a30 !important;border-color:#2b3b5c !important;color:#dbe3f0 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-hist-cab{background:#0d1830 !important;color:#94a7cf !important;border-bottom-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-linha{border-bottom-color:#1e2c4a !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-vazio{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-quem{color:#8fa2c8 !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-btn-mini{background:#16233f !important;color:#dbe3f0 !important;border-color:#2b3b5c !important}',
+    'html.digi-escuro #view-central-nf .nfx-hist .nfx-btn-cancel{background:#3f1620 !important;color:#f0a8a8 !important;border-color:#6b2b2b !important}'
+  ].join('\n');
+  document.head.appendChild(st);
+}
+console.log('v6.0.3 — fiscal no modo escuro + saveConfig blindado');
+console.log('v6.0.2 — cura dados sumidos + Central NF virou MENU + popups próprios com X');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("autocura_empresa_central_nf_tela_patch.js", e); }
+;
+
+/* ===== perfis_nuvem_cura_sessao_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PERFIS_NUVEM_CURA_SESSAO_PATCH v6.0.4
+// A prova do diagnóstico DELE em mãos: "Empresa da minha sessão: (nenhuma?!)"
+// com o banco tendo EXATAMENTE 1 empresa [emp_digicopy] e tudo "visível".
+// Causa-raiz achada na 6.0.4: a cura da 6.0.2 só tentava carimbar a sessão por
+// TRINTA SEGUNDOS depois de abrir o sistema (sonda 1s×30) e marcava "já fez"
+// na primeira passada. Quem fazia login depois disso — caso real dele, login
+// 1x/dia — passava o DIA INTEIRO sem empresa na sessão → as telas filtram por
+// empresa e os dados "somem". A nuvem e o banco estavam certos o tempo todo.
+//
+// O que este patch entrega:
+//  1) CURA DEFINITIVA (mesma regra segura: SÓ carimba com EXATAMENTE 1 empresa
+//     no banco; 2+ nunca chuta):
+//     • sonda 2s por até 10 MINUTOS (era 30s) e não desiste enquanto não houver
+//       resposta definitiva (sessão carimbada OU 2+ empresas confirmadas);
+//     • rearmada a CADA login (wrap do setSession) e a CADA gravação do banco
+//       (wrap do db.save — é por onde os dados da nuvem pousam, cobrindo PC que
+//       abre o sistema antes dos dados descerem);
+//     • botão manual "Reparar sessão agora" na tela Nuvem (ao lado do
+//       diagnóstico, instalado no patch 5227) chama window.acForcarCura().
+//  2) PERFIS DA NUVEM (pedido dele): a tela Nuvem abre pra todo PC; PC que
+//     entrou com a senha do GERENTE vira Administrador na nuvem (gastos,
+//     aparelhos, convites — implementado no worker 5.26.3 e nos gates do
+//     cloudflare_sync_patch); PC comum vê a nuvem SEM os gastos e só desconecta
+//     a própria sessão. Aqui só fica a constatação via console (auditoria leve).
+//
+// Guard: __v6004pnc. PURE exportado pra testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6004pnc) return;
+
+/* PNC604_PURE_START */
+// Decisão da cura — pura e testável. Dado o retrato (sessão? tem empresa?
+// quantas empresas no banco? tentativa), diz o próximo passo:
+//   'esperar'            → ainda não dá pra decidir (sem login ou banco vazio)
+//   'carimbar-sessao'    → 1 empresa no banco e sessão sem empresa → carimba
+//   'definitivo-multi'   → 2+ empresas e sessão vazia → NÃO chuta, fim da sonda
+//   'resolvido'          → sessão já tem empresa → fim da sonda
+//   'fim-tentativas'     → estourou o teto de tentativas
+function pncProximoPasso(o){
+  o=o||{};
+  const tent=Number(o.tentativas)||0, teto=Number(o.teto)||300;
+  if(tent>teto) return 'fim-tentativas';
+  if(!o.temSessao) return 'esperar';
+  if(o.sessTemEmpresa) return 'resolvido';
+  const n=Number(o.nEmpresas)||0;
+  if(n===1) return 'carimbar-sessao';
+  if(n>1) return 'definitivo-multi';
+  return 'esperar'; // banco ainda vazio (dados da nuvem a caminho)
+}
+/* PNC604_PURE_END */
+
+if(typeof module!=='undefined') module.exports={pncProximoPasso:pncProximoPasso};
+if(typeof window!=='undefined'){ window.PNC604_PURE={pncProximoPasso:pncProximoPasso}; }
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6004pnc=true;
+
+function pncToast(msg,tipo){ try{ if(typeof toast==='function') toast(msg,tipo||'info'); }catch(e){} }
+function pncAudit(acao,dados){
+  try{
+    const s=(typeof getSession==='function'?getSession():null)||{};
+    db.logs=db.logs||[];
+    db.logs.push({tipo:'autocura-604',acao:acao,dados:dados||{},usuarioId:s.usuarioId||null,usuarioLogin:s.login||null,at:new Date().toISOString()});
+    if(typeof db.save==='function') db.save();
+  }catch(e){}
+}
+function pure602(){
+  if(window.AC602_PURE) return window.AC602_PURE;
+  return null; // a fila garante o 208 antes; se faltar, a cura simplesmente não roda (log em console)
+}
+
+// Motor da cura — chama as funções PURAS da 6.0.2 (mesma regra: só 1 empresa)
+let avisouMulti=false;
+async function acForcarCura(){
+  const P=pure602();
+  if(!P) return {ok:false,motivo:'motor da cura (6.0.2) não está carregado nesta tela — recarregue (F5)'};
+  if(typeof db==='undefined'||!db||typeof getSession!=='function') return {ok:false,motivo:'banco ainda carregando'};
+  const sess=getSession();
+  if(!sess) return {ok:false,motivo:'ninguém entrou no sistema ainda (sem sessão)'};
+  const emps=Array.isArray(db.empresas)?db.empresas:[];
+  const passo=pncProximoPasso({temSessao:true,sessTemEmpresa:!!sess.empresaId,nEmpresas:emps.length,tentativas:0,teto:1});
+  if(passo==='resolvido') return {ok:true,sessaoMudou:false,empresaId:sess.empresaId,orfaos:0};
+  if(passo==='definitivo-multi') return {ok:false,motivo:'o banco tem '+emps.length+' empresas — o sistema não chuta; saia e entre escolhendo a empresa certa'};
+  if(emps.length===0) return {ok:false,motivo:'o banco local ainda está vazio — os dados da nuvem podem estar descendo; tente de novo em alguns segundos'};
+  // carimbar-sessao
+  const r=P.acCuraSessao(sess, db);
+  let mudouSessao=false;
+  if(r.mudou){
+    try{ setSession(sess); mudouSessao=true; }catch(e){ return {ok:false,motivo:'falhou ao gravar a sessão: '+(e.message||e)}; }
+    pncAudit('sessao-carimbada-604',{empresaId:r.empresaId});
+  }
+  let orfaos=0;
+  try{
+    const oc=P.acContarOrfaos(db);
+    if(oc.total>0){ const cz=P.acCarimbarOrfaos(db, sess.empresaId||emps[0].id); orfaos=cz.total||0; if(orfaos) pncAudit('orfaos-carimbados-604',{total:orfaos,porEntidade:oc.porEntidade}); }
+  }catch(e){}
+  return {ok:true,sessaoMudou:mudouSessao,empresaId:(sess.empresaId||''),orfaos:orfaos};
+}
+window.acForcarCura=acForcarCura;
+
+// ── Driver automático: sonda 2s × 10 min + hooks de login/db.save ──────────
+let pncFechado=false;
+function pncResolvido(){
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.empresaId) return true;
+    const emps=(typeof db!=='undefined'&&Array.isArray(db.empresas))?db.empresas:[];
+    if(sess&&emps.length>1) return true; // definitivo: não chuta
+  }catch(e){}
+  return false;
+}
+function pncTentativa(silencioso){
+  if(pncFechado) return;
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    const emps=(typeof db!=='undefined'&&Array.isArray(db.empresas))?db.empresas:[];
+    const passo=pncProximoPasso({temSessao:!!sess,sessTemEmpresa:!!(sess&&sess.empresaId),nEmpresas:emps.length,tentativas:0,teto:99999});
+    if(passo==='resolvido'){ pncFechado=true; return; }
+    if(passo==='definitivo-multi'){
+      pncFechado=true;
+      if(!avisouMulti){ avisouMulti=true; pncToast('Sessão SEM empresa e banco com '+emps.length+' empresas: o sistema não chuta. Saia e entre escolhendo a empresa certa.','error'); pncAudit('sessao-sem-empresa-multi',{empresas:emps.length}); }
+      return;
+    }
+    if(passo!=='carimbar-sessao') return; // esperar
+    acForcarCura().then(function(r){
+      if(r&&r.ok){
+        pncFechado=true;
+        if(r.sessaoMudou&&!silencioso) pncToast('Sessão carimbada com '+(r.empresaId||'')+' — era por isso que dados "sumiam" neste PC. Recarregue as telas.','success');
+        if(r.sessaoMudou&&silencioso) pncToast('Sessão carimbada com '+(r.empresaId||'')+'. Recarregue as telas — os dados voltam.','success');
+        if(Number(r.orfaos)>0) pncToast('Curei '+r.orfaos+' registro(s) sem carimbo de empresa — agora aparecem em todos os PCs.','success');
+      }
+    }).catch(function(){});
+  }catch(e){}
+}
+// Sonda densa na abertura (2s por até 10 minutos; para sozinha ao resolver)
+(function pncSonda(){
+  let tent=0;
+  const t=setInterval(function(){
+    tent++;
+    pncTentativa(false);
+    if(pncFechado||tent>300) clearInterval(t);
+  },2000);
+})();
+// Rearme a cada login (quem entra DEPOIS da abertura não fica sem cura o dia
+// inteiro — era exatamente o caso dele) e a cada gravação do banco (dados da
+// nuvem pousando depois dos 10 minutos). Barato: uma tentativa silenciosa.
+let pncReagendando=false;
+function pncRearmar(){
+  if(pncFechado||pncReagendando) return;
+  pncReagendando=true;
+  setTimeout(function(){ pncReagendando=false; try{ pncTentativa(true); }catch(e){} },500);
+  setTimeout(function(){ try{ if(!pncFechado) pncTentativa(true); }catch(e){} },3000);
+}
+if(typeof window.setSession==='function' && !window.setSession.__pnc604){
+  const _setS=window.setSession;
+  const embr=function(){ const r=_setS.apply(this,arguments); pncRearmar(); return r; };
+  embr.__pnc604=true;
+  window.setSession=embr;
+}
+if(typeof db!=='undefined' && db && typeof db.save==='function' && !db.save.__pnc604){
+  const _save=db.save;
+  let ultima=0;
+  const embrS=function(){
+    const r=_save.apply(this,arguments);
+    const agora=Date.now();
+    if(agora-ultima>4000 && !pncFechado){ ultima=agora; try{ pncTentativa(true); }catch(e){} }
+    return r;
+  };
+  embrS.__pnc604=true;
+  try{ db.save=embrS; }catch(e){}
+}
+console.log('v6.0.4 — cura da sessão DEFINITIVA (sonda 10min + rearma no login/db.save + botão Reparar) e perfis da nuvem (gerente vira admin; comum sem gastos, só desconecta a si)');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("perfis_nuvem_cura_sessao_patch.js", e); }
+;
+
+/* ===== permissoes_estorno_venda_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PERMISSOES_ESTORNO_VENDA_PATCH v6.0.5
+// Quatro pedidos dele (com a regra nova: conferir antes de concordar — tudo
+// aqui foi verificado no código antes):
+//
+// 1) PERMISSÕES NO EDITOR DO USUÁRIO (Configurações → Usuários → Ações →
+//    Editar): a caixa "Emitir NF" (que hoje é uma coluna injetada na tabela,
+//    v5.22.21) passa a existir TAMBÉM dentro da edição do usuário, e nascem
+//    duas irmãs: "Apagar registros" e "Estornar registros"
+//    (vendas/chamados/orçamentos/leituras...). Só Admin/Dono vê e mexe nesse
+//    bloco. Padrões seguros: existentes nascem PERMITIDOS (ninguém trava por
+//    acidente); Emitir NF segue desmarcada por padrão (como sempre foi).
+//    A coluna da tabela continua (escreve no mesmo campo).
+//
+// 2) BLOQUEIO DE VERDADE nos executores (não é só esconder botão):
+//    apagar → excluirVendaUnificado, deleteVenda, excluirChamadosSelecionados,
+//             excluirChamadoV52422, excluirOrcamento(sMarcados),
+//             removerLancamentoLeitura;
+//    estornar → estornarVenda, estornarVendasSelecionadas,
+//             estornarLeituraContrato, estornarNotinha.
+//    Admin/Dono sempre podem (anti-trancamento); funcionário sem a caixa leva
+//    aviso do sistema + a tentativa fica na Auditoria.
+//
+// 3) NOTINHA ESTORNADA ABRE NA ABA DA VENDA (não no modal de histórico que
+//    "nem deveria existir"): clicar numa notinha extornada abre a tela de nova
+//    venda CARREGADA com os dados (cliente + itens + desconto), marcada como
+//    "refazendo notinha extornada" — salvar ATUALIZA a mesma notinha
+//    (mantém número), devolve o estoque dos itens antigos e baixa o dos novos
+//    (o estorno original não mexia em estoque — por isso o acerto é por
+//    devolução+nova baixa, nunca baixa em dobro). Faturado na hora = cria o
+//    título novo normalmente. Histórico/auditoria do estorno são preservados.
+//    Conferido os "outros lugares" que ele mandou olhar: leitura extornada JÁ
+//    volta aberta pra edição (v5.25.0 faz certo); chamados e orçamentos não
+//    têm estorno (só exclusão).
+//
+// 4) FINANCEIRO MOSTRA O EXTORNADO (não some mais): o estorno MARCA os
+//    títulos como 'estornado' (antes APAGAVA — por isso sumiam do Financeiro).
+//    Títulos extornados aparecem com tarja própria, sem checkbox de baixa,
+//    fora das somas de aberto/recebido/vencido (edição cirúrgica no
+//    renderFinanceiro do app.js). Bônus conferido: os títulos 'estornado' que
+//    a LEITURA já marcava (v5.25.0) hoje apareciam como "vencido" por engano
+//    — o mesmo acerto cobre eles.
+//
+// Guard: __v6005pes. PURE exportado p/ testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6005pes) return;
+
+/* P605_PURE_START */
+// Regra de permissão — pura e testável.
+//   acao: 'emitirNfe' | 'apagar' | 'estornar'
+//   perfil Admin/Dono → sempre pode (anti-trancamento);
+//   demais: emitirNfe padrão DESMARCADO (como sempre foi),
+//           apagar/estornar padrão MARCADO (usuários antigos não travam do nada
+//           — o dono desmarca em quem quiser restringir).
+function p605Perfil(u){
+  const p=String((u&&u.perfil)||'').trim();
+  return (p==='Admin'||p==='Dono')?p:'Funcionário';
+}
+function p605Pode(u, acao){
+  if(!u) return false;
+  if(p605Perfil(u)!=='Funcionário') return true;
+  if(acao==='emitirNfe') return !!u.podeEmitirNfe;
+  if(acao==='apagar') return u.podeApagar===undefined ? true : !!u.podeApagar;
+  if(acao==='estornar') return u.podeEstornar===undefined ? true : !!u.podeEstornar;
+  return false;
+}
+// Valor que a checkbox do editor mostra (mesmos padrões acima)
+function p605ValorCaixa(u, acao){
+  if(acao==='emitirNfe') return !!(u&&u.podeEmitirNfe);
+  if(acao==='apagar') return !u||u.podeApagar===undefined?true:!!u.podeApagar;
+  if(acao==='estornar') return !u||u.podeEstornar===undefined?true:!!u.podeEstornar;
+  return false;
+}
+/* P605_PURE_END */
+
+if(typeof module!=='undefined') module.exports={p605Perfil:p605Perfil,p605Pode:p605Pode,p605ValorCaixa:p605ValorCaixa};
+if(typeof window!=='undefined'){ window.P605_PURE={p605Perfil:p605Perfil,p605Pode:p605Pode,p605ValorCaixa:p605ValorCaixa}; }
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6005pes=true;
+
+function txt(v){ return String(v==null?'':v).trim(); }
+function sess(){ return typeof getSession==='function'?getSession():null; }
+function usuarioLogado(){
+  const s=sess(); if(!s) return null;
+  try{
+    return (db.usuarios||[]).find(function(u){ return u && u.id===s.usuarioId; })
+        || (db.usuarios||[]).find(function(u){ return u && u.login===s.login && u.empresaId===s.empresaId; })
+        || {id:s.usuarioId,login:s.login,perfil:s.perfil,podeEmitirNfe:false};
+  }catch(e){ return {id:s.usuarioId,login:s.login,perfil:s.perfil,podeEmitirNfe:false}; }
+}
+function avisoSeg(msg){
+  if(typeof window.lfbAlert==='function'){ window.lfbAlert(msg,'Permissão'); return; }
+  if(typeof toast==='function') toast(msg,'error');
+}
+function negado(acaoPt){
+  const s=sess()||{};
+  avisoSeg('Seu usuário NÃO tem permissão para '+acaoPt+'. Só quem está marcado nas caixas de permissão (Usuários → editar) faz isso — peça ao Admin ou Dono.');
+  try{ if(typeof logAction==='function') logAction('seguranca','negado',null,'Tentativa de '+acaoPt+' sem permissão por '+(s.usuarioNome||s.login||'?')); }catch(e){}
+}
+window.usuarioPodeApagar=function(){ return p605Pode(usuarioLogado(),'apagar'); };
+window.usuarioPodeEstornar=function(){ return p605Pode(usuarioLogado(),'estornar'); };
+
+// ══ 1) EDITOR DO USUÁRIO: bloco de permissões (visível só p/ Admin/Dono) ════
+function montarBlocoPermissoes(u){
+  const velho=document.getElementById('p605-permissoes');
+  if(velho) velho.remove();
+  const eu=usuarioLogado();
+  if(p605Perfil(eu)==='Funcionário') return; // funcionário nem vê o bloco
+  const alvo=(typeof db!=='undefined'&&db&&db.usuarios&&u&&u.id)
+    ? (db.usuarios.find(function(x){return x&&x.id===u.id;})||u) : (u||{});
+  const corpo=document.getElementById('modal-body');
+  if(!corpo) return;
+  if(!corpo.querySelector('#u-nome')) return; // não é o modal de usuário
+  const caixa=function(id,acao,rotulo,desc){
+    return '<label style="display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;background:#fff">'+
+      '<input type="checkbox" id="'+id+'" '+(p605ValorCaixa(alvo,acao)?'checked':'')+' style="width:16px;height:16px;margin-top:2px">'+
+      '<span><b style="font-size:12.5px">'+rotulo+'</b><br><small style="color:#64748b;font-size:11px">'+desc+'</small></span></label>';
+  };
+  const div=document.createElement('div');
+  div.id='p605-permissoes';
+  div.style.cssText='margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px';
+  div.innerHTML='<p style="font-size:11px;font-weight:800;color:#0a1e8a;text-transform:uppercase;letter-spacing:.3px;margin:0 0 8px">Permissões do usuário (só Admin/Dono mexe)</p>'+
+    '<div style="display:grid;gap:8px">'+
+    caixa('u-perm-nfe','emitirNfe','Emitir NF (nota fiscal)','Quem NÃO estiver marcado nem vê botão de emitir/conferir NF funcionando.')+
+    caixa('u-perm-apagar','apagar','Apagar registros','Vendas, chamados, orçamentos, lançamentos de leitura... Sem a caixa, o sistema avisa e registra na Auditoria.')+
+    caixa('u-perm-estornar','estornar','Estornar registros','Estornar venda faturada, leitura faturada, notinha... Sem a caixa, bloqueia na hora.')+
+    '</div>';
+  corpo.appendChild(div);
+}
+if(typeof window.renderModalUsuario==='function' && !window.renderModalUsuario.__p605){
+  const _rmu=window.renderModalUsuario;
+  const embr=function(id){
+    const r=_rmu.apply(this,arguments);
+    try{
+      let alvo=null;
+      try{ const s=sess(); alvo=id?(db.usuarios||[]).find(function(x){return x&&x.id===id && (!s||x.empresaId===s.empresaId);}):null; }catch(e){}
+      montarBlocoPermissoes(alvo||{});
+    }catch(e){}
+    return r;
+  };
+  embr.__p605=true;
+  window.renderModalUsuario=embr;
+}
+// Aplica as caixas no salvar (o saveUsuario original lê só os campos dele)
+if(typeof window.saveUsuario==='function' && !window.saveUsuario.__p605){
+  const _su=window.saveUsuario;
+  const embrS=function(){
+    const bloco=document.getElementById('p605-permissoes');
+    let vals=null;
+    if(bloco){
+      const eu=usuarioLogado();
+      if(p605Perfil(eu)!=='Funcionário'){
+        vals={
+          podeEmitirNfe:!!(document.getElementById('u-perm-nfe')&&document.getElementById('u-perm-nfe').checked),
+          podeApagar:!!(document.getElementById('u-perm-apagar')&&document.getElementById('u-perm-apagar').checked),
+          podeEstornar:!!(document.getElementById('u-perm-estornar')&&document.getElementById('u-perm-estornar').checked)
+        };
+      }
+    }
+    const r=_su.apply(this,arguments);
+    if(vals){
+      try{
+        const s=sess();
+        const id=(window.modalContext&&window.modalContext.id)||null;
+        const login=(document.getElementById('u-login')&&document.getElementById('u-login').value||'').trim().toLowerCase();
+        let u=id?(db.usuarios||[]).find(function(x){return x&&x.id===id;}):null;
+        if(!u&&login) u=(db.usuarios||[]).find(function(x){return x&&x.login===login&&(!s||x.empresaId===s.empresaId);});
+        if(u){
+          const antes={nfe:!!u.podeEmitirNfe,apagar:p605ValorCaixa(u,'apagar'),estornar:p605ValorCaixa(u,'estornar')};
+          u.podeEmitirNfe=vals.podeEmitirNfe; u.podeApagar=vals.podeApagar; u.podeEstornar=vals.podeEstornar;
+          if(antes.nfe!==u.podeEmitirNfe||antes.apagar!==p605ValorCaixa(u,'apagar')||antes.estornar!==p605ValorCaixa(u,'estornar')){
+            try{ if(typeof logAction==='function') logAction('usuario','permissoes',u.id,'Permissões de '+(u.login||'?')+': NF='+(u.podeEmitirNfe?'SIM':'não')+' apagar='+(u.podeApagar?'SIM':'não')+' estornar='+(u.podeEstornar?'SIM':'não')); }catch(e){}
+          }
+          try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+          try{ if(typeof renderUsuarios==='function') renderUsuarios(); }catch(e){}
+        }
+      }catch(e){}
+    }
+    return r;
+  };
+  embrS.__p605=true;
+  window.saveUsuario=embrS;
+}
+
+// ══ 2) GATES (barramento de verdade) nos executores ═════════════════════════
+function wrapGate(nome, acaoPt, checa){
+  if(typeof window[nome]!=='function'){
+    // pode ainda não existir nesta posição da fila? tenta de novo depois
+    setTimeout(function(){ wrapGate(nome, acaoPt, checa); },1200);
+    return;
+  }
+  if(window[nome].__p605gate) return;
+  const _f=window[nome];
+  const embr=function(){
+    if(!checa()){ negado(acaoPt); return; }
+    return _f.apply(this,arguments);
+  };
+  embr.__p605gate=true;
+  window[nome]=embr;
+}
+wrapGate('excluirVendaUnificado','apagar registros (vendas)',window.usuarioPodeApagar);
+wrapGate('deleteVenda','apagar registros (vendas)',window.usuarioPodeApagar);
+wrapGate('excluirChamadosSelecionados','apagar registros (chamados)',window.usuarioPodeApagar);
+wrapGate('excluirChamadoV52422','apagar registros (chamados)',window.usuarioPodeApagar);
+wrapGate('excluirOrcamento','apagar registros (orçamentos)',window.usuarioPodeApagar);
+wrapGate('excluirOrcamentosMarcados','apagar registros (orçamentos)',window.usuarioPodeApagar);
+wrapGate('removerLancamentoLeitura','apagar registros (leituras)',window.usuarioPodeApagar);
+wrapGate('estornarVenda','estornar registros (vendas)',window.usuarioPodeEstornar);
+wrapGate('estornarVendasSelecionadas','estornar registros (vendas)',window.usuarioPodeEstornar);
+wrapGate('estornarLeituraContrato','estornar registros (leituras)',window.usuarioPodeEstornar);
+wrapGate('estornarNotinha','estornar registros (notinhas)',window.usuarioPodeEstornar);
+
+// ══ 3) ESTORNADA → ABRE NA ABA DA VENDA (carregada, edição que MANTÉM número)
+//--------------------------------------------------------------------------
+function abrirVendaEstornadaEdicao(v){
+  if(typeof window.novaVenda!=='function'){
+    avisoSeg('A tela de nova venda não carregou ainda. Recarregue (F5) e tente de novo.');
+    return;
+  }
+  window.__editandoVendaEstornadaId=v.id;
+  window.novaVenda();
+  setTimeout(function(){
+    try{
+      if(typeof montarBlocoPermissoes==='function'){/* no-op */}
+      // banner explicativo no topo do modal
+      const corpo=document.getElementById('modal-body');
+      if(corpo && !corpo.querySelector('#p605-banner-refazer')){
+        const b=document.createElement('div');
+        b.id='p605-banner-refazer';
+        b.style.cssText='margin-bottom:10px;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:12.5px;font-weight:700';
+        b.innerHTML='↩ Refazendo a notinha <b>'+String(v.numero||'')+'</b> (estava EXTORNADA) — veio com cliente, itens e desconto. Ajuste o que precisar e salve: <b>o número é mantido</b>. Se faturar de novo, o título novo aparece no Financeiro (o extornado fica visível com tarja própria).';
+        corpo.insertBefore(b,corpo.firstChild);
+      }
+      // cliente
+      if(typeof window.selectClienteVenda==='function' && v.clienteId){
+        try{ window.selectClienteVenda(v.clienteId); }catch(e){}
+      }
+      // itens
+      window.itensTemp=(v.itens||[]).map(function(it){
+        return {produtoId:it.produtoId, qtd:Number(it.qtd)||1, preco:Number(it.preco)||0, subtotal:Number(it.subtotal)!=null?Number(it.subtotal):(Number(it.qtd)||1)*(Number(it.preco)||0)};
+      });
+      if(typeof window.renderItensVenda==='function') window.renderItensVenda();
+      // desconto + status padrão seguro (orçamento: NADA de título novo sem escolha)
+      const nvDesc=document.getElementById('nv-desc'); if(nvDesc) nvDesc.value=Number(v.desconto)||0;
+      const nvSt=document.getElementById('nv-status');
+      if(nvSt){ nvSt.value='orcamento'; if(typeof window.onStatusVendaChange==='function') window.onStatusVendaChange(); }
+      if(typeof window.updateVendaTotal==='function') window.updateVendaTotal();
+      // rodapé honesto
+      const footer=document.getElementById('modal-footer');
+      if(footer){ const btns=footer.querySelectorAll('button'); if(btns.length) btns[btns.length-1].textContent='Salvar notinha '+String(v.numero||'')+' (mantém o número)'; }
+      // título do modal
+      const t=document.getElementById('modal-title'); if(t) t.innerText='Refazer notinha '+String(v.numero||'')+' (extornada)';
+    }catch(e){}
+  },380);
+}
+// Clique numa notinha ESTORNADA: não abre o modal de histórico — vai pra aba
+if(typeof window.historicoVenda==='function' && !window.historicoVenda.__p605){
+  const _hv=window.historicoVenda;
+  const embrH=function(id){
+    let v=null;
+    try{ v=(db.vendas||[]).find(function(x){return x&&x.id===id;})||null; }catch(e){}
+    if(v && String(v.status||'').toLowerCase()==='estornada' && !v.origemMigracao){
+      abrirVendaEstornadaEdicao(v);
+      return;
+    }
+    return _hv.apply(this,arguments);
+  };
+  embrH.__p605=true;
+  window.historicoVenda=embrH;
+}
+// Salvar no modo refazer: ATUALIZA a mesma notinha (mantém número/id), acerta
+// o estoque por devolução+nova baixa, e só cria título novo se faturar.
+if(typeof window.saveVendaNova==='function' && !window.saveVendaNova.__p605){
+  const _svn=window.saveVendaNova;
+  const embrV=function(){
+    const editId=window.__editandoVendaEstornadaId;
+    if(!editId) return _svn.apply(this,arguments);
+    const s=sess();
+    let v=null;
+    try{ v=(db.vendas||[]).find(function(x){return x&&x.id===editId;})||null; }catch(e){}
+    if(!v){ window.__editandoVendaEstornadaId=null; return _svn.apply(this,arguments); }
+    // — mesmas validações do fluxo novo —
+    if(!window.clienteSelecionadoVenda){ if(typeof toast==='function') toast('Selecione o cliente pela caixa aberta','error'); return; }
+    if(!window.itensTemp||!window.itensTemp.length){ if(typeof toast==='function') toast('Adicione pelo menos um produto pela caixa aberta','error'); return; }
+    const status=document.getElementById('nv-status').value;
+    let pagamento=document.getElementById('nv-pag').value;
+    let vencimento=null;
+    if(status==='faturado'){
+      if(!pagamento){ if(typeof toast==='function') toast('Selecione forma de pagamento (aparece ao faturar)','error'); return; }
+      if(pagamento==='A prazo'){
+        vencimento=document.getElementById('nv-vencimento').value;
+        if(!vencimento){ if(typeof toast==='function') toast('Selecione a data de vencimento para A prazo','error'); return; }
+      }
+    }
+    const desc=parseFloat(document.getElementById('nv-desc').value)||0;
+    const total=window.itensTemp.reduce(function(s,i){return s+i.subtotal;},0)-desc;
+    // — estoque: devolve os itens ANTIGOS, baixa os NOVOS (estoque nunca em dobro) —
+    const mexeEstoque=function(it,sinal){
+      const p=(db.produtos||[]).find(function(x){return x&&x.id===it.produtoId&&(!s||x.empresaId===s.empresaId);});
+      if(p && p.categoria!=='Serviço' && p.categoria!=='Recarga' && !p.estoqueInfinito) p.estoque+=(sinal* (Number(it.qtd)||0));
+    };
+    (v.itens||[]).forEach(function(it){ mexeEstoque(it,+1); });
+    window.itensTemp.forEach(function(it){ mexeEstoque(it,-1); });
+    // — atualiza a MESMA notinha —
+    const itensNovos=window.itensTemp.map(function(it){return {produtoId:it.produtoId,qtd:it.qtd,preco:it.preco,subtotal:it.subtotal};});
+    v.itens=itensNovos;
+    v.clienteId=window.clienteSelecionadoVenda.id;
+    v.desconto=desc;
+    v.total=total;
+    v.status=status;
+    v.formaPagamento=(status==='faturado')?(pagamento||'Não faturado'):'Não faturado';
+    v.vencimento=(status==='faturado'&&vencimento)?vencimento:null;
+    v.atualizadoEm=new Date().toISOString();
+    v.atualizadoPor=s&&s.usuarioId; v.atualizadoPorNome=s&&s.usuarioNome;
+    v.refeitaDeEstorno=true;
+    try{ if(typeof logAction==='function') logAction('venda','refazer-pos-estorno',v.id,'Notinha '+v.numero+' refeita a partir do estorno por '+(s&&s.usuarioNome)+' — itens atualizados, número mantido'); }catch(e){}
+    if(status==='faturado'&&s){
+      db.contasReceber.push({
+        id:uid('cr'), empresaId:s.empresaId, origem:'venda', clienteId:v.clienteId,
+        descricao:'Venda '+v.numero+' - '+window.clienteSelecionadoVenda.nome+' - '+pagamento+(vencimento?' - Venc '+fmtDate(vencimento):''),
+        valor:total, vencimento: vencimento?new Date(vencimento).toISOString():new Date(Date.now()+1000*60*60*24*14).toISOString(),
+        pagamentoData:null, status:'aberto', contratoId:null, leituraId:null, vendaId:v.id,
+        criadoPor:s.usuarioId, criadoPorNome:s.usuarioNome, formaPagamento:pagamento
+      });
+    }
+    window.__editandoVendaEstornadaId=null;
+    saveDB(); renderVendas(); renderProdutos(); renderFinanceiro(); renderAuditoria(); closeModal();
+    if(typeof toast==='function') toast('Notinha '+v.numero+' refeita (número mantido) por '+(s&&s.usuarioNome),'success');
+    setTimeout(function(){ try{ imprimirNotinha(v.id); }catch(e){} },500);
+  };
+  embrV.__p605=true;
+  window.saveVendaNova=embrV;
+}
+console.log('v6.0.5 — permissões no editor (NF/apagar/estornar) com bloqueio real + notinha extornada abre na aba da venda + financeiro mostra EXTORNADO');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("permissoes_estorno_venda_patch.js", e); }
+;
+
+/* ===== fiscal_menu_completo_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// FISCAL_MENU_COMPLETO_PATCH v6.0.6 — "os menus fiscais ainda não foram
+// implementadas... já coloca TUDO pra eu fazer a prévia" (ordem dele: sem
+// prévia de meio de caminho; construir o cardápio inteiro AGORA).
+// Em cima do motor 6.0.1 + Portão 6.0.0 + mapa do sistema antigo:
+//  1) CARTA DE CORREÇÃO ELETRÔNICA (CC-e, evento 110110) — irmã do cancela-
+//     mento: mesma assinatura/transmissão, texto mín. 15, múltiplas por nota,
+//     trilha registrada. Botão "CC-e" em cada nota autorizada do histórico.
+//  2) STATUS DO SERVIÇO SEFAZ (consStatServ) — o serviço estava na tabela do
+//     motor desde a 6.0.1 mas nunca chamado: botão "Testar SEFAZ" na Central.
+//  3) CONFIGURAÇÃO FISCAL na Central (mapa do dump): NCM padrão, NCM tinta/
+//     recarga (32151100 do dump), NCM locação (37079021) + descrição da
+//     locação ("CARTUCHO TONER"), e TEXTO DO SIMPLES para o infCpl das notas
+//     REAIS — campo vazio por padrão (nada entra na nota sem ele preencher;
+//     os valores estranhos do dump do velho NÃO entram — eram provável lixo).
+//     NCM por tipo: produto.ncm (cadastro) sempre ganha; sem NCM no produto:
+//     categoria Recarga → NCM tinta; item vindo de leitura/locação → NCM
+//     locação; senão, NCM padrão. Prioridade conferida no código (ncmDoItem).
+//  4) PACOTE DO MÊS PRO CONTADOR: baixa um .zip (gerado em JS PURO, método
+//     STORE sem compactação + CRC32 próprio) com todos os XMLs do mês +
+//     pasta de eventos (cancelamento/CC-e) + indice.txt. Sem biblioteca.
+//  5) QR NFC-e v2: CONFERIDO — já estava no layout 2 (chave|2|tpAmb|idCSC|
+//     SHA1(...) maiúsculo). A verificação aberta do mapeamento fica FECHADA,
+//     com teste de vetor contra o crypto do Node.
+// Tudo herda o Portão: homologação primeiro, senha só na hora, só clique,
+// auditoria nfgAudit em cada operação nova.
+// Guard: __v6006fmc. PURE exportado p/ testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6006fmc) return;
+
+/* FMC606_PURE_START */
+// ── Carta de Correção (evento 110110, layout 1.00) ─────────────────────────
+const FMC_XCONDUSO_CCE='A Carta de Correcao e disciplinada pelo paragrafo 1o-A do art. 7o do Convenio S/N, de 15 de dezembro de 1970 e pode ser utilizada para regularizacao de erro ocorrido na emissao de documento fiscal, desde que o erro nao esteja relacionado com: I - as variaveis que determinam o valor do imposto tais como: base de calculo, aliquota, diferenca de preco, quantidade, valor da operacao ou da prestacao; II - a correcao de dados cadastrais que implique mudanca do remetente ou do destinatario; III - a data de emissao ou de saida.';
+function fmcEventoCCe(o){
+  return '<envEvento versao="1.00" xmlns="http://www.portalfiscal.inf.br/nfe">'+
+    '<idLote>1</idLote><evento versao="1.00"><infEvento Id="ID110110'+o.chave+String(o.seq||1).padStart(2,'0')+'">'+
+    '<cOrgao>'+o.cOrgao+'</cOrgao><tpAmb>'+o.tpAmb+'</tpAmb><CNPJ>'+o.cnpj+'</CNPJ>'+
+    '<chNFe>'+o.chave+'</chNFe><dhEvento>'+o.dhEvento+'</dhEvento>'+
+    '<tpEvento>110110</tpEvento><nSeqEvento>'+(o.seq||1)+'</nSeqEvento><verEvento>1.00</verEvento>'+
+    '<detEvento versao="1.00"><descEvento>Carta de Correcao</descEvento>'+
+    '<xCorrecao>'+String(o.correcao||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</xCorrecao>'+
+    '<xCondUso>'+FMC_XCONDUSO_CCE+'</xCondUso>'+
+    '</detEvento></infEvento></evento></envEvento>';
+}
+// ── Status do serviço (consStatServ NF 4.00) ────────────────────────────────
+function fmcConsStatServ(o){
+  return '<consStatServ versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">'+
+    '<tpAmb>'+o.tpAmb+'</tpAmb><cUF>'+(o.cUF||'31')+'</cUF><xServ>STATUS</xServ></consStatServ>';
+}
+// ── CRC32 + ZIP STORE (sem biblioteca; arquivos sem compressão — zip válido) ─
+const FMC_CRCTAB=(function(){
+  const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; }
+  return t;
+})();
+function fmcCrc32(bytes){
+  let c=0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) c=FMC_CRCTAB[(c^bytes[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function fmcU8(str){ return unescape(encodeURIComponent(String(str))).split('').map(ch=>ch.charCodeAt(0)); }
+function fmcDosDate(ms){
+  const d=new Date(ms||Date.now());
+  const dosTime=((d.getHours()<<11)&0xFFFF)|((d.getMinutes()<<5)&0xFFFF)|((d.getSeconds()/2)|0);
+  const dosDate=(((d.getFullYear()-1980)<<9)&0xFFFF)|(((d.getMonth()+1)<<5)&0xFFFF)|(d.getDate()&0xFFFF);
+  return { dosTime:dosTime, dosDate:dosDate };
+}
+// files: [{nome, conteudo}] → Uint8Array do .zip (método 0 = STORE)
+function fmcZipStore(files){
+  const partes=[]; const central=[]; let offset=0;
+  const push=function(u8){ partes.push(u8); offset+=u8.length; };
+  function u16(v){ return new Uint8Array([v&255,(v>>>8)&255]); }
+  function u32(v){ return new Uint8Array([v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255]); }
+  files.forEach(function(f){
+    const nome=fmcU8(f.nome);
+    const dados=(f.conteudo instanceof Uint8Array)?f.conteudo:new Uint8Array(fmcU8(f.conteudo));
+    const crc=fmcCrc32(dados);
+    const dd=fmcDosDate(f.mtime);
+    const header=[].concat(
+      Array.from(u32(0x04034b50)), Array.from(u16(20)), Array.from(u16(0x0800)),
+      Array.from(u16(0)), Array.from(u16(dd.dosTime)), Array.from(u16(dd.dosDate)),
+      Array.from(u32(crc)), Array.from(u32(dados.length)), Array.from(u32(dados.length)),
+      Array.from(u16(nome.length)), Array.from(u16(0))
+    );
+    const localOffset=offset;
+    push(new Uint8Array(header)); push(nome); push(dados);
+    const cent=[].concat(
+      Array.from(u32(0x02014b50)), Array.from(u16(20)), Array.from(u16(20)),
+      Array.from(u16(0x0800)), Array.from(u16(0)),
+      Array.from(u16(dd.dosTime)), Array.from(u16(dd.dosDate)),
+      Array.from(u32(crc)), Array.from(u32(dados.length)), Array.from(u32(dados.length)),
+      Array.from(u16(nome.length)), Array.from(u16(0)), Array.from(u16(0)),
+      Array.from(u16(0)), Array.from(u16(0)), Array.from(u32(0)), Array.from(u32(localOffset))
+    );
+    central.push({head:new Uint8Array(cent), nome:nome});
+  });
+  const centralInicio=offset;
+  let centralTam=0;
+  central.forEach(function(c){ partes.push(c.head); centralTam+=c.head.length; partes.push(c.nome); centralTam+=c.nome.length; });
+  const eocd=[].concat(
+    Array.from(u32(0x06054b50)), Array.from(u16(0)), Array.from(u16(0)),
+    Array.from(u16(files.length)), Array.from(u16(files.length)),
+    Array.from(u32(centralTam)), Array.from(u32(centralInicio)), Array.from(u16(0))
+  );
+  partes.push(new Uint8Array(eocd));
+  let total=0; partes.forEach(p=>{ total+=p.length; });
+  const out=new Uint8Array(total); let pos=0;
+  partes.forEach(p=>{ out.set(p,pos); pos+=p.length; });
+  return out;
+}
+// injeta texto no infCpl (cria infAdic se não houver) — mesma técnica do selo
+function fmcAplicarTextoInfCpl(xml, texto){
+  const t=String(texto||'').trim();
+  if(!t) return xml;
+  const esc=t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+' ';
+  const s=String(xml||'');
+  if(s.indexOf('<infCpl>')>=0) return s.replace('<infCpl>','<infCpl>'+esc);
+  if(s.indexOf('</infNFe>')>=0) return s.replace('</infNFe>','<infAdic><infCpl>'+esc.slice(0,-1)+'</infCpl></infAdic></infNFe>');
+  return s;
+}
+// NCM por tipo (mapa do dump): produto.ncm ganha; Recarga sem NCM → tinta;
+// itens de leitura/locação → NCM locação; resto → NCM padrão.
+function fmcNcmPorTipo(itens, produtos, cfg, ehLeitura){
+  cfg=cfg||{};
+  const padrao=(cfg.nfNcmPadrao||'').trim();
+  return (itens||[]).map(function(it){
+    const prod=(produtos||[]).find(function(p){ return p && (p.id===it.produtoId || (it.produtoId==null && p.nome===(it.nome||it.descricao))); });
+    let ncm=(prod && String(prod.ncm||'').replace(/\D/g,'')) || '';
+    if(!ncm && prod && String(prod.categoria||'')==='Recarga' && cfg.nfNcmTinta) ncm=String(cfg.nfNcmTinta).replace(/\D/g,'');
+    if(!ncm && ehLeitura && cfg.nfNcmLocacao) ncm=String(cfg.nfNcmLocacao).replace(/\D/g,'');
+    if(!ncm) ncm=(padrao||'').replace(/\D/g,'');
+    const nome=((!it.nome && !it.descricao) && ehLeitura && cfg.nfDescLocacao) ? cfg.nfDescLocacao : (it.nome||it.descricao||'');
+    return Object.assign({}, it, { ncm: ncm, nome: nome, descricao: it.descricao!=null?it.descricao:nome });
+  });
+}
+/* FMC606_PURE_END */
+
+const apiPura606={ fmcEventoCCe:fmcEventoCCe, fmcConsStatServ:fmcConsStatServ, fmcCrc32:fmcCrc32,
+  fmcZipStore:fmcZipStore, fmcAplicarTextoInfCpl:fmcAplicarTextoInfCpl, fmcNcmPorTipo:fmcNcmPorTipo,
+  FMC_XCONDUSO_CCE:FMC_XCONDUSO_CCE };
+if(typeof module!=='undefined') module.exports=apiPura606;
+if(typeof window!=='undefined'){ window.FMC606_PURE=apiPura606; }
+
+// Config fiscal (campos do mapa do dump) — lê escreve db.config
+function fmcCfgLer(){
+  const c=(typeof db!=='undefined' && db && db.config) || {};
+  return {
+    nfNcmPadrao:String(c.nfNcmPadrao||''), nfNcmTinta:String(c.nfNcmTinta||'32151100'),
+    nfNcmLocacao:String(c.nfNcmLocacao||'37079021'), nfDescLocacao:String(c.nfDescLocacao||'CARTUCHO TONER'),
+    nfTextoSimples:String(c.nfTextoSimples||'')
+  };
+}
+if(typeof module!=='undefined' && module.exports){ module.exports.apiPura606=apiPura606; module.exports.FMC606_PURE=apiPura606; }
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6006fmc=true;
+
+function fmcToast(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
+function fmcAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{}; db.logs=db.logs||[]; db.logs.push({tipo:'nf-menu606',acao:acao,dados:dados||{},usuarioId:s.usuarioId||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
+function fmcAmb(){ return (window.NFG_PURE&&window.NFG_PURE.nfgAmbiente(db))||'homologacao'; }
+function fmcPonte(){ return (window.nfeCertAPI && window.nfeCertAPI.isElectron) ? window.nfeCertAPI : null; }
+function fmcSemPonte(){ if(typeof window.lfbAlert==='function') window.lfbAlert('Essa operação fiscal só roda no app de computador (.exe) — a SEFAZ exige o certificado A1 no PC emissor. Abra pelo atalho do computador e volte aqui.','Fiscal'); }
+function fmcNota(id){ return ((db.config&&db.config.nfRegistro)||[]).find(n=>n.id===id)||null; }
+
+// ══ 1) CARTA DE CORREÇÃO (CC-e 110110) ═════════════════════════════════════
+window.nfCartaCorrecao=async function(notaId){
+  try{
+    if(!(window.usuarioPodeEmitirNfe&&window.usuarioPodeEmitirNfe())){ fmcToast('Sem permissão de emitir NF — CC-e também exige.','error'); return {ok:false}; }
+    const nota=fmcNota(notaId); if(!nota){ fmcToast('Nota não encontrada.','error'); return {ok:false}; }
+    if(nota.status!=='autorizada'){ fmcToast('CC-e só em nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
+    const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    const nit=await window.nfxPedirTexto('Carta de Correção (CC-e)',
+      'Escreva a correção (mínimo 15 letras). NÃO pode mudar: valores/impostos, dados de quem emite/recebe, nem data de emissão/saída.\n'+
+      ((nota.cce&&nota.cce.length)?('\nJá existem '+nota.cce.length+' carta(s) nesta nota.'):''), {minimo:15});
+    if(!nit || nit.trim().length<15){ if(nit!==null) fmcToast('Texto muito curto — CC-e não enviada.','error'); return {ok:false, error:'texto-curto'}; }
+    const okProd=(nota.ambiente==='producao')
+      ? await window.nfxConfirmar('REGISTRAR CC-e DE VERDADE?','Em produção a carta fica registrada na SEFAZ para sempre, junto com a nota.', {botao:'Registrar CC-e', cor:'#b45309'})
+      : true;
+    if(!okProd) return {ok:false, error:'desistiu'};
+    const senha=await window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva.', {mascara:true});
+    if(!senha) return {ok:false, error:'sem-senha'};
+    const seq=((nota.cce&&nota.cce.length)||0)+1;
+    const evt=fmcEventoCCe({ chave:nota.chave, seq:seq, correcao:nit.trim(), cnpj:String(nota.cnpj||'').replace(/\D/g,''), cOrgao:'31', tpAmb:(nota.ambiente==='producao'?'1':'2'), dhEvento:new Date().toISOString() });
+    fmcAudit('cce-inicio',{numero:nota.numero, chave:nota.chave, seq:seq});
+    const ass=await ponte.assinar(evt, senha, null);
+    if(!ass || !ass.ok){ fmcToast('Falha ao assinar a CC-e: '+((ass&&ass.error)||'?'),'error'); return {ok:false}; }
+    const ws=window.NFX_PURE.nfxUrl(nota.ambiente||fmcAmb(), nota.modelo, 'evento');
+    const envelope=window.NFX_PURE.nfxEnvelope(ass.xmlAssinado).replace('PLACEHOLDER','NFeRecepcaoEvento4');
+    const trx=await ponte.transmitir({url:ws.url, envelope:envelope, soapAction:ws.soapAction, senhaCert:senha});
+    if(!trx || !trx.ok){ fmcToast('Transmissão da CC-e falhou: '+((trx&&trx.error)||'?'),'error'); return {ok:false}; }
+    const ret=window.NFX_PURE.nfxParseRetorno(trx.xml);
+    fmcAudit('cce-resposta',{numero:nota.numero, seq:seq, cStat:ret.cStat, motivo:ret.xMotivo});
+    if(ret.classe==='evento-registrado'){
+      nota.cce=nota.cce||[];
+      nota.cce.push({seq:seq, texto:nit.trim(), em:new Date().toISOString(), protocolo:ret.nProt||'', xMotivo:ret.xMotivo, xmlEvento:trx.xml||''});
+      nota.atualizadoEm=new Date().toISOString();
+      try{ if(typeof db.save==='function') db.save(); }catch(e){}
+      fmcToast('✅ Carta de correção registrada ('+seq+'ª): '+ret.xMotivo,'success');
+    }else{
+      fmcToast('SEFAZ respondeu à CC-e: '+ret.cStat+' — '+ret.xMotivo,'error');
+    }
+    try{ if(typeof window.nfxRenderHistorico==='function') window.nfxRenderHistorico(); }catch(e){}
+    return {ok:ret.classe==='evento-registrado', retorno:ret};
+  }catch(e){ fmcAudit('cce-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
+};
+
+// ══ 2) STATUS DO SERVIÇO SEFAZ ═════════════════════════════════════════════
+window.nfStatusServico=async function(){
+  try{
+    if(!(window.usuarioPodeEmitirNfe&&window.usuarioPodeEmitirNfe())){ fmcToast('Sem permissão de emitir NF.','error'); return {ok:false}; }
+    const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    const senha=await window.nfxPedirTexto('Senha do certificado A1','Pra chamar a SEFAZ é preciso assinar com o A1 (a senha NÃO fica salva).', {mascara:true});
+    if(!senha) return {ok:false, error:'sem-senha'};
+    const amb=fmcAmb();
+    const xml=fmcConsStatServ({tpAmb:(amb==='producao'?'1':'2'), cUF:'31'});
+    fmcAudit('status-inicio',{ambiente:amb});
+    const ass=await ponte.assinar(xml, senha, null);
+    if(!ass || !ass.ok){ fmcToast('Falha ao assinar: '+((ass&&ass.error)||'?'),'error'); return {ok:false}; }
+    const ws=window.NFX_PURE.nfxUrl(amb,'55','status');
+    const envelope=window.NFX_PURE.nfxEnvelope(ass.xmlAssinado).replace('PLACEHOLDER','NFeStatusServico4');
+    const trx=await ponte.transmitir({url:ws.url, envelope:envelope, soapAction:ws.soapAction, senhaCert:senha});
+    if(!trx || !trx.ok){ fmcToast('Sem resposta da SEFAZ: '+((trx&&trx.error)||('HTTP '+((trx&&trx.status)||'?'))),'error'); fmcAudit('status-falha',{erro:trx&&(trx.error||trx.status)}); return {ok:false}; }
+    const ret=window.NFX_PURE.nfxParseRetorno(trx.xml);
+    const operando=ret.cStat==='107';
+    fmcAudit('status-resposta',{ambiente:amb, cStat:ret.cStat, motivo:ret.xMotivo});
+    if(operando) fmcToast('✅ SEFAZ-MG '+(amb==='producao'?'(PRODUÇÃO)':'(homologação)')+' EM OPERAÇÃO — '+ret.xMotivo+' (cStat 107). Certificado e conexão OK — pode emitir.','success');
+    else fmcToast('SEFAZ respondeu cStat '+ret.cStat+' — '+ret.xMotivo+(ret.cStat==='108'?'\n(108 = serviço paralisado momentaneamente; tente mais tarde)':''),'error');
+    return {ok:operando, retorno:ret};
+  }catch(e){ fmcAudit('status-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
+};
+
+// ══ 4) PACOTE DO MÊS PRO CONTADOR (zip STORE puro) ═════════════════════════
+window.nfPacoteContador=async function(){
+  try{
+    const hoje=new Date();
+    const padrao=String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
+    const ini=await window.nfxPedirTexto('Pacote para a contabilidade','Mês das notas (MM/AAAA) — exemplo: '+padrao);
+    if(ini===null) return {ok:false, error:'desistiu'};
+    const mm=String(ini||'').trim()||padrao;
+    const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
+    if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
+    const alvo=m[2]+'-'+m[1].padStart(2,'0');
+    const reg=((db.config&&db.config.nfRegistro)||[]);
+    const doMes=reg.filter(function(n){
+      const dia=String(n.dataAutorizacao||n.atualizadoEm||n.criadoEm||'');
+      return dia.slice(0,7)===alvo && (n.xmlAutorizado || n.xmlEnviado || n.xmlCancelamento);
+    });
+    if(!doMes.length){ fmcToast('Nenhuma nota com XML em '+m[1].padStart(2,'0')+'/'+m[2]+'. (O pacote usa o mês da autorização.)','error'); return {ok:false}; }
+    const arquivos=[];
+    let linhas='PACOTE XML '+m[1].padStart(2,'0')+'/'+m[2]+' — Sistema Digicopy — gerado em '+new Date().toLocaleString('pt-BR')+'\r\n\r\n';
+    doMes.forEach(function(n){
+      const base=(n.chave?('NFe_'+n.chave):('NFe_n'+n.numero+'_'+(n.id||'')));
+      const statusPt = n.status==='cancelada' ? 'CANCELADA' : n.status;
+      if(n.xmlAutorizado || n.xmlEnviado){
+        arquivos.push({nome:base+'.xml', conteudo:(n.xmlAutorizado||n.xmlEnviado)});
+      }
+      if(n.xmlCancelamento) arquivos.push({nome:'eventos/CANCELAMENTO_'+base+'.xml', conteudo:n.xmlCancelamento});
+      (n.cce||[]).forEach(function(c){ if(c.xmlEvento) arquivos.push({nome:'eventos/CCE_'+String(c.seq||1).padStart(2,'0')+'_'+base+'.xml', conteudo:c.xmlEvento}); });
+      linhas+=(n.modelo==='65'?'NFC-e':'NF-e')+' nº '+(n.numero||'')+' série '+(n.serie||'1')+' · '+String(statusPt)+' · chave '+(n.chave||'-')+' · protocolo '+(n.protocolo||'-')+' · total '+String(n.totalDaNota||0)+'\r\n';
+    });
+    arquivos.push({nome:'indice.txt', conteudo:linhas});
+    fmcAudit('pacote-contador',{mes:alvo, notas:doMes.length, arquivos:arquivos.length});
+    const zip=fmcZipStore(arquivos);
+    const nome='pacote_xml_'+alvo+'.zip';
+    const blob=new Blob([zip],{type:'application/zip'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    fmcToast('✅ '+nome+' baixado: '+doMes.length+' nota(s), '+arquivos.length+' arquivo(s) — é só mandar pra contabilidade.','success');
+    return {ok:true, arquivos:arquivos.length, notas:doMes.length};
+  }catch(e){ fmcAudit('pacote-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
+};
+
+// ══ 3) NCM POR TIPO + TEXTO DO SIMPLES no XML nascente ═════════════════════
+// Wrap do montarDocumento (docConferido): remata NCM por tipo ANTES do fallback
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarDocumento==='function' && !window.NFE_EMISSAO_PURE.montarDocumento.__fmc){
+  const _md=window.NFE_EMISSAO_PURE.montarDocumento;
+  const embrMd=function(){
+    const doc=_md.apply(this,arguments);
+    try{
+      const cfg=fmcCfgLer();
+      const ehLeitura = /leitura|loca/i.test(String((arguments&&arguments.length&&arguments[1]&&arguments[1].origem)||(doc&&doc.origem)||''));
+      if(doc && Array.isArray(doc.itens)){
+        const tratados=fmcNcmPorTipo(doc.itens,(typeof db!=='undefined'?db.produtos:[])||[],cfg,ehLeitura);
+        // só troca quando a regra de tipo trouxe NCM diferente do já preenchido-padrão vazio
+        doc.itens=doc.itens.map(function(it,i){
+          const t=tratados[i]||it;
+          const novo={};
+          if(t.ncm && (!it.ncm || String(it.ncm).replace(/\D/g,'')===String((cfg.nfNcmPadrao||'').replace(/\D/g,'')) )) novo.ncm=t.ncm;
+          if(t.nome && t.nome!==(it.nome||it.descricao) && (!it.nome || !String(it.nome).trim())) novo.nome=t.nome, novo.descricao=t.nome;
+          return Object.keys(novo).length?Object.assign({},it,novo):it;
+        });
+      }
+    }catch(e){}
+    return doc;
+  };
+  embrMd.__fmc=true;
+  window.NFE_EMISSAO_PURE.montarDocumento=embrMd;
+}
+// Wrap do montarXml: texto do Simples entra no infCpl QUANDO houver config
+// e o ambiente for PRODUÇÃO (em homologação o selo NOTA DE TESTE já cobre).
+if(window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.montarXml==='function' && !window.NFE_EMISSAO_PURE.montarXml.__fmc){
+  const _mx=window.NFE_EMISSAO_PURE.montarXml;
+  const embrMx=function(doc){
+    let xml=_mx.apply(this,arguments);
+    try{
+      if(fmcAmb()==='producao'){
+        const cfg=fmcCfgLer();
+        if(cfg.nfTextoSimples.trim()) xml=fmcAplicarTextoInfCpl(xml, cfg.nfTextoSimples);
+      }
+    }catch(e){}
+    return xml;
+  };
+  embrMx.__fmc=true;
+  window.NFE_EMISSAO_PURE.montarXml=embrMx;
+}
+
+// ══ 5) CENTRAL: seção OPERAÇÕES + card CONFIGURAÇÃO FISCAL ═════════════════
+function fmcInstalarExtra(){
+  const view=document.getElementById('view-central-nf');
+  if(!view || view.querySelector('#fmc-ops')) return;
+  // linha de operações (entra logo após a linha dos 3 botões base)
+  const baseBtn=view.querySelector('#cnf-inut');
+  const ops=document.createElement('div');
+  ops.id='fmc-ops';
+  ops.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:8px';
+  ops.innerHTML=
+    '<button id="fmc-status" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">📡 Testar SEFAZ agora</button>'+
+    '<button id="fmc-pacote" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🗂 Pacote do mês p/ contador (zip)</button>';
+  if(baseBtn && baseBtn.parentElement) baseBtn.parentElement.insertAdjacentElement('afterend',ops);
+  // card configuração fiscal (mapa do dump)
+  const cards=view.querySelectorAll('.cnf-card');
+  if(cards.length && !view.querySelector('#fmc-config')){
+    const cfg=fmcCfgLer();
+    const card=document.createElement('div');
+    card.id='fmc-config';
+    card.className='cnf-card';
+    card.style.cssText='margin-top:10px';
+    card.innerHTML=
+      '<p style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px" class="cnf-sub">Configuração fiscal (mapa do sistema antigo)</p>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">'+
+      '<label style="font-size:11px;font-weight:800">NCM padrão<input id="fmc-ncm-padrao" class="cnf-input" value="'+cfg.nfNcmPadrao.replace(/"/g,'&quot;')+'" style="width:100%;height:32px;border-radius:8px;padding:0 8px;margin-top:3px;font-size:12.5px"></label>'+
+      '<label style="font-size:11px;font-weight:800">NCM recarga/tinta<input id="fmc-ncm-tinta" class="cnf-input" value="'+cfg.nfNcmTinta.replace(/"/g,'&quot;')+'" style="width:100%;height:32px;border-radius:8px;padding:0 8px;margin-top:3px;font-size:12.5px"></label>'+
+      '<label style="font-size:11px;font-weight:800">NCM locação<input id="fmc-ncm-loc" class="cnf-input" value="'+cfg.nfNcmLocacao.replace(/"/g,'&quot;')+'" style="width:100%;height:32px;border-radius:8px;padding:0 8px;margin-top:3px;font-size:12.5px"></label>'+
+      '<label style="font-size:11px;font-weight:800">Descrição locação<input id="fmc-desc-loc" class="cnf-input" value="'+cfg.nfDescLocacao.replace(/"/g,'&quot;')+'" style="width:100%;height:32px;border-radius:8px;padding:0 8px;margin-top:3px;font-size:12.5px"></label></div>'+
+      '<label style="font-size:11px;font-weight:800;display:block;margin-top:10px">Texto do Simples Nacional (entra nos "dados adicionais" das notas REAIS — homologação já carrega o selo de teste)'+
+      '<textarea id="fmc-txo-simples" class="cnf-input" rows="3" placeholder="Vazio = nada entra sozinho. Modelos comuns:&#10;• DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI.&#10;• PERMITE O APROVEITAMENTO DO CRÉDITO DE ICMS NO VALOR DE R$ ..., NOS TERMOS DO ART. 23 DA LC Nº 123/2006." style="width:100%;border-radius:8px;padding:8px;margin-top:3px;font-size:12px;font-family:inherit">'+cfg.nfTextoSimples.replace(/</g,'&lt;')+'</textarea></label>'+
+      '<p style="font-size:11px;margin:6px 0 0" class="cnf-sub">O texto do sistema antigo trazia valores prontos (R$ e %) que mudam por nota — por isso aqui o campo nasce VAZIO: você decide o texto certo na prévia.</p>'+
+      '<div style="margin-top:10px"><button id="fmc-cfg-salvar" class="cnf-btn" style="height:34px;padding:0 14px;border-radius:9px;font-size:12.5px">Salvar configuração fiscal</button></div>';
+    cards[cards.length-1].parentElement.appendChild(card);
+    card.querySelector('#fmc-cfg-salvar').onclick=function(){
+      db.config=db.config||{};
+      db.config.nfNcmPadrao=card.querySelector('#fmc-ncm-padrao').value.trim();
+      db.config.nfNcmTinta=card.querySelector('#fmc-ncm-tinta').value.trim();
+      db.config.nfNcmLocacao=card.querySelector('#fmc-ncm-loc').value.trim();
+      db.config.nfDescLocacao=card.querySelector('#fmc-desc-loc').value.trim();
+      db.config.nfTextoSimples=card.querySelector('#fmc-txo-simples').value;
+      try{ if(typeof db.save==='function') db.save(); }catch(e){}
+      fmcAudit('config-fiscal-salva',{ncmPadrao:db.config.nfNcmPadrao, temTexto:!!db.config.nfTextoSimples.trim()});
+      fmcToast('✅ Configuração fiscal salva (serve no cadastro de novos produtos e nas próximas notas).','success');
+    };
+  }
+  const st=document.getElementById('fmc-status'); if(st && !st.__fmc){ st.__fmc=true; st.onclick=function(){ window.nfStatusServico(); }; }
+  const pk=document.getElementById('fmc-pacote'); if(pk && !pk.__fmc){ pk.__fmc=true; pk.onclick=function(){ window.nfPacoteContador(); }; }
+  // CC-e por nota autorizada (entra na linha da ação, antes do Cancelar)
+  const linhas=view.querySelectorAll('.nfx-linha [data-id]');
+  linhas.forEach(function(span){
+    if(span.querySelector('[data-nfx="cce"]')) return;
+    const nota=fmcNota(span.getAttribute('data-id'));
+    if(!nota || nota.status!=='autorizada') return;
+    const bt=document.createElement('button');
+    bt.setAttribute('data-nfx','cce');
+    bt.className='nfx-btn-mini';
+    bt.style.cssText='font-size:11px;padding:3px 8px;border-radius:6px';
+    bt.textContent='CC-e'+((nota.cce&&nota.cce.length)?' ('+nota.cce.length+')':'');
+    const cancelBtn=span.querySelector('[data-nfx="cancelar"]');
+    if(cancelBtn) span.insertBefore(bt,cancelBtn); else span.appendChild(bt);
+    bt.onclick=function(){ window.nfCartaCorrecao(nota.id); };
+  });
+}
+if(typeof window.renderCentralNf==='function' && !window.renderCentralNf.__fmc){
+  const _rc=window.renderCentralNf;
+  const embrRc=function(){
+    const r=_rc.apply(this,arguments);
+    setTimeout(fmcInstalarExtra,60);
+    return r;
+  };
+  embrRc.__fmc=true;
+  window.renderCentralNf=embrRc;
+}
+// Sonda de preenchimento (render do histórico acontece fora da render da
+// central, ex.: após cancelamento) — barata, para quando a view some da tela.
+(function fmcSonda(){
+  let tent=0;
+  const t=setInterval(function(){
+    tent++;
+    try{ if(!document.hidden){ const v=document.getElementById('view-central-nf'); if(v && v.offsetParent!==null) fmcInstalarExtra(); } }catch(e){}
+    if(tent>150) clearInterval(t); // ~5 minutos cobrindo navegação lenta
+  },2000);
+})();
+console.log('v6.0.6 — MENU FISCAL COMPLETO: CC-e (110110) + Testar SEFAZ (status serviço) + Pacote do mês p/ contador (zip puro) + NCM por tipo + texto do Simples (vazio por padrão) na Central');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fiscal_menu_completo_patch.js", e); }
+;
+
+/* ===== dashboard_inicio_clicavel_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD_INICIO_CLICAVEL_PATCH v6.0.7 — foto dele (18/09): a tela Início
+// mostrava "undefined" espalhado ("Silva e Freitas • undefined", "undefined •
+// undefined PB", leitura com título "undefined") E o pedido na lata:
+//   "essa foto é de inicio... faz essas informações ser clicadas que vai
+//    mostrar a origem delas"
+//  1) ANTI-UNDEFINED de verdade (causa, não maquiagem): a lista original cria
+//     "${cli?.nome}" cru — quando o cliente/equipamento foi apagado ou o
+//     registro veio sem vínculo, nasce "undefined" na tela. Agora cada campo
+//     tem alternativa honesta: "(cliente removido)", "(equipamento removido)",
+//     "consumo não informado", e o " • " só entra entre partes que existem
+//     (nunca fica "por Katia • " pendurado). Descrição/tipo vazios não
+//     aparecem; ausência não quebra a linha.
+//  2) CADA ITEM CLICÁVEL ABRE A ORIGEM (pedido dele): chamado → vai pra
+//     Manutenção e já abre a OS no modal; leitura → vai pra Leituras e abre
+//     a leitura. Cursor de mão + dica no hover ("Abrir a origem").
+//  3) BLINDAGEM: se qualquer parte antiga do renderDashboard explodir (log
+//     sem detalhes etc.), as listas novas ainda são redesenhadas — nada de
+//     painel quebrado pela metade.
+// Sem timers pesados: um abraço no renderDashboard (chamado em toda navegação
+// pro Início) + sonda leve só enquanto o Início estiver visível.
+// Guard: __v6007dhc. PURE exportado p/ testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6007dhc) return;
+
+/* DHC607_PURE_START */
+// Junta partes com " • " pulando vazios — fim dos "undefined • undefined PB".
+function dhcJunta(partes){
+  return (partes||[]).filter(function(p){ return p!==undefined && p!==null && String(p).trim()!==''; }).map(function(p){return String(p);}).join(' • ');
+}
+function dhcEsc(s){
+  return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dhcNomeCliente(clientes,id){
+  if(id===undefined||id===null||id==='') return '';
+  // Comparação FROUXA de propósito: registros antigos/sincronizados misturam
+  // id número com id texto ('5' !== 5) — era a raiz do "undefined" da foto.
+  const sid=String(id);
+  const c=(clientes||[]).find(function(x){ return x && String(x.id)===sid; });
+  return (c && c.nome) ? String(c.nome) : '';
+}
+// Linha de CHAMADO/OS: número (4 últimos), "Cliente • tipo", "por quem • descrição".
+function dhcLinhaOs(clientes,o){
+  o=o||{};
+  const numero=(o.numero!==undefined && o.numero!==null && String(o.numero).trim()!=='') ? String(o.numero).slice(-4) : '—';
+  const cliNome=dhcNomeCliente(clientes,o.clienteId) || (o.clienteNome?String(o.clienteNome):'') || '(cliente removido)';
+  const titulo=dhcJunta([cliNome, o.tipo]);
+  const desc=(o.descricao!==undefined && o.descricao!==null) ? String(o.descricao).trim().slice(0,40) : '';
+  const subtitulo=dhcJunta(['por '+((o.criadoPorNome&&String(o.criadoPorNome).trim())||'-'), desc]);
+  return { id:o.id||'', numero:numero, titulo:titulo, subtitulo:subtitulo, prioridade:(o.prioridade&&String(o.prioridade).trim())||'normal' };
+}
+// Linha de LEITURA: cliente (cai pro cliente do equipamento, depois pro nome
+// guardado), equipamento, consumo, quem lançou; valor do excedente p/ tarja.
+function dhcLinhaLeitura(clientes,equipamentos,l){
+  l=l||{};
+  const seq=(l.equipamentoId!==undefined && l.equipamentoId!==null) ? String(l.equipamentoId) : '';
+  const eq=seq ? (equipamentos||[]).find(function(e){ return e && String(e.id)===seq; }) : null;
+  let cliNome=dhcNomeCliente(clientes,l.clienteId);
+  if(!cliNome && eq) cliNome=dhcNomeCliente(clientes,eq.clienteId);
+  if(!cliNome && l.clienteNome) cliNome=String(l.clienteNome);
+  const titulo=cliNome || '(cliente removido)';
+  const eqNome=(eq && eq.modelo) ? String(eq.modelo) : '(equipamento removido)';
+  const consumo=(l.consumoPB!==undefined && l.consumoPB!==null && String(l.consumoPB).trim()!=='') ? (String(l.consumoPB)+' PB') : 'consumo não informado';
+  const subtitulo=dhcJunta([eqNome, consumo, 'por '+((l.criadoPorNome&&String(l.criadoPorNome).trim())||'-')]);
+  const valor=Number(l.valorExcedente)||0;
+  return { id:l.id||'', titulo:titulo, subtitulo:subtitulo, valor:valor };
+}
+/* DHC607_PURE_END */
+const apiPura607={ dhcJunta:dhcJunta, dhcEsc:dhcEsc, dhcNomeCliente:dhcNomeCliente, dhcLinhaOs:dhcLinhaOs, dhcLinhaLeitura:dhcLinhaLeitura };
+if(typeof module!=='undefined') module.exports=apiPura607;
+if(typeof window!=='undefined'){ window.DHC607_PURE=apiPura607; }
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6007dhc=true;
+
+// Clique por delegação (UM ouvinte no documento; sem onclick inline → id com
+// caractere esquisito nunca quebra o HTML).
+document.addEventListener('click',function(ev){
+  const alvo=ev.target && ev.target.closest ? ev.target.closest('.dhc-item') : null;
+  if(!alvo) return;
+  window.dhcAbrirOrigem(alvo.getAttribute('data-dhc'), alvo.getAttribute('data-id'));
+});
+
+// ── Abrir a origem (pedido dele: clicar mostra de onde veio) ───────────────
+window.dhcAbrirOrigem=function(tipo,id){
+  if(!id) return;
+  try{
+    if(tipo==='os'){
+      if(typeof navigateTo==='function') navigateTo('manutencao');
+      setTimeout(function(){ try{ if(typeof openModal==='function') openModal('os',id); }catch(e){} },60);
+    }else if(tipo==='leitura'){
+      if(typeof navigateTo==='function') navigateTo('leituras');
+      setTimeout(function(){ try{ if(typeof openModal==='function') openModal('leitura',id); }catch(e){} },60);
+    }
+  }catch(e){}
+};
+
+// ── Redesenho das duas listas do Início (anti-undefined + clicáveis) ───────
+function dhcEstilos(){
+  if(document.getElementById('dhc-css')) return;
+  const st=document.createElement('style'); st.id='dhc-css';
+  st.textContent='.dhc-item{cursor:pointer;transition:background .12s}.dhc-item:hover{background:#f1f5f9}.dhc-seta{opacity:0;transition:opacity .12s;color:#0a1e8a;font-size:15px}.dhc-item:hover .dhc-seta{opacity:1}';
+  document.head.appendChild(st);
+}
+function dhcFixListas(){
+  const inicio=document.getElementById('view-dashboard');
+  if(inicio && inicio.offsetParent===null) return; // fora do Início não gasta nada
+  if(typeof db==='undefined' || !db) return;
+  const sess=(typeof getSession==='function') ? getSession() : null;
+  if(!sess || !sess.empresaId) return;
+  dhcEstilos();
+  const lc=document.getElementById('list-chamados-recentes');
+  if(lc){
+    const recOs=(db.os||[]).filter(function(o){ return o.empresaId===sess.empresaId && o.status!=='concluido'; }).slice(0,4);
+    lc.innerHTML=recOs.map(function(o){
+      const r=dhcLinhaOs(db.clientes,o);
+      return '<div class="dhc-item p-4 flex items-center gap-3" title="Abrir a origem (Manutenção)" data-dhc="os" data-id="'+dhcEsc(r.id)+'">'+
+        '<div class="w-10 h-10 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-mono text-[10px] font-bold">'+dhcEsc(r.numero)+'</div>'+
+        '<div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">'+dhcEsc(r.titulo)+'</p>'+
+        '<p class="text-[11.5px] text-slate-500 truncate">'+dhcEsc(r.subtitulo)+'</p></div>'+
+        '<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 uppercase">'+dhcEsc(r.prioridade)+'</span>'+
+        '<i class="ph ph-arrow-right dhc-seta"></i></div>';
+    }).join('') || '<div class="p-8 text-center text-[12px] text-slate-500">Sem chamados</div>';
+  }
+  const ll=document.getElementById('list-leituras-pendentes');
+  if(ll){
+    const pendLeit=(db.leituras||[]).filter(function(l){ return l.empresaId===sess.empresaId && l.status==='pendente'; }).slice(0,4);
+    ll.innerHTML=pendLeit.map(function(l){
+      const r=dhcLinhaLeitura(db.clientes,db.equipamentos,l);
+      return '<div class="dhc-item p-4 flex items-center gap-3" title="Abrir a origem (Leituras)" data-dhc="leitura" data-id="'+dhcEsc(r.id)+'">'+
+        '<div class="w-10 h-10 rounded-xl bg-[#e8eaf8] text-[#0a1e8a] grid place-items-center"><i class="ph ph-printer"></i></div>'+
+        '<div class="flex-1 min-w-0"><p class="font-semibold text-[13px] truncate">'+dhcEsc(r.titulo)+'</p>'+
+        '<p class="text-[11.5px] text-slate-500 truncate">'+dhcEsc(r.subtitulo)+'</p></div>'+
+        '<span class="text-[11px] font-bold px-2.5 py-1 rounded-full '+(r.valor>0?'bg-amber-50 text-amber-700 border border-amber-200':'bg-slate-100 text-slate-600')+'">'+(r.valor>0?(typeof fmtMoney==='function'?fmtMoney(r.valor):('R$ '+r.valor)):'Franquia')+'</span>'+
+        '<i class="ph ph-arrow-right dhc-seta"></i></div>';
+    }).join('') || '<div class="p-8 text-center text-[12px] text-slate-500">Nenhuma pendência 🎉</div>';
+  }
+}
+
+// Abraço no renderDashboard: render original (mesmo se explodir) + correção.
+function dhcWrapDashboard(){
+  if(typeof window.renderDashboard==='function' && !window.renderDashboard.__dhc){
+    const _rd=window.renderDashboard;
+    const embr=function(){
+      let r;
+      try{ r=_rd.apply(this,arguments); }catch(e){ try{ console.warn('[v6.0.7] renderDashboard tropeçou, listas corrigidas mesmo assim:',e); }catch(_){}} 
+      setTimeout(dhcFixListas,30);
+      return r;
+    };
+    embr.__dhc=true;
+    window.renderDashboard=embr;
+    return true;
+  }
+  return typeof window.renderDashboard==='function';
+}
+// Sonda leve: garante o abraço (caso o render seja definido depois) e cobre
+// navegação pro Início sem depender de quem chamou (barata: 2s, para quando o
+// Início some da tela por 20 checagens seguidas).
+(function dhcSonda(){
+  let fora=0, tent=0;
+  const t=setInterval(function(){
+    tent++;
+    try{
+      dhcWrapDashboard();
+      const alvo=document.getElementById('list-chamados-recentes');
+      const visivel=alvo && alvo.offsetParent!==null;
+      if(visivel){ fora=0; dhcFixListas(); } else { fora++; }
+    }catch(e){}
+    if((fora>20 && tent>10) || tent>150) clearInterval(t); // ~5 min de teto
+  },2000);
+})();
+console.log('v6.0.7 — INÍCIO SEM UNDEFINED + CLICÁVEL: chamados abrem a OS na Manutenção, leituras abrem na tela de Leituras; campos sem dado mostram alternativa honesta, nunca "undefined".');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("dashboard_inicio_clicavel_patch.js", e); }
+;
+
+/* ===== menus_fiscais_separados_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// MENUS_FISCAIS_SEPARADOS_PATCH v6.0.8 — pedido dele (18/09):
+//   "das NF separe os menus como nas fotos que eu mandei, assim tudo em uma
+//    tela ta muito estranho, e o que tiver em configuração tira de lá e coloca
+//    no seu devido menu"
+//  1) Central NF fica SÓ COM OPERAÇÃO: placa de ambiente, troca de ambiente
+//     (protegida por digitar PRODUCAO — Portão v6.0.0 intocado), emissão,
+//     histórico, CC-e, Testar SEFAZ, Pacote do mês, Inutilizar faixa.
+//  2) CONFIGURAÇÃO SAI DA CENTRAL e ganha MENU PRÓPRIO: "Config. Fiscal"
+//     (nav lateral + barra clássica, mesma linguagem do botão Nota Fiscal):
+//       • Ambiente atual (olhar) + atalho pra trocar na Central (protegido)
+//       • Dados fiscais da empresa (botão p/ o perfil tributário: CNPJ/IE/NCM
+//         e importação do certificado A1 — telas que já existem)
+//       • Certificado A1: STATUS ao vivo via ponte do .exe (sem salvar senha)
+//       • NFC-e CSC (ID + código) — mesmas chaves de antes (nfCscId/nfCsc)
+//       • Notas: NCM padrão/tinta/locação + descrição locação + texto do
+//         Simples — MESMAS chaves que a 6.0.6 já gravava (nfNcmPadrao etc.):
+//         uma verdade só no db.config, telas diferentes escrevendo no mesmo
+//         lugar.
+//  3) Na Central os cards de configuração ESCONDEM (não se apaga: os patches
+//     antigos recriam a tela a cada render; esconder é a convivência pacífica)
+//     e o botão "Dados fiscais" vira ponte: "⚙️ Configurações fiscais →".
+// Guard: __v6008mfs. PURE exportado p/ testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6008mfs) return;
+
+/* MFS608_PURE_START */
+// Lê a config fiscal com os MESMOS defaults da 6.0.6 (uma verdade só).
+function mfsCfgLer(cfg){
+  const c=cfg||{};
+  return {
+    nfAmbiente:String(c.nfAmbiente||'homologacao'),
+    nfCscId:String(c.nfCscId||''), nfCsc:String(c.nfCsc||''),
+    nfNcmPadrao:String(c.nfNcmPadrao||''), nfNcmTinta:String(c.nfNcmTinta||'32151100'),
+    nfNcmLocacao:String(c.nfNcmLocacao||'37079021'), nfDescLocacao:String(c.nfDescLocacao||'CARTUCHO TONER'),
+    nfTextoSimples:String(c.nfTextoSimples||'')
+  };
+}
+// O que volta pro db.config quando salva a aba "Notas" (NCM + texto Simples).
+function mfsCfgNotas(cfg,v){
+  const out=cfg||{};
+  out.nfNcmPadrao=String(v.nfNcmPadrao||'').trim();
+  out.nfNcmTinta=String(v.nfNcmTinta||'').trim();
+  out.nfNcmLocacao=String(v.nfNcmLocacao||'').trim();
+  out.nfDescLocacao=String(v.nfDescLocacao||'').trim();
+  out.nfTextoSimples=String(v.nfTextoSimples||'');
+  return out;
+}
+// O que volta pro db.config quando salva o CSC (mesmas chaves da Central antiga).
+function mfsCfgCsc(cfg,v){
+  const out=cfg||{};
+  out.nfCscId=String(v.nfCscId||'').trim();
+  out.nfCsc=String(v.nfCsc||'');
+  return out;
+}
+function mfsEsc(s){
+  return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+/* MFS608_PURE_END */
+const apiPura608={ mfsCfgLer:mfsCfgLer, mfsCfgNotas:mfsCfgNotas, mfsCfgCsc:mfsCfgCsc, mfsEsc:mfsEsc };
+if(typeof module!=='undefined') module.exports=apiPura608;
+if(typeof window!=='undefined'){ window.MFS608_PURE=apiPura608; }
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6008mfs=true;
+
+function mfsToast(m,t){ try{ if(typeof toast==='function') toast(m,t||'success'); }catch(e){} }
+function mfsAud(acao,detalhe){ try{ if(typeof logAction==='function') logAction('fiscal',acao,'config-fiscal',detalhe||''); }catch(e){} }
+
+// ── TELA: CONFIGURAÇÕES FISCAIS (menu próprio) ─────────────────────────────
+function mfsRender(){
+  const v=typeof ensureView==='function'?ensureView('config-fiscal'):null;
+  if(!v) return;
+  let sess=null; try{ sess=typeof getSession==='function'?getSession():null; }catch(e){}
+  if(!sess){ v.innerHTML='<div class="p-8 text-center text-slate-500 text-[13px]">Entre com login para configurar o fiscal.</div>'; return; }
+  const cfg=mfsCfgLer(typeof db!=='undefined'&&db?db.config:{});
+  const prod=cfg.nfAmbiente==='producao';
+  const noExe=!(window.__digicopyPontes&&window.__digicopyPontes.nfeCertAPI);
+  const card='rounded-[16px] bg-white border shadow-sm p-5';
+  const lab='text-[11px] uppercase font-bold text-slate-500';
+  const inp='mt-1 w-full h-10 px-3 rounded-xl border text-[13px]';
+  const btn='h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12.5px] font-semibold';
+  let h='';
+  // 1) Ambiente — olhar aqui, trocar na Central (lá mora a proteção PRODUCAO)
+  h+='<div style="padding:10px 14px;border-radius:14px;font-weight:800;font-size:13px;color:#fff;background:'+(prod?'#14532d':'#7f1d1d')+'">'+
+     '🏛️ Ambiente: '+(prod?'PRODUÇÃO — nota vale de verdade':'HOMOLOGAÇÃO — modo teste')+
+     ' <span style="font-weight:500;opacity:.9">· a troca é feita na Central NF (pede digitar PRODUCAO)</span></div>';
+  h+='<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">';
+  // 2) Dados fiscais da empresa
+  h+='<div class="'+card+'"><h4 class="font-bold text-[14px]">🏢 Dados fiscais da empresa</h4>'+
+     '<p class="text-[12px] text-slate-500 mt-1">CNPJ, IE, regime, endereço e o NCM padrão — é daqui que a nota nasce.</p>'+
+     '<div class="mt-3 flex flex-wrap gap-2">'+
+     '<button id="cfgf-perfil" class="'+btn+'">Abrir dados fiscais (CNPJ/IE/NCM…)</button>'+
+     '<button id="cfgf-ir-central" class="h-10 px-4 rounded-xl bg-white border text-[12.5px] font-semibold">Ir p/ Central NF (emitir)</button></div></div>';
+  // 3) Certificado A1 — status ao vivo quando .exe
+  h+='<div class="'+card+'"><h4 class="font-bold text-[14px]">🔐 Certificado A1</h4>'+
+     '<p class="text-[12px] text-slate-500 mt-1">A senha é pedida <b>na hora</b> de cada emissão e <b>não fica salva</b>. O certificado vive na pasta do sistema deste PC.</p>'+
+     '<div id="cfgf-cert-status" class="mt-3 text-[12.5px] text-slate-500">'+(noExe?'Abra pelo <b>.exe do computador</b> pra importar e ver o status (navegador não fala com certificado).':'Consultando o certificado deste PC…')+'</div>'+
+     (noExe?'':'<div class="mt-3 flex flex-wrap gap-2"><button id="cfgf-cert-import" class="'+btn+'">Importar certificado (.pfx)</button></div>')+'</div>';
+  // 4) NFC-e CSC
+  h+='<div class="'+card+'"><h4 class="font-bold text-[14px]">🧾 NFC-e — código CSC (SEFAZ-MG)</h4>'+
+     '<div class="grid grid-cols-3 gap-3 mt-3"><div><label class="'+lab+'">ID do CSC</label><input id="cfgf-cscid" class="'+inp+'" value="'+mfsEsc(cfg.nfCscId)+'"></div>'+
+     '<div class="col-span-2"><label class="'+lab+'">CSC</label><input id="cfgf-csc" type="password" class="'+inp+'" value="'+mfsEsc(cfg.nfCsc)+'"></div></div>'+
+     '<div class="mt-3"><button id="cfgf-csc-salvar" class="'+btn+'">Salvar CSC</button></div>'+
+     '<p class="text-[11px] text-slate-400 mt-2">Gera no portal da SEFAZ-MG quando for emitir cupom de verdade. Fica salvo na nuvem, só nos PCs autorizados.</p></div>';
+  // 5) Notas — NCMs + texto do Simples (mesmas chaves da 6.0.6)
+  h+='<div class="'+card+' lg:col-span-2"><h4 class="font-bold text-[14px]">📦 Notas — NCM por tipo e texto do Simples</h4>'+
+     '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">'+
+     '<div><label class="'+lab+'">NCM padrão</label><input id="cfgf-ncm-padrao" class="'+inp+'" value="'+mfsEsc(cfg.nfNcmPadrao)+'" placeholder="ex.: 84439923"></div>'+
+     '<div><label class="'+lab+'">NCM recarga/tinta</label><input id="cfgf-ncm-tinta" class="'+inp+'" value="'+mfsEsc(cfg.nfNcmTinta)+'"></div>'+
+     '<div><label class="'+lab+'">NCM locação</label><input id="cfgf-ncm-loc" class="'+inp+'" value="'+mfsEsc(cfg.nfNcmLocacao)+'"></div>'+
+     '<div><label class="'+lab+'">Descrição locação</label><input id="cfgf-desc-loc" class="'+inp+'" value="'+mfsEsc(cfg.nfDescLocacao)+'"></div></div>'+
+     '<div class="mt-3"><label class="'+lab+'">Texto do Simples Nacional (só entra nas notas REAIS; vazio = nada entra sozinho)</label>'+
+     '<textarea id="cfgf-txo-simples" rows="2" class="mt-1 w-full px-3 py-2 rounded-xl border text-[12.5px]">'+mfsEsc(cfg.nfTextoSimples)+'</textarea></div>'+
+     '<div class="mt-3"><button id="cfgf-notas-salvar" class="'+btn+'">Salvar configuração das notas</button></div>'+
+     '<p class="text-[11px] text-slate-400 mt-2">Prioridade do NCM da nota: produto cadastrado &gt; tinta (recarga) &gt; locação (leitura) &gt; padrão. Homologação já carrega o selo de teste — o texto do Simples só entra em PRODUÇÃO.</p></div>';
+  h+='</div>';
+  v.innerHTML=h;
+
+  v.querySelector('#cfgf-perfil').onclick=function(){ try{ if(typeof abrirPerfilTributario==='function') abrirPerfilTributario(); else mfsToast('Perfil tributário não disponível aqui.','error'); }catch(e){} };
+  v.querySelector('#cfgf-ir-central').onclick=function(){ try{ window.navigateTo('central-nf'); }catch(e){} };
+  v.querySelector('#cfgf-csc-salvar').onclick=function(){
+    if(typeof db==='undefined'||!db) return;
+    db.config=mfsCfgCsc(db.config||{},{ nfCscId:v.querySelector('#cfgf-cscid').value, nfCsc:v.querySelector('#cfgf-csc').value });
+    try{ if(typeof db.save==='function') db.save(); }catch(e){}
+    mfsAud('csc-salvo','ID do CSC '+db.config.nfCscId+' salvo na tela Config. Fiscal');
+    mfsToast('CSC salvo na nuvem (fica só nos PCs autorizados).');
+  };
+  v.querySelector('#cfgf-notas-salvar').onclick=function(){
+    if(typeof db==='undefined'||!db) return;
+    db.config=mfsCfgNotas(db.config||{},{ nfNcmPadrao:v.querySelector('#cfgf-ncm-padrao').value, nfNcmTinta:v.querySelector('#cfgf-ncm-tinta').value,
+      nfNcmLocacao:v.querySelector('#cfgf-ncm-loc').value, nfDescLocacao:v.querySelector('#cfgf-desc-loc').value, nfTextoSimples:v.querySelector('#cfgf-txo-simples').value });
+    try{ if(typeof db.save==='function') db.save(); }catch(e){}
+    mfsAud('config-notas-salva','NCMs e texto do Simples salvos na tela Config. Fiscal');
+    mfsToast('✅ Configuração das notas salva (vale nas próximas emissões).');
+  };
+  // Status do certificado ao vivo (só no .exe)
+  if(!noExe){
+    const st=v.querySelector('#cfgf-cert-status');
+    try{
+      window.__digicopyPontes.nfeCertAPI.status().then(function(r){
+        if(!st) return;
+        if(r&&r.ok){ st.innerHTML='✅ Certificado <b>instalado</b> neste PC'+(r.arquivo?(' · <span class="text-slate-400">'+mfsEsc(r.arquivo)+'</span>'):'')+(r.validade?(' · válido até <b>'+mfsEsc(String(r.validade).slice(0,10))+'</b>'):''); st.className='mt-3 text-[12.5px] text-emerald-700'; }
+        else { st.innerHTML='⚠️ Nenhum certificado A1 neste PC ainda — importe o arquivo .pfx aqui embaixo.'; st.className='mt-3 text-[12.5px] text-amber-700'; }
+      }).catch(function(){ if(st) st.textContent='Não consegui consultar o certificado (ponte ocupada).'; });
+    }catch(e){}
+    const imp=v.querySelector('#cfgf-cert-import');
+    if(imp) imp.onclick=async function(){
+      try{
+        const r=await window.__digicopyPontes.nfeCertAPI.importar();
+        if(r&&r.ok){ mfsToast('Certificado importado neste PC.'); mfsAud('cert-importado','A1 importado pela tela Config. Fiscal'); mfsRender(); }
+        else mfsToast((r&&r.error)||'Importação cancelada.','error');
+      }catch(e){ mfsToast('Falha ao importar o certificado.','error'); }
+    };
+  }
+}
+
+// ── CENTRAL fica só com OPERAÇÃO: esconde config (convivência pacífica) ────
+function mfsLimparCentral(){
+  const view=document.getElementById('view-central-nf');
+  if(!view || view.offsetParent===null) return;
+  try{
+    // card do CSC (tem #cnf-cscid dentro) — esconde
+    const csc=view.querySelector('#cnf-cscid');
+    const cardCsc=csc&&csc.closest?csc.closest('.cnf-card'):null;
+    if(cardCsc) cardCsc.style.display='none';
+    // card do certificado (pela cara, texto "Certificado A1") — esconde
+    const cards=view.querySelectorAll('.cnf-card');
+    cards.forEach(function(c){ if((c.textContent||'').indexOf('Certificado A1')>=0) c.style.display='none'; });
+    // card de configuração das notas da 6.0.6 (#fmc-config) — esconde (vive agora na Config. Fiscal)
+    const fcfg=view.querySelector('#fmc-config'); if(fcfg) fcfg.style.display='none';
+    // se a grade de cards ficou toda escondida, some com ela
+    const grade=cards.length?cards[0].parentElement:null;
+    if(grade){ let vis=0; grade.querySelectorAll('.cnf-card').forEach(function(c){ if(c.style.display!=='none') vis++; }); if(!vis) grade.style.display='none'; }
+    // botão "Dados fiscais" vira ponte pro menu certo
+    const bc=view.querySelector('#cnf-config');
+    if(bc && !bc.__mfs){ bc.__mfs=true; bc.innerHTML='⚙️ Configurações fiscais (certificado, CSC, NCM) →'; bc.title='Certificado, CSC, NCMs e texto do Simples mudaram pra tela própria: menu Config. Fiscal'; bc.onclick=function(){ window.navigateTo('config-fiscal'); }; }
+  }catch(e){}
+}
+if(typeof window.renderCentralNf==='function' && !window.renderCentralNf.__mfs){
+  const _rc=window.renderCentralNf;
+  const embr=function(){
+    const r=_rc.apply(this,arguments);
+    setTimeout(mfsLimparCentral,110); // depois da instalação da 6.0.6 (60ms)
+    return r;
+  };
+  embr.__mfs=true;
+  window.renderCentralNf=embr;
+}
+
+// ── Entrada da tela (mesma receita da Central) ─────────────────────────────
+if(typeof window.navigateTo==='function' && !window.navigateTo.__mfs){
+  const _nav=window.navigateTo;
+  const embrNav=function(view){
+    const r=_nav.apply(this,arguments);
+    if(view==='config-fiscal'){
+      try{ if(typeof setPageHeader==='function') setPageHeader('Configurações Fiscais','Certificado, CSC, NCMs e texto das notas — separado da operação'); }catch(e){}
+      try{ mfsRender(); }catch(e){}
+    }
+    return r;
+  };
+  embrNav.__mfs=true;
+  window.navigateTo=embrNav;
+}
+
+// ── Botões de menu (nav lateral + barra clássica) — espelho do Nota Fiscal ─
+function mfsInstalarMenu(){
+  const nav=document.getElementById('nav-gest');
+  if(nav&&!nav.querySelector('[data-nav="config-fiscal"]')){
+    const btn=document.createElement('button');
+    btn.setAttribute('data-nav','config-fiscal'); if(btn.dataset) btn.dataset.nav='config-fiscal';
+    btn.onclick=function(){ window.navigateTo('config-fiscal'); };
+    btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+    btn.innerHTML='<i class="ph ph-gear text-[19px]"></i><span>Config. Fiscal</span>';
+    const nf=nav.querySelector('[data-nav="central-nf"]');
+    if(nf&&nf.nextSibling) nav.insertBefore(btn,nf.nextSibling); else nav.appendChild(btn);
+  }
+  const toolbar=document.querySelector('.classic-toolbar-scroll');
+  if(toolbar&&!document.getElementById('topmod-config-fiscal')){
+    const mod=document.createElement('div'); mod.className='module'; mod.id='topmod-config-fiscal';
+    mod.innerHTML='<button onclick="navigateTo(\'config-fiscal\')"><i class="ph ph-gear"></i>Config. Fiscal</button>';
+    const tnf=document.getElementById('topmod-central-nf');
+    if(tnf&&tnf.nextSibling) toolbar.insertBefore(mod,tnf.nextSibling); else toolbar.appendChild(mod);
+  }
+}
+// Sonda leve: menu redesenha após login; limpeza da Central re-runs entre renders
+(function mfsSonda(){
+  let tent=0;
+  const t=setInterval(function(){
+    tent++;
+    if(!document.hidden){ try{ mfsInstalarMenu(); mfsLimparCentral(); }catch(e){} }
+    if(tent>300) clearInterval(t); // ~10 min de cobertura p/ navegação lenta
+  },2000);
+})();
+console.log('v6.0.8 — MENUS FISCAIS SEPARADOS: Central fica só com operação (emitir, histórico, CC-e, Testar SEFAZ, pacote, inutilizar); Configurações Fiscais ganha menu próprio (ambiente olhar, dados fiscais, certificado A1 ao vivo no .exe, CSC, NCMs e texto do Simples — mesmas chaves).');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menus_fiscais_separados_patch.js", e); }
+;
+
+/* ===== permissoes_override_menus_fiscais_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// PERMISSOES_OVERRIDE_MENUS_FISCAIS_PATCH v6.0.9 — três ordens dele (18/09):
+//  1) "Remove o permitir de FORA do editar — ele só vai funcionar dentro da
+//     aba editar": a coluna "Emitir NF" que a v5.22.21 injeta NA TABELA de
+//     usuários a cada render (data-nfe-col/data-nfe-cell) agora é ARRANCADA
+//     sempre que aparece. Permissão só se vê e só se mexe DENTRO do editor.
+//  2) "Quem não pode excluir nem estornar e tentar, aparece na tela: peça a
+//     um usuário que tenha permissão pra colocar o login e a senha pra
+//     realizar essa ação — e embaixo vai ter o login": nasce a AUTORIZAÇÃO
+//     NA HORA (override de supervisor) nos 11 executores com gate da v6.0.5:
+//     popup DO SISTEMA (mesmo padrão visual dos avisos), campos Login + Senha,
+//     valida contra os usuários da empresa logada (Admin/Dono sempre valem;
+//     funcionário só se a caixa dele estiver marcada), token de 3 segundos,
+//     ação segue na hora e fica AUDITADO quem pediu e QUEM AUTORIZOU. Senha
+//     errada / cancelar = nada acontece (e audita também).
+//  3) "Os menus fiscais não foram ainda... continua tendo somente 3, só um é
+//     aba específica de fiscal, e os outros vão pra configuração": agora o
+//     fiscal tem MENU PRA CADA COISA, como nas fotos do sistema antigo:
+//       • Nota Fiscal (Central — operação completa, v6.0.8)
+//       • Histórico de Notas — a lista de notas em tela PRÓPRIA (CC-e incluso)
+//       • Status & Pacote — Testar SEFAZ (107=Operação) + Pacote do mês zip
+//       • Inutilizar Faixa — formulário próprio (guard de emitir NF incluso)
+//       • Config. Fiscal (v6.0.8) — certificado, CSC, NCMs, texto do Simples
+// Guard: __v6009pom. PURE exportado p/ testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6009pom) return;
+
+/* POM609_PURE_START */
+// Valida a AUTORIZAÇÃO NA HORA: acha usuário da empresa pelo login, confere a
+// senha dele e se ele pode a ação ('apagar'|'estornar'|'emitirNfe'). Admin e
+// Dono valem sempre (regra da v6.0.5). Nunca inventa permissão.
+function pomValidaAutorizacao(usuarios, empresaId, login, senha, acao, podeFn){
+  const lg=String(login==null?'':login).trim().toLowerCase();
+  if(!lg) return {ok:false, motivo:'Informe o login de quem autoriza.'};
+  if(senha==null || String(senha)==='') return {ok:false, motivo:'Informe a senha de quem autoriza.'};
+  const u=(usuarios||[]).find(function(x){
+    return x && String(x.login||'').trim().toLowerCase()===lg && (!empresaId || x.empresaId===empresaId);
+  });
+  if(!u) return {ok:false, motivo:'Login não encontrado nesta empresa.'};
+  if(String(u.senha||'')!==String(senha)) return {ok:false, motivo:'Senha não confere para '+lg+'.'};
+  const pode=(typeof podeFn==='function') ? podeFn : function(uu,ac){ const p=String((uu&&uu.perfil)||'').trim(); return p==='Admin'||p==='Dono'; };
+  if(!pode(u, acao)) return {ok:false, motivo:(u.nome||u.login||'Esse usuário')+' também NÃO tem permissão pra isso.'};
+  return {ok:true, quem:{id:u.id||'', login:u.login||lg, nome:u.nome||u.login||lg, perfil:String(u.perfil||'')}};
+}
+/* POM609_PURE_END */
+const apiPura609={ pomValidaAutorizacao:pomValidaAutorizacao };
+if(typeof module!=='undefined') module.exports=apiPura609;
+if(typeof window!=='undefined'){ window.POM609_PURE=apiPura609; }
+
+if(typeof window==='undefined' || typeof document==='undefined') return;
+window.__v6009pom=true;
+
+function pomPode(u,acao){
+  if(window.P605_PURE && window.P605_PURE.p605Pode) return window.P605_PURE.p605Pode(u,acao);
+  return pomValidaAutorizacao([u], u&&u.empresaId, u&&u.login, u&&u.senha, acao).ok;
+}
+function pomLog(acao,alvo,detalhe){ try{ if(typeof logAction==='function') logAction('seguranca',acao,alvo,detalhe||''); }catch(e){} }
+
+// ══ 1) AUTORIZAÇÃO NA HORA (override) nos executores com gate da v6.0.5 ════
+window.__p609AutorizadoAte=0; // token de 3s — só vale a ação autorizada agora
+
+function pomPopupAutorizacao(acaoPt, quemPediu, acao){
+  acao=acao||'apagar';
+  return new Promise(function(resolve){
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45)';
+    ov.innerHTML='<div style="background:#fff;border-radius:18px;padding:24px 26px;max-width:430px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);border:1px solid #e2e8f0">'+
+      '<div style="width:52px;height:52px;border-radius:50%;background:#e0e7ff;margin:0 auto 12px;display:grid;place-items:center;font-size:26px">🔐</div>'+
+      '<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0 0 6px">Permissão necessária</p>'+
+      '<p style="font-size:13px;color:#334155;margin:0 0 14px;line-height:1.5">Você não tem permissão para <b>'+String(acaoPt).replace(/</g,'&lt;')+'</b>.<br>Peça a um usuário que <b>tenha permissão</b> pra colocar o <b>login e a senha</b> dele aqui e realizar esta ação.</p>'+
+      '<div style="text-align:left"><label style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748b">Login de quem autoriza</label>'+
+      '<input id="pom-aut-login" autocomplete="username" style="margin:3px 0 10px;width:100%;height:42px;padding:0 12px;border-radius:11px;border:1px solid #cbd5e1;font-size:13.5px" placeholder="ex.: kauan"></div>'+
+      '<div style="text-align:left"><label style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748b">Senha de quem autoriza</label>'+
+      '<input id="pom-aut-senha" type="password" autocomplete="current-password" style="margin:3px 0 4px;width:100%;height:42px;padding:0 12px;border-radius:11px;border:1px solid #cbd5e1;font-size:13.5px" placeholder="••••••"></div>'+
+      '<p id="pom-aut-erro" style="font-size:12px;color:#b91c1c;min-height:16px;margin:4px 0 0"></p>'+
+      '<div style="margin-top:14px;display:flex;gap:10px;justify-content:center">'+
+      '<button id="pom-aut-cancelar" style="height:42px;padding:0 20px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-size:13px;font-weight:700;cursor:pointer">Cancelar</button>'+
+      '<button id="pom-aut-ok" style="height:42px;padding:0 22px;border-radius:11px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">Autorizar e executar</button></div>'+
+      (quemPediu?'<p style="font-size:11px;color:#94a3b8;margin:12px 0 0">Pedido por: '+String(quemPediu).replace(/</g,'&lt;')+'</p>':'')+
+      '</div>';
+    document.body.appendChild(ov);
+    const inpL=ov.querySelector('#pom-aut-login'), inpS=ov.querySelector('#pom-aut-senha'), erro=ov.querySelector('#pom-aut-erro');
+    function fecha(v){ try{ov.remove();}catch(e){} document.removeEventListener('keydown',onKey,true); resolve(v); }
+    function onKey(e){ if(e.key==='Escape') fecha(null); if(e.key==='Enter'){ e.preventDefault(); tentar(); } }
+    document.addEventListener('keydown',onKey,true);
+    ov.querySelector('#pom-aut-cancelar').onclick=function(){ fecha(null); };
+    ov.addEventListener('click',function(e){ if(e.target===ov) fecha(null); });
+    function tentar(){
+      const sess=(typeof getSession==='function')?getSession():null;
+      const r=pomValidaAutorizacao((typeof db!=='undefined'&&db?db.usuarios:[]), sess&&sess.empresaId, inpL.value, inpS.value, acao, pomPode);
+      if(!r.ok){ erro.textContent=r.motivo; inpS.select&&inpS.select(); return; }
+      fecha(r);
+    }
+    ov.querySelector('#pom-aut-ok').onclick=tentar;
+    setTimeout(function(){ try{ inpL.focus(); }catch(e){} },30);
+  });
+}
+
+// Re-embrulho por cima do gate da v6.0.5: sem permissão → override; com
+// autorização válida → token 3s deixa o gate antigo passar e a ação segue.
+function pomWrapOverride(nome, acaoPt){
+  if(typeof window[nome]!=='function'){ setTimeout(function(){ pomWrapOverride(nome,acaoPt); },1200); return; }
+  if(window[nome].__p609gate) return;
+  const _f=window[nome];
+  const embr=function(){
+    const checa=acaoPt.indexOf('estornar')===0 ? window.usuarioPodeEstornar : window.usuarioPodeApagar;
+    let pode=false; try{ pode=(window.__p609AutorizadoAte>Date.now()) || (typeof checa==='function' && checa()); }catch(e){}
+    if(pode) return _f.apply(this,arguments);
+    const sess=(typeof getSession==='function')?getSession():null;
+    const pedinte=(sess&&(sess.usuarioNome||sess.login))||'?';
+    const args=arguments, self=this;
+    return pomPopupAutorizacao(acaoPt, pedinte, acaoPt.indexOf('estornar')===0?'estornar':'apagar').then(function(r){
+      if(!r || !r.ok){ pomLog('override-cancelado', nome, quemTxt()); return; }
+      window.__p609AutorizadoAte=Date.now()+3000;
+      pomLog('override-autorizado', nome, quemTxt(r.quem));
+      return _f.apply(self,args);
+    });
+    function quemTxt(q){
+      return 'Ação: '+acaoPt+' · pedido por '+pedinte+(q?(' · AUTORIZADO por '+q.nome+' ('+q.login+', '+q.perfil+')'):' · sem autorização (fechou/errou)');
+    }
+  };
+  embr.__p609gate=true;
+  if(embr.__p605gate) embr.__p605gate=true;
+  for(const k in _f){ if(k!=='__p605gate') embr[k]=_f[k]; }
+  embr.__p605gate=_f.__p605gate;
+  window[nome]=embr;
+}
+['excluirVendaUnificado','deleteVenda','excluirChamadosSelecionados','excluirChamadoV52422','excluirOrcamento','excluirOrcamentosMarcados','removerLancamentoLeitura']
+  .forEach(function(n){ pomWrapOverride(n,'apagar registros'); });
+['estornarVenda','estornarVendasSelecionadas','estornarLeituraContrato','estornarNotinha']
+  .forEach(function(n){ pomWrapOverride(n,'estornar registros'); });
+// Mesmo token vale pro negado() antigo: se o gate velho conferir de novo nos
+// 3s, passa. (Os dois caminhos — wrap novo e wrap velho — convergem.)
+const _uPA=window.usuarioPodeApagar, _uPE=window.usuarioPodeEstornar;
+if(typeof _uPA==='function') window.usuarioPodeApagar=function(){ return (window.__p609AutorizadoAte>Date.now()) ? true : _uPA.apply(this,arguments); };
+if(typeof _uPE==='function') window.usuarioPodeEstornar=function(){ return (window.__p609AutorizadoAte>Date.now()) ? true : _uPE.apply(this,arguments); };
+
+// ══ 2) "Permitir" FORA DO EDITAR MORRE DE VEZ (caça à coluna da v5.22.21) ══
+function pomLimparColunaPermissao(){
+  const view=document.getElementById('view-usuarios');
+  if(!view || view.offsetParent===null) return;
+  let tirou=0;
+  view.querySelectorAll('[data-nfe-col],[data-nfe-cell]').forEach(function(el){ el.remove(); tirou++; });
+  if(tirou) window.__p609ColunaMorta=(window.__p609ColunaMorta||0)+tirou;
+}
+if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p609){
+  const _ru=window.renderUsuarios;
+  const embrRu=function(){ const r=_ru.apply(this,arguments); setTimeout(pomLimparColunaPermissao,70); return r; };
+  embrRu.__p609=true;
+  window.renderUsuarios=embrRu;
+}
+
+// ══ 3) MENUS FISCAIS DE VERDADE (um menu pra cada coisa) ═══════════════════
+function pomAmbTxt(){
+  const amb=(typeof db!=='undefined'&&db&&db.config&&db.config.nfAmbiente)||'homologacao';
+  return amb==='producao'
+    ? '<div style="padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;background:#14532d">🏛️ PRODUÇÃO — vale de verdade</div>'
+    : '<div style="padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;background:#7f1d1d">🏛️ HOMOLOGAÇÃO — modo teste, sem valor fiscal</div>';
+}
+function pomPodeEmitir(){ try{ return !!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe()); }catch(e){ return false; } }
+const pomCard='rounded-[16px] bg-white border shadow-sm p-5';
+const pomBtn='h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12.5px] font-semibold';
+
+// — 3.1 Histórico de Notas (tela própria; CC-e junto) —
+function pomRenderHistorico(){
+  const v=typeof ensureView==='function'?ensureView('fiscal-historico'):null; if(!v) return;
+  v.innerHTML=pomAmbTxt()+'<div class="'+pomCard+'"><h3 class="font-bold text-[15px]">🧾 Histórico de Notas</h3>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Todas as notas desta empresa. Nota autorizada tem botão <b>CC-e</b> (Carta de Correção) e cancelamento na própria linha.</p>'+
+    '<div id="pom-hist" class="mt-3"></div></div>';
+  try{
+    window.__nfxHistAlvo=v.querySelector('#pom-hist');
+    if(typeof window.nfxRenderHistorico==='function') window.nfxRenderHistorico();
+  }catch(e){}
+  setTimeout(pomInjetarCCeHistorico,120);
+}
+// A 6.0.6 instala o botão CC-e só dentro da Central; aqui a gente repete o
+// gesto na tela própria usando a MESMA função global window.nfCartaCorrecao.
+function pomInjetarCCeHistorico(){
+  const v=document.getElementById('view-fiscal-historico'); if(!v||v.offsetParent===null) return;
+  try{
+    const reg=(typeof db!=='undefined'&&db&&db.config&&db.config.nfRegistro)||[];
+    v.querySelectorAll('.nfx-linha [data-id]').forEach(function(span){
+      if(span.querySelector('[data-pom="cce"]')) return;
+      const nota=reg.find(function(n){ return n && n.id===span.getAttribute('data-id'); });
+      if(!nota || nota.status!=='autorizada') return;
+      const bt=document.createElement('button');
+      bt.setAttribute('data-pom','cce'); bt.className='nfx-btn-mini';
+      bt.style.cssText='font-size:11px;padding:3px 8px;border-radius:6px';
+      bt.textContent='CC-e'+((nota.cce&&nota.cce.length)?' ('+nota.cce.length+')':'');
+      span.appendChild(bt);
+      bt.onclick=function(){ window.nfCartaCorrecao(nota.id); };
+    });
+  }catch(e){}
+}
+
+// — 3.2 Status & Pacote (ferramentas do contador/monitoramento) —
+function pomRenderFerramentas(){
+  const v=typeof ensureView==='function'?ensureView('fiscal-ferramentas'):null; if(!v) return;
+  v.innerHTML=pomAmbTxt()+'<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">'+
+    '<div class="'+pomCard+'"><h4 class="font-bold text-[14px]">📡 Status do serviço SEFAZ</h4>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Pergunta AGORA pra SEFAZ-MG se a autorização de notas está no ar. Resposta <b>107 = Serviço em Operação</b> (perfeito). Prova o certificado + internet antes de emitir.</p>'+
+    '<div class="mt-3"><button id="pom-ft-status" class="'+pomBtn+'">Testar SEFAZ agora</button></div></div>'+
+    '<div class="'+pomCard+'"><h4 class="font-bold text-[14px]">🗂 Pacote do mês p/ contador</h4>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Baixa um <b>.zip</b> com todos os XMLs das notas do mês escolhido + eventos (cancelamento/CC-e) + índice. É o arquivo que a contabilidade pede todo mês. O mês é perguntado na hora (MM/AAAA).</p>'+
+    '<div class="mt-3"><button id="pom-ft-pacote" class="'+pomBtn+'">Baixar pacote (zip)</button></div></div></div>';
+  v.querySelector('#pom-ft-status').onclick=function(){ try{ window.nfStatusServico(); }catch(e){} };
+  v.querySelector('#pom-ft-pacote').onclick=function(){ try{ window.nfPacoteContador(); }catch(e){} };
+}
+
+// — 3.3 Inutilizar Faixa (formulário próprio, guard de emitir NF) —
+function pomRenderInutilizar(){
+  const v=typeof ensureView==='function'?ensureView('fiscal-inutilizar'):null; if(!v) return;
+  const pode=pomPodeEmitir();
+  v.innerHTML=pomAmbTxt()+'<div class="'+pomCard+' max-w-[560px] mt-3"><h3 class="font-bold text-[15px]">🧹 Inutilizar faixa de numeração</h3>'+
+    '<p class="text-[12px] text-slate-500 mt-1">Quando um número de nota <b>pula</b> (erro, cancelamento fora do prazo), a SEFAZ exige <b>inutilizar</b> aquele número — fica registrado que ele não existirá.</p>'+
+    (pode?'':'<p class="mt-2 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2">Sem permissão de emitir NF: você pode olhar, mas só quem tem a caixa marcada inutiliza (ou autoriza na hora com login+senha).</p>')+
+    '<div class="grid grid-cols-2 gap-3 mt-3">'+
+    '<div><label class="text-[11px] uppercase font-bold text-slate-500">Modelo</label><select id="pom-in-modelo" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"><option value="55">55 — NF-e (A4)</option><option value="65">65 — NFC-e (cupom)</option></select></div>'+
+    '<div><label class="text-[11px] uppercase font-bold text-slate-500">Série</label><input id="pom-in-serie" value="1" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"></div>'+
+    '<div><label class="text-[11px] uppercase font-bold text-slate-500">Número inicial</label><input id="pom-in-ini" type="number" min="1" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"></div>'+
+    '<div><label class="text-[11px] uppercase font-bold text-slate-500">Número final</label><input id="pom-in-fim" type="number" min="1" class="mt-1 w-full h-10 px-3 rounded-xl border text-[13px]"></div></div>'+
+    '<div class="mt-4"><button id="pom-in-enviar" class="'+pomBtn+'">Inutilizar na SEFAZ</button></div></div>';
+  v.querySelector('#pom-in-enviar').onclick=async function(){
+    if(!pomPodeEmitir()){
+      const sess=(typeof getSession==='function')?getSession():null;
+      const r=await pomPopupAutorizacao('emitir NF (inutilizar faixa)', (sess&&(sess.usuarioNome||sess.login))||'?', 'emitirNfe');
+      if(!r||!r.ok){ pomLog('override-cancelado','fiscal-inutilizar','Inutilizar sem autorização'); return; }
+      window.__p609AutorizadoAte=Date.now()+3000;
+      pomLog('override-autorizado','fiscal-inutilizar','Inutilizar autorizada por '+r.quem.nome+' ('+r.quem.login+')');
+      try{ if(typeof toast==='function') toast('Autorizado por '+r.quem.nome+' — enviando…','success'); }catch(e){}
+    }
+    const ini=parseInt(v.querySelector('#pom-in-ini').value,10)||0;
+    const fim=parseInt(v.querySelector('#pom-in-fim').value,10)||ini;
+    if(!ini){ try{ if(typeof toast==='function') toast('Informe o número inicial.','error'); }catch(e){} return; }
+    try{ window.nfInutilizarFaixa({ modelo:v.querySelector('#pom-in-modelo').value, serie:parseInt(v.querySelector('#pom-in-serie').value,10)||1, nNFIni:ini, nNFFin:Math.max(ini,fim), cnpj:'' }); }catch(e){}
+  };
+}
+
+// — 3.4 Entradas de menu (nav lateral + barra clássica) —
+const POM_MENUS=[
+  {view:'central-nf',       icon:'ph-receipt',        rot:'Nota Fiscal'},
+  {view:'fiscal-historico', icon:'ph-archive',        rot:'Histórico de Notas', header:['Histórico de Notas','CC-e e cancelamento por linha · todas as notas'], render:pomRenderHistorico},
+  {view:'fiscal-ferramentas',icon:'ph-wrench',        rot:'Status & Pacote', header:['Fiscal — Status & Pacote','Testar a SEFAZ e baixar o pacote do mês p/ contador'], render:pomRenderFerramentas},
+  {view:'fiscal-inutilizar', icon:'ph-broom',         rot:'Inutilizar Faixa', header:['Inutilizar Faixa de Numeração','Registro formal de números pulados na SEFAZ'], render:pomRenderInutilizar},
+  {view:'config-fiscal',    icon:'ph-gear',           rot:'Config. Fiscal'}
+];
+function pomInstalarMenus(){
+  const nav=document.getElementById('nav-gest');
+  if(nav){
+    let ref=nav.querySelector('[data-nav="central-nf"]');
+    POM_MENUS.slice(1).forEach(function(m){
+      if(nav.querySelector('[data-nav="'+m.view+'"]')) return;
+      const btn=document.createElement('button');
+      btn.setAttribute('data-nav',m.view); if(btn.dataset) btn.dataset.nav=m.view;
+      btn.onclick=function(){ window.navigateTo(m.view); };
+      btn.className='w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+      btn.innerHTML='<i class="ph '+m.icon+' text-[19px]"></i><span>'+m.rot+'</span>';
+      if(ref&&ref.nextSibling) nav.insertBefore(btn,ref.nextSibling); else nav.appendChild(btn);
+      ref=btn;
+    });
+  }
+  const toolbar=document.querySelector('.classic-toolbar-scroll');
+  if(toolbar){
+    let refTb=document.getElementById('topmod-central-nf');
+    POM_MENUS.slice(1).forEach(function(m){
+      if(document.getElementById('topmod-'+m.view)) return;
+      const mod=document.createElement('div'); mod.className='module'; mod.id='topmod-'+m.view;
+      mod.innerHTML='<button onclick="navigateTo(\''+m.view+'\')"><i class="ph '+m.icon+'"></i>'+m.rot+'</button>';
+      if(refTb&&refTb.nextSibling) toolbar.insertBefore(mod,refTb.nextSibling); else toolbar.appendChild(mod);
+      refTb=mod;
+    });
+  }
+}
+if(typeof window.navigateTo==='function' && !window.navigateTo.__p609){
+  const _nav=window.navigateTo;
+  const embrNav=function(view){
+    const r=_nav.apply(this,arguments);
+    const m=POM_MENUS.find(function(x){ return x.view===view && x.render; });
+    if(m){
+      try{ if(typeof setPageHeader==='function') setPageHeader(m.header[0],m.header[1]); }catch(e){}
+      try{ m.render(); }catch(e){}
+    }
+    return r;
+  };
+  embrNav.__p609=true;
+  window.navigateTo=embrNav;
+}
+
+// Sonda: menus redesenham após login; caça à coluna solta e CC-e do histórico
+(function pomSonda(){
+  let tent=0;
+  const t=setInterval(function(){
+    tent++;
+    if(!document.hidden){
+      try{ pomInstalarMenus(); pomLimparColunaPermissao(); pomInjetarCCeHistorico(); }catch(e){}
+    }
+    if(tent>300) clearInterval(t);
+  },2000);
+})();
+console.log('v6.0.9 — PERMISSÃO SÓ NO EDITAR + AUTORIZAÇÃO NA HORA (override login+senha auditado nos 11 executores) + MENUS FISCAIS DE VERDADE (Histórico, Status & Pacote, Inutilizar Faixa — um menu pra cada coisa, como nas fotos).');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("permissoes_override_menus_fiscais_patch.js", e); }
+;
+
+/* ===== seis_submenus_velho_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// SEIS_SUBMENUS_VELHO_PATCH v6.0.10 — pedido dele 18/09 (foto do menu antigo):
+// o menu fiscal tem que ficar IGUAL ao do sistema antigo, com EXATAMENTE os 6
+// submenus do print e na mesma ordem:
+//   1. Nota Fiscal        4. NCM
+//   2. Perfil Tributário  5. Enviar XML
+//   3. Manifestação       6. Configurações
+// ...e dentro de cada um, TUDO que ele pediu em todas as fotos.
+//
+// O que este patch faz:
+//  A) Os 3 atalhos soltos da v6.0.9 (Histórico de Notas / Status & Pacote /
+//     Inutilizar Faixa) SAEM do menu — nada morre: viram botões dentro das
+//     telas (a Central tem atalho pra Histórico e Inutilizar; o pacote do mês
+//     vive em Enviar XML; o teste da SEFAZ vive em Configurações e em Enviar XML).
+//  B) 4 telas NOVAS, tela cheia, padrão visual do próprio sistema:
+//     - Perfil Tributário: regime (CRT), CNAE/IE/IM (mesmas chaves que a
+//       Config. Fiscal já lê — uma verdade só), CFOP de dentro/fora do estado,
+//       CSOSN/CST padrão e alíquotas (ICMS interno/interestadual, IPI, PIS,
+//       COFINS, ISS) + IBS/CBS da reforma. O perfil cobre o que o item não
+//       trouxer, via wrap em NFE_EMISSAO_PURE.fiscalPadrao (sem tocar nascimento).
+//     - Manifestação do destinatário: cola a chave (44 dígitos, confere o DV),
+//       escolhe Ciência/Confirmação/Desconhecimento/Não realizada, transmite
+//       pro AMBIENTE NACIONAL (cOrgao 91 — é lá que evento de destinatário mora,
+//       não na SEFAZ-MG) com assinatura na hora (senha não grava). Lista
+//       local das manifestações com protocolo.
+//     - NCM: favoritos (código+descrição) com "usar como padrão/tinta/locação"
+//       gravando nas MESMAS chaves que a Config. Fiscal usa (nfNcmPadrao/
+//       nfNcmTinta/nfNcmLocacao) — uma verdade só, sem duplicar cadastro.
+//     - Enviar XML: gera o pacote .zip do mês (mesmo motor da 6.0.6), e-mail
+//       do contador salvo + botão copiar, contagem de notas do mês em cima.
+//       Texto honesto: o envio mesmo é você anexando o zip no e-mail/Zap.
+//  C) Permissão: manifestar exige a caixa "emitir NF" — quem não tem, recebe o
+//     popup de autorização (login+senha de quem pode), token 3s convergente
+//     com o __p609AutorizadoAte da v6.0.9. Tudo auditado.
+// Guard: __v60010sxv · PURE: SXV609_PURE (sem DOM, testável).
+// NÃO mexer sem rodar: test_ajustes_v60010.js + suíte dupla.
+// ═══════════════════════════════════════════════════════════════════════════
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window.__v60010sxv) return;
+  window.__v60010sxv = true;
+
+  // SXV_PURE_START
+  function sxvEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function sxvDigitos(s) { return String(s == null ? '' : s).replace(/\D/g, ''); }
+  function sxvValidaChave(chave) {
+    const c = sxvDigitos(chave);
+    if (!c) return { ok: false, motivo: 'Cole a chave de acesso da nota.' };
+    if (c.length !== 44) return { ok: false, motivo: 'A chave tem que ter 44 números — você colou ' + c.length + '.' };
+    // DV (posição 44) confere por módulo 11 — evita protocolo rejeitado na SEFAZ
+    let soma = 0, peso = 2;
+    for (let i = 42; i >= 0; i--) { soma += parseInt(c[i], 10) * peso; peso = peso === 9 ? 2 : peso + 1; }
+    const resto = soma % 11;
+    const dv = (resto === 0 || resto === 1) ? 0 : 11 - resto;
+    if (dv !== parseInt(c[43], 10)) return { ok: false, motivo: 'Essa chave não confere (dígito verificador errado) — confira se copiou inteirinha.' };
+    return { ok: true, chave: c };
+  }
+  function sxvMascaraChave(chave) { return sxvDigitos(chave).replace(/(\d{4})(?=\d)/g, '$1 ').trim(); }
+  var SXV_EVENTOS = [
+    { tp: '210210', rot: 'Ciência', desc: 'Ciencia da Operacao', ajuda: 'Só aviso que fiquei sabendo da nota (não confirma nem recusa)', just: false },
+    { tp: '210200', rot: 'Confirmar operação', desc: 'Confirmacao da Operacao', ajuda: 'A mercadoria/serviço chegou e bate com a nota', just: false },
+    { tp: '210220', rot: 'Desconhecer', desc: 'Desconhecimento da Operacao', ajuda: 'Essa nota tem meu CNPJ mas eu não sei do que se trata', just: false },
+    { tp: '210240', rot: 'Não realizada', desc: 'Operacao nao Realizada', ajuda: 'Eu conheço a operação, mas ela NÃO aconteceu — justificativa obrigatória', just: true }
+  ];
+  function sxvEventoPorTipo(tp) { return SXV_EVENTOS.find(function (e) { return e.tp === tp; }) || null; }
+  function sxvValidaJust(tpEvento, just) {
+    const j = String(just || '').trim();
+    const ev = sxvEventoPorTipo(tpEvento);
+    if (!ev) return { ok: false, motivo: 'Tipo de evento desconhecido.' };
+    if (ev.just && j.length < 15) return { ok: false, motivo: 'Pra "Não realizada" a justificativa é obrigatória (mínimo 15 letras).' };
+    if (j.length > 255) return { ok: false, motivo: 'Justificativa passou de 255 letras — encurta.' };
+    return { ok: true, just: j };
+  }
+  function sxvEventoManifestacao(o) {
+    const ev = sxvEventoPorTipo(o.tpEvento);
+    let det = '<descEvento>' + ev.desc + '</descEvento>';
+    if (ev.tp === '210240') det += '<cOrgaoAutor>' + (o.cOrgaoAutor || '31') + '</cOrgaoAutor><tpAutor>1</tpAutor><verAplic>' + (o.verAplic || 'DIGICOPY 6.0.10') + '</verAplic><xJust>' + sxvEsc(String(o.xJust || '').trim()) + '</xJust>';
+    return '<envEvento xmlns="http://www.portalfiscal.inf.br/nfe" versao="1.00"><idLote>' + (o.idLote || '1') + '</idLote>' +
+      '<evento versao="1.00"><infEvento Id="ID' + ev.tp + o.chave + '01">' +
+      '<cOrgao>91</cOrgao><tpAmb>' + o.tpAmb + '</tpAmb><CNPJ>' + o.cnpj + '</CNPJ>' +
+      '<chNFe>' + o.chave + '</chNFe><dhEvento>' + o.dhEvento + '</dhEvento>' +
+      '<tpEvento>' + ev.tp + '</tpEvento><nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento>' +
+      '<detEvento versao="1.00">' + det + '</detEvento></infEvento></evento></envEvento>';
+  }
+  function sxvUrlManifestacao(ambiente) {
+    return ambiente === 'producao'
+      ? { url: 'https://www.nfe.fazenda.gov.br/RecepcaoEvento4/RecepcaoEvento4.asmx', soapAction: 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEvento' }
+      : { url: 'https://hom.nfe.fazenda.gov.br/RecepcaoEvento4/RecepcaoEvento4.asmx', soapAction: 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEvento' };
+  }
+  function sxvValidaPerfil(p) {
+    p = p || {};
+    if (['1', '2', '3'].indexOf(String(p.crt || '')) < 0) return { ok: false, motivo: 'Escolhe o regime (Simples Nacional, SN excedente ou Normal).' };
+    if (p.cnae && !/^\d{7}$/.test(sxvDigitos(p.cnae))) return { ok: false, motivo: 'CNAE tem que ter 7 números (ou deixe em branco).' };
+    const cfopOk = function (v) { return /^\d{4}$/.test(String(v || '')); };
+    if (!cfopOk(p.cfopDentro)) return { ok: false, motivo: 'CFOP de venda dentro do estado inválido (4 números).' };
+    if (!cfopOk(p.cfopFora)) return { ok: false, motivo: 'CFOP de venda fora do estado inválido (4 números).' };
+    if (String(p.cfopDentro)[0] !== '5') return { ok: false, motivo: 'CFOP dentro do estado começa com 5 (ex.: 5.102).' };
+    if (String(p.cfopFora)[0] !== '6') return { ok: false, motivo: 'CFOP fora do estado começa com 6 (ex.: 6.102).' };
+    if (!/^\d{3}$/.test(String(p.csosn || ''))) return { ok: false, motivo: 'CSOSN padrão tem 3 números (ex.: 102).' };
+    if (!/^\d{2}$/.test(String(p.cstIcms || ''))) return { ok: false, motivo: 'CST de ICMS tem 2 números (ex.: 00).' };
+    const aliqs = [['pIcmsInterna', 'ICMS interno'], ['pIcmsInterestadual', 'ICMS interestadual'], ['pIpi', 'IPI'], ['pPis', 'PIS'], ['pCofins', 'COFINS'], ['pIss', 'ISS'], ['pIbsUf', 'IBS UF'], ['pIbsMun', 'IBS município'], ['pCbs', 'CBS']];
+    for (let i = 0; i < aliqs.length; i++) {
+      const n = Number(p[aliqs[i][0]]);
+      if (isNaN(n) || n < 0 || n > 100) return { ok: false, motivo: 'Alíquota de ' + aliqs[i][1] + ' tem que ficar entre 0 e 100.' };
+    }
+    return { ok: true };
+  }
+  function sxvValidaNcm(cod, desc) {
+    if (!/^\d{8}$/.test(sxvDigitos(cod))) return { ok: false, motivo: 'NCM tem 8 números (ex.: 84439923).' };
+    if (String(desc || '').trim().length < 3) return { ok: false, motivo: 'Escreve a descrição do NCM (mínimo 3 letras).' };
+    return { ok: true };
+  }
+  function sxvMenuVelho() {
+    return [
+      { view: 'central-nf', rot: 'Nota Fiscal' },
+      { view: 'fiscal-perfil', rot: 'Perfil Tributário' },
+      { view: 'fiscal-manifestacao', rot: 'Manifestação' },
+      { view: 'fiscal-ncm', rot: 'NCM' },
+      { view: 'fiscal-enviar-xml', rot: 'Enviar XML' },
+      { view: 'config-fiscal', rot: 'Configurações' }
+    ];
+  }
+  function sxvAutorizacaoValida(usuarios, empresaId, login, senha) {
+    const l = String(login || '').trim().toLowerCase();
+    const s = String(senha || '');
+    if (!l) return { ok: false, motivo: 'Informe o login de quem autoriza.' };
+    if (!s) return { ok: false, motivo: 'Informe a senha de quem autoriza.' };
+    const u = (usuarios || []).find(function (x) {
+      return x && String(x.login || '').trim().toLowerCase() === l && (!empresaId || !x.empresaId || x.empresaId === empresaId);
+    });
+    if (!u) return { ok: false, motivo: 'Login não encontrado nesta empresa.' };
+    if (String(u.senha || '') !== s) return { ok: false, motivo: 'Senha não confere pra ' + (u.nome || u.login) + '.' };
+    const limpo = (u.perfil === 'Admin' || u.perfil === 'Dono');
+    if (!limpo && u.podeEmitirNfe !== true) return { ok: false, motivo: (u.nome || u.login) + ' também NÃO tem permissão de emitir NF.' };
+    return { ok: true, quem: { id: u.id, login: u.login, nome: u.nome || u.login, perfil: u.perfil } };
+  }
+  // SXV_PURE_END
+
+  // ── Registro/auditoria no mesmo diário fiscal ─────────────────────────────
+  function sxvDb() { if (typeof db === 'undefined') return null; db.config = db.config || {}; return db; }
+  function sxvLog(acao, origem, detalhe) {
+    try {
+      const d = sxvDb(); if (!d) return;
+      const s = (typeof getSession === 'function' ? getSession() : null) || {};
+      d.logs = d.logs || [];
+      d.logs.push({ tipo: 'nf-portao', acao: 'sxv:' + acao, origem: origem, detalhe: detalhe || '', usuarioId: s.usuarioId || null, usuarioLogin: s.login || s.usuarioLogin || null, at: new Date().toISOString() });
+      if (d.logs.length > 400) d.logs.splice(0, d.logs.length - 400);
+      if (typeof d.save === 'function') d.save();
+    } catch (e) { }
+  }
+  function sxvToast(msg, tipo) { try { if (typeof toast === 'function') toast(msg, tipo || 'info'); } catch (e) { } }
+  function sxvSalvar() { try { if (typeof db !== 'undefined' && db.save) db.save(); } catch (e) { } }
+  var sxvCard = 'rounded-[16px] bg-white border shadow-sm p-5';
+  var sxvBtn = 'h-10 px-4 rounded-xl bg-[#0a1e8a] text-white text-[12.5px] font-semibold';
+  var sxvBtnSm = 'h-8 px-2.5 rounded-lg border text-[11.5px] font-semibold bg-white hover:bg-slate-50';
+  var sxvLab = 'text-[11px] uppercase font-bold text-slate-500';
+  var sxvInp = 'mt-1 w-full h-10 px-3 rounded-xl border text-[13px]';
+
+  // ── A) Menu: só os 6 do print ─────────────────────────────────────────────
+  var SXV_ESCONDIDOS = ['fiscal-historico', 'fiscal-ferramentas', 'fiscal-inutilizar'];
+  function sxvEsconderERenomear() {
+    SXV_ESCONDIDOS.forEach(function (v) {
+      const nb = document.querySelector('[data-nav="' + v + '"]');
+      if (nb) nb.style.display = 'none';
+      const tm = document.getElementById('topmod-' + v);
+      if (tm) tm.style.display = 'none';
+    });
+    const cfgNav = document.querySelector('[data-nav="config-fiscal"] span');
+    if (cfgNav && cfgNav.textContent !== 'Configurações') cfgNav.textContent = 'Configurações';
+    const cfgTb = document.querySelector('#topmod-config-fiscal button');
+    if (cfgTb && cfgTb.textContent !== 'Configurações') cfgTb.innerHTML = '<i class="ph ph-gear"></i>Configurações';
+  }
+  var SXV_BOTAO_NOVO = [
+    { view: 'fiscal-perfil', icon: 'ph-percent', rot: 'Perfil Tributário', header: ['Perfil Tributário', 'Regime, CFOP, códigos de tributo e alíquotas · cobre o que o item não trouxer'] },
+    { view: 'fiscal-manifestacao', icon: 'ph-stamp', rot: 'Manifestação', header: ['Manifestação do Destinatário', 'Ciência · Confirmação · Desconhecimento · Não realizada (Ambiente Nacional)'] },
+    { view: 'fiscal-ncm', icon: 'ph-barcode', rot: 'NCM', header: ['NCM — Nomenclatura Comum do Mercosul', 'Favoritos e padrões que a nota usa'] },
+    { view: 'fiscal-enviar-xml', icon: 'ph-file-zip', rot: 'Enviar XML', header: ['Enviar XML', 'Pacote do mês em .zip pra contabilidade'] }
+  ];
+  function sxvInstalarMenus() {
+    const nav = document.getElementById('nav-gest');
+    if (nav) {
+      let ref = nav.querySelector('[data-nav="central-nf"]');
+      SXV_BOTAO_NOVO.forEach(function (m) {
+        if (nav.querySelector('[data-nav="' + m.view + '"]')) { ref = nav.querySelector('[data-nav="' + m.view + '"]'); return; }
+        const btn = document.createElement('button');
+        btn.setAttribute('data-nav', m.view); if (btn.dataset) btn.dataset.nav = m.view;
+        btn.className = 'w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+        btn.innerHTML = '<i class="ph ' + m.icon + ' text-[19px]"></i><span>' + m.rot + '</span>';
+        btn.onclick = function () { window.navigateTo(m.view); };
+        if (ref && ref.nextSibling) nav.insertBefore(btn, ref.nextSibling); else nav.appendChild(btn);
+        ref = btn;
+      });
+    }
+    const toolbar = document.querySelector('.classic-toolbar-scroll');
+    if (toolbar) {
+      let refTb = document.getElementById('topmod-central-nf');
+      SXV_BOTAO_NOVO.forEach(function (m) {
+        if (document.getElementById('topmod-' + m.view)) { refTb = document.getElementById('topmod-' + m.view); return; }
+        const mod = document.createElement('div'); mod.className = 'module'; mod.id = 'topmod-' + m.view;
+        mod.innerHTML = '<button onclick="navigateTo(\'' + m.view + '\')"><i class="ph ' + m.icon + '"></i>' + m.rot + '</button>';
+        if (refTb && refTb.nextSibling) toolbar.insertBefore(mod, refTb.nextSibling); else toolbar.appendChild(mod);
+        refTb = mod;
+      });
+    }
+  }
+
+  // ── B.1 Perfil Tributário ─────────────────────────────────────────────────
+  function sxvPerfilLer() {
+    const d = sxvDb() || { config: {} };
+    return Object.assign({
+      crt: '1', cfopDentro: '5102', cfopFora: '6102', csosn: '102', cstIcms: '00', codTributo: '',
+      cstPis: '01', cstCofins: '01', cstIpi: '50', pIcmsInterna: 0, pIcmsInterestadual: 0, pIpi: 0,
+      pPis: 0, pCofins: 0, pIss: 0, cstIbsCbs: '000', cclassTrib: '000001', pIbsUf: 0.1, pIbsMun: 0, pCbs: 0.9
+    }, (d.config && d.config.perfilTributario) || {});
+  }
+  function sxvRenderPerfil() {
+    const v = typeof ensureView === 'function' ? ensureView('fiscal-perfil') : null; if (!v) return;
+    const p = sxvPerfilLer();
+    const d = sxvDb() || { config: {} };
+    const f = (d.config && d.config.fiscal) || {};
+    const reg = '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🏛️ Regime e identificação</h4>' +
+      '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">' +
+      '<div><label class="' + sxvLab + '">Regime tributário (CRT)</label><select id="sxv-pf-crt" class="' + sxvInp + '">' +
+      '<option value="1"' + (String(p.crt) === '1' ? ' selected' : '') + '>1 — Simples Nacional</option>' +
+      '<option value="2"' + (String(p.crt) === '2' ? ' selected' : '') + '>2 — Simples Nacional (excedeu o limite)</option>' +
+      '<option value="3"' + (String(p.crt) === '3' ? ' selected' : '') + '>3 — Regime Normal</option></select></div>' +
+      '<div><label class="' + sxvLab + '">CNAE fiscal (7 números)</label><input id="sxv-pf-cnae" class="' + sxvInp + '" value="' + sxvEsc(f.cnae || '') + '" placeholder="ex.: 4744099"></div>' +
+      '<div><label class="' + sxvLab + '">Código do tributo (TP_CODIGO do antigo)</label><input id="sxv-pf-codtrib" class="' + sxvInp + '" value="' + sxvEsc(p.codTributo) + '" placeholder="opcional"></div></div>' +
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">' +
+      '<div><label class="' + sxvLab + '">Inscrição Estadual</label><input id="sxv-pf-ie" class="' + sxvInp + '" value="' + sxvEsc(f.ie || '') + '"></div>' +
+      '<div><label class="' + sxvLab + '">Inscrição Municipal</label><input id="sxv-pf-im" class="' + sxvInp + '" value="' + sxvEsc(f.im || '') + '"></div></div>' +
+      '<p class="text-[11px] text-slate-400 mt-2">IE/IM/CNAE gravam nas MESMAS chaves que a Config. Fiscal lê — o que você muda aqui já vale pra emissão.</p></div>';
+    const trib = '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🧾 CFOPs e códigos de tributo</h4>' +
+      '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+      '<div><label class="' + sxvLab + '">CFOP dentro do estado</label><input id="sxv-pf-cfop-d" class="' + sxvInp + '" value="' + sxvEsc(p.cfopDentro) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CFOP fora do estado</label><input id="sxv-pf-cfop-f" class="' + sxvInp + '" value="' + sxvEsc(p.cfopFora) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CSOSN padrão (Simples)</label><input id="sxv-pf-csosn" class="' + sxvInp + '" value="' + sxvEsc(p.csosn) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CST ICMS (regime normal)</label><input id="sxv-pf-cst" class="' + sxvInp + '" value="' + sxvEsc(p.cstIcms) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CST PIS</label><input id="sxv-pf-cstpis" class="' + sxvInp + '" value="' + sxvEsc(p.cstPis) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CST COFINS</label><input id="sxv-pf-cstcof" class="' + sxvInp + '" value="' + sxvEsc(p.cstCofins) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CST IPI</label><input id="sxv-pf-cstipi" class="' + sxvInp + '" value="' + sxvEsc(p.cstIpi) + '"></div>' +
+      '<div><label class="' + sxvLab + '">CST IBS/CBS (reforma)</label><input id="sxv-pf-cstibscbs" class="' + sxvInp + '" value="' + sxvEsc(p.cstIbsCbs) + '"></div></div></div>';
+    const alq = '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">📐 Alíquotas padrão (%)</h4>' +
+      '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">' +
+      ['pIcmsInterna|ICMS interno', 'pIcmsInterestadual|ICMS interestadual', 'pIpi|IPI', 'pPis|PIS', 'pCofins|COFINS', 'pIss|ISS', 'pIbsUf|IBS estado', 'pIbsMun|IBS município', 'pCbs|CBS', 'cclassTrib|cClassTrib (reforma)'].map(function (x) {
+        const kv = x.split('|');
+        return '<div><label class="' + sxvLab + '">' + kv[1] + '</label><input id="sxv-pf-' + kv[0].toLowerCase() + '" class="' + sxvInp + '" value="' + sxvEsc(p[kv[0]]) + '"></div>';
+      }).join('') + '</div></div>';
+    v.innerHTML = '<div class="flex items-start justify-between gap-3 flex-wrap">' + sxvAmbPlaca() +
+      '<button id="sxv-pf-salvar" class="' + sxvBtn + '">Salvar perfil tributário</button></div>' +
+      '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-2">' + reg + trib + alq + '</div>' +
+      '<p class="text-[11.5px] text-slate-500 bg-slate-50 border rounded-xl p-3">💡 Como a nota usa isso: quando o produto/item já tem imposto próprio, ele vence; o que faltar o perfil cobre. Hoje a nota sai como <b>Simples Nacional (CRT 1)</b> — os demais regimes entram quando a contabilidade confirmar os números.</p>';
+    v.querySelector('#sxv-pf-salvar').onclick = function () {
+      const g = function (id) { const el = v.querySelector(id); return el ? el.value.trim() : ''; };
+      const num = function (x) { const n = parseFloat(String(x).replace(',', '.')); return isNaN(n) ? 0 : n; };
+      const novo = {
+        crt: g('#sxv-pf-crt'), cfopDentro: sxvDigitos(g('#sxv-pf-cfop-d')), cfopFora: sxvDigitos(g('#sxv-pf-cfop-f')),
+        csosn: sxvDigitos(g('#sxv-pf-csosn')), cstIcms: sxvDigitos(g('#sxv-pf-cst')), codTributo: g('#sxv-pf-codtrib'),
+        cstPis: sxvDigitos(g('#sxv-pf-cstpis')), cstCofins: sxvDigitos(g('#sxv-pf-cstcof')), cstIpi: sxvDigitos(g('#sxv-pf-cstipi')),
+        cstIbsCbs: sxvDigitos(g('#sxv-pf-cstibscbs')), cclassTrib: sxvDigitos(g('#sxv-pf-cclasstrib')),
+        pIcmsInterna: num(g('#sxv-pf-picmsinterna')), pIcmsInterestadual: num(g('#sxv-pf-picmsinterestadual')), pIpi: num(g('#sxv-pf-pipi')),
+        pPis: num(g('#sxv-pf-ppis')), pCofins: num(g('#sxv-pf-pcofins')), pIss: num(g('#sxv-pf-piss')),
+        pIbsUf: num(g('#sxv-pf-pibsuf')), pIbsMun: num(g('#sxv-pf-pibsmun')), pCbs: num(g('#sxv-pf-pcbs'))
+      };
+      const r = sxvValidaPerfil(novo);
+      if (!r.ok) { sxvToast(r.motivo, 'error'); return; }
+      novo.at = new Date().toISOString();
+      const dd = sxvDb(); if (!dd) return;
+      dd.config.perfilTributario = novo;
+      dd.config.fiscal = Object.assign({}, dd.config.fiscal || {}, { cnae: sxvDigitos(g('#sxv-pf-cnae')), ie: g('#sxv-pf-ie'), im: g('#sxv-pf-im') });
+      sxvSalvar();
+      sxvLog('perfil-salvo', 'fiscal-perfil', 'CRT ' + novo.crt + ' · CFOP ' + novo.cfopDentro + '/' + novo.cfopFora + ' · CSOSN ' + novo.csosn);
+      sxvToast('✅ Perfil tributário salvo.', 'success');
+    };
+  }
+  // Cobre imposto faltoso na emissão (o item continua vencendo quando trouxer o dele)
+  (function sxvWrapFiscalPadrao() {
+    try {
+      if (window.NFE_EMISSAO_PURE && typeof window.NFE_EMISSAO_PURE.fiscalPadrao === 'function' && !window.NFE_EMISSAO_PURE.fiscalPadrao.__v60010) {
+        const _fp = window.NFE_EMISSAO_PURE.fiscalPadrao;
+        const f = function () {
+          const base = _fp.apply(this, arguments) || {};
+          const pf = (typeof db !== 'undefined' && db.config && db.config.perfilTributario) || null;
+          if (pf) {
+            const mapa = { csosn: pf.csosn, cstIcms: pf.cstIcms, cstPis: pf.cstPis, cstCofins: pf.cstCofins, cstIpi: pf.cstIpi, cfop: pf.cfopDentro };
+            Object.keys(mapa).forEach(function (k) { if (base[k] === undefined || base[k] === null || base[k] === '') base[k] = mapa[k]; });
+          }
+          return base;
+        };
+        f.__v60010 = true;
+        window.NFE_EMISSAO_PURE.fiscalPadrao = f;
+      }
+    } catch (e) { }
+  })();
+
+  // ── B.2 Manifestação do destinatário ──────────────────────────────────────
+  function sxvManifestacoes() { const d = sxvDb() || { config: {} }; d.config.nfManifestacoes = d.config.nfManifestacoes || []; return d.config.nfManifestacoes; }
+  function sxvRenderManifestacao() {
+    const v = typeof ensureView === 'function' ? ensureView('fiscal-manifestacao') : null; if (!v) return;
+    const d = sxvDb() || { config: {} };
+    const cnpjCfg = ((d.config.fiscal && d.config.fiscal.cnpj) || '').trim();
+    const lista = sxvManifestacoes().slice().sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); });
+    v.innerHTML = sxvAmbPlaca() + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">📥 Manifestar uma nota recebida</h4>' +
+      '<p class="text-[12px] text-slate-500 mt-1">Cola a <b>chave de 44 números</b> da nota que chegou pro seu CNPJ, escolhe o evento e transmite. Vai pro <b>Ambiente Nacional</b> (é lá que destinatário fala, não na SEFAZ-MG). A senha do certificado é digitada na hora e não fica salva.</p>' +
+      '<div class="mt-3"><label class="' + sxvLab + '">Chave de acesso (44 números)</label><input id="sxv-mf-chave" class="' + sxvInp + ' font-mono" placeholder="3124 0900 0000 0000 0000 5500 1000 0000 0001 2001 2345"></div>' +
+      '<div class="mt-3"><label class="' + sxvLab + '">CNPJ da sua empresa (destinatário)</label><input id="sxv-mf-cnpj" class="' + sxvInp + '" value="' + sxvEsc(cnpjCfg) + '" placeholder="só números"></div>' +
+      '<div class="mt-3 space-y-2" id="sxv-mf-ev">' + SXV_EVENTOS.map(function (ev, i) {
+        return '<label class="flex items-start gap-2.5 rounded-xl border p-3 cursor-pointer hover:bg-slate-50"><input type="radio" name="sxv-ev" value="' + ev.tp + '"' + (i === 1 ? ' checked' : '') + ' class="mt-0.5">' +
+          '<span><b class="text-[13px]">' + ev.rot + '</b> <span class="text-[11px] text-slate-400">(' + ev.tp + ')</span><br><span class="text-[11.5px] text-slate-500">' + ev.ajuda + '</span></span></label>';
+      }).join('') + '</div>' +
+      '<div id="sxv-mf-just-box" class="mt-3" style="display:none"><label class="' + sxvLab + '">Justificativa (obrigatória pra "Não realizada", mínimo 15 letras)</label><textarea id="sxv-mf-just" rows="2" class="mt-1 w-full px-3 py-2 rounded-xl border text-[13px]"></textarea></div>' +
+      '<div class="mt-4"><button id="sxv-mf-enviar" class="' + sxvBtn + '">Manifestar na SEFAZ (Ambiente Nacional)</button></div></div>' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🗂 Manifestações desta empresa</h4>' +
+      '<p class="text-[12px] text-slate-500 mt-1">Protocolos registrados aqui ficam prova. O pacote do mês (menu Enviar XML) leva suas próprias notas; manifestação de terceiros confere pelo portal.</p>' +
+      '<div id="sxv-mf-lista" class="mt-3 max-h-[420px] overflow-auto space-y-2">' +
+      (lista.length ? lista.map(function (m) {
+        const ev = sxvEventoPorTipo(m.tp) || { rot: m.tp };
+        const cor = /registrad/i.test(m.xMotivo || '') || m.cStat === '135' || m.cStat === '136' ? '#16a34a' : '#dc2626';
+        return '<div class="rounded-xl border p-3 text-[12px]"><div class="flex justify-between gap-2"><b>' + ev.rot + '</b><span style="color:' + cor + ';font-weight:700">' + sxvEsc(String(m.cStat || '')) + ' ' + sxvEsc(m.xMotivo || m.status || '') + '</span></div>' +
+          '<div class="font-mono text-[11px] text-slate-500 mt-1">' + sxvEsc(sxvMascaraChave(m.chave || '')) + '</div>' +
+          '<div class="text-[11px] text-slate-400 mt-0.5">' + (m.protocolo ? ('Protocolo ' + sxvEsc(m.protocolo) + ' · ') : '') + sxvEsc(String(m.at || '').slice(0, 16).replace('T', ' ')) + '</div></div>';
+      }).join('') : '<div class="empty-state">Nenhuma manifestação ainda</div>') + '</div></div></div>';
+    const justBox = v.querySelector('#sxv-mf-just-box');
+    v.querySelectorAll('input[name="sxv-ev"]').forEach(function (r) {
+      r.onchange = function () { justBox.style.display = r.value === '210240' && r.checked ? '' : 'none'; };
+    });
+    v.querySelector('#sxv-mf-enviar').onclick = function () {
+      const chaveIn = v.querySelector('#sxv-mf-chave').value;
+      const cnpj = sxvDigitos(v.querySelector('#sxv-mf-cnpj').value);
+      const tp = (v.querySelector('input[name="sxv-ev"]:checked') || {}).value || '210210';
+      const just = v.querySelector('#sxv-mf-just').value;
+      const lancar = async function () {
+        if (cnpj.length !== 14) { sxvToast('CNPJ da sua empresa tem que ter 14 números.', 'error'); return; }
+        const dd = sxvDb(); if (dd) { dd.config.fiscal = Object.assign({}, dd.config.fiscal || {}, { cnpj: cnpj }); sxvSalvar(); }
+        await window.nfManifestarEvento(chaveIn, tp, just, cnpj);
+        sxvRenderManifestacao();
+      };
+      const pode = (window.__p609AutorizadoAte > Date.now()) || (typeof window.usuarioPodeEmitirNfe === 'function' && window.usuarioPodeEmitirNfe());
+      if (pode) { lancar(); return; }
+      sxvPopupAutorizacao('manifestar uma nota recebida', function (quem) {
+        window.__p609AutorizadoAte = Date.now() + 3000;
+        sxvLog('override-autorizado', 'fiscal-manifestacao', 'Manifestação autorizada por ' + quem.nome + ' (' + quem.login + ')');
+        lancar();
+      });
+    };
+  }
+  window.nfManifestarEvento = async function (chaveIn, tpEvento, justIn, cnpjIn) {
+    try {
+      const vc = sxvValidaChave(chaveIn); if (!vc.ok) { sxvToast(vc.motivo, 'error'); return { ok: false, error: 'chave' }; }
+      const vj = sxvValidaJust(tpEvento, justIn); if (!vj.ok) { sxvToast(vj.motivo, 'error'); return { ok: false, error: 'just' }; }
+      const ponte = (window.nfeCertAPI && window.nfeCertAPI.isElectron) ? window.nfeCertAPI : null;
+      if (!ponte) { sxvToast('A transmissão roda pelo aplicativo de desktop (.exe) com certificado — pelo navegador não assina.', 'error'); return { ok: false, error: 'sem-ponte' }; }
+      const senha = (typeof window.nfxPedirTexto === 'function') ? await window.nfxPedirTexto('Senha do certificado A1', 'Usada AGORA pra assinar a manifestação e NÃO fica salva.', { mascara: true }) : null;
+      if (!senha) return { ok: false, error: 'sem-senha' };
+      if (!window.NFX_PURE) { sxvToast('Motor fiscal (NFX_PURE) não carregou.', 'error'); return { ok: false, error: 'sem-motor' }; }
+      const amb = (window.NFG_PURE && window.NFG_PURE.nfgAmbiente(db)) || 'homologacao';
+      const dd = sxvDb(); const cnpj = sxvDigitos(cnpjIn || (dd && dd.config.fiscal && dd.config.fiscal.cnpj) || '');
+      const evt = sxvEventoManifestacao({ chave: vc.chave, cnpj: cnpj, tpEvento: tpEvento, tpAmb: amb === 'producao' ? '1' : '2', dhEvento: new Date().toISOString(), xJust: vj.just, cOrgaoAutor: '31', verAplic: 'DIGICOPY 6.0.10' });
+      sxvLog('manifestar-inicio', 'fiscal-manifestacao', tpEvento + ' chave ' + vc.chave.slice(0, 12) + '…');
+      const ass = await ponte.assinar(evt, senha, null);
+      if (!ass || !ass.ok) { sxvToast('Falha ao assinar a manifestação: ' + ((ass && ass.error) || '?'), 'error'); return { ok: false, error: 'assinar' }; }
+      const ws = sxvUrlManifestacao(amb);
+      const envelope = window.NFX_PURE.nfxEnvelope(ass.xmlAssinado).replace('PLACEHOLDER', 'NFeRecepcaoEvento4');
+      const trx = await ponte.transmitir({ url: ws.url, envelope: envelope, soapAction: ws.soapAction, senhaCert: senha });
+      if (!trx || !trx.ok) { sxvToast('Transmissão falhou: ' + ((trx && trx.error) || '?'), 'error'); return { ok: false, error: 'transmitir' }; }
+      const ret = window.NFX_PURE.nfxParseRetorno(trx.xml);
+      const okEvento = ret.classe === 'evento-registrado' || ret.cStat === '135' || ret.cStat === '136';
+      sxvManifestacoes().push({ tp: tpEvento, chave: vc.chave, cnpj: cnpj, cStat: ret.cStat, xMotivo: ret.xMotivo, protocolo: ret.nProt || ret.nProtEvento || '', status: okEvento ? 'registrada' : 'rejeitada', at: new Date().toISOString() });
+      if (sxvManifestacoes().length > 200) sxvManifestacoes().splice(0, sxvManifestacoes().length - 200);
+      sxvSalvar();
+      sxvLog('manifestar-resposta', 'fiscal-manifestacao', ret.cStat + ' ' + ret.xMotivo);
+      sxvToast((okEvento ? '✅ Manifestação registrada: ' : 'SEFAZ respondeu: ') + ret.cStat + ' — ' + ret.xMotivo, okEvento ? 'success' : 'error');
+      return { ok: okEvento, retorno: ret };
+    } catch (e) { sxvLog('manifestar-excecao', 'fiscal-manifestacao', e.message || String(e)); sxvToast('Erro: ' + (e.message || e), 'error'); return { ok: false }; }
+  };
+
+  // Popup de autorização (mesmo visual/comportamento da v6.0.9; escopo: manifestação)
+  function sxvPopupAutorizacao(acaoRotulo, onOk) {
+    const s = (typeof getSession === 'function' ? getSession() : null) || {};
+    const usuarios = (typeof db !== 'undefined' && db.usuarios) || [];
+    const empresaId = s.empresaId || (s.empresa && s.empresa.id) || '';
+    const pedinte = (s.usuarioNome || s.login || s.usuarioLogin || '?');
+    const old = document.getElementById('sxv-popup-aut'); if (old) old.remove();
+    const ov = document.createElement('div');
+    ov.id = 'sxv-popup-aut';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483200;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML = '<div class="bg-white rounded-[18px] shadow-2xl p-6 w-full max-w-[420px]" role="dialog" aria-modal="true">' +
+      '<div class="font-bold text-[15px]">🔐 Autorização necessária</div>' +
+      '<p class="text-[12.5px] text-slate-500 mt-1">Pra <b>' + sxvEsc(acaoRotulo) + '</b> é preciso permissão. Peça a um usuário que TENHA pra digitar o login e a senha aqui embaixo (pedido por <b>' + sxvEsc(pedinte) + '</b>).</p>' +
+      '<div class="mt-4"><label class="' + sxvLab + '">Login de quem autoriza</label><input id="sxv-aut-login" class="' + sxvInp + '" autocomplete="off"></div>' +
+      '<div class="mt-3"><label class="' + sxvLab + '">Senha</label><input id="sxv-aut-senha" type="password" class="' + sxvInp + '"></div>' +
+      '<p id="sxv-aut-erro" class="text-[12px] text-red-600 mt-2" style="display:none"></p>' +
+      '<div class="flex gap-2 mt-4"><button id="sxv-aut-ok" class="' + sxvBtn + ' flex-1">Autorizar e realizar</button><button id="sxv-aut-cancelar" class="h-10 px-4 rounded-xl border text-[12.5px] font-semibold">Cancelar</button></div></div>';
+    document.body.appendChild(ov);
+    const erro = ov.querySelector('#sxv-aut-erro');
+    const fechar = function (motivo) { if (motivo) sxvLog('override-cancelado', 'fiscal-manifestacao', motivo + ' (pedinte: ' + pedinte + ')'); ov.remove(); };
+    const confirmar = function () {
+      const r = sxvAutorizacaoValida(usuarios, empresaId, ov.querySelector('#sxv-aut-login').value, ov.querySelector('#sxv-aut-senha').value);
+      if (!r.ok) { erro.textContent = r.motivo; erro.style.display = ''; return; }
+      ov.remove();
+      onOk(r.quem);
+    };
+    ov.querySelector('#sxv-aut-ok').onclick = confirmar;
+    ov.querySelector('#sxv-aut-cancelar').onclick = function () { fechar('desistiu no popup'); };
+    ov.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); confirmar(); } if (ev.key === 'Escape') { fechar('desistiu no popup'); } });
+    setTimeout(function () { try { ov.querySelector('#sxv-aut-login').focus(); } catch (e) { } }, 40);
+  }
+
+  // ── B.3 NCM ───────────────────────────────────────────────────────────────
+  function sxvNcmFavs() { const d = sxvDb() || { config: {} }; d.config.ncmFavoritos = d.config.ncmFavoritos || []; return d.config.ncmFavoritos; }
+  function sxvRenderNcm() {
+    const v = typeof ensureView === 'function' ? ensureView('fiscal-ncm') : null; if (!v) return;
+    const d = sxvDb() || { config: {} };
+    const favs = sxvNcmFavs();
+    const linha = function (n, i) {
+      return '<div class="flex items-center gap-2 rounded-xl border p-2.5 text-[12.5px]"><span class="font-mono font-bold">' + sxvEsc(n.cod) + '</span><span class="flex-1 truncate">' + sxvEsc(n.desc) + '</span>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-ncm="categoria" data-i="' + i + '" title="Usar como NCM padrão dos produtos">→ padrão</button>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-ncm="tinta" data-i="' + i + '" title="Usar como NCM de recarga/tinta">→ tinta</button>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-ncm="locacao" data-i="' + i + '" title="Usar como NCM de locação">→ locação</button>' +
+        '<button class="h-8 w-8 grid place-items-center rounded-lg hover:bg-red-50 text-red-600" data-sxv-ncm="excluir" data-i="' + i + '" title="Tirar dos favoritos"><i class="ph ph-trash"></i></button></div>';
+    };
+    v.innerHTML = sxvAmbPlaca() + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🏷️ NCMs favoritos</h4>' +
+      '<p class="text-[12px] text-slate-500 mt-1">Os códigos que sua empresa usa. Os produtos podem ter NCM próprio (o produto vence); estes aqui são o <b>plano B por tipo</b> e o padrão geral.</p>' +
+      '<div class="grid grid-cols-[150px_1fr_auto] gap-2 mt-3 items-end">' +
+      '<div><label class="' + sxvLab + '">Código (8 números)</label><input id="sxv-ncm-cod" class="' + sxvInp + '" placeholder="84439923" maxlength="8"></div>' +
+      '<div><label class="' + sxvLab + '">Descrição</label><input id="sxv-ncm-desc" class="' + sxvInp + '" placeholder="ex.: Peças e acessórios p/ impressora"></div>' +
+      '<button id="sxv-ncm-add" class="' + sxvBtn + '">Adicionar</button></div>' +
+      '<div id="sxv-ncm-lista" class="mt-3 space-y-2">' + (favs.length ? favs.map(linha).join('') : '<div class="empty-state">Nenhum favorito ainda</div>') + '</div></div>' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🎯 Padrões que a nota usa</h4>' +
+      '<div class="grid grid-cols-1 gap-3 mt-3 text-[13px]">' +
+      '<div class="rounded-xl border p-3 flex items-center justify-between gap-2"><span><b>NCM padrão</b> (produto sem NCM)</span><code class="font-mono" id="sxv-ncm-padrao">' + sxvEsc(d.config.nfNcmPadrao || '—') + '</code></div>' +
+      '<div class="rounded-xl border p-3 flex items-center justify-between gap-2"><span><b>Recarga/tinta</b></span><code class="font-mono" id="sxv-ncm-tinta">' + sxvEsc(d.config.nfNcmTinta || '—') + '</code></div>' +
+      '<div class="rounded-xl border p-3 flex items-center justify-between gap-2"><span><b>Locação de máquinas</b></span><code class="font-mono" id="sxv-ncm-locacao">' + sxvEsc(d.config.nfNcmLocacao || '—') + '</code></div></div>' +
+      '<p class="text-[11.5px] text-slate-500 bg-slate-50 border rounded-xl p-3 mt-3">Os 3 padrões acima são as MESMAS chaves da <b>Config. Fiscal</b> (uma verdade só). Nos produtos, a lupa de NCM continua valendo no cadastro. A tabela completa do sistema antigo (4.439 linhas) entra quando você mandar o arquivo — hoje já dá pra pesquisar pelo IBPT no cadastro do produto.</p></div></div>';
+    v.querySelector('#sxv-ncm-add').onclick = function () {
+      const cod = sxvDigitos(v.querySelector('#sxv-ncm-cod').value);
+      const desc = v.querySelector('#sxv-ncm-desc').value;
+      const r = sxvValidaNcm(cod, desc);
+      if (!r.ok) { sxvToast(r.motivo, 'error'); return; }
+      sxvNcmFavs().push({ cod: cod, desc: desc.trim(), criadoEm: new Date().toISOString() });
+      sxvSalvar(); sxvLog('ncm-favorito', 'fiscal-ncm', cod + ' ' + desc.trim().slice(0, 40));
+      sxvRenderNcm(); sxvToast('Favorito salvo.', 'success');
+    };
+    v.querySelectorAll('[data-sxv-ncm]').forEach(function (bt) {
+      bt.onclick = function () {
+        const acao = bt.getAttribute('data-sxv-ncm');
+        const i = parseInt(bt.getAttribute('data-i'), 10) || 0;
+        const n = sxvNcmFavs()[i];
+        if (!n) return;
+        const dd = sxvDb(); if (!dd) return;
+        if (acao === 'excluir') { sxvNcmFavs().splice(i, 1); sxvLog('ncm-favorito-removido', 'fiscal-ncm', n.cod); }
+        if (acao === 'categoria') { dd.config.nfNcmPadrao = n.cod; sxvLog('ncm-padrao', 'fiscal-ncm', n.cod); }
+        if (acao === 'tinta') { dd.config.nfNcmTinta = n.cod; sxvLog('ncm-tinta', 'fiscal-ncm', n.cod); }
+        if (acao === 'locacao') { dd.config.nfNcmLocacao = n.cod; sxvLog('ncm-locacao', 'fiscal-ncm', n.cod); }
+        sxvSalvar(); sxvRenderNcm();
+        sxvToast(acao === 'excluir' ? 'Favorito removido.' : 'NCM ' + n.cod + ' agora é o padrão de ' + (acao === 'categoria' ? 'produtos' : acao) + ' ✅', 'success');
+      };
+    });
+  }
+
+  // ── B.4 Enviar XML ────────────────────────────────────────────────────────
+  function sxvNotasDoMes() {
+    try {
+      const d = sxvDb() || { config: {} };
+      const alvo = new Date().toISOString().slice(0, 7);
+      const reg = (d.config.nfRegistro || []);
+      return reg.filter(function (n) { return String(n.dataAutorizacao || n.atualizadoEm || n.criadoEm || '').slice(0, 7) === alvo; });
+    } catch (e) { return []; }
+  }
+  function sxvRenderXml() {
+    const v = typeof ensureView === 'function' ? ensureView('fiscal-enviar-xml') : null; if (!v) return;
+    const d = sxvDb() || { config: {} };
+    const email = d.config.emailContador || '';
+    const notas = sxvNotasDoMes();
+    v.innerHTML = sxvAmbPlaca() + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">🗂 Pacote de XMLs do mês</h4>' +
+      '<p class="text-[12px] text-slate-500 mt-1">Gera o <b>.zip</b> com os XMLs das notas do mês que você escolher + eventos (cancelamento, CC-e) + índice. Este mês tem <b>' + notas.length + '</b> nota(s) registrada(s). O mês é perguntado na hora (MM/AAAA).</p>' +
+      '<div class="mt-3"><button id="sxv-xml-pacote" class="' + sxvBtn + '">Gerar pacote (.zip)</button></div>' +
+      '<div class="mt-4"><button id="sxv-xml-status" class="' + sxvBtnSm + '">📡 Testar SEFAZ agora</button> <span class="text-[11px] text-slate-400">o mesmo diagnóstico da Configurações</span></div></div>' +
+      '<div class="' + sxvCard + '"><h4 class="font-bold text-[14px]">✉️ E-mail do contador</h4>' +
+      '<p class="text-[12px] text-slate-500 mt-1">Salvo aqui pra você copiar na hora de mandar o pacote. <b>Sendo honesto:</b> o sistema baixa o zip no PC; o envio é você anexando no e-mail ou no Zap da contabilidade (envio automático de e-mail ainda não existe no sistema).</p>' +
+      '<div class="mt-3 flex gap-2"><input id="sxv-xml-email" type="email" class="flex-1 h-10 px-3 rounded-xl border text-[13px]" value="' + sxvEsc(email) + '" placeholder="contador@escritorio.com.br"><button id="sxv-xml-email-salvar" class="' + sxvBtn + '">Salvar</button><button id="sxv-xml-email-copiar" class="' + sxvBtnSm + '">Copiar</button></div>' +
+      '<p class="text-[11px] text-slate-400 mt-3">Dica: depois de gerar o pacote, o arquivo aparece na pasta de Downloads com o nome do mês (ex.: pacote-xml-2026-09.zip).</p></div></div>';
+    v.querySelector('#sxv-xml-pacote').onclick = function () { try { window.nfPacoteContador(); } catch (e) { } };
+    v.querySelector('#sxv-xml-status').onclick = function () { try { window.nfStatusServico(); } catch (e) { } };
+    v.querySelector('#sxv-xml-email-salvar').onclick = function () {
+      const e = v.querySelector('#sxv-xml-email').value.trim();
+      if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { sxvToast('Esse e-mail tá estranho — confere?', 'error'); return; }
+      const dd = sxvDb(); if (!dd) return;
+      dd.config.emailContador = e; sxvSalvar();
+      sxvLog('email-contador', 'fiscal-enviar-xml', e || '(limpo)');
+      sxvToast('E-mail do contador salvo.', 'success');
+    };
+    v.querySelector('#sxv-xml-email-copiar').onclick = function () {
+      const e = v.querySelector('#sxv-xml-email').value.trim();
+      if (!e) { sxvToast('Nada pra copiar — salva o e-mail primeiro.', 'error'); return; }
+      try {
+        if (navigator.clipboard) navigator.clipboard.writeText(e);
+        sxvToast('E-mail copiado ✅', 'success');
+      } catch (err) { sxvToast(e, 'info'); }
+    };
+  }
+
+  // ── Placa de ambiente (mesma verdade da v6.0.9) ───────────────────────────
+  function sxvAmbPlaca() {
+    let amb = 'homologacao';
+    try { amb = (window.NFG_PURE && window.NFG_PURE.nfgAmbiente(db)) || 'homologacao'; } catch (e) { }
+    return amb === 'producao'
+      ? '<div style="padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;background:#166534">✅ PRODUÇÃO — nota vale de verdade</div>'
+      : '<div style="padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;background:#7f1d1d">🏛️ HOMOLOGAÇÃO — modo teste, sem valor fiscal</div>';
+  }
+
+  // Atalhos dentro da Central (os 3 atalhos que saíram do menu não se perdem)
+  function sxvAtalhosCentral() {
+    try {
+      const v = document.getElementById('view-central-nf');
+      if (!v || v.offsetParent === null || document.getElementById('sxv-atalhos')) return;
+      const card = document.createElement('div');
+      card.id = 'sxv-atalhos';
+      card.className = sxvCard + ' mt-2';
+      card.innerHTML = '<div class="flex flex-wrap gap-2 items-center"><span class="text-[12px] font-bold text-slate-500 mr-1">Atalhos:</span>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-go="fiscal-historico">📚 Histórico de Notas</button>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-go="fiscal-inutilizar">🧹 Inutilizar Faixa</button>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-go="fiscal-manifestacao">📥 Manifestação</button>' +
+        '<button class="' + sxvBtnSm + '" data-sxv-go="fiscal-enviar-xml">🗂 Enviar XML</button></div>';
+      v.insertBefore(card, v.firstChild);
+      card.querySelectorAll('[data-sxv-go]').forEach(function (b) { b.onclick = function () { window.navigateTo(b.getAttribute('data-sxv-go')); }; });
+    } catch (e) { }
+  }
+  // Configurações: diagnóstico SEFAZ + lembrete do pacote (vivem nela agora)
+  function sxvExtrasConfig() {
+    try {
+      const v = document.getElementById('view-config-fiscal');
+      if (!v || v.offsetParent === null || document.getElementById('sxv-cfg-extra')) return;
+      const card = document.createElement('div');
+      card.id = 'sxv-cfg-extra';
+      card.className = sxvCard + ' mt-3';
+      card.innerHTML = '<h4 class="font-bold text-[14px]">📡 Diagnóstico SEFAZ</h4>' +
+        '<p class="text-[12px] text-slate-500 mt-1">Prova o certificado + internet antes de emitir: pergunta AGORA se a autorização de notas está no ar (107 = perfeito).</p>' +
+        '<div class="mt-3 flex gap-2"><button id="sxv-cfg-status" class="' + sxvBtn + '">Testar SEFAZ agora</button><button class="' + sxvBtnSm + '" data-sxv-go="fiscal-enviar-xml">🗂 Enviar XML (pacote do mês)</button></div>';
+      v.appendChild(card);
+      card.querySelector('#sxv-cfg-status').onclick = function () { try { window.nfStatusServico(); } catch (e) { } };
+      card.querySelector('[data-sxv-go]').onclick = function () { window.navigateTo('fiscal-enviar-xml'); };
+    } catch (e) { }
+  }
+
+  // ── Navegação + sonda ─────────────────────────────────────────────────────
+  var SXV_VIEW_RENDER = {
+    'fiscal-perfil': ['Perfil Tributário', 'Regime, CFOP, códigos de tributo e alíquotas · cobre o que o item não trouxer', sxvRenderPerfil],
+    'fiscal-manifestacao': ['Manifestação do Destinatário', 'Ciência · Confirmação · Desconhecimento · Não realizada (Ambiente Nacional)', sxvRenderManifestacao],
+    'fiscal-ncm': ['NCM — Nomenclatura Comum do Mercosul', 'Favoritos e padrões que a nota usa', sxvRenderNcm],
+    'fiscal-enviar-xml': ['Enviar XML', 'Pacote do mês em .zip pra contabilidade', sxvRenderXml]
+  };
+  if (typeof window.navigateTo === 'function' && !window.navigateTo.__sxv) {
+    const _nav = window.navigateTo;
+    const embr = function (view) {
+      const r = _nav.apply(this, arguments);
+      try {
+        const m = SXV_VIEW_RENDER[view];
+        if (m) { if (typeof setPageHeader === 'function') setPageHeader(m[0], m[1]); m[2](); }
+        if (view === 'central-nf') setTimeout(sxvAtalhosCentral, 90);
+        if (view === 'config-fiscal') setTimeout(sxvExtrasConfig, 90);
+      } catch (e) { }
+      return r;
+    };
+    embr.__sxv = true;
+    window.navigateTo = embr;
+  }
+  sxvEsconderERenomear();
+  sxvInstalarMenus();
+  (function sxvSonda() {
+    let tent = 0;
+    const t = setInterval(function () {
+      tent++;
+      if (!document.hidden) {
+        try { sxvEsconderERenomear(); sxvInstalarMenus(); sxvAtalhosCentral(); sxvExtrasConfig(); } catch (e) { }
+      }
+      if (tent > 300) clearInterval(t);
+    }, 2000);
+  })();
+
+  console.log('%cSEIS_SUBMENUS_VELHO_PATCH v6.0.10 ativo — menu fiscal igual ao sistema antigo: Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações.', 'color:#7c3aed;font-weight:bold');
+})();
+
+// PURE export (testes + reuso)
+if (typeof module !== 'undefined' && module.exports) {
+  const _p = (function () {
+    const src = require('fs').readFileSync(__filename, 'utf8');
+    const m = src.match(/\/\/ SXV_PURE_START([\s\S]*?)\/\/ SXV_PURE_END/);
+    const fn = new Function(m[1] + '; return { sxvEsc, sxvDigitos, sxvValidaChave, sxvMascaraChave, SXV_EVENTOS, sxvEventoPorTipo, sxvValidaJust, sxvEventoManifestacao, sxvUrlManifestacao, sxvValidaPerfil, sxvValidaNcm, sxvMenuVelho, sxvAutorizacaoValida };');
+    return fn();
+  })();
+  module.exports = _p;
+  if (typeof global !== 'undefined') global.SXV609_PURE = _p;
+}
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("seis_submenus_velho_patch.js", e); }
+;
+
+/* ===== submenu_hover_nfe_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// SUBMENU_HOVER_NFE_PATCH v6.0.11 — correção dele (18/09): "os submenu vc fez
+// errado, é pra colocar onde mostra os menus quando coloca o mouse por cima
+// de NF-e/NFC-e".
+//
+// O correto (igual ao sistema antigo): existe UM item "NF-e/NFC-e" e os 6
+// submenus aparecem quando o mouse passa por cima. Não é a fila de botões
+// soltos que a v6.0.9/6.0.10 instalou.
+//
+// O que este patch faz:
+//  A) BARRA CLÁSSICA (ribbon): o módulo "NF-e/NFC-e" que já existia no
+//     index.html (com 3 itens falsos "Em breve") virou real no próprio
+//     index.html — hover abre .module-menu com os 6 submenus de verdade.
+//     Os módulos fiscais SOLTOS na barra (instalados pelas 6.0.9/6.0.10)
+//     ficam escondidos (display:none) — não apagados: as telas continuam.
+//  B) NAV LATERAL: os 6 botões fiscais soltos viram UM botão "NF-e/NFC-e"
+//     (ícone ph-file-text, mesmo do ribbon) posicionado exatamente onde o
+//     "Nota Fiscal" estava; passar o mouse abre o flyout branco à direita
+//     com os 6, no MESMO padrão visual do .module-menu da barra clássica.
+//     Clicar no pai abre a Central (Nota Fiscal).
+//  C) Nada de tela some: as views/atalhos da 6.0.10 seguem iguais — só o
+//     JEITO DE CHEGAR muda (um pai + submenu em vez de botões soltos).
+//
+// Guard: __v60011sxvm · PURE: SXVM611_PURE (sem DOM, testável).
+// NÃO mexer sem rodar: test_ajustes_v60011.js + suíte dupla.
+// ═══════════════════════════════════════════════════════════════════════════
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window.__v60011sxvm) return;
+  window.__v60011sxvm = true;
+
+  // SXVM_PURE_START
+  function sxvmItens() {
+    return [
+      { view: 'central-nf', rot: 'Nota Fiscal', icon: 'ph-receipt' },
+      { view: 'fiscal-perfil', rot: 'Perfil Tributário', icon: 'ph-percent' },
+      { view: 'fiscal-manifestacao', rot: 'Manifestação', icon: 'ph-stamp' },
+      { view: 'fiscal-ncm', rot: 'NCM', icon: 'ph-barcode' },
+      { view: 'fiscal-enviar-xml', rot: 'Enviar XML', icon: 'ph-file-zip' },
+      { view: 'config-fiscal', rot: 'Configurações', icon: 'ph-gear' }
+    ];
+  }
+  // SXVM_PURE_END
+
+  var SXVM_SOLTOS = sxvmItens().map(function (m) { return m.view; })
+    .concat(['fiscal-historico', 'fiscal-ferramentas', 'fiscal-inutilizar']);
+
+  function sxvmEsconderSoltos() {
+    SXVM_SOLTOS.forEach(function (v) {
+      const nb = document.querySelector('[data-nav="' + v + '"]');
+      if (nb) nb.style.display = 'none';
+      const tm = document.getElementById('topmod-' + v);
+      if (tm) tm.style.display = 'none';
+    });
+  }
+
+  function sxvmCss() {
+    if (document.getElementById('sxvm-style')) return;
+    const st = document.createElement('style');
+    st.id = 'sxvm-style';
+    st.textContent =
+      '#sxvm-flyout-nav{position:fixed;z-index:2147483000;display:none;min-width:238px;background:#fff;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 18px 45px rgba(15,23,42,.18);padding:8px}' +
+      '#sxvm-flyout-nav .sxvm-cab{padding:4px 10px 8px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;border-bottom:1px solid #eef2f7;margin-bottom:5px}' +
+      '#sxvm-flyout-nav button{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;font-size:12.5px;color:#334155;transition:.14s;background:none;border:none;cursor:pointer;font-family:inherit}' +
+      '#sxvm-flyout-nav button:hover{background:#f1f6ff;color:#0a1e8a;padding-left:14px}' +
+      '#sxvm-flyout-nav button i{font-size:18px;color:#0a1e8a}';
+    document.head.appendChild(st);
+  }
+
+  function sxvmFlyout() {
+    let fly = document.getElementById('sxvm-flyout-nav');
+    if (fly) return fly;
+    sxvmCss();
+    fly = document.createElement('div');
+    fly.id = 'sxvm-flyout-nav';
+    fly.setAttribute('role', 'menu');
+    fly.innerHTML = '<div class="sxvm-cab">NF-e/NFC-e</div>' + sxvmItens().map(function (m) {
+      return '<button type="button" role="menuitem" data-view="' + m.view + '"><i class="ph ' + m.icon + '"></i>' + m.rot + '</button>';
+    }).join('');
+    document.body.appendChild(fly);
+    fly.querySelectorAll('button[data-view]').forEach(function (b) {
+      b.onclick = function () {
+        sxvmFechar(true);
+        try { window.navigateTo(b.getAttribute('data-view')); } catch (e) { }
+      };
+    });
+    fly.addEventListener('mouseenter', sxvmCancelarFechar);
+    fly.addEventListener('mouseleave', function () { sxvmAgendarFechar(); });
+    return fly;
+  }
+
+  var sxvmTimer = null;
+  function sxvmAgendarFechar() {
+    sxvmCancelarFechar();
+    sxvmTimer = setTimeout(function () { sxvmFechar(); }, 180);
+  }
+  function sxvmCancelarFechar() { if (sxvmTimer) { clearTimeout(sxvmTimer); sxvmTimer = null; } }
+  function sxvmFechar(agora) {
+    const fly = document.getElementById('sxvm-flyout-nav');
+    if (fly) fly.style.display = 'none';
+    sxvmCancelarFechar();
+  }
+  function sxvmAbrir(botao) {
+    const fly = sxvmFlyout();
+    const rc = botao.getBoundingClientRect();
+    fly.style.left = Math.min(window.innerWidth - 250, rc.right + 8) + 'px';
+    fly.style.top = Math.max(8, rc.top - 4) + 'px';
+    fly.style.display = 'block';
+  }
+
+  function sxvmInstalarNavLateral() {
+    const nav = document.getElementById('nav-gest');
+    if (!nav) return;
+    let pai = document.getElementById('sxvm-nav-pai');
+    if (!pai) {
+      pai = document.createElement('button');
+      pai.id = 'sxvm-nav-pai';
+      pai.setAttribute('data-nav', 'central-nf'); // mesma marca do destino principal (nav ativa)
+      pai.className = 'w-full h-10 px-3 rounded-xl flex items-center gap-3 text-[13.5px] font-medium transition text-white/60 hover:bg-white/[0.08] hover:text-white';
+      pai.innerHTML = '<i class="ph ph-file-text text-[19px]"></i><span>NF-e/NFC-e</span><i class="ph ph-caret-right text-[13px] ml-auto"></i>';
+      pai.addEventListener('mouseenter', function () { sxvmAbrir(pai); });
+      pai.addEventListener('mouseleave', function () { sxvmAgendarFechar(); });
+      pai.onclick = function () { sxvmFechar(true); try { window.navigateTo('central-nf'); } catch (e) { } };
+      const ref = nav.querySelector('[data-nav="central-nf"]:not(#sxvm-nav-pai)') || nav.firstChild;
+      if (ref && ref.parentNode === nav) nav.insertBefore(pai, ref); else nav.appendChild(pai);
+    }
+  }
+
+  function sxvmTudo() {
+    try { sxvmEsconderSoltos(); sxvmInstalarNavLateral(); } catch (e) { }
+  }
+
+  sxvmTudo();
+  (function sxvmSonda() {
+    let tent = 0;
+    const t = setInterval(function () {
+      tent++;
+      if (!document.hidden) sxvmTudo();
+      if (tent > 300) clearInterval(t);
+    }, 2000);
+  })();
+  window.addEventListener('blur', function () { sxvmFechar(true); });
+  document.addEventListener('click', function (ev) {
+    const fly = document.getElementById('sxvm-flyout-nav');
+    if (fly && fly.style.display === 'block' && !fly.contains(ev.target) && ev.target.id !== 'sxvm-nav-pai' && !(ev.target.closest && ev.target.closest('#sxvm-nav-pai'))) sxvmFechar(true);
+  });
+
+  console.log('%cSUBMENU_HOVER_NFE_PATCH v6.0.11 ativo — NF-e/NFC-e vira UM item; os 6 submenus aparecem quando o mouse passa por cima (igual ao sistema antigo).', 'color:#0a1e8a;font-weight:bold');
+})();
+
+// PURE export (testes + reuso)
+if (typeof module !== 'undefined' && module.exports) {
+  const _p = (function () {
+    const src = require('fs').readFileSync(__filename, 'utf8');
+    const m = src.match(/\/\/ SXVM_PURE_START([\s\S]*?)\/\/ SXVM_PURE_END/);
+    const fn = new Function(m[1] + '; return { sxvmItens };');
+    return fn();
+  })();
+  module.exports = _p;
+  if (typeof global !== 'undefined') global.SXVM611_PURE = _p;
+}
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("submenu_hover_nfe_patch.js", e); }
+;
+
+/* ===== navegacao_sem_tela_branca_patch.js ===== */
+try{
+/* navegacao_sem_tela_branca_patch.js (v6.0.12) — MATA A TELA BRANCA DE VEZ.
+
+Relato dele (18/09/2026): "quando eu clico no menu ele fica branco e não
+carrega, só em algumas situações o botão fica visível e dá pra clicar de novo;
+acontece a mesma coisa com o buscador escolar".
+
+CAUSA RAIZ (lendo o código, não achismo):
+  1) navigateTo (app.js) ESCONDE TODAS as .view ANTES de procurar o destino;
+  2) Buscador Escola e TODAS as telas fiscais não existem no HTML — nascem sob
+     demanda via ensureView(), que as cria COM a classe "hidden" (app.js:287);
+  3) ordem fatal: clicou → tudo escondido → destino ainda não existe → o render
+     CRIA a tela (escondida) → ninguém des-esconde → BRANCO TOTAL. Na 2ª
+     navegação às vezes aparecia ("em algumas situações") porque a view já
+     existia no DOM; a barra de cima nunca some (não é .view) — por isso o
+     botão "continuava visível" nessas situações.
+
+CORREÇÃO (sem tocar no miolo do app.js — padrão histórico do projeto):
+  • wrap de window.navigateTo por cima da cadeia inteira (somos o último patch
+    da fila):
+      a) ANTES  → ensureView(view): o destino já EXISTE quando o núcleo for
+         esconder/mostrar — o 'if(target) remove(hidden)' do núcleo acerta;
+      b) DEPOIS → des-esconde de novo (se alguém recriou o container);
+      c) se o destino ficou SEM CONTEÚDO (view sem render), em vez de branco
+         mostra tela honesta com botão "Voltar ao Início" — nada de branco nunca.
+  • Atalhos/flyouts/menus continuam chamando navigateTo normal (onclick inline
+    resolve em runtime → cai neste wrap). */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v60012nav) return;
+  G.__v60012nav = true;
+
+  // ── PURE (testável sem DOM) ─────────────────────────────────────────────
+  function navAvisoVazio(view, titulo) {
+    var v = String(view || '');
+    var t = String(titulo || 'Tela sem conteúdo');
+    return '<div class="neo-shell"><div class="neo-panel">' +
+      '<div class="neo-head"><div><h3>' + t + '</h3><p>O botão funcionou — só faltou a tela carregar</p></div>' +
+      '<div class="neo-actions"><button class="neo-btn primary" onclick="navigateTo(\'dashboard\')"><i class="ph ph-house"></i> Voltar ao Início</button></div></div>' +
+      '<div style="padding:18px 22px;font-size:13px;color:#475569;line-height:1.6">' +
+      '<p>A tela <b style="color:#0a1e8a">' + v + '</b> foi chamada mas não tinha conteúdo pronto para mostrar. ' +
+      'Nada foi apagado: seus dados e as outras telas continuam intactos. ' +
+      'Se isso aparecer de novo, anote o nome acima e avise.</p>' +
+      '</div></div></div>';
+  }
+  G.NAV612_PURE = { avisoVazio: navAvisoVazio };
+
+  // Views com criação sob demanda que sofriam a tela branca (documentação viva)
+  var NAV_SOB_DEMANDA = ['buscador-escola', 'central-nf', 'config-fiscal', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'fiscal-historico', 'fiscal-inutilizar', 'fiscal-ferramentas'];
+
+  // ── O WRAP ──────────────────────────────────────────────────────────────
+  function instalar() {
+    var anterior = G.navigateTo;
+    if (typeof anterior !== 'function') return false;
+    if (anterior.__nav612) return true; // já embrulhado
+    var embrulhado = function (view) {
+      // a) garante o destino ANTES do núcleo esconder tudo
+      try { if (typeof G.ensureView === 'function') G.ensureView(view); } catch (e) { }
+      var r = anterior.apply(G, arguments);
+      // b) garante VISÍVEL depois — nunca mais tela branca
+      try {
+        var t = G.document ? G.document.getElementById('view-' + view) : null;
+        if (t) {
+          t.classList.remove('hidden');
+          if (!t.innerHTML || !String(t.innerHTML).trim()) {
+            t.innerHTML = G.NAV612_PURE.avisoVazio(view, 'Tela sem conteúdo');
+          }
+        }
+      } catch (e) { }
+      return r;
+    };
+    embrulhado.__nav612 = true;
+    G.navigateTo = embrulhado;
+    return true;
+  }
+  if (!instalar()) {
+    // app.js ainda não subiu (ordem de scripts): espera o DOM pronto
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      document.addEventListener('DOMContentLoaded', function () { instalar(); });
+    }
+  }
+  G.__v60012navLista = NAV_SOB_DEMANDA;
+  if (typeof module !== 'undefined' && module.exports) module.exports = G.NAV612_PURE;
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("navegacao_sem_tela_branca_patch.js", e); }
+;
+
+/* ===== ribbon_fiscal_estilo_antigo_patch.js ===== */
+try{
+/* ribbon_fiscal_estilo_antigo_patch.js (v6.0.13) — MENU FISCAL BONITO:
+   faixa de comandos estilo a aba "NF-e/NFC-e" do sistema antigo.
+
+   Dele (18/09/2026): "ta horrivel de feio esse menu fiscal".
+   O submenu no lugar certo (v6.0.11) e as telas que abrem (v6.0.12) não
+   bastam: ele quer a CARA do menu fiscal do velho — faixa ribbon com aba,
+   botões GRANDES (ícone em cima, nome embaixo) agrupados por assunto.
+
+   O que este patch faz (sem desmontar nada do que existe):
+   1) Faixa ribbon NO TOPO de cada tela fiscal (Central + os 6 menus + os
+      atalhos fiscais): aba "NF-e/NFC-e" ativa, 3 grupos (Documentos,
+      Cadastros fiscais, Sistema), 6 botões grandes com ícone azul + legenda,
+      item atual destacado. Clique navega (passa pelo anti-tela-branca 6.0.12).
+   2) Re-injeta a faixa quando a tela re-renderiza (renders fiscais sobrescrevem
+      innerHTML) — wrap de navigateTo + sonda leve só quando tela fiscal visível.
+   3) Beleza também no flyout lateral da v6.0.11 (#sxvm-flyout-nav): cabeçalho,
+      bordas/hover/sombra no padrão visual do sistema — só CSS, sem tocar no
+      arquivo do patch 6.0.11 (mural protege o conteúdo dele). */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v60013wxr) return;
+  G.__v60013wxr = true;
+
+  // ── PURE: os 6 itens agrupados (mesmos destinos da v6.0.10/6.0.11) ──────
+  function wxrItens() {
+    return [
+      { view: 'central-nf', rot: 'Nota Fiscal', icon: 'ph-file-text', grupo: 'Documentos' },
+      { view: 'fiscal-manifestacao', rot: 'Manifestação', icon: 'ph-stamp', grupo: 'Documentos' },
+      { view: 'fiscal-enviar-xml', rot: 'Enviar XML', icon: 'ph-file-zip', grupo: 'Documentos' },
+      { view: 'fiscal-perfil', rot: 'Perfil Tributário', icon: 'ph-scales', grupo: 'Cadastros fiscais' },
+      { view: 'fiscal-ncm', rot: 'NCM', icon: 'ph-barcode', grupo: 'Cadastros fiscais' },
+      { view: 'config-fiscal', rot: 'Configurações', icon: 'ph-gear-six', grupo: 'Sistema' }
+    ];
+  }
+  function wxrGruposOrdem() { return ['Documentos', 'Cadastros fiscais', 'Sistema']; }
+  var WXR_VIEWS = ['central-nf', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'config-fiscal', 'fiscal-historico', 'fiscal-inutilizar', 'fiscal-ferramentas'];
+  function wxrEhViewFiscal(view) { return WXR_VIEWS.indexOf(view) >= 0; }
+  G.WXR613_PURE = { itens: wxrItens, gruposOrdem: wxrGruposOrdem, views: WXR_VIEWS, ehViewFiscal: wxrEhViewFiscal };
+
+  // ── CSS da faixa (e polimento do flyout lateral) ────────────────────────
+  var CSS_ID = 'wxr-ribbon-css';
+  var CSS =
+    '.wxr-bar{margin:0 0 12px;border:1px solid #d7e0ee;border-radius:14px;background:linear-gradient(180deg,#ffffff,#eef4ff);box-shadow:0 10px 26px rgba(15,23,42,.08);overflow:hidden}' +
+    '.wxr-tabs{display:flex;gap:2px;padding:6px 10px 0;background:linear-gradient(180deg,#f4f8ff,#e8effc);border-bottom:1px solid #d7e0ee}' +
+    '.wxr-tab{height:27px;padding:0 16px;border:1px solid #d7e0ee;border-bottom:none;border-radius:9px 9px 0 0;background:#fff;color:#0a1e8a;font-size:12px;font-weight:800;display:flex;align-items:center;gap:6px}' +
+    '.wxr-corpo{display:flex;gap:10px;padding:10px 12px 6px;overflow-x:auto}' +
+    '.wxr-grupo{display:flex;gap:4px;padding:0 10px;position:relative;border-right:1px solid #dbe3ef}' +
+    '.wxr-grupo:last-child{border-right:none}' +
+    '.wxr-grupo-nome{position:absolute;left:0;right:0;bottom:-22px;text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}' +
+    '.wxr-grupo-wrap{padding-bottom:24px;position:relative}' +
+    '.wxr-btn{width:92px;height:66px;border:1px solid transparent;border-radius:11px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.14s;padding:4px}' +
+    '.wxr-btn i{font-size:26px;color:#0a1e8a}' +
+    '.wxr-btn span{font-size:11px;font-weight:750;color:#334155;text-align:center;line-height:1.15}' +
+    '.wxr-btn:hover{background:#dceaff;border-color:#b8d0f5;transform:translateY(-1px)}' +
+    '.wxr-btn.ativo{background:#eaf2ff;border-color:#0a1e8a;box-shadow:inset 0 0 0 1px #0a1e8a}' +
+    /* relação de irmãos: central ativa também quando está em atalhos fiscais */
+    '#sxvm-flyout-nav{border-radius:14px !important;box-shadow:0 20px 55px rgba(15,23,42,.22) !important;border:1px solid #d7e0ee !important;padding:10px !important}' +
+    '#sxvm-flyout-nav::before{content:"NF-e/NFC-e";display:block;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#0a1e8a;padding:2px 10px 8px;border-bottom:1px solid #eef2f7;margin-bottom:6px}' +
+    '#sxvm-flyout-nav button{border-radius:9px !important}' +
+    '#sxvm-flyout-nav button i{color:#0a1e8a}' +
+    '#sxvm-nav-pai.sxvm-ativo, #sxvm-nav-pai:hover{background:rgba(255,255,255,.14) !important}';
+  function wxrCss() {
+    if (typeof document === 'undefined' || document.getElementById(CSS_ID)) return;
+    var st = document.createElement('style');
+    st.id = CSS_ID; st.textContent = CSS;
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  // ── Monta a faixa ───────────────────────────────────────────────────────
+  function wxrMonta(viewAtual) {
+    var bar = document.createElement('div');
+    bar.className = 'wxr-bar'; bar.id = 'wxr-bar';
+    var tabs = document.createElement('div');
+    tabs.className = 'wxr-tabs';
+    tabs.innerHTML = '<div class="wxr-tab"><i class="ph ph-file-text" style="font-size:15px"></i>NF-e/NFC-e</div>';
+    bar.appendChild(tabs);
+    var corpo = document.createElement('div');
+    corpo.className = 'wxr-corpo';
+    G.WXR613_PURE.gruposOrdem().forEach(function (g) {
+      var wrap = document.createElement('div');
+      wrap.className = 'wxr-grupo-wrap';
+      var grp = document.createElement('div');
+      grp.className = 'wxr-grupo';
+      G.WXR613_PURE.itens().filter(function (it) { return it.grupo === g; }).forEach(function (it) {
+        var b = document.createElement('button');
+        b.className = 'wxr-btn' + (it.view === viewAtual ? ' ativo' : '');
+        b.innerHTML = '<i class="ph ' + it.icon + '"></i><span>' + it.rot + '</span>';
+        b.onclick = function () { if (typeof G.navigateTo === 'function') G.navigateTo(it.view); };
+        grp.appendChild(b);
+      });
+      wrap.appendChild(grp);
+      var nome = document.createElement('div');
+      nome.className = 'wxr-grupo-nome'; nome.textContent = g;
+      grp.appendChild(nome);
+      corpo.appendChild(wrap);
+    });
+    bar.appendChild(corpo);
+    return bar;
+  }
+
+  // ── Injeta no topo da view fiscal visível (idempotente) ─────────────────
+  function wxrGarante() {
+    try {
+      wxrCss();
+      for (var i = 0; i < WXR_VIEWS.length; i++) {
+        var v = document.getElementById('view-' + WXR_VIEWS[i]);
+        if (!v) continue;
+        var velha = v.querySelector(':scope > .wxr-bar');
+        if (v.offsetParent === null) { if (velha) velha.remove(); continue; }
+        if (!velha) v.insertBefore(wxrMonta(WXR_VIEWS[i]), v.firstChild);
+        else {
+          // atualiza o destaque do item ativo (navegação sem re-render)
+          velha.querySelectorAll('.wxr-btn').forEach(function () { });
+        }
+      }
+    } catch (e) { }
+  }
+
+  // Wrap por cima da cadeia: depois de navegar, garante a faixa no próximo tick
+  function instalar() {
+    var anterior = G.navigateTo;
+    if (typeof anterior !== 'function') return false;
+    if (!anterior.__wxr613) {
+      var embrulhado = function (view) {
+        var r = anterior.apply(G, arguments);
+        setTimeout(wxrGarante, 0);
+        setTimeout(wxrGarante, 40);
+        return r;
+      };
+      embrulhado.__wxr613 = true;
+      embrulhado.__nav612 = anterior.__nav612; // preserva marca do anti-branco
+      G.navigateTo = embrulhado;
+    }
+    return true;
+  }
+  if (!instalar() && typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', function () { instalar(); });
+  }
+  if (typeof setInterval === 'function' && typeof document !== 'undefined') {
+    var iid = setInterval(function () {
+      // só trabalha quando tem tela fiscal aberta sem faixa (re-render fiscal)
+      try {
+        for (var i = 0; i < WXR_VIEWS.length; i++) {
+          var v = document.getElementById('view-' + WXR_VIEWS[i]);
+          if (v && v.offsetParent !== null && !v.querySelector(':scope > .wxr-bar')) { wxrGarante(); return; }
+        }
+      } catch (e) { }
+    }, 900);
+    if (iid && iid.unref) iid.unref();
+    G.__wxrSonda = iid;
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = G.WXR613_PURE;
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ribbon_fiscal_estilo_antigo_patch.js", e); }
+;
+
+/* ===== fiscal_catalogo_completo_patch.js ===== */
+try{
+/* fiscal_catalogo_completo_patch.js (v6.0.14) — AS 6 TELAS FISCAIS COMPLETAS,
+   campo a campo do CATÁLOGO das fotos do sistema antigo (RELATORIO_SESSAO.md,
+   dias 14-15/09, fase de design declarada 100% fechada).
+
+   Decreto dele (19/09/2026): "não quero leva — substitui esses velhos que você
+   colocou e coloque TUDO de uma vez; se precisar de foto específica eu falo o
+   nome, salvei com nome e tudo".
+
+   O que este patch SUBSTITUI (renders anteriores continuam no bundle, mas a
+   pintura final é daqui — este wrap é o último da fila):
+     • central-nf .......... Listagem de Notas completa (8f) + Venda-NF editor
+                            em 9 abas (20f) + Pré-Visualizar DANFE com selo;
+     • fiscal-perfil ....... Perfis Tributários (11f): 5 perfis REAIS seed +
+                            Configurar Tributação (ICMS/PIS/COFINS/IPI/Reforma);
+     • fiscal-manifestacao . Consulta Notas Destinadas (7f): 3 buscas NSU,
+                            filtros, grade dele, 4 eventos legais, Baixar XML;
+     • fiscal-ncm ......... Lupa NCM com favoritos + padrões (mesmas chaves);
+     • fiscal-enviar-xml ... 'Preparar Arquivos Fiscais' (1f): mês, incluir PDFs,
+                            matriz NFe/NFCe × geradas/canceladas/corrigidas/não
+                            encontrados + Enviar para Escritório;
+     • config-fiscal ....... CONFIG NF EM 10 ABAS (Geral/Outras/Tributação/
+                            Mensagens/Certificados/FCP/Inutilizar/NFCe/
+                            Autorizações/Reforma) com os valores dele de preset.
+
+   Leis permanentes respeitadas: placa HOMOLOGAÇÃO/PRODUÇÃO; nada automático
+   (Gerar NFC-e ao finalizar venda nasce DESMARCADO, igual ao dele); senha na
+   hora; PRODUCAO digitado (Portão v6.0.0 intocado); manifestar/inutilizar/
+   excluir nota pedem permissão 'Emitir NF' (usuarioPodeEmitirNfe); popup
+   sempre do sistema (modal-root); zero segredos gravados (CSC fica nos campos
+   já existentes, com máscara); grafo de chaves: config mora em db.config.nfCfg,
+   perfis em db.perfisNf, rascunhos em db.notasNf, e as chaves antigas
+   (nfCsc/nfCscId/nfNcmPadrao/nfNcmTinta/nfNcmLocacao/nfRegistro/nfManifestacoes)
+   seguem lidas/gravadas nos mesmos lugares — uma verdade só. */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc) return;
+  G.__v6014fxc = true;
+
+  /* ══════════════ PURE — o catálogo transcrito (testável sem DOM) ══════════════ */
+  /* Config > Geral (12 fotos) */
+  var DANFE_OPCOES = [['0', '0 - Sem geração'], ['1', '1 - Normal (retrato)'], ['2', '2 - Normal (paisagem)'], ['3', '3 - Simplificado'], ['4', '4 - DANFE NFC-e'], ['5', '5 - DANFE NFC-e em mensagem eletrônica']];
+  var FRETE_OPCOES = [['0', '0 - Por conta do emitente (CIF)'], ['1', '1 - Por conta do destinatário/remetente (FOB)'], ['2', '2 - Por conta de terceiros'], ['3', '3 - Transporte próprio por conta do remetente'], ['4', '4 - Transporte próprio por conta do destinatário'], ['9', '9 - Sem ocorrência de transporte']];
+  var MODELO_OPCOES = [['55', '55 - NF-e'], ['65', '65 - NFC-e']];
+  var PROCESSAMENTO = [['0', '0 - Assíncrono'], ['1', '1 - Síncrono']];
+  var PROC_EMISSAO = [['0', '0 - Emissão normal (aplicativo do contribuinte)'], ['1', '1 - Emissão de NFC-e pelo Fisco'], ['2', '2 - Emissão de NFC-e em site do Fisco'], ['3', '3 - Emissão em aplicativo do Fisco']];
+  var TP_EMISSAO = [['1', '1 - Normal'], ['2', '2 - Contingência FS-IA'], ['3', '3 - Contingência SCAN'], ['4', '4 - Contingência DPEC'], ['5', '5 - Contingência FS-DA'], ['6', '6 - Contingência SVC-AN'], ['7', '7 - Contingência SVC-RS'], ['9', '9 - Contingência off-line (NFC-e)']];
+  var TP_OPERACAO = [['0', '0 - Não se aplica / Outros'], ['1', '1 - Venda presencial'], ['2', '2 - Venda não presencial, pela internet'], ['3', '3 - Venda não presencial, teleatendimento'], ['4', '4 - NFC-e em operação com entrega a domicílio'], ['5', '5 - Venda presencial, fora do estabelecimento'], ['9', '9 - Venda não presencial, outros']];
+  var CRT_OPCOES = [['1', '1 - Simples Nacional'], ['2', '2 - Simples Nacional (excesso de sublimite)'], ['3', '3 - Regime Normal'], ['4', '4 - Simples Nacional - MEI']];
+  var REG_ESP = [['0', '0 - Nenhum'], ['1', '1 - Microempresa Municipal'], ['2', '2 - Estimativa'], ['3', '3 - Sociedade de Profissionais'], ['4', '4 - Cooperativa'], ['5', '5 - MEI'], ['6', '6 - ME EPP']];
+  var VERSAO = [['4.00', '4.00 (vigente)'], ['3.10', '3.10 (legado)']];
+  /* Venda-NF > Gerais (20 fotos) */
+  var FINALIDADE = [['1', '1 - NF-e normal'], ['2', '2 - NF-e complementar'], ['3', '3 - NF-e de ajuste'], ['4', '4 - Devolução/Retorno'], ['5', '5 - Nota de crédito'], ['6', '6 - Nota de débito']];
+  var TIPO_NOTA = [['1', '1 - Saída'], ['0', '0 - Entrada']];
+  var NATUREZAS = ['VENDA', 'COMPRA', 'TRANSFERENCIA', 'DEVOLUCAO', 'COMPLEMENTAR', 'IMPORTACAO', 'CONSIGNACAO', 'REMESSA', 'REMESSA PARA CONSERTO', 'REMESSA EM GARANTIA', 'REMESSA BEM LOCAÇÃO', 'DEMONSTRAÇÃO', 'SIMPLES REMESSA', 'LOCAÇÃO EQUIPAMENTOS', 'RETORNO PARA CONSERTO', 'LOCAÇÃO BENS MÓVEIS'];
+  var PAGAMENTOS = [['01', '01 - Dinheiro'], ['02', '02 - Cheque'], ['03', '03 - Cartão de Crédito'], ['04', '04 - Cartão de Débito'], ['05', '05 - Cartão Loja (Private Label)'], ['10', '10 - Vale Alimentação'], ['11', '11 - Vale Refeição'], ['12', '12 - Vale Presente'], ['13', '13 - Vale Combustível'], ['14', '14 - Duplicata Mercantil'], ['15', '15 - Boleto Bancário'], ['16', '16 - Depósito Bancário'], ['17', '17 - Pagamento Instantâneo (PIX) Dinâmico'], ['18', '18 - Transferência/Wallet'], ['19', '19 - Programa de Fidelidade/Cashback'], ['20', '20 - PIX Estático'], ['21', '21 - Crédito em Loja'], ['22', '22 - Falha de pagamento'], ['90', '90 - Sem Pagamento'], ['98', '98 - Regime Especial NFE'], ['99', '99 - Outros']];
+  var LIST_SITUACAO = [['todos', 'Todos'], ['autorizada', 'Autorizadas'], ['corrigida', 'Corrigidas'], ['cancelada', 'Canceladas'], ['nao-gerada', 'Não Geradas']];
+  var LIST_AMBIENTE = [['todos', 'Todos'], ['producao', 'Produção'], ['homologacao', 'Homologação']];
+  var LIST_MODELO = [['todas', 'Todas'], ['55', 'NF-e'], ['65', 'NFC-e']];
+  var LIST_TIPO_DATA = [['cadastro', 'Dt. Cadastro'], ['autorizacao', 'Dt. Autorização'], ['cancelamento', 'Dt. Cancelamento']];
+  var LIST_FILTRO_COMBO = [['hoje-abertas', 'Hoje / Abertas'], ['hoje', 'Hoje'], ['num-nota', 'Núm. Nota'], ['canceladas', 'Canceladas'], ['cod-cliente', 'Cód. Cliente'], ['nome-cliente', 'Nome Cliente'], ['chave', 'Chave'], ['valor', 'Valor'], ['cod-venda', 'Cód. Venda']];
+  var LIST_COLS = ['Data', 'Modelo', 'Tipo', 'Email', 'Núm. Nota', 'Natureza Op.', 'Cliente', 'Valor', 'Situação'];
+  /* Manifestação (7 fotos) */
+  var MANIF_TIPO_FILTRO = [['hoje', 'Cadastradas Hoje'], ['emitente', 'Nome do Emitente'], ['chave', 'Chave'], ['valor', 'Valor']];
+  var MANIF_STATUS_NF = [['todas', 'Todas'], ['autorizada', 'Autorizadas'], ['cancelada', 'Canceladas'], ['denegada', 'Denegadas']];
+  var MANIF_STATUS = [['todos', 'Todos'], ['confirmada', 'Operação Confirmada'], ['ciencia', 'Ciência da Operação'], ['desconhecida', 'Operação Desconhecida'], ['nao-realizada', 'Operação Não Realizada']];
+  var EVENTOS_MANIF = [['ciencia', 'Ciência da Operação'], ['desconheco', 'Desconheço esta Operação'], ['nao-realizada', 'Operação Não Foi Realizada'], ['realizada', 'Operação Realizada com Sucesso']];
+  var MANIF_COLS = ['Sel', 'Código', 'NSU', 'Nome/Razão Social', 'IE', 'CNPJ', 'Chave da Nota', 'Tipo de Valor', 'Valor', 'Série', 'Número DFe', 'Dh. Emissão', 'Status Nota', 'Status Manifestação', 'Protocolo Nota'];
+  var MANIF_BUSCAS = [['ultimo', 'A partir do último registro consultado (retoma o NSU salvo)'], ['3meses', 'Últimos 3 meses (primeira carga)'], ['nsu', 'A partir de um NSU específico']];
+  /* Perfil Tributário (11 fotos + foto do combo) — OS 5 PERFIS REAIS DA LOJA */
+  var PERFIS_SEED = [
+    { cod: '00001', descricao: 'VENDA DENTRO DO ESTADO', cfop: '5102' },
+    { cod: '00002', descricao: 'VENDA FORA DO ESTADO', cfop: '6102' },
+    { cod: '00003', descricao: 'DEV/REMESSA DE MERCADORIA P/ CONSERTO', cfop: '5915' },
+    { cod: '00005', descricao: 'RETORNO DE CONSERTO', cfop: '5916' },
+    { cod: '00004', descricao: 'TROCA DE MERCADORIA', cfop: '6949' }];
+  var CSOSN_LISTA = [['101', '101 - Tributada pelo Simples com permissão de crédito'], ['102', '102 - Tributada pelo Simples sem permissão de crédito'], ['103', '103 - Isenção do ICMS no Simples para faixa de receita'], ['201', '201 - Tributada pelo Simples com permissão de crédito e ST'], ['202', '202 - Tributada pelo Simples sem permissão de crédito e ST'], ['203', '203 - Isenção do ICMS no Simples com ST'], ['300', '300 - Imune'], ['400', '400 - Não tributada pelo Simples'], ['500', '500 - ICMS cobrado anteriormente por ST'], ['900', '900 - Outros']];
+  var PISCOFINS_CST = [['01', '01 - Operação Tributável (alíquota normal)'], ['02', '02 - Operação Tributável (alíquota diferenciada)'], ['03', '03 - Operação Tributável (alíq. unidade por produto)'], ['04', '04 - Operação Tributável monofásica (alíquota zero)'], ['05', '05 - Operação Tributável por Substituição Tributária'], ['06', '06 - Operação Tributável (alíquota zero)'], ['07', '07 - Operação Isenta da Contribuição'], ['08', '08 - Operação Sem Incidência da Contribuição'], ['09', '09 - Operação com Suspensão da Contribuição'], ['49', '49 - Outras Operações de Saída']];
+  var IPI_CST = [['50', '50 - Saída Tributada'], ['51', '51 - Saída Tributável com Alíquota Zero'], ['52', '52 - Saída Isenta'], ['53', '53 - Saída Não-Tributada'], ['54', '54 - Saída Imune'], ['55', '55 - Saída com Suspensão'], ['56', '56 - Saída com Suspensão (couro)'], ['99', '99 - Outras Saídas']];
+  var REFORMA_CST = [['000', '000 - Tributação integral'], ['200', '200 - Alíquota reduzida'], ['410', '410 - Imunidade e não incidência'], ['510', '510 - Diferimento'], ['515', '515 - Diferimento com redução de alíquota'], ['550', '550 - Suspensão'], ['800', '800 - Transferência de crédito'], ['810', '810 - Ajustes'], ['811', '811 - Ajustes (anexo)'], ['830', '830 - Exclusão da base de cálculo']];
+  var REFORMA_CLASSIF = [['000001', '000001 - Situações tributadas integralmente pelo IBS e CBS'], ['000003', '000003 - Regime automotivo'], ['000004', '000004 - Regime automotivo (variação)']];
+  /* NFCe (3 fotos) */
+  var VEQR = [['veqr000', 'veqr000'], ['veqr100', 'veqr100'], ['veqr200', 'veqr200 (padrão v2 vigente)'], ['veqr300', 'veqr300']];
+  var IMPRESSORA_TIPO = [['0', '0 - Mini impressora (térmica)'], ['1', '1 - Laser/Tinta (Spooler)']];
+  var FCP_UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+  var VENDA_NF_ABAS = ['Gerais', 'Destinatário', 'Itens da Nota', 'Informações Adicionais', 'Transporte', 'Correções', 'Reforma Tributária', 'Referenciar', 'Log'];
+  var CONFIG_ABAS = ['Geral', 'Impressão', 'NFCe', 'Tributação', 'Nuvem', 'Outras', 'Mensagens', 'FCP', 'Autorizações', 'Reforma'];
+
+  function fxCfgPadrao() {
+    return {
+      geral: { serie: '1', modelo: '55', processamento: '1', procEmissao: '0', danfe: '1', frete: '9', tpEmis: '1', tpOp: '0', versao: '4.00', crt: '1', regEsp: '1' },
+      outras: { agruparItens: false, margemSup: '', margemInf: '', margemEsq: '', margemDir: '', fuso: '-03:00', caminhoSec: '', emailEscritorio: '' },
+      trib: { perfilDentro: '00001', perfilFora: '00002', mostrarTribItens: true, formatoMsg: 'junto' },
+      msg: { infoContribuinte: '', textoCartaCorrecao: '', justificativaContingencia: '' },
+      cert: { a3Serial: '' },
+      fcp: { padrao: 2, ufs: {} },
+      nfce: { qrcodeInfSup: true, gerarAoFinalizar: false, logoDanfe: true, logoSobreDados: false, imprimirSemPrevia: false, qrLateral: true, impressoraTipo: '1', impressora: '', veqr: 'veqr200' },
+      autoriz: { cnpjs: '' },
+      reforma: { ativa: true, intermediador: '0' },
+      fusoOk: true
+    };
+  }
+  function fxItemVazio(n) {
+    return { n: n || 1, gtin: '', cprod: '', descricao: '', ncm: '', cest: '', cfop: '5102', csosn: '102', qtd: 1, un: 'UN', vunit: 0, vtotal: 0, tipo: 'PRODUTO', desconto: 0, bc: 0, perfilCod: '', trib: { icmsBase: 0, icmsValor: 0, stBase: 0, stPerc: 0, stValor: 0, ipiCst: '99', ipiPerc: 0, ipiValor: 0, pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, beneficio: '', icmsDeson: 0, fcpPerc: 0, fcpValor: 0, efetBase: 0, efetValor: 0, pedido: '', pedidoItem: '', refCst: '000', refClassif: '000001', refIbsUfPerc: 0.1, refIbsMunPerc: 0, refCbsPerc: 0.9, imp: { di: '', dtReg: '', codExp: '', via: '', afrmm: 0, forma: '', desembData: '', desembUf: '', desembLocal: '', iof: 0, despAduan: 0, ii: 0, pais: '1058 BRASIL' } } };
+  }
+  function fxPagamentoVazio() { return { forma: '01', valor: 0 }; }
+  function fxNotaVazia(numero, usuario) {
+    return {
+      id: 'fx' + Date.now().toString(36), cod: '', numero: numero || '', modelo: '55', finalidade: '1', tipo: '1', natureza: 'VENDA', serie: '1',
+      dhCadastro: new Date().toISOString(), dhEmissao: '', dhSaida: '', usuario: usuario || '',
+      dest: { pesquisarPor: 'Cliente', refId: '', nome: '', doc: '', ie: '', endereco: '', cidade: '', uf: '', enderecoDiferente: false, entrega: '' },
+      itens: [], pagamentos: [], duplicatas: [],
+      totais: { despAcess: 0, produtos: 0, servicos: 0, ipi: 0, icmsST: 0, frete: 0, seletivo: 0, ibs: 0, cbs: 0, descontos: 0, total: 0, tribAprox: 0 },
+      frete: { modalidade: '9', transportadora: { doc: '', nome: '', ie: '', endereco: '', cidade: '', uf: '', email: '' }, veiculo: { placa: '', uf: '', rntc: '' }, volumes: [] },
+      infos: { preConfig: '', complementares: '', geradasAuto: '', empenho: '', pedido: '', contrato: '' },
+      refs: [], reforma: { cst: '000', classif: '000001', base: 0 },
+      creditoIcms: 0, status: 'Não Gerada', ambiente: '', emailMarcado: false, log: [], criadoEm: new Date().toISOString()
+    };
+  }
+  function fxIbsCbs(base, aliUf, aliMun, aliCbs) {
+    var b = Number(base) || 0;
+    var r = function (v) { return Math.round(v * 100) / 100; };
+    return { ibsUf: r(b * (Number(aliUf) || 0) / 100), ibsMun: r(b * (Number(aliMun) || 0) / 100), cbs: r(b * (Number(aliCbs) || 0) / 100) };
+  }
+  function fxBRL(v) { return (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fxEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function fxDig(s) { return String(s || '').replace(/\D+/g, ''); }
+  function fxDataBR(iso) { if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('pt-BR'); }
+
+  G.FX614_PURE = {
+    DANFE_OPCOES: DANFE_OPCOES, FRETE_OPCOES: FRETE_OPCOES, MODELO_OPCOES: MODELO_OPCOES, PROCESSAMENTO: PROCESSAMENTO,
+    PROC_EMISSAO: PROC_EMISSAO, TP_EMISSAO: TP_EMISSAO, TP_OPERACAO: TP_OPERACAO, CRT_OPCOES: CRT_OPCOES, REG_ESP: REG_ESP, VERSAO: VERSAO,
+    FINALIDADE: FINALIDADE, TIPO_NOTA: TIPO_NOTA, NATUREZAS: NATUREZAS, PAGAMENTOS: PAGAMENTOS,
+    LIST_SITUACAO: LIST_SITUACAO, LIST_AMBIENTE: LIST_AMBIENTE, LIST_MODELO: LIST_MODELO, LIST_TIPO_DATA: LIST_TIPO_DATA, LIST_FILTRO_COMBO: LIST_FILTRO_COMBO, LIST_COLS: LIST_COLS,
+    MANIF_TIPO_FILTRO: MANIF_TIPO_FILTRO, MANIF_STATUS_NF: MANIF_STATUS_NF, MANIF_STATUS: MANIF_STATUS, EVENTOS_MANIF: EVENTOS_MANIF, MANIF_COLS: MANIF_COLS, MANIF_BUSCAS: MANIF_BUSCAS,
+    PERFIS_SEED: PERFIS_SEED, CSOSN_LISTA: CSOSN_LISTA, PISCOFINS_CST: PISCOFINS_CST, IPI_CST: IPI_CST, REFORMA_CST: REFORMA_CST, REFORMA_CLASSIF: REFORMA_CLASSIF,
+    VEQR: VEQR, IMPRESSORA_TIPO: IMPRESSORA_TIPO, FCP_UFS: FCP_UFS, VENDA_NF_ABAS: VENDA_NF_ABAS, CONFIG_ABAS: CONFIG_ABAS,
+    cfgPadrao: fxCfgPadrao, itemVazio: fxItemVazio, pagamentoVazio: fxPagamentoVazio, notaVazia: fxNotaVazia, ibsCbs: fxIbsCbs, brl: fxBRL, esc: fxEsc, dig: fxDig, dataBR: fxDataBR
+  };
+  G.__v6014fxcInfo = 'FXCatalogo pronto';
+})();
+
+/* ══════════════ PARTE 2 — infraestrutura (db, css, campos, popup do sistema) ══════════════ */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc2) return;
+  G.__v6014fxc2 = true;
+  var P = G.FX614_PURE;
+
+  function fxDb() { return (typeof db !== 'undefined' && db) ? db : (G.db || { config: {} }); }
+  function fxSave() { try { if (typeof saveDB === 'function') saveDB(); } catch (e) { } }
+  function fxSess() { try { return typeof getSession === 'function' ? getSession() : null; } catch (e) { return null; } }
+  function fxLog(acao, detalhe) {
+    try {
+      var d = fxDb(); d.config = d.config || {}; d.config.fxLogFiscal = d.config.fxLogFiscal || [];
+      d.config.fxLogFiscal.push({ acao: acao, detalhe: detalhe || '', em: new Date().toISOString(), usuario: (fxSess() || {}).usuario || '' });
+      if (d.config.fxLogFiscal.length > 400) d.config.fxLogFiscal = d.config.fxLogFiscal.slice(-400);
+    } catch (e) { }
+  }
+  function fxCfg() {
+    var d = fxDb(); d.config = d.config || {};
+    if (!d.config.nfCfg) d.config.nfCfg = P.cfgPadrao();
+    else { var p0 = P.cfgPadrao(); for (var k in p0) { if (!d.config.nfCfg[k]) d.config.nfCfg[k] = p0[k]; else if (typeof p0[k] === 'object') for (var k2 in p0[k]) if (d.config.nfCfg[k][k2] === undefined) d.config.nfCfg[k][k2] = p0[k][k2]; } }
+    return d.config.nfCfg;
+  }
+  function fxPerfis() {
+    var d = fxDb();
+    if (!d.perfisNf) {
+      d.perfisNf = P.PERFIS_SEED.map(function (s) {
+        return { cod: s.cod, descricao: s.descricao, tipo: 'ICMS', cfop: s.cfop, csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9, seed: true };
+      });
+      fxSave();
+      fxLog('perfis-seed', '5 perfis reais da loja semeados (uma vez)');
+    }
+    return d.perfisNf;
+  }
+  function fxNotas() { var d = fxDb(); d.notasNf = d.notasNf || []; return d.notasNf; }
+  function fxPlaca() {
+    var amb = 'homologacao';
+    try { amb = (G.NFG_PURE && G.NFG_PURE.nfgAmbiente(fxDb())) || 'homologacao'; } catch (e) { }
+    var prod = amb === 'producao';
+    return '<div class="fx-placa" style="background:' + (prod ? '#14532d' : '#7f1d1d') + '">' +
+      (prod ? '✅ PRODUÇÃO — a nota gerada aqui VALE DE VERDADE' : '🏛️ HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL') + '</div>';
+  }
+  function fxPode() { try { return G.usuarioPodeEmitirNfe && G.usuarioPodeEmitirNfe(); } catch (e) { return false; } }
+
+  /* popup SEMPRE do sistema: usa o modal-root do app */
+  function fxConfirm(titulo, texto, onSim, labelSim) {
+    var root = document.getElementById('modal-root'), box = document.getElementById('modal-box'),
+      body = document.getElementById('modal-body'), foot = document.getElementById('modal-footer'),
+      ttl = document.getElementById('modal-title');
+    if (!root || !body) { if (onSim) onSim(); return; }
+    ttl.textContent = titulo;
+    body.innerHTML = '<div style="font-size:13.5px;color:#334155;line-height:1.65">' + texto + '</div>';
+    foot.innerHTML = '';
+    var nao = document.createElement('button'); nao.className = 'h-10 px-5 rounded-xl bg-slate-100 font-bold text-[13px]'; nao.textContent = 'Cancelar';
+    nao.onclick = function () { if (typeof closeModal === 'function') closeModal(); };
+    var sim = document.createElement('button'); sim.className = 'h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[13px]'; sim.textContent = labelSim || 'Confirmar';
+    sim.onclick = function () { if (typeof closeModal === 'function') closeModal(); if (onSim) onSim(); };
+    foot.appendChild(nao); foot.appendChild(sim);
+    root.classList.remove('hidden');
+  }
+  function fxAlert(titulo, texto) {
+    var root = document.getElementById('modal-root'), body = document.getElementById('modal-body'),
+      foot = document.getElementById('modal-footer'), ttl = document.getElementById('modal-title');
+    if (!root || !body) return;
+    ttl.textContent = titulo;
+    body.innerHTML = '<div style="font-size:13.5px;color:#334155;line-height:1.65">' + texto + '</div>';
+    foot.innerHTML = '<button class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold text-[13px]" onclick="closeModal()">Entendi</button>';
+    root.classList.remove('hidden');
+  }
+  function fxToast(m, t) { try { if (typeof toast === 'function') toast(m, t || "success"); } catch (e) { } }
+
+  /* campos com data-fx (coleta genérica DOM→objeto) */
+  function fxInp(path, label, extra) {
+    return '<label class="fx-lb">' + label + '<input class="fx-in" data-fx="' + path + '" ' + (extra || '') + '></label>';
+  }
+  function fxSel(path, label, opcoes, extra) {
+    var o = opcoes.map(function (p) { return '<option value="' + p[0] + '">' + P.esc(p[1]) + '</option>'; }).join('');
+    return '<label class="fx-lb">' + label + '<select class="fx-in" data-fx="' + path + '" ' + (extra || '') + '>' + o + '</select></label>';
+  }
+  function fxChk(path, label, extra) {
+    return '<label class="fx-chk"><input type="checkbox" data-fx="' + path + '" ' + (extra || '') + '><span>' + label + '</span></label>';
+  }
+  function fxValo(obj, path) {
+    var cur = obj; String(path).split('.').forEach(function (k) { cur = (cur == null ? undefined : cur[k]); });
+    return cur === undefined || cur === null ? '' : cur;
+  }
+  function fxAplica(obj) {
+    document.querySelectorAll('#fx-root [data-fx]').forEach(function (el) {
+      var path = el.getAttribute('data-fx'), cur = obj, parts = path.split('.');
+      for (var i = 0; i < parts.length - 1; i++) { if (cur[parts[i]] == null) cur[parts[i]] = {}; cur = cur[parts[i]]; }
+      var last = parts[parts.length - 1];
+      if (el.type === 'checkbox') cur[last] = !!el.checked; else if (el.type === 'number') cur[last] = el.value; else cur[last] = el.value;
+    });
+  }
+  function fxPinta(obj) {
+    document.querySelectorAll('#fx-root [data-fx]').forEach(function (el) {
+      var v = fxValo(obj, el.getAttribute('data-fx'));
+      if (el.type === 'checkbox') el.checked = !!v; else el.value = v;
+    });
+  }
+
+  var CSS =
+    '#fx-root .fx-placa{padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;margin-bottom:10px}' +
+    '#fx-root .fx-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;margin-bottom:10px}' +
+    '#fx-root .fx-lb{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#64748b;display:flex;flex-direction:column;gap:3px}' +
+    '#fx-root .fx-in{height:32px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12.5px;background:#fff;min-width:110px}' +
+    '#fx-root .fx-chk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#334155;height:32px}' +
+    '#fx-root .fx-btn{height:34px;padding:0 13px;border-radius:9px;border:1px solid #d9e3ef;background:#fff;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.14s}' +
+    '#fx-root .fx-btn:hover{border-color:#0a1e8a;color:#0a1e8a;transform:translateY(-1px)}' +
+    '#fx-root .fx-btn.pri{background:#0a1e8a;border-color:#0a1e8a;color:#fff}' +
+    '#fx-root .fx-btn.dan{border-color:#fecaca;color:#991b1b}#fx-root .fx-btn.dan:hover{background:#fef2f2}' +
+    '#fx-root .fx-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}' +
+    '#fx-root table.fx-tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden}' +
+    '#fx-root .fx-tb th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10px;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid #e2e8f0;z-index:1}' +
+    '#fx-root .fx-tb td{padding:7px 8px;border-bottom:1px solid #eef2f7;vertical-align:middle}' +
+    '#fx-root .fx-tb tbody tr{transition:.12s;cursor:pointer}#fx-root .fx-tb tbody tr:hover{background:#f5f9ff}#fx-root .fx-tb tbody tr.fx-sel{background:#dbeafe}' +
+    '#fx-root .fx-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid #e2e8f0;margin-bottom:10px;padding:0 2px}' +
+    '#fx-root .fx-tab{height:32px;padding:0 13px;border-radius:9px 9px 0 0;font-size:12px;font-weight:750;color:#475569;display:flex;align-items:center;gap:6px;cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:none}' +
+    '#fx-root .fx-tab.on{background:#0a1e8a;color:#fff}' +
+    '#fx-root .fx-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px}' +
+    '#fx-root .fx-grid{display:grid;gap:8px}.fx-g2{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.fx-g3{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.fx-g4{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}' +
+    '#fx-root .fx-status{font-size:26px;font-weight:900;letter-spacing:-.02em}' +
+    '#fx-root .fx-cofre{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}' +
+    '#fx-root .fx-cofre>div{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px;text-align:center}' +
+    '#fx-root .fx-cofre b{display:block;font-size:17px;color:#166534}' +
+    '#fx-root .fx-mini{font-size:11px;color:#64748b}' +
+    '#fx-root .fx-selmark{width:14px;height:14px;border:2px solid #94a3b8;border-radius:4px;display:inline-block;vertical-align:middle}' +
+    '#fx-root tr.fx-sel .fx-selmark{background:#0a1e8a;border-color:#0a1e8a;box-shadow:inset 0 0 0 2px #fff}' +
+    '#fx-root textarea.fx-in{height:auto;min-height:70px;padding:8px 9px;width:100%}';
+  function fxCss() {
+    if (typeof document === 'undefined' || document.getElementById('fx614-css')) return;
+    var st = document.createElement('style'); st.id = 'fx614-css'; st.textContent = CSS;
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  G.__v6014fxInfra = { db: fxDb, save: fxSave, sess: fxSess, log: fxLog, cfg: fxCfg, perfis: fxPerfis, notas: fxNotas, placa: fxPlaca, pode: fxPode, confirm: fxConfirm, alert: fxAlert, toast2: fxToast, inp: fxInp, sel: fxSel, chk: fxChk, valo: fxValo, aplica: fxAplica, pinta: fxPinta, css: fxCss };
+})();
+
+/* ══════════════ PARTE 3 — CENTRAL: LISTAGEM DE NOTAS (8 fotos) + editor VENDA-NF (20 fotos) ══════════════ */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc3) return;
+  G.__v6014fxc3 = true;
+  var P = G.FX614_PURE, I = G.__v6014fxInfra;
+
+  function fxEstadoList() {
+    if (!G.__fxList) G.__fxList = { ambiente: 'todos', situacao: 'todos', modelo: 'todas', ini: '', fim: '', tipoData: 'cadastro', agrupar: false, combo: 'hoje-abertas', txt: '', sel: null };
+    return G.__fxList;
+  }
+  function fxLinhasBase() {
+    var d = I.db(), linhas = [];
+    (d.config && d.config.nfRegistro || []).forEach(function (r, i) {
+      linhas.push({ fonte: 'reg', id: 'reg' + i, data: r.autorizadoEm || r.criadoEm || r.atualizadoEm || '', modelo: r.modelo || '55', tipo: 'Saída', email: !!r.emailMarcado, numero: r.numero || r.nNF || '', natureza: r.natureza || r.natOp || 'VENDA', cliente: r.cliente || r.destNome || '', valor: Number(r.valor || r.vNF || 0), situacao: r.status === 'cancelada' ? 'Cancelada' : (r.corrigida ? 'Corrigida' : 'Autorizada'), ambiente: r.ambiente || 'homologacao', ref: r });
+    });
+    I.notas().forEach(function (n) {
+      linhas.push({ fonte: 'rasc', id: n.id, data: n.dhCadastro, modelo: n.modelo, tipo: n.tipo === '0' ? 'Entrada' : 'Saída', email: !!n.emailMarcado, numero: n.numero, natureza: n.natureza, cliente: (n.dest && n.dest.nome) || '', valor: (n.totais && n.totais.total) || 0, situacao: n.status || 'Não Gerada', ambiente: n.ambiente || (I.cfg() && ''), ref: n });
+    });
+    linhas.sort(function (a, b) { return String(b.data).localeCompare(String(a.data)); });
+    return linhas;
+  }
+  function fxAplicarFiltros(linhas, st) {
+    var hoje = new Date().toISOString().slice(0, 10);
+    return linhas.filter(function (l) {
+      if (st.ambiente !== 'todos' && l.ambiente !== st.ambiente) return false;
+      if (st.situacao !== 'todos') {
+        var s = l.situacao.toLowerCase();
+        if (st.situacao === 'nao-gerada' && s.indexOf('não gerada') < 0) return false;
+        if (st.situacao === 'autorizada' && s.indexOf('autorizada') < 0) return false;
+        if (st.situacao === 'corrigida' && s.indexOf('corrigida') < 0) return false;
+        if (st.situacao === 'cancelada' && s.indexOf('cancelada') < 0) return false;
+      }
+      if (st.modelo !== 'todas' && String(l.modelo) !== st.modelo) return false;
+      var dia = String(l.data).slice(0, 10);
+      if (st.ini && dia < st.ini) return false;
+      if (st.fim && dia > st.fim) return false;
+      var t = String(st.txt || '').toLowerCase();
+      if (t) {
+        switch (st.combo) {
+          case 'hoje': return dia === hoje;
+          case 'hoje-abertas': return (dia === hoje) || (l.situacao === 'Não Gerada');
+          case 'num-nota': return String(l.numero).indexOf(t) >= 0;
+          case 'canceladas': return l.situacao === 'Cancelada';
+          case 'cod-cliente': return String((l.ref.dest && l.ref.dest.refId) || '').indexOf(t) >= 0;
+          case 'nome-cliente': return String(l.cliente).toLowerCase().indexOf(t) >= 0;
+          case 'chave': return String((l.ref && l.ref.chave) || '').indexOf(t) >= 0;
+          case 'valor': return String(l.valor).indexOf(t) >= 0;
+          case 'cod-venda': return String((l.ref && l.ref.vendaId) || '').indexOf(t) >= 0;
+        }
+      } else if (st.combo === 'hoje-abertas') return (dia === hoje) || (l.situacao === 'Não Gerada');
+      return true;
+    });
+  }
+
+  function fxRenderListagem() {
+    var st = fxEstadoList();
+    var linhas = fxAplicarFiltros(fxLinhasBase(), st);
+    var h = I.placa();
+    h += '<div class="fx-barra">' +
+      I.sel('lst.ambiente', 'Ambiente', P.LIST_AMBIENTE) +
+      I.sel('lst.situacao', 'Situação', P.LIST_SITUACAO) +
+      I.sel('lst.modelo', 'Modelo', P.LIST_MODELO) +
+      I.inp('lst.ini', 'Período de', 'type="date"') +
+      I.inp('lst.fim', 'até', 'type="date"') +
+      I.sel('lst.tipoData', 'Tipo de data', P.LIST_TIPO_DATA) +
+      I.chk('lst.agrupar', 'Agrupar Filtros') +
+      '<button class="fx-btn pri" onclick="fxAcao(\'lst-pesquisar\')"><i class="ph ph-magnifying-glass"></i>Pesquisar</button>' +
+      '<button class="fx-btn" onclick="fxAcao(\'lst-imprimir\')"><i class="ph ph-printer"></i>Imprimir</button></div>';
+    h += '<div class="fx-barra">' +
+      I.sel('lst.combo', 'Filtro', P.LIST_FILTRO_COMBO) +
+      I.inp('lst.txt', 'Valor do filtro', 'style="min-width:220px" placeholder="digite aqui o que procurar"') +
+      '<span class="fx-mini" style="align-self:center">' + linhas.length + ' nota(s) no filtro</span>' +
+      '<span style="flex:1"></span>' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'nf-novo\')"><i class="ph ph-plus"></i>Novo</button>' +
+      '<button class="fx-btn" id="fx-bt-alt" onclick="fxAcao(\'nf-alterar\')" disabled><i class="ph ph-pencil"></i>Alterar</button>' +
+      '<button class="fx-btn dan" id="fx-bt-exc" onclick="fxAcao(\'nf-excluir\')" disabled><i class="ph ph-trash"></i>Excluir</button>' +
+      '<button class="fx-btn" id="fx-bt-clo" onclick="fxAcao(\'nf-clonar\')" disabled><i class="ph ph-copy"></i>Clonar</button></div>';
+    h += '<div style="overflow:auto;max-height:calc(100vh - 340px)"><table class="fx-tb"><thead><tr>' +
+      P.LIST_COLS.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>';
+    if (!linhas.length) h += '<tr><td colspan="' + P.LIST_COLS.length + '" style="text-align:center;color:#94a3b8;padding:22px">Nenhuma nota no filtro — clique em <b>Novo</b> para abrir a nota (ou ajuste o período/situação).</td></tr>';
+    linhas.forEach(function (l) {
+      var sel = st.sel === l.id ? ' class="fx-sel"' : '';
+      h += '<tr' + sel + ' onclick="fxAcao(\'lst-sel\',\'' + l.id + '\')">' +
+        '<td>' + P.dataBR(l.data) + '</td><td>' + P.esc(l.modelo) + '</td><td>' + l.tipo + '</td><td>' + (l.email ? '✉' : '') + '</td>' +
+        '<td><b>' + P.esc(l.numero) + '</b></td><td>' + P.esc(l.natureza) + '</td><td>' + P.esc(l.cliente) + '</td>' +
+        '<td style="text-align:right">' + P.brl(l.valor) + '</td>' +
+        '<td><b style="color:' + (l.situacao === 'Autorizada' ? '#166534' : (l.situacao === 'Cancelada' ? '#991b1b' : '#92400e')) + '">' + l.situacao + '</b></td></tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<p class="fx-mini">Nota já <b>autorizada não pode ser alterada nem excluída</b> (regra fiscal) — correção = CC-e, ou cancelamento. Alterar/Excluir valem para notas <b>Não Geradas</b>. Clonar cria uma Não Gerada com os mesmos dados.</p>';
+    return h;
+  }
+
+  /* ── VENDA-NF (editor) ── */
+  function fxNotaEdicao() {
+    var d = I.db();
+    if (!G.__fxEd) return null;
+    return I.notas().find(function (n) { return n.id === G.__fxEd.id; }) || null;
+  }
+  function fxAbaVendaNf(n) {
+    var aba = (G.__fxEd && G.__fxEd.aba) || 'Gerais';
+    var h = '<div class="fx-tabs">' + P.VENDA_NF_ABAS.map(function (a) {
+      return '<div class="fx-tab' + (a === aba ? ' on' : '') + '" onclick="fxAcao(\'nf-aba\',\'' + a.replace(/'/g, '') + '\')">' + a + '</div>';
+    }).join('') + '</div>';
+    return h;
+  }
+  function fxTotaisAuto(n) {
+    var prod = 0, serv = 0, desc = 0, ibsUf = 0, ibsMun = 0, cbs = 0;
+    n.itens.forEach(function (it) {
+      var t = (Number(it.qtd) || 0) * (Number(it.vunit) || 0) - (Number(it.desconto) || 0);
+      it.vtotal = Math.max(0, Math.round(t * 100) / 100);
+      if (it.tipo === 'SERVIÇO') serv += it.vtotal; else prod += it.vtotal;
+      desc += Number(it.desconto) || 0;
+      var c = P.ibsCbs(it.vtotal, it.trib.refIbsUfPerc, it.trib.refIbsMunPerc, it.trib.refCbsPerc);
+      ibsUf += c.ibsUf; ibsMun += c.ibsMun; cbs += c.cbs;
+    });
+    var t = n.totais;
+    t.produtos = Math.round(prod * 100) / 100; t.servicos = Math.round(serv * 100) / 100; t.descontos = Math.round(desc * 100) / 100;
+    t.ibs = Math.round((ibsUf + ibsMun) * 100) / 100; t.cbs = Math.round(cbs * 100) / 100;
+    t.total = Math.round((t.produtos + t.servicos + (Number(t.despAcess) || 0) + (Number(t.frete) || 0) + (Number(t.seletivo) || 0) + (Number(t.ipi) || 0) + (Number(t.icmsST) || 0) - t.descontos) * 100) / 100;
+    return t;
+  }
+  function fxRenderGerais(n) {
+    var t = fxTotaisAuto(n);
+    var h = '<div class="fx-card"><div class="fx-grid fx-g3">' +
+      I.sel('nota.modelo', 'Modelo', P.MODELO_OPCOES) +
+      I.sel('nota.finalidade', 'Finalidade', P.FINALIDADE) +
+      I.sel('nota.tipo', 'Tipo', P.TIPO_NOTA) +
+      I.sel('nota.natureza', 'Natureza da Operação', P.NATUREZAS.map(function (x) { return [x, x]; })) +
+      I.inp('nota.serie', 'Série') + I.inp('nota.numero', 'Número') +
+      I.inp('nota.creditoIcms', 'Crédito ICMS (R$)', 'type="number" step="0.01"') +
+      I.inp('nota.totais.tribAprox', 'Total Aprox. Tributos R$ (IBPT)', 'type="number" step="0.01"') +
+      '</div>' +
+      '<p class="fx-mini">Painel de impostos por item (PIS/COFINS/ICMS) é calculado nos Itens; o Total Aprox. sai nas Informações Adicionais se a config estiver ligada (aba Tributação das Configurações).</p></div>';
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">💳 Pagamentos</h4><div id="fx-pags">';
+    h += '<div class="fx-grid" style="grid-template-columns:230px 130px 40px;gap:6px;align-items:center">';
+    n.pagamentos.forEach(function (p, i) {
+      h += '<select class="fx-in" onchange="fxAcao(\'nf-pag-edit\',\'' + i + '\', this.value)">' + P.PAGAMENTOS.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === p.forma ? ' selected' : '') + '>' + P.esc(o[1]) + '</option>'; }).join('') + '</select>' +
+        '<input class="fx-in" type="number" step="0.01" value="' + (p.valor || 0) + '" onchange="fxAcao(\'nf-pag-val\',\'' + i + '\', this.value)">' +
+        '<button class="fx-btn dan" onclick="fxAcao(\'nf-pag-del\',\'' + i + '\')">✕</button>';
+    });
+    h += '</div><button class="fx-btn" style="margin-top:8px" onclick="fxAcao(\'nf-pag-add\')"><i class="ph ph-plus"></i>Adicionar pagamento</button></div>';
+    h += '<h4 style="margin:10px 0 8px">📑 Duplicatas</h4><div class="fx-grid" style="grid-template-columns:130px 150px 40px;gap:6px;align-items:center">';
+    n.duplicatas.forEach(function (du, i) {
+      h += '<input class="fx-in" type="number" step="0.01" value="' + (du.valor || 0) + '" onchange="fxAcao(\'nf-dup-val\',\'' + i + '\', this.value)">' +
+        '<input class="fx-in" type="date" value="' + (du.vencimento || '') + '" onchange="fxAcao(\'nf-dup-ven\',\'' + i + '\', this.value)">' +
+        '<button class="fx-btn dan" onclick="fxAcao(\'nf-dup-del\',\'' + i + '\')">✕</button>';
+    });
+    h += '</div><button class="fx-btn" style="margin-top:8px" onclick="fxAcao(\'nf-dup-add\')"><i class="ph ph-plus"></i>Adicionar duplicata</button></div>';
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">🧮 Totais</h4><div class="fx-grid fx-g4">' +
+      I.inp('nota.totais.despAcess', 'Desp. Acessórias', 'type="number" step="0.01"') +
+      '<label class="fx-lb">Produtos<input class="fx-in" value="' + t.produtos + '" readonly style="background:#f8fafc"></label>' +
+      '<label class="fx-lb">Serviços<input class="fx-in" value="' + t.servicos + '" readonly style="background:#f8fafc"></label>' +
+      I.inp('nota.totais.ipi', 'IPI', 'type="number" step="0.01"') +
+      I.inp('nota.totais.icmsST', 'ICMS ST', 'type="number" step="0.01"') +
+      I.inp('nota.totais.frete', 'Frete', 'type="number" step="0.01"') +
+      I.inp('nota.totais.seletivo', 'Imposto Seletivo', 'type="number" step="0.01"') +
+      '<label class="fx-lb">IBS (Reforma)<input class="fx-in" value="' + t.ibs + '" readonly style="background:#f0fdf4"></label>' +
+      '<label class="fx-lb">CBS (Reforma)<input class="fx-in" value="' + t.cbs + '" readonly style="background:#f0fdf4"></label>' +
+      '<label class="fx-lb">Descontos<input class="fx-in" value="' + t.descontos + '" readonly style="background:#f8fafc"></label>' +
+      '</div><div style="text-align:right;margin-top:8px;font-size:20px;font-weight:900;color:#0a1e8a">Total: R$ ' + P.brl(t.total) + '</div></div>';
+    if (n.autorizacao) h += '<div class="fx-card fx-mini">Autorização: Dh ' + P.esc(n.autorizacao.dh || '') + ' · Protocolo ' + P.esc(n.autorizacao.protocolo || '') + '</div>';
+    return h;
+  }
+  function fxRenderDestinatario(n) {
+    var d = I.db();
+    var origens = P.esc((d.clientes || []).length) + ' clientes e ' + ((d.fornecedores || []).length) + ' fornecedores no cadastro';
+    var h = '<div class="fx-card"><div class="fx-grid fx-g3">' +
+      I.sel('nota.dest.pesquisarPor', 'Pesquisar por', [['Cliente', 'Cliente'], ['Fornecedor', 'Fornecedor']]) +
+      I.inp('nota.dest.refId', 'Cadastro (id)') +
+      '<label class="fx-lb">Escolher do cadastro<select class="fx-in" id="fx-dest-pick"><option value="">— selecionar —</option>' +
+      (d.clientes || []).map(function (c) { return '<option value="cli:' + P.esc(c.id) + '">👤 ' + P.esc((c.id || '') + ' · ' + (c.nome || c.razao || '')) + '</option>'; }).join('') +
+      (d.fornecedores || []).map(function (f) { return '<option value="for:' + P.esc(f.id) + '">🏭 ' + P.esc((f.id || '') + ' · ' + (f.nome || f.razao || '')) + '</option>'; }).join('') +
+      '</select></label>' +
+      '<div class="fx-lb"> <button class="fx-btn" style="margin-top:16px" onclick="fxAcao(\'nf-dest-puxar\')"><i class="ph ph-download"></i>Puxar dados do cadastro</button></div>' +
+      '</div><p class="fx-mini">Origem: ' + origens + '. Puxa do cadastro <b>sem redigitar</b>; os campos abaixo ainda podem ser ajustados só nesta nota.</p>' +
+      '<div class="fx-grid fx-g3">' +
+      I.inp('nota.dest.nome', 'Nome / Razão Social', 'style="min-width:260px"') +
+      I.inp('nota.dest.doc', 'CNPJ/CPF') +
+      I.inp('nota.dest.ie', 'IE') +
+      I.inp('nota.dest.endereco', 'Endereço', 'style="min-width:260px"') +
+      I.inp('nota.dest.cidade', 'Cidade') +
+      I.inp('nota.dest.uf', 'UF', 'maxlength="2" style="width:60px"') +
+      '</div>' +
+      I.chk('nota.dest.enderecoDiferente', 'Endereço de Entrega é Diferente do Destinatário') +
+      '<label class="fx-lb" style="margin-top:6px">Endereço de entrega (se diferente)<textarea class="fx-in" data-fx="nota.dest.entrega"></textarea></label></div>';
+    return h;
+  }
+  function fxRenderItens(n) {
+    G.__fxTrib = G.__fxTrib || { idx: -1, sub: 'Tributação' };
+    var d = I.db(), h = '';
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">➕ Lançar Produto</h4><div class="fx-grid" style="grid-template-columns:70px 1fr 90px 80px 90px 110px 130px 90px;gap:6px;align-items:end">' +
+      '<label class="fx-lb">Código<input class="fx-in" id="fx-it-cod"></label>' +
+      '<label class="fx-lb">Descrição (digite ou escolha do estoque)<input class="fx-in" id="fx-it-desc" list="fx-dl-prod"><datalist id="fx-dl-prod">' +
+      (d.produtos || []).map(function (p2) { return '<option value="' + P.esc(p2.nome || '') + '" data-cod="' + P.esc(p2.id || '') + '">'; }).join('') + '</datalist></label>' +
+      '<label class="fx-lb">NCM<input class="fx-in" id="fx-it-ncm" style="min-width:80px"></label>' +
+      '<label class="fx-lb">Qtd<input class="fx-in" id="fx-it-qtd" type="number" step="0.0001" value="1" style="min-width:70px"></label>' +
+      '<label class="fx-lb">UN<input class="fx-in" id="fx-it-un" value="UN" style="min-width:60px"></label>' +
+      '<label class="fx-lb">Vlr. Unit<input class="fx-in" id="fx-it-vu" type="number" step="0.01" style="min-width:90px"></label>' +
+      '<label class="fx-lb">Perfil Tributário<select class="fx-in" id="fx-it-perfil">' + I.perfis().map(function (pf) { return '<option value="' + pf.cod + '">' + P.esc(pf.cod + ' ' + pf.descricao) + '</option>'; }).join('') + '</select></label>' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'nf-item-add\')"><i class="ph ph-plus"></i>Lançar</button></div>' +
+      '<p class="fx-mini">Estoque: ' + ((d.produtos || []).length) + ' produtos · escolher da lista preenche código/NCM/valor. <a href="javascript:void(0)" onclick="navigateTo(\'fiscal-perfil\')">＋ Novo Perfil</a> abre o cadastro de perfis.</p></div>';
+    h += '<div style="overflow:auto"><table class="fx-tb"><thead><tr><th>Nº</th><th>Código</th><th>Descrição</th><th>NCM</th><th>CFOP</th><th>CSOSN</th><th>Qtd</th><th>UN</th><th>Vlr Unit</th><th>Desconto</th><th>Total</th><th>Tipo</th><th>Perfil</th><th></th></tr></thead><tbody>';
+    if (!n.itens.length) h += '<tr><td colspan="14" style="text-align:center;color:#94a3b8;padding:18px">Nota sem itens — lance o primeiro acima.</td></tr>';
+    n.itens.forEach(function (it, i) {
+      h += '<tr><td>' + (i + 1) + '</td><td>' + P.esc(it.cprod) + '</td><td>' + P.esc(it.descricao) + '</td><td>' + P.esc(it.ncm) + '</td>' +
+        '<td>' + P.esc(it.cfop) + '</td><td>' + P.esc(it.csosn) + '</td><td>' + it.qtd + '</td><td>' + P.esc(it.un) + '</td>' +
+        '<td style="text-align:right">' + P.brl(it.vunit) + '</td><td style="text-align:right">' + P.brl(it.desconto) + '</td>' +
+        '<td style="text-align:right"><b>' + P.brl(it.vtotal) + '</b></td><td>' + it.tipo + '</td><td>' + P.esc(it.perfilCod || '—') + '</td>' +
+        '<td style="white-space:nowrap"><button class="fx-btn" title="Tributação do item" onclick="fxAcao(\'nf-item-trib\',\'' + i + '\')">⚖️</button>' +
+        '<button class="fx-btn dan" onclick="fxAcao(\'nf-item-del\',\'' + i + '\')">✕</button></td></tr>';
+    });
+    h += '</tbody></table></div>';
+    /* mini-abas Itens | Tributação (o cantinho superior esquerdo das fotos) */
+    if (G.__fxTrib.idx >= 0 && n.itens[G.__fxTrib.idx]) {
+      var it = n.itens[G.__fxTrib.idx], sub = G.__fxTrib.sub;
+      h += '<div class="fx-card" style="border:2px solid #0a1e8a">' +
+        '<div class="fx-tabs" style="margin-bottom:8px">' + ['Itens', 'Tributação'].map(function (s) {
+          return '<div class="fx-tab' + (sub === s ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-sub\',\'' + s + '\')">' + s + '</div>';
+        }).join('') + '<div style="flex:1"></div><button class="fx-btn" onclick="fxAcao(\'nf-trib-fechar\')">✕ Fechar tributação</button></div>';
+      if (sub === 'Itens') {
+        h += '<div class="fx-grid fx-g3">' +
+          '<label class="fx-lb">GTIN/EAN<input class="fx-in" data-fx="tribItem.gtin"></label>' +
+          '<label class="fx-lb">C.Prod<input class="fx-in" data-fx="tribItem.cprod"></label>' +
+          '<label class="fx-lb">Descrição<input class="fx-in" data-fx="tribItem.descricao" style="min-width:240px"></label>' +
+          '<label class="fx-lb">Valor<input class="fx-in" type="number" step="0.01" data-fx="tribItem.vunit"></label>' +
+          '<label class="fx-lb">NCM<input class="fx-in" data-fx="tribItem.ncm"></label>' +
+          '<label class="fx-lb">CEST<input class="fx-in" data-fx="tribItem.cest"></label>' +
+          '<label class="fx-lb">CFOP<input class="fx-in" data-fx="tribItem.cfop" maxlength="4"></label>' +
+          '<div class="fx-lb"> <button class="fx-btn" style="margin-top:16px" onclick="fxAcao(\'nf-item-cfop-todos\')">Alterar para Todos</button></div></div>';
+      }
+      h += '<div id="fx-trib-corpo">' + (sub === 'Tributação' ? fxRenderTribItem(it) : '') + '</div></div>';
+      G.__fxTribItemRef = it;
+    }
+    return h;
+  }
+  function fxRenderTribItem(it) {
+    var t = it.trib;
+    G.__fxTribAba = G.__fxTribAba || 'Tributação';
+    var abas = ['Tributação', 'Importação', 'Outros', 'Reforma Tributária'];
+    var h = '<div class="fx-tabs">' + abas.map(function (a) {
+      return '<div class="fx-tab' + (G.__fxTribAba === a ? ' on' : '') + '" onclick="fxAcao(\'nf-trib-aba\',\'' + a + '\')">' + a + '</div>';
+    }).join('') + '</div>';
+    if (G.__fxTribAba === 'Tributação') {
+      h += '<div class="fx-grid fx-g3">' +
+        /* ICMS */
+        '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS</h4>' +
+        I.sel('tribItem.trib2.csosn', 'CST/CSOSN (Simples Nacional)', P.CSOSN_LISTA) +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.icmsBase', 'Base ICMS R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.icmsValor', 'Valor ICMS R$', 'type="number" step="0.01"') + '</div>' +
+        '<button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'icms\')">Zerar ICMS</button></div>' +
+        /* ICMS ST */
+        '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">ICMS ST</h4><div class="fx-grid fx-g2">' +
+        I.inp('tribItem.trib2.stBase', 'Base ST R$', 'type="number" step="0.01"') + I.inp('tribItem.trib2.stPerc', 'ST %', 'type="number" step="0.01"') + I.inp('tribItem.trib2.stValor', 'Valor ST R$', 'type="number" step="0.01"') +
+        '</div><button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'st\')">Zerar ST</button></div>' +
+        /* IPI */
+        '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">IPI</h4>' +
+        I.sel('tribItem.trib2.ipiCst', 'CST', P.IPI_CST) +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.ipiPerc', 'IPI %', 'type="number" step="0.01"') + I.inp('tribItem.trib2.ipiValor', 'Valor IPI R$', 'type="number" step="0.01"') + '</div>' +
+        '<button class="fx-btn" style="margin-top:6px" onclick="fxAcao(\'nf-trib-zerar\',\'ipi\')">Zerar IPI</button></div>' +
+        /* PIS */
+        '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">PIS</h4>' +
+        I.sel('tribItem.trib2.pisCst', 'CST', P.PISCOFINS_CST) +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.pisAli', 'Alíquota %', 'type="number" step="0.01"') + '<label class="fx-lb"> </label></div></div>' +
+        /* COFINS */
+        '<div class="fx-card" style="margin:0"><h4 style="margin:0 0 6px">COFINS</h4>' +
+        I.sel('tribItem.trib2.cofinsCst', 'CST', P.PISCOFINS_CST) +
+        '<div class="fx-grid fx-g2" style="margin-top:6px">' + I.inp('tribItem.trib2.cofinsAli', 'Alíquota %', 'type="number" step="0.01"') + '</div></div>' +
+        '</div>';
+    } else if (G.__fxTribAba === 'Importação') {
+      var imp = t.imp;
+      h += '<div class="fx-grid fx-g3">' +
+        I.inp('tribItem.imp2.di', 'Documento (DI/DSI/DA/DRI-E)') +
+        I.inp('tribItem.imp2.dtReg', 'Data de Registro', 'type="date"') +
+        I.inp('tribItem.imp2.codExp', 'Código do Exportador') +
+        I.inp('tribItem.imp2.via', 'Via de Transporte') +
+        I.inp('tribItem.imp2.afrmm', 'AFRMM R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.forma', 'Forma de Importação') +
+        I.inp('tribItem.imp2.desembData', 'Desembaraço — Data', 'type="date"') +
+        I.inp('tribItem.imp2.desembUf', 'Desembaraço — UF', 'maxlength="2"') +
+        I.inp('tribItem.imp2.desembLocal', 'Desembaraço — Local') +
+        I.inp('tribItem.imp2.iof', 'IOF R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.despAduan', 'Despesas Aduaneiras R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.ii', 'Imposto de Importação R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.imp2.pais', 'País') + '</div>' +
+        '<p class="fx-mini">Adições (nº/fabricante/desconto) entram quando a nota tiver importação de verdade.</p>';
+    } else if (G.__fxTribAba === 'Outros') {
+      h += '<div class="fx-grid fx-g3">' +
+        I.inp('tribItem.trib2.icmsDeson', 'ICMS Desonerado R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.beneficio', 'Cód. Benefício Fiscal') +
+        I.inp('tribItem.trib2.fcpPerc', 'FCP %', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.fcpValor', 'FCP R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.efetBase', 'Base % Efetivo', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.efetValor', 'Valor Efetivo R$', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.pedido', 'Nº do Pedido') +
+        I.inp('tribItem.trib2.pedidoItem', 'Item do Pedido') +
+        '<label class="fx-lb">Par Comercial/Tributável<input class="fx-in" value="' + P.esc(it.un) + ' × ' + P.brl(it.qtd) + ' × ' + P.brl(it.vunit) + ' = ' + P.brl(it.vtotal) + '" readonly style="background:#f8fafc"></label>' +
+        '</div><p class="fx-mini">Outros → CSOSN ICMS (DIF/UF remetente-dest.), ICMS ST retido/substituído e FCP por UF ficam nestes campos — completa o mapa das 18 fotos.</p>';
+    } else {
+      var cofre = P.ibsCbs(it.vtotal, t.refIbsUfPerc, t.refIbsMunPerc, t.refCbsPerc);
+      h += '<div class="fx-grid fx-g3">' +
+        I.sel('tribItem.trib2.refCst', 'CST (Reforma)', P.REFORMA_CST) +
+        I.sel('tribItem.trib2.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
+        I.inp('tribItem.trib2.refIbsUfPerc', 'IBS Estadual %', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.refIbsMunPerc', 'IBS Municipal %', 'type="number" step="0.01"') +
+        I.inp('tribItem.trib2.refCbsPerc', 'CBS %', 'type="number" step="0.01"') +
+        '</div>' +
+        '<div class="fx-cofre" style="margin-top:8px">' +
+        '<div><span class="fx-mini">IBS Estadual</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
+        '<div><span class="fx-mini">IBS Municipal</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
+        '<div><span class="fx-mini">CBS</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
+        '<p class="fx-mini">Os cofrinhos verdes calculam sozinhos sobre o valor do item (' + P.brl(it.vtotal) + ') com as alíquotas acima — devolução de tributos usa os mesmos campos na nota de devolução.</p>';
+    }
+    return h;
+  }
+  function fxRenderInfosAdic(n) {
+    return '<div class="fx-card"><div class="fx-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+      '<label class="fx-lb">Pré-Configurada (do cadastro)<textarea class="fx-in" data-fx="nota.infos.preConfig"></textarea></label>' +
+      '<label class="fx-lb">Informações Complementares (livre)<textarea class="fx-in" data-fx="nota.infos.complementares" placeholder="Ex.: TOMADOR NOTA FISCAL DE SERVIÇO... (romance crediário→fiscal)"></textarea></label>' +
+      '<label class="fx-lb">Geradas Automaticamente (leitura)<textarea class="fx-in" data-fx="nota.infos.geradasAuto" readonly style="background:#f8fafc"></textarea></label></div>' +
+      '<p class="fx-mini">A caixa automática recebe o texto IBPT (quando ligada na Config &gt; Tributação) na hora de gerar — nunca inventa valor.</p>' +
+      '<h4 style="margin:10px 0 8px">🏛️ Órgãos Públicos</h4><div class="fx-grid fx-g3">' +
+      I.inp('nota.infos.empenho', 'Nota de Empenho') + I.inp('nota.infos.pedido', 'Pedido') + I.inp('nota.infos.contrato', 'Contrato') + '</div></div>';
+  }
+  function fxRenderTransporte(n) {
+    return '<div class="fx-card"><div class="fx-grid fx-g2">' +
+      I.sel('nota.frete.modalidade', 'Modalidade do Frete', P.FRETE_OPCOES) + '</div>' +
+      '<h4 style="margin:10px 0 8px">🚚 Transportadora</h4><div class="fx-grid fx-g4">' +
+      I.inp('nota.frete.transportadora.doc', 'CNPJ/CPF') + I.inp('nota.frete.transportadora.nome', 'Razão Social', 'style="min-width:230px"') +
+      I.inp('nota.frete.transportadora.ie', 'IE') + I.inp('nota.frete.transportadora.endereco', 'Endereço', 'style="min-width:220px"') +
+      I.inp('nota.frete.transportadora.cidade', 'Cidade') + I.inp('nota.frete.transportadora.uf', 'UF', 'maxlength="2" style="width:60px"') +
+      I.inp('nota.frete.transportadora.email', 'E-mail') + '</div>' +
+      '<h4 style="margin:10px 0 8px">🚗 Veículo</h4><div class="fx-grid fx-g3">' +
+      I.inp('nota.frete.veiculo.placa', 'Placa', 'maxlength="8" style="width:100px"') + I.inp('nota.frete.veiculo.uf', 'UF', 'maxlength="2" style="width:60px"') + I.inp('nota.frete.veiculo.rntc', 'RNTC') + '</div>' +
+      '<h4 style="margin:10px 0 8px">📦 Volumes Transportados</h4>' +
+      '<div class="fx-grid" style="grid-template-columns:70px 130px 110px 90px 100px 100px 100px 40px;gap:6px;align-items:center">' +
+      n.frete.volumes.map(function (v, i) {
+        return '<input class="fx-in" type="number" value="' + (v.qtde || 0) + '" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'qtde\',this.value)">' +
+          '<input class="fx-in" value="' + P.esc(v.especie || '') + '" placeholder="Espécie" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'especie\',this.value)">' +
+          '<input class="fx-in" value="' + P.esc(v.marca || '') + '" placeholder="Marca" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'marca\',this.value)">' +
+          '<input class="fx-in" value="' + P.esc(v.num || '') + '" placeholder="Numeração" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'num\',this.value)">' +
+          '<input class="fx-in" type="number" step="0.001" value="' + (v.pesoB || 0) + '" placeholder="Peso Bruto" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'pesoB\',this.value)">' +
+          '<input class="fx-in" type="number" step="0.001" value="' + (v.pesoL || 0) + '" placeholder="Peso Líq." onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'pesoL\',this.value)">' +
+          '<input class="fx-in" value="' + P.esc(v.lacre || '') + '" placeholder="Lacre" onchange="fxAcao(\'nf-vol-edit\',\'' + i + '\',\'lacre\',this.value)">' +
+          '<button class="fx-btn dan" onclick="fxAcao(\'nf-vol-del\',\'' + i + '\')">✕</button>';
+      }).join('') + '</div>' +
+      '<button class="fx-btn" style="margin-top:8px" onclick="fxAcao(\'nf-vol-add\')"><i class="ph ph-plus"></i>Adicionar volume</button></div>';
+  }
+  function fxRenderCorrecoes(n) {
+    var d = I.db(), cce = [];
+    (d.config && d.config.nfRegistro || []).forEach(function (r) {
+      if (r.chave && n.chaveRef === r.chave) (r.cartas || r.eventos || []).forEach(function (c) { cce.push(c); });
+    });
+    (n.cce || []).forEach(function (c) { cce.push(c); });
+    return '<div class="fx-card"><h4 style="margin:0 0 8px">📝 Correções Realizadas (Cartas de Correção)</h4>' +
+      '<table class="fx-tb"><thead><tr><th>Data</th><th>Texto</th><th>Protocolo</th></tr></thead><tbody>' +
+      (cce.length ? cce.map(function (c) { return '<tr><td>' + P.dataBR(c.em || c.dh) + '</td><td>' + P.esc(c.texto || '') + '</td><td>' + P.esc(c.protocolo || '') + '</td></tr>'; }).join('') :
+        '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px">Nenhuma carta de correção nesta nota ainda.</td></tr>') + '</tbody></table>' +
+      '<div style="margin-top:8px;display:flex;gap:8px">' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-cce-imprimir\')"><i class="ph ph-printer"></i>Imprimir</button>' +
+      '<span class="fx-mini" style="align-self:center">CC-e nova se faz pela LISTAGEM da Central (botão da nota autorizada) — carta não altera valor/item.</span></div></div>';
+  }
+  function fxRenderReforma(n) {
+    var base = (n.totais && n.totais.produtos) || 0;
+    var cofre = P.ibsCbs(base, 0.1, 0, 0.9);
+    return '<div class="fx-card"><div class="fx-grid fx-g2">' +
+      I.sel('nota.reforma.cst', 'Tributação Padrão — CST', P.REFORMA_CST) +
+      I.sel('nota.reforma.classif', 'Classificação', P.REFORMA_CLASSIF) +
+      I.inp('nota.reforma.base', 'Base R$', 'type="number" step="0.01"') + '</div>' +
+      '<div class="fx-cofre" style="margin-top:8px">' +
+      '<div><span class="fx-mini">IBS Estadual 0,1%</span><b>R$ ' + P.brl(cofre.ibsUf) + '</b></div>' +
+      '<div><span class="fx-mini">IBS Municipal 0%</span><b>R$ ' + P.brl(cofre.ibsMun) + '</b></div>' +
+      '<div><span class="fx-mini">CBS 0,9%</span><b>R$ ' + P.brl(cofre.cbs) + '</b></div></div>' +
+      '<p class="fx-mini">Vigência por UF/data fica nas Configurações &gt; Reforma (o "Alterar NFe → Cidades / Datas" do sistema antigo virou os parâmetros da aba Reforma). <a href="javascript:void(0)" onclick="navigateTo(\'config-fiscal\')">Abrir Configurações</a></p></div>';
+  }
+  function fxRenderReferenciar(n) {
+    return '<div class="fx-card"><h4 style="margin:0 0 8px">🔗 Notas Fiscais Referenciadas</h4>' +
+      '<table class="fx-tb"><thead><tr><th>Chave de acesso (44 dígitos)</th><th></th></tr></thead><tbody>' +
+      (n.refs.length ? n.refs.map(function (r, i) { return '<tr><td style="font-family:monospace">' + P.esc(r) + '</td><td style="width:40px"><button class="fx-btn dan" onclick="fxAcao(\'nf-ref-del\',\'' + i + '\')">✕</button></td></tr>'; }).join('') :
+        '<tr><td colspan="2" style="text-align:center;color:#94a3b8;padding:14px">Nenhuma nota referenciada (devoluções/complementares apontam a nota de origem aqui).</td></tr>') + '</tbody></table>' +
+      '<div style="display:flex;gap:8px;margin-top:8px"><input class="fx-in" id="fx-ref-nova" maxlength="44" placeholder="cole a chave de 44 dígitos" style="min-width:380px;font-family:monospace">' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-ref-add\')"><i class="ph ph-plus"></i>Adicionar</button></div></div>';
+  }
+  function fxRenderLog(n) {
+    var regs = (n.log || []).slice().reverse();
+    return '<div class="fx-card"><div class="fx-tabs">' +
+      ['Respostas', 'XML Resposta', 'Log'].map(function (s) { return '<div class="fx-tab' + (s === 'Log' ? ' on' : '') + '">' + s + '</div>'; }).join('') + '</div>' +
+      '<p class="fx-mini">Retorno completo WS / dados SEFAZ aparecem aqui depois da 1ª transmissão real. Antes disso: o log local da nota.</p>' +
+      '<table class="fx-tb"><thead><tr><th>Quando</th><th>O que aconteceu</th><th>Quem</th></tr></thead><tbody>' +
+      (regs.length ? regs.map(function (l) { return '<tr><td>' + P.esc((l.em || '').replace('T', ' ').slice(0, 19)) + '</td><td>' + P.esc(l.acao + (l.detalhe ? ' — ' + l.detalhe : '')) + '</td><td>' + P.esc(l.usuario || '') + '</td></tr>'; }).join('') :
+        '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:14px">Log vazio — ações da nota aparecem aqui.</td></tr>') + '</tbody></table></div>';
+  }
+  function fxRenderEditorNf() {
+    var n = fxNotaEdicao(); if (!n) return '';
+    var aba = (G.__fxEd && G.__fxEd.aba) || 'Gerais';
+    var s = (I.sess() || {}).usuario || n.usuario || '';
+    var h = I.placa();
+    h += '<div class="fx-card" style="position:sticky;top:0;z-index:2">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">' +
+      '<div><div class="fx-mini">Código</div><b>' + P.esc(n.cod || '— automático —') + '</b></div>' +
+      '<div><div class="fx-mini">Dh Cadastro</div><b>' + P.esc(P.dataBR(n.dhCadastro)) + '</b></div>' +
+      '<div><div class="fx-mini">Dh Emissão</div><b>' + P.esc(P.dataBR(n.dhEmissao) || '— até gerar —') + '</b></div>' +
+      '<div><div class="fx-mini">Dh Saída</div><b>' + P.esc(P.dataBR(n.dhSaida) || '—') + '</b></div>' +
+      '<div><div class="fx-mini">Usuário</div><b>' + P.esc(s) + '</b></div>' +
+      '<div style="flex:1;text-align:right"><div class="fx-status" style="color:' + (n.status === 'Autorizada' ? '#166534' : (n.status === 'Cancelada' ? '#991b1b' : '#92400e')) + '">' + P.esc(n.status) + '</div></div></div></div>';
+    h += fxAbaVendaNf(n);
+    h += '<div id="fx-root">';
+    if (aba === 'Gerais') h += fxRenderGerais(n);
+    else if (aba === 'Destinatário') h += fxRenderDestinatario(n);
+    else if (aba === 'Itens da Nota') h += fxRenderItens(n);
+    else if (aba === 'Informações Adicionais') h += fxRenderInfosAdic(n);
+    else if (aba === 'Transporte') h += fxRenderTransporte(n);
+    else if (aba === 'Correções') h += fxRenderCorrecoes(n);
+    else if (aba === 'Reforma Tributária') h += fxRenderReforma(n);
+    else if (aba === 'Referenciar') h += fxRenderReferenciar(n);
+    else if (aba === 'Log') h += fxRenderLog(n);
+    h += '</div>';
+    h += '<div class="fx-card" style="position:sticky;bottom:0;z-index:2;display:flex;gap:8px;flex-wrap:wrap;box-shadow:0 -8px 24px rgba(15,23,42,.08)">' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'nf-gerar\')"><i class="ph ph-paper-plane-tilt"></i>Gerar NF-e</button>' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-previa\')"><i class="ph ph-eye"></i>Pré-Visualizar</button>' +
+      '<button class="fx-btn" onclick="navigateTo(\'config-fiscal\')" title="Abre as Configurações de NF (10 abas)"><i class="ph ph-gear"></i></button>' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-salvar\')"><i class="ph ph-floppy-disk"></i>Salvar</button>' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-sair\')">Sair</button></div>';
+    return h;
+  }
+  function fxRenderCentral() {
+    I.css();
+    G.__fxEd = G.__fxEd || null;
+    var h = G.__fxEd && fxNotaEdicao() ? fxRenderEditorNf() : fxRenderListagem();
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+  /* DANFE PRÉ-VISUALIZAÇÃO (selo vermelho grande, sem valor fiscal) */
+  function fxDanfePrevia(n) {
+    var cfg = I.cfg();
+    var emp = (I.db().config && I.db().config.empresa) || {};
+    var t = fxTotaisAuto(n);
+    var linhas = n.itens.map(function (it, i) {
+      return '<tr><td>' + P.esc(it.cprod) + '</td><td>' + P.esc(it.descricao) + '</td><td>' + P.esc(it.ncm) + '</td><td>' + P.esc(it.cfop) + '</td><td>' + P.esc(it.un) + '</td><td style="text-align:right">' + P.brl(it.qtd) + '</td><td style="text-align:right">' + P.brl(it.vunit) + '</td><td style="text-align:right">' + P.brl(it.vtotal) + '</td></tr>';
+    }).join('');
+    var ibpt = ''; if (cfg.trib.mostrarTribItens && Number(n.totais.tribAprox) > 0) ibpt = 'Valor Aproximado Total dos Tributos Federais, Estaduais e Municipais R$ ' + P.brl(n.totais.tribAprox) + ' Fonte: IBPT';
+    var infos = [n.infos.preConfig, n.infos.complementares, ibpt].filter(Boolean).join('\n');
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pré-visualização da NF-e</title><style>' +
+      'body{font-family:Arial,sans-serif;margin:24px;color:#111} .danfe{position:relative;border:2px solid #111;max-width:820px;margin:auto;padding:10px;overflow:hidden}' +
+      '.selo{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);font-size:44px;font-weight:900;color:rgba(220,38,38,.30);border:6px solid rgba(220,38,38,.30);border-radius:14px;padding:8px 20px;white-space:nowrap;letter-spacing:.04em}' +
+      '.bloco{border:1px solid #111;margin-top:8px;padding:6px;font-size:11px} .bloco h5{margin:0 0 4px;font-size:10px;text-transform:uppercase;letter-spacing:.05em}' +
+      'table{width:100%;border-collapse:collapse;font-size:10px} td,th{border:1px solid #111;padding:3px 4px}' +
+      '.cab{display:flex;justify-content:space-between;align-items:center} .cab h2{margin:0;font-size:18px}.mini{font-size:9px;color:#333}' +
+      '@media print {.btn{display:none}} </style></head><body>' +
+      '<div style="text-align:center;margin-bottom:10px" class="btn"><button onclick="window.print()" style="height:36px;padding:0 18px;font-weight:700">🖨️ Imprimir</button> <button onclick="window.close()" style="height:36px;padding:0 18px">Fechar</button></div>' +
+      '<div class="danfe"><div class="selo">NF-E EM PRÉ-VISUALIZAÇÃO<br><span style="font-size:24px">SEM VALOR FISCAL</span></div>' +
+      '<div class="cab"><div><h2>DANFE</h2><div class="mini">Documento Auxiliar da Nota Fiscal Eletrônica</div></div>' +
+      '<div style="text-align:right"><div><b>NF-e Nº ' + P.esc(n.numero || '—') + '</b> Série ' + P.esc(n.serie) + '</div><div class="mini">Modelo ' + P.esc(n.modelo) + ' · ' + P.esc(n.natureza) + '</div><div class="mini">CHAVE DE ACESSO: — (só existe após autorizar)</div></div></div>' +
+      '<div class="bloco"><h5>Emitente</h5>' + P.esc(emp.nome || '(empresa do sistema)') + ' · CNPJ ' + P.esc(emp.cnpj || '—') + ' · IE ' + P.esc(emp.ie || '—') + '</div>' +
+      '<div class="bloco"><h5>Destinatário / Remetente</h5>' + P.esc(n.dest.nome || '—') + ' · CNPJ/CPF ' + P.esc(n.dest.doc || '—') + ' · IE ' + P.esc(n.dest.ie || '—') + '<br>' + P.esc(n.dest.endereco || '') + ' ' + P.esc(n.dest.cidade || '') + '/' + P.esc(n.dest.uf || '') + (n.dest.enderecoDiferente && n.dest.entrega ? '<br><b>Entrega:</b> ' + P.esc(n.dest.entrega) : '') + '</div>' +
+      '<div class="bloco"><h5>Produtos e Serviços</h5><table><thead><tr><th>Código</th><th>Descrição</th><th>NCM</th><th>CFOP</th><th>UN</th><th>Qtd</th><th>Vlr Unit</th><th>Vlr Total</th></tr></thead><tbody>' + (linhas || '<tr><td colspan="8" style="text-align:center">sem itens</td></tr>') + '</tbody></table></div>' +
+      '<div class="bloco"><h5>Cálculo do Imposto</h5>Produtos R$ ' + P.brl(t.produtos) + ' · Serviços R$ ' + P.brl(t.servicos) + ' · Frete R$ ' + P.brl(t.frete) + ' · IPI R$ ' + P.brl(t.ipi) + ' · ICMS ST R$ ' + P.brl(t.icmsST) + ' · IBS R$ ' + P.brl(t.ibs) + ' · CBS R$ ' + P.brl(t.cbs) + ' · Descontos R$ ' + P.brl(t.descontos) + ' · <b>TOTAL DA NOTA R$ ' + P.brl(t.total) + '</b></div>' +
+      '<div class="bloco"><h5>Transporte</h5>Modalidade: ' + P.esc((P.FRETE_OPCOES.find(function (f) { return f[0] === n.frete.modalidade; }) || ['', '—'])[1]) + (n.frete.transportadora.nome ? ' · ' + P.esc(n.frete.transportadora.nome) : '') + (n.frete.volumes.length ? ' · Volumes: ' + n.frete.volumes.map(function (v) { return P.esc(v.qtde + ' ' + (v.especie || '')); }).join(', ') : '') + '</div>' +
+      '<div class="bloco"><h5>Dados Adicionais</h5><pre style="white-space:pre-wrap;font-size:10px;margin:0">' + P.esc(infos || '(sem informações)') + '</pre></div>' +
+      '<div class="mini" style="text-align:center;margin-top:6px">Pré-visualização gerada pelo sistema Digicopy — sem valor fiscal enquanto não autorizada na SEFAZ.</div></div></body></html>';
+  }
+
+/* ══════════════ PARTE 4 — PERFIL TRIBUTÁRIO (11 fotos) ══════════════ */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc4) return;
+  G.__v6014fxc4 = true;
+  var P = G.FX614_PURE, I = G.__v6014fxInfra;
+
+  function fxRenderPerfilLista() {
+    I.css();
+    var perfis = I.perfis(), h = I.placa();
+    h += '<div class="fx-barra"><b style="font-size:14px">Perfis Tributários</b><span class="fx-mini">o mapa das operações da loja — cada item da nota escolhe um perfil e herda CFOP/CSOSN dele</span>' +
+      '<span style="flex:1"></span><button class="fx-btn pri" onclick="fxAcao(\'pf-novo\')"><i class="ph ph-plus"></i>Novo Perfil</button></div>';
+    h += '<table class="fx-tb"><thead><tr><th>Código</th><th>Descrição</th><th>CFOP</th><th>CSOSN</th><th>PIS</th><th>COFINS</th><th>IPI</th><th></th></tr></thead><tbody>';
+    perfis.forEach(function (pf, i) {
+      h += '<tr><td><b>' + P.esc(pf.cod) + '</b></td><td>' + P.esc(pf.descricao) + '</td><td>' + P.esc(pf.cfop) + '</td><td>' + P.esc(pf.csosn) + '</td>' +
+        '<td>' + P.esc(pf.pisCst) + ' ' + (pf.pisAli || 0) + '%</td><td>' + P.esc(pf.cofinsCst) + ' ' + (pf.cofinsAli || 0) + '%</td><td>' + P.esc(pf.ipiCst) + ' ' + (pf.ipiAli || 0) + '%</td>' +
+        '<td style="white-space:nowrap"><button class="fx-btn" onclick="fxAcao(\'pf-alterar\',\'' + i + '\')"><i class="ph ph-pencil"></i>Alterar</button>' +
+        '<button class="fx-btn dan" onclick="fxAcao(\'pf-excluir\',\'' + i + '\')">Excluir</button></td></tr>';
+    });
+    h += '</tbody></table>';
+    if (G.__fxPfEd != null && perfis[G.__fxPfEd]) h += fxRenderPerfilEdicao(perfis[G.__fxPfEd], G.__fxPfEd);
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+  function fxRenderPerfilEdicao(pf, idx) {
+    G.__fxPfObj = pf;
+    return '<div class="fx-card" style="border:2px solid #0a1e8a;margin-top:10px"><h4 style="margin:0 0 8px">⚙️ Configurar Tributação — ' + P.esc(pf.cod) + '</h4>' +
+      '<div class="fx-grid fx-g3">' +
+      I.sel('pf.tipo', 'Tipo de Tributação', [['ICMS', 'ICMS'], ['ISSQN', 'ISSQN']]) +
+      I.inp('pf.descricao', 'Descrição', 'style="min-width:280px"') +
+      I.inp('pf.cfop', 'CFOP Padrão', 'maxlength="4"') + '</div>' +
+      '<div class="fx-tabs" style="margin-top:10px">' + ['ICMS', 'PIS', 'COFINS', 'IPI', 'Reforma Tributária'].map(function (a) {
+        return '<div class="fx-tab' + ((G.__fxPfAba || 'ICMS') === a ? ' on' : '') + '" onclick="fxAcao(\'pf-aba\',\'' + a + '\')">' + a + '</div>';
+      }).join('') + '</div>' +
+      '<div class="fx-card" style="margin:0">' + fxRenderPerfilAba(pf) + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'pf-salvar\')"><i class="ph ph-floppy-disk"></i>Salvar perfil</button>' +
+      '<button class="fx-btn" onclick="fxAcao(\'pf-fechar\')">Fechar</button></div></div>';
+  }
+  function fxRenderPerfilAba(pf) {
+    var a = G.__fxPfAba || 'ICMS';
+    if (a === 'ICMS') return I.sel('pf.csosn', 'CST/CSOSN (Simples Nacional)', P.CSOSN_LISTA) + '<p class="fx-mini">O dele usa <b>102</b> (sem crédito) nas vendas e 500 ST em operações com substituição.</p>';
+    if (a === 'PIS') return '<div class="fx-grid fx-g2">' + I.sel('pf.pisCst', 'CST PIS', P.PISCOFINS_CST) + I.inp('pf.pisAli', 'Alíquota PIS %', 'type="number" step="0.01"') + '</div>';
+    if (a === 'COFINS') return '<div class="fx-grid fx-g2">' + I.sel('pf.cofinsCst', 'CST COFINS', P.PISCOFINS_CST) + I.inp('pf.cofinsAli', 'Alíquota COFINS %', 'type="number" step="0.01"') + '</div>';
+    if (a === 'IPI') return '<div class="fx-grid fx-g2">' + I.sel('pf.ipiCst', 'CST IPI', P.IPI_CST) + I.inp('pf.ipiAli', 'Alíquota IPI %', 'type="number" step="0.01"') + '</div>';
+    return '<div class="fx-grid fx-g2">' + I.sel('pf.refCst', 'CST (novo modelo)', P.REFORMA_CST) + I.sel('pf.refClassif', 'Classificação', P.REFORMA_CLASSIF) +
+      I.inp('pf.ibsUf', 'IBS UF %', 'type="number" step="0.01"') + I.inp('pf.ibsMun', 'IBS MUN %', 'type="number" step="0.01"') + I.inp('pf.cbs', 'CBS %', 'type="number" step="0.01"') + '</div>';
+  }
+
+  /* ══════════════ PARTE 5 — MANIFESTAÇÃO DESTINATÁRIO (7 fotos) ══════════════ */
+  function fxManifEstado() {
+    if (!G.__fxMf) G.__fxMf = { busca: 'ultimo', nsu: '', tipo: 'hoje', txt: '', statusNf: 'todas', modelo: 'todas', status: 'todos', ini: '', fim: '', naoSeAplica: false, sel: null };
+    return G.__fxMf;
+  }
+  function fxManifLista() { var d = I.db(); d.config = d.config || {}; d.config.nfManifestacoes = d.config.nfManifestacoes || []; return d.config.nfManifestacoes; }
+  function fxRenderManifestacao() {
+    I.css();
+    var st = fxManifEstado(), h = I.placa();
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">📥 Consulta Notas Destinadas</h4><div style="display:flex;flex-direction:column;gap:5px">' +
+      P.MANIF_BUSCAS.map(function (b) {
+        return '<label class="fx-chk"><input type="radio" name="fxm-busca" ' + (st.busca === b[0] ? 'checked' : '') + ' onchange="fxAcao(\'mf-busca-modo\',\'' + b[0] + '\')"><span>' + P.esc(b[1]) + '</span></label>';
+      }).join('') + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">' +
+      '<label class="fx-lb" id="fxm-nsu-lb" style="display:' + (st.busca === 'nsu' ? 'flex' : 'none') + '">NSU específico<input class="fx-in" id="fxm-nsu" value="' + P.esc(st.nsu) + '" maxlength="15"></label>' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'mf-consultar\')"><i class="ph ph-cloud-arrow-down"></i>Consultar Destinadas</button>' +
+      '<span class="fx-mini">Marcador NSU salvo por empresa: <b>' + P.esc((I.db().config || {}).nfNsuUltimo || '— nenhuma consulta ainda —') + '</b></span></div></div>';
+    h += '<div class="fx-barra">' +
+      I.sel('mf.tipo', 'Tipo de Filtro', P.MANIF_TIPO_FILTRO) +
+      I.inp('mf.txt', 'Valor do filtro', 'style="min-width:200px"') +
+      I.sel('mf.statusNf', 'Status NF', P.MANIF_STATUS_NF) +
+      I.sel('mf.modelo', 'Modelo NF', P.LIST_MODELO) +
+      I.sel('mf.status', 'Status Manifestação', P.MANIF_STATUS) +
+      I.inp('mf.ini', 'Período de', 'type="date"') + I.inp('mf.fim', 'até', 'type="date"') +
+      I.chk('mf.naoSeAplica', 'Não se Aplica') + '</div>';
+    var lista = fxManifLista().filter(function (m) {
+      if (st.statusNf !== 'todas' && (m.statusNota || 'autorizada') !== st.statusNf) return false;
+      if (st.modelo !== 'todas' && String(m.modelo || '55') !== st.modelo) return false;
+      if (st.status !== 'todos') { var ev = (m.nossoStatus || 'desconhecida'); if (st.status === 'confirmada' && ev !== 'realizada' && ev !== 'confirmada') return false; if (st.status !== 'confirmada' && ev !== st.status) return false; }
+      var dia = String(m.dhEmissao || m.em || '').slice(0, 10);
+      if (st.ini && dia < st.ini) return false;
+      if (st.fim && dia > st.fim) return false;
+      var t = String(st.txt || '').toLowerCase();
+      if (t) { if (st.tipo === 'emitente' && String(m.emitente || '').toLowerCase().indexOf(t) < 0) return false; if (st.tipo === 'chave' && String(m.chave || '').indexOf(t) < 0) return false; if (st.tipo === 'valor' && String(m.valor || '').indexOf(t) < 0) return false; }
+      return true;
+    });
+    h += '<div class="fx-barra"><span class="fx-mini">' + lista.length + ' nota(s) destinadas</span><span style="flex:1"></span>' +
+      '<button class="fx-btn" onclick="fxAcao(\'mf-consultar\')"><i class="ph ph-arrows-clockwise"></i>Obter Notas</button>' +
+      '<button class="fx-btn pri" id="fxm-bt-man" onclick="fxAcao(\'mf-manifestar\')" disabled><i class="ph ph-stamp"></i>Manifestar</button>' +
+      '<button class="fx-btn" id="fxm-bt-xml" onclick="fxAcao(\'mf-baixar\')" disabled><i class="ph ph-download"></i>Baixar XML</button></div>';
+    h += '<div style="overflow:auto;max-height:calc(100vh - 380px)"><table class="fx-tb"><thead><tr>' + P.MANIF_COLS.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>';
+    if (!lista.length) h += '<tr><td colspan="' + P.MANIF_COLS.length + '" style="text-align:center;color:#94a3b8;padding:22px">Nenhuma nota destinada na lista — use <b>Consultar Destinadas</b> (ou adicione uma chave pela busca).</td></tr>';
+    lista.forEach(function (m, i) {
+      var id = m.chave || ('m' + i), sel = st.sel === id ? ' class="fx-sel"' : '';
+      h += '<tr' + sel + ' onclick="fxAcao(\'mf-sel\',\'' + id + '\')">' +
+        '<td><span class="fx-selmark"></span></td><td>' + P.esc(m.codigo || (i + 1)) + '</td><td>' + P.esc(m.nsu || '—') + '</td>' +
+        '<td>' + P.esc(m.emitente || '') + '</td><td>' + P.esc(m.ie || '') + '</td><td>' + P.esc(m.cnpj || '') + '</td>' +
+        '<td style="font-family:monospace;font-size:10.5px">' + P.esc((m.chave || '').slice(0, 20) + (m.chave && m.chave.length > 20 ? '…' : '')) + '</td>' +
+        '<td>' + P.esc(m.tipoValor || 'NF') + '</td><td style="text-align:right">' + P.brl(m.valor || 0) + '</td><td>' + P.esc(m.serie || '') + '</td>' +
+        '<td>' + P.esc(m.nDFe || '') + '</td><td>' + P.esc(P.dataBR(m.dhEmissao || m.em)) + '</td>' +
+        '<td>' + P.esc(m.statusNota || 'Autorizada') + '</td><td>' + P.esc(m.nossoStatus || 'Operação Desconhecida') + '</td><td>' + P.esc(m.protocolo || '') + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+
+  /* ══════════════ PARTE 6 — NCM (favoritos + padrões; tela com filtros = foto pendente opcional) ══════════════ */
+  function fxRenderNcm() {
+    I.css();
+    var d = I.db(); d.config = d.config || {}; d.config.nfNcmFavoritos = d.config.nfNcmFavoritos || [];
+    var termo = (G.__fxNcmTermo || '').toLowerCase();
+    var favs = d.config.nfNcmFavoritos.filter(function (f) { return !termo || String(f.cod).indexOf(termo) >= 0 || String(f.desc).toLowerCase().indexOf(termo) >= 0; });
+    var h = I.placa();
+    h += '<div class="fx-barra"><input class="fx-in" id="fx-ncm-termo" placeholder="Buscar por código ou descrição" style="min-width:260px" value="' + P.esc(G.__fxNcmTermo || '') + '">' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'ncm-buscar\')"><i class="ph ph-magnifying-glass"></i>Buscar</button>' +
+      '<span class="fx-mini">a tabela NCM completa (4.439 itens do banco antigo) entra com a migração — hoje a lupa vive nos favoritos</span></div>';
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">⭐ Favoritos</h4>' +
+      '<div class="fx-grid" style="grid-template-columns:110px 1fr 40px;gap:6px"><input class="fx-in" id="fx-ncm-cod" maxlength="8" placeholder="8 dígitos"><input class="fx-in" id="fx-ncm-desc" placeholder="descrição"><button class="fx-btn pri" onclick="fxAcao(\'ncm-add\')">＋</button></div>' +
+      '<table class="fx-tb" style="margin-top:8px"><thead><tr><th>Código</th><th>Descrição</th><th>Uso</th></tr></thead><tbody>';
+    if (!favs.length) h += '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:14px">Nenhum favorito ainda — cadastre os NCMs usados no dia a dia.</td></tr>';
+    favs.forEach(function (f, i) {
+      h += '<tr><td style="font-family:monospace">' + P.esc(f.cod) + '</td><td>' + P.esc(f.desc) + '</td>' +
+        '<td style="white-space:nowrap"><button class="fx-btn" onclick="fxAcao(\'ncm-uso\',\'' + i + '\',\'padrao\')">→ padrão</button>' +
+        '<button class="fx-btn" onclick="fxAcao(\'ncm-uso\',\'' + i + '\',\'tinta\')">→ recarga/tinta</button>' +
+        '<button class="fx-btn" onclick="fxAcao(\'ncm-uso\',\'' + i + '\',\'locacao\')">→ locação</button>' +
+        '<button class="fx-btn dan" onclick="fxAcao(\'ncm-del\',\'' + i + '\')">✕</button></td></tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">🎯 Padrões atuais (uma verdade só — gravam nas mesmas chaves da Configuração)</h4>' +
+      '<div class="fx-grid fx-g3">' +
+      '<div class="fx-card" style="margin:0"><span class="fx-mini">NCM padrão (produto sem NCM)</span><b style="font-family:monospace">' + P.esc(d.config.nfNcmPadrao || '—') + '</b></div>' +
+      '<div class="fx-card" style="margin:0"><span class="fx-mini">Recarga/tinta</span><b style="font-family:monospace">' + P.esc(d.config.nfNcmTinta || '—') + '</b></div>' +
+      '<div class="fx-card" style="margin:0"><span class="fx-mini">Locação de máquinas</span><b style="font-family:monospace">' + P.esc(d.config.nfNcmLocacao || '—') + '</b></div></div></div>';
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+
+  /* ══════════════ PARTE 7 — ENVIAR XML: 'Preparar Arquivos Fiscais' (1 foto) ══════════════ */
+  function fxMatrizMes(mesISO) {
+    var d = I.db(), m = { nfe: { ger: 0, canc: 0, corr: 0, nf: [] }, nfce: { ger: 0, canc: 0, corr: 'Não Suportado', nf: [] } };
+    (d.config && d.config.nfRegistro || []).forEach(function (r) {
+      var dia = String(r.autorizadoEm || r.criadoEm || '').slice(0, 7);
+      if (dia !== mesISO) return;
+      var alvo = String(r.modelo) === '65' ? m.nfce : m.nfe;
+      if (!r.xml) alvo.nf.push(r); else if (r.status === 'cancelada') alvo.canc++; else if (r.corrigida) alvo.corr++; else alvo.ger++;
+    });
+    m.nfe.nfNao = m.nfe.nf.length; m.nfce.nfNao = m.nfce.nf.length;
+    return m;
+  }
+  function fxRenderEnviarXml() {
+    I.css();
+    var hoje = new Date(); var mesPadrao = hoje.toISOString().slice(0, 7);
+    G.__fxXmlMes = G.__fxXmlMes || mesPadrao;
+    G.__fxXmlPdf = G.__fxXmlPdf || false;
+    var mz = fxMatrizMes(G.__fxXmlMes);
+    var mesNome = new Date(G.__fxXmlMes + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    function linha(rot, a, b) { return '<tr><td><b>' + rot + '</b></td><td style="text-align:center">' + a + '</td><td style="text-align:center">' + b + '</td></tr>'; }
+    var h = I.placa();
+    h += '<div class="fx-card"><h4 style="margin:0 0 8px">🗂️ Preparar Arquivos Fiscais</h4>' +
+      '<div class="fx-barra"><label class="fx-lb">Selecione o Mês<input class="fx-in" type="month" value="' + G.__fxXmlMes + '" onchange="fxAcao(\'xml-mes\',this.value)"></label>' +
+      '<label class="fx-chk"><input type="checkbox" ' + (G.__fxXmlPdf ? 'checked' : '') + ' onchange="fxAcao(\'xml-pdf\',this.checked)"><span>Incluir PDFs</span></label>' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'xml-preparar\')"><i class="ph ph-package"></i>Preparar Arquivos</button></div>' +
+      '<table class="fx-tb"><thead><tr><th></th><th>NF-e (modelo 55)</th><th>NFC-e (modelo 65)</th></tr></thead><tbody>' +
+      linha('Geradas', mz.nfe.ger, mz.nfce.ger) +
+      linha('Canceladas', mz.nfe.canc, mz.nfce.canc) +
+      linha('Corrigidas', mz.nfe.corr, mz.nfce.corr) +
+      '<tr><td><b>XML Não Encontrados</b></td><td style="text-align:center">' + mz.nfe.nfNao + (mz.nfe.nfNao ? ' <a href="javascript:void(0)" onclick="fxAcao(\'xml-ver\',\'nfe\')">Ver</a>' : '') + '</td><td style="text-align:center">' + mz.nfce.nfNao + (mz.nfce.nfNao ? ' <a href="javascript:void(0)" onclick="fxAcao(\'xml-ver\',\'nfce\')">Ver</a>' : '') + '</td></tr></tbody></table>' +
+      ((mz.nfe.nfNao + mz.nfce.nfNao) ? '<p class="fx-mini" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px;margin-top:8px">⚠️ Há XML não encontrado: no sistema antigo você procurava <b>em outros terminais</b>. Aqui, a nuvem junta os XMLs de TODOS os PCs na mesma pasta do mês — se faltar algum, rode o pacote no PC que emitiu e os outros PCs herdam pela sincronização.</p>' : '') +
+      '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">' +
+      '<label class="fx-lb">E-mail do escritório (CC)<input class="fx-in" id="fx-xml-email" style="min-width:280px" value="' + P.esc(I.cfg().outras.emailEscritorio) + '" placeholder="e-mail do contador"></label>' +
+      '<button class="fx-btn" onclick="fxAcao(\'xml-copiar\')"><i class="ph ph-copy"></i>Copiar</button></div>' +
+      '<button class="fx-btn pri" style="margin-top:10px" onclick="fxAcao(\'xml-enviar\')"><i class="ph ph-envelope"></i> Enviar para Escritório (' + mesNome + ')</button></div>';
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+  G.__v6014fxRender2 = { perfil: fxRenderPerfilLista, manifestacao: fxRenderManifestacao, ncm: fxRenderNcm, enviarXml: fxRenderEnviarXml };
+})();
+
+/* ══════════════ PARTE 8 — CONFIG NF EM 10 ABAS (catálogo completo das 10 abas) ══════════════ */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc5) return;
+  G.__v6014fxc5 = true;
+  var P = G.FX614_PURE, I = G.__v6014fxInfra;
+
+  function fxRenderConfig() {
+    I.css();
+    var cfg = I.cfg();
+    G.__fxCfgAba = G.__fxCfgAba || 'Geral';
+    var aba = G.__fxCfgAba;
+    var h = I.placa();
+    h += '<div class="fx-tabs">' + P.CONFIG_ABAS.map(function (a) {
+      return '<div class="fx-tab' + (a === aba ? ' on' : '') + '" onclick="fxAcao(\'cfg-aba\',\'' + a + '\')">' + a + '</div>';
+    }).join('') + '</div>';
+    h += '<div id="fx-root">' + fxRenderConfigAba(cfg, aba) + '</div>';
+    h += '<div style="display:flex;gap:8px;margin-top:4px">' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'cfg-salvar\')"><i class="ph ph-floppy-disk"></i>Salvar esta aba</button>' +
+      '<span class="fx-mini" style="align-self:center">preset = os valores lidos das fotos da config do sistema antigo (série 1, DANFE retrato, frete 9, síncrono, CRT 1…)</span></div>';
+    return '<div class="fx-root-wrap">' + h + '</div>';
+  }
+  function fxRenderConfigAba(cfg, aba) {
+    var d = I.db(), h = '';
+    if (aba === 'Geral') {
+      var amb = 'homologacao'; try { amb = (G.NFG_PURE && G.NFG_PURE.nfgAmbiente(d)) || 'homologacao'; } catch (e) { }
+      h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+        '<label class="fx-lb">Ambiente<input class="fx-in" value="' + (amb === 'producao' ? '1 - Produção' : '2 - Homologação') + '" readonly style="background:#f8fafc"></label>' +
+        I.inp('cfg.geral.serie', 'Série') +
+        I.sel('cfg.geral.modelo', 'Modelo', P.MODELO_OPCOES) +
+        I.sel('cfg.geral.processamento', 'Processamento', P.PROCESSAMENTO) +
+        I.sel('cfg.geral.procEmissao', 'Processo de Emissão', P.PROC_EMISSAO) +
+        I.sel('cfg.geral.danfe', 'DANFE', P.DANFE_OPCOES) +
+        I.sel('cfg.geral.frete', 'Frete Padrão', P.FRETE_OPCOES) +
+        I.sel('cfg.geral.tpEmis', 'Tipo de Emissão', P.TP_EMISSAO) +
+        I.sel('cfg.geral.tpOp', 'Tipo de Operação', P.TP_OPERACAO) +
+        I.sel('cfg.geral.versao', 'Versão', P.VERSAO) +
+        I.sel('cfg.geral.crt', 'CRT (Regime Tributário)', P.CRT_OPCOES) +
+        I.sel('cfg.geral.regEsp', 'Regime Especial', P.REG_ESP) +
+        '</div><p class="fx-mini">Ambiente é lido da placa (Portão Fiscal — produção só com <b>PRODUCAO</b> digitado na Central). Os demais campos valem como preset da emissão.</p></div>';
+    } else if (aba === 'Outras') {
+      h += '<div class="fx-card"><div class="fx-grid fx-g3">' +
+        I.chk('cfg.outras.agruparItens', 'Agrupar itens iguais na finalização') +
+        I.inp('cfg.outras.fuso', 'Fuso horário (UTC)') +
+        I.inp('cfg.outras.emailEscritorio', 'E-mail pro Escritório (CC contador)', 'style="min-width:280px"') +
+        '</div><p class="fx-mini">O e-mail do escritório é o destino do "Enviar para Escritório" (menu Enviar XML). Dado de terceiro: só preencher quando o senhor confirmar. Margens e pasta de PDF/XML ficaram na aba <b>Impressão</b>/aba <b>Nuvem</b>.</p></div>';
+    } else if (aba === 'Tributação') {
+      h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
+        I.sel('cfg.trib.perfilDentro', 'Perfil tributário PADRÃO — dentro do Estado (1)', I.perfis().map(function (p2) { return [p2.cod, p2.cod + ' ' + p2.descricao]; })) +
+        I.sel('cfg.trib.perfilFora', 'Perfil tributário PADRÃO — fora do Estado (2)', I.perfis().map(function (p2) { return [p2.cod, p2.cod + ' ' + p2.descricao]; })) +
+        I.chk('cfg.trib.mostrarTribItens', 'Exibir Valor Aproximado Total dos Tributos nas Informações Adicionais dos Itens') +
+        I.sel('cfg.trib.formatoMsg', 'Formato da mensagem de tributos', [['junto', 'Federal/Estadual/Municipal junto'], ['separado', 'Federal/Estadual/Municipal separado']]) +
+        '</div><p class="fx-mini">Perfis padrão do dele: dentro = 00001 (CFOP 5102), fora = 00002 (CFOP 6102).</p></div>';
+    } else if (aba === 'Mensagens') {
+      h += '<div class="fx-card"><div class="fx-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+        '<label class="fx-lb">Informações Adicionais do Interesse do Contribuinte<textarea class="fx-in" data-fx="cfg.msg.infoContribuinte" placeholder="sai em toda nota (ex.: endereço, mensagem)"></textarea></label>' +
+        '<label class="fx-lb">Texto Obrigatório da Carta de Correção<textarea class="fx-in" data-fx="cfg.msg.textoCartaCorrecao" placeholder="modelo de crédito ICMS do contador — carta NÃO altera valor/item"></textarea></label>' +
+        '<label class="fx-lb">Justificativa da entrada em contingência<textarea class="fx-in" data-fx="cfg.msg.justificativaContingencia" placeholder="ex.: sem comunicação com a SEFAZ no horário"></textarea></label></div></div>';
+    } else if (aba === 'Impressão') {
+      h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
+        I.sel('cfg.geral.danfe', 'DANFE (padrão de saída)', P.DANFE_OPCOES) +
+        I.inp('cfg.outras.caminhoSec', 'Caminho secundário PDF/XML', 'style="min-width:260px" placeholder="pasta onde os arquivos também são guardados"') +
+        '</div><div class="fx-grid fx-g3" style="margin-top:8px">' +
+        I.inp('cfg.outras.margemSup', 'Margem DANFE superior (cm)', 'type="number" step="0.1"') +
+        I.inp('cfg.outras.margemInf', 'Margem DANFE inferior (cm)', 'type="number" step="0.1"') +
+        I.inp('cfg.outras.margemEsq', 'Margem esquerda (cm)', 'type="number" step="0.1"') +
+        I.inp('cfg.outras.margemDir', 'Margem direita (cm)', 'type="number" step="0.1"') +
+        '</div><p class="fx-mini">Preset lido das fotos dele: DANFE 1 - Retrato. As margens ajustam a impressão do DANFE na impressora da loja. Caminho secundário = segunda pasta de guarda (além da da nuvem).</p></div>';
+    } else if (aba === 'FCP') {
+      h += '<div class="fx-card"><p class="fx-mini">Fundo de Combate à Pobreza por UF (NT 003.2015) — aplica só em venda interestadual a consumidor final; confirme alíquotas com a contabilidade. Padrão 2%.</p>' +
+        '<label class="fx-lb" style="max-width:200px">Alíquota padrão %<input class="fx-in" type="number" step="0.01" data-fx="cfg.fcp.padrao"></label>' +
+        '<table class="fx-tb" style="margin-top:8px"><thead><tr><th>UF</th><th>Alíquota FCP %</th></tr></thead><tbody>' +
+        P.FCP_UFS.map(function (uf) {
+          var v = (cfg.fcp.ufs && cfg.fcp.ufs[uf] !== undefined) ? cfg.fcp.ufs[uf] : cfg.fcp.padrao;
+          return '<tr><td><b>' + uf + '</b></td><td><input class="fx-in" style="width:100px" type="number" step="0.01" value="' + v + '" onchange="fxAcao(\'cfg-fcp-uf\',\'' + uf + '\', this.value)"></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    } else if (aba === 'Nuvem') {
+      h += '<div class="fx-card"><h4 style="margin:0 0 6px">☁️ Sincronização</h4>' +
+        '<p class="fx-mini" style="margin-top:0">A nuvem junta os XMLs de TODOS os PCs na mesma pasta do mês — o que um PC emite, os outros herdam pela sincronização. Sem pasta de rede para configurar: o app grava e replica automaticamente.</p>' +
+        '<div class="fx-grid fx-g2">' + I.inp('cfg.outras.caminhoSec', 'Caminho secundário local (opcional)', 'style="min-width:260px"') + '</div>' +
+        '<h4 style="margin:12px 0 6px">🔐 Certificado Digital (do PC emissor)</h4>' +
+        '<div class="fx-grid fx-g2">' +
+        I.inp('cfg.cert.a3Serial', 'A3 — Número de Série (token/smartcard)', 'style="min-width:280px"') +
+        '<div class="fx-lb">A1 — arquivo PFX<div class="fx-mini" style="text-transform:none;font-weight:500;margin-top:4px">Importar arquivo + senha = só no PC emissor (.exe), pela Central. A senha é pedida na hora e <b>não fica salva</b>.</div></div>' +
+        '</div><p class="fx-mini">Biblioteca TLS 1.2 fixa (conjunto moderno: WinCrypt/WinHttp/LibXml2 equiv.).' +
+        (cfg.cert.a3Serial ? ' <b>⚠️ Confira se o número de série bate com o certificado renovado antes da 1ª emissão de verdade.</b>' : '') + '</p></div>';
+    } else if (aba === 'NFCe') {
+      var cscId = (d.config && d.config.nfCscId) || '', csc = (d.config && d.config.nfCsc) || '';
+      h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
+        I.chk('cfg.nfce.qrcodeInfSup', 'Adicionar Tag de QRCode em Informações Suplementares') +
+        I.chk('cfg.nfce.gerarAoFinalizar', 'Gerar NFC-e ao Finalizar Venda no PDV') +
+        I.chk('cfg.nfce.logoDanfe', 'Imprimir Logo no DANFE') +
+        I.chk('cfg.nfce.logoSobreDados', 'Logo sobre os dados da empresa') +
+        I.chk('cfg.nfce.imprimirSemPrevia', 'Imprimir DANFE sem pré-visualização') +
+        I.chk('cfg.nfce.qrLateral', 'Imprimir QRCode Lateral') +
+        I.sel('cfg.nfce.veqr', 'Versão do QRCode', P.VEQR) +
+        I.sel('cfg.nfce.impressoraTipo', 'Tipo de Impressora', P.IMPRESSORA_TIPO) +
+        I.inp('cfg.nfce.impressora', 'Nome da impressora selecionada') +
+        '</div>' +
+        '<div class="fx-grid fx-g2" style="margin-top:10px">' +
+        I.inp('csc.id', 'Id CSC', 'value="' + P.esc(cscId) + '"') +
+        '<label class="fx-lb">CSC/Token (sócinho fica guardado e mascarado)<input class="fx-in" type="password" data-fx="csc.token" value="' + P.esc(csc) + '" autocomplete="off" style="min-width:280px"></label>' +
+        '</div><p class="fx-mini">O CSC é emitido no portal da SEFAZ-MG e assina o QRCode — sem ele, cupom não valida. <b>Gerar NFC-e ao finalizar</b> nasce desmarcado (igual ao dele): nada automático no caixa.</p></div>';
+    } else if (aba === 'Autorizações') {
+      h += '<div class="fx-card">' +
+        '<label class="fx-lb">CNPJ/CPF de quem pode baixar seus XMLs junto à SEFAZ (até 10, separados por vírgula)<input class="fx-in" data-fx="cfg.autoriz.cnpjs" style="min-width:420px" placeholder="ex.: CNPJ do escritório de contabilidade"></label>' +
+        '<p class="fx-mini">Uso típico: liberar o contador. A autorização em si é registrada na SEFAZ; aqui fica a lista de referência.</p></div>';
+    } else if (aba === 'Reforma') {
+      h += '<div class="fx-card"><div class="fx-grid fx-g2">' +
+        I.chk('cfg.reforma.ativa', 'Ativar Reforma Tributária (IBS/CBS 2026)') +
+        I.sel('cfg.reforma.intermediador', 'Indicador de Intermediador/Marketplace', [['0', '0 - Site próprio / teleatendimento / venda direta'], ['1', '1 - Marketplace / plataforma / app parceiro']]) +
+        '</div><p class="fx-mini">O dele vende direto: indicador 0. Os cofrinhos da nota (IBS UF/MUN/CBS) usam as alíquotas do perfil/item.</p>' +
+        '<h4 style="margin:10px 0 8px">🗓️ Parâmetros de vigência (Cidades / Datas)</h4>' +
+        I.inp('cfg.reforma.vigenciaUF', 'UF de referência', 'maxlength="2" style="width:70px" value="MG"') +
+        I.inp('cfg.reforma.vigenciaData', 'Vigente a partir de', 'type="date"') + '</div>';
+    }
+    return h;
+  }
+  G.__v6014fxRender2 = Object.assign(G.__v6014fxRender2 || {}, { config: fxRenderConfig });
+})();
+  /* exportações da parte 3 (ações precisam enxergar) */
+  G.__v6014fx3 = { estadoList: fxEstadoList, linhasBase: fxLinhasBase, filtros: fxAplicarFiltros, notaEdicao: fxNotaEdicao, totaisAuto: fxTotaisAuto, renderCentral: fxRenderCentral, danfePrevia: fxDanfePrevia };
+})();
+
+/* ══════════════ PARTE 9 — AÇÕES (window.fxAcao) + WRAP FINAL ══════════════ */
+(function () {
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6014fxc6) return;
+  G.__v6014fxc6 = true;
+  var P = G.FX614_PURE, I = G.__v6014fxInfra, R1 = G.__v6014fx3, R2 = G.__v6014fxRender2;
+  var VIEWS = ['central-nf', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'config-fiscal'];
+
+  function fxTelaFiscalAtiva() {
+    for (var i = 0; i < VIEWS.length; i++) {
+      var v = document.getElementById('view-' + VIEWS[i]);
+      if (v && v.offsetParent !== null) return VIEWS[i];
+    }
+    return null;
+  }
+  function fxRenderDe(view) {
+    if (view === 'central-nf') return R1.renderCentral();
+    if (view === 'fiscal-perfil') return R2.perfil();
+    if (view === 'fiscal-manifestacao') return R2.manifestacao();
+    if (view === 'fiscal-ncm') return R2.ncm();
+    if (view === 'fiscal-enviar-xml') return R2.enviarXml();
+    if (view === 'config-fiscal') return R2.config();
+    return null;
+  }
+  function fxRaizDe(view) {
+    /* objeto raiz que alimenta os [data-fx] da tela (I.pinta/I.aplica) */
+    var d = I.db();
+    if (view === 'central-nf') {
+      var n = R1.notaEdicao();
+      if (n) { var it = (G.__fxTrib && G.__fxTrib.idx >= 0) ? n.itens[G.__fxTrib.idx] : null; if (it) { it.trib2 = it.trib; it.imp2 = it.trib.imp; } return { nota: n, tribItem: it || {}, lst: R1.estadoList() }; }
+      return { lst: R1.estadoList() };
+    }
+    if (view === 'fiscal-manifestacao') return { mf: G.__fxMf || {} };
+    if (view === 'fiscal-perfil') return { pf: G.__fxPfObj || {} };
+    if (view === 'config-fiscal') return { cfg: I.cfg(), inut: (G.__fxInut = G.__fxInut || { ano: '26', modelo: '55' }), csc: { id: (d.config || {}).nfCscId || '', token: (d.config || {}).nfCsc || '' } };
+    return {};
+  }
+  function fxLimpaAliases() {
+    (I.db().notasNf || []).forEach(function (n) { (n.itens || []).forEach(function (it) { delete it.trib2; delete it.imp2; }); });
+  }
+  function fxReRender(view) {
+    var t = fxTelaFiscalAtiva() || view;
+    if (!t) return;
+    var el = document.getElementById('view-' + t);
+    var html = fxRenderDe(t);
+    if (el && html != null) { el.innerHTML = html; I.pinta(fxRaizDe(t)); }
+    I.css();
+  }
+  G.__fxReRender614 = fxReRender;
+
+  function fxProximoNumero() {
+    var mx = 0;
+    (I.db().config && I.db().config.nfRegistro || []).forEach(function (r) { var v = parseInt(r.numero, 10); if (v > mx) mx = v; });
+    (I.notas() || []).forEach(function (n) { var v = parseInt(n.numero, 10); if (v > mx) mx = v; });
+    return String(mx + 1);
+  }
+  function fxSelecionada() {
+    var st = R1.estadoList();
+    if (!st.sel) return null;
+    return R1.filtros(R1.linhasBase(), st).find(function (l) { return l.id === st.sel; }) || R1.linhasBase().find(function (l) { return l.id === st.sel; }) || null;
+  }
+
+  G.fxAcao = function (acao, a, b, c) {
+    var d = I.db(), st, n, i, v;
+    try {
+      /* ── listagem ── */
+      if (acao === 'lst-pesquisar') { I.aplica(fxRaizDe('central-nf')); return fxReRender('central-nf'); }
+      if (acao === 'lst-sel') { st = R1.estadoList(); st.sel = (st.sel === a ? null : a); return fxReRender('central-nf'); }
+      if (acao === 'lst-imprimir') {
+        st = R1.estadoList(); var linhas = R1.filtros(R1.linhasBase(), st);
+        var w = G.open ? G.open('', '_blank') : null; if (!w) return;
+        w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Listagem de Notas</title><style>body{font-family:Arial;padding:16px}table{width:100%;border-collapse:collapse;font-size:11px}td,th{border:1px solid #111;padding:4px}h3{margin:0 0 8px}</style></head><body>' +
+          '<h3>Listagem de Notas — ' + new Date().toLocaleDateString('pt-BR') + '</h3><table><thead><tr>' + P.LIST_COLS.map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          linhas.map(function (l) { return '<tr><td>' + P.dataBR(l.data) + '</td><td>' + P.esc(l.modelo) + '</td><td>' + l.tipo + '</td><td>' + (l.email ? '✉' : '') + '</td><td>' + P.esc(l.numero) + '</td><td>' + P.esc(l.natureza) + '</td><td>' + P.esc(l.cliente) + '</td><td style="text-align:right">' + P.brl(l.valor) + '</td><td>' + l.situacao + '</td></tr>'; }).join('') +
+          '</tbody></table><button onclick="window.print()">🖨️ Imprimir</button></body></html>');
+        w.document.close(); return;
+      }
+      if (acao === 'nf-novo') {
+        var sess = (I.sess() || {});
+        var nota = P.notaVazia(fxProximoNumero(), sess.usuario || '');
+        nota.cod = String(I.notas().length + 416).padStart(5, '0');
+        nota.ambiente = (G.NFG_PURE && G.NFG_PURE.nfgAmbiente(d)) || 'homologacao';
+        nota.log.push({ acao: 'nota-criada', detalhe: 'rascunho aberto pelo menu Nota Fiscal', em: new Date().toISOString(), usuario: nota.usuario });
+        I.notas().push(nota); G.__fxEd = { id: nota.id, aba: 'Gerais' }; G.__fxTrib = { idx: -1, sub: 'Tributação' };
+        fxLimpaAliases(); I.save(); I.log('nf-nova', 'rascunho ' + nota.cod);
+        return fxReRender('central-nf');
+      }
+      if (acao === 'nf-alterar') {
+        var sel = fxSelecionada();
+        if (!sel) return I.alert('Alterar nota', 'Selecione uma nota na grade primeiro (clique na linha).');
+        if (sel.fonte === 'reg') return I.alert('Nota já autorizada', 'Nota <b>autorizada não pode ser alterada</b> — é regra fiscal. Para corrigir: Carta de Correção (CC-e). Para anular: cancelamento. Para reaproveitar os dados: <b>Clonar</b>.');
+        G.__fxEd = { id: sel.id, aba: 'Gerais' }; G.__fxTrib = { idx: -1, sub: 'Tributação' };
+        return fxReRender('central-nf');
+      }
+      if (acao === 'nf-excluir') {
+        var sel2 = fxSelecionada();
+        if (!sel2) return I.alert('Excluir nota', 'Selecione uma nota na grade primeiro.');
+        if (sel2.fonte === 'reg') return I.alert('Nota já autorizada', 'Nota autorizada <b>não pode ser excluída</b> (regra fiscal) — cancele pela Central se for o caso.');
+        if (!I.pode()) return I.alert('Sem permissão', 'Excluir nota precisa da permissão <b>Emitir NF</b> (Admin/Dono libera na tela Usuários).');
+        I.confirm('Excluir rascunho', 'Excluir a nota <b>Não Gerada</b> nº ' + P.esc(sel2.numero) + ' (' + P.esc(sel2.cliente || 'sem destinatário') + ', R$ ' + P.brl(sel2.valor) + ')?<br><br>Ela ainda não foi transmitida — excluir não deixa buraco fiscal.', function () {
+          d.notasNf = (d.notasNf || []).filter(function (x) { return x.id !== sel2.id; });
+          R1.estadoList().sel = null; fxLimpaAliases(); I.save(); I.log('nf-excluida', 'rascunho nº ' + sel2.numero);
+          I.toast2('Rascunho excluído'); fxReRender('central-nf');
+        }, 'Excluir');
+        return;
+      }
+      if (acao === 'nf-clonar') {
+        var sel3 = fxSelecionada();
+        if (!sel3) return I.alert('Clonar nota', 'Selecione uma nota na grade primeiro.');
+        var base;
+        if (sel3.fonte === 'reg') { base = P.notaVazia('', sel3.ref.usuario || ''); base.natureza = sel3.natureza; base.modelo = String(sel3.modelo); base.dest.nome = sel3.cliente; base.totais.total = sel3.valor; base.log.push({ acao: 'clonada-de-autorizada', detalhe: 'dados básicos da nota ' + sel3.numero + ' (itens completos precisam estar no cadastro)', em: new Date().toISOString() }); }
+        else { base = JSON.parse(JSON.stringify(sel3.ref)); base.id = 'fx' + Date.now().toString(36); base.status = 'Não Gerada'; base.dhEmissao = ''; base.dhSaida = ''; base.chaveRef = ''; base.log = (base.log || []).concat([{ acao: 'clonada', detalhe: 'cópia do rascunho nº ' + sel3.numero, em: new Date().toISOString() }]); }
+        base.numero = fxProximoNumero(); base.cod = String(I.notas().length + 416).padStart(5, '0'); base.criadoEm = new Date().toISOString(); base.dhCadastro = base.criadoEm;
+        I.notas().push(base); G.__fxEd = { id: base.id, aba: 'Gerais' }; G.__fxTrib = { idx: -1, sub: 'Tributação' };
+        R1.estadoList().sel = null; fxLimpaAliases(); I.save(); I.log('nf-clonada', 'nova ' + base.cod + ' a partir de ' + sel3.numero);
+        return fxReRender('central-nf');
+      }
+      /* ── editor Venda-NF ── */
+      n = R1.notaEdicao();
+      if (acao === 'nf-aba') { if (n) { I.aplica(fxRaizDe('central-nf')); G.__fxEd.aba = a; fxLimpaAliases(); I.save(); } return fxReRender('central-nf'); }
+      if (!n) return;
+      if (acao === 'nf-salvar' || acao === 'nf-sair') {
+        I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); n.atualizadoEm = new Date().toISOString();
+        n.log = n.log || []; n.log.push({ acao: 'nota-salva', detalhe: 'itens: ' + n.itens.length + ' · total R$ ' + P.brl(n.totais.total), em: n.atualizadoEm, usuario: (I.sess() || {}).usuario || '' });
+        if (acao === 'nf-sair') G.__fxEd = null;
+        fxLimpaAliases(); I.save(); I.log('nf-salva', n.cod + ' R$ ' + n.totais.total);
+        I.toast2('Nota salva'); return fxReRender('central-nf');
+      }
+      if (acao === 'nf-gerar') {
+        I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); fxLimpaAliases(); I.save();
+        if (!n.itens.length) return I.alert('Nota sem itens', 'Lance pelo menos 1 item na aba <b>Itens da Nota</b> antes de gerar.');
+        if (!n.dest.nome && !n.dest.doc) return I.alert('Sem destinatário', 'Escolha o destinatário na aba <b>Destinatário</b> (puxa do cadastro sem redigitar).');
+        if (!I.pode()) return I.alert('Sem permissão', 'Gerar NF-e precisa da permissão <b>Emitir NF</b>.');
+        var amb2 = (G.NFG_PURE && G.NFG_PURE.nfgAmbiente(d)) || 'homologacao';
+        I.confirm('Gerar NF-e nº ' + n.numero + '?',
+          'Confere o resumo: <b>' + P.esc(n.dest.nome || n.dest.doc) + '</b> · ' + n.itens.length + ' item(ns) · <b>R$ ' + P.brl(n.totais.total) + '</b> · natureza ' + P.esc(n.natureza) + ' · ambiente <b>' + (amb2 === 'producao' ? 'PRODUÇÃO (vale de verdade)' : 'HOMOLOGAÇÃO (teste)') + '</b>.<br><br>Nada é automático: transmitir usa o certificado do PC emissor e pede a senha na hora.',
+          function () {
+            var emissor = G.nfTransmitirNota || G.nfeTransmitirNota || G.nfTransmitir;
+            if (typeof emissor === 'function') { try { emissor(n); } catch (e) { I.alert('Transmissão', 'O emissor respondeu com erro: ' + P.esc(e.message || e)); } }
+            else I.alert('Falta o PC emissor', 'A nota ficou salva como <b>Não Gerada</b> — nada foi transmitido (sem sucesso falso). Para gerar de verdade a nota precisa sair pelo PC com o certificado (.exe): confirme comigo que o motor de emissão já está preso nessa tela.');
+            n.log.push({ acao: 'gerar-tentativa', detalhe: (typeof emissor === 'function' ? 'emissor chamado' : 'sem emissor preso — ficou como Não Gerada'), em: new Date().toISOString(), usuario: (I.sess() || {}).usuario || '' });
+            fxLimpaAliases(); I.save(); fxReRender('central-nf');
+          }, 'Gerar agora');
+        return;
+      }
+      if (acao === 'nf-previa') {
+        I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); fxLimpaAliases(); I.save();
+        var w2 = G.open ? G.open('', '_blank') : null; if (!w2) return I.toast2('Popup bloqueado — libere para ver a prévia', 'info');
+        w2.document.write(R1.danfePrevia(n)); w2.document.close();
+        n.log.push({ acao: 'previa-danfe', detalhe: 'selo SEM VALOR FISCAL', em: new Date().toISOString() }); I.save();
+        return;
+      }
+      /* itens */
+      if (acao === 'nf-item-add') {
+        var desc = (document.getElementById('fx-it-desc') || {}).value || '';
+        var prod = (d.produtos || []).find(function (p2) { return String(p2.nome || '').toLowerCase() === desc.toLowerCase(); });
+        var it = P.itemVazio(n.itens.length + 1);
+        it.descricao = desc; it.cprod = (document.getElementById('fx-it-cod') || {}).value || (prod ? prod.id : '');
+        it.ncm = (document.getElementById('fx-it-ncm') || {}).value || (prod && prod.ncm) || (d.config || {}).nfNcmPadrao || '';
+        it.qtd = Number((document.getElementById('fx-it-qtd') || {}).value) || 1;
+        it.un = (document.getElementById('fx-it-un') || {}).value || 'UN';
+        it.vunit = Number((document.getElementById('fx-it-vu') || {}).value) || (prod ? (prod.preco || prod.precoVenda || 0) : 0);
+        it.perfilCod = (document.getElementById('fx-it-perfil') || {}).value || I.cfg().trib.perfilDentro;
+        var pf = I.perfis().find(function (x) { return x.cod === it.perfilCod; });
+        if (pf) { it.cfop = pf.cfop; it.csosn = pf.csosn; it.trib.pisCst = pf.pisCst; it.trib.pisAli = pf.pisAli; it.trib.cofinsCst = pf.cofinsCst; it.trib.cofinsAli = pf.cofinsAli; it.trib.ipiCst = pf.ipiCst; it.trib.ipiPerc = pf.ipiAli; it.trib.refCst = pf.refCst; it.trib.refClassif = pf.refClassif; it.trib.refIbsUfPerc = pf.ibsUf; it.trib.refIbsMunPerc = pf.ibsMun; it.trib.refCbsPerc = pf.cbs; }
+        if (!it.descricao) return I.toast2('Descreva o item ou escolha do estoque', 'info');
+        n.itens.push(it); R1.totaisAuto(n);
+        n.log.push({ acao: 'item-lancado', detalhe: it.descricao + ' x' + it.qtd, em: new Date().toISOString() });
+        fxLimpaAliases(); I.save(); return fxReRender('central-nf');
+      }
+      if (acao === 'nf-item-del') { n.itens.splice(Number(a), 1); R1.totaisAuto(n); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-item-trib') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: Number(a), sub: 'Tributação' }; G.__fxTribAba = 'Tributação'; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-sub') { G.__fxTrib.sub = a; return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-fechar') { I.aplica(fxRaizDe('central-nf')); G.__fxTrib = { idx: -1, sub: 'Tributação' }; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-trib-aba') { I.aplica(fxRaizDe('central-nf')); G.__fxTribAba = a; fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-item-cfop-todos') {
+        var itAberto = (G.__fxTrib && G.__fxTrib.idx >= 0) ? n.itens[G.__fxTrib.idx] : null;
+        if (itAberto) { var cf = (document.querySelector('[data-fx="tribItem.cfop"]') || {}).value || itAberto.cfop; n.itens.forEach(function (x) { x.cfop = cf; }); I.toast2('CFOP ' + cf + ' aplicado a todos os itens'); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+        return;
+      }
+      if (acao === 'nf-trib-zerar') {
+        var itZ = (G.__fxTrib && G.__fxTrib.idx >= 0) ? n.itens[G.__fxTrib.idx] : null; if (!itZ) return;
+        I.aplica(fxRaizDe('central-nf'));
+        if (a === 'icms') { itZ.trib.icmsBase = 0; itZ.trib.icmsValor = 0; }
+        if (a === 'st') { itZ.trib.stBase = 0; itZ.trib.stPerc = 0; itZ.trib.stValor = 0; }
+        if (a === 'ipi') { itZ.trib.ipiPerc = 0; itZ.trib.ipiValor = 0; }
+        fxLimpaAliases(); I.save(); return fxReRender('central-nf');
+      }
+      /* pagamentos/duplicatas/volumes (edição inline já vem pronta) */
+      if (acao === 'nf-pag-add') { n.pagamentos.push(P.pagamentoVazio()); return fxReRender('central-nf'); }
+      if (acao === 'nf-pag-del') { n.pagamentos.splice(Number(a), 1); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-pag-edit') { n.pagamentos[Number(a)].forma = b; fxLimpaAliases(); I.save(); return; }
+      if (acao === 'nf-pag-val') { n.pagamentos[Number(a)].valor = Number(b) || 0; fxLimpaAliases(); I.save(); return; }
+      if (acao === 'nf-dup-add') { n.duplicatas.push({ valor: 0, vencimento: '' }); return fxReRender('central-nf'); }
+      if (acao === 'nf-dup-del') { n.duplicatas.splice(Number(a), 1); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-dup-val') { n.duplicatas[Number(a)].valor = Number(b) || 0; fxLimpaAliases(); I.save(); return; }
+      if (acao === 'nf-dup-ven') { n.duplicatas[Number(a)].vencimento = b; fxLimpaAliases(); I.save(); return; }
+      if (acao === 'nf-vol-add') { n.frete.volumes.push({ qtde: 1, especie: 'UNIDADE', marca: '', num: '', pesoB: 0, pesoL: 0, lacre: '' }); return fxReRender('central-nf'); }
+      if (acao === 'nf-vol-del') { n.frete.volumes.splice(Number(a), 1); fxLimpaAliases(); I.save(); return fxReRender('central-nf'); }
+      if (acao === 'nf-vol-edit') { var vv = n.frete.volumes[Number(a)]; if (vv) { vv[b] = (b === 'qtde' || b === 'pesoB' || b === 'pesoL') ? (Number(c) || 0) : c; } fxLimpaAliases(); I.save(); return; }
+      /* destinatário */
+      if (acao === 'nf-dest-puxar') {
+        var pick = (document.getElementById('fx-dest-pick') || {}).value || '';
+        if (!pick) return I.toast2('Escolha alguém no seletor do cadastro', 'info');
+        var fonte = pick.slice(0, 4) === 'cli:' ? (d.clientes || []) : (d.fornecedores || []);
+        var alvo = fonte.find(function (x) { return String(x.id) === pick.slice(4); });
+        if (!alvo) return;
+        I.aplica(fxRaizDe('central-nf'));
+        n.dest.refId = alvo.id; n.dest.nome = alvo.nome || alvo.razao || '';
+        n.dest.doc = alvo.cnpj || alvo.cpf || alvo.documento || '';
+        n.dest.ie = alvo.ie || alvo.inscricaoEstadual || '';
+        n.dest.endereco = alvo.endereco || alvo.logradouro || '';
+        n.dest.cidade = alvo.cidade || ''; n.dest.uf = alvo.uf || '';
+        n.log.push({ acao: 'dest-puxado', detalhe: n.dest.nome, em: new Date().toISOString() });
+        fxLimpaAliases(); I.save(); return fxReRender('central-nf');
+      }
+      /* referenciar */
+      if (acao === 'nf-ref-add') {
+        var chave = P.dig((document.getElementById('fx-ref-nova') || {}).value || '');
+        if (chave.length !== 44) return I.alert('Chave inválida', 'A chave de acesso tem <b>44 dígitos</b> — você mandou ' + chave.length + '.');
+        if (n.refs.indexOf(chave) >= 0) return I.toast2('Essa nota já está referenciada', 'info');
+        n.refs.push(chave); n.log.push({ acao: 'nf-referenciada', detalhe: chave, em: new Date().toISOString() });
+        fxLimpaAliases(); I.save(); return fxReRender('central-nf');
+      }
+      if (acao === 'nf-ref-del') { I.confirm('Remover referência', 'Tirar esta nota referenciada da lista?', function () { n.refs.splice(Number(a), 1); I.save(); fxReRender('central-nf'); }, 'Remover'); return; }
+      if (acao === 'nf-cce-imprimir') { I.toast2('A impressão da CC-e sai pela Central (nota autorizada)', 'info'); return; }
+      /* perfil tributário */
+      if (acao === 'pf-novo') {
+        var usados = I.perfis().map(function (x) { return x.cod; });
+        var livre = 1; while (usados.indexOf(String(livre).padStart(5, '0')) >= 0) livre++;
+        var pf2 = { cod: String(livre).padStart(5, '0'), descricao: '', tipo: 'ICMS', cfop: '5102', csosn: '102', pisCst: '07', pisAli: 0, cofinsCst: '07', cofinsAli: 0, ipiCst: '99', ipiAli: 0, refCst: '000', refClassif: '000001', ibsUf: 0.1, ibsMun: 0, cbs: 0.9 };
+        I.perfis().push(pf2); G.__fxPfEd = I.perfis().length - 1; G.__fxPfObj = pf2; G.__fxPfAba = 'ICMS';
+        return fxReRender('fiscal-perfil');
+      }
+      if (acao === 'pf-alterar') { G.__fxPfEd = Number(a); G.__fxPfObj = I.perfis()[Number(a)]; G.__fxPfAba = 'ICMS'; return fxReRender('fiscal-perfil'); }
+      if (acao === 'pf-fechar') { G.__fxPfEd = null; G.__fxPfObj = null; return fxReRender('fiscal-perfil'); }
+      if (acao === 'pf-aba') { I.aplica({ pf: G.__fxPfObj || {} }); G.__fxPfAba = a; return fxReRender('fiscal-perfil'); }
+      if (acao === 'pf-salvar') {
+        var pfS = G.__fxPfObj; if (!pfS) return;
+        I.aplica({ pf: pfS });
+        if (!String(pfS.descricao || '').trim()) return I.alert('Falta a descrição', 'O perfil precisa de uma descrição (ex.: VENDA DENTRO DO ESTADO).');
+        if (!/^\d{4}$/.test(String(pfS.cfop))) return I.alert('CFOP inválido', 'CFOP precisa ter 4 dígitos (ex.: 5102, 6102, 5915).');
+        fxLimpaAliases(); I.save(); I.log('pf-salvo', pfS.cod + ' ' + pfS.descricao);
+        G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil salvo ✅'); return fxReRender('fiscal-perfil');
+      }
+      if (acao === 'pf-excluir') {
+        var pfX = I.perfis()[Number(a)]; if (!pfX) return;
+        I.confirm('Excluir perfil', 'Excluir o perfil <b>' + P.esc(pfX.cod + ' ' + pfX.descricao) + '</b>?<br>Itens de notas antigas que usam esse código continuam com o texto gravado na nota.', function () {
+          d.perfisNf.splice(Number(a), 1); I.save(); I.log('pf-excluido', pfX.cod + ' ' + pfX.descricao);
+          G.__fxPfEd = null; G.__fxPfObj = null; I.toast2('Perfil excluído'); fxReRender('fiscal-perfil');
+        }, 'Excluir');
+        return;
+      }
+      /* manifestação */
+      if (acao === 'mf-busca-modo') { G.__fxMf.busca = a; return fxReRender('fiscal-manifestacao'); }
+      if (acao === 'mf-aplicar') { I.aplica({ mf: G.__fxMf }); return fxReRender('fiscal-manifestacao'); }
+      if (acao === 'mf-sel') { var mf = G.__fxMf; mf.sel = (mf.sel === a ? null : a); return fxReRender('fiscal-manifestacao'); }
+      if (acao === 'mf-consultar') {
+        var mfc = G.__fxMf;
+        mfc.nsu = (document.getElementById('fxm-nsu') || {}).value || mfc.nsu;
+        if (mfc.busca === 'nsu' && !/^\d{1,15}$/.test(P.dig(mfc.nsu))) return I.alert('NSU inválido', 'Informe o número do NSU (só dígitos).');
+        var cons = G.nfConsultarDestinadas || G.nfDistribuicaoDfe;
+        if (typeof cons === 'function') { try { cons(mfc.busca, mfc.nsu); } catch (e) { } }
+        else I.alert('Consulta à SEFAZ', 'Consultar notas destinadas fala com a SEFAZ usando o <b>certificado do PC emissor</b> (.exe) + internet. Nenhum motor de consulta está preso nesta tela ainda — a lista atual permanece (sem sucesso falso). <br><br>O marcador NSU fica guardado por empresa: <b>' + (mfc.busca === 'nsu' ? P.esc(mfc.nsu) : 'retoma do último/3 meses') + '</b>.');
+        if (mfc.busca === 'nsu') { d.config.nfNsuUltimo = P.dig(mfc.nsu); I.save(); }
+        I.log('mf-consultar', mfc.busca + (mfc.nsu ? ' nsu ' + mfc.nsu : ''));
+        return;
+      }
+      if (acao === 'mf-manifestar') {
+        var mfm = G.__fxMf;
+        if (!mfm.sel) return I.alert('Manifestar', 'Selecione uma nota na grade primeiro (clique na linha).');
+        if (!I.pode()) return I.alert('Sem permissão', 'Manifestar precisa da permissão <b>Emitir NF</b> (a operação responde à SEFAZ em nome da empresa).');
+        var alvoM = fxManifLista().find(function (m, i2) { return (m.chave || ('m' + i2)) === mfm.sel; });
+        if (!alvoM) return;
+        var body = '<div style="display:flex;flex-direction:column;gap:8px">' +
+          P.EVENTOS_MANIF.map(function (e, ei) {
+            return '<label class="fx-chk" style="height:38px;border:1px solid #e2e8f0;border-radius:10px;padding:0 10px"><input type="radio" name="fxm-ev" value="' + e[0] + '"' + (ei === 0 ? ' checked' : '') + '><span><b>' + P.esc(e[1]) + '</b>' + (e[0] === 'nao-realizada' ? ' <span class="fx-mini">(pede justificativa de 15+ letras)</span>' : '') + '</span></label>';
+          }).join('') +
+          '<label class="fx-lb" style="margin-top:6px">Justificativa (só se operação não realizada)<input class="fx-in" id="fxm-just" style="width:100%"></label></div>';
+        I.confirm('Manifestar nota', '<div class="fx-mini" style="margin-bottom:8px">Chave <span style="font-family:monospace">' + P.esc((alvoM.chave || '').slice(0, 20)) + '…</span> · emitente ' + P.esc(alvoM.emitente || '') + '</div>' + body, function () {
+          var ev = (document.querySelector('input[name="fxm-ev"]:checked') || {}).value || 'ciencia';
+          var just = (document.getElementById('fxm-just') || {}).value || '';
+          if (ev === 'nao-realizada' && just.trim().length < 15) { I.alert('Justificativa curta', 'A SEFAZ pede justificativa com <b>pelo menos 15 letras</b> para "Operação Não Foi Realizada". Tente de novo.'); return; }
+          var rotulo = (P.EVENTOS_MANIF.find(function (e) { return e[0] === ev; }) || ['', ev])[1];
+          if (typeof G.nfManifestarEvento === 'function') {
+            try { G.nfManifestarEvento(alvoM.chave, ev, just, alvoM.cnpj); } catch (e) { }
+            alvoM.nossoStatus = rotulo; fxLimpaAliases(); I.save(); fxReRender('fiscal-manifestacao');
+          } else I.alert('Falta o PC emissor', 'O envio do evento usa o certificado do PC emissor (.exe). Nada foi manifestado (sem sucesso falso).');
+          I.log('mf-manifestar', ev + ' ' + (alvoM.chave || ''));
+        }, 'Manifestar agora');
+        return;
+      }
+      if (acao === 'mf-baixar') {
+        var mfb = G.__fxMf;
+        var alvoB = fxManifLista().find(function (m2, i2) { return (m2.chave || ('m' + i2)) === mfb.sel; });
+        if (!alvoB) return I.alert('Baixar XML', 'Selecione uma nota na grade primeiro.');
+        if (!alvoB.xml) return I.alert('XML indisponível', 'Esta nota não tem o XML guardado. Baixar da SEFAZ usa o certificado do PC emissor (.exe).');
+        var blob = new Blob([alvoB.xml], { type: 'application/xml' });
+        var aEl = document.createElement('a'); aEl.href = URL.createObjectURL(blob);
+        aEl.download = (alvoB.chave || 'nota') + '.xml'; document.body.appendChild(aEl); aEl.click();
+        setTimeout(function () { URL.revokeObjectURL(aEl.href); aEl.remove(); }, 900);
+        return;
+      }
+      /* NCM */
+      if (acao === 'ncm-buscar') { G.__fxNcmTermo = (document.getElementById('fx-ncm-termo') || {}).value || ''; return fxReRender('fiscal-ncm'); }
+      if (acao === 'ncm-add') {
+        var cod = P.dig((document.getElementById('fx-ncm-cod') || {}).value || '');
+        var descr = ((document.getElementById('fx-ncm-desc') || {}).value || '').trim();
+        if (!/^\d{8}$/.test(cod)) return I.alert('NCM inválido', 'NCM tem <b>8 dígitos</b> (ex.: 84439923).');
+        if (!descr) return I.alert('Falta a descrição', 'Descreva o NCM (ex.: peças de impressora).');
+        d.config.nfNcmFavoritos = d.config.nfNcmFavoritos || [];
+        if (d.config.nfNcmFavoritos.some(function (f) { return f.cod === cod; })) return I.toast2('Esse NCM já é favorito', 'info');
+        d.config.nfNcmFavoritos.push({ cod: cod, desc: descr }); I.save(); I.log('ncm-add', cod);
+        return fxReRender('fiscal-ncm');
+      }
+      if (acao === 'ncm-del') { I.confirm('Remover favorito', 'Tirar esse NCM dos favoritos?', function () { d.config.nfNcmFavoritos.splice(Number(a), 1); I.save(); fxReRender('fiscal-ncm'); }, 'Remover'); return; }
+      if (acao === 'ncm-uso') {
+        var fav = (d.config.nfNcmFavoritos || [])[Number(a)]; if (!fav) return;
+        if (b === 'padrao') d.config.nfNcmPadrao = fav.cod;
+        if (b === 'tinta') d.config.nfNcmTinta = fav.cod;
+        if (b === 'locacao') d.config.nfNcmLocacao = fav.cod;
+        I.save(); I.log('ncm-' + b, fav.cod); I.toast2('NCM ' + fav.cod + ' agora é o padrão de ' + b);
+        return fxReRender('fiscal-ncm');
+      }
+      /* enviar xml */
+      if (acao === 'xml-mes') { G.__fxXmlMes = a || G.__fxXmlMes; return fxReRender('fiscal-enviar-xml'); }
+      if (acao === 'xml-pdf') { G.__fxXmlPdf = !!a; return; }
+      if (acao === 'xml-preparar') { return fxReRender('fiscal-enviar-xml'); }
+      if (acao === 'xml-copiar') { var em = (document.getElementById('fx-xml-email') || {}).value || ''; if (navigator.clipboard && em) navigator.clipboard.writeText(em).then(function () { I.toast2('E-mail copiado ✅'); }); return; }
+      if (acao === 'xml-ver') { I.alert('XML não encontrados (' + (a === 'nfe' ? 'NF-e' : 'NFC-e') + ')', 'Notas do mês sem XML guardado: confira no PC que emitiu — a sincronização traz para todos. Se a emissão foi há pouco, aguarde o pacote da nuvem.'); return; }
+      if (acao === 'xml-enviar') {
+        var em2 = (document.getElementById('fx-xml-email') || {}).value || '';
+        I.cfg().outras.emailEscritorio = em2; I.save();
+        if (!em2) return I.alert('E-mail do escritório', 'Preencha o e-mail do contador antes de enviar (fica gravado na aba Outras das Configurações).');
+        if (typeof G.nfPacoteContador === 'function') { try { G.nfPacoteContador(); } catch (e) { } I.log('xml-escritorio', G.__fxXmlMes + ' incluir PDFs: ' + !!G.__fxXmlPdf); }
+        else I.alert('Pacote', 'O gerador de pacote .zip não respondeu — tente pela Central (Pacote do mês).');
+        return;
+      }
+      /* config */
+      if (acao === 'cfg-aba') { I.aplica(fxRaizDe('config-fiscal')); G.__fxCfgAba = a; return fxReRender('config-fiscal'); }
+      if (acao === 'cfg-salvar') {
+        var raiz = fxRaizDe('config-fiscal');
+        I.aplica(raiz);
+        d.config.nfCscId = String(raiz.csc.id || '').trim();
+        d.config.nfCsc = String(raiz.csc.token || '');
+        fxLimpaAliases(); I.save(); I.log('cfg-salva', G.__fxCfgAba);
+        I.toast2('Configuração "' + G.__fxCfgAba + '" salva ✅');
+        return fxReRender('config-fiscal');
+      }
+      if (acao === 'cfg-fcp-uf') { I.cfg().fcp.ufs[a] = Number(b); I.save(); return; }
+      if (acao === 'inut-enviar') {
+        var raiz2 = fxRaizDe('config-fiscal'); I.aplica(raiz2);
+        var ini = parseInt(raiz2.inut.numIni, 10), fin = parseInt(raiz2.inut.numFin, 10);
+        if (!ini || !fin || fin < ini) return I.alert('Intervalo inválido', 'Informe número inicial e final (final ≥ inicial).');
+        if (String(raiz2.inut.motivo || '').trim().length < 15) return I.alert('Motivo curto', 'A SEFAZ pede justificativa com <b>pelo menos 15 letras</b> (ex.: NUMERAÇÃO FALHOU NA EMISSÃO).');
+        if (!I.pode()) return I.alert('Sem permissão', 'Inutilizar numeração precisa da permissão <b>Emitir NF</b>.');
+        G.__fxInutPend = { ini: ini, fin: fin, ano: raiz2.inut.ano, modelo: raiz2.inut.modelo, motivo: raiz2.inut.motivo };
+        I.confirm('Inutilizar ' + ini + ' a ' + fin + '?', 'Modelo ' + raiz2.inut.modelo + ' · ano ' + P.esc(raiz2.inut.ano) + ' · motivo: <b>' + P.esc(raiz2.inut.motivo) + '</b><br><br>Isso aposenta números junto à Receita — <b>não tem como desfazer</b>.', function () {
+          var enviador = G.nfInutilizarFaixa || G.nfInutilizar;
+          d.config.nfInutilizacoes = d.config.nfInutilizacoes || [];
+          d.config.nfInutilizacoes.push({ ini: G.__fxInutPend.ini, fin: G.__fxInutPend.fin, ano: G.__fxInutPend.ano, modelo: G.__fxInutPend.modelo, motivo: G.__fxInutPend.motivo, em: new Date().toISOString(), enviado: typeof enviador === 'function' });
+          if (typeof enviador === 'function') { try { enviador(G.__fxInutPend); } catch (e) { } }
+          else I.alert('Registrada, mas não enviada', 'A solicitação ficou registrada. O envio à SEFAZ usa o certificado do PC emissor (.exe) — prenda o motor e ela sai no próximo clique (sem sucesso falso).');
+          fxLimpaAliases(); I.save(); I.log('inut-enviar', G.__fxInutPend.ini + '-' + G.__fxInutPend.fin);
+          fxReRender('config-fiscal');
+        }, 'Enviar Solicitação');
+        return;
+      }
+    } catch (err) {
+      try { I.alert('Ops — a tela respondeu com erro', P.esc(err.message || err) + '<br><span class="fx-mini">Nada foi perdido; reabra a tela pelo menu se precisar.</span>'); } catch (e) { }
+    }
+  };
+
+  /* wrap final da navegação: as 6 telas pintam com o catálogo completo */
+  function instalar() {
+    var anterior = G.navigateTo;
+    if (typeof anterior !== 'function') return false;
+    if (!anterior.__fx614) {
+      var embrulhado = function (view) {
+        var r = anterior.apply(G, arguments);
+        try { if (VIEWS.indexOf(view) >= 0) fxReRender(view); } catch (e) { }
+        return r;
+      };
+      embrulhado.__fx614 = true;
+      embrulhado.__nav612 = anterior.__nav612;
+      embrulhado.__wxr613 = anterior.__wxr613;
+      G.navigateTo = embrulhado;
+    }
+    return true;
+  }
+  if (!instalar() && typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', function () { instalar(); });
+  }
+  G.__v6014fxcInfo = 'FXCatalogo telas+acoes prontas';
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = (typeof window !== 'undefined' ? window : globalThis).FX614_PURE;
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("fiscal_catalogo_completo_patch.js", e); }
+;
+
+/* ===== menu_fiscal_oficial_patch.js ===== */
+try{
+/* ═══════════════════════════════════════════════════════════════════════════
+ * menu_fiscal_oficial_patch.js — v6.1.0
+ *
+ * "po, mas continua feio d+, os menus não estão ficando lá em cima no
+ *  NF-e/NFC-e, lá que tem que ficar, e muda esse nome pra ser oficialmente
+ *  o MENU FISCAL, e os 6 menus tem que ficar ai" — resposta:
+ *
+ *  1) A faixa do topo agora se chama oficialmente **Menu Fiscal** (não mais
+ *     "NF-e/NFC-e") — aba, flyout lateral e onde mais aparecer.
+ *  2) A faixa NÃO SOME quando a tela fiscal re-renderiza por dentro: o
+ *     re-render da v6.0.14 (fxReRender) derrubava o innerHTML da view e a
+ *     faixa só voltava na sonda do ribbon (atraso visual). Agora um wrap por
+ *     cima do __fxReRender614 PRESERVA o nó da faixa (re-insere no mesmo
+ *     instante) — e uma sonda leve cobre qualquer outro caminho.
+ *  3) Beleza: CSS de acabamento por cima das 6 telas e da faixa (gradiente
+ *     suave, grade zebrada, chips de situação coloridos, botões com hover,
+ *     campos com foco azul, cards com sombra macia) — só CSS, sem mudar
+ *     nenhum texto/literal que os murais protegem.
+ *  4) Importador **CLIENTES.json** (mesma pegada do PRODUTOS.json v5.22.21):
+ *     mapeamento tolerante aos nomes de campo do sistema antigo, DEL=S pula,
+ *     dedupe por documento/código — grava na entidade `clientes` da nuvem.
+ *     A página envio_arquivos.html ganha o card de clientes que usa isto.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6100mfo && G.__v6100mfo.vivo) return;
+
+  /* ── PURE (testável, sem DOM) ─────────────────────────────────────────── */
+  var ROTULO_FISCAL = 'Menu Fiscal';
+  var TELAS_FISCAIS = ['central-nf', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'config-fiscal'];
+
+  function txt(v) { return String(v == null ? '' : v).trim(); }
+  function linhasDeJson(raw) {
+    if (Array.isArray(raw)) return raw;
+    if (!raw || typeof raw !== 'object') return [];
+    if (Array.isArray(raw.data)) return raw.data;
+    if (Array.isArray(raw.dados)) return raw.dados;
+    if (Array.isArray(raw.clientes)) return raw.clientes;
+    var keys = Object.keys(raw);
+    for (var i = 0; i < keys.length; i++) {
+      var v = raw[keys[i]];
+      if (Array.isArray(v) && v.length && typeof v[0] === 'object') return v;
+      if (v && typeof v === 'object' && Array.isArray(v.data)) return v.data;
+    }
+    return [];
+  }
+  function primeiro(row, nomes) {
+    for (var i = 0; i < nomes.length; i++) {
+      if (row[nomes[i]] !== undefined && row[nomes[i]] !== null && txt(row[nomes[i]]) !== '') return row[nomes[i]];
+    }
+    return '';
+  }
+  function ehDel(row) { return txt(primeiro(row, ['DEL', 'del', 'EXCLUIDO', 'excluido'])).toUpperCase() === 'S'; }
+  function docDe(row) { return txt(primeiro(row, ['CNPJ', 'CPF', 'DOCUMENTO', 'DOC', 'cnpj', 'cpf', 'documento'])).replace(/\D/g, ''); }
+  function codDe(row) { return txt(primeiro(row, ['CODIGO', 'COD_CLI', 'COD_CLIENTE', 'CLI_CODIGO', 'ID', 'codigo', 'id'])); }
+  function mapearCliente(row) {
+    var nome = txt(primeiro(row, ['NOME', 'RAZAO', 'RAZAO_SOCIAL', 'CLIENTE', 'nome', 'razao']));
+    var fantasia = txt(primeiro(row, ['FANTASIA', 'NOME_FANTASIA', 'fantasia']));
+    var doc = docDe(row);
+    return {
+      codigo: codDe(row),
+      nome: nome,
+      fantasia: fantasia,
+      cnpj: doc.length > 11 ? doc : '',
+      cpf: doc && doc.length <= 11 ? doc : '',
+      documento: doc,
+      ie: txt(primeiro(row, ['IE', 'INSCRICAO', 'INSC_ESTADUAL', 'ie', 'inscricaoEstadual'])),
+      endereco: txt(primeiro(row, ['ENDERECO', 'LOGRADOURO', 'endereco', 'logradouro'])),
+      numero: txt(primeiro(row, ['NUMERO', 'NUM', 'numero'])),
+      complemento: txt(primeiro(row, ['COMPLEMENTO', 'complemento'])),
+      bairro: txt(primeiro(row, ['BAIRRO', 'bairro'])),
+      cidade: txt(primeiro(row, ['CIDADE', 'MUNICIPIO', 'cidade', 'municipio'])),
+      uf: txt(primeiro(row, ['UF', 'ESTADO', 'uf', 'estado'])).toUpperCase().slice(0, 2),
+      cep: txt(primeiro(row, ['CEP', 'cep'])).replace(/\D/g, '').slice(0, 8),
+      fone: txt(primeiro(row, ['FONE', 'TELEFONE', 'CELULAR', 'fone', 'telefone', 'celular'])),
+      email: txt(primeiro(row, ['EMAIL', 'E_MAIL', 'email'])),
+      status: 'ativo'
+    };
+  }
+  function chaveCliente(c) {
+    if (c.documento) return 'doc:' + c.documento;
+    if (c.codigo) return 'cod:' + c.codigo;
+    return 'nome:' + c.nome.toLowerCase();
+  }
+  /* funde: só preenche campo vazio do cadastro atual (nunca pisa no que já tem) */
+  function fundirCliente(atual, novo) {
+    var rec = Object.assign({}, atual), mudou = false;
+    ['nome', 'fantasia', 'documento', 'cnpj', 'cpf', 'ie', 'endereco', 'numero', 'complemento', 'bairro', 'cidade', 'uf', 'cep', 'fone', 'email'].forEach(function (campo) {
+      if (!txt(rec[campo]) && txt(novo[campo])) { rec[campo] = novo[campo]; mudou = true; }
+    });
+    return { rec: rec, mudou: mudou };
+  }
+  function prepararImportacao(linhas) {
+    var ativas = (linhas || []).filter(function (r) { return r && !ehDel(r); });
+    var puladas = (linhas || []).length - ativas.length;
+    var mapeados = ativas.map(mapearCliente).filter(function (c) { return c.nome; });
+    return { mapeados: mapeados, puladas: puladas };
+  }
+
+  G.MFO610_PURE = {
+    rotuloFx: ROTULO_FISCAL,
+    telasFiscais: TELAS_FISCAIS.slice(),
+    linhasDeJson: linhasDeJson, ehDel: ehDel, docDe: docDe, codDe: codDe,
+    mapearCliente: mapearCliente, chaveCliente: chaveCliente,
+    fundirCliente: fundirCliente, prepararImportacao: prepararImportacao
+  };
+
+  if (typeof module !== 'undefined' && module.exports) { module.exports = G.MFO610_PURE; }
+  if (typeof window === 'undefined' || !window.document) { G.__v6100mfo = { vivo: false }; return; }
+
+  /* ── 1) Nome oficial: a faixa do topo é o MENU FISCAL ─────────────────── */
+  function pintaRotuloFx() {
+    var trocou = false;
+    document.querySelectorAll('.wxr-tab').forEach(function (el) {
+      if (el.textContent.indexOf('NF-e/NFC-e') >= 0) {
+        el.innerHTML = '<i class="ph ph-file-text" style="font-size:15px"></i>' + ROTULO_FISCAL;
+        el.title = 'Menu Fiscal — as 6 telas do fiscal, sempre aqui em cima';
+        trocou = true;
+      }
+    });
+    return trocou;
+  }
+  /* flyout lateral: o ::before ganha o nome oficial via CSS (vem depois → vence) */
+  function injetaCss() {
+    if (document.getElementById('mfo610-css')) return;
+    var st = document.createElement('style');
+    st.id = 'mfo610-css';
+    st.textContent =
+      /* nome oficial no flyout */
+      '#sxvm-flyout-nav::before{content:"Menu Fiscal" !important}' +
+      /* ── faixa: acabamento (sem mexer em layout/medidas do ribbon) ── */
+      '.wxr-bar{border:1px solid #c8d7f2;border-radius:16px;background:linear-gradient(180deg,#ffffff 0%,#eef4ff 55%,#e3eeff 100%);box-shadow:0 12px 30px rgba(10,30,138,.14)}' +
+      '.wxr-tab{background:linear-gradient(180deg,#1d4ed8,#1e3a8a);color:#fff !important;border-radius:10px 10px 0 0;box-shadow:0 8px 18px rgba(30,58,138,.35);letter-spacing:.02em}' +
+      '.wxr-btn{transition:transform .08s ease, box-shadow .12s ease, border-color .12s ease}' +
+      '.wxr-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.14);border-color:#93c5fd}' +
+      '.wxr-btn:active{transform:translateY(0)}' +
+      /* ── 6 telas fiscais: beleza por cima do fx614 ── */
+      '#view-central-nf,#view-fiscal-perfil,#view-fiscal-manifestacao,#view-fiscal-ncm,#view-fiscal-enviar-xml,#view-config-fiscal{background:linear-gradient(180deg,#f6f9ff 0%,#eef3fc 100%);border-radius:18px;padding:12px}' +
+      '.fx-card{box-shadow:0 6px 18px rgba(15,23,42,.06);border:1px solid #e4ebf8 !important}' +
+      '.fx-tb thead th{position:sticky;top:0;background:linear-gradient(180deg,#f1f5fb,#e8eef9);z-index:2;box-shadow:0 1px 0 #dbe4f3}' +
+      '.fx-tb tbody tr:nth-child(even){background:#f8fbff}' +
+      '.fx-tb tbody tr:hover{background:#eef5ff}' +
+      '.fx-tab.on{background:#fff;border-color:#1d4ed8;color:#0a1e8a;box-shadow:0 -2px 0 #1d4ed8 inset}' +
+      '.fx-btn{transition:transform .08s ease, box-shadow .12s ease}' +
+      '.fx-btn:hover:not([disabled]){transform:translateY(-1px);box-shadow:0 6px 14px rgba(15,23,42,.12)}' +
+      '.fx-btn.pri{background:linear-gradient(180deg,#2563eb,#1d4ed8);border-color:#1d4ed8}' +
+      '.fx-in:focus,.fx-tb input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.18)}' +
+      '.fx-placa{border-radius:12px;letter-spacing:.03em;box-shadow:0 6px 16px rgba(127,29,29,.18)}';
+    document.head.appendChild(st);
+  }
+  /* MutationObserver: renomeia a aba onde quer que a faixa reapareça */
+  var obs = null;
+  function sobeObserver() {
+    if (obs || !document.body) return;
+    pintaRotuloFx(); injetaCss();
+    obs = new MutationObserver(function () { pintaRotuloFx(); injetaCss(); });
+    try { obs.observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', sobeObserver);
+  } else { sobeObserver(); }
+
+  /* ── 2) A faixa NÃO SOME nas re-renderizações internas das telas fiscais ── */
+  function garanteFaixaNaView() {
+    try {
+      for (var i = 0; i < TELAS_FISCAIS.length; i++) {
+        var v = document.getElementById('view-' + TELAS_FISCAIS[i]);
+        if (v && v.offsetParent !== null && !v.querySelector(':scope > .wxr-bar') && typeof G.wxrGarante === 'function') { G.wxrGarante(); }
+      }
+      pintaRotuloFx();
+    } catch (e) { }
+  }
+  function embrulhaReRender() {
+    var anterior = G.__fxReRender614;
+    if (typeof anterior !== 'function' || anterior.__mfo610) return false;
+    var embr = function (view) {
+      var alvo = document.getElementById('view-' + (view || ''));
+      var barraViva = alvo ? alvo.querySelector(':scope > .wxr-bar') : null;
+      var r = anterior.apply(G, arguments);
+      try {
+        if (alvo) {
+          var tinha = alvo.querySelector(':scope > .wxr-bar');
+          if (!tinha) {
+            if (barraViva) alvo.insertBefore(barraViva, alvo.firstChild);   /* devolve a MESMA faixa, no instante */
+            else garanteFaixaNaView();                                    /* se ele tinha removido de vez, reconstrói pela sonda */
+          }
+        }
+        pintaRotuloFx();
+      } catch (e) { }
+      return r;
+    };
+    embr.__mfo610 = true;
+    G.__fxReRender614 = embr;
+    return true;
+  }
+  /* sonda leve só enquanto uma tela fiscal estiver aberta:
+     cobre qualquer caminho de render que não passe pelos wraps */
+  var agendada = false;
+  function sondaFaixa() {
+    if (agendada) return; agendada = true;
+    var bateuAlgo = false;
+    try {
+      for (var i = 0; i < TELAS_FISCAIS.length; i++) {
+        var v = document.getElementById('view-' + TELAS_FISCAIS[i]);
+        if (v && v.offsetParent !== null) { bateuAlgo = true; break; }
+      }
+      if (bateuAlgo) { pintaRotuloFx(); garanteFaixaNaView(); injetaCss(); }
+    } catch (e) { }
+    agendada = false;
+  }
+  try { setInterval(sondaFaixa, 1500); } catch (e) { }
+  embrulhaReRender();
+  setTimeout(embrulhaReRender, 0);
+  setTimeout(embrulhaReRender, 120);
+
+  /* expõe p/ outros patches e p/ o mural */
+  G.mfoGaranteFaixa = garanteFaixaNaView;
+  G.__v6100mfo = { vivo: true };
+  console.log('[DIGICOPY] v6.1.0 Menu Fiscal oficial (faixa sempre no topo) + importador CLIENTES.json + beleza nas 6 telas');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("menu_fiscal_oficial_patch.js", e); }
+;
+
+/* ===== submenu_fiscal_oficial_patch.js ===== */
+try{
+/* ═══════════════════════════════════════════════════════════════════════════
+ * submenu_fiscal_oficial_patch.js — v6.1.1
+ *
+ * "meu deus... dos menus fiscal e da aba fiscal, como vc não está entendendo?
+ *  não está mudando nada, continua feio e não adicionou nos submenu do
+ *  fiscal que vai virar novo. EU NÃO QUERO QUE APAREÇA QUANDO EU CLICAR
+ *  EM NOTA FISCAL entendeu?"
+ *
+ * Leitura final (a certa):
+ *  1) A FAIXA no topo das TELAS (a ribbon da 6.0.13/6.1.0) ESTÁ FORA.
+ *     Clicou em Nota Fiscal → abre a tela e NADA aparece pendurado em cima.
+ *     (.wxr-bar morre por CSS; os patches velhos seguem intactos no arquivo,
+ *      só não mostram mais nada — padrão da casa.)
+ *  2) O lugar oficial dos 6 é o SUBMENU do FISCAL: a aba/módulo da barra
+ *     passa a se chamar **Fiscal** (não mais "NF-e/NFC-e") e o submenu com
+ *     os 6 (Nota Fiscal · Perfil Tributário · Manifestação · NCM ·
+ *     Enviar XML · Configurações) ABRE E FICA FIXADO ao clicar na aba —
+ *     não é só no hover. Clicou fora ou num item → fecha. Na lateral idem:
+ *     o pai "Fiscal" pin o flyout aberto no clique.
+ *  3) Mapeador de CLIENTES alinhado AO BANCO REAL (amostra que ele mandou:
+ *     COD_CLIENTE / NOME_RAZAOSOCIAL / NOME_FANTASIA / CPF_CNPJ / RG_IE /
+ *     RUA-NUMERO-COMPLEMENTO-BAIRRO-CIDADE-UF-CEP / COBRANCA separada /
+ *     TELEFONE-CELULAR-CLI_WHATSAPP / CONTATO / EMAIL / BLOQUEADO /
+ *     CLI_LIMITE_CREDITO / DESCONTO / REFERENCIA / LATITUDE-LONGITUDE /
+ *     campos fiscais NFE_INDIEDEST-NFE_INDFINAL-NFE_OBRIGATORIO-NFE_GOVERNAMENTAL
+ *     / TIPO F-J / DT_CADASTRO / DEL=S pula). Ele NÃO quer importar ("vai
+ *     dar b.o") — nada é importado sozinho: o mapeador só existe pro dia
+ *     que ele decidir, e a página de envio usa exatamente estes campos.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var G = typeof window !== 'undefined' ? window : globalThis;
+  if (G.__v6101sfo && G.__v6101sfo.vivo) return;
+
+  /* ── PURE — mapeador do cliente conforme o dump REAL (amostra dele) ── */
+  function tx(v) { return String(v == null ? '' : v).trim(); }
+  function soDig(v) { return tx(v).replace(/\D/g, ''); }
+  function ehDelCli(row) { return tx(row && row.DEL).toUpperCase() === 'S'; }
+  function mapearClienteOficial(row) {
+    var doc = soDig(row.CPF_CNPJ);
+    var c = {
+      codigo: tx(row.COD_CLIENTE),
+      nome: tx(row.NOME_RAZAOSOCIAL),
+      fantasia: tx(row.NOME_FANTASIA),
+      contato: tx(row.CONTATO),
+      tipo: tx(row.TIPO).toUpperCase() === 'J' ? 'J' : (tx(row.TIPO).toUpperCase() === 'F' ? 'F' : ''),
+      documento: doc,
+      cnpj: doc.length > 11 ? doc : '',
+      cpf: (doc && doc.length <= 11) ? doc : '',
+      ie: tx(row.RG_IE),
+      endereco: tx(row.RUA),
+      numero: tx(row.NUMERO),
+      complemento: tx(row.COMPLEMENTO),
+      bairro: tx(row.BAIRRO),
+      cidade: tx(row.CIDADE),
+      uf: tx(row.UF).toUpperCase().slice(0, 2),
+      cep: soDig(row.CEP).slice(0, 8),
+      referencia: tx(row.REFERENCIA),
+      fone: tx(row.TELEFONE),
+      celular: tx(row.CELULAR),
+      whatsapp: tx(row.CLI_WHATSAPP),
+      email: tx(row.EMAIL),
+      bloqueado: tx(row.BLOQUEADO).toUpperCase() === 'S',
+      limiteCredito: Number(row.CLI_LIMITE_CREDITO) || 0,
+      desconto: Number(row.DESCONTO) || 0,
+      criadoEm: tx(row.DT_CADASTRO),
+      latitude: tx(row.LATITUDE),
+      longitude: tx(row.LONGITUDE),
+      /* endereço de cobrança separado (só preenche quando veio de verdade) */
+      cobranca: (tx(row.RUA_COBRANCA) || tx(row.CIDADE_COBRANCA)) ? {
+        endereco: tx(row.RUA_COBRANCA), numero: tx(row.NUMERO_COBRANCA),
+        complemento: tx(row.COMPLEMENTO_COBRANCA), bairro: tx(row.BAIRRO_COBRANCA),
+        cidade: tx(row.CIDADE_COBRANCA), uf: tx(row.UF_COBRANCA).toUpperCase().slice(0, 2),
+        cep: soDig(row.CEP_COBRANCA).slice(0, 8), referencia: tx(row.REFERENCIA_COBRANCA)
+      } : null,
+      /* fiscais do cliente (a nota lê daqui: isento de IE, consumidor final…) */
+      nfe: {
+        indIeDest: row.NFE_INDIEDEST != null ? Number(row.NFE_INDIEDEST) : 9,
+        indFinal: row.NFE_INDFINAL != null ? Number(row.NFE_INDFINAL) : 1,
+        obrigatorioNfe: Number(row.NFE_OBRIGATORIO) === 1,
+        governamental: Number(row.NFE_GOVERNAMENTAL) === 1
+      },
+      status: 'ativo'
+    };
+    return c;
+  }
+
+  G.SFO611_PURE = { ehDelCli: ehDelCli, mapearCliente: mapearClienteOficial, rotuloPai: 'Fiscal' };
+  if (typeof module !== 'undefined' && module.exports) { module.exports = G.SFO611_PURE; }
+  if (typeof window === 'undefined' || !window.document) { G.__v6101sfo = { vivo: false }; return; }
+
+  /* ── 1) A FAIXA DAS TELAS MORRE (não aparece mais ao clicar em Nota Fiscal) ── */
+  function injetaCss() {
+    if (document.getElementById('sfo611-css')) return;
+    var st = document.createElement('style');
+    st.id = 'sfo611-css';
+    st.textContent =
+      /* a ribbon que eu fiz (6.0.13/6.1.0) está desligada — o submenu do Fiscal é o oficial */
+      '.wxr-bar{display:none !important;height:0 !important;margin:0 !important;overflow:hidden !important}' +
+      /* nome oficial do flyout lateral: Fiscal */
+      '#sxvm-flyout-nav::before{content:"Fiscal" !important}' +
+      /* submenu FIXADO (clique na aba Fiscal abre e segura) — mesma cara do hover */
+      '.module.sfo-pin .module-menu{opacity:1 !important;visibility:visible !important;transform:translateY(0) scale(1) !important}' +
+      '.module.sfo-pin>button{background:linear-gradient(180deg,#1d4ed8,#1e3a8a);color:#fff !important;border-radius:10px;box-shadow:0 8px 18px rgba(30,58,138,.30)}' +
+      '.module.sfo-pin>button i{color:#fff !important}' +
+      '#menu-nfe.module-menu{min-width:250px}' +
+      '#menu-nfe button{height:40px}' +
+      '#sxvm-flyout-nav.sfo-pin{display:block !important}' +
+      '#sxvm-nav-pai.sfo-pin{background:#f1f6ff;border-radius:9px}' +
+      '#sxvm-nav-pai.sfo-pin .ph-caret-right{transform:rotate(90deg)}';
+    document.head.appendChild(st);
+  }
+
+  /* ── 2) Aba/módulo "NF-e/NFC-e" vira oficialmente **Fiscal** ─────────── */
+  function ehBotaoPaiFiscal(el) {
+    if (!el || !el.closest) return false;
+    var mod = el.closest('.module');
+    if (mod && mod.querySelector('#menu-nfe') && mod.querySelector(':scope > button') === botaoDe(el)) return true;
+    return false;
+  }
+  function botaoDe(el) { return el.tagName === 'BUTTON' || el.closest('button') ? (el.tagName === 'BUTTON' ? el : el.closest('button')) : null; }
+  function renomeiaPai() {
+    document.querySelectorAll('.module').forEach(function (mod) {
+      if (!mod.querySelector('#menu-nfe')) return;
+      var b = mod.querySelector(':scope > button');
+      if (b && b.textContent.indexOf('NF-e/NFC-e') >= 0) {
+        b.innerHTML = '<i class="ph ph-file-text"></i>Fiscal';
+        b.title = 'Menu Fiscal — clica pra abrir os 6 do fiscal';
+      }
+    });
+    /* lateral: o pai do flyout (criado pela 6.0.11) */
+    var pai = document.getElementById('sxvm-nav-pai');
+    if (pai && pai.textContent.indexOf('NF-e/NFC-e') >= 0) {
+      var icone = pai.querySelector('i');
+      var caret = pai.querySelector('.ph-caret-right');
+      pai.innerHTML = '';
+      if (icone) pai.appendChild(icone);
+      pai.appendChild(document.createTextNode('Fiscal'));
+      if (caret) pai.appendChild(caret);
+    }
+  }
+
+  /* pin: abre o submenu da aba Fiscal e segura até clicar fora/num item */
+  function despinTodos(excecao) {
+    document.querySelectorAll('.module.sfo-pin, #sxvm-nav-pai.sfo-pin, #sxvm-flyout-nav.sfo-pin').forEach(function (el) {
+      if (el !== excecao) el.classList.remove('sfo-pin');
+    });
+  }
+  function onCliqueCaptura(ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+
+    /* clique na ABA FISCAL da barra clássica: abre o submenu (pin), não navega */
+    var mod = t.closest('.module');
+    if (mod && mod.querySelector('#menu-nfe') && mod.querySelector(':scope > button') && mod.querySelector(':scope > button').contains(t)) {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      var aberto = mod.classList.contains('sfo-pin');
+      despinTodos();
+      if (!aberto) mod.classList.add('sfo-pin');
+      return;
+    }
+    /* clique num ITEM do submenu do Fiscal: fecha o pin e deixa navegar */
+    if (t.closest('#menu-nfe') && t.closest('button')) { despinTodos(); return; }
+    /* clique no PAI lateral: pin o flyout */
+    var pai = t.closest('#sxvm-nav-pai');
+    if (pai) {
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      var fly = document.getElementById('sxvm-flyout-nav');
+      if (fly && fly.style.display === 'none') { try { fly.style.display = 'block'; } catch (e) { } }
+      var aberto2 = pai.classList.contains('sfo-pin');
+      despinTodos();
+      if (!aberto2) { pai.classList.add('sfo-pin'); if (fly) fly.classList.add('sfo-pin'); }
+      return;
+    }
+    /* clique num item do flyout: fecha tudo (a navegação segue pelo handler dele) */
+    if (t.closest('#sxvm-flyout-nav')) { despinTodos(); return; }
+    /* qualquer outro clique: fecha pins */
+    despinTodos();
+  }
+
+  function instala() {
+    injetaCss(); renomeiaPai();
+    if (!document.__sfo611Captura) {
+      document.__sfo611Captura = true;
+      document.addEventListener('click', onCliqueCaptura, true);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { instala(); });
+  else instala();
+  /* o pai da lateral é criado depois (runtime) — uma passada tardia cobre */
+  setTimeout(renomeiaPai, 400);
+  setTimeout(renomeiaPai, 1500);
+  var ren = new MutationObserver(function () { renomeiaPai(); });
+  try { ren.observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+
+  G.__v6101sfo = { vivo: true };
+  console.log('[DIGICOPY] v6.1.1 Submenu Fiscal oficial: faixa das telas DESLIGADA; aba Fiscal abre e fixa os 6; mapeador CLIENTES alinhado ao banco real');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("submenu_fiscal_oficial_patch.js", e); }
+;
+
+/* ===== navegacao_fiscal_barra_escuro_patch.js ===== */
+try{
+/* ============================================================
+ * v6.1.2 — Navegação fiscal NA BARRA DE MÓDULOS (reconstruída)
+ *          + modo escuro íntegro nas telas fiscais.
+ *
+ * Causa-raiz provada no teste E2E headless (jsdom):
+ * 1) pintarMenus (v5.22.13+) RECRIA a .module-row a partir de
+ *    menusPadrao() e APAGA o markup estático do index: o módulo
+ *    fiscal volta com o rótulo velho "NF-e/NFC-e" e um submenu
+ *    SEM id com 3 itens antigos → a v6.1.1 (que buscava
+ *    #menu-nfe) nunca encontrava o alvo → "não muda nada".
+ * 2) As CSS claras fixas das telas fiscais/faixa não respeitavam
+ *    .digi-escuro → "modo escuro todo bugado".
+ *
+ * Este patch: acha o módulo fiscal pelo ONCLICK (abrirCentralNfe /
+ * navigateTo('central-nf')), recoloca o rótulo "Fiscal" e o
+ * #menu-nfe com os 6 menus oficiais sempre que a barra for
+ * repintada (observer), mantém pin por clique (compatível com a
+ * v6.1.1 via classe .sfo-pin + e.defaultPrevented), e cobre o
+ * modo escuro (.digi-escuro) de todas as camadas claras fixas.
+ * Não importa dado, não toca banco, não interfere no claro.
+ * Guard: __v612nes
+ * ============================================================ */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window.__v612nes) return;
+  window.__v612nes = true;
+
+  var VIEWS = [
+    'view-central-nf',
+    'view-fiscal-perfil',
+    'view-fiscal-manifestacao',
+    'view-fiscal-enviar-xml',
+    'view-fiscal-ncm',
+    'view-config-fiscal'
+  ];
+
+  /* ---------- CSS: modo escuro (.digi-escuro) cobre os claros fixos ---------- */
+  function injetaCss() {
+    var st = document.getElementById('nes612-css');
+    if (st) {
+      /* mantém a folha por ÚLTIMO: folhas tardias (menus, catálogo) não a cobrem */
+      var head0 = document.head || document.documentElement;
+      if (st.parentNode === head0 && head0.lastElementChild !== st) head0.appendChild(st);
+      return;
+    }
+    st = document.createElement('style');
+    st.id = 'nes612-css';
+    st.textContent = [
+      /* shell das telas fiscais (gradiente claro → escuro) */
+      'body.digi-escuro #view-central-nf, body.digi-escuro #view-fiscal-perfil, body.digi-escuro #view-fiscal-manifestacao, ' +
+      'body.digi-escuro #view-fiscal-enviar-xml, body.digi-escuro #view-fiscal-ncm, body.digi-escuro #view-config-fiscal' +
+      '{ background: linear-gradient(180deg,#0a1240 0%, #0d1746 55%, #101b52 100%) !important; color:#e8eeff !important; }',
+
+      /* painel #fx-root: cartões, barras, inputs, tabelas e abas */
+      'body.digi-escuro #fx-root{ color:#e8eeff !important; }',
+      'body.digi-escuro #fx-root .fx-card, body.digi-escuro #fx-root .fx-barra{' +
+      ' background: rgba(13,21,54,.88) !important; background-color: rgba(13,21,54,.88) !important;' +
+      ' background-image: none !important; border-color: rgba(148,167,255,.22) !important;' +
+      ' box-shadow: 0 2px 14px rgba(2,6,26,.45) !important; }',
+      'body.digi-escuro #fx-root .fx-lb, body.digi-escuro #fx-root .fx-mini, body.digi-escuro #fx-root .fx-h2{ color:#a9bff2 !important; }',
+      'body.digi-escuro #fx-root .fx-in, body.digi-escuro #fx-root select.fx-in, body.digi-escuro #fx-root textarea.fx-in{' +
+      ' background:#0b1337 !important; color:#e8eeff !important; border-color: rgba(148,167,255,.28) !important; }',
+      'body.digi-escuro #fx-root .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
+      'body.digi-escuro #fx-root .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
+      'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background: rgba(148,167,255,.06) !important; }',
+      'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.16) !important; }',
+      'body.digi-escuro .fx-tab{ color:#a9bff2 !important; }',
+      'body.digi-escuro .fx-tab.on{ background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important; }',
+      'body.digi-escuro #fx-root .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',
+      'body.digi-escuro #fx-root .fx-btn:hover{ background:#1c2c6e !important; }',
+
+      /* submenu #menu-nfe da barra (o claro do sfo611 quebrava o escuro) */
+      'body.digi-escuro #menu-nfe{ background:#0d1738 !important; border:1px solid rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
+      'body.digi-escuro #menu-nfe button{ color:#dbe6ff !important; }',
+      'body.digi-escuro #menu-nfe button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }',
+
+      /* flyout lateral (sxvm) também fica íntegro no escuro */
+      'body.digi-escuro #sxvm-flyout-nav{ background:#0d1738 !important; border-color: rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
+      'body.digi-escuro #sxvm-flyout-nav button{ color:#dbe6ff !important; }',
+      'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  /* ---------- módulo fiscal na barra de módulos ---------- */
+  function ehFiscalBtn(b) {
+    var oc = (b && b.getAttribute('onclick')) || '';
+    return /abrirCentralNfe\s*\(|navigateTo\('central-nf'\)/.test(oc);
+  }
+  function moduloFiscal() {
+    var mods = document.querySelectorAll('.module-row .module, .modern-topnav .module');
+    for (var i = 0; i < mods.length; i++) {
+      var b = mods[i].querySelector(':scope > button');
+      if (ehFiscalBtn(b)) return mods[i];
+    }
+    return null;
+  }
+
+  var SUBS = [
+    ["navigateTo('central-nf')", 'ph-receipt', 'Nota Fiscal'],
+    ["navigateTo('fiscal-perfil')", 'ph-percent', 'Perfil Tributário'],
+    ["navigateTo('fiscal-manifestacao')", 'ph-stamp', 'Manifestação'],
+    ["navigateTo('fiscal-ncm')", 'ph-barcode', 'NCM'],
+    ["navigateTo('fiscal-enviar-xml')", 'ph-file-zip', 'Enviar XML'],
+    ["navigateTo('config-fiscal')", 'ph-gear', 'Configurações']
+  ];
+  function menuHtml() {
+    return SUBS.map(function (s) {
+      return '<button onclick="' + s[0] + '"><i class="ph ' + s[1] + '"></i>' + s[2] + '</button>';
+    }).join('');
+  }
+
+  function fixBarra() {
+    var mod = moduloFiscal();
+    if (!mod) return false;
+    var btn = mod.querySelector(':scope > button');
+    if (btn && !/^\s*Fiscal\b/.test(String(btn.textContent || '').trim())) {
+      btn.innerHTML = '<i class="ph ph-file-text"></i>Fiscal';
+    }
+    /* submenu velho (sem id, 3 itens) sai; #menu-nfe oficial fica */
+    var menus = mod.querySelectorAll('.module-menu');
+    for (var i = 0; i < menus.length; i++) {
+      if (menus[i].id !== 'menu-nfe' && menus[i].parentNode) menus[i].parentNode.removeChild(menus[i]);
+    }
+    var menu = mod.querySelector('#menu-nfe');
+    if (!menu) {
+      menu = document.createElement('div');
+      menu.id = 'menu-nfe';
+      menu.className = 'module-menu';
+      mod.appendChild(menu);
+    }
+    if (menu.className.indexOf('module-menu') === -1) menu.className = 'module-menu ' + menu.className;
+    if (menu.getAttribute('data-nes612') !== '1' || menu.querySelectorAll(':scope > button').length !== SUBS.length) {
+      var pin = menu.classList.contains('sfo-pin');
+      menu.innerHTML = menuHtml();
+      menu.setAttribute('data-nes612', '1');
+      if (pin) menu.classList.add('sfo-pin');
+    }
+    return true;
+  }
+
+  /* ---------- clique no pai: abre e FICA preso (pin); compõe com o sfo611 ---------- */
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return; /* o submenu_fiscal_oficial (6.1.1) já tratou */
+    var mod = e.target && e.target.closest ? e.target.closest('.module') : null;
+    if (!mod) return;
+    var btn = mod.querySelector(':scope > button');
+    var menu = mod.querySelector('#menu-nfe');
+    if (!ehFiscalBtn(btn) || !menu) return;
+    if (!e.target.closest('.module-menu')) {
+      /* clique no PAI: pin/destampa o submenu, sem navegar */
+      e.preventDefault(); e.stopPropagation();
+      fixBarra();
+      var estava = menu.classList.contains('sfo-pin');
+      var todos = document.querySelectorAll('.module-menu.sfo-pin');
+      for (var i = 0; i < todos.length; i++) todos[i].classList.remove('sfo-pin');
+      if (!estava) menu.classList.add('sfo-pin');
+      return;
+    }
+    /* clicou num ITEM: navega (onclick próprio) e o pin se solta */
+    var alvo = e.target.closest('button');
+    if (alvo && /central-nf|fiscal-|config-fiscal/.test(alvo.getAttribute('onclick') || '')) {
+      setTimeout(function () { menu.classList.remove('sfo-pin'); }, 60);
+    }
+  }, true);
+  /* clicar fora solta o pin */
+  document.addEventListener('click', function (e) {
+    var pins = document.querySelectorAll('.module-menu.sfo-pin');
+    for (var i = 0; i < pins.length; i++) {
+      var m = pins[i];
+      if (!(e.target && m.contains(e.target)) && !(m.parentElement && m.parentElement.contains(e.target))) {
+        m.classList.remove('sfo-pin');
+      }
+    }
+  });
+
+  /* ---------- sobrevive a cada re-pintura da barra ---------- */
+  var armouObs = false, pendente = false;
+  function armaObs() {
+    if (armouObs) return;
+    var row = document.querySelector('.module-row');
+    if (!row || typeof window.MutationObserver !== 'function') return;
+    armouObs = true;
+    new window.MutationObserver(function (muts) {
+      var mexeu = muts.some(function (m) {
+        return m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length);
+      });
+      if (!mexeu || pendente) return;
+      pendente = true;
+      setTimeout(function () { pendente = false; armouObs = false; fixBarra(); armaObs(); }, 40);
+    }).observe(row, { childList: true, subtree: true });
+  }
+
+  function armar() {
+    injetaCss();
+    var ok = fixBarra();
+    armaObs();
+    if (!ok) setTimeout(armar, 350);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(armar, 80); });
+  } else {
+    setTimeout(armar, 80);
+  }
+  try {
+    if (typeof window.showApp === 'function' && !window.showApp.__v612nes) {
+      var antiga = window.showApp;
+      window.showApp = function () {
+        var r = antiga.apply(this, arguments);
+        setTimeout(armar, 150);
+        return r;
+      };
+      window.showApp.__v612nes = true;
+    }
+  } catch (e) {}
+
+  console.log('[DIGICOPY] v6.1.2 navegação Fiscal firme na barra + escuro sem bug');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("navegacao_fiscal_barra_escuro_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 190;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 222;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 190 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 222 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

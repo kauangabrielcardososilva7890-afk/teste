@@ -28,6 +28,8 @@ if (missing.length) throw new Error('Arquivos ausentes no bundle: ' + missing.jo
 // ── Quem pode ser isolado ───────────────────────────────────────────────────
 let acorn = null;
 try { acorn = require('acorn'); } catch (e) { acorn = null; }
+// v5.26.5 — vendor no repo: build não depende mais de node_modules intactos
+if (!acorn) { try { acorn = require('./vendor/acorn'); } catch (e) { acorn = null; } }
 
 function declaraNoEscopoGlobal(src, arquivo) {
   if (!acorn) return true;                       // sem parser: não arrisca, não isola
@@ -44,7 +46,7 @@ function declaraNoEscopoGlobal(src, arquivo) {
 }
 
 if (!acorn) {
-  console.error('  ! acorn não encontrado: bundle será gerado SEM isolamento de erro.');
+  console.error('  ! acorn não encontrado (nem node_modules, nem vendor/): bundle será gerado SEM isolamento de erro.');
   console.error('    Rode: npm install');
 }
 
