@@ -38,3 +38,17 @@ anotar/guarda isso", NÃO implementa — registra por escrito em arquivo do repo
 (foi o caso das fotos do velho: o que chegou está anotado no MAPEAMENTO_SISTEMA_ANTIGO.md).
 E na dúvida se chegou ou não chegou, CONFERIR a evidência antes de responder — nunca
 chutar de memória.
+
+## 18. Antes de dizer "não tenho / não chegou", VARRER o RELATORIO_SESSAO.md e o histórico (18/09)
+
+CASO REAL: disse a ele que as fotos das telas internas do sistema antigo "nunca chegaram".
+
+ERROU. O catálogo COMPLETO (dezenas de fotos, campo a campo, dias 14-15/09) sempre
+
+esteve escrito no RELATORIO_SESSAO.md — a fase de design foi declarada FECHADA em 15/09.
+
+A memória resumida entre turnos estava com uma linha falsa; a verdade mora nos ARQUIVOS.
+
+Regra: afirmação sobre "o que chegou/não chegou" só depois de grep no RELATORIO_SESSAO.md,
+
+MAPEAMENTO_SISTEMA_ANTIGO.md e git log. Ameaça de "pedir de novo" sem essa varredura = falta grave.
