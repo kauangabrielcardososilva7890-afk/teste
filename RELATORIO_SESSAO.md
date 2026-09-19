@@ -4,8 +4,8 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a0bb58-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/27  
-**Última versão:** **v5.21.4**  
-**Commit:** `e21c5db`  
+**Última versão:** **v5.21.5**  
+**Commit:** `54831a7`  
 **Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
 **Site:** endereço Cloudflare do usuário (pedir o link)
 
@@ -27,6 +27,10 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.21.5 — Banner rawgh deletado (aprovado)
+- Usuário aprovou a remoção: banner "endereço PROVISÓRIO" deletado de verdade do `app.js` (bloco final do arquivo) + `removerAvisoProvisorio` do `correcoes_uso_diario_patch.js` + seletores rawgh do `delete_hidden_patch.js`. Nenhuma referência a rawgh resta no código (só histórico de versões antigas neste `.md`).
+- Validação: `npm run check` OK (Bundle 100 scripts, sha256 029d7441c823d803); `npm test` **55 passaram, 1 falha aceita (etiquetas), 0 falharam**.
 
 ## v5.21.4 — Fiscal: Imprimir de volta + sem trava + CI passando no PR
 - **Imprimir de volta no detalhe do Fiscal** (`modulos_neo_visual_patch.js`): a troca do modal na v5.21.3 derrubou o rodapé com o botão Imprimir do `migrados_print` (o wrapper dele parou de rodar porque a função foi substituída). O detalhe agora tem rodapé padrão (`p-4 border-t`) com **Imprimir** (chama `imprimirRegistroMigrado`) + Fechar em estilo neo.
