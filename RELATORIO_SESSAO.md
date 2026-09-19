@@ -7,7 +7,7 @@
 **Última versão:** **v5.21.3**  
 **Commit:** `97e8162`  
 **Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/97e8162/index.html?v=5.21.3`
+**Site:** endereço Cloudflare do usuário (pedir o link)
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -255,6 +255,9 @@ Respostas às 4 perguntas feitas e confirmadas pelo usuário nesta sessão:
 - Causa raiz (igual ao botão de backup): o `finalizacao_sistema_patch.js` (último a carregar) SOBRESCREVE `renderClientes` inteiro, matando o card "Importar clientes" do `sistema_clientes_loja_patch.js` (que rodava antes e era substituído).
 - Correção: botão **"Importar clientes"** adicionado direto no cabeçalho (`neo-actions`) da tela final de Clientes, com `<input type=file id=clientes-json-input>` escondido e status `#clientes-import-status`.
 - `importarClientesJsonFinal` agora mostra o resultado num `lfbAlert` (importados/atualizados/ignorados + total). Lê `CLIENTES.json`/`CLIENTES_FINAL.json` e ignora `CLIENTES_USUARIOS*`.
+
+## v5.20.13 — Botão "Exportar backup" agora VISÍVEL de verdade
+- Causa raiz: havdos/ignorados + total). Lê `CLIENTES.json`/`CLIENTES_FINAL.json` e ignora `CLIENTES_USUARIOS*`.
 
 ## v5.20.13 — Botão "Exportar backup" agora VISÍVEL de verdade
 - Causa raiz: havia **duas telas de Configurações** brigando. O `app.js` montava uma com o card "Backup" ("Exportar backup JSON"), mas o `notinha_patch.js` SOBRESCREVIA essa tela inteira com outra (que só tinha "Exportar backup local" pequeno no meio de um card). Por isso o botão que prometi "voltar" nunca aparecia.
