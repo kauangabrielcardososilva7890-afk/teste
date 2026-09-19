@@ -1,13 +1,13 @@
 # Relatório da sessão DIGICOPY — continuar em outro chat
 
-**Data:** 2026-08-16  
+**Data:** 2026-09-19  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa da sessão:** `arena/01a00cfb-teste` (continuação do PR #21 em uma nova sessão)  
-**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/22  
-**Última versão:** **v5.21.2**  
-**Commit:** `72a5994`  
-**Zip:** `Sistema-Digicopy-v5.21.2.zip`  
-**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/72a5994df04c140a03299512a60f68b40ed5f98e/index.html?v=5.21.2`
+**Branch fixa da sessão:** `arena/01a0bb58-teste`  
+**PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/27  
+**Última versão:** **v5.21.3**  
+**Commit:** `97e8162`  
+**Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
+**GitHack:** `https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/97e8162/index.html?v=5.21.3`
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 
@@ -27,6 +27,16 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Vendas/Notinhas v5.15.2; 1 impressora; 2.2 finalizar lista; 2.3 filtros; 3 impressoras; 4.3–4.6; 5 Todos; 6 busca impressora contrato; 7 sort; ESC sem loop.
 
 ---
+
+## v5.21.3 — Fiscal bonito + modo escuro + Dono na nuvem + duplo clique
+- **Fiscal no padrão neo** (`modulos_neo_visual_patch.js`): as abas das tabelas migradas (as 6 do Fiscal e as demais) saíram do layout roxo antigo e usam o mesmo padrão dos outros menus (neo-shell/panel/head/table). Busca só no Enter/lupa (regra), botão Limpar, ordenar clicando na coluna (▲▼), duplo clique abre o detalhe, "Mostrar mais" de 50 em 50, Exportar/Excluir mantidos, chip de categoria no cabeçalho. Mantida a classe `text-white/80` para o chip v4.3 continuar funcionando.
+- **Modo escuro** (`modo_escuro_patch.js`): botão lua/sol na barra azul do topo (ao lado do sino). Cobre menus, telas neo, tabelas, modais, login e painel da nuvem. Escolha salva em `digicopy_theme_v1` (padrão claro). Impressão força claro sozinha.
+- **Dono gerencia a nuvem**: `systemAdmin()` no `cloudflare_sync_patch.js` agora aceita perfil `dono` além de `admin`. Denivaldo (Dono, garantido pelo seed em todo PC) vê Nuvem/Backup e abre o diagnóstico da nuvem sem precisar do outro PC. Se existir um usuário gerente, o Dono muda o perfil dele para Dono em Usuários e ele também passa a ver. O erro 403 citado pelo usuário é de versão antiga (texto não existe mais no código) — some atualizando pelo link novo.
+- **Duplo clique global** (`duplo_clique_patch.js` + correção na origem no `app.js`): duplo clique na linha abre o cadastro/detalhe em todas as grades (usuário, equipamento, leitura, OS, auditoria abre a origem, demais via botão da linha). Blocklist garante que NUNCA aciona excluir/baixar/pagar/estornar/faturar/salvar. Vendas e modais mantêm a lógica própria.
+- **Testes quebrados corrigidos**: deletados `test_correcoes_relatorio.js` e `test_vendas_chamados_reparo.js` (testavam patches que nunca existiram no git); `test_ajustes_v5188.js` atualizado (digicopyLoja removida na v5.20.11). Três testes novos na suíte.
+- `worker/README.md`: branch de produção em desenvolvimento atualizada para `arena/01a0bb58-teste`; PR #22 já unido ao `main`.
+- **Limitação repetida**: workflow de CI (`.github/workflows/ci.yml`) não pôde ser enviado — token do GitHub App sem permissão `workflows` (mesmo bloqueio da v5.20.28). Validação segue manual: `npm run check` + `npm test`.
+- Validação: `npm run check` OK (Bundle 100 scripts, sha256 f2a2e24f25b45525); `npm test` **55 passaram, 1 falha aceita (etiquetas), 0 falharam**; smoke runtime com DOM falso OK (render neo, ordenação, tema, duplo clique).
 
 ## v5.21.2 — autorização possível antes de esconder Nuvem
 - Regra corrigida: PC sem token mostra **Nuvem** para qualquer perfil, permitindo colar código. Após autorização, Nuvem some para não-Admin; Backup é sempre só Admin.
