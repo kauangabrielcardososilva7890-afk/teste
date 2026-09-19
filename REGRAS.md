@@ -26,9 +26,8 @@ Lista única e numerada. Se uma regra mudar, atualize AQUI (não espalhe em outr
 ## Áreas
 18. **Não reabrir etiquetas nem vendas** sem pedido explícito (áreas aceitas/fechadas).
 19. **Áreas aceitas não mexer sem pedido** (lista do "Aceito" em `RELATORIO_SESSAO.md`).
-20. **Rawgh-banner** (aviso de endereço provisório): só remover com confirmação do usuário.
+20. **Rawgh-banner** (aviso de endereço provisório): REMOVIDO na v5.21.5 com aprovação do usuário.
 
 ## Pendências do usuário (não são regras, só para não esquecer)
 - Passar o endereço do site Cloudflare dele (para os links de teste).
-- Confirmar remoção do banner `rawgh`.
 - Dizer onde viu o "modo escuro" (não existe neste repositório — ver v5.21.4).
