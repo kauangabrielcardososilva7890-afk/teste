@@ -15,7 +15,7 @@ const P = require('./submenu_hover_nfe_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 216; hover NF-e/NFC-e fecha a fila',
-  man.length === 221 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
+  man.length === 222 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60011sxvm') >= 0 && bundle.indexOf('SXVM_PURE_START') >= 0 && bundle.indexOf('SUBMENU_HOVER_NFE_PATCH v6.0.11 ativo') >= 0);
 
@@ -26,7 +26,7 @@ ok('os 3 itens FALSOS ("Em breve…") sumiram do index.html',
   html.indexOf('Em breve: emissão de nota fiscal') < 0 && html.indexOf('Módulo fiscal em preparação') < 0);
 ok('os 6 submenus apontam pras views certas (hover → navega)',
   ['central-nf', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'config-fiscal'].every(v => html.indexOf("navigateTo('" + v + "')") >= 0));
-ok('(supersede v6.1.1) a aba oficial agora é **Fiscal**: clicar ABRE o submenu dos 6 pinado; a Central abre pelo item Nota Fiscal',
+ok('(supersede v6.1.2) a aba oficial agora é **Fiscal**: clicar ABRE o submenu dos 6 pinado; a Central abre pelo item Nota Fiscal',
   /<div class="module"><button onclick="navigateTo\('central-nf'\)"><i class="ph ph-file-text"><\/i>Fiscal<\/button><div id="menu-nfe"/.test(html));
 
 console.log('== OS 6 DO PRINT (PURE) ==');
@@ -55,9 +55,9 @@ ok('sonda re-aplica tudo (lateral redesenha no login) igual ao padrão das vers�
   src.indexOf('setInterval') >= 0 && src.indexOf('sxvmTudo') >= 0 && src.indexOf('300') >= 0);
 
 console.log('== CARIMBO 6.0.11 ==');
-ok('package.json na 6.0.11', pkg.version === '6.1.1');
-ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.1'") >= 0 && html.indexOf('>v6.1.1<') >= 0 && html.indexOf('app.bundle.js?v=6.1.1') >= 0 && html.indexOf('v6.1.1</title>') >= 0);
-ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.1'") >= 0 && mob.indexOf('>v6.1.1<') >= 0);
+ok('package.json na 6.0.11', pkg.version === '6.1.2');
+ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0 && html.indexOf('v6.1.2</title>') >= 0);
+ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

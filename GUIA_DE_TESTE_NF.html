@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.1.1</title>
+<title>Guia de Teste — Nota Fiscal (NF-e) · Sistema Digicopy v6.1.2</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +36,7 @@
 <body>
 
 <header>
-  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.1.1</h1>
+  <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.1.2</h1>
   <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
      Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
 </header>
@@ -46,7 +46,7 @@
 <h2>Antes de começar (2 minutos)</h2>
 <ol>
   <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
-  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.1.1</code>.<br>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.1.2</code>.<br>
       Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
   <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
 </ol>
@@ -108,7 +108,16 @@
   <li>Estorne uma notinha (venda de teste): ela <b>abre na aba da venda já carregada</b> (mesmo número), e no Financeiro o título fica com a tarja <b>EXTORNADO</b> (não some, não entra nas somas).</li>
 </ul></div>
 
-<div class="passo"><b class="t">A11. O menu fiscal do jeito certo: NADA na tela + aba Fiscal com o submenu dos 6 (v6.1.1)</b>
+<div class="passo"><b class="t">A12. A aba Fiscal NA BARRA DE CIMA de verdade + modo escuro sem bug (v6.1.2)</b>
+  <span class="d">A v6.1.1 acertava só o esqueleto: ao ligar, o sistema <b>redesenha a barra de módulos</b> e apagava o trabalho — era o seu "não está mudando nada" (só o rodapé mudava). A v6.1.2 se <b>reaplicaca toda vez</b> que a barra for redesenhada. E o modo escuro não fica mais com telas claras bugadas por cima.</span>
+  <ul><li><b>Aba "Fiscal" na barra de cima</b> (era "NF-e/NFC-e"). Clique nela: o submenu <b>abre e FICA aberto</b>; clicou de novo, fecha. Os 6 itens: Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações.</li>
+  <li><b>Clica num item</b> (ex.: NCM) → navega para a tela e o submenu <b>fecha sozinho</b>. A tela abre limpa: <b>nada de faixa de botões</b> pendurada.</li>
+  <li><b>Recarregue a página e entre de novo:</b> a aba continua "Fiscal" com os 6 — a correção se reaplicaca sempre que o sistema remontar essa barra (é exatamente o que acontecia sem você ver, toda vez que ligava).</li>
+  <li><b>Modo escuro</b> (nas preferências do sistema): as telas fiscais ficam <b>escuras de verdade</b> — fundo azul-escuro, cartões escuros, textos claros legíveis, tabela com cabeçalho escuro. Voltar ao claro: tudo claro como antes, sem resquício escuro.</li></ul>
+  <p class="obs">Prova automática desta versão: teste de navegador sem cabeça rodou o app completo e conferiu <b>23/23 pontos</b>: aba renomeada na barra <b>mesmo depois de o sistema reconstruir a barra</b>, clique fixando/soltando, item navegando, faixa fora da tela, escuro aplicado nas telas fiscais e claro preservado. Nada foi importado nem apagado do seu cadastro.</p>
+</div>
+
+<div class="passo"><b class="t">A11. O menu fiscal do jeito certo: NADA na tela + aba Fiscal com o submenu dos 6 (v6.1.2)</b>
   <ul><li><b>A faixa que aparecia no topo das telas SUMIU de vez.</b> Clica em "Nota Fiscal" e a tela abre limpa — nada pendurado em cima.</li>
   <li><b>Na barra de módulos do topo, a aba agora se chama oficialmente FISCAL.</b> Clicou nela → o <b>submenu abre e fica parado</b> com os 6: Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações. Clica fora (ou num item) e ele fecha. Passar o mouse sem clicar também abre, como sempre foi.</li>
   <li><b>Na barra lateral</b> (modo de menu lateral), o item "Fiscal" faz igual: clica e o painelzinho dos 6 fica aberto.</li>

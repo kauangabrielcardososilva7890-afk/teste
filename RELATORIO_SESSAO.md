@@ -3513,3 +3513,26 @@ Ele não queria prévia de meio de caminho: pediu o cardápio inteiro de uma vez
 **Validação:** mural `test_ajustes_v6101.js` 18/18 (inclui a amostra real EDSON/INSTITUTO) + suíte **182/0/0 duas vezes**. Carimbos: index/package/mobile/guia(A11)/docx.
 
 **Comprometimento de leitura:** quando ele manda duas correções seguidas no MESMO ponto (menu), a segunda é a definitiva — menu-oficial = submenu do módulo, nunca overlay dentro de tela.
+
+---
+
+## v6.1.2 — Navegação Fiscal firme na barra reconstruída + modo escuro íntegro (19/09/2026)
+
+**Reclamação dele:** "confira tudo… não está mudando nada, somente o rodapé da versão; o modo escuro é todo bugado."
+
+### Causa-raiz provada (E2E headless jsdom rodando o app inteiro)
+1. **"Não muda nada":** `pintarMenus()` (v5.22.13+) recria a `.module-row` a partir de `menusPadrao()` no boot e **apaga o markup estático do index** — o módulo fiscal volta com o rótulo velho "NF-e/NFC-e" e um submenu sem id com 3 itens antigos. A v6.1.1 buscava o alvo por `#menu-nfe` → nunca achava na barra → parecia que só o rodapé mudava. (Na lateral, "Fiscal" já tinha colado.)
+2. **Escuro bugado:** as CSS claras fixas das minhas telas fiscais/faixa/submenu ignoravam `.digi-escuro`.
+
+### Correção (novo patch 222º: `navegacao_fiscal_barra_escuro_patch.js`, guard `__v612nes`)
+- Acha o módulo fiscal pelo **onclick** (`abrirCentralNfe()`/navigateTo('central-nf')) — sobrevive a qualquer re-pintura; rotula "Fiscal"; (re)cria `#menu-nfe` com os 6 oficiais e remove o submenu velho; observer na row + wrap de `showApp`.
+- Pin por clique reusa `.sfo-pin` e respeita o handler da v6.1.1 (`e.defaultPrevented`) — sem duplo toggle; clique no item navega e solta o pin; clique fora solta.
+- CSS dark `body.digi-escuro`: 6 shells fiscais (gradiente escuro), `#fx-root` (fx-card/fx-barra/fx-in/fx-tb/fx-tab/fx-btn), `#menu-nfe` e `#sxvm-flyout-nav`. Claro intacto (regra só aplica com a classe). Longhands + re-anexa a folha no fim do head.
+
+### Provas
+- **E2E jsdom (micro4): 23/23 PASS** — boot limpo; guard on; aba "Fiscal" na barra reconstruída; #menu-nfe 6 oficiais mesmo depois de chamar `pintarMenus()`; submenu velho removido; clique no pai fixa (sfo-pin) e não navega; 2º clique solta; clique no item abre a tela e solta o pin; conteúdo fx pinta; `.wxr-bar` inexistente/`display:none`; claro claro; com `.digi-escuro`: shell, menu e cartões escuros. (No jsdom o `!important` interfolhas não aplica em alguns casos — a regra-fonte com seletor dominante é a prova canônica; micro-benchmark isolado confirmou cascata funcionando.)
+- **Suíte: 183/0/0** (+ test_ajustes_v6102.js, 24 asserts).
+- Manifesto 222 scripts, sha256 do bundle: ver build; 4 carimbos 6.1.2 no index (+ package); docx atualizado; Guia A12.
+
+### O que pedir a ele se ainda assim "não abrir"
+Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé mudar sem efeito = cache/bundle antigo (o .exe embarca o bundle; o Pages atualiza em ~2 min).

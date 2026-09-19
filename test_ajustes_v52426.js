@@ -45,9 +45,9 @@ if (typeof registrar === 'function') {
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('cnfe-historico') && bundle.includes('registrarNfeEmitida'), 'bundle: histórico dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('cnfe-historico'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.1'"), 'index 6.0.9');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.1<'), 'rodapé v6.0.9');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.1.1"'), 'package.json 6.0.6');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.2'"), 'index 6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.2<'), 'rodapé v6.0.9');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.1.2"'), 'package.json 6.0.6');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (histórico das notas assinadas na Central NF).');

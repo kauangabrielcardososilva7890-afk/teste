@@ -21,11 +21,11 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto 221; Submenu Fiscal Oficial fecha a fila',
-  man.length === 221 && man[220] === 'submenu_fiscal_oficial_patch.js' && man[219] === 'menu_fiscal_oficial_patch.js');
+  man.length === 222 && man[220] === 'submenu_fiscal_oficial_patch.js' && man[219] === 'menu_fiscal_oficial_patch.js');
 ok('bundle contém o patch (guard + PURE + css + captura de clique)',
   bundle.indexOf('__v6101sfo') >= 0 && bundle.indexOf('SFO611_PURE') >= 0 && bundle.indexOf('sfo611-css') >= 0 && bundle.indexOf('onCliqueCaptura') >= 0);
 ok('carimbo 6.1.1 (package + index 4 pontos)',
-  pkg.version === '6.1.1' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.1'") >= 0 && html.indexOf('v6.1.1</title>') >= 0 && html.indexOf('>v6.1.1<') >= 0 && html.indexOf('app.bundle.js?v=6.1.1') >= 0);
+  pkg.version === '6.1.2' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('v6.1.2</title>') >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
 
 console.log('== A FAIXA DAS TELAS ESTÁ DESLIGADA ==');
 ok('.wxr-bar morta por CSS absoluto (não aparece NADA ao clicar em Nota Fiscal)',

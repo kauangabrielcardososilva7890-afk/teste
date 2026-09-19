@@ -219,5 +219,6 @@
   "ribbon_fiscal_estilo_antigo_patch.js",
   "fiscal_catalogo_completo_patch.js",
   "menu_fiscal_oficial_patch.js",
-  "submenu_fiscal_oficial_patch.js"
+  "submenu_fiscal_oficial_patch.js",
+  "navegacao_fiscal_barra_escuro_patch.js"
 ]
