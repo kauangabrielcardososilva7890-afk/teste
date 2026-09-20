@@ -150,6 +150,39 @@
     origem e escopo. Não transformar automaticamente anotações de atualização,
     decisões pontuais ou detalhes de implementação em regra.
 
+## Checklist obrigatória antes de programar
+
+Antes de começar a programar, responder as 24 perguntas abaixo. A resposta deve
+ser feita na análise da tarefa; quando alguma resposta mostrar falta de
+informação ou ambiguidade, perguntar ao dono antes de continuar. Não é para
+fingir que está tudo certo nem para fazer as perguntas ao dono quando elas
+puderem ser verificadas no código, nos fatos ou nos testes.
+
+1. Tenho todas as informações necessárias?
+2. Entendi exatamente o que o usuário quer?
+3. Preciso perguntar algo antes de continuar?
+4. O que o usuário informou está correto?
+5. Estou fazendo alguma suposição?
+6. Posso estar passando alguma informação errada?
+7. Esse código já existe em algum arquivo?
+8. Existe alguma função que já faz isso?
+9. Esse código depende de outro código?
+10. Essa alteração pode quebrar alguma coisa?
+11. Essa alteração pode afetar outra função?
+12. Estou duplicando código desnecessariamente?
+13. Existe código desnecessário?
+14. Posso simplificar esse código?
+15. Posso fazer isso em uma linha?
+16. Posso reduzir a quantidade de linhas sem perder clareza?
+17. Posso otimizar esse código sem alterar seu funcionamento?
+18. Estou mantendo o padrão do projeto?
+19. Estou alterando algo que não precisava ser alterado?
+20. Depois da alteração, tudo continuará funcionando?
+21. Preciso testar alguma parte antes de finalizar?
+22. Existe uma solução mais simples e segura?
+23. Essa minha ação irá quebrar alguma coisa no sistema?
+24. Existe algum método que posso testar antes de realizar tal coisa?
+
 ## O que foi conferido
 
 A consolidação foi comparada com a versão anterior de `REGRAS_PERMANENTES.md`,
