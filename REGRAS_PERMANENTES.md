@@ -150,6 +150,11 @@
 40. Quando uma nova regra for realmente confirmada, acrescentá-la aqui com sua
     origem e escopo. Não transformar automaticamente anotações de atualização,
     decisões pontuais ou detalhes de implementação em regra.
+41. Cada alteração deve deixar no `RELATORIO_SESSAO.md` um registro de continuidade
+    com data, pedido, arquivos alterados, validações, links, pendências e estado
+    de deploy. Esse registro deve permitir continuar o trabalho em outro chat
+    sem perder contexto. Não fazer merge nem publicar o Worker sem confirmação
+    humana explícita.
 
 ## Checklist obrigatória antes de programar
 

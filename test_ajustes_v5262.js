@@ -1,12 +1,12 @@
 // test_ajustes_v5262.js — v5.26.2: LOGIN DA NUVEM ANTES DO LOGIN DE USUÁRIO
-// (portão à vista pra todos, CNPJ+senha primeiro, nome do PC só depois),
+// (portão à vista pra todos, CNPJ+senha primeiro e conexão automática),
 // SESSÃO DE USUÁRIO 1X POR DIA e GERENTE .exe COM AVISOS CLAROS DE FALHA.
 //
 // O que este teste trava (pedido dele, literal — quem desfizer quebra aqui):
 //  1) o portão da nuvem EXISTE e aparece ANTES do login de usuário em PC não
 //     autorizado; nunca fica oculto "de propósito";
-//  2) a etapa de "qual é este computador" só aparece DEPOIS de /v1/check-pass
-//     confirmar CNPJ+senha (mais uma tranca);
+//  2) depois de /v1/check-pass confirmar CNPJ+senha, o aparelho conecta
+//     automaticamente, sem perguntar o nome do PC nem criar etapa extra;
 //  3) /v1/check-pass é só conferência: NÃO cria device, NÃO muda dados;
 //  4) conectou 1x: token no PC → portão nunca mais aparece;
 //  5) sessão de usuário vale o DIA: virou o dia → remove a sessão e avisa;
@@ -37,8 +37,9 @@ ok('manifesto: patch v5.26.2 na 203 (v5.26.0 na 202; data grande do chamado na 2
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5262ln') >= 0);
 ok('portão cobre a tela inteira só quando NÃO tem token (conectou 1x some)', patch.indexOf("if (tokenNuvem()) return;") >= 0 && patch.indexOf('v5262-portao') >= 0);
 ok('ordem certa: etapa 1 = CNPJ+senha via /v1/check-pass', patch.indexOf("'/v1/check-pass'") >= 0 && patch.indexOf('v5262-etapa1') >= 0);
-ok('nome do PC só DEPOIS de conferir (etapa 2 escondida até ok=true)', patch.indexOf('v5262-etapa2') >= 0 && patch.indexOf("'/v1/enroll-cnpj'") >= 0 && patch.indexOf("if (tokenNuvem()) return;") >= 0);
-ok('check-pass sem registros: etapa 1 manda só cnpj+senha', /api\('\/v1\/check-pass'/.test(patch) && patch.indexOf("body:JSON.stringify({ cnpj:cnpj, senha:senha })") >= 0 && patch.indexOf('deviceName: pc') >= 0);
+ok('conecta automaticamente depois de conferir (sem etapa de nome do PC)', !patch.includes('v5262-etapa2') && !patch.includes('v5262-pc') && patch.indexOf('conectarAutomaticamente') >= 0 && patch.indexOf("'/v1/enroll-cnpj'") >= 0);
+ok('check-pass sem registros: etapa 1 manda só cnpj+senha', /api\('\/v1\/check-pass'/.test(patch) && patch.indexOf("body:JSON.stringify({ cnpj:cnpj, senha:senha })") >= 0 && patch.indexOf('deviceName:nomePCAutomatico()') >= 0);
+ok('senha tem botão de mostrar/ocultar', patch.includes('v5262-mostrar-senha') && patch.includes("campo.type = mostrar ? 'text' : 'password'") && patch.includes('Ocultar senha'));
 ok('portão não fecha sistema: link jeito antigo p/ admin até reload', patch.indexOf('v5262-antigo') >= 0 && patch.indexOf('FECHOU_KEY') >= 0 && patch.indexOf('sessionStorage.setItem(FECHOU_KEY') >= 0);
 ok('portão abaixo dos popups do sistema (z 2147482900 < 2147483000)', patch.indexOf('2147482900') >= 0);
 ok('CNPJ vem preenchido (usa o CNPJ_V5260_PURE do patch 202)', patch.indexOf('CNPJ_V5260_PURE') >= 0 && patch.indexOf('fmtCnpj') >= 0);
@@ -82,7 +83,7 @@ ok('senha do gerente sinaliza tipo gerente e administrador', wk.indexOf("tipo: g
 ok('senha errada do check-pass devolve erro específico, não só HTTP 403', wk.indexOf('CNPJ ou senha de conexão/gerente incorretos') >= 0);
 ok('api do app preserva data.aviso nas respostas de erro', sync.indexOf('(data.aviso)') >= 0 && sync.indexOf('err.aviso') >= 0);
 ok('portão explica quando o computador será Administrador', patch.indexOf('r.administrador') >= 0 && patch.indexOf('será criado como <b>Administrador</b>') >= 0);
-ok('campo aceita senha de conexão ou do gerente', patch.indexOf('SENHA DE CONEXÃO OU DO GERENTE') >= 0);
+ok('campo mostra só SENHA DE CONEXÃO e não expõe a regra do gerente', patch.indexOf('SENHA DE CONEXÃO<br>') >= 0 && patch.indexOf('OU DO GERENTE (gerente separado') < 0);
 ok('gerente-login: erro GERENTE_NAO_DEFINIDO (409) com instrução', wk.indexOf('GERENTE_NAO_DEFINIDO') >= 0 && wk.indexOf('Salvar senhas na nuvem') >= 0);
 ok('gerente-login: erro GERENTE_SO_DONO cita o CNPJ/nome da dona', wk.indexOf('GERENTE_SO_DONO') >= 0 && wk.indexOf('owner_nome') >= 0);
 ok('gerente-login: erro SENHA_GERENTE_INVALIDA específico', wk.indexOf('SENHA_GERENTE_INVALIDA') >= 0);
@@ -99,4 +100,4 @@ ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_V
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
-console.log('\nTudo OK — v5.26.2 (login da nuvem ANTES do login de usuário · nome do PC só depois da senha certa · sessão de usuário 1x por dia · Gerente .exe com avisos claros de falha).');
+console.log('\nTudo OK — v5.26.2 (login da nuvem ANTES do login de usuário · conexão automática sem perguntar nome do PC · olho para mostrar senha · sessão de usuário 1x por dia · Gerente .exe com avisos claros de falha).');

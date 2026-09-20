@@ -3536,3 +3536,53 @@ Ele não queria prévia de meio de caminho: pediu o cardápio inteiro de uma vez
 
 ### O que pedir a ele se ainda assim "não abrir"
 Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé mudar sem efeito = cache/bundle antigo (o .exe embarca o bundle; o Pages atualiza em ~2 min).
+
+---
+
+## CONTINUIDADE — 20/09/2026 — ajuste do portão da nuvem após o print do usuário
+
+### Pedido confirmado nesta conversa
+
+- Adicionar um botão de olho para mostrar/ocultar a senha do portão, com o mesmo comportamento do campo de senha do usuário.
+- Remover a etapa "QUAL É ESTE COMPUTADOR?" e o botão/voltar dessa etapa, porque a solicitação estava criando muitos aparelhos/registros na nuvem.
+- Depois de conferir CNPJ + senha, conectar automaticamente sem pedir o nome do PC.
+- Remover da tela o texto `OU DO GERENTE (gerente separado cria este PC como Administrador)`. A senha do gerente continua aceita tecnicamente pelo Worker, mas não é exposta no rótulo visual do campo.
+- Não fazer merge. Continuar na branch `arena/01a0bfad-teste` e registrar cada ação, validação, link, pendência e estado de publicação para permitir retomada em outro chat.
+
+### Implementação desta continuação
+
+- `ajustes_v5262_login_nuvem_primeiro_patch.js`:
+  - campo visual agora mostra somente `SENHA DE CONEXÃO`;
+  - botão `👁` alterna `password`/`text`, com `aria-label`, `title` e `aria-pressed`;
+  - etapa do nome do computador removida;
+  - `/v1/check-pass` continua sendo a conferência antes da criação;
+  - após a conferência, `/v1/enroll-cnpj` é chamado automaticamente;
+  - o nome técnico do aparelho é gerado e persistido localmente como `PC XXXXXXXX`, sem pedir nome ao usuário;
+  - senha do gerente continua podendo resultar em aparelho `role: admin`, sem aparecer no texto do campo.
+- `test_ajustes_v5262.js` atualizado para travar: ausência da etapa do PC, conexão automática, botão de olho e ausência do texto visual do gerente.
+- `REGRAS_PERMANENTES.md` ganhou a regra 41: toda alteração deve ser registrada neste relatório com contexto suficiente para continuar em outro chat; merge e publicação do Worker exigem confirmação humana explícita.
+- Bundle e cópia mobile regenerados pelo processo oficial.
+
+### Validações desta continuação
+
+- `npm test`: **183 passaram, 0 falharam**.
+- `npm run check`: passou.
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- Testes e `node --check` do Worker: passaram.
+- `git diff --check` com tolerância explícita ao CRLF dos `.cmd`: passou.
+
+### Estado de Git/deploy
+
+- Branch fixa: `arena/01a0bfad-teste`.
+- Nenhum merge foi feito.
+- Nenhum Worker foi publicado nesta continuação.
+- O Worker público ainda é `API 0.4.7 / Worker 5.26.3`; o código local está em `API 0.4.8 / Worker 5.26.4`.
+- Próxima ação externa somente após confirmação: publicar o Worker `5.26.4`. A publicação atualiza a API de login da nuvem, sem fazer merge e sem trocar a branch; não apaga os hashes de senha nem os aparelhos existentes, mas passa a usar a regra nova de conferência/enrollment.
+
+### Links obrigatórios para retomada
+
+- Site fixo da branch: https://arena-01a0bfad-teste.teste-60f.pages.dev
+- Preview atualizado da última publicação Pages validada: https://385275d1.teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
+- PR: https://github.com/kauangabrielcardososilva7890-afk/teste/pull/28
+- Saúde do Worker público, ainda antigo: https://digicopy-sync-api.digicopyonline.workers.dev/health
