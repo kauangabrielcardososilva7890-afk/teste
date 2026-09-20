@@ -153,6 +153,15 @@ function campos(contratoId){
     DATA_INICIO: dataBR(c.dataInicio),
     DATA_TERMINO: dataBR(c.dataFim),
     QTD_MAQUINAS: maqs.length,
+    CTR_CODIGO: String((c && (c.numero || c.codigoAntigo || c.id)) || '').replace(/\D+/g,'').replace(/^0+/,'') || '0',
+    DATA_INICIO: dataBR(c.dataInicio),
+    DATA_FIM: dataBR(c.dataFim),
+    DATA_HOJE: dataBR(new Date().toISOString().slice(0,10)),
+    CLI_TELEFONE: cli.telefone || '',
+    CLI_CELULAR: cli.celular || '',
+    CLI_ENDCOMPLETO: [cli.endereco, cli.numero, cli.bairro, cli.cidade, cli.estado, cli.cep].filter(Boolean).join(', '),
+    EMP_TELEFONE: emp.telefone || '',
+    EMP_EMAIL: emp.email || '',
     CTR_VALOR_MENSAL: dinheiro(c.valorMensalFixo || 0),
     CTR_FRANQUIA: `${n(c.franquiaPB,0).toLocaleString('pt-BR')} páginas`,
     CTR_PERIODO: `${dataBR(c.dataInicio)} a ${dataBR(c.dataFim)}`,
@@ -196,7 +205,18 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const conf = cfg();
   const template = tipo === 'proposta' ? (conf.proposta || DEFAULT_PROPOSTA_RTF) : (conf.contrato || DEFAULT_CONTRATO_RTF);
   const rtfFinal = aplicarTemplate(template, contratoId);
-  baixar(`${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`, rtfFinal);
+  const nome = `${tipo === 'proposta' ? 'proposta' : 'contrato'}-${codigo}.rtf`;
+  // v5.24.34 — P6: no programa do PC o RTF abre DIRETO no Word (e já vai
+  // pré-preenchido — dados completos vêm do mapa de campos acima).
+  // Navegador/celular mantêm o download de antes.
+  if(window.rtfAPI && typeof window.rtfAPI.abrir==='function'){
+    window.rtfAPI.abrir({ nome: nome, conteudo: rtfFinal }).then(function(r){
+      if(!r || !r.ok){ baixar(nome, rtfFinal); }
+      else if(typeof toast==='function'){ toast('Abrindo no Word: '+nome); }
+    }).catch(function(){ baixar(nome, rtfFinal); });
+    return;
+  }
+  baixar(nome, rtfFinal);
 };
 
 function renderCardConfig(){

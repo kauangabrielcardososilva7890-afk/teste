@@ -23,22 +23,19 @@ ok('funcionário "ana" criado pela tela é PRESERVADO', P.ehUsuarioDemoAntigo({ 
 ok('usuário comum preservado', P.ehUsuarioDemoAntigo({ id:'usr_kauan', login:'kauan', criadoPor:'sistema' }, LOGINS, IDS) === false);
 ok('legado migrado com login de demo é PRESERVADO', P.ehUsuarioDemoAntigo({ id:'usr_m1', login:'carlos', criadoPor:'migracao' }, LOGINS, IDS) === false);
 
-// jaRodouHoje
-const hoje = new Date('2026-08-16T10:00:00');
-ok('mesmo dia = já rodou', P.jaRodouHoje('2026-08-16T03:00:00', hoje) === true);
-ok('ontem = não rodou', P.jaRodouHoje('2026-08-15T23:59:00', hoje) === false);
-ok('nunca rodou (null)', P.jaRodouHoje(null, hoje) === false);
-ok('data inválida = não rodou', P.jaRodouHoje('xxxx', hoje) === false);
-
-// nomeBackupDiario
-ok('nome do arquivo do backup', P.nomeBackupDiario(hoje) === 'digicopy-backup-2026-08-16.json');
+// backup automático: removido na v5.22.67, agora só pelo botão
+const fonte = require('fs').readFileSync(__dirname+'/ajustes_v52024_patch.js','utf8');
+ok('não existe mais backup rodando sozinho', !/rodarBackupDiario|agendarBackupDiario|saveDaily/.test(fonte));
+ok('não sobrou temporizador de backup', !/setInterval|setTimeout\(\s*rodarBackup/.test(fonte));
+ok('o botão de backup continua de pé', /window\.exportBackup\s*=/.test(fonte));
 
 // jsonBackupLimpo: tira _rt, mantém o resto
 {
-  const db = { empresas:[{id:'emp_digicopy'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x' } };
+  const db = { empresas:[{id:'emp_digicopy'}], clientes:[{id:'c1', nome:'A', _rt:'2026-08-16T00:00:00Z'}], config:{ loja:{fantasia:'DIGICOPY'}, _rt:'x', escolaAuth:{usuario:'x',senha:'segredo'} } };
   const j = JSON.parse(P.jsonBackupLimpo(db));
   ok('_rt removido dos registros', j.clientes[0]._rt === undefined && j.config._rt === undefined);
   ok('conteúdo preservado', j.clientes[0].nome === 'A' && j.config.loja.fantasia === 'DIGICOPY' && j.empresas.length === 1);
+  ok('senha do Buscador não vai no backup', j.config.escolaAuth === undefined);
 }
 
 ConsoleLogOk();

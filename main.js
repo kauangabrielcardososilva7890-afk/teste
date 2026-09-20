@@ -1,10 +1,30 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 let mainWindow = null;
+const APP_VERSION = (function(){
+  try{ return String(require('./package.json').version||''); }catch(e){ return ''; }
+})();
+
+// Impressão digital do código empacotado. O build_bundle.js grava o sha256 do
+// bundle no cabeçalho do app.bundle.js. Usar essa digital (e não só a versão)
+// evita o problema de gerar um .exe NOVO com o MESMO número de versão e o
+// Electron continuar servindo o código ANTIGO do cache.
+const APP_FINGERPRINT = (function(){
+  try{
+    const fd = fs.openSync(path.join(__dirname, 'app.bundle.js'), 'r');
+    const buf = Buffer.alloc(512);
+    const lidos = fs.readSync(fd, buf, 0, 512, 0);
+    fs.closeSync(fd);
+    const m = /sha256:\s*([0-9a-f]+)/.exec(buf.toString('utf8', 0, lidos));
+    return APP_VERSION + '|' + (m ? m[1] : '');
+  }catch(e){ return APP_VERSION + '|'; }
+})();
+
+try{ app.commandLine.appendSwitch('disable-http-cache'); }catch(e){}
 
 function createWindow () {
   try{ Menu.setApplicationMenu(null); }catch(e){}
@@ -13,24 +33,96 @@ function createWindow () {
     width: 1400,
     height: 900,
     autoHideMenuBar: true,
+    backgroundColor: '#ffffff',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
+      // Cache de código V8 LIGADO: o bundle tem ~2,9 MB e recompilá-lo do zero
+      // a cada abertura pesa muito em PC fraco. Era 'none' (v5.22.48) só para
+      // contornar código antigo preso no cache — problema agora resolvido na
+      // raiz pela impressão digital: se o código muda, o Code Cache é apagado.
+      v8CacheOptions: 'bypassHeatCheck',
+      spellcheck: false,
       devTools: false,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'logo.png'),
     show: false,
-    title: 'Sistema Digicopy'
+    title: APP_VERSION ? ('Sistema Digicopy v'+APP_VERSION) : 'Sistema Digicopy'
   });
 
-  win.loadFile('index.html');
+  try{
+    const marker = path.join(app.getPath('userData'), 'app-version.txt');
+    const prev = fs.existsSync(marker) ? String(fs.readFileSync(marker,'utf8')||'').trim() : '';
+    if(!prev || prev !== APP_FINGERPRINT){
+      const ud = app.getPath('userData');
+      ['Cache','Code Cache','GPUCache','Service Worker'].forEach(function(nome){
+        try{ fs.rmSync(path.join(ud, nome), { recursive:true, force:true }); }catch(e){}
+      });
+      try{ win.webContents.session.clearCache(); }catch(e){}
+      try{ win.webContents.session.clearStorageData({ storages: ['cachestorage', 'serviceworkers', 'shadercache'] }); }catch(e){}
+      try{ if(win.webContents.session.clearCodeCaches) win.webContents.session.clearCodeCaches({ urls: [] }); }catch(e){}
+      try{ fs.writeFileSync(marker, APP_FINGERPRINT, 'utf8'); }catch(e){}
+    }
+  }catch(e){}
+  win.loadFile(path.join(__dirname, 'index.html'));
+
+  // ── Registro de falhas do bundle (v5.22.65) ───────────────────────────────
+  // O app.bundle.js junta ~186 scripts. Cada um roda dentro do seu try/catch,
+  // então uma falha não derruba os outros — mas precisa ficar registrada, ou
+  // some sem ninguém ver. Aqui as falhas vão para um arquivo de texto que o
+  // `npm run diag` lê. Nunca atrapalha o uso: tudo dentro de try/catch.
+  try{
+    const logPath = path.join(app.getPath('userData'), 'log-erros.txt');
+    const anotar = (texto) => {
+      try{
+        fs.appendFileSync(logPath,
+          '[' + new Date().toISOString() + '] v' + APP_VERSION + ' ' + texto + '\n', 'utf8');
+      }catch(e){}
+    };
+
+    win.webContents.on('console-message', (event, level, message) => {
+      // level 3 = error. Só o que interessa, para o arquivo não crescer à toa.
+      if (level >= 2 && /\[DIGICOPY\]\[FALHOU\]|Uncaught|SecurityError/i.test(String(message||''))) {
+        anotar('CONSOLE: ' + String(message).slice(0, 500));
+      }
+    });
+
+    win.webContents.on('render-process-gone', (event, detalhes) => {
+      anotar('TELA MORREU: ' + JSON.stringify(detalhes));
+    });
+
+    win.webContents.on('did-finish-load', () => {
+      win.webContents.executeJavaScript(
+        '(function(){try{return JSON.stringify({' +
+        'completo: window.__DIGICOPY_BUNDLE_COMPLETO === true,' +
+        'scripts: window.__DIGICOPY_BUNDLE_SCRIPTS || 0,' +
+        'erros: (window.__DIGICOPY_ERROS||[]).map(function(x){return x.arquivo+" :: "+String(x.erro).split("\\n")[0];})' +
+        '});}catch(e){return "{}";}})()'
+      ).then((json) => {
+        let r = {};
+        try{ r = JSON.parse(json) || {}; }catch(e){}
+        if (r.completo === false) {
+          anotar('BUNDLE NÃO CHEGOU AO FIM — algo abortou a execução.');
+        }
+        if (Array.isArray(r.erros) && r.erros.length) {
+          anotar('SCRIPTS QUE FALHARAM (' + r.erros.length + ' de ' + r.scripts + '):');
+          r.erros.forEach(e => anotar('   • ' + String(e).slice(0, 400)));
+        } else if (r.completo) {
+          anotar('OK: bundle completo, ' + r.scripts + ' scripts, nenhuma falha.');
+        }
+      }).catch(() => {});
+    });
+  }catch(e){}
+
   try{
     win.webContents.on('will-navigate', (event, url) => {
-      if(!String(url||'').startsWith('file://')) event.preventDefault();
+      if(String(url||'').startsWith('file://')) return;
+      event.preventDefault();
+      if(isAllowedExternalUrl(url)) shell.openExternal(url).catch(()=>{});
     });
   }catch(e){}
   try{ win.webContents.on('devtools-opened', () => win.webContents.closeDevTools()); }catch(e){}
@@ -40,7 +132,13 @@ function createWindow () {
     if(k==='f12') event.preventDefault();
   }); }catch(e){}
   win.webContents.on('context-menu', e => e.preventDefault());
-  win.once('ready-to-show', () => win.show());
+  win.once('ready-to-show', () => {
+    try{ if(win && !win.isDestroyed()) win.show(); }catch(e){}
+  });
+  // Fallback de exibição da janela: garante que a janela apareça mesmo se ready-to-show atrasar
+  setTimeout(() => {
+    try{ if(win && !win.isDestroyed() && !win.isVisible()) win.show(); }catch(e){}
+  }, 1500);
   return win;
 }
 
@@ -51,6 +149,26 @@ app.whenReady().then(() => {
   registerEscolaIPC();
   registerPrintIPC();
   registerBackupIPC();
+  registerErroTxtIPC();
+  // v5.24.34 — P6: contrato RTF abre DIRETO no Word (pedido dele/no.html):
+  // grava o arquivo temporário e manda o sistema abrir (shell.openPath →
+  // Word/LibreOffice, o que estiver associado ao .rtf).
+  ipcMain.handle('rtf:abrir', async (_e, payload) => {
+    try{
+      const osMod = require('os');
+      const dir = app.getPath('temp');
+      const nome = String((payload && payload.nome) || 'contrato.rtf').replace(/[^a-zA-Z0-9_.-]/g, '_').slice(0, 80) || 'contrato.rtf';
+      const conteudo = String((payload && payload.conteudo) || '');
+      const full = path.join(dir, 'digicopy-' + Date.now().toString(36) + '-' + nome);
+      fs.writeFileSync(full, conteudo, 'utf8');
+      const res = await shell.openPath(full);
+      return { ok: !res, erro: res || null, arquivo: full };
+    }catch(e){ return { ok:false, erro:String(e && e.message || e) }; }
+  });
+  registerPrinterMonitorIPC();
+  registerOpenExternalIPC();
+  registerNfeCertIPC();
+  registerEscolaLoginIPC();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createWindow();
   });
@@ -320,6 +438,169 @@ function mapFbType(typeNum){
   return map[typeNum] || `TYPE_${typeNum}`;
 }
 
+function isAllowedExternalUrl(raw){
+  try{
+    const u = new URL(String(raw||''));
+    if(u.protocol !== 'https:') return false;
+    const host = String(u.hostname||'').toLowerCase();
+    return host === 'caixaescolar.educacao.mg.gov.br' || host === 'www.caixaescolar.educacao.mg.gov.br';
+  }catch(e){ return false; }
+}
+
+function nfeCertDir(){
+  return path.join(app.getPath('userData'), 'certs');
+}
+function nfeCertPath(){
+  return path.join(nfeCertDir(), 'nfe-a1.pfx');
+}
+function registerNfeCertIPC(){
+  ipcMain.handle('nfe:cert-status', async () => {
+    try{
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:true, installed:false };
+      const st = fs.statSync(p);
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs, path:p };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-validade', async (_evt, payload) => {
+    // v5.24.34 — conferir a validade do certificado SEM assinar nada: pede a
+    // senha do cofre só pra isso, lê a data e devolve. Fim da era "o sistema
+    // não sabe que o cert venceu".
+    try{
+      const senha = payload && payload.senha;
+      if(!senha) return { ok:false, error:'Informe a senha do certificado.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Nenhum certificado A1 instalado neste PC.' };
+      const sign = require('./nfe_assinatura.js');
+      const info = sign.lerValidadePfx(fs.readFileSync(p), senha);
+      return { ok:true, titular:info.titular, validoAte:info.validoAte, validoDe:info.validoDe, vencido:info.vencido };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-import', async () => {
+    try{
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Selecionar certificado A1 (.pfx)',
+        filters: [
+          { name: 'Certificado A1', extensions: ['pfx', 'p12'] },
+          { name: 'Todos os arquivos', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+      if(result.canceled || !result.filePaths.length) return { ok:false, canceled:true };
+      const src = result.filePaths[0];
+      const ext = path.extname(src).toLowerCase();
+      if(ext !== '.pfx' && ext !== '.p12') return { ok:false, error:'Selecione um arquivo .pfx ou .p12.' };
+      fs.mkdirSync(nfeCertDir(), { recursive: true });
+      fs.copyFileSync(src, nfeCertPath());
+      const st = fs.statSync(nfeCertPath());
+      return { ok:true, installed:true, bytes:st.size, updatedAt:st.mtimeMs };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:cert-remove', async () => {
+    try{
+      const p = nfeCertPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, installed:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('nfe:sign-xml', async (_evt, payload) => {
+    const senha = String((payload&&payload.senha)!=null?payload.senha:'');
+    const xml = String((payload&&payload.xml)||'');
+    try{
+      if(!xml) return { ok:false, error:'XML vazio.' };
+      let pfxBuf = null;
+      const rawB64 = String((payload&&payload.pfxB64)||'').replace(/^data:[^;]+;base64,/, '');
+      if(rawB64){
+        pfxBuf = Buffer.from(rawB64, 'base64');
+      }else{
+        const p = nfeCertPath();
+        if(!fs.existsSync(p)) return { ok:false, error:'Envie o certificado A1 pela página de arquivos. Senha só na hora de assinar.' };
+        pfxBuf = fs.readFileSync(p);
+      }
+      const sign = require('./nfe_assinatura.js');
+      const r = sign.assinarNfeXml(xml, pfxBuf, senha);
+      return { ok:true, xmlAssinado:r.xmlAssinado, chave:r.chave, certificado:r.certificado };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
+
+  // v6.0.1 — TRANSMISSÃO SEFAZ (só dentro do .exe; o navegador não faz TLS com A1).
+  // Mesmos freios do Buscador Escola: URL em lista-branca (só MG), pfx lido do
+  // certificado já importado no PC, senha NÃO fica salva (vem da janela na hora),
+  // tenta 3x em falha de servidor, devolve o XML de retorno pra conferência.
+  ipcMain.handle('nfe:transmitir', async (_evt, payload) => {
+    try{
+      const url = String((payload && payload.url) || '');
+      const envelope = String((payload && payload.envelope) || '');
+      const soapAction = String((payload && payload.soapAction) || '');
+      const senhaCert = String((payload && payload.senhaCert) || '');
+      if(!/^https:\/\/(hnfe\.nfe|nfe|hnfce|nfce)\.fazenda\.mg\.gov\.br\/(nfe2|nfce)\/services\//.test(url)){
+        return { ok:false, error:'URL fora da lista branca (só SEFAZ-MG NF-e/NFC-e).' };
+      }
+      if(!envelope) return { ok:false, error:'Envelope vazio.' };
+      const p = nfeCertPath();
+      if(!fs.existsSync(p)) return { ok:false, error:'Certificado A1 não importado neste PC (Central de Nota Fiscal → certificado).' };
+      if(!senhaCert) return { ok:false, error:'Senha do certificado obrigatória na hora de transmitir (não fica salva).' };
+      const https = require('https');
+      const u = new URL(url);
+      const fazerUmaVez = () => new Promise((resolve) => {
+        const req = https.request({
+          hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+          pfx: fs.readFileSync(p), passphrase: senhaCert,
+          minVersion: 'TLSv1.2', timeout: 25000, rejectUnauthorized: true,
+          headers: { 'Content-Type': 'application/soap+xml; charset=utf-8', 'SOAPAction': soapAction,
+                     'Content-Length': Buffer.byteLength(envelope), 'Connection': 'close' }
+        }, (resp) => {
+          let corpo = '';
+          resp.setEncoding('utf8');
+          resp.on('data', (c) => { corpo += c; });
+          resp.on('end', () => resolve({ ok: resp.statusCode >= 200 && resp.statusCode < 300, status: resp.statusCode, xml: corpo }));
+        });
+        req.on('timeout', () => { req.destroy(new Error('Tempo esgotado (25s) — SEFAZ não respondeu.')); });
+        req.on('error', (e) => resolve({ ok:false, status:0, error:e.message || String(e) }));
+        req.write(envelope);
+        req.end();
+      });
+      let ultima = null;
+      for(let tent = 0; tent < 3; tent++){
+        ultima = await fazerUmaVez();
+        if(ultima.ok) return ultima;
+        if(ultima.status && ultima.status >= 400 && ultima.status < 500 && ultima.status !== 408) return ultima; // 4xx = rejeição técnica, não adianta repetir
+        await new Promise(r => setTimeout(r, 700 * (tent + 1)));
+      }
+      return ultima || { ok:false, error:'Falha desconhecida na transmissão.' };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+}
+
+function registerPrinterMonitorIPC(){
+  // v5.24.34 — Fase 1 do MONITOR DE IMPRESSORAS (pedido dele, 'ue faz'):
+  // lê via SNMP a impressora que está na MESMA rede deste PC. Só existe no
+  // .exe; no navegador/celular a chamada da ponte nem aparece (honesto).
+  ipcMain.handle('prt:snmp-status', async (_evt, payload) => {
+    try{
+      const ip = String((payload && payload.ip) || '').trim();
+      if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return { ok:false, error:'IP inválido.' };
+      const snmp = require('./snmp_printer.js');
+      return await snmp.lerStatusUmaVez(ip, (payload && payload.community) || 'public', 2500);
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+}
+
+function registerOpenExternalIPC(){
+  ipcMain.handle('shell:open-external', async (_evt, raw) => {
+    const url = String(raw||'');
+    if(!isAllowedExternalUrl(url)) return { ok:false, error:'URL não permitida.' };
+    try{
+      await shell.openExternal(url);
+      return { ok:true };
+    }catch(e){
+      return { ok:false, error:e.message||String(e) };
+    }
+  });
+}
+
 // ──────────────────────────────────────────────
 // BUSCADOR ESCOLA IPC — chamada HTTP sem CORS no Electron
 // Mantém cookies/sessão entre requisições (como requests.Session do Python)
@@ -372,6 +653,38 @@ function registerEscolaIPC(){
   ipcMain.handle('escola:clear-cookies', () => { escolaCookies.clear(); return {ok:true}; });
 }
 
+function escolaLoginPath(){
+  return path.join(app.getPath('userData'), 'escola-login.json');
+}
+function registerEscolaLoginIPC(){
+  ipcMain.handle('escola:login-status', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(!fs.existsSync(p)) return { ok:true, saved:false };
+      const raw = JSON.parse(fs.readFileSync(p, 'utf8')||'{}');
+      const usuario = String(raw.usuario||'').trim();
+      const senha = String(raw.senha||'');
+      return { ok:true, saved:!!(usuario&&senha), usuario, senha };
+    }catch(e){ return { ok:false, saved:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-save', async (_evt, dados) => {
+    try{
+      const usuario = String((dados&&dados.usuario)||'').trim();
+      const senha = String((dados&&dados.senha)||'');
+      if(!usuario || !senha) return { ok:false, error:'Informe usuário e senha.' };
+      fs.writeFileSync(escolaLoginPath(), JSON.stringify({ usuario, senha, atualizadoEm:new Date().toISOString() }), 'utf8');
+      return { ok:true, saved:true, usuario };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+  ipcMain.handle('escola:login-clear', async () => {
+    try{
+      const p = escolaLoginPath();
+      if(fs.existsSync(p)) fs.unlinkSync(p);
+      return { ok:true, saved:false };
+    }catch(e){ return { ok:false, error:e.message||String(e) }; }
+  });
+}
+
 // ──────────────────────────────────────────────
 // BACKUP IPC — backup automático diário em pasta do %APPDATA%
 // (salva direto, sem janela e sem clique; 1 arquivo por dia)
@@ -387,6 +700,42 @@ function registerBackupIPC(){
       fs.writeFileSync(fpath, content, 'utf8');
       return { ok:true, path: fpath, dir };
     }catch(e){ return { ok:false, error: e.message || String(e) }; }
+  });
+}
+
+// ──────────────────────────────────────────────
+// ERRO.TXT IPC (v5.24.34) — pedido dele: erro indevido vira linha num
+// erro.txt visível, não mais um registro mudo na auditoria. Fica no userData
+// (%APPDATA%\<app>): a pasta do sistema pode ser protegida contra gravação
+// (Arquivos de Programas) — lá o arquivo morreria de silêncio. Rotação: 2MB
+// vira erro.1.txt e recomeça (PC fraco, arquivo nunca incha).
+// ──────────────────────────────────────────────
+function erroTxtPath(){
+  return path.join(app.getPath('userData'), 'erro.txt');
+}
+function registerErroTxtIPC(){
+  ipcMain.handle('errotxt:append', async (_evt, linha) => {
+    try{
+      const p = erroTxtPath();
+      try{
+        if(fs.existsSync(p) && fs.statSync(p).size > 2*1024*1024){
+          const antigo = path.join(app.getPath('userData'), 'erro.1.txt');
+          try{ if(fs.existsSync(antigo)) fs.unlinkSync(antigo); }catch(e){}
+          fs.renameSync(p, antigo);
+        }
+      }catch(e){}
+      const limpa = String(linha == null ? '' : linha).replace(/[\r\n]+/g, ' | ').slice(0, 1200);
+      fs.appendFileSync(p, limpa + '\n', 'utf8');
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
+  });
+  ipcMain.handle('errotxt:abrir', async () => {
+    try{
+      const p = erroTxtPath();
+      if(!fs.existsSync(p)) fs.writeFileSync(p, '', 'utf8');
+      shell.showItemInFolder(p); // abre o Explorador já com o erro.txt selecionado
+      return { ok:true, path:p };
+    }catch(e){ return { ok:false, error:e.message || String(e) }; }
   });
 }
 

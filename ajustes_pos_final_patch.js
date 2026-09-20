@@ -34,21 +34,6 @@ function isProdutoImpressoraLocacao(p){
   if(origem.includes('equipamento')||origem.includes('locacao')||origem.includes('locação')||origem.includes('itens_locacao')) return true;
   return false;
 }
-function vendaEmAndamento(){
-  const ctx=window.modalContext||{};
-  const vendaCtx=ctx.type==='venda'||document.getElementById('nv-itens')||document.getElementById('neo-venda-itens')||document.getElementById('cv-itens');
-  if(!vendaCtx) return false;
-  const hasItems=(window.itensTemp&&window.itensTemp.length)||(window.neoVendaItens&&window.neoVendaItens.length)||(window.cvItens&&window.cvItens.length);
-  const hasClient=window.neoVendaCliente||document.getElementById('nv-cli')?.value||document.getElementById('cv-cliente')?.value;
-  const obs=document.querySelector('#modal-body textarea')?.value||'';
-  return !!(hasItems||hasClient||txt(obs));
-}
-function chamarSalvarVendaDisponivel(){
-  if(typeof window.neoSalvarVenda==='function' && (window.neoVendaItens||[]).length) return window.neoSalvarVenda();
-  if(typeof window.cvSaveVenda==='function' && (window.cvItens||[]).length) return window.cvSaveVenda();
-  if(typeof window.saveVenda==='function') return window.saveVenda();
-  toastMsg('Não encontrei função de salvar esta venda.','error');
-}
 function rodapeLojaHtml(){
   const l=loja();
   return `<div class="rodape-loja-final" style="margin:6mm 10mm 3mm;border-top:1px solid #d8dee9;padding-top:2mm;text-align:center;font-family:Arial,sans-serif;font-size:8.5px;color:#5b6472;page-break-inside:avoid"><b>${esc(l.fantasia)}</b>${l.razao?' • '+esc(l.razao):''}${l.cnpj?' • CNPJ '+esc(l.cnpj):''}<br>${esc(l.endereco||'Endereço não informado')}${l.telefone?' • Tel. '+esc(l.telefone):''}${l.whatsapp?' • WhatsApp '+esc(l.whatsapp):''}${l.email?' • '+esc(l.email):''}</div>`;
@@ -88,19 +73,11 @@ if(typeof oldRenderProdutos==='function') window.renderProdutos=function(){
   finally{ db.produtos=orig; }
 };
 
-// Fechar venda em andamento: pergunta se deseja salvar antes de sair.
-const oldClose=window.closeModal;
-window.closeModal=function(){
-  if(vendaEmAndamento()&&!window.__fecharVendaConfirmado&&!window.__salvandoVendaFinal){
-    const salvarVenda=confirm('Você está saindo de uma venda/notinha em andamento. Deseja salvar antes de sair?\n\nOK = salvar agora\nCancelar = sair sem salvar');
-    if(salvarVenda){ window.__salvandoVendaFinal=true; try{ chamarSalvarVendaDisponivel(); } finally{ setTimeout(()=>window.__salvandoVendaFinal=false,600); } return; }
-    window.__fecharVendaConfirmado=true;
-    const r=oldClose?oldClose.apply(this,arguments):undefined;
-    setTimeout(()=>window.__fecharVendaConfirmado=false,200);
-    return r;
-  }
-  return oldClose?oldClose.apply(this,arguments):undefined;
-};
+// v5.22.73 — este aviso "Deseja salvar antes de sair?" era de uma tela de venda
+// que não existe mais: ele procurava neoSalvarVenda/cvSaveVenda/saveVenda e,
+// como a venda de hoje salva por vosGravarVenda, terminava em "Não encontrei
+// função de salvar esta venda" — travando o Salvar. A venda atual já grava
+// sozinha ao fechar (ajustes_v52241), então esta camada foi removida.
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=document.getElementById('modal-root'); if(m&&!m.classList.contains('hidden')){ e.preventDefault(); window.closeModal(); } } },true);
 
 // Rodapé padrão em qualquer janela HTML de impressão/PDF (exceto RTF).
