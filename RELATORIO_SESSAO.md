@@ -3554,3 +3554,9 @@ Linha `arena/01a0bb58-teste` (v5.21.3–v5.21.6) fundida aqui (merge da `01a0590
 
 **Resoluções do merge:** index.html/package.json/test_app_bundle = lado 6.1.2; manifest = 222 + 2 (224); runner = 183 + 2 (185 suites); `test_cloudflare_sync` = união; app.js = deles + audit-dblclick/dono/rawgh-removal; `RELATORIO_ANDAMENTO` em `docs/` + nota deles; bundle + mobile regenerados (sync_build).
 **Re-ancoragem:** 32 suítes (`=== 222`→224, cadeias `length-N` +2). Validação: `test_runner.js` 185/0/0 (2x), `npm run check` OK (224, sha256 bf5442fd0b2010d2).
+
+### 20/09 — pós-fusão: decisões do dono
+- NÃO fundir o PR #27 no main por enquanto — seguir trabalhando nesta branch (ordem dele).
+- Verificado: `main` segue velho (`fb93c0c`, só ci.yml); o merge que ele clicou (PR #26) foi para a `01a0590a`, NÃO para o main. Nenhum PR para o main foi fundido (só o #22 antigo, que é a base).
+- Zips: o `main` tem 54 zips (v5.19.10–v5.21.2, 46,7 MB); o PR #27 remove todos (regra: binário nunca no repo; .exe sai do GERAR_EXE.cmd). O print dele = lista de DELETADOS (vermelho), não adição. Histórico git preserva tudo.
+- Site: publica da linha deles; trocar a production branch para `main` SÓ depois do merge — passos do painel ensinados no chat.
