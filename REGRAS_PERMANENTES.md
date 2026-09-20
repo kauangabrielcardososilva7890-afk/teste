@@ -1,5 +1,9 @@
 # REGRAS PERMANENTES DO DONO (anotadas a pedido dele — reler em TODA tarefa)
 
+> **Documento canônico ampliado:** `REGRAS_PARA_SEGUIR_SEMPRE.md`. Este arquivo
+> permanece como registro original das regras recebidas em 18/09/2026; a lista
+> consolidada e as regras extraídas dos demais documentos ficam no arquivo novo.
+
 Ficheiro criado 18/09/2026 juntando as ordens dele desta sessão e das anteriores. Vale como checklist antes de responder/codar.
 
 ## Do jeito de trabalhar
