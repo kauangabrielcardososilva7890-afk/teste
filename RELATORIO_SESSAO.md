@@ -3560,3 +3560,6 @@ Linha `arena/01a0bb58-teste` (v5.21.3–v5.21.6) fundida aqui (merge da `01a0590
 - Verificado: `main` segue velho (`fb93c0c`, só ci.yml); o merge que ele clicou (PR #26) foi para a `01a0590a`, NÃO para o main. Nenhum PR para o main foi fundido (só o #22 antigo, que é a base).
 - Zips: o `main` tem 54 zips (v5.19.10–v5.21.2, 46,7 MB); o PR #27 remove todos (regra: binário nunca no repo; .exe sai do GERAR_EXE.cmd). O print dele = lista de DELETADOS (vermelho), não adição. Histórico git preserva tudo.
 - Site: publica da linha deles; trocar a production branch para `main` SÓ depois do merge — passos do painel ensinados no chat.
+
+### 20/09 — PR #27 fechado sem merge (ordem do dono)
+- PR #27 fechado (close, sem fundir). `main` segue intacto. Todo o trabalho da fusão (6.1.2 + 5.21.x, suite 185/0/0) permanece nesta branch `arena/01a0bb58-teste`. Reabrir quando ele mandar.
