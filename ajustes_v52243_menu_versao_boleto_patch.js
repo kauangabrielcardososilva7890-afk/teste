@@ -42,13 +42,31 @@ function garantirCss(){
   document.head.appendChild(st);
 }
 
+function rotasDoModulo(mod){
+  var partes = [];
+  try{
+    var pai = mod.querySelector(':scope > button');
+    if(pai) partes.push(pai.getAttribute('onclick') || '');
+    mod.querySelectorAll(':scope > .module-menu > button, :scope > .module-menu a').forEach(function(item){
+      partes.push(item.getAttribute('onclick') || item.getAttribute('href') || '');
+    });
+  }catch(e){
+    // :scope não existe em alguns WebViews antigos; ainda assim nunca use o
+    // innerHTML inteiro, pois nomes de outras telas geram falsos selecionados.
+    var primeiro = mod.querySelector('button');
+    if(primeiro) partes.push(primeiro.getAttribute('onclick') || '');
+  }
+  return partes.join(' ');
+}
+
 function pintarMenuAberto(view){
   garantirCss();
   var row = document.querySelector('.module-row');
   if(!row) return;
   row.querySelectorAll('.module').forEach(function(mod){
-    var html = mod.innerHTML||'';
-    var on = moduloAberto(view, html);
+    // Só o botão-pai e os itens imediatos do módulo definem sua tela. Nunca
+    // vasculhar o innerHTML inteiro: isso acumulava Atendimento + Cadastros.
+    var on = moduloAberto(view, rotasDoModulo(mod));
     if(on) mod.classList.add('mod-sel');
     else mod.classList.remove('mod-sel');
   });

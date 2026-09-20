@@ -49,7 +49,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 <https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.18>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
@@ -3536,3 +3536,149 @@ Ele não queria prévia de meio de caminho: pediu o cardápio inteiro de uma vez
 
 ### O que pedir a ele se ainda assim "não abrir"
 Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé mudar sem efeito = cache/bundle antigo (o .exe embarca o bundle; o Pages atualiza em ~2 min).
+
+---
+
+## CONTINUIDADE — 20/09/2026 — ajuste do portão da nuvem após o print do usuário
+
+### Pedido confirmado nesta conversa
+
+- Adicionar um botão de olho para mostrar/ocultar a senha do portão, com o mesmo comportamento do campo de senha do usuário.
+- Remover a etapa "QUAL É ESTE COMPUTADOR?" e o botão/voltar dessa etapa, porque a solicitação estava criando muitos aparelhos/registros na nuvem.
+- Depois de conferir CNPJ + senha, conectar automaticamente sem pedir o nome do PC.
+- Remover da tela o texto `OU DO GERENTE (gerente separado cria este PC como Administrador)`. A senha do gerente continua aceita tecnicamente pelo Worker, mas não é exposta no rótulo visual do campo.
+- Não fazer merge. Continuar na branch `arena/01a0bfad-teste` e registrar cada ação, validação, link, pendência e estado de publicação para permitir retomada em outro chat.
+
+### Implementação desta continuação
+
+- `ajustes_v5262_login_nuvem_primeiro_patch.js`:
+  - campo visual agora mostra somente `SENHA DE CONEXÃO`;
+  - botão `👁` alterna `password`/`text`, com `aria-label`, `title` e `aria-pressed`;
+  - etapa do nome do computador removida;
+  - `/v1/check-pass` continua sendo a conferência antes da criação;
+  - após a conferência, `/v1/enroll-cnpj` é chamado automaticamente;
+  - o nome técnico do aparelho é gerado e persistido localmente como `PC XXXXXXXX`, sem pedir nome ao usuário;
+  - senha do gerente continua podendo resultar em aparelho `role: admin`, sem aparecer no texto do campo.
+- `test_ajustes_v5262.js` atualizado para travar: ausência da etapa do PC, conexão automática, botão de olho e ausência do texto visual do gerente.
+- `REGRAS_PERMANENTES.md` ganhou a regra 41: toda alteração deve ser registrada neste relatório com contexto suficiente para continuar em outro chat; merge e publicação do Worker exigem confirmação humana explícita.
+- Bundle e cópia mobile regenerados pelo processo oficial.
+
+### Validações desta continuação
+
+- `npm test`: **183 passaram, 0 falharam**.
+- `npm run check`: passou.
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- Testes e `node --check` do Worker: passaram.
+- `git diff --check` com tolerância explícita ao CRLF dos `.cmd`: passou.
+
+### Estado de Git/deploy
+
+- Branch fixa: `arena/01a0bfad-teste`.
+- Commit desta continuação: `8291b1c` (`Simplifica portao da nuvem e adiciona olho na senha`).
+- Nenhum merge foi feito.
+- Nenhum Worker foi publicado nesta continuação.
+- O Worker público ainda é `API 0.4.7 / Worker 5.26.3`; o código local está em `API 0.4.8 / Worker 5.26.4`.
+- Próxima ação externa somente após confirmação: publicar o Worker `5.26.4`. A publicação atualiza a API de login da nuvem, sem fazer merge e sem trocar a branch; não apaga os hashes de senha nem os aparelhos existentes, mas passa a usar a regra nova de conferência/enrollment.
+
+### Links obrigatórios para retomada
+
+- Site fixo da branch: https://arena-01a0bfad-teste.teste-60f.pages.dev
+- Preview atualizado da última publicação Pages validada: https://2e2599ae.teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
+- PR: https://github.com/kauangabrielcardososilva7890-afk/teste/pull/28
+- Saúde do Worker público, ainda antigo: https://digicopy-sync-api.digicopyonline.workers.dev/health
+
+---
+
+## CONTINUIDADE — 20/09/2026 — menus por clique, revisão do menu fiscal e tentativa autorizada de publicação
+
+### Pedido confirmado
+
+- Reduzir a quantidade de links nas respostas: manter somente o link de teste e o ZIP quando forem necessários.
+- Publicar o Worker sem pedir nova confirmação; não fazer merge.
+- Em todos os menus com submenu: hover não abre; clique no menu abre; clique no mesmo menu fecha; clique fora fecha; clique no item navega.
+- Melhorar a aparência do menu fiscal e de suas telas.
+- Fazer `Menu Fiscal → Configurações` permitir visualizar e abrir as abas internas Impressão, NFCe, Tributação e demais abas.
+- Confirmar por inspeção de código se o menu fiscal está completo, sem suposição.
+
+### Confirmação factual do catálogo atual
+
+- O submenu fiscal principal tem **6 itens oficiais** no código: Nota Fiscal, Perfil Tributário, Manifestação, NCM, Enviar XML e Configurações.
+- Configurações fiscais tem **10 abas implementadas**: Geral, Impressão, NFCe, Tributação, Nuvem, Outras, Mensagens, FCP, Autorizações e Reforma.
+- Portanto, está completo conforme o catálogo novo de 6 + 10 abas.
+- Não está completo se a referência for o menu legado inteiro: três rotas antigas (`fiscal-historico`, `fiscal-inutilizar`, `fiscal-ferramentas`) continuam escondidas do submenu oficial, embora partes existam no código/atalhos. Elas não foram reintroduzidas nesta mudança porque isso não foi pedido de forma específica.
+
+### Implementação
+
+- Commit do código desta continuação: `bedd92a` (`Ajusta menus por clique e configurações fiscais`).
+- `navegacao_fiscal_barra_escuro_patch.js` agora força todos os módulos com submenu a ficarem fechados no hover e abre/fecha por clique, com fechamento por clique fora e navegação ao clicar em item.
+- O flyout fiscal lateral também não fica visível apenas pelo hover; só aparece quando fixado por clique.
+- `fiscal_catalogo_completo_patch.js` teve o CSS corrigido de `#fx-root` para `.fx-root-wrap`, alcançando também a placa, abas, cards, tabelas e botões externos. Isso corrige a aparência incompleta/sem estilo das telas fiscais e deixa visíveis/clicáveis as abas internas de Configurações.
+- `test_ajustes_v6102.js` passou a validar o comportamento por clique e as 10 abas de configuração.
+- Bundle e cópia mobile regenerados.
+
+### Validação
+
+- `npm test`: **183 passaram, 0 falharam**.
+- `npm run check`: passou.
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- Testes e `node --check` do Worker: passaram.
+- Checks locais do menu e do catálogo fiscal: passaram.
+
+### Publicação do Worker autorizada, mas bloqueada por autenticação externa
+
+- Foi executado o fluxo oficial `npm run deploy`.
+- Primeiro bloqueio: `wrangler` não está instalado localmente.
+- Tentativa oficial equivalente com `npx --yes wrangler@4.123.0` falhou porque o ambiente não possui `CLOUDFLARE_API_TOKEN` em modo não interativo.
+- Não usei `--temporary`, pois isso publicaria em conta temporária e não na conta correta.
+- Resultado: **o Worker não foi publicado**; continua público em `API 0.4.7 / Worker 5.26.3`. O código local continua pronto em `API 0.4.8 / Worker 5.26.4`.
+- Nenhum merge foi feito. A publicação só poderá continuar quando a autenticação Cloudflare for reconectada/configurada no ambiente; não solicitar token ou senha pelo chat.
+
+### Links mínimos desta continuação
+
+- Site de teste: https://caa14db1.teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
+
+---
+
+## Rodada 2026-09-20 — navegação fiscal, acesso administrativo e ícones
+
+### Correções implementadas
+
+- A seleção azul escura da barra agora é exclusiva. O cálculo usa apenas o `onclick` do botão-pai e os itens imediatos daquele módulo; não varre o `innerHTML` completo. Isso evita que Atendimento e Cadastros fiquem selecionados juntos.
+- O botão de senha do portão de nuvem deixou de usar emoji. Ele usa SVG inline de olho aberto e SVG com corte quando a senha está visível, com `aria-label`, `title` e `aria-pressed` coerentes.
+- O fluxo administrativo não presume uma senha de gerente existente. Quando as senhas ainda não foram definidas, o portão orienta abrir Nuvem → Recuperar administrador com o segredo configurado localmente no painel seguro. Depois da recuperação, o cartão administrativo exige uma senha de conexão e uma senha de gerente separada.
+- As opções legadas `fiscal-historico`, `fiscal-inutilizar` e `fiscal-ferramentas` passaram a ser removidas do DOM em todos os pontos de navegação, sem apagar as rotas internas ou dados fiscais.
+- As dez abas de Menu Fiscal → Configurações passaram a ser botões reais com `data-fx-tab` e clique delegado pelo patch final. O bloqueio que impedia as abas de abrir foi reproduzido e corrigido: `fxAcao` retornava antes das ações de configuração porque o guard `if (!n) return` era executado antes de `cfg-aba`.
+
+### Reprodução funcional
+
+Foi carregado o `index.html` e o `app.bundle.js` por um servidor HTTP local, com DOM de navegador automatizado. O roteiro navegou para Clientes, Vendas e Configurações fiscais e conferiu:
+
+- Clientes → somente Cadastros selecionado;
+- Vendas → somente Atendimento selecionado;
+- Configurações fiscais → somente Fiscal selecionado;
+- as dez abas alteraram `window.__fxCfgAba`, re-renderizaram a tela e mantiveram exatamente uma aba `.on`;
+- os três atalhos legados não existiam no DOM;
+- o olho alterou o campo entre `password` e `text` e trocou o SVG para o olho cortado.
+
+O roteiro automatizado está em `test_ajustes_v6103.js` e integra o `test_runner.js`. A suíte completa desta rodada terminou com **184 testes aprovados e 0 falhas**. O bundle foi regenerado com 222 scripts e a cópia de `mobile/www` foi sincronizada.
+
+### Worker e publicação
+
+O Worker não foi publicado nesta rodada: as tentativas locais não encontraram `wrangler` instalado e a tentativa com Wrangler via npm exigiu autenticação Cloudflare ausente no ambiente. Não houve deploy destrutivo, `--temporary`, token ou segredo gravado no repositório.
+
+Procedimento seguro para publicação, sempre executado localmente pelo responsável, sem enviar segredo pelo chat:
+
+1. Abra um terminal na pasta `cloudflare-worker` do repositório.
+2. Instale o Wrangler apenas na máquina local, se necessário, ou use a versão já aprovada pelo projeto.
+3. Faça login pelo fluxo interativo do Wrangler, sem colar token em conversa ou arquivo versionado.
+4. Confira o `wrangler.toml`, o binding D1 e o nome do Worker antes de publicar.
+5. Configure `SETUP_SECRET` como secret do Worker pelo comando interativo de secret; não coloque o valor no `wrangler.toml`, `.md`, `.cmd` ou Git.
+6. Execute as migrações D1 previstas no projeto, conferindo o banco de destino antes de qualquer alteração.
+7. Rode a validação local do Worker e publique com o comando normal de produção do projeto, sem `--temporary`.
+8. Verifique a rota de saúde no painel/ambiente oficial e só depois abra o sistema para conectar o primeiro aparelho.
+9. No sistema, use Primeiro computador somente no aparelho principal; se o administrador já existia, use Recuperar administrador. Depois crie as duas senhas separadas no cartão administrativo.
+10. Guarde o token de aparelho apenas no dispositivo autorizado. Se a publicação falhar por autenticação, reconecte a conta Cloudflare no ambiente e repita localmente; não substitua o segredo por texto enviado no chat.
+
+Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.

@@ -149,7 +149,7 @@
         '<label style="font-size:11px;font-weight:800">CNPJ DA EMPRESA DONA (é ele que vira gerente)<br><input id="v5260-a-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
         '<label style="font-size:11px;font-weight:800">NOME DA EMPRESA DONA<br><input id="v5260-a-nome" placeholder="Ex.: DIGICOPY" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
         '<label style="font-size:11px;font-weight:800">SENHA DE CONEXÃO (PCs novos + site de atualizações)<br><input id="v5260-a-conn" type="password" placeholder="mín. 4 caracteres" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
-        '<label style="font-size:11px;font-weight:800">SENHA DO GERENTE (só entra com o CNPJ da dona acima)<br><input id="v5260-a-ger" type="password" placeholder="deixe vazio para usar a mesma de conexão" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+        '<label style="font-size:11px;font-weight:800">SENHA DO GERENTE (só entra com o CNPJ da dona acima)<br><input id="v5260-a-ger" type="password" placeholder="crie uma senha separada (mín. 4 caracteres)" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
       '</div>'+
       '<div style="display:flex;gap:8px;margin-top:10px"><button id="v5260-a-salvar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Salvar senhas na nuvem</button></div>'+
       '<div id="v5260-a-res" style="margin-top:10px"></div>';
@@ -164,11 +164,11 @@
       var conn = card.querySelector('#v5260-a-conn').value;
       var ger = card.querySelector('#v5260-a-ger').value;
       var apiC = window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api;
-      if(cnpj.length!==14 || conn.length<4){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">CNPJ precisa de 14 dígitos e a senha de conexão de no mínimo 4 caracteres.</div>'; return; }
+      if(cnpj.length!==14 || conn.length<4 || ger.length<4){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Informe o CNPJ, uma senha de conexão e uma senha do gerente separada, ambas com no mínimo 4 caracteres. Se a senha de gerente nunca foi criada, este é o momento de criá-la.</div>'; return; }
       if(typeof apiC!=='function'){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Motor da nuvem não carregado.</div>'; return; }
       btn.disabled = true; btn.textContent = 'Salvando...';
       try{
-        var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:(ger||conn) }) });
+        var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:ger }) });
         if(!r || !r.ok) throw new Error((r&&r.message)||'Não salvou.');
         res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. PCs novos já entram com CNPJ + senha de conexão. Se trocar a senha, computadores já conectados continuam — só bloqueia os novos.</div>';
         card.querySelector('#v5260-a-conn').value=''; card.querySelector('#v5260-a-ger').value='';

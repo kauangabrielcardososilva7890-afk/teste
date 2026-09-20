@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 831e9f968ffb964e
+ * scripts: 222 | sha256: e84a8400e39cbffd
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28047,8 +28047,13 @@ async function api(path, options){
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
   let data=null; try{data=await response.json();}catch(e){}
   if(!response.ok){
-    const err=new Error((data&&data.message)||('Erro HTTP '+response.status));
+    // Algumas rotas antigas devolvem a mensagem em `aviso`, não em `message`.
+    // Preservar essa mensagem impede que uma senha errada vire genericamente
+    // "Erro HTTP 403" e pareça falha de internet ou motor velho.
+    const detalhe=(data&&((data.message)||(data.aviso)))||('Erro HTTP '+response.status);
+    const err=new Error(detalhe);
     err.code=(data&&data.error)||('HTTP_'+response.status); err.status=response.status;
+    err.aviso=(data&&data.aviso)||'';
     throw err;
   }
   return data;
@@ -28257,7 +28262,7 @@ async function renderConnected(body){
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
-    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Para ter acesso de administrador, desconecte e entre de novo com o CNPJ + a <b>senha do gerente</b>.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
+    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Se a senha do gerente nunca foi definida, primeiro use a aba <b>Recuperar administrador</b> desta tela com o segredo configurado localmente na Cloudflare; depois, no cartão de senhas, crie uma senha do gerente. Só então reconecte com CNPJ + essa senha para transformar este PC em administrador.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
     body.querySelector('#dc-enviar-locais').onclick=async()=>{
       const btn=body.querySelector('#dc-enviar-locais');
@@ -38241,7 +38246,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0bfad-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -40533,13 +40538,31 @@ function garantirCss(){
   document.head.appendChild(st);
 }
 
+function rotasDoModulo(mod){
+  var partes = [];
+  try{
+    var pai = mod.querySelector(':scope > button');
+    if(pai) partes.push(pai.getAttribute('onclick') || '');
+    mod.querySelectorAll(':scope > .module-menu > button, :scope > .module-menu a').forEach(function(item){
+      partes.push(item.getAttribute('onclick') || item.getAttribute('href') || '');
+    });
+  }catch(e){
+    // :scope não existe em alguns WebViews antigos; ainda assim nunca use o
+    // innerHTML inteiro, pois nomes de outras telas geram falsos selecionados.
+    var primeiro = mod.querySelector('button');
+    if(primeiro) partes.push(primeiro.getAttribute('onclick') || '');
+  }
+  return partes.join(' ');
+}
+
 function pintarMenuAberto(view){
   garantirCss();
   var row = document.querySelector('.module-row');
   if(!row) return;
   row.querySelectorAll('.module').forEach(function(mod){
-    var html = mod.innerHTML||'';
-    var on = moduloAberto(view, html);
+    // Só o botão-pai e os itens imediatos do módulo definem sua tela. Nunca
+    // vasculhar o innerHTML inteiro: isso acumulava Atendimento + Cadastros.
+    var on = moduloAberto(view, rotasDoModulo(mod));
     if(on) mod.classList.add('mod-sel');
     else mod.classList.remove('mod-sel');
   });
@@ -41875,7 +41898,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0bfad-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -42776,7 +42799,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0bfad-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -49939,7 +49962,7 @@ try{
         '<label style="font-size:11px;font-weight:800">CNPJ DA EMPRESA DONA (é ele que vira gerente)<br><input id="v5260-a-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
         '<label style="font-size:11px;font-weight:800">NOME DA EMPRESA DONA<br><input id="v5260-a-nome" placeholder="Ex.: DIGICOPY" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
         '<label style="font-size:11px;font-weight:800">SENHA DE CONEXÃO (PCs novos + site de atualizações)<br><input id="v5260-a-conn" type="password" placeholder="mín. 4 caracteres" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
-        '<label style="font-size:11px;font-weight:800">SENHA DO GERENTE (só entra com o CNPJ da dona acima)<br><input id="v5260-a-ger" type="password" placeholder="deixe vazio para usar a mesma de conexão" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
+        '<label style="font-size:11px;font-weight:800">SENHA DO GERENTE (só entra com o CNPJ da dona acima)<br><input id="v5260-a-ger" type="password" placeholder="crie uma senha separada (mín. 4 caracteres)" style="height:38px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px"></label>'+
       '</div>'+
       '<div style="display:flex;gap:8px;margin-top:10px"><button id="v5260-a-salvar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Salvar senhas na nuvem</button></div>'+
       '<div id="v5260-a-res" style="margin-top:10px"></div>';
@@ -49954,11 +49977,11 @@ try{
       var conn = card.querySelector('#v5260-a-conn').value;
       var ger = card.querySelector('#v5260-a-ger').value;
       var apiC = window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.api;
-      if(cnpj.length!==14 || conn.length<4){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">CNPJ precisa de 14 dígitos e a senha de conexão de no mínimo 4 caracteres.</div>'; return; }
+      if(cnpj.length!==14 || conn.length<4 || ger.length<4){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Informe o CNPJ, uma senha de conexão e uma senha do gerente separada, ambas com no mínimo 4 caracteres. Se a senha de gerente nunca foi criada, este é o momento de criá-la.</div>'; return; }
       if(typeof apiC!=='function'){ res.innerHTML='<div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 12px;font-size:12.5px">Motor da nuvem não carregado.</div>'; return; }
       btn.disabled = true; btn.textContent = 'Salvando...';
       try{
-        var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:(ger||conn) }) });
+        var r = await apiC('/v1/connect-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, nome:nome, senha:conn, senhaGerente:ger }) });
         if(!r || !r.ok) throw new Error((r&&r.message)||'Não salvou.');
         res.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 12px;font-size:12.5px">✅ Senhas guardadas (como embaralhado) na nuvem. PCs novos já entram com CNPJ + senha de conexão. Se trocar a senha, computadores já conectados continuam — só bloqueia os novos.</div>';
         card.querySelector('#v5260-a-conn').value=''; card.querySelector('#v5260-a-ger').value='';
@@ -50013,8 +50036,8 @@ try{
 // Como funciona aqui dentro (sem encostar na tela antiga):
 // A) PORTÃO: se este PC não está autorizado na nuvem (token vazio), um
 //    painel cobre a tela inteira ANTES de qualquer login: CNPJ da loja +
-//    senha de conexão. Senha certa → SÓ ENTÃO pergunta "qual é este
-//    computador?" (etapa 2, mais uma tranca). Conclua → autoriza, recarrega
+//    senha de conexão. Senha certa → autoriza automaticamente o aparelho
+//    com um nome técnico persistente, sem perguntar qual é o PC. Recarrega
 //    e o fluxo segue para o login de usuário. Conectou 1x → nunca mais aparece.
 // B) SESSÃO DE USUÁRIO 1X POR DIA: a sessão vale só no dia em que entrou.
 //    Virou o dia e abriu o sistema → volta a pedir usuário+senha (1x ao dia);
@@ -50084,6 +50107,11 @@ try{
     if (fechouNestaSessao()) return;     // admin saiu pelo jeito antigo até recarregar
 
     var base = empresaCnpjNome();
+    function olhoSvg(cortado){
+      return cortado
+        ? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.3A10.8 10.8 0 0 1 12 5c6.6 0 10 7 10 7a18.6 18.6 0 0 1-3.1 3.8M6.2 6.2C3.5 8.1 2 12 2 12s3.4 7 10 7a10.8 10.8 0 0 0 4.1-.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M2 12s3.4-7 10-7 10 7 10 7-3.4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+    }
     var box = document.createElement('div');
     box.id = 'v5262-portao';
     box.style.cssText = 'position:fixed;inset:0;z-index:2147482900;background:linear-gradient(135deg,#f1f4fb,#e8edfb);display:flex;align-items:center;justify-content:center;padding:18px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;';
@@ -50094,17 +50122,11 @@ try{
         '<p style="margin:8px 0 0;font-size:12.5px;color:#64748b;line-height:1.6">Este computador ainda não está conectado. <b>É só a primeira vez aqui</b> — depois some pra sempre. Sem a conexão, o sistema não abre (mais uma tranca de segurança sua).</p>'+
         '<div id="v5262-etapa1">'+
           '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:16px">CNPJ DA LOJA<br><input id="v5262-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
-          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:10px">SENHA DE CONEXÃO (definida pelo dono no painel Nuvem)<br><input id="v5262-senha" type="password" placeholder="senha de conexão" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:10px">SENHA DE CONEXÃO<br><span style="display:flex;align-items:center;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;overflow:hidden"><input id="v5262-senha" type="password" placeholder="senha de conexão" autocomplete="current-password" style="height:42px;flex:1;min-width:0;border:0;outline:0;padding:0 12px;font-size:14px;box-sizing:border-box"><button id="v5262-mostrar-senha" type="button" aria-label="Mostrar senha" title="Mostrar senha" style="height:42px;width:46px;border:0;background:#fff;color:#0a1e8a;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">'+olhoSvg(false)+'</button></span></label>'+
           '<button id="v5262-continuar" style="margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer">Continuar</button>'+
         '</div>'+
-        '<div id="v5262-etapa2" style="display:none">'+
-          '<div id="v5262-ok-aviso" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:12px;padding:11px 14px;font-size:12.5px;margin-top:16px;text-align:left">✅ CNPJ e senha conferem! Agora diga qual é este computador.</div>'+
-          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:12px">QUAL É ESTE COMPUTADOR?<br><input id="v5262-pc" placeholder="Ex.: PC BALCÃO 1 / PC CAIXA / NOTEBOOK" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
-          '<button id="v5262-conectar" style="margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer">Conectar e entrar</button>'+
-          '<div style="margin-top:10px"><a href="#" id="v5262-voltar" style="font-size:12px;color:#64748b">← voltar</a></div>'+
-        '</div>'+
         '<div id="v5262-msg" style="margin-top:14px"></div>'+
-        '<div id="v5262-jeito-antigo" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px"><a href="#" id="v5262-antigo" style="font-size:11.5px;color:#94a3b8">sou o administrador e ainda não defini a senha → entrar pelo jeito antigo</a></div>'+
+        '<div id="v5262-jeito-antigo" style="display:none;margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px"><a href="#" id="v5262-antigo" style="font-size:11.5px;color:#94a3b8">a senha ainda não foi criada → abrir Recuperar administrador</a></div>'+
       '</div>';
     document.body.appendChild(box);
 
@@ -50132,49 +50154,94 @@ try{
       var C = window.DIGICOPY_CLOUD;
       return (C && typeof C.api === 'function') ? C.api : null;
     }
+    function nomePCAutomatico(){
+      try{
+        var chave = 'digicopy_cloud_device_name_v5262';
+        var existente = localStorage.getItem(chave);
+        if(existente) return existente;
+        var id = (window.crypto && typeof window.crypto.randomUUID === 'function')
+          ? window.crypto.randomUUID().slice(0,8)
+          : String(Date.now()).slice(-8);
+        var nome = 'PC ' + String(id).toUpperCase();
+        localStorage.setItem(chave, nome);
+        return nome;
+      }catch(e){ return 'PC WEB'; }
+    }
+    async function conectarAutomaticamente(cnpj, senha, botao){
+      var api = apiNuvem();
+      if(!api){ mostrarMsg('Motor da nuvem ainda carregando... tente de novo em 2 segundos.','erro'); botao.disabled=false; botao.textContent='Continuar'; return; }
+      botao.disabled = true; botao.textContent = 'Conectando...';
+      try{
+        var data = await api('/v1/enroll-cnpj',{
+          method:'POST',
+          body:JSON.stringify({ cnpj:cnpj, senha:senha, empresaNome:empresaCnpjNome().nome, deviceName:nomePCAutomatico() })
+        });
+        if(!data || !data.token || !data.device) throw new Error('Resposta de autorização incompleta.');
+        localStorage.setItem(TOKEN_KEY, data.token);
+        localStorage.setItem(DEVICE_KEY, JSON.stringify(Object.assign({}, data.device, { activation:'cnpj', cnpj:cnpj })));
+        mostrarMsg('✅ Computador conectado! Abrindo o sistema...','bom');
+        setTimeout(function(){ try{ location.reload(); }catch(e){} }, 800);
+      }catch(err){
+        var em = (err && err.message) || 'Não conectou. Tente de novo.';
+        if(/rota|404/i.test(em)){
+          mostrarMsg('O motor da nuvem ainda é o antigo. O dono precisa rodar o <b>atualizar_motor_nuvem.cmd</b> UMA vez e tentar de novo.','erro');
+          mostrarJeitoAntigo();
+        }else if(/conexão|internet/i.test(em)){
+          mostrarMsg('Sem conseguir falar com a nuvem agora: '+esc(em)+'<br>Verifique a internet.','erro');
+          mostrarJeitoAntigo();
+        }else{
+          mostrarMsg(esc(em),'erro');
+        }
+        botao.disabled = false; botao.textContent = 'Continuar';
+      }
+    }
+
+    box.querySelector('#v5262-mostrar-senha').onclick = function(){
+      var campo = box.querySelector('#v5262-senha');
+      var mostrar = campo.type === 'password';
+      campo.type = mostrar ? 'text' : 'password';
+      this.innerHTML = mostrar ? olhoSvg(true) : olhoSvg(false);
+      this.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+      this.setAttribute('title', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+      this.setAttribute('aria-pressed', mostrar ? 'true' : 'false');
+    };
 
     box.querySelector('#v5262-antigo').onclick = function(ev){
       ev.preventDefault();
       try{ sessionStorage.setItem(FECHOU_KEY,'1'); }catch(e){}
       var d = document.getElementById('v5262-portao'); if(d) d.remove();
-      try{ if(typeof toast==='function') toast('Entrada administrativa: conecte o PC pela tela Nuvem e defina as senhas no cartão novo.','info'); }catch(e){}
+      try{ if(typeof toast==='function') toast('Abra Nuvem → Recuperar administrador. Depois de recuperar o aparelho, crie uma senha de conexão e uma senha de gerente separada no cartão de senhas.','info'); }catch(e){}
+      try{ if(typeof window.abrirCloudflareNuvem==='function') window.abrirCloudflareNuvem(); }catch(e){}
     };
-    box.querySelector('#v5262-voltar').onclick = function(ev){
-      ev.preventDefault();
-      box.querySelector('#v5262-etapa2').style.display='none';
-      box.querySelector('#v5262-etapa1').style.display='block';
-      mostrarMsg('');
-    };
-
-    // ETAPA 1 — confere CNPJ + senha (sem criar nada)
+    // ETAPA 1 — confere CNPJ + senha e conecta automaticamente (sem perguntar o nome do PC)
     box.querySelector('#v5262-continuar').onclick = async function(){
       var api = apiNuvem();
       if(!api){ mostrarMsg('O motor da nuvem ainda está carregando... aguarde 2 segundos e aperte Continuar de novo.','erro'); return; }
       var cnpj = soDigitos(box.querySelector('#v5262-cnpj').value);
       var senha = box.querySelector('#v5262-senha').value;
-      if(cnpj.length!==14 || !senha){ mostrarMsg('Preencha o CNPJ (14 dígitos) e a senha de conexão.','erro'); return; }
+      if(cnpj.length!==14 || !senha){ mostrarMsg('Preencha o CNPJ (14 dígitos) e a senha de conexão ou do gerente.','erro'); return; }
       var b = box.querySelector('#v5262-continuar');
       b.disabled = true; b.textContent = 'Conferindo...'; mostrarMsg('');
       try{
         var r = await api('/v1/check-pass',{ method:'POST', body:JSON.stringify({ cnpj:cnpj, senha:senha }) });
         if(r && r.ok === false && r.senhaDefinida === false){
-          mostrarMsg(esc(r.aviso || 'A senha de conexão ainda não foi definida.')+'<br>O dono define a senha no sistema → Nuvem → cartão <b>"Senhas de conexão (CNPJ) e do Gerente"</b>.','erro');
+          mostrarMsg(esc(r.aviso || 'A senha de conexão ainda não foi definida.')+'<br>Se o administrador nunca criou as senhas, abra <b>Nuvem → Recuperar administrador</b> usando o segredo configurado no painel seguro; depois crie uma senha de conexão e uma senha de gerente separada no cartão <b>"Senhas de conexão (CNPJ) e do Gerente"</b>.','erro');
           mostrarJeitoAntigo(); b.disabled=false; b.textContent='Continuar'; return;
         }
         if(r && r.ok === true){
-          box.querySelector('#v5262-etapa1').style.display='none';
-          box.querySelector('#v5262-etapa2').style.display='block';
-          box.dataset.v5262cnpj = cnpj;
-          box.dataset.v5262senha = senha;
-          try{ box.querySelector('#v5262-pc').focus(); }catch(e){}
-          b.disabled=false; b.textContent='Continuar'; return;
+          box.dataset.v5262tipo = r.tipo || 'conexao';
+          mostrarMsg(r.administrador
+            ? '🔐 Senha do gerente conferida! Este computador será criado como <b>Administrador</b>. Conectando...'
+            : '✅ CNPJ e senha de conexão conferem! Este computador será autorizado como PC comum. Conectando...','bom');
+          await conectarAutomaticamente(cnpj, senha, b);
+          return;
         }
         mostrarMsg(esc((r && r.aviso) || 'Não conferiu. Tente de novo.'),'erro');
       }catch(err){
         var em = (err && err.message) || 'Falhou.';
         var aviso = (err && err.aviso) || '';
         if(/CNPJ ou senha/.test(em) || /CNPJ ou senha/.test(aviso)){
-          mostrarMsg('CNPJ ou senha de conexão <b>incorretos</b>. Confira com calma e tente de novo.','erro');
+          mostrarMsg('CNPJ ou senha de conexão ou do gerente <b>incorretos</b>. Confira com calma e tente de novo.','erro');
         }else if(/rota|404/i.test(em)){
           mostrarMsg('O motor da nuvem ainda é o antigo. O dono precisa rodar o <b>atualizar_motor_nuvem.cmd</b> UMA vez e tentar de novo.','erro');
           mostrarJeitoAntigo();
@@ -50187,30 +50254,6 @@ try{
     };
     try{ box.querySelector('#v5262-senha').addEventListener('keydown', function(ev){ if(ev.key==='Enter') box.querySelector('#v5262-continuar').click(); }); }catch(e){}
 
-    // ETAPA 2 — nome do PC (só aparece depois da senha certa) → autoriza
-    box.querySelector('#v5262-conectar').onclick = async function(){
-      var api = apiNuvem();
-      if(!api){ mostrarMsg('Motor da nuvem ainda carregando... tente de novo em 2 segundos.','erro'); return; }
-      var pc = box.querySelector('#v5262-pc').value.trim();
-      if(!pc){ mostrarMsg('Diga qual é este computador (ex.: PC BALCÃO 1).','erro'); return; }
-      var b = box.querySelector('#v5262-conectar');
-      b.disabled = true; b.textContent = 'Conectando...';
-      try{
-        var data = await api('/v1/enroll-cnpj',{
-          method:'POST',
-          body:JSON.stringify({ cnpj: box.dataset.v5262cnpj, senha: box.dataset.v5262senha, empresaNome: empresaCnpjNome().nome, deviceName: pc })
-        });
-        if(!data || !data.token || !data.device) throw new Error('Resposta de autorização incompleta.');
-        localStorage.setItem(TOKEN_KEY, data.token);
-        localStorage.setItem(DEVICE_KEY, JSON.stringify(Object.assign({}, data.device, { activation:'cnpj', cnpj: box.dataset.v5262cnpj })));
-        mostrarMsg('✅ Computador conectado! Abrindo o sistema...','bom');
-        setTimeout(function(){ try{ location.reload(); }catch(e){} }, 800);
-      }catch(err){
-        mostrarMsg(esc((err && err.message) || 'Não conectou. Tente de novo.'),'erro');
-        b.disabled = false; b.textContent = 'Conectar e entrar';
-      }
-    };
-    try{ box.querySelector('#v5262-pc').addEventListener('keydown', function(ev){ if(ev.key==='Enter') box.querySelector('#v5262-conectar').click(); }); }catch(e){}
   }
 
   // ── aviso "virou o dia" no topo da tela de login de usuário ───────────────
@@ -54382,33 +54425,33 @@ try{
   }
 
   var CSS =
-    '#fx-root .fx-placa{padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;margin-bottom:10px}' +
-    '#fx-root .fx-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;margin-bottom:10px}' +
-    '#fx-root .fx-lb{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#64748b;display:flex;flex-direction:column;gap:3px}' +
-    '#fx-root .fx-in{height:32px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12.5px;background:#fff;min-width:110px}' +
-    '#fx-root .fx-chk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#334155;height:32px}' +
-    '#fx-root .fx-btn{height:34px;padding:0 13px;border-radius:9px;border:1px solid #d9e3ef;background:#fff;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.14s}' +
-    '#fx-root .fx-btn:hover{border-color:#0a1e8a;color:#0a1e8a;transform:translateY(-1px)}' +
-    '#fx-root .fx-btn.pri{background:#0a1e8a;border-color:#0a1e8a;color:#fff}' +
-    '#fx-root .fx-btn.dan{border-color:#fecaca;color:#991b1b}#fx-root .fx-btn.dan:hover{background:#fef2f2}' +
-    '#fx-root .fx-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}' +
-    '#fx-root table.fx-tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden}' +
-    '#fx-root .fx-tb th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10px;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid #e2e8f0;z-index:1}' +
-    '#fx-root .fx-tb td{padding:7px 8px;border-bottom:1px solid #eef2f7;vertical-align:middle}' +
-    '#fx-root .fx-tb tbody tr{transition:.12s;cursor:pointer}#fx-root .fx-tb tbody tr:hover{background:#f5f9ff}#fx-root .fx-tb tbody tr.fx-sel{background:#dbeafe}' +
-    '#fx-root .fx-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid #e2e8f0;margin-bottom:10px;padding:0 2px}' +
-    '#fx-root .fx-tab{height:32px;padding:0 13px;border-radius:9px 9px 0 0;font-size:12px;font-weight:750;color:#475569;display:flex;align-items:center;gap:6px;cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:none}' +
-    '#fx-root .fx-tab.on{background:#0a1e8a;color:#fff}' +
-    '#fx-root .fx-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px}' +
-    '#fx-root .fx-grid{display:grid;gap:8px}.fx-g2{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.fx-g3{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.fx-g4{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}' +
-    '#fx-root .fx-status{font-size:26px;font-weight:900;letter-spacing:-.02em}' +
-    '#fx-root .fx-cofre{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}' +
-    '#fx-root .fx-cofre>div{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px;text-align:center}' +
-    '#fx-root .fx-cofre b{display:block;font-size:17px;color:#166534}' +
-    '#fx-root .fx-mini{font-size:11px;color:#64748b}' +
-    '#fx-root .fx-selmark{width:14px;height:14px;border:2px solid #94a3b8;border-radius:4px;display:inline-block;vertical-align:middle}' +
-    '#fx-root tr.fx-sel .fx-selmark{background:#0a1e8a;border-color:#0a1e8a;box-shadow:inset 0 0 0 2px #fff}' +
-    '#fx-root textarea.fx-in{height:auto;min-height:70px;padding:8px 9px;width:100%}';
+    '.fx-root-wrap .fx-placa{padding:9px 13px;border-radius:12px;font-weight:800;font-size:12.5px;color:#fff;margin-bottom:10px}' +
+    '.fx-root-wrap .fx-barra{display:flex;flex-wrap:wrap;gap:8px;align-items:end;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px;margin-bottom:10px}' +
+    '.fx-root-wrap .fx-lb{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#64748b;display:flex;flex-direction:column;gap:3px}' +
+    '.fx-root-wrap .fx-in{height:32px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;font-size:12.5px;background:#fff;min-width:110px}' +
+    '.fx-root-wrap .fx-chk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#334155;height:32px}' +
+    '.fx-root-wrap .fx-btn{height:34px;padding:0 13px;border-radius:9px;border:1px solid #d9e3ef;background:#fff;color:#334155;font-size:12px;font-weight:750;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:.14s}' +
+    '.fx-root-wrap .fx-btn:hover{border-color:#0a1e8a;color:#0a1e8a;transform:translateY(-1px)}' +
+    '.fx-root-wrap .fx-btn.pri{background:#0a1e8a;border-color:#0a1e8a;color:#fff}' +
+    '.fx-root-wrap .fx-btn.dan{border-color:#fecaca;color:#991b1b}.fx-root-wrap .fx-btn.dan:hover{background:#fef2f2}' +
+    '.fx-root-wrap .fx-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}' +
+    '.fx-root-wrap table.fx-tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden}' +
+    '.fx-root-wrap .fx-tb th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10px;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid #e2e8f0;z-index:1}' +
+    '.fx-root-wrap .fx-tb td{padding:7px 8px;border-bottom:1px solid #eef2f7;vertical-align:middle}' +
+    '.fx-root-wrap .fx-tb tbody tr{transition:.12s;cursor:pointer}.fx-root-wrap .fx-tb tbody tr:hover{background:#f5f9ff}.fx-root-wrap .fx-tb tbody tr.fx-sel{background:#dbeafe}' +
+    '.fx-root-wrap .fx-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid #e2e8f0;margin-bottom:10px;padding:0 2px}' +
+    '.fx-root-wrap .fx-tab{height:32px;padding:0 13px;border-radius:9px 9px 0 0;font-size:12px;font-weight:750;color:#475569;display:flex;align-items:center;gap:6px;cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:none}' +
+    '.fx-root-wrap .fx-tab.on{background:#0a1e8a;color:#fff}' +
+    '.fx-root-wrap .fx-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px}' +
+    '.fx-root-wrap .fx-grid{display:grid;gap:8px}.fx-g2{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.fx-g3{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.fx-g4{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}' +
+    '.fx-root-wrap .fx-status{font-size:26px;font-weight:900;letter-spacing:-.02em}' +
+    '.fx-root-wrap .fx-cofre{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}' +
+    '.fx-root-wrap .fx-cofre>div{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px;text-align:center}' +
+    '.fx-root-wrap .fx-cofre b{display:block;font-size:17px;color:#166534}' +
+    '.fx-root-wrap .fx-mini{font-size:11px;color:#64748b}' +
+    '.fx-root-wrap .fx-selmark{width:14px;height:14px;border:2px solid #94a3b8;border-radius:4px;display:inline-block;vertical-align:middle}' +
+    '.fx-root-wrap tr.fx-sel .fx-selmark{background:#0a1e8a;border-color:#0a1e8a;box-shadow:inset 0 0 0 2px #fff}' +
+    '.fx-root-wrap textarea.fx-in{height:auto;min-height:70px;padding:8px 9px;width:100%}';
   function fxCss() {
     if (typeof document === 'undefined' || document.getElementById('fx614-css')) return;
     var st = document.createElement('style'); st.id = 'fx614-css'; st.textContent = CSS;
@@ -55067,7 +55110,7 @@ try{
     var aba = G.__fxCfgAba;
     var h = I.placa();
     h += '<div class="fx-tabs">' + P.CONFIG_ABAS.map(function (a) {
-      return '<div class="fx-tab' + (a === aba ? ' on' : '') + '" onclick="fxAcao(\'cfg-aba\',\'' + a + '\')">' + a + '</div>';
+      return '<button type="button" class="fx-tab' + (a === aba ? ' on' : '') + '" data-fx-tab="' + P.esc(a) + '">' + a + '</button>';
     }).join('') + '</div>';
     h += '<div id="fx-root">' + fxRenderConfigAba(cfg, aba) + '</div>';
     h += '<div style="display:flex;gap:8px;margin-top:4px">' +
@@ -55297,7 +55340,10 @@ try{
       /* ── editor Venda-NF ── */
       n = R1.notaEdicao();
       if (acao === 'nf-aba') { if (n) { I.aplica(fxRaizDe('central-nf')); G.__fxEd.aba = a; fxLimpaAliases(); I.save(); } return fxReRender('central-nf'); }
-      if (!n) return;
+      // Configurações fiscais não dependem de uma nota aberta. O guard do
+      // editor ficava antes destas ações e fazia as dez abas ignorarem clique
+      // quando o usuário entrava pela barra diretamente.
+      if (!n && acao !== 'cfg-aba' && acao !== 'cfg-salvar' && acao !== 'cfg-fcp-uf' && acao !== 'inut-enviar') return;
       if (acao === 'nf-salvar' || acao === 'nf-sair') {
         I.aplica(fxRaizDe('central-nf')); R1.totaisAuto(n); n.atualizadoEm = new Date().toISOString();
         n.log = n.log || []; n.log.push({ acao: 'nota-salva', detalhe: 'itens: ' + n.itens.length + ' · total R$ ' + P.brl(n.totais.total), em: n.atualizadoEm, usuario: (I.sess() || {}).usuario || '' });
@@ -56027,8 +56073,10 @@ try{
  * navigateTo('central-nf')), recoloca o rótulo "Fiscal" e o
  * #menu-nfe com os 6 menus oficiais sempre que a barra for
  * repintada (observer), mantém pin por clique (compatível com a
- * v6.1.1 via classe .sfo-pin + e.defaultPrevented), e cobre o
- * modo escuro (.digi-escuro) de todas as camadas claras fixas.
+ * v6.1.1 via classe .sfo-pin + e.defaultPrevented), e muda TODOS
+ * os módulos com submenu para abrir somente por clique (hover não
+ * abre; clique fora fecha). Também cobre o modo escuro (.digi-escuro)
+ * de todas as camadas claras fixas.
  * Não importa dado, não toca banco, não interfere no claro.
  * Guard: __v612nes
  * ============================================================ */
@@ -56064,23 +56112,23 @@ try{
       'body.digi-escuro #view-fiscal-enviar-xml, body.digi-escuro #view-fiscal-ncm, body.digi-escuro #view-config-fiscal' +
       '{ background: linear-gradient(180deg,#0a1240 0%, #0d1746 55%, #101b52 100%) !important; color:#e8eeff !important; }',
 
-      /* painel #fx-root: cartões, barras, inputs, tabelas e abas */
-      'body.digi-escuro #fx-root{ color:#e8eeff !important; }',
-      'body.digi-escuro #fx-root .fx-card, body.digi-escuro #fx-root .fx-barra{' +
+      /* painel .fx-root-wrap: cartões, barras, inputs, tabelas e abas */
+      'body.digi-escuro .fx-root-wrap{ color:#e8eeff !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-card, body.digi-escuro .fx-root-wrap .fx-barra{' +
       ' background: rgba(13,21,54,.88) !important; background-color: rgba(13,21,54,.88) !important;' +
       ' background-image: none !important; border-color: rgba(148,167,255,.22) !important;' +
       ' box-shadow: 0 2px 14px rgba(2,6,26,.45) !important; }',
-      'body.digi-escuro #fx-root .fx-lb, body.digi-escuro #fx-root .fx-mini, body.digi-escuro #fx-root .fx-h2{ color:#a9bff2 !important; }',
-      'body.digi-escuro #fx-root .fx-in, body.digi-escuro #fx-root select.fx-in, body.digi-escuro #fx-root textarea.fx-in{' +
+      'body.digi-escuro .fx-root-wrap .fx-lb, body.digi-escuro .fx-root-wrap .fx-mini, body.digi-escuro .fx-root-wrap .fx-h2{ color:#a9bff2 !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-in, body.digi-escuro .fx-root-wrap select.fx-in, body.digi-escuro .fx-root-wrap textarea.fx-in{' +
       ' background:#0b1337 !important; color:#e8eeff !important; border-color: rgba(148,167,255,.28) !important; }',
-      'body.digi-escuro #fx-root .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
-      'body.digi-escuro #fx-root .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
       'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background: rgba(148,167,255,.06) !important; }',
       'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.16) !important; }',
       'body.digi-escuro .fx-tab{ color:#a9bff2 !important; }',
       'body.digi-escuro .fx-tab.on{ background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important; }',
-      'body.digi-escuro #fx-root .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',
-      'body.digi-escuro #fx-root .fx-btn:hover{ background:#1c2c6e !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-btn:hover{ background:#1c2c6e !important; }',
 
       /* submenu #menu-nfe da barra (o claro do sfo611 quebrava o escuro) */
       'body.digi-escuro #menu-nfe{ background:#0d1738 !important; border:1px solid rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
@@ -56090,9 +56138,45 @@ try{
       /* flyout lateral (sxvm) também fica íntegro no escuro */
       'body.digi-escuro #sxvm-flyout-nav{ background:#0d1738 !important; border-color: rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
       'body.digi-escuro #sxvm-flyout-nav button{ color:#dbe6ff !important; }',
-      'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }'
+      'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }',
+      /* comportamento novo: menu só abre por clique, nunca só por hover */
+      '.module:not(.sfo-pin) > .module-menu{opacity:0 !important;visibility:hidden !important;transform:translateY(8px) scale(.98) !important;pointer-events:none !important}',
+      '.module.sfo-pin > .module-menu{opacity:1 !important;visibility:visible !important;transform:translateY(0) scale(1) !important;pointer-events:auto !important}',
+      '.module.sfo-pin > button{background:linear-gradient(180deg,#1d4ed8,#1e3a8a) !important;color:#fff !important;border-radius:10px;box-shadow:0 8px 18px rgba(30,58,138,.24)}',
+      '.module.sfo-pin > button i{color:#fff !important}',
+      '.module-menu{background:#fff;border:1px solid #dbe3ef;border-radius:14px;box-shadow:0 18px 45px rgba(15,23,42,.18);padding:8px}',
+      '.module-menu button{height:40px;border-radius:10px;font-weight:650}',
+      '#sxvm-flyout-nav:not(.sfo-pin){display:none !important}',
+      '#sxvm-flyout-nav.sfo-pin{display:block !important}',
+      'body.digi-escuro .module-menu{background:#0d1738;border-color:rgba(148,167,255,.28);box-shadow:0 14px 34px rgba(2,6,26,.55)}'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
+  }
+
+  /* ---------- remove definitivamente as três opções fiscais legadas ---------- */
+  var FISCAIS_LEGADOS = ['fiscal-historico', 'fiscal-inutilizar', 'fiscal-ferramentas'];
+  function ehRotaFiscalLegada(valor) {
+    var s = String(valor || '');
+    return FISCAIS_LEGADOS.some(function (v) {
+      return s === v || s.indexOf("navigateTo('" + v + "')") >= 0 || s.indexOf('navigateTo("' + v + '")') >= 0;
+    });
+  }
+  function removerOpcoesFiscaisLegadas() {
+    var seletor = '[data-nav],[data-sxv-go],[id^="topmod-"]';
+    document.querySelectorAll(seletor).forEach(function (el) {
+      var chave = el.getAttribute('data-nav') || el.getAttribute('data-sxv-go') || '';
+      var id = el.id || '';
+      if (ehRotaFiscalLegada(chave) || FISCAIS_LEGADOS.some(function (v) { return id === 'topmod-' + v; })) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }
+    });
+    document.querySelectorAll('button, a').forEach(function (el) {
+      var oc = el.getAttribute('onclick') || '';
+      if (!oc || !ehRotaFiscalLegada(oc)) return;
+      // Mantém a tela/rotas para compatibilidade de dados, mas não deixa
+      // nenhum botão antigo continuar exposto em barra, submenu ou atalho.
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
   }
 
   /* ---------- módulo fiscal na barra de módulos ---------- */
@@ -56124,6 +56208,7 @@ try{
   }
 
   function fixBarra() {
+    removerOpcoesFiscaisLegadas();
     var mod = moduloFiscal();
     if (!mod) return false;
     var btn = mod.querySelector(':scope > button');
@@ -56152,7 +56237,47 @@ try{
     return true;
   }
 
-  /* ---------- clique no pai: abre e FICA preso (pin); compõe com o sfo611 ---------- */
+  /* ---------- Configurações: as dez abas usam um clique delegado estável ---------- */
+  document.addEventListener('click', function (e) {
+    var tab = e.target && e.target.closest ? e.target.closest('[data-fx-tab]') : null;
+    if (!tab) return;
+    var tela = tab.closest('#view-config-fiscal');
+    if (!tela) return;
+    var acao = window.fxAcao;
+    if (typeof acao !== 'function') return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    acao('cfg-aba', tab.getAttribute('data-fx-tab') || 'Geral');
+  }, true);
+
+  /* ---------- todos os menus: clique abre/fecha; hover não abre ---------- */
+  function fecharMenus(excecao) {
+    document.querySelectorAll('.module.sfo-pin').forEach(function (m) {
+      if (m !== excecao) m.classList.remove('sfo-pin');
+    });
+    var fly = document.getElementById('sxvm-flyout-nav');
+    if (fly && fly !== excecao && !fly.classList.contains('sfo-pin')) fly.style.display = 'none';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return;
+    var mod = e.target && e.target.closest ? e.target.closest('.module') : null;
+    var pai = mod && mod.querySelector(':scope > button');
+    var menu = mod && mod.querySelector(':scope > .module-menu');
+    if (mod && pai && menu && pai.contains(e.target)) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      var estava = mod.classList.contains('sfo-pin');
+      fecharMenus();
+      if (!estava) mod.classList.add('sfo-pin');
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest('.module-menu')) {
+      fecharMenus();
+      return; /* deixa o onclick do item navegar */
+    }
+    if (!(e.target && e.target.closest && e.target.closest('#sxvm-flyout-nav'))) fecharMenus();
+  }, true);
+
+  /* ---------- clique no pai fiscal: abre e FICA preso (pin); compõe com o sfo611 ---------- */
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented) return; /* o submenu_fiscal_oficial (6.1.1) já tratou */
     var mod = e.target && e.target.closest ? e.target.closest('.module') : null;
@@ -56204,10 +56329,20 @@ try{
     }).observe(row, { childList: true, subtree: true });
   }
 
+  var armouLegadosObs = false;
+  function armaLegadosObs() {
+    if (armouLegadosObs || !document.body || typeof window.MutationObserver !== 'function') return;
+    armouLegadosObs = true;
+    new window.MutationObserver(function (muts) {
+      if (muts.some(function (m) { return m.type === 'childList' && m.addedNodes.length; })) removerOpcoesFiscaisLegadas();
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
   function armar() {
     injetaCss();
     var ok = fixBarra();
     armaObs();
+    armaLegadosObs();
     if (!ok) setTimeout(armar, 350);
   }
   if (document.readyState === 'loading') {

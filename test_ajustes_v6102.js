@@ -27,8 +27,19 @@ ok(/showApp/.test(p) && /__v612nes/.test(p), 'showApp embrulhado (boot tardio re
 const views = ['view-central-nf','view-fiscal-perfil','view-fiscal-manifestacao','view-fiscal-enviar-xml','view-fiscal-ncm','view-config-fiscal'];
 ok(views.every(v => p.indexOf('body.digi-escuro #' + v) !== -1), 'as 6 shells fiscais têm gradiente escuro próprio');
 ok(/nes612-css/.test(p) && /linear-gradient\(180deg,#0a1240/.test(p), 'CSS injetado nes612-css com gradiente escuro');
-ok(/body\.digi-escuro #fx-root \.fx-card/.test(p) && /body\.digi-escuro #fx-root \.fx-barra/.test(p), 'fx-card/fx-barra escuros no dark');
-ok(/body\.digi-escuro #fx-root \.fx-tb th/.test(p) && /body\.digi-escuro #fx-root \.fx-tb td/.test(p), 'tabelas fx legíveis no escuro');
+ok(/body\.digi-escuro \.fx-root-wrap \.fx-card/.test(p) && /body\.digi-escuro \.fx-root-wrap \.fx-barra/.test(p), 'fx-card/fx-barra escuros no dark');
+ok(/body\.digi-escuro \.fx-root-wrap \.fx-tb th/.test(p) && /body\.digi-escuro \.fx-root-wrap \.fx-tb td/.test(p), 'tabelas fx legíveis no escuro');
+ok(/module:not\(\.sfo-pin\) > \.module-menu/.test(p) && /pointer-events:none/.test(p) && /stopImmediatePropagation\(\)/.test(p), 'menus só abrem por clique; o hover não abre e o pai não navega direto');
+ok(/module\.sfo-pin > \.module-menu/.test(p) && /fecharMenus/.test(p), 'clique no pai alterna submenu e clique fora fecha');
+const menuSel = fs.readFileSync('ajustes_v52243_menu_versao_boleto_patch.js','utf8');
+ok(/rotasDoModulo/.test(menuSel) && /:scope > \.module-menu/.test(menuSel) && !/var html = mod\.innerHTML/.test(menuSel), 'seleção da barra usa apenas rotas do pai e itens imediatos, sem acumular módulos');
+const catalogo = fs.readFileSync('fiscal_catalogo_completo_patch.js','utf8');
+ok(/data-fx-tab/.test(catalogo) && /type="button" class="fx-tab/.test(catalogo) && !/cfg-aba.*onclick/.test(catalogo), 'abas de Configurações usam botões reais sem onclick inline quebrável');
+ok(/closest\('\[data-fx-tab\]'\)/.test(p) && /acao\('cfg-aba'/.test(p), 'clique das dez abas é delegado pelo patch final e chama a ação de re-render');
+ok(['Geral','Impressão','NFCe','Tributação','Nuvem','Outras','Mensagens','FCP','Autorizações','Reforma'].every(function(a){ return catalogo.indexOf("aba === '" + a + "'") >= 0; }), 'as dez abas têm roteamento de renderização, não apenas rótulos');
+ok(/FISCAIS_LEGADOS/.test(p) && /removerOpcoesFiscaisLegadas/.test(p) && /data-sxv-go/.test(p), 'as três opções fiscais legadas são removidas do DOM, sem apagar as rotas de dados');
+const fx = ler('fiscal_catalogo_completo_patch.js');
+ok(/\.fx-root-wrap \.fx-tabs/.test(fx) && /\.fx-root-wrap \.fx-tab\.on/.test(fx) && /CONFIG_ABAS = \['Geral', 'Impressão', 'NFCe', 'Tributação'/.test(fx), 'configuração fiscal mostra e estiliza as 10 abas internas');
 ok(/body\.digi-escuro #menu-nfe\{/.test(p) && /body\.digi-escuro #menu-nfe button:hover/.test(p), 'submenu #menu-nfe escuro na barra');
 ok(/body\.digi-escuro #sxvm-flyout-nav\{/.test(p), 'flyout lateral escuro');
 const regrasClarasEscuras = (p.match(/digi-escuro/g) || []).length;
@@ -40,8 +51,8 @@ const man = JSON.parse(ler('bundle-manifest.json'));
 ok(man.length === 222 && man[221] === 'navegacao_fiscal_barra_escuro_patch.js' && man[220] === 'submenu_fiscal_oficial_patch.js',
   'manifesto 222: v6.1.1 antes, v6.1.2 fecha a fila');
 const ix = ler('index.html');
-ok(/DIGICOPY_APP_VERSION = '6\.1\.2'/.test(ix) && /<title>Sistema Digicopy v6\.1\.2<\/title>/.test(ix) &&
-   />v6\.1\.2<\/span>/.test(ix) && /app\.bundle\.js\?v=6\.1\.2/.test(ix), '4 carimbos v6.1.2 no index');
+ok(/DIGICOPY_APP_VERSION = '6\.1\.3'/.test(ix) && /<title>Sistema Digicopy v6\.1\.3<\/title>/.test(ix) &&
+   />v6\.1\.3<\/span>/.test(ix) && /app\.bundle\.js\?v=6\.1\.3/.test(ix), '4 carimbos atuais no index');
 ok(/>Fiscal<\/button><div id="menu-nfe"/.test(ix) || /<\/i>Fiscal<\/button><div id="menu-nfe"/.test(ix), 'index estático segue com a aba "Fiscal" + #menu-nfe');
 ok(!/localStorage\.setItem\('db\./.test(p) && !/indexedDB/.test(p), 'não toca banco, não importa dado (importação continua cancelada)');
 

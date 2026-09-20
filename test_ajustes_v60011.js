@@ -26,7 +26,7 @@ ok('os 3 itens FALSOS ("Em breve…") sumiram do index.html',
   html.indexOf('Em breve: emissão de nota fiscal') < 0 && html.indexOf('Módulo fiscal em preparação') < 0);
 ok('os 6 submenus apontam pras views certas (hover → navega)',
   ['central-nf', 'fiscal-perfil', 'fiscal-manifestacao', 'fiscal-ncm', 'fiscal-enviar-xml', 'config-fiscal'].every(v => html.indexOf("navigateTo('" + v + "')") >= 0));
-ok('(supersede v6.1.2) a aba oficial agora é **Fiscal**: clicar ABRE o submenu dos 6 pinado; a Central abre pelo item Nota Fiscal',
+ok('(supersede v6.1.3) a aba oficial agora é **Fiscal**: clicar ABRE o submenu dos 6 pinado; a Central abre pelo item Nota Fiscal',
   /<div class="module"><button onclick="navigateTo\('central-nf'\)"><i class="ph ph-file-text"><\/i>Fiscal<\/button><div id="menu-nfe"/.test(html));
 
 console.log('== OS 6 DO PRINT (PURE) ==');
@@ -55,9 +55,9 @@ ok('sonda re-aplica tudo (lateral redesenha no login) igual ao padrão das vers�
   src.indexOf('setInterval') >= 0 && src.indexOf('sxvmTudo') >= 0 && src.indexOf('300') >= 0);
 
 console.log('== CARIMBO 6.0.11 ==');
-ok('package.json na 6.0.11', pkg.version === '6.1.2');
-ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0 && html.indexOf('v6.1.2</title>') >= 0);
-ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0);
+ok('package.json na 6.0.11', pkg.version === '6.1.3');
+ok('index.html carimbado (4 pontos)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0 && html.indexOf('v6.1.3</title>') >= 0);
+ok('celular carimbado 6.0.11', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

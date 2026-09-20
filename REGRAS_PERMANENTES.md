@@ -1,54 +1,201 @@
-# REGRAS PERMANENTES DO DONO (anotadas a pedido dele — reler em TODA tarefa)
+# REGRAS PERMANENTES DO DONO
 
-Ficheiro criado 18/09/2026 juntando as ordens dele desta sessão e das anteriores. Vale como checklist antes de responder/codar.
+> Este é o documento canônico das regras confirmadas para o DIGICOPY.
+>
+> **Importante:** este arquivo não é uma cópia de relatórios, testes ou do
+> código. Uma observação histórica, um detalhe de uma implementação, um patch,
+> uma versão, um número de testes ou uma decisão pontual não vira regra só por
+> aparecer em algum arquivo. O número dos itens abaixo serve apenas para
+> organização: são regras consolidadas, não 134 ordens diferentes.
+>
+> Quando houver conflito, conferir nesta ordem: pedido mais recente e explícito
+> do dono → código e configuração atuais → testes atuais → documentação do
+> projeto → histórico.
 
-## Do jeito de trabalhar
-1. **NUNCA concordar sempre.** Ele pode falar coisa que ele mesmo não sabe direito. **Conferir primeiro (no código, nos fatos) se o que ele falou é verdade.** Se estiver errado ou incompleto: dizer, com prova, antes de agir. (Ordem dele, 18/09.)
-2. **Um pedido pode puxar outros.** Ele dá o exemplo: modo escuro não é numa parte só — pode ser vários locais e vários arquivos. **Antes de entregar, varrer o efeito nas telas/arquivos relacionados** (foi assim com "estorno pode dar em outros lugares": leitura já voltava editável e já marcava extornado; chamados/orçamentos não têm estorno).
-3. **Muitas perguntas (10+).** Quando houver ambiguidade real, perguntar antes em vez de chutar.
-4. **Tom direto** nos textos pra ele e pra terceiros (sem condescendência: "a pessoa não é burra, só não acompanha pra onde o projeto anda").
-5. **Popup sempre do próprio sistema** (com X). Nunca prompt/confirm nativo do navegador.
-6. **Relatórios com DOIS blocos: CORREÇÕES e ADIÇÕES.** Entregas de teste = colar na conversa (nada de .md pra preencher: guia em HTML, relatório em TXT).
-7. **Depois de TODA atualização, enviar sempre os links:** o de testar o site + o .zip. (Com o repositório PRIVADO desde 18/09: raw.githubusercontent/githack mortos; os documentos clicáveis moram no site público pages.dev; o .zip do GitHub só abre pra quem está logado na conta.)
+## 1. Trabalho e comunicação
 
-## Do produto
-8. **Versões:** app sobe só na 3ª casa (6.0.x na linha fiscal; antes 5.26.x). Worker/gerente na régua própria (5.26.x). Ao subir versão: re-ancorar os murais SEM mexer nos carimbos de nascimento; suíte tem que fechar 100% antes do push.
-9. **Fiscal:** nada emite nota sozinho (proibido temporizador pra emitir); senha do certificado só na hora, nunca salva; produção só com a palavra PRODUCAO digitada + permissão; tudo auditado em db.logs; homologação primeiro, sempre; selo "NOTA DE TESTE, SEM VALOR FISCAL" em modo teste.
-10. **Permissões:** caixas de permissão só Admin/Dono mexem; padrões nunca travam usuário existente (NF padrão desmarcada; apagar/estornar padrão marcado); bloqueio é real nos executores, não só esconder botão; tentativa negada vai pra Auditoria.
-11. **Cura de dados:** automática, mas NUNCA chuta — só carimba quando existe EXATAMENTE 1 empresa no banco; 2+ empresas = orientar relogar.
-12. **Buscador Escola:** nunca deletar (robô só trabalha com a aba aberta).
-13. **Nada de token/senha/segredo em commit** (CSC da NFC-e do dump antigo foi descartado a pedido dele; na ativação ele cola direto na Central).
-14. **Mobile APK: PAUSADO.** Não tocar até ele confirmar que pode voltar (ordem de 18/09).
-15. **Migração do sistema antigo:** só quando ele mandar; mapa de campos + prévia antes de gravar; arquivos ficam no PC dele (nunca no repositório); inventário das tabelas está em MAPEAMENTO_SISTEMA_ANTIGO.md.
-16. **Menu fiscal:** menu de verdade (não flutuante), modais com X; seguir o padrão visual do próprio sistema (claro e escuro).
+1. Conferir código, fatos e evidências antes de concordar ou implementar. Se uma
+   afirmação estiver errada ou incompleta, explicar com prova antes de agir.
+2. Antes de responder que algo chegou, não chegou, existe ou não existe, varrer os
+   arquivos relevantes, especialmente `RELATORIO_SESSAO.md`,
+   `MAPEAMENTO_SISTEMA_ANTIGO.md` e o histórico Git.
+3. Antes de entregar uma alteração, avaliar o efeito nas telas, módulos, fluxos,
+   APIs, build, mobile e testes relacionados. Não corrigir só o primeiro ponto
+   encontrado quando o mesmo comportamento existir em outros lugares.
+4. Perguntar antes de codar quando houver ambiguidade real. Não inventar uma
+   interpretação própria.
+5. Responder em português simples, direto e sem tom condescendente.
+6. Quando o dono passar algo para fazer, implementar, salvo quando ele disser que
+   é somente para anotar, guardar ou registrar.
+7. Relatórios devem separar **CORREÇÕES** e **ADIÇÕES**. Resultados de teste devem
+   ser apresentados na conversa ou em HTML/TXT previsto, sem exigir que o dono
+   preencha um Markdown.
+8. **TODAS as conversas que eu tiver, mesmo que sejam apenas dúvidas, têm que
+   trazer os links necessários**, incluindo o link do site para teste e o ZIP da
+   branch atual. Em repositório privado, avisar que o ZIP exige autenticação.
 
-## Fila dele (não esquecer — só mexer quando ele mandar "faz")
-- **Permissões por usuário, o restante:** funcionário sem fiscal e sem Buscador Escola; links de cobrança com cota total/dia configurável no gerente.exe.
-- **Migração do outro sistema** (inventário pronto, item 15).
-- **NFC-e 65 quando vier o CSC real** (gerado por ele na SEFAZ-MG) → alinhar QR pra v2 (verificação aberta).
-- **NCM por tipo de item** (cartucho/tinta/locação — do dump) e **texto do Simples (art. 23 LC 123)** no infCpl das notas reais.
-- **Etiquetas folha A4** na grade 7×18 do sistema antigo.
-- **Sistemas 3 e 4** do roadmap (gerente já foi; restantes quando ele puxar).
+## 2. Organização do código e desempenho
 
-## 17. O que ele PASSA é pra IMPLEMENTAR — a não ser que ele diga "só anotar" (18/09)
+9. Manter um arquivo por módulo e corrigir o módulo vivo; não copiar um arquivo
+   inteiro para criar uma segunda versão da mesma função.
+10. Criar arquivo novo somente quando houver função ou módulo realmente novo.
+   Não transformar cada funcionalidade em um arquivão nem deixar código duplicado
+   por precaução.
+11. Antes de remover código aparentemente morto, conferir o arquivo inteiro,
+    listeners, atalhos e dependências, provar que está morto e testar antes e
+    depois. Poda em lote exige autorização quando for uma limpeza planejada.
+12. O foco é o sistema de PC e os computadores são fracos. Toda mudança deve
+    preservar ou melhorar leitura, memória, renderização, rede e responsividade.
+    Não duplicar scripts, listeners, timers, consultas ou trabalho de tela; não
+    usar polling curto para recriar telas ou consultar a nuvem.
+13. Buscas e listagens pesadas devem ser acionadas por Enter, lupa, filtro ou
+    pedido explícito de mostrar tudo, e não a cada tecla. Preservar texto, foco,
+    seleção e dados enquanto o usuário digita.
+14. O Buscador Escola não deve ser deletado e só pode trabalhar enquanto sua aba
+    estiver aberta; não fazer login, busca, gravação ou sincronização invisível
+    em outra tela.
+15. Códigos internos, códigos novos e etiquetas devem ser numéricos, sem prefixo,
+    letras ou ano, salvo chave técnica separada exigida por integração.
 
-Regra dele, textual: "vc ja implementa as coisas que eu vou te passando a não ser que eu falo pra vc so anotar".
-Então: chegou pedido/material → implementa na mesma versão. Se ele disser "só anota/
-anotar/guarda isso", NÃO implementa — registra por escrito em arquivo do repositório
-(foi o caso das fotos do velho: o que chegou está anotado no MAPEAMENTO_SISTEMA_ANTIGO.md).
-E na dúvida se chegou ou não chegou, CONFERIR a evidência antes de responder — nunca
-chutar de memória.
+## 3. Interface e navegação
 
-## 18. Antes de dizer "não tenho / não chegou", VARRER o RELATORIO_SESSAO.md e o histórico (18/09)
+16. Nunca usar `prompt`, `confirm` ou `alert` nativos do navegador. Confirmações,
+    erros e decisões devem usar popup/modal próprio do sistema, com X e foco
+    correto.
+17. Nenhum botão pode ficar morto ou silencioso. O erro deve informar o motivo e
+    preservar os dados digitados quando possível. O visual deve respeitar o
+    padrão do sistema nos modos claro e escuro.
+18. O Menu Fiscal deve ser um menu real da barra superior, com submenu próprio,
+    seguindo o visual do sistema. Não substituir a navegação por protótipo
+    flutuante sem pedido específico.
 
-CASO REAL: disse a ele que as fotos das telas internas do sistema antigo "nunca chegaram".
+## 4. Segurança, fiscal e permissões
 
-ERROU. O catálogo COMPLETO (dezenas de fotos, campo a campo, dias 14-15/09) sempre
+19. Nunca colocar senha, token, CSC, certificado, chave de API, cookie, dump
+    sensível ou dado real desnecessário em código, commit, relatório, teste,
+    bundle ou HTML público. Nunca pedir essas credenciais pelo chat.
+20. A senha do certificado só pode ser informada no momento da operação e nunca
+    deve ser salva. O CSC antigo foi descartado e não pode ser recuperado ou
+    reutilizado.
+21. Manter as proteções atuais do Electron e da ponte entre processos; não expor
+    APIs, credenciais ou dados pessoais sem necessidade. Mensagens de erro não
+    devem vazar segredos.
+22. Fiscal começa em homologação. Nada emite nota sozinho por timer ou em segundo
+    plano; produção exige a palavra `PRODUCAO`, permissão, ação manual, senha na
+    hora e auditoria. Homologação/prévia deve exibir `NOTA DE TESTE, SEM VALOR
+    FISCAL`.
+23. Ações fiscais relevantes e tentativas negadas devem ser auditadas. Nota
+    autorizada não deve ser editada ou apagada como se fosse rascunho; seguir o
+    fluxo fiscal correto.
+24. Caixas de permissão só podem ser alteradas pelos perfis autorizados. O bloqueio
+    deve existir no executor real, não apenas escondendo botão, e a tentativa
+    negada deve ir para Auditoria. Padrões novos não podem bloquear usuários
+    existentes sem decisão explícita.
 
-esteve escrito no RELATORIO_SESSAO.md — a fase de design foi declarada FECHADA em 15/09.
+## 5. Sessão, sincronização e preservação de dados
 
-A memória resumida entre turnos estava com uma linha falsa; a verdade mora nos ARQUIVOS.
+25. Cura automática não pode chutar: só carimbar quando houver exatamente uma
+    empresa válida; com duas ou mais, orientar novo login. Não confundir usuário,
+    aparelho, perfil e empresa da sessão.
+26. Login, sincronização, atualização, migração e recuperação não podem apagar
+    dados automaticamente. Pull incompleto, queda de internet ou conflito não
+    pode descartar alteração local em silêncio.
+27. Reset da nuvem, limpeza em massa, exclusão definitiva e qualquer operação
+    destrutiva exigem confirmação explícita e backup/conferência prévios quando
+    aplicável. Preservar clientes, vendas, contratos, estoque, configurações,
+    histórico e valores antigos.
+28. A sincronização deve continuar local-first, incremental e coerente com a
+    configuração atual. Não substituir a base inteira nem instalar atualização
+    automaticamente fora do fluxo autorizado.
+29. Orçamentos, vendas, títulos, estoque, leituras, chamados e históricos devem
+    manter status, origem e rastreabilidade. Extorno não é exclusão simples; Pix
+    não confirma pagamento sozinho quando o fluxo exige comprovante ou ação
+    manual.
 
-Regra: afirmação sobre "o que chegou/não chegou" só depois de grep no RELATORIO_SESSAO.md,
+## 6. Migração, build e entrega
 
-MAPEAMENTO_SISTEMA_ANTIGO.md e git log. Ameaça de "pedir de novo" sem essa varredura = falta grave.
+30. Migração do sistema antigo só começa quando for solicitada. Antes de gravar,
+    apresentar mapa de campos e prévia; manter os arquivos originais no PC do
+    dono; não migrar senhas, segredos, lixo operacional ou dados sem confirmação.
+31. O dump antigo é referência para investigação, não autorização para copiar
+    visual, marca, identidade, credencial, tributação ou regra sem conferência.
+32. A versão efetiva deve ser conferida nas fontes atuais. Mudança de código deve
+    manter `package.json`, manifesto, bundle, build, documentação e cópia mobile
+    coerentes, respeitando a régua de versão vigente.
+33. Gerar o bundle pelo processo oficial, sincronizar os arquivos derivados e
+    validar referências antes de entregar. Não editar manualmente manifesto ou
+    listas geradas, nem carregar duas vezes um script já presente no bundle.
+34. O fluxo de build deve limpar, sincronizar, gerar bundle, empacotar e verificar.
+    Não gerar nem commitar ZIP novo; o download deve usar o ZIP da branch do
+    GitHub.
+35. O APK/mobile permanece pausado até autorização nova. Só sincronizar
+    `mobile/www` quando uma origem que ele consome mudar, para não quebrar a
+    coerência do projeto; não evoluir a frente mobile.
+36. Antes de entregar, executar os checks aplicáveis, incluindo `npm run check`,
+    `npm test`, `npm run sync:check`, validação do bundle/arquivos, testes do
+    Worker e validação mobile quando houver impacto. Não esconder teste falhando;
+    separar falha de infraestrutura de falha do produto.
+37. O PR deve permanecer na branch da sessão e ter `main` como base, salvo pedido
+    explícito diferente. Não fazer merge, deploy de produção, reset ou outra
+    publicação destrutiva sem confirmação humana explícita.
+
+## 7. Escopo congelado e histórico
+
+38. Mobile/APK continua pausado até autorização nova; migração e NFC-e 65 só
+    avançam quando os pré-requisitos e a autorização forem confirmados.
+39. Fila, roadmap, versões antigas, nomes de patches, hashes, contagens de
+    testes, branches antigas, PRs antigos, links antigos e descrições de
+    correções já executadas são histórico ou pendência, não novas regras
+    permanentes.
+40. Quando uma nova regra for realmente confirmada, acrescentá-la aqui com sua
+    origem e escopo. Não transformar automaticamente anotações de atualização,
+    decisões pontuais ou detalhes de implementação em regra.
+41. Cada alteração deve deixar no `RELATORIO_SESSAO.md` um registro de continuidade
+    com data, pedido, arquivos alterados, validações, links, pendências e estado
+    de deploy. Esse registro deve permitir continuar o trabalho em outro chat
+    sem perder contexto. Não fazer merge nem publicar o Worker sem confirmação
+    humana explícita.
+
+## Checklist obrigatória antes de programar
+
+Antes de começar a programar, responder as 24 perguntas abaixo. A resposta deve
+ser feita na análise da tarefa; quando alguma resposta mostrar falta de
+informação ou ambiguidade, perguntar ao dono antes de continuar. Não é para
+fingir que está tudo certo nem para fazer as perguntas ao dono quando elas
+puderem ser verificadas no código, nos fatos ou nos testes.
+
+1. Tenho todas as informações necessárias?
+2. Entendi exatamente o que o usuário quer?
+3. Preciso perguntar algo antes de continuar?
+4. O que o usuário informou está correto?
+5. Estou fazendo alguma suposição?
+6. Posso estar passando alguma informação errada?
+7. Esse código já existe em algum arquivo?
+8. Existe alguma função que já faz isso?
+9. Esse código depende de outro código?
+10. Essa alteração pode quebrar alguma coisa?
+11. Essa alteração pode afetar outra função?
+12. Estou duplicando código desnecessariamente?
+13. Existe código desnecessário?
+14. Posso simplificar esse código?
+15. Posso fazer isso em uma linha?
+16. Posso reduzir a quantidade de linhas sem perder clareza?
+17. Posso otimizar esse código sem alterar seu funcionamento?
+18. Estou mantendo o padrão do projeto?
+19. Estou alterando algo que não precisava ser alterado?
+20. Depois da alteração, tudo continuará funcionando?
+21. Preciso testar alguma parte antes de finalizar?
+22. Existe uma solução mais simples e segura?
+23. Essa minha ação irá quebrar alguma coisa no sistema?
+24. Existe algum método que posso testar antes de realizar tal coisa?
+
+## O que foi conferido
+
+A consolidação foi comparada com a versão anterior de `REGRAS_PERMANENTES.md`,
+com os relatórios e com o documento de regras criado nesta sessão. A versão
+anterior explicitamente numerava 16 regras de trabalho/produto e mantinha as
+orientações sobre implementação e conferência em duas seções adicionais; não
+havia 134 ordens permanentes dadas pelo dono.
+
+Os relatórios, o código e os testes continuam sendo fontes de evidência para
+resolver tarefas, mas não aumentam este documento automaticamente.

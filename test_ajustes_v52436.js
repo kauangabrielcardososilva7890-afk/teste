@@ -90,10 +90,10 @@ ok((patch.match(/__v52436lei/g) || []).length >= 4, 'guards __v52436lei nos 4 wr
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_UMA_ABERTA_V52436_PURE') && bundle.includes('Fature (feche) ela antes de criar outra'), 'bundle: guarda dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_UMA_ABERTA_V52436_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.2'"), 'index 6.0.9');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.2<'), 'rodapé v6.0.9');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.2'"), 'celular 6.0.9');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.1.2', 'package.json 6.0.9');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'celular 6.0.9');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.1.3', 'package.json 6.0.9');
 
   // ── 4. Link oficial (githack morto — ele cobrou) ──────────────────────────
   const sync = fs.readFileSync('sync_build.js', 'utf8');
