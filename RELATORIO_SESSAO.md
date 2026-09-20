@@ -4,8 +4,8 @@
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa da sessão:** `arena/01a0bb58-teste`  
 **PR:** https://github.com/kauangabrielcardososilva7890-afk/teste/pull/27  
-**Última versão:** **v5.21.5**  
-**Commit:** `54831a7`  
+**Última versão:** **v5.21.6**  
+**Commit:** `ebd0b71`  
 **Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
 **Site:** https://teste-60f.pages.dev/ (site de teste do usuário, Cloudflare Pages)
 
@@ -36,6 +36,20 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 - Fiscal deles: `fiscal_catalogo_completo_patch.js` + `navegacao_fiscal_barra_escuro_patch.js` (menu Nota Fiscal/Perfil Tributário/Manifestação/NCM/Enviar XML) — módulo NFe real, área distinta do meu neo de módulos dinâmicos (tendem a coexistir).
 - Lido somente via git show/grep; nenhum merge feito — o merge é do outro chat.
 - Perguntas levadas ao outro chat: (1) qual branch deploya o site; (2) plano/ordem do merge e quem resolve conflitos; (3) confirmar remoção do meu modo escuro; (4) o bug da fiscal foi no site deles ou no meu preview; (5) o que são "4.4/4.9" e "códigos numéricos"; (6) o .exe sai de qual branch; (7) querem meu duplo-clique global + REGRAS.md no merge?
+### Respostas do outro chat (20/09) + verificações minhas
+- (1) Site = branch `01a0683d` (empírico deles; painel Pages decide, sem CLI). Verificado: site roda código da linha deles (strings únicas); exato `?v=` não verificável daqui (curl bloqueado, fetch sem HTML cru).
+- (2) CORREÇÃO IMPORTANTE: o plano deles ("já estou no main") está errado — PR #26 foi merged na `01a0590a` (base), NÃO no main. `main` não tem nada das duas linhas: faltam 271 commits deles + 11 meus (base comum `26e5987`). `01a0590a` contém `01a0683d` por inteiro (+ só o commit de merge); nada único após `c7918d7`. Merge real = 3 vias.
+- (3) Manter `digi-escuro`, descartar lua/sol — FEITO aqui na v5.21.6.
+- (4) Bug fiscal = código compartilhado (redesenho da barra apagava conserto); fix `navegacao_fiscal_barra_escuro_patch.js` v6.1.2 existe na branch deles — merge tem que preservar o arquivo. Meus fixes (Imprimir + indexOf) são outra área (módulos dinâmicos neo).
+- (5) "4.4/4.9" NÃO existe em nenhum `.md` das duas linhas (único "4.4" é a seção "4.4 Pix" do doc antigo, que não fala de confirm; sem seção 4.9; REGRAS deles sem numeração 4.x) — número deve vir de conversa; pedir o texto original ao usuário.
+- (6) .exe = build local (GERAR_EXE.cmd) do zip da branch deles. Minha branch tem `build:win` mas sem o `.cmd`/BUILD_EXE.md.
+- (7) Docs meus podem fundir; duplo-clique precisa teste pós-merge na fiscal (fixar submenu). REGRAS deles (`REGRAS_PERMANENTES.md`) tem que ficar — unificar com meu `REGRAS.md`? (pergunta nova).
+- Receita de conflito deles: nunca editar bundle na mão; index.html/package.json = versão maior; manifest = união; depois build_bundle.js + sync_build.js + test_runner.js 2x (183 testes).
+- Perguntas NOVAS: (8) unificar os dois REGRAS? (9) CI passa no main fundido (test deles 183 + sync_build.js + mobile/)? (10) quem executa o merge, quando e em que ordem (PR #27 entra?)?
+
+## v5.21.6 — Modo escuro lua/sol removido (duplicava o oficial)
+- Confirmado pelo chat da branch `01a0683d`: o modo escuro oficial é o `digi-escuro` deles (checkbox na Config, v5.22.30). Meu `modo_escuro_patch.js` (botão lua/sol + `data-theme`) foi deletado de verdade: arquivo + `test_modo_escuro.js` + entradas no `bundle-manifest.json`, `test_runner.js` e `check` do `package.json`. `test_app_bundle.js` atualizado (100→99 scripts). Bundle agora com 99 scripts.
+- Validação: `npm run check` OK (Bundle 99 scripts, sha256 5c9c7e1f35854359); `npm test` **54 passaram, 1 falha aceita (etiquetas), 0 falharam**.
 
 ## v5.21.5 — Banner rawgh deletado (aprovado)
 - Usuário aprovou a remoção: banner "endereço PROVISÓRIO" deletado de verdade do `app.js` (bloco final do arquivo) + `removerAvisoProvisorio` do `correcoes_uso_diario_patch.js` + seletores rawgh do `delete_hidden_patch.js`. Nenhuma referência a rawgh resta no código (só histórico de versões antigas neste `.md`).
