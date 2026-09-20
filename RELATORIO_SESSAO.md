@@ -3740,7 +3740,8 @@ Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.
 ### Estado de Git/deploy
 
 - Branch fixa desta sessão: **`arena/01a0c087-teste`** (branch novo, ainda não existia no remoto quando esta rodada começou).
-- PR: `(ver seção de links — PR #29 aberto para esta branch)` — **sem merge**.
+- Commit desta rodada: `50fd32f` (`Sessao nova: leitura integral, regras permanentes e branch do cliente atualizada`).
+- PR #29 aberto com **base `main`**: https://github.com/kauangabrielcardososilva7890-afk/teste/pull/29 — **sem merge** (aguardando o dono).
 - Nenhum Worker publicado nesta rodada; deploy do motor segue pendente de ação humana.
 
 ### Links desta retomada
