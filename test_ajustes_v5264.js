@@ -76,10 +76,10 @@ ok('o que foi pro papel já é a versão caixa grande', /min-width:170px/.test(f
 ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 
 console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente intactos) ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.2');
-ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0);
+ok('package.json na 6.0.9', pkg.version === '6.1.3');
+ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
-ok('worker SEGUE 5.26.3 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
+ok('worker SEGUE 5.26.4 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 

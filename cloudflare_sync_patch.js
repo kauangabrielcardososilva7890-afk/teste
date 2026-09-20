@@ -81,8 +81,13 @@ async function api(path, options){
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
   let data=null; try{data=await response.json();}catch(e){}
   if(!response.ok){
-    const err=new Error((data&&data.message)||('Erro HTTP '+response.status));
+    // Algumas rotas antigas devolvem a mensagem em `aviso`, não em `message`.
+    // Preservar essa mensagem impede que uma senha errada vire genericamente
+    // "Erro HTTP 403" e pareça falha de internet ou motor velho.
+    const detalhe=(data&&((data.message)||(data.aviso)))||('Erro HTTP '+response.status);
+    const err=new Error(detalhe);
     err.code=(data&&data.error)||('HTTP_'+response.status); err.status=response.status;
+    err.aviso=(data&&data.aviso)||'';
     throw err;
   }
   return data;

@@ -20,7 +20,7 @@ ok('manifesto já é 220 (Menu Fiscal oficial v6.1.0 por último); o catálogo d
 ok('bundle contém o patch (guards + PURE + fxAcao + fx614-css)',
   bundle.indexOf('__v6014fxc') >= 0 && bundle.indexOf('FX614_PURE') >= 0 && bundle.indexOf('fxAcao') >= 0 && bundle.indexOf('fx614-css') >= 0);
 ok('carimbo v6.0.14 (package + index + query do bundle)',
-  pkg.version === '6.1.2' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('v6.1.2</title>') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
+  pkg.version === '6.1.3' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('v6.1.3</title>') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
 
 console.log('== PURE: fábricas e constantes do catálogo ==');
 global.window = global;

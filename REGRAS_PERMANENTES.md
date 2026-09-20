@@ -30,7 +30,8 @@
 7. Relatórios devem separar **CORREÇÕES** e **ADIÇÕES**. Resultados de teste devem
    ser apresentados na conversa ou em HTML/TXT previsto, sem exigir que o dono
    preencha um Markdown.
-8. Após cada atualização entregue, informar o link do site para teste e o ZIP da
+8. **TODAS as conversas que eu tiver, mesmo que sejam apenas dúvidas, têm que
+   trazer os links necessários**, incluindo o link do site para teste e o ZIP da
    branch atual. Em repositório privado, avisar que o ZIP exige autenticação.
 
 ## 2. Organização do código e desempenho

@@ -25,7 +25,7 @@ ok('manifesto 220; Menu Fiscal Oficial fecha a fila (por cima do catálogo fisca
 ok('bundle contém o patch (guard + PURE + observer + css)',
   bundle.indexOf('__v6100mfo') >= 0 && bundle.indexOf('MFO610_PURE') >= 0 && bundle.indexOf('mfo610-css') >= 0);
 ok('carimbo 6.1.0 (package + index 4 pontos)',
-  pkg.version === '6.1.2' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('v6.1.2</title>') >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
+  pkg.version === '6.1.3' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('v6.1.3</title>') >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
 
 console.log('== MENU FISCAL OFICIAL ==');
 const P = require('./menu_fiscal_oficial_patch.js');

@@ -52,20 +52,20 @@ ok('tela Nuvem abre pra todo PC (trava antiga de usuário removida; papel é do 
 ok('desconectar só a si (rótulo claro + explicação)', sync.indexOf('Desconectar ESTE computador') >= 0 && sync.indexOf('Tira só ESTE computador') >= 0);
 ok('zona de admin segue trancada no papel do aparelho', sync.indexOf("d.role==='admin'") >= 0);
 
-console.log('== PERFIS DA NUVEM (worker 5.26.3) ==');
-ok('worker na 5.26.3', wk.indexOf("WORKER_VERSION = '5.26.3'") >= 0);
+console.log('== PERFIS DA NUVEM (worker 5.26.4) ==');
+ok('worker na 5.26.4', wk.indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('enroll-cnpj aceita a senha do GERENTE → role admin', wk.indexOf("via = 'cnpj-gerente'") >= 0 && wk.indexOf("role = 'admin'") >= 0);
 ok('senha errada (conexão OU gerente) cai no MESMO erro de sempre (anti-oráculo)', wk.indexOf("if (!gerOk) throw new ApiError(403, 'CNPJ_OU_SENHA_INVALIDOS', 'CNPJ ou senha de conexão incorretos.');") >= 0);
 ok('admin só com senhas DIFERENTES (gerente ≠ conexão)', wk.indexOf('seg.gerente_hash !== seg.conn_hash') >= 0);
 const segEnroll = wk.slice(wk.indexOf("/v1/enroll-cnpj"), wk.indexOf("/v1/enroll-cnpj") + 5000);
 ok('gerente só com o CNPJ DA DONA', /cnpj === seg\.owner_cnpj[\s\S]{0,120}conferirSenha\(env, cnpj, senha, 'gerente_hash'\)/.test(segEnroll));
 ok('role entra VÁRIAVEL no INSERT do device (nada fixo)', segEnroll.indexOf("VALUES ('device_enrolled', ?, ?, ?, ?)") >= 0 && segEnroll.indexOf("VALUES (?, ?, ?, 'device'") < 0);
-ok('eclusa anti-trancamento: connect-pass aceita prova de GERENTE (v5.26.3)', wk.slice(wk.indexOf("/v1/connect-pass"), wk.indexOf("/v1/connect-pass") + 1200).indexOf('requireAdminOuGerente(request, env)') >= 0 && wk.indexOf('eclusa anti-trancamento') >= 0);
+ok('eclusa anti-trancamento: connect-pass aceita prova de GERENTE (v5.26.4)', wk.slice(wk.indexOf("/v1/connect-pass"), wk.indexOf("/v1/connect-pass") + 1200).indexOf('requireAdminOuGerente(request, env)') >= 0 && wk.indexOf('eclusa anti-trancamento') >= 0);
 
 console.log('== CARIMBO 6.0.4 ==');
-ok('package.json na 6.0.4', pkg.version === '6.1.2');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
-ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0);
+ok('package.json na 6.0.4', pkg.version === '6.1.3');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
+ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
 
 console.log('\n' + pass + ' passaram, ' + fail + ' falharam.');
 if (fail > 0) process.exit(1);

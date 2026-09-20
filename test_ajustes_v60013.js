@@ -55,10 +55,10 @@ ok('menu-nfe da barra segue real (regressão)',
 
 console.log('== CARIMBOS v6.0.13 ==');
 ok('index.html carimbado (4 pontos)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0 && html.indexOf('v6.1.2</title>') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0 && html.indexOf('v6.1.3</title>') >= 0);
 ok('mobile carimbado (3 pontos)',
-  mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0 && mob.indexOf('v6.1.2</title>') >= 0);
-ok('package.json cravado', pkg.version === '6.1.2');
+  mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0 && mob.indexOf('v6.1.3</title>') >= 0);
+ok('package.json cravado', pkg.version === '6.1.3');
 
 console.log('');
 console.log('RESUMO: ' + pass + ' passaram, ' + fail + ' falharam.');

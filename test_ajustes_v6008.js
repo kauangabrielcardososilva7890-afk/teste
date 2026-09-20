@@ -64,10 +64,10 @@ ok('salva refaz db.config via PURE + db.save + auditoria logAction',
   src.indexOf('mfsCfgCsc(db.config||{}') >= 0 && src.indexOf('mfsCfgNotas(db.config||{}') >= 0 && src.indexOf("db.save()") >= 0 && src.indexOf("logAction('fiscal'") >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.2');
+ok('package.json na 6.0.9', pkg.version === '6.1.3');
 ok('index.html carimbado (versão real + rodapé + query)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

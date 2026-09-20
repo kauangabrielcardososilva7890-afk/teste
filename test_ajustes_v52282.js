@@ -7,7 +7,7 @@ const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 
 console.log('== AJUSTES v5.22.82 ==');
 ok('versão da linha 5.22.x (não amarrar teste à versão exata)',/^[56]\.\d+\.\d+$/.test(pkg.version));
-ok('a nuvem se identifica como 0.4.7',/API_VERSION = '0\.4\.7'/.test(worker)&&wpkg.version==='0.4.7');
+ok('a nuvem se identifica como 0.4.8',/API_VERSION = '0\.4\.8'/.test(worker)&&wpkg.version==='0.4.8');
 
 // ── menos gravação: índice que ninguém usa sai ──
 ok('saem os dois índices que eu criei para a contagem',/DROP INDEX IF EXISTS idx_records_deleted;/.test(mig)&&/DROP INDEX IF EXISTS idx_records_entity_deleted;/.test(mig));

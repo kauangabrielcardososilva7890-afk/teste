@@ -48,7 +48,7 @@ echo.
 curl -s "https://digicopy-sync-api.digicopyonline.workers.dev/health"
 echo.
 echo.
-echo ^(Tem que aparecer "versao":"5.24.8" ou mais novo na linha de cima.^)
+echo ^(Tem que aparecer "versao":"5.26.4" ou mais novo na linha de cima.^)
 echo ==========================================================
 echo  Pronto! Tira uma foto desta tela e me manda.
 echo ==========================================================

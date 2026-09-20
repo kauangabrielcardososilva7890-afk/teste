@@ -68,9 +68,9 @@ ok('porta v6.0.0 na 206; transmissao 207, autocura 208, perfis 209, permissões 
 ok('guard anti dupla-instalação', src.indexOf('__v6000fg') >= 0);
 
 console.log('== CARIMBO 6.0.0 (linha fiscal abre versão nova) ==');
-ok('package.json na 6.0.0', pkg.version === '6.1.2');
-ok('index.html carimbado 6.0.0', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0);
-ok('worker SEGUE 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.3'") >= 0);
+ok('package.json na 6.0.0', pkg.version === '6.1.3');
+ok('index.html carimbado 6.0.0', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
+ok('worker SEGUE 5.26.4', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 ok('mobile sincronizado', mobile === bundle);
 

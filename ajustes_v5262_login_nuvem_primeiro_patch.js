@@ -93,7 +93,7 @@
         '<p style="margin:8px 0 0;font-size:12.5px;color:#64748b;line-height:1.6">Este computador ainda não está conectado. <b>É só a primeira vez aqui</b> — depois some pra sempre. Sem a conexão, o sistema não abre (mais uma tranca de segurança sua).</p>'+
         '<div id="v5262-etapa1">'+
           '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:16px">CNPJ DA LOJA<br><input id="v5262-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
-          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:10px">SENHA DE CONEXÃO (definida pelo dono no painel Nuvem)<br><input id="v5262-senha" type="password" placeholder="senha de conexão" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:800;color:#334155;margin-top:10px">SENHA DE CONEXÃO OU DO GERENTE (gerente separado cria este PC como Administrador)<br><input id="v5262-senha" type="password" placeholder="senha de conexão ou do gerente" style="height:42px;width:100%;margin-top:4px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;font-size:14px;box-sizing:border-box"></label>'+
           '<button id="v5262-continuar" style="margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;background:#0a1e8a;color:#fff;font-weight:900;font-size:14.5px;cursor:pointer">Continuar</button>'+
         '</div>'+
         '<div id="v5262-etapa2" style="display:none">'+
@@ -151,7 +151,7 @@
       if(!api){ mostrarMsg('O motor da nuvem ainda está carregando... aguarde 2 segundos e aperte Continuar de novo.','erro'); return; }
       var cnpj = soDigitos(box.querySelector('#v5262-cnpj').value);
       var senha = box.querySelector('#v5262-senha').value;
-      if(cnpj.length!==14 || !senha){ mostrarMsg('Preencha o CNPJ (14 dígitos) e a senha de conexão.','erro'); return; }
+      if(cnpj.length!==14 || !senha){ mostrarMsg('Preencha o CNPJ (14 dígitos) e a senha de conexão ou do gerente.','erro'); return; }
       var b = box.querySelector('#v5262-continuar');
       b.disabled = true; b.textContent = 'Conferindo...'; mostrarMsg('');
       try{
@@ -165,6 +165,11 @@
           box.querySelector('#v5262-etapa2').style.display='block';
           box.dataset.v5262cnpj = cnpj;
           box.dataset.v5262senha = senha;
+          box.dataset.v5262tipo = r.tipo || 'conexao';
+          var papelAviso = box.querySelector('#v5262-ok-aviso');
+          if(papelAviso) papelAviso.innerHTML = r.administrador
+            ? '🔐 Senha do gerente conferida! Este computador será criado como <b>Administrador</b> e verá os botões de administração da nuvem. Agora diga qual é este computador.'
+            : '✅ CNPJ e senha de conexão conferem! Este computador será autorizado como PC comum. Agora diga qual é este computador.';
           try{ box.querySelector('#v5262-pc').focus(); }catch(e){}
           b.disabled=false; b.textContent='Continuar'; return;
         }
@@ -173,7 +178,7 @@
         var em = (err && err.message) || 'Falhou.';
         var aviso = (err && err.aviso) || '';
         if(/CNPJ ou senha/.test(em) || /CNPJ ou senha/.test(aviso)){
-          mostrarMsg('CNPJ ou senha de conexão <b>incorretos</b>. Confira com calma e tente de novo.','erro');
+          mostrarMsg('CNPJ ou senha de conexão ou do gerente <b>incorretos</b>. Confira com calma e tente de novo.','erro');
         }else if(/rota|404/i.test(em)){
           mostrarMsg('O motor da nuvem ainda é o antigo. O dono precisa rodar o <b>atualizar_motor_nuvem.cmd</b> UMA vez e tentar de novo.','erro');
           mostrarJeitoAntigo();

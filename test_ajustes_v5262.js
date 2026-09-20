@@ -22,6 +22,7 @@ function ok(name, cond) {
 const PATCH = 'ajustes_v5262_login_nuvem_primeiro_patch.js';
 const wk = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
 const patch = fs.readFileSync(PATCH, 'utf8');
+const sync = fs.readFileSync('cloudflare_sync_patch.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -71,11 +72,17 @@ ok('PURA sessaoDoDiaExpirada: login de hoje = válida; de ontem = expira',
   (sandbox.localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({loginAt:'2026-09-01T10:00:00'})), P.sessaoDoDiaExpirada() === true));
 
 console.log('== WORKER: /v1/check-pass + erros específicos do gerente ==');
-ok('worker carimbado 5.26.3', wk.indexOf("WORKER_VERSION = '5.26.3'") >= 0);
+ok('worker carimbado 5.26.4', wk.indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('rota POST /v1/check-pass existe', wk.indexOf("'/v1/check-pass'") >= 0 && wk.indexOf("request.method === 'POST' && url.pathname === '/v1/check-pass'") >= 0);
 ok('check-pass NÃO cria nada (sem INSERT nesse trecho)', (function(){ const t = wk.split("'/v1/check-pass'")[1].split("'/v1/enroll-cnpj'")[0]; return t.indexOf('INSERT') < 0 && t.indexOf('INSERT INTO devices') < 0 && t.indexOf('randomToken') < 0; })());
 ok('check-pass diz quando a senha ainda não foi definida (senhaDefinida:false)', wk.indexOf('senhaDefinida: false') >= 0 && wk.indexOf('Senhas de conexão (CNPJ) e do Gerente') >= 0);
 ok('check-pass confere com conn_hash (senha nunca em texto)', wk.indexOf("conferirSenha(env, cnpj0, senha0, 'conn_hash')") >= 0);
+ok('check-pass também confere gerente_hash só no CNPJ da dona', /gerente_hash[\s\S]{0,220}cnpj0 === seg0\.owner_cnpj/.test(wk));
+ok('senha do gerente sinaliza tipo gerente e administrador', wk.indexOf("tipo: gerenteOk ? 'gerente' : 'conexao'") >= 0 && wk.indexOf('administrador: gerenteOk') >= 0);
+ok('senha errada do check-pass devolve erro específico, não só HTTP 403', wk.indexOf('CNPJ ou senha de conexão/gerente incorretos') >= 0);
+ok('api do app preserva data.aviso nas respostas de erro', sync.indexOf('(data.aviso)') >= 0 && sync.indexOf('err.aviso') >= 0);
+ok('portão explica quando o computador será Administrador', patch.indexOf('r.administrador') >= 0 && patch.indexOf('será criado como <b>Administrador</b>') >= 0);
+ok('campo aceita senha de conexão ou do gerente', patch.indexOf('SENHA DE CONEXÃO OU DO GERENTE') >= 0);
 ok('gerente-login: erro GERENTE_NAO_DEFINIDO (409) com instrução', wk.indexOf('GERENTE_NAO_DEFINIDO') >= 0 && wk.indexOf('Salvar senhas na nuvem') >= 0);
 ok('gerente-login: erro GERENTE_SO_DONO cita o CNPJ/nome da dona', wk.indexOf('GERENTE_SO_DONO') >= 0 && wk.indexOf('owner_nome') >= 0);
 ok('gerente-login: erro SENHA_GERENTE_INVALIDA específico', wk.indexOf('SENHA_GERENTE_INVALIDA') >= 0);
@@ -87,8 +94,8 @@ ok('tela tem avisoLoginGerente mapeando os códigos', gHtml.indexOf('avisoLoginG
 ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem internet)', gHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0 && /sem (internet|conexão)/i.test(gHtml));
 
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.2');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0);
+ok('package.json na 6.0.9', pkg.version === '6.1.3');
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 

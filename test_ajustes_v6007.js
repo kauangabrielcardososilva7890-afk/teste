@@ -79,10 +79,10 @@ ok('exporta PURE p/ testes e guarda anti-duplo (__v6007dhc)',
   src.indexOf('DHC607_PURE') >= 0 && src.indexOf('__v6007dhc') >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.2');
+ok('package.json na 6.0.9', pkg.version === '6.1.3');
 ok('index.html carimbado (versão real + rodapé + query)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && html.indexOf('>v6.1.2<') >= 0 && html.indexOf('app.bundle.js?v=6.1.2') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.2'") >= 0 && mob.indexOf('>v6.1.2<') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');
