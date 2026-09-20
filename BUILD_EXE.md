@@ -62,7 +62,7 @@ Os dois primeiros são impressos no final de `npm run sync`:
   Teste no navegador (site próprio — Pages):
     https://teste-60f.pages.dev
   Baixar tudo (zip do GitHub):
-    https://github.com/.../archive/refs/heads/arena/01a0683d-teste.zip
+    https://github.com/.../archive/refs/heads/arena/01a0bfad-teste.zip
 ```
 
 A branch fica em `package.json > digicopy.branch`. O `npm run sync` usa esse
