@@ -3610,6 +3610,7 @@ Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé
 
 ### Implementação
 
+- Commit do código desta continuação: `bedd92a` (`Ajusta menus por clique e configurações fiscais`).
 - `navegacao_fiscal_barra_escuro_patch.js` agora força todos os módulos com submenu a ficarem fechados no hover e abre/fecha por clique, com fechamento por clique fora e navegação ao clicar em item.
 - O flyout fiscal lateral também não fica visível apenas pelo hover; só aparece quando fixado por clique.
 - `fiscal_catalogo_completo_patch.js` teve o CSS corrigido de `#fx-root` para `.fx-root-wrap`, alcançando também a placa, abas, cards, tabelas e botões externos. Isso corrige a aparência incompleta/sem estilo das telas fiscais e deixa visíveis/clicáveis as abas internas de Configurações.
@@ -3635,5 +3636,5 @@ Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé
 
 ### Links mínimos desta continuação
 
-- Site de teste: https://8e8e8475.teste-60f.pages.dev
+- Site de teste: https://caa14db1.teste-60f.pages.dev
 - ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
