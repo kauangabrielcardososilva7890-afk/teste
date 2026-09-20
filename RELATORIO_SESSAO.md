@@ -49,7 +49,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 <https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.18>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
 GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.

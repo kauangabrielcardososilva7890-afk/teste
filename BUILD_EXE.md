@@ -51,7 +51,7 @@ apagado pra não induzir erro. Mantido o histórico no RELATORIO_SESSAO.md):
 <https://teste-60f.pages.dev>
 
 **Baixar tudo (zip do próprio GitHub)** — não gerar `.zip` novo no repositório:
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0683d-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip>
 
 **Site público de download (pra cliente/loja):**
 <https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes>
