@@ -168,7 +168,7 @@ async function renderDisconnected(body){
   catch(e){ body.innerHTML=message(e.message,'error'); return; }
   if(!health.ready){ body.innerHTML=message('A API ainda não está pronta. Banco: '+health.database+' • esquema: '+(health.schemaVersion||'pendente')+' • segurança: '+(health.setupConfigured?'ok':'pendente'),'error'); return; }
   body.innerHTML=message('Nuvem pronta. Este computador ainda não foi autorizado. Nenhum dado local será enviado antes da autorização.','info')+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-code" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Tenho um código</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div>';
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0"><button id="dc-tab-first" style="padding:8px 12px;border-radius:9px;background:#e8eaf8;color:#0a1e8a;font-weight:800">Primeiro computador</button><button id="dc-tab-recover" style="padding:8px 12px;border-radius:9px;background:#f1f5f9;color:#475569;font-weight:800">Recuperar administrador</button></div><div id="dc-form"></div>';
   const form=body.querySelector('#dc-form');
   function first(){
     form.innerHTML='<h3 style="font-size:15px;font-weight:900">Ativar o computador principal</h3><p style="font-size:12px;color:#64748b;margin-top:4px">Faça isto apenas no computador principal do serviço.</p>'+field('Nome deste computador','dc-name','text','Ex.: PC PRINCIPAL - DIGICOPY')+field('Segredo de ativação','dc-secret','password','SETUP_SECRET da Cloudflare')+'<div style="display:flex;gap:8px;margin-top:15px">'+button('Ativar como administrador','dc-submit',true)+'</div><div id="dc-result" style="margin-top:12px"></div>';
@@ -177,17 +177,6 @@ async function renderDisconnected(body){
   function recover(){
     form.innerHTML='<h3 style="font-size:15px;font-weight:900">Recuperar acesso administrativo</h3><p style="font-size:12px;color:#64748b;margin-top:4px">Não apaga nem substitui os dados da nuvem.</p>'+field('Nome deste computador','dc-name','text','Ex.: NOTEBOOK ADMIN')+field('Segredo de recuperação','dc-secret','password','SETUP_SECRET da Cloudflare')+'<div style="display:flex;gap:8px;margin-top:15px">'+button('Recuperar administrador','dc-submit',true)+'</div><div id="dc-result" style="margin-top:12px"></div>';
     form.querySelector('#dc-submit').onclick=()=>activate('/v1/recover');
-  }
-  function code(){
-    form.innerHTML='<h3 style="font-size:15px;font-weight:900">Autorizar este computador</h3><p style="font-size:12px;color:#64748b;margin-top:4px">Use o código temporário gerado em um computador administrador.</p>'+field('Nome deste computador','dc-name','text','Ex.: PC FINANCEIRO')+field('Código temporário','dc-code','text','join_...')+'<div style="display:flex;gap:8px;margin-top:15px">'+button('Autorizar computador','dc-submit',true)+'</div><div id="dc-result" style="margin-top:12px"></div>';
-    form.querySelector('#dc-submit').onclick=async()=>{
-      const btn=form.querySelector('#dc-submit'),result=form.querySelector('#dc-result');
-      const deviceName=form.querySelector('#dc-name').value.trim(),joinCode=form.querySelector('#dc-code').value.trim();
-      if(!deviceName||!joinCode){result.innerHTML=message('Preencha o nome e o código.','error');return;}
-      setBusy(btn,true,'Autorizando...');
-      try{const data=await api('/v1/enroll',{method:'POST',body:JSON.stringify({deviceName,code:joinCode})});storeAuth(data);await renderConnected(body);}
-      catch(e){result.innerHTML=message(e.message,'error');setBusy(btn,false);}
-    };
   }
   async function activate(path){
     const btn=form.querySelector('#dc-submit'),result=form.querySelector('#dc-result');
@@ -198,7 +187,6 @@ async function renderDisconnected(body){
     catch(e){result.innerHTML=message(e.message,'error');setBusy(btn,false);}
   }
   body.querySelector('#dc-tab-first').onclick=first;
-  body.querySelector('#dc-tab-code').onclick=code;
   body.querySelector('#dc-tab-recover').onclick=recover;
   first();
 }
@@ -294,7 +282,6 @@ async function renderConnected(body){
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
     '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Se a senha do gerente nunca foi definida, primeiro use a aba <b>Recuperar administrador</b> desta tela com o segredo configurado localmente na Cloudflare; depois, no cartão de senhas, crie uma senha do gerente. Só então reconecte com CNPJ + essa senha para transformar este PC em administrador.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
   if(escolher){
@@ -319,13 +306,6 @@ async function renderConnected(body){
     setBusy(btn,true,'Sincronizando...');
     try{if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('manual');await renderConnected(body);}
     catch(e){setBusy(btn,false);}
-  };
-  if(isAdmin) body.querySelector('#dc-invite').onclick=async()=>{
-    const btn=body.querySelector('#dc-invite'),result=body.querySelector('#dc-invite-result'),role=body.querySelector('#dc-role').value;
-    setBusy(btn,true,'Gerando...');
-    try{const data=await api('/v1/invites',{method:'POST',body:JSON.stringify({minutes:15,role})});result.innerHTML=message('Código de uso único (expira em 15 minutos):','info')+'<div style="font-family:monospace;word-break:break-all;padding:10px;background:#0f172a;color:white;border-radius:9px;margin-top:7px" id="dc-code-out">'+esc(data.code)+'</div>'+button('Copiar código','dc-copy',false);result.querySelector('#dc-copy').onclick=async()=>{try{await navigator.clipboard.writeText(data.code);result.querySelector('#dc-copy').textContent='Copiado!';}catch(e){}};}
-    catch(e){result.innerHTML=message(e.message,'error');}
-    setBusy(btn,false);
   };
   if(isAdmin){
     const adminResult=body.querySelector('#dc-admin-result');

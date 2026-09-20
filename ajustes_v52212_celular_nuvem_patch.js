@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v5.22.12 — celular autoriza com código e puxa a nuvem
+// v5.22.12 — celular conecta por CNPJ + senha de conexão e puxa a nuvem
 // • NF-e continua só no PC da loja (A1 local)
-// • No celular: Nuvem abre em "Tenho um código", nome padrão Celular
+// • No celular: Nuvem abre no formulário "Entrar com CNPJ"
 // • Menu por toque. Sem emitir nota neste aparelho
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
@@ -87,14 +87,14 @@ function bloquearNfe(){
 
 function prepararNuvemCelular(){
   if(!ehCelular()) return;
-  const tab=document.getElementById('dc-tab-code');
+  const tab=document.getElementById('v5260-tab-cnpj');
   if(tab) tab.click();
-  const name=document.getElementById('dc-name');
+  const name=document.getElementById('v5260-pc');
   if(name && !String(name.value||'').trim()) name.value='Celular';
   const h=document.querySelector('#dc-form h3');
-  if(h) h.textContent='Autorizar este celular';
+  if(h) h.textContent='Conectar este celular com o CNPJ da loja';
   const p=document.querySelector('#dc-form p');
-  if(p) p.textContent='Cole o código gerado no computador administrador. Os dados da nuvem descem para cá. Nada sobe sozinho.';
+  if(p) p.textContent='Use o CNPJ da loja e a senha de conexão. Os dados da nuvem descem para cá; nada sobe sozinho antes da autorização.';
 }
 
 const _abrir=window.abrirCloudflareNuvem;

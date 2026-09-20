@@ -107,7 +107,7 @@
         '<label style="display:block;font-size:11px;font-weight:800;margin-top:10px">NOME DESTE COMPUTADOR<br><input id="v5260-pc" placeholder="Ex.: PC BALCÃO 2" style="height:40px;width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;margin-top:4px;font-size:14px"></label>'+
         '<div style="display:flex;gap:8px;margin-top:15px"><button id="v5260-entrar" style="height:40px;padding:0 16px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Conectar computador</button></div>'+
         '<div id="v5260-res" style="margin-top:12px"></div>'+
-        '<p style="font-size:10.5px;color:#94a3b8;margin-top:10px">Prefere o jeito antigo? A aba "Tenho um código" continua funcionando (código vence em minutos).</p>';
+        '<p style="font-size:10.5px;color:#94a3b8;margin-top:10px">Este é o único caminho de conexão de novos aparelhos: CNPJ + senha de conexão.</p>';
       try{ var c0=empresaCnpj(); if(c0){ form.querySelector('#v5260-cnpj').value=c0.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'); } }catch(e){}
       form.querySelector('#v5260-entrar').onclick = async function(){
         var res = form.querySelector('#v5260-res');

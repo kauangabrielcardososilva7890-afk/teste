@@ -3682,3 +3682,15 @@ Procedimento seguro para publicação, sempre executado localmente pelo respons�
 10. Guarde o token de aparelho apenas no dispositivo autorizado. Se a publicação falhar por autenticação, reconecte a conta Cloudflare no ambiente e repita localmente; não substitua o segredo por texto enviado no chat.
 
 Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.
+
+---
+
+## Rodada 2026-09-20 — remoção do acesso por código/link
+
+- Corrigida a orientação de publicação: este projeto já possui `SETUP_SECRET` configurado. O procedimento não deve mandar criar outro secret sem necessidade; a publicação normal mantém o secret existente.
+- Removida da interface Nuvem a aba **Tenho um código**, o formulário de código temporário, o botão administrativo **Gerar código (15 min)** e o fluxo de convite por código no cliente.
+- O celular deixou de abrir a tela de código e passou a usar o formulário **Entrar com CNPJ**, com nome técnico `Celular` preenchido automaticamente.
+- Os endpoints antigos de convite permanecem apenas no Worker para compatibilidade técnica com instalações antigas; não são mais oferecidos por nenhum caminho da interface atual.
+- O acesso de novos aparelhos fica exclusivamente por CNPJ + senha de conexão. O acesso administrativo usa CNPJ + senha de gerente separada.
+- Bundle desktop, `mobile/www` e assets públicos do Android foram regenerados/sincronizados.
+- Validação: `npm test` = 184 aprovados, `npm run check` aprovado e E2E fiscal aprovado.

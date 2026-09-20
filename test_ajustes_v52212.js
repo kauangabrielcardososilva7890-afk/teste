@@ -11,7 +11,7 @@ ok('detecta Android',P.ehCelular({ua:'Mozilla/5.0 (Linux; Android 14) Mobile'})=
 ok('detecta iPhone',P.ehCelular({ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)'})===true);
 ok('PC não é celular',P.ehCelular({ua:'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})===false);
 ok('Capacitor conta como app',P.ehCelular({capacitor:true})===true);
-ok('abre em tenho um código',/dc-tab-code/.test(code)&&/Celular/.test(code));
+ok('celular usa conexão por CNPJ, sem código/link',!/dc-tab-code/.test(code)&&/v5260-tab-cnpj/.test(code)&&/Celular/.test(code));
 ok('NF-e bloqueada no celular',/só no computador da loja/.test(code));
 ok('não grava senha A1',!/pfx|A1/.test(code)||/certificado A1/.test(code));
 ok('não envia SEFAZ',!/NFeAutorizacao4|hnfe\.fazenda/.test(code));

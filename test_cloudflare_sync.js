@@ -8,7 +8,7 @@ console.log('== CLOUDFLARE SYNC UI ==');
 ok("usa endpoint workers.dev correto (v5.24.34: ele confirmou QUER o gratis — subdominio digicopyonline definitivo; nome de vendas fica pra dominio proprio depois)",/digicopy-sync-api\.digicopyonline\.workers\.dev/.test(code));
 ok('token individual fica em chave local própria',/digicopy_cloud_device_token_v1/.test(code));
 ok('segredo não é salvo no localStorage',!/setItem\([^\n]*secret/i.test(code));
-ok('possui primeiro setup, convite, ingresso e recuperação',/\/v1\/setup/.test(code)&&/\/v1\/invites/.test(code)&&/\/v1\/enroll/.test(code)&&/\/v1\/recover/.test(code));
+ok('possui primeiro setup e recuperação, sem conexão por código/link na interface',/\/v1\/setup/.test(code)&&/\/v1\/recover/.test(code)&&!/dc-tab-code/.test(code)&&!/Tenho um código/.test(code)&&!/Gerar código/.test(code)&&!/\/v1\/invites/.test(code)&&!/\/v1\/enroll/.test(code));
 ok('botão Nuvem está na barra superior',/id="btn-nuvem"[^>]*abrirCloudflareNuvem/.test(html));
 ok('Nuvem aparece para TODO PC (v6.0.6: o papel blinda o conteúdo, não o botão)',/if\(cloud\)cloud\.style\.display='';/.test(code));
 ok('Backup fica sempre só para Admin',/backup\.style\.display=admin/.test(code));

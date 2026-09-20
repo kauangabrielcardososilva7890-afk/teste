@@ -79,6 +79,7 @@ function namesSelected(w) {
     assert(legacy.every(function (v) {
       return !w.document.querySelector('[data-nav="' + v + '"], [data-sxv-go="' + v + '"], #topmod-' + v);
     }), 'rotas fiscais legadas não aparecem como opções');
+    assert(!w.document.querySelector('#dc-tab-code') && !w.document.body.textContent.includes('Tenho um código'), 'conexão por código/link não aparece na nuvem');
 
     let view = w.document.getElementById('view-config-fiscal');
     assert(view, 'Configurações fiscais abriu');
