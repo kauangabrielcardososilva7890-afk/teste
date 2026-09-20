@@ -7,8 +7,12 @@ API local-first isolada do aplicativo Electron/web.
 - Root directory: `cloudflare-worker`
 - Build command: deixe vazio
 - Deploy command: `npm run deploy` (aplica migrações pendentes e só depois publica)
-- Production branch durante o desenvolvimento: `arena/01a00cfb-teste`
-- Production branch após aprovação do PR: `main`
+- Production branch: `arena/01a0c087-teste` (branch fixa da sessão, escolhida pelo dono
+  em 20/09/2026 para o push publicar sozinho). Ao aprovar/mergear o PR na `main`,
+  **voltar esta configuração para `main`** — senão o worker fica preso na branch de sessão.
+  (Anteriormente: `arena/01a00cfb-teste`, motivo de o worker no ar ter ficado em
+  API 0.4.7 / Worker 5.26.3 enquanto o repositório já tinha 0.4.8 / 5.26.4.)
+- Passo a passo ilustrado do painel: `PASSO_A_PASSO_NUVEM_E_SITE.html` (raiz do projeto)
 
 ## Banco D1
 

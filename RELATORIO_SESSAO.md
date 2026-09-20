@@ -3755,3 +3755,57 @@ Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.
 2. Publicar o Worker 5.26.4 quando o dono autorizar (ação humana; sem token no chat).
 3. Teste do dono no link fixo: Início sem "undefined", menu Fiscal (6 itens + 10 abas), permissões/estorno e o fluxo de NF em homologação (`GUIA_DE_TESTE_NF.html` + `RELATORIO_DE_TESTE_NF.txt`).
 4. Se for gerar `.exe` novo, subir o número da versão (6.1.3 → 6.1.4) e re-ancorar os testes que carimbam 6.1.3 na mesma entrega.
+
+---
+
+## CONTINUIDADE — 20/09/2026 — worker publicando pela branch da sessão + site de teste na branch nova
+
+### Pedido confirmado
+
+- **Worker:** fazer o push desta sessão publicar o worker sozinho (hoje a integração GitHub aponta para uma branch antiga).
+- **Site de teste:** manter **um link só** — trocar a branch de produção do Pages para `arena/01a0c087-teste` (decisão dele, com o clique a clique entregue).
+- Dono pediu explicação do worker antes de agir; explicação entregue na conversa (peças, rotas, versão no ar, deploy, riscos).
+
+### Conferências feitas antes (evidência, não suposição)
+
+- O vínculo GitHub→Cloudflare **não mora no repositório**: não existe `.cloudflare/`, `.wrangler/` nem configuração de branch em `cloudflare-worker/wrangler.jsonc` (só nome, D1, R2 e o cron `30 21 * * *`). A troca é no painel.
+- `cloudflare-worker/README.md` estava apontando **Production branch = `arena/01a00cfb-teste`** (branch antiga) — explica por que o no ar ficou em **API 0.4.7 / Worker 5.26.3** com o repo em **0.4.8 / 5.26.4**.
+- O arquivo do worker é **idêntico** entre a branch anterior (`arena/01a0bfad-teste`) e esta (`git diff` vazio em `cloudflare-worker/`) — publicar por esta branch sobe exatamente o que está no repositório.
+- 15 arquivos do sistema apontam para `digicopy-sync-api.digicopyonline.workers.dev`: **a nuvem publicada é a mesma que a loja usa no dia a dia** (risco registrado abaixo).
+- Rotas de convite antigas (`/v1/invites`, `/v1/enroll`) seguem no worker **só por compatibilidade**; a interface nova não as chama (acesso agora é CNPJ + senha).
+
+### O que foi alterado nesta rodada
+
+- `PASSO_A_PASSO_NUVEM_E_SITE.html` (novo, na raiz): guia clicável/imprimível com os passos do painel para (1) trocar a Production branch do worker, (2) trocar a Production branch do Pages `teste-60f`, (3) conferências (`/health` = 5.26.4 e rodapé = v6.1.3) e o aviso de voltar para `main` depois do merge.
+- `cloudflare-worker/README.md`: Production branch atualizada para `arena/01a0c087-teste`, com o histórico da branch antiga e o lembrete de voltar para `main` após o merge; ponteiro para o guia novo.
+- Nenhum código do worker foi tocado nesta rodada (a mudança é de painel).
+
+### Risco registrado (decisão dele, com aviso)
+
+- Com a branch da sessão como produção, **todo push publica o worker da loja**. Combinado: só empurro commit com o worker testado (`node --check`, `test-pure.mjs`, `test-integration.sh` quando o ambiente permitir) e nada de regra do worker sem avisar.
+- Alternativa mais segura oferecida no guia: manter produção em `main` e ligar “Non-production branch deploys = Preview URLs”.
+
+### Validações desta rodada
+
+- `npm test`: **184 passaram, 0 falharam** (com o guia novo e o README atualizado).
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- `npm run check`: passou. `git diff --check`: limpo.
+- Worker: `node --check src/index.js` e `node test-pure.mjs`: passaram.
+
+### Estado de Git/deploy
+
+- Branch fixa: `arena/01a0c087-teste`. PR #29 com base `main` — **sem merge**.
+- Worker no ar: **ainda API 0.4.7 / Worker 5.26.3** até o dono trocar a branch no painel (ou rodar `atualizar_motor_nuvem.cmd`). Nada foi publicado nesta rodada.
+- Site de teste: segue na branch de produção antiga até a troca no painel.
+
+### Links desta retomada
+
+- Site de teste (link fixo): https://teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip
+- Saúde da nuvem (conferir a versão no ar): https://digicopy-sync-api.digicopyonline.workers.dev/health
+
+### Pendências
+
+1. Dono: trocar as duas Production branches no painel (worker e Pages) — passos no `PASSO_A_PASSO_NUVEM_E_SITE.html`.
+2. Conferir `/health` = 5.26.4 e rodapé do site = v6.1.3 depois da troca.
+3. Depois do merge do PR #29: voltar a Production branch do worker para `main`.
