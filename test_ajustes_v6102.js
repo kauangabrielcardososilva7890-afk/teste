@@ -27,8 +27,12 @@ ok(/showApp/.test(p) && /__v612nes/.test(p), 'showApp embrulhado (boot tardio re
 const views = ['view-central-nf','view-fiscal-perfil','view-fiscal-manifestacao','view-fiscal-enviar-xml','view-fiscal-ncm','view-config-fiscal'];
 ok(views.every(v => p.indexOf('body.digi-escuro #' + v) !== -1), 'as 6 shells fiscais têm gradiente escuro próprio');
 ok(/nes612-css/.test(p) && /linear-gradient\(180deg,#0a1240/.test(p), 'CSS injetado nes612-css com gradiente escuro');
-ok(/body\.digi-escuro #fx-root \.fx-card/.test(p) && /body\.digi-escuro #fx-root \.fx-barra/.test(p), 'fx-card/fx-barra escuros no dark');
-ok(/body\.digi-escuro #fx-root \.fx-tb th/.test(p) && /body\.digi-escuro #fx-root \.fx-tb td/.test(p), 'tabelas fx legíveis no escuro');
+ok(/body\.digi-escuro \.fx-root-wrap \.fx-card/.test(p) && /body\.digi-escuro \.fx-root-wrap \.fx-barra/.test(p), 'fx-card/fx-barra escuros no dark');
+ok(/body\.digi-escuro \.fx-root-wrap \.fx-tb th/.test(p) && /body\.digi-escuro \.fx-root-wrap \.fx-tb td/.test(p), 'tabelas fx legíveis no escuro');
+ok(/module:not\(\.sfo-pin\) > \.module-menu/.test(p) && /pointer-events:none/.test(p) && /stopImmediatePropagation\(\)/.test(p), 'menus só abrem por clique; o hover não abre e o pai não navega direto');
+ok(/module\.sfo-pin > \.module-menu/.test(p) && /fecharMenus/.test(p), 'clique no pai alterna submenu e clique fora fecha');
+const fx = ler('fiscal_catalogo_completo_patch.js');
+ok(/\.fx-root-wrap \.fx-tabs/.test(fx) && /\.fx-root-wrap \.fx-tab\.on/.test(fx) && /CONFIG_ABAS = \['Geral', 'Impressão', 'NFCe', 'Tributação'/.test(fx), 'configuração fiscal mostra e estiliza as 10 abas internas');
 ok(/body\.digi-escuro #menu-nfe\{/.test(p) && /body\.digi-escuro #menu-nfe button:hover/.test(p), 'submenu #menu-nfe escuro na barra');
 ok(/body\.digi-escuro #sxvm-flyout-nav\{/.test(p), 'flyout lateral escuro');
 const regrasClarasEscuras = (p.match(/digi-escuro/g) || []).length;

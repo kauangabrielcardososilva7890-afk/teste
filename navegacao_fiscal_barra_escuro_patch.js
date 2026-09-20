@@ -15,8 +15,10 @@
  * navigateTo('central-nf')), recoloca o rótulo "Fiscal" e o
  * #menu-nfe com os 6 menus oficiais sempre que a barra for
  * repintada (observer), mantém pin por clique (compatível com a
- * v6.1.1 via classe .sfo-pin + e.defaultPrevented), e cobre o
- * modo escuro (.digi-escuro) de todas as camadas claras fixas.
+ * v6.1.1 via classe .sfo-pin + e.defaultPrevented), e muda TODOS
+ * os módulos com submenu para abrir somente por clique (hover não
+ * abre; clique fora fecha). Também cobre o modo escuro (.digi-escuro)
+ * de todas as camadas claras fixas.
  * Não importa dado, não toca banco, não interfere no claro.
  * Guard: __v612nes
  * ============================================================ */
@@ -52,23 +54,23 @@
       'body.digi-escuro #view-fiscal-enviar-xml, body.digi-escuro #view-fiscal-ncm, body.digi-escuro #view-config-fiscal' +
       '{ background: linear-gradient(180deg,#0a1240 0%, #0d1746 55%, #101b52 100%) !important; color:#e8eeff !important; }',
 
-      /* painel #fx-root: cartões, barras, inputs, tabelas e abas */
-      'body.digi-escuro #fx-root{ color:#e8eeff !important; }',
-      'body.digi-escuro #fx-root .fx-card, body.digi-escuro #fx-root .fx-barra{' +
+      /* painel .fx-root-wrap: cartões, barras, inputs, tabelas e abas */
+      'body.digi-escuro .fx-root-wrap{ color:#e8eeff !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-card, body.digi-escuro .fx-root-wrap .fx-barra{' +
       ' background: rgba(13,21,54,.88) !important; background-color: rgba(13,21,54,.88) !important;' +
       ' background-image: none !important; border-color: rgba(148,167,255,.22) !important;' +
       ' box-shadow: 0 2px 14px rgba(2,6,26,.45) !important; }',
-      'body.digi-escuro #fx-root .fx-lb, body.digi-escuro #fx-root .fx-mini, body.digi-escuro #fx-root .fx-h2{ color:#a9bff2 !important; }',
-      'body.digi-escuro #fx-root .fx-in, body.digi-escuro #fx-root select.fx-in, body.digi-escuro #fx-root textarea.fx-in{' +
+      'body.digi-escuro .fx-root-wrap .fx-lb, body.digi-escuro .fx-root-wrap .fx-mini, body.digi-escuro .fx-root-wrap .fx-h2{ color:#a9bff2 !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-in, body.digi-escuro .fx-root-wrap select.fx-in, body.digi-escuro .fx-root-wrap textarea.fx-in{' +
       ' background:#0b1337 !important; color:#e8eeff !important; border-color: rgba(148,167,255,.28) !important; }',
-      'body.digi-escuro #fx-root .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
-      'body.digi-escuro #fx-root .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
       'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background: rgba(148,167,255,.06) !important; }',
       'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.16) !important; }',
       'body.digi-escuro .fx-tab{ color:#a9bff2 !important; }',
       'body.digi-escuro .fx-tab.on{ background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important; }',
-      'body.digi-escuro #fx-root .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',
-      'body.digi-escuro #fx-root .fx-btn:hover{ background:#1c2c6e !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-btn:hover{ background:#1c2c6e !important; }',
 
       /* submenu #menu-nfe da barra (o claro do sfo611 quebrava o escuro) */
       'body.digi-escuro #menu-nfe{ background:#0d1738 !important; border:1px solid rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
@@ -78,7 +80,17 @@
       /* flyout lateral (sxvm) também fica íntegro no escuro */
       'body.digi-escuro #sxvm-flyout-nav{ background:#0d1738 !important; border-color: rgba(148,167,255,.28) !important; box-shadow: 0 14px 34px rgba(2,6,26,.55) !important; }',
       'body.digi-escuro #sxvm-flyout-nav button{ color:#dbe6ff !important; }',
-      'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }'
+      'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }',
+      /* comportamento novo: menu só abre por clique, nunca só por hover */
+      '.module:not(.sfo-pin) > .module-menu{opacity:0 !important;visibility:hidden !important;transform:translateY(8px) scale(.98) !important;pointer-events:none !important}',
+      '.module.sfo-pin > .module-menu{opacity:1 !important;visibility:visible !important;transform:translateY(0) scale(1) !important;pointer-events:auto !important}',
+      '.module.sfo-pin > button{background:linear-gradient(180deg,#1d4ed8,#1e3a8a) !important;color:#fff !important;border-radius:10px;box-shadow:0 8px 18px rgba(30,58,138,.24)}',
+      '.module.sfo-pin > button i{color:#fff !important}',
+      '.module-menu{background:#fff;border:1px solid #dbe3ef;border-radius:14px;box-shadow:0 18px 45px rgba(15,23,42,.18);padding:8px}',
+      '.module-menu button{height:40px;border-radius:10px;font-weight:650}',
+      '#sxvm-flyout-nav:not(.sfo-pin){display:none !important}',
+      '#sxvm-flyout-nav.sfo-pin{display:block !important}',
+      'body.digi-escuro .module-menu{background:#0d1738;border-color:rgba(148,167,255,.28);box-shadow:0 14px 34px rgba(2,6,26,.55)}'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
   }
@@ -140,7 +152,34 @@
     return true;
   }
 
-  /* ---------- clique no pai: abre e FICA preso (pin); compõe com o sfo611 ---------- */
+  /* ---------- todos os menus: clique abre/fecha; hover não abre ---------- */
+  function fecharMenus(excecao) {
+    document.querySelectorAll('.module.sfo-pin').forEach(function (m) {
+      if (m !== excecao) m.classList.remove('sfo-pin');
+    });
+    var fly = document.getElementById('sxvm-flyout-nav');
+    if (fly && fly !== excecao && !fly.classList.contains('sfo-pin')) fly.style.display = 'none';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented) return;
+    var mod = e.target && e.target.closest ? e.target.closest('.module') : null;
+    var pai = mod && mod.querySelector(':scope > button');
+    var menu = mod && mod.querySelector(':scope > .module-menu');
+    if (mod && pai && menu && pai.contains(e.target)) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      var estava = mod.classList.contains('sfo-pin');
+      fecharMenus();
+      if (!estava) mod.classList.add('sfo-pin');
+      return;
+    }
+    if (e.target && e.target.closest && e.target.closest('.module-menu')) {
+      fecharMenus();
+      return; /* deixa o onclick do item navegar */
+    }
+    if (!(e.target && e.target.closest && e.target.closest('#sxvm-flyout-nav'))) fecharMenus();
+  }, true);
+
+  /* ---------- clique no pai fiscal: abre e FICA preso (pin); compõe com o sfo611 ---------- */
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented) return; /* o submenu_fiscal_oficial (6.1.1) já tratou */
     var mod = e.target && e.target.closest ? e.target.closest('.module') : null;

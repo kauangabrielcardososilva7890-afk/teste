@@ -3587,3 +3587,53 @@ Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé
 - ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
 - PR: https://github.com/kauangabrielcardososilva7890-afk/teste/pull/28
 - Saúde do Worker público, ainda antigo: https://digicopy-sync-api.digicopyonline.workers.dev/health
+
+---
+
+## CONTINUIDADE — 20/09/2026 — menus por clique, revisão do menu fiscal e tentativa autorizada de publicação
+
+### Pedido confirmado
+
+- Reduzir a quantidade de links nas respostas: manter somente o link de teste e o ZIP quando forem necessários.
+- Publicar o Worker sem pedir nova confirmação; não fazer merge.
+- Em todos os menus com submenu: hover não abre; clique no menu abre; clique no mesmo menu fecha; clique fora fecha; clique no item navega.
+- Melhorar a aparência do menu fiscal e de suas telas.
+- Fazer `Menu Fiscal → Configurações` permitir visualizar e abrir as abas internas Impressão, NFCe, Tributação e demais abas.
+- Confirmar por inspeção de código se o menu fiscal está completo, sem suposição.
+
+### Confirmação factual do catálogo atual
+
+- O submenu fiscal principal tem **6 itens oficiais** no código: Nota Fiscal, Perfil Tributário, Manifestação, NCM, Enviar XML e Configurações.
+- Configurações fiscais tem **10 abas implementadas**: Geral, Impressão, NFCe, Tributação, Nuvem, Outras, Mensagens, FCP, Autorizações e Reforma.
+- Portanto, está completo conforme o catálogo novo de 6 + 10 abas.
+- Não está completo se a referência for o menu legado inteiro: três rotas antigas (`fiscal-historico`, `fiscal-inutilizar`, `fiscal-ferramentas`) continuam escondidas do submenu oficial, embora partes existam no código/atalhos. Elas não foram reintroduzidas nesta mudança porque isso não foi pedido de forma específica.
+
+### Implementação
+
+- `navegacao_fiscal_barra_escuro_patch.js` agora força todos os módulos com submenu a ficarem fechados no hover e abre/fecha por clique, com fechamento por clique fora e navegação ao clicar em item.
+- O flyout fiscal lateral também não fica visível apenas pelo hover; só aparece quando fixado por clique.
+- `fiscal_catalogo_completo_patch.js` teve o CSS corrigido de `#fx-root` para `.fx-root-wrap`, alcançando também a placa, abas, cards, tabelas e botões externos. Isso corrige a aparência incompleta/sem estilo das telas fiscais e deixa visíveis/clicáveis as abas internas de Configurações.
+- `test_ajustes_v6102.js` passou a validar o comportamento por clique e as 10 abas de configuração.
+- Bundle e cópia mobile regenerados.
+
+### Validação
+
+- `npm test`: **183 passaram, 0 falharam**.
+- `npm run check`: passou.
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- Testes e `node --check` do Worker: passaram.
+- Checks locais do menu e do catálogo fiscal: passaram.
+
+### Publicação do Worker autorizada, mas bloqueada por autenticação externa
+
+- Foi executado o fluxo oficial `npm run deploy`.
+- Primeiro bloqueio: `wrangler` não está instalado localmente.
+- Tentativa oficial equivalente com `npx --yes wrangler@4.123.0` falhou porque o ambiente não possui `CLOUDFLARE_API_TOKEN` em modo não interativo.
+- Não usei `--temporary`, pois isso publicaria em conta temporária e não na conta correta.
+- Resultado: **o Worker não foi publicado**; continua público em `API 0.4.7 / Worker 5.26.3`. O código local continua pronto em `API 0.4.8 / Worker 5.26.4`.
+- Nenhum merge foi feito. A publicação só poderá continuar quando a autenticação Cloudflare for reconectada/configurada no ambiente; não solicitar token ou senha pelo chat.
+
+### Links mínimos desta continuação
+
+- Site de teste: https://8e8e8475.teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
