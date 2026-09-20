@@ -1,6 +1,6 @@
 # Gerar o .exe — guia definitivo
 
-**Versão atual:** v5.25.0
+**Versão atual:** v6.1.3 (conferida em `package.json`; o rodapé é a régua)
 **Link de teste OFICIAL:** site próprio https://teste-60f.pages.dev (GitHack
 MORREU quando o repositório ficou privado — não serve nem de plano B)
 **Portal público de atualizações:** https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes
@@ -51,7 +51,7 @@ apagado pra não induzir erro. Mantido o histórico no RELATORIO_SESSAO.md):
 <https://teste-60f.pages.dev>
 
 **Baixar tudo (zip do próprio GitHub)** — não gerar `.zip` novo no repositório:
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip>
 
 **Site público de download (pra cliente/loja):**
 <https://digicopy-sync-api.digicopyonline.workers.dev/atualizacoes>
@@ -62,7 +62,7 @@ Os dois primeiros são impressos no final de `npm run sync`:
   Teste no navegador (site próprio — Pages):
     https://teste-60f.pages.dev
   Baixar tudo (zip do GitHub):
-    https://github.com/.../archive/refs/heads/arena/01a0bfad-teste.zip
+    https://github.com/.../archive/refs/heads/arena/01a0c087-teste.zip
 ```
 
 A branch fica em `package.json > digicopy.branch`. O `npm run sync` usa esse

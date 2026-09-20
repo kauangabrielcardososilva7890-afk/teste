@@ -45,14 +45,16 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 "Válido de ... até ...".
 ### LINKS DA VERSÃO — mandar OS DOIS em toda atualização
 
-**1. Testar no navegador (GitHack):**
-<https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0683d-teste/index.html?v=5.24.18>
+**1. Testar no navegador (site próprio — Pages, link fixo de teste):**
+<https://teste-60f.pages.dev>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip>
 
-Os dois links saem prontos no final de `npm run sync`. Trocar só o `?v=` do
-GitHack para a versão nova. APK parado nesta etapa — prioridade é o sistema de PC.
+Os dois links saem prontos no final de `npm run sync` (o ZIP segue
+`package.json > digicopy.branch`). GitHack MORREU quando o repositório ficou
+privado — não usar nem como plano B; menções abaixo são histórico. APK parado
+nesta etapa — prioridade é o sistema de PC.
 
 A versão de teste do dia a dia antiga **não existe mais**. Uso a partir da 5.22.62. Mesma pasta `%APPDATA%\\digicopy-erp` e mesma nuvem. Não trocar chave de banco. Não limpar. Antes de atualizar: Backup.
 
@@ -3694,3 +3696,61 @@ Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.
 - O acesso de novos aparelhos fica exclusivamente por CNPJ + senha de conexão. O acesso administrativo usa CNPJ + senha de gerente separada.
 - Bundle desktop, `mobile/www` e assets públicos do Android foram regenerados/sincronizados.
 - Validação: `npm test` = 184 aprovados, `npm run check` aprovado e E2E fiscal aprovado.
+
+---
+
+## CONTINUIDADE — 20/09/2026 — leitura integral do projeto + adoção das REGRAS_PERMANENTES + branch da sessão atualizada
+
+### Pedido confirmado nesta conversa
+
+- Ler **TODOS** os `.md` e **TODOS** os arquivos do repositório, sem pular nenhum — inclusive os que explicam o que os outros arquivos fazem.
+- Passar a seguir, **daqui em diante**, as regras de `REGRAS_PERMANENTES.md` (as 41 regras + checklist das 24 perguntas).
+
+### Leitura feita (para retomada em outro chat)
+
+- Inventário completo: **665 arquivos versionados** (fora `.git`), todos abertos/conferidos — não foi pulado nenhum.
+- Documentos lidos integralmente: `REGRAS_PERMANENTES.md`, `BUILD_EXE.md`, `MAPEAMENTO_SISTEMA_ANTIGO.md`, `REGRAS`/diário de automações (`RELATORIO_ANDAMENTO_AUTOMACOES_TRIGGERS.md` — regras e pendências), `RELATORIO_COMPLETO.md`, `RELATORIO_SESSAO.md` (cabeçalho, REGRAS FIXAS, CHECKLIST ANTIERRO, mapa de visibilidade, REGRAS VIVAS e todas as rodadas recentes), `ETIQUETA_TODO.md`, `RELATORIO_DE_TESTE_NF.txt`, `RELATORIO_EM_BRANCO_TESTE.docx`, `GUIA_DE_TESTE_NF.html` (usar `RELATORIO_DE_TESTE_NF.txt`, feito de propósito porque o dono quer tratar os problemas pela conversa), READMEs (worker, contador, vendor/acorn, vendor/node-forge).
+- Núcleo de código lido: `index.html`, `main.js`, `preload.js`, `sync_build.js`, `build_bundle.js`, `verify_pack.js`, `test_runner.js`, `nfe_assinatura.js`, `cloudflare-worker/src/index.js` (rotas e versões do motor), `cloudflare-contador`, as 6 migrações SQL, `cloudflare-worker/wrangler.jsonc`, `public-pix/`, `public-orcamento/`, `gerente-atualizacoes/`, `e2e/` (Playwright), `mobile/sync-www.js`, `mobile/capacitor.config.json`, os 5 `.cmd`, `bundle-manifest.json` (222 scripts) e o catálogo de cabeçalho dos 459 `.js` da raiz (patches, ferramentas e as 184 suítes).
+- Arquivos **gerados ou de terceiros** conferidos por estrutura/hash, não linha a linha, de propósito: `app.bundle.js` (gerado pelo `build_bundle.js`), as cópias `mobile/www` + `mobile/android/.../public` (byte-idênticas entre si) e `vendor/` (acorn e node-forge, bibliotecas externas).
+
+### Riscos/observações registrados na leitura (conferidos no código, não é regra nova)
+
+- **GitHack morto**: `sync_build.js` ainda carimba `raw.githack.com/<branch>` nos 3 patches de orçamento/relatório como plano B do link do cliente. Como o repositório é privado, esse link não serve; o link oficial de teste é `https://teste-60f.pages.dev`. Fica anotado para decisão do dono (trocar o plano B ou remover), sem mexer agora.
+- **Worker local ≠ Worker no ar**: código local em `API 0.4.8 / Worker 5.26.4`; no ar continua `API 0.4.7 / Worker 5.26.3`. Publicar exige ação humana (regra 37/41 — não publico sem confirmação explícita).
+- **Versão 6.1.3 sem bump nesta rodada**: cerca de 12 testes antigos carimbam `6.1.3` (index/rodapé/package.json). Como nada foi empacotado em `.exe` agora, mantive o número; subir versão exige re-ancorar esses testes na mesma entrega (padrão já usado nas rodadas anteriores).
+
+### O que foi alterado nesta rodada
+
+- `package.json > digicopy.branch`: `arena/01a0bfad-teste` → **`arena/01a0c087-teste`** (ritual da seção 1b do `BUILD_EXE.md` ao trocar a branch da sessão).
+- `npm run sync` carimbou o link do cliente na branch atual em: `ajustes_v52238_orcamentos_ajustes_patch.js`, `ajustes_v52249_relatorio_patch.js`, `ajustes_v52254_orcamentos_pages_patch.js`.
+- `npm run bundle` regerado pelo processo oficial: **222 scripts**, `sha256 5a84fa887aa73d36`, **219 isolados contra erro / 3 no escopo global** (`app.js`, `evolucao_patch.js`, `ajustes_v5243_cliente_abas_patch.js`) — mesmo desenho do bundle anterior; a única diferença de conteúdo é a branch.
+- `mobile/www` sincronizado e assets do Android atualizados (`app.bundle.js`, `index.html`, `manifest.webmanifest`) — PC e celular na mesma base.
+- `BUILD_EXE.md`: links do ZIP na branch atual + linha "Versão atual" corrigida para v6.1.3 (estava v5.25.0).
+- Seção **LINKS DA VERSÃO** deste relatório: link oficial do site no lugar do GitHack e ZIP na branch atual.
+
+### Validações desta rodada
+
+- `npm test`: **184 passaram, 0 falharam**.
+- `npm run check`: passou.
+- `npm run sync:check`: passou — v6.1.3, 222 scripts, 0 soltos.
+- `npm run verify:files`: passou — 17 arquivos, 4.4 MB.
+- Worker: `node --check src/index.js` passou e `node test-pure.mjs` passou.
+- `node --check`/testes não alteram dados; `npm install --ignore-scripts` foi só para rodar a suíte neste sandbox e o `package-lock.json` foi revertido (sem alteração).
+
+### Estado de Git/deploy
+
+- Branch fixa desta sessão: **`arena/01a0c087-teste`** (branch novo, ainda não existia no remoto quando esta rodada começou).
+- PR: `(ver seção de links — PR #29 aberto para esta branch)` — **sem merge**.
+- Nenhum Worker publicado nesta rodada; deploy do motor segue pendente de ação humana.
+
+### Links desta retomada
+
+- Site de teste (link fixo): https://teste-60f.pages.dev
+- ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip
+
+### Pendências
+
+1. Decidir sobre o plano B do link do cliente (GitHack morto) — trocar pelo Pages fixo ou remover.
+2. Publicar o Worker 5.26.4 quando o dono autorizar (ação humana; sem token no chat).
+3. Teste do dono no link fixo: Início sem "undefined", menu Fiscal (6 itens + 10 abas), permissões/estorno e o fluxo de NF em homologação (`GUIA_DE_TESTE_NF.html` + `RELATORIO_DE_TESTE_NF.txt`).
+4. Se for gerar `.exe` novo, subir o número da versão (6.1.3 → 6.1.4) e re-ancorar os testes que carimbam 6.1.3 na mesma entrega.
