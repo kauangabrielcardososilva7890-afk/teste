@@ -1,0 +1,20 @@
+const fs=require('fs');
+function ok(name,cond){if(!cond){console.error('  ✘ '+name);process.exit(1);}console.log('  ✔ '+name);}
+const code=fs.readFileSync('ajustes_v52212_celular_nuvem_patch.js','utf8');
+const manifest=JSON.parse(fs.readFileSync('bundle-manifest.json','utf8'));
+const html=fs.readFileSync('index.html','utf8');
+const ctx={window:{},document:undefined};
+new Function('window','document',code)(ctx.window,ctx.document);
+const P=ctx.window.CELULAR_NUVEM_PURE;
+console.log('== CELULAR + NUVEM ==');
+ok('detecta Android',P.ehCelular({ua:'Mozilla/5.0 (Linux; Android 14) Mobile'})===true);
+ok('detecta iPhone',P.ehCelular({ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)'})===true);
+ok('PC não é celular',P.ehCelular({ua:'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})===false);
+ok('Capacitor conta como app',P.ehCelular({capacitor:true})===true);
+ok('abre em tenho um código',/dc-tab-code/.test(code)&&/Celular/.test(code));
+ok('NF-e bloqueada no celular',/só no computador da loja/.test(code));
+ok('não grava senha A1',!/pfx|A1/.test(code)||/certificado A1/.test(code));
+ok('não envia SEFAZ',!/NFeAutorizacao4|hnfe\.fazenda/.test(code));
+ok('manifesto instalável',html.includes('manifest.webmanifest'));
+ok('patch no bundle',manifest.includes('ajustes_v52212_celular_nuvem_patch.js'));
+console.log('\nRESULTADO: celular + nuvem passou!');

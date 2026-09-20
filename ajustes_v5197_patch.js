@@ -21,11 +21,10 @@ function temPermissaoTotal(s){
 }
 
 function podeVerAuditoria(){
-  // Reaproveita a lógica do v5.19.6 se existir, senão usa a local.
-  if(window.AJUSTES_V5196_PURE && typeof window.AJUSTES_V5196_PURE.temPermissaoTotal === 'function'){
-    return window.AJUSTES_V5196_PURE.temPermissaoTotal(sess());
-  }
-  return temPermissaoTotal(sess());
+  // v5.24.34 — pedido dele: auditoria VISÍVEL PARA TODOS os usuários de novo.
+  // Os erros saíram da auditoria (agora moram no erro.txt), então ela volta a
+  // ser o quadro de "quem fez o quê" aberto a qualquer login ativo.
+  return !!sess();
 }
 
 // Mostra/esconde os itens de menu de auditoria conforme a permissão.

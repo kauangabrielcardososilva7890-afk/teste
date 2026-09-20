@@ -1,0 +1,21 @@
+{
+  "name": "Sistema Digicopy",
+  "short_name": "Digicopy",
+  "start_url": "./index.html?v=1.0",
+  "display": "standalone",
+  "background_color": "#0a1e8a",
+  "theme_color": "#0a1e8a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./logo_2.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./logo_2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

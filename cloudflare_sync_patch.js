@@ -6,7 +6,25 @@
 (function(){
 'use strict';
 
-const API = 'https://digicopy-sync-api.kauangabrielcardososilva7890.workers.dev';
+const API = 'https://digicopy-sync-api.digicopyonline.workers.dev';
+
+// v5.23.4 — medidor oficial SOB DEMANDA (pedido do dono: "nada de cronômetro,
+// mede só quando eu abrir aquele menu"). O sistema só CUTUCA o mini-worker
+// público do medidor: o token da conta NUNCA fica aqui — vive no cofre do
+// próprio medidor. Feita a medida, o /v1/status já lê o uso_real fresquinho.
+// Trava de 3 min: abrir a tela 10x seguidas não mede 10x.
+const MEDIDOR_OFICIAL_URL = 'https://digicopy-contador-uso.digicopyonline.workers.dev/v1/medir';
+async function chamarMedidorOficial(){
+  const agora = Date.now();
+  if(window.__dcUltPingMedidor && agora - window.__dcUltPingMedidor < 180000) return false;
+  window.__dcUltPingMedidor = agora;
+  try{
+    const r = await fetch(MEDIDOR_OFICIAL_URL, { cache: 'no-store' });
+    const j = await r.json().catch(() => null);
+    return !!(j && j.ok);
+  }catch(e){ return false; }
+}
+window.DC_chamarMedidorOficial = chamarMedidorOficial;
 const TOKEN_KEY = 'digicopy_cloud_device_token_v1';
 const DEVICE_KEY = 'digicopy_cloud_device_info_v1';
 
@@ -29,10 +47,35 @@ function forgetAuth(){
   try{ localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(DEVICE_KEY); }catch(e){}
   try{setTimeout(applyAdminVisibility,0);}catch(e){}
 }
+// v5.24.1 — prova do USUÁRIO (backups dependem do cargo, não do aparelho):
+// login + sha256(login|senha), conferidos pela nuvem contra o cadastro.
+async function provaUsuario(login, senha){
+  try{
+    if(typeof crypto==='undefined'||!crypto.subtle) return '';
+    const dados=new TextEncoder().encode(String(login)+'|'+String(senha));
+    const digest=await crypto.subtle.digest('SHA-256',dados);
+    return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
 async function api(path, options){
   const opts=Object.assign({},options||{});
   opts.headers=Object.assign({'content-type':'application/json'},opts.headers||{});
   const tk=token(); if(tk) opts.headers.authorization='Bearer '+tk;
+  // a nuvem usa isto para fotografar o banco quando a versão sobe (backup de atualização)
+  try{ if(window.DIGICOPY_APP_VERSION && !opts.headers['x-digicopy-versao']) opts.headers['x-digicopy-versao']=String(window.DIGICOPY_APP_VERSION); }catch(e){}
+  // v5.24.1 — manda a prova do usuário logado quando ela existir; a nuvem só
+  // exige nos recursos que dependem de cargo (backups). Não atrapalha o resto.
+  try{
+    const sess=(typeof getSession==='function')?getSession():null;
+    if(sess&&sess.login&&!opts.headers['x-digicopy-usuario-login']){
+      const cand=((typeof db!=='undefined'&&db.usuarios)||[]).filter(u=>u&&String(u.login||'').toLowerCase()===String(sess.login).toLowerCase());
+      const u=cand.find(x=>x.id===sess.usuarioId)||cand[0];
+      if(u&&u.senha){
+        opts.headers['x-digicopy-usuario-login']=String(sess.login).toLowerCase();
+        opts.headers['x-digicopy-usuario-prova']=await provaUsuario(String(sess.login).toLowerCase(),u.senha);
+      }
+    }
+  }catch(e){}
   let response;
   try{ response=await fetch(API+path,opts); }
   catch(e){ throw new Error('Sem conexão com a nuvem. Verifique a internet.'); }
@@ -65,10 +108,14 @@ function systemAdmin(){
   try{const s=typeof getSession==='function'?getSession():null;const p=String((s&&s.perfil)||'').toLowerCase();return !!(s&&(p==='admin'||p==='dono'));}catch(e){return false;}
 }
 function applyAdminVisibility(){
-  const admin=systemAdmin(),needsAuthorization=!token();
+  const admin=systemAdmin();
   const cloud=document.getElementById('btn-nuvem');
   const backup=document.getElementById('btn-backup-top');
-  if(cloud)cloud.style.display=(admin||needsAuthorization)?'':'none';
+  // v6.0.4 — pedido dele: o botão Nuvem aparece em TODO PC (conectado ou não).
+  // O que muda é o CONTEÚDO lá dentro: PC administrador (entrou com a senha do
+  // gerente) vê gastos e a zona de administração; PC comum vê a nuvem SEM os
+  // gastos e só desconecta a própria sessão.
+  if(cloud)cloud.style.display='';
   if(backup)backup.style.display=admin?'':'none';
 }
 window.DIGICOPY_CLOUD.refreshVisibility=applyAdminVisibility;
@@ -152,43 +199,122 @@ async function renderDisconnected(body){
 }
 
 async function renderConnected(body){
-  body.innerHTML=message('Verificando autorização deste computador...','info');
-  let status;
+  body.innerHTML=message('Medindo o uso oficial e verificando autorização deste computador...','info');
+  // v5.23.4 — mede quando a tela abre (pedido do dono); se o medidor não
+  // estiver implantado/responder, segue a vida com a contagem estimada.
+  const medidoAgora = await chamarMedidorOficial();
+  let status,contagemFalhou='';
   try{status=await api('/v1/status',{method:'GET'});}
   catch(e){
     if(e.status===401){forgetAuth();return renderDisconnected(body);}
-    body.innerHTML=message(e.message,'error')+'<div style="margin-top:12px">'+button('Tentar novamente','dc-retry',true)+'</div>'; body.querySelector('#dc-retry').onclick=()=>renderConnected(body);return;
+    // A tela da nuvem não pode ficar refém da contagem de registros. Se a conta
+    // falhar, a janela abre do mesmo jeito com o que o PC já sabe, e tudo que
+    // importa — sincronizar, autorizar outro PC, ver excluídos — continua
+    // funcionando. Só os números da nuvem ficam de fora, com o aviso do motivo.
+    const salvo=deviceInfo();
+    if(!salvo){
+      body.innerHTML=message(e.message,'error')+'<div style="margin-top:12px">'+button('Tentar novamente','dc-retry',true)+'</div>'; body.querySelector('#dc-retry').onclick=()=>renderConnected(body);return;
+    }
+    contagemFalhou=e.message||'a nuvem não respondeu a contagem';
+    const motorLimite=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.ehLimiteDiario;
+    if(motorLimite&&motorLimite(contagemFalhou))contagemFalhou=window.DIGICOPY_CLOUD_SYNC.recadoDoLimite();
+    status={device:salvo,totals:{devices:'—',records:'—',deleted:0,cursor:0,byEntity:{}}};
+    // v5.24.4 — o aviso "código da nuvem ANTIGO" aparecia até quando a contagem
+    // apenas tropeçava (ex.: cota diária estourada). O aviso é sobre VERSÃO:
+    // pergunta direto ao /health antes de acusar código velho.
+    try{
+      const h=await api('/health',{method:'GET'});
+      if(h&&h.versao)status.workerVersao=h.versao;
+    }catch(_){/* se nem o /health responde, aí faz sentido desconfiar */}
   }
   const d=status.device,t=status.totals,isAdmin=d.role==='admin';
+  const uso=(contagemFalhou&&contagemFalhou!=='')?null:(status.usoHoje||null);
+  const linhaVersaoNuvem = status.workerVersao
+    ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
+    : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  function garantirCssUso(){
+    if(document.getElementById('dc-uso-css')) return;
+    const s=document.createElement('style');
+    s.id='dc-uso-css';
+    s.textContent=[
+      'html.digi-escuro .dc-uso-nuvem{background:#1e293b!important;border-color:#334155!important}',
+      'html.digi-escuro .dc-uso-nuvem h3{color:#e5e7eb!important}',
+      'html.digi-escuro .dc-uso-nuvem .dc-uso-barra{background:#0f172a!important}',
+      'html.digi-escuro .dc-uso-nuvem small,html.digi-escuro .dc-uso-nuvem span{color:#94a3b8!important}'
+    ].join('');
+    document.head.appendChild(s);
+  }
+  garantirCssUso();
+  function barraUso(pct){
+    const p=Math.max(0,Math.min(100,pct));
+    const cor=p>=90?'#dc2626':p>=70?'#d97706':'#0a1e8a';
+    return '<div class="dc-uso-barra" style="height:9px;border-radius:9px;background:#e2e8f0;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+p+'%;background:'+cor+'"></div></div>';
+  }
+  function fmtNum(n){ try{ return Number(n||0).toLocaleString('pt-BR'); }catch(e){ return String(n||0); } }
+  const usoBloco = uso
+    ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-weight:700">plano pago ativo ($5 fixos): o teto virou por mês e gigantesco — esse número agora é só curiosidade</small></div>'+
+      '<div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>✏️ Gravações (o que o sistema salva)</span><span>'+fmtNum(uso.escritas)+' / '+fmtNum(uso.tetoEscritas)+'</span></div>'+barraUso(uso.tetoEscritas?uso.escritas/uso.tetoEscritas*100:0)+'</div>'+
+      '<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#334155"><span>🔍 Leituras (o que o sistema consulta)</span><span>'+fmtNum(uso.leituras)+' / '+fmtNum(uso.tetoLeituras)+'</span></div>'+barraUso(uso.tetoLeituras?uso.leituras/uso.tetoLeituras*100:0)+'</div>'+
+      '<small style="color:#94a3b8;font-size:10px;display:block;margin-top:7px">'+(uso.fonte==='oficial'?'medidor oficial da sua conta Cloudflare'+(medidoAgora?' — medido agora, na abertura desta tela (ele remede sozinho a cada abertura).':(uso.medidoEm?' — o mesmo número do painel dela, medido agora mesmo.':' — o mesmo número do painel dela.')):'contagem estimada pela própria nuvem — no plano pago isso vira só curiosidade de uso, sem nenhum risco de susto.')+'</small>'+
+      '</div>'
+    : (contagemFalhou
+      ? '<div class="dc-uso-nuvem" style="margin:12px 0;padding:12px;background:#f4f6ff;border:1px solid #c9ceef;border-radius:11px"><h3 style="margin:0;font-size:13px;font-weight:900;color:#0a1e8a">📊 Uso da nuvem hoje</h3><small style="color:#64748b;font-size:11px;display:block;margin-top:6px">não consegui medir agora ('+esc(contagemFalhou)+') — os números voltam na próxima consulta.</small></div>'
+      : '');
   const localClients=typeof db!=='undefined'&&Array.isArray(db.clientes)?db.clientes.length:0;
   const cloudClients=t.byEntity&&t.byEntity.clientes?Number(t.byEntity.clientes.active)||0:0;
-  const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado',blockedDeletes:{}};
-  const blocked=Object.keys(sync.blockedDeletes||{});
-  const syncMessage=sync.paused?'Nuvem vazia e sincronização PAUSADA. Nada será enviado automaticamente até você publicar este PC.':(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.');
-  const blockedHtml=blocked.length?'<div style="margin:12px 0">'+message('Proteção ativada: uma exclusão grande foi bloqueada. Confirme somente se você realmente apagou esses dados.','error')+blocked.map(entity=>'<button class="dc-approve-delete" data-entity="'+esc(entity)+'" style="margin:7px 7px 0 0;padding:8px 11px;border-radius:9px;background:#b91c1c;color:white;font-weight:800">Confirmar exclusões de '+esc(entity)+' ('+sync.blockedDeletes[entity].length+')</button>').join('')+'</div>':'';
-  body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+blockedHtml+
-    '<div style="display:flex;gap:8px;margin-bottom:14px">'+button(sync.paused?'Publicar este PC na nuvem':'Sincronizar agora','dc-sync-now',true)+'</div>'+
+  const sync=window.DIGICOPY_CLOUD_SYNC?window.DIGICOPY_CLOUD_SYNC.info():{outbox:0,pending:0,cursor:0,lastOk:0,lastError:'Motor de dados não carregado'};
+  const escolher=!!sync.paused;
+  // "23 mil registros" não diz nada sozinho. Aqui a pessoa vê lista por lista de
+  // onde vem cada número e confere se bate com o que ela usa.
+  const porLista=Object.keys((t&&t.byEntity)||{})
+    .map(nome=>({nome,n:Number(t.byEntity[nome]&&t.byEntity[nome].active)||0}))
+    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  const detalhe=porLista.length
+    ?'<details style="margin:12px 0"><summary style="cursor:pointer;font-size:12px;font-weight:800">O que são os '+t.records+' registros da nuvem (ver lista por lista)</summary><div style="margin-top:8px;max-height:260px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px">'
+      +porLista.map(x=>'<div style="display:flex;justify-content:space-between;padding:7px 11px;border-bottom:1px solid #f1f5f9;font-size:12px"><span>'+esc(x.nome)+'</span><b>'+x.n+'</b></div>').join('')
+      +'</div></details>'
+    :'';
+  const held=Number(sync.heldLocalOnly)||0;
+  const syncMessage=escolher
+    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
+    :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
+  const avisoContagem=contagemFalhou
+    ?message('Os números da nuvem não puderam ser contados agora ('+esc(contagemFalhou)+'). Isso NÃO atrapalha a sincronização: seus dados continuam indo e voltando normalmente. Os botões abaixo funcionam.','info')
+    :'';
+  body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
+    (isAdmin?usoBloco:'')+linhaVersaoNuvem+
+    detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
+      ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
+      :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
     (isAdmin?'<div style="border-top:1px solid #e2e8f0;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Autorizar outro computador</h3><div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-top:8px"><label style="font-size:11px;font-weight:800">PERFIL<br><select id="dc-role" style="height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px"><option value="device">Computador autorizado</option><option value="admin">Outro administrador</option></select></label>'+button('Gerar código (15 min)','dc-invite',true)+'</div><div id="dc-invite-result" style="margin-top:10px"></div></div>':'')+
-    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
-    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end">'+button('Remover autorização deste navegador','dc-forget',false)+'</div>';
-  body.querySelector('#dc-sync-now').onclick=async()=>{
+    (isAdmin?'<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px"><h3 style="font-size:14px;font-weight:900">Administração da nuvem</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+button('Ver aparelhos e dados enviados','dc-list-devices',false)+button('Ver excluídos ('+(t.deleted||0)+')','dc-list-deleted',false)+button('Zerar dados da nuvem','dc-reset-cloud',false)+'</div><div id="dc-admin-result" style="margin-top:10px"></div></div>':'')+
+    '<div style="border-top:1px solid #e2e8f0;margin-top:16px;padding-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:10px"><small style="color:#94a3b8;font-size:10.5px">Tira só ESTE computador — os outros PCs e os dados não são mexidos. Para ter acesso de administrador, desconecte e entre de novo com o CNPJ + a <b>senha do gerente</b>.</small>'+button('Desconectar ESTE computador','dc-forget',false)+'</div>';
+  if(escolher){
+    body.querySelector('#dc-enviar-locais').onclick=async()=>{
+      const btn=body.querySelector('#dc-enviar-locais');
+      const ok=await window.confirmSistema('Enviar agora os dados deste computador para a nuvem?','Enviar dados deste PC');if(!ok)return;
+      setBusy(btn,true,'Enviando...');
+      try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Nuvem');}
+      await renderConnected(body);
+    };
+    body.querySelector('#dc-nao-enviar').onclick=async()=>{
+      const btn=body.querySelector('#dc-nao-enviar');
+      const ok=await window.confirmSistema('Os dados que já existem neste computador ficam só aqui e não vão para a nuvem. Tudo o que for feito daqui para frente sincroniza normalmente. Confirma?','Não enviar os dados atuais');if(!ok)return;
+      setBusy(btn,true,'Aplicando...');
+      try{await window.DIGICOPY_CLOUD_SYNC.manterLocalSemEnviar();}
+      catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Não consegui aplicar');}
+      await renderConnected(body);
+    };
+  } else body.querySelector('#dc-sync-now').onclick=async()=>{
     const btn=body.querySelector('#dc-sync-now');
-    if(sync.paused){
-      const ok=await window.confirmSistema('Publicar agora todos os dados deste PC na nuvem vazia?','Publicar este PC');if(!ok)return;
-      setBusy(btn,true,'Publicando...');
-      try{await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud();await renderConnected(body);}catch(e){if(typeof window.lfbAlert==='function')window.lfbAlert(e.message,'Publicação pendente');await renderConnected(body);}
-      return;
-    }
     setBusy(btn,true,'Sincronizando...');
     try{if(window.DIGICOPY_CLOUD_SYNC)await window.DIGICOPY_CLOUD_SYNC.tick('manual');await renderConnected(body);}
     catch(e){setBusy(btn,false);}
   };
-  body.querySelectorAll('.dc-approve-delete').forEach(btn=>btn.onclick=async()=>{
-    const entity=btn.dataset.entity;
-    const ok=typeof window.confirmSistema==='function'?await window.confirmSistema('Você realmente excluiu estes registros de '+entity+'? Eles ficarão recuperáveis na nuvem.','Confirmar exclusão em massa'):false;
-    if(ok&&window.DIGICOPY_CLOUD_SYNC){window.DIGICOPY_CLOUD_SYNC.approveMassDelete(entity);await window.DIGICOPY_CLOUD_SYNC.tick('exclusao-aprovada');await renderConnected(body);}
-  });
   if(isAdmin) body.querySelector('#dc-invite').onclick=async()=>{
     const btn=body.querySelector('#dc-invite'),result=body.querySelector('#dc-invite-result'),role=body.querySelector('#dc-role').value;
     setBusy(btn,true,'Gerando...');
@@ -202,15 +328,46 @@ async function renderConnected(body){
       adminResult.innerHTML=message('Carregando aparelhos...','info');
       try{
         const data=await api('/v1/devices',{method:'GET'});
-        adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
+        adminResult.innerHTML=(data.devices||[]).map(x=>{const last=x.lastSeenAt?new Date(Number(x.lastSeenAt)).toLocaleString('pt-BR'):'nunca';return '<div style="display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e2e8f0;border-radius:9px;margin-top:6px"><div style="flex:1"><b>'+esc(x.name)+'</b><small style="display:block;color:#64748b">'+esc(x.role==='admin'?'Administrador':'Autorizado')+(x.revokedAt?' • BLOQUEADO':'')+' • '+Number(x.activeRecords||0)+' registros atuais • '+Number(x.totalChanges||0)+' alterações</small><small style="display:block;color:#94a3b8">Último acesso: '+esc(last)+'</small></div>'+(!x.revokedAt&&x.id!==data.currentDeviceId?'<button class="dc-revoke" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-weight:800">Bloquear</button>':'')
+          /* v5.24.34 — pedido dele: excluir o lixo antigo DE VEZ (só depois de bloqueado) */
+          +(x.id!==data.currentDeviceId?'<button class="dc-del-device" data-id="'+esc(x.id)+'" data-name="'+esc(x.name)+'" style="padding:6px 9px;border-radius:8px;background:#be123c;color:#fff;font-weight:800">Excluir de vez</button>':'')+'</div>';}).join('')||message('Nenhum aparelho encontrado.','info');
         adminResult.querySelectorAll('.dc-revoke').forEach(btn=>btn.onclick=async()=>{
           const ok=await window.confirmSistema('Bloquear o aparelho '+btn.dataset.name+'? Ele perderá o acesso, mas nenhum dado será apagado.','Bloquear aparelho');
           if(!ok)return;
           try{await api('/v1/devices/revoke',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id})});body.querySelector('#dc-list-devices').click();}
           catch(e){adminResult.innerHTML=message(e.message,'error');}
         });
+        adminResult.querySelectorAll('.dc-del-device').forEach(btn=>btn.onclick=async()=>{
+          const ok=await window.confirmSistema('Apagar o aparelho '+btn.dataset.name+' DA LISTA? Ele perde o acesso e SOME da nuvem na hora. Nenhum DADO de cliente/produto é apagado — só o aparelho some.','Excluir aparelho de vez');
+          if(!ok)return;
+          try{
+            await api('/v1/devices/delete-forever',{method:'POST',body:JSON.stringify({deviceId:btn.dataset.id,nome:btn.dataset.name})});
+            body.querySelector('#dc-list-devices').click();
+          }
+          catch(e){adminResult.innerHTML=message(e.message,'error');}
+        });
       }catch(e){adminResult.innerHTML=message(e.message,'error');}
     };
+    body.querySelector('#dc-reset-cloud').onclick=async()=>{
+      const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
+      if(!ok1)return;
+      const ok2=await window.confirmSistema('Último aviso: a nuvem vai ficar vazia e a sincronização parada. Depois o sistema pergunta se você quer enviar os dados deste PC. Confirma?','Confirmar zerar nuvem');
+      if(!ok2)return;
+      const btn=body.querySelector('#dc-reset-cloud');
+      setBusy(btn,true,'Zerando...');
+      try{
+        if(!window.DIGICOPY_CLOUD_SYNC||typeof window.DIGICOPY_CLOUD_SYNC.resetCloudOnly!=='function')throw new Error('Motor de sincronização não carregado.');
+        await window.DIGICOPY_CLOUD_SYNC.resetCloudOnly();
+        if(typeof window.lfbAlert==='function')window.lfbAlert('Nuvem vazia. Agora escolha se quer enviar os dados deste PC.','Nuvem zerada');
+        await renderConnected(body);
+      }catch(e){
+        if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não foi possível zerar');
+        setBusy(btn,false);
+      }
+    };
+    // v5.22.74 — nada de botão: o que sumiu sozinho volta sozinho. O motor
+    // reconhece as exclusões em lote da falha da v5.22.69 e desfaz só elas,
+    // sem tocar no que a pessoa apagou de propósito.
     body.querySelector('#dc-list-deleted').onclick=async()=>{
       adminResult.innerHTML=message('Carregando itens excluídos...','info');
       try{
@@ -231,11 +388,31 @@ async function renderConnected(body){
 }
 
 window.abrirCloudflareNuvem=async function(){
-  if(!systemAdmin()&&token()){if(typeof window.lfbAlert==='function')window.lfbAlert('Este computador já está autorizado. Somente o administrador pode abrir as configurações da nuvem.','Acesso restrito');return;}
+  // v6.0.4 — a tela Nuvem ABRE para qualquer usuário. O que é de administrador
+  // (gastos, aparelhos, convite, zerar nuvem, acompanhamento dos PCs) continua
+  // trancado lá dentro pelo PAPEL DO APARELHO (role admin = entrou com a senha
+  // do gerente), não pelo login da pessoa.
   const root=modalShell(),body=root.querySelector('#dc-body');
   body.innerHTML=message('Verificando a nuvem...','info');
   if(token()) await renderConnected(body); else await renderDisconnected(body);
 };
+
+// A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
+// clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
+// escolha se apresenta sozinha, uma vez por sessão.
+function cobrarEscolha(){
+  if(!token()||!systemAdmin())return;
+  if(window.__dcEscolhaMostrada)return;
+  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
+  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
+  if(document.getElementById('digicopy-cloud-modal'))return;
+  window.__dcEscolhaMostrada=true;
+  window.abrirCloudflareNuvem();
+}
+if(typeof document!=='undefined'){
+  setTimeout(cobrarEscolha,9000);
+  setTimeout(cobrarEscolha,45000);
+}
 
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
 })();
