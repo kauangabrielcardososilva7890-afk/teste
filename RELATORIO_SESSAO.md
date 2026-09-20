@@ -28,6 +28,15 @@ Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedid
 
 ---
 
+## Linha do site (outro chat) — descoberta 2026-09-20
+- Site https://teste-60f.pages.dev/ NÃO roda esta branch: as strings dele (Fiscal NFe, "Conexão da nuvem", "Leituras agora vivem") não existem em nenhum dos 442 commits daqui.
+- O código do site está em `arena/01a0683d-teste` (v6.1.2, PR #26) e `arena/01a0590a-teste` (contém a primeira). Base comum com esta branch: `26e5987` (as duas linhas divergiram dali; o `main` não tem nenhuma das duas).
+- **Modo escuro do usuário ACHADO**: `ajustes_v52230_modo_escuro_dispositivo_patch.js` — checkbox "Modo escuro" no card "Aparência deste computador", anexado no FIM da Config (`#view-config .grid`), mecanismo `html.digi-escuro` + localStorage só-neste-aparelho. Era exatamente o que ele descreveu.
+- **DUPLICAÇÃO (resolver no merge)**: meu `modo_escuro_patch.js` (botão lua/sol no topo + `data-theme`) duplica a função deles com mecanismo diferente — os dois juntos conflitam (dois toggles). Recomendação: manter o DELES, remover o meu. Aguardando confirmação; NÃO remover sozinho.
+- Fiscal deles: `fiscal_catalogo_completo_patch.js` + `navegacao_fiscal_barra_escuro_patch.js` (menu Nota Fiscal/Perfil Tributário/Manifestação/NCM/Enviar XML) — módulo NFe real, área distinta do meu neo de módulos dinâmicos (tendem a coexistir).
+- Lido somente via git show/grep; nenhum merge feito — o merge é do outro chat.
+- Perguntas levadas ao outro chat: (1) qual branch deploya o site; (2) plano/ordem do merge e quem resolve conflitos; (3) confirmar remoção do meu modo escuro; (4) o bug da fiscal foi no site deles ou no meu preview; (5) o que são "4.4/4.9" e "códigos numéricos"; (6) o .exe sai de qual branch; (7) querem meu duplo-clique global + REGRAS.md no merge?
+
 ## v5.21.5 — Banner rawgh deletado (aprovado)
 - Usuário aprovou a remoção: banner "endereço PROVISÓRIO" deletado de verdade do `app.js` (bloco final do arquivo) + `removerAvisoProvisorio` do `correcoes_uso_diario_patch.js` + seletores rawgh do `delete_hidden_patch.js`. Nenhuma referência a rawgh resta no código (só histórico de versões antigas neste `.md`).
 - Validação: `npm run check` OK (Bundle 100 scripts, sha256 029d7441c823d803); `npm test` **55 passaram, 1 falha aceita (etiquetas), 0 falharam**.
