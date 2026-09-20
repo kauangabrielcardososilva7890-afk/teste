@@ -94,7 +94,6 @@
   "ajustes_v52023_patch.js",
   "ajustes_v52024_patch.js",
   "modulos_neo_visual_patch.js",
-  "modo_escuro_patch.js",
   "duplo_clique_patch.js",
   "indexeddb_persistence_patch.js",
   "cloudflare_sync_patch.js",
