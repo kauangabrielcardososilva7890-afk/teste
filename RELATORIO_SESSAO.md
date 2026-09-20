@@ -7,7 +7,7 @@
 **Última versão:** **v5.21.5**  
 **Commit:** `54831a7`  
 **Zip:** `https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bb58-teste.zip`  
-**Site:** endereço Cloudflare do usuário (pedir o link)
+**Site:** https://teste-60f.pages.dev/ (site de teste do usuário, Cloudflare Pages)
 
 Não voltar para outras branches. Não reabrir etiquetas nem vendas (salvo pedido explícito).
 

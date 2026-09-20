@@ -29,5 +29,4 @@ Lista única e numerada. Se uma regra mudar, atualize AQUI (não espalhe em outr
 20. **Rawgh-banner** (aviso de endereço provisório): REMOVIDO na v5.21.5 com aprovação do usuário.
 
 ## Pendências do usuário (não são regras, só para não esquecer)
-- Passar o endereço do site Cloudflare dele (para os links de teste).
 - Dizer onde viu o "modo escuro" (não existe neste repositório — ver v5.21.4).
