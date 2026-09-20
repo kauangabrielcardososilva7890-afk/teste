@@ -3574,6 +3574,7 @@ Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé
 ### Estado de Git/deploy
 
 - Branch fixa: `arena/01a0bfad-teste`.
+- Commit desta continuação: `8291b1c` (`Simplifica portao da nuvem e adiciona olho na senha`).
 - Nenhum merge foi feito.
 - Nenhum Worker foi publicado nesta continuação.
 - O Worker público ainda é `API 0.4.7 / Worker 5.26.3`; o código local está em `API 0.4.8 / Worker 5.26.4`.
@@ -3582,7 +3583,7 @@ Ambiente onde ele testa (Pages no Chrome? .exe?) e um print da barra — rodapé
 ### Links obrigatórios para retomada
 
 - Site fixo da branch: https://arena-01a0bfad-teste.teste-60f.pages.dev
-- Preview atualizado da última publicação Pages validada: https://385275d1.teste-60f.pages.dev
+- Preview atualizado da última publicação Pages validada: https://2e2599ae.teste-60f.pages.dev
 - ZIP da branch: https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0bfad-teste.zip
 - PR: https://github.com/kauangabrielcardososilva7890-afk/teste/pull/28
 - Saúde do Worker público, ainda antigo: https://digicopy-sync-api.digicopyonline.workers.dev/health
