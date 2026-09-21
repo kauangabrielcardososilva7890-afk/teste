@@ -38,7 +38,7 @@
 <header>
   <h1>Guia de Teste — Nota Fiscal (NF-e modelo 55) · v6.1.3</h1>
   <p>Sistema Digicopy · Teste dividido em Parte A (navegador, sem certificado) e Parte B (computador com o .exe + certificado A1).
-     Não precisa apressar. Se algo der errado, anote na hora no relatório (arquivo <b>RELATORIO_DE_TESTE_NF.txt</b>) — quanto mais detalhe, mais rápido a correção sai.</p>
+     Não precisa apressar. Se algo der errado, anote na hora no relatório — o jeito novo é o arquivo <b>RELATORIO_DE_TESTE_NF.html</b> (abre no navegador, tem 3 caixinhas por pergunta e no fim salva um .txt pronto para me mandar). O <b>RELATORIO_DE_TESTE_NF.txt</b> continua valendo como plano B, para quem preferir digitar direto.</p>
 </header>
 
 <div class="regra"><b>Regra de ouro do teste:</b> tudo nasce em <b>HOMOLOGAÇÃO</b> (modo teste, sem valor fiscal). A tela mostra uma placa vermelha escrita <b>HOMOLOGAÇÃO — MODO TESTE, SEM VALOR FISCAL</b> o tempo todo. Se em algum momento aparecer <b>PRODUÇÃO</b> sem ninguém ter habilitado de propósito, anote como ERRO GRAVE. Nada aqui emite nota de verdade: emitir exige clique, senha na hora e a palavra PRODUCAO digitada.</div>
@@ -195,9 +195,10 @@
 
 <h2>Como entregar o resultado</h2>
 <ol>
-  <li>Abra o arquivo <b>RELATORIO_DE_TESTE_NF.txt</b> (está junto com este guia) em qualquer editor de texto.</li>
-  <li>Preencha o que deu certo, o que deu errado, as <b>correções</b> que pede e as <b>adições</b> que sentiu falta.</li>
-  <li>Mande de volta <b>colando o conteúdo na conversa</b> (ou enviando o arquivo). Não precisa formatar nada bonito — o texto puro serve.</li>
+  <li>Abra o arquivo <b>RELATORIO_DE_TESTE_NF.html</b> (está junto com este guia) — no navegador, pelo site ou do próprio PC.</li>
+  <li>Em cada pergunta, marque <b>uma</b> caixa: <b>✅ OK</b>, <b>❌ Não resolveu</b> ou <b>➖ Não testei</b>. Se quiser explicar, escreva na caixinha de texto daquela pergunta; no fim tem uma caixa livre de observações.</li>
+  <li>Clique em <b>💾 Salvar relatório (.txt)</b> e mande o arquivo que baixar (ou clique em <b>📋 Copiar texto</b> e cole aqui na conversa).</li>
+  <li>Se preferir digitar à mão, o <b>RELATORIO_DE_TESTE_NF.txt</b> continua valendo — é o plano B.</li>
 </ol>
 
 <div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>

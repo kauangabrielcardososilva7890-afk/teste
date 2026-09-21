@@ -3847,3 +3847,58 @@ nova: ou a integração Git dele não está ligada, ou a build não rodou.
 5. Aviso de validade do certificado A1 na Central de NF (sessão de NF).
 6. Subir a versão (6.1.3 → 6.1.4) quando for gerar `.exe` novo, re-ancorando os testes que carimbam 6.1.3.
 7. Merge do PR #29 somente com autorização explícita do dono.
+
+---
+
+## CONTINUIDADE — 21/09/2026 — worker 5.26.4 no ar (conferido) + erro do build explicado + relatório de teste em HTML
+
+### Pedidos desta rodada (4)
+
+1. Erro do deploy do worker (token de build) + "o código correto pra dar o deploy".
+2. Conferir se o worker/site realmente subiram (ele: "o site ta certo, o worker que deu b.o").
+3. Log do `atualizar_motor_nuvem.cmd` enviado por ele (deploy manual concluído).
+4. Transformar o relatório de teste em HTML, com 3 caixas por pergunta (resolveu / não resolveu / não testei), caixa de texto opcional em cada pergunta, uma caixa separada e botão **Salvar** que gera um `.txt` já escrito.
+
+### Conferências feitas por fora (evidência, não suposição)
+
+- `GET /health` → **`version 0.4.8` / `versao 5.26.4`** ✅ o worker no ar está na versão do repositório.
+- `https://teste-60f.pages.dev` → agora serve o **`cloudflare-worker/README.md` novo** (Production branch citando `arena/01a0c087-teste`) ✅ a produção do Pages pegou a branch desta sessão.
+- O erro do build (`The build token selected for this build has been deleted or rolled...`) é o caso **"Stale API token"** documentado pela Cloudflare em *Troubleshooting builds*: o dropdown de **API token** da Build Configuration guarda token editado/apagado/rollado. **Não é código do worker.** Cura: **Create new token** na Build Configuration → Save → Retry build.
+- Detalhe técnico descoberto e anotado: o token criado automaticamente pelo Workers Builds tem *Account Settings (read), Workers Scripts (edit), Workers KV (edit), Workers R2 (edit), Workers Routes (edit), User Details (read), Memberships (read)* — **não inclui D1**, e o `Deploy command` do projeto (`npm run deploy`) roda migrações antes de publicar. Saídas documentadas: acrescentar **D1: Edit** ao token **ou** trocar o Deploy command para `npx wrangler deploy` e deixar migração para o `.cmd`.
+
+### Alterações desta rodada
+
+- **`RELATORIO_DE_TESTE_NF.html` (NOVO)** — relatório de teste do dono, no mesmo estilo do `GUIA_DE_TESTE_NF.html`:
+  - **25 perguntas** em 4 partes (A app/navegação · B nuvem/perfis · C fiscal/homologação · D permissões/estorno), cada uma com **exatamente 3 caixas** (✅ OK · ❌ Não resolveu · ➖ Não testei) e **caixa de texto opcional**;
+  - "onde testou" (3 caixas), 5 linhas de **CORREÇÕES**, 5 de **ADIÇÕES**, **caixa de texto separada** de observações gerais e **veredicto** (3 caixas);
+  - **💾 Salvar relatório (.txt)** baixa o arquivo já escrito (com data/hora, marcas, observações e resumo contado); **📋 Copiar texto** e **👁 Prévia** como planos B;
+  - rascunho automático no navegador (não perde o que digitou), contador "respondidas de 25", aviso de nunca escrever senha/token/certificado/CSC, sem popup nativo (regra do projeto), sem dependência externa (funciona do PC e do site).
+- **`test_relatorio_teste_nf.js` (NOVO)** + entrada no `test_runner.js` — abre o HTML de verdade (jsdom), preenche como o dono faria e confere o `.txt` gerado (3 caixas por pergunta, marcas OK/NAO/NT/---, contagem do resumo, correções/adições/geral/veredicto, nome do arquivo, rascunho, e que o relatório **não** entra no bundle nem no `.exe`).
+- `GUIA_DE_TESTE_NF.html`: as duas passagens que mandavam usar o `.txt` agora apontam para o **HTML** (o `.txt` segue como plano B).
+- `RELATORIO_DE_TESTE_NF.txt`: aviso no topo indicando a versão recomendada (HTML).
+- `cloudflare-worker/README.md`: nova seção **"Publicação automática (Workers Builds)"** com a configuração certa, o erro do token velho, a cura oficial, as permissões do token e o alerta de D1.
+- `PASSO_A_PASSO_NUVEM_E_SITE.html`: bloco **"Deu erro no build do Worker?"** com o passo a passo da cura + a nota de que o `.cmd` já publicou a 5.26.4.
+- **Bug pego pelo teste novo (antes de entregar):** o gerador do `.txt` quebrava quando havia pergunta sem resposta (`ST['vazio']` não existia). Corrigido no `RELATORIO_DE_TESTE_NF.html` — pergunta sem marcação agora sai como `[---]` e entra na conta "sem resposta".
+
+### Validações
+
+- `node test_relatorio_teste_nf.js`: **31 asserts ✓** · `npm test`: **185 passaram, 0 falharam**.
+- `npm run check` ✔ · `npm run sync:check` ✔ (v6.1.3, 222 scripts, 0 soltos) · `git diff --check` limpo.
+- Worker: `node --check src/index.js` + `node test-pure.mjs` ✔ (nenhum código do worker foi alterado nesta rodada).
+- `node_modules` não sobrevive entre rodadas neste sandbox (a suíte precisa de `npm install` — já documentado no `BUILD_EXE.md`).
+
+### Estado de Git/deploy
+
+- Branch fixa: `arena/01a0c087-teste` · PR #29 com base `main` — **sem merge**.
+- Worker no ar: **API 0.4.8 / Worker 5.26.4** ✅ (deploy manual do dono pelo `atualizar_motor_nuvem.cmd`; o deploy automático continua quebrado só pelo token velho do Workers Builds).
+- Site de teste: **Produção em `arena/01a0c087-teste`** ✅ (conferido pelo README novo servido no link fixo).
+- Nada foi publicado pelo agente nesta rodada.
+
+### Pendências
+
+1. Dono: teste funcional no link fixo, usando o **`RELATORIO_DE_TESTE_NF.html`** (baixa o `.txt` e manda aqui).
+2. Dono (opcional): consertar o token do Workers Builds se quiser publicação automática do worker — se preferir, mantemos o `.cmd` (mais seguro para a nuvem da loja).
+3. Plano B do link do cliente (GitHack morto dentro do `sync_build.js`) — decisão pendente.
+4. Aviso de validade do certificado A1 na Central de NF.
+5. Subir a versão (6.1.3 → 6.1.4) quando for gerar `.exe` novo, re-ancorando os testes que carimbam 6.1.3 — **incluir aqui** a atualização da versão citada no `GUIA_DE_TESTE_NF.html` e no `RELATORIO_DE_TESTE_NF.html`.
+6. Merge do PR #29 somente com autorização explícita do dono.

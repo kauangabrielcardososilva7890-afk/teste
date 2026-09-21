@@ -94,6 +94,32 @@ push desta branch publicar sozinho.</p>
 <p>Volte nesta mesma tela e troque a <b>Production branch</b> de volta para <code>main</code>
 (eu te lembro no dia). Sem isso, o worker fica preso na branch de sessão.</p>
 
+<h3>Deu erro no build do Worker?</h3>
+
+<div class="caixa perigo">
+  <b>Erro:</b> <code>Failed: The build token selected for this build has been deleted or rolled and cannot be used for this build. Please update your build token in the Worker Builds settings and retry the build.</code><br><br>
+  <b>Isso não é erro do código</b> — é o <b>token de build</b> guardado no painel, que ficou velho
+  (foi editado, apagado ou “rollado” em <b>My Profile → API Tokens</b>). É um caso conhecido e
+  documentado pela Cloudflare (<i>Troubleshooting builds → Stale API token</i>). A cura:
+  <ol>
+    <li>No projeto do worker: <b>Settings → Build → Build Configuration</b>.</li>
+    <li>No campo <b>API token</b>, clique em <b>Create new token</b> (a Cloudflare cria o token com as permissões certas — nada de colar valor no repositório).</li>
+    <li><b>Save</b>.</li>
+    <li><b>Deployments</b> → menu <b>⋯</b> do build → <b>Retry build</b>.</li>
+  </ol>
+  <b>Se o build passar do token e falhar nas migrações:</b> o <b>Deploy command</b> é
+  <code>npm run deploy</code>, que roda as migrações antes de publicar — e o token automático do
+  Workers Builds <b>não inclui D1</b>. Nesse caso: acrescente <b>D1: Edit</b> ao token, ou troque o
+  Deploy command para <code>npx wrangler deploy</code> e deixe as migrações para o
+  <code>atualizar_motor_nuvem.cmd</code> (que já faz isso e sempre funcionou).
+</div>
+
+<div class="caixa bom">
+  <b>Não quer brigar com token agora?</b> Não precisa: em 21/09 o
+  <code>atualizar_motor_nuvem.cmd</code> publicou o worker <b>5.26.4</b> com sucesso
+  (conferido em <code>/health</code>). O automático é conveniência; o manual é o caminho garantido.
+</div>
+
 <h2>Parte 2 — Site de teste (Pages) na branch nova</h2>
 
 <ol>

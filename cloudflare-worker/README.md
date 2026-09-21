@@ -14,6 +14,47 @@ API local-first isolada do aplicativo Electron/web.
   API 0.4.7 / Worker 5.26.3 enquanto o repositório já tinha 0.4.8 / 5.26.4.)
 - Passo a passo ilustrado do painel: `PASSO_A_PASSO_NUVEM_E_SITE.html` (raiz do projeto)
 
+## Publicação automática (Workers Builds) — conferência e erro do token
+
+Configuração certa em **Settings → Build → Build Configuration**:
+
+| Campo | Valor |
+|---|---|
+| Root directory | `cloudflare-worker` |
+| Build command | (vazio) |
+| Deploy command | `npm run deploy` |
+| Production branch | a branch da sessão (hoje `arena/01a0c087-teste`) |
+
+**Erro conhecido (21/09/2026):** `Failed: The build token selected for this build
+has been deleted or rolled and cannot be used for this build. Please update your
+build token in the Worker Builds settings and retry the build.`
+
+Esse erro **não é do código do worker** — é o token de build guardado no painel,
+que ficou velho (foi editado, apagado ou "rollado" em My Profile → API Tokens).
+A cura, conforme a documentação oficial da Cloudflare (*Troubleshooting builds →
+Stale API token*):
+
+1. **Settings → Build → Build Configuration → API token** → **Create new token**
+   (a Cloudflare cria o token já com as permissões da lista abaixo — não precisa
+   colar valor nenhum no repositório).
+2. **Save** (as configurações valem para o próximo build; ao refazer, valem as do
+   momento do retry).
+3. **Deployments** → `⋯` do build → **Retry build**.
+
+Permissões do token criado automaticamente pelo Workers Builds: *Account Settings
+(read)*, *Workers Scripts (edit)*, *Workers KV Storage (edit)*, *Workers R2
+Storage (edit)*, *Workers Routes (edit)* e *User Details (read) / Memberships
+(read)*. **Atenção:** essa lista não inclui D1 — e o nosso `Deploy command` roda
+as migrações antes de publicar. Se o build falhar no passo das migrações por
+permissão, use uma destas duas saídas: acrescentar **D1: Edit** ao token do
+build, ou trocar o **Deploy command** para `npx wrangler deploy` (e deixar as
+migrações para o `atualizar_motor_nuvem.cmd`, que sempre funcionou).
+
+**Cuidado ao ligar isso:** o worker publicado é o **mesmo que a loja usa no dia a
+dia**. Com produção apontando para a branch da sessão, todo push publica na
+nuvem real. Se quiser automatizar com rede de segurança, ligue também
+**Non-production branch builds** (Preview URLs) e deixe a produção em `main`.
+
 ## Banco D1
 
 Binding: `DB`

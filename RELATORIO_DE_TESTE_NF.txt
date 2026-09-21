@@ -1,3 +1,7 @@
+ATENÇÃO: A VERSÃO RECOMENDADA AGORA É O ARQUIVO RELATORIO_DE_TESTE_NF.html (mesma pasta).
+Ele abre no navegador, tem 3 caixinhas por pergunta (OK / não resolveu / não testei) e, no fim,
+salva sozinho um .txt já escrito. Este arquivo continua valendo como PLANO B, para digitar direto.
+
 ════════════════════════════════════════════════════════════════════════
 RELATÓRIO DE TESTE — DIGICOPY v6.1.3
 Preencha em qualquer editor de texto e devolva COLANDO NA CONVERSA
