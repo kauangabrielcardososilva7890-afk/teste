@@ -3809,3 +3809,41 @@ Nenhum link de deployment ou preview foi criado ou apresentado nesta rodada.
 1. Dono: trocar as duas Production branches no painel (worker e Pages) — passos no `PASSO_A_PASSO_NUVEM_E_SITE.html`.
 2. Conferir `/health` = 5.26.4 e rodapé do site = v6.1.3 depois da troca.
 3. Depois do merge do PR #29: voltar a Production branch do worker para `main`.
+
+---
+
+## VERIFICAÇÃO 20/09/2026 — o que realmente está no ar (conferido por fora, não por suposição)
+
+Depois de o dono fazer as trocas no painel, estas foram as conferências feitas de fora
+(ferramenta de leitura de página, porque o sandbox não tem rede para esses domínios):
+
+| Onde | O que respondia | Veredito |
+|---|---|---|
+| `…/health` (worker da nuvem) | `version 0.4.7`, `versao 5.26.3` | ❌ **ainda o antigo** (o repositório tem 0.4.8 / 5.26.4) |
+| Alias `arena-01a0c087-teste.teste-60f.pages.dev` | serve o `cloudflare-worker/README.md` **NOVO** (Production branch já citando `arena/01a0c087-teste`) | ✅ a branch nova **está publicada** no Pages |
+| Link fixo `https://teste-60f.pages.dev` | serve o `README.md` **VELHO** (Production branch `arena/01a00cfb-teste`) e o guia novo **não existe** ali | ❌ produção do Pages ainda aponta para a branch antiga |
+
+Leitura dos fatos: o Pages **construiu** a branch nova (alias responde com o conteúdo novo),
+mas o **endereço fixo ainda serve a produção antiga** — a troca de branch de produção
+precisa ser confirmada/salva e a produção atualizada. O worker **não recebeu** a versão
+nova: ou a integração Git dele não está ligada, ou a build não rodou.
+
+### Ação tomada para destravar
+
+- Push de commit nesta branch (documentação da verificação) para disparar as duas builds:
+  a do Pages (produção da branch nova) e, se estiver ligada, a do worker (`npm run deploy`).
+- Se, depois do push, o `/health` continuar em 5.26.3, a conclusão é factual: **o projeto do
+  worker não tem integração Git** (as versões no ar vieram de deploy manual) — nesse caso o
+  caminho é `atualizar_motor_nuvem.cmd` ou `cd cloudflare-worker && npx wrangler deploy`
+  no PC do dono (não publico worker por conta própria sem confirmação dele — regra 37/41).
+
+### Pendências que continuam abertas
+
+1. Worker no ar em 5.26.4 (acima).
+2. Link fixo do Pages na branch da sessão (acima).
+3. Teste do dono no link fixo: Início sem "undefined", menu Fiscal (6 itens + 10 abas),
+   permissões/estorno e NF em homologação (`GUIA_DE_TESTE_NF.html` + `RELATORIO_DE_TESTE_NF.txt`).
+4. Plano B do link do cliente (GitHack morto dentro do `sync_build.js`) — decisão do dono.
+5. Aviso de validade do certificado A1 na Central de NF (sessão de NF).
+6. Subir a versão (6.1.3 → 6.1.4) quando for gerar `.exe` novo, re-ancorando os testes que carimbam 6.1.3.
+7. Merge do PR #29 somente com autorização explícita do dono.
