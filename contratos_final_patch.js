@@ -67,6 +67,33 @@ function equipamentoPorChave(chave, empId){
   if(!k) return null;
   return (db.equipamentos||[]).find(e => e.empresaId === empId && (up(e.patrimonio) === k || up(e.serie) === k || up(e.codigoAntigo) === k)) || null;
 }
+// ══ v6.1.4 — "CLIENTE SEM VÍNCULO" (relato dele, 21/09/2026, com foto) ═════
+// Contratos apareciam como "Cliente sem vínculo" mesmo existindo o cadastro:
+// o vínculo só era procurado pelo ID e pelo CÓDIGO antigo. Cadastro migrado
+// muitas vezes guardou só o NOME — e aí não achava nunca. Agora o nome salvo no
+// contrato (e o nome da linha crua da locação) também vale — MAS com a regra de
+// sempre: só vincula quando o nome aponta para UM único cliente da empresa.
+// Nome repetido (ex.: dois "Cliente Balcão") nunca chuta: fica como está e o
+// caso aparece como "ambíguo" para o dono resolver na tela de Clientes.
+function cfNormNome(v){
+  return up(txt(v)).replace(/[^A-Z0-9 ]/g,' ').replace(/\b(LTDA|ME|MEI|EIRELI|EPP|SA|S A|E)\b/g,' ').replace(/\s+/g,' ').trim();
+}
+function cfNomeDoContrato(c){
+  if(!c) return '';
+  const direto = txt(c.clienteNome || c.nomeCliente || c.cliente || c.clienteRazao || c.razaoSocial || c.nomeFantasia);
+  if(direto) return direto;
+  const raw = rawLocPorContrato(c);
+  return raw ? txt(nomeRow(raw)) : '';
+}
+function cfClientesPorNome(nome, empId){
+  const alvo = cfNormNome(nome);
+  if(!alvo || alvo.length < 3) return [];
+  return (db.clientes||[]).filter(x => x && (!empId || !x.empresaId || x.empresaId === empId) && cfNormNome(x.nome || x.fantasia) === alvo);
+}
+function cfClientePorNomeUnico(nome, empId){
+  const achados = cfClientesPorNome(nome, empId);
+  return achados.length === 1 ? achados[0] : null; // 0 = não achou; 2+ = ambíguo, não chuta
+}
 function rawLocPorContrato(c){
   const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
   if(!cod) return null;
@@ -96,9 +123,12 @@ function vincularContratosClientes(empId){
     if(c.clienteId && cliente(c.clienteId)) return;
     const raw = rawLocPorContrato(c);
     const codCli = codigo(c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE']));
+    let cli = codCli ? clientePorCodigo(codCli, empId) : null;
+    // v6.1.4 — sem código, tenta o NOME (único) antes de qualquer criação
+    if(!cli) cli = cfClientePorNomeUnico(cfNomeDoContrato(c), empId);
+    if(cli){ c.clienteId = cli.id; if(codCli) c.codClienteAntigo = codCli; mudou++; return; }
     if(!codCli) return;
-    let cli = clientePorCodigo(codCli, empId);
-    if(!cli) cli = criaClienteDeRaw(codCli, rawClientePorCodigo(codCli) || raw || {}, empId);
+    cli = criaClienteDeRaw(codCli, rawClientePorCodigo(codCli) || raw || {}, empId);
     if(cli){ c.clienteId = cli.id; c.codClienteAntigo = codCli; mudou++; }
   });
   return mudou;
@@ -178,6 +208,14 @@ function th(col,label){ return `<th onclick="contratosFinalSort('${col}')" class
 function clienteContrato(c){
   let cl = c && c.clienteId ? cliente(c.clienteId) : null;
   if(!cl){ const raw=rawLocPorContrato(c); const codCli=codigo(c && c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE'])); cl=clientePorCodigo(codCli, c && c.empresaId); }
+  // v6.1.4 — pelos nomes (relato "Cliente sem vínculo"): nome do contrato e,
+  // se preciso, o nome da linha crua. Só com correspondência ÚNICA.
+  if(!cl && c) cl = cfClientePorNomeUnico(cfNomeDoContrato(c), c.empresaId);
+  // v6.1.4 — último recurso: o parque do contrato aponta para o cliente
+  if(!cl && c){
+    const p = (db.parque||[]).find(x => x && x.contratoId === c.id && x.clienteId && cliente(x.clienteId));
+    if(p) cl = cliente(p.clienteId);
+  }
   return cl;
 }
 function nomeClienteContrato(c){ const cl=clienteContrato(c); return cl ? cl.nome : 'Cliente sem vínculo'; }
@@ -224,7 +262,7 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${tipo==='proposta'?'proposta':'contrato'}-${codigoContrato(c)||'sem-codigo'}.rtf`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
 };
 
-window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar };
+window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar, cfNormNome, cfClientePorNomeUnico, clienteContrato };
 
 const oldShowApp = window.showApp;
 window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };

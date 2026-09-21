@@ -4034,3 +4034,45 @@ Ele esclareceu: quer o **código compilado do worker** (o mesmo que o painel mos
 - **5** = ele vai mandar **todas** as fotos da parte fiscal antiga na próxima mensagem (sem separar). Nada a fazer além de esperar; ao chegar, separar por tela (menu fiscal, nova venda de NF em aba, A1).
 - **6** = ele quer **os três** (check-up único, quadro de versão por PC, teste de tela automático). **Fila desta próxima entrega:** (A) check-up único com resumo copiável; (B) quadro de versão por PC — precisa de migração 0007 (`app_version` em `devices`) + leitura do header `x-digicopy-versao` (que o worker já recebe) + coluna no painel Nuvem; (C) teste de tela automático no ritual (base em `e2e/`, Playwright).
 - Ele perguntou também se o relatório novo já não faz parte disso: não — o relatório é **o que ele preenche**; as 3 ferramentas rodam **sozinhas no sistema** e são para mim/diagnóstico.
+
+---
+
+## CONTINUIDADE — 21/09/2026 (5) — barra (foto), contrato sem vínculo, cliente duplicado, relatório de problemas e o PR
+
+### 1) O PR (ele perguntou: "até agora não criou um PR?")
+
+**O PR #29 já existia desde 20/09** (`arena/01a0c087-teste` → `main`, OPEN, MERGEABLE, 11 commits à frente da main). **Descrição reescrita** nesta rodada (via `gh api PATCH`, porque `gh pr edit` falha com erro de "Projects classic") com a tabela de tudo que entrou. **O que explicar a ele:** o link fixo e o worker rodam a **branch** — por isso o merge não muda o que ele vê no site; o merge serve para levar o conteúdo à `main` (e depois voltar as Production branches para `main`, como já combinado).
+
+### 2) Contratos com "Cliente sem vínculo" (foto dele)
+
+**Causa:** `clienteContrato()` procurava o cliente só por `clienteId` e por `codClienteAntigo` (código). Cadastro migrado às vezes guardou **só o nome** — e nunca achava. **Correção (`contratos_final_patch.js`):** o **nome salvo no contrato** (e o nome da linha crua de LOCACAO) passam a valer — com a regra de sempre: **só vincula quando o nome aponta para UM único cadastro** da empresa; nome repetido **não chuta**. Último recurso: o cliente que aparece no `parque` do contrato. Exporta `cfNormNome`, `cfClientePorNomeUnico` e `clienteContrato` no `CONTRATOS_FINAL_PURE`.
+
+### 3) "Cliente Balcão duplicado" — detector + união guiada
+
+Em `ajustes_v5214_clientes_visiveis_patch.js` (módulo dos clientes, sem arquivo novo):
+- **`cliGruposDuplicados`** agrupa pelo nome comparável (sem acento, sem maiúscula, ignorando LTDA/ME/MEI/EIRELI/EPP/SA) e só considera empresas da sessão e cadastros não-unificados.
+- **`cliRefsDe`** conta as referências por entidade (contratos, vendas, OS, leituras, orçamentos, títulos, parque...).
+- **`cliEscolherPrincipal`** escolhe quem fica: **mais referências** → desempate pelo **código menor** (mais antigo) → `criadoEm`.
+- **`cliUnir`** varre **todas** as listas do banco e move `clienteId` para o principal; marca os repetidos como `status:'unificado'` + `unificadoPara`. **Nunca apaga nada.**
+- **UI:** botão **🔎 Duplicados (N)** na tela Clientes (com a contagem), painel com os grupos, botão "Unir em 1 cadastro", confirmação em popup do sistema (`confirmSistema`), exigência de permissão (`usuarioPodeApagar` ou Admin/Dono), registro na Auditoria e — na mesma janela — a **lista dos contratos que continuam sem vínculo** (com o nome guardado em cada um).
+- Sem tocar em contador, sem apagar dado, sem criar cliente novo.
+
+### 4) Novo relatório: `RELATORIO_DE_PROBLEMAS.html`
+
+Pedido dele: relatório **de problemas em geral** (não é o de nota fiscal), com os **caminhos em caixas** e botão **"+ Adicionar passo"** que cria caixas **sem limite**, mais um **"+" separado** que cria **outro problema** (bloco novo abaixo).
+- Cada bloco: título, **passos (caminhos) numerados**, o que aconteceu, o que esperava, frequência (sempre/às vezes/uma vez), gravidade (trava/atrapalha/só visual), nome do print (a foto vai pelo chat) e observações do problema.
+- Botão de **remover** passo (✕) e bloco (✕); numeração se ajeita sozinha; nunca fica sem bloco.
+- Rascunho automático no navegador; **💾 Salvar** gera `.txt` com tudo (problema 1, 2, 3...), **📋 Copiar** e **👁 Prévia**.
+- Aviso de segredos; sem dependência externa; fora do bundle/.exe.
+
+### 5) Ainda desta rodada
+
+- `test_relatorio_problemas.js` (novo na suíte) e `test_ajustes_v6104.js` ampliado (contratos + duplicados, 78+ asserts).
+- Suíte: **187 testes, 0 falhas**. `check`/`sync:check`/`verify:files` OK. Bundle sha `6baf251f865ed73e`. Mobile sincronizado.
+- **PR #29**: título e descrição atualizados.
+
+### 6) Respostas pendentes para ele (registro)
+
+- **"O deploy do worker é necessário?"** → **Não, agora não.** O worker no ar já está na versão do código (API 0.4.8 / Worker 5.26.4, conferido em `/health`). O deploy só é preciso quando o **código da nuvem** mudar. Os três caminhos que existem de verdade: (1) `atualizar_motor_nuvem.cmd` no PC (o mais completo: aplica migração + publica); (2) **colar o código** em Cloudflare → Workers & Pages → `digicopy-sync-api` → **Edit code** → Ctrl+A → colar → **Deploy**; (3) botão no GitHub (Actions → Publicar motor da nuvem) — só quando ele instalar o arquivo na aba Actions.
+- **Os 3 pedidos de garantia (A check-up, B quadro de versão por PC, C teste de tela automático)** seguem na fila: ele confirmou "os 3". **B precisa de migração 0007** (`app_version` em `devices`) + leitura do header `x-digicopy-versao` (o worker já recebe) + coluna no painel Nuvem — entra junto com o próximo `.cmd`.
+- **Fotos da parte fiscal antiga**: ele disse que manda todas juntas; nesta rodada veio **uma** (a dos contratos). As fotos do menu fiscal antigo e da "nova venda de NF em aba" ainda são necessárias.

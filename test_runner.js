@@ -199,7 +199,8 @@ const tests=[
   "test_versao_visual.js",
   "test_mobile_apk.js",
   "test_relatorio_teste_nf.js",
-  "test_ajustes_v6104.js"
+  "test_ajustes_v6104.js",
+  "test_relatorio_problemas.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

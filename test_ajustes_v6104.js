@@ -223,9 +223,117 @@ async function testarMotorDaNuvem(){
 
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// "CLIENTE SEM VÍNCULO" e "CLIENTE DUPLICADO" (relato dele com foto, 21/09)
+// Roda os DOIS módulos de verdade (contratos_final e clientes visíveis) num
+// ambiente igual ao do sistema, com os casos da foto dele.
+// ═══════════════════════════════════════════════════════════════════════════
+function testarClientesEContratos(){
+  console.log('\n== CONTRATO SEM VÍNCULO: o nome salvo agora vale (só quando é único) ==');
+  const codeC = fs.readFileSync('contratos_final_patch.js', 'utf8');
+  const db = {
+    empresas: [{ id: 'emp' }],
+    clientes: [
+      { id: 'cli1', empresaId: 'emp', codigo: '1', nome: 'Cliente Balcão' },
+      { id: 'cli77', empresaId: 'emp', codigo: '77', nome: 'Cliente Balcão Ltda' },
+      { id: 'cli9', empresaId: 'emp', codigo: '9', nome: 'Cassia Ap Guides de Souza Veloso e Bezerra' }
+    ],
+    contratos: [
+      { id: 'ct1', empresaId: 'emp', numero: 'LC-1', clienteId: null, clienteNome: 'Cassia Ap Guides de Souza Veloso e Bezerra' },
+      { id: 'ct2', empresaId: 'emp', numero: 'LC-2', clienteId: null, clienteNome: 'Cliente Balcão' },
+      { id: 'ct3', empresaId: 'emp', numero: 'LC-3', clienteId: null }
+    ],
+    equipamentos: [], parque: [], leituras: [], os: [], modulosDinamicos: {}
+  };
+  const ctx = { window: {}, db };
+  new Function('window', 'db', codeC)(ctx.window, ctx.db);
+  const PC = ctx.window.CONTRATOS_FINAL_PURE;
+
+  ok(typeof PC.cfNormNome === 'function' && typeof PC.cfClientePorNomeUnico === 'function',
+     'módulo dos contratos exporta os helpers de nome');
+  ok(PC.cfNormNome('Cliente Balcão Ltda') === PC.cfNormNome('CLIENTE BALCAO') && PC.cfNormNome('Cliente Balcão Ltda') === 'CLIENTE BALCAO',
+     'nome comparável ignora acento, maiúscula e sufixo Ltda/ME/EIRELI');
+  ok((PC.cfClientePorNomeUnico('Cassia Ap Guides de Souza Veloso e Bezerra', 'emp') || {}).id === 'cli9',
+     'nome único acha o cliente CERTO');
+  ok(PC.cfClientePorNomeUnico('Cliente Balcão', 'emp') === null && PC.cfClientePorNomeUnico('Cliente Balcão Ltda', 'emp') === null,
+     'nome que casa com 2 cadastros NÃO chuta (devolve nulo) — regra de sempre');
+  ok((PC.clienteContrato(db.contratos[0]) || {}).nome === 'Cassia Ap Guides de Souza Veloso e Bezerra',
+     'contrato com o nome guardado agora aparece COM cliente (era "Cliente sem vínculo")');
+  ok(PC.clienteContrato(db.contratos[1]) === null,
+     'contrato com nome ambíguo continua sem vínculo — honesto, e o dono resolve unindo');
+  ok(PC.clienteContrato(db.contratos[2]) === null,
+     'contrato sem nenhuma pista de cliente continua sem vínculo');
+
+  console.log('\n== CLIENTES DUPLICADOS: detector + união que NÃO apaga nada ==');
+  const codeV = fs.readFileSync('ajustes_v5214_clientes_visiveis_patch.js', 'utf8');
+  const db2 = {
+    empresas: [{ id: 'emp_digicopy' }],
+    clientes: [
+      { id: 'c1', empresaId: 'emp_digicopy', codigo: '1', nome: 'Cliente Balcão', criadoEm: '2025-01-01' },
+      { id: 'c77', empresaId: 'emp_digicopy', codigo: '77', nome: 'CLIENTE BALCAO LTDA', criadoEm: '2026-08-01' },
+      { id: 'c9', empresaId: 'emp_digicopy', codigo: '9', nome: 'Cassia Ap Guides de Souza Veloso e Bezerra', criadoEm: '2025-05-05' }
+    ],
+    contratos: [{ id: 'ct1', clienteId: 'c1' }, { id: 'ct2', clienteId: 'c77' }],
+    vendas: [{ id: 'v1', clienteId: 'c77' }, { id: 'v2', clienteId: 'c9' }],
+    os: [{ id: 'o1', clienteId: 'c1' }], leituras: [], orcamentos: [], contasReceber: [{ id: 'cr1', clienteId: 'c77' }],
+    contasPagar: [], parque: [{ id: 'p1', clienteId: 'c1' }], notificacoes: [], recargas: [], equipamentos: [], produtos: []
+  };
+  const ctx2 = { window: {}, document: undefined, db: db2 };
+  new Function('window', 'document', codeV)(ctx2.window, ctx2.document);
+  const PV = ctx2.window.CLIENTES_VISIVEIS_PURE;
+  ok(typeof PV.cliGruposDuplicados === 'function' && typeof PV.cliUnir === 'function',
+     'módulo dos clientes exporta o detector e a união');
+  const grupos = PV.cliGruposDuplicados(db2.clientes, 'emp_digicopy', db2);
+  ok(grupos.length === 1 && grupos[0].itens.length === 2,
+     'acha exatamente 1 grupo repetido (Balcão x2) e não inventa outro');
+  const refs1 = PV.cliRefsDe(db2, 'c1'), refs77 = PV.cliRefsDe(db2, 'c77');
+  ok(refs1.total === 3 && refs77.total === 3,
+     'conta as referências de cada cadastro por entidade (os dois com 3: contrato/OS/parque e contrato/venda/título)');
+  ok(refs1.parque === 1 && refs77.vendas === 1 && refs77.contasReceber === 1,
+     'a contagem sai separada por tipo (venda, título, parque...) — é o que o dono vê no painel');
+  // empate: a regra manda ficar com o de código menor (o cadastro mais antigo)
+  const principalEmpate = PV.cliEscolherPrincipal(grupos[0].itens);
+  ok(principalEmpate.cliente.id === 'c1',
+     'empate de referências: fica o de código MENOR (o cadastro mais antigo) — regra determinística');
+  // com um uso a mais no outro cadastro, ele passa a ser o principal
+  db2.vendas.push({ id: 'v3', clienteId: 'c77' });
+  const gruposDepois = PV.cliGruposDuplicados(db2.clientes, 'emp_digicopy', db2);
+  const principal = PV.cliEscolherPrincipal(gruposDepois[0].itens);
+  ok(principal.cliente.id === 'c77' && principal.refs.total === 4,
+     'com mais referências, o principal passa a ser o mais USADO (4 contra 3)');
+  const r = PV.cliUnir(db2, ['c1', 'c77'], 'c77', 'Cliente Balcão');
+  ok(db2.contratos[0].clienteId === 'c77' && db2.os[0].clienteId === 'c77' && db2.parque[0].clienteId === 'c77',
+     'todas as referências passaram para o principal (contrato, OS e parque)');
+  ok(db2.clientes.length === 3 && !!db2.clientes.find(c => c.id === 'c1'),
+     'NADA foi apagado: os dois cadastros continuam no banco');
+  ok(db2.clientes[0].status === 'unificado' && db2.clientes[0].unificadoPara === 'c77',
+     'o repetido ficou marcado como UNIFICADO apontando o principal');
+  ok(r.total === 3 && r.contratos === 1 && r.os === 1 && r.parque === 1,
+     'o total de referências movidas bate (3: contrato, OS e parque) e sai separado por entidade');
+  ok(db2.vendas.filter(v => v.clienteId === 'c77').length === 2,
+     'as vendas que já eram do principal continuam nele (nada foi embaralhado)');
+  ok(PV.cliGruposDuplicados(db2.clientes, 'emp_digicopy', db2).length === 0,
+     'depois de unir, o grupo não aparece mais como pendente');
+  ok((db2.clientes.find(c => c.id === 'c9') || {}).status === undefined && db2.vendas[1].clienteId === 'c9',
+     'o cliente que não é duplicado (Cassia) ficou intacto');
+
+  const src = fs.readFileSync('ajustes_v5214_clientes_visiveis_patch.js', 'utf8');
+  ok(src.indexOf('confirmSistema') >= 0, 'a união exige confirmação em popup do sistema');
+  ok(src.indexOf('podeUnirClientes') >= 0 && src.indexOf('usuarioPodeApagar') >= 0,
+     'a união exige permissão (apagar/estornar, ou Admin/Dono)');
+  ok(src.indexOf("logAction('cliente','unificar'") >= 0, 'a união entra na Auditoria');
+  ok(src.indexOf('🔎 Duplicados') >= 0 && src.indexOf('clientesDuplicadosContar') >= 0,
+     'tem botão na tela de Clientes já com a contagem de grupos');
+  ok(src.indexOf('contratoSemVinculo') >= 0, 'o mesmo painel lista os contratos sem vínculo (para saber onde olhar)');
+  const bundle = fs.readFileSync('app.bundle.js', 'utf8');
+  ok(bundle.indexOf('cfClientePorNomeUnico') >= 0 && bundle.indexOf('cliGruposDuplicados') >= 0,
+     'o bundle leva as duas correções');
+}
+
 (async function(){
   await testarBarraDeMenus();
   await testarMotorDaNuvem();
+  testarClientesEContratos();
   if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }
   console.log('\nTudo OK — v6.1.4: relatório do Kauan atendido item por item.');
 })();
