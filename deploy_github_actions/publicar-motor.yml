@@ -6,6 +6,8 @@
 #   2) Clique em "New workflow" (ou "set up a workflow yourself").
 #   3) Apague todo o conteúdo do editor e cole ESTE arquivo inteiro.
 #   4) Dê o nome de arquivo `publicar-motor.yml` e clique em "Commit changes".
+#   O MESMO código está no relatório de teste (RELATORIO_DE_TESTE_NF.html),
+#   na seção «Plano B do deploy», com um botão «📋 Copiar código» — é só colar.
 #   (O nome `.github/workflows/publicar-motor.yml` é criado automaticamente
 #    pelo próprio GitHub ao salvar por essa tela — por isso este arquivo mora
 #    aqui nesta pasta: a ferramenta automática que edita o sistema não tem

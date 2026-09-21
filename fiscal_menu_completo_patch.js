@@ -210,6 +210,28 @@ window.nfCartaCorrecao=async function(notaId){
   }catch(e){ fmcAudit('cce-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
 };
 
+// ══ 1.5) INSTALAR O CERTIFICADO A1 DENTRO DO SISTEMA (v6.1.4) ══════════════
+// Pedido dele: sem passar pela página de arquivos. Abre a janelinha do Windows
+// (a mesma do sistema antigo), copia o .pfx para a pasta do programa NESTE PC e
+// mostra o resultado. Assinar continua pedindo a senha na hora, sem salvar.
+window.nfInstalarCertificado=async function(){
+  try{
+    const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    if(typeof ponte.importar!=='function'){ fmcToast('Este computador não tem a janela de escolher arquivo nesta versão. Envie o A1 pela página de arquivos.','error'); return {ok:false}; }
+    const r=await ponte.importar();
+    if(r && r.ok){
+      const kb=Math.max(1,Math.round(Number(r.bytes||0)/1024));
+      fmcAudit('certificado-instalado',{bytes:r.bytes||0});
+      if(typeof window.lfbAlert==='function') window.lfbAlert('✅ Certificado A1 instalado NESTE computador ('+(kb?kb+' KB':'arquivo lido')+').\n\nNada foi enviado para a nuvem nem para a SEFAZ. A senha do certificado é pedida na hora de assinar/cancelar e NÃO fica salva.\n\nJá pode usar o botão «Testar SEFAZ agora» para conferir a conexão.','Certificado A1');
+      else fmcToast('✅ Certificado A1 instalado neste PC.','success');
+      return {ok:true, bytes:r.bytes||0};
+    }
+    if(r && r.canceled){ fmcToast('Nada foi instalado (você fechou a janelinha).','info'); return {ok:false, error:'desistiu'}; }
+    fmcToast('Não deu para instalar: '+((r&&r.error)||'motivo desconhecido'),'error');
+    return {ok:false};
+  }catch(e){ fmcToast('Erro ao instalar o certificado: '+(e.message||e),'error'); return {ok:false}; }
+};
+
 // ══ 2) STATUS DO SERVIÇO SEFAZ ═════════════════════════════════════════════
 window.nfStatusServico=async function(){
   try{
@@ -228,8 +250,8 @@ window.nfStatusServico=async function(){
         if(typeof window.lfbAlert==='function') window.lfbAlert(
           'Este teste precisa do CERTIFICADO A1 instalado neste computador.\n\n'+
           'O sistema já está pronto — falta só o arquivo do certificado:\n'+
-          '1) Abra a página de arquivos (menu Enviar Arquivos / envio_arquivos.html).\n'+
-          '2) Envie o arquivo do certificado A1 (.pfx).\n'+
+          '1) Clique no botão «📎 Instalar certificado A1 (neste PC)» aqui mesmo na Central — abre a janelinha do Windows para escolher o arquivo. (Se preferir, a página de arquivos também envia.)\n'+
+          '2) Escolha o arquivo do certificado A1 (.pfx ou .p12).\n'+
           '3) Volte aqui e clique em "Testar SEFAZ agora" de novo — a senha do '+
           'certificado é pedida na hora e NÃO fica salva.\n\n'+
           'Nada foi enviado à SEFAZ agora e nenhuma nota saiu por causa disto.',
@@ -370,7 +392,13 @@ function fmcInstalarExtra(){
   ops.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:8px';
   ops.innerHTML=
     '<button id="fmc-status" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">📡 Testar SEFAZ agora</button>'+
-    '<button id="fmc-pacote" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🗂 Pacote do mês p/ contador (zip)</button>';
+    '<button id="fmc-pacote" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🗂 Pacote do mês p/ contador (zip)</button>'+
+    // v6.1.4 — PEDIDO DELE (21/09/2026): "tem como eu colocar [o certificado]
+    // dentro do sistema, sem ter que enviar? igual o do sistema antigo" — TEM.
+    // O programa abre a janelinha do Windows para escolher o .pfx e guarda no
+    // próprio PC (mesmo caminho que o sistema antigo usava). A senha continua
+    // sendo pedida só na hora de assinar e não fica salva em lugar nenhum.
+    '<button id="fmc-cert" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">📎 Instalar certificado A1 (neste PC)</button>';
   if(baseBtn && baseBtn.parentElement) baseBtn.parentElement.insertAdjacentElement('afterend',ops);
   // card configuração fiscal (mapa do dump)
   const cards=view.querySelectorAll('.cnf-card');
@@ -405,6 +433,7 @@ function fmcInstalarExtra(){
     };
   }
   const st=document.getElementById('fmc-status'); if(st && !st.__fmc){ st.__fmc=true; st.onclick=function(){ window.nfStatusServico(); }; }
+  const cf=document.getElementById('fmc-cert'); if(cf && !cf.__fmc){ cf.__fmc=true; cf.onclick=function(){ window.nfInstalarCertificado(); }; }
   const pk=document.getElementById('fmc-pacote'); if(pk && !pk.__fmc){ pk.__fmc=true; pk.onclick=function(){ window.nfPacoteContador(); }; }
   // CC-e por nota autorizada (entra na linha da ação, antes do Cancelar)
   const linhas=view.querySelectorAll('.nfx-linha [data-id]');

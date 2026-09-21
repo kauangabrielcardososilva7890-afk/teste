@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 1c12cd268e2d8f7c
+ * scripts: 222 | sha256: 25c058324f68ecd4
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -30443,12 +30443,15 @@ function injectButton(root){
 }
 
 window.dcDiagnosticoInvisiveis=function(){
-  const alvoSess=(typeof sess==='function')?sess():null;
-  // v6.1.4 — RELATÓRIO DELE (21/09/2026): o diagnóstico gritava "A CAUSA ESTÁ
-  // AQUI" com tudo "todos visíveis" — alarme falso, ele se assustou à toa.
-  // A empresa da sessão passa a ser procurada nos dois nomes possíveis
-  // (empresaId é o oficial; empresa aparece em sessões antigas/sincronizadas),
-  // e o aviso dramático só sai quando existe ALGO REALMENTE escondido.
+  // v6.1.4 — A CAUSA DO "(nenhuma?!)" EM TODO COMPUTADOR (relatório dele,
+  // 21/09/2026): este arquivo usava `sess()` — e `sess()` NÃO EXISTE aqui
+  // dentro. No bundle cada módulo é isolado; `typeof sess==='function'` dava
+  // falso SEMPRE, então o diagnóstico escrevia "Empresa da minha sessão:
+  // (nenhuma?!)" mesmo com a sessão certinha (prova: o botão «Reparar sessão
+  // agora», que usa getSession() direto, respondeu "já estava com empresa").
+  // Alarme falso puro — e ele ainda levou o susto para os outros PCs.
+  const getS=(typeof getSession==='function')?getSession():(typeof sess==='function'?sess():null);
+  const alvoSess=getS;
   const empAtual=(alvoSess&&(alvoSess.empresaId||alvoSess.empresa||alvoSess.empresa_id))||'';
   const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
   const linhas=[];
@@ -30469,7 +30472,11 @@ window.dcDiagnosticoInvisiveis=function(){
   }
   const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
   const outros=Object.keys(idsEstranhos);
-  let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
+  const versao=(typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'(não li)';
+  const quem=alvoSess?((alvoSess.usuarioNome||alvoSess.login||'?')+' ('+(alvoSess.perfil||'?')+')'):'(ninguém logado)';
+  let cab='Sessão deste computador: '+quem+'\nEmpresa da minha sessão: '+(empAtual||'(SEM EMPRESA — a cura carimba sozinha; o botão verde força agora)')+
+          '\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'')+
+          '\nVersão deste sistema: '+versao;
   if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
   const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
   // v6.1.4 — alarme honesto: drama só quando existe dado escondido de verdade.
@@ -30490,7 +30497,9 @@ window.dcDiagnosticoInvisiveis=function(){
     : totalInvis
     ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
     : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
-  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;
+  const rodape = '\n\nPara comparar com outro computador (é assim que se acha diferença de dados): '+
+    'abra ESTE mesmo botão no outro PC e compare as duas telas — se a «Empresa da minha sessão» for diferente entre os PCs, me manda as duas que eu junto as empresas em 1 versão.';
+  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo+rodape;
   if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
   else alert(msg);
 };
@@ -52366,6 +52375,28 @@ window.nfCartaCorrecao=async function(notaId){
   }catch(e){ fmcAudit('cce-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
 };
 
+// ══ 1.5) INSTALAR O CERTIFICADO A1 DENTRO DO SISTEMA (v6.1.4) ══════════════
+// Pedido dele: sem passar pela página de arquivos. Abre a janelinha do Windows
+// (a mesma do sistema antigo), copia o .pfx para a pasta do programa NESTE PC e
+// mostra o resultado. Assinar continua pedindo a senha na hora, sem salvar.
+window.nfInstalarCertificado=async function(){
+  try{
+    const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    if(typeof ponte.importar!=='function'){ fmcToast('Este computador não tem a janela de escolher arquivo nesta versão. Envie o A1 pela página de arquivos.','error'); return {ok:false}; }
+    const r=await ponte.importar();
+    if(r && r.ok){
+      const kb=Math.max(1,Math.round(Number(r.bytes||0)/1024));
+      fmcAudit('certificado-instalado',{bytes:r.bytes||0});
+      if(typeof window.lfbAlert==='function') window.lfbAlert('✅ Certificado A1 instalado NESTE computador ('+(kb?kb+' KB':'arquivo lido')+').\n\nNada foi enviado para a nuvem nem para a SEFAZ. A senha do certificado é pedida na hora de assinar/cancelar e NÃO fica salva.\n\nJá pode usar o botão «Testar SEFAZ agora» para conferir a conexão.','Certificado A1');
+      else fmcToast('✅ Certificado A1 instalado neste PC.','success');
+      return {ok:true, bytes:r.bytes||0};
+    }
+    if(r && r.canceled){ fmcToast('Nada foi instalado (você fechou a janelinha).','info'); return {ok:false, error:'desistiu'}; }
+    fmcToast('Não deu para instalar: '+((r&&r.error)||'motivo desconhecido'),'error');
+    return {ok:false};
+  }catch(e){ fmcToast('Erro ao instalar o certificado: '+(e.message||e),'error'); return {ok:false}; }
+};
+
 // ══ 2) STATUS DO SERVIÇO SEFAZ ═════════════════════════════════════════════
 window.nfStatusServico=async function(){
   try{
@@ -52384,8 +52415,8 @@ window.nfStatusServico=async function(){
         if(typeof window.lfbAlert==='function') window.lfbAlert(
           'Este teste precisa do CERTIFICADO A1 instalado neste computador.\n\n'+
           'O sistema já está pronto — falta só o arquivo do certificado:\n'+
-          '1) Abra a página de arquivos (menu Enviar Arquivos / envio_arquivos.html).\n'+
-          '2) Envie o arquivo do certificado A1 (.pfx).\n'+
+          '1) Clique no botão «📎 Instalar certificado A1 (neste PC)» aqui mesmo na Central — abre a janelinha do Windows para escolher o arquivo. (Se preferir, a página de arquivos também envia.)\n'+
+          '2) Escolha o arquivo do certificado A1 (.pfx ou .p12).\n'+
           '3) Volte aqui e clique em "Testar SEFAZ agora" de novo — a senha do '+
           'certificado é pedida na hora e NÃO fica salva.\n\n'+
           'Nada foi enviado à SEFAZ agora e nenhuma nota saiu por causa disto.',
@@ -52526,7 +52557,13 @@ function fmcInstalarExtra(){
   ops.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:8px';
   ops.innerHTML=
     '<button id="fmc-status" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">📡 Testar SEFAZ agora</button>'+
-    '<button id="fmc-pacote" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🗂 Pacote do mês p/ contador (zip)</button>';
+    '<button id="fmc-pacote" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">🗂 Pacote do mês p/ contador (zip)</button>'+
+    // v6.1.4 — PEDIDO DELE (21/09/2026): "tem como eu colocar [o certificado]
+    // dentro do sistema, sem ter que enviar? igual o do sistema antigo" — TEM.
+    // O programa abre a janelinha do Windows para escolher o .pfx e guarda no
+    // próprio PC (mesmo caminho que o sistema antigo usava). A senha continua
+    // sendo pedida só na hora de assinar e não fica salva em lugar nenhum.
+    '<button id="fmc-cert" class="cnf-btn" style="height:38px;padding:0 14px;border-radius:10px;font-size:12.5px">📎 Instalar certificado A1 (neste PC)</button>';
   if(baseBtn && baseBtn.parentElement) baseBtn.parentElement.insertAdjacentElement('afterend',ops);
   // card configuração fiscal (mapa do dump)
   const cards=view.querySelectorAll('.cnf-card');
@@ -52561,6 +52598,7 @@ function fmcInstalarExtra(){
     };
   }
   const st=document.getElementById('fmc-status'); if(st && !st.__fmc){ st.__fmc=true; st.onclick=function(){ window.nfStatusServico(); }; }
+  const cf=document.getElementById('fmc-cert'); if(cf && !cf.__fmc){ cf.__fmc=true; cf.onclick=function(){ window.nfInstalarCertificado(); }; }
   const pk=document.getElementById('fmc-pacote'); if(pk && !pk.__fmc){ pk.__fmc=true; pk.onclick=function(){ window.nfPacoteContador(); }; }
   // CC-e por nota autorizada (entra na linha da ação, antes do Cancelar)
   const linhas=view.querySelectorAll('.nfx-linha [data-id]');
@@ -56332,9 +56370,21 @@ try{
       'body.digi-escuro .fx-root-wrap .fx-in, body.digi-escuro .fx-root-wrap select.fx-in, body.digi-escuro .fx-root-wrap textarea.fx-in{' +
       ' background:#0b1337 !important; color:#e8eeff !important; border-color: rgba(148,167,255,.28) !important; }',
       'body.digi-escuro .fx-root-wrap .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
-      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
-      'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background: rgba(148,167,255,.06) !important; }',
-      'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.16) !important; }',
+      // v6.1.4 — FOTO DO DONO (21/09/2026, item A3): a tabela dos Perfis
+      // Tributários ficava com LINHA BRANCA e texto claro em cima — ilegível.
+      // Causa: o CSS claro põe fundo branco na TABELA, e aqui só as linhas
+      // PARES recebiam fundo escuro; as ímpares ficavam brancas. Agora a
+      // tabela inteira e TODA linha têm fundo escuro (as pares um tom acima),
+      // e o botão de ação da linha ganha contraste.
+      'body.digi-escuro .fx-root-wrap table.fx-tb{ background:#0b1337 !important; border-color: rgba(148,167,255,.22) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#e6edff !important; border-color: rgba(148,167,255,.14) !important; background: transparent !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb tbody tr{ background:#0e1a48 !important; }',
+      'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background:#101f55 !important; }',
+      'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.28) !important; }',
+      'body.digi-escuro .fx-tb tbody tr.fx-sel{ background:#1d3a9e !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-btn{ background:#22307a !important; color:#ffffff !important; border-color: rgba(148,167,255,.4) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-btn.pri{ background:#2f6bff !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-mini{ color:#b9c9f5 !important; }',
       'body.digi-escuro .fx-tab{ color:#a9bff2 !important; }',
       'body.digi-escuro .fx-tab.on{ background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important; }',
       'body.digi-escuro .fx-root-wrap .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',

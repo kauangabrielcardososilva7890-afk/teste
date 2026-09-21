@@ -135,4 +135,24 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 ok('relatório fora do bundle (não pesa na abertura do sistema)', !manifest.includes(ARQ));
 ok('relatório fora do build.files (.exe não leva arquivo de teste)', !pkg.build.files.includes(ARQ));
 
+// ── 8. O código do deploy mora no relatório, prontinho para copiar ────────
+// Pedido dele (21/09/2026): "o código é meio grande, você pode deixar um botão
+// de copiar o código no html do relatório". Aqui a prova é que o texto que
+// está na tela é IGUALZINHO ao arquivo do repositório (sem cópia que envelhece).
+console.log('\n== CÓDIGO DO DEPLOY (copiar) ==');
+ok('seção do plano B existe com o botão de copiar', !!d.getElementById('btn-copiar-deploy') && !!d.getElementById('codigo-deploy'));
+const bruto = html.slice(html.indexOf('<pre id="codigo-deploy"'), html.indexOf('</pre>', html.indexOf('<pre id="codigo-deploy"')));
+const noPre = bruto.slice(bruto.indexOf('>') + 1);
+const desesc = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const yamlArquivo = fs.readFileSync('deploy_github_actions/publicar-motor.yml', 'utf8');
+const norm = t => desesc(t).replace(/\r\n/g, '\n').replace(/\s+$/,'');
+ok('o código do relatório é IGUAL ao arquivo do repositório (nada de cópia velha)', norm(noPre) === norm(yamlArquivo));
+ok('o código traz os 2 passos do .cmd e os segredos do GitHub',
+   noPre.indexOf('d1 migrations apply DB --remote') >= 0 && noPre.indexOf('secrets.CLOUDFLARE_API_TOKEN') >= 0);
+ok('o código não roda sozinho (só no botão workflow_dispatch)', noPre.indexOf('workflow_dispatch') >= 0 && noPre.indexOf('push:') < 0);
+ok('a página explica o caminho (Actions → New workflow → colar → segredos → Run workflow)',
+   html.indexOf('New workflow') >= 0 && html.indexOf('Run workflow') >= 0 && html.indexOf('CLOUDFLARE_ACCOUNT_ID') >= 0);
+ok('copiar usa a área de transferência e tem plano B (nunca falha calado)',
+   html.indexOf('navigator.clipboard.writeText(texto)') >= 0 && html.indexOf('execCommand') >= 0);
+
 console.log('\nRESULTADO: relatório de teste (HTML) passou!');

@@ -23,6 +23,8 @@ const fmc   = fs.readFileSync('fiscal_menu_completo_patch.js', 'utf8');
 const fx    = fs.readFileSync('fiscal_catalogo_completo_patch.js', 'utf8');
 const aud   = fs.readFileSync('ajustes_v5197_patch.js', 'utf8');
 const bundle= fs.readFileSync('app.bundle.js', 'utf8');
+const escuro = fs.readFileSync('navegacao_fiscal_barra_escuro_patch.js', 'utf8');
+const relHtml = fs.readFileSync('RELATORIO_DE_TESTE_NF.html', 'utf8');
 const man   = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
 
 console.log('== D2 — o aviso que ele mandou tirar ==');
@@ -78,6 +80,34 @@ ok(wf.indexOf('workflow_dispatch') >= 0, 'deploy só roda quando o dono aperta o
 ok(wf.indexOf('on:') >= 0 && wf.indexOf('push:') < 0, 'NÃO publica sozinho em push (sem surpresa na nuvem real)');
 ok(wf.indexOf('d1 migrations apply DB --remote') >= 0 && wf.indexOf('wrangler@4 deploy') >= 0, 'faz os mesmos 2 passos do atualizar_motor_nuvem.cmd');
 ok(wf.indexOf('secrets.CLOUDFLARE_API_TOKEN') >= 0 && wf.indexOf('secrets.CLOUDFLARE_ACCOUNT_ID') >= 0, 'usa segredos do GitHub (nada de token no código)');
+
+console.log('== A3 (foto dele) — tabela fiscal ilegível no modo escuro ==');
+ok(escuro.indexOf('table.fx-tb{ background:#0b1337') >= 0, 'a TABELA inteira fica escura (antes só a moldura; o fundo branco do claro dominava)');
+ok(escuro.indexOf('.fx-tb tbody tr{ background:#0e1a48') >= 0, 'TODA linha tem fundo escuro (era só nas pares: as ímpares ficavam brancas com texto claro)');
+ok(escuro.indexOf('tr:nth-child(even){ background:#101f55') >= 0, 'as linhas pares seguem um tom acima (zebra continua visível)');
+ok(escuro.indexOf('.fx-tb tbody tr:hover') >= 0 && escuro.indexOf('.fx-sel{ background:#1d3a9e') >= 0, 'hover e linha selecionada continuam marcando');
+ok(escuro.indexOf('.fx-tb .fx-btn{ background:#22307a') >= 0, 'botão da linha (Alterar/Excluir) ganha contraste no escuro');
+ok(escuro.indexOf('FOTO DO DONO (21/09/2026, item A3)') >= 0, 'o motivo (a foto dele) ficou registrado no arquivo');
+
+console.log('== A causa do "(nenhuma?!)" em TODO computador ==');
+ok(diag.indexOf("const getS=(typeof getSession==='function')?getSession()") >= 0, 'diagnóstico passa a usar getSession() direto (sess() não existe neste módulo)');
+ok(diag.indexOf("const alvoSess=getS;") >= 0, 'a sessão real é a que o sistema tem de verdade (e não mais null fixo)');
+ok(diag.indexOf('SEM EMPRESA — a cura carimba sozinha') >= 0, 'quando faltar carimbo, o texto explica em vez de gritar "(nenhuma?!)"');
+ok(diag.indexOf('Sessão deste computador: ') >= 0 && diag.indexOf('Versão deste sistema: ') >= 0, 'o diagnóstico mostra quem está logado e a versão do sistema');
+ok(diag.indexOf('Para comparar com outro computador') >= 0, 'ensina a comparar com outro PC (é assim que se acha diferença de dados)');
+
+console.log('== Certificado A1 instalado DENTRO do sistema (pedido dele) ==');
+ok(fmc.indexOf('window.nfInstalarCertificado') >= 0, 'função de instalar o A1 criada no módulo fiscal');
+ok(fmc.indexOf('📎 Instalar certificado A1 (neste PC)') >= 0, 'botão na Central de Nota Fiscal');
+ok(fmc.indexOf('ponte.importar()') >= 0, 'usa a janelinha do Windows (mesmo caminho do sistema antigo)');
+ok(fmc.indexOf('certificado-instalado') >= 0, 'instalação entra na Auditoria');
+ok(fmc.indexOf('NÃO fica salva') >= 0, 'relembra que a senha não fica salva');
+ok(fmc.indexOf('Clique no botão «📎 Instalar certificado A1 (neste PC)»') >= 0, 'o aviso do Testar SEFAZ aponta o botão novo (sem obrigar a página de arquivos)');
+ok(fs.readFileSync('main.js','utf8').indexOf("ipcMain.handle('nfe:cert-import'") >= 0, 'o programa (.exe) já sabia receber o .pfx — agora tem botão na tela');
+
+console.log('== O código do deploy dentro do relatório (copiar) ==');
+ok(relHtml.indexOf('btn-copiar-deploy') >= 0 && relHtml.indexOf('codigo-deploy') >= 0, 'seção com o código e o botão de copiar');
+ok(relHtml.indexOf('d1 migrations apply DB --remote') >= 0 && relHtml.indexOf('Run workflow') >= 0, 'o código e o passo a passo estão na página');
 
 if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }
 console.log('\nTudo OK — v6.1.4: relatório do Kauan atendido item por item.');

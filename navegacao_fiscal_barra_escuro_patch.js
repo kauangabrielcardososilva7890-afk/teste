@@ -64,9 +64,21 @@
       'body.digi-escuro .fx-root-wrap .fx-in, body.digi-escuro .fx-root-wrap select.fx-in, body.digi-escuro .fx-root-wrap textarea.fx-in{' +
       ' background:#0b1337 !important; color:#e8eeff !important; border-color: rgba(148,167,255,.28) !important; }',
       'body.digi-escuro .fx-root-wrap .fx-tb th{ background:#111e4e !important; color:#c3d4ff !important; border-color: rgba(148,167,255,.18) !important; }',
-      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#dbe6ff !important; border-color: rgba(148,167,255,.12) !important; }',
-      'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background: rgba(148,167,255,.06) !important; }',
-      'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.16) !important; }',
+      // v6.1.4 — FOTO DO DONO (21/09/2026, item A3): a tabela dos Perfis
+      // Tributários ficava com LINHA BRANCA e texto claro em cima — ilegível.
+      // Causa: o CSS claro põe fundo branco na TABELA, e aqui só as linhas
+      // PARES recebiam fundo escuro; as ímpares ficavam brancas. Agora a
+      // tabela inteira e TODA linha têm fundo escuro (as pares um tom acima),
+      // e o botão de ação da linha ganha contraste.
+      'body.digi-escuro .fx-root-wrap table.fx-tb{ background:#0b1337 !important; border-color: rgba(148,167,255,.22) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb td{ color:#e6edff !important; border-color: rgba(148,167,255,.14) !important; background: transparent !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb tbody tr{ background:#0e1a48 !important; }',
+      'body.digi-escuro .fx-tb tbody tr:nth-child(even){ background:#101f55 !important; }',
+      'body.digi-escuro .fx-tb tbody tr:hover{ background: rgba(59,99,246,.28) !important; }',
+      'body.digi-escuro .fx-tb tbody tr.fx-sel{ background:#1d3a9e !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-btn{ background:#22307a !important; color:#ffffff !important; border-color: rgba(148,167,255,.4) !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-btn.pri{ background:#2f6bff !important; }',
+      'body.digi-escuro .fx-root-wrap .fx-tb .fx-mini{ color:#b9c9f5 !important; }',
       'body.digi-escuro .fx-tab{ color:#a9bff2 !important; }',
       'body.digi-escuro .fx-tab.on{ background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important; }',
       'body.digi-escuro .fx-root-wrap .fx-btn{ background:#152258 !important; color:#dbe6ff !important; border-color: rgba(148,167,255,.25) !important; }',

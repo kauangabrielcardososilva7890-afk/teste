@@ -147,12 +147,15 @@ function injectButton(root){
 }
 
 window.dcDiagnosticoInvisiveis=function(){
-  const alvoSess=(typeof sess==='function')?sess():null;
-  // v6.1.4 — RELATÓRIO DELE (21/09/2026): o diagnóstico gritava "A CAUSA ESTÁ
-  // AQUI" com tudo "todos visíveis" — alarme falso, ele se assustou à toa.
-  // A empresa da sessão passa a ser procurada nos dois nomes possíveis
-  // (empresaId é o oficial; empresa aparece em sessões antigas/sincronizadas),
-  // e o aviso dramático só sai quando existe ALGO REALMENTE escondido.
+  // v6.1.4 — A CAUSA DO "(nenhuma?!)" EM TODO COMPUTADOR (relatório dele,
+  // 21/09/2026): este arquivo usava `sess()` — e `sess()` NÃO EXISTE aqui
+  // dentro. No bundle cada módulo é isolado; `typeof sess==='function'` dava
+  // falso SEMPRE, então o diagnóstico escrevia "Empresa da minha sessão:
+  // (nenhuma?!)" mesmo com a sessão certinha (prova: o botão «Reparar sessão
+  // agora», que usa getSession() direto, respondeu "já estava com empresa").
+  // Alarme falso puro — e ele ainda levou o susto para os outros PCs.
+  const getS=(typeof getSession==='function')?getSession():(typeof sess==='function'?sess():null);
+  const alvoSess=getS;
   const empAtual=(alvoSess&&(alvoSess.empresaId||alvoSess.empresa||alvoSess.empresa_id))||'';
   const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
   const linhas=[];
@@ -173,7 +176,11 @@ window.dcDiagnosticoInvisiveis=function(){
   }
   const empresas=(window.db&&Array.isArray(window.db.empresas))?window.db.empresas:[];
   const outros=Object.keys(idsEstranhos);
-  let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
+  const versao=(typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'(não li)';
+  const quem=alvoSess?((alvoSess.usuarioNome||alvoSess.login||'?')+' ('+(alvoSess.perfil||'?')+')'):'(ninguém logado)';
+  let cab='Sessão deste computador: '+quem+'\nEmpresa da minha sessão: '+(empAtual||'(SEM EMPRESA — a cura carimba sozinha; o botão verde força agora)')+
+          '\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'')+
+          '\nVersão deste sistema: '+versao;
   if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
   const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
   // v6.1.4 — alarme honesto: drama só quando existe dado escondido de verdade.
@@ -194,7 +201,9 @@ window.dcDiagnosticoInvisiveis=function(){
     : totalInvis
     ? '\n\n>>> A CHAVE DO MISTÉRIO: '+totalInvis+' registros chegaram da nuvem mas estão carimbados com OUTRA empresa — por isso não aparecem nas telas. Manda foto deste diagnóstico que eu selo a correção (unir as empresas) em 1 versão.'
     : '\n\nNada escondido por empresa: os dados deste PC estão todos visíveis. O problema é outro — manda foto deste diagnóstico mesmo assim.';
-  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo;
+  const rodape = '\n\nPara comparar com outro computador (é assim que se acha diferença de dados): '+
+    'abra ESTE mesmo botão no outro PC e compare as duas telas — se a «Empresa da minha sessão» for diferente entre os PCs, me manda as duas que eu junto as empresas em 1 versão.';
+  const msg='DIAGNÓSTICO (só lê, não muda nada)\n\n'+cab+'\n\n'+linhas.join('\n')+corpo+rodape;
   if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Por que dados não aparecem?');
   else alert(msg);
 };

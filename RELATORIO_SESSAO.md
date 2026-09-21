@@ -3956,3 +3956,39 @@ O relatório preenchido no site (15 OK · 2 não resolveu · 8 não testei · "A
 3. **B7**: ele disse que "tem um problema a parte diferente" — perguntar qual.
 4. Re-teste no link fixo depois do próximo deploy do site.
 5. Fila de sempre: GitHack (link do cliente), aviso de validade do A1, bump 6.1.4 com o `.exe`, merge do PR #29 só com ordem (e voltar a Production branch para `main` depois).
+
+---
+
+## CONTINUIDADE — 21/09/2026 (3) — foto do modo escuro (A3), "(nenhuma?!)" achado, A1 dentro do sistema e código do deploy no relatório
+
+### O que ele mandou nesta rodada
+
+1. **A foto do A3** (modo escuro da tela Fiscal → Perfis Tributários): tabela com **linhas brancas e texto claro** — ilegível.
+2. **B7 = o mesmo do "observações gerais"**: sessão aparecendo **"(nenhuma?!)"** e a suspeita de que é por isso que **em outros computadores não aparece a mesma informação**.
+3. Pedido: **instalar o certificado A1 por dentro do sistema**, como no sistema antigo (não pela página de arquivos).
+4. Pedido: **o código do deploy** do worker (o do botão no GitHub) em lugar fácil de copiar → **botão de copiar no HTML do relatório**.
+5. Perguntas: se quero as fotos da parte fiscal antiga de novo; se já está tudo no "não acontecer mais"; e como resolver o "(nenhuma?!)".
+
+### A causa do "(nenhuma?!)" — encontrada e provada
+
+O módulo `ajustes_v5227_nuvem_acompanhamento_patch.js` chamava `sess()` **que não existe dentro dele** (no bundle cada módulo é isolado; `typeof sess==='function'` dava falso SEMPRE). Resultado: o diagnóstico escrevia "Empresa da minha sessão: (nenhuma?!)" **em todo computador**, mesmo com a sessão certa. **Prova:** o botão «Reparar sessão agora» (que usa `getSession()` direto) respondeu "Sessão: **já estava com empresa**" — contradição no mesmo PC, no mesmo instante. Não era dado sumido; era o diagnóstico mentindo. **Corrigido:** passa a ler `getSession()` (com fallback) e o texto, quando faltar carimbo, explica em vez de gritar. Ganhou também: quem está logado, versão do sistema e a instrução de comparar o mesmo botão nos dois PCs (é assim que se acha diferença real de dados).
+
+### Correções feitas
+
+1. **A3 — modo escuro das tabelas fiscais** (`navegacao_fiscal_barra_escuro_patch.js`): o CSS claro põe fundo **branco na tabela** e o escuro só pintava as **linhas pares** → as ímpares ficavam brancas com texto claro. Agora a tabela inteira e **toda** linha são escuras (pares um tom acima), hover/seleção marcando e o botão da linha (Alterar/Excluir) com contraste. Vale para as 6 telas fiscais de uma vez.
+2. **A1 instalado por dentro do sistema** (`fiscal_menu_completo_patch.js`): botão **«📎 Instalar certificado A1 (neste PC)»** na linha de operações da Central. Abre a janelinha do Windows (o mesmo `nfe:cert-import` que já existia no programa), copia o `.pfx` para o PC, mostra o tamanho, entra na Auditoria e lembra que a senha é pedida na hora e não fica salva. O aviso do "Testar SEFAZ" agora aponta esse botão (a página de arquivos continua valendo como alternativa).
+3. **Código do deploy dentro do relatório** (`RELATORIO_DE_TESTE_NF.html`): seção **«🧩 Plano B do deploy — o código do botão (copiar)»** com o passo a passo (Actions → New workflow → colar → 2 segredos → Run workflow), o YAML completo e o botão **📋 Copiar código** (com plano B se o navegador negar a área de transferência). O texto no `<pre>` é **idêntico** ao arquivo `deploy_github_actions/publicar-motor.yml` — e há teste comparando os dois, para nunca envelhecer.
+4. `deploy_github_actions/publicar-motor.yml` aponta para a seção do relatório onde está o botão de copiar.
+
+### Validação
+
+- `test_relatorio_teste_nf.js`: **37 verificações ✓** (inclui a igualdade do código com o arquivo).
+- `test_ajustes_v6104.js`: **49 verificações ✓** (A3, o `sess`, o A1 dentro do sistema e o código no relatório).
+- `npm test`: **186 passaram, 0 falharam** · `npm run check` OK (222 scripts) · `npm run sync:check` OK · `npm run verify:files` OK · bundle sha `25c058324f68ecd4` · mobile/www + assets Android sincronizados.
+- Versão segue **v6.1.3** (bump 6.1.4 junto do próximo `.exe`).
+
+### Respostas dadas a ele (registro)
+
+- **Fotos da parte fiscal antiga:** sim, mas **só 3 telas específicas** (não tudo de novo): (1) o menu/faixa fiscal do sistema antigo; (2) a tela antiga de nova venda de NF **em aba**; (3) o cadastro/instalação do A1 no sistema antigo (se ele tiver).
+- **"Já tem tudo para não acontecer mais?"** — o mecanismo está de pé (erro vira teste, aviso só quando há o que fazer, tela que explica, ritual de validação). Próximos candidatos propostos, **esperando a escolha dele**: (a) check-up único com resumo copiável; (b) quadro de versão por PC na nuvem; (c) teste de tela automático a cada versão (o `e2e/` com Playwright já existe).
+- **"(nenhuma?!)"**: causa provada e corrigida; para a diferença entre PCs, a orientação é abrir o mesmo diagnóstico nos dois e comparar (se a empresa divergir de verdade, é caso de unir empresas em 1 versão).
