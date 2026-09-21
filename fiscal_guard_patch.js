@@ -59,13 +59,72 @@ else if(typeof global!=='undefined') global.NFG_PURE=api;
 if(typeof window==='undefined' || typeof document==='undefined') return;
 window.__v6000fg=true;
 
+// ── AUDITORIA FISCAL DE VERDADE (v6.1.4) ───────────────────────────────────
+// RELATÓRIO DELE (21/09/2026, pergunta C5): "registra no log, não na auditoria"
+// — e era exatamente isso: o portão gravava só o log técnico (tipo
+// 'nf-portao'), sem os campos que a tela Auditoria lê (empresaId, entidade,
+// usuarioNome, dataHora). Resultado: a ação fiscal ficava invisível na
+// Auditoria. Agora cada ação fiscal grava TAMBÉM uma linha de auditoria no
+// mesmo formato do resto do sistema (logAction), com o nome de quem fez.
+// O log técnico continua (é ele que ajuda a achar problema do menu fiscal).
+window.nfAuditarFiscal=function(acao, detalhes, entidadeId){
+  try{
+    if(typeof logAction!=='function') return false;
+    const s=(typeof getSession==='function'?getSession():null)||{};
+    if(!s.usuarioId && !s.login) return false;
+    const rotulos={
+      'ambiente->producao':'Fiscal: ambiente mudado para PRODUCAO',
+      'ambiente->homologacao':'Fiscal: ambiente voltado para HOMOLOGACAO (teste)',
+      'conferir':'Fiscal: nota conferida',
+      'abrir-central':'Fiscal: Central de Nota Fiscal aberta',
+      'status-inicio':'Fiscal: teste da SEFAZ iniciado',
+      'status-resposta':'Fiscal: SEFAZ respondeu ao teste',
+      'status-falha':'Fiscal: teste da SEFAZ sem resposta',
+      'status-excecao':'Fiscal: erro no teste da SEFAZ',
+      'sem-certificado':'Fiscal: teste da SEFAZ bloqueado (sem certificado A1 neste PC)',
+      'pacote-contador':'Fiscal: pacote do mes (.zip) gerado para o contador',
+      'pacote-excecao':'Fiscal: erro ao gerar o pacote do mes',
+      'cce-inicio':'Fiscal: Carta de Correcao (CC-e) iniciada',
+      'cce-resposta':'Fiscal: Carta de Correcao (CC-e) respondida pela SEFAZ',
+      'cce-excecao':'Fiscal: erro na Carta de Correcao',
+      'transmitir-inicio':'Fiscal: envio de nota para a SEFAZ iniciado',
+      'transmitir-resposta':'Fiscal: resposta da SEFAZ para o envio de nota',
+      'cancelar-inicio':'Fiscal: cancelamento de nota iniciado',
+      'cancelar-resposta':'Fiscal: resposta da SEFAZ ao cancelamento'
+    };
+    const base=rotulos[acao]||('Fiscal: '+String(acao||'').replace(/[-_]/g,' '));
+    const extra=typeof nfgResumoDados==='function'?nfgResumoDados(detalhes):'';
+    logAction('fiscal', acao, entidadeId||'', (base+(extra?(' — '+extra):'')).slice(0,300));
+    return true;
+  }catch(e){ return false; }
+};
+// Resumo curto do que aconteceu (sem despejar o objeto inteiro na Auditoria)
+function nfgResumoDados(d){
+  if(!d || typeof d!=='object') return '';
+  const p=[];
+  if(d.ambiente) p.push('ambiente '+d.ambiente);
+  if(d.numero!=null && d.numero!=='') p.push('nota '+d.numero);
+  if(d.modelo) p.push('modelo '+d.modelo);
+  if(d.mes) p.push('mês '+d.mes);
+  if(d.notas!=null) p.push(d.notas+' nota(s)');
+  if(d.arquivos!=null) p.push(d.arquivos+' arquivo(s)');
+  if(d.cStat) p.push('cStat '+d.cStat);
+  if(d.motivo) p.push(String(d.motivo).slice(0,90));
+  if(d.erro) p.push('erro: '+String(d.erro).slice(0,90));
+  return p.join(' · ');
+}
+
 function nfgAudit(acao, dados){
   try{
     db.logs=db.logs||[];
     const s=(typeof getSession==='function'?getSession():null)||{};
+    // v6.1.4 — além do log técnico, a linha da AUDITORIA (é isso que o dono vê)
+    if(typeof window.nfAuditarFiscal==='function'){ try{ window.nfAuditarFiscal(acao, dados, ''); }catch(e){} }
     db.logs.push({ tipo:'nf-portao', acao:acao, ambiente:nfgAmbiente(db),
-      usuarioId:s.usuarioId||null, usuarioLogin:s.login||s.usuarioLogin||null,
-      dados:dados||{}, at:new Date().toISOString() });
+      empresaId:s.empresaId||null, dataHora:new Date().toISOString(),
+      usuarioId:s.usuarioId||null, usuarioNome:s.usuarioNome||s.login||null,
+      usuarioLogin:s.login||s.usuarioLogin||null,
+      dados:dados||{}, detalhes:nfgResumoDados(dados), at:new Date().toISOString() });
     if(db.logs.length>300){ db.logs.splice(0,db.logs.length-300); }
     if(typeof db.save==='function') db.save();
   }catch(e){}

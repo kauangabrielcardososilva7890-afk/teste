@@ -27,6 +27,47 @@ function podeVerAuditoria(){
   return !!sess();
 }
 
+// ══ v6.1.4 — AUDITORIA À PROVA DE LOG TORTO (relatório dele, 21/09/2026) ══
+// Dois problemas reais que apareciam como "erro inesperado" na tela:
+//  1) Existem logs gravados por módulos antigos SEM os campos que a tabela lê
+//     (usuarioNome, dataHora, entidade, detalhes). Ao entrarem na tela, o
+//     render quebrava e a Auditoria aparecia vazia/errada.
+//  2) Com a sessão SEM empresa (caso dele), o filtro `l.empresaId===sess.empresaId`
+//     descarta TODAS as linhas — a tela fica vazia e parece que nada foi
+//     registrado. Aqui vale a MESMA regra segura da cura: só quando o banco
+//     tem EXATAMENTE 1 empresa é que a sessão é carimbada (2+ = nunca chuta).
+function v5197SanearLogs(){
+  try{
+    if(typeof db==='undefined'||!db||!Array.isArray(db.logs)) return;
+    var s=(typeof getSession==='function'?getSession():null)||null;
+    if(s && !s.empresaId){
+      var emps=Array.isArray(db.empresas)?db.empresas:[];
+      if(emps.length===1 && emps[0] && emps[0].id){
+        s.empresaId=emps[0].id;
+        try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+      }
+    }
+    var carimbo=(s&&s.empresaId)||null;
+    db.logs.forEach(function(l){
+      if(!l||typeof l!=='object') return;
+      if(!l.dataHora) l.dataHora=l.at||new Date().toISOString();
+      if(l.empresaId===undefined||l.empresaId===null) l.empresaId=carimbo;
+      if(!l.usuarioNome) l.usuarioNome=l.usuarioLogin||'Sistema';
+      if(!l.usuarioLogin) l.usuarioLogin=l.usuarioNome||'-';
+      if(!l.entidade) l.entidade=l.tipo||'sistema';
+      if(l.acao===undefined||l.acao===null) l.acao='';
+      if(l.entidadeId===undefined||l.entidadeId===null) l.entidadeId='';
+      if(!l.detalhes) l.detalhes=l.dados?JSON.stringify(l.dados).slice(0,200):'';
+    });
+  }catch(e){}
+}
+if(typeof window.renderAuditoria==='function' && !window.renderAuditoria.__v5197){
+  const _ra=window.renderAuditoria;
+  const ra=function(){ try{ v5197SanearLogs(); }catch(e){} return _ra.apply(this,arguments); };
+  ra.__v5197=true;
+  window.renderAuditoria=ra;
+}
+
 // Mostra/esconde os itens de menu de auditoria conforme a permissão.
 function esconderAuditoria(){
   // Sem sessão (tela de login): não mexe em nada.

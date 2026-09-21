@@ -209,6 +209,14 @@
     root.classList.remove('hidden');
   }
   function fxToast(m, t) { try { if (typeof toast === 'function') toast(m, t || "success"); } catch (e) { } }
+  // v6.1.4 — copiar o e-mail do contador de dentro do popup do pacote
+  window.fxXmlCopiarEmail = function () {
+    var em = (fxCfg().outras && fxCfg().outras.emailEscritorio) || '';
+    try {
+      if (navigator.clipboard && em) navigator.clipboard.writeText(em).then(function () { fxToast('E-mail ' + em + ' copiado ✅'); });
+      else fxToast('E-mail do contador: ' + em, 'info');
+    } catch (e) { fxToast('E-mail do contador: ' + em, 'info'); }
+  };
 
   /* campos com data-fx (coleta genérica DOM→objeto) */
   function fxInp(path, label, extra) {
@@ -1372,9 +1380,35 @@
       if (acao === 'xml-enviar') {
         var em2 = (document.getElementById('fx-xml-email') || {}).value || '';
         I.cfg().outras.emailEscritorio = em2; I.save();
-        if (!em2) return I.alert('E-mail do escritório', 'Preencha o e-mail do contador antes de enviar (fica gravado na aba Outras das Configurações).');
-        if (typeof G.nfPacoteContador === 'function') { try { G.nfPacoteContador(); } catch (e) { } I.log('xml-escritorio', G.__fxXmlMes + ' incluir PDFs: ' + !!G.__fxXmlPdf); }
-        else I.alert('Pacote', 'O gerador de pacote .zip não respondeu — tente pela Central (Pacote do mês).');
+        if (!em2) return I.alert('E-mail do escritório', 'Preencha o e-mail do contador antes de gerar o pacote (fica gravado na aba Outras das Configurações).');
+        // v6.1.4 — RELATÓRIO DELE (21/09/2026, C6). O que estava errado:
+        //  • chamava o gerador SEM o mês que ele já escolheu no topo da tela, e
+        //    o sistema perguntava a data outra vez;
+        //  • o botão dizia "Enviar para Escritório" mas NADA era enviado por
+        //    e-mail (o sistema não mexe no Gmail dele) — ninguém avisava isso.
+        // Agora: usa o mês escolhido e, no fim, explica em popup do sistema que
+        // o pacote foi BAIXADO neste PC, que e-mail nenhum saiu sozinho e que a
+        // anexação é dele (com atalho para abrir o próprio Gmail já escrito).
+        var gerar = (typeof G.nfPacoteContador === 'function') ? G.nfPacoteContador(G.__fxXmlMes, { semAviso: true }) : null;
+        I.log('xml-escritorio', G.__fxXmlMes + ' incluir PDFs: ' + !!G.__fxXmlPdf);
+        if (!gerar) return I.alert('Pacote', 'O gerador de pacote .zip não respondeu — tente pela Central (Pacote do mês).');
+        Promise.resolve(gerar).then(function (res) {
+          if (!res || !res.ok) return; // o próprio gerador já avisou o motivo (ex.: nenhuma nota no mês)
+          var mesTxt = new Date(G.__fxXmlMes + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+          var txt = 'O pacote <b>' + P.esc(res.nome || '') + '</b> (' + mesTxt + ') foi <b>baixado neste computador</b> — ' +
+            res.notas + ' nota(s), ' + res.arquivos + ' arquivo(s).<br><br>' +
+            '<b>Importante:</b> o sistema <b>não envia e-mail por você</b> — nada saiu do seu Gmail nem do de ninguém. ' +
+            'Qualquer envio automático de e-mail ainda não existe. O caminho é você anexar o .zip que baixou.<br><br>' +
+            'Destino: <b>' + P.esc(em2) + '</b><br>' +
+            '<button type="button" onclick="fxXmlCopiarEmail()" style="margin-top:6px;height:34px;padding:0 12px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:700;font-size:12.5px;cursor:pointer">📋 Copiar e-mail do contador</button>';
+          I.confirm('Pacote do contador pronto', txt, function () {
+            try {
+              var assunto = 'XMLs fiscais — ' + mesTxt;
+              var corpo = 'Segue o pacote ' + (res.nome || '') + ' com os XMLs de ' + mesTxt + '.';
+              window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em2) + '&su=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo), '_blank');
+            } catch (e) { }
+          }, 'Abrir meu Gmail para escrever');
+        }).catch(function () { });
         return;
       }
       /* config */

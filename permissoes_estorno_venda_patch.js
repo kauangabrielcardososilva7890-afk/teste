@@ -121,11 +121,15 @@ function montarBlocoPermissoes(u){
   const div=document.createElement('div');
   div.id='p605-permissoes';
   div.style.cssText='margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px';
-  div.innerHTML='<p style="font-size:11px;font-weight:800;color:#0a1e8a;text-transform:uppercase;letter-spacing:.3px;margin:0 0 8px">Permissões do usuário (só Admin/Dono mexe)</p>'+
+  div.innerHTML='<p style="font-size:11px;font-weight:800;color:#0a1e8a;text-transform:uppercase;letter-spacing:.3px;margin:0 0 4px">Permissões do usuário (só Admin/Dono mexe)</p>'+
+    // v6.1.4 — PEDIDO DO DONO (21/09/2026, relatório D1: "que permissões são
+    // essas?"): explicação em língua de gente, antes das 3 caixas. O que TODO
+    // usuário já pode fazer continua normal; as caixas só liberam os extras.
+    '<p style="font-size:11.5px;color:#475569;margin:0 0 8px;line-height:1.45">O que <b>todo</b> usuário já pode fazer (abrir telas, cadastrar, vender) continua igual — nada aqui tira isso. Estas <b>3 caixas são permissões extras</b>, para o que mexe com dinheiro ou com nota. Caixa <b>desmarcada</b> = o sistema bloqueia na hora e registra na <b>Auditoria</b> quem tentou.</p>'+
     '<div style="display:grid;gap:8px">'+
-    caixa('u-perm-nfe','emitirNfe','Emitir NF (nota fiscal)','Quem NÃO estiver marcado nem vê botão de emitir/conferir NF funcionando.')+
-    caixa('u-perm-apagar','apagar','Apagar registros','Vendas, chamados, orçamentos, lançamentos de leitura... Sem a caixa, o sistema avisa e registra na Auditoria.')+
-    caixa('u-perm-estornar','estornar','Estornar registros','Estornar venda faturada, leitura faturada, notinha... Sem a caixa, bloqueia na hora.')+
+    caixa('u-perm-nfe','emitirNfe','Emitir NF (nota fiscal)','Marcada: pode emitir, cancelar e conferir nota fiscal. Desmarcada: nem vê os botões da parte fiscal funcionando.')+
+    caixa('u-perm-apagar','apagar','Apagar registros','Marcada: pode apagar vendas, chamados, orçamentos, clientes, leituras... Desmarcada: o sistema avisa e anota na Auditoria.')+
+    caixa('u-perm-estornar','estornar','Estornar registros','Marcada: pode estornar venda faturada, leitura faturada, notinha. Desmarcada: bloqueia na hora e anota na Auditoria.')+
     '</div>';
   corpo.appendChild(div);
 }
@@ -223,16 +227,10 @@ function abrirVendaEstornadaEdicao(v){
   window.novaVenda();
   setTimeout(function(){
     try{
-      if(typeof montarBlocoPermissoes==='function'){/* no-op */}
-      // banner explicativo no topo do modal
-      const corpo=document.getElementById('modal-body');
-      if(corpo && !corpo.querySelector('#p605-banner-refazer')){
-        const b=document.createElement('div');
-        b.id='p605-banner-refazer';
-        b.style.cssText='margin-bottom:10px;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:12.5px;font-weight:700';
-        b.innerHTML='↩ Refazendo a notinha <b>'+String(v.numero||'')+'</b> (estava EXTORNADA) — veio com cliente, itens e desconto. Ajuste o que precisar e salve: <b>o número é mantido</b>. Se faturar de novo, o título novo aparece no Financeiro (o extornado fica visível com tarja própria).';
-        corpo.insertBefore(b,corpo.firstChild);
-      }
+      // v6.1.4 — PEDIDO DO DONO (21/09/2026, relatório de teste, item D2):
+      // o banner amarelo de "refazendo a notinha (estava extornada)" foi
+      // REMOVIDO — o aviso só poluía a tela. Nada mudou no comportamento: a
+      // notinha reabre com cliente, itens e desconto, e o número é mantido.
       // cliente
       if(typeof window.selectClienteVenda==='function' && v.clienteId){
         try{ window.selectClienteVenda(v.clienteId); }catch(e){}
@@ -333,5 +331,48 @@ if(typeof window.saveVendaNova==='function' && !window.saveVendaNova.__p605){
   embrV.__p605=true;
   window.saveVendaNova=embrV;
 }
+// ══ 3) AJUDA NA TELA DE USUÁRIOS (v6.1.4 — pedido D1 do relatório dele) ════
+// Ele perguntou "que permissões são essas?". O editor do usuário já explica,
+// mas quem não abre o lápis nunca vê. Este botão fica na tela Usuários, do
+// lado do card "Como funciona?", e abre a explicação em popup do sistema.
+window.permissoesAjuda=function(){
+  const texto='PERMISSÕES DO USUÁRIO — em língua de gente\n\n'+
+    'O que TODO usuário já pode fazer (abrir telas, cadastrar cliente/produto, '+
+    'vender, lançar leitura) continua igual. As 3 caixas são EXTRAS, para o que '+
+    'mexe com dinheiro ou com nota:\n\n'+
+    '1) Emitir NF (nota fiscal) — marcada, o usuário emite, cancela e confere nota. '+
+    'Desmarcada, ele nem vê os botões da parte fiscal funcionando.\n\n'+
+    '2) Apagar registros — marcada, ele pode apagar venda, chamado, orçamento, '+
+    'cliente, leitura... Desmarcada, o sistema avisa e anota na Auditoria quem tentou.\n\n'+
+    '3) Estornar registros — marcada, ele pode estornar venda faturada, leitura '+
+    'faturada e notinha. Desmarcada, bloqueia na hora e anota na Auditoria.\n\n'+
+    'Onde ficam: clique no lápis (✏️) do usuário → bloco "Permissões do usuário". '+
+    'Só Admin e Dono veem e mexem nessas caixas.';
+  if(typeof window.lfbAlert==='function') window.lfbAlert(texto,'As 3 permissões explicadas');
+  else if(typeof toast==='function') toast('Abra o cadastro do usuário (lápis) para ver as permissões','info');
+};
+function p605BotaoAjuda(){
+  const view=document.getElementById('view-usuarios');
+  if(!view || view.querySelector('#p605-ajuda-perm')) return;
+  const card=view.querySelector('.rounded-\\[16px\\].bg-white.border.p-5') || view.querySelector('table');
+  const alvo=(view.querySelector('.space-y-4')||view);
+  const b=document.createElement('button');
+  b.id='p605-ajuda-perm';
+  b.type='button';
+  b.textContent='❓ O que são as 3 permissões?';
+  b.style.cssText='display:block;width:100%;margin-top:10px;height:38px;border-radius:10px;font-weight:800;font-size:12.5px;background:#eef2ff;color:#0a1e8a;border:1px solid #c7d2fe;cursor:pointer';
+  b.onclick=window.permissoesAjuda;
+  if(card && card.parentNode) card.parentNode.insertBefore(b,card.nextSibling);
+  else alvo.insertBefore(b,alvo.firstChild);
+}
+if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p605ajuda){
+  const _ru=window.renderUsuarios;
+  const ru=function(){ const r=_ru.apply(this,arguments); try{ setTimeout(p605BotaoAjuda,0); }catch(e){} return r; };
+  ru.__p605ajuda=true;
+  window.renderUsuarios=ru;
+}
+setTimeout(p605BotaoAjuda,1500);
+
 console.log('v6.0.5 — permissões no editor (NF/apagar/estornar) com bloqueio real + notinha extornada abre na aba da venda + financeiro mostra EXTORNADO');
+console.log('v6.1.4 — aviso amarelo da notinha refeita removido (pedido dele, item D2) + ajuda "O que são as 3 permissões?" na tela Usuários');
 })();

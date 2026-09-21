@@ -148,7 +148,12 @@ function injectButton(root){
 
 window.dcDiagnosticoInvisiveis=function(){
   const alvoSess=(typeof sess==='function')?sess():null;
-  const empAtual=(alvoSess&&alvoSess.empresaId)||'';
+  // v6.1.4 — RELATÓRIO DELE (21/09/2026): o diagnóstico gritava "A CAUSA ESTÁ
+  // AQUI" com tudo "todos visíveis" — alarme falso, ele se assustou à toa.
+  // A empresa da sessão passa a ser procurada nos dois nomes possíveis
+  // (empresaId é o oficial; empresa aparece em sessões antigas/sincronizadas),
+  // e o aviso dramático só sai quando existe ALGO REALMENTE escondido.
+  const empAtual=(alvoSess&&(alvoSess.empresaId||alvoSess.empresa||alvoSess.empresa_id))||'';
   const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
   const linhas=[];
   let totalInvis=0;
@@ -171,8 +176,15 @@ window.dcDiagnosticoInvisiveis=function(){
   let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
   if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
   const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
-  const corpo = semSessaoComUmaEmpresa
+  // v6.1.4 — alarme honesto: drama só quando existe dado escondido de verdade.
+  // Tudo visível + sessão sem carimbo = NADA quebrado (o sistema carimba
+  // sozinho na entrada; o botão verde é opcional). Era aqui que ele se
+  // assustava sem motivo.
+  const temDadoEscondido = (totalInvis + totalOrfaos) > 0;
+  const corpo = (semSessaoComUmaEmpresa && temDadoEscondido)
     ? '\n\n>>> A CAUSA ESTÁ AQUI EM CIMA: sua SESSÃO está SEM empresa, mas o banco tem exatamente 1 ('+empresas[0].id+'). É por isso que dados somem das telas: as listas só mostram a empresa da sessão. Resolva NA HORA clicando no botão verde «Reparar sessão agora» (ao lado deste) — depois recarregue as telas que tudo volta.\n\n(Detalhe técnico, v6.0.4: a sonda antiga só tentava carimbar por 30 segundos depois de abrir o sistema. Quem entrava depois disso ficava o dia inteiro sem carimbo — por isso às vezes aparecia, às vezes não. Agora a cura insiste por até 10 minutos e é rearmada a cada login.)'
+    : (semSessaoComUmaEmpresa && !temDadoEscondido)
+    ? '\n\n✅ NADA QUEBRADO AQUI: as listas acima estão TODAS VISÍVEIS e não há registro escondido — só o carimbo da sessão ainda não caiu (ele é gravado sozinho na entrada do sistema). Isto NÃO some com dado nenhum: pode trabalhar normal. Se quiser adiantar, o botão verde «Reparar sessão agora» carimba na hora; senão deixe que ele se carimba sozinho.'
     : totalOrfaos
     ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
       Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+

@@ -3902,3 +3902,57 @@ nova: ou a integração Git dele não está ligada, ou a build não rodou.
 4. Aviso de validade do certificado A1 na Central de NF.
 5. Subir a versão (6.1.3 → 6.1.4) quando for gerar `.exe` novo, re-ancorando os testes que carimbam 6.1.3 — **incluir aqui** a atualização da versão citada no `GUIA_DE_TESTE_NF.html` e no `RELATORIO_DE_TESTE_NF.html`.
 6. Merge do PR #29 somente com autorização explícita do dono.
+
+---
+
+## CONTINUIDADE — 21/09/2026 (2) — relatório do Kauan atendido: 6 correções + botão de deploy no GitHub
+
+### O que ele mandou
+
+O relatório preenchido no site (15 OK · 2 não resolveu · 8 não testei · "APROVADO COM RESSALVAS") e o log do build do worker **ainda** no erro do token. A pergunta de fundo dele: *"vejo que aparece muitos erros inesperados, o que podemos fazer pra corrigir todos e não acontecer mais?"*.
+
+### Diagnóstico dos "muitos erros" (o que era de verdade)
+
+| Item do relatório | Classificação | O que era |
+|---|---|---|
+| A3 (fiscal ilegível no claro/escuro) | **código** | aguardando a foto dele (print "1") para corrigir o ponto exato |
+| C5 ("registra no log, não na auditoria") | **código** | o portão fiscal gravava só log técnico, sem os campos que a tela Auditoria lê |
+| C3 · C4 · C6 · C7 · C8 | **passo pendente, não defeito** | tudo depende do **certificado A1 instalado** — sem ele nada fala com a SEFAZ |
+| D1 | **explicação** | as 3 caixas existiam, mas ninguém dizia o que eram |
+| D2 | **pedido** | aviso amarelo incomodando — removido |
+| B9 + observações ("(nenhuma?!)") | **alarme falso** | o diagnóstico gritava "A CAUSA ESTÁ AQUI" com tudo visível |
+| C6 (mês pedido 2×, "que gmail envia?") | **fluxo confuso** | pedia o mês de novo e o botão "Enviar" não enviava e-mail nenhum (ninguém avisava) |
+| menu fiscal em aba; "nova venda de NF" | **a definir com ele** | precisa das fotos que ele ofereceu reenviar |
+| item 1 (build token) | **painel da Cloudflare** | não é código; plano B criado (botão no GitHub) |
+
+### Correções feitas (todas em módulos existentes, sem arquivo novo no bundle)
+
+1. **D2 — aviso removido** (`permissoes_estorno_venda_patch.js`): o banner amarelo de "refazendo a notinha (extornada)" saiu de vez; nada mais foi criado no lugar. O comportamento não mudou (número mantido, itens vindos do estorno).
+2. **D1 — "que permissões são essas?"** (mesmo arquivo): explicação em língua de gente dentro do editor do usuário (as 3 caixas são EXTRAS; desmarcada = bloqueia e anota na Auditoria), descrição por caixa ("Marcada: ... Desmarcada: ...") e botão **"❓ O que são as 3 permissões?"** na tela Usuários, para quem nunca abre o lápis.
+3. **C5 — ação fiscal na Auditoria** (`fiscal_guard_patch.js` + `fiscal_menu_completo_patch.js`): criado `window.nfAuditarFiscal(acao, dados)` que grava na Auditoria no MESMO formato do resto do sistema (`logAction('fiscal', ...)`, com empresaId, usuário, data/hora e resumo em português). O portão (`nfgAudit`) e o menu fiscal (`fmcAudit`) passaram a chamar; o log técnico continua (é ele que serve para achar problema do menu).
+4. **Auditoria à prova de log torto** (`ajustes_v5197_patch.js`): antes de desenhar, os logs ganham os campos que a tabela lê (usuarioNome, dataHora, entidade, detalhes) e — só quando o banco tem **exatamente 1 empresa** — a sessão sem carimbo é carimbada (mesma regra segura de sempre). Sem isso, sessão sem empresa deixava a Auditoria **vazia** e um log antigo quebrava a tela.
+5. **C7/C3/C4 — sem A1, orientar em vez de "Falha ao assinar"** (`fiscal_menu_completo_patch.js`): o "Testar SEFAZ agora" confere o certificado ANTES (`ponte.status()`), e sem ele abre popup do sistema com o passo a passo (página de arquivos → .pfx → voltar; senha pedida na hora e não salva) + linha "sem-certificado" na Auditoria. Nada é enviado à SEFAZ nesse caso.
+6. **C6 — mês reaproveitado + aviso honesto** (`fiscal_menu_completo_patch.js` + `fiscal_catalogo_completo_patch.js`): `nfPacoteContador(mesJaEscolhido, opcoes)` aceita o mês já escolhido na tela (AAAA-MM ou MM/AAAA) e **não pergunta de novo**; sem argumento (botão da Central) continua perguntando como antes. O "Enviar para Escritório" agora: gera o pacote do mês da tela, e no fim abre popup explicando que o .zip foi **baixado neste PC**, que o sistema **não envia e-mail por você** (automático ainda não existe) e oferece **"Copiar e-mail do contador"** e **"Abrir meu Gmail para escrever"** (Gmail dele, com destino/assunto já escritos — o anexo é dele).
+7. **Fim do alarme falso** (`ajustes_v5227_nuvem_acompanhamento_patch.js`): a empresa da sessão é lida em `empresaId || empresa || empresa_id`; o aviso dramático "A CAUSA ESTÁ AQUI" só sai quando existe dado escondido de verdade (`temDadoEscondido`). Com tudo visível, a resposta agora é **"✅ NADA QUEBRADO AQUI"** — explica que o carimbo cai sozinho e que ninguém perdeu dado.
+
+### Plano B do deploy do worker (o token da Cloudflare continua travando)
+
+- Criado `.github/workflows/publicar-motor.yml`: botão **"Run workflow"** no GitHub que roda exatamente os 2 passos do `atualizar_motor_nuvem.cmd` (`wrangler d1 migrations apply DB --remote` + `wrangler deploy`), usando segredos do GitHub (`CLOUDFLARE_API_TOKEN` com Workers Edit + **D1 Edit** e `CLOUDFLARE_ACCOUNT_ID`). **Não roda em push** — só quando ele aperta, para não publicar sozinho na nuvem da loja. O `.cmd` continua valendo.
+
+### Arquivos alterados nesta rodada
+
+`permissoes_estorno_venda_patch.js` · `fiscal_guard_patch.js` · `fiscal_menu_completo_patch.js` · `fiscal_catalogo_completo_patch.js` · `ajustes_v5197_patch.js` · `ajustes_v5227_nuvem_acompanhamento_patch.js` · `test_runner.js` · `test_ajustes_v6104.js` (novo) · `.github/workflows/publicar-motor.yml` (novo) · `app.bundle.js` + `mobile/www` + assets Android (regerados).
+
+### Validação
+
+- `node test_ajustes_v6104.js`: **31 verificações ✓** (D1, D2, C5, C6, C7, diagnóstico, workflow, e o bundle carregando as correções).
+- `npm test`: **186 passaram, 0 falharam** · `npm run check` OK (222 scripts, sha `676f0d941d6a4d07`) · `npm run sync:check` OK · `npm run verify:files` OK · worker `node --check` OK (não mexemos no worker nesta rodada).
+- Versão do sistema segue **v6.1.3** — o bump para 6.1.4 vai junto do próximo `.exe` (os testes antigos carimbam a versão atual).
+
+### Pendências (com ele)
+
+1. **Item 1**: o log que ele colou é de **20/09 21:04 (horário de São Paulo)** — anterior à troca do token. Conferir o build MAIS NOVO em Deployments; se ainda falhar: reconectar o repositório em Settings → Build (recria o token) ou usar o botão novo do GitHub.
+2. **Fotos** que ele ofereceu reenviar: (a) modo escuro da parte fiscal (A3); (b) como ele quer a "nova venda de NF" em **aba** (o menu fiscal confuso).
+3. **B7**: ele disse que "tem um problema a parte diferente" — perguntar qual.
+4. Re-teste no link fixo depois do próximo deploy do site.
+5. Fila de sempre: GitHack (link do cliente), aviso de validade do A1, bump 6.1.4 com o `.exe`, merge do PR #29 só com ordem (e voltar a Production branch para `main` depois).

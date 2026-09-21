@@ -158,7 +158,11 @@ if(typeof window==='undefined' || typeof document==='undefined') return;
 window.__v6006fmc=true;
 
 function fmcToast(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
-function fmcAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{}; db.logs=db.logs||[]; db.logs.push({tipo:'nf-menu606',acao:acao,dados:dados||{},usuarioId:s.usuarioId||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
+function fmcAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{};
+  // v6.1.4 — auditoria de verdade (relatório dele, C5): a linha do log técnico
+  // continua aqui embaixo, mas a ação TAMBÉM entra na tela Auditoria.
+  if(typeof window.nfAuditarFiscal==='function'){ try{ window.nfAuditarFiscal(acao,dados,''); }catch(e){} }
+  db.logs=db.logs||[]; db.logs.push({tipo:'nf-menu606',acao:acao,dados:dados||{},empresaId:s.empresaId||null,dataHora:new Date().toISOString(),usuarioId:s.usuarioId||null,usuarioNome:s.usuarioNome||s.login||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
 function fmcAmb(){ return (window.NFG_PURE&&window.NFG_PURE.nfgAmbiente(db))||'homologacao'; }
 function fmcPonte(){ return (window.nfeCertAPI && window.nfeCertAPI.isElectron) ? window.nfeCertAPI : null; }
 function fmcSemPonte(){ if(typeof window.lfbAlert==='function') window.lfbAlert('Essa operação fiscal só roda no app de computador (.exe) — a SEFAZ exige o certificado A1 no PC emissor. Abra pelo atalho do computador e volte aqui.','Fiscal'); }
@@ -211,6 +215,29 @@ window.nfStatusServico=async function(){
   try{
     if(!(window.usuarioPodeEmitirNfe&&window.usuarioPodeEmitirNfe())){ fmcToast('Sem permissão de emitir NF.','error'); return {ok:false}; }
     const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    // v6.1.4 — RELATÓRIO DELE (21/09/2026, C3/C4/C7): ele clicou em "Testar
+    // SEFAZ agora" sem ter enviado o A1 e levou o aviso cru "Falha ao assinar:
+    // Envie o certificado A1...". Agora o sistema CONFERE ANTES, avisa em
+    // popup do sistema com o passo a passo e ainda registra na Auditoria —
+    // nada de erro cinza que parece defeito. O teste SEFAZ não é defeito
+    // quando falta o certificado: é um passo que ainda não foi feito.
+    try{
+      const st=(typeof ponte.status==='function')?await ponte.status():null;
+      if(st && st.ok && !st.installed){
+        fmcAudit('sem-certificado',{ambiente:fmcAmb()});
+        if(typeof window.lfbAlert==='function') window.lfbAlert(
+          'Este teste precisa do CERTIFICADO A1 instalado neste computador.\n\n'+
+          'O sistema já está pronto — falta só o arquivo do certificado:\n'+
+          '1) Abra a página de arquivos (menu Enviar Arquivos / envio_arquivos.html).\n'+
+          '2) Envie o arquivo do certificado A1 (.pfx).\n'+
+          '3) Volte aqui e clique em "Testar SEFAZ agora" de novo — a senha do '+
+          'certificado é pedida na hora e NÃO fica salva.\n\n'+
+          'Nada foi enviado à SEFAZ agora e nenhuma nota saiu por causa disto.',
+          'Falta o certificado A1');
+        else fmcToast('Falta instalar o certificado A1 neste PC (página de arquivos). Nada foi enviado à SEFAZ.','error');
+        return {ok:false, error:'sem-certificado'};
+      }
+    }catch(e){}
     const senha=await window.nfxPedirTexto('Senha do certificado A1','Pra chamar a SEFAZ é preciso assinar com o A1 (a senha NÃO fica salva).', {mascara:true});
     if(!senha) return {ok:false, error:'sem-senha'};
     const amb=fmcAmb();
@@ -232,16 +259,29 @@ window.nfStatusServico=async function(){
 };
 
 // ══ 4) PACOTE DO MÊS PRO CONTADOR (zip STORE puro) ═════════════════════════
-window.nfPacoteContador=async function(){
+// v6.1.4 — RELATÓRIO DELE (21/09/2026, C6): na tela "Enviar XML" ele já escolhe
+// o MÊS na matriz do topo e o sistema perguntava a data OUTRA VEZ. Agora quem
+// chama pode passar o mês já escolhido (formato AAAA-MM) — a função usa direto,
+// sem perguntar nada. Sem argumento (botão da Central), continua perguntando.
+window.nfPacoteContador=async function(mesJaEscolhido, opcoes){
   try{
+    const o=opcoes||{};
     const hoje=new Date();
     const padrao=String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
-    const ini=await window.nfxPedirTexto('Pacote para a contabilidade','Mês das notas (MM/AAAA) — exemplo: '+padrao);
-    if(ini===null) return {ok:false, error:'desistiu'};
-    const mm=String(ini||'').trim()||padrao;
-    const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
-    if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
-    const alvo=m[2]+'-'+m[1].padStart(2,'0');
+    let alvo='';
+    const jaVem=String(mesJaEscolhido||'').trim();
+    if(/^\d{4}-\d{2}$/.test(jaVem)){ alvo=jaVem; }
+    else if(/^\d{1,2}\/\d{4}$/.test(jaVem)){ const q=jaVem.match(/^(\d{1,2})\/(\d{4})$/); alvo=q[2]+'-'+q[1].padStart(2,'0'); }
+    if(!alvo){
+      const ini=await window.nfxPedirTexto('Pacote para a contabilidade','Mês das notas (MM/AAAA) — exemplo: '+padrao);
+      if(ini===null) return {ok:false, error:'desistiu'};
+      const mm=String(ini||'').trim()||padrao;
+      const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
+      if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
+      alvo=m[2]+'-'+m[1].padStart(2,'0');
+      opcoes=o;
+    }
+    const m=[alvo.slice(5,7),alvo.slice(0,4)];
     const reg=((db.config&&db.config.nfRegistro)||[]);
     const doMes=reg.filter(function(n){
       const dia=String(n.dataAutorizacao||n.atualizadoEm||n.criadoEm||'');
@@ -267,8 +307,12 @@ window.nfPacoteContador=async function(){
     const blob=new Blob([zip],{type:'application/zip'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-    fmcToast('✅ '+nome+' baixado: '+doMes.length+' nota(s), '+arquivos.length+' arquivo(s) — é só mandar pra contabilidade.','success');
-    return {ok:true, arquivos:arquivos.length, notas:doMes.length};
+    // v6.1.4 — resposta honesta (relatório dele, C6): o sistema BAIXA o zip no
+    // computador e NÃO envia e-mail nenhum (não usa o Gmail dele nem o de
+    // ninguém). Quando o silencioso é falso, ele fica sem saber se foi enviado.
+    const sufixoEnvio = o.semAviso ? '' : ' — é só mandar pra contabilidade.';
+    fmcToast('✅ '+nome+' baixado: '+doMes.length+' nota(s), '+arquivos.length+' arquivo(s)'+sufixoEnvio,'success');
+    return {ok:true, arquivos:arquivos.length, notas:doMes.length, nome:nome, mes:alvo};
   }catch(e){ fmcAudit('pacote-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
 };
 

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 5a84fa887aa73d36
+ * scripts: 222 | sha256: 676f0d941d6a4d07
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -27126,6 +27126,47 @@ function podeVerAuditoria(){
   return !!sess();
 }
 
+// ══ v6.1.4 — AUDITORIA À PROVA DE LOG TORTO (relatório dele, 21/09/2026) ══
+// Dois problemas reais que apareciam como "erro inesperado" na tela:
+//  1) Existem logs gravados por módulos antigos SEM os campos que a tabela lê
+//     (usuarioNome, dataHora, entidade, detalhes). Ao entrarem na tela, o
+//     render quebrava e a Auditoria aparecia vazia/errada.
+//  2) Com a sessão SEM empresa (caso dele), o filtro `l.empresaId===sess.empresaId`
+//     descarta TODAS as linhas — a tela fica vazia e parece que nada foi
+//     registrado. Aqui vale a MESMA regra segura da cura: só quando o banco
+//     tem EXATAMENTE 1 empresa é que a sessão é carimbada (2+ = nunca chuta).
+function v5197SanearLogs(){
+  try{
+    if(typeof db==='undefined'||!db||!Array.isArray(db.logs)) return;
+    var s=(typeof getSession==='function'?getSession():null)||null;
+    if(s && !s.empresaId){
+      var emps=Array.isArray(db.empresas)?db.empresas:[];
+      if(emps.length===1 && emps[0] && emps[0].id){
+        s.empresaId=emps[0].id;
+        try{ if(typeof setSession==='function') setSession(s); }catch(e){}
+      }
+    }
+    var carimbo=(s&&s.empresaId)||null;
+    db.logs.forEach(function(l){
+      if(!l||typeof l!=='object') return;
+      if(!l.dataHora) l.dataHora=l.at||new Date().toISOString();
+      if(l.empresaId===undefined||l.empresaId===null) l.empresaId=carimbo;
+      if(!l.usuarioNome) l.usuarioNome=l.usuarioLogin||'Sistema';
+      if(!l.usuarioLogin) l.usuarioLogin=l.usuarioNome||'-';
+      if(!l.entidade) l.entidade=l.tipo||'sistema';
+      if(l.acao===undefined||l.acao===null) l.acao='';
+      if(l.entidadeId===undefined||l.entidadeId===null) l.entidadeId='';
+      if(!l.detalhes) l.detalhes=l.dados?JSON.stringify(l.dados).slice(0,200):'';
+    });
+  }catch(e){}
+}
+if(typeof window.renderAuditoria==='function' && !window.renderAuditoria.__v5197){
+  const _ra=window.renderAuditoria;
+  const ra=function(){ try{ v5197SanearLogs(); }catch(e){} return _ra.apply(this,arguments); };
+  ra.__v5197=true;
+  window.renderAuditoria=ra;
+}
+
 // Mostra/esconde os itens de menu de auditoria conforme a permissão.
 function esconderAuditoria(){
   // Sem sessão (tela de login): não mexe em nada.
@@ -30403,7 +30444,12 @@ function injectButton(root){
 
 window.dcDiagnosticoInvisiveis=function(){
   const alvoSess=(typeof sess==='function')?sess():null;
-  const empAtual=(alvoSess&&alvoSess.empresaId)||'';
+  // v6.1.4 — RELATÓRIO DELE (21/09/2026): o diagnóstico gritava "A CAUSA ESTÁ
+  // AQUI" com tudo "todos visíveis" — alarme falso, ele se assustou à toa.
+  // A empresa da sessão passa a ser procurada nos dois nomes possíveis
+  // (empresaId é o oficial; empresa aparece em sessões antigas/sincronizadas),
+  // e o aviso dramático só sai quando existe ALGO REALMENTE escondido.
+  const empAtual=(alvoSess&&(alvoSess.empresaId||alvoSess.empresa||alvoSess.empresa_id))||'';
   const ENTS=['usuarios','tecnicos','clientes','produtos','recargas','equipamentos','contratos','parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar'];
   const linhas=[];
   let totalInvis=0;
@@ -30426,8 +30472,15 @@ window.dcDiagnosticoInvisiveis=function(){
   let cab='Empresa da minha sessão: '+(empAtual||'(nenhuma?!)')+'\nEmpresas no banco: '+empresas.length+(empresas.length?' ['+empresas.map(function(x){return x.id;}).join(', ')+']':'');
   if(outros.length) cab+='\nIDs estranhos achados nos dados: '+outros.join(', ');
   const semSessaoComUmaEmpresa = !empAtual && empresas.length===1;
-  const corpo = semSessaoComUmaEmpresa
+  // v6.1.4 — alarme honesto: drama só quando existe dado escondido de verdade.
+  // Tudo visível + sessão sem carimbo = NADA quebrado (o sistema carimba
+  // sozinho na entrada; o botão verde é opcional). Era aqui que ele se
+  // assustava sem motivo.
+  const temDadoEscondido = (totalInvis + totalOrfaos) > 0;
+  const corpo = (semSessaoComUmaEmpresa && temDadoEscondido)
     ? '\n\n>>> A CAUSA ESTÁ AQUI EM CIMA: sua SESSÃO está SEM empresa, mas o banco tem exatamente 1 ('+empresas[0].id+'). É por isso que dados somem das telas: as listas só mostram a empresa da sessão. Resolva NA HORA clicando no botão verde «Reparar sessão agora» (ao lado deste) — depois recarregue as telas que tudo volta.\n\n(Detalhe técnico, v6.0.4: a sonda antiga só tentava carimbar por 30 segundos depois de abrir o sistema. Quem entrava depois disso ficava o dia inteiro sem carimbo — por isso às vezes aparecia, às vezes não. Agora a cura insiste por até 10 minutos e é rearmada a cada login.)'
+    : (semSessaoComUmaEmpresa && !temDadoEscondido)
+    ? '\n\n✅ NADA QUEBRADO AQUI: as listas acima estão TODAS VISÍVEIS e não há registro escondido — só o carimbo da sessão ainda não caiu (ele é gravado sozinho na entrada do sistema). Isto NÃO some com dado nenhum: pode trabalhar normal. Se quiser adiantar, o botão verde «Reparar sessão agora» carimba na hora; senão deixe que ele se carimba sozinho.'
     : totalOrfaos
     ? '\n\n>>> A CAUSA PROVÁVEL DOS SUMIÇOS: '+totalOrfaos+' registros SEM carimbo de empresa ('+
       Object.keys(orfaosPor).map(function(k){return k+': '+orfaosPor[k];}).join(', ')+
@@ -50586,13 +50639,72 @@ else if(typeof global!=='undefined') global.NFG_PURE=api;
 if(typeof window==='undefined' || typeof document==='undefined') return;
 window.__v6000fg=true;
 
+// ── AUDITORIA FISCAL DE VERDADE (v6.1.4) ───────────────────────────────────
+// RELATÓRIO DELE (21/09/2026, pergunta C5): "registra no log, não na auditoria"
+// — e era exatamente isso: o portão gravava só o log técnico (tipo
+// 'nf-portao'), sem os campos que a tela Auditoria lê (empresaId, entidade,
+// usuarioNome, dataHora). Resultado: a ação fiscal ficava invisível na
+// Auditoria. Agora cada ação fiscal grava TAMBÉM uma linha de auditoria no
+// mesmo formato do resto do sistema (logAction), com o nome de quem fez.
+// O log técnico continua (é ele que ajuda a achar problema do menu fiscal).
+window.nfAuditarFiscal=function(acao, detalhes, entidadeId){
+  try{
+    if(typeof logAction!=='function') return false;
+    const s=(typeof getSession==='function'?getSession():null)||{};
+    if(!s.usuarioId && !s.login) return false;
+    const rotulos={
+      'ambiente->producao':'Fiscal: ambiente mudado para PRODUCAO',
+      'ambiente->homologacao':'Fiscal: ambiente voltado para HOMOLOGACAO (teste)',
+      'conferir':'Fiscal: nota conferida',
+      'abrir-central':'Fiscal: Central de Nota Fiscal aberta',
+      'status-inicio':'Fiscal: teste da SEFAZ iniciado',
+      'status-resposta':'Fiscal: SEFAZ respondeu ao teste',
+      'status-falha':'Fiscal: teste da SEFAZ sem resposta',
+      'status-excecao':'Fiscal: erro no teste da SEFAZ',
+      'sem-certificado':'Fiscal: teste da SEFAZ bloqueado (sem certificado A1 neste PC)',
+      'pacote-contador':'Fiscal: pacote do mes (.zip) gerado para o contador',
+      'pacote-excecao':'Fiscal: erro ao gerar o pacote do mes',
+      'cce-inicio':'Fiscal: Carta de Correcao (CC-e) iniciada',
+      'cce-resposta':'Fiscal: Carta de Correcao (CC-e) respondida pela SEFAZ',
+      'cce-excecao':'Fiscal: erro na Carta de Correcao',
+      'transmitir-inicio':'Fiscal: envio de nota para a SEFAZ iniciado',
+      'transmitir-resposta':'Fiscal: resposta da SEFAZ para o envio de nota',
+      'cancelar-inicio':'Fiscal: cancelamento de nota iniciado',
+      'cancelar-resposta':'Fiscal: resposta da SEFAZ ao cancelamento'
+    };
+    const base=rotulos[acao]||('Fiscal: '+String(acao||'').replace(/[-_]/g,' '));
+    const extra=typeof nfgResumoDados==='function'?nfgResumoDados(detalhes):'';
+    logAction('fiscal', acao, entidadeId||'', (base+(extra?(' — '+extra):'')).slice(0,300));
+    return true;
+  }catch(e){ return false; }
+};
+// Resumo curto do que aconteceu (sem despejar o objeto inteiro na Auditoria)
+function nfgResumoDados(d){
+  if(!d || typeof d!=='object') return '';
+  const p=[];
+  if(d.ambiente) p.push('ambiente '+d.ambiente);
+  if(d.numero!=null && d.numero!=='') p.push('nota '+d.numero);
+  if(d.modelo) p.push('modelo '+d.modelo);
+  if(d.mes) p.push('mês '+d.mes);
+  if(d.notas!=null) p.push(d.notas+' nota(s)');
+  if(d.arquivos!=null) p.push(d.arquivos+' arquivo(s)');
+  if(d.cStat) p.push('cStat '+d.cStat);
+  if(d.motivo) p.push(String(d.motivo).slice(0,90));
+  if(d.erro) p.push('erro: '+String(d.erro).slice(0,90));
+  return p.join(' · ');
+}
+
 function nfgAudit(acao, dados){
   try{
     db.logs=db.logs||[];
     const s=(typeof getSession==='function'?getSession():null)||{};
+    // v6.1.4 — além do log técnico, a linha da AUDITORIA (é isso que o dono vê)
+    if(typeof window.nfAuditarFiscal==='function'){ try{ window.nfAuditarFiscal(acao, dados, ''); }catch(e){} }
     db.logs.push({ tipo:'nf-portao', acao:acao, ambiente:nfgAmbiente(db),
-      usuarioId:s.usuarioId||null, usuarioLogin:s.login||s.usuarioLogin||null,
-      dados:dados||{}, at:new Date().toISOString() });
+      empresaId:s.empresaId||null, dataHora:new Date().toISOString(),
+      usuarioId:s.usuarioId||null, usuarioNome:s.usuarioNome||s.login||null,
+      usuarioLogin:s.login||s.usuarioLogin||null,
+      dados:dados||{}, detalhes:nfgResumoDados(dados), at:new Date().toISOString() });
     if(db.logs.length>300){ db.logs.splice(0,db.logs.length-300); }
     if(typeof db.save==='function') db.save();
   }catch(e){}
@@ -51781,11 +51893,15 @@ function montarBlocoPermissoes(u){
   const div=document.createElement('div');
   div.id='p605-permissoes';
   div.style.cssText='margin-top:12px;border-top:1px solid #e2e8f0;padding-top:12px';
-  div.innerHTML='<p style="font-size:11px;font-weight:800;color:#0a1e8a;text-transform:uppercase;letter-spacing:.3px;margin:0 0 8px">Permissões do usuário (só Admin/Dono mexe)</p>'+
+  div.innerHTML='<p style="font-size:11px;font-weight:800;color:#0a1e8a;text-transform:uppercase;letter-spacing:.3px;margin:0 0 4px">Permissões do usuário (só Admin/Dono mexe)</p>'+
+    // v6.1.4 — PEDIDO DO DONO (21/09/2026, relatório D1: "que permissões são
+    // essas?"): explicação em língua de gente, antes das 3 caixas. O que TODO
+    // usuário já pode fazer continua normal; as caixas só liberam os extras.
+    '<p style="font-size:11.5px;color:#475569;margin:0 0 8px;line-height:1.45">O que <b>todo</b> usuário já pode fazer (abrir telas, cadastrar, vender) continua igual — nada aqui tira isso. Estas <b>3 caixas são permissões extras</b>, para o que mexe com dinheiro ou com nota. Caixa <b>desmarcada</b> = o sistema bloqueia na hora e registra na <b>Auditoria</b> quem tentou.</p>'+
     '<div style="display:grid;gap:8px">'+
-    caixa('u-perm-nfe','emitirNfe','Emitir NF (nota fiscal)','Quem NÃO estiver marcado nem vê botão de emitir/conferir NF funcionando.')+
-    caixa('u-perm-apagar','apagar','Apagar registros','Vendas, chamados, orçamentos, lançamentos de leitura... Sem a caixa, o sistema avisa e registra na Auditoria.')+
-    caixa('u-perm-estornar','estornar','Estornar registros','Estornar venda faturada, leitura faturada, notinha... Sem a caixa, bloqueia na hora.')+
+    caixa('u-perm-nfe','emitirNfe','Emitir NF (nota fiscal)','Marcada: pode emitir, cancelar e conferir nota fiscal. Desmarcada: nem vê os botões da parte fiscal funcionando.')+
+    caixa('u-perm-apagar','apagar','Apagar registros','Marcada: pode apagar vendas, chamados, orçamentos, clientes, leituras... Desmarcada: o sistema avisa e anota na Auditoria.')+
+    caixa('u-perm-estornar','estornar','Estornar registros','Marcada: pode estornar venda faturada, leitura faturada, notinha. Desmarcada: bloqueia na hora e anota na Auditoria.')+
     '</div>';
   corpo.appendChild(div);
 }
@@ -51883,16 +51999,10 @@ function abrirVendaEstornadaEdicao(v){
   window.novaVenda();
   setTimeout(function(){
     try{
-      if(typeof montarBlocoPermissoes==='function'){/* no-op */}
-      // banner explicativo no topo do modal
-      const corpo=document.getElementById('modal-body');
-      if(corpo && !corpo.querySelector('#p605-banner-refazer')){
-        const b=document.createElement('div');
-        b.id='p605-banner-refazer';
-        b.style.cssText='margin-bottom:10px;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:12.5px;font-weight:700';
-        b.innerHTML='↩ Refazendo a notinha <b>'+String(v.numero||'')+'</b> (estava EXTORNADA) — veio com cliente, itens e desconto. Ajuste o que precisar e salve: <b>o número é mantido</b>. Se faturar de novo, o título novo aparece no Financeiro (o extornado fica visível com tarja própria).';
-        corpo.insertBefore(b,corpo.firstChild);
-      }
+      // v6.1.4 — PEDIDO DO DONO (21/09/2026, relatório de teste, item D2):
+      // o banner amarelo de "refazendo a notinha (estava extornada)" foi
+      // REMOVIDO — o aviso só poluía a tela. Nada mudou no comportamento: a
+      // notinha reabre com cliente, itens e desconto, e o número é mantido.
       // cliente
       if(typeof window.selectClienteVenda==='function' && v.clienteId){
         try{ window.selectClienteVenda(v.clienteId); }catch(e){}
@@ -51993,7 +52103,50 @@ if(typeof window.saveVendaNova==='function' && !window.saveVendaNova.__p605){
   embrV.__p605=true;
   window.saveVendaNova=embrV;
 }
+// ══ 3) AJUDA NA TELA DE USUÁRIOS (v6.1.4 — pedido D1 do relatório dele) ════
+// Ele perguntou "que permissões são essas?". O editor do usuário já explica,
+// mas quem não abre o lápis nunca vê. Este botão fica na tela Usuários, do
+// lado do card "Como funciona?", e abre a explicação em popup do sistema.
+window.permissoesAjuda=function(){
+  const texto='PERMISSÕES DO USUÁRIO — em língua de gente\n\n'+
+    'O que TODO usuário já pode fazer (abrir telas, cadastrar cliente/produto, '+
+    'vender, lançar leitura) continua igual. As 3 caixas são EXTRAS, para o que '+
+    'mexe com dinheiro ou com nota:\n\n'+
+    '1) Emitir NF (nota fiscal) — marcada, o usuário emite, cancela e confere nota. '+
+    'Desmarcada, ele nem vê os botões da parte fiscal funcionando.\n\n'+
+    '2) Apagar registros — marcada, ele pode apagar venda, chamado, orçamento, '+
+    'cliente, leitura... Desmarcada, o sistema avisa e anota na Auditoria quem tentou.\n\n'+
+    '3) Estornar registros — marcada, ele pode estornar venda faturada, leitura '+
+    'faturada e notinha. Desmarcada, bloqueia na hora e anota na Auditoria.\n\n'+
+    'Onde ficam: clique no lápis (✏️) do usuário → bloco "Permissões do usuário". '+
+    'Só Admin e Dono veem e mexem nessas caixas.';
+  if(typeof window.lfbAlert==='function') window.lfbAlert(texto,'As 3 permissões explicadas');
+  else if(typeof toast==='function') toast('Abra o cadastro do usuário (lápis) para ver as permissões','info');
+};
+function p605BotaoAjuda(){
+  const view=document.getElementById('view-usuarios');
+  if(!view || view.querySelector('#p605-ajuda-perm')) return;
+  const card=view.querySelector('.rounded-\\[16px\\].bg-white.border.p-5') || view.querySelector('table');
+  const alvo=(view.querySelector('.space-y-4')||view);
+  const b=document.createElement('button');
+  b.id='p605-ajuda-perm';
+  b.type='button';
+  b.textContent='❓ O que são as 3 permissões?';
+  b.style.cssText='display:block;width:100%;margin-top:10px;height:38px;border-radius:10px;font-weight:800;font-size:12.5px;background:#eef2ff;color:#0a1e8a;border:1px solid #c7d2fe;cursor:pointer';
+  b.onclick=window.permissoesAjuda;
+  if(card && card.parentNode) card.parentNode.insertBefore(b,card.nextSibling);
+  else alvo.insertBefore(b,alvo.firstChild);
+}
+if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p605ajuda){
+  const _ru=window.renderUsuarios;
+  const ru=function(){ const r=_ru.apply(this,arguments); try{ setTimeout(p605BotaoAjuda,0); }catch(e){} return r; };
+  ru.__p605ajuda=true;
+  window.renderUsuarios=ru;
+}
+setTimeout(p605BotaoAjuda,1500);
+
 console.log('v6.0.5 — permissões no editor (NF/apagar/estornar) com bloqueio real + notinha extornada abre na aba da venda + financeiro mostra EXTORNADO');
+console.log('v6.1.4 — aviso amarelo da notinha refeita removido (pedido dele, item D2) + ajuda "O que são as 3 permissões?" na tela Usuários');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("permissoes_estorno_venda_patch.js", e); }
@@ -52161,7 +52314,11 @@ if(typeof window==='undefined' || typeof document==='undefined') return;
 window.__v6006fmc=true;
 
 function fmcToast(m,t){ if(typeof toast==='function') toast(m,t||'info'); }
-function fmcAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{}; db.logs=db.logs||[]; db.logs.push({tipo:'nf-menu606',acao:acao,dados:dados||{},usuarioId:s.usuarioId||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
+function fmcAudit(acao,dados){ try{ const s=(typeof getSession==='function'?getSession():null)||{};
+  // v6.1.4 — auditoria de verdade (relatório dele, C5): a linha do log técnico
+  // continua aqui embaixo, mas a ação TAMBÉM entra na tela Auditoria.
+  if(typeof window.nfAuditarFiscal==='function'){ try{ window.nfAuditarFiscal(acao,dados,''); }catch(e){} }
+  db.logs=db.logs||[]; db.logs.push({tipo:'nf-menu606',acao:acao,dados:dados||{},empresaId:s.empresaId||null,dataHora:new Date().toISOString(),usuarioId:s.usuarioId||null,usuarioNome:s.usuarioNome||s.login||null,usuarioLogin:s.login||null,at:new Date().toISOString()}); if(typeof db.save==='function') db.save(); }catch(e){} }
 function fmcAmb(){ return (window.NFG_PURE&&window.NFG_PURE.nfgAmbiente(db))||'homologacao'; }
 function fmcPonte(){ return (window.nfeCertAPI && window.nfeCertAPI.isElectron) ? window.nfeCertAPI : null; }
 function fmcSemPonte(){ if(typeof window.lfbAlert==='function') window.lfbAlert('Essa operação fiscal só roda no app de computador (.exe) — a SEFAZ exige o certificado A1 no PC emissor. Abra pelo atalho do computador e volte aqui.','Fiscal'); }
@@ -52214,6 +52371,29 @@ window.nfStatusServico=async function(){
   try{
     if(!(window.usuarioPodeEmitirNfe&&window.usuarioPodeEmitirNfe())){ fmcToast('Sem permissão de emitir NF.','error'); return {ok:false}; }
     const ponte=fmcPonte(); if(!ponte){ fmcSemPonte(); return {ok:false}; }
+    // v6.1.4 — RELATÓRIO DELE (21/09/2026, C3/C4/C7): ele clicou em "Testar
+    // SEFAZ agora" sem ter enviado o A1 e levou o aviso cru "Falha ao assinar:
+    // Envie o certificado A1...". Agora o sistema CONFERE ANTES, avisa em
+    // popup do sistema com o passo a passo e ainda registra na Auditoria —
+    // nada de erro cinza que parece defeito. O teste SEFAZ não é defeito
+    // quando falta o certificado: é um passo que ainda não foi feito.
+    try{
+      const st=(typeof ponte.status==='function')?await ponte.status():null;
+      if(st && st.ok && !st.installed){
+        fmcAudit('sem-certificado',{ambiente:fmcAmb()});
+        if(typeof window.lfbAlert==='function') window.lfbAlert(
+          'Este teste precisa do CERTIFICADO A1 instalado neste computador.\n\n'+
+          'O sistema já está pronto — falta só o arquivo do certificado:\n'+
+          '1) Abra a página de arquivos (menu Enviar Arquivos / envio_arquivos.html).\n'+
+          '2) Envie o arquivo do certificado A1 (.pfx).\n'+
+          '3) Volte aqui e clique em "Testar SEFAZ agora" de novo — a senha do '+
+          'certificado é pedida na hora e NÃO fica salva.\n\n'+
+          'Nada foi enviado à SEFAZ agora e nenhuma nota saiu por causa disto.',
+          'Falta o certificado A1');
+        else fmcToast('Falta instalar o certificado A1 neste PC (página de arquivos). Nada foi enviado à SEFAZ.','error');
+        return {ok:false, error:'sem-certificado'};
+      }
+    }catch(e){}
     const senha=await window.nfxPedirTexto('Senha do certificado A1','Pra chamar a SEFAZ é preciso assinar com o A1 (a senha NÃO fica salva).', {mascara:true});
     if(!senha) return {ok:false, error:'sem-senha'};
     const amb=fmcAmb();
@@ -52235,16 +52415,29 @@ window.nfStatusServico=async function(){
 };
 
 // ══ 4) PACOTE DO MÊS PRO CONTADOR (zip STORE puro) ═════════════════════════
-window.nfPacoteContador=async function(){
+// v6.1.4 — RELATÓRIO DELE (21/09/2026, C6): na tela "Enviar XML" ele já escolhe
+// o MÊS na matriz do topo e o sistema perguntava a data OUTRA VEZ. Agora quem
+// chama pode passar o mês já escolhido (formato AAAA-MM) — a função usa direto,
+// sem perguntar nada. Sem argumento (botão da Central), continua perguntando.
+window.nfPacoteContador=async function(mesJaEscolhido, opcoes){
   try{
+    const o=opcoes||{};
     const hoje=new Date();
     const padrao=String(hoje.getMonth()+1).padStart(2,'0')+'/'+hoje.getFullYear();
-    const ini=await window.nfxPedirTexto('Pacote para a contabilidade','Mês das notas (MM/AAAA) — exemplo: '+padrao);
-    if(ini===null) return {ok:false, error:'desistiu'};
-    const mm=String(ini||'').trim()||padrao;
-    const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
-    if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
-    const alvo=m[2]+'-'+m[1].padStart(2,'0');
+    let alvo='';
+    const jaVem=String(mesJaEscolhido||'').trim();
+    if(/^\d{4}-\d{2}$/.test(jaVem)){ alvo=jaVem; }
+    else if(/^\d{1,2}\/\d{4}$/.test(jaVem)){ const q=jaVem.match(/^(\d{1,2})\/(\d{4})$/); alvo=q[2]+'-'+q[1].padStart(2,'0'); }
+    if(!alvo){
+      const ini=await window.nfxPedirTexto('Pacote para a contabilidade','Mês das notas (MM/AAAA) — exemplo: '+padrao);
+      if(ini===null) return {ok:false, error:'desistiu'};
+      const mm=String(ini||'').trim()||padrao;
+      const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
+      if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
+      alvo=m[2]+'-'+m[1].padStart(2,'0');
+      opcoes=o;
+    }
+    const m=[alvo.slice(5,7),alvo.slice(0,4)];
     const reg=((db.config&&db.config.nfRegistro)||[]);
     const doMes=reg.filter(function(n){
       const dia=String(n.dataAutorizacao||n.atualizadoEm||n.criadoEm||'');
@@ -52270,8 +52463,12 @@ window.nfPacoteContador=async function(){
     const blob=new Blob([zip],{type:'application/zip'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-    fmcToast('✅ '+nome+' baixado: '+doMes.length+' nota(s), '+arquivos.length+' arquivo(s) — é só mandar pra contabilidade.','success');
-    return {ok:true, arquivos:arquivos.length, notas:doMes.length};
+    // v6.1.4 — resposta honesta (relatório dele, C6): o sistema BAIXA o zip no
+    // computador e NÃO envia e-mail nenhum (não usa o Gmail dele nem o de
+    // ninguém). Quando o silencioso é falso, ele fica sem saber se foi enviado.
+    const sufixoEnvio = o.semAviso ? '' : ' — é só mandar pra contabilidade.';
+    fmcToast('✅ '+nome+' baixado: '+doMes.length+' nota(s), '+arquivos.length+' arquivo(s)'+sufixoEnvio,'success');
+    return {ok:true, arquivos:arquivos.length, notas:doMes.length, nome:nome, mes:alvo};
   }catch(e){ fmcAudit('pacote-excecao',{erro:e.message||String(e)}); fmcToast('Erro: '+(e.message||e),'error'); return {ok:false}; }
 };
 
@@ -54373,6 +54570,14 @@ try{
     root.classList.remove('hidden');
   }
   function fxToast(m, t) { try { if (typeof toast === 'function') toast(m, t || "success"); } catch (e) { } }
+  // v6.1.4 — copiar o e-mail do contador de dentro do popup do pacote
+  window.fxXmlCopiarEmail = function () {
+    var em = (fxCfg().outras && fxCfg().outras.emailEscritorio) || '';
+    try {
+      if (navigator.clipboard && em) navigator.clipboard.writeText(em).then(function () { fxToast('E-mail ' + em + ' copiado ✅'); });
+      else fxToast('E-mail do contador: ' + em, 'info');
+    } catch (e) { fxToast('E-mail do contador: ' + em, 'info'); }
+  };
 
   /* campos com data-fx (coleta genérica DOM→objeto) */
   function fxInp(path, label, extra) {
@@ -55536,9 +55741,35 @@ try{
       if (acao === 'xml-enviar') {
         var em2 = (document.getElementById('fx-xml-email') || {}).value || '';
         I.cfg().outras.emailEscritorio = em2; I.save();
-        if (!em2) return I.alert('E-mail do escritório', 'Preencha o e-mail do contador antes de enviar (fica gravado na aba Outras das Configurações).');
-        if (typeof G.nfPacoteContador === 'function') { try { G.nfPacoteContador(); } catch (e) { } I.log('xml-escritorio', G.__fxXmlMes + ' incluir PDFs: ' + !!G.__fxXmlPdf); }
-        else I.alert('Pacote', 'O gerador de pacote .zip não respondeu — tente pela Central (Pacote do mês).');
+        if (!em2) return I.alert('E-mail do escritório', 'Preencha o e-mail do contador antes de gerar o pacote (fica gravado na aba Outras das Configurações).');
+        // v6.1.4 — RELATÓRIO DELE (21/09/2026, C6). O que estava errado:
+        //  • chamava o gerador SEM o mês que ele já escolheu no topo da tela, e
+        //    o sistema perguntava a data outra vez;
+        //  • o botão dizia "Enviar para Escritório" mas NADA era enviado por
+        //    e-mail (o sistema não mexe no Gmail dele) — ninguém avisava isso.
+        // Agora: usa o mês escolhido e, no fim, explica em popup do sistema que
+        // o pacote foi BAIXADO neste PC, que e-mail nenhum saiu sozinho e que a
+        // anexação é dele (com atalho para abrir o próprio Gmail já escrito).
+        var gerar = (typeof G.nfPacoteContador === 'function') ? G.nfPacoteContador(G.__fxXmlMes, { semAviso: true }) : null;
+        I.log('xml-escritorio', G.__fxXmlMes + ' incluir PDFs: ' + !!G.__fxXmlPdf);
+        if (!gerar) return I.alert('Pacote', 'O gerador de pacote .zip não respondeu — tente pela Central (Pacote do mês).');
+        Promise.resolve(gerar).then(function (res) {
+          if (!res || !res.ok) return; // o próprio gerador já avisou o motivo (ex.: nenhuma nota no mês)
+          var mesTxt = new Date(G.__fxXmlMes + '-02').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+          var txt = 'O pacote <b>' + P.esc(res.nome || '') + '</b> (' + mesTxt + ') foi <b>baixado neste computador</b> — ' +
+            res.notas + ' nota(s), ' + res.arquivos + ' arquivo(s).<br><br>' +
+            '<b>Importante:</b> o sistema <b>não envia e-mail por você</b> — nada saiu do seu Gmail nem do de ninguém. ' +
+            'Qualquer envio automático de e-mail ainda não existe. O caminho é você anexar o .zip que baixou.<br><br>' +
+            'Destino: <b>' + P.esc(em2) + '</b><br>' +
+            '<button type="button" onclick="fxXmlCopiarEmail()" style="margin-top:6px;height:34px;padding:0 12px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-weight:700;font-size:12.5px;cursor:pointer">📋 Copiar e-mail do contador</button>';
+          I.confirm('Pacote do contador pronto', txt, function () {
+            try {
+              var assunto = 'XMLs fiscais — ' + mesTxt;
+              var corpo = 'Segue o pacote ' + (res.nome || '') + ' com os XMLs de ' + mesTxt + '.';
+              window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(em2) + '&su=' + encodeURIComponent(assunto) + '&body=' + encodeURIComponent(corpo), '_blank');
+            } catch (e) { }
+          }, 'Abrir meu Gmail para escrever');
+        }).catch(function () { });
         return;
       }
       /* config */
