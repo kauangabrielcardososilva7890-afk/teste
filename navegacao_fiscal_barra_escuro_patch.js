@@ -94,6 +94,16 @@
       'body.digi-escuro #sxvm-flyout-nav button{ color:#dbe6ff !important; }',
       'body.digi-escuro #sxvm-flyout-nav button:hover{ background: rgba(59,99,246,.22) !important; color:#ffffff !important; }',
       /* comportamento novo: menu só abre por clique, nunca só por hover */
+      /* v6.1.4 — FOTO/RECLAMAÇÃO DELE (21/09/2026): "estou num menu e mostra
+         outro menu selecionado". O azul cheio era do MENU ABERTO (.sfo-pin), e
+         ficava preso quando ele ia para outra tela por outro caminho. Agora são
+         dois estados com visual diferente: MENU ABERTO = azul cheio (igual
+         antes); ESTOU AQUI (a tela aberta) = chip claro com contorno — assim
+         nunca parece que a tela de baixo é outra. */
+      '.module.sfo-ativo > button{background:#dbe7ff !important;color:#0a1e8a !important;box-shadow:inset 0 0 0 1px #b9cdf7 !important;transform:none !important}',
+      '.module.sfo-ativo > button i{color:#0a1e8a !important}',
+      'body.digi-escuro .module.sfo-ativo > button{background:#1b2a63 !important;color:#dbe6ff !important;box-shadow:inset 0 0 0 1px rgba(148,167,255,.45) !important}',
+      'body.digi-escuro .module.sfo-ativo > button i{color:#93b4ff !important}',
       '.module:not(.sfo-pin) > .module-menu{opacity:0 !important;visibility:hidden !important;transform:translateY(8px) scale(.98) !important;pointer-events:none !important}',
       '.module.sfo-pin > .module-menu{opacity:1 !important;visibility:visible !important;transform:translateY(0) scale(1) !important;pointer-events:auto !important}',
       '.module.sfo-pin > button{background:linear-gradient(180deg,#1d4ed8,#1e3a8a) !important;color:#fff !important;border-radius:10px;box-shadow:0 8px 18px rgba(30,58,138,.24)}',
@@ -266,6 +276,93 @@
     }
   });
 
+  /* ══ v6.1.4 — QUEM FICA MARCADO É A TELA ABERTA ══════════════════════════
+     Reclamação dele (21/09/2026, com foto): estava na tela de Produtos e a
+     barra mostrava LOCAÇÃO azul com o menu aberto. Causa: a classe do menu
+     aberto (.sfo-pin) era posta pelo clique e só era limpa pelos handlers de
+     clique deste arquivo — e dezenas de outros módulos interceptam o clique
+     antes (stopImmediatePropagation), deixando a marca PRESA para sempre.
+     Agora o estado é recalculado pelo que está na TELA: quando a rota muda,
+     solta todo pino e marca o módulo da tela atual. Não depende de handler de
+     clique nenhum — funciona mesmo quando outro módulo "engole" o evento. */
+  function rotaDoBotao(b){
+    var oc=(b&&b.getAttribute)?(b.getAttribute('onclick')||''):'';
+    var m=/navigateTo\(\s*['"]([a-z0-9-]+)['"]\s*\)/i.exec(oc);
+    return m?m[1]:'';
+  }
+  function viewAtual(){
+    var v=document.querySelector('.view:not(.hidden)');
+    return v?String(v.id||'').replace(/^view-/,''):'';
+  }
+  function modulosDaBarra(){
+    return Array.prototype.slice.call(document.querySelectorAll('.module-row .module, .modern-topnav .module'));
+  }
+  function rotasDoModulo(mod){
+    var rotas=[], b=mod.querySelector(':scope > button');
+    var r=rotaDoBotao(b); if(r) rotas.push(r);
+    Array.prototype.slice.call(mod.querySelectorAll('.module-menu button')).forEach(function(x){
+      var rr=rotaDoBotao(x); if(rr && rotas.indexOf(rr)<0) rotas.push(rr);
+    });
+    return rotas;
+  }
+  function moduloDaView(nome){
+    if(!nome) return null;
+    var mods=modulosDaBarra();
+    for(var i=0;i<mods.length;i++){ if(rotasDoModulo(mods[i]).indexOf(nome)>=0) return mods[i]; }
+    if(/^fiscal-/.test(nome)||nome==='central-nf'||nome==='config-fiscal'){ var f=moduloFiscal(); if(f) return f; }
+    return null;
+  }
+  function limparPinos(){
+    Array.prototype.slice.call(document.querySelectorAll('.module.sfo-pin')).forEach(function(m){ m.classList.remove('sfo-pin'); });
+    Array.prototype.slice.call(document.querySelectorAll('.module-menu.sfo-pin')).forEach(function(m){ m.classList.remove('sfo-pin'); });
+    var fly=document.getElementById('sxvm-flyout-nav');
+    if(fly){ fly.classList.remove('sfo-pin'); fly.style.display='none'; }
+  }
+  var ultimaRota=null;
+  function marcarTelaAtual(forcar){
+    var nome=viewAtual();
+    if(!forcar && nome===ultimaRota) return;
+    ultimaRota=nome;
+    limparPinos();
+    Array.prototype.slice.call(document.querySelectorAll('.module.sfo-ativo')).forEach(function(m){ m.classList.remove('sfo-ativo'); });
+    var mod=moduloDaView(nome);
+    if(mod) mod.classList.add('sfo-ativo');
+  }
+  window.DIGICOPY_MARCA_TELA_ATUAL=marcarTelaAtual;
+
+  /* clique fora solta o pino também no pointerdown: este evento NÃO é
+     interceptado pelos outros módulos (eles param o 'click') */
+  document.addEventListener('pointerdown', function(e){
+    var alvo=e.target;
+    Array.prototype.slice.call(document.querySelectorAll('.module.sfo-pin')).forEach(function(m){
+      if(!m.contains(alvo)) m.classList.remove('sfo-pin');
+    });
+    var fly=document.getElementById('sxvm-flyout-nav');
+    if(fly && !fly.contains(alvo)){ fly.classList.remove('sfo-pin'); fly.style.display='none'; }
+  }, true);
+  /* a troca de tela é observada nas próprias views (classe hidden) */
+  var armouObsViews=false;
+  function armaObsViews(){
+    if(armouObsViews||typeof window.MutationObserver!=='function') return;
+    var views=document.querySelectorAll('.view');
+    if(!views.length) return;
+    armouObsViews=true;
+    var obs=new window.MutationObserver(function(){ setTimeout(function(){ marcarTelaAtual(); },20); });
+    Array.prototype.slice.call(views).forEach(function(v){ try{ obs.observe(v,{attributes:true,attributeFilter:['class']}); }catch(e){} });
+  }
+  /* navegou por qualquer caminho que chame navigateTo → recalcula já */
+  try{
+    if(typeof window.navigateTo==='function' && !window.navigateTo.__v612nesNav){
+      var navAntiga=window.navigateTo;
+      window.navigateTo=function(){
+        var r=navAntiga.apply(this,arguments);
+        setTimeout(function(){ marcarTelaAtual(); },0);
+        return r;
+      };
+      window.navigateTo.__v612nesNav=true;
+    }
+  }catch(e){}
+
   /* ---------- sobrevive a cada re-pintura da barra ---------- */
   var armouObs = false, pendente = false;
   function armaObs() {
@@ -279,7 +376,7 @@
       });
       if (!mexeu || pendente) return;
       pendente = true;
-      setTimeout(function () { pendente = false; armouObs = false; fixBarra(); armaObs(); }, 40);
+      setTimeout(function () { pendente = false; armouObs = false; fixBarra(); armaObs(); armaObsViews(); marcarTelaAtual(true); }, 40);
     }).observe(row, { childList: true, subtree: true });
   }
 
@@ -297,6 +394,8 @@
     var ok = fixBarra();
     armaObs();
     armaLegadosObs();
+    armaObsViews();
+    marcarTelaAtual(true);
     if (!ok) setTimeout(armar, 350);
   }
   if (document.readyState === 'loading') {
@@ -317,4 +416,5 @@
   } catch (e) {}
 
   console.log('[DIGICOPY] v6.1.2 navegação Fiscal firme na barra + escuro sem bug');
+  console.log('[DIGICOPY] v6.1.4 o módulo marcado na barra é o da TELA aberta (fim do menu preso)');
 })();

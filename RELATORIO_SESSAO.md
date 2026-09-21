@@ -3992,3 +3992,45 @@ O módulo `ajustes_v5227_nuvem_acompanhamento_patch.js` chamava `sess()` **que n
 - **Fotos da parte fiscal antiga:** sim, mas **só 3 telas específicas** (não tudo de novo): (1) o menu/faixa fiscal do sistema antigo; (2) a tela antiga de nova venda de NF **em aba**; (3) o cadastro/instalação do A1 no sistema antigo (se ele tiver).
 - **"Já tem tudo para não acontecer mais?"** — o mecanismo está de pé (erro vira teste, aviso só quando há o que fazer, tela que explica, ritual de validação). Próximos candidatos propostos, **esperando a escolha dele**: (a) check-up único com resumo copiável; (b) quadro de versão por PC na nuvem; (c) teste de tela automático a cada versão (o `e2e/` com Playwright já existe).
 - **"(nenhuma?!)"**: causa provada e corrigida; para a diferença entre PCs, a orientação é abrir o mesmo diagnóstico nos dois e comparar (se a empresa divergir de verdade, é caso de unir empresas em 1 versão).
+
+---
+
+## CONTINUIDADE — 21/09/2026 (4) — barra marcando o menu errado (foto dele) + motor da nuvem para colar no painel
+
+### 1) O bug da barra (foto: tela de Produtos, LOCAÇÃO azul e com menu aberto)
+
+**Causa-raiz:** a classe do menu aberto (`.sfo-pin`) era posta no clique e só era **limpa pelos handlers de clique deste módulo**. Dezenas de outros módulos interceptam o clique antes (`stopImmediatePropagation`) — e como o patch da barra é o ÚLTIMO do bundle, ele nem roda nesses cliques. Resultado: navegando por outro caminho, a marca ficava **presa** e a barra mostrava um menu que não era o da tela.
+
+**Correção (`navegacao_fiscal_barra_escuro_patch.js`) — o estado passou a seguir a TELA, não o clique:**
+- `marcarTelaAtual()` lê a view visível (`.view:not(.hidden)`), **solta todos os pinos** (`.module.sfo-pin`, `.module-menu.sfo-pin` e o flyout lateral) e marca **o módulo da tela atual** com a classe nova `.sfo-ativo`.
+- O mapa rota→módulo é **derivado do próprio DOM** (onclick do botão e dos itens do menu — sem lista fixa); rotas fiscais sem item próprio caem no módulo Fiscal.
+- Três gatilhos independentes: `MutationObserver` nas views (classe `hidden`), wrap do `navigateTo` e chamada em `armar()`/após cada re-pintura da barra. **Não depende de handler de clique** — funciona mesmo quando outro módulo "engole" o evento.
+- Clique fora agora solta o pino também no **`pointerdown`** (evento que os outros módulos não interceptam).
+- Visual: **MENU ABERTO = azul cheio** (como era) e **ESTOU AQUI = chip claro com contorno** (novo) — assim nunca mais parece que a tela de baixo é outra. No modo escuro o chip tem cor própria.
+- Exporta `window.DIGICOPY_MARCA_TELA_ATUAL` para diagnóstico/teste.
+
+**Prova:** teste jsdom em `test_ajustes_v6104.js` reproduz o caso da foto (Locação aberta → navega para Produtos): confere que nenhum pino fica preso e que o módulo marcado é o da tela, em 5 rotas (produtos, contratos, impressoras, central-nf) e no clique fora.
+
+### 2) Item 4 entendido — o código é o DO WORKER, para colar no painel
+
+Ele esclareceu: quer o **código compilado do worker** (o mesmo que o painel mostra com `__defProp`/`__name`), para publicar colando. Feito:
+
+- **`cloudflare-worker/motor_para_colar.js`** — gerado com `wrangler deploy --dry-run --outdir=motor_compilado` (só compila, **não publica**), igual ao que o Cloudflare executa. Cabeçalho explica o que é, o que NÃO muda ao colar (bindings D1/R2/cron e secrets continuam; migração **não** é aplicada por este caminho) e como regerar. `sha256` do corpo também em `motor_para_colar.sha256`.
+- **`MOTOR_NUVEM_PARA_COLAR.html`** (novo, 134 KB) — página com o **botão «📋 Copiar código»**, botão de **baixar .js**, o passo a passo (Edit code → colar → Deploy → conferir `/health`), o sha256, a primeira/última linha (para saber que colou tudo) e os outros caminhos (`.cmd`, botão do GitHub).
+- `RELATORIO_DE_TESTE_NF.html` — a seção de deploy virou **«DEPLOY DO MOTOR DA NUVEM — os dois caminhos»**, com o caminho 1 (colar) em destaque e link para a página nova; o botão do GitHub ficou como caminho 2.
+- `cloudflare-worker/motor_compilado/` (saída crua do wrangler) entrou no `.gitignore`.
+
+### Validação
+
+- `test_ajustes_v6104.js`: **78 verificações ✓** (barra de menus em jsdom + motor da nuvem + tudo da rodada anterior).
+- `test_relatorio_teste_nf.js`: 37 ✓ — `npm test`: **186 passaram, 0 falharam**.
+- `npm run check` (222 scripts, sha `b3e933f79210cfc5`), `sync:check`, `verify:files` OK; mobile/www + assets Android sincronizados.
+- O motor entregue foi carregado de verdade: `import` OK, `default.fetch` e `default.scheduled` presentes; `node --check` OK.
+- Guarda de envelhecimento: teste compara `API_VERSION`/`WORKER_VERSION` do `motor_para_colar.js` com o `src/index.js` — subir a versão sem regerar o arquivo **falha o teste**.
+
+### Respostas/pendências dele nesta rodada
+
+- **1 = ok** (o deploy do worker dele resolveu) — registrado.
+- **5** = ele vai mandar **todas** as fotos da parte fiscal antiga na próxima mensagem (sem separar). Nada a fazer além de esperar; ao chegar, separar por tela (menu fiscal, nova venda de NF em aba, A1).
+- **6** = ele quer **os três** (check-up único, quadro de versão por PC, teste de tela automático). **Fila desta próxima entrega:** (A) check-up único com resumo copiável; (B) quadro de versão por PC — precisa de migração 0007 (`app_version` em `devices`) + leitura do header `x-digicopy-versao` (que o worker já recebe) + coluna no painel Nuvem; (C) teste de tela automático no ritual (base em `e2e/`, Playwright).
+- Ele perguntou também se o relatório novo já não faz parte disso: não — o relatório é **o que ele preenche**; as 3 ferramentas rodam **sozinhas no sistema** e são para mim/diagnóstico.

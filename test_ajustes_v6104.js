@@ -12,6 +12,7 @@
 //   B9/observações — diagnóstico "A CAUSA ESTÁ AQUI" com tudo visível (alarme falso)
 // ═══════════════════════════════════════════════════════════════════════════
 const fs = require('fs');
+const { JSDOM } = require('jsdom');
 
 let falhas = 0;
 function ok(cond, msg){ if(cond) console.log('  ✔ ' + msg); else { falhas++; console.error('  ✘ ' + msg); } }
@@ -109,5 +110,122 @@ console.log('== O código do deploy dentro do relatório (copiar) ==');
 ok(relHtml.indexOf('btn-copiar-deploy') >= 0 && relHtml.indexOf('codigo-deploy') >= 0, 'seção com o código e o botão de copiar');
 ok(relHtml.indexOf('d1 migrations apply DB --remote') >= 0 && relHtml.indexOf('Run workflow') >= 0, 'o código e o passo a passo estão na página');
 
-if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }
-console.log('\nTudo OK — v6.1.4: relatório do Kauan atendido item por item.');
+// ═══════════════════════════════════════════════════════════════════════════
+// A BARRA DE MENUS — reprodução do bug dele em jsdom (foto de 21/09/2026):
+// "estou num menu e mostra outro menu selecionado na barra azul".
+// ═══════════════════════════════════════════════════════════════════════════
+async function testarBarraDeMenus(){
+  console.log('\n== BARRA DE MENUS: o marcado é o módulo da TELA (bug dele) ==');
+  const patch = fs.readFileSync('navegacao_fiscal_barra_escuro_patch.js', 'utf8');
+  const html =
+    '<div class="module-row">' +
+      '<div class="module" id="m-prod"><button onclick="navigateTo(\'produtos\')">Produtos</button></div>' +
+      '<div class="module" id="m-loc"><button onclick="navigateTo(\'contratos\')">Locação</button>' +
+        '<div class="module-menu"><button onclick="navigateTo(\'contratos\')">Contratos</button>' +
+        '<button onclick="navigateTo(\'impressoras\')">Impressoras</button></div></div>' +
+      '<div class="module" id="m-fis"><button onclick="navigateTo(\'central-nf\')">Fiscal</button></div>' +
+    '</div>' +
+    '<section id="view-produtos" class="view"></section>' +
+    '<section id="view-contratos" class="view hidden"></section>' +
+    '<section id="view-impressoras" class="view hidden"></section>' +
+    '<section id="view-central-nf" class="view hidden"></section>';
+  const dom = new JSDOM(
+    html +
+    '<script>window.navigateTo=function(v){document.querySelectorAll(".view").forEach(function(s){s.classList.add("hidden");});' +
+    'var el=document.getElementById("view-"+v); if(el) el.classList.remove("hidden");};</script>' +
+    '<script>' + patch + '</script>',
+    { runScripts: 'dangerously', url: 'https://teste-60f.pages.dev/' });
+  const d = dom.window.document;
+  const espera = ms => new Promise(r => setTimeout(r, ms));
+  await espera(120);
+  await espera(300);
+
+  const ativo = () => { const el = d.querySelector('.module.sfo-ativo'); return el ? el.id : ''; };
+  const pinados = () => d.querySelectorAll('.module.sfo-pin, .module-menu.sfo-pin').length;
+
+  ok(ativo() === 'm-prod', 'abriu em Produtos -> quem fica marcado e PRODUTOS');
+  ok(pinados() === 0, 'nenhum menu comeca preso');
+
+  d.getElementById('m-loc').classList.add('sfo-pin');
+  ok(d.querySelector('.module.sfo-pin') !== null, 'menu da Locacao aberto fica azul (esperado enquanto o menu esta aberto)');
+  dom.window.navigateTo('contratos');
+  await espera(80);
+  ok(pinados() === 0, 'ao NAVEGAR, o menu aberto se solta (era isso que ficava preso - o bug da foto)');
+  ok(ativo() === 'm-loc', 'na tela de Contratos, quem fica marcado e LOCACAO');
+  ok(!d.getElementById('m-prod').classList.contains('sfo-ativo'), 'o modulo da tela anterior nao fica marcado junto');
+
+  d.getElementById('m-loc').classList.add('sfo-pin');
+  dom.window.navigateTo('produtos');
+  await espera(80);
+  ok(pinados() === 0 && ativo() === 'm-prod', 'Locacao -> Produtos: nenhum menu preso e PRODUTOS marcado (caso da foto, corrigido)');
+
+  dom.window.navigateTo('impressoras');
+  await espera(80);
+  ok(ativo() === 'm-loc', 'tela de Impressoras (item de dentro do menu) marca LOCACAO');
+
+  dom.window.navigateTo('central-nf');
+  await espera(80);
+  ok(ativo() === 'm-fis', 'Central de NF marca FISCAL');
+
+  d.getElementById('m-loc').classList.add('sfo-pin');
+  d.body.dispatchEvent(new dom.window.Event('pointerdown', { bubbles: true }));
+  ok(pinados() === 0, 'clicar fora solta o menu aberto (via pointerdown, sem depender do clique)');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOTOR DA NUVEM para colar no painel (pedido dele: "o código é grande,
+// deixa um botão de copiar"). Aqui a prova é que o código entregue é o MESMO
+// que o wrangler publica, que ele RODA (fetch + scheduled), que a página
+// mostra ele inteiro e que ele não envelhece quando a versão do worker sobe.
+// ═══════════════════════════════════════════════════════════════════════════
+async function testarMotorDaNuvem(){
+  const crypto = require('crypto');
+  console.log('\n== MOTOR DA NUVEM: código para colar e publicar ==');
+  const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
+  const src = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
+  const pagina = fs.readFileSync('MOTOR_NUVEM_PARA_COLAR.html', 'utf8');
+  const rel = fs.readFileSync('RELATORIO_DE_TESTE_NF.html', 'utf8');
+
+  ok(motor.indexOf('var __defProp = Object.defineProperty;') >= 0 && /as default\s*\n?\};/.test(motor),
+     'o arquivo é o bundle do worker (mesmo formato esbuild que o painel da Cloudflare mostra)');
+  const apiSrc = /const API_VERSION\s*=\s*'([^']+)'/.exec(src) || /API_VERSION\s*=\s*'([^']+)'/.exec(src);
+  const wvSrc = /WORKER_VERSION\s*=\s*'([^']+)'/.exec(src);
+  const apiMotor = /var API_VERSION = "([^"]+)"/.exec(motor);
+  const wvMotor = /var WORKER_VERSION = "([^"]+)"/.exec(motor);
+  ok(!!apiSrc && !!apiMotor && apiSrc[1] === apiMotor[1], 'a API do arquivo é a mesma do src (' + (apiMotor && apiMotor[1]) + ')');
+  ok(!!wvSrc && !!wvMotor && wvSrc[1] === wvMotor[1],
+     'a versão do worker bate com o src (' + (wvMotor && wvMotor[1]) + ') — se alguém subir a versão e esquecer de regerar, este teste acusa');
+
+  const mod = await import('file://' + process.cwd() + '/cloudflare-worker/motor_para_colar.js');
+  ok(typeof mod.default.fetch === 'function', 'o código RODA: exporta o fetch (o que responde /health, /v1/...)');
+  ok(typeof mod.default.scheduled === 'function', 'o código RODA: exporta o scheduled (backup diário das 18:30)');
+
+  // o corpo (sem o cabeçalho) tem o sha256 publicado ao lado — confere a integridade
+  const corpo = motor.slice(motor.indexOf('*/') + 3).replace(/^\r?\n/, '');
+  const shaCalculado = crypto.createHash('sha256').update(corpo, 'utf8').digest('hex');
+  const shaArquivo = fs.readFileSync('cloudflare-worker/motor_para_colar.sha256', 'utf8').trim();
+  ok(shaCalculado === shaArquivo, 'o sha256 do código bate com o arquivo .sha256 (' + shaArquivo.slice(0, 12) + '...)');
+  ok(motor.indexOf(shaArquivo) >= 0, 'o sha256 também está escrito no cabeçalho do próprio código');
+
+  // a página mostra o código INTEIRO e igual ao arquivo (nada de cópia velha)
+  const i = pagina.indexOf('<pre id="codigo">'), f = pagina.indexOf('</pre>', i);
+  const naPagina = pagina.slice(pagina.indexOf('>', i) + 1, f)
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  ok(naPagina.replace(/\r\n/g, '\n') === motor.replace(/\r\n/g, '\n'), 'a página traz o código IGUALZINHO ao arquivo do repositório');
+  ok(pagina.indexOf('btn-copiar') >= 0 && pagina.indexOf('navigator.clipboard.writeText(codigo)') >= 0,
+     'botão de copiar o código inteiro, com plano B (execCommand) se o navegador negar');
+  ok(pagina.indexOf('btn-baixar') >= 0, 'botão de baixar o arquivo .js (quem preferir abrir e copiar de lá)');
+  ok(pagina.indexOf('Edit code') >= 0 && pagina.indexOf('Deploy') >= 0, 'a página ensina o caminho: Edit code → colar → Deploy');
+  ok(pagina.indexOf('não contém</b> senha') >= 0 && pagina.indexOf('Nunca cole segredos') >= 0, 'deixa claro que não há segredo nenhum no código');
+  ok(pagina.indexOf('não aplica migração do banco') >= 0, 'avisa que colar não aplica migração (quem aplica é o .cmd)');
+  ok(rel.indexOf('MOTOR_NUVEM_PARA_COLAR.html') >= 0, 'o relatório de teste aponta para a página do motor');
+  ok(fs.readFileSync(".gitignore", "utf8").indexOf("motor_compilado") >= 0, "a pasta do wrangler (motor_compilado) fica fora do git");
+
+}
+
+(async function(){
+  await testarBarraDeMenus();
+  await testarMotorDaNuvem();
+  if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }
+  console.log('\nTudo OK — v6.1.4: relatório do Kauan atendido item por item.');
+})();

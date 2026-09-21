@@ -82,8 +82,16 @@
 <h2>VEREDICTO</h2>
 <div class="caixas" id="veredicto"></div>
 
-<h2>🧩 PLANO B DO DEPLOY — o código do botão (copiar)</h2>
-<p class="dica">Se o build automático da Cloudflare continuar reclamando do token velho, use este caminho:
+<h2>🧩 DEPLOY DO MOTOR DA NUVEM — os dois caminhos (copiar)</h2>
+<div class="item" style="border:2px solid #0a1e8a;background:#f5f8ff">
+  <p style="font-size:13.5px;margin:0 0 6px"><b>CAMINHO 1 — colar o código no painel da Cloudflare</b> (é o que você pediu):
+     o código do worker está numa página só para isso, com o botão <b>📋 Copiar código</b> e o passo a passo —
+     sem token, sem Node, sem wrangler, sem senha.</p>
+  <p style="margin:0 0 8px"><a href="MOTOR_NUVEM_PARA_COLAR.html" style="display:inline-block;height:42px;line-height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;text-decoration:none;font-size:13.5px">📋 Abrir: Motor da Nuvem — copiar o código</a></p>
+  <p class="dica" style="margin:0">Também está no arquivo <b>MOTOR_NUVEM_PARA_COLAR.html</b> (mesma pasta deste relatório) e o código puro em
+     <b>cloudflare-worker/motor_para_colar.js</b>. API 0.4.8 · Worker 5.26.4 — igual ao que está no ar.</p>
+</div>
+<p class="dica" style="margin-top:12px"><b>CAMINHO 2 — botão no GitHub:</b> se o build automático da Cloudflare continuar reclamando do token velho, use este:
    ele faz os mesmos 2 passos do <b>atualizar_motor_nuvem.cmd</b> (aplicar migrações + publicar o worker),
    por um botão no GitHub. <b>Não publica sozinho</b> — só roda quando você aperta.</p>
 <ol class="dica" style="margin:0 0 8px 18px">
