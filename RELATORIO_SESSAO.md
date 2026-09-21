@@ -3937,11 +3937,11 @@ O relatório preenchido no site (15 OK · 2 não resolveu · 8 não testei · "A
 
 ### Plano B do deploy do worker (o token da Cloudflare continua travando)
 
-- Criado `.github/workflows/publicar-motor.yml`: botão **"Run workflow"** no GitHub que roda exatamente os 2 passos do `atualizar_motor_nuvem.cmd` (`wrangler d1 migrations apply DB --remote` + `wrangler deploy`), usando segredos do GitHub (`CLOUDFLARE_API_TOKEN` com Workers Edit + **D1 Edit** e `CLOUDFLARE_ACCOUNT_ID`). **Não roda em push** — só quando ele aperta, para não publicar sozinho na nuvem da loja. O `.cmd` continua valendo.
+- Criado `deploy_github_actions/publicar-motor.yml` (a automação não pode escrever em `.github/workflows`; o arquivo traz o passo a passo de colar na aba Actions): botão **"Run workflow"** no GitHub que roda exatamente os 2 passos do `atualizar_motor_nuvem.cmd` (`wrangler d1 migrations apply DB --remote` + `wrangler deploy`), usando segredos do GitHub (`CLOUDFLARE_API_TOKEN` com Workers Edit + **D1 Edit** e `CLOUDFLARE_ACCOUNT_ID`). **Não roda em push** — só quando ele aperta, para não publicar sozinho na nuvem da loja. O `.cmd` continua valendo.
 
 ### Arquivos alterados nesta rodada
 
-`permissoes_estorno_venda_patch.js` · `fiscal_guard_patch.js` · `fiscal_menu_completo_patch.js` · `fiscal_catalogo_completo_patch.js` · `ajustes_v5197_patch.js` · `ajustes_v5227_nuvem_acompanhamento_patch.js` · `test_runner.js` · `test_ajustes_v6104.js` (novo) · `.github/workflows/publicar-motor.yml` (novo) · `app.bundle.js` + `mobile/www` + assets Android (regerados).
+`permissoes_estorno_venda_patch.js` · `fiscal_guard_patch.js` · `fiscal_menu_completo_patch.js` · `fiscal_catalogo_completo_patch.js` · `ajustes_v5197_patch.js` · `ajustes_v5227_nuvem_acompanhamento_patch.js` · `test_runner.js` · `test_ajustes_v6104.js` (novo) · `deploy_github_actions/publicar-motor.yml` (novo) · `app.bundle.js` + `mobile/www` + assets Android (regerados).
 
 ### Validação
 

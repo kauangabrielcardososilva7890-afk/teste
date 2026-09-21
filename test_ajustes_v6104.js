@@ -68,11 +68,12 @@ ok(diag.indexOf('A CAUSA ESTÁ AQUI EM CIMA') >= 0, 'o aviso dramático continua
 ok(diag.indexOf('DIAGNÓSTICO (só lê, não muda nada)') >= 0, 'o diagnóstico continua SÓ LENDO (regra de sempre)');
 
 console.log('== Nada disso pesa na abertura do sistema ==');
-ok(man.indexOf('.github') < 0 && man.indexOf('publicar-motor') < 0, 'workflow do GitHub não entra no bundle do sistema');
+ok(man.indexOf('.github') < 0 && man.indexOf('publicar-motor') < 0 && man.indexOf('deploy_github_actions') < 0, 'botão de deploy (arquivo do GitHub) não entra no bundle do sistema');
 ok(bundle.indexOf('nfAuditarFiscal') >= 0 && bundle.indexOf('NADA QUEBRADO AQUI') >= 0, 'bundle já tem as correções (rodar npm run bundle antes de entregar)');
 
-console.log('== O workflow de deploy existe e é manual (sem susto na nuvem da loja) ==');
-const wf = fs.readFileSync('.github/workflows/publicar-motor.yml', 'utf8');
+console.log('== O botão de deploy existe e é manual (sem susto na nuvem da loja) ==');
+const wf = fs.readFileSync('deploy_github_actions/publicar-motor.yml', 'utf8');
+ok(wf.indexOf('COMO INSTALAR ESTE BOTÃO') >= 0, 'o arquivo explica como colar no GitHub (Actions → New workflow)');
 ok(wf.indexOf('workflow_dispatch') >= 0, 'deploy só roda quando o dono aperta o botão');
 ok(wf.indexOf('on:') >= 0 && wf.indexOf('push:') < 0, 'NÃO publica sozinho em push (sem surpresa na nuvem real)');
 ok(wf.indexOf('d1 migrations apply DB --remote') >= 0 && wf.indexOf('wrangler@4 deploy') >= 0, 'faz os mesmos 2 passos do atualizar_motor_nuvem.cmd');

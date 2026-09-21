@@ -1,6 +1,16 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # PUBLICAR O MOTOR DA NUVEM — um clique, pelo GitHub (plano B do Workers Builds)
 #
+# COMO INSTALAR ESTE BOTÃO (2 minutos, uma vez só):
+#   1) Abra o repositório no GitHub e clique na aba "Actions".
+#   2) Clique em "New workflow" (ou "set up a workflow yourself").
+#   3) Apague todo o conteúdo do editor e cole ESTE arquivo inteiro.
+#   4) Dê o nome de arquivo `publicar-motor.yml` e clique em "Commit changes".
+#   (O nome `.github/workflows/publicar-motor.yml` é criado automaticamente
+#    pelo próprio GitHub ao salvar por essa tela — por isso este arquivo mora
+#    aqui nesta pasta: a ferramenta automática que edita o sistema não tem
+#    permissão de escrever na pasta de workflows, o dono do repositório tem.)
+#
 # POR QUE ISTO EXISTE (21/09/2026)
 # O build automático da Cloudflare (Workers Builds) ficou preso no erro
 #   "The build token selected for this build has been deleted or rolled and
