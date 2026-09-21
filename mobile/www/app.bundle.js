@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 676f0d941d6a4d07
+ * scripts: 222 | sha256: 1c12cd268e2d8f7c
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -52435,7 +52435,6 @@ window.nfPacoteContador=async function(mesJaEscolhido, opcoes){
       const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
       if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
       alvo=m[2]+'-'+m[1].padStart(2,'0');
-      opcoes=o;
     }
     const m=[alvo.slice(5,7),alvo.slice(0,4)];
     const reg=((db.config&&db.config.nfRegistro)||[]);

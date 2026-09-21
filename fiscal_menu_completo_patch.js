@@ -279,7 +279,6 @@ window.nfPacoteContador=async function(mesJaEscolhido, opcoes){
       const m=mm.match(/^(\d{1,2})\/(\d{4})$/);
       if(!m){ fmcToast('Formato inválido — use MM/AAAA (ex.: '+padrao+').','error'); return {ok:false}; }
       alvo=m[2]+'-'+m[1].padStart(2,'0');
-      opcoes=o;
     }
     const m=[alvo.slice(5,7),alvo.slice(0,4)];
     const reg=((db.config&&db.config.nfRegistro)||[]);
