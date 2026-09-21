@@ -4076,3 +4076,59 @@ Pedido dele: relatório **de problemas em geral** (não é o de nota fiscal), co
 - **"O deploy do worker é necessário?"** → **Não, agora não.** O worker no ar já está na versão do código (API 0.4.8 / Worker 5.26.4, conferido em `/health`). O deploy só é preciso quando o **código da nuvem** mudar. Os três caminhos que existem de verdade: (1) `atualizar_motor_nuvem.cmd` no PC (o mais completo: aplica migração + publica); (2) **colar o código** em Cloudflare → Workers & Pages → `digicopy-sync-api` → **Edit code** → Ctrl+A → colar → **Deploy**; (3) botão no GitHub (Actions → Publicar motor da nuvem) — só quando ele instalar o arquivo na aba Actions.
 - **Os 3 pedidos de garantia (A check-up, B quadro de versão por PC, C teste de tela automático)** seguem na fila: ele confirmou "os 3". **B precisa de migração 0007** (`app_version` em `devices`) + leitura do header `x-digicopy-versao` (o worker já recebe) + coluna no painel Nuvem — entra junto com o próximo `.cmd`.
 - **Fotos da parte fiscal antiga**: ele disse que manda todas juntas; nesta rodada veio **uma** (a dos contratos). As fotos do menu fiscal antigo e da "nova venda de NF em aba" ainda são necessárias.
+
+---
+
+## CONTINUIDADE — 21/09/2026 (6) — "continua igual" (CACHE!), regras dos links, motor na mesma versão, abas fiscais e as fotos
+
+### 0) O PR (ele: "até agora não criou um PR?")
+
+O **#29 já existe** desde 20/09 (`arena/01a0c087-teste` → `main`, OPEN, MERGEABLE). Ele mesmo viu e disse "se está criado ignora". **O site e o worker rodam a BRANCH** — o merge não muda o que ele testa.
+
+### 1) O BUG DO MENU "continua igual" — a causa era CACHE DO NAVEGADOR
+
+**Prova:** o site **já servia** o bundle novo (conferido: `app.bundle.js` com `sha256 6baf251f865ed73e`), mas o `index.html` pedia `./app.bundle.js?v=6.1.3` — **a mesma URL de antes**, porque o `?v=` era a VERSÃO do app e a versão só muda no bump. Resultado: o navegador dele continuava usando a cópia velha e ele via o bug "corrigido".
+
+**Correção (v6.1.4):**
+- `sync_build.js` carimba `?v=<versão>-<hash do conteúdo do bundle>`: mudou o sistema, muda a URL, o navegador é obrigado a baixar. O `sync --check` **acusa** se ficar velho.
+- **`_headers` na raiz** (novo): `Cache-Control: no-cache` para o site todo — o servidor manda revalidar sempre.
+- `test_build_sync.js` ajustado para o novo formato (aceitava só `?v=<versão>`); teste novo no `test_ajustes_v6104.js` compara o `?v=` com o hash real do bundle.
+- **Reforço do menu:** `marcarTelaAtual` ganhou **vigilância leve** (1,5 s, respeita `document.hidden`, desligável por `window.DIGICOPY_PARA_VIGIA()`) que reaplica o chip da tela atual quando a barra é repintada por outro módulo — **sem fechar menu aberto pelo dono** (quem fecha continua sendo o clique/pointerdown).
+
+### 2) Regra 8 (links em toda resposta) — mecanismo novo
+
+- **`npm run links`** (`links.js`): imprime o bloco com site, relatórios, motor, `/health` e **ZIP da branch atual** (com o aviso de que o repositório é privado), montado da branch/versão reais — não de cabeça.
+- `REGRAS_PERMANENTES.md` regra 8 ganhou o ponteiro do comando (com a origem: a cobrança dele de 21/09).
+- Teste no `test_ajustes_v6104.js` confere o bloco (site, ZIP com aviso, health, citação da regra).
+
+### 3) Motor da nuvem acompanhando a versão (`npm run motor`)
+
+- **`gerar_motor_nuvem.js`**: 1 comando compila o worker (`wrangler --dry-run`, **não publica**), regrava `cloudflare-worker/motor_para_colar.js` (+ `.sha256`, com data de geração) e atualiza a página `MOTOR_NUVEM_PARA_COLAR.html` (versões e sha). Teste já existente acusa se as versões divergirem do `src/index.js`.
+- **O `.cmd` dele funcionou**: o log mostra `Deployed digicopy-sync-api` e `/health` com `"versao":"5.26.4"` — ou seja, o motor no ar está na versão do código. O erro do token era do **Workers Builds** (build automático do painel), não do sistema nem do `.cmd`.
+
+### 4) AS ABAS FISCAIS (formato aba, não menu) — feito
+
+Em `navegacao_fiscal_barra_escuro_patch.js` (sem arquivo novo, para não mexer na contagem do manifesto):
+- Faixa **`.nes612-abas`** injetada no topo de **toda tela fiscal**, com as **6 telas** do sistema antigo (Nota Fiscal · Perfil Tributário · Manifestação · NCM · Enviar XML · Configurações), a atual marcada, um clique para trocar, CSS próprio no claro e no escuro e **fora da impressão**.
+- Teste em jsdom: a faixa aparece, tem 6 abas com os nomes certos, marca só a atual, cada aba navega sozinha.
+
+### 5) As fotos do sistema antigo (52 arquivos) — registradas
+
+- **`FISCAL_ANTIGO_REFERENCIA.md`** (novo): cada grupo de fotos → o que mostra → o que já temos e o que falta, com a fila de trabalho (lista da NFe, tela da NFe com abas, CST/IBS-CBS, grupo Outros, Importação, DANFE com IBPT, manifestação, preparar arquivos fiscais).
+- As fotos **não** foram copiadas para o git (peso); elas ficam em `/home/user/uploads/` e o documento é o registro durável.
+- ⚠ Regra 31 registrada: referência para conferência, **não** autorização para copiar visual/tributação.
+
+### Validação desta rodada
+
+- Suíte **187 testes, 0 falhas** · `test_ajustes_v6104.js` com barra de menus, abas fiscais, contratos/clientes, cache/links/motor.
+- `npm run check` (222 scripts), `sync:check`, `verify:files` OK; mobile/www + assets Android sincronizados.
+- Bundle sha final desta rodada: conferir no `npm run check` (muda a cada commit).
+
+### Pendências
+
+1. **Confirmar com o dono** que "nova venda de NF em aba" = a tela da NFe com as abas (Gerais, Destinatário, Itens, …) — se sim, é o próximo passo (com a lista da NFe e a coluna Situação).
+2. Fotos do menu fiscal antigo/aba: **chegaram** (registradas no `FISCAL_ANTIGO_REFERENCIA.md`).
+3. B7 (problema ao entrar na nuvem) — ele disse que está nas observações gerais do relatório; **ler o relatório preenchido** quando ele mandar o .txt.
+4. C8 (CC-e/cancelamento) — só depois do A1 instalado.
+5. As 3 ferramentas de garantia (check-up, quadro de versão por PC — precisa migração 0007, teste de tela automático).
+6. Merge do PR #29 e volta das Production branches para `main` — **só com ordem expressa**.

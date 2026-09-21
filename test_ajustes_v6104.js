@@ -170,6 +170,33 @@ async function testarBarraDeMenus(){
   d.getElementById('m-loc').classList.add('sfo-pin');
   d.body.dispatchEvent(new dom.window.Event('pointerdown', { bubbles: true }));
   ok(pinados() === 0, 'clicar fora solta o menu aberto (via pointerdown, sem depender do clique)');
+
+  // ── as 6 telas fiscais como ABAS (foto do sistema antigo) ────────────────
+  d.getElementById('view-central-nf').classList.remove('hidden');
+  d.getElementById('view-produtos').classList.add('hidden');
+  dom.window.navigateTo('central-nf');
+  await espera(80);
+  d.getElementById('view-central-nf').classList.remove('hidden');
+  dom.window.DIGICOPY_MARCA_TELA_ATUAL(true);
+  const abas = d.querySelector('#view-central-nf .nes612-abas');
+  ok(!!abas, 'a faixa de ABAS fiscais aparece na tela fiscal (formato aba, não menu)');
+  const btns = abas ? [...abas.querySelectorAll('button')] : [];
+  ok(btns.length === 6, 'a faixa tem as 6 telas fiscais (Nota Fiscal, Perfil, Manifestação, NCM, XML, Configurações)');
+  ok(btns.map(b => b.textContent.trim()).join(' | ') === 'Nota Fiscal | Perfil Tributário | Manifestação | NCM | Enviar XML | Configurações',
+     'os nomes das abas são os do sistema antigo');
+  ok(btns.filter(b => b.classList.contains('on')).map(b => b.textContent.trim()).join('') === 'Nota Fiscal',
+     'a aba da tela atual fica marcada (e só ela)');
+  ok(btns.map(b => (b.getAttribute('onclick') || '')).every(o => /^navigateTo\('[a-z-]+'\)$/.test(o)),
+     'cada aba navega sozinha (não depende do menu de cima)');
+  ok(/body\.digi-escuro \.nes612-abas/.test(escuro) && /@media print\{\.nes612-abas\{display:none/.test(escuro),
+     'a faixa respeita o modo escuro e não sai na impressão');
+
+  // a vigilância do chip é um setInterval: o teste PRECISA desligá-la, senão o
+  // processo do Node fica vivo para sempre (foi para isso que ela é exposta).
+  ok(typeof dom.window.DIGICOPY_PARA_VIGIA === 'function', 'a vigilância pode ser desligada (função exposta)');
+  dom.window.DIGICOPY_PARA_VIGIA();
+  dom.window.close();
+  ok(true, 'vigilância desligada no fim do teste (o teste não fica pendurado)');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -330,10 +357,67 @@ function testarClientesEContratos(){
      'o bundle leva as duas correções');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// "CORRIGIU MAS CONTINUA IGUAL" — a causa era CACHE e as regras de resposta.
+// Aqui ficam as travas: cache do bundle, cabeçalho do servidor, bloco de links
+// de toda resposta (regra 8) e o motor da nuvem sempre na versão do src.
+// ═══════════════════════════════════════════════════════════════════════════
+function testarCacheLinksEMotor(){
+  const crypto = require('crypto');
+  console.log('\n== CACHE: o navegador nunca mais pode ver a versão velha ==');
+  const idx = fs.readFileSync('index.html', 'utf8');
+  const bundle = fs.readFileSync('app.bundle.js');
+  const hash = crypto.createHash('sha256').update(bundle).digest('hex').slice(0, 12);
+  const vIdx = (/"\.\/app\.bundle\.js\?v=([^"]+)"/.exec(idx) || [])[1];
+  const pkgv = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+  ok(vIdx === (pkgv + '-' + hash),
+     'o ?v= do app.bundle.js é versão+hash (' + vIdx + ') — mudou o sistema, muda a URL e o navegador baixa de novo');
+  ok(/const vBundle = hashDoBundle\(\);/.test(fs.readFileSync('sync_build.js', 'utf8')),
+     'o sync_build carimba esse hash sozinho (ninguém precisa lembrar)');
+  ok(/conferirCacheDoBundle\(\);/.test(fs.readFileSync('sync_build.js', 'utf8')),
+     'o sync --check acusa se o index.html ficar com ?v= velho');
+  const headers = fs.readFileSync('_headers', 'utf8');
+  ok(/Cache-Control: no-cache/.test(headers) && headers.indexOf('/*') >= 0,
+     '_headers na raiz manda o servidor revalidar sempre (nada de cópia velha)');
+  ok(!/X-Frame-Options: DENY/.test(headers), 'o _headers novo não bloqueia nada que hoje funciona (sem X-Frame-Options)');
+
+  console.log('\n== REGRA 8: os links vão em TODA resposta ==');
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  ok(pkg.scripts && pkg.scripts.links === 'node links.js', 'existe o comando npm run links (bloco pronto, não é de cabeça)');
+  const links = fs.readFileSync('links.js', 'utf8');
+  const branch = pkg.digicopy.branch;
+  ok(links.indexOf('https://teste-60f.pages.dev') >= 0, 'o bloco traz o site de teste');
+  ok(links.indexOf('refs/heads/\' + branch + \'.zip') >= 0 || links.indexOf("refs/heads/' + branch + '.zip") >= 0,
+     'o bloco traz o ZIP da branch atual (montado na hora, não fixo)');
+  ok(/PRIVADO, exige login/.test(links), 'avisa que o ZIP exige login (repositório privado)');
+  ok(links.indexOf('workers.dev/health') >= 0, 'o bloco traz o /health da nuvem');
+  ok(/REGRAS_PERMANENTES\.md, regra 8/.test(links), 'o bloco cita a regra que o exige (fica rastreável)');
+
+  console.log('\n== MOTOR DA NUVEM acompanha a versão sozinho ==');
+  ok(pkg.scripts.motor === 'node gerar_motor_nuvem.js', 'existe npm run motor (1 comando para regerar o arquivo de colar)');
+  const gerador = fs.readFileSync('gerar_motor_nuvem.js', 'utf8');
+  ok(gerador.indexOf('--dry-run') >= 0 && gerador.indexOf('NÃO publica') >= 0,
+     'o gerador só compila (nada é publicado na nuvem)');
+  ok(gerador.indexOf('MOTOR_NUVEM_PARA_COLAR.html') >= 0,
+     'o mesmo comando atualiza a página do botão de copiar (uma verdade só)');
+  const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
+  ok(/GERADO EM: \d{4}-\d{2}-\d{2}/.test(motor), 'o arquivo diz quando foi gerado');
+
+  console.log('\n== BARRA: vigilância leve do chip (sem fechar menu do dono) ==');
+  const escuro = fs.readFileSync('navegacao_fiscal_barra_escuro_patch.js', 'utf8');
+  ok(/setInterval\(function\(\)\{\s*\n\s*if \(document\.hidden\) return;/.test(escuro),
+     'a vigilância respeita a janela escondida (não gasta PC à toa)');
+  ok(escuro.indexOf('DIGICOPY_PARA_VIGIA') >= 0, 'dá para desligar a vigilância (teste/diagnóstico)');
+  ok(escuro.indexOf('}, 1500);') >= 0 && escuro.indexOf('limparPinos') >= 0 &&
+     /if \(!document\.querySelector\('\.module\.sfo-ativo'\)\) marcarTelaAtual\(true\);/.test(escuro),
+     'a vigilância é leve (1,5 s) e só mexe no chip — não fecha menu aberto pelo dono');
+}
+
 (async function(){
   await testarBarraDeMenus();
   await testarMotorDaNuvem();
   testarClientesEContratos();
+  testarCacheLinksEMotor();
   if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }
   console.log('\nTudo OK — v6.1.4: relatório do Kauan atendido item por item.');
 })();

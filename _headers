@@ -1,0 +1,8 @@
+# v6.1.4 — o dono via a versão ANTIGA do sistema mesmo depois das correções:
+# o navegador guardava o app.bundle.js em cache (a URL só mudava na virada de
+# versão). Aqui o servidor manda revalidar sempre; junto com o ?v=<hash> que o
+# sync_build carimba no index.html, cache velho nunca mais esconde correção.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Cache-Control: no-cache

@@ -19,15 +19,12 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.8 / Worker 5.26.4
+ * VERSÃO DESTE ARQUIVO: API 0.4.8 / Worker 5.26.4   (igual ao src/index.js)
+ * GERADO EM: 2026-09-21 20:31 UTC
  * sha256 do código (sem este cabeçalho):
  *   96161c1e9152b29f2f16cfd5af395e39ec2995b63814d0cf61b15e0c89705390
  *
- * COMO REGERAR (quando o sistema mudar — precisa de Node instalado):
- *   cd cloudflare-worker
- *   npm install
- *   npx wrangler deploy --dry-run --outdir=motor_compilado
- *   (e substituir o corpo deste arquivo pelo motor_compilado/index.js)
+ * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
  * se alguém esquecer de regerar, o teste acusa.
  * ═══════════════════════════════════════════════════════════════════════════ */

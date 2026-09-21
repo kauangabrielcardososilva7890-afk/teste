@@ -44,7 +44,7 @@ ok('rodapé bate com a versão', new RegExp('id="footer-version"[^>]*>v'+versao.
 const srcs = [...html.matchAll(/<script\s[^>]*src="\.\/([A-Za-z0-9_.\-/]+\.js)(\?v=([^"]*))?"/g)];
 const desatualizados = srcs
   .filter(m => !m[1].startsWith('assets/vendor/'))
-  .filter(m => m[3] !== versao)
+  .filter(m => m[3] !== versao && m[3] !== (versao + '-' + (m[1] === 'app.bundle.js' ? m[3].split('-')[1] : '')))
   .map(m => m[1]);
 ok('todo script do app tem ?v='+versao, desatualizados.length === 0);
 

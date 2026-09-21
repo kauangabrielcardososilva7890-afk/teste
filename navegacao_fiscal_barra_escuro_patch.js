@@ -327,8 +327,93 @@
     Array.prototype.slice.call(document.querySelectorAll('.module.sfo-ativo')).forEach(function(m){ m.classList.remove('sfo-ativo'); });
     var mod=moduloDaView(nome);
     if(mod) mod.classList.add('sfo-ativo');
+    injetaAbasFiscais();
   }
   window.DIGICOPY_MARCA_TELA_ATUAL=marcarTelaAtual;
+
+  /* ══ v6.1.4 — AS 6 TELAS FISCAIS COMO ABAS (foto do sistema antigo) ═══════
+     Pedido dele: "criar uma nova venda de NF tem que abrir é em formato aba,
+     não formato menu". No sistema antigo (fotos de 21/09) o fiscal abre com a
+     FAIXA das 6 telas (Nota Fiscal · Perfil Tributário · Manifestação · NCM ·
+     Enviar XML · Configurações) e cada tela é uma aba. Aqui a faixa aparece no
+     topo de TODA tela fiscal, marcando onde você está, e leva de uma para a
+     outra com UM clique — sem depender do menu de cima. */
+  var ABAS_FISCAIS = [
+    ["central-nf",          'ph-receipt',  'Nota Fiscal'],
+    ["fiscal-perfil",       'ph-percent',  'Perfil Tributário'],
+    ["fiscal-manifestacao", 'ph-stamp',    'Manifestação'],
+    ["fiscal-ncm",          'ph-barcode',  'NCM'],
+    ["fiscal-enviar-xml",   'ph-file-zip', 'Enviar XML'],
+    ["config-fiscal",       'ph-gear',     'Configurações']
+  ];
+  function injetaCssAbas(){
+    if (document.getElementById('nes612-abas-css')) return;
+    var st = document.createElement('style');
+    st.id = 'nes612-abas-css';
+    st.textContent = [
+      '.nes612-abas{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;margin:0 0 10px;background:#fff;border:1px solid #dbe3ef;border-radius:12px;box-shadow:0 2px 10px rgba(15,23,42,.05)}',
+      '.nes612-abas b.nes-titulo{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-right:6px}',
+      '.nes612-abas button{height:34px;padding:0 12px;border-radius:9px;border:1px solid #dbe3ef;background:#fff;color:#334155;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer}',
+      '.nes612-abas button:hover{border-color:#0a1e8a;color:#0a1e8a;background:#f4f8ff}',
+      '.nes612-abas button i{font-size:15px}',
+      '.nes612-abas button.on{background:#0a1e8a;border-color:#0a1e8a;color:#fff}',
+      'body.digi-escuro .nes612-abas{background:rgba(13,21,54,.9);border-color:rgba(148,167,255,.25)}',
+      'body.digi-escuro .nes612-abas b.nes-titulo{color:#a9bff2}',
+      'body.digi-escuro .nes612-abas button{background:#131f52;border-color:rgba(148,167,255,.28);color:#dbe6ff}',
+      'body.digi-escuro .nes612-abas button:hover{background:#1b2a63;color:#fff}',
+      'body.digi-escuro .nes612-abas button.on{background:#2f6bff;border-color:#2f6bff;color:#fff}',
+      '@media print{.nes612-abas{display:none!important}}'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function rotasFiscais(){ return ABAS_FISCAIS.map(function(a){ return a[0]; }); }
+  function abasHtml(rotaAtual){
+    return '<b class="nes-titulo">Fiscal</b>' + ABAS_FISCAIS.map(function(a){
+      var on = a[0] === rotaAtual ? ' on' : '';
+      return '<button type="button" class="' + on.trim() + '" onclick="navigateTo(\'' + a[0] + '\')"><i class="ph ' + a[1] + '"></i>' + a[2] + '</button>';
+    }).join('');
+  }
+  function injetaAbasFiscais(){
+    var nome = viewAtual();
+    if (!nome || rotasFiscais().indexOf(nome) < 0) return;
+    var view = document.getElementById('view-' + nome);
+    if (!view) return;
+    injetaCssAbas();
+    var barra = view.querySelector(':scope > .nes612-abas');
+    if (!barra) {
+      var div = document.createElement('div');
+      div.className = 'nes612-abas';
+      div.innerHTML = abasHtml(nome);
+      view.insertBefore(div, view.firstChild);
+      return;
+    }
+    // já existe: só garante a marca da aba certa (troca de tela pelo menu, etc.)
+    Array.prototype.slice.call(barra.querySelectorAll('button')).forEach(function(b){
+      var oc = b.getAttribute('onclick') || '';
+      var m = /navigateTo\(\s*['"]([a-z0-9-]+)['"]\s*\)/i.exec(oc);
+      var on = m && m[1] === nome;
+      if (on && !b.classList.contains('on')) b.classList.add('on');
+      if (!on && b.classList.contains('on')) b.classList.remove('on');
+    });
+  }
+  window.DIGICOPY_ABAS_FISCAIS = injetaAbasFiscais;
+
+  /* v6.1.4 — vigilância leve: a barra pode ser repintada por outros módulos de
+     um jeito que o observer não vê; aqui o chip da tela atual é reaplicado (e
+     NENHUM menu é fechado à força — quem fecha é o clique, como o dono espera).
+     `document.hidden` evita trabalho quando a janela está atrás (regra do projeto). */
+  var vigia = setInterval(function(){
+    if (document.hidden) return;
+    try{
+      if (!document.querySelector('.module.sfo-ativo')) marcarTelaAtual(true);
+      else if (viewAtual() !== ultimaRota) marcarTelaAtual();
+    }catch(e){}
+  }, 1500);
+  try{
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) marcarTelaAtual(true); });
+    window.addEventListener('focus', function(){ marcarTelaAtual(true); });
+  }catch(e){}
+  window.DIGICOPY_PARA_VIGIA = function(){ clearInterval(vigia); }; // para teste/diagnóstico
 
   /* clique fora solta o pino também no pointerdown: este evento NÃO é
      interceptado pelos outros módulos (eles param o 'click') */

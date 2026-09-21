@@ -15,7 +15,9 @@
     "build:win": "node clean_dist.js && node sync_build.js && npm run bundle && electron-builder --win --x64 --config.asar=false && node verify_pack.js",
     "verify:exe": "node verify_pack.js",
     "verify:files": "node verify_pack.js --dry",
-    "diag": "node diagnostico_exe.js"
+    "diag": "node diagnostico_exe.js",
+    "links": "node links.js",
+    "motor": "node gerar_motor_nuvem.js"
   },
   "build": {
     "appId": "br.com.digicopy.erp.demo",

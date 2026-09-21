@@ -33,6 +33,10 @@
 8. **TODAS as conversas que eu tiver, mesmo que sejam apenas dúvidas, têm que
    trazer os links necessários**, incluindo o link do site para teste e o ZIP da
    branch atual. Em repositório privado, avisar que o ZIP exige autenticação.
+   *(21/09/2026 — o dono cobrou que esta regra foi esquecida em respostas. Para
+   não depender de memória: o bloco pronto sai com `npm run links`, montado da
+   própria branch/versão, e o teste `test_ajustes_v6104.js` confere que ele traz
+   site, ZIP com aviso de autenticação e `/health`.)*
 
 ## 2. Organização do código e desempenho
 

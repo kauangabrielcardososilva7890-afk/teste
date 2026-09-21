@@ -105,8 +105,29 @@ html = html.replace(
   /(<script\s[^>]*src=")\.\/([A-Za-z0-9_.\-/]+\.js)(\?v=[^"]*)?(")/g,
   (m, pre, arquivo, _q, pos) => {
     if (arquivo.startsWith('assets/vendor/')) return m;
+    if (arquivo === 'app.bundle.js') return m; // tratado logo abaixo, pelo HASH
     return pre + './' + arquivo + '?v=' + versao + pos;
   }
+);
+
+// v6.1.4 — CACHE DO BUNDLE (a causa do "corrigiu mas continua igual"):
+// o ?v= era a VERSÃO do app, que só muda no bump de versão. O bundle mudava a
+// cada correção e o navegador do dono continuava servindo a cópia velha do
+// cache (mesma URL!). Agora o ?v= do app.bundle.js é o HASH DO CONTEÚDO: mudou
+// uma linha do sistema, muda a URL, o navegador é OBRIGADO a baixar de novo.
+function hashDoBundle(){
+  try{
+    const conteudo = fs.readFileSync('app.bundle.js');
+    return require('crypto').createHash('sha256').update(conteudo).digest('hex').slice(0, 12);
+  }catch(e){ return versao; }
+}
+const vBundle = hashDoBundle();
+html = html.replace(
+  /(\.\/app\.bundle\.js)(\?v=[^"]*)?(")/g,
+  // formato: ?v=<versão>-<hash do conteúdo>. A versão continua na URL (todo o
+  // resto do sistema e os testes já dependem dela) e o hash é o que faz o
+  // navegador baixar de novo a cada correção — sem depender de bump de versão.
+  (_m, arq, _q, pos) => arq + '?v=' + versao + '-' + vBundle + pos
 );
 
 if (html !== htmlOriginal) alteracoes.push('index.html (versão/cache-busting)');
@@ -233,6 +254,21 @@ function imprimirLinks(){
 }
 
 avisos.forEach(a => console.log('  ⚠ ' + a));
+
+// v6.1.4 — se o bundle mudou e o index.html ficou com ?v= velho, isso é
+// DESATUALIZADO (o dono veria a versão antiga no navegador dele).
+function conferirCacheDoBundle(){
+  let conteudo;
+  try { conteudo = fs.readFileSync('app.bundle.js'); } catch (e) { return; }
+  const hash = require('crypto').createHash('sha256').update(conteudo).digest('hex').slice(0, 12);
+  const achado = /app\.bundle\.js\?v=([^"']+)/.exec(html);
+  if (!achado) return;
+  const esperado = versao + '-' + hash;
+  if (achado[1] !== esperado) {
+    alteracoes.push('index.html (?v= do app.bundle.js está ' + achado[1] + ' e o certo é ' + esperado + ')');
+  }
+}
+conferirCacheDoBundle();
 
 if (!alteracoes.length) {
   console.log(`Sync OK: v${versao} | ${manifest.length} no bundle | ${scriptsSoltos.length} soltos | ${filesEsperado.length} entradas em build.files`);
