@@ -4132,3 +4132,46 @@ Em `navegacao_fiscal_barra_escuro_patch.js` (sem arquivo novo, para não mexer n
 4. C8 (CC-e/cancelamento) — só depois do A1 instalado.
 5. As 3 ferramentas de garantia (check-up, quadro de versão por PC — precisa migração 0007, teste de tela automático).
 6. Merge do PR #29 e volta das Production branches para `main` — **só com ordem expressa**.
+
+---
+
+## CONTINUIDADE — 21/09/2026 (7) — "os dados do outro PC não aparecem" (nota 34), check-up da nuvem e cache
+
+### 1) O problema que ele relatou (2 fotos: PC Navegador 1 vazio × PC Navegador 2 com as notas 34 e 32)
+
+**Não era o dado "não sincronizado": era a sincronização PARADA por escolha pendente.** O motor (`cloudflare_data_sync_patch.js`) tem uma trava de segurança: quando este PC tem dados que a nuvem não conhece (ou a nuvem tem dados e este PC tem sobras), ele **pausa** (`paused=true`, `pauseReason='escolha-inicial'`) e espera o dono escolher entre *“Enviar os dados deste PC para a nuvem”* e *“Não enviar os dados atuais”*. **Enquanto está pausado, `tick()` sai na primeira linha: o PC não baixa NADA** — é exatamente "o que criei no outro PC não aparece aqui". E isso "sempre volta" porque cada nova conexão/instalação/reconexão cai na mesma pergunta, que fica sem resposta.
+
+**Solução entregue (nesta rodada) — o CHECK-UP DA NUVEM (o item “A” que ele aprovou):**
+- Botão novo na janela da **Nuvem**: **🩺 Abrir check-up da nuvem** (injetado por `injetarBotaoCheckup`, envolvendo `abrirCloudflareNuvem`).
+- Mostra em português: conectado?, **sincronização ligada ou PAUSADA (e o motivo)**, quantos registros estão por subir, **registros deste PC × registros da nuvem**, último envio OK e último erro; e a comparação **lista por lista (aqui × nuvem)** com destaque no que está diferente.
+- Quando está pausado, explica na cara: *"Enquanto ela está pausada, este computador não baixa nada da nuvem — é por isso que o que foi criado no outro PC não aparece aqui."*
+- Quatro botões: **🔄 Sincronizar agora**, **⬇️ Baixar tudo da nuvem de novo**, **⬆️ Enviar este PC inteiro** e **📋 Copiar resumo** (o texto que ele me manda se voltar).
+- **`baixarTudoDaNuvem()`** (novo, no motor): volta o **cursor ao começo do diário da nuvem** e relê tudo. Não envia, não apaga nada local e não toca na nuvem (cada mudança só entra se for versão mais nova que a conhecida aqui). Se estiver pausado, **avisa e não mexe** — a escolha é do dono.
+- `estadoDetalhado()` (novo) expõe o estado e a contagem por lista para a tela e para teste.
+
+### 2) Explicação honesta que vai para ele sobre as duas fotos
+
+- Onde ele **criou** as notas (PC 2) precisa **concluir a escolha** (ou já estar sincronizando) para as notas subirem; e o **PC 1 precisa não estar pausado** para baixá-las.
+- O **"local"** que aparece no canto direito das duas fotos **não** é o estado da nuvem: é um texto fixo do index.html desde antes. Pode confundir — anotado como melhoria (trocar por estado real da nuvem).
+
+### 3) Item 4 dele ("você falou pra fazer isso, qual o passo correto?") — resposta dada
+
+O caminho correto e suficiente é **rodar `atualizar_motor_nuvem.cmd`** (aplicou migrações — nenhuma pendente — e publicou: o log dele mostra `Deployed digicopy-sync-api` e `/health` com `versao":"5.26.4"`). O aviso de **token** é do **Workers Builds** (build automático do painel da Cloudflare), que **não é necessário**. Os caminhos "Create new token + Retry" e "colar código no Edit code" ficam como plano B — nada é obrigatório agora.
+
+### 4) Item 5 = "isso" (confirmado)
+
+Confirmado: **"nova venda de NF em aba"** = a tela da NFe com as abas (Gerais · Destinatário · Itens da Nota · Informações Adicionais · Transporte · Correções · Reforma Tributária · Referenciar · Log) e rodapé Gerar NFe / Pré-visualizar. **É o próximo passo de construção** (está registrado em `FISCAL_ANTIGO_REFERENCIA.md`, seção 6, item 2 — junto da lista da NFe com a coluna **Situação** e do DANFE com o IBPT).
+
+### 5) Item 6 = só o `A` (check-up) — ✅ ENTREGUE nesta rodada
+
+O `B` (quadro de versão por PC) fica de fora por pedido dele. O `C` (teste de tela automático) segue na fila.
+
+### Validação
+
+- Suíte **187 testes, 0 falhas** (novo bloco `testarCheckupDaNuvem` no `test_ajustes_v6104.js`, com o motor carregado de verdade em sandbox).
+- `npm run check`, `npm run sync` (Sync OK), `npm run verify:files` OK; mobile/www e assets Android sincronizados.
+- Bundle sha desta rodada: ver `npm run check`.
+
+### Pendência imediata de investigação (se voltar)
+
+Se ele rodar o check-up e **continuar** sem ver os dados do outro PC, o resumo copiado dirá: pausado? cursor? pendentes? e a comparação por lista — com isso eu fecho a causa na hora (sem chute).

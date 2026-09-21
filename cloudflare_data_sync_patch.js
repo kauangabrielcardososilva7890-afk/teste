@@ -749,6 +749,27 @@ async function resetCloudOnly(){
 // Opção 1 da escolha: enviar os dados atuais deste PC para a nuvem.
 // Cada registro sobe pelo próprio id, então reenviar o mesmo dado atualiza em
 // vez de criar cópia.
+// ══ v6.1.4 — "MEUS DADOS NÃO APARECEM NO OUTRO PC": baixar tudo de novo ═════
+// O que este PC recebe da nuvem é um DIÁRIO (cada mudança tem um número, e o PC
+// guarda até onde leu = cursor). Se por qualquer motivo ele ficou com o cursor
+// adiantado (nuvem zerada, recuperação, remontagem de base), o que foi criado no
+// outro PC fica invisível AQUI PARA SEMPRE — é o "sempre volta esse problema".
+// Aqui o cursor volta ao COMEÇO do diário e tudo é reaplicado. O que protege
+// dado local é o mesmo de sempre: cada mudança só entra se for uma versão MAIS
+// NOVA do que a que este PC já conhece; nada é enviado nem apagado por causa
+// disto, e a nuvem não é tocada.
+async function baixarTudoDaNuvem(){
+  if(typeof document!=='undefined'&&busy)throw new Error('Aguarde a sincronização atual terminar.');
+  if(!authorized())throw new Error('Este computador não está conectado à nuvem.');
+  const pausadoAntes=!!state.paused,motivo=String(state.pauseReason||'');
+  const antes=Number(state.cursor)||0;
+  state.cursor=0;state.initialPull=true;
+  persist();
+  if(pausadoAntes)return {pausado:true,motivo,pausadoAntes:true,antes,durante:Number(state.cursor)||0};
+  await tick('baixar-tudo-da-nuvem');
+  return {pausado:false,antes,durante:Number(state.cursor)||0,conflitos:(state.conflicts||0)};
+}
+
 async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
@@ -825,7 +846,15 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+// Estado completo para o check-up (nada é inventado: o que não se sabe vem null)
+function estadoDetalhado(){
+  const s=info();
+  s.totalLocal=(()=>{let t=0;const M=definicoes();for(const e of Object.keys(M))for(const _ of entriesFor(e,M[e]))t++;return t;})();
+  s.porListaLocal=(()=>{const out={};const M=definicoes();for(const e of Object.keys(M)){let n=0;for(const _ of entriesFor(e,M[e]))n++;if(n)out[e]=n;}return out;})();
+  s.bruto=typeof db!=='undefined'&&db?db:null;
+  return s;
+}
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();

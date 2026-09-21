@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 67d73675335ea9de
+ * scripts: 222 | sha256: d5970a9c3208ef69
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -29203,6 +29203,27 @@ async function resetCloudOnly(){
 // Opção 1 da escolha: enviar os dados atuais deste PC para a nuvem.
 // Cada registro sobe pelo próprio id, então reenviar o mesmo dado atualiza em
 // vez de criar cópia.
+// ══ v6.1.4 — "MEUS DADOS NÃO APARECEM NO OUTRO PC": baixar tudo de novo ═════
+// O que este PC recebe da nuvem é um DIÁRIO (cada mudança tem um número, e o PC
+// guarda até onde leu = cursor). Se por qualquer motivo ele ficou com o cursor
+// adiantado (nuvem zerada, recuperação, remontagem de base), o que foi criado no
+// outro PC fica invisível AQUI PARA SEMPRE — é o "sempre volta esse problema".
+// Aqui o cursor volta ao COMEÇO do diário e tudo é reaplicado. O que protege
+// dado local é o mesmo de sempre: cada mudança só entra se for uma versão MAIS
+// NOVA do que a que este PC já conhece; nada é enviado nem apagado por causa
+// disto, e a nuvem não é tocada.
+async function baixarTudoDaNuvem(){
+  if(typeof document!=='undefined'&&busy)throw new Error('Aguarde a sincronização atual terminar.');
+  if(!authorized())throw new Error('Este computador não está conectado à nuvem.');
+  const pausadoAntes=!!state.paused,motivo=String(state.pauseReason||'');
+  const antes=Number(state.cursor)||0;
+  state.cursor=0;state.initialPull=true;
+  persist();
+  if(pausadoAntes)return {pausado:true,motivo,pausadoAntes:true,antes,durante:Number(state.cursor)||0};
+  await tick('baixar-tudo-da-nuvem');
+  return {pausado:false,antes,durante:Number(state.cursor)||0,conflitos:(state.conflicts||0)};
+}
+
 async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
   state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
@@ -29279,7 +29300,15 @@ function pendingEstimate(){
 }
 function info(){return {authorized:authorized(),busy,paused:!!state.paused,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+// Estado completo para o check-up (nada é inventado: o que não se sabe vem null)
+function estadoDetalhado(){
+  const s=info();
+  s.totalLocal=(()=>{let t=0;const M=definicoes();for(const e of Object.keys(M))for(const _ of entriesFor(e,M[e]))t++;return t;})();
+  s.porListaLocal=(()=>{const out={};const M=definicoes();for(const e of Object.keys(M)){let n=0;for(const _ of entriesFor(e,M[e]))n++;if(n)out[e]=n;}return out;})();
+  s.bruto=typeof db!=='undefined'&&db?db:null;
+  return s;
+}
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -30695,6 +30724,151 @@ function injectButton(root){
       : ('Nada reparado automaticamente: '+((r&&r.motivo)||'motivo desconhecido')+'\n\nSe o banco tiver 2 empresas ou mais, o sistema NÃO chuta — saia e entre escolhendo a empresa certa.');
     if(typeof window.lfbAlert==='function')window.lfbAlert(msg,'Reparar sessão'); else alert(msg);
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// v6.1.4 — CHECK-UP DA NUVEM (pedido dele: "quero resolver, isso sempre volta")
+//
+// O problema que ele relatou (nota criada num PC e não aparece no outro) tem
+// três causas possíveis, e este check-up MOSTRA qual é — sem chute:
+//   1. a sincronização está PAUSADA esperando a escolha ("enviar os dados deste
+//      PC" ou "não enviar"). Enquanto ninguém escolhe, o PC não baixa NADA;
+//   2. o computador está conectado, mas o diário da nuvem está sendo lido a
+//      partir de um ponto adiantado (cursor) → dá para "Baixar tudo de novo";
+//   3. tem coisa pendente para subir (fila) ou erro recente aparecendo no ícone.
+// Ele vê o estado em português, compara LISTA POR LISTA (aqui x nuvem) e conserta
+// com um clique. O resumo é copiável — é o "me manda o texto" que eu preciso.
+// ═══════════════════════════════════════════════════════════════════════════
+function upLista(mapa){
+  if(!mapa) return [];
+  return Object.keys(mapa).map(function(k){ return k+': '+mapa[k]; }).sort();
+}
+window.dcCheckupNuvemResumo=function(estado, nuvem){
+  const L=[];
+  L.push('CHECK-UP DA NUVEM — '+new Date().toLocaleString('pt-BR'));
+  L.push('Versão do sistema: '+((typeof window!=='undefined'&&window.DIGICOPY_APP_VERSION)||'?'));
+  if(!estado){ L.push('Motor de sincronização não carregado.'); return L.join('\n'); }
+  L.push('Conectado...: '+(estado.authorized?'SIM':'NÃO'));
+  L.push('Pausado.....: '+(estado.paused?'SIM — motivo: '+(estado.pauseReason||'sem motivo informado'):'não'));
+  L.push('Pendentes neste PC (fila de envio): '+(estado.outbox||0));
+  L.push('Registros deste PC: '+(estado.totalLocal||0));
+  L.push('Último envio OK: '+(estado.lastOk?new Date(estado.lastOk).toLocaleString('pt-BR'):'nunca'));
+  L.push('Último erro: '+(estado.lastError||'nenhum'));
+  L.push('Leitura da nuvem até o número: '+(estado.cursor||0));
+  if(estado.porListaLocal&&Object.keys(estado.porListaLocal).length) L.push('Listas deste PC → '+upLista(estado.porListaLocal).join(' | '));
+  if(nuvem&&nuvem.byEntity){ const nb=Object.keys(nuvem.byEntity).map(function(k){ return k+': '+(Number(nuvem.byEntity[k]&&nuvem.byEntity[k].active)||0); }).sort(); L.push('Listas na nuvem → '+nb.join(' | ')); }
+  else L.push('Listas na nuvem → (não consegui contar agora)');
+  return L.join('\n');
+};
+
+window.dcCheckupNuvem=async function(){
+  const S=window.DIGICOPY_CLOUD_SYNC;
+  if(!S||typeof S.estadoDetalhado!=='function'){ if(typeof window.lfbAlert==='function') window.lfbAlert('O motor da nuvem ainda não carregou. Espere alguns segundos e tente de novo.','Check-up da nuvem'); return; }
+  const estado=S.estadoDetalhado();
+  let nuvem=null, erroNuvem='';
+  try{
+    if(typeof S.apiStatus==='function') nuvem=await S.apiStatus();
+    else if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api) nuvem=(await window.DIGICOPY_CLOUD.api('/v1/status',{method:'GET'})).totals||null;
+  }catch(e){ erroNuvem=(e&&e.message)||String(e); }
+  const resumo=window.dcCheckupNuvemResumo(estado,nuvem);
+  const linhaLocal=estado.porListaLocal&&Object.keys(estado.porListaLocal).length
+    ? '<div style="max-height:230px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px">'+Object.keys(estado.porListaLocal).sort().map(function(k){
+        const naNuvem=(nuvem&&nuvem.byEntity&&nuvem.byEntity[k])?(Number(nuvem.byEntity[k].active)||0):null;
+        const dif=(naNuvem!==null&&naNuvem!==estado.porListaLocal[k]);
+        return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid #f1f5f9;font-size:12px"><span>'+k+'</span><b>Aqui: '+estado.porListaLocal[k]+(naNuvem!==null?(' · Nuvem: '+naNuvem):'')+(dif?' <span style="color:#b45309">(diferente)</span>':'')+'</b></div>';
+      }).join('')+'</div>'
+    : '<p style="font-size:12px;color:#64748b;margin:4px 0 0">Nada gravado neste PC ainda.</p>';
+  const corpo=''+
+    '<p style="font-size:12.5px;color:#334155;margin:0 0 10px">Este check-up <b>só olha</b>. Ele mostra onde cada dado está e conserta a sincronização se ela estiver parada. '+
+    'Nada é apagado em lugar nenhum.</p>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">'+
+      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">CONECTADO</small><br><b>'+(estado.authorized?'SIM':'NÃO')+'</b></div>'+
+      '<div style="padding:9px 11px;background:'+(estado.paused?'#fff7ed':'#f8fafc')+';border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">SINCRONIZAÇÃO</small><br><b>'+(estado.paused?'PAUSADA':'ligada')+'</b></div>'+
+      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">POR SUBIR</small><br><b>'+(estado.outbox||0)+'</b></div>'+
+      '<div style="padding:9px 11px;background:#f8fafc;border-radius:10px;font-size:12px"><small style="color:#64748b;font-weight:800">AQUI / NUVEM</small><br><b>'+(estado.totalLocal||0)+' / '+(nuvem&&nuvem.records!=null?nuvem.records:'—')+'</b></div>'+
+    '</div>'+
+    (estado.paused
+      ? '<div style="border:1px solid #fdba74;background:#fff7ed;border-radius:10px;padding:10px 12px;margin-bottom:10px"><b style="color:#9a3412;font-size:13px">⚠ A sincronização está PAUSADA esperando a sua escolha</b>'+
+        '<p style="font-size:12px;color:#7c2d12;margin:5px 0 0">Enquanto ela está pausada, este computador <b>não baixa nada</b> da nuvem — é por isso que o que foi criado no outro PC não aparece aqui. '+
+        'Abra a janela da <b>Nuvem</b> e escolha: <b>“Enviar os dados deste PC para a nuvem”</b> (se este PC é o certo) ou <b>“Não enviar os dados atuais”</b> (se a nuvem é a certa).</p></div>'
+      : '')+
+    (estado.lastError?'<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px"><b>Último erro:</b> '+String(estado.lastError).replace(/[<>&]/g,'')+'</div>':'')+
+    (erroNuvem?'<p style="font-size:11.5px;color:#9a3412;margin:0 0 8px">Não consegui contar a nuvem agora ('+String(erroNuvem).replace(/[<>&]/g,'')+'). Os botões de conserto funcionam do mesmo jeito.</p>':'')+
+    '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 4px">Lista por lista (aqui x nuvem)</h4>'+linhaLocal+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+
+      '<button type="button" id="dc-ck-sync" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0a1e8a;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">🔄 Sincronizar agora</button>'+
+      '<button type="button" id="dc-ck-baixar" style="height:40px;padding:0 14px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">⬇️ Baixar tudo da nuvem de novo</button>'+
+      '<button type="button" id="dc-ck-enviar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0a1e8a;font-weight:800;font-size:12.5px;cursor:pointer">⬆️ Enviar este PC inteiro</button>'+
+      '<button type="button" id="dc-ck-copiar" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:800;font-size:12.5px;cursor:pointer">📋 Copiar resumo</button>'+
+    '</div>'+
+    '<p style="font-size:11.5px;color:#64748b;margin:9px 0 0">“Baixar tudo de novo” só faz este PC ler o diário da nuvem desde o começo — o que já está mais novo aqui não é mexido, e a nuvem não é alterada.</p>'+
+    '<pre id="dc-ck-resumo" style="display:none"></pre>';
+  if(!modalSistemaCheckup('Check-up da nuvem', corpo)){ if(typeof window.lfbAlert==='function') window.lfbAlert(resumo,'Check-up da nuvem'); return; }
+  function recadinho(t,erro){ const el=document.getElementById('dc-ck-aviso'); if(el){ el.textContent=t; el.style.color=erro?'#b91c1c':'#15803d'; } }
+  document.getElementById('dc-ck-sync').onclick=async function(){
+    try{ recadinho('Sincronizando...'); await window.DIGICOPY_CLOUD_SYNC.tick('check-up'); recadinho('Sincronizado.'); }
+    catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-baixar').onclick=async function(){
+    try{
+      recadinho('Baixando tudo de novo...');
+      const r=await window.DIGICOPY_CLOUD_SYNC.baixarTudoDaNuvem();
+      if(r&&r.pausado){ recadinho('A sincronização está PAUSADA — escolha na janela da Nuvem antes de baixar.',true); return; }
+      recadinho('Pronto: reli a nuvem desde o começo (número '+(r&&r.antes||0)+' → '+(r&&r.durante||0)+').');
+      if(typeof renderClientes==='function'){ try{ renderClientes(); }catch(e){} }
+      if(typeof renderVendas==='function'){ try{ renderVendas(); }catch(e){} }
+    }catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-enviar').onclick=async function(){
+    let ok=true;
+    if(typeof window.confirmSistema==='function') ok=await window.confirmSistema('Enviar todo o conteúdo deste computador para a nuvem? Nada é apagado: o que já existe é atualizado e o que falta é criado.','Enviar este PC inteiro');
+    if(!ok) return;
+    try{ recadinho('Enviando...'); await window.DIGICOPY_CLOUD_SYNC.publishLocalToCloud(); recadinho('Enviado. Os outros PCs recebem no próximo ciclo.'); }
+    catch(e){ recadinho('Erro: '+(e.message||e),true); }
+  };
+  document.getElementById('dc-ck-copiar').onclick=function(){
+    const pre=document.getElementById('dc-ck-resumo');
+    pre.style.display='block'; pre.textContent=resumo;
+    const pronto=function(){ recadinho('Resumo copiado! Cole no chat.'); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(resumo).then(pronto).catch(pronto); } else pronto();
+  };
+};
+function modalSistemaCheckup(titulo, corpoHtml){
+  const root=document.getElementById('modal-root'), box=document.getElementById('modal-box'),
+        t=document.getElementById('modal-title'), b=document.getElementById('modal-body'), f=document.getElementById('modal-footer');
+  if(!root||!b) return false;
+  if(box) box.className='w-full max-w-[820px] rounded-[18px] bg-white shadow-2xl overflow-hidden max-h-[92vh] flex flex-col';
+  if(t) t.textContent=titulo;
+  b.innerHTML=corpoHtml+'<div id="dc-ck-aviso" style="font-size:12px;font-weight:800;margin-top:10px"></div>';
+  if(f) f.innerHTML='<button onclick="closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button>';
+  root.classList.remove('hidden');
+  return true;
+}
+// Botão na janela da Nuvem: "🩺 Check-up da nuvem"
+function injetarBotaoCheckup(){
+  try{
+    const modal=document.getElementById('digicopy-cloud-modal'); if(!modal) return;
+    const body=modal.querySelector('#dc-body'); if(!body) return;
+    if(body.querySelector('#dc-abrir-checkup')) return;
+    if(!body.querySelector('#dc-sync-now')&&!body.querySelector('#dc-enviar-locais')) return;
+    const box=document.createElement('div');
+    box.style.cssText='border-top:1px solid #e2e8f0;margin-top:14px;padding-top:12px';
+    box.innerHTML='<h3 style="font-size:14px;font-weight:900;margin:0 0 4px">🩺 Check-up da nuvem</h3>'+
+      '<p style="font-size:12px;color:#64748b;margin:0 0 8px">Um dado criado no outro PC não aparece aqui? O check-up mostra se a sincronização está pausada, quantos registros têm em cada lado (lista por lista) e conserta com um clique.</p>'+
+      '<button id="dc-abrir-checkup" type="button" style="height:40px;padding:0 16px;border-radius:10px;border:none;background:#0f766e;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer">🩺 Abrir check-up da nuvem</button>';
+    const forget=body.querySelector('#dc-forget');
+    if(forget&&forget.parentNode) forget.parentNode.insertBefore(box,forget); else body.appendChild(box);
+    const b=document.getElementById('dc-abrir-checkup'); if(b) b.onclick=function(){ window.dcCheckupNuvem(); };
+  }catch(e){}
+}
+if(typeof window.abrirCloudflareNuvem==='function'&&!window.abrirCloudflareNuvem.__v6104ck){
+  const oldC=window.abrirCloudflareNuvem;
+  window.abrirCloudflareNuvem=async function(){
+    const r=await oldC.apply(this,arguments);
+    try{ setTimeout(injetarBotaoCheckup,100); setTimeout(injetarBotaoCheckup,500); setTimeout(injetarBotaoCheckup,1200); }catch(e){}
+    return r;
+  };
+  window.abrirCloudflareNuvem.__v6104ck=true;
 }
 
 window.dcDiagnosticoInvisiveis=function(){
