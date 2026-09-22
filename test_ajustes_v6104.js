@@ -106,9 +106,14 @@ ok(fmc.indexOf('NÃO fica salva') >= 0, 'relembra que a senha não fica salva');
 ok(fmc.indexOf('Clique no botão «📎 Instalar certificado A1 (neste PC)»') >= 0, 'o aviso do Testar SEFAZ aponta o botão novo (sem obrigar a página de arquivos)');
 ok(fs.readFileSync('main.js','utf8').indexOf("ipcMain.handle('nfe:cert-import'") >= 0, 'o programa (.exe) já sabia receber o .pfx — agora tem botão na tela');
 
-console.log('== O código do deploy dentro do relatório (copiar) ==');
-ok(relHtml.indexOf('btn-copiar-deploy') >= 0 && relHtml.indexOf('codigo-deploy') >= 0, 'seção com o código e o botão de copiar');
-ok(relHtml.indexOf('d1 migrations apply DB --remote') >= 0 && relHtml.indexOf('Run workflow') >= 0, 'o código e o passo a passo estão na página');
+console.log('== Publicar o motor: o PASSO REAL (ordem dele: esquecer o worker) ==');
+ok(relHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0, 'o relatório ensina o arquivo que existe (atualizar_motor_nuvem.cmd)');
+ok(relHtml.indexOf('CLOUDFLARE_API_TOKEN') < 0 && relHtml.indexOf('New workflow') < 0,
+   'não manda mais mexer em token/painel/GitHub');
+ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.4"') >= 0,
+   'explica as respostas que a janela pede e o que tem que aparecer no fim');
+ok(fs.existsSync('atualizar_motor_nuvem.cmd') && /wrangler d1 migrations apply DB --remote/.test(fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8')),
+   'o passo ensinado é o do arquivo de verdade (mesmos comandos)');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // A BARRA DE MENUS — reprodução do bug dele em jsdom (foto de 21/09/2026):
@@ -291,6 +296,65 @@ function testarClientesEContratos(){
   ok(PC.clienteContrato(db.contratos[2]) === null,
      'contrato sem nenhuma pista de cliente continua sem vínculo');
 
+  // v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo".
+  // Aqui a prova de que procura mais E de que dá para resolver na mão.
+  console.log('\n== CONTRATO SEM VÍNCULO: procura melhor e o dono escolhe ==');
+  db.clientes.push({ id: 'cliDoc', empresaId: 'emp', codigo: '501', nome: 'Papelaria Central', documento: '12.345.678/0001-99' });
+  db.contratos.push({ id: 'ct4', empresaId: 'emp', numero: 'LC-4', clienteId: null, documento: '12345678000199' });
+  db.clientes.push({ id: 'cliPar', empresaId: 'emp', codigo: '502', nome: 'Maria de Jesus Comércio de Papéis' });
+  db.contratos.push({ id: 'ct5', empresaId: 'emp', numero: 'LC-5', clienteId: null, clienteNome: 'Maria Jesus' });
+  ok(typeof PC.cfClientePorDocumento === 'function' && typeof PC.cfClientePorNomeParecido === 'function',
+     'o módulo exporta os dois buscadores novos (documento e nome parecido)');
+  ok((PC.clienteContrato(db.contratos.find(c => c.id === 'ct4')) || {}).id === 'cliDoc',
+     'contrato que só tinha o CNPJ agora acha o cliente pelo documento');
+  ok((PC.cfClientePorNomeParecido('Maria Jesus', 'emp') || {}).id === 'cliPar',
+     'nome parecido (um contido no outro) acha o cliente — e só quando é UM só');
+  ok(PC.cfClientePorNomeParecido('Cliente Balcão', 'emp') === null,
+     'nome parecido com 2 cadastros NÃO chuta (quem decide é o dono, no botão)');
+  ok(PC.cfDocumentoDoContrato({ numero: 'LC-9', cpf: '123' }) === '',
+     'documento curto/lixo não é tratado como CPF/CNPJ (não inventa vínculo)');
+
+  const srcC = fs.readFileSync('contratos_final_patch.js', 'utf8');
+  ok(srcC.indexOf('window.contratoVincularCliente') >= 0 && srcC.indexOf('window.cfvEscolher') >= 0,
+     'existe o seletor de cliente do contrato (Vincular cliente)');
+  ok(srcC.indexOf('🔗 Vincular cliente') >= 0 && srcC.indexOf('clienteContrato(c)?') >= 0,
+     'a linha do contrato sem vínculo mostra o botão (e some quando já tem cliente)');
+  ok(srcC.indexOf("logAction('contrato','vincular'") >= 0 && srcC.indexOf('vinculadoPorNome') >= 0,
+     'o vínculo na mão grava quem vinculou e entra na Auditoria');
+  ok(srcC.indexOf('cfvEscolher') >= 0 && srcC.indexOf('if(typeof saveDB') >= 0 || srcC.indexOf('salvar();') >= 0,
+     'o vínculo é salvo no banco (não é só na tela)');
+
+  // o seletor escolhe de verdade: roda a função com um DOM simples
+  const domC = new (require('jsdom').JSDOM)('<div id="modal-root" class="hidden"><div id="modal-box"></div><div id="modal-title"></div><div id="modal-body"></div><div id="modal-footer"></div></div>');
+  const winC = domC.window;
+  const dbC = {
+    empresas: [{ id: 'emp' }],
+    clientes: [{ id: 'cX', empresaId: 'emp', codigo: '7', nome: 'Cliente do Botão' }],
+    contratos: [{ id: 'ctX', empresaId: 'emp', numero: 'LC-7', clienteId: null, clienteNome: 'Cliente do Botao Ltda' }],
+    equipamentos: [], parque: [], leituras: [], os: [], vendas: [], modulosDinamicos: {}, config: {}
+  };
+  const sessao = { empresaId: 'emp', usuarioId: 'u1', usuarioNome: 'Kauan' };
+  winC.getSession = () => sessao;
+  winC.closeModal = () => {};
+  const auditoria = [];
+  new Function('window', 'document', 'db', 'getSession', 'logAction', 'saveDB', 'console', srcC)(
+    winC, winC.document, dbC, () => sessao,
+    (a, b, c, d) => auditoria.push([a, b, c, d]),
+    () => {}, console);
+  winC.contratoVincularCliente('ctX');
+  const abriu = !!winC.document.getElementById('cfv-lista') && winC.document.body.innerHTML.indexOf('Cliente do Botão') >= 0;
+  ok(abriu, 'o botão abre a lista de clientes da empresa (com o nome guardado no contrato para comparar)');
+  winC.openContratoCompleto = () => {};   // o teste não precisa reabrir a tela
+  winC.cfvEscolher('cX');
+  ok(dbC.contratos[0].clienteId === 'cX' && dbC.contratos[0].vinculoManual === true && dbC.contratos[0].vinculadoPorNome === 'Kauan',
+     'escolher o cliente grava o vínculo no contrato (com quem vinculou)');
+  ok(auditoria.some(a => a[0] === 'contrato' && a[1] === 'vincular'),
+     'a escolha na mão entra na Auditoria');
+
+  const srcV = fs.readFileSync('ajustes_v5214_clientes_visiveis_patch.js', 'utf8');
+  ok(srcV.indexOf('clientesDuplicadosVincularContrato') >= 0 && srcV.indexOf('🔗 Vincular cliente') >= 0,
+     'o painel de clientes repetidos também tem o botão de vincular por contrato');
+
   console.log('\n== CLIENTES DUPLICADOS: detector + união que NÃO apaga nada ==');
   const codeV = fs.readFileSync('ajustes_v5214_clientes_visiveis_patch.js', 'utf8');
   const db2 = {
@@ -460,8 +524,41 @@ async function testarCheckupDaNuvem(){
   ok(true, 'motor carregado no teste sem quebrar');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RODAPÉ: "por que parou de atualizar?" — ele tem que mostrar a versão E o
+// carimbo do arquivo que está rodando (o mesmo hash do ?v= do app.bundle.js).
+// ═══════════════════════════════════════════════════════════════════════════
+async function testarRodapeDaVersao(){
+  console.log('\n== RODAPÉ: versão + carimbo do que está rodando agora ==');
+  const src = fs.readFileSync('ajustes_v52245_rodape_versao_patch.js', 'utf8');
+  ok(src.indexOf('function seloDoBuild()') >= 0, 'o rodapé procura o carimbo na URL do app.bundle.js');
+  ok(src.indexOf("ver.setAttribute('data-build'") >= 0, 'o carimbo fica marcado no elemento (dá para conferir com o F12)');
+
+  const html =
+    '<script src="./app.bundle.js?v=6.1.4-1d27112d3821"></script>' +
+    '<footer class="x"><span>Sistema Digicopy</span><span id="footer-version">v0</span><span id="footer-session">Empresa - Usuário</span></footer>' +
+    '<script>' + src + '</script>';
+  const dom = new (require('jsdom').JSDOM)(html, { runScripts: 'dangerously' });
+  dom.window.DIGICOPY_APP_VERSION = '6.1.4';
+  await new Promise(r => setTimeout(r, 900));
+  const ver = dom.window.document.getElementById('footer-version');
+  ok(/^v6\.1\.4 • 1d27112d/.test(ver.textContent),
+     'o rodapé mostra a versão E o carimbo do arquivo carregado (' + ver.textContent + ')');
+  ok(ver.getAttribute('data-build') === '1d27112d', 'o carimbo bate com o da URL do app.bundle.js');
+  ok(/muda a cada correção/.test(ver.title || ''), 'o balão explica que o carimbo muda a cada correção publicada');
+  const sem = new (require('jsdom').JSDOM)('<footer><span id="footer-version">v0</span><span id="footer-session">Empresa - Usuário</span></footer><script>' + src + '</script>', { runScripts: 'dangerously' });
+  await new Promise(r => setTimeout(r, 900));
+  ok(/^v/.test(sem.window.document.getElementById('footer-version').textContent),
+     'sem URL de bundle (programa .exe antigo) o rodapé mostra só a versão, sem quebrar');
+  const canto = sem.window.document.getElementById('footer-session').textContent;
+  ok(/Local • sem nuvem|Nuvem conectada/.test(canto),
+     'o canto direito não fica mais no texto fixo "Empresa - Usuário" (diz onde está rodando: ' + canto + ')');
+  dom.window.close(); sem.window.close();
+}
+
 (async function(){
   await testarBarraDeMenus();
+  await testarRodapeDaVersao();
   await testarMotorDaNuvem();
   testarClientesEContratos();
   testarCacheLinksEMotor();

@@ -10,6 +10,8 @@
 //  4) se o relatório mudar de cara, o wrap devolve o HTML intacto (não quebra);
 //  5) window.open é restaurada SEMPRE (finally), não importa o erro.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 const vm = require('vm');
 
 function ok(name, cond) {
@@ -76,8 +78,8 @@ ok('o que foi pro papel já é a versão caixa grande', /min-width:170px/.test(f
 ok('window.open restaurada após a chamada', sandbox.window.open === openAntes);
 
 console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente intactos) ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.3');
-ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
+ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
+ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('worker SEGUE 5.26.4 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');

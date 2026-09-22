@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Teste — Sistema Digicopy v6.1.3</title>
+<title>Relatório de Teste — Sistema Digicopy v6.1.4</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -49,7 +49,7 @@
 <body>
 
 <header>
-  <h1>Relatório de Teste — Sistema Digicopy v6.1.3</h1>
+  <h1>Relatório de Teste — Sistema Digicopy v6.1.4</h1>
   <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
      No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
   <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
@@ -58,7 +58,7 @@
 <div class="campos" id="dados">
   <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
   <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
-  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.3"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.4 + carimbo"></div>
   <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.4"></div>
 </div>
 
@@ -82,144 +82,29 @@
 <h2>VEREDICTO</h2>
 <div class="caixas" id="veredicto"></div>
 
-<h2>🧩 DEPLOY DO MOTOR DA NUVEM — os dois caminhos (copiar)</h2>
+<h2>🧩 ATUALIZAR O MOTOR DA NUVEM — o passo real (sem painel, sem token, sem GitHub)</h2>
 <div class="item" style="border:2px solid #0a1e8a;background:#f5f8ff">
-  <p style="font-size:13.5px;margin:0 0 6px"><b>CAMINHO 1 — colar o código no painel da Cloudflare</b> (é o que você pediu):
-     o código do worker está numa página só para isso, com o botão <b>📋 Copiar código</b> e o passo a passo —
-     sem token, sem Node, sem wrangler, sem senha.</p>
-  <p style="margin:0 0 8px"><a href="MOTOR_NUVEM_PARA_COLAR.html" style="display:inline-block;height:42px;line-height:42px;padding:0 18px;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;text-decoration:none;font-size:13.5px">📋 Abrir: Motor da Nuvem — copiar o código</a></p>
-  <p class="dica" style="margin:0">Também está no arquivo <b>MOTOR_NUVEM_PARA_COLAR.html</b> (mesma pasta deste relatório) e o código puro em
-     <b>cloudflare-worker/motor_para_colar.js</b>. API 0.4.8 · Worker 5.26.4 — igual ao que está no ar.</p>
+  <p style="font-size:13.5px;margin:0 0 8px"><b>Você não precisa mexer no worker, em token nem no painel da Cloudflare.</b>
+     Quando for preciso publicar uma correção do motor, o caminho é UM arquivo que já está no ZIP do sistema: o
+     <b>atualizar_motor_nuvem.cmd</b>. Ele faz os passos certos sozinho, na ordem certa.</p>
+  <ol style="font-size:13px;margin:0 0 8px 18px;line-height:1.7">
+    <li>Baixe o <b>ZIP do sistema</b> pelo link que eu mando no chat e clique com o botão direito → <b>Extrair tudo</b>.
+        Dentro da pasta têm que ficar, lado a lado, o arquivo <b>atualizar_motor_nuvem.cmd</b> e a pasta <b>cloudflare-worker</b>.</li>
+    <li><b>Dois cliques em <code>atualizar_motor_nuvem.cmd</code></b>. Ele mostra na tela os 4 passos:</li>
+  </ol>
+  <table style="font-size:12.5px;border-collapse:collapse;margin:0 0 8px">
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>1/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">lista o que ainda falta aplicar no banco (<i>só olhando</i>)</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>2/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">aplica as migrações — se ele perguntar <code>Proceed? (y/n)</code>, digite <code>y</code> e Enter</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>3/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">publica o motor da nuvem (<i>wrangler deploy</i>)</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>4/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">mostra a versão que ficou no ar AGORA (<i>/health</i>)</td></tr>
+  </table>
+  <p style="font-size:13px;margin:0 0 8px">No fim tem que aparecer <b><code>"versao":"5.26.4"</code></b> ou mais novo.
+     A janela <b>fica aberta</b> de propósito: <b>tire uma foto dela e me mande</b>. Se travar no meio, a própria janela diz o motivo — não feche, só fotografe.</p>
+  <p style="font-size:13px;margin:0">Na primeira vez ele pode pedir para você autorizar a conta na Cloudflare: ele abre o navegador, você entra normalmente e pronto — isso fica guardado nesse PC e não volta a pedir.</p>
 </div>
-<p class="dica" style="margin-top:12px"><b>CAMINHO 2 — botão no GitHub:</b> se o build automático da Cloudflare continuar reclamando do token velho, use este:
-   ele faz os mesmos 2 passos do <b>atualizar_motor_nuvem.cmd</b> (aplicar migrações + publicar o worker),
-   por um botão no GitHub. <b>Não publica sozinho</b> — só roda quando você aperta.</p>
-<ol class="dica" style="margin:0 0 8px 18px">
-  <li>No repositório, aba <b>Actions</b> → <b>New workflow</b> → <i>set up a workflow yourself</i>.</li>
-  <li>Apague tudo e <b>cole o código abaixo</b> (use o botão <b>📋 Copiar código</b>).</li>
-  <li>Salve com o nome <b>publicar-motor.yml</b> → <b>Commit changes</b>.</li>
-  <li>Em <b>Settings → Secrets and variables → Actions</b>, crie 2 segredos:
-      <b>CLOUDFLARE_API_TOKEN</b> (token da Cloudflare com <i>Workers: Edit</i> e <i>D1: Edit</i>) e
-      <b>CLOUDFLARE_ACCOUNT_ID</b>.</li>
-  <li>Depois: <b>Actions → Publicar motor da nuvem → Run workflow</b>.</li>
-</ol>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-  <button class="btn sec" id="btn-copiar-deploy" type="button">📋 Copiar código</button>
-  <span id="status-deploy" style="font-size:12.5px;font-weight:700"></span>
-</div>
-<pre id="codigo-deploy" style="display:block;margin:0 0 6px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;padding:10px;font-family:Consolas,monospace;font-size:11.5px;white-space:pre;overflow:auto;max-height:340px"># ═══════════════════════════════════════════════════════════════════════════
-# PUBLICAR O MOTOR DA NUVEM — um clique, pelo GitHub (plano B do Workers Builds)
-#
-# COMO INSTALAR ESTE BOTÃO (2 minutos, uma vez só):
-#   1) Abra o repositório no GitHub e clique na aba "Actions".
-#   2) Clique em "New workflow" (ou "set up a workflow yourself").
-#   3) Apague todo o conteúdo do editor e cole ESTE arquivo inteiro.
-#   4) Dê o nome de arquivo `publicar-motor.yml` e clique em "Commit changes".
-#   O MESMO código está no relatório de teste (RELATORIO_DE_TESTE_NF.html),
-#   na seção «Plano B do deploy», com um botão «📋 Copiar código» — é só colar.
-#   (O nome `.github/workflows/publicar-motor.yml` é criado automaticamente
-#    pelo próprio GitHub ao salvar por essa tela — por isso este arquivo mora
-#    aqui nesta pasta: a ferramenta automática que edita o sistema não tem
-#    permissão de escrever na pasta de workflows, o dono do repositório tem.)
-#
-# POR QUE ISTO EXISTE (21/09/2026)
-# O build automático da Cloudflare (Workers Builds) ficou preso no erro
-#   "The build token selected for this build has been deleted or rolled and
-#    cannot be used for this build."
-# Isso é token de build velho guardado no painel deles — não é o código do
-# sistema. Enquanto a Cloudflare não voltar a publicar sozinha, este arquivo
-# dá o MESMO resultado, sem depender daquele token: você aperta um botão aqui
-# no GitHub e ele roda exatamente os dois passos do atualizar_motor_nuvem.cmd
-#   1) wrangler d1 migrations apply DB --remote   (aplica migrações pendentes)
-#   2) wrangler deploy                           (publica o worker)
-#
-# COMO USAR (uma vez só de configuração):
-#  1) No GitHub: Settings → Secrets and variables → Actions → New repository
-#     secret, e crie DOIS segredos:
-#       CLOUDFLARE_API_TOKEN  → token criado em Cloudflare → My Profile →
-#                               API Tokens → Create Token → "Edit Cloudflare
-#                               Workers" e acrescente a permissão D1: Edit
-#                               (o nosso deploy roda migrações do banco D1).
-#       CLOUDFLARE_ACCOUNT_ID → aparece na Cloudflare em Workers &amp; Pages →
-#                               lado direito (Account ID) ou na URL do painel.
-#  2) Aba "Actions" → "Publicar motor da nuvem" → botão "Run workflow".
-#
-# SEGURANÇA: os segredos ficam guardados no GitHub (criptografados) e NUNCA
-# aparecem em log. Este arquivo não roda sozinho em push — só quando você
-# aperta o botão. Assim não tem susto na nuvem da loja.
-# ═══════════════════════════════════════════════════════════════════════════
-name: Publicar motor da nuvem
-
-on:
-  # Só roda quando VOCÊ aperta o botão (Actions → Run workflow).
-  workflow_dispatch:
-    inputs:
-      aplicar_migracoes:
-        description: 'Aplicar as migrações do banco antes de publicar'
-        type: boolean
-        default: true
-
-permissions:
-  contents: read
-
-jobs:
-  publicar:
-    name: Migrações + publicar o worker
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: cloudflare-worker
-    steps:
-      - name: Baixar o repositório
-        uses: actions/checkout@v4
-
-      - name: Preparar o Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Conferir os segredos
-        env:
-          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          faltando=""
-          [ -z "$CF_TOKEN" ] &amp;&amp; faltando="$faltando CLOUDFLARE_API_TOKEN"
-          [ -z "$CF_ACCOUNT" ] &amp;&amp; faltando="$faltando CLOUDFLARE_ACCOUNT_ID"
-          if [ -n "$faltando" ]; then
-            echo "::error::Faltam segredos no GitHub:$faltando"
-            echo "Crie em: Settings → Secrets and variables → Actions → New repository secret"
-            exit 1
-          fi
-          echo "Segredos presentes. Seguindo."
-
-      - name: O que ainda falta aplicar no banco (só olhando)
-        if: ${{ inputs.aplicar_migracoes }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4 d1 migrations list DB --remote
-
-      - name: Aplicar as migrações do banco
-        if: ${{ inputs.aplicar_migracoes }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4 d1 migrations apply DB --remote
-
-      - name: Publicar o worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@4 deploy
-
-      - name: Conferir a versão publicada (fim)
-        run: |
-          echo "Pronto. O worker foi publicado com os segredos do GitHub."
-          echo "Para conferir: abra https://digicopy-sync-api.digicopyonline.workers.dev/health"
-          echo "e veja os campos version/versao."
-</pre>
+<p class="dica">Se um dia você quiser ver o código que roda na nuvem, ele está inteiro em
+   <a href="MOTOR_NUVEM_PARA_COLAR.html">MOTOR_NUVEM_PARA_COLAR.html</a> (com botão de copiar) — mas <b>não precisa abrir hoje</b>:
+   o caminho é o duplo clique no <b>atualizar_motor_nuvem.cmd</b>.</p>
 
 <footer>
   Este relatório é um arquivo do próprio site — nada é enviado sozinho: o texto só sai quando você aperta
@@ -238,7 +123,7 @@ jobs:
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════
-// RELATÓRIO DE TESTE DO DONO (v6.1.3) — substitui o RELATORIO_DE_TESTE_NF.txt
+// RELATÓRIO DE TESTE DO DONO (v6.1.4) — substitui o RELATORIO_DE_TESTE_NF.txt
 // Cada pergunta: 3 caixas (OK / não resolveu / não testei) + observação livre.
 // No fim: gera um .txt já escrito e baixa (ou copia) para mandar no chat.
 // Sem dependências, sem servidor: funciona aberto do PC (arquivo) ou pelo site.
@@ -277,6 +162,25 @@ const PARTES = [
   { id:'D', nome:'PARTE D — PERMISSÕES E ESTORNO', itens:[
     ['Permissões (as 3 caixas) aparecem dentro do editor do usuário'],
     ['Estorno abre a aba da venda / notinha estornada carregada para refazer']
+  ]},
+  { id:'E', nome:'PARTE E — SINCRONIZAÇÃO AUTOMÁTICA (novo em 22/09)', itens:[
+    ['Conectou na nuvem (CNPJ + qualquer uma das duas senhas) e sincronizou SOZINHO — sem escolher nada e sem apertar botão'],
+    ['O que existe em um PC apareceu no outro (os dois conectados, sem precisar clicar em nada)'],
+    ['Nada foi apagado no PC que já tinha dados (venda, cliente, contrato, OS — tudo onde estava)'],
+    ['O mesmo dado NÃO duplicou depois de sincronizar (não virou dois clientes / duas vendas)'],
+    ['O botão "Check-up da nuvem" mostra lista por lista o que está diferente, com o resumo para copiar'],
+    ['Os consertos do check-up (baixar tudo de novo / enviar este PC inteiro / sincronizar agora) funcionaram']
+  ]},
+  { id:'F', nome:'PARTE F — CONTRATOS E CLIENTES', itens:[
+    ['Contrato que mostrava "Cliente sem vínculo" agora mostra o nome do cliente'],
+    ['O botão "🔗 Vincular cliente" abre a lista, filtra e salva o cliente escolhido no contrato'],
+    ['O vínculo feito na mão ficou registrado na Auditoria (quem vinculou e quando)'],
+    ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada']
+  ]},
+  { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
+    ['O rodapé mostra a versão v6.1.4 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)'],
+    ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat'],
+    ['O sistema abriu com as correções novas (nada de tela velha do cache)']
   ]}
 ];
 
@@ -513,25 +417,9 @@ document.addEventListener('input', () => {
 });
 document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
 $('btn-salvar').addEventListener('click', salvarArquivo);
-// v6.1.4 — copiar o código do botão de deploy (pedido dele: o código é grande,
-// então o relatório entrega ele pronto para colar no GitHub)
-(function(){
-  const b=$('btn-copiar-deploy'), alvo=$('codigo-deploy'), status=$('status-deploy');
-  if(!b||!alvo) return;
-  const aviso=function(t,erro){ if(!status) return; status.textContent=t; status.style.color=erro?'#b91c1c':'#15803d'; setTimeout(function(){ status.textContent=''; },7000); };
-  b.addEventListener('click', function(){
-    const texto=alvo.textContent;
-    const pronto=function(){ aviso('Código copiado! Cole na tela do GitHub (Actions → New workflow).'); };
-    const fallback=function(){
-      const t=document.createElement('textarea'); t.value=texto; t.style.position='fixed'; t.style.opacity='0';
-      document.body.appendChild(t); t.select();
-      try{ document.execCommand('copy'); pronto(); }catch(e){ aviso('Não deu para copiar — selecione o texto e use Ctrl+C.', true); }
-      t.remove();
-    };
-    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(texto).then(pronto).catch(fallback); }
-    else fallback();
-  });
-})();
+// v6.1.4 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
+// A seção do deploy virou instrução do atualizar_motor_nuvem.cmd (sem token, sem
+// painel, sem copiar código). O script de copiar o YAML saiu daqui de propósito.
 $('btn-copiar').addEventListener('click', copiarTexto);
 $('btn-previa').addEventListener('click', () => mostrarPrevia());
 

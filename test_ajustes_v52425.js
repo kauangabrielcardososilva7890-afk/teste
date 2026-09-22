@@ -1,6 +1,8 @@
 // test_ajustes_v52425.js — v5.24.34: resposta ao "os menus de NF não estão acessando".
 // Regra do tópico C: tudo FUNCIONA ou para LIMPO no "falta certificado válido".
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -41,9 +43,9 @@ ok(leitura.stdout.trim() === 'function function', 'assinatura: funções novas e
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('central-nfe-modal') && bundle.includes('NFE_CENTRAL_V52425'), 'bundle: Central dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('central-nfe-modal'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.1.3"'), 'package.json 6.0.6');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
 ok(fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').includes("'5.26.4'"), 'worker carimbado (re-ancorado v5.26.4)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

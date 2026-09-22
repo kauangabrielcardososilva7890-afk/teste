@@ -51,8 +51,12 @@ const man = JSON.parse(ler('bundle-manifest.json'));
 ok(man.length === 222 && man[221] === 'navegacao_fiscal_barra_escuro_patch.js' && man[220] === 'submenu_fiscal_oficial_patch.js',
   'manifesto 222: v6.1.1 antes, v6.1.2 fecha a fila');
 const ix = ler('index.html');
-ok(/DIGICOPY_APP_VERSION = '6\.1\.3'/.test(ix) && /<title>Sistema Digicopy v6\.1\.3<\/title>/.test(ix) &&
-   />v6\.1\.3<\/span>/.test(ix) && /app\.bundle\.js\?v=6\.1\.3/.test(ix), '4 carimbos atuais no index');
+// v6.1.4 — a versão sai do package.json: subir a versão não reescreve o teste.
+const VERSAO_APP = JSON.parse(ler('package.json')).version;
+ok(ix.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 &&
+   ix.indexOf('<title>Sistema Digicopy v' + VERSAO_APP + '</title>') >= 0 &&
+   ix.indexOf('>v' + VERSAO_APP + '<') >= 0 &&
+   ix.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0, '4 carimbos atuais no index');
 ok(/>Fiscal<\/button><div id="menu-nfe"/.test(ix) || /<\/i>Fiscal<\/button><div id="menu-nfe"/.test(ix), 'index estático segue com a aba "Fiscal" + #menu-nfe');
 ok(!/localStorage\.setItem\('db\./.test(p) && !/indexedDB/.test(p), 'não toca banco, não importa dado (importação continua cancelada)');
 

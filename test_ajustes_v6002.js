@@ -9,6 +9,8 @@
 //     o motor de transmissão NÃO usa mais prompt()/confirm() nativos (só
 //     fallback se a popup própria não existir).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 const vm = require('vm');
 
 function ok(name, cond) {
@@ -77,8 +79,8 @@ console.log('== INTEGRAÇÃO + CARIMBO 6.0.2 ==');
 ok('patch na 208; perfis 209; permissões 210; menu fiscal v6.0.6; Início clicável v6.0.7; menus fiscais separados v6.0.8 na 212; override v6.0.9 na 214; 6 submenus v6.0.10 na 215; hover NF-e/NFC-e v6.0.11 fecha a fila (216)', manifest.length === 222 && manifest[207] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[208] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[209] === 'permissoes_estorno_venda_patch.js' && manifest[210] === 'fiscal_menu_completo_patch.js' && manifest[211] === 'dashboard_inicio_clicavel_patch.js' && manifest[212] === 'menus_fiscais_separados_patch.js' && manifest[213] === 'permissoes_override_menus_fiscais_patch.js' && manifest[214] === 'seis_submenus_velho_patch.js' && manifest[215] === 'submenu_hover_nfe_patch.js');
 ok('cura + tela no bundle gerado', bundle.indexOf('v6.0.2') >= 0 && bundle.indexOf('Curei ') >= 0);
 ok('guard anti dupla-instalação', src.indexOf('__v6002ac') >= 0);
-ok('package.json na 6.0.2', pkg.version === '6.1.3');
-ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
+ok('package.json na 6.0.2', pkg.version === VERSAO_APP);
+ok('index.html carimbado 6.0.2', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('worker atualizado 5.26.4 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.2 (dados sumidos CURADOS: sessão e registros carimbados quando há UMA empresa; Central NF vira menu de verdade; popups próprios com X em todo o fiscal).');

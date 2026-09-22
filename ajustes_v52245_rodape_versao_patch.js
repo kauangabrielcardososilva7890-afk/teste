@@ -10,6 +10,21 @@ window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
 
 if(typeof document==='undefined') return;
 
+// v6.1.4 (22/09/2026) — DONO: "por que o rodapé de versões parou de atualizar?".
+// Resposta curta: o número só muda quando a VERSÃO muda (bump), e várias
+// correções saíram dentro da mesma 6.1.3. Agora o rodapé mostra duas coisas:
+// a versão do sistema E o CARIMBO do arquivo que o navegador está rodando
+// agora (o mesmo hash que vai na URL do app.bundle.js). Mudou uma linha do
+// sistema e publicou? O carimbo muda na hora — dá para conferir se o arquivo
+// novo chegou neste PC sem depender de número de versão.
+function seloDoBuild(){
+  try{
+    var s = document.querySelector('script[src*="app.bundle.js"]');
+    if(!s) return '';
+    var m = String(s.getAttribute('src')||'').match(/-([0-9a-f]{6,})/i);
+    return m ? m[1].slice(0,8) : '';
+  }catch(e){ return ''; }
+}
 function pintarRodape(){
   var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer');
@@ -25,12 +40,29 @@ function pintarRodape(){
     if(sess) foot.insertBefore(ver, sess);
     else foot.appendChild(ver);
   }
-  ver.textContent = 'v'+curV;
+  var selo = seloDoBuild();
+  ver.textContent = 'v'+curV + (selo ? ' • '+selo : '');
+  ver.setAttribute('data-versao', curV);
+  ver.setAttribute('data-build', selo || 'sem-carimbo');
+  ver.title = 'Versão do sistema v'+curV + (selo ? ' • carimbo do arquivo que está rodando agora: '+selo : '') +
+    ' — o carimbo muda a cada correção publicada (é o mesmo pedaço que vai na URL do app.bundle.js).';
   if(left){
     left.textContent = 'Sistema Digicopy • Banco na Nuvem';
     left.classList.add('text-left');
   }
-  if(sess) sess.classList.add('text-right');
+  if(sess){
+    sess.classList.add('text-right');
+    // v6.1.4 (22/09/2026) — o canto direito era texto fixo "Empresa - Usuário".
+    // Enquanto ninguém entrou, o honesto é dizer onde o sistema está rodando.
+    if(/Empresa\s*-\s*Usu/i.test(sess.textContent || '')){
+      var naNuvem = false;
+      try{ naNuvem = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
+      sess.textContent = naNuvem ? 'Nuvem conectada • aguardando login' : 'Local • sem nuvem conectada';
+      sess.title = naNuvem
+        ? 'Este computador está autorizado na nuvem; o nome da empresa e do usuário aparece depois do login.'
+        : 'Este computador está usando só o banco local (a nuvem não está conectada aqui).';
+    }
+  }
 }
 
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52245ver){

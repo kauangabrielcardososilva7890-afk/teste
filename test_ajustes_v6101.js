@@ -7,6 +7,8 @@
 // alinhado ao dump real que ele mandou (NOME_RAZAOSOCIAL/CPF_CNPJ/RG_IE/
 // cobrança/NFE_*) — e nada é importado sozinho (medo de "dar b.o").
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let pass = 0, fail = 0;
 function ok(nome, cond) { if (cond) { pass++; console.log('  ok -', nome); } else { fail++; console.log('  FALHOU -', nome); } }
 
@@ -25,7 +27,7 @@ ok('manifesto 221; Submenu Fiscal Oficial fecha a fila',
 ok('bundle contém o patch (guard + PURE + css + captura de clique)',
   bundle.indexOf('__v6101sfo') >= 0 && bundle.indexOf('SFO611_PURE') >= 0 && bundle.indexOf('sfo611-css') >= 0 && bundle.indexOf('onCliqueCaptura') >= 0);
 ok('carimbo 6.1.1 (package + index 4 pontos)',
-  pkg.version === '6.1.3' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('v6.1.3</title>') >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
+  pkg.version === VERSAO_APP && html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('v' + VERSAO_APP + '</title>') >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0 && html.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0);
 
 console.log('== A FAIXA DAS TELAS ESTÁ DESLIGADA ==');
 ok('.wxr-bar morta por CSS absoluto (não aparece NADA ao clicar em Nota Fiscal)',

@@ -3,6 +3,8 @@
 // pop-up do sistema / rodapé da leitura desatualizado / tela antiga fora do
 // contrato aposentada por decreto).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -87,10 +89,10 @@ ok((patch.match(/__v5250lo/g) || []).length >= 10, 'guards __v5250lo em todos os
   const bundle = fs.readFileSync('app.bundle.js', 'utf8');
   ok(bundle.includes('LEITURA_OVERHAUL_V5250_PURE') && bundle.includes('Contador anterior registrado') && bundle.includes('Leituras agora vivem dentro do contrato'), 'bundle: revisão dentro');
   ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('LEITURA_OVERHAUL_V5250_PURE'), 'bundle do CELULAR igual');
-  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9 (re-ancorado: v5.26.0 = CNPJ + gerente)');
-  ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9 (re-ancorado: entrega grande ganhou a 2ª casa)');
-  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'celular 6.0.9');
-  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === '6.1.3', 'package.json 6.0.9');
+  ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9 (re-ancorado: v5.26.0 = CNPJ + gerente)');
+  ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9 (re-ancorado: entrega grande ganhou a 2ª casa)');
+  ok(fs.readFileSync('mobile/www/index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'celular 6.0.9');
+  ok(JSON.parse(fs.readFileSync('package.json', 'utf8')).version === VERSAO_APP, 'package.json 6.0.9');
 
   if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
   console.log('\nTudo OK — v5.25.0 (revisão completa de leituras: anterior visível, confirmações do sistema, ações na listagem, rodapé novo, tela antiga aposentada com resgate).');

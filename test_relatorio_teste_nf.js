@@ -33,7 +33,7 @@ const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://teste-60f
 const w = dom.window, d = w.document;
 
 const perguntas = [...d.querySelectorAll('.item.pergunta')];
-ok('uma caixa por pergunta: 25 perguntas na tela', perguntas.length === 25);
+ok('uma caixa por pergunta: 38 perguntas na tela', perguntas.length === 38);
 ok('cada pergunta tem EXATAMENTE 3 caixas',
    perguntas.every(p => p.querySelectorAll('input[type=radio]').length === 3));
 ok('cada pergunta tem a caixa de texto opcional (observação)',
@@ -44,14 +44,23 @@ ok('as 3 caixas são: OK, não resolveu, não testei',
      return vals === 'nao,nt,ok';
    }));
 
-// numeração das partes (A1..A6 · B1..B9 · C1..C8 · D1..D2), sem buraco
+// numeração das partes (A1..A6 · B1..B9 · C1..C8 · D1..D2 · E1..E6 · F1..F4 · G1..G3), sem buraco
 const esperados = [];
-'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, 4).forEach((letra, i) => {
-  const quantos = [6, 9, 8, 2][i];
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, 7).forEach((letra, i) => {
+  const quantos = [6, 9, 8, 2, 6, 4, 3][i];
   for (let n = 1; n <= quantos; n++) esperados.push(letra + n);
 });
-ok('numeração completa e na ordem (A1..D2)',
-   esperados.length === 25 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
+ok('numeração completa e na ordem (A1..G3)',
+   esperados.length === 38 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
+// As 3 partes novas (22/09/2026): nuvem automática, contratos e rodapé
+ok('PARTE E pergunta a sincronização automática (conectou = sincroniza)',
+   html.indexOf('PARTE E — SINCRONIZAÇÃO AUTOMÁTICA') >= 0 &&
+   html.indexOf('sincronizou SOZINHO') >= 0 && html.indexOf('Check-up da nuvem') >= 0);
+ok('PARTE F pergunta contrato sem vínculo e o botão de vincular na mão',
+   html.indexOf('PARTE F — CONTRATOS E CLIENTES') >= 0 &&
+   html.indexOf('Cliente sem vínculo') >= 0 && html.indexOf('🔗 Vincular cliente') >= 0);
+ok('PARTE G pergunta a versão e o carimbo do rodapé',
+   html.indexOf('PARTE G — VERSÃO NO RODAPÉ') >= 0 && html.indexOf('carimbo') >= 0);
 
 // ── 3. Campos do dono: onde testou, correções, adições, caixa separada ─────
 ok('"onde você testou" com 3 caixas (navegador / .exe / os dois)',
@@ -79,35 +88,39 @@ function escrever(id, texto){
 }
 
 d.getElementById('d_nome').value = 'Dono';
-d.getElementById('d_rodape').value = 'v6.1.3';
+d.getElementById('d_rodape').value = 'v6.1.4 + 1d27112d';
 d.getElementById('d_nuvem').value = '5.26.4';
 marcar('ONDE', 'exe');
 marcar('A1', 'ok');  escrever('t_A1', 'abriu normal, sem undefined');
 marcar('B2', 'nao'); escrever('t_B2', 'mostrou erro de internet em vez de senha');
 marcar('C4', 'nt');
 marcar('D2', 'ok');
+marcar('E1', 'ok');   escrever('t_E1', 'conectou e sincronizou sozinho, sem perguntar nada');
+marcar('E2', 'ok');
+marcar('F1', 'ok');   escrever('t_F1', 'o contrato 40 agora mostra o cliente certo');
+marcar('G1', 'ok');
 escrever('corr_1', 'Financeiro: filtro de data veio vazio');
 escrever('ad_1', 'Queria um atalho para imprimir em 2 vias');
 escrever('geral', 'Testei só no exe do escritório.');
 marcar('VEREDITO', 'ressalvas');
 
-ok('contador acompanha o preenchimento (4 respondidas de 25)',
-   /Respondidas: <b>4<\/b> de <b>25<\/b>/.test(d.getElementById('contador').innerHTML));
+ok('contador acompanha o preenchimento (8 respondidas de 38)',
+   /Respondidas: <b>8<\/b> de <b>38<\/b>/.test(d.getElementById('contador').innerHTML));
 
 const r = w.montarTexto();
 const txt = r.texto;
 
 ok('tipo salvarArquivo existe (o clique gera e baixa o .txt)', typeof w.salvarArquivo === 'function');
 ok('cabeçalho do relatório com data/hora', /RELATÓRIO DE TESTE — SISTEMA DIGICOPY/.test(txt) && /Gerado em \d\d\/\d\d\/\d\d\d\d às \d\dh\d\d/.test(txt));
-ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.3/.test(txt) && /5\.26\.4/.test(txt));
+ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.4/.test(txt) && /5\.26\.4/.test(txt) && /1d27112d/.test(txt));
 ok('pergunta respondida sai com a marca OK + observação',
    /\[OK \] A1 — .+\n\s+abriu normal, sem undefined/.test(txt));
 ok('pergunta não resolvida sai com a marca NAO + observação',
    /\[NAO\] B2 — .+\n\s+mostrou erro de internet em vez de senha/.test(txt));
 ok('pergunta não testada sai com a marca NT', /\[NT \] C4 — /.test(txt));
-ok('pergunta em branco sai como sem resposta no resumo', /21 sem resposta/.test(txt));
-ok('resumo conta certo (2 OK · 1 não resolveu · 1 não testei · 21 sem resposta)',
-   /RESUMO: 2 OK · 1 não resolveu · 1 não testei · 21 sem resposta/.test(txt));
+ok('pergunta em branco sai como sem resposta no resumo', /30 sem resposta/.test(txt));
+ok('resumo conta certo (6 OK · 1 não resolveu · 1 não testei · 30 sem resposta)',
+   /RESUMO: 6 OK · 1 não resolveu · 1 não testei · 30 sem resposta/.test(txt));
 ok('pergunta em branco sai marcada como "---" no corpo do relatório',
    /\[---\] B1 — /.test(txt));
 ok('CORREÇÕES e ADIÇÕES saem escritas', /C1: Financeiro: filtro de data veio vazio/.test(txt) && /A1: Queria um atalho para imprimir em 2 vias/.test(txt));
@@ -135,24 +148,19 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 ok('relatório fora do bundle (não pesa na abertura do sistema)', !manifest.includes(ARQ));
 ok('relatório fora do build.files (.exe não leva arquivo de teste)', !pkg.build.files.includes(ARQ));
 
-// ── 8. O código do deploy mora no relatório, prontinho para copiar ────────
-// Pedido dele (21/09/2026): "o código é meio grande, você pode deixar um botão
-// de copiar o código no html do relatório". Aqui a prova é que o texto que
-// está na tela é IGUALZINHO ao arquivo do repositório (sem cópia que envelhece).
-console.log('\n== CÓDIGO DO DEPLOY (copiar) ==');
-ok('seção do plano B existe com o botão de copiar', !!d.getElementById('btn-copiar-deploy') && !!d.getElementById('codigo-deploy'));
-const bruto = html.slice(html.indexOf('<pre id="codigo-deploy"'), html.indexOf('</pre>', html.indexOf('<pre id="codigo-deploy"')));
-const noPre = bruto.slice(bruto.indexOf('>') + 1);
-const desesc = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-const yamlArquivo = fs.readFileSync('deploy_github_actions/publicar-motor.yml', 'utf8');
-const norm = t => desesc(t).replace(/\r\n/g, '\n').replace(/\s+$/,'');
-ok('o código do relatório é IGUAL ao arquivo do repositório (nada de cópia velha)', norm(noPre) === norm(yamlArquivo));
-ok('o código traz os 2 passos do .cmd e os segredos do GitHub',
-   noPre.indexOf('d1 migrations apply DB --remote') >= 0 && noPre.indexOf('secrets.CLOUDFLARE_API_TOKEN') >= 0);
-ok('o código não roda sozinho (só no botão workflow_dispatch)', noPre.indexOf('workflow_dispatch') >= 0 && noPre.indexOf('push:') < 0);
-ok('a página explica o caminho (Actions → New workflow → colar → segredos → Run workflow)',
-   html.indexOf('New workflow') >= 0 && html.indexOf('Run workflow') >= 0 && html.indexOf('CLOUDFLARE_ACCOUNT_ID') >= 0);
-ok('copiar usa a área de transferência e tem plano B (nunca falha calado)',
-   html.indexOf('navigator.clipboard.writeText(texto)') >= 0 && html.indexOf('execCommand') >= 0);
+// ── 8. O passo de publicar o motor é o REAL (ordem dele, 22/09/2026: "esquece
+// o assunto do worker, só ensina o passo real") ─────────────────────────────
+console.log('\n== PASSO REAL DE PUBLICAR O MOTOR ==');
+ok('a seção ensina o atualizar_motor_nuvem.cmd (o arquivo que existe)',
+   html.indexOf('atualizar_motor_nuvem.cmd') >= 0);
+ok('a seção não pede token, painel nem GitHub',
+   html.indexOf('CLOUDFLARE_API_TOKEN') < 0 && html.indexOf('New workflow') < 0 &&
+   html.indexOf('sem painel, sem token, sem GitHub') >= 0);
+ok('explica os 4 passos que a janela mostra (listar, migrar, publicar, health)',
+   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.26.4"') >= 0);
+ok('diz que a janela fica aberta e que é para mandar foto',
+   /tire uma foto|Foto e me manda|foto dela/i.test(html));
+ok('o arquivo do .cmd existe de verdade no repositório (o passo não é invenção)',
+   fs.existsSync('atualizar_motor_nuvem.cmd'));
 
 console.log('\nRESULTADO: relatório de teste (HTML) passou!');

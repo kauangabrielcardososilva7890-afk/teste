@@ -6,6 +6,8 @@
 // botões marca como vista). No celular: mesmo código, mesmo comportamento.
 // CONFIG: card "Publicar nova atualização" (versão + link https + notas).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -62,9 +64,9 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('aviso-update-card'), 'bundle: sininho dentro');
 ok(bundle.includes('card-publicar-atualizacao'), 'bundle: publicador dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('aviso-update-card'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index: versão 5.25.0');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'index: rodapé v6.0.9');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.1.3"'), 'package.json 6.0.6');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index: versão 5.25.0');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'index: rodapé v6.0.9');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
 ok(wk.includes("'5.26.4'"), 'worker carimbado 5.26.4 (gerente entra como PC admin; 5.26.4 = visual profissional do site; 5.26.0 = motor do CNPJ+gerente) (visual profissional do site; o 5.26.0 foi o motor do CNPJ+gerente)')
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }

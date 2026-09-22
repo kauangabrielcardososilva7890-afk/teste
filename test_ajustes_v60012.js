@@ -5,6 +5,8 @@
 // "hidden" — na 1ª navegação o destino não existia quando o núcleo mostrou,
 // e ninguém des-escondia depois do render. Fix: wrap (core intocado).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let pass = 0, fail = 0;
 function ok(nome, cond) { if (cond) { pass++; console.log('  ok -', nome); } else { fail++; console.log('  FALHOU -', nome); } }
 
@@ -58,10 +60,10 @@ ok('menu-nfe da barra continua real com os 6 (regressão da 6.0.11)',
 
 console.log('== CARIMBOS v6.0.12 ==');
 ok('index.html carimbado (4 pontos)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0 && html.indexOf('v6.1.3</title>') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0 && html.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0 && html.indexOf('v' + VERSAO_APP + '</title>') >= 0);
 ok('mobile carimbado (3 pontos)',
-  mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0 && mob.indexOf('v6.1.3</title>') >= 0);
-ok('package.json cravado', pkg.version === '6.1.3');
+  mob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && mob.indexOf('>v' + VERSAO_APP + '<') >= 0 && mob.indexOf('v' + VERSAO_APP + '</title>') >= 0);
+ok('package.json cravado', pkg.version === VERSAO_APP);
 
 console.log('');
 console.log('RESUMO: ' + pass + ' passaram, ' + fail + ' falharam.');

@@ -3,6 +3,8 @@
 // excluir aparelho-lixo DE VEZ (bloqueado primeiro, nunca a si mesmo),
 // MONITOR DE IMPRESSORAS fase 1 (SNMP no .exe) + HUB P8 no Parque.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -60,8 +62,8 @@ const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('hub-impressora-modal') && bundle.includes('PARQUE_MONITOR_V52427'), 'bundle: monitor+hub dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('hub-impressora-modal'), 'bundle do CELULAR igual');
 ok(JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8')).includes('ajustes_v52232_parque_monitor_hub_patch.js'), 'manifest: novo patch registrado');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (P5 + .cmd sem fechar + excluir lixo + monitor SNMP + hub P8).');

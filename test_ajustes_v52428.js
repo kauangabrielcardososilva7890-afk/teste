@@ -4,6 +4,8 @@
 // mostra só o que tá vivo), reativar por tempo (1d/7d/∞) ou desligar, editar,
 // ocultar, excluir. Sininho leva pro site; site mostra tutorial ANTES do botão.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -60,8 +62,8 @@ ok(fs.readFileSync('GERAR_EXE.cmd','latin1').includes('interno') && fs.readFileS
 
 
 
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (portal de atualizações só dele + arquivo no R2 + site vivo).');

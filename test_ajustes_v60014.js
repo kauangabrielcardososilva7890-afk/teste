@@ -5,6 +5,8 @@
 // Enviar XML ("Preparar Arquivos Fiscais") e Configurações em 10 abas — o
 // popup é o modal do sistema e DANFE sai com selo SEM VALOR FISCAL.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let pass = 0, fail = 0;
 function ok(nome, cond) { if (cond) { pass++; console.log('  ok -', nome); } else { fail++; console.log('  FALHOU -', nome); } }
 
@@ -20,7 +22,7 @@ ok('manifesto já é 220 (Menu Fiscal oficial v6.1.0 por último); o catálogo d
 ok('bundle contém o patch (guards + PURE + fxAcao + fx614-css)',
   bundle.indexOf('__v6014fxc') >= 0 && bundle.indexOf('FX614_PURE') >= 0 && bundle.indexOf('fxAcao') >= 0 && bundle.indexOf('fx614-css') >= 0);
 ok('carimbo v6.0.14 (package + index + query do bundle)',
-  pkg.version === '6.1.3' && html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('v6.1.3</title>') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
+  pkg.version === VERSAO_APP && html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('v' + VERSAO_APP + '</title>') >= 0 && html.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0);
 
 console.log('== PURE: fábricas e constantes do catálogo ==');
 global.window = global;

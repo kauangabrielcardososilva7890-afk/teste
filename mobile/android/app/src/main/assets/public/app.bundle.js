@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: d5970a9c3208ef69
+ * scripts: 222 | sha256: d73bd029a5a610d9
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -12269,6 +12269,43 @@ function cfClientePorNomeUnico(nome, empId){
   const achados = cfClientesPorNome(nome, empId);
   return achados.length === 1 ? achados[0] : null; // 0 = não achou; 2+ = ambíguo, não chuta
 }
+// ══ v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo" ══════
+// Sem MESCLAR cadastro nenhum, duas frentes:
+//   1) procurar melhor antes de desistir: CNPJ/CPF e nome parecido (um contido
+//      no outro) — sempre só quando aponta para UM único cliente da empresa;
+//   2) quando não achar, deixar o dono ESCOLHER na tela (botão 🔗 Vincular),
+//      gravando o vínculo no contrato e na Auditoria.
+// Continua valendo a regra de sempre: nome repetido NUNCA é adivinhado.
+function cfSoDigitos(v){ return txt(v).replace(/\D+/g,''); }
+function cfDocumentoDoContrato(c){
+  const raw = rawLocPorContrato(c);
+  const bruto = pick(c||{}, ['documento','cnpj','cpf','clienteDocumento','docCliente'])
+    || pick(raw||{}, ['CNPJ','CPF','DOCUMENTO','DOC','LO_CNPJ','LO_CPF','CLI_CNPJ','CLI_CPF','CNPJ_CPF']);
+  const d = cfSoDigitos(bruto);
+  return (d.length===11 || d.length===14) ? d : ''; // CPF/CNPJ de verdade; resto é lixo
+}
+function cfClientePorDocumento(c, empId){
+  const d = cfDocumentoDoContrato(c);
+  if(!d) return null;
+  const achados = (db.clientes||[]).filter(x => x && (!empId || !x.empresaId || x.empresaId===empId)
+    && cfSoDigitos(x.documento||x.cnpj||x.cpf) === d);
+  return achados.length === 1 ? achados[0] : null;
+}
+function cfClientePorNomeParecido(nome, empId){
+  const alvo = cfNormNome(nome);
+  if(!alvo || alvo.length < 6) return null;
+  const tokens = alvo.split(' ').filter(t => t.length > 2);
+  const achados = (db.clientes||[]).filter(x => {
+    if(!x || (empId && x.empresaId && x.empresaId !== empId)) return false;
+    const atual = cfNormNome(x.nome || x.fantasia);
+    if(!atual) return false;
+    if(atual === alvo) return true;
+    if(atual.includes(alvo) || alvo.includes(atual)) return true; // "MARIA JESUS" x "MARIA DE JESUS COMERCIO"
+    if(tokens.length >= 2) return tokens.every(t => atual.includes(t));
+    return false;
+  });
+  return achados.length === 1 ? achados[0] : null; // 2+ = ambíguo: quem decide é o dono, no botão
+}
 function rawLocPorContrato(c){
   const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
   if(!cod) return null;
@@ -12301,6 +12338,9 @@ function vincularContratosClientes(empId){
     let cli = codCli ? clientePorCodigo(codCli, empId) : null;
     // v6.1.4 — sem código, tenta o NOME (único) antes de qualquer criação
     if(!cli) cli = cfClientePorNomeUnico(cfNomeDoContrato(c), empId);
+    // v6.1.4 — e antes de criar cadastro novo: documento (CNPJ/CPF) e nome parecido
+    if(!cli) cli = cfClientePorDocumento(c, empId);
+    if(!cli) cli = cfClientePorNomeParecido(cfNomeDoContrato(c), empId);
     if(cli){ c.clienteId = cli.id; if(codCli) c.codClienteAntigo = codCli; mudou++; return; }
     if(!codCli) return;
     cli = criaClienteDeRaw(codCli, rawClientePorCodigo(codCli) || raw || {}, empId);
@@ -12391,6 +12431,9 @@ function clienteContrato(c){
     const p = (db.parque||[]).find(x => x && x.contratoId === c.id && x.clienteId && cliente(x.clienteId));
     if(p) cl = cliente(p.clienteId);
   }
+  // v6.1.4 (22/09/2026) — antes de dizer "sem vínculo": CNPJ/CPF e nome parecido
+  if(!cl && c) cl = cfClientePorDocumento(c, c.empresaId);
+  if(!cl && c) cl = cfClientePorNomeParecido(cfNomeDoContrato(c), c.empresaId);
   return cl;
 }
 function nomeClienteContrato(c){ const cl=clienteContrato(c); return cl ? cl.nome : 'Cliente sem vínculo'; }
@@ -12407,7 +12450,7 @@ window.renderContratos = function(){
   const sorters={codigo:c=>Number(codigoContrato(c)||0), cliente:nomeClienteContrato, inicio:c=>c.dataInicio||'', fim:c=>c.dataFim||'', impressoras:c=>maquinasContrato(c).filter(p=>p.status==='ativo').length, chamados:chamadosCliente, valor:c=>n(c.valorMensalFixo), status:c=>c.status||''};
   lista=[...lista].sort((a,b)=>{ const A=sorters[STATE.sort]||sorters.codigo; const av=A(a), bv=A(b); return typeof av==='number'&&typeof bv==='number'?av-bv:cmp(av,bv); });
   const ativos=(db.contratos||[]).filter(c=>c.empresaId===s.empresaId && c.status==='ativo');
-  view.innerHTML=`<div class="space-y-4"><div class="flex flex-wrap justify-between gap-3 items-center"><div class="flex gap-2"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo contrato</button><button onclick="excluirContratoUnificado()" class="h-10 px-5 rounded-xl bg-red-600 text-white text-[13.5px] font-semibold"><i class="ph ph-trash mr-1"></i>Excluir</button></div><div class="flex gap-2"><select id="filter-contrato-status" onchange="contratosFinalBuscar()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo" ${STATE.status==='ativo'?'selected':''}>Ativo</option><option value="pendente" ${STATE.status==='pendente'?'selected':''}>Pendente</option><option value="vencido" ${STATE.status==='vencido'?'selected':''}>Vencido</option><option value="encerrado" ${STATE.status==='encerrado'?'selected':''}>Encerrado</option></select><input id="search-contratos" value="${esc(STATE.busca)}" placeholder="Código ou cliente..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]">${botaoBusca('contratosFinalBuscar()')}</div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Contratos</p><p class="text-[22px] font-extrabold">${lista.length}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Ativos</p><p class="text-[22px] font-extrabold text-emerald-700">${ativos.length}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Mensalidade</p><p class="text-[20px] font-extrabold text-[#0a1e8a]">${dinheiro(ativos.reduce((sum,c)=>sum+n(c.valorMensalFixo),0))}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Abrir</p><p class="text-[13px] font-bold">Duplo clique no cliente</p></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[690px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'contrato-check-lote\']').forEach(c=>c.checked=this.checked)"></th>${th('codigo','Código')}${th('cliente','Cliente')}${th('inicio','Início')}${th('fim','Fim')}${th('impressoras','Impressoras')}${th('chamados','Chamados')}${th('valor','Valor')}${th('status','Status')}</tr></thead><tbody class="divide-y">${lista.map(c=>{ const imps=maquinasContrato(c).filter(p=>p.status==='ativo').length; const ch=chamadosCliente(c); return `<tr ondblclick="openContratoCompleto('${c.id}')" class="hover:bg-blue-50/50 cursor-pointer"><td class="px-2 py-2.5 w-8"><input type="checkbox" name="contrato-check-lote" value="${c.id}" onclick="event.stopPropagation()"></td><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">${esc(codigoContrato(c))}</td><td class="px-4 py-2.5"><p class="font-semibold">${esc(nomeClienteContrato(c))}</p><p class="text-[11px] text-slate-500">Duplo clique para abrir</p></td><td class="px-4 py-2.5">${dataBR(c.dataInicio)}</td><td class="px-4 py-2.5">${dataBR(c.dataFim)}</td><td class="px-4 py-2.5 font-bold">${imps}</td><td class="px-4 py-2.5 ${ch?'font-bold text-amber-700':''}">${ch}</td><td class="px-4 py-2.5 font-bold">${dinheiro(c.valorMensalFixo)}</td><td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-bold uppercase">${esc(c.status||'ativo')}</span></td></tr>`;}).join('') || '<tr><td colspan="9" class="p-12 text-center text-slate-500">Nenhum contrato</td></tr>'}</tbody></table></div></div></div>`;
+  view.innerHTML=`<div class="space-y-4"><div class="flex flex-wrap justify-between gap-3 items-center"><div class="flex gap-2"><button onclick="openModal('contrato')" class="h-10 px-5 rounded-xl bg-[#0a1e8a] text-white text-[13.5px] font-semibold shadow"><i class="ph ph-plus mr-1"></i>Novo contrato</button><button onclick="excluirContratoUnificado()" class="h-10 px-5 rounded-xl bg-red-600 text-white text-[13.5px] font-semibold"><i class="ph ph-trash mr-1"></i>Excluir</button></div><div class="flex gap-2"><select id="filter-contrato-status" onchange="contratosFinalBuscar()" class="h-10 px-3 rounded-xl bg-white border text-[13px]"><option value="">Todos status</option><option value="ativo" ${STATE.status==='ativo'?'selected':''}>Ativo</option><option value="pendente" ${STATE.status==='pendente'?'selected':''}>Pendente</option><option value="vencido" ${STATE.status==='vencido'?'selected':''}>Vencido</option><option value="encerrado" ${STATE.status==='encerrado'?'selected':''}>Encerrado</option></select><input id="search-contratos" value="${esc(STATE.busca)}" placeholder="Código ou cliente..." class="h-10 px-4 rounded-xl bg-white border text-[13px] w-[280px]">${botaoBusca('contratosFinalBuscar()')}</div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Contratos</p><p class="text-[22px] font-extrabold">${lista.length}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Ativos</p><p class="text-[22px] font-extrabold text-emerald-700">${ativos.length}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Mensalidade</p><p class="text-[20px] font-extrabold text-[#0a1e8a]">${dinheiro(ativos.reduce((sum,c)=>sum+n(c.valorMensalFixo),0))}</p></div><div class="rounded-[14px] bg-white border p-4"><p class="text-[11px] uppercase font-bold text-slate-500">Abrir</p><p class="text-[13px] font-bold">Duplo clique no cliente</p></div></div><div class="rounded-[16px] bg-white border shadow-sm overflow-hidden"><div class="overflow-auto max-h-[690px]"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-slate-50 border-b text-[11px] uppercase font-bold text-slate-500"><tr><th class="px-2 py-2.5 w-8"><input type="checkbox" onclick="document.querySelectorAll('input[name=\'contrato-check-lote\']').forEach(c=>c.checked=this.checked)"></th>${th('codigo','Código')}${th('cliente','Cliente')}${th('inicio','Início')}${th('fim','Fim')}${th('impressoras','Impressoras')}${th('chamados','Chamados')}${th('valor','Valor')}${th('status','Status')}</tr></thead><tbody class="divide-y">${lista.map(c=>{ const imps=maquinasContrato(c).filter(p=>p.status==='ativo').length; const ch=chamadosCliente(c); return `<tr ondblclick="openContratoCompleto('${c.id}')" class="hover:bg-blue-50/50 cursor-pointer"><td class="px-2 py-2.5 w-8"><input type="checkbox" name="contrato-check-lote" value="${c.id}" onclick="event.stopPropagation()"></td><td class="px-4 py-2.5 font-mono font-bold text-[#0a1e8a]">${esc(codigoContrato(c))}</td><td class="px-4 py-2.5"><p class="font-semibold">${esc(nomeClienteContrato(c))}</p>${clienteContrato(c)?'<p class="text-[11px] text-slate-500">Duplo clique para abrir</p>':'<button type="button" onclick="event.stopPropagation();contratoVincularCliente(\''+c.id+'\')" class="mt-1 h-7 px-2 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 font-bold text-[11px]">🔗 Vincular cliente</button>'}</td><td class="px-4 py-2.5">${dataBR(c.dataInicio)}</td><td class="px-4 py-2.5">${dataBR(c.dataFim)}</td><td class="px-4 py-2.5 font-bold">${imps}</td><td class="px-4 py-2.5 ${ch?'font-bold text-amber-700':''}">${ch}</td><td class="px-4 py-2.5 font-bold">${dinheiro(c.valorMensalFixo)}</td><td class="px-4 py-2.5"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-bold uppercase">${esc(c.status||'ativo')}</span></td></tr>`;}).join('') || '<tr><td colspan="9" class="p-12 text-center text-slate-500">Nenhum contrato</td></tr>'}</tbody></table></div></div></div>`;
   bindEnter('search-contratos', window.contratosFinalBuscar);
 };
 
@@ -12423,7 +12466,68 @@ window.openContratoCompleto = function(contratoId){
   const maquinas=maquinasContrato(c).filter(p=>p.status==='ativo');
   const chamados=chamadosCliente(c);
   const leituras=(db.leituras||[]).filter(l=>l.contratoId===c.id || (c.clienteId && l.clienteId===c.clienteId)).length;
-  setModal(`Contrato ${codigoContrato(c)} — ${cl.nome || 'Cliente'}`, `<div class="space-y-5 text-[13px]"><div class="rounded-[18px] bg-[#0a1e8a] text-white p-5 flex flex-col md:flex-row justify-between gap-4"><div><p class="text-[11px] uppercase font-bold text-white/70">Cliente</p><h3 class="text-[20px] font-extrabold mt-1">${esc(cl.nome||'Cliente sem vínculo')}</h3><p class="text-[12px] text-white/80 mt-1">${esc(cl.documento||'')} ${cl.cidade?('• '+esc(cl.cidade)+'/'+esc(cl.estado||'')):''}</p></div><div class="text-right"><p class="text-[11px] uppercase font-bold text-white/70">Código</p><p class="text-[26px] font-extrabold">${esc(codigoContrato(c))}</p><p class="text-[12px] text-white/80">${dataBR(c.dataInicio)} até ${dataBR(c.dataFim)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="rounded-[16px] border bg-emerald-50 border-emerald-200 p-4"><p class="text-[11px] font-bold uppercase text-emerald-800">Impressoras</p><p class="text-[26px] font-extrabold text-emerald-700">${maquinas.length}</p></div><div class="rounded-[16px] border bg-amber-50 border-amber-200 p-4"><p class="text-[11px] font-bold uppercase text-amber-800">Chamados Abertos</p><p class="text-[26px] font-extrabold text-amber-700">${chamados}</p></div><div class="rounded-[16px] border bg-blue-50 border-blue-200 p-4"><p class="text-[11px] font-bold uppercase text-blue-800">Valor Mensal</p><p class="text-[22px] font-extrabold text-blue-700">${dinheiro(c.valorMensalFixo)}</p></div><div class="rounded-[16px] border bg-purple-50 border-purple-200 p-4"><p class="text-[11px] font-bold uppercase text-purple-800">Leituras</p><p class="text-[26px] font-extrabold text-purple-700">${leituras}</p></div></div><div class="flex flex-wrap gap-3"><button onclick="abrirLeiturasContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-speedometer"></i> Leituras</button><button onclick="abrirChamadosContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold"><i class="ph ph-wrench"></i> Chamados</button><button onclick="abrirModalEquipamentoContrato('${c.id}', null)" class="h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold ml-auto"><i class="ph ph-printer"></i> Nova Impressora</button><button onclick="baixarContratoRTF('${c.id}','contrato')" class="h-11 px-4 rounded-xl bg-white border font-bold">Contrato RTF</button><button onclick="baixarContratoRTF('${c.id}','proposta')" class="h-11 px-4 rounded-xl bg-white border font-bold">Proposta RTF</button></div>${tabelaImpressoras(c)}</div>`, `<button onclick="fecharModalOperacional ? fecharModalOperacional() : closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button><button onclick="salvarContratoFullRefino('${c.id}')" class="h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar Contrato</button>`, '1080px');
+  setModal(`Contrato ${codigoContrato(c)} — ${cl.nome || 'Cliente'}`, `<div class="space-y-5 text-[13px]"><div class="rounded-[18px] bg-[#0a1e8a] text-white p-5 flex flex-col md:flex-row justify-between gap-4"><div><p class="text-[11px] uppercase font-bold text-white/70">Cliente</p><h3 class="text-[20px] font-extrabold mt-1">${esc(cl.nome||'Cliente sem vínculo')}</h3>${!cl.nome?'<button type="button" onclick="event.stopPropagation();contratoVincularCliente(\''+c.id+'\')" class="mt-2 h-9 px-3 rounded-lg bg-white text-[#0a1e8a] font-bold text-[12px]">🔗 Vincular cliente</button>':''}<p class="text-[12px] text-white/80 mt-1">${esc(cl.documento||'')} ${cl.cidade?('• '+esc(cl.cidade)+'/'+esc(cl.estado||'')):''}</p></div><div class="text-right"><p class="text-[11px] uppercase font-bold text-white/70">Código</p><p class="text-[26px] font-extrabold">${esc(codigoContrato(c))}</p><p class="text-[12px] text-white/80">${dataBR(c.dataInicio)} até ${dataBR(c.dataFim)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><div class="rounded-[16px] border bg-emerald-50 border-emerald-200 p-4"><p class="text-[11px] font-bold uppercase text-emerald-800">Impressoras</p><p class="text-[26px] font-extrabold text-emerald-700">${maquinas.length}</p></div><div class="rounded-[16px] border bg-amber-50 border-amber-200 p-4"><p class="text-[11px] font-bold uppercase text-amber-800">Chamados Abertos</p><p class="text-[26px] font-extrabold text-amber-700">${chamados}</p></div><div class="rounded-[16px] border bg-blue-50 border-blue-200 p-4"><p class="text-[11px] font-bold uppercase text-blue-800">Valor Mensal</p><p class="text-[22px] font-extrabold text-blue-700">${dinheiro(c.valorMensalFixo)}</p></div><div class="rounded-[16px] border bg-purple-50 border-purple-200 p-4"><p class="text-[11px] font-bold uppercase text-purple-800">Leituras</p><p class="text-[26px] font-extrabold text-purple-700">${leituras}</p></div></div><div class="flex flex-wrap gap-3"><button onclick="abrirLeiturasContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-emerald-600 text-white font-bold"><i class="ph ph-speedometer"></i> Leituras</button><button onclick="abrirChamadosContrato('${c.id}')" class="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold"><i class="ph ph-wrench"></i> Chamados</button><button onclick="abrirModalEquipamentoContrato('${c.id}', null)" class="h-11 px-5 rounded-xl bg-[#0a1e8a] text-white font-bold ml-auto"><i class="ph ph-printer"></i> Nova Impressora</button><button onclick="baixarContratoRTF('${c.id}','contrato')" class="h-11 px-4 rounded-xl bg-white border font-bold">Contrato RTF</button><button onclick="baixarContratoRTF('${c.id}','proposta')" class="h-11 px-4 rounded-xl bg-white border font-bold">Proposta RTF</button></div>${tabelaImpressoras(c)}</div>`, `<button onclick="fecharModalOperacional ? fecharModalOperacional() : closeModal()" class="h-10 px-5 rounded-xl bg-white border font-bold">Fechar</button><button onclick="salvarContratoFullRefino('${c.id}')" class="h-10 px-6 rounded-xl bg-[#0a1e8a] text-white font-bold">Salvar Contrato</button>`, '1080px');
+};
+// ══ v6.1.4 (22/09/2026) — VINCULAR CLIENTE NA MÃO (botão da tela) ═══════════
+// Quando o sistema não acha sozinho (nome repetido, nome muito diferente ou
+// cliente que nem existe mais no cadastro), o próprio dono escolhe: abre a
+// lista de clientes da empresa, filtra pelo nome/código/CNPJ e clica. O vínculo
+// é gravado NO CONTRATO (clienteId + quem vinculou) e fica na Auditoria.
+// Nada é mesclado e nada é apagado — só o contrato passa a apontar certo.
+window.contratoVincularCliente = function(contratoId){
+  const c = contrato(contratoId);
+  if(!c){ aviso('Contrato não encontrado','error'); return; }
+  const empId = c.empresaId || (sess()||{}).empresaId;
+  const itens = (db.clientes||[]).filter(x => x && x.status !== 'excluido' && x.status !== 'unificado'
+    && (!empId || !x.empresaId || x.empresaId === empId));
+  window.__cfv = { contratoId: c.id, empId: empId, itens: itens };
+  setModal('Vincular cliente ao contrato ' + codigoContrato(c),
+    '<p style="font-size:12.5px;color:#475569;margin:0 0 8px">Escolha o cliente deste contrato. O sistema mostra o nome que está guardado no contrato ' +
+    '(<b>' + esc(cfNomeDoContrato(c) || 'sem nome guardado') + '</b>) para você comparar. Nada é mesclado nem apagado: só este contrato passa a apontar para o cliente escolhido.</p>' +
+    '<input id="cfv-busca" type="text" placeholder="Filtre por nome, código ou CNPJ/CPF..." oninput="cfvFiltrar(this.value)" style="width:100%;height:38px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font-size:13.5px;margin-bottom:8px">' +
+    '<div id="cfv-lista" style="max-height:380px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px"></div>',
+    '<button type="button" onclick="fecharModalOperacional ? fecharModalOperacional() : closeModal()" style="height:40px;padding:0 18px;border-radius:10px;background:#fff;border:1px solid #cbd5e1;font-weight:800">Fechar</button>',
+    '860px');
+  window.cfvFiltrar('');
+};
+window.cfvFiltrar = function(termo){
+  const st = window.__cfv; if(!st) return;
+  const box = document.getElementById('cfv-lista'); if(!box) return;
+  const q = up(termo);
+  const qDig = q.replace(/\D+/g,'');
+  const filtrados = st.itens.filter(x => {
+    if(!q) return true;
+    const campos = [x.nome, x.fantasia, x.codigo, x.codigoAntigo, x.id, x.documento, x.cnpj, x.cpf];
+    if(campos.some(v => up(v).includes(q))) return true;
+    // se o que foi digitado tem número (código ou CNPJ), compara só os dígitos
+    return qDig.length >= 3 && campos.some(v => txt(v).replace(/\D+/g,'').includes(qDig));
+  });
+  box.innerHTML = filtrados.slice(0, 400).map(x => {
+    const cod = txt(x.codigo || x.codigoAntigo || x.id);
+    const doc = txt(x.documento || x.cnpj || x.cpf);
+    return '<div onclick="cfvEscolher(\'' + x.id + '\')" style="padding:9px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:13px" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#fff\'">' +
+      '<b>' + esc(x.nome || x.fantasia || '(sem nome)') + '</b>' +
+      '<p style="margin:2px 0 0;font-size:11.5px;color:#64748b">código ' + esc(cod) + (doc ? ' • ' + esc(doc) : '') + '</p></div>';
+  }).join('') || '<p style="padding:14px;font-size:13px;color:#64748b">Nenhum cliente com esse filtro. Saia, cadastre/renomeie o cliente e volte aqui.</p>';
+};
+window.cfvEscolher = function(clienteId){
+  const st = window.__cfv; if(!st) return;
+  const c = contrato(st.contratoId); const cl = cliente(clienteId);
+  if(!c || !cl){ aviso('Contrato ou cliente saiu da lista. Abra de novo.','error'); return; }
+  c.clienteId = cl.id;
+  if(!c.codClienteAntigo && cl.codigo) c.codClienteAntigo = cl.codigo;
+  const s = sess();
+  c.vinculadoPor = (s && (s.usuarioId || s.id)) || 'local';
+  c.vinculadoPorNome = (s && (s.usuarioNome || s.login)) || 'Usuário local';
+  c.vinculadoEm = new Date().toISOString();
+  c.vinculoManual = true;
+  try{ if(typeof logAction === 'function') logAction('contrato','vincular', c.id, 'Cliente do contrato ' + codigoContrato(c) + ' vinculado na mão para ' + (cl.nome||'') + ' (cód ' + txt(cl.codigo||cl.id) + ')'); }catch(e){}
+  salvar();
+  aviso('Contrato ' + codigoContrato(c) + ' agora é do cliente ' + (cl.nome||''));
+  try{ if(typeof renderContratos === 'function') renderContratos(); }catch(e){}
+  try{ if(typeof renderAuditoria === 'function') renderAuditoria(); }catch(e){}
+  fechar();
+  setTimeout(function(){ try{ window.openContratoCompleto(c.id); }catch(e){} }, 150);
 };
 function rtfEsc(v){ return txt(v).replace(/\\/g,'\\\\').replace(/\{/g,'\\{').replace(/\}/g,'\\}').replace(/\n/g,'\\par '); }
 function rtfLine(label, value){ return `\\b ${rtfEsc(label)}:\\b0  ${rtfEsc(value)}\\par `; }
@@ -12437,7 +12541,8 @@ window.baixarContratoRTF = function(contratoId, tipo){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${tipo==='proposta'?'proposta':'contrato'}-${codigoContrato(c)||'sem-codigo'}.rtf`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
 };
 
-window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar, cfNormNome, cfClientePorNomeUnico, clienteContrato };
+window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar, cfNormNome, cfClientePorNomeUnico, clienteContrato,
+  cfClientePorDocumento, cfClientePorNomeParecido, cfDocumentoDoContrato };
 
 const oldShowApp = window.showApp;
 window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };
@@ -28315,9 +28420,9 @@ async function renderConnected(body){
     :'';
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
-    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
+    ?('Sincronizando automaticamente — nada a escolher'+(held?' ('+held+' registros locais entrando na fila)':'')+'.')
     :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
-      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização automática ativa — conectou, sincroniza sozinho.'));
   const avisoContagem=contagemFalhou
     ?message('Os números da nuvem não puderam ser contados agora ('+esc(contagemFalhou)+'). Isso NÃO atrapalha a sincronização: seus dados continuam indo e voltando normalmente. Os botões abaixo funcionam.','info')
     :'';
@@ -28430,18 +28535,12 @@ window.abrirCloudflareNuvem=async function(){
 // A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
 // clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
 // escolha se apresenta sozinha, uma vez por sessão.
-function cobrarEscolha(){
-  if(!token()||!systemAdmin())return;
-  if(window.__dcEscolhaMostrada)return;
-  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
-  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
-  if(document.getElementById('digicopy-cloud-modal'))return;
-  window.__dcEscolhaMostrada=true;
-  window.abrirCloudflareNuvem();
-}
+// v6.1.4 — ORDEM DO DONO (22/09/2026): acabou a escolha obrigatória, então
+// acabou também o pop-up que abria sozinho cobrando resposta. Quem conecta
+// sincroniza na hora; a janela da Nuvem é para ver o estado e usar o check-up.
+function cobrarEscolha(){ /* mantida por compatibilidade: agora não faz nada */ }
 if(typeof document!=='undefined'){
-  setTimeout(cobrarEscolha,9000);
-  setTimeout(cobrarEscolha,45000);
+  // Nada abre sozinho: sem susto na cara do usuário.
 }
 
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
@@ -28579,13 +28678,19 @@ let state=loadState(),outbox=loadOutbox();
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v5.22.71-sem-logs';
-if(state.initialPull&&!String(state.regras||'').startsWith('v5.22.7')){
+const REGRAS='v6.1.4-conectou-sincroniza';
+// v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
+// não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
+// sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
+// quem conecta passa a sincronizar sozinho. A proteção de dado continua sendo a
+// de sempre (nada é apagado; envio é por id, então não duplica), e o botão
+// manual "Não enviar os dados atuais" continua existindo para quem quiser.
+state.paused=false;
+state.pauseReason='';
+if(state.regras!==REGRAS){
   state.regras=REGRAS;
-  state.paused=true;
-  state.pauseReason='escolha-inicial';
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
-}else if(state.regras!==REGRAS){state.regras=REGRAS;}
+}
 // Auditoria e avisos já subiram nas versões anteriores e agora não viajam mais.
 // Ficariam ocupando lugar na nuvem e inflando a contagem, então saem de lá uma
 // vez só, no ritmo normal da fila.
@@ -28713,20 +28818,14 @@ function listLocalOnlyKeys(beforeKeys){
 // duas opções: enviar os dados atuais deste PC, ou não enviar. Qualquer uma
 // das duas destrava a sincronização daí em diante.
 function decideReinstallGuard(opts){
-  const activation=opts&&opts.activation;
-  const cloudHasData=!!(opts&&opts.cloudHasData);
-  const localCount=Number(opts&&opts.localCount)||0;
-  const extraCount=Number(opts&&opts.extraCount)||0;
-  // v5.22.69 — o PC autorizado por convite APAGAVA daqui tudo o que a nuvem não
-  // tinha. Era isso que deixava o segundo computador faltando dados. Agora ele
-  // recebe a mesma escolha dos outros: nada é apagado sem a pessoa mandar.
-  if(activation==='invite'&&extraCount===0){
-    return {pause:false,isolate:false,hold:false,reason:'convidado-ok'};
-  }
-  if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
-    return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
-  }
-  return {pause:false,isolate:false,hold:false,reason:'ok'};
+  // v6.1.4 — ORDEM DO DONO (22/09/2026): sem trava de escolha. Conectou
+  // (qualquer uma das duas senhas), sincroniza na hora, nos dois sentidos.
+  // Nada é apagado e nada é isolado automaticamente: o envio é por id (atualiza
+  // o que já existe em vez de criar cópia) e a LEITURA da nuvem nunca apaga
+  // dado local — quem manda apagar é o dono, pela tela.
+  // A função continua existindo (e respondendo) porque o painel, o check-up e
+  // os testes usam o formato; agora ela sempre devolve "pode sincronizar".
+  return {pause:false,isolate:false,hold:false,reason:'sincroniza-direto'};
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
@@ -29047,14 +29146,12 @@ async function tick(reason){
         localCount:localBusinessCount(),
         extraCount:extras.length
       });
-      if(decision.isolate)await reconcileFirstAuthorizedDevice(localBefore);
-      state.heldLocalOnly=decision.hold?extras:[];
-      state.pauseReason=decision.pause?decision.reason:'';
-      if(decision.pause){
-        state.paused=true;state.initialPull=true;persist();
-        indicator(false,'Escolha o que fazer com os dados deste PC');
-        return true;
-      }
+      // v6.1.4 — sem pausa: sobras locais sobem por id (atualiza, não duplica);
+      // o que existe igual dos dois lados não é reenviado (a comparação de hash
+      // feita depois da leitura cuida disso).
+      state.heldLocalOnly=[];
+      state.pauseReason='';
+      state.paused=false;
     }
     let totalSent=0;
     for(let round=0;round<50;round++){
@@ -29239,6 +29336,8 @@ async function publishLocalToCloud(){
 }
 // Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais
 // ficam só neste PC e a nuvem passa a sincronizar normalmente daí em diante.
+// Continua disponível como OPÇÃO manual (a pedido, na tela da Nuvem) — o
+// caminho normal agora é sincronizar sozinho, sem perguntar nada.
 async function manterLocalSemEnviar(){
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
@@ -29308,6 +29407,16 @@ function estadoDetalhado(){
   s.bruto=typeof db!=='undefined'&&db?db:null;
   return s;
 }
+// v6.1.4 — PCs que já estavam parados na escolha (versão antiga) voltam a
+// sincronizar sozinhos na primeira abertura, sem ninguém clicar em nada.
+(function destravarPausaIngreme(){
+  try{
+    if(state.paused&&(state.pauseReason==='escolha-inicial'||!state.pauseReason)){
+      state.paused=false;state.pauseReason='';state.regras=REGRAS;persist();
+    }
+  }catch(e){}
+})();
+
 window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
@@ -29568,10 +29677,12 @@ window.clientesDuplicadosAbrir=async function(){
       '<ul style="margin:0 0 0 16px;font-size:12.5px">'+semVinculo.slice(0,12).map(c=>{
         const P=window.CONTRATOS_FINAL_PURE||{};
         const nome=(typeof P.cfNomeDoContrato==='function'?P.cfNomeDoContrato(c):'')||'(sem nome guardado no contrato)';
-        return '<li>Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+'</li>';
+        return '<li style="margin:4px 0">Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+
+          ' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(c.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button></li>';
       }).join('')+(semVinculo.length>12?'<li>… e mais '+(semVinculo.length-12)+'</li>':'')+'</ul>'+
-      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar pelo nome automaticamente (quando o nome existe em UM só cadastro). '+
-      'Se o cliente não existir mais no cadastro, abra o contrato (duplo clique) e escolha o cliente — ou me manda print destes nomes.</p>'
+      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar sozinho pelo código, pelo CNPJ/CPF e pelo nome '+
+      '(quando aponta para UM só cadastro). O que sobrar, você resolve aqui: clique em <b>🔗 Vincular cliente</b> e escolha o cliente na lista. '+
+      'Nada é mesclado nem apagado — só o contrato passa a apontar para o cliente certo, e fica registrado na Auditoria.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
   const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
@@ -29579,6 +29690,15 @@ window.clientesDuplicadosAbrir=async function(){
     '<h4 style="font-size:13px;color:#0a1e8a;margin:0 0 6px">Clientes repetidos</h4>'+cards+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv;
   if(!modalSistema('Clientes duplicados', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Clientes duplicados');
+};
+// v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo". O botão
+// fecha esta janela e abre o seletor de clientes do próprio contrato.
+window.clientesDuplicadosVincularContrato=function(contratoId){
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  setTimeout(function(){
+    if(typeof window.contratoVincularCliente==='function') window.contratoVincularCliente(contratoId);
+    else if(typeof window.lfbAlert==='function') window.lfbAlert('O seletor de cliente não carregou nesta tela. Recarregue (F5) e tente de novo.','Vincular cliente');
+  },150);
 };
 window.clientesDuplicadosUnir=async function(indice){
   const grupos=window.__cliDupGrupos||[];
@@ -42045,6 +42165,21 @@ window.RODAPE_VERSAO_V52245_PURE = { VERSAO: VERSAO };
 
 if(typeof document==='undefined') return;
 
+// v6.1.4 (22/09/2026) — DONO: "por que o rodapé de versões parou de atualizar?".
+// Resposta curta: o número só muda quando a VERSÃO muda (bump), e várias
+// correções saíram dentro da mesma 6.1.3. Agora o rodapé mostra duas coisas:
+// a versão do sistema E o CARIMBO do arquivo que o navegador está rodando
+// agora (o mesmo hash que vai na URL do app.bundle.js). Mudou uma linha do
+// sistema e publicou? O carimbo muda na hora — dá para conferir se o arquivo
+// novo chegou neste PC sem depender de número de versão.
+function seloDoBuild(){
+  try{
+    var s = document.querySelector('script[src*="app.bundle.js"]');
+    if(!s) return '';
+    var m = String(s.getAttribute('src')||'').match(/-([0-9a-f]{6,})/i);
+    return m ? m[1].slice(0,8) : '';
+  }catch(e){ return ''; }
+}
 function pintarRodape(){
   var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
   var foot = document.querySelector('footer');
@@ -42060,12 +42195,29 @@ function pintarRodape(){
     if(sess) foot.insertBefore(ver, sess);
     else foot.appendChild(ver);
   }
-  ver.textContent = 'v'+curV;
+  var selo = seloDoBuild();
+  ver.textContent = 'v'+curV + (selo ? ' • '+selo : '');
+  ver.setAttribute('data-versao', curV);
+  ver.setAttribute('data-build', selo || 'sem-carimbo');
+  ver.title = 'Versão do sistema v'+curV + (selo ? ' • carimbo do arquivo que está rodando agora: '+selo : '') +
+    ' — o carimbo muda a cada correção publicada (é o mesmo pedaço que vai na URL do app.bundle.js).';
   if(left){
     left.textContent = 'Sistema Digicopy • Banco na Nuvem';
     left.classList.add('text-left');
   }
-  if(sess) sess.classList.add('text-right');
+  if(sess){
+    sess.classList.add('text-right');
+    // v6.1.4 (22/09/2026) — o canto direito era texto fixo "Empresa - Usuário".
+    // Enquanto ninguém entrou, o honesto é dizer onde o sistema está rodando.
+    if(/Empresa\s*-\s*Usu/i.test(sess.textContent || '')){
+      var naNuvem = false;
+      try{ naNuvem = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
+      sess.textContent = naNuvem ? 'Nuvem conectada • aguardando login' : 'Local • sem nuvem conectada';
+      sess.title = naNuvem
+        ? 'Este computador está autorizado na nuvem; o nome da empresa e do usuário aparece depois do login.'
+        : 'Este computador está usando só o banco local (a nuvem não está conectada aqui).';
+    }
+  }
 }
 
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52245ver){
@@ -42263,8 +42415,8 @@ function injetarBotao(){
   if(!body.querySelector('#dc-sync-now') && !body.querySelector('#dc-forget')) return;
   var box=document.createElement('div');
   box.style.cssText='border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px';
-  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não autorizar dados deste PC</h3>'
-    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">Este PC passa a usar a nuvem. O que só existe aqui some DESTE computador. A nuvem não apaga nada. O que você lançar depois sobe.</p>'
+  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não enviar os dados atuais deste PC (opcional)</h3>'
+    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">A sincronização agora é automática: quem conecta já sincroniza nos dois sentidos. Use este botão só se quiser que este PC passe a usar apenas o que está na nuvem — o que só existe aqui sai DESTE computador e a nuvem não é apagada.</p>'
     +'<button id="dc-nao-autorizar-local" type="button" style="height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74">Não autorizar dados deste PC</button>';
   var forgetRow=body.querySelector('#dc-forget');
   if(forgetRow && forgetRow.parentNode){

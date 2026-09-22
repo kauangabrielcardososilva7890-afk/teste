@@ -229,10 +229,12 @@ window.clientesDuplicadosAbrir=async function(){
       '<ul style="margin:0 0 0 16px;font-size:12.5px">'+semVinculo.slice(0,12).map(c=>{
         const P=window.CONTRATOS_FINAL_PURE||{};
         const nome=(typeof P.cfNomeDoContrato==='function'?P.cfNomeDoContrato(c):'')||'(sem nome guardado no contrato)';
-        return '<li>Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+'</li>';
+        return '<li style="margin:4px 0">Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+
+          ' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(c.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button></li>';
       }).join('')+(semVinculo.length>12?'<li>… e mais '+(semVinculo.length-12)+'</li>':'')+'</ul>'+
-      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar pelo nome automaticamente (quando o nome existe em UM só cadastro). '+
-      'Se o cliente não existir mais no cadastro, abra o contrato (duplo clique) e escolha o cliente — ou me manda print destes nomes.</p>'
+      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar sozinho pelo código, pelo CNPJ/CPF e pelo nome '+
+      '(quando aponta para UM só cadastro). O que sobrar, você resolve aqui: clique em <b>🔗 Vincular cliente</b> e escolha o cliente na lista. '+
+      'Nada é mesclado nem apagado — só o contrato passa a apontar para o cliente certo, e fica registrado na Auditoria.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
   const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
@@ -240,6 +242,15 @@ window.clientesDuplicadosAbrir=async function(){
     '<h4 style="font-size:13px;color:#0a1e8a;margin:0 0 6px">Clientes repetidos</h4>'+cards+
     '<h4 style="font-size:13px;color:#0a1e8a;margin:12px 0 6px">Contratos sem vínculo</h4>'+sv;
   if(!modalSistema('Clientes duplicados', corpo)) if(typeof window.lfbAlert==='function') window.lfbAlert('Não achei a janela de modal nesta tela. Recarregue (F5) e tente de novo.','Clientes duplicados');
+};
+// v6.1.4 (22/09/2026) — DONO: "quero resolver o Cliente sem vínculo". O botão
+// fecha esta janela e abre o seletor de clientes do próprio contrato.
+window.clientesDuplicadosVincularContrato=function(contratoId){
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  setTimeout(function(){
+    if(typeof window.contratoVincularCliente==='function') window.contratoVincularCliente(contratoId);
+    else if(typeof window.lfbAlert==='function') window.lfbAlert('O seletor de cliente não carregou nesta tela. Recarregue (F5) e tente de novo.','Vincular cliente');
+  },150);
 };
 window.clientesDuplicadosUnir=async function(indice){
   const grupos=window.__cliDupGrupos||[];

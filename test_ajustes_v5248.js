@@ -6,6 +6,8 @@
 //    desce junto de gravação real ou a cada 15 min);
 //  • carimbos 5.24.34 + script de raio-x (ver_gasto_nuvem.cmd) presentes.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, nome){ if(cond){ console.log('  ✔ ' + nome); } else { falhas++; console.error('  ✘ FALHOU: ' + nome); } }
 const escola = fs.readFileSync('buscador_escola_patch.js', 'utf8');
@@ -40,9 +42,9 @@ const cmdMotor = fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8');
 ok(cmdMotor.indexOf('migrations apply DB --remote') >= 0 && cmdMotor.indexOf('wrangler deploy') >= 0, 'atualizar_motor_nuvem.cmd migra E publica, na ordem');
 ok(cmdMotor.indexOf('/health') >= 0 && cmd.indexOf('/health') >= 0, 'os dois atalhos conferem a versão no ar via /health');
 ok(worker.indexOf("const WORKER_VERSION = '5.26.4'") >= 0, 'worker carimbado (re-ancorado v5.26.4 = gerente vira PC admin; o carimbo original era 5.24.34)');
-ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0, 'index.html carimbado (re-ancorado v6.0.9)');
-ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.9)');
-ok(pkg.version === '6.1.3', 'package.json carimbado (re-ancorado v6.0.9)');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'index.html carimbado (re-ancorado v6.0.9)');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0, 'mobile/www/index.html carimbada (re-ancorado v6.0.9)');
+ok(pkg.version === VERSAO_APP, 'package.json carimbado (re-ancorado v6.0.9)');
 ok(bundle === bundleM, 'bundles raiz e mobile idênticos');
 ok(bundle.indexOf('esAutoTique') >= 0, 'freio da escola está dentro do bundle');
 

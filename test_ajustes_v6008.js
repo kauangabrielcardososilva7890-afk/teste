@@ -3,6 +3,8 @@
 // tira de lá e coloca no seu devido menu". Central = só operação; Config.
 // Fiscal = menu próprio (certificado, CSC, NCMs, texto — mesmas chaves).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let pass = 0, fail = 0;
 function ok(nome, cond) { if (cond) { pass++; console.log('  ok -', nome); } else { fail++; console.log('  FALHOU -', nome); } }
 
@@ -64,10 +66,10 @@ ok('salva refaz db.config via PURE + db.save + auditoria logAction',
   src.indexOf('mfsCfgCsc(db.config||{}') >= 0 && src.indexOf('mfsCfgNotas(db.config||{}') >= 0 && src.indexOf("db.save()") >= 0 && src.indexOf("logAction('fiscal'") >= 0);
 
 console.log('== CARIMBO 6.0.9 ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.3');
+ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado (versão real + rodapé + query)',
-  html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
-ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
+  html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0 && html.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0);
+ok('celular carimbado 6.0.9', mob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && mob.indexOf('>v' + VERSAO_APP + '<') >= 0);
 
 console.log('');
 console.log(pass + ' passaram, ' + fail + ' falharam');

@@ -3,6 +3,8 @@
 // Causa: a cura 6.0.2 só tentava 30s depois de abrir o sistema e marcava "já
 // fez" na 1ª passada — login depois disso = dia inteiro sem carimbo.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let pass = 0, fail = 0;
 function ok(nome, cond) { if (cond) { pass++; console.log('  ok -', nome); } else { fail++; console.log('  FALHOU -', nome); } }
 
@@ -63,9 +65,9 @@ ok('role entra VÁRIAVEL no INSERT do device (nada fixo)', segEnroll.indexOf("VA
 ok('eclusa anti-trancamento: connect-pass aceita prova de GERENTE (v5.26.4)', wk.slice(wk.indexOf("/v1/connect-pass"), wk.indexOf("/v1/connect-pass") + 1200).indexOf('requireAdminOuGerente(request, env)') >= 0 && wk.indexOf('eclusa anti-trancamento') >= 0);
 
 console.log('== CARIMBO 6.0.4 ==');
-ok('package.json na 6.0.4', pkg.version === '6.1.3');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0 && html.indexOf('app.bundle.js?v=6.1.3') >= 0);
-ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && mob.indexOf('>v6.1.3<') >= 0);
+ok('package.json na 6.0.4', pkg.version === VERSAO_APP);
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0 && html.indexOf('app.bundle.js?v=' + VERSAO_APP) >= 0);
+ok('celular carimbado 6.0.4', mob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && mob.indexOf('>v' + VERSAO_APP + '<') >= 0);
 
 console.log('\n' + pass + ' passaram, ' + fail + ' falharam.');
 if (fail > 0) process.exit(1);

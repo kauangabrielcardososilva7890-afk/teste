@@ -9,6 +9,8 @@
 //  4) rodapé do Gerente era texto fixo e ficou desatualizado (v5.26.0) → agora
 //     a tela puxa a versão REAL do programa (g:versao → app.getVersion()).
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 const vm = require('vm');
 
 function ok(name, cond) {
@@ -71,8 +73,8 @@ ok('tela preenche o rodapé com a versão real no load', gHtml.indexOf('window.g
 
 console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.4) ==');
 ok('gerente package 5.26.3', gPkg.version === '5.26.3');
-ok('app (package.json) na 6.0.9 (escola: ralo fechado)', pkg.version === '6.1.3');
-ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
+ok('app (package.json) na 6.0.9 (escola: ralo fechado)', pkg.version === VERSAO_APP);
+ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('worker SEGUE 5.26.4 (sem mudança de motor nesta entrega)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
 ok('manifesto hoje tem 216; posições 202/203 históricas intactas (login-nuvem, data grande); hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila', manifest.length === 222 && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('bundle contém o patch com a máscara nova', bundle.indexOf('__v5262ln') >= 0 && bundle.indexOf('$1.$2.$3/$4-$5') >= 0);

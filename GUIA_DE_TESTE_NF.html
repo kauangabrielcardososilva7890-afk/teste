@@ -46,7 +46,7 @@
 <h2>Antes de começar (2 minutos)</h2>
 <ol>
   <li>Abra o sistema. Se aparecer tela de login, entre normalmente (o login é 1 vez por dia).</li>
-  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.1.3</code>.<br>
+  <li>Olhe o <b>rodapé</b> da página: tem que estar escrito <code>v6.1.4</code> e, do lado, um carimbo curto de letras/números (ex.: <code>1d27112d</code>).<br>
       Se não estiver: recarregue com <code>F5</code>. Continuando errado, feche a aba, abra de novo e, se ainda assim não vier, <code>Ctrl+Shift+R</code> uma vez.</li>
   <li>Abra o menu da <b>Nuvem</b> (botão no topo). Se aparecer um aviso de <b>"código da nuvem está ANTIGO"</b>, anote no relatório — não é erro seu, é um passo de publicação que o dono faz.</li>
 </ol>
@@ -184,6 +184,62 @@
   <li>Tudo fica registrado em <b>Auditoria</b> (quem emitiu, cancelou, quando).</li>
 </ul></div>
 
+
+<h2>Parte C — Nuvem automática, contratos sem vínculo e rodapé (novo em 22/09)</h2>
+<p>Objetivo: provar que <b>conectar = sincronizar sozinho</b> (sem escolher nada, sem apertar botão), que o dado que existe em um PC chega no outro, e que o contrato com <b>"Cliente sem vínculo"</b> tem conserto na tela.</p>
+
+<div class="passo"><b class="t">C1. Conectar já sincroniza (a escolha acabou)</b>
+<ul class="check">
+  <li>Abra o menu da <b>Nuvem</b> e conecte com <b>CNPJ + senha</b> (pode ser a senha de conexão ou a do gerente).</li>
+  <li><b>Não pode aparecer</b> mais a pergunta "escolha o que fazer com os dados deste PC" nem popup cobrando resposta.</li>
+  <li>A tela da Nuvem tem que escrever: <b>"Sincronização automática ativa — conectou, sincroniza sozinho"</b>.</li>
+  <li>Feche a janela da Nuvem e continue usando normalmente — o envio segue sozinho (não precisa ficar olhando).</li>
+  <li>Se ainda existir o botão "Não enviar os dados atuais deste PC (opcional)", ele é só opcional: <b>não</b> precisa clicar.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C2. O dado de um PC aparecer no outro (o problema que voltava)</b>
+<ul class="check">
+  <li>Crie um registro de teste em <b>um</b> PC (uma venda ou um cliente com nome "TESTE NUVEM 22/09").</li>
+  <li>Espere até <b>2 minutos</b> e abra o sistema <b>no outro PC</b> (que também tem que estar conectado na nuvem).</li>
+  <li>O registro tem que aparecer lá. Se não aparecer: deixe os dois PCs abertos e mande print dos dois.</li>
+  <li>Confira que <b>nada sumiu</b> em nenhum dos PCs e que o registro <b>não duplicou</b> (não virou dois "TESTE NUVEM 22/09").</li>
+</ul></div>
+
+<div class="passo"><b class="t">C3. Check-up da nuvem (o botão que mostra o que está diferente)</b>
+<ul class="check">
+  <li>Na tela da <b>Nuvem</b>, clique em <b>🩺 Check-up da nuvem</b>.</li>
+  <li>Aparece uma comparação <b>lista por lista</b> (clientes, vendas, contratos, ordens…) com os números de cada lado e o que está diferente.</li>
+  <li>Tem o <b>resumo para copiar</b> — se o problema voltar, é esse texto que você me manda.</li>
+  <li>Os consertos: <b>Baixar tudo de novo</b>, <b>Enviar este PC inteiro</b> e <b>Sincronizar agora</b>. A tela avisa que <b>nada é apagado</b>.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C4. Contrato que mostrava "Cliente sem vínculo"</b>
+<ul class="check">
+  <li>Abra <b>Contratos</b> e procure algum que ainda esteja escrito <b>"Cliente sem vínculo"</b>.</li>
+  <li>Se o cliente existe no cadastro, o sistema agora acha sozinho pelo <b>código</b>, pelo <b>CNPJ/CPF</b> e pelo <b>nome</b> (quando o nome aponta para um cadastro só) — confira se já aparece o nome certo.</li>
+  <li>Se ainda estiver sem vínculo, na própria linha do contrato tem o botão <b>🔗 Vincular cliente</b>: clique, filtre pelo nome e escolha o cliente. O contrato passa a apontar para ele na hora.</li>
+  <li>O mesmo atalho existe dentro do contrato aberto (duplo clique) e na janela de <b>clientes duplicados/repetidos</b>.</li>
+  <li>Confira na <b>Auditoria</b> a linha do vínculo (quem vinculou e quando).</li>
+  <li>Regra que continua valendo: <b>nada é mesclado</b> e <b>nada é apagado</b> — o vínculo só diz qual cliente é o dono daquele contrato.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C5. Rodapé da versão (por que ele "parou" e o que mudou)</b>
+<ul class="check">
+  <li>No rodapé, no meio, tem que aparecer <b>v6.1.4</b> e ao lado um <b>carimbo</b> curto (ex.: <code>1d27112d</code>).</li>
+  <li>Passe o mouse em cima: o balãozinho explica que o carimbo é do arquivo que está rodando agora.</li>
+  <li>O carimbo muda a cada correção publicada (o número da versão só muda quando eu subo a versão).</li>
+  <li>Se o carimbo não for igual ao que eu te mandei no chat: <code>Ctrl+Shift+R</code> uma vez e confira de novo.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C6. Atualizar o motor da nuvem (o passo real — só quando eu avisar)</b>
+<ul class="check">
+  <li>Baixe o <b>ZIP do sistema</b> pelo link que eu mando no chat.</li>
+  <li>Clique com o botão direito → <b>Extrair tudo</b> (tem que ficar o arquivo <b>atualizar_motor_nuvem.cmd</b> e a pasta <b>cloudflare-worker</b> na mesma pasta).</li>
+  <li><b>Dois cliques</b> em <b>atualizar_motor_nuvem.cmd</b>. Ele faz sozinho: mostra o que falta no banco → aplica as migrações (se perguntar <code>Proceed? (y/n)</code>, digite <code>y</code> e Enter) → publica → e no fim mostra a versão no ar.</li>
+  <li>No fim tem que aparecer <code>"versao":"5.26.4"</code> ou mais novo. A janela fica aberta: <b>tire uma foto e me mande</b>.</li>
+  <li>Se travar, não feche a janela — ela mostra o motivo. Foto e me manda.</li>
+</ul></div>
+
 <h2>Se der erro: o que copiar</h2>
 <table>
   <tr><th>Onde apareceu</th><th>O que copiar pro relatório</th></tr>
@@ -204,8 +260,8 @@
 <div class="okverde"><b>Critério de aprovado:</b> Parte A inteira sem erro + B1 com nota autorizada em homologação + DANFE conferido com selo de teste + B2 com cancelamento registrado. Qualquer item que falhar vira correção na próxima versão com a sua anotação.</div>
 
 <footer>
-  Guia do testador · Sistema Digicopy <b>v6.1.3</b> (app) · worker da nuvem v5.26.4 · gerente v5.26.3 ·
-  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.1.3, este guia ainda não é o que você está testando.
+  Guia do testador · Sistema Digicopy <b>v6.1.4</b> (app) · worker da nuvem v5.26.4 · gerente v5.26.3 ·
+  vale para a branch publicada em teste-60f.pages.dev. Se o rodapé não mostrar v6.1.4, este guia ainda não é o que você está testando.
 </footer>
 
 </body>

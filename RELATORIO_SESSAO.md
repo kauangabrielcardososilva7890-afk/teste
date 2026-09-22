@@ -4175,3 +4175,42 @@ O `B` (quadro de versão por PC) fica de fora por pedido dele. O `C` (teste de t
 ### Pendência imediata de investigação (se voltar)
 
 Se ele rodar o check-up e **continuar** sem ver os dados do outro PC, o resumo copiado dirá: pausado? cursor? pendentes? e a comparação por lista — com isso eu fecho a causa na hora (sem chute).
+
+---
+
+## CONTINUIDADE 22/09 (8) — "já envia logo", tudo pendente e o rodapé
+
+### 1) Trava de escolha REMOVIDA (ordem dele)
+
+"retire essa trava de preferir enviar ou não, já envia logo; colocou o login e qualquer das duas senhas, conecta e sincroniza na hora, sem apertar botão".
+
+- `cloudflare_data_sync_patch.js`: `REGRAS='v6.1.4-conectou-sincroniza'`; no boot `state.paused=false` / `state.pauseReason=''`; `decideReinstallGuard()` sempre devolve `{pause:false,isolate:false,hold:false,reason:'sincroniza-direto'}`; `tick()` não retorna mais por pausa (`heldLocalOnly=[]`, `paused=false`); `destravarPausaIngreme()` libera PC que ficou parado na escolha da versão antiga.
+- `cloudflare_sync_patch.js`: `cobrarEscolha()` virou no-op (nada abre sozinho) e a janela escreve "Sincronização automática ativa — conectou, sincroniza sozinho".
+- `ajustes_v52246_nuvem_nao_autorizar_patch.js`: o botão virou **opcional** — "Não enviar os dados atuais deste PC (opcional)".
+- Testes históricos re-ancorados (a pergunta única não existe mais). Suíte **187/0**.
+
+### 2) "Cliente sem vínculo" nos contratos (item 6, sem mesclar clientes)
+
+- `contratos_final_patch.js`: procura **também** por **CNPJ/CPF** (`cfClientePorDocumento`) e por **nome parecido** (`cfClientePorNomeParecido`, um contido no outro) — sempre só quando aponta para **UM** cliente. Continua nunca chutando nome repetido.
+- **Botão novo `🔗 Vincular cliente`** na linha do contrato sem vínculo, no cabeçalho do contrato aberto e no painel de clientes repetidos (`clientesDuplicadosVincularContrato`). O seletor (`contratoVincularCliente` + `cfvFiltrar`/`cfvEscolher`) grava `clienteId`, `vinculadoPorNome`, `vinculadoEm` e entra na **Auditoria**. Nada é mesclado nem apagado.
+
+### 3) Rodapé de versões (por que "parou")
+
+O número só mudava quando a **versão** mudava (bump) — várias correções saíram dentro da mesma 6.1.3. Agora `ajustes_v52245_rodape_versao_patch.js` mostra **v6.1.4 • carimbo** (o mesmo hash do `?v=` do app.bundle.js), com balão explicando. O canto direito também parou de ficar no texto fixo "Empresa - Usuário": mostra "Local • sem nuvem conectada" ou "Nuvem conectada • aguardando login".
+
+### 4) Versão 6.1.4 + tudo reancorado
+
+`package.json` 6.1.3 → **6.1.4**; `index.html`, `mobile/www` e assets Android carimbados; bundle 222 scripts; motor recarimbado (API 0.4.8 / Worker 5.26.4).
+
+**Truque de manutenção:** os testes que travavam a versão literal ('6.1.3') agora leem `package.json` (`const VERSAO_APP = ...`). Subir versão não reescreve mais 33 arquivos de teste.
+
+### 5) Relatório e guia para ELE escrever (tudo, não só fiscal)
+
+- `RELATORIO_DE_TESTE_NF.html`: **38 perguntas** (A1..A4 = 25 antigas + **E** nuvem automática, **F** contratos/clientes, **G** rodapé/atualização), cada uma com as 3 caixas + texto opcional; caixa geral e veredicto no fim; salva .txt.
+- A seção do worker foi **trocada pelo passo real** (ordem dele: "esquece o assunto do worker"): baixar ZIP → extrair → **dois cliques em `atualizar_motor_nuvem.cmd`** → os 4 passos que a janela mostra → mandar foto. Sem token, sem painel, sem GitHub.
+- `GUIA_DE_TESTE_NF.html`: **Parte C** nova (C1 conectar já sincroniza · C2 dado do outro PC · C3 check-up · C4 contrato sem vínculo · C5 rodapé · C6 atualizar o motor).
+
+### Validação
+
+- Suíte **187 testes, 0 falhas**; `npm run sync --check` OK; bundle SHA256 conferido; `npm run verify:files` OK.
+- Commit da rodada: `v6.1.4: conectou = sincroniza…` + este (rodapé/contratos/relatório).

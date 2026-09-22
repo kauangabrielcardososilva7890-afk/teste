@@ -12,6 +12,8 @@
 //  5) sessão de usuário vale o DIA: virou o dia → remove a sessão e avisa;
 //  6) login do Gerente traz mensagens específicas por código de erro.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 const vm = require('vm');
 
 function ok(name, cond) {
@@ -95,8 +97,8 @@ ok('tela tem avisoLoginGerente mapeando os códigos', gHtml.indexOf('avisoLoginG
 ok('tela explica o que fazer (definir senha / rodar o .cmd do motor / sem internet)', gHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0 && /sem (internet|conexão)/i.test(gHtml));
 
 console.log('== CARIMBO 5.26.2 (app inteiro) ==');
-ok('package.json na 6.0.9', pkg.version === '6.1.3');
-ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '6.1.3'") >= 0 && html.indexOf('>v6.1.3<') >= 0);
+ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
+ok('index.html carimbado (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 

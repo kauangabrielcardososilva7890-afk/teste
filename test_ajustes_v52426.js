@@ -3,6 +3,8 @@
 // cliente, data, chave + copiar chave). Local de propósito: a emissão só roda
 // no PC que tem o A1, então a lista mora ali mesmo, sem custar nuvem.
 const fs = require('fs');
+// v6.1.4 (22/09/2026) — a versão sai do package.json (subir versão não reescreve teste)
+const VERSAO_APP = JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version;
 let falhas = 0;
 function ok(cond, msg) {
   if (cond) console.log('✔', msg);
@@ -45,9 +47,9 @@ if (typeof registrar === 'function') {
 const bundle = fs.readFileSync('app.bundle.js', 'utf8');
 ok(bundle.includes('cnfe-historico') && bundle.includes('registrarNfeEmitida'), 'bundle: histórico dentro');
 ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('cnfe-historico'), 'bundle do CELULAR igual');
-ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '6.1.3'"), 'index 6.0.9');
-ok(fs.readFileSync('index.html', 'utf8').includes('>v6.1.3<'), 'rodapé v6.0.9');
-ok(fs.readFileSync('package.json', 'utf8').includes('"version": "6.1.3"'), 'package.json 6.0.6');
+ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9');
+ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9');
+ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (histórico das notas assinadas na Central NF).');
