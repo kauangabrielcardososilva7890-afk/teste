@@ -80,10 +80,31 @@ function cfNormNome(v){
 }
 function cfNomeDoContrato(c){
   if(!c) return '';
-  const direto = txt(c.clienteNome || c.nomeCliente || c.cliente || c.clienteRazao || c.razaoSocial || c.nomeFantasia);
+  // v6.1.4 (22/09/2026) — DONO: "só quero que resolva essa parte onde os
+  // contratos mostram 'cliente sem vínculo' para o nome correto". O nome pode
+  // ter entrado por QUALQUER um destes campos; era isso que faltava.
+  const direto = txt(
+    c.clienteNome || c.nomeCliente || c.clienteRazao || c.razaoSocial ||
+    c.nomeFantasia || c.fantasiaCliente || c.nomeDoCliente || c.razao ||
+    (c.cliente && typeof c.cliente === 'object' ? (c.cliente.nome || c.cliente.fantasia || c.cliente.razaoSocial) : c.cliente) ||
+    c.nome || c.descricaoCliente
+  );
   if(direto) return direto;
-  const raw = rawLocPorContrato(c);
-  return raw ? txt(nomeRow(raw)) : '';
+  const row = dadosDoContratoAntigo(c);
+  return row ? txt(nomeRow(row)) : '';
+}
+// v6.1.4 — dados do contrato no sistema antigo: procura a linha da locação pelo
+// código do contrato em TODOS os campos de código conhecidos e, se não achar,
+// aceita a linha cujo código do cliente bate com o do contrato.
+function dadosDoContratoAntigo(c){
+  const bruto = rawLocPorContrato(c);
+  if(bruto) return bruto;
+  const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
+  if(!cod) return null;
+  const linhas = linhasModulo(/^LOCACAO$|^LOCAÇÃO$|CONTRATO/i);
+  const porCliente = linhas.find(r => codigo(pick(r, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE'])) === codigo(c && c.codClienteAntigo));
+  if(porCliente) return porCliente;
+  return linhas.find(r => Object.keys(r || {}).some(k => /COD|NUM|ID/i.test(k) && codigo(r[k]) === cod)) || null;
 }
 function cfClientesPorNome(nome, empId){
   const alvo = cfNormNome(nome);
@@ -131,6 +152,134 @@ function cfClientePorNomeParecido(nome, empId){
   });
   return achados.length === 1 ? achados[0] : null; // 2+ = ambíguo: quem decide é o dono, no botão
 }
+// ══ v6.1.4 (22/09/2026) — CURA AUTOMÁTICA do vínculo (ordem dele: "era pra
+// VOCÊ resolver, eu não lembro quem era quem") ═════════════════════════════
+// Ninguém precisa escolher nada. Para cada contrato sem cliente o sistema:
+//   1) tenta o CÓDIGO antigo do cliente (contrato e linha crua da locação);
+//   2) tenta o CNPJ/CPF;
+//   3) tenta a EVIDÊNCIA: quem já aparece ligado a este contrato (parque,
+//      leituras, OS, vendas, títulos) aponta o cliente;
+//   4) tenta o nome por PONTUAÇÃO parecida (tokens) — resolve inclusive nome
+//      repetido, escolhendo o cadastro mais antigo/código mais próximo, com o
+//      motivo escrito na Auditoria;
+//   5) se não existe nenhuma pista, RECONSTRÓI o cadastro a partir do nome que
+//      veio do sistema antigo (nada é inventado: é o nome/código de lá).
+// Tudo o que ele decidir fica marcado (vinculoAutomatico) e auditado — dá para
+// ver depois o que foi ligado sozinho e por quê. Nada é apagado nem mesclado.
+function cfTokens(nome){ return cfNormNome(nome).split(' ').filter(t => t.length > 2); }
+function cfPontosDeNome(a, b){
+  const A = cfTokens(a), B = cfTokens(b);
+  if(!A.length || !B.length) return 0;
+  const setB = new Set(B);
+  let peso = 0, comuns = 0;
+  A.forEach(t => { peso += t.length; if(setB.has(t)) comuns += t.length; });
+  if(!peso) return 0;
+  const cobertura = comuns / peso;
+  const sobra = Math.abs(A.length - B.length) / Math.max(A.length, B.length);
+  return Math.max(0, cobertura * (1 - 0.3 * sobra));
+}
+function cfCandidatos(empId){
+  return (db.clientes||[]).filter(x => x && x.status !== 'excluido' && x.status !== 'unificado'
+    && (!empId || !x.empresaId || x.empresaId === empId));
+}
+function cfPontuar(nome, empId){
+  const alvo = nome;
+  return cfCandidatos(empId)
+    .map(cl => ({ cl: cl, pontos: Math.max(cfPontosDeNome(alvo, cl.nome || cl.fantasia), cfPontosDeNome(alvo, cl.fantasia || cl.nome)) }))
+    .filter(x => x.pontos > 0)
+    .sort((a, b) => b.pontos - a.pontos || cmp(codigo(a.cl.codigo || a.cl.codigoAntigo || a.cl.id), codigo(b.cl.codigo || b.cl.codigoAntigo || b.cl.id)));
+}
+// Quem já está ligado a este contrato em QUALQUER outra lista (parque, leitura,
+// OS, venda, título) — prova mais forte que parecença de nome.
+function cfClientePorEvidencia(c, empId){
+  if(!c) return null;
+  const cod = codigo(c.codigoAntigo || c.numero || c.codigo);
+  const listas = ['parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'];
+  for(const nome of listas){
+    const arr = db[nome]; if(!Array.isArray(arr)) continue;
+    const achado = arr.find(x => x && x.clienteId && cliente(x.clienteId) &&
+      (x.contratoId === c.id || (cod && codigo(x.contratoCodigo || x.codContrato || x.codigoContrato || x.contrato) === cod)));
+    if(achado) return cliente(achado.clienteId);
+  }
+  return null;
+}
+// Nome genérico não vale virar cadastro (senão a cura criaria "Cliente" repetido).
+const CF_NOME_GENERICO = /^(CLIENTE|CLIENTES|CONSUMIDOR|BALCAO|BALCÃO|DIVERSOS|VARIOUS|SEM NOME|NAO INFORMADO|NÃO INFORMADO|TESTE|CLIENTE TESTE|CLIENTE BALCAO|CLIENTE BALCÃO)$/;
+function cfNomeServivel(nome){
+  const n = cfNormNome(nome);
+  return !!n && n.length >= 3 && !CF_NOME_GENERICO.test(n);
+}
+function cfCriarClienteDoContrato(c, empId, codCli){
+  const nome = txt(cfNomeDoContrato(c));
+  if(!cfNomeServivel(nome)) return null;
+  const cod = codigo(codCli) || codigo(proximoCodigoCliente(empId));
+  const novo = {
+    id: uidSafe('cli'), empresaId: empId, codigo: cod, codigoAntigo: cod,
+    nome: normalizaNomeEmpresa(nome), fantasia: normalizaNomeEmpresa(nome),
+    tipo: 'PJ', status: 'ativo', criadoPor: 'cura-contrato', criadoPorNome: 'Cura automática do contrato',
+    criadoEm: new Date().toISOString(), revisar: true,
+    observacao: 'Cadastro reconstruído do contrato ' + codigoContrato(c) + ' (o sistema antigo tinha este nome e este contrato sem cliente ligado).'
+  };
+  db.clientes.push(novo);
+  return novo;
+}
+function proximoCodigoCliente(empId){
+  const nums = (db.clientes||[]).filter(x => !empId || !x.empresaId || x.empresaId === empId)
+    .map(x => Number(codigo(x.codigo || x.codigoAntigo || x.id)) || 0);
+  return String((nums.length ? Math.max.apply(null, nums) : 0) + 1);
+}
+function cfCurarVinculos(empId){
+  const relatorio = { examinados: 0, ligados: 0, criados: 0, sobrou: 0, detalhes: [] };
+  (db.contratos||[]).filter(c => c && c.status !== 'excluido' && (!empId || !c.empresaId || c.empresaId === empId)).forEach(c => {
+    if(c.clienteId && cliente(c.clienteId)) return;
+    relatorio.examinados++;
+    const raw = rawLocPorContrato(c);
+    const codCli = codigo(c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE']));
+    let cli = null, motivo = '';
+    if(!cli && codCli){ cli = clientePorCodigo(codCli, empId); if(cli) motivo = 'código antigo ' + codCli; }
+    if(!cli){ cli = cfClientePorDocumento(c, empId); if(cli) motivo = 'CNPJ/CPF igual'; }
+    if(!cli){ cli = cfClientePorNomeUnico(cfNomeDoContrato(c), empId); if(cli) motivo = 'nome igual e único'; }
+    if(!cli){ cli = cfClientePorEvidencia(c, empId); if(cli) motivo = 'o contrato já tinha esse cliente no parque/leituras/OS/vendas'; }
+    if(!cli && txt(cfNomeDoContrato(c))){
+      const pontos = cfPontuar(cfNomeDoContrato(c), empId);
+      if(pontos.length && pontos[0].pontos >= 0.6){
+        if(pontos.length === 1 || (pontos[0].pontos - pontos[1].pontos) >= 0.15){
+          cli = pontos[0].cl; motivo = 'nome parecido (' + Math.round(pontos[0].pontos * 100) + '%)';
+        }else{
+          // nome parecido com mais de um cadastro: decide sozinho pelo MAIS ANTIGO
+          // (cadastro antigo = o que veio do sistema de verdade) e registra o porquê.
+          const empatados = pontos.filter(x => (pontos[0].pontos - x.pontos) < 0.15).map(x => x.cl);
+          empatados.sort((a, b) => cmp(txt(a.criadoEm || ''), txt(b.criadoEm || '')) || cmp(codigo(a.codigo || a.id), codigo(b.codigo || b.id)));
+          cli = empatados[0]; motivo = 'nome parecido com ' + empatados.length + ' cadastros — escolhido o mais antigo (' + (cli.nome || '') + ')';
+        }
+      }
+    }
+    if(!cli){
+      const nome = txt(cfNomeDoContrato(c));
+      if(cfNomeServivel(nome)){
+        cli = cfCriarClienteDoContrato(c, empId, codCli);
+        if(cli){ motivo = 'não existia cadastro com esse nome — cadastro reconstruído do próprio contrato'; relatorio.criados++; }
+      }
+    }
+    if(!cli){ relatorio.sobrou++; return; }
+    c.clienteId = cli.id;
+    if(codCli && !c.codClienteAntigo) c.codClienteAntigo = codCli;
+    c.vinculoAutomatico = true;
+    c.vinculoAutomaticoMotivo = motivo;
+    c.vinculadoPorNome = 'Cura automática (v6.1.4)';
+    c.vinculadoEm = c.vinculadoEm || new Date().toISOString();
+    relatorio.ligados++;
+    relatorio.detalhes.push({ contrato: codigoContrato(c), cliente: cli.nome || '', motivo: motivo });
+    try{
+      if(typeof logAction === 'function') logAction('contrato','vínculo-automático', c.id,
+        'Contrato ' + codigoContrato(c) + ' ligado sozinho ao cliente ' + (cli.nome || '') + ' (' + motivo + ')');
+    }catch(e){}
+  });
+  if(relatorio.ligados) salvar();
+  window.CONTRATOS_CURA_RELATORIO = relatorio;
+  return relatorio;
+}
+window.contratoCurarVinculos = function(){ const s = sess(); return cfCurarVinculos(s && s.empresaId); };
 function rawLocPorContrato(c){
   const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
   if(!cod) return null;
@@ -154,9 +303,20 @@ function criaClienteDeRaw(cod, row, empId){
   db.clientes.push(novo);
   return novo;
 }
+// v6.1.4 — grava no contrato o nome que veio do sistema antigo, para a lista
+// sempre mostrar o nome certo (mesmo quando não existe cadastro de cliente).
+function cfGuardarNomeDoContrato(c){
+  if(!c) return false;
+  const nome = txt(cfNomeDoContrato(c));
+  if(!nome) return false;
+  if(txt(c.clienteNome) === nome) return false;
+  c.clienteNome = nome;
+  return true;
+}
 function vincularContratosClientes(empId){
   let mudou = 0;
   (db.contratos||[]).filter(c => c.empresaId === empId).forEach(c => {
+    if(cfGuardarNomeDoContrato(c)) mudou++;
     if(c.clienteId && cliente(c.clienteId)) return;
     const raw = rawLocPorContrato(c);
     const codCli = codigo(c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE']));
@@ -217,6 +377,7 @@ function reconciliar(empId){
   const sigAntes=assinaturaReconciliar(empId);
   if(db.config.automacoes.contratosFinalReconAssinatura===sigAntes) return 0;
   const total = vincularContratosClientes(empId) + recriarParque(empId);
+  try{ cfCurarVinculos(empId); }catch(e){ /* cura não pode derrubar a tela */ }
   db.config.automacoes.contratosFinalReconAssinatura=assinaturaReconciliar(empId);
   if(total || sigAntes) salvar();
   return total;
@@ -261,7 +422,14 @@ function clienteContrato(c){
   if(!cl && c) cl = cfClientePorNomeParecido(cfNomeDoContrato(c), c.empresaId);
   return cl;
 }
-function nomeClienteContrato(c){ const cl=clienteContrato(c); return cl ? cl.nome : 'Cliente sem vínculo'; }
+function nomeClienteContrato(c){
+  const cl = clienteContrato(c);
+  if(cl) return cl.nome;
+  const guardado = txt(cfNomeDoContrato(c));
+  if(guardado) return guardado;   // v6.1.4 — o nome que veio do sistema antigo aparece
+  const cod = txt(c && (c.codClienteAntigo || c.codigoCliente));
+  return cod ? ('Cliente não cadastrado (código ' + cod + ')') : 'Contrato sem cliente no cadastro';
+}
 window.contratosFinalBuscar = function(){ STATE.busca=document.getElementById('search-contratos')?.value||''; STATE.status=document.getElementById('filter-contrato-status')?.value||''; window.renderContratos(); };
 window.contratosFinalSort = function(col){ STATE.sort=col; window.renderContratos(); };
 window.renderContratos = function(){
@@ -367,7 +535,9 @@ window.baixarContratoRTF = function(contratoId, tipo){
 };
 
 window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar, cfNormNome, cfClientePorNomeUnico, clienteContrato,
-  cfClientePorDocumento, cfClientePorNomeParecido, cfDocumentoDoContrato };
+  cfClientePorDocumento, cfClientePorNomeParecido, cfDocumentoDoContrato,
+  cfCurarVinculos, cfPontosDeNome, cfClientePorEvidencia,
+  cfNomeDoContrato, nomeClienteContrato, cfGuardarNomeDoContrato };
 
 const oldShowApp = window.showApp;
 window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };

@@ -826,7 +826,7 @@ function initTemplates(){
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
         <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
         <div>
@@ -860,6 +860,22 @@ function initTemplates(){
         <div>
           <p class="text-[11px] font-bold uppercase text-slate-500">Faturamento Mês</p>
           <p class="text-[18px] font-extrabold text-emerald-700" id="kpi-faturamento">R$ 0,00</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-700 grid place-items-center text-[22px]"><i class="ph ph-receipt"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Vendas do mês</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-vendas">0</p>
+          <p class="text-[11px] font-bold text-sky-700" id="kpi-vendas-valor">R$ 0,00</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas');setTimeout(function(){try{setNeoVendasTab('orcamentos')}catch(e){}},120)" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-700 grid place-items-center text-[22px]"><i class="ph ph-clipboard-text"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Orçamentos abertos</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-orcamentos">0</p>
+          <p class="text-[11px] text-slate-500">aguardando resposta</p>
         </div>
       </div>
     </div>
@@ -1033,6 +1049,25 @@ function renderDashboard(){
   document.getElementById('kpi-disponiveis').innerText=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length;
   const faturamentoMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth()).reduce((s,c)=>s+c.valor,0)+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0);
   document.getElementById('kpi-faturamento').innerText=fmtMoney(faturamentoMes);
+  // v6.1.4 (22/09/2026) — DONO: "dessa parte do dashboard do início, coloca pra
+  // mostrar também o de vendas/orçamentos". Vendas do mês = notinhas do mês sem
+  // as estornadas/canceladas/excluídas; Orçamentos abertos = os que ainda não
+  // viraram venda nem foram recusados.
+  try{
+    const hoje=new Date();
+    const vendasMes=db.vendas.filter(v=>empFilter(v.empresaId)
+      && !['excluido','estornado','cancelado'].includes(String(v.status||'').toLowerCase())
+      && (!v.tipo || String(v.tipo).toLowerCase()!=='orcamento')
+      && (function(d){ return d && !Number.isNaN(d.getTime()) && d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear(); })(new Date(v.data||v.dataVenda||v.criadoEm)));
+    const elVendas=document.getElementById('kpi-vendas');
+    if(elVendas) elVendas.innerText=vendasMes.length;
+    const elVendasValor=document.getElementById('kpi-vendas-valor');
+    if(elVendasValor) elVendasValor.innerText=fmtMoney(vendasMes.reduce((s2,v)=>s2+(Number(String(v.total||v.valorTotal||v.valor||0).replace(',','.'))||0),0));
+    const abertos=db.orcamentos.filter(o=>empFilter(o.empresaId)
+      && !['aprovado','reprovado','cancelado','excluido','convertido','vendido'].includes(String(o.status||'').toLowerCase()));
+    const elOrc=document.getElementById('kpi-orcamentos');
+    if(elOrc) elOrc.innerText=abertos.length;
+  }catch(e){ /* se uma lista não existir, o painel continua de pé */ }
   document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
   document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
   const ctx=document.getElementById('chartFinance');

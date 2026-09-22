@@ -17,6 +17,8 @@
     "verify:files": "node verify_pack.js --dry",
     "diag": "node diagnostico_exe.js",
     "links": "node links.js",
+    "guardar": "node guardar_repo.js",
+    "guardar:check": "node guardar_repo.js --check",
     "motor": "node gerar_motor_nuvem.js"
   },
   "build": {

@@ -47,7 +47,16 @@ function pintarRodape(){
   ver.title = 'Versão do sistema v'+curV + (selo ? ' • carimbo do arquivo que está rodando agora: '+selo : '') +
     ' — o carimbo muda a cada correção publicada (é o mesmo pedaço que vai na URL do app.bundle.js).';
   if(left){
-    left.textContent = 'Sistema Digicopy • Banco na Nuvem';
+    // v6.1.4 — o texto da esquerda era fixo ("Banco na Nuvem") mesmo quando a
+    // nuvem não estava conectada. Agora diz onde o banco está de verdade.
+    var online = false;
+    try{ online = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
+    var btnErro = left.querySelector('button');            // não perder o botão erro.txt
+    left.textContent = online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC';
+    if(btnErro) left.appendChild(btnErro);
+    left.title = online
+      ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
+      : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.';
     left.classList.add('text-left');
   }
   if(sess){

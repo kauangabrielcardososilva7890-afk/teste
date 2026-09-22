@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v5.26.0**  
+**Última versão:** **v6.1.4** (rodada 22/09 nº3 — branch `arena/01a0c087-teste`)  
 
 ---
 
@@ -4214,3 +4214,100 @@ O número só mudava quando a **versão** mudava (bump) — várias correções 
 
 - Suíte **187 testes, 0 falhas**; `npm run sync --check` OK; bundle SHA256 conferido; `npm run verify:files` OK.
 - Commit da rodada: `v6.1.4: conectou = sincroniza…` + este (rodapé/contratos/relatório).
+
+---
+
+## CONTINUIDADE 22/09 (9) — dashboard com vendas/orçamentos, vínculo curado pelo sistema e o ".git que volta"
+
+### 1) PEDIDO dele com FOTO do Início: mostrar vendas e orçamentos no dashboard
+
+- `app.js` → `initTemplates()`: a grade do Início virou **4 colunas** e ganhou **dois cartões**:
+  - **Vendas do mês** (`#kpi-vendas` + `#kpi-vendas-valor`) — clicar abre **vendas**;
+  - **Orçamentos abertos** (`#kpi-orcamentos`) — clicar abre **vendas na aba Orçamentos** (`setNeoVendasTab('orcamentos')`).
+- `renderDashboard()` calcula os dois dentro de `try{}catch{}` (não podem derrubar a tela):
+  vendas do mês = `db.vendas` do mês corrente, fora `excluido/estornado/cancelado` e fora `tipo='orcamento'`;
+  orçamentos abertos = `db.orcamentos` fora de `aprovado/reprovado/cancelado/excluido/convertido/vendido`.
+- Valor em dinheiro aceita `total`, `valorTotal` ou `valor` com vírgula (`Number(String(v).replace(',','.'))`).
+
+### 2) "Quero resolver o Cliente sem vínculo" — agora quem resolve é o SISTEMA (ordem dele)
+
+Ele recusou escolher na mão ("se é pra EU escolher o cliente esquece"). Então `contratos_final_patch.js` ganhou a **cura automática** `cfCurarVinculos(empId)`, chamada dentro de `reconciliar()` (roda sozinha quando a tela de contratos abre):
+
+1. código antigo do cliente (contrato e linha crua da locação) → 2. CNPJ/CPF (`cfDocumentoDoContrato`/`cfClientePorDocumento`) → 3. nome igual e único → 4. **evidência** (`cfClientePorEvidencia`: quem já aparece no parque/leituras/OS/vendas daquele contrato) → 5. **nome parecido por pontuação** (`cfPontosDeNome`/`cfPontuar`); empate é decidido pelo **cadastro mais antigo** e o porquê vai escrito → 6. se não existe cadastro, **reconstrói** o cliente com o nome que veio do sistema antigo (`cfCriarClienteDoContrato`, marcado `revisar:true`).
+- Travas: `CF_NOME_GENERICO`/`cfNomeServivel` — nome genérico ("Cliente", "Balcão") **não** vira cadastro; parecido só liga quando aponta para **UM** cadastro (2+ = não chuta).
+- Cada decisão: `vinculoAutomatico` + `vinculoAutomaticoMotivo` no contrato e linha **`logAction('contrato','vínculo-automático', …)`** na Auditoria.
+- Nome na tela: `cfNomeDoContrato` lê MUITO mais campos (inclusive `cliente` objeto) e, via `dadosDoContratoAntigo`, a própria linha da LOCACAO; `cfGuardarNomeDoContrato` grava `clienteNome` no contrato. `nomeClienteContrato` só escreve "Cliente não cadastrado (código X)" quando não há NENHUM nome.
+- O botão **🔗 Vincular cliente** (linha, contrato aberto e painel de repetidos) fica como **rede de segurança**, não como obrigação.
+
+### 3) "O .git fica voltando pra trás" — cura e ferramenta
+
+- Causa: o checkout desta sessão pode ser recriado/rebobinado entre rodadas; o que não estiver no GitHub se perde. Quando o remoto andou, `push` dá "fetch first".
+- Conserto certo (e o que a ferramenta manda fazer): `git fetch origin <branch>` + **`git reset --soft FETCH_HEAD`** (nunca re-clone/pull/merge) + `node guardar_repo.js`.
+- **Novo:** `guardar_repo.js` (raiz) + `guardar_repo.cmd` (dois cliques no PC dele) + atalhos `npm run guardar` / `npm run guardar:check`. Ele: mostra o que mudou → `git add -A` + commit (mensagem automática com data/hora) → `push origin HEAD:<branch da sessão>` → se for recusado, imprime o conserto. `--check` só olha.
+- Regra de trabalho: **toda leva termina publicada** (commit + push) — é isso que impede a volta.
+
+### 4) Relatório de teste: fim da pergunta repetida
+
+- `RELATORIO_DE_TESTE_NF.html`: cada pergunta agora tem **estado** (`✅ resolvido antes` / `🆕 novo de 22/09` / `🔁 continua aberto`) e um **filtro "só o que falta testar"**. Total **39 perguntas** (parte **G** ganhou G4 sobre o `guardar_repo.cmd`). O contador soma separado: "Respondidas: X de 36 em aberto (3 já resolvidas antes)". O `.txt` marca `[JA OK]` e lista as já resolvidas fora da conta de "sem resposta".
+- `GUIA_DE_TESTE_NF.html`: C4 reescrito (a ordem de tentativas do sistema, reconstrução e honestidade do nome genérico), C5 com o texto novo da esquerda do rodapé e **C7** novo (o `guardar_repo.cmd`).
+- A pergunta do Kauan ("o `.exe`/motor já está no ar pelo PC dele") está respondida no relatório: **item 4 provado** — o `atualizar_motor_nuvem.cmd` dele terminou em `"versao":"5.26.4"` (version id `a17c7900-aca9-4016-9972-eccb3bcc4fda`).
+
+### 5) Rodapé (a pergunta "por que parou de atualizar")
+
+- `ajustes_v52245_rodape_versao_patch.js`: a esquerda parou de dizer "Banco na Nuvem" fixo → agora **"banco só neste PC"** ou **"banco neste PC + nuvem conectada"** (estado real); o botão `erro.txt` é **preservado** ao repintar; o meio continua `v6.1.4 • <carimbo>` (hash do `?v=` do bundle).
+- `ajustes_v52243` e `ajustes_v52244` não sobrescrevem mais o rodapé oficial (antes o último a rodar vencia e apagava a pessoa/sessão).
+
+### Validação
+
+- Suíte **188 testes, 0 falhas** (novo `test_ajustes_v6105.js` com 39 asserts da leva + `test_ajustes_v6104.js` com a cura, o CNPJ/parecido, o 🔗 e o rodapé vivo).
+- Ritual de build: `npm run bundle` → `npm run sync` → `node mobile/sync-www.js` → cópia para `mobile/android/app/src/main/assets/public/` → `npm run motor`.
+- Push ao fim da leva (regra nova): commit + `origin arena/01a0c087-teste`.
+
+---
+
+## CONTINUIDADE 22/09 (9) — dashboard com vendas/orçamentos, vínculo curado pelo sistema e o ".git que volta"
+
+### 1) PEDIDO dele com FOTO do Início: mostrar vendas e orçamentos no dashboard
+
+- `app.js` → `initTemplates()`: grade do Início agora em **4 colunas** com **dois cartões novos**:
+  - **Vendas do mês** (`#kpi-vendas` + `#kpi-vendas-valor`) — clique abre **vendas**;
+  - **Orçamentos abertos** (`#kpi-orcamentos`) — clique abre **vendas na aba Orçamentos** (`setNeoVendasTab('orcamentos')`).
+- `renderDashboard()` calcula os dois dentro de `try{}catch{}` (não podem derrubar a tela):
+  vendas do mês = `db.vendas` do mês corrente, fora `excluido/estornado/cancelado` e fora `tipo='orcamento'`;
+  orçamentos abertos = `db.orcamentos` fora de `aprovado/reprovado/cancelado/excluido/convertido/vendido`.
+- Valor em dinheiro aceita `total`, `valorTotal` ou `valor` (com vírgula normalizada).
+- Prova em teste: com 3 vendas (uma estornada, uma de 2020) o cartão mostra **1**; com 3 orçamentos (um aprovado) mostra **2**.
+
+### 2) "Quero resolver o Cliente sem vínculo" — quem resolve é o SISTEMA (ordem dele)
+
+Ele recusou escolher na mão ("se é pra EU escolher o cliente esquece"). Então `contratos_final_patch.js` ganhou a **cura automática** `cfCurarVinculos(empId)`, chamada dentro de `reconciliar()` (roda sozinha quando a tela de contratos abre):
+
+1. código antigo do cliente (contrato e linha crua da locação) → 2. CNPJ/CPF (`cfDocumentoDoContrato`/`cfClientePorDocumento`) → 3. nome igual e único → 4. **evidência** (`cfClientePorEvidencia`: quem já aparece no parque/leituras/OS/vendas daquele contrato) → 5. **nome parecido por pontuação** (`cfPontosDeNome`/`cfPontuar`); empate é decidido pelo **cadastro mais antigo** e o porquê vai escrito → 6. se não existe cadastro, **reconstrói** o cliente com o nome que veio do sistema antigo (`cfCriarClienteDoContrato`, `revisar:true`).
+- Travas: `CF_NOME_GENERICO`/`cfNomeServivel` — nome genérico ("Cliente", "Balcão") **não** vira cadastro; parecido só liga quando aponta para **UM** cadastro (2+ = não chuta).
+- Cada decisão: `vinculoAutomatico` + `vinculoAutomaticoMotivo` no contrato + **`logAction('contrato','vínculo-automático', …)`** na Auditoria.
+- Nome na tela: `cfNomeDoContrato` lê MUITO mais campos (inclusive `cliente` objeto) e, via `dadosDoContratoAntigo`, a própria linha da LOCACAO; `cfGuardarNomeDoContrato` grava `clienteNome` no contrato. `nomeClienteContrato` só escreve "Cliente não cadastrado (código X)" quando não há NENHUM nome.
+- O botão **🔗 Vincular cliente** (linha, contrato aberto e painel de repetidos) fica como **rede de segurança**, não como obrigação.
+
+### 3) "O .git fica voltando pra trás" — cura e ferramenta
+
+- Causa: o checkout desta sessão pode ser recriado/rebobinado entre rodadas; o que não estiver no GitHub se perde. Quando o remoto andou, `push` dá "fetch first".
+- Conserto certo (e o que a ferramenta manda fazer): `git fetch origin <branch>` + **`git reset --soft FETCH_HEAD`** (nunca re-clone/pull/merge) + `node guardar_repo.js`.
+- **Novo:** `guardar_repo.js` (raiz) + `guardar_repo.cmd` (dois cliques no PC dele) + atalhos `npm run guardar` / `npm run guardar:check`. Ele: mostra o que mudou → `git add -A` + commit → `push origin HEAD:<branch da sessão>` → se recusado, imprime o conserto. `--check` só olha, não mexe.
+- Regra de trabalho nova: **toda leva termina publicada** (commit + push) — é isso que impede a volta.
+
+### 4) Relatório de teste: fim da pergunta repetida
+
+- `RELATORIO_DE_TESTE_NF.html`: cada pergunta tem **estado** (`✅ resolvido antes` / `🆕 novo de 22/09` / `🔁 continua aberto`) + **filtro "só o que falta testar"**. Total **39 perguntas** (G4 nova sobre o `guardar_repo.cmd`). Contador separa: "Respondidas: X de 36 em aberto (3 já resolvidas antes)". O `.txt` marca `[JA OK]` e lista as já resolvidas fora da conta de "sem resposta".
+- `GUIA_DE_TESTE_NF.html`: **C4** reescrito (ordem de tentativas do sistema, reconstrução, honestidade do nome genérico), **C5** com o texto novo da esquerda do rodapé e **C7** novo (o `guardar_repo.cmd`).
+- Item 4 dele ("o `.exe`/motor já está no ar pelo PC dele"): **provado** — `atualizar_motor_nuvem.cmd` terminou em `"versao":"5.26.4"` (version id `a17c7900-aca9-4016-9972-eccb3bcc4fda`). Não precisa repetir.
+
+### 5) Rodapé (a pergunta "por que parou de atualizar")
+
+- `ajustes_v52245_rodape_versao_patch.js`: esquerda parou de dizer "Banco na Nuvem" fixo → **"banco só neste PC"** ou **"banco neste PC + nuvem conectada"**; o botão `erro.txt` é **preservado** ao repintar; o meio continua `v6.1.4 • <carimbo>` (hash do `?v=` do bundle).
+- `ajustes_v52243` e `ajustes_v52244` não sobrescrevem mais o rodapé oficial (antes o último a rodar vencia e apagava empresa/usuário).
+
+### Validação
+
+- Suíte **188 testes, 0 falhas** — novos: `test_ajustes_v6105.js` (39 asserts da leva) e as adições em `test_ajustes_v6104.js` (cura automática, CNPJ/parecido, 🔗, rodapé vivo) e `test_relatorio_teste_nf.js` (estados + filtro + contador).
+- Ritual de build: `npm run bundle` → `npm run sync` → `node mobile/sync-www.js` → cópia para `mobile/android/app/src/main/assets/public/` → `npm run motor`. Bundle sha256 `a71b9051b9e5ec9c`, `?v=6.1.4-a71b9051b9e5`.
+- Fim da leva: commit + `git push origin arena/01a0c087-teste` (regra: nada fica só no sandbox).

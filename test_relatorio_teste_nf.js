@@ -33,7 +33,7 @@ const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://teste-60f
 const w = dom.window, d = w.document;
 
 const perguntas = [...d.querySelectorAll('.item.pergunta')];
-ok('uma caixa por pergunta: 38 perguntas na tela', perguntas.length === 38);
+ok('uma caixa por pergunta: 39 perguntas na tela', perguntas.length === 39);
 ok('cada pergunta tem EXATAMENTE 3 caixas',
    perguntas.every(p => p.querySelectorAll('input[type=radio]').length === 3));
 ok('cada pergunta tem a caixa de texto opcional (observação)',
@@ -47,11 +47,11 @@ ok('as 3 caixas são: OK, não resolveu, não testei',
 // numeração das partes (A1..A6 · B1..B9 · C1..C8 · D1..D2 · E1..E6 · F1..F4 · G1..G3), sem buraco
 const esperados = [];
 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, 7).forEach((letra, i) => {
-  const quantos = [6, 9, 8, 2, 6, 4, 3][i];
+  const quantos = [6, 9, 8, 2, 6, 4, 4][i];
   for (let n = 1; n <= quantos; n++) esperados.push(letra + n);
 });
-ok('numeração completa e na ordem (A1..G3)',
-   esperados.length === 38 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
+ok('numeração completa e na ordem (A1..G4)',
+   esperados.length === 39 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
 // As 3 partes novas (22/09/2026): nuvem automática, contratos e rodapé
 ok('PARTE E pergunta a sincronização automática (conectou = sincroniza)',
    html.indexOf('PARTE E — SINCRONIZAÇÃO AUTOMÁTICA') >= 0 &&
@@ -61,6 +61,26 @@ ok('PARTE F pergunta contrato sem vínculo e o botão de vincular na mão',
    html.indexOf('Cliente sem vínculo') >= 0 && html.indexOf('🔗 Vincular cliente') >= 0);
 ok('PARTE G pergunta a versão e o carimbo do rodapé',
    html.indexOf('PARTE G — VERSÃO NO RODAPÉ') >= 0 && html.indexOf('carimbo') >= 0);
+// 22/09/2026 — ele reclamou: "tem algumas das mesmas perguntas, você não anotou
+// o que foi resolvido?" → cada pergunta traz o selo e existe o filtro.
+ok('pergunta já resolvida vem marcada (✅ resolvido antes)',
+   d.querySelectorAll('.item.pergunta[data-estado="ok"]').length === 3 &&
+   html.indexOf('✅ resolvido antes') >= 0);
+ok('pergunta nova de 22/09 vem marcada (🆕 novo de 22/09)',
+   d.querySelectorAll('.item.pergunta[data-estado="novo"]').length === 14);
+ok('existe o filtro "só o que falta testar"',
+   !!d.getElementById('so_faltando') && html.indexOf('só o que falta testar') >= 0);
+
+// filtro na prática: marcado esconde as "ok" e mostra a contagem
+(function(){
+  const chk = d.getElementById('so_faltando');
+  const total = d.querySelectorAll('.item.pergunta').length;
+  chk.checked = true; chk.dispatchEvent(new w.Event('change', { bubbles: true }));
+  const visiveis = [...d.querySelectorAll('.item.pergunta')].filter(el => !el.classList.contains('item-escondido')).length;
+  ok('filtro esconde só as 3 já resolvidas (' + visiveis + ' de ' + total + ')', visiveis === total - 3);
+  ok('o contador do filtro mostra quantas faltam', /perguntas em aberto/.test(d.getElementById('contagem-filtro').textContent));
+  chk.checked = false; chk.dispatchEvent(new w.Event('change', { bubbles: true }));
+})();
 
 // ── 3. Campos do dono: onde testou, correções, adições, caixa separada ─────
 ok('"onde você testou" com 3 caixas (navegador / .exe / os dois)',
@@ -104,8 +124,10 @@ escrever('ad_1', 'Queria um atalho para imprimir em 2 vias');
 escrever('geral', 'Testei só no exe do escritório.');
 marcar('VEREDITO', 'ressalvas');
 
-ok('contador acompanha o preenchimento (8 respondidas de 38)',
-   /Respondidas: <b>8<\/b> de <b>38<\/b>/.test(d.getElementById('contador').innerHTML));
+ok('contador acompanha o preenchimento (8 respondidas de 36 EM ABERTO)',
+   /Respondidas: <b>8<\/b> de <b>36<\/b> em aberto/.test(d.getElementById('contador').innerHTML));
+ok('o contador separa o que já foi resolvido antes (não repete pergunta resolvida)',
+   /3 já resolvidas antes/.test(d.getElementById('contador').innerHTML));
 
 const r = w.montarTexto();
 const txt = r.texto;
@@ -118,9 +140,11 @@ ok('pergunta respondida sai com a marca OK + observação',
 ok('pergunta não resolvida sai com a marca NAO + observação',
    /\[NAO\] B2 — .+\n\s+mostrou erro de internet em vez de senha/.test(txt));
 ok('pergunta não testada sai com a marca NT', /\[NT \] C4 — /.test(txt));
-ok('pergunta em branco sai como sem resposta no resumo', /30 sem resposta/.test(txt));
-ok('resumo conta certo (6 OK · 1 não resolveu · 1 não testei · 30 sem resposta)',
-   /RESUMO: 6 OK · 1 não resolveu · 1 não testei · 30 sem resposta/.test(txt));
+ok('pergunta em branco sai como sem resposta no resumo', /29 sem resposta/.test(txt));
+ok('resumo conta certo (5 OK · 1 não resolveu · 1 não testei · 29 sem resposta)',
+   /RESUMO: 5 OK · 1 não resolveu · 1 não testei · 29 sem resposta/.test(txt));
+ok('o .txt separa as 3 que já estavam resolvidas antes (fora da conta de sem resposta)',
+   /3 já resolvida\(s\) antes/.test(txt) && /\[JA OK\] C5/.test(txt));
 ok('pergunta em branco sai marcada como "---" no corpo do relatório',
    /\[---\] B1 — /.test(txt));
 ok('CORREÇÕES e ADIÇÕES saem escritas', /C1: Financeiro: filtro de data veio vazio/.test(txt) && /A1: Queria um atalho para imprimir em 2 vias/.test(txt));

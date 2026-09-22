@@ -232,9 +232,10 @@ window.clientesDuplicadosAbrir=async function(){
         return '<li style="margin:4px 0">Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+
           ' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(c.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button></li>';
       }).join('')+(semVinculo.length>12?'<li>… e mais '+(semVinculo.length-12)+'</li>':'')+'</ul>'+
-      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar sozinho pelo código, pelo CNPJ/CPF e pelo nome '+
-      '(quando aponta para UM só cadastro). O que sobrar, você resolve aqui: clique em <b>🔗 Vincular cliente</b> e escolha o cliente na lista. '+
-      'Nada é mesclado nem apagado — só o contrato passa a apontar para o cliente certo, e fica registrado na Auditoria.</p>'
+      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema liga isso <b>sozinho</b>: pelo código do sistema antigo, pelo CNPJ/CPF, '+
+      'pelo parque/leituras/OS daquele contrato e pelo nome (mesmo parecido). Se ainda sobrou algum, é porque o nome guardado no contrato é genérico '+
+      '(ex.: "Cliente") — aí o botão <b>🔗 Vincular cliente</b> continua ali como plano B. Nada é mesclado nem apagado, e cada decisão automática '+
+      'fica registrada na Auditoria com o motivo.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
   const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+

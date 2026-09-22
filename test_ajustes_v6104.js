@@ -351,6 +351,89 @@ function testarClientesEContratos(){
   ok(auditoria.some(a => a[0] === 'contrato' && a[1] === 'vincular'),
      'a escolha na mão entra na Auditoria');
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 22/09/2026 — DONO: "se é pra EU escolher o cliente esquece... era pra VOCÊ
+  // resolver, eu não lembro quem era quem, quem fez foi você". Então a prova
+  // agora é a CURA AUTOMÁTICA: nenhum contrato fica sem cliente por falta de
+  // alguém escolher na mão.
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log('\n== CURA AUTOMÁTICA DO VÍNCULO (o sistema resolve, não o dono) ==');
+  ok(typeof PC.cfCurarVinculos === 'function' && typeof PC.cfPontosDeNome === 'function',
+     'o módulo exporta a cura automática e a pontuação de nome');
+  ok(PC.cfPontosDeNome('Maria Jesus', 'Maria de Jesus Comércio de Papéis') > PC.cfPontosDeNome('Maria Jesus', 'Papelaria Central'),
+     'a pontuação prefere o nome realmente parecido');
+
+  const dbH = {
+    empresas: [{ id: 'emp' }],
+    clientes: [
+      { id: 'h1', empresaId: 'emp', codigo: '1', nome: 'Maria de Jesus Comércio de Papéis', criadoEm: '2019-01-01' },
+      { id: 'h2', empresaId: 'emp', codigo: '2', nome: 'Maria Jesus Papelaria', criadoEm: '2024-06-01' },
+      { id: 'h3', empresaId: 'emp', codigo: '3', nome: 'Papelaria Central', documento: '12.345.678/0001-99' }
+    ],
+    contratos: [
+      { id: 'hc1', empresaId: 'emp', numero: 'LC-1', clienteId: null, clienteNome: 'MARIA JESUS' },              // 2 parecidos → mais antigo
+      { id: 'hc2', empresaId: 'emp', numero: 'LC-2', clienteId: null, documento: '12345678000199' },            // só CNPJ
+      { id: 'hc3', empresaId: 'emp', numero: 'LC-3', clienteId: null, clienteNome: 'Gráfica Nova Era' },        // não existe → reconstrói
+      { id: 'hc4', empresaId: 'emp', numero: 'LC-4', clienteId: null, clienteNome: 'Cliente' },                 // nome genérico → não inventa
+      { id: 'hc5', empresaId: 'emp', numero: 'LC-5', clienteId: null, clienteNome: 'Cassia Ap Guides', codClienteAntigo: '9' }
+    ],
+    equipamentos: [], parque: [], leituras: [],
+    os: [{ id: 'o1', empresaId: 'emp', contratoId: 'hc5', clienteId: 'h3' }],   // evidência: a OS diz quem é
+    modulosDinamicos: {}, config: {}
+  };
+  dbH.clientes.push({ id: 'h9', empresaId: 'emp', codigo: '9', nome: 'Cassia Ap Guides de Souza Veloso e Bezerra' });
+  const ctxH = { window: {}, db: dbH };
+  new Function('window', 'db', 'console', srcC)(ctxH.window, ctxH.db, console);
+  const PCH = ctxH.window.CONTRATOS_FINAL_PURE;
+  const rel = PCH.cfCurarVinculos('emp');
+  const porNumero = n => dbH.contratos.find(c => c.numero === n);
+  ok(porNumero('LC-1').clienteId === 'h1' && /mais antigo/.test(porNumero('LC-1').vinculoAutomaticoMotivo || ''),
+     'nome parecido com 2 cadastros: escolhe o MAIS ANTIGO sozinho (e escreve o porquê)');
+  ok(porNumero('LC-2').clienteId === 'h3', 'contrato só com CNPJ: liga pelo documento');
+  ok(porNumero('LC-3').clienteId && dbH.clientes.find(c => c.id === porNumero('LC-3').clienteId).revisar === true,
+     'nome que não existia: RECONSTRÓI o cadastro do próprio contrato (marcado para revisão)');
+  ok(porNumero('LC-4').clienteId === null, 'nome genérico ("Cliente") NÃO vira cadastro novo — honesto');
+  ok(porNumero('LC-5').clienteId === 'h9', 'contrato com código antigo liga pelo código');
+  ok(rel.ligados === 4 && rel.criados === 1 && rel.sobrou === 1,
+     'relatório da cura bate (4 ligados, 1 cadastro reconstruído, 1 sem pista): ' + JSON.stringify(rel.ligados + '/' + rel.criados + '/' + rel.sobrou));
+  ok(dbH.clientes.filter(c => c.criadoPor === 'cura-contrato').length === 1,
+     'a cura criou UM cadastro só (não poluiu a lista de clientes)');
+  ok(PCH.clienteContrato(porNumero('LC-3')) !== null && dbH.contratos.filter(c => c.vinculoAutomatico).length === 4,
+     'todos os contratos ligados ficam marcados como vínculo automático (dá para auditar depois)');
+  const srcH = fs.readFileSync('contratos_final_patch.js', 'utf8');
+  ok(srcH.indexOf('cfCurarVinculos(empId)') >= 0 && srcH.indexOf('try{ cfCurarVinculos(empId); }catch(e)') >= 0,
+     'a cura roda sozinha quando a tela de contratos reconcilia (ninguém precisa clicar)');
+  ok(srcH.indexOf("logAction('contrato','vínculo-automático'") >= 0,
+     'cada decisão automática entra na Auditoria com o motivo');
+  ok(srcH.indexOf('CF_NOME_GENERICO') >= 0, 'existe a trava contra nome genérico virando cadastro');
+
+  // ── NOME DO CLIENTE NO CONTRATO (o pedido dele de 22/09: "só quero que
+  // resolva essa parte onde os contratos mostram 'cliente sem vínculo'") ─────
+  console.log('\n== CONTRATO MOSTRA O NOME CERTO (nunca mais "sem vínculo" à toa) ==');
+  const dbN = {
+    empresas: [{ id: 'emp' }], clientes: [], equipamentos: [], parque: [], leituras: [], os: [],
+    modulosDinamicos: { LOCACAO: { dados: [{ COD_LOCACAO: 12, NOME: 'Gráfica Nova Era ME', LO_COD_CLIENTE: 77 }] } },
+    config: {},
+    contratos: [
+      { id: 'n1', empresaId: 'emp', numero: 'LC-12', clienteId: null },                                   // nome vem da linha antiga
+      { id: 'n2', empresaId: 'emp', numero: 'LC-9', clienteId: null, cliente: { nome: 'Escola Aprender' } }, // nome em objeto
+      { id: 'n3', empresaId: 'emp', numero: 'LC-8', clienteId: null, codClienteAntigo: '55' }              // sem nome → mostra o código
+    ]
+  };
+  const ctxN = { window: {}, db: dbN };
+  new Function('window', 'db', 'console', srcC)(ctxN.window, ctxN.db, console);
+  const PCN = ctxN.window.CONTRATOS_FINAL_PURE;
+  ok(PCN.cfNomeDoContrato(dbN.contratos[0]) === 'Gráfica Nova Era ME',
+     'acha o nome do cliente na linha antiga da locação (era isso que faltava)');
+  ok(PCN.cfNomeDoContrato(dbN.contratos[1]) === 'Escola Aprender',
+     'acha o nome quando ele veio dentro de um objeto cliente');
+  ok(PCN.vincularContratosClientes('emp') >= 1 && dbN.contratos[0].clienteNome === 'Gráfica Nova Era ME',
+     'grava o nome no contrato (a lista passa a mostrar o nome sempre)');
+  ok(srcC.indexOf("return cod ? ('Cliente não cadastrado (código ' + cod + ')')") >= 0,
+     'quando não existe nome nenhum, mostra o código do cliente em vez de "sem vínculo"');
+  ok(srcC.indexOf('function dadosDoContratoAntigo(c)') >= 0 && srcC.indexOf('cfGuardarNomeDoContrato') >= 0,
+     'o módulo tem a busca ampliada e o gravador do nome do sistema antigo');
+
   const srcV = fs.readFileSync('ajustes_v5214_clientes_visiveis_patch.js', 'utf8');
   ok(srcV.indexOf('clientesDuplicadosVincularContrato') >= 0 && srcV.indexOf('🔗 Vincular cliente') >= 0,
      'o painel de clientes repetidos também tem o botão de vincular por contrato');
@@ -525,6 +608,58 @@ async function testarCheckupDaNuvem(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// DASHBOARD: cartões de VENDAS e ORÇAMENTOS (pedido dele, 22/09, com a imagem
+// do Início pedindo "coloca pra mostrar também o de vendas/orçamentos").
+// ═══════════════════════════════════════════════════════════════════════════
+function testarCartoesDoInicio(){
+  console.log('\n== INÍCIO: cartões de vendas e orçamentos ==');
+  const app = fs.readFileSync('app.js', 'utf8');
+  ok(app.indexOf('id="kpi-vendas"') >= 0 && app.indexOf('id="kpi-orcamentos"') >= 0,
+     'os dois cartões novos existem no painel do Início');
+  ok(/Vendas do mês/.test(app) && /Orçamentos abertos/.test(app), 'os títulos estão em português e claros');
+  ok(app.indexOf("onclick=\"navigateTo('vendas')\" style=\"cursor:pointer\"") >= 0 &&
+     app.indexOf("setNeoVendasTab('orcamentos')") >= 0,
+     'clicar leva para as notinhas e, no caso dos orçamentos, já abre a aba Orçamentos');
+  ok(app.indexOf("document.getElementById('kpi-vendas').innerText=vendasMes.length") >= 0 ||
+     app.indexOf('elVendas.innerText=vendasMes.length') >= 0,
+     'a contagem de vendas do mês é calculada de verdade (não é número fixo)');
+  ok(app.indexOf("elOrc.innerText=abertos.length") >= 0, 'a contagem de orçamentos abertos é calculada de verdade');
+  ok(app.indexOf("['excluido','estornado','cancelado']") >= 0,
+     'venda estornada/cancelada não entra no cartão (número honesto)');
+
+  // roda o cálculo com dados de teste, num DOM pequeno, para provar o número
+  const dom = new (require('jsdom').JSDOM)('<div id="kpi-contratos"></div><div id="kpi-parque"></div><div id="kpi-os"></div><div id="kpi-disponiveis"></div><div id="kpi-faturamento"></div><div id="kpi-vendas"></div><div id="kpi-vendas-valor"></div><div id="kpi-orcamentos"></div><div id="kpi-auditoria"></div><div id="alert-vencendo"></div><div id="current-date"></div><div id="status-user-home"></div>');
+  const w = dom.window;
+  const agora = new Date();
+  const dbD = {
+    empresas: [{ id: 'emp' }], usuarios: [], logs: [], produtos: [], recargas: [], equipamentos: [],
+    contratos: [], parque: [], leituras: [], os: [], contasReceber: [], contasPagar: [],
+    vendas: [
+      { id: 'v1', empresaId: 'emp', total: 100, data: agora.toISOString() },
+      { id: 'v2', empresaId: 'emp', total: 50, data: agora.toISOString(), status: 'estornado' },
+      { id: 'v3', empresaId: 'emp', total: 10, data: '2020-01-01' }
+    ],
+    orcamentos: [
+      { id: 'o1', empresaId: 'emp', status: 'aberto' },
+      { id: 'o2', empresaId: 'emp', status: 'aprovado' },
+      { id: 'o3', empresaId: 'emp', status: 'pendente' }
+    ]
+  };
+  const ini2 = app.indexOf('function renderDashboard()');
+  const fim2 = app.indexOf('\nfunction ', ini2 + 10);
+  const trecho = app.slice(ini2, fim2 > ini2 ? fim2 : ini2 + 6000);
+  try{
+    new Function('document', 'db', 'getSession', 'fmtMoney', trecho + '\nrenderDashboard();')
+      (w.document, dbD, () => ({ empresaId: 'emp', usuarioNome: 'Kauan' }), v => 'R$ ' + Number(v || 0).toFixed(2));
+  }catch(e){ /* o pedaço do gráfico pode reclamar; o que importa é o cartão */ }
+  ok(String(w.document.getElementById('kpi-vendas').innerText) === '1',
+     'só a venda DESTE mês e não estornada entra na conta (achou: ' + w.document.getElementById('kpi-vendas').innerText + ')');
+  ok(String(w.document.getElementById('kpi-orcamentos').innerText) === '2',
+     'orçamento aprovado não conta como aberto (achou: ' + w.document.getElementById('kpi-orcamentos').innerText + ')');
+  dom.window.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // RODAPÉ: "por que parou de atualizar?" — ele tem que mostrar a versão E o
 // carimbo do arquivo que está rodando (o mesmo hash do ?v= do app.bundle.js).
 // ═══════════════════════════════════════════════════════════════════════════
@@ -556,11 +691,97 @@ async function testarRodapeDaVersao(){
   dom.window.close(); sem.window.close();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// v6.1.4 (22/09, nº3) — "QUERO RESOLVER O CLIENTE SEM VÍNCULO": o sistema acha
+// o cliente por CNPJ/CPF e por nome parecido (quando é seguro) e, quando sobra
+// algum, o 🔗 resolve na tela. O rodapé passa a dizer onde o banco está.
+// ═══════════════════════════════════════════════════════════════════════════
+async function testarAchouClienteERodapeVivo(){
+  const srcC = fs.readFileSync('contratos_final_patch.js', 'utf8');
+  const dbA = {
+    empresas: [{ id: 'emp' }],
+    clientes: [
+      { id: 'a1', empresaId: 'emp', codigo: '1', nome: 'Papelaria Central Ltda', documento: '12.345.678/0001-99' },
+      { id: 'a2', empresaId: 'emp', codigo: '2', nome: 'Irmandade São João' },
+      { id: 'a3', empresaId: 'emp', codigo: '3', nome: 'Irmandade São João Batista' }
+    ],
+    contratos: [
+      { id: 'ac1', empresaId: 'emp', numero: 'LC-1', clienteId: null, documento: '12345678000199' },
+      { id: 'ac2', empresaId: 'emp', numero: 'LC-2', clienteId: null, clienteNome: 'IRMANDADE SAO JOAO' }
+    ],
+    equipamentos: [], parque: [], leituras: [], os: [], modulosDinamicos: {}, config: {}
+  };
+  const ctxA = { window: {}, db: dbA };
+  new Function('window', 'db', 'console', srcC)(ctxA.window, ctxA.db, console);
+  const PA = ctxA.window.CONTRATOS_FINAL_PURE;
+  console.log('\n== CONTRATO SEM VÍNCULO: mais formas de achar sozinho ==');
+  ok(PA.cfDocumentoDoContrato(dbA.contratos[0]) === '12345678000199',
+     'lê o CNPJ/CPF do contrato em qualquer campo conhecido (só dígitos, sem pontuação)');
+  ok((PA.cfClientePorDocumento(dbA.contratos[0], 'emp') || {}).id === 'a1',
+     'CNPJ igual: liga no cadastro certo sem ninguém escolher');
+  ok(PA.cfClientePorNomeParecido('IRMANDADE SAO JOAO', 'emp') === null,
+     'nome parecido com DOIS cadastros (São João x São João Batista): NÃO chuta');
+  PA.vincularContratosClientes('emp');
+  ok(dbA.contratos[0].clienteId === 'a1', 'o contrato do CNPJ ficou ligado depois de reconciliar');
+  ok(dbA.contratos[1].clienteId === 'a2', 'nome IGUAL (mesmo sem acento) liga sem ninguém escolher');
+  ok(PA.cfClientePorNomeParecido('IRMANDADE SAO JOAO BATISTA DE DEUS', 'emp') === null,
+     'se a semelhança aponta para dois cadastros, o sistema NÃO chuta (fica para o 🔗) — nada de ligar errado');
+  ok((PA.cfClientePorNomeParecido('IRMANDADE SAO JOAO DE DEUS', 'emp') || {}).id === 'a2',
+     'quando só UM cadastro serve de base para o nome, ele liga (é o caso "empresa com nome maior")');
+
+  // ── o 🔗 na tela: abre, filtra e salva no contrato ────────────────────────
+  console.log('\n== 🔗 VINCULAR: abre a lista, filtra e salva ==');
+  const { JSDOM } = require('jsdom');
+  const domV = new JSDOM('<body><div id="modal-root" class="hidden"><div id="modal-title"></div><div id="modal-body"></div><div id="modal-footer"></div></div></body>');
+  const wV = domV.window;
+  const log = [];
+  const dbV = JSON.parse(JSON.stringify(dbA));
+  const ctxV = { window: wV, db: dbV };
+  new Function('window', 'db', 'document', 'getSession', 'logAction', 'saveDB', 'toast', 'console', srcC)
+    (wV, dbV, wV.document, () => ({ empresaId: 'emp', usuarioNome: 'Kauan' }),
+     (...a) => log.push(a.join(' ')), () => {}, () => {}, console);
+  wV.contratoVincularCliente && wV.contratoVincularCliente('ac2');
+  const modal = wV.document.getElementById('modal-body').innerHTML;
+  ok(modal.indexOf('cfv-busca') >= 0 && modal.indexOf('Irmandade') >= 0,
+     'abre a janelinha com a lista de clientes e a caixinha de filtro');
+  wV.cfvFiltrar && wV.cfvFiltrar('Batista');
+  const filtrado = wV.document.getElementById('cfv-lista').innerHTML;
+  ok(filtrado.indexOf('Batista') >= 0 && filtrado.indexOf('Papelaria') < 0, 'o filtro funciona (acha por pedaço do nome)');
+  wV.cfvFiltrar && wV.cfvFiltrar('12345678');
+  ok(wV.document.getElementById('cfv-lista').innerHTML.indexOf('Papelaria') >= 0,
+     'o filtro também acha pelo CNPJ digitado');
+  wV.cfvEscolher && wV.cfvEscolher('a3');
+  ok(dbV.contratos.find(c => c.id === 'ac2').clienteId === 'a3',
+     'escolher na lista grava o cliente no contrato (era o que faltava para o dono resolver sozinho)');
+  ok(log.join(' ').indexOf('vincul') >= 0, 'e fica registrado na Auditoria (' + (log[0] || 'sem log') + ')');
+  domV.window.close();
+
+  // ── rodapé: diz onde o banco está, sem perder o botão erro.txt ───────────
+  console.log('\n== RODAPÉ: versão + carimbo + onde o banco está ==');
+  const srcRod = fs.readFileSync('ajustes_v52245_rodape_versao_patch.js', 'utf8');
+  const domR = new JSDOM('<body><footer><span>Sistema Digicopy • Banco na Nuvem <button id="erro">erro.txt</button></span>' +
+    '<span id="footer-version">v6.1.4</span><span id="footer-session">Empresa - Usuário</span></footer>' +
+    '<script src="./app.bundle.js?v=6.1.4-e65f19cc495b"></script></body>', { runScripts: 'outside-only' });
+  domR.window.DIGICOPY_APP_VERSION = '6.1.4';
+  domR.window.eval(srcRod);
+  await new Promise(r => setTimeout(r, 900));   // o rodapé se pinta em 200ms/800ms
+  const dR = domR.window.document;
+  ok(/^v6\.1\.4 • e65f19cc$/.test(dR.getElementById('footer-version').textContent),
+     'o rodapé mostra versão + carimbo do arquivo que está rodando (' + dR.getElementById('footer-version').textContent + ')');
+  ok(!!dR.getElementById('erro'), 'o botão erro.txt continua no rodapé (não foi apagado ao repintar)');
+  ok(/banco só neste PC|banco neste PC \+ nuvem conectada/.test(dR.querySelector('footer span').textContent),
+     'a esquerda diz onde o banco está de verdade (antes era "Banco na Nuvem" fixo): ' +
+     JSON.stringify(dR.querySelector('footer span').textContent.trim()));
+  domR.window.close();
+}
+
 (async function(){
   await testarBarraDeMenus();
   await testarRodapeDaVersao();
+  testarCartoesDoInicio();
   await testarMotorDaNuvem();
   testarClientesEContratos();
+  await testarAchouClienteERodapeVivo();
   testarCacheLinksEMotor();
   await testarCheckupDaNuvem();
   if (falhas > 0){ console.error('\n' + falhas + ' assert(s) FALHARAM'); process.exit(1); }

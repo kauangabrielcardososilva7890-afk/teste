@@ -74,10 +74,9 @@ function pintarMenuAberto(view){
 
 function pintarRodape(){
   var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
-  var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
-  }
+  // v6.1.4 — o rodapé oficial (v52245) já escreve a versão + o carimbo do build
+  // no <span id="footer-version">. Aqui só cuidamos do resto da esquerda para não
+  // brigar com ele (antes este patch sobrescrevia tudo com "Banco na Nuvem").
   var top = document.getElementById('app-title-version');
   if(top && !/v5\.22\./.test(top.textContent||'')){
     top.textContent = 'Sistema Digicopy v'+curV;

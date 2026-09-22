@@ -213,14 +213,15 @@
   <li>Os consertos: <b>Baixar tudo de novo</b>, <b>Enviar este PC inteiro</b> e <b>Sincronizar agora</b>. A tela avisa que <b>nada é apagado</b>.</li>
 </ul></div>
 
-<div class="passo"><b class="t">C4. Contrato que mostrava "Cliente sem vínculo"</b>
+<div class="passo"><b class="t">C4. Contrato que mostrava "Cliente sem vínculo" (quem resolve é o SISTEMA)</b>
 <ul class="check">
-  <li>Abra <b>Contratos</b> e procure algum que ainda esteja escrito <b>"Cliente sem vínculo"</b>.</li>
-  <li>Se o cliente existe no cadastro, o sistema agora acha sozinho pelo <b>código</b>, pelo <b>CNPJ/CPF</b> e pelo <b>nome</b> (quando o nome aponta para um cadastro só) — confira se já aparece o nome certo.</li>
-  <li>Se ainda estiver sem vínculo, na própria linha do contrato tem o botão <b>🔗 Vincular cliente</b>: clique, filtre pelo nome e escolha o cliente. O contrato passa a apontar para ele na hora.</li>
-  <li>O mesmo atalho existe dentro do contrato aberto (duplo clique) e na janela de <b>clientes duplicados/repetidos</b>.</li>
-  <li>Confira na <b>Auditoria</b> a linha do vínculo (quem vinculou e quando).</li>
-  <li>Regra que continua valendo: <b>nada é mesclado</b> e <b>nada é apagado</b> — o vínculo só diz qual cliente é o dono daquele contrato.</li>
+  <li>Abra <b>Contratos</b>. O que você tem que ver: <b>o nome do cliente</b> na linha — não mais "Cliente sem vínculo" à toa.</li>
+  <li>O sistema tenta sozinho, nesta ordem: <b>código antigo</b> do cliente → <b>CNPJ/CPF</b> → <b>nome igual</b> → <b>evidência</b> (quem já aparece no parque, nas leituras, nas OS ou nas vendas daquele contrato) → <b>nome parecido</b> (ex.: "Maria Jesus" acha "Maria de Jesus Comércio de Papéis"). Isso roda sozinho quando a tela de contratos abre — <b>você não escolhe nada</b>.</li>
+  <li>Se o cliente não existir em cadastro nenhum, ele <b>reconstrói o cadastro com o nome que veio do sistema antigo</b> (marcado para revisão) — o nome que estava lá é o nome que aparece.</li>
+  <li>Quando o nome guardado é genérico (ex.: só "Cliente"), ele <b>não inventa cadastro</b>: como honestidade, mostra <b>"Cliente não cadastrado (código X)"</b> em vez de mentir um nome.</li>
+  <li>Só nesse caso de sobra, e como <b>rede de segurança</b>, a linha traz o botão <b>🔗 Vincular cliente</b> (também dentro do contrato aberto e na janela de clientes repetidos). Se você não quiser clicar, não precisa: me diga qual contrato ficou sobrando que eu ajusto na origem.</li>
+  <li>O que o sistema ligou sozinho fica <b>marcado no contrato</b> e escrito na <b>Auditoria</b> com o motivo ("código antigo 12", "nome parecido 88%", "cadastro reconstruído").</li>
+  <li>Regra que continua valendo: <b>nada é mesclado</b> e <b>nada é apagado</b> — vínculo só diz qual cliente é o dono daquele contrato.</li>
 </ul></div>
 
 <div class="passo"><b class="t">C5. Rodapé da versão (por que ele "parou" e o que mudou)</b>
@@ -229,6 +230,8 @@
   <li>Passe o mouse em cima: o balãozinho explica que o carimbo é do arquivo que está rodando agora.</li>
   <li>O carimbo muda a cada correção publicada (o número da versão só muda quando eu subo a versão).</li>
   <li>Se o carimbo não for igual ao que eu te mandei no chat: <code>Ctrl+Shift+R</code> uma vez e confira de novo.</li>
+  <li>Do lado esquerdo o rodapé agora diz <b>onde o banco está de verdade</b>: "banco só neste PC" ou "banco neste PC + nuvem conectada" (antes ficava escrito "Banco na Nuvem" mesmo sem nuvem).</li>
+  <li>O botãozinho <b>erro.txt</b> continua no rodapé (ele é a prova de que o rodapé é pintado sem apagar o resto).</li>
 </ul></div>
 
 <div class="passo"><b class="t">C6. Atualizar o motor da nuvem (o passo real — só quando eu avisar)</b>
@@ -238,6 +241,15 @@
   <li><b>Dois cliques</b> em <b>atualizar_motor_nuvem.cmd</b>. Ele faz sozinho: mostra o que falta no banco → aplica as migrações (se perguntar <code>Proceed? (y/n)</code>, digite <code>y</code> e Enter) → publica → e no fim mostra a versão no ar.</li>
   <li>No fim tem que aparecer <code>"versao":"5.26.4"</code> ou mais novo. A janela fica aberta: <b>tire uma foto e me mande</b>.</li>
   <li>Se travar, não feche a janela — ela mostra o motivo. Foto e me manda.</li>
+</ul></div>
+
+<div class="passo"><b class="t">C7. "O .git fica voltando pra trás" — como não perder mais nada</b>
+<ul class="check">
+  <li>Existe agora o <b>guardar_repo.cmd</b> (fica na <b>raiz do sistema</b>, ao lado do <code>GERAR_EXE.cmd</code>): <b>dois cliques</b> nele.</li>
+  <li>Ele mostra o que mudou, <b>salva</b> e <b>envia para o GitHub</b> — e no fim diz o nome do último commit guardado.</li>
+  <li>Se aparecer a mensagem de que a branch andou, ele mesmo escreve o conserto (<code>git fetch</code> + <code>git reset --soft FETCH_HEAD</code> + rodar de novo). <b>Nunca</b> baixar tudo de novo nem apagar a pasta.</li>
+  <li>Para só olhar (sem salvar nada): <code>node guardar_repo.js --check</code>.</li>
+  <li>Teste agora: rode o <code>guardar_repo.cmd</code>, tire foto da última linha e me mande.</li>
 </ul></div>
 
 <h2>Se der erro: o que copiar</h2>

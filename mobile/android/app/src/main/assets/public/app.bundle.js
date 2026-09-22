@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: d73bd029a5a610d9
+ * scripts: 222 | sha256: 09b71b18cfa87d67
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1078,7 +1078,7 @@ function initTemplates(){
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('contratos')" style="cursor:pointer">
         <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 grid place-items-center text-[22px]"><i class="ph ph-file-text"></i></div>
         <div>
@@ -1112,6 +1112,22 @@ function initTemplates(){
         <div>
           <p class="text-[11px] font-bold uppercase text-slate-500">Faturamento Mês</p>
           <p class="text-[18px] font-extrabold text-emerald-700" id="kpi-faturamento">R$ 0,00</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas')" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-700 grid place-items-center text-[22px]"><i class="ph ph-receipt"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Vendas do mês</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-vendas">0</p>
+          <p class="text-[11px] font-bold text-sky-700" id="kpi-vendas-valor">R$ 0,00</p>
+        </div>
+      </div>
+      <div class="rounded-[16px] bg-white border p-4 shadow-sm flex items-center gap-3" onclick="navigateTo('vendas');setTimeout(function(){try{setNeoVendasTab('orcamentos')}catch(e){}},120)" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-700 grid place-items-center text-[22px]"><i class="ph ph-clipboard-text"></i></div>
+        <div>
+          <p class="text-[11px] font-bold uppercase text-slate-500">Orçamentos abertos</p>
+          <p class="text-[20px] font-extrabold text-slate-800" id="kpi-orcamentos">0</p>
+          <p class="text-[11px] text-slate-500">aguardando resposta</p>
         </div>
       </div>
     </div>
@@ -1285,6 +1301,25 @@ function renderDashboard(){
   document.getElementById('kpi-disponiveis').innerText=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && e.status==='disponivel').length;
   const faturamentoMes=db.contasReceber.filter(cr=>cr.empresaId===sess.empresaId && new Date(cr.vencimento).getMonth()===new Date().getMonth()).reduce((s,c)=>s+c.valor,0)+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').reduce((s,c)=>s+c.valorMensalFixo,0);
   document.getElementById('kpi-faturamento').innerText=fmtMoney(faturamentoMes);
+  // v6.1.4 (22/09/2026) — DONO: "dessa parte do dashboard do início, coloca pra
+  // mostrar também o de vendas/orçamentos". Vendas do mês = notinhas do mês sem
+  // as estornadas/canceladas/excluídas; Orçamentos abertos = os que ainda não
+  // viraram venda nem foram recusados.
+  try{
+    const hoje=new Date();
+    const vendasMes=db.vendas.filter(v=>empFilter(v.empresaId)
+      && !['excluido','estornado','cancelado'].includes(String(v.status||'').toLowerCase())
+      && (!v.tipo || String(v.tipo).toLowerCase()!=='orcamento')
+      && (function(d){ return d && !Number.isNaN(d.getTime()) && d.getMonth()===hoje.getMonth() && d.getFullYear()===hoje.getFullYear(); })(new Date(v.data||v.dataVenda||v.criadoEm)));
+    const elVendas=document.getElementById('kpi-vendas');
+    if(elVendas) elVendas.innerText=vendasMes.length;
+    const elVendasValor=document.getElementById('kpi-vendas-valor');
+    if(elVendasValor) elVendasValor.innerText=fmtMoney(vendasMes.reduce((s2,v)=>s2+(Number(String(v.total||v.valorTotal||v.valor||0).replace(',','.'))||0),0));
+    const abertos=db.orcamentos.filter(o=>empFilter(o.empresaId)
+      && !['aprovado','reprovado','cancelado','excluido','convertido','vendido'].includes(String(o.status||'').toLowerCase()));
+    const elOrc=document.getElementById('kpi-orcamentos');
+    if(elOrc) elOrc.innerText=abertos.length;
+  }catch(e){ /* se uma lista não existir, o painel continua de pé */ }
   document.getElementById('alert-vencendo').innerText=db.contratos.filter(c=>c.empresaId===sess.empresaId && ((new Date(c.dataFim)-new Date())/(1000*60*60*24)>0 && (new Date(c.dataFim)-new Date())/(1000*60*60*24)<30)).length;
   document.getElementById('kpi-auditoria').innerText=db.logs.filter(l=>l.empresaId===sess.empresaId && new Date(l.dataHora).toDateString()===new Date().toDateString()).length+' hoje';
   const ctx=document.getElementById('chartFinance');
@@ -12255,10 +12290,31 @@ function cfNormNome(v){
 }
 function cfNomeDoContrato(c){
   if(!c) return '';
-  const direto = txt(c.clienteNome || c.nomeCliente || c.cliente || c.clienteRazao || c.razaoSocial || c.nomeFantasia);
+  // v6.1.4 (22/09/2026) — DONO: "só quero que resolva essa parte onde os
+  // contratos mostram 'cliente sem vínculo' para o nome correto". O nome pode
+  // ter entrado por QUALQUER um destes campos; era isso que faltava.
+  const direto = txt(
+    c.clienteNome || c.nomeCliente || c.clienteRazao || c.razaoSocial ||
+    c.nomeFantasia || c.fantasiaCliente || c.nomeDoCliente || c.razao ||
+    (c.cliente && typeof c.cliente === 'object' ? (c.cliente.nome || c.cliente.fantasia || c.cliente.razaoSocial) : c.cliente) ||
+    c.nome || c.descricaoCliente
+  );
   if(direto) return direto;
-  const raw = rawLocPorContrato(c);
-  return raw ? txt(nomeRow(raw)) : '';
+  const row = dadosDoContratoAntigo(c);
+  return row ? txt(nomeRow(row)) : '';
+}
+// v6.1.4 — dados do contrato no sistema antigo: procura a linha da locação pelo
+// código do contrato em TODOS os campos de código conhecidos e, se não achar,
+// aceita a linha cujo código do cliente bate com o do contrato.
+function dadosDoContratoAntigo(c){
+  const bruto = rawLocPorContrato(c);
+  if(bruto) return bruto;
+  const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
+  if(!cod) return null;
+  const linhas = linhasModulo(/^LOCACAO$|^LOCAÇÃO$|CONTRATO/i);
+  const porCliente = linhas.find(r => codigo(pick(r, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE'])) === codigo(c && c.codClienteAntigo));
+  if(porCliente) return porCliente;
+  return linhas.find(r => Object.keys(r || {}).some(k => /COD|NUM|ID/i.test(k) && codigo(r[k]) === cod)) || null;
 }
 function cfClientesPorNome(nome, empId){
   const alvo = cfNormNome(nome);
@@ -12306,6 +12362,134 @@ function cfClientePorNomeParecido(nome, empId){
   });
   return achados.length === 1 ? achados[0] : null; // 2+ = ambíguo: quem decide é o dono, no botão
 }
+// ══ v6.1.4 (22/09/2026) — CURA AUTOMÁTICA do vínculo (ordem dele: "era pra
+// VOCÊ resolver, eu não lembro quem era quem") ═════════════════════════════
+// Ninguém precisa escolher nada. Para cada contrato sem cliente o sistema:
+//   1) tenta o CÓDIGO antigo do cliente (contrato e linha crua da locação);
+//   2) tenta o CNPJ/CPF;
+//   3) tenta a EVIDÊNCIA: quem já aparece ligado a este contrato (parque,
+//      leituras, OS, vendas, títulos) aponta o cliente;
+//   4) tenta o nome por PONTUAÇÃO parecida (tokens) — resolve inclusive nome
+//      repetido, escolhendo o cadastro mais antigo/código mais próximo, com o
+//      motivo escrito na Auditoria;
+//   5) se não existe nenhuma pista, RECONSTRÓI o cadastro a partir do nome que
+//      veio do sistema antigo (nada é inventado: é o nome/código de lá).
+// Tudo o que ele decidir fica marcado (vinculoAutomatico) e auditado — dá para
+// ver depois o que foi ligado sozinho e por quê. Nada é apagado nem mesclado.
+function cfTokens(nome){ return cfNormNome(nome).split(' ').filter(t => t.length > 2); }
+function cfPontosDeNome(a, b){
+  const A = cfTokens(a), B = cfTokens(b);
+  if(!A.length || !B.length) return 0;
+  const setB = new Set(B);
+  let peso = 0, comuns = 0;
+  A.forEach(t => { peso += t.length; if(setB.has(t)) comuns += t.length; });
+  if(!peso) return 0;
+  const cobertura = comuns / peso;
+  const sobra = Math.abs(A.length - B.length) / Math.max(A.length, B.length);
+  return Math.max(0, cobertura * (1 - 0.3 * sobra));
+}
+function cfCandidatos(empId){
+  return (db.clientes||[]).filter(x => x && x.status !== 'excluido' && x.status !== 'unificado'
+    && (!empId || !x.empresaId || x.empresaId === empId));
+}
+function cfPontuar(nome, empId){
+  const alvo = nome;
+  return cfCandidatos(empId)
+    .map(cl => ({ cl: cl, pontos: Math.max(cfPontosDeNome(alvo, cl.nome || cl.fantasia), cfPontosDeNome(alvo, cl.fantasia || cl.nome)) }))
+    .filter(x => x.pontos > 0)
+    .sort((a, b) => b.pontos - a.pontos || cmp(codigo(a.cl.codigo || a.cl.codigoAntigo || a.cl.id), codigo(b.cl.codigo || b.cl.codigoAntigo || b.cl.id)));
+}
+// Quem já está ligado a este contrato em QUALQUER outra lista (parque, leitura,
+// OS, venda, título) — prova mais forte que parecença de nome.
+function cfClientePorEvidencia(c, empId){
+  if(!c) return null;
+  const cod = codigo(c.codigoAntigo || c.numero || c.codigo);
+  const listas = ['parque','leituras','os','vendas','orcamentos','contasReceber','contasPagar','notificacoes'];
+  for(const nome of listas){
+    const arr = db[nome]; if(!Array.isArray(arr)) continue;
+    const achado = arr.find(x => x && x.clienteId && cliente(x.clienteId) &&
+      (x.contratoId === c.id || (cod && codigo(x.contratoCodigo || x.codContrato || x.codigoContrato || x.contrato) === cod)));
+    if(achado) return cliente(achado.clienteId);
+  }
+  return null;
+}
+// Nome genérico não vale virar cadastro (senão a cura criaria "Cliente" repetido).
+const CF_NOME_GENERICO = /^(CLIENTE|CLIENTES|CONSUMIDOR|BALCAO|BALCÃO|DIVERSOS|VARIOUS|SEM NOME|NAO INFORMADO|NÃO INFORMADO|TESTE|CLIENTE TESTE|CLIENTE BALCAO|CLIENTE BALCÃO)$/;
+function cfNomeServivel(nome){
+  const n = cfNormNome(nome);
+  return !!n && n.length >= 3 && !CF_NOME_GENERICO.test(n);
+}
+function cfCriarClienteDoContrato(c, empId, codCli){
+  const nome = txt(cfNomeDoContrato(c));
+  if(!cfNomeServivel(nome)) return null;
+  const cod = codigo(codCli) || codigo(proximoCodigoCliente(empId));
+  const novo = {
+    id: uidSafe('cli'), empresaId: empId, codigo: cod, codigoAntigo: cod,
+    nome: normalizaNomeEmpresa(nome), fantasia: normalizaNomeEmpresa(nome),
+    tipo: 'PJ', status: 'ativo', criadoPor: 'cura-contrato', criadoPorNome: 'Cura automática do contrato',
+    criadoEm: new Date().toISOString(), revisar: true,
+    observacao: 'Cadastro reconstruído do contrato ' + codigoContrato(c) + ' (o sistema antigo tinha este nome e este contrato sem cliente ligado).'
+  };
+  db.clientes.push(novo);
+  return novo;
+}
+function proximoCodigoCliente(empId){
+  const nums = (db.clientes||[]).filter(x => !empId || !x.empresaId || x.empresaId === empId)
+    .map(x => Number(codigo(x.codigo || x.codigoAntigo || x.id)) || 0);
+  return String((nums.length ? Math.max.apply(null, nums) : 0) + 1);
+}
+function cfCurarVinculos(empId){
+  const relatorio = { examinados: 0, ligados: 0, criados: 0, sobrou: 0, detalhes: [] };
+  (db.contratos||[]).filter(c => c && c.status !== 'excluido' && (!empId || !c.empresaId || c.empresaId === empId)).forEach(c => {
+    if(c.clienteId && cliente(c.clienteId)) return;
+    relatorio.examinados++;
+    const raw = rawLocPorContrato(c);
+    const codCli = codigo(c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE']));
+    let cli = null, motivo = '';
+    if(!cli && codCli){ cli = clientePorCodigo(codCli, empId); if(cli) motivo = 'código antigo ' + codCli; }
+    if(!cli){ cli = cfClientePorDocumento(c, empId); if(cli) motivo = 'CNPJ/CPF igual'; }
+    if(!cli){ cli = cfClientePorNomeUnico(cfNomeDoContrato(c), empId); if(cli) motivo = 'nome igual e único'; }
+    if(!cli){ cli = cfClientePorEvidencia(c, empId); if(cli) motivo = 'o contrato já tinha esse cliente no parque/leituras/OS/vendas'; }
+    if(!cli && txt(cfNomeDoContrato(c))){
+      const pontos = cfPontuar(cfNomeDoContrato(c), empId);
+      if(pontos.length && pontos[0].pontos >= 0.6){
+        if(pontos.length === 1 || (pontos[0].pontos - pontos[1].pontos) >= 0.15){
+          cli = pontos[0].cl; motivo = 'nome parecido (' + Math.round(pontos[0].pontos * 100) + '%)';
+        }else{
+          // nome parecido com mais de um cadastro: decide sozinho pelo MAIS ANTIGO
+          // (cadastro antigo = o que veio do sistema de verdade) e registra o porquê.
+          const empatados = pontos.filter(x => (pontos[0].pontos - x.pontos) < 0.15).map(x => x.cl);
+          empatados.sort((a, b) => cmp(txt(a.criadoEm || ''), txt(b.criadoEm || '')) || cmp(codigo(a.codigo || a.id), codigo(b.codigo || b.id)));
+          cli = empatados[0]; motivo = 'nome parecido com ' + empatados.length + ' cadastros — escolhido o mais antigo (' + (cli.nome || '') + ')';
+        }
+      }
+    }
+    if(!cli){
+      const nome = txt(cfNomeDoContrato(c));
+      if(cfNomeServivel(nome)){
+        cli = cfCriarClienteDoContrato(c, empId, codCli);
+        if(cli){ motivo = 'não existia cadastro com esse nome — cadastro reconstruído do próprio contrato'; relatorio.criados++; }
+      }
+    }
+    if(!cli){ relatorio.sobrou++; return; }
+    c.clienteId = cli.id;
+    if(codCli && !c.codClienteAntigo) c.codClienteAntigo = codCli;
+    c.vinculoAutomatico = true;
+    c.vinculoAutomaticoMotivo = motivo;
+    c.vinculadoPorNome = 'Cura automática (v6.1.4)';
+    c.vinculadoEm = c.vinculadoEm || new Date().toISOString();
+    relatorio.ligados++;
+    relatorio.detalhes.push({ contrato: codigoContrato(c), cliente: cli.nome || '', motivo: motivo });
+    try{
+      if(typeof logAction === 'function') logAction('contrato','vínculo-automático', c.id,
+        'Contrato ' + codigoContrato(c) + ' ligado sozinho ao cliente ' + (cli.nome || '') + ' (' + motivo + ')');
+    }catch(e){}
+  });
+  if(relatorio.ligados) salvar();
+  window.CONTRATOS_CURA_RELATORIO = relatorio;
+  return relatorio;
+}
+window.contratoCurarVinculos = function(){ const s = sess(); return cfCurarVinculos(s && s.empresaId); };
 function rawLocPorContrato(c){
   const cod = codigo(c && (c.codigoAntigo || c.numero || c.codigo));
   if(!cod) return null;
@@ -12329,9 +12513,20 @@ function criaClienteDeRaw(cod, row, empId){
   db.clientes.push(novo);
   return novo;
 }
+// v6.1.4 — grava no contrato o nome que veio do sistema antigo, para a lista
+// sempre mostrar o nome certo (mesmo quando não existe cadastro de cliente).
+function cfGuardarNomeDoContrato(c){
+  if(!c) return false;
+  const nome = txt(cfNomeDoContrato(c));
+  if(!nome) return false;
+  if(txt(c.clienteNome) === nome) return false;
+  c.clienteNome = nome;
+  return true;
+}
 function vincularContratosClientes(empId){
   let mudou = 0;
   (db.contratos||[]).filter(c => c.empresaId === empId).forEach(c => {
+    if(cfGuardarNomeDoContrato(c)) mudou++;
     if(c.clienteId && cliente(c.clienteId)) return;
     const raw = rawLocPorContrato(c);
     const codCli = codigo(c.codClienteAntigo || pick(raw||{}, ['LO_COD_CLIENTE','L_COD_CLIENTE','COD_CLIENTE','CLIENTE','COD_PESSOA','ID_CLIENTE']));
@@ -12392,6 +12587,7 @@ function reconciliar(empId){
   const sigAntes=assinaturaReconciliar(empId);
   if(db.config.automacoes.contratosFinalReconAssinatura===sigAntes) return 0;
   const total = vincularContratosClientes(empId) + recriarParque(empId);
+  try{ cfCurarVinculos(empId); }catch(e){ /* cura não pode derrubar a tela */ }
   db.config.automacoes.contratosFinalReconAssinatura=assinaturaReconciliar(empId);
   if(total || sigAntes) salvar();
   return total;
@@ -12436,7 +12632,14 @@ function clienteContrato(c){
   if(!cl && c) cl = cfClientePorNomeParecido(cfNomeDoContrato(c), c.empresaId);
   return cl;
 }
-function nomeClienteContrato(c){ const cl=clienteContrato(c); return cl ? cl.nome : 'Cliente sem vínculo'; }
+function nomeClienteContrato(c){
+  const cl = clienteContrato(c);
+  if(cl) return cl.nome;
+  const guardado = txt(cfNomeDoContrato(c));
+  if(guardado) return guardado;   // v6.1.4 — o nome que veio do sistema antigo aparece
+  const cod = txt(c && (c.codClienteAntigo || c.codigoCliente));
+  return cod ? ('Cliente não cadastrado (código ' + cod + ')') : 'Contrato sem cliente no cadastro';
+}
 window.contratosFinalBuscar = function(){ STATE.busca=document.getElementById('search-contratos')?.value||''; STATE.status=document.getElementById('filter-contrato-status')?.value||''; window.renderContratos(); };
 window.contratosFinalSort = function(col){ STATE.sort=col; window.renderContratos(); };
 window.renderContratos = function(){
@@ -12542,7 +12745,9 @@ window.baixarContratoRTF = function(contratoId, tipo){
 };
 
 window.CONTRATOS_FINAL_PURE = { codigo, vincularContratosClientes, recriarParque, reconciliar, cfNormNome, cfClientePorNomeUnico, clienteContrato,
-  cfClientePorDocumento, cfClientePorNomeParecido, cfDocumentoDoContrato };
+  cfClientePorDocumento, cfClientePorNomeParecido, cfDocumentoDoContrato,
+  cfCurarVinculos, cfPontosDeNome, cfClientePorEvidencia,
+  cfNomeDoContrato, nomeClienteContrato, cfGuardarNomeDoContrato };
 
 const oldShowApp = window.showApp;
 window.showApp = function(){ const ret=oldShowApp?oldShowApp.apply(this,arguments):undefined; const s=sess(); if(s){ const job=()=>reconciliar(s.empresaId); if(window.DIGI_TURBO&&window.DIGI_TURBO.auto) window.DIGI_TURBO.auto('contratos_final_reconciliar', job, 100); else setTimeout(job,100); } return ret; };
@@ -29680,9 +29885,10 @@ window.clientesDuplicadosAbrir=async function(){
         return '<li style="margin:4px 0">Contrato <b>'+String(c.numero||c.codigo||c.id||'')+'</b> — nome no contrato: '+String(nome).replace(/[<>&]/g,'')+
           ' <button type="button" onclick="clientesDuplicadosVincularContrato(\''+String(c.id)+'\')" style="height:28px;padding:0 10px;border-radius:8px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74;font-weight:800;font-size:11.5px;cursor:pointer">🔗 Vincular cliente</button></li>';
       }).join('')+(semVinculo.length>12?'<li>… e mais '+(semVinculo.length-12)+'</li>':'')+'</ul>'+
-      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema já tenta ligar sozinho pelo código, pelo CNPJ/CPF e pelo nome '+
-      '(quando aponta para UM só cadastro). O que sobrar, você resolve aqui: clique em <b>🔗 Vincular cliente</b> e escolha o cliente na lista. '+
-      'Nada é mesclado nem apagado — só o contrato passa a apontar para o cliente certo, e fica registrado na Auditoria.</p>'
+      '<p style="font-size:12px;color:#64748b;margin:6px 0 0">O sistema liga isso <b>sozinho</b>: pelo código do sistema antigo, pelo CNPJ/CPF, '+
+      'pelo parque/leituras/OS daquele contrato e pelo nome (mesmo parecido). Se ainda sobrou algum, é porque o nome guardado no contrato é genérico '+
+      '(ex.: "Cliente") — aí o botão <b>🔗 Vincular cliente</b> continua ali como plano B. Nada é mesclado nem apagado, e cada decisão automática '+
+      'fica registrada na Auditoria com o motivo.</p>'
     : '<p style="font-size:13px;color:#15803d;font-weight:700;margin:0">✅ Nenhum contrato sem vínculo de cliente.</p>';
   window.__cliDupGrupos=grupos;
   const corpo='<p style="font-size:12.5px;color:#475569;margin:0 0 10px">Comparação por nome (sem acento, sem maiúscula, ignorando LTDA/ME/EIRELI). '+
@@ -41161,10 +41367,9 @@ function pintarMenuAberto(view){
 
 function pintarRodape(){
   var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || VERSAO;
-  var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot){
-    foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v'+curV;
-  }
+  // v6.1.4 — o rodapé oficial (v52245) já escreve a versão + o carimbo do build
+  // no <span id="footer-version">. Aqui só cuidamos do resto da esquerda para não
+  // brigar com ele (antes este patch sobrescrevia tudo com "Banco na Nuvem").
   var top = document.getElementById('app-title-version');
   if(top && !/v5\.22\./.test(top.textContent||'')){
     top.textContent = 'Sistema Digicopy v'+curV;
@@ -41515,7 +41720,7 @@ if(window.FINANCEIRO_V52243_PURE && typeof window.FINANCEIRO_V52243_PURE.filtraL
 function pintarRodape(){
   var curV = (typeof window !== 'undefined' && window.DIGICOPY_APP_VERSION) || '5.22.44';
   var foot = document.querySelector('footer span:not(#footer-session)');
-  if(foot) foot.textContent = 'Sistema Digicopy • Banco na Nuvem • v' + curV;
+  if(foot) foot.setAttribute('data-v52244', curV);   // v6.1.4 — não sobrescreve mais o rodapé oficial
 }
 if(typeof window.navigateTo==='function' && !window.navigateTo.__v52244ver){
   var oldN = window.navigateTo;
@@ -42202,7 +42407,16 @@ function pintarRodape(){
   ver.title = 'Versão do sistema v'+curV + (selo ? ' • carimbo do arquivo que está rodando agora: '+selo : '') +
     ' — o carimbo muda a cada correção publicada (é o mesmo pedaço que vai na URL do app.bundle.js).';
   if(left){
-    left.textContent = 'Sistema Digicopy • Banco na Nuvem';
+    // v6.1.4 — o texto da esquerda era fixo ("Banco na Nuvem") mesmo quando a
+    // nuvem não estava conectada. Agora diz onde o banco está de verdade.
+    var online = false;
+    try{ online = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
+    var btnErro = left.querySelector('button');            // não perder o botão erro.txt
+    left.textContent = online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC';
+    if(btnErro) left.appendChild(btnErro);
+    left.title = online
+      ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
+      : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.';
     left.classList.add('text-left');
   }
   if(sess){

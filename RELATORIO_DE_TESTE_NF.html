@@ -42,6 +42,13 @@
   #status.ok{color:var(--verde)} #status.erro{color:var(--vermelho)}
   #previa{display:none;margin-top:10px;border:1px solid var(--borda);border-radius:10px;background:var(--fundo);padding:10px;font-family:Consolas,monospace;font-size:11.5px;white-space:pre-wrap;max-height:320px;overflow:auto}
   footer{margin-top:22px;border-top:2px solid #eef2ff;padding-top:10px;font-size:12px;color:var(--cinza)}
+  .selo{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+  .selo.ok{background:#dcfce7;color:#15803d}
+  .selo.novo{background:#e0e7ff;color:#3730a3}
+  .selo.repetida{background:#f1f5f9;color:#475569}
+  .filtro{display:flex;align-items:center;gap:6px;font-size:12.5px;background:#f5f8ff;border:1px solid #cbd5e1;border-radius:10px;padding:7px 10px;margin:0 0 6px}
+  .filtro input{accent-color:var(--azul);cursor:pointer}
+  .item.item-escondido{display:none}
   @media(max-width:760px){.item.pergunta{grid-template-columns:1fr}}
   @media print{.barra,#previa{display:none!important} body{padding-bottom:0}}
 </style>
@@ -65,6 +72,10 @@
 <h3>Onde você testou</h3>
 <div class="caixas" id="d_onde"></div>
 
+<div class="filtro">
+  <label><input type="checkbox" id="so_faltando"> Mostrar <b>só o que falta testar</b> (esconde o que já foi resolvido e confirmado antes)</label>
+  <span id="contagem-filtro" style="margin-left:auto;color:#64748b"></span>
+</div>
 <div id="partes"></div>
 
 <h2>CORREÇÕES — o que estava errado, quebrado ou feio</h2>
@@ -131,56 +142,57 @@
 
 const PARTES = [
   { id:'A', nome:'PARTE A — APLICATIVO E NAVEGAÇÃO', itens:[
-    ['O sistema abriu sem tela branca e sem "undefined" escrito nas telas'],
-    ['Menu Fiscal aparece na barra de cima e abre os seis itens no submenu'],
-    ['Menu Fiscal e telas fiscais ficam legíveis no modo claro E no modo escuro'],
-    ['Popups são do sistema (têm X) — nenhum alerta nativo do navegador'],
-    ['Botões e telas respondem uma vez só (sem clique duplicado / efeito dobrado)'],
-    ['Na Início, os cartões são clicáveis e abrem a origem (chamado/leitura)']
+    ['O sistema abriu sem tela branca e sem "undefined" escrito nas telas', 'repetida'],
+    ['Menu Fiscal aparece na barra de cima e abre os seis itens no submenu', 'repetida'],
+    ['Menu Fiscal e telas fiscais ficam legíveis no modo claro E no modo escuro', 'repetida'],
+    ['Popups são do sistema (têm X) — nenhum alerta nativo do navegador', 'repetida'],
+    ['Botões e telas respondem uma vez só (sem clique duplicado / efeito dobrado)', 'repetida'],
+    ['Na Início, os cartões são clicáveis e abrem a origem (chamado/leitura)', 'repetida']
   ]},
   { id:'B', nome:'PARTE B — NUVEM E PERFIS DO COMPUTADOR', itens:[
-    ['Senha de conexão cria um computador autorizado comum'],
-    ['Senha errada mostra "CNPJ ou senha ... incorretos"'],
-    ['Senha errada NÃO mostra erro falso de internet/atualizador'],
-    ['CNPJ + senha do gerente cria este computador como Administrador'],
-    ['PC Administrador mostra os botões de uso, aparelhos, convites e administração'],
-    ['PC comum NÃO mostra os botões exclusivos do Administrador'],
-    ['Entrar na nuvem não apaga os dados locais deste PC'],
-    ['O painel mostra a versão real da nuvem (ex.: 5.26.4)'],
-    ['Botão verde "Reparar sessão agora" responde na hora']
+    ['Senha de conexão cria um computador autorizado comum', 'repetida'],
+    ['Senha errada mostra "CNPJ ou senha ... incorretos"', 'repetida'],
+    ['Senha errada NÃO mostra erro falso de internet/atualizador', 'repetida'],
+    ['CNPJ + senha do gerente cria este computador como Administrador', 'repetida'],
+    ['PC Administrador mostra os botões de uso, aparelhos, convites e administração', 'repetida'],
+    ['PC comum NÃO mostra os botões exclusivos do Administrador', 'repetida'],
+    ['Entrar na nuvem não apaga os dados locais deste PC', 'repetida'],
+    ['O painel mostra a versão real da nuvem (ex.: 5.26.4)', 'repetida'],
+    ['Botão verde "Reparar sessão agora" responde na hora', 'repetida']
   ]},
   { id:'C', nome:'PARTE C — FISCAL (SOMENTE HOMOLOGAÇÃO)', itens:[
-    ['Central de Nota Fiscal abre como tela inteira (menu)'],
-    ['Homologação identificada como teste sem valor fiscal (placa/selo)'],
-    ['Senha do certificado é pedida na hora e não fica salva'],
-    ['Nenhuma nota é emitida sozinha (sem clique e sem senha)'],
-    ['A ação fiscal fica registrada na auditoria'],
-    ['DANFE, XML e consulta responderam conforme o fluxo testado'],
-    ['Botões novos: "Testar SEFAZ agora" e "Pacote do mês p/ contador (.zip)"'],
-    ['Carta de Correção (CC-e) e cancelamento de nota de teste']
+    ['Central de Nota Fiscal abre como tela inteira (menu)', 'repetida'],
+    ['Homologação identificada como teste sem valor fiscal (placa/selo)', 'repetida'],
+    ['Senha do certificado é pedida na hora e não fica salva', 'repetida'],
+    ['Nenhuma nota é emitida sozinha (sem clique e sem senha)', 'repetida'],
+    ['A ação fiscal fica registrada na auditoria', 'ok'],
+    ['DANFE, XML e consulta responderam conforme o fluxo testado', 'repetida'],
+    ['Botões novos: "Testar SEFAZ agora" e "Pacote do mês p/ contador (.zip)"', 'ok'],
+    ['Carta de Correção (CC-e) e cancelamento de nota de teste', 'repetida']
   ]},
   { id:'D', nome:'PARTE D — PERMISSÕES E ESTORNO', itens:[
-    ['Permissões (as 3 caixas) aparecem dentro do editor do usuário'],
-    ['Estorno abre a aba da venda / notinha estornada carregada para refazer']
+    ['Permissões (as 3 caixas) aparecem dentro do editor do usuário', 'repetida'],
+    ['Estorno abre a aba da venda / notinha estornada carregada para refazer', 'ok']
   ]},
   { id:'E', nome:'PARTE E — SINCRONIZAÇÃO AUTOMÁTICA (novo em 22/09)', itens:[
-    ['Conectou na nuvem (CNPJ + qualquer uma das duas senhas) e sincronizou SOZINHO — sem escolher nada e sem apertar botão'],
-    ['O que existe em um PC apareceu no outro (os dois conectados, sem precisar clicar em nada)'],
-    ['Nada foi apagado no PC que já tinha dados (venda, cliente, contrato, OS — tudo onde estava)'],
-    ['O mesmo dado NÃO duplicou depois de sincronizar (não virou dois clientes / duas vendas)'],
-    ['O botão "Check-up da nuvem" mostra lista por lista o que está diferente, com o resumo para copiar'],
-    ['Os consertos do check-up (baixar tudo de novo / enviar este PC inteiro / sincronizar agora) funcionaram']
+    ['Conectou na nuvem (CNPJ + qualquer uma das duas senhas) e sincronizou SOZINHO — sem escolher nada e sem apertar botão', 'novo'],
+    ['O que existe em um PC apareceu no outro (os dois conectados, sem precisar clicar em nada)', 'novo'],
+    ['Nada foi apagado no PC que já tinha dados (venda, cliente, contrato, OS — tudo onde estava)', 'novo'],
+    ['O mesmo dado NÃO duplicou depois de sincronizar (não virou dois clientes / duas vendas)', 'novo'],
+    ['O botão "Check-up da nuvem" mostra lista por lista o que está diferente, com o resumo para copiar', 'novo'],
+    ['Os consertos do check-up (baixar tudo de novo / enviar este PC inteiro / sincronizar agora) funcionaram', 'novo']
   ]},
   { id:'F', nome:'PARTE F — CONTRATOS E CLIENTES', itens:[
-    ['Contrato que mostrava "Cliente sem vínculo" agora mostra o nome do cliente'],
-    ['O botão "🔗 Vincular cliente" abre a lista, filtra e salva o cliente escolhido no contrato'],
-    ['O vínculo feito na mão ficou registrado na Auditoria (quem vinculou e quando)'],
-    ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada']
+    ['Contrato que mostrava "Cliente sem vínculo" agora mostra o nome do cliente', 'novo'],
+    ['Se sobrar algum contrato que nem o sistema conseguiu resolver, o botão "🔗 Vincular cliente" continua ali como plano B (abre a lista e salva)', 'novo'],
+    ['O vínculo feito na mão ficou registrado na Auditoria (quem vinculou e quando)', 'novo'],
+    ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
   ]},
   { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
-    ['O rodapé mostra a versão v6.1.4 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)'],
-    ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat'],
-    ['O sistema abriu com as correções novas (nada de tela velha do cache)']
+    ['O rodapé mostra a versão v6.1.4 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
+    ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
+    ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']
   ]}
 ];
 
@@ -208,18 +220,55 @@ function caixasHtml(grupo, opcoes){
   $('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
   $('veredicto').innerHTML = caixasHtml('VEREDITO', VEREDITO);
 
+  // v6.1.4 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
+  // testar duas vezes), e tem o filtro "só o que falta testar".
+  const SELOS = {
+    ok:      ['✅ resolvido antes', 'Já foi corrigido numa rodada anterior — só confirme se ficou bom.', 'selo ok'],
+    novo:    ['🆕 novo de 22/09', 'Entrou agora nesta versão.', 'selo novo'],
+    repetida:['🔁 continua aberto', 'Já perguntei antes e ainda não foi dado como resolvido.', 'selo repetida']
+  };
   $('partes').innerHTML = PARTES.map(p => {
     const itens = p.itens.map((it, i) => {
       const n = p.id + (i + 1);
+      const estado = it[1] || 'repetida';
+      const selo = SELOS[estado] || SELOS.repetida;
       lista.push({ n: n, q: it[0] });
-      return '<div class="item pergunta">' +
-        '<div class="q"><b>' + n + '</b> — ' + it[0] + '</div>' +
+      return '<div class="item pergunta' + (estado === 'ok' ? ' item-escondido' : '') + '" data-estado="' + estado + '" data-parte="' + p.id + '">' +
+        '<div class="q"><b>' + n + '</b> — ' + it[0] + '<span class="' + selo[2] + '" title="' + selo[1] + '">' + selo[0] + '</span></div>' +
         caixasHtml(n, [['ok', ST.ok[1]], ['nao', ST.nao[1]], ['nt', ST.nt[1]]]) +
         '<div class="obs"><textarea id="t_' + n + '" placeholder="Quer explicar? Escreva aqui (opcional)"></textarea></div>' +
       '</div>';
     }).join('');
-    return '<h2>' + p.nome + '</h2><p class="dica">Uma caixa por pergunta. A caixinha de texto é opcional.</p>' + itens;
+    return '<h2>' + p.nome + '</h2><p class="dica">Uma caixa por pergunta. A caixinha de texto é opcional. ' +
+      'As marcadas com <span class="selo ok">✅ resolvido antes</span> já foram corrigidas — você só testa se quiser confirmar.</p>' + itens;
   }).join('');
+
+  // filtro: esconde as já resolvidas e some com a seção se não sobrar nada
+  const aplicarFiltro = function(){
+    const soFalta = !!($('so_faltando') && $('so_faltando').checked);
+    let visiveis = 0;
+    document.querySelectorAll('#partes .item.pergunta').forEach(el => {
+      const esconder = soFalta && el.getAttribute('data-estado') === 'ok';
+      el.classList.toggle('item-escondido', esconder);
+      if (!esconder) visiveis++;
+    });
+    document.querySelectorAll('#partes h2').forEach(h2 => { h2.style.display = soFalta && visiveis === 0 ? 'none' : ''; });
+    // esconde também as seções inteiras quando todas as perguntas dela estão escondidas
+    document.querySelectorAll('#partes h2').forEach(h2 => {
+      let el = h2.nextElementSibling, algum = false;
+      while (el && el.tagName !== 'H2'){
+        if (el.classList && el.classList.contains('pergunta') && !el.classList.contains('item-escondido')) algum = true;
+        el = el.nextElementSibling;
+      }
+      h2.style.display = algum ? '' : 'none';
+      if (el === null || el && el.tagName === 'H2'){ /* nada */ }
+    });
+    const el = $('contagem-filtro');
+    if (el) el.textContent = soFalta ? (visiveis + ' perguntas em aberto') : '';
+  };
+  const chk = $('so_faltando');
+  if (chk) chk.addEventListener('change', aplicarFiltro);
+  aplicarFiltro();
 
   for (let i = 1; i <= 5; i++){
     $('correcoes').insertAdjacentHTML('beforeend',
@@ -279,10 +328,17 @@ function salvarRascunho(){
 // ── contador de respondidas ───────────────────────────────────────────────
 function contar(){
   const ok = lista.filter(it => valorRadio(it.n)).length;
+  // v6.1.4 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
+  // que importa é o que continua em aberto (era a reclamação dele: "o relatório
+  // repete pergunta que já foi resolvida").
+  const jaResolvidas = (typeof PARTES !== 'undefined' ? PARTES : [])
+    .reduce((acc, p) => acc + p.itens.filter(it => (it[1] || 'repetida') === 'ok').length, 0);
   const total = lista.length;
-  const brancas = total - ok;
-  $('contador').innerHTML = 'Respondidas: <b>' + ok + '</b> de <b>' + total + '</b>' +
-    (brancas ? ' · faltam <b>' + brancas + '</b>' : ' · tudo respondido ✅');
+  const emAberto = total - jaResolvidas;
+  const brancas = emAberto - ok;
+  $('contador').innerHTML = 'Respondidas: <b>' + ok + '</b> de <b>' + emAberto + '</b> em aberto' +
+    (jaResolvidas ? ' <span style="color:#15803d">(' + jaResolvidas + ' já resolvidas antes — só confirmar se quiser)</span>' : '') +
+    (brancas > 0 ? ' · faltam <b>' + brancas + '</b>' : ' · tudo respondido ✅');
 }
 
 // ── texto final que vira o .txt ───────────────────────────────────────────
@@ -310,7 +366,11 @@ function montarTexto(){
   L.push('');
 
   L.push('2) RESPOSTAS (legenda: OK = resolveu · NAO = não resolveu · NT = não testei/não identifiquei)');
+  L.push('   Perguntas marcadas como [JA OK] já foram corrigidas em rodada anterior —');
+  L.push('   elas NÃO entram na conta de "sem resposta" (era a reclamação do dono:');
+  L.push('   "o relatório repete pergunta que já foi resolvida").');
   const contagem = { ok:0, nao:0, nt:0, vazio:0 };
+  const jaOk = [];
   PARTES.forEach(p => {
     L.push('');
     L.push('   ' + p.nome);
@@ -318,14 +378,20 @@ function montarTexto(){
       const n = p.id + (i + 1);
       const r = e.respostas[n] || {};
       const st = r.st || 'vazio';
-      contagem[st]++;
-      L.push('   [' + ST[st][0].padEnd(3) + '] ' + n + ' — ' + it[0]);
+      const resolvidaAntes = (it[1] || 'repetida') === 'ok';
+      if (resolvidaAntes) jaOk.push(n + ' — ' + it[0]);
+      if (!resolvidaAntes) contagem[st]++;
+      L.push('   [' + (resolvidaAntes ? 'JA OK' : ST[st][0].padEnd(3)) + '] ' + n + ' — ' + it[0]);
       if (String(r.obs || '').trim()) String(r.obs).trim().split(/\r?\n/).forEach(t => L.push('           ' + t));
     });
   });
   L.push('');
   L.push('   RESUMO: ' + contagem.ok + ' OK · ' + contagem.nao + ' não resolveu · ' +
          contagem.nt + ' não testei · ' + contagem.vazio + ' sem resposta');
+  if (jaOk.length){
+    L.push('   ' + jaOk.length + ' já resolvida(s) antes (fora da conta acima, só confirmar se quiser):');
+    jaOk.forEach(t => L.push('      • ' + t));
+  }
   L.push('');
 
   L.push('3) CORREÇÕES — o que estava errado, quebrado ou feio');
