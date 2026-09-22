@@ -27,9 +27,11 @@
 
 **Como veio:** ele abriu a área de importação (`importar.html`), largou a pasta `Grids` e
 **colou o texto aqui** (o anexo `.txt` não chega na conversa — colar funciona). Chegaram
-**8 dos 9** arquivos: `FormCadProdutoscxGridProductsDBTableView.grd` em **texto** e 7
-**binários** em base64 (Cliente, ConsuChamado, ImpressorasOnline, LeiturasColetiva,
-Leituras, Locacao2, Locacao). **Falta só o de Contas a Pagar.**
+**os 9 arquivos da pasta**: `FormCadProdutoscxGridProductsDBTableView.grd` e
+`FormContasPagarcxGridContasPagarDBTableView.grd` em **texto**, e 7 **binários** em base64
+(Cliente, ConsuChamado, ImpressorasOnline, LeiturasColetiva, Leituras, Locacao2, Locacao).
+**A pasta `Grids` está completa** — o de Contas a Pagar veio na 2ª colagem (37 colunas, das
+quais 10 na tela; por baixo já tinha Pix, centro de custo, cheque, estorno e previsão).
 
 **O que os arquivos são:** no sistema antigo (Delphi) cada tela guardava a arrumação da
 grade num `.grd`. Os binários são streams `TPF0`/`TColumnsWrapper` — não são texto, e foi
@@ -51,8 +53,8 @@ passam a poder usar exatamente os nomes que ele já usa. **Não muda o programa*
 arquivo do sistema foi tocado; nada sobe, nada é guardado — é só referência), então a
 versão publicada continua **v6.1.10**.
 
-**O que ainda falta dessa pasta:** o `.grd` de **Contas a Pagar**; e os `.xsd` de evento da
-`NSNFe` — que hoje **não fazem falta** (a emissão da NFS-e é no portal, dentro do navegador
+**O que ainda falta:** nada da pasta `Grids` (as 9 estão lidas). Da `NSNFe` os `.xsd` de
+evento **não fazem falta hoje** (a emissão da NFS-e é no portal, dentro do navegador
 embutido); ficam guardados como referência para o dia em que o fiscal for por API.
 
 ## Rodada 22/09/2026 (nº6) — v6.1.8 · a memória da tela + o "falta pouco" da nota + o endereço certo da NFS-e

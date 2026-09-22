@@ -5,8 +5,8 @@
 > resultado aqui na conversa. Nada foi anexado, nada foi enviado para fora: a
 > leitura é 100% local no PC dele.
 >
-> **O que chegou:** `FormCadProdutoscxGridProductsDBTableView.grd` em **texto**
-> (formato INI, 5,8 KB) + **7 arquivos binários** em base64:
+> **O que chegou:** **as 9 grades da pasta**, em duas colagens — `FormContasPagarcxGridContasPagarDBTableView.grd`
+> e `FormCadProdutoscxGridProductsDBTableView.grd` em **texto** (formato INI) + **7 arquivos binários** em base64:
 > `FormCadClienteDBGrid5`, `FormConsuChamadoDBGrid1`, `FormImpressorasOnlineDBGrid3`,
 > `FormLeiturasColetivaDBGrid1`, `FormLeiturasDBGrid1`, `FormLocacao2DBGrid1`,
 > `FormLocacaoDBGrid1`.
@@ -61,7 +61,75 @@ situação da nota pintando a linha:
 
 ---
 
-## 2. As 7 telas binárias (nomes reais, coluna por coluna)
+## 2. Contas a Pagar — `FormContasPagarcxGridContasPagarDBTableView.grd` (texto/INI)
+
+Também veio como **texto** (formato INI). É a maior das grades: **37 colunas**,
+das quais **10 apareciam na tela** e 27 estavam cadastradas mas ocultas.
+
+**As que ele via na tela (na ordem):**
+
+| # | Campo (nome real) | Largura | Alinhamento |
+|---|---|---|---|
+| 1 | `COD_PAGAR` | 52 | direita |
+| 2 | `PARCELA` | 34 | esquerda |
+| 3 | `NOME_CREDOR` | 294 | esquerda |
+| 4 | `NOME_CATEGORIA` | 126 | esquerda |
+| 6 | `DATA_VENCIMENTO` | 76 | esquerda |
+| 7 | `DATA_PAGAMENTO` | 76 | esquerda |
+| 9 | `NOME_RECEBIMENTO` | 66 | esquerda |
+| 10 | `VALOR_PARCELA` | 69 | direita |
+| 11 | `DESCRICAO` | 344 | esquerda |
+| 37 | `NOME_CONTA` | 129 | esquerda |
+
+**As que existiam mas estavam ocultas** (úteis para saber o que a tela antiga já tinha):
+
+| Campo (nome real) | Largura | Observação |
+|---|---|---|
+| `DESC_FINANCEIRO` | 122 |  |
+| `JUROS` | 100 |  |
+| `VALOR_NORMAL_PARC` | 100 |  |
+| `COD_FORNECEDOR` | 64 |  |
+| `COD_COMPRA` | 64 |  |
+| `LOCAL_PG` | 244 |  |
+| `COD_FUNCIONARIO` | 64 |  |
+| `COD_RECEBIMENTO` | 64 |  |
+| `CP_COD_CAIXA` | 64 |  |
+| `ESTORNAR` | 20 | marcação de estorno |
+| `TIPO` | 20 |  |
+| `COD_CAT_CONTAS_PAGAR` | 64 |  |
+| `CP_COD_CHEQUE` | 64 | cheque |
+| `CP_PREVISAO` | 20 | previsão (pago/não pago) |
+| `CP_COD_RETIRADA` | 64 |  |
+| `DATA_CADASTRO` | 64 |  |
+| `DOCUMENTO` | 244 | documento da conta |
+| `HORA_CADASTRO` | 64 |  |
+| `VALOR_TOTAL` | 118 |  |
+| `DESC_PARCELA` | 64 |  |
+| `CON_COD_EMPRESA` | 64 | código da empresa (multiempresa) |
+| `CP_COD_CENTRO_CUSTO` | 64 | centro de custo já existia |
+| `OBS` | 6004 | largura 6004 no arquivo — defeito do sistema antigo (ele nunca mostrou essa coluna) |
+| `CP_COD_CONTA` | 64 | conta bancária |
+| `CP_COD_PIX` | 64 | campo de **Pix** já existia na conta a pagar |
+| `COD_DESMEMBRADO` | 64 |  |
+| `NOME_FORNECEDOR` | 364 | fornecedor por nome (além do nome do credor) |
+
+**Regras de cor:** as mesmas 3 do arquivo de Produtos (`Areas="O1:O"`) —
+mesmos textos e mesmos números de cor, o que indica que o bloco foi **copiado de uma
+tela para a outra** no sistema antigo:
+
+| Condição (texto) | Fundo | Letra |
+|---|---|---|
+| `"Autorizada"` | 9610862 | -16777196 |
+| `"Cancelada"` | 4868823 | 16777215 |
+| `"Denegada"` | 12566272 | -16777196 |
+
+> Como aqui a coluna pintada não é a de situação da nota, o mais provável é
+> ser **sobra da cópia** — as cores (verde/vermelho/laranja) é que valem como
+> referência do padrão que ele usava para autorizada/cancelada/denegada.
+
+---
+
+## 3. As 7 telas binárias (nomes reais, coluna por coluna)
 
 Legenda: "Largura" = o quanto ele tinha esticado a coluna (— = o arquivo não
 guardou largura); "Aparecia?" = se a coluna estava ligada na tela (nos **7
@@ -213,7 +281,7 @@ arquivos que chegaram, todas estavam** ligadas — nenhuma oculta).
 
 ---
 
-## 3. O que essa leitura já resolve / o que muda no nosso sistema
+## 4. O que essa leitura já resolve / o que muda no nosso sistema
 
 1. **Nomes reais das telas (item vi).** Cada tela do sistema novo pode usar o
    mesmo nome de campo e o mesmo título que ele já conhece:
@@ -227,7 +295,10 @@ arquivos que chegaram, todas estavam** ligadas — nenhuma oculta).
    Modalidade, Anterior, Atual, Capturado em, Observação) e `Locação`
    (Nosso Código, Cliente, CNPJ, Valor Contrato, Valor Últ. Leit, Cha, Equip.,
    Última Leitura, Fecha Dia) + itens da locação (patrimônio, serial, valores
-   A4/A3 de preto/color e scanner).
+   A4/A3 de preto/color e scanner) + `Contas a pagar` (Código, Parcela, Credor,
+   Categoria, Vencimento, Pagamento, Recebimento, Valor da Parcela, Descrição,
+   Conta) — e por baixo: **Pix**, **centro de custo**, cheque, estorno, previsão
+   e documento já existiam nessa tela.
 2. **A "arrumação das colunas" continua como ele decidiu:** *só o básico* —
    lembrar **a última ordenação e o último filtro** de cada tela, por usuário, na
    nuvem, salvando sozinho. Este documento **não** muda essa decisão; as larguras
@@ -238,16 +309,16 @@ arquivos que chegaram, todas estavam** ligadas — nenhuma oculta).
    nota** (Autorizada/Cancelada/Denegada) que batem com a ideia da coluna única de
    status no nosso fiscal.
 
-## 4. O que ainda falta dessa pasta (dito com todas as letras)
+## 5. O que ainda falta dessa pasta (dito com todas as letras)
 
 | Item | Situação |
 |---|---|
-| `FormContasPagarDBGrid*.grd` (Contas a Pagar) | **não veio** na colagem — é o 9º arquivo da pasta |
-| Demais `.grd` da pasta `Grids` | se existirem outros, não apareceram |
+| **As 9 grades da pasta `Grids`** | ✅ **completas** (Contas a Pagar chegou na 2ª colagem) |
+| Demais `.grd` da pasta `Grids` | se existirem outros, não apareceram — mas as 9 telas que ele citou estão todas aqui |
 | `.xsd` de evento da `NSNFe` (CC-e, cancelamento) | não foram mandados — com o **navegador embutido** não fazem falta agora; ficam para o dia em que o fiscal for por API |
 | `BANCO.FDB`, DLLs, `.exe` | **não pedir** — peso grande e não é o que a gente usa |
 
-## 5. Arquivos desta leitura (para nunca precisar reler)
+## 6. Arquivos desta leitura (para nunca precisar reler)
 
 | Arquivo | O que tem |
 |---|---|
@@ -255,6 +326,7 @@ arquivos que chegaram, todas estavam** ligadas — nenhuma oculta).
 | `_ref/grids_decode.py` | o leitor do formato (`TPF0`/`TColumnsWrapper`) |
 | `_ref/grids.json` | todas as colunas, campo, título, largura e visibilidade |
 | `_ref/grids_decodificado.txt` | o mesmo, em texto, tela por tela |
+| `_ref/grids_contaspagar.py` | a grade de **Contas a Pagar** (veio em texto/INI) já lida em lista |
 
 **Quirk registrado:** no arquivo `FormConsuChamadoDBGrid1.grd` o campo
 `VI_CODENDA` veio com um `\r` colado no fim do nome (defeito do próprio arquivo
