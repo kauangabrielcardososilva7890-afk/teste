@@ -2,8 +2,8 @@
 
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
-**Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.5** (rodada 22/09 nº4 — branch `arena/01a0c087-teste`)  
+**Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
+**Última versão:** **v6.1.6** (rodada 22/09 nº5 — branch `arena/01a0c087-teste`)  
 
 ---
 
@@ -53,7 +53,33 @@ PCs (`cloudflare-worker/test-client-sync.mjs`) contra o motor de verdade
 excluir, restaurar e republicar.
 
 **Pendências:** publicar o motor (`atualizar_motor_nuvem.cmd`); testar em dois
-PCs o que a PARTE H pergunta; `.exe` até ele rodar o `GERAR_EXE.cmd`.
+PCs o que a PARTE H pergunta; gerar o `.exe` leve (`CRIAR_EXE_SO_NUVEM.cmd`) e o
+instalador completo (`GERAR_EXE.cmd`) — os dois são ele quem roda.
+
+## Rodada 22/09/2026 (nº5) — v6.1.6 · o .exe que só conecta na nuvem
+
+**Pedido dele (22/09, depois da rodada nº4):** *"esse da nuvem é possível fazer
+um .exe só pra isso? só pra conectar na nuvem no sistema"* — olhando a pasta do
+sistema antigo (SisPrinter + `BANCO.FDB` + `Firebird_3_0_7` + DLLs + `Atualizador.exe`).
+
+**Resposta técnica (por que aqui é mais simples):** no sistema antigo o `.exe`
+tinha 100 MB porque levava o programa **e o banco Firebird** dentro do PC. Aqui o
+sistema e os dados moram na nuvem — então o que sobra para o PC é **um ícone**:
+clicou, abriu ligado na nuvem. Sem instalar, sem banco local, sem atualizador
+(o próprio site é sempre a versão nova).
+
+**Entregue nesta leva:**
+| Arquivo | O que é |
+|---|---|
+| `CRIAR_EXE_SO_NUVEM.cmd` | dois-cliques que gera o `.exe` leve (a janela não fecha sozinha) |
+| `nuvem/criar_exe_so_nuvem.ps1` | compila o lançador com o próprio Windows (`Add-Type`), **sem baixar nada**; se não compilar, cria o atalho |
+| `nuvem/abrir_digicopy.vbs` | abre o sistema no Edge/Chrome em janela limpa (`--app=`), já na nuvem |
+| `test_exe_so_nuvem.js` | trava isso (nada de modal nativo, nada de download, nada guardado no PC) |
+
+**Validações:** `npm test` = **190 passaram, 0 falharam** (entrou o `test_exe_so_nuvem.js`);
+`npm run versao` subiu 6.1.5 → 6.1.6 e carimbou o `index.html`; motor e nuvem de pé
+(API 0.4.9 / Worker 5.26.5 no repositório).
+
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 

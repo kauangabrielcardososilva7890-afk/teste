@@ -20,14 +20,14 @@ function ler(p){ return fs.readFileSync(p, 'utf8'); }
 const VERSAO_APP = JSON.parse(ler('package.json')).version;
 
 console.log('\n== v6.1.4 rodada 22/09 nº3 ==');
-ok(VERSAO_APP === '6.1.5', 'a versão do app continua 6.1.5 (é a versão desta leva)');
+ok(VERSAO_APP === '6.1.6', 'a versão do app continua 6.1.5 (é a versão desta leva)');
 
 // ── 1. NUVEM: conectou = sincroniza, sem escolha e sem susto ────────────────
 console.log('\n== NUVEM: conectou, sincroniza (fim da trava) ==');
 const sync = ler('cloudflare_data_sync_patch.js');
 ok(/function decideReinstallGuard\(opts\)\{[\s\S]{0,1200}?pause:false,isolate:false,hold:false,reason:'sincroniza-direto'/.test(sync),
    'a decisão do motor SEMPRE libera a sincronização (pause:false · isolate:false · hold:false)');
-ok(sync.indexOf("const REGRAS='v6.1.5-conectou-sincroniza'") >= 0,
+ok(sync.indexOf("const REGRAS='v6.1.6-conectou-sincroniza'") >= 0,
    'a marca das regras mudou: quem estava na trava antiga é destravado ao abrir');
 ok(/^state\.paused=false;$/m.test(sync) && sync.indexOf("state.pauseReason='';") >= 0,
    'ao carregar o motor, a pausa de escolha é zerada (ninguém fica esperando resposta)');

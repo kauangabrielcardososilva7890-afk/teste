@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// v6.1.5 — RODADA 22/09/2026 (nº4): o que o dono pediu, item por item.
+// v6.1.6 — RODADA 22/09/2026 (nº4): o que o dono pediu, item por item.
 //
 //   1) "sabe a parte de nota fiscal e clica pra criar uma nova? ela não vai ser
 //      em formato menu, e sim em formato aba, que nem o de vendas, e ta vendo
@@ -153,9 +153,9 @@ const rel = ler('RELATORIO_DE_TESTE_NF.html');
 ok('tem a PARTE H com o que é novo nesta rodada',
   rel.indexOf('PARTE H') >= 0 && rel.indexOf('Nova nota fiscal em ABA') >= 0 &&
   rel.indexOf('um olho só') >= 0);
-ok('o relatório é da versão publicada agora (v6.1.5)',
-  rel.indexOf('v6.1.5') >= 0 && rel.indexOf('5.26.5') >= 0);
+ok('o relatório é da versão publicada agora (v6.1.6)',
+  rel.indexOf('v6.1.6') >= 0 && rel.indexOf('5.26.5') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
-console.log('\nRESULTADO: v6.1.5 (rodada 22/09 nº4) passou!');
+console.log('\nRESULTADO: v6.1.6 (rodada 22/09 nº4) passou!');

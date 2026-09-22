@@ -32,7 +32,7 @@ ok('a marca do registro é sempre a mesma',S.hash(S.clean({nome:'x'}))===S.hash(
 ok('PC convidado nunca perde dado (v6.1.4: nada é isolado, tudo sincroniza)',/isolate:false/.test(code)&&!/isolate:true/.test(code));
 // v6.1.4 (22/09/2026): a pergunta única acabou por ordem do dono — quem conecta
 // já sincroniza. A marca de regras continua existindo para carimbar a versão.
-ok('regra nova não pergunta mais nada (v6.1.5 conectou = sincroniza)',/const REGRAS='v6\.1\.5-conectou-sincroniza'/.test(code)&&/state\.regras/.test(code)&&/reason:'sincroniza-direto'/.test(code)&&!/pause:true/.test(code));
+ok('regra nova não pergunta mais nada (v6.1.6 conectou = sincroniza)',/const REGRAS='v6\.1\.6-conectou-sincroniza'/.test(code)&&/state\.regras/.test(code)&&/reason:'sincroniza-direto'/.test(code)&&!/pause:true/.test(code));
 ok('nada abre sozinho cobrando escolha (v6.1.4: sincroniza direto)',/function cobrarEscolha/.test(painel)&&/não faz nada/.test(painel));
 ok('escolha não abre por cima de outra janela da nuvem',/digicopy-cloud-modal/.test(painel));
 console.log('\nRESULTADO: ajustes v5.22.69 passaram!');

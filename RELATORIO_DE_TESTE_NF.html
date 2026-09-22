@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Teste — Sistema Digicopy v6.1.5</title>
+<title>Relatório de Teste — Sistema Digicopy v6.1.6</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +56,7 @@
 <body>
 
 <header>
-  <h1>Relatório de Teste — Sistema Digicopy v6.1.5</h1>
+  <h1>Relatório de Teste — Sistema Digicopy v6.1.6</h1>
   <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
      No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
   <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
@@ -65,7 +65,7 @@
 <div class="campos" id="dados">
   <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
   <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
-  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.5 + carimbo"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.6 + carimbo"></div>
   <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.5"></div>
 </div>
 
@@ -134,7 +134,7 @@
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════
-// RELATÓRIO DE TESTE DO DONO (v6.1.5)
+// RELATÓRIO DE TESTE DO DONO (v6.1.6)
 // Cada pergunta: 3 caixas (OK / não resolveu / não testei) + observação livre.
 // No fim: gera um .txt já escrito e baixa (ou copia) para mandar no chat.
 // Sem dependências, sem servidor: funciona aberto do PC (arquivo) ou pelo site.
@@ -189,7 +189,7 @@ const PARTES = [
     ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
   ]},
   { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
-    ['O rodapé mostra a versão v6.1.5 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['O rodapé mostra a versão v6.1.6 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
     ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
     ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
     ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']
@@ -229,7 +229,7 @@ function caixasHtml(grupo, opcoes){
   $('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
   $('veredicto').innerHTML = caixasHtml('VEREDITO', VEREDITO);
 
-  // v6.1.5 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
+  // v6.1.6 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
   // testar duas vezes), e tem o filtro "só o que falta testar".
   const SELOS = {
     ok:      ['✅ resolvido antes', 'Já foi corrigido numa rodada anterior — só confirme se ficou bom.', 'selo ok'],
@@ -337,7 +337,7 @@ function salvarRascunho(){
 // ── contador de respondidas ───────────────────────────────────────────────
 function contar(){
   const ok = lista.filter(it => valorRadio(it.n)).length;
-  // v6.1.5 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
+  // v6.1.6 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
   // que importa é o que continua em aberto (era a reclamação dele: "o relatório
   // repete pergunta que já foi resolvida").
   const jaResolvidas = (typeof PARTES !== 'undefined' ? PARTES : [])
@@ -492,7 +492,7 @@ document.addEventListener('input', () => {
 });
 document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
 $('btn-salvar').addEventListener('click', salvarArquivo);
-// v6.1.5 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
+// v6.1.6 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
 // A seção do deploy virou instrução do atualizar_motor_nuvem.cmd (sem token, sem
 // painel, sem copiar código). O script de copiar o YAML saiu daqui de propósito.
 $('btn-copiar').addEventListener('click', copiarTexto);

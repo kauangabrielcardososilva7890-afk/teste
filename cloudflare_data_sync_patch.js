@@ -224,7 +224,7 @@ function trocarEstado(novo){state=novo;estadoGeracao++;return state;}
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v6.1.5-conectou-sincroniza';
+const REGRAS='v6.1.6-conectou-sincroniza';
 // v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
 // não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
 // sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
