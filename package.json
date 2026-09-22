@@ -19,7 +19,8 @@
     "links": "node links.js",
     "guardar": "node guardar_repo.js",
     "guardar:check": "node guardar_repo.js --check",
-    "motor": "node gerar_motor_nuvem.js"
+    "motor": "node gerar_motor_nuvem.js",
+    "versao": "node mudar_versao.js"
   },
   "build": {
     "appId": "br.com.digicopy.erp.demo",

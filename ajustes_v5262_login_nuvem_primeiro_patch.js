@@ -82,12 +82,27 @@
   // PRÓPRIO NAVEGADOR (Edge/Chrome desenha um em todo type=password). Aqui ele
   // é escondido; o único olho é o botão do sistema (v5262-mostrar-senha).
   function esconderOlhoNativo(){
+    if (typeof document === 'undefined') return;
     if (document.getElementById('v5262-olho-css')) return;
+    var alvo = document.head || document.documentElement;
+    if (!alvo) return;
     var st = document.createElement('style');
     st.id = 'v5262-olho-css';
-    st.textContent = 'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important}' +
-      'input[type=password]::-webkit-credentials-auto-fill-button{display:none!important}';
-    (document.head || document.documentElement).appendChild(st);
+    st.textContent =
+      // Edge/IE: o "olhinho" de revelar senha que o navegador desenha sozinho
+      'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important;width:0!important;height:0!important}' +
+      // Chrome/Chromium: botões internos que aparecem por cima do campo
+      'input[type=password]::-webkit-credentials-auto-fill-button,input[type=password]::-webkit-contacts-auto-fill-button,' +
+      'input[type=password]::-webkit-strong-password-auto-fill-button{display:none!important;visibility:hidden!important;' +
+      'pointer-events:none!important;position:absolute!important;right:0!important;width:0!important;height:0!important}';
+    alvo.appendChild(st);
+  }
+  // v6.1.5 — o olho do navegador é escondido ASSIM QUE O ARQUIVO CARREGA (não só
+  // quando o portão abre): assim vale também para o campo de senha do painel da
+  // Nuvem (CNPJ + senha de conexão), que fica em outra tela.
+  esconderOlhoNativo();
+  if (typeof document !== 'undefined' && document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', esconderOlhoNativo);
   }
   function montarPortao(){
     if (document.getElementById('v5262-portao')) return;

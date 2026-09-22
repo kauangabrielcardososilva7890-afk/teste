@@ -532,7 +532,7 @@ function testarCacheLinksEMotor(){
      'o bloco traz o ZIP da branch atual (montado na hora, não fixo)');
   ok(/PRIVADO, exige login/.test(links), 'avisa que o ZIP exige login (repositório privado)');
   ok(links.indexOf('workers.dev/health') >= 0, 'o bloco traz o /health da nuvem');
-  ok(/REGRAS_PERMANENTES\.md, regra 8/.test(links), 'o bloco cita a regra que o exige (fica rastreável)');
+  ok(/REGRAS_PERMANENTES\.md, regras? 8/.test(links), 'o bloco cita a regra que o exige (fica rastreável)');
 
   console.log('\n== MOTOR DA NUVEM acompanha a versão sozinho ==');
   ok(pkg.scripts.motor === 'node gerar_motor_nuvem.js', 'existe npm run motor (1 comando para regerar o arquivo de colar)');

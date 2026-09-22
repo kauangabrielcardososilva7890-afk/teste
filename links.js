@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════════════
 // LINKS DA RESPOSTA — imprime o bloco de links que TODA resposta ao dono
-// precisa trazer (REGRAS_PERMANENTES.md, regra 8).
+// precisa trazer (REGRAS_PERMANENTES.md, regra 8 e regra 42: site + ZIP, nada de lista).
 //
 // Por que existe: eu esqueci de mandar os links nas respostas. Agora não dá:
 // este comando monta o bloco a partir da FONTE (package.json, branch atual,
@@ -31,7 +31,7 @@ try {
 } catch (e) {}
 
 console.log('');
-console.log('🔗 LINKS (toda resposta leva estes) — regra 8 de REGRAS_PERMANENTES.md');
+console.log('🔗 LINKS (toda resposta leva estes) — regras 8 e 42 de REGRAS_PERMANENTES.md (máximo: site + ZIP)');
 console.log('');
 console.log('• Testar no site (link fixo — sempre a versão mais nova):');
 console.log('  ' + SITE);

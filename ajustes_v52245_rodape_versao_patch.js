@@ -52,11 +52,19 @@ function pintarRodape(){
     var online = false;
     try{ online = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
     var btnErro = left.querySelector('button');            // não perder o botão erro.txt
-    left.textContent = online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC';
+    // v6.1.5 — MODO SÓ NUVEM (ordem do dono): quando está ligado, este PC não
+    // guarda a base; o rodapé diz isso com todas as letras.
+    var soNuvem = false;
+    try{ soNuvem = !!(window.DIGICOPY_SO_NUVEM && online); }catch(e){}
+    left.textContent = soNuvem
+      ? 'Sistema Digicopy • dados só na nuvem (este PC não guarda cópia)'
+      : (online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC');
     if(btnErro) left.appendChild(btnErro);
-    left.title = online
-      ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
-      : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.';
+    left.title = soNuvem
+      ? 'Tudo o que você cria vai para a nuvem na hora. Este computador não guarda cópia dos dados — ao abrir, ele lê tudo da nuvem de novo.'
+      : (online
+        ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
+        : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.');
     left.classList.add('text-left');
   }
   if(sess){

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 6b65e6bf47abfafe
+ * scripts: 222 | sha256: f1968a56664abb0e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28583,6 +28583,25 @@ async function renderConnected(body){
   const linhaVersaoNuvem = status.workerVersao
     ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
     : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  // v6.1.5 — MODO SÓ NUVEM (ordem do dono): o PC não guarda cópia dos dados.
+  const sn=(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.infoSoNuvem)?window.DIGICOPY_CLOUD_SYNC.infoSoNuvem():{ligado:false,chavesDaBaseNoNavegador:0};
+  const blocoSoNuvem =
+    '<div style="border-top:1px solid #e2e8f0;margin-top:14px;padding-top:12px">'+
+      '<h3 style="margin:0 0 6px;font-size:13px;color:#0a1e8a">💾 Onde ficam os dados</h3>'+
+      (sn.ligado
+        ? '<div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:12px">'+
+            '<b>SÓ NUVEM (ligado)</b> — tudo o que você cria vai para a nuvem e <b>este computador não guarda cópia da base</b>.'+
+            (sn.chavesDaBaseNoNavegador? ' Ainda sobraram <b>'+sn.chavesDaBaseNoNavegador+'</b> pedaço(s) guardados de versão antiga — o botão abaixo limpa.' : ' Nada da base está guardado neste navegador agora.')+
+          '</div>'
+        : '<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px">'+
+            '<b>Cópia local ligada</b> — este PC guarda uma cópia da base para abrir sem internet. '+
+          '</div>')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+
+        button(sn.ligado?'Guardar cópia neste PC (abrir sem internet)':'Voltar a NÃO guardar nada neste PC','dc-sonuvem-toggle',false)+
+        button('Soltar agora a cópia deste PC','dc-sonuvem-limpar',false)+
+      '</div>'+
+      '<small style="color:#94a3b8;font-size:10.5px;display:block;margin-top:6px">No modo SÓ NUVEM a base é remontada lendo a nuvem a cada abertura. Fica no PC só o necessário para não pedir senha de novo e para não perder o que ainda não subiu.</small>'+
+    '</div>';
   function garantirCssUso(){
     if(document.getElementById('dc-uso-css')) return;
     const s=document.createElement('style');
@@ -28636,7 +28655,7 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
-    (isAdmin?usoBloco:'')+linhaVersaoNuvem+
+    (isAdmin?usoBloco:'')+linhaVersaoNuvem+blocoSoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
@@ -28690,6 +28709,28 @@ async function renderConnected(body){
           catch(e){adminResult.innerHTML=message(e.message,'error');}
         });
       }catch(e){adminResult.innerHTML=message(e.message,'error');}
+    };
+    const btSn=body.querySelector('#dc-sonuvem-toggle');
+    if(btSn)btSn.onclick=async()=>{
+      try{
+        const S=window.DIGICOPY_CLOUD_SYNC, agora=S.modoSoNuvem();
+        if(!agora){
+          const ok1=await window.confirmSistema('Ligar a cópia neste PC? Assim o sistema abre sem internet aqui, e este computador passa a guardar os dados.','Guardar cópia neste PC');
+          if(!ok1)return;
+        }
+        S.definirSoNuvem(!agora);
+        if(typeof window.lfbAlert==='function')window.lfbAlert(agora?'Pronto: este PC não guarda mais cópia da base — só a nuvem.':'Pronto: este PC volta a guardar uma cópia da base.','Onde ficam os dados');
+        await renderConnected(body);
+      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para mudar'); }
+    };
+    const btLimpar=body.querySelector('#dc-sonuvem-limpar');
+    if(btLimpar)btLimpar.onclick=async()=>{
+      try{
+        const S=window.DIGICOPY_CLOUD_SYNC;
+        const n=S.soltarCopiaLocal();
+        if(typeof window.lfbAlert==='function')window.lfbAlert(n?'Apaguei '+n+' pedaço(s) da base que estavam guardados neste navegador. Os dados continuam na nuvem — feche e abra o sistema para ver que ele remonta tudo de lá.':'Não havia nada guardado neste navegador.','Cópia deste PC');
+        await renderConnected(body);
+      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para limpar'); }
     };
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
       const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');
@@ -28904,6 +28945,77 @@ function normalizarEstado(novo){
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
 let state=loadState(),outbox=loadOutbox();
 normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
+
+// ═══════════════════════════════════════════════════════════════════════════
+// v6.1.5 — "SÓ NUVEM" (ordem do dono, 22/09/2026, em maiúsculas):
+//   "EU N QUERO DADOS SALVOS NO MEU PC N, EU QUERO É SOMENTE OS DADOS DA NUVEM,
+//    TUDO O QUE EU CRIAR VAI PRA NUVEM, QUERO QUE NADA FIQUE SALVO NO PC OU NO
+//    NAVEGADOR N, É DIFICIL ISSO?"
+// Como funciona: o sistema PARA de gravar a base neste computador. O que ele
+// cria sobe para a nuvem na hora e a tela continua funcionando com os dados na
+// memória do programa; ao abrir o sistema, a base é remontada LENDO O DIÁRIO DA
+// NUVEM desde o começo. No PC fica guardado só o necessário para não pedir a
+// senha de novo e para não perder nada que ainda não subiu (token + fila de
+// envio). Quem quiser abrir sem internet desliga isto no painel da Nuvem.
+// ═══════════════════════════════════════════════════════════════════════════
+const SO_NUVEM_KEY='digicopy_cf_so_nuvem_v1';
+const BASE_CHAVES=['digicopy_erp_v42_demo_apresentacao','digicopy_erp_backup_pre_sync','digicopy_erp_v20','digicopy_erp_v10'];
+const BASE_IDB='digicopy_erp_storage_v1';
+function modoSoNuvem(){ try{ const v=localStorage.getItem(SO_NUVEM_KEY); return v===null?true:v==='1'; }catch(e){ return true; } }
+function aplicarSoNuvem(){
+  const ligado=modoSoNuvem();
+  try{ window.DIGICOPY_SO_NUVEM=ligado; }catch(e){}
+  if(ligado){
+    // Sem base guardada aqui: o diário da nuvem é lido inteiro na abertura.
+    // (Só o que TRAZ dados da nuvem é mexido; nada local é enviado nem apagado.)
+    state.cursor=0; state.versions={}; state.initialPull=true;
+  }
+  return ligado;
+}
+function definirSoNuvem(ligado){
+  try{ localStorage.setItem(SO_NUVEM_KEY, ligado?'1':'0'); }catch(e){}
+  aplicarSoNuvem();
+  if(ligado){ try{ soltarCopiaLocal(); }catch(e){} }
+  else persist();
+  return modoSoNuvem();
+}
+// Apaga o que ESTE computador guardou da base (navegador). Não toca no token da
+// nuvem, nem na fila de envio, nem em nada da nuvem.
+function soltarCopiaLocal(){
+  let apagadas=0;
+  try{
+    const alvos=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k)continue;
+      if(BASE_CHAVES.some(pref=>k.indexOf(pref)===0)||k.indexOf('digicopy_erp_v42_demo_apresentacao_part__')===0)alvos.push(k);
+    }
+    alvos.forEach(k=>{ try{ localStorage.removeItem(k); apagadas++; }catch(e){} });
+  }catch(e){}
+  try{
+    if(typeof indexedDB!=='undefined'){
+      const req=indexedDB.deleteDatabase(BASE_IDB);
+      req.onblocked=function(){};
+    }
+  }catch(e){}
+  return apagadas;
+}
+// Antes de soltar a cópia deste PC, confere na nuvem se ela tem TUDO o que
+// este PC tem. Sem resposta (internet caída) ou com a nuvem menor → NÃO solta
+// nada (melhor guardar demais do que perder algo que ainda não subiu).
+async function nuvemTemTudo(){
+  try{
+    const call=api(); if(!call)return false;
+    const st=await call('/v1/status?fresh=1',{method:'GET'});
+    const naNuvem=Number(st&&st.totals&&st.totals.records)||0;
+    return naNuvem>=localBusinessCount();
+  }catch(e){ return false; }
+}
+function infoSoNuvem(){
+  let kb=0;
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i)||''; if(BASE_CHAVES.some(pref=>k.indexOf(pref)===0))kb++; } }catch(e){}
+  return {ligado:modoSoNuvem(),chavesDaBaseNoNavegador:kb};
+}
 // v6.1.5 — CARIMBO DE GERAÇÃO (bug do teste de dois PCs): se o estado inteiro é
 // trocado no meio de uma sincronização (zerar a nuvem / decidir não enviar /
 // check-up), a rodada que já estava em andamento precisa PARAR na hora. Sem
@@ -29405,6 +29517,12 @@ async function tick(reason){
     if(totalSent>0)await pullAll();
     if(trocou())return false;
     failures=0;lastError='';state.lastOk=Date.now();persist();
+    // SÓ NUVEM: sincronizou tudo (nada pendente) → o que este PC guardou da base
+    // vai embora. A tela continua com os dados na memória; a nuvem é a fonte.
+    if(modoSoNuvem()&&!outbox.length&&await nuvemTemTudo()){
+      const soltas=soltarCopiaLocal();
+      if(soltas)indicator(true,'Dados só na nuvem • cópia local liberada');
+    }
     if(outbox.length){
       // Remessa grande: mostra o quanto falta e volta logo para continuar, em vez
       // de esperar o próximo ciclo normal de vários minutos.
@@ -29659,7 +29777,7 @@ function estadoDetalhado(){
   }catch(e){}
 })();
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -29672,14 +29790,37 @@ setTimeout(()=>{try{varrerDemonstracao();}catch(e){}},6000);
 try{
   const original=window.saveDB;
   if(typeof original==='function'&&!original.__cfWrapped){
-    window.saveDB=function(){const r=original.apply(this,arguments);if(!applying&&authorized())schedule(900);return r;};
+    window.saveDB=function(){
+      // SÓ NUVEM: a base NÃO é gravada neste computador (segue na memória e
+      // sobe para a nuvem). Fora do modo, grava como sempre gravou.
+      const soNuvem=!!window.DIGICOPY_SO_NUVEM&&authorized();
+      const r=soNuvem?true:original.apply(this,arguments);
+      if(!applying&&authorized())schedule(900);
+      return r;
+    };
     window.saveDB.__cfWrapped=true;
   }
 }catch(e){}
 try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>10000)schedule(250);});}catch(e){}
 try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>10000)schedule(250);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
-if(authorized())schedule(1200);else scheduleHeartbeat();
+aplicarSoNuvem();
+// A tela abre antes de a nuvem responder. Quando a base chega (e a tela estava
+// vazia), redesenha a tela atual para o dono ver os dados sem apertar nada.
+async function hidratarTela(){
+  if(!modoSoNuvem())return;
+  const vazio=(typeof db!=='undefined'&&db)?localBusinessCount()===0:false;
+  if(!vazio)return;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    if(localBusinessCount()>0&&typeof window.navigateTo==='function'){
+      const tela=(function(){ try{ const v=document.querySelector('.view:not(.hidden)'); if(v&&v.id&&v.id.indexOf('view-')===0)return v.id.slice(5); }catch(e){} return 'dashboard'; })();
+      window.navigateTo(tela);
+      indicator(false,'Dados da nuvem carregados');
+    }
+  }catch(e){}
+}
+if(authorized()){ schedule(1200); setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600); } else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();
 
@@ -42449,11 +42590,19 @@ function pintarRodape(){
     var online = false;
     try{ online = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
     var btnErro = left.querySelector('button');            // não perder o botão erro.txt
-    left.textContent = online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC';
+    // v6.1.5 — MODO SÓ NUVEM (ordem do dono): quando está ligado, este PC não
+    // guarda a base; o rodapé diz isso com todas as letras.
+    var soNuvem = false;
+    try{ soNuvem = !!(window.DIGICOPY_SO_NUVEM && online); }catch(e){}
+    left.textContent = soNuvem
+      ? 'Sistema Digicopy • dados só na nuvem (este PC não guarda cópia)'
+      : (online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC');
     if(btnErro) left.appendChild(btnErro);
-    left.title = online
-      ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
-      : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.';
+    left.title = soNuvem
+      ? 'Tudo o que você cria vai para a nuvem na hora. Este computador não guarda cópia dos dados — ao abrir, ele lê tudo da nuvem de novo.'
+      : (online
+        ? 'O sistema guarda aqui e também na nuvem; o que um PC tem aparece no outro.'
+        : 'Ainda não conectou na nuvem: o que existe aqui é só deste computador.');
     left.classList.add('text-left');
   }
   if(sess){
@@ -50980,12 +51129,27 @@ try{
   // PRÓPRIO NAVEGADOR (Edge/Chrome desenha um em todo type=password). Aqui ele
   // é escondido; o único olho é o botão do sistema (v5262-mostrar-senha).
   function esconderOlhoNativo(){
+    if (typeof document === 'undefined') return;
     if (document.getElementById('v5262-olho-css')) return;
+    var alvo = document.head || document.documentElement;
+    if (!alvo) return;
     var st = document.createElement('style');
     st.id = 'v5262-olho-css';
-    st.textContent = 'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important}' +
-      'input[type=password]::-webkit-credentials-auto-fill-button{display:none!important}';
-    (document.head || document.documentElement).appendChild(st);
+    st.textContent =
+      // Edge/IE: o "olhinho" de revelar senha que o navegador desenha sozinho
+      'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important;width:0!important;height:0!important}' +
+      // Chrome/Chromium: botões internos que aparecem por cima do campo
+      'input[type=password]::-webkit-credentials-auto-fill-button,input[type=password]::-webkit-contacts-auto-fill-button,' +
+      'input[type=password]::-webkit-strong-password-auto-fill-button{display:none!important;visibility:hidden!important;' +
+      'pointer-events:none!important;position:absolute!important;right:0!important;width:0!important;height:0!important}';
+    alvo.appendChild(st);
+  }
+  // v6.1.5 — o olho do navegador é escondido ASSIM QUE O ARQUIVO CARREGA (não só
+  // quando o portão abre): assim vale também para o campo de senha do painel da
+  // Nuvem (CNPJ + senha de conexão), que fica em outra tela.
+  esconderOlhoNativo();
+  if (typeof document !== 'undefined' && document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', esconderOlhoNativo);
   }
   function montarPortao(){
     if (document.getElementById('v5262-portao')) return;

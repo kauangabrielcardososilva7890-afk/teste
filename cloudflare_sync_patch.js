@@ -228,6 +228,25 @@ async function renderConnected(body){
   const linhaVersaoNuvem = status.workerVersao
     ? '<div style="font-size:10px;color:#94a3b8;margin-top:10px">🔧 Código da nuvem: <b>v'+esc(status.workerVersao)+'</b></div>'
     : '<div style="margin-top:10px;padding:9px 11px;border-radius:9px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:11px;font-weight:800">⚠️ O código da nuvem está ANTIGO (não responde a versão). Repita o <b>npx wrangler deploy</b> na pasta <b>cloudflare-worker/</b>.</div>';
+  // v6.1.5 — MODO SÓ NUVEM (ordem do dono): o PC não guarda cópia dos dados.
+  const sn=(window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.infoSoNuvem)?window.DIGICOPY_CLOUD_SYNC.infoSoNuvem():{ligado:false,chavesDaBaseNoNavegador:0};
+  const blocoSoNuvem =
+    '<div style="border-top:1px solid #e2e8f0;margin-top:14px;padding-top:12px">'+
+      '<h3 style="margin:0 0 6px;font-size:13px;color:#0a1e8a">💾 Onde ficam os dados</h3>'+
+      (sn.ligado
+        ? '<div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:12px">'+
+            '<b>SÓ NUVEM (ligado)</b> — tudo o que você cria vai para a nuvem e <b>este computador não guarda cópia da base</b>.'+
+            (sn.chavesDaBaseNoNavegador? ' Ainda sobraram <b>'+sn.chavesDaBaseNoNavegador+'</b> pedaço(s) guardados de versão antiga — o botão abaixo limpa.' : ' Nada da base está guardado neste navegador agora.')+
+          '</div>'
+        : '<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:10px;padding:10px 12px;font-size:12px">'+
+            '<b>Cópia local ligada</b> — este PC guarda uma cópia da base para abrir sem internet. '+
+          '</div>')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+
+        button(sn.ligado?'Guardar cópia neste PC (abrir sem internet)':'Voltar a NÃO guardar nada neste PC','dc-sonuvem-toggle',false)+
+        button('Soltar agora a cópia deste PC','dc-sonuvem-limpar',false)+
+      '</div>'+
+      '<small style="color:#94a3b8;font-size:10.5px;display:block;margin-top:6px">No modo SÓ NUVEM a base é remontada lendo a nuvem a cada abertura. Fica no PC só o necessário para não pedir senha de novo e para não perder o que ainda não subiu.</small>'+
+    '</div>';
   function garantirCssUso(){
     if(document.getElementById('dc-uso-css')) return;
     const s=document.createElement('style');
@@ -281,7 +300,7 @@ async function renderConnected(body){
     :'';
   body.innerHTML=message(syncMessage,sync.paused?'info':'ok')+avisoContagem+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0"><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHO</small><b style="display:block;margin-top:3px">'+esc(d.name)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PERFIL</small><b style="display:block;margin-top:3px">'+(isAdmin?'Administrador':'Autorizado')+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NESTE PC</small><b style="display:block;margin-top:3px">'+localClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>CLIENTES NA NUVEM</small><b style="display:block;margin-top:3px">'+cloudClients+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>REGISTROS NA NUVEM</small><b style="display:block;margin-top:3px">'+t.records+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>PENDENTES NESTE PC</small><b style="display:block;margin-top:3px">'+sync.pending+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>EXCLUÍDOS</small><b style="display:block;margin-top:3px">'+(t.deleted||0)+'</b></div><div style="padding:12px;background:#f8fafc;border-radius:11px"><small>APARELHOS</small><b style="display:block;margin-top:3px">'+t.devices+'</b></div></div>'+
-    (isAdmin?usoBloco:'')+linhaVersaoNuvem+
+    (isAdmin?usoBloco:'')+linhaVersaoNuvem+blocoSoNuvem+
     detalhe+'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+(escolher
       ?button('Enviar os dados deste PC para a nuvem','dc-enviar-locais',true)+button('Não enviar os dados atuais','dc-nao-enviar',false)
       :button('Sincronizar agora','dc-sync-now',true))+'</div>'+
@@ -335,6 +354,28 @@ async function renderConnected(body){
           catch(e){adminResult.innerHTML=message(e.message,'error');}
         });
       }catch(e){adminResult.innerHTML=message(e.message,'error');}
+    };
+    const btSn=body.querySelector('#dc-sonuvem-toggle');
+    if(btSn)btSn.onclick=async()=>{
+      try{
+        const S=window.DIGICOPY_CLOUD_SYNC, agora=S.modoSoNuvem();
+        if(!agora){
+          const ok1=await window.confirmSistema('Ligar a cópia neste PC? Assim o sistema abre sem internet aqui, e este computador passa a guardar os dados.','Guardar cópia neste PC');
+          if(!ok1)return;
+        }
+        S.definirSoNuvem(!agora);
+        if(typeof window.lfbAlert==='function')window.lfbAlert(agora?'Pronto: este PC não guarda mais cópia da base — só a nuvem.':'Pronto: este PC volta a guardar uma cópia da base.','Onde ficam os dados');
+        await renderConnected(body);
+      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para mudar'); }
+    };
+    const btLimpar=body.querySelector('#dc-sonuvem-limpar');
+    if(btLimpar)btLimpar.onclick=async()=>{
+      try{
+        const S=window.DIGICOPY_CLOUD_SYNC;
+        const n=S.soltarCopiaLocal();
+        if(typeof window.lfbAlert==='function')window.lfbAlert(n?'Apaguei '+n+' pedaço(s) da base que estavam guardados neste navegador. Os dados continuam na nuvem — feche e abra o sistema para ver que ele remonta tudo de lá.':'Não havia nada guardado neste navegador.','Cópia deste PC');
+        await renderConnected(body);
+      }catch(e){ if(typeof window.lfbAlert==='function')window.lfbAlert(e.message||String(e),'Não deu para limpar'); }
     };
     body.querySelector('#dc-reset-cloud').onclick=async()=>{
       const ok1=await window.confirmSistema('Isso APAGA os dados da nuvem. Os dados DESTE computador não serão apagados. Bloqueie os outros aparelhos antes. Continuar?','Zerar nuvem');

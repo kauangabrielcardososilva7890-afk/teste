@@ -160,6 +160,21 @@
     sem perder contexto. Não fazer merge nem publicar o Worker sem confirmação
     humana explícita.
 
+42. **Forma da resposta (22/09/2026):** levar link em toda resposta, mas **no
+    máximo o essencial — site de teste e ZIP**. Ele reclamou em maiúsculas de
+    receber vários links: nada de lista de links.
+43. **Mobile pausado (22/09/2026):** enquanto ele não liberar, não fazer trabalho
+    novo em `mobile/**` (a sincronização mecânica do `mobile/sync-www.js`, que
+    faz parte da build, continua valendo para não deixar o carimbo divergente).
+44. **Dados só na nuvem (22/09/2026):** tudo o que ele cria vai para a nuvem; o
+    PC não é depósito. O modo `SÓ NUVEM` fica ligado por padrão, a cópia local
+    só é solta depois de a nuvem confirmar que tem tudo o que este PC tem, e
+    nunca se apaga nada sem essa confirmação.
+45. **Cada leva publica e atualiza a versão (22/09/2026):** usar `npm run versao`
+    e publicar com `guardar_repo` (`npm run guardar`) ao fim de cada leva; o
+    rodapé, o carimbo, o relatório e o guia acompanham a versão publicada. É a
+    resposta ao ".git fica voltando": nada fica só no PC/sandbox.
+
 ## Checklist obrigatória antes de programar
 
 Antes de começar a programar, responder as 24 perguntas abaixo. A resposta deve

@@ -3,9 +3,57 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0683d-teste` (anteriores: `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.4** (rodada 22/09 nº3 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v6.1.5** (rodada 22/09 nº4 — branch `arena/01a0c087-teste`)  
 
 ---
+
+## Rodada 22/09/2026 (nº4) — v6.1.5 · branch `arena/01a0c087-teste`
+
+**Pedido dele (literal, resumido):** apagar `MOTOR_NUVEM_PARA_COLAR.html` e
+`RELATORIO_DE_TESTE_NF.txt`; "criar nova NF" em **ABA** com as 5 opções da foto
+do sistema antigo; **um olho só** no campo da senha da nuvem; consertar a
+sincronização ("a nuvem não está sincronizando, um PC não mostra as informações
+a outro PC"); **nada salvo no PC/navegador — só nuvem**; parar de mandar vários
+links; mobile pausado; e "vai atualizando conforme as atualizações".
+
+**O que foi feito:**
+- `git rm MOTOR_NUVEM_PARA_COLAR.html` + `RELATORIO_DE_TESTE_NF.txt`, e todas as
+  referências (relatório, gerador, links, testes) limpas. O motor continua sendo
+  gerado em `cloudflare-worker/motor_para_colar.js` + `.sha256` por `npm run motor`.
+- **NF em aba:** `fiscal_catalogo_completo_patch.js` — botão **Nova nota** abre,
+  dentro da Central, os 5 caminhos do sistema antigo (Gerar NF-e Avulsa · Gerar
+  de NF-e Devolução para Cliente · Gerar de NF-e Devolução para Fornecedor ·
+  Gerar NFCe · Importar Declaração de Importação), cada um já com modelo
+  (55/65), finalidade (1/4) e o texto de apoio certo.
+- **Um olho só:** `ajustes_v5262_login_nuvem_primeiro_patch.js` esconde o olho
+  que o próprio navegador desenha (`::-ms-reveal`, `::-webkit-credentials-auto-fill-button`)
+  logo na carga do arquivo; o único olho é o botão do sistema.
+- **Sincronização (bugs achados no teste real de dois PCs contra o motor):**
+  `normalizarEstado()` (o estado trocado inteiro perdia `state.sumindo` e a
+  varredura estourava em silêncio → "nada mais subia"), `trocarEstado()` +
+  `estadoGeracao` (rodada antiga desfazia a decisão nova), contagem FRESCA no
+  `/v1/status?fresh=1` e resumo do worker apagado ao zerar a nuvem (o painel
+  mostrava contagem de até 10 minutos antes).
+- **SÓ NUVEM:** modo ligado por padrão — a base não é mais gravada no navegador
+  (`saveDB` não persiste nesse modo), a nuvem é lida inteira na abertura e a
+  cópia local só é solta quando a nuvem confirma que tem tudo o que o PC tem
+  (`nuvemTemTudo()`); painel da Nuvem mostra o modo, permite soltar a cópia e
+  voltar a guardar cópia para abrir sem internet.
+- **Versão acompanha a publicação:** `npm run versao` (`mudar_versao.js`) +
+  v6.1.5 no `package.json`, no rodapé, no relatório e no guia; `RELATORIO_DE_TESTE_NF.html`
+  ganhou a PARTE H (o que é novo nesta rodada) mantendo o filtro "só o que falta testar".
+- **Nuvem (worker) 0.4.9 / 5.26.5** em `cloudflare-worker/src/index.js`, motor
+  regerado; **precisa rodar o `atualizar_motor_nuvem.cmd`** para publicar.
+- Regras novas no `REGRAS_PERMANENTES.md`: 42 (máximo site + ZIP nos links),
+  43 (mobile pausado), 44 (dados só na nuvem), 45 (versão/publicação por leva).
+
+**Validações:** `npm test` = **189 passaram, 0 falharam**; teste local de dois
+PCs (`cloudflare-worker/test-client-sync.mjs`) contra o motor de verdade
+(D1 local, migrações aplicadas) passou ponta a ponta: publicar, baixar, editar,
+excluir, restaurar e republicar.
+
+**Pendências:** publicar o motor (`atualizar_motor_nuvem.cmd`); testar em dois
+PCs o que a PARTE H pergunta; `.exe` até ele rodar o `GERAR_EXE.cmd`.
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 

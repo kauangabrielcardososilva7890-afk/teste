@@ -33,7 +33,7 @@ const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://teste-60f
 const w = dom.window, d = w.document;
 
 const perguntas = [...d.querySelectorAll('.item.pergunta')];
-ok('uma caixa por pergunta: 39 perguntas na tela', perguntas.length === 39);
+ok('uma caixa por pergunta: 44 perguntas na tela', perguntas.length === 46);
 ok('cada pergunta tem EXATAMENTE 3 caixas',
    perguntas.every(p => p.querySelectorAll('input[type=radio]').length === 3));
 ok('cada pergunta tem a caixa de texto opcional (observação)',
@@ -46,12 +46,12 @@ ok('as 3 caixas são: OK, não resolveu, não testei',
 
 // numeração das partes (A1..A6 · B1..B9 · C1..C8 · D1..D2 · E1..E6 · F1..F4 · G1..G3), sem buraco
 const esperados = [];
-'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, 7).forEach((letra, i) => {
-  const quantos = [6, 9, 8, 2, 6, 4, 4][i];
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').slice(0, 8).forEach((letra, i) => {
+  const quantos = [6, 9, 8, 2, 6, 4, 4, 7][i];
   for (let n = 1; n <= quantos; n++) esperados.push(letra + n);
 });
-ok('numeração completa e na ordem (A1..G4)',
-   esperados.length === 39 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
+ok('numeração completa e na ordem (A1..H7)',
+   esperados.length === 46 && esperados.every(n => d.querySelector('input[name="r_' + n + '"]')));
 // As 3 partes novas (22/09/2026): nuvem automática, contratos e rodapé
 ok('PARTE E pergunta a sincronização automática (conectou = sincroniza)',
    html.indexOf('PARTE E — SINCRONIZAÇÃO AUTOMÁTICA') >= 0 &&
@@ -59,6 +59,11 @@ ok('PARTE E pergunta a sincronização automática (conectou = sincroniza)',
 ok('PARTE F pergunta contrato sem vínculo e o botão de vincular na mão',
    html.indexOf('PARTE F — CONTRATOS E CLIENTES') >= 0 &&
    html.indexOf('Cliente sem vínculo') >= 0 && html.indexOf('🔗 Vincular cliente') >= 0);
+ok('PARTE H lista o que esta rodada mudou (NF em aba, um olho, PC↔PC)',
+   html.indexOf('PARTE H — NOVO DE 22/09 (nº4)') >= 0 &&
+   html.indexOf('Nova nota fiscal em ABA') >= 0 &&
+   html.indexOf('um olho só') >= 0 &&
+   html.indexOf('Um PC criou algo e o OUTRO PC mostrou') >= 0);
 ok('PARTE G pergunta a versão e o carimbo do rodapé',
    html.indexOf('PARTE G — VERSÃO NO RODAPÉ') >= 0 && html.indexOf('carimbo') >= 0);
 // 22/09/2026 — ele reclamou: "tem algumas das mesmas perguntas, você não anotou
@@ -67,7 +72,7 @@ ok('pergunta já resolvida vem marcada (✅ resolvido antes)',
    d.querySelectorAll('.item.pergunta[data-estado="ok"]').length === 3 &&
    html.indexOf('✅ resolvido antes') >= 0);
 ok('pergunta nova de 22/09 vem marcada (🆕 novo de 22/09)',
-   d.querySelectorAll('.item.pergunta[data-estado="novo"]').length === 14);
+   d.querySelectorAll('.item.pergunta[data-estado="novo"]').length === 21);
 ok('existe o filtro "só o que falta testar"',
    !!d.getElementById('so_faltando') && html.indexOf('só o que falta testar') >= 0);
 
@@ -108,8 +113,8 @@ function escrever(id, texto){
 }
 
 d.getElementById('d_nome').value = 'Dono';
-d.getElementById('d_rodape').value = 'v6.1.4 + 1d27112d';
-d.getElementById('d_nuvem').value = '5.26.4';
+d.getElementById('d_rodape').value = 'v6.1.5 + 1d27112d';
+d.getElementById('d_nuvem').value = '5.26.5';
 marcar('ONDE', 'exe');
 marcar('A1', 'ok');  escrever('t_A1', 'abriu normal, sem undefined');
 marcar('B2', 'nao'); escrever('t_B2', 'mostrou erro de internet em vez de senha');
@@ -124,8 +129,8 @@ escrever('ad_1', 'Queria um atalho para imprimir em 2 vias');
 escrever('geral', 'Testei só no exe do escritório.');
 marcar('VEREDITO', 'ressalvas');
 
-ok('contador acompanha o preenchimento (8 respondidas de 36 EM ABERTO)',
-   /Respondidas: <b>8<\/b> de <b>36<\/b> em aberto/.test(d.getElementById('contador').innerHTML));
+ok('contador acompanha o preenchimento (8 respondidas de 43 EM ABERTO)',
+   /Respondidas: <b>8<\/b> de <b>43<\/b> em aberto/.test(d.getElementById('contador').innerHTML));
 ok('o contador separa o que já foi resolvido antes (não repete pergunta resolvida)',
    /3 já resolvidas antes/.test(d.getElementById('contador').innerHTML));
 
@@ -134,15 +139,15 @@ const txt = r.texto;
 
 ok('tipo salvarArquivo existe (o clique gera e baixa o .txt)', typeof w.salvarArquivo === 'function');
 ok('cabeçalho do relatório com data/hora', /RELATÓRIO DE TESTE — SISTEMA DIGICOPY/.test(txt) && /Gerado em \d\d\/\d\d\/\d\d\d\d às \d\dh\d\d/.test(txt));
-ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.4/.test(txt) && /5\.26\.4/.test(txt) && /1d27112d/.test(txt));
+ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.5/.test(txt) && /5\.26\.5/.test(txt) && /1d27112d/.test(txt));
 ok('pergunta respondida sai com a marca OK + observação',
    /\[OK \] A1 — .+\n\s+abriu normal, sem undefined/.test(txt));
 ok('pergunta não resolvida sai com a marca NAO + observação',
    /\[NAO\] B2 — .+\n\s+mostrou erro de internet em vez de senha/.test(txt));
 ok('pergunta não testada sai com a marca NT', /\[NT \] C4 — /.test(txt));
-ok('pergunta em branco sai como sem resposta no resumo', /29 sem resposta/.test(txt));
-ok('resumo conta certo (5 OK · 1 não resolveu · 1 não testei · 29 sem resposta)',
-   /RESUMO: 5 OK · 1 não resolveu · 1 não testei · 29 sem resposta/.test(txt));
+ok('pergunta em branco sai como sem resposta no resumo', /36 sem resposta/.test(txt));
+ok('resumo conta certo (5 OK · 1 não resolveu · 1 não testei · 36 sem resposta)',
+   /RESUMO: 5 OK · 1 não resolveu · 1 não testei · 36 sem resposta/.test(txt));
 ok('o .txt separa as 3 que já estavam resolvidas antes (fora da conta de sem resposta)',
    /3 já resolvida\(s\) antes/.test(txt) && /\[JA OK\] C5/.test(txt));
 ok('pergunta em branco sai marcada como "---" no corpo do relatório',
