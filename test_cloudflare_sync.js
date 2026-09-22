@@ -21,8 +21,8 @@ ok('ferramentas temporárias saíram da interface',!/dc-dedupe-clients|dc-review
 ok('admin pode zerar a nuvem e depois escolher o que enviar',/dc-reset-cloud/.test(code)&&/resetCloudOnly/.test(code)&&/dc-enviar-locais/.test(code));
 ok('aparelhos mostram registros, alterações e último acesso',/activeRecords/.test(code)&&/totalChanges/.test(code)&&/Último acesso/.test(code));
 ok('escolha aparece quando a sincronização está parada',/const escolher=!!sync\.paused/.test(code));
-ok('nada sobe sem a pessoa escolher',/dc-enviar-locais/.test(code)&&/dc-nao-enviar/.test(code));
-ok('explica que não duplica',/não duplicar/.test(code));
+ok('v6.1.4: escolha não é mais obrigatória (sincroniza sozinho)',/const escolher=!!sync\.paused/.test(code)&&/Sincronização automática ativa/.test(code));
+ok('explica que nada duplica na nuvem',/não duplica|Enviando os dados para a nuvem/.test(code));
 ok('restaura e bloqueia com confirmação',/\/v1\/restore/.test(code)&&/\/v1\/devices\/revoke/.test(code));
 ok('novo painel está no bundle',manifest.includes('cloudflare_sync_patch.js'));
 ok('Firebase automático apagado',!fs.existsSync('sync_realtime_patch.js'));

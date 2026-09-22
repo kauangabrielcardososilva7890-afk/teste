@@ -22,7 +22,7 @@ ok('não chama zerar nuvem', !/reset-cloud/.test(ui) && /discardLocalKeepCloud/.
 ok('fila antiga não sobe', /outbox=\[\]/.test(motor) || /outbox = \[\]/.test(motor));
 ok('depois despausa e sincroniza', /paused=false/.test(motor) && /nao-autorizar-local/.test(ui+motor));
 ok('dois avisos do sistema', (ui.match(/confirmSistema/g)||[]).length>=2);
-ok('botão no painel', /dc-nao-autorizar-local/.test(ui) && /Não autorizar dados deste PC/.test(ui));
+ok('botão no painel (agora opcional)', /dc-nao-autorizar-local/.test(ui) && /Não enviar os dados atuais deste PC \(opcional\)/.test(ui));
 ok('patch no bundle', manifest.includes('ajustes_v52246_nuvem_nao_autorizar_patch.js'));
 ok('versão', /^[56]\.\d+\.\d+/.test(pkg.version) && /app\.bundle\.js\?v=[56]\.\d+\.\d+/.test(html) && /v[56]\.\d+\.\d+/.test(html));
 ok('APK quieto', !/mobile\//.test(ui));

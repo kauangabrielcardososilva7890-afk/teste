@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: d5970a9c3208ef69
+ * scripts: 222 | sha256: 7a2afc76d4dcebd1
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28315,9 +28315,9 @@ async function renderConnected(body){
     :'';
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
-    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
+    ?('Sincronizando automaticamente — nada a escolher'+(held?' ('+held+' registros locais entrando na fila)':'')+'.')
     :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
-      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização automática ativa — conectou, sincroniza sozinho.'));
   const avisoContagem=contagemFalhou
     ?message('Os números da nuvem não puderam ser contados agora ('+esc(contagemFalhou)+'). Isso NÃO atrapalha a sincronização: seus dados continuam indo e voltando normalmente. Os botões abaixo funcionam.','info')
     :'';
@@ -28430,18 +28430,12 @@ window.abrirCloudflareNuvem=async function(){
 // A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
 // clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
 // escolha se apresenta sozinha, uma vez por sessão.
-function cobrarEscolha(){
-  if(!token()||!systemAdmin())return;
-  if(window.__dcEscolhaMostrada)return;
-  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
-  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
-  if(document.getElementById('digicopy-cloud-modal'))return;
-  window.__dcEscolhaMostrada=true;
-  window.abrirCloudflareNuvem();
-}
+// v6.1.4 — ORDEM DO DONO (22/09/2026): acabou a escolha obrigatória, então
+// acabou também o pop-up que abria sozinho cobrando resposta. Quem conecta
+// sincroniza na hora; a janela da Nuvem é para ver o estado e usar o check-up.
+function cobrarEscolha(){ /* mantida por compatibilidade: agora não faz nada */ }
 if(typeof document!=='undefined'){
-  setTimeout(cobrarEscolha,9000);
-  setTimeout(cobrarEscolha,45000);
+  // Nada abre sozinho: sem susto na cara do usuário.
 }
 
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
@@ -28579,13 +28573,19 @@ let state=loadState(),outbox=loadOutbox();
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v5.22.71-sem-logs';
-if(state.initialPull&&!String(state.regras||'').startsWith('v5.22.7')){
+const REGRAS='v6.1.4-conectou-sincroniza';
+// v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
+// não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
+// sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
+// quem conecta passa a sincronizar sozinho. A proteção de dado continua sendo a
+// de sempre (nada é apagado; envio é por id, então não duplica), e o botão
+// manual "Não enviar os dados atuais" continua existindo para quem quiser.
+state.paused=false;
+state.pauseReason='';
+if(state.regras!==REGRAS){
   state.regras=REGRAS;
-  state.paused=true;
-  state.pauseReason='escolha-inicial';
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
-}else if(state.regras!==REGRAS){state.regras=REGRAS;}
+}
 // Auditoria e avisos já subiram nas versões anteriores e agora não viajam mais.
 // Ficariam ocupando lugar na nuvem e inflando a contagem, então saem de lá uma
 // vez só, no ritmo normal da fila.
@@ -28713,20 +28713,14 @@ function listLocalOnlyKeys(beforeKeys){
 // duas opções: enviar os dados atuais deste PC, ou não enviar. Qualquer uma
 // das duas destrava a sincronização daí em diante.
 function decideReinstallGuard(opts){
-  const activation=opts&&opts.activation;
-  const cloudHasData=!!(opts&&opts.cloudHasData);
-  const localCount=Number(opts&&opts.localCount)||0;
-  const extraCount=Number(opts&&opts.extraCount)||0;
-  // v5.22.69 — o PC autorizado por convite APAGAVA daqui tudo o que a nuvem não
-  // tinha. Era isso que deixava o segundo computador faltando dados. Agora ele
-  // recebe a mesma escolha dos outros: nada é apagado sem a pessoa mandar.
-  if(activation==='invite'&&extraCount===0){
-    return {pause:false,isolate:false,hold:false,reason:'convidado-ok'};
-  }
-  if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
-    return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
-  }
-  return {pause:false,isolate:false,hold:false,reason:'ok'};
+  // v6.1.4 — ORDEM DO DONO (22/09/2026): sem trava de escolha. Conectou
+  // (qualquer uma das duas senhas), sincroniza na hora, nos dois sentidos.
+  // Nada é apagado e nada é isolado automaticamente: o envio é por id (atualiza
+  // o que já existe em vez de criar cópia) e a LEITURA da nuvem nunca apaga
+  // dado local — quem manda apagar é o dono, pela tela.
+  // A função continua existindo (e respondendo) porque o painel, o check-up e
+  // os testes usam o formato; agora ela sempre devolve "pode sincronizar".
+  return {pause:false,isolate:false,hold:false,reason:'sincroniza-direto'};
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
@@ -29047,14 +29041,12 @@ async function tick(reason){
         localCount:localBusinessCount(),
         extraCount:extras.length
       });
-      if(decision.isolate)await reconcileFirstAuthorizedDevice(localBefore);
-      state.heldLocalOnly=decision.hold?extras:[];
-      state.pauseReason=decision.pause?decision.reason:'';
-      if(decision.pause){
-        state.paused=true;state.initialPull=true;persist();
-        indicator(false,'Escolha o que fazer com os dados deste PC');
-        return true;
-      }
+      // v6.1.4 — sem pausa: sobras locais sobem por id (atualiza, não duplica);
+      // o que existe igual dos dois lados não é reenviado (a comparação de hash
+      // feita depois da leitura cuida disso).
+      state.heldLocalOnly=[];
+      state.pauseReason='';
+      state.paused=false;
     }
     let totalSent=0;
     for(let round=0;round<50;round++){
@@ -29239,6 +29231,8 @@ async function publishLocalToCloud(){
 }
 // Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais
 // ficam só neste PC e a nuvem passa a sincronizar normalmente daí em diante.
+// Continua disponível como OPÇÃO manual (a pedido, na tela da Nuvem) — o
+// caminho normal agora é sincronizar sozinho, sem perguntar nada.
 async function manterLocalSemEnviar(){
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
@@ -29308,6 +29302,16 @@ function estadoDetalhado(){
   s.bruto=typeof db!=='undefined'&&db?db:null;
   return s;
 }
+// v6.1.4 — PCs que já estavam parados na escolha (versão antiga) voltam a
+// sincronizar sozinhos na primeira abertura, sem ninguém clicar em nada.
+(function destravarPausaIngreme(){
+  try{
+    if(state.paused&&(state.pauseReason==='escolha-inicial'||!state.pauseReason)){
+      state.paused=false;state.pauseReason='';state.regras=REGRAS;persist();
+    }
+  }catch(e){}
+})();
+
 window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
@@ -42263,8 +42267,8 @@ function injetarBotao(){
   if(!body.querySelector('#dc-sync-now') && !body.querySelector('#dc-forget')) return;
   var box=document.createElement('div');
   box.style.cssText='border-top:1px solid #e2e8f0;margin-top:16px;padding-top:14px';
-  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não autorizar dados deste PC</h3>'
-    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">Este PC passa a usar a nuvem. O que só existe aqui some DESTE computador. A nuvem não apaga nada. O que você lançar depois sobe.</p>'
+  box.innerHTML='<h3 style="font-size:14px;font-weight:900">Não enviar os dados atuais deste PC (opcional)</h3>'
+    +'<p style="font-size:12px;color:#64748b;margin:6px 0 10px;line-height:1.45">A sincronização agora é automática: quem conecta já sincroniza nos dois sentidos. Use este botão só se quiser que este PC passe a usar apenas o que está na nuvem — o que só existe aqui sai DESTE computador e a nuvem não é apagada.</p>'
     +'<button id="dc-nao-autorizar-local" type="button" style="height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:12px;background:#fff7ed;color:#9a3412;border:1px solid #fdba74">Não autorizar dados deste PC</button>';
   var forgetRow=body.querySelector('#dc-forget');
   if(forgetRow && forgetRow.parentNode){

@@ -46,11 +46,11 @@ ok('3.1 busca repõe o texto depois de redesenhar',/function reporTexto/.test(fi
 // 5.1 — nuvem: escolha única na primeira conexão
 const motor=ler('cloudflare_data_sync_patch.js');
 const painel=ler('cloudflare_sync_patch.js');
-ok('5.1 primeira conexão pede escolha',/escolha-inicial/.test(motor));
+ok('5.1 primeira conexão sincroniza sem perguntar (v6.1.4)',/sincroniza-direto/.test(motor)&&!/pauseReason='escolha-inicial'/.test(motor));
 ok('5.1 duas opções existem no motor',/async function publishLocalToCloud/.test(motor)&&/async function manterLocalSemEnviar/.test(motor));
 ok('5.1 painel mostra as duas opções',/dc-enviar-locais/.test(painel)&&/dc-nao-enviar/.test(painel));
 ok('5.1 bloqueio de exclusão sumiu da tela',!/Confirmar exclusões de/.test(painel)&&!/dc-approve-delete/.test(painel));
-ok('5.1 por padrão nada sobe sozinho',/pause:true,isolate:false,hold:true/.test(motor));
+ok('5.1 v6.1.4: por ordem do dono, conectou e sincroniza direto (sem travar)',/function decideReinstallGuard/.test(motor)&&/sincroniza-direto/.test(motor));
 
 ['menus_tela_pequena_patch.js','cloudflare_data_sync_patch.js','cloudflare_sync_patch.js','ajustes_v52218_pix_prazo_print_venda_patch.js'].forEach(f=>{
   ok('no bundle: '+f,manifest.indexOf(f)>=0);

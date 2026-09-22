@@ -125,13 +125,19 @@ let state=loadState(),outbox=loadOutbox();
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v5.22.71-sem-logs';
-if(state.initialPull&&!String(state.regras||'').startsWith('v5.22.7')){
+const REGRAS='v6.1.4-conectou-sincroniza';
+// v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
+// não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
+// sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
+// quem conecta passa a sincronizar sozinho. A proteção de dado continua sendo a
+// de sempre (nada é apagado; envio é por id, então não duplica), e o botão
+// manual "Não enviar os dados atuais" continua existindo para quem quiser.
+state.paused=false;
+state.pauseReason='';
+if(state.regras!==REGRAS){
   state.regras=REGRAS;
-  state.paused=true;
-  state.pauseReason='escolha-inicial';
   try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(e){}
-}else if(state.regras!==REGRAS){state.regras=REGRAS;}
+}
 // Auditoria e avisos já subiram nas versões anteriores e agora não viajam mais.
 // Ficariam ocupando lugar na nuvem e inflando a contagem, então saem de lá uma
 // vez só, no ritmo normal da fila.
@@ -259,20 +265,14 @@ function listLocalOnlyKeys(beforeKeys){
 // duas opções: enviar os dados atuais deste PC, ou não enviar. Qualquer uma
 // das duas destrava a sincronização daí em diante.
 function decideReinstallGuard(opts){
-  const activation=opts&&opts.activation;
-  const cloudHasData=!!(opts&&opts.cloudHasData);
-  const localCount=Number(opts&&opts.localCount)||0;
-  const extraCount=Number(opts&&opts.extraCount)||0;
-  // v5.22.69 — o PC autorizado por convite APAGAVA daqui tudo o que a nuvem não
-  // tinha. Era isso que deixava o segundo computador faltando dados. Agora ele
-  // recebe a mesma escolha dos outros: nada é apagado sem a pessoa mandar.
-  if(activation==='invite'&&extraCount===0){
-    return {pause:false,isolate:false,hold:false,reason:'convidado-ok'};
-  }
-  if((!cloudHasData&&localCount>0)||(cloudHasData&&extraCount>0)){
-    return {pause:true,isolate:false,hold:true,reason:'escolha-inicial'};
-  }
-  return {pause:false,isolate:false,hold:false,reason:'ok'};
+  // v6.1.4 — ORDEM DO DONO (22/09/2026): sem trava de escolha. Conectou
+  // (qualquer uma das duas senhas), sincroniza na hora, nos dois sentidos.
+  // Nada é apagado e nada é isolado automaticamente: o envio é por id (atualiza
+  // o que já existe em vez de criar cópia) e a LEITURA da nuvem nunca apaga
+  // dado local — quem manda apagar é o dono, pela tela.
+  // A função continua existindo (e respondendo) porque o painel, o check-up e
+  // os testes usam o formato; agora ela sempre devolve "pode sincronizar".
+  return {pause:false,isolate:false,hold:false,reason:'sincroniza-direto'};
 }
 async function reconcileFirstAuthorizedDevice(beforeKeys){
   if(!beforeKeys||typeof db==='undefined'||!db)return 0;
@@ -593,14 +593,12 @@ async function tick(reason){
         localCount:localBusinessCount(),
         extraCount:extras.length
       });
-      if(decision.isolate)await reconcileFirstAuthorizedDevice(localBefore);
-      state.heldLocalOnly=decision.hold?extras:[];
-      state.pauseReason=decision.pause?decision.reason:'';
-      if(decision.pause){
-        state.paused=true;state.initialPull=true;persist();
-        indicator(false,'Escolha o que fazer com os dados deste PC');
-        return true;
-      }
+      // v6.1.4 — sem pausa: sobras locais sobem por id (atualiza, não duplica);
+      // o que existe igual dos dois lados não é reenviado (a comparação de hash
+      // feita depois da leitura cuida disso).
+      state.heldLocalOnly=[];
+      state.pauseReason='';
+      state.paused=false;
     }
     let totalSent=0;
     for(let round=0;round<50;round++){
@@ -785,6 +783,8 @@ async function publishLocalToCloud(){
 }
 // Opção 2 da escolha: não enviar o que já existe aqui. Os registros atuais
 // ficam só neste PC e a nuvem passa a sincronizar normalmente daí em diante.
+// Continua disponível como OPÇÃO manual (a pedido, na tela da Nuvem) — o
+// caminho normal agora é sincronizar sozinho, sem perguntar nada.
 async function manterLocalSemEnviar(){
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
@@ -854,6 +854,16 @@ function estadoDetalhado(){
   s.bruto=typeof db!=='undefined'&&db?db:null;
   return s;
 }
+// v6.1.4 — PCs que já estavam parados na escolha (versão antiga) voltam a
+// sincronizar sozinhos na primeira abertura, sem ninguém clicar em nada.
+(function destravarPausaIngreme(){
+  try{
+    if(state.paused&&(state.pauseReason==='escolha-inicial'||!state.pauseReason)){
+      state.paused=false;state.pauseReason='';state.regras=REGRAS;persist();
+    }
+  }catch(e){}
+})();
+
 window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.

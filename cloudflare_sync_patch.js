@@ -270,9 +270,9 @@ async function renderConnected(body){
     :'';
   const held=Number(sync.heldLocalOnly)||0;
   const syncMessage=escolher
-    ?('Escolha o que fazer com os dados que já existem neste computador e a nuvem ainda não tem'+(held?' ('+held+' registros)':'')+'. Para não duplicar nada, ninguém envia sozinho. Depois da escolha a nuvem sincroniza tudo, sempre, sem perguntar de novo.')
+    ?('Sincronizando automaticamente — nada a escolher'+(held?' ('+held+' registros locais entrando na fila)':'')+'.')
     :(sync.outbox?('Enviando os dados para a nuvem: faltam '+sync.outbox+' registros. Pode fechar esta janela e continuar trabalhando — o envio segue sozinho e recomeça de onde parou.')
-      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização incremental ativa.'));
+      :(sync.lastError?('Computador autorizado, com pendência: '+sync.lastError):'Computador autorizado. Sincronização automática ativa — conectou, sincroniza sozinho.'));
   const avisoContagem=contagemFalhou
     ?message('Os números da nuvem não puderam ser contados agora ('+esc(contagemFalhou)+'). Isso NÃO atrapalha a sincronização: seus dados continuam indo e voltando normalmente. Os botões abaixo funcionam.','info')
     :'';
@@ -385,18 +385,12 @@ window.abrirCloudflareNuvem=async function(){
 // A sincronização fica PARADA até a pessoa escolher. Se o painel só abrisse no
 // clique, o PC podia passar dias sem sincronizar sem ninguém perceber — então a
 // escolha se apresenta sozinha, uma vez por sessão.
-function cobrarEscolha(){
-  if(!token()||!systemAdmin())return;
-  if(window.__dcEscolhaMostrada)return;
-  const s=window.DIGICOPY_CLOUD_SYNC&&window.DIGICOPY_CLOUD_SYNC.info?window.DIGICOPY_CLOUD_SYNC.info():null;
-  if(!s||!s.paused||s.pauseReason!=='escolha-inicial')return;
-  if(document.getElementById('digicopy-cloud-modal'))return;
-  window.__dcEscolhaMostrada=true;
-  window.abrirCloudflareNuvem();
-}
+// v6.1.4 — ORDEM DO DONO (22/09/2026): acabou a escolha obrigatória, então
+// acabou também o pop-up que abria sozinho cobrando resposta. Quem conecta
+// sincroniza na hora; a janela da Nuvem é para ver o estado e usar o check-up.
+function cobrarEscolha(){ /* mantida por compatibilidade: agora não faz nada */ }
 if(typeof document!=='undefined'){
-  setTimeout(cobrarEscolha,9000);
-  setTimeout(cobrarEscolha,45000);
+  // Nada abre sozinho: sem susto na cara do usuário.
 }
 
 console.log('[DIGICOPY] Cloudflare D1: painel de autorização carregado');
