@@ -156,9 +156,9 @@ ok('tem a PARTE H com o que é novo nesta rodada',
 ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa do PC)',
   rel.indexOf('NAVEGADOR DENTRO DO SISTEMA') >= 0 && rel.indexOf('NFS-e Nacional') >= 0 &&
   rel.indexOf('WhatsApp Web') >= 0 && rel.indexOf('Abrir numa janela nova') >= 0);
-ok('o relatório é da versão publicada agora (v6.1.9)',
-  rel.indexOf('v6.1.9') >= 0 && rel.indexOf('5.26.5') >= 0);
+ok('o relatório é da versão publicada agora (v6.1.10)',
+  rel.indexOf('v6.1.10') >= 0 && rel.indexOf('5.26.5') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
-console.log('\nRESULTADO: v6.1.9 (rodada 22/09) passou!');
+console.log('\nRESULTADO: v6.1.10 (rodada 22/09) passou!');

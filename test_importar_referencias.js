@@ -67,8 +67,31 @@ ok(/navigator\.clipboard\.writeText/.test(html) && /execCommand\('copy'\)/.test(
    'copia sozinho e, se o navegador não deixar, ensina Ctrl+A / Ctrl+C');
 ok(html.indexOf('id="b-salvar"') >= 0, 'e ainda dá para salvar um .txt, se ele preferir');
 ok(html.indexOf('Ctrl+A') >= 0 && html.indexOf('Ctrl+C') >= 0, 'o plano B da cópia está escrito na tela');
-ok(/MAX_ARQ\s*=\s*300\s*\*\s*1024/.test(html) && /MAX_TOTAL\s*=/.test(html),
-   'tem teto de tamanho (arquivo grande demais é pulado com aviso — PC fraco, regra #12)');
+ok(/MAX_ARQ\s*=\s*900\s*\*\s*1024/.test(html) && /MAX_TOTAL\s*=\s*3\s*\*\s*1024\s*\*\s*1024/.test(html),
+   'o teto sobe para 900 KB por arquivo e 3 MB no total (cabe o leiauteNFe de 337 KB)');
+ok(/grande demais \(pulei\)/.test(html) && /status === 'grande'/.test(html), 'acima do teto o arquivo é pulado com aviso (nada de travar o PC — regra #12)');
+
+console.log('\n== 3b) Arquivo grande: resumo e partes para colar ==');
+const xsd = '<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.portalfiscal.inf.br/nfe" version="4.00">' +
+  '<xs:element name="NFe" type="TNFe"/><xs:element name="enviNFe" type="TEnviNFe"/>' +
+  '<xs:complexType name="TNFe"><xs:sequence><xs:element name="infNFe" type="TInfNFe"/></xs:sequence></xs:complexType>' +
+  '<xs:attribute name="versao" type="xs:string"/></xs:schema>';
+const resumo = P.irResumoXsd(xsd);
+ok(resumo.indexOf('http://www.portalfiscal.inf.br/nfe') >= 0, 'o resumo mostra o namespace do esquema');
+ok(resumo.indexOf('Versao.........: 4.00') >= 0, 'o resumo mostra a versão (4.00)');
+ok(/Elementos \(3\)/.test(resumo) && resumo.indexOf('NFe, enviNFe, infNFe') >= 0, 'o resumo lista os elementos, sem repetir');
+ok(/Tipos \(1\)/.test(resumo) && resumo.indexOf('TNFe') >= 0, 'o resumo lista os tipos (complexType)');
+ok(/Atributos \(1\)/.test(resumo) && resumo.indexOf('versao') >= 0, 'o resumo lista os atributos');
+ok(resumo.length < xsd.length * 2, 'o resumo é curto (dá para colar numa mensagem)');
+
+const grande = new Array(5000).join('linha de exemplo do arquivo grande\n');
+const partes = P.irPartes(grande, 40000);
+ok(partes.length > 1, 'texto grande é dividido em partes');
+ok(partes.every(p => p.length <= 40000), 'nenhuma parte passa do tamanho combinado (~40 KB para colar)');
+ok(partes.join('') === grande, 'juntando as partes volta o texto inteiro (nada é perdido)');
+ok(P.irPartes('curto', 40000).length === 1, 'texto pequeno continua em UMA parte (nada de complicar)');
+ok(html.indexOf('id="parte"') >= 0 && /Parte ' \+ \(i \+ 1\) \+ ' de '/.test(html), 'a tela tem a listinha de partes, numerada');
+ok(html.indexOf('select') >= 0 && /listinha ao lado/.test(html), 'o aviso explica a listinha de partes');
 ok(/reader\.readAsArrayBuffer/.test(html), 'lê os bytes (para poder detectar binário de verdade)');
 ok(html.indexOf('Escolher a pasta inteira') >= 0, 'o botão da pasta está na tela, com o nome claro');
 

@@ -19,15 +19,16 @@
   .solte.porcima{ background:var(--azul2); border-color:var(--azul); }
   .solte b{ color:var(--azul); font-size:14px; }
   .solte div{ font-size:12px; color:#64748b; margin-top:4px; }
-  .linha{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .linha{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:center; }
   button{ height:34px; padding:0 14px; border-radius:10px; border:1px solid var(--borda); background:#fff; color:var(--azul); font-weight:700; font-size:12.5px; cursor:pointer; }
   button.principal{ background:var(--azul); color:#fff; border-color:var(--azul); }
   button:disabled{ opacity:.5; cursor:not-allowed; }
+  select{ height:34px; border-radius:10px; border:1px solid var(--borda); padding:0 8px; font-size:12.5px; color:var(--azul); background:#fff; }
   ul.lista{ margin:10px 0 0; padding:0; list-style:none; font-size:12.5px; }
   ul.lista li{ display:flex; gap:8px; align-items:flex-start; padding:4px 0; border-top:1px solid #f1f5f9; }
   ul.lista li:first-child{ border-top:0; }
   ul.lista .nome{ flex:1; word-break:break-all; }
-  .selo{ font-weight:700; }
+  .selo{ font-weight:700; white-space:nowrap; }
   .selo.txt{ color:var(--ok); }
   .selo.bin{ color:var(--aviso); }
   textarea{ width:100%; min-height:260px; margin-top:10px; border:1px solid var(--borda); border-radius:12px; padding:10px; font-family:ui-monospace,Consolas,monospace; font-size:12px; }
@@ -41,7 +42,7 @@
 <body>
 <div class="topo">
   <h1>Importar arquivos do sistema antigo</h1>
-  <p>Ferramenta de apoio · Sistema Digicopy v6.1.9 · 22/09/2026 — nada sai do seu computador: a leitura é feita aqui mesmo no navegador.</p>
+  <p>Ferramenta de apoio · Sistema Digicopy v6.1.10 · 22/09/2026 (rev. 2 — arquivos grandes) · nada sai do seu computador: a leitura é feita aqui mesmo no navegador.</p>
 </div>
 
 <div class="wrap">
@@ -49,7 +50,9 @@
     <h2>1) Escolha os arquivos (pode ser a pasta inteira)</h2>
     <p class="dica">
       Arraste a pasta <b>Grids</b> (ou os arquivos do <b>NSNFe</b>) e solte na área abaixo. Também dá para clicar e escolher
-      os arquivos, ou usar <b>Escolher a pasta inteira</b>. Pode mandar vários de uma vez — arquivos de texto (1–50 KB) são o ideal.
+      os arquivos, ou usar <b>Escolher a pasta inteira</b>. Pode mandar vários de uma vez.
+      Arquivos <b>grandes</b> (ex.: <code>leiauteNFe_v4.00.xsd</code>, 337 KB) agora são aceitos: dele sai um <b>resumo</b> e, se você quiser o texto inteiro,
+      a ferramenta <b>divide em partes</b> para você colar uma por mensagem.
       <b>Não mande</b> o <code>BANCO.FDB</code> nem as DLLs/exe: são binários enormes e não ajudam.
     </p>
     <div class="solte" id="solte">
@@ -69,9 +72,10 @@
 
   <div class="caixa">
     <h2>2) Copie o texto e cole na conversa</h2>
-    <p class="dica">Aperte <b>Copiar tudo</b> e cole na conversa (Ctrl+V). Se o botão não funcionar, clique dentro da caixa do texto, aperte Ctrl+A e depois Ctrl+C.</p>
+    <p class="dica">Aperte <b>Copiar</b> e cole na conversa (Ctrl+V). Se o botão não funcionar, clique dentro da caixa do texto, aperte Ctrl+A e depois Ctrl+C.</p>
     <div class="linha">
       <button class="principal" id="b-copiar" disabled>Copiar tudo</button>
+      <select id="parte" hidden></select>
       <button id="b-salvar" disabled>Salvar .txt no PC</button>
     </div>
     <textarea id="saida" spellcheck="false" placeholder="O texto dos arquivos aparece aqui depois que você escolher eles..."></textarea>
@@ -91,7 +95,6 @@ function irEhBinario(bytes){
   for(let i = 0; i < n; i++){
     const b = bytes[i];
     if(b === 0) zeros++;
-    // fora de tab/LF/CR e da faixa imprimível => lixo
     if(b !== 9 && b !== 10 && b !== 13 && (b < 32 || b > 126)) ruins++;
   }
   if(zeros > 0) return true;
@@ -113,7 +116,6 @@ function irDecodificar(bytes){
   return { texto:s, codificacao:'latin1' };
 }
 
-// Base64 (para arquivo binário ainda dar para aproveitar alguma coisa)
 function irBase64(bytes){
   const buf = (bytes instanceof Uint8Array) ? bytes : new Uint8Array(bytes || []);
   let s = '';
@@ -128,7 +130,42 @@ function irTamanho(n){
   return (n / 1048576).toFixed(2) + ' MB';
 }
 
-// Monta o texto final: um cabeçalho por arquivo + o conteúdo.
+// Junta os nomes achados dentro do XML, sem repetir e em ordem de aparição.
+function irNomesUnicos(texto, re){
+  const vistos = {}, saida = [];
+  let m;
+  const r = new RegExp(re.source, 'g');
+  while((m = r.exec(texto))){
+    const nome = m[1];
+    if(!nome || vistos[nome]) continue;
+    vistos[nome] = 1; saida.push(nome);
+    if(saida.length >= 4000) break;
+  }
+  return saida;
+}
+
+// Resumo de um arquivo grande de esquema (.xsd): é o que eu preciso ver sem
+// carregar 337 KB na conversa — versão, namespaces e a lista de elementos/tipos.
+function irResumoXsd(texto){
+  const t = String(texto || '');
+  const acha = function(re){ const m = t.match(re); return m ? m[1] : ''; };
+  const alvo = acha(/targetNamespace="([^"]+)"/);
+  const versao = acha(/\bversion="([^"]+)"/);
+  const elementos = irNomesUnicos(t, /<xs:element[^>]*\bname="([^"]+)"/);
+  const tipos = irNomesUnicos(t, /<xs:(?:complex|simple)Type[^>]*\bname="([^"]+)"/);
+  const atributos = irNomesUnicos(t, /<xs:attribute[^>]*\bname="([^"]+)"/);
+  const L = [];
+  L.push('--- RESUMO DO ESQUEMA (arquivo grande: isto é o que basta para eu ler) ---');
+  L.push('Namespace......: ' + (alvo || '(sem targetNamespace)'));
+  L.push('Versao.........: ' + (versao || '(sem version)'));
+  L.push('Elementos (' + elementos.length + ')...: ' + elementos.join(', '));
+  L.push('Tipos (' + tipos.length + ')...: ' + tipos.join(', '));
+  L.push('Atributos (' + atributos.length + ')...: ' + atributos.join(', '));
+  L.push('--- FIM DO RESUMO ---');
+  return L.join('\n');
+}
+
+// Monta o texto final: um cabeçalho por arquivo + o conteúdo (ou o resumo).
 function irJuntar(itens){
   const L = [];
   (itens || []).forEach(function(it){
@@ -136,6 +173,9 @@ function irJuntar(itens){
     if(it.binario || it.status === 'binario'){
       L.push('(arquivo BINARIO — vai em base64 para eu conseguir ler no meu lado)');
       L.push(it.base64 || '');
+    } else if(it.resumo){
+      L.push(it.resumo);
+      L.push('(o texto inteiro deste arquivo ficou nas PARTES — só mande se eu pedir)');
     } else {
       L.push(it.texto || '');
     }
@@ -143,9 +183,35 @@ function irJuntar(itens){
   });
   return L.join('\n');
 }
+
+// Divide um texto em partes de tamanho máximo (sem cortar no meio de uma linha).
+function irPartes(texto, maximo){
+  const t = String(texto || '');
+  const limite = Number(maximo) || 40000;
+  if(!t) return [];
+  if(t.length <= limite) return [t];
+  // cada "pedaço" já vem com o seu \n (o último pode vir sem) — assim nada se perde
+  const linhas = t.match(/[^\n]*\n|[^\n]+/g) || [];
+  const partes = [];
+  let atual = '';
+  linhas.forEach(function(pedaco){
+    if(atual.length + pedaco.length > limite && atual){
+      partes.push(atual); atual = '';
+    }
+    if(pedaco.length > limite){
+      let resto = pedaco;
+      while(resto.length > limite){ partes.push(resto.slice(0, limite)); resto = resto.slice(limite); }
+      atual = resto; return;
+    }
+    atual += pedaco;
+  });
+  if(atual) partes.push(atual);
+  return partes;
+}
 if(typeof window !== 'undefined'){
   window.IR_PURE = { irEhBinario:irEhBinario, irDecodificar:irDecodificar, irBase64:irBase64,
-                     irTamanho:irTamanho, irJuntar:irJuntar };
+                     irTamanho:irTamanho, irResumoXsd:irResumoXsd, irJuntar:irJuntar,
+                     irPartes:irPartes, irNomesUnicos:irNomesUnicos };
 }
 /* IR_PURE_END */
 
@@ -153,31 +219,35 @@ if(typeof window !== 'undefined'){
 'use strict';
 if(typeof document === 'undefined') return;
 
-// Teto de segurança (PC fraco + mensagem que caiba na conversa)
-const MAX_ARQ = 300 * 1024;        // por arquivo: 300 KB
-const MAX_TOTAL = 1200 * 1024;     // no total: 1,2 MB de texto
+// Tetos (PC fraco + mensagem que caiba na conversa)
+const MAX_ARQ = 900 * 1024;        // por arquivo: 900 KB (o leiauteNFe tem 337 KB)
+const MAX_TOTAL = 3 * 1024 * 1024; // no total: 3 MB de texto
 const MAX_B64 = 80 * 1024;         // binário: base64 até 80 KB por arquivo
+const RESUMO_ACIMA = 120 * 1024;   // acima disso: sai resumo + partes
+const TAM_PARTE = 40000;           // cada parte que ele cola: ~40 KB
 
 const $ = id => document.getElementById(id);
-let total = 0;
+let partes = [];
+let textoCompleto = '';
 
 function recado(txt, tipo){ const el = $('recado'); el.textContent = txt || ''; el.className = 'recado ' + (tipo || ''); }
 function recado2(txt, tipo){ const el = $('recado2'); el.textContent = txt || ''; el.className = 'recado ' + (tipo || ''); }
 
 function pintarLinha(item){
+  const rot = item.status === 'texto' ? ['txt', 'texto OK']
+            : item.status === 'binario' ? ['bin', 'binário (vai em base64)']
+            : ['bin', item.status === 'grande' ? 'grande demais (pulei)' : 'não deu para ler'];
+  const extra = item.resumo ? ' — mandei o resumo' : '';
   const li = document.createElement('li');
-  const selo = item.status === 'texto' ? ['selo txt', 'texto OK']
-             : item.status === 'binario' ? ['selo bin', 'binário (vai em base64)']
-             : ['selo bin', item.status === 'grande' ? 'grande demais (pulei)' : 'não deu para ler'];
-  li.innerHTML = '<span class="selo ' + selo[0].split(' ')[1] + '">' + selo[1] + '</span>' +
-                 '<span class="nome">' + item.nome + ' — ' + item.tamanho + '</span>';
+  li.innerHTML = '<span class="selo ' + rot[0] + '">' + rot[1] + '</span>' +
+                 '<span class="nome">' + item.nome + ' — ' + item.tamanho + extra + '</span>';
   $('lista').appendChild(li);
 }
 
 function lerArquivo(file){
   return new Promise(function(resolve){
     const reader = new FileReader();
-    reader.onerror = function(){ resolve({ nome:file.name, status:'erro', tamanho:irTamanho(file.size), bytes:0 }); };
+    reader.onerror = function(){ resolve({ nome:file.name, status:'erro', tamanho:irTamanho(file.size), bytes:file.size }); };
     reader.onload = function(){
       const bytes = new Uint8Array(reader.result || []);
       const item = { nome:file.name, bytes:file.size, tamanho:irTamanho(file.size) };
@@ -191,6 +261,11 @@ function lerArquivo(file){
         const d = irDecodificar(bytes);
         item.status = 'texto';
         item.texto = d.texto;
+        item.codificacao = d.codificacao;
+        // arquivo grande de esquema: além do texto, um resumo curto para colar
+        if(d.texto.length > RESUMO_ACIMA && /<xs:schema|<xsd:schema/i.test(d.texto)){
+          item.resumo = irResumoXsd(d.texto);
+        }
       }
       resolve(item);
     };
@@ -212,18 +287,50 @@ async function receber(files){
   const grandes = itens.filter(it => it.status === 'grande').length;
   const erros = itens.filter(it => it.status === 'erro').length;
 
-  let texto = irJuntar(bons);
-  if(texto.length > MAX_TOTAL){
-    texto = texto.slice(0, MAX_TOTAL) + '\n\n(…cortei aqui: o texto ficou grande demais. Mande em duas vezes.)';
-  }
-  $('saida').value = texto;
-  total = texto.length;
-  $('b-copiar').disabled = !texto;
-  $('b-salvar').disabled = !texto;
+  // texto que ele cola: resumos dos grandes + conteúdo dos pequenos
+  const paraColar = [];
+  const paraDividir = [];
+  bons.forEach(function(it){
+    if(it.resumo){
+      paraColar.push('===== ARQUIVO: ' + it.nome + ' (' + it.tamanho + ') =====');
+      paraColar.push(it.resumo);
+      paraColar.push('');
+    }
+    paraDividir.push(it);
+  });
+  const pequenos = bons.filter(it => !it.resumo);
+  const curto = irJuntar(pequenos).replace(/\s+$/, '');
+  const cabeca = paraColar.join('\n').replace(/\s+$/, '');
+  textoCompleto = (curto && cabeca) ? (cabeca + '\n\n' + curto) : (cabeca || curto);
+
+  // partes (com o texto INTEIRO) para quando algo for grande demais para colar
+  const completo = irJuntar(bons);
+  partes = irPartes(completo, TAM_PARTE);
+
+  $('saida').value = textoCompleto.slice(0, MAX_TOTAL);
+  $('b-copiar').disabled = !$('saida').value;
+  $('b-salvar').disabled = !completo;
   $('b-limpar').disabled = false;
-  recado('Prontos: ' + bons.length + ' de ' + lista.length + ' arquivo(s).' +
-         (grandes ? ' Pulei ' + grandes + ' grande(s) demais.' : '') + (erros ? ' ' + erros + ' não deu para ler.' : ''), 'ok');
-  recado2(texto.length ? 'Texto pronto (' + irTamanho(texto.length) + '). Aperte "Copiar tudo" e cole na conversa.' : '');
+
+  const sel = $('parte');
+  if(partes.length > 1 && completo.length > TAM_PARTE){
+    sel.hidden = false;
+    sel.innerHTML = partes.map(function(_, i){
+      return '<option value="' + i + '">Parte ' + (i + 1) + ' de ' + partes.length + ' (texto inteiro)</option>';
+    }).join('');
+    sel.value = '0';
+    sel.onchange = function(){ $('saida').value = partes[Number(sel.value)] || ''; };
+    recado('Prontos: ' + bons.length + ' de ' + lista.length + ' arquivo(s).' +
+           (grandes ? ' Pulei ' + grandes + ' grande(s) demais.' : '') + (erros ? ' ' + erros + ' não deu para ler.' : '') +
+           ' O texto inteiro tem ' + irTamanho(completo.length) + ' — se não couber numa mensagem, escolha "Parte 1" na listinha ao lado.',
+           'ok');
+    recado2(textoCompleto.length ? 'Na caixa está o texto com os resumos dos grandes (' + irTamanho(textoCompleto.length) + '). Aperte "Copiar" e cole na conversa.' : '');
+  } else {
+    sel.hidden = true; sel.onchange = null;
+    recado('Prontos: ' + bons.length + ' de ' + lista.length + ' arquivo(s).' +
+           (grandes ? ' Pulei ' + grandes + ' grande(s) demais.' : '') + (erros ? ' ' + erros + ' não deu para ler.' : ''), 'ok');
+    recado2(textoCompleto.length ? 'Texto pronto (' + irTamanho(textoCompleto.length) + '). Aperte "Copiar" e cole na conversa.' : '');
+  }
 }
 
 function copiarTudo(){
@@ -240,23 +347,27 @@ function copiarTudo(){
 }
 
 function salvarTxt(){
-  const ta = $('saida');
-  if(!ta.value) return;
+  if(!textoCompleto && !partes.length) return;
   try{
-    const blob = new Blob([ta.value], { type:'text/plain;charset=utf-8' });
+    // o .txt leva TUDO (inclusive o texto inteiro dos grandes); o "Copiar" leva
+    // o resumo + os pequenos, que é o que cabe numa mensagem.
+    const conteudo = (partes && partes.length ? partes.join('') : '') || textoCompleto;
+    const blob = new Blob([conteudo], { type:'text/plain;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'referencias-sistema-antigo.txt';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
     recado2('Arquivo .txt salvo na pasta Downloads.', 'ok');
-  }catch(e){ recado2('Não deu para salvar aqui — use o "Copiar tudo" e cole na conversa.', 'aviso'); }
+  }catch(e){ recado2('Não deu para salvar aqui — use o "Copiar" e cole na conversa.', 'aviso'); }
 }
 
 function limpar(){
   $('lista').innerHTML = ''; $('saida').value = '';
   $('b-copiar').disabled = true; $('b-salvar').disabled = true; $('b-limpar').disabled = true;
   $('in-arquivos').value = ''; $('in-pasta').value = '';
+  const sel = $('parte'); sel.hidden = true; sel.innerHTML = ''; sel.onchange = null;
+  partes = []; textoCompleto = '';
   recado(''); recado2('');
 }
 
@@ -283,7 +394,7 @@ $('solte').addEventListener('drop', function(e){
 window.addEventListener('dragover', function(e){ e.preventDefault(); });
 window.addEventListener('drop', function(e){ e.preventDefault(); });
 
-console.log('[DIGICOPY] importar.html — leitura de referencias do sistema antigo (nada sai do PC)');
+console.log('[DIGICOPY] importar.html rev.2 — leitura de referencias do sistema antigo (nada sai do PC)');
 })();
 </script>
 </body>
