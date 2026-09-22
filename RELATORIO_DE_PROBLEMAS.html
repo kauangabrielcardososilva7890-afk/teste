@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Problemas — Sistema Digicopy</title>
+<style>
+  :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#1e293b;background:#fff;line-height:1.5;font-size:14px;max-width:960px;margin:0 auto;padding:20px 20px 120px}
+  header{border:2px solid var(--azul);border-radius:14px;padding:16px 20px;margin-bottom:14px;background:linear-gradient(135deg,#eef2ff,#fff)}
+  header h1{font-size:20px;color:var(--azul)}
+  header p{font-size:12.5px;color:var(--cinza);margin-top:5px}
+  header .aviso{margin-top:9px;font-size:12px;background:#fff7ed;border-left:4px solid var(--laranja);padding:7px 10px;border-radius:6px;color:#7c2d12}
+  h2{font-size:15.5px;color:var(--azul);margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #eef2ff}
+  .dica{font-size:12px;color:var(--cinza);margin-bottom:8px}
+  .campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+  .campo label,label.rot{display:block;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--cinza);margin-bottom:4px}
+  input[type=text],select{width:100%;height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;font-size:13.5px;font-family:inherit;background:#fff}
+  input[type=text]:focus,textarea:focus,select:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(10,30,138,.09)}
+  textarea{width:100%;min-height:44px;border:1px solid #cbd5e1;border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical}
+  .caixas{display:flex;gap:6px;flex-wrap:wrap}
+  .caixa{display:flex;align-items:center;gap:6px;border:1px solid #cbd5e1;border-radius:8px;padding:5px 9px;font-size:12.5px;cursor:pointer;background:#fff;user-select:none;white-space:nowrap}
+  .caixa input{accent-color:var(--azul);cursor:pointer}
+  .caixa:hover{background:var(--fundo);border-color:var(--azul)}
+  .caixa.marcada{background:#eef2ff;border-color:var(--azul);font-weight:700}
+  .problema{border:2px solid #dbe3ef;border-radius:14px;padding:14px;margin-bottom:14px;background:#fff}
+  .problema > .cab{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .problema > .cab .num{width:30px;height:30px;border-radius:9px;background:var(--azul);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+  .problema > .cab b{font-size:14.5px;color:var(--azul);flex:1}
+  .linha{margin-bottom:10px}
+  .passo{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}
+  .passo .n{width:26px;height:38px;display:grid;place-items:center;font-weight:800;font-size:12.5px;color:var(--azul);flex:none}
+  .passo textarea{min-height:38px}
+  .btn-mini{height:38px;padding:0 12px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font-size:12.5px;font-weight:700;cursor:pointer;flex:none}
+  .btn-mini:hover{border-color:var(--azul);color:var(--azul)}
+  .btn-add{height:38px;padding:0 13px;border-radius:9px;border:1px dashed #93c5fd;background:#f8fbff;color:#0a1e8a;font-size:12.5px;font-weight:800;cursor:pointer}
+  .btn-add:hover{background:#eef4ff}
+  .btn-add.grande{height:46px;padding:0 20px;font-size:13.5px;border-width:2px}
+  .barra{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #eef2ff;box-shadow:0 -6px 18px rgba(15,23,42,.07);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:9}
+  .barra .cont{font-size:12.5px;color:var(--cinza);margin-right:auto}
+  .barra .cont b{color:var(--azul)}
+  button.btn{height:40px;padding:0 16px;border:1px solid var(--azul);background:var(--azul);color:#fff;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer}
+  button.btn.sec{background:#fff;color:var(--azul)}
+  #status{font-size:12.5px;font-weight:700;min-height:18px}
+  #status.ok{color:var(--verde)} #status.erro{color:var(--vermelho)}
+  #previa{display:none;margin-top:10px;border:1px solid var(--borda);border-radius:10px;background:var(--fundo);padding:10px;font-family:Consolas,monospace;font-size:11.5px;white-space:pre-wrap;max-height:340px;overflow:auto}
+  .add-problema{border:2px dashed #93c5fd;border-radius:14px;padding:12px;text-align:center;background:#f8fbff;margin-bottom:14px}
+  .add-problema p{font-size:12.5px;color:#1e3a8a;margin-bottom:8px}
+  footer{margin-top:22px;border-top:2px solid #eef2ff;padding-top:10px;font-size:12px;color:var(--cinza)}
+  @media print{.barra,#previa,.btn-add,.btn-mini,.add-problema{display:none!important} body{padding-bottom:0}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Relatório de Problemas — Sistema Digicopy</h1>
+  <p>Serve para <b>qualquer problema</b> que não seja o teste de nota fiscal. Escreva do seu jeito:
+     cada problema tem os <b>passos (caminhos)</b> — um por caixinha, com <b>➕ Adicionar passo</b> para quantos quiser —
+     e o espaço do que aconteceu. No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo.</p>
+  <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Descreva a tela e o que apareceu.</div>
+</header>
+
+<div class="campos" id="dados">
+  <div class="campo"><label>Quem está reportando</label><input type="text" id="d_nome" placeholder="seu nome"></div>
+  <div class="campo"><label>Data</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.3"></div>
+  <div class="campo"><label>Versão da nuvem (painel ou /health)</label><input type="text" id="d_nuvem" placeholder="5.26.4"></div>
+</div>
+<div class="linha" style="margin-top:10px">
+  <label class="rot">Onde aconteceu</label>
+  <div class="caixas" id="d_onde"></div>
+</div>
+
+<h2>Os problemas</h2>
+<p class="dica">Cada bloco é UM problema. Nos passos, escreva o caminho exato: <i>menu → tela → botão</i> (um por caixinha).</p>
+<div id="problemas"></div>
+
+<div class="add-problema">
+  <p><b>+ Relatório de OUTRO problema</b><br>Cria um bloco novo embaixo (não é um passo do de cima — é um problema diferente).</p>
+  <button class="btn-add grande" type="button" data-add-problema>➕ Adicionar outro problema</button>
+</div>
+
+<h2>Observações gerais (opcional)</h2>
+<textarea id="geral" style="min-height:90px" placeholder="Qualquer coisa que não coube nos blocos de cima..."></textarea>
+
+<footer>
+  Nada é enviado sozinho: o texto só sai quando você aperta <b>Salvar</b>. Rascunho guardado neste navegador;
+  pode fechar e voltar depois. Os prints (fotos) você manda junto no chat, dizendo o nome do arquivo em cada problema.
+</footer>
+
+<div class="barra">
+  <span class="cont" id="contador"></span>
+  <span id="status"></span>
+  <button class="btn sec" id="btn-previa" type="button">👁 Prévia</button>
+  <button class="btn sec" id="btn-copiar" type="button">📋 Copiar texto</button>
+  <button class="btn" id="btn-salvar" type="button">💾 Salvar relatório (.txt)</button>
+</div>
+<pre id="previa"></pre>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════════════════
+// RELATÓRIO DE PROBLEMAS — pedido do dono (21/09/2026):
+// "faz um igual do relatório de teste, mas de problemas que tem, onde a pessoa
+//  preenche falando os caminhos e o problema; o de caminhos você coloca uma
+//  caixa por caixa e, se for adicionar mais, um botão + abaixo que cria mais
+//  caixas infinitamente; e um + separado que cria outro relatório (uma cópia
+//  abaixo) — esse é de relatórios de outras coisas, não é o caminho que estamos
+//  usando [nota fiscal]".
+// Sem dependência, sem servidor. Funciona aberto do PC ou pelo site.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ONDE = [['navegador','Navegador (site)'],['exe','Programa .exe'],['ambos','Os dois'],['celular','Celular (app)']];
+const FREQ = [['sempre','Sempre acontece'],['asvezes','Às vezes acontece'],['umavez','Aconteceu só uma vez']];
+const GRAV = [['trava','Trava o trabalho (não dá pra usar)'],['atrapalha','Atrapalha, mas dá pra continuar'],['visual','Só visual/feio (funciona)']];
+const CHAVE = 'digicopy_relatorio_problemas_v1';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s);
+
+let seq = 0;              // contador de blocos de problema criados nesta sessão
+
+function caixasHtml(grupo, opcoes){
+  return '<div class="caixas">' + opcoes.map(([v, rot]) =>
+    '<label class="caixa"><input type="radio" name="r_' + grupo + '" value="' + v + '">' + rot + '</label>'
+  ).join('') + '</div>';
+}
+
+// ── um bloco de problema (clonável quantas vezes quiser) ──────────────────
+function blocoHtml(n){
+  const id = 'pb' + n;
+  return '' +
+  '<div class="problema" id="' + id + '" data-problema="' + n + '">' +
+    '<div class="cab"><span class="num">' + n + '</span><b>Problema ' + n + '</b>' +
+      '<button class="btn-mini" type="button" data-del-problema title="Remover este bloco">✕ Remover bloco</button></div>' +
+
+    '<div class="linha"><label class="rot">Título curto do problema</label>' +
+      '<input type="text" data-campo="titulo" placeholder="ex.: Contrato mostra cliente sem vínculo"></div>' +
+
+    '<div class="linha"><label class="rot">Passos (caminhos) — um por caixinha</label>' +
+      '<div data-passos></div>' +
+      '<button class="btn-add" type="button" data-add-passo>➕ Adicionar passo (caminho)</button></div>' +
+
+    '<div class="linha"><label class="rot">O que aconteceu (o problema)</label>' +
+      '<textarea data-campo="aconteceu" placeholder="O que apareceu de errado na tela"></textarea></div>' +
+
+    '<div class="linha"><label class="rot">O que você esperava que acontecesse</label>' +
+      '<textarea data-campo="esperado" placeholder="Como deveria ser o certo"></textarea></div>' +
+
+    '<div class="linha"><label class="rot">Com que frequência</label>' + caixasHtml('FREQ' + n, FREQ) + '</div>' +
+    '<div class="linha"><label class="rot">Quanto atrapalha</label>' + caixasHtml('GRAV' + n, GRAV) + '</div>' +
+
+    '<div class="linha"><label class="rot">Print (foto) deste problema</label>' +
+      '<input type="text" data-campo="print" placeholder="nome do arquivo da foto (ex.: Captura 2026-09-21 170117.png) — mande a foto junto no chat"></div>' +
+
+    '<div class="linha"><label class="rot">Mais alguma coisa deste problema (opcional)</label>' +
+      '<textarea data-campo="obs" placeholder="Detalhes, o que já tentou, em quais computadores acontece..."></textarea></div>' +
+  '</div>';
+}
+
+function caixaPassoHtml(){
+  return '<div class="passo"><span class="n"></span>' +
+    '<textarea data-passo placeholder="ex.: menu Locação → Contratos → duplo clique no contrato"></textarea>' +
+    '<button class="btn-mini" type="button" data-del-passo title="Apagar este passo">✕</button></div>';
+}
+
+function renumerarPassos(bloco){
+  bloco.querySelectorAll('[data-passos] .passo').forEach((p, i) => {
+    p.querySelector('.n').textContent = (i + 1) + '.';
+  });
+}
+function renumerarProblemas(){
+  [...document.querySelectorAll('#problemas .problema')].forEach((el, i) => {
+    el.querySelector('.cab .num').textContent = (i + 1);
+    el.querySelector('.cab b').textContent = 'Problema ' + (i + 1);
+  });
+  contar();
+}
+
+// ── cria um bloco novo (com um passo vazio) ───────────────────────────────
+function novoProblema(dados){
+  seq++;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = blocoHtml(seq);
+  const bloco = wrap.firstElementChild;
+  $('problemas').appendChild(bloco);
+  const passos = bloco.querySelector('[data-passos]');
+  const lista = (dados && Array.isArray(dados.passos) && dados.passos.length) ? dados.passos : [''];
+  lista.forEach(t => {
+    passos.insertAdjacentHTML('beforeend', caixaPassoHtml());
+    passos.lastElementChild.querySelector('[data-passo]').value = t || '';
+  });
+  if (dados){
+    bloco.querySelectorAll('[data-campo]').forEach(c => { c.value = dados[c.getAttribute('data-campo')] || ''; });
+    const mf = bloco.querySelector('input[name="r_FREQ' + seq + '"][value="' + dados.freq + '"]'); if (mf) mf.checked = true;
+    const mg = bloco.querySelector('input[name="r_GRAV' + seq + '"][value="' + dados.grav + '"]'); if (mg) mg.checked = true;
+  }
+  renumerarPassos(bloco);
+  pintarCaixas();
+  return bloco;
+}
+
+// ── cliques (delegado: funciona nos blocos criados depois) ────────────────
+document.addEventListener('click', function(e){
+  const alvo = e.target;
+  if (!alvo || !alvo.closest) return;
+  if (alvo.closest('[data-add-problema]')){ novoProblema(); salvarRascunho(); return; }
+  const addP = alvo.closest('[data-add-passo]');
+  if (addP){
+    const bloco = addP.closest('[data-problema]');
+    const passos = bloco.querySelector('[data-passos]');
+    passos.insertAdjacentHTML('beforeend', caixaPassoHtml());
+    renumerarPassos(bloco);
+    const novo = passos.lastElementChild.querySelector('[data-passo]');
+    if (novo) novo.focus();
+    salvarRascunho(); return;
+  }
+  const delP = alvo.closest('[data-del-passo]');
+  if (delP){
+    const bloco = delP.closest('[data-problema]');
+    const passo = delP.closest('.passo');
+    if (passo) passo.remove();
+    const passos = bloco.querySelector('[data-passos]');
+    if (!passos.querySelector('.passo')) passos.insertAdjacentHTML('beforeend', caixaPassoHtml());
+    renumerarPassos(bloco); salvarRascunho(); return;
+  }
+  const delB = alvo.closest('[data-del-problema]');
+  if (delB){
+    const bloco = delB.closest('[data-problema]');
+    if (bloco) bloco.remove();
+    if (!$('problemas').querySelector('[data-problema]')) novoProblema();
+    renumerarProblemas(); salvarRascunho(); return;
+  }
+});
+
+// ── caixas de rádio: pintar e contar ─────────────────────────────────────
+function pintarCaixas(){
+  document.querySelectorAll('.caixa').forEach(c => {
+    const r = c.querySelector('input');
+    c.classList.toggle('marcada', !!(r && r.checked));
+  });
+}
+function valorRadio(nome){
+  const el = document.querySelector('input[name="r_' + nome + '"]:checked');
+  return el ? el.value : '';
+}
+function contar(){
+  const blocos = document.querySelectorAll('#problemas .problema');
+  let completos = 0;
+  blocos.forEach(b => { if (b.querySelector('[data-campo="titulo"]').value.trim() && b.querySelector('[data-campo="aconteceu"]').value.trim()) completos++; });
+  $('contador').innerHTML = blocos.length + ' problema(s) · <b>' + completos + '</b> com título e descrição';
+}
+
+// ── estado → texto → .txt ────────────────────────────────────────────────
+function estado(){
+  const e = {
+    nome: $('d_nome').value, data: $('d_data').value, onde: valorRadio('ONDE'),
+    rodape: $('d_rodape').value, nuvem: $('d_nuvem').value, geral: $('geral').value, problemas: []
+  };
+  document.querySelectorAll('#problemas .problema').forEach(b => {
+    const n = b.getAttribute('data-problema');
+    const p = {};
+    b.querySelectorAll('[data-campo]').forEach(c => { p[c.getAttribute('data-campo')] = c.value; });
+    p.passos = [...b.querySelectorAll('[data-passo]')].map(t => t.value);
+    p.freq = valorRadio('FREQ' + n); p.grav = valorRadio('GRAV' + n);
+    e.problemas.push(p);
+  });
+  return e;
+}
+function aplicar(e){
+  if (!e) return;
+  $('d_nome').value = e.nome || ''; $('d_data').value = e.data || '';
+  $('d_rodape').value = e.rodape || ''; $('d_nuvem').value = e.nuvem || '';
+  $('geral').value = e.geral || '';
+  marcarRadio('ONDE', e.onde);
+  (e.problemas || []).forEach(p => novoProblema(p));
+  if (!(e.problemas || []).length) novoProblema();
+  pintarCaixas(); renumerarProblemas();
+}
+function marcarRadio(nome, valor){
+  if (!valor) return;
+  const el = document.querySelector('input[name="r_' + nome + '"][value="' + valor + '"]');
+  if (el) el.checked = true;
+}
+function montarTexto(){
+  const e = estado();
+  const agora = new Date(), dois = n => String(n).padStart(2, '0');
+  const quando = dois(agora.getDate()) + '/' + dois(agora.getMonth() + 1) + '/' + agora.getFullYear() + ' às ' + dois(agora.getHours()) + 'h' + dois(agora.getMinutes());
+  const linha = '═'.repeat(64);
+  const L = [];
+  L.push(linha);
+  L.push('RELATÓRIO DE PROBLEMAS — SISTEMA DIGICOPY');
+  L.push('Gerado em ' + quando);
+  L.push(linha, '');
+  L.push('1) QUEM REPORTA E ONDE');
+  L.push('   Nome............: ' + (e.nome || '(não escreveu)'));
+  L.push('   Data............: ' + (e.data || '(não escreveu)'));
+  L.push('   Aconteceu em....: ' + (e.onde ? (ONDE.find(o => o[0] === e.onde) || [])[1] : '(não marcou)'));
+  L.push('   Versão no rodapé: ' + (e.rodape || '(não escreveu)'));
+  L.push('   Versão da nuvem.: ' + (e.nuvem || '(não escreveu)'));
+  L.push('');
+  L.push('2) PROBLEMAS (' + e.problemas.length + ')');
+  e.problemas.forEach((p, i) => {
+    const f = FREQ.find(x => x[0] === p.freq), g = GRAV.find(x => x[0] === p.grav);
+    L.push('');
+    L.push('   ─────────────────────────────────────────────────────────');
+    L.push('   PROBLEMA ' + (i + 1) + ': ' + (String(p.titulo || '').trim() || '(sem título)'));
+    L.push('   ─────────────────────────────────────────────────────────');
+    L.push('   CAMINHOS (o que eu fiz, passo a passo):');
+    const passos = (p.passos || []).map(t => String(t || '').trim()).filter(Boolean);
+    if (passos.length) passos.forEach((t, k) => L.push('     ' + (k + 1) + ') ' + t));
+    else L.push('     (não escreveu os passos)');
+    L.push('   O QUE ACONTECEU..: ' + (String(p.aconteceu || '').trim() || '(não escreveu)').split(/\r?\n/).join('\n                      '));
+    L.push('   O QUE ESPERAVA...: ' + (String(p.esperado || '').trim() || '(não escreveu)').split(/\r?\n/).join('\n                      '));
+    L.push('   FREQUÊNCIA.......: ' + (f ? f[1] : '(não marcou)'));
+    L.push('   QUANTO ATRAPALHA.: ' + (g ? g[1] : '(não marcou)'));
+    L.push('   PRINT (arquivo)..: ' + (String(p.print || '').trim() || '(não mandou/não tem)'));
+    const obs = String(p.obs || '').trim();
+    if (obs) L.push('   OBSERVAÇÕES......: ' + obs.split(/\r?\n/).join('\n                      '));
+  });
+  L.push('');
+  L.push('3) OBSERVAÇÕES GERAIS');
+  L.push(String(e.geral || '').trim() ? String(e.geral).trim().split(/\r?\n/).map(t => '   ' + t).join('\n') : '   (nada anotado)');
+  L.push('');
+  L.push(linha);
+  L.push('Relatório preenchido no próprio site do sistema. Os prints são enviados');
+  L.push('junto no chat. Nenhuma senha, token, certificado ou CSC está aqui.');
+  L.push(linha);
+  return L.join('\n');
+}
+function nomeArquivo(){
+  const d = new Date(), dois = n => String(n).padStart(2, '0');
+  return 'relatorio-problemas-digicopy-' + d.getFullYear() + '-' + dois(d.getMonth() + 1) + '-' + dois(d.getDate()) + '-' + dois(d.getHours()) + dois(d.getMinutes()) + '.txt';
+}
+let recadoTimer = null;
+function recado(msg, erro){
+  const s = $('status');
+  s.textContent = msg; s.className = erro ? 'erro' : 'ok';
+  if (recadoTimer) clearTimeout(recadoTimer);
+  recadoTimer = setTimeout(() => { s.textContent = ''; s.className = ''; }, 7000);
+}
+function salvarArquivo(){
+  const texto = montarTexto();
+  try{
+    const blob = new Blob(['\ufeff' + texto], { type:'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nomeArquivo();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    recado('Relatório salvo! Me mande o arquivo ' + a.download + ' (e os prints) no chat.');
+  }catch(e){ mostrarPrevia(true); recado('Não consegui baixar aqui — usei a prévia: copie o texto e cole no chat.', true); }
+}
+function mostrarPrevia(forcar){
+  const p = $('previa');
+  const abrir = forcar === true ? true : p.style.display === 'none';
+  if (abrir){ p.textContent = montarTexto(); p.style.display = 'block'; p.scrollIntoView({ block:'nearest' }); }
+  else p.style.display = 'none';
+}
+function copiarTexto(){
+  const texto = montarTexto();
+  const pronto = () => recado('Texto copiado! Cole no chat (ou mande o .txt salvo).');
+  const fallback = () => {
+    const t = document.createElement('textarea');
+    t.value = texto; t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    try{ document.execCommand('copy'); pronto(); }catch(e){ mostrarPrevia(true); recado('Não deu para copiar — usei a prévia abaixo.', true); }
+    t.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(pronto).catch(fallback);
+  else fallback();
+}
+function salvarRascunho(){
+  try{ localStorage.setItem(CHAVE, JSON.stringify(estado())); }catch(e){}
+}
+
+// ── ligações ────────────────────────────────────────────────────────────
+$('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
+let tmr = null;
+document.addEventListener('input', () => {
+  pintarCaixas(); contar();
+  if (tmr) clearTimeout(tmr);
+  tmr = setTimeout(salvarRascunho, 250);
+});
+document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
+$('btn-salvar').addEventListener('click', salvarArquivo);
+$('btn-copiar').addEventListener('click', copiarTexto);
+$('btn-previa').addEventListener('click', () => mostrarPrevia());
+
+try{ aplicar(JSON.parse(localStorage.getItem(CHAVE) || 'null')); }catch(e){}
+if (!$('problemas').querySelector('[data-problema]')) novoProblema();
+if (!$('d_data').value){
+  const d = new Date(), dois = n => String(n).padStart(2, '0');
+  $('d_data').value = dois(d.getDate()) + '/' + dois(d.getMonth() + 1) + '/' + d.getFullYear();
+}
+pintarCaixas(); renumerarProblemas();
+</script>
+</body>
+</html>

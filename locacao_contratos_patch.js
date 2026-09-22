@@ -156,7 +156,7 @@ window.renderProdutos = function(){
           <td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full bg-slate-100 text-[11px] font-semibold">${escapeHtml(p.categoria||'Produto')}</span></td>
           <td class="px-5 py-3"><p class="font-bold ${isLow ? 'text-red-600' : ''}">${p.estoque||0} un</p><p class="text-[11px] text-slate-500">mín. ${p.estoqueMin||0}</p></td>
           <td class="px-5 py-3"><p class="text-[12px]">${fmtMoney(p.custo||0)} → <b>${fmtMoney(p.preco||0)}</b></p></td>
-          <td class="px-5 py-3"><span class="font-mono text-[11px] px-2 py-1 rounded bg-slate-100 border">${escapeHtml(p.local||'-')}</span></td>
+          
           <td class="px-5 py-3 text-right"><div class="flex justify-end gap-1"><button onclick="openModal('produto','${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100" title="Alterar"><i class="ph ph-pencil"></i></button><button onclick="deleteProduto('${p.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600" title="Excluir"><i class="ph ph-trash"></i></button></div></td>
         </tr>
       `;
@@ -187,7 +187,7 @@ window.renderModalProduto = function(id){
   const isEdit = !!id;
   const p = isEdit ? db.produtos.find(x => x.id === id && x.empresaId === sess.empresaId) : {
     sku: uid('prd'), nome: '', categoria: 'Produto', fabricante: '',
-    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional'
+    estoque: 0, estoqueMin: 0, custo: 0, preco: 0, local: '', ncm: '', origem: '0 - Nacional', estoqueInfinito: false
   };
   if(!p) return toast('Produto não encontrado', 'error');
 
@@ -238,8 +238,13 @@ window.renderModalProduto = function(id){
       </div>
 
       <div id="painel-prod-estoque" class="hidden space-y-4">
-        <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-3 text-[12px] text-blue-800 font-medium">
-          <i class="ph ph-check-circle"></i> Controle de Estoque sempre ativo. Notificações ocorrem apenas quando abaixo (<) do estoque mínimo.
+        <label class="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-[12px] text-blue-900 font-semibold cursor-pointer">
+          <input id="p-estoque-infinito" type="checkbox" ${p.estoqueInfinito?'checked':''} onchange="alternarEstoqueInfinito()" class="w-4 h-4 accent-[#0a1e8a]">
+          <span><i class="ph ph-infinity"></i> Não controlar estoque deste produto (estoque infinito)</span>
+        </label>
+        <div id="p-campos-estoque">
+        <div class="rounded-xl bg-slate-50 border p-3 text-[12px] text-slate-600 font-medium">
+          Quando marcado, o produto fica sempre disponível e não é descontado nas vendas.
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
@@ -260,10 +265,7 @@ window.renderModalProduto = function(id){
             <label class="block font-bold text-slate-600 mb-1">Custo Total R$</label>
             <input id="p-custo" type="number" step="0.01" value="${p.custo||0}" class="w-full h-10 px-3 rounded-xl border">
           </div>
-          <div>
-            <label class="block font-bold text-slate-600 mb-1">Localização no Almoxarifado</label>
-            <input id="p-local" value="${escapeHtml(p.local||'')}" class="w-full h-10 px-3 rounded-xl border" placeholder="Prateleira / Setor">
-          </div>
+        </div>
         </div>
       </div>
 
@@ -292,6 +294,14 @@ window.renderModalProduto = function(id){
   `;
   document.getElementById('modal-root').classList.remove('hidden');
   window.modalContext = { type: 'produto', id };
+  alternarEstoqueInfinito();
+};
+
+window.alternarEstoqueInfinito = function(){
+  const infinito = !!document.getElementById('p-estoque-infinito')?.checked;
+  ['p-est','p-est-min','p-est-ideal','p-custo'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.disabled=infinito; el.classList.toggle('bg-slate-100',infinito); }
+  });
 };
 
 window.mudarAbaProd = function(aba){
@@ -317,12 +327,13 @@ window.salvarProdutoModal = function(id){
     nome: window.VOTM_PURE ? window.VOTM_PURE.toTitleCase(nome) : nome,
     categoria: document.getElementById('p-cat')?.value || 'Produto',
     fabricante: document.getElementById('p-fab')?.value?.trim() || '',
-    estoque: parseInt(document.getElementById('p-est')?.value || 0) || 0,
+    estoqueInfinito: !!document.getElementById('p-estoque-infinito')?.checked,
+    estoque: document.getElementById('p-estoque-infinito')?.checked ? 0 : (parseInt(document.getElementById('p-est')?.value || 0) || 0),
     estoqueMin: parseInt(document.getElementById('p-est-min')?.value || 0) || 0,
     estoqueIdeal: parseInt(document.getElementById('p-est-ideal')?.value || 0) || 0,
     custo: parseFloat(document.getElementById('p-custo')?.value || 0) || 0,
     preco: parseFloat(document.getElementById('p-preco')?.value || 0) || 0,
-    local: document.getElementById('p-local')?.value?.trim() || '',
+    local: '',
     ncm: document.getElementById('p-ncm')?.value?.trim() || '',
     origem: document.getElementById('p-origem')?.value || '0 - Nacional',
     status: 'ativo'
@@ -1127,7 +1138,7 @@ window.openModalChamadoCompleto = function(osId, contratoId){
         <div class="rounded-xl bg-blue-50 border border-blue-200 p-3 flex items-center justify-between">
           <div>
             <label class="font-bold text-blue-900 mr-2">Selecione a Impressora da Manutenção:</label>
-            <select id="o-equip-sel" onchange="autoPreencherDadosChamado(this.value)" class="h-9 px-3 rounded-lg border font-semibold">${maqSel}<option value="">Outro Equipamento</option></select>
+            <input type="hidden" id="o-equip-sel" value="${o.equipamentoId||''}"><div id="o-equip-escolhida" class="${o.equipamentoId?'':'hidden'} mt-2 flex items-center justify-between rounded-xl border bg-white px-3 py-2"><span id="o-equip-nome" class="font-semibold text-[12px]">${o.equipamentoId?escapeHtml((db.equipamentos||[]).find(e=>e.id===o.equipamentoId)?.modelo||'Impressora'):''}</span><button type="button" onclick="editarEquipamentoOS()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-[#0a1e8a]" title="Trocar impressora"><i class="ph ph-pencil"></i></button></div><div id="o-equip-lista" class="${o.equipamentoId?'hidden':''} mt-2 rounded-xl border bg-white max-h-48 overflow-y-auto">${maqSel.replace(/<option[^>]*value="([^"]+)"[^>]*>([\s\S]*?)<\/option>/g, '<button type="button" onclick="selecionarEquipamentoOS(\'$1\')" class="w-full text-left px-3 py-2 border-b hover:bg-blue-50">$2</button>')}</div>
           </div>
           <span class="text-[11px] text-blue-700">Preenche Serial/Patrimônio e Contador Antigo</span>
         </div>
@@ -1257,43 +1268,6 @@ window.salvarChamadoCompleto = function(osId, contratoId){
   toast('Chamado salvo com sucesso!', 'success');
 };
 
-window.imprimirChamadoPDF = function(osId){
-  const o = db.os.find(x => x.id === osId);
-  if(!o) return toast('Chamado não encontrado', 'error');
-  const cli = db.clientes.find(x => x.id === o.clienteId) || {};
-  const html = `
-    <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chamado Técnico — ${o.numero}</title>
-    <style>
-      body{font-family:Arial,sans-serif;margin:20px;color:#111;font-size:12px}
-      .cab{display:flex;justify-content:space-between;border-bottom:2px solid #0a1e8a;padding-bottom:10px;margin-bottom:15px}
-      .cab h1{color:#0a1e8a;font-size:20px;margin:0}
-      .box{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px;background:#f9fafc}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-      @media print{.no-print{display:none}}
-    </style></head><body>
-      <div class="no-print" style="margin-bottom:15px"><button onclick="window.print()" style="padding:10px 20px;background:#0a1e8a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🖨 Imprimir / Salvar PDF 1.1</button></div>
-      <div class="cab">
-        <div><h1>DIGICOPY ERP — CHAMADO TÉCNICO (MOD. 1.1)</h1><p><b>Cliente:</b> ${escapeHtml(cli.nome||'Sem Cliente')} (${escapeHtml(cli.documento||'')})</p></div>
-        <div style="text-align:right"><p><b>OS:</b> ${o.numero}</p><p><b>Data:</b> ${fmtDate(o.dataAbertura)}</p><p><b>Prioridade:</b> ${String(o.prioridade||'normal').toUpperCase()}</p></div>
-      </div>
-      <div class="box">
-        <p><b>Motivo do Chamado:</b> ${escapeHtml(o.descricao||'-')}</p>
-        <p style="margin-top:5px"><b>Técnico Atribuído:</b> ${escapeHtml(o.tecnico||'—')}</p>
-      </div>
-      <div class="box grid">
-        <div><p><b>Serial:</b> ${escapeHtml(o.serie||'-')}</p><p><b>Patrimônio:</b> ${escapeHtml(o.patrimonio||'-')}</p></div>
-        <div><p><b>Contador Antigo:</b> ${o.contadorAntigo||0}</p><p><b>Contador Atual:</b> ${o.contadorAtual||0}</p><p><b>Qtd. Impressas:</b> <b>${o.quantidadeImpressos||0}</b></p></div>
-      </div>
-      ${o.servicos ? `<div class="box"><p><b>Serviços Executados:</b></p><p>${escapeHtml(o.servicos)}</p></div>` : ''}
-      <div style="margin-top:50px;display:flex;justify-content:space-between">
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Técnico</div>
-        <div style="border-top:1px solid #000;width:200px;text-align:center;padding-top:5px">Assinatura Cliente</div>
-      </div>
-    </body></html>
-  `;
-  const win = window.open('','_blank');
-  if(win){ win.document.write(html); win.document.close(); }
-};
 
 console.log('[DIGICOPY] PATCH locacao_contratos_patch.js v4.9.12 — Locação/Contratos, Leituras (2.1), Chamados (19.1/1.1) e Estoque');
 })();

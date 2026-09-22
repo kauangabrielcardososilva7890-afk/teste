@@ -1,3 +1,5 @@
+> **ESTADO ATUAL (2026-09-16):** este arquivo é o diário das automações. Versão da verdade hoje: **v5.25.0**. Link de teste oficial: https://teste-60f.pages.dev (GitHack morto após repo privado — menções abaixo são histórico). Regras vivas no RELATORIO_SESSAO.md.
+
 # RELATÓRIO DE ANDAMENTO — AUTOMAÇÕES, CONTRATOS, RTF E MIGRAÇÃO
 
 > Documento de continuidade para evitar perda de contexto caso o chat trave.

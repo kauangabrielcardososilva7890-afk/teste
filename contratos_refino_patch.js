@@ -462,9 +462,53 @@ window.openModalChamadoCompleto = function(osId, contratoId){
   renderPecas(); if(o.equipamentoId) autoPreencherDadosChamado(o.equipamentoId, true, o.id);
 };
 window.atualizarImpressorasChamadoRefino = function(){ const clienteId = document.getElementById('kr-os-cli')?.value || ''; const sel = document.getElementById('kr-os-eq'); if(sel) sel.innerHTML = '<option value="">Selecione</option>'+selectEquipOptions(null, '', clienteId); };
-window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){ const eq = getEq(equipId); if(!eq) return; const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {}; document.getElementById('kr-os-modelo').value = eq.modelo || ''; document.getElementById('kr-os-patr').value = eq.patrimonio || ''; document.getElementById('kr-os-serie').value = eq.serie || ''; document.getElementById('kr-os-local').value = p.localInstalacao || p.setor || ''; const ult = ultimoContador(equipId, ignoreOsId); document.getElementById('kr-os-cont-ant').value = ult.valor; if(!manterAtual) document.getElementById('kr-os-cont-atu').value = ult.valor; calcImpressoesChamado(); };
-window.calcImpressoesChamado = function(){ const ant = n(document.getElementById('kr-os-cont-ant')?.value); const atu = Math.max(ant, n(document.getElementById('kr-os-cont-atu')?.value, ant)); const out = document.getElementById('kr-os-qtd'); if(out) out.value = atu - ant; };
-function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
+// v5.22.73 — cada campo é preenchido só se existir na tela. A tela do chamado
+// mudou com o tempo (campos que somem quando a impressora não tem contador
+// color, por exemplo) e escrever direto no campo ausente derrubava o sistema
+// com "Cannot set properties of null".
+function porCampo(id, valor){ const el = document.getElementById(id); if(el) el.value = valor; }
+window.autoPreencherDadosChamado = function(equipId, manterAtual, ignoreOsId){
+  const eq = getEq(equipId); if(!eq) return;
+  const p = (db.parque||[]).filter(x=>x.equipamentoId===equipId).sort((a,b)=>new Date(b.dataInstalacao||0)-new Date(a.dataInstalacao||0))[0] || {};
+  porCampo('kr-os-modelo', eq.modelo || '');
+  porCampo('kr-os-patr', eq.patrimonio || '');
+  porCampo('kr-os-serie', eq.serie || '');
+  porCampo('kr-os-local', p.localInstalacao || p.setor || '');
+  const ult = ultimoContador(equipId, ignoreOsId);
+  porCampo('kr-os-cont-ant', ult.valor);
+  if(!manterAtual) porCampo('kr-os-cont-atu', ult.valor);
+  calcImpressoesChamado();
+};
+// v5.22.90 — a função que VALIA procurava só os ids kr-os-* (tela antiga)
+// e deixava o chamado atual (ko-*) sem calcular a quantidade impressa.
+// Agora atende TODOS os conjuntos de id usados pelas telas de chamado.
+window.calcImpressoesChamado = function(){
+  var pares = [
+    ['ko-cont-ant','ko-cont-atu','ko-qtd-imp'],
+    ['kr-os-cont-ant','kr-os-cont-atu','kr-os-qtd'],
+    ['o-cont-ant','o-cont-atu','o-qtd-imp'],
+    ['ca-cont-ant','ca-cont-atu','ca-qtd']
+  ];
+  for(var i = 0; i < pares.length; i++){
+    var a = document.getElementById(pares[i][0]);
+    var u = document.getElementById(pares[i][1]);
+    var q = document.getElementById(pares[i][2]);
+    if(!a && !u && !q) continue;
+    var ant = Number(a && a.value ? a.value : 0) || 0;
+    var atu = u && u.value !== '' && u.value != null ? (Number(u.value) || 0) : ant;
+    if(atu < ant) atu = ant;
+    if(q) q.value = atu - ant;
+  }
+};
+// v5.22.90 — além do oninput dos campos (que nem sempre existe), um ouvinte
+// garante o cálculo em QUALQUER campo de contador, em qualquer tela.
+if(typeof document !== 'undefined'){
+  document.addEventListener('input', function(e){
+    var id = (e && e.target && e.target.id) || '';
+    if(/-cont-atu$/.test(id) || /-cont-ant$/.test(id)) window.calcImpressoesChamado();
+  }, true);
+}
+function ajustaEstoque(pecas, sinal){ (pecas||[]).forEach(it => { const p = (db.produtos||[]).find(x=>x.id===it.produtoId); if(p && !p.estoqueInfinito && !/SERV/i.test(p.categoria||'')) p.estoque = n(p.estoque) + sinal*n(it.qtd); }); }
 window.salvarChamadoCompleto = function(osId, contratoId){
   const s = sess(); if(!s) return;
   const c = contratoId ? getCtr(contratoId) : null;
@@ -502,14 +546,6 @@ function printWindow(htmlDoc, slug){
   setTimeout(() => { try{ win.history.replaceState(null, '', slug || 'relatorio.html'); }catch(_e){} }, 50);
 }
 function basePrintCSS(){ return `@page{size:A4;margin:8mm}body{font-family:Arial,sans-serif;margin:0;color:#111;font-size:12px;background:white}.page{padding:16px}.top{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0a1e8a;padding-bottom:12px;margin-bottom:12px}.brand{display:flex;align-items:center;gap:12px}.brand h1{margin:0;color:#0a1e8a;font-size:19px}.muted{color:#64748b;font-size:11px}.box{border:1px solid #d7dce2;border-radius:10px;padding:10px;margin:8px 0;background:#fafbff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border:1px solid #d7dce2;padding:6px;text-align:left}th{background:#eef2ff;color:#0a1e8a;font-size:10px;text-transform:uppercase}.sig{border-top:1px solid #111;width:220px;text-align:center;padding-top:6px;margin-top:46px}.no-print{margin:14px}.no-print button{padding:10px 18px;background:#0a1e8a;color:white;border:0;border-radius:8px;font-weight:bold}@media print{.no-print{display:none}.page{padding:0}}`; }
-window.imprimirChamadoPDF = function(osId){
-  const o = (db.os||[]).find(x=>x.id===osId); if(!o) return aviso('Chamado não encontrado','error');
-  const cli = getCli(o.clienteId) || {};
-  const pecas = (o.pecas||[]).map(it => `<tr><td>${esc(it.descricao||'')}</td><td>${n(it.qtd)}</td><td>${dinheiro(it.preco)}</td><td>${dinheiro(it.subtotal)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center">Sem produtos</td></tr>';
-  const title = `Chamado ${codigoOS(o)}`;
-  const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>${basePrintCSS()}</style></head><body><script>document.title=${JSON.stringify(title)};try{history.replaceState(null,'',${JSON.stringify('chamado-'+codigoOS(o)+'.html')});}catch(e){}</script><div class="no-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button></div><div class="page"><div class="top"><div class="brand">${logoHTML()}<div><h1>Ordem de Serviço Técnica</h1><div class="muted">DIGICOPY • Assistência e locação de impressoras</div></div></div><div style="text-align:right"><div class="muted">Código</div><h1 style="margin:0;color:#0a1e8a">${esc(codigoOS(o))}</h1><div class="muted">${dataBR(o.dataAbertura)}</div></div></div><div class="grid"><div class="box"><b>Cliente</b><p>${esc(cli.nome||'')}</p><p class="muted">${esc(cli.documento||'')} • ${esc(cli.telefone||'')}</p><p class="muted">${esc(cli.endereco||'')} ${esc(cli.numero||'')} - ${esc(cli.cidade||'')}/${esc(cli.estado||'')}</p></div><div class="box"><b>Atendimento</b><p><b>Criado por:</b> ${esc(o.criadoPorNome||'-')}</p><p><b>Técnico:</b> ${esc(o.tecnico||'-')}</p><p><b>Status:</b> ${esc(o.status||'aberto')}</p></div></div><div class="box"><b>Impressora</b><p>${esc(o.modelo||'-')} • Patrimônio ${esc(o.patrimonio||'-')} • Serial ${esc(o.serie||'-')}</p><p class="muted">Local: ${esc(o.local||'-')}</p></div><div class="box"><b>Motivo / Defeito informado</b><p>${esc(o.descricao||'-')}</p></div><div class="box"><b>Serviços executados / observações</b><p>${esc(o.servicos||o.observacao||'-')}</p></div><div class="box"><b>Produtos / Peças aplicadas</b><table><thead><tr><th>Produto</th><th>Qtd</th><th>Unitário</th><th>Total</th></tr></thead><tbody>${pecas}</tbody></table></div><div style="display:flex;justify-content:space-between"><div class="sig">Assinatura Técnico</div><div class="sig">Assinatura Cliente</div></div></div></body></html>`;
-  printWindow(doc, `chamado-${codigoOS(o)}.html`);
-};
 window.imprimirRelatorioLeiturasPDF = function(contratoId){
   const c = getCtr(contratoId); if(!c) return;
   const cli = getCli(c.clienteId) || {};

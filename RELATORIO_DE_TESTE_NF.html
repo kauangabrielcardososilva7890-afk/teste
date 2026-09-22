@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório de Teste — Sistema Digicopy v6.1.10</title>
+<style>
+  :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Segoe UI,Arial,Helvetica,sans-serif;color:#1e293b;background:#fff;line-height:1.5;font-size:14px;max-width:940px;margin:0 auto;padding:20px 20px 110px}
+  header{border:2px solid var(--azul);border-radius:14px;padding:16px 20px;margin-bottom:16px;background:linear-gradient(135deg,#eef2ff,#fff)}
+  header h1{font-size:20px;color:var(--azul)}
+  header p{font-size:12.5px;color:var(--cinza);margin-top:5px}
+  header .aviso{margin-top:9px;font-size:12px;background:#fff7ed;border-left:4px solid var(--laranja);padding:7px 10px;border-radius:6px;color:#7c2d12}
+  h2{font-size:15.5px;color:var(--azul);margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #eef2ff}
+  h3{font-size:13.5px;color:var(--azul);margin:16px 0 6px}
+  .dica{font-size:12px;color:var(--cinza);margin-bottom:8px}
+  .campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+  .campo label{display:block;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--cinza);margin-bottom:4px}
+  input[type=text]{width:100%;height:36px;border:1px solid #cbd5e1;border-radius:9px;padding:0 10px;font-size:13.5px;font-family:inherit}
+  input[type=text]:focus,textarea:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(10,30,138,.09)}
+  .item{border:1px solid var(--borda);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+  .item.pergunta{display:grid;grid-template-columns:1fr 300px;gap:10px}
+  .item .q{font-size:13.5px}
+  .item .q b{color:var(--azul)}
+  .caixas{display:flex;gap:6px;flex-wrap:wrap}
+  .caixa{display:flex;align-items:center;gap:6px;border:1px solid #cbd5e1;border-radius:8px;padding:5px 9px;font-size:12.5px;cursor:pointer;background:#fff;user-select:none;white-space:nowrap}
+  .caixa input{accent-color:var(--azul);cursor:pointer}
+  .caixa:hover{background:var(--fundo);border-color:var(--azul)}
+  .caixa.marcada{background:#eef2ff;border-color:var(--azul);font-weight:700}
+  .obs{margin-top:8px;grid-column:1/-1}
+  textarea{width:100%;min-height:38px;border:1px solid #cbd5e1;border-radius:9px;padding:7px 10px;font-size:13px;font-family:inherit;resize:vertical}
+  .livre{margin-bottom:8px}
+  .livre .rot{font-size:12px;font-weight:800;color:var(--azul);margin-bottom:3px}
+  .barra{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #eef2ff;box-shadow:0 -6px 18px rgba(15,23,42,.07);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:9}
+  .barra .cont{font-size:12.5px;color:var(--cinza);margin-right:auto}
+  .barra .cont b{color:var(--azul)}
+  button.btn{height:40px;padding:0 16px;border:1px solid var(--azul);background:var(--azul);color:#fff;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer}
+  button.btn:hover{filter:brightness(1.08)}
+  button.btn.sec{background:#fff;color:var(--azul)}
+  #status{font-size:12.5px;font-weight:700;min-height:18px}
+  #status.ok{color:var(--verde)} #status.erro{color:var(--vermelho)}
+  #previa{display:none;margin-top:10px;border:1px solid var(--borda);border-radius:10px;background:var(--fundo);padding:10px;font-family:Consolas,monospace;font-size:11.5px;white-space:pre-wrap;max-height:320px;overflow:auto}
+  footer{margin-top:22px;border-top:2px solid #eef2ff;padding-top:10px;font-size:12px;color:var(--cinza)}
+  .selo{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+  .selo.ok{background:#dcfce7;color:#15803d}
+  .selo.novo{background:#e0e7ff;color:#3730a3}
+  .selo.repetida{background:#f1f5f9;color:#475569}
+  .filtro{display:flex;align-items:center;gap:6px;font-size:12.5px;background:#f5f8ff;border:1px solid #cbd5e1;border-radius:10px;padding:7px 10px;margin:0 0 6px}
+  .filtro input{accent-color:var(--azul);cursor:pointer}
+  .item.item-escondido{display:none}
+  @media(max-width:760px){.item.pergunta{grid-template-columns:1fr}}
+  @media print{.barra,#previa{display:none!important} body{padding-bottom:0}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Relatório de Teste — Sistema Digicopy v6.1.10</h1>
+  <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
+     No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
+  <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
+</header>
+
+<div class="campos" id="dados">
+  <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
+  <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.10 + carimbo"></div>
+  <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.5"></div>
+</div>
+
+<h3>Onde você testou</h3>
+<div class="caixas" id="d_onde"></div>
+
+<div class="filtro">
+  <label><input type="checkbox" id="so_faltando"> Mostrar <b>só o que falta testar</b> (esconde o que já foi resolvido e confirmado antes)</label>
+  <span id="contagem-filtro" style="margin-left:auto;color:#64748b"></span>
+</div>
+<div id="partes"></div>
+
+<h2>CORREÇÕES — o que estava errado, quebrado ou feio</h2>
+<p class="dica">Um item por linha, do seu jeito. O que vale é: onde foi (tela/botão) → o que você fez → o que apareceu de errado.</p>
+<div id="correcoes"></div>
+
+<h2>ADIÇÕES — o que faltou ou poderia facilitar</h2>
+<p class="dica">Ideias e pedidos. Não precisa cerimônia.</p>
+<div id="adicoes"></div>
+
+<h2>OBSERVAÇÕES GERAIS</h2>
+<p class="dica">Caixa livre: qualquer coisa que não coube nas perguntas de cima.</p>
+<textarea id="geral" style="min-height:110px" placeholder="Escreva aqui..."></textarea>
+
+<h2>VEREDICTO</h2>
+<div class="caixas" id="veredicto"></div>
+
+<h2>🧩 ATUALIZAR O MOTOR DA NUVEM — o passo real (sem painel, sem token, sem GitHub)</h2>
+<div class="item" style="border:2px solid #0a1e8a;background:#f5f8ff">
+  <p style="font-size:13.5px;margin:0 0 8px"><b>Você não precisa mexer no worker, em token nem no painel da Cloudflare.</b>
+     Quando for preciso publicar uma correção do motor, o caminho é UM arquivo que já está no ZIP do sistema: o
+     <b>atualizar_motor_nuvem.cmd</b>. Ele faz os passos certos sozinho, na ordem certa.</p>
+  <ol style="font-size:13px;margin:0 0 8px 18px;line-height:1.7">
+    <li>Baixe o <b>ZIP do sistema</b> pelo link que eu mando no chat e clique com o botão direito → <b>Extrair tudo</b>.
+        Dentro da pasta têm que ficar, lado a lado, o arquivo <b>atualizar_motor_nuvem.cmd</b> e a pasta <b>cloudflare-worker</b>.</li>
+    <li><b>Dois cliques em <code>atualizar_motor_nuvem.cmd</code></b>. Ele mostra na tela os 4 passos:</li>
+  </ol>
+  <table style="font-size:12.5px;border-collapse:collapse;margin:0 0 8px">
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>1/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">lista o que ainda falta aplicar no banco (<i>só olhando</i>)</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>2/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">aplica as migrações — se ele perguntar <code>Proceed? (y/n)</code>, digite <code>y</code> e Enter</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>3/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">publica o motor da nuvem (<i>wrangler deploy</i>)</td></tr>
+    <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>4/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">mostra a versão que ficou no ar AGORA (<i>/health</i>)</td></tr>
+  </table>
+  <p style="font-size:13px;margin:0 0 8px">No fim tem que aparecer <b><code>"versao":"5.26.5"</code></b> ou mais novo.
+     A janela <b>fica aberta</b> de propósito: <b>tire uma foto dela e me mande</b>. Se travar no meio, a própria janela diz o motivo — não feche, só fotografe.</p>
+  <p style="font-size:13px;margin:0">Na primeira vez ele pode pedir para você autorizar a conta na Cloudflare: ele abre o navegador, você entra normalmente e pronto — isso fica guardado nesse PC e não volta a pedir.</p>
+</div>
+<p class="dica">Se um dia precisar ver o código que roda na nuvem, ele está inteiro no arquivo
+   <b>cloudflare-worker/motor_para_colar.js</b> — mas <b>não precisa mexer nisso</b>: o caminho é o duplo clique no
+   <b>atualizar_motor_nuvem.cmd</b>.</p>
+
+<footer>
+  Este relatório é um arquivo do próprio site — nada é enviado sozinho: o texto só sai quando você aperta
+  <b>Salvar</b>. Rascunho guardado automaticamente neste navegador; pode fechar e voltar depois.
+</footer>
+
+<div class="barra">
+  <span class="cont" id="contador"></span>
+  <span id="status"></span>
+  <button class="btn sec" id="btn-previa" type="button">👁 Prévia</button>
+  <button class="btn sec" id="btn-copiar" type="button">📋 Copiar texto</button>
+  <button class="btn" id="btn-salvar" type="button">💾 Salvar relatório (.txt)</button>
+</div>
+<pre id="previa"></pre>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════════════════
+// RELATÓRIO DE TESTE DO DONO (v6.1.7)
+// Cada pergunta: 3 caixas (OK / não resolveu / não testei) + observação livre.
+// No fim: gera um .txt já escrito e baixa (ou copia) para mandar no chat.
+// Sem dependências, sem servidor: funciona aberto do PC (arquivo) ou pelo site.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PARTES = [
+  { id:'A', nome:'PARTE A — APLICATIVO E NAVEGAÇÃO', itens:[
+    ['O sistema abriu sem tela branca e sem "undefined" escrito nas telas', 'repetida'],
+    ['Menu Fiscal aparece na barra de cima e abre os seis itens no submenu', 'repetida'],
+    ['Menu Fiscal e telas fiscais ficam legíveis no modo claro E no modo escuro', 'repetida'],
+    ['Popups são do sistema (têm X) — nenhum alerta nativo do navegador', 'repetida'],
+    ['Botões e telas respondem uma vez só (sem clique duplicado / efeito dobrado)', 'repetida'],
+    ['Na Início, os cartões são clicáveis e abrem a origem (chamado/leitura)', 'repetida']
+  ]},
+  { id:'B', nome:'PARTE B — NUVEM E PERFIS DO COMPUTADOR', itens:[
+    ['Senha de conexão cria um computador autorizado comum', 'repetida'],
+    ['Senha errada mostra "CNPJ ou senha ... incorretos"', 'repetida'],
+    ['Senha errada NÃO mostra erro falso de internet/atualizador', 'repetida'],
+    ['CNPJ + senha do gerente cria este computador como Administrador', 'repetida'],
+    ['PC Administrador mostra os botões de uso, aparelhos, convites e administração', 'repetida'],
+    ['PC comum NÃO mostra os botões exclusivos do Administrador', 'repetida'],
+    ['Entrar na nuvem não apaga os dados locais deste PC', 'repetida'],
+    ['O painel mostra a versão real da nuvem (ex.: 5.26.5)', 'repetida'],
+    ['Botão verde "Reparar sessão agora" responde na hora', 'repetida']
+  ]},
+  { id:'C', nome:'PARTE C — FISCAL (SOMENTE HOMOLOGAÇÃO)', itens:[
+    ['Central de Nota Fiscal abre como tela inteira (menu)', 'repetida'],
+    ['Homologação identificada como teste sem valor fiscal (placa/selo)', 'repetida'],
+    ['Senha do certificado é pedida na hora e não fica salva', 'repetida'],
+    ['Nenhuma nota é emitida sozinha (sem clique e sem senha)', 'repetida'],
+    ['A ação fiscal fica registrada na auditoria', 'ok'],
+    ['DANFE, XML e consulta responderam conforme o fluxo testado', 'repetida'],
+    ['Botões novos: "Testar SEFAZ agora" e "Pacote do mês p/ contador (.zip)"', 'ok'],
+    ['Carta de Correção (CC-e) e cancelamento de nota de teste', 'repetida']
+  ]},
+  { id:'D', nome:'PARTE D — PERMISSÕES E ESTORNO', itens:[
+    ['Permissões (as 3 caixas) aparecem dentro do editor do usuário', 'repetida'],
+    ['Estorno abre a aba da venda / notinha estornada carregada para refazer', 'ok']
+  ]},
+  { id:'E', nome:'PARTE E — SINCRONIZAÇÃO AUTOMÁTICA (novo em 22/09)', itens:[
+    ['Conectou na nuvem (CNPJ + qualquer uma das duas senhas) e sincronizou SOZINHO — sem escolher nada e sem apertar botão', 'novo'],
+    ['O que existe em um PC apareceu no outro (os dois conectados, sem precisar clicar em nada)', 'novo'],
+    ['Nada foi apagado no PC que já tinha dados (venda, cliente, contrato, OS — tudo onde estava)', 'novo'],
+    ['O mesmo dado NÃO duplicou depois de sincronizar (não virou dois clientes / duas vendas)', 'novo'],
+    ['O botão "Check-up da nuvem" mostra lista por lista o que está diferente, com o resumo para copiar', 'novo'],
+    ['Os consertos do check-up (baixar tudo de novo / enviar este PC inteiro / sincronizar agora) funcionaram', 'novo']
+  ]},
+  { id:'F', nome:'PARTE F — CONTRATOS E CLIENTES', itens:[
+    ['Contrato que mostrava "Cliente sem vínculo" agora mostra o nome do cliente', 'novo'],
+    ['Se sobrar algum contrato que nem o sistema conseguiu resolver, o botão "🔗 Vincular cliente" continua ali como plano B (abre a lista e salva)', 'novo'],
+    ['O vínculo feito na mão ficou registrado na Auditoria (quem vinculou e quando)', 'novo'],
+    ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
+  ]},
+  { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
+    ['O rodapé mostra a versão v6.1.10 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
+    ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
+    ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']
+  ]},
+  { id:'H', nome:'PARTE H — NOVO DE 22/09 (nº4) — O QUE EU CORRIGI NESTA RODADA', itens:[
+    ['Nova nota fiscal em ABA (sem janelinha): abriu com as 5 opções — Gerar NF-e Avulsa · Gerar de NF-e Devolução para Cliente · Gerar de NF-e Devolução para Fornecedor · Gerar NFCe · Importar Declaração de Importação', 'novo'],
+    ['Escolher um desses tipos já abre a nota no jeito certo (NF-e modelo 55 · NFCe modelo 65 · devolução finalidade 4 · importação com o texto da DI)', 'novo'],
+    ['Na senha da nuvem aparece um olho só (o do sistema) — o olho extra do navegador sumiu', 'novo'],
+    ['Um PC criou algo e o OUTRO PC mostrou depois de abrir conectado (sem apertar nada): venda, cliente, contrato, OS', 'novo'],
+    ['A contagem no painel/check-up é a de AGORA (não mais a de 10 minutos atrás)', 'novo'],
+    ['O rodapé diz "dados só na nuvem (este PC não guarda cópia)" e, fechando e abrindo o sistema, TUDO aparece de novo — veio da nuvem', 'novo'],
+    ['No painel da Nuvem dá para ver onde os dados ficam, soltar a cópia deste PC e (se quiser) voltar a guardar cópia para abrir sem internet', 'novo']
+  ]},
+  { id:'I', nome:'PARTE I — NAVEGADOR DENTRO DO SISTEMA (novo de 22/09 nº5) — só funciona no PROGRAMA DO PC', itens:[
+    ['No programa do PC, o menu Navegador abriu a tela com as abas: NFS-e (prefeitura) · NFS-e Nacional · WhatsApp Web', 'novo'],
+    ['O portal da prefeitura abriu DENTRO do sistema (não pulou para o Edge/Chrome) e dá para digitar/emitir normalmente', 'novo'],
+    ['O WhatsApp Web abriu dentro do sistema e entrou lendo o QR Code uma vez (na segunda abertura já estava logado)', 'novo'],
+    ['Botão ＋ Site: adicionei um site meu, ele ficou salvo e apareceu no outro PC (a lista fica na nuvem, não no PC)', 'novo'],
+    ['Fora do programa do PC (site no Edge/celular), a tela explica que ali não abre e oferece \"Abrir numa janela nova\" (sem tela branca)', 'novo']
+  ]},
+  { id:'J', nome:'PARTE J — NOVO DE 22/09 (nº6) — A MEMÓRIA DA TELA E O "FALTA POUCO" DA NOTA', itens:[
+    ['Ordenei uma lista (cliquei no título da coluna) e escrevi num filtro; fechei a tela e abri de novo: voltou do mesmo jeito, sem eu apertar nada', 'novo'],
+    ['O que eu deixei arrumado numa tela apareceu igual no OUTRO PC (a memória é da nuvem, por usuário)', 'novo'],
+    ['Na Central de NF-e apareceu o cartão FALTA POUCO PARA A NOTA VALER DE VERDADE, com a lista do que falta (CNPJ, IE, série, perfil, NCM, CSC) e cada botão levando ao lugar certo', 'novo'],
+    ['No mesmo cartão o certificado A1 é conferido NA HORA pelo programa do PC (✅ instalado neste PC / ⚠️ não achei) — sem eu ter que procurar', 'novo']
+  ]},
+];
+
+const ONDE = [['navegador','Navegador (site)'],['exe','Programa .exe'],['ambos','Os dois']];
+const VEREDITO = [['aprovado','APROVADO — tudo que testei funcionou'],
+                  ['ressalvas','APROVADO COM RESSALVAS — funciona, mas tem o que arrumar'],
+                  ['reprovado','REPROVADO — não dá para usar assim']];
+// vazio = pergunta sem marcação (não pode quebrar o gerador do .txt)
+const ST = { ok:['OK','✅ OK'], nao:['NAO','❌ Não resolveu'], nt:['NT','➖ Não testei'], vazio:['---',''] };
+const CHAVE = 'digicopy_relatorio_teste_v1';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s);
+const lista = [];
+
+// ── monta as 3 caixas de uma pergunta ──────────────────────────────────────
+function caixasHtml(grupo, opcoes){
+  return '<div class="caixas">' + opcoes.map(([v, rot]) =>
+    '<label class="caixa"><input type="radio" name="r_' + grupo + '" value="' + v + '">' + rot + '</label>'
+  ).join('') + '</div>';
+}
+
+// ── desenha as perguntas na tela (a partir da lista PARTES) ────────────────
+(function desenhar(){
+  $('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
+  $('veredicto').innerHTML = caixasHtml('VEREDITO', VEREDITO);
+
+  // v6.1.7 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
+  // testar duas vezes), e tem o filtro "só o que falta testar".
+  const SELOS = {
+    ok:      ['✅ resolvido antes', 'Já foi corrigido numa rodada anterior — só confirme se ficou bom.', 'selo ok'],
+    novo:    ['🆕 novo de 22/09', 'Entrou agora nesta versão.', 'selo novo'],
+    repetida:['🔁 continua aberto', 'Já perguntei antes e ainda não foi dado como resolvido.', 'selo repetida']
+  };
+  $('partes').innerHTML = PARTES.map(p => {
+    const itens = p.itens.map((it, i) => {
+      const n = p.id + (i + 1);
+      const estado = it[1] || 'repetida';
+      const selo = SELOS[estado] || SELOS.repetida;
+      lista.push({ n: n, q: it[0] });
+      return '<div class="item pergunta' + (estado === 'ok' ? ' item-escondido' : '') + '" data-estado="' + estado + '" data-parte="' + p.id + '">' +
+        '<div class="q"><b>' + n + '</b> — ' + it[0] + '<span class="' + selo[2] + '" title="' + selo[1] + '">' + selo[0] + '</span></div>' +
+        caixasHtml(n, [['ok', ST.ok[1]], ['nao', ST.nao[1]], ['nt', ST.nt[1]]]) +
+        '<div class="obs"><textarea id="t_' + n + '" placeholder="Quer explicar? Escreva aqui (opcional)"></textarea></div>' +
+      '</div>';
+    }).join('');
+    return '<h2>' + p.nome + '</h2><p class="dica">Uma caixa por pergunta. A caixinha de texto é opcional. ' +
+      'As marcadas com <span class="selo ok">✅ resolvido antes</span> já foram corrigidas — você só testa se quiser confirmar.</p>' + itens;
+  }).join('');
+
+  // filtro: esconde as já resolvidas e some com a seção se não sobrar nada
+  const aplicarFiltro = function(){
+    const soFalta = !!($('so_faltando') && $('so_faltando').checked);
+    let visiveis = 0;
+    document.querySelectorAll('#partes .item.pergunta').forEach(el => {
+      const esconder = soFalta && el.getAttribute('data-estado') === 'ok';
+      el.classList.toggle('item-escondido', esconder);
+      if (!esconder) visiveis++;
+    });
+    document.querySelectorAll('#partes h2').forEach(h2 => { h2.style.display = soFalta && visiveis === 0 ? 'none' : ''; });
+    // esconde também as seções inteiras quando todas as perguntas dela estão escondidas
+    document.querySelectorAll('#partes h2').forEach(h2 => {
+      let el = h2.nextElementSibling, algum = false;
+      while (el && el.tagName !== 'H2'){
+        if (el.classList && el.classList.contains('pergunta') && !el.classList.contains('item-escondido')) algum = true;
+        el = el.nextElementSibling;
+      }
+      h2.style.display = algum ? '' : 'none';
+      if (el === null || el && el.tagName === 'H2'){ /* nada */ }
+    });
+    const el = $('contagem-filtro');
+    if (el) el.textContent = soFalta ? (visiveis + ' perguntas em aberto') : '';
+  };
+  const chk = $('so_faltando');
+  if (chk) chk.addEventListener('change', aplicarFiltro);
+  aplicarFiltro();
+
+  for (let i = 1; i <= 5; i++){
+    $('correcoes').insertAdjacentHTML('beforeend',
+      '<div class="livre"><div class="rot">C' + i + '</div><textarea id="corr_' + i + '" placeholder="Onde foi (tela/botão) → o que fiz → o que apareceu de errado"></textarea></div>');
+    $('adicoes').insertAdjacentHTML('beforeend',
+      '<div class="livre"><div class="rot">A' + i + '</div><textarea id="ad_' + i + '" placeholder="Ideia ou pedido"></textarea></div>');
+  }
+})();
+
+// ── leitura e escrita do formulário ───────────────────────────────────────
+function valorRadio(nome){
+  const el = document.querySelector('input[name="r_' + nome + '"]:checked');
+  return el ? el.value : '';
+}
+function marcarRadio(nome, valor){
+  const el = document.querySelector('input[name="r_' + nome + '"][value="' + valor + '"]');
+  if (el) el.checked = true;
+}
+function pintarCaixas(){
+  document.querySelectorAll('.caixa').forEach(c => {
+    const r = c.querySelector('input');
+    c.classList.toggle('marcada', !!(r && r.checked));
+  });
+}
+function estado(){
+  const e = {
+    nome: $('d_nome').value, data: $('d_data').value, onde: valorRadio('ONDE'),
+    rodape: $('d_rodape').value, nuvem: $('d_nuvem').value,
+    respostas: {}, veredicto: valorRadio('VEREDITO'), geral: $('geral').value,
+    correcoes: [], adicoes: []
+  };
+  lista.forEach(it => e.respostas[it.n] = { st: valorRadio(it.n), obs: $('t_' + it.n).value });
+  for (let i = 1; i <= 5; i++){ e.correcoes.push($('corr_' + i).value); e.adicoes.push($('ad_' + i).value); }
+  return e;
+}
+function aplicar(e){
+  if (!e) return;
+  $('d_nome').value = e.nome || ''; $('d_data').value = e.data || '';
+  $('d_rodape').value = e.rodape || ''; $('d_nuvem').value = e.nuvem || '';
+  $('geral').value = e.geral || '';
+  marcarRadio('ONDE', e.onde); marcarRadio('VEREDITO', e.veredicto);
+  lista.forEach(it => {
+    const r = (e.respostas || {})[it.n] || {};
+    if (r.st) marcarRadio(it.n, r.st);
+    $('t_' + it.n).value = r.obs || '';
+  });
+  for (let i = 1; i <= 5; i++){
+    $('corr_' + i).value = (e.correcoes || [])[i - 1] || '';
+    $('ad_' + i).value = (e.adicoes || [])[i - 1] || '';
+  }
+  pintarCaixas();
+}
+function salvarRascunho(){
+  try{ localStorage.setItem(CHAVE, JSON.stringify(estado())); }catch(e){}
+}
+
+// ── contador de respondidas ───────────────────────────────────────────────
+function contar(){
+  const ok = lista.filter(it => valorRadio(it.n)).length;
+  // v6.1.7 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
+  // que importa é o que continua em aberto (era a reclamação dele: "o relatório
+  // repete pergunta que já foi resolvida").
+  const jaResolvidas = (typeof PARTES !== 'undefined' ? PARTES : [])
+    .reduce((acc, p) => acc + p.itens.filter(it => (it[1] || 'repetida') === 'ok').length, 0);
+  const total = lista.length;
+  const emAberto = total - jaResolvidas;
+  const brancas = emAberto - ok;
+  $('contador').innerHTML = 'Respondidas: <b>' + ok + '</b> de <b>' + emAberto + '</b> em aberto' +
+    (jaResolvidas ? ' <span style="color:#15803d">(' + jaResolvidas + ' já resolvidas antes — só confirmar se quiser)</span>' : '') +
+    (brancas > 0 ? ' · faltam <b>' + brancas + '</b>' : ' · tudo respondido ✅');
+}
+
+// ── texto final que vira o .txt ───────────────────────────────────────────
+function montarTexto(){
+  const e = estado();
+  const agora = new Date();
+  const dois = n => String(n).padStart(2, '0');
+  const quando = dois(agora.getDate()) + '/' + dois(agora.getMonth() + 1) + '/' + agora.getFullYear() +
+                 ' às ' + dois(agora.getHours()) + 'h' + dois(agora.getMinutes());
+  const L = [];
+  const linha = '═'.repeat(64);
+
+  L.push(linha);
+  L.push('RELATÓRIO DE TESTE — SISTEMA DIGICOPY');
+  L.push('Gerado em ' + quando);
+  L.push('Site de teste: https://teste-60f.pages.dev');
+  L.push(linha, '');
+
+  L.push('1) QUEM TESTOU E ONDE');
+  L.push('   Nome............: ' + (e.nome || '(não escreveu)'));
+  L.push('   Data............: ' + (e.data || '(não escreveu)'));
+  L.push('   Testou em.......: ' + (e.onde ? (ONDE.find(o => o[0] === e.onde) || [])[1] : '(não marcou)'));
+  L.push('   Versão no rodapé: ' + (e.rodape || '(não escreveu)'));
+  L.push('   Versão da nuvem.: ' + (e.nuvem || '(não escreveu)'));
+  L.push('');
+
+  L.push('2) RESPOSTAS (legenda: OK = resolveu · NAO = não resolveu · NT = não testei/não identifiquei)');
+  L.push('   Perguntas marcadas como [JA OK] já foram corrigidas em rodada anterior —');
+  L.push('   elas NÃO entram na conta de "sem resposta" (era a reclamação do dono:');
+  L.push('   "o relatório repete pergunta que já foi resolvida").');
+  const contagem = { ok:0, nao:0, nt:0, vazio:0 };
+  const jaOk = [];
+  PARTES.forEach(p => {
+    L.push('');
+    L.push('   ' + p.nome);
+    p.itens.forEach((it, i) => {
+      const n = p.id + (i + 1);
+      const r = e.respostas[n] || {};
+      const st = r.st || 'vazio';
+      const resolvidaAntes = (it[1] || 'repetida') === 'ok';
+      if (resolvidaAntes) jaOk.push(n + ' — ' + it[0]);
+      if (!resolvidaAntes) contagem[st]++;
+      L.push('   [' + (resolvidaAntes ? 'JA OK' : ST[st][0].padEnd(3)) + '] ' + n + ' — ' + it[0]);
+      if (String(r.obs || '').trim()) String(r.obs).trim().split(/\r?\n/).forEach(t => L.push('           ' + t));
+    });
+  });
+  L.push('');
+  L.push('   RESUMO: ' + contagem.ok + ' OK · ' + contagem.nao + ' não resolveu · ' +
+         contagem.nt + ' não testei · ' + contagem.vazio + ' sem resposta');
+  if (jaOk.length){
+    L.push('   ' + jaOk.length + ' já resolvida(s) antes (fora da conta acima, só confirmar se quiser):');
+    jaOk.forEach(t => L.push('      • ' + t));
+  }
+  L.push('');
+
+  L.push('3) CORREÇÕES — o que estava errado, quebrado ou feio');
+  let temCorr = false;
+  e.correcoes.forEach((v, i) => { if (String(v || '').trim()){ temCorr = true; L.push('   C' + (i + 1) + ': ' + String(v).trim().replace(/\r?\n/g, ' | ')); } });
+  if (!temCorr) L.push('   (nada anotado)');
+  L.push('');
+
+  L.push('4) ADIÇÕES — o que faltou ou poderia facilitar');
+  let temAd = false;
+  e.adicoes.forEach((v, i) => { if (String(v || '').trim()){ temAd = true; L.push('   A' + (i + 1) + ': ' + String(v).trim().replace(/\r?\n/g, ' | ')); } });
+  if (!temAd) L.push('   (nada anotado)');
+  L.push('');
+
+  L.push('5) OBSERVAÇÕES GERAIS');
+  L.push(String(e.geral || '').trim() ? String(e.geral).trim().split(/\r?\n/).map(t => '   ' + t).join('\n') : '   (nada anotado)');
+  L.push('');
+
+  L.push('6) VEREDICTO');
+  const v = VEREDITO.find(x => x[0] === e.veredicto);
+  L.push('   ' + (v ? v[1] : '(não marcou o veredicto)'));
+  L.push('');
+  L.push(linha);
+  L.push('Relatório preenchido no próprio site do sistema. Nenhuma senha, token,');
+  L.push('certificado ou CSC deve estar neste arquivo.');
+  L.push(linha);
+  return { texto: L.join('\n'), nome: e.nome, quando: quando };
+}
+
+// ── recado na tela (sem alert nativo — regra do projeto) ──────────────────
+let recadoTimer = null;
+function recado(msg, erro){
+  const s = $('status');
+  s.textContent = msg;
+  s.className = erro ? 'erro' : 'ok';
+  if (recadoTimer) clearTimeout(recadoTimer);
+  recadoTimer = setTimeout(() => { s.textContent = ''; s.className = ''; }, 6000);
+}
+
+// ── salvar o .txt ─────────────────────────────────────────────────────────
+function nomeArquivo(){
+  const d = new Date(), dois = n => String(n).padStart(2, '0');
+  return 'relatorio-teste-digicopy-' + d.getFullYear() + '-' + dois(d.getMonth() + 1) + '-' + dois(d.getDate()) +
+         '-' + dois(d.getHours()) + dois(d.getMinutes()) + '.txt';
+}
+function salvarArquivo(){
+  const r = montarTexto();
+  try{
+    const blob = new Blob(['\ufeff' + r.texto], { type:'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nomeArquivo();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    recado('Relatório salvo! Mande o arquivo ' + a.download + ' para o chat.');
+  }catch(e){
+    mostrarPrevia(true);
+    recado('Não consegui baixar aqui — usei a prévia: copie o texto e cole no chat.', true);
+  }
+}
+function mostrarPrevia(forcar){
+  const p = $('previa');
+  const abrir = forcar === true ? true : p.style.display === 'none';
+  if (abrir){ p.textContent = montarTexto().texto; p.style.display = 'block'; p.scrollIntoView({ block:'nearest' }); }
+  else p.style.display = 'none';
+}
+function copiarTexto(){
+  const texto = montarTexto().texto;
+  const pronto = () => recado('Texto copiado! Cole no chat.');
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(pronto).catch(() => copiarFallback(texto, pronto));
+  } else copiarFallback(texto, pronto);
+}
+function copiarFallback(texto, pronto){
+  const t = document.createElement('textarea');
+  t.value = texto; t.style.position = 'fixed'; t.style.opacity = '0';
+  document.body.appendChild(t); t.select();
+  try{ document.execCommand('copy'); pronto(); }
+  catch(e){ mostrarPrevia(true); recado('Não deu para copiar — usei a prévia abaixo.', true); }
+  t.remove();
+}
+
+// ── ligações ──────────────────────────────────────────────────────────────
+let tmr = null;
+document.addEventListener('input', () => {
+  pintarCaixas(); contar();
+  if (tmr) clearTimeout(tmr);
+  tmr = setTimeout(salvarRascunho, 250);
+});
+document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
+$('btn-salvar').addEventListener('click', salvarArquivo);
+// v6.1.7 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
+// A seção do deploy virou instrução do atualizar_motor_nuvem.cmd (sem token, sem
+// painel, sem copiar código). O script de copiar o YAML saiu daqui de propósito.
+$('btn-copiar').addEventListener('click', copiarTexto);
+$('btn-previa').addEventListener('click', () => mostrarPrevia());
+
+try{ aplicar(JSON.parse(localStorage.getItem(CHAVE) || 'null')); }catch(e){}
+if (!$('d_data').value){
+  const d = new Date(), dois = n => String(n).padStart(2, '0');
+  $('d_data').value = dois(d.getDate()) + '/' + dois(d.getMonth() + 1) + '/' + d.getFullYear();
+}
+contar();
+</script>
+</body>
+</html>

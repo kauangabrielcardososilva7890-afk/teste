@@ -7,8 +7,53 @@ API local-first isolada do aplicativo Electron/web.
 - Root directory: `cloudflare-worker`
 - Build command: deixe vazio
 - Deploy command: `npm run deploy` (aplica migrações pendentes e só depois publica)
-- Production branch durante o desenvolvimento: `arena/01a00cfb-teste`
-- Production branch após aprovação do PR: `main`
+- Production branch: `arena/01a0c087-teste` (branch fixa da sessão, escolhida pelo dono
+  em 20/09/2026 para o push publicar sozinho). Ao aprovar/mergear o PR na `main`,
+  **voltar esta configuração para `main`** — senão o worker fica preso na branch de sessão.
+  (Anteriormente: `arena/01a00cfb-teste`, motivo de o worker no ar ter ficado em
+  API 0.4.7 / Worker 5.26.3 enquanto o repositório já tinha 0.4.8 / 5.26.4.)
+- Passo a passo ilustrado do painel: `PASSO_A_PASSO_NUVEM_E_SITE.html` (raiz do projeto)
+
+## Publicação automática (Workers Builds) — conferência e erro do token
+
+Configuração certa em **Settings → Build → Build Configuration**:
+
+| Campo | Valor |
+|---|---|
+| Root directory | `cloudflare-worker` |
+| Build command | (vazio) |
+| Deploy command | `npm run deploy` |
+| Production branch | a branch da sessão (hoje `arena/01a0c087-teste`) |
+
+**Erro conhecido (21/09/2026):** `Failed: The build token selected for this build
+has been deleted or rolled and cannot be used for this build. Please update your
+build token in the Worker Builds settings and retry the build.`
+
+Esse erro **não é do código do worker** — é o token de build guardado no painel,
+que ficou velho (foi editado, apagado ou "rollado" em My Profile → API Tokens).
+A cura, conforme a documentação oficial da Cloudflare (*Troubleshooting builds →
+Stale API token*):
+
+1. **Settings → Build → Build Configuration → API token** → **Create new token**
+   (a Cloudflare cria o token já com as permissões da lista abaixo — não precisa
+   colar valor nenhum no repositório).
+2. **Save** (as configurações valem para o próximo build; ao refazer, valem as do
+   momento do retry).
+3. **Deployments** → `⋯` do build → **Retry build**.
+
+Permissões do token criado automaticamente pelo Workers Builds: *Account Settings
+(read)*, *Workers Scripts (edit)*, *Workers KV Storage (edit)*, *Workers R2
+Storage (edit)*, *Workers Routes (edit)* e *User Details (read) / Memberships
+(read)*. **Atenção:** essa lista não inclui D1 — e o nosso `Deploy command` roda
+as migrações antes de publicar. Se o build falhar no passo das migrações por
+permissão, use uma destas duas saídas: acrescentar **D1: Edit** ao token do
+build, ou trocar o **Deploy command** para `npx wrangler deploy` (e deixar as
+migrações para o `atualizar_motor_nuvem.cmd`, que sempre funcionou).
+
+**Cuidado ao ligar isso:** o worker publicado é o **mesmo que a loja usa no dia a
+dia**. Com produção apontando para a branch da sessão, todo push publica na
+nuvem real. Se quiser automatizar com rede de segurança, ligue também
+**Non-production branch builds** (Preview URLs) e deixe a produção em `main`.
 
 ## Banco D1
 
@@ -46,5 +91,44 @@ npx wrangler d1 migrations apply DB --remote
 - `POST /v1/review/remove-revoked` — remove seleção validando novamente a origem bloqueada
 - `POST /v1/admin/reset-cloud` — zera somente dados de negócio, exigindo admin único e frase exata
 - `GET /v1/status` — diagnóstico autenticado
+- `GET /v1/backups` — admin lista os backups guardados
+- `GET /v1/backup?key=NOME` — admin baixa um backup (arquivo `.json`)
+- `DELETE /v1/backup?key=NOME` — admin apaga UM backup
+- `DELETE /v1/backups` — admin apaga TODOS os backups (só o balde; os dados do sistema nunca)
 
 Nenhuma rota substitui a base inteira.
+
+## Backups automáticos (v5.22.97)
+
+Dois ciclos independentes, feitos pela nuvem sozinha (não precisa PC ligado), e
+um reforço manual. Tudo organizado em **pastas dentro da nuvem do sistema**
+(tabela exclusiva de backups, criada sozinha — não mistura com os dados) e
+guardado **compactado** para economizar espaço:
+
+| 📁 Pasta | Quando sai sozinho | Exemplo de arquivo |
+|---|---|---|
+| **Backup diario** | Todo dia **18:30** (horário de São Paulo) | `Backup 08-09-2026.json` |
+| **Backup atualizações** | No primeiro sync de uma **versão nova** — foto da versão **anterior** | `Backup sistema 5.22.95.json` |
+| **Backup manual** | Quando o dono aperta **📸 Backup agora** na tela | `Backup 08-09-2026 19h20.json` |
+
+O backup de atualização só dispara quando a versão **sobe** (um PC antigo que
+sincronizar depois não dispara backup de tabela invertida). Mesmo dia/mesma
+versão = mesmo nome de arquivo: **não acumula duplicado**.
+
+Os backups **nunca são apagados sozinhos** — a limpeza é manual, pelos botões
+do administrador no painel "Nuvem" do sistema: **📥 Baixar todos** (um `.zip`
+com as pastas e um arquivo por backup, pronto pro HD externo) e
+**🗑️ Excluir backups** (confirmação dupla; apaga SÓ os backups, os dados do
+sistema nunca; o ciclo continua normal).
+
+### Ativando pela primeira vez (um comando só)
+
+```bash
+cd cloudflare-worker
+npx wrangler deploy
+```
+
+Pronto. A tabela de backups se cria sozinha no primeiro uso. **Não é preciso
+ativar R2, plano pago nem cartão** — os backups moram no mesmo banco D1 que o
+sistema já usa (dentro do limite grátis). `npx wrangler tail` mostra as linhas
+`BACKUP_DIARIO_OK` / `BACKUP_VERSAO_FALHOU` se quiser acompanhar.
