@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.9** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v6.1.10** (rodada 22/09 nº8 — branch `arena/01a0c087-teste`)  
 
 ---
 
@@ -22,6 +22,38 @@
 **Rev. 2 (v6.1.10) — depois do primeiro uso real:** ele mandou o `.txt` pelo chat e o anexo **não chegou** no meu lado (foto chega, `.txt` não) e o `leiauteNFe_v4.00.xsd` (337,8 KB) ficou de fora por ser "grande demais". Consertos: teto **900 KB por arquivo / 3 MB no total**; para esquema grande a ferramenta gera **RESUMO** (namespace, versão, listas de elementos/tipos/atributos) — é o que basta para eu ler; **`Salvar .txt` agora leva o texto inteiro**; e quando o texto passa de 40 KB aparece a listinha **"Parte 1 de N"** para colar uma parte por mensagem (o `irPartes` foi corrigido para não perder nem sobrar `\n` na divisão). Caminho recomendado com ele: **colar o texto direto na conversa** (o "Copiar" já formata com cabeçalho por arquivo).
 
 **O que pedir dele:** pasta **Grids** inteira (9 `.grd`: Locação, Locação2, Leituras, LeiturasColetiva, ImpressorasOnline, ConsuChamado, ContasPagar, CadCliente, CadProdutos) e do **NSNFe** os de evento (`e110110` CC-e, `e110111` cancelamento, `e110112`, `e110140`), `consSitNFe_v4.00.xsd` e `DFeTiposBasicos_v1.00.xsd`. Correção anotada: os `.xsd` da pasta **são o pacote oficial** (layout 4.00 + eventos) e o `DFeTiposBasicos` foi atualizado em 16/10/2025 — servem de referência para **CC-e e cancelamento** (o que faltava na NF-e), ao contrário do que eu supus antes ("antigos").
+
+## 22/09/2026 — as GRIDS do sistema antigo chegaram (os nomes REAIS das telas)
+
+**Como veio:** ele abriu a área de importação (`importar.html`), largou a pasta `Grids` e
+**colou o texto aqui** (o anexo `.txt` não chega na conversa — colar funciona). Chegaram
+**8 dos 9** arquivos: `FormCadProdutoscxGridProductsDBTableView.grd` em **texto** e 7
+**binários** em base64 (Cliente, ConsuChamado, ImpressorasOnline, LeiturasColetiva,
+Leituras, Locacao2, Locacao). **Falta só o de Contas a Pagar.**
+
+**O que os arquivos são:** no sistema antigo (Delphi) cada tela guardava a arrumação da
+grade num `.grd`. Os binários são streams `TPF0`/`TColumnsWrapper` — não são texto, e foi
+preciso escrever um leitor (`_ref/grids_decode.py`) para tirar **nome do campo + título da
+coluna + largura** de cada coluna.
+
+**Onde ficou:** `GRIDS_SISTEMA_ANTIGO_REFERENCIA.md` (novo, na raiz) — as 9 telas, coluna
+por coluna, com os nomes reais (`COD_PRODUTO`, `NOME_RAZAOSOCIAL`, `VI_ORDEM`,
+`CON_CONTADOR_GERAL`, `CP_MODALIDADE`, `IT_VALOR_LOCACAO_A3`…), os títulos que ele já
+conhece ("Nome do Cliente", "Motivo do Chamado", "Qtde Exced", "Última Leitur", "Cha") e as
+larguras que ele tinha ajustado (alguns títulos ficaram escritos exatamente assim no sistema
+antigo). Apoio: `_ref/grids.json` (dados) e
+`_ref/grids_decodificado.txt` (texto). Também a grade de produtos em INI, com a ordenação
+`DESCRICAO` descendo e as **3 regras de cor por situação da nota** (Autorizada / Cancelada /
+Denegada).
+
+**O que isso muda:** é a base do item **(vi) nomes reais** — os títulos das nossas telas
+passam a poder usar exatamente os nomes que ele já usa. **Não muda o programa** (nenhum
+arquivo do sistema foi tocado; nada sobe, nada é guardado — é só referência), então a
+versão publicada continua **v6.1.10**.
+
+**O que ainda falta dessa pasta:** o `.grd` de **Contas a Pagar**; e os `.xsd` de evento da
+`NSNFe` — que hoje **não fazem falta** (a emissão da NFS-e é no portal, dentro do navegador
+embutido); ficam guardados como referência para o dia em que o fiscal for por API.
 
 ## Rodada 22/09/2026 (nº6) — v6.1.8 · a memória da tela + o "falta pouco" da nota + o endereço certo da NFS-e
 

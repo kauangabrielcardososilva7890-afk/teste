@@ -1,0 +1,120 @@
+========================================================================================================
+FormCadClienteDBGrid5 — 10 colunas (10 visíveis)
+   1 [x] ATIVO                      | Sel                          | larg 20
+   2 [x] CODK_CLIENT                | Codigo                       | larg None
+   3 [x] NOME_RAZAOSOCIAL           | Nome do Cliente              | larg 415
+   4 [x] TELEFONE                   | Telefone                     | larg 89
+   5 [x] CPF_CNPJ                   | CPF/CNPJ                     | larg 114
+   6 [x] NOME_FANTASIA              | Nome Fantasia                | larg 227
+   7 [x] RUA                        | Endereço                     | larg 199
+   8 [x] NUMERO                     | Número                       | larg None
+   9 [x] BAIRRO                     | Bairro                       | larg 142
+  10 [x] CIDADE                     | Cidade                       | larg 132
+========================================================================================================
+FormConsuChamadoDBGrid1 — 16 colunas (16 visíveis)
+   1 [x] ATIVO                      | Sel                          | larg None
+   2 [x] VI_ORDEM                   | Ordem                        | larg 38
+   3 [x] COD_VISITA                 | Código                       | larg None
+   4 [x] NOME_FUNC_RESP             | Atribuído                    | larg 80
+   5 [x] DATA                       | None                         | larg None
+   6 [x] NOME_RAZAOSOCIAL           | Cliente                      | larg 250
+   7 [x] VI_RUA                     | Endereço                     | larg 200
+   8 [x] VI_NUMERO                  | Numero                       | larg 50
+   9 [x] VI_BAIRRO                  | Bahrro                       | larg 150
+  10 [x] VI_CIDADE                  | Cidade                       | larg 150
+  11 [x] NOME_MOTIVO                | Motivo do Chamado            | larg 202
+  12 [x] EQUIPAMENTO                | Produto                      | larg 183
+  13 [x] VI_SERIAL                  | Serial                       | larg 142
+  14 [x] VI_PATRIMONIO              | Patrimônio                   | larg 74
+  15 [x] VI_LOCALIZACAO             | Localização                  | larg 73
+  16 [x] VI_CODENDA T               | None                         | larg 69
+========================================================================================================
+FormImpressorasOnlineDBGrid3 — 19 colunas (19 visíveis)
+   1 [x] CON_DATA                   | Última Conexão               | larg 120
+   2 [x] CON_SITUACAO               | S                            | larg 18
+   3 [x] CON_NOME_EMPRESA           | Local                        | larg 200
+   4 [x] CON_MODELO_IMPRESSORA      | Impressora                   | larg 200
+   5 [x] CON_SERIAL                 | Serial                       | larg 130
+   6 [x] CON_IP                     | IP                           | larg 100
+   7 [x] CON_TOTAL_IMPRESSAO_DIA    | Impressões                   | larg 80
+   8 [x] CON_CONTADOR_GERAL         | Contador Geral               | larg 80
+   9 [x] CON_CONTADORPRETOA4        | Contador Preto               | larg 80
+  10 [x] CON_CONTADORCOLORA4        | Contador Color               | larg 80
+  11 [x] CON_STATUS                 | Status da Impressora         | larg 200
+  12 [x] CON_TOTALPRINT             | Cont. Imp                    | larg 55
+  13 [x] CON_TOTALCOPY              | Cont. Cópia                  | larg 66
+  14 [x] CON_TOTALFAX               | Cont. Fax                    | larg 55
+  15 [x] CON_IMPMONO                | Imp. Preto                   | larg 55
+  16 [x] CON_IMPCOLOR               | Imp. Color                   | larg 55
+  17 [x] CON_COPMONO                | Cop Mono                     | larg 55
+  18 [x] CON_COPCOLOR               | Cop Color                    | larg 55
+  19 [x] CON_CONTADORSCAN           | Scanner                      | larg 55
+========================================================================================================
+FormLeiturasColetivaDBGrid1 — 19 colunas (19 visíveis)
+   1 [x] COD_CONTADOR               | Seq                          | larg 30
+   2 [x] IT_PATRIMONIO              | Patrim                       | larg 40
+   3 [x] STATUS                     | S                            | larg 17
+   4 [x] DESCRICAO                  | Impressora                   | larg 163
+   5 [x] CP_DEPARTAMENTO            | Departamento                 | larg 171
+   6 [x] IT_SERIAL                  | Serial                       | larg 142
+   7 [x] IT_LOCALIZACAO             | Localização                  | larg 65
+   8 [x] CP_TIPO                    | Tipo                         | larg 66
+   9 [x] CP_MODALIDADE              | Modalidade                   | larg 65
+  10 [x] CP_CONTADOR_ANTERIOR       | Anterior                     | larg 62
+  11 [x] PAGINAS_ATUAL              | Atual                        | larg 65
+  12 [x] CP_PAGINAS                 | Utilizado                    | larg 65
+  13 [x] PAGINAS_EXCEDENTE          | Qtde Exced                   | larg 65
+  14 [x] CP_VALOR_EXCEDENTE         | Valor Exced                  | larg 65
+  15 [x] CP_VALOR_ACRESCIMO         | Acréscimo                    | larg 65
+  16 [x] CP_VALOR_TOTAL             | Valor Total                  | larg 65
+  17 [x] DATA_LEITURA               | Lançado em                   | larg 120
+  18 [x] CP_DATA_CAPTURADO          | Capturado em                 | larg 83
+  19 [x] CP_OBS                     | Observação                   | larg 300
+========================================================================================================
+FormLeiturasDBGrid1 — 14 colunas (14 visíveis)
+   1 [x] ATIVO                      | Sel                          | larg None
+   2 [x] LE_COD_LEITURA             | Código                       | larg 46
+   3 [x] LE_DATA                    | Lançada em                   | larg 71
+   4 [x] LE_DATA_INICIO             | Inicio                       | larg None
+   5 [x] LE_DATA_FINAL              | Final                        | larg 90
+   6 [x] LE_PAGINAS                 | Utilizado                    | larg 75
+   7 [x] LE_PAGINAS_EXCEDENTES      | Qtde Exced                   | larg 67
+   8 [x] LE_VALOR_EXCEDENTES        | Valor Exced.                 | larg 70
+   9 [x] LE_VALOR_DESCONTO          | Desconto                     | larg 62
+  10 [x] LE_VALOR_ACRESCIMO         | Acréscimo                    | larg 65
+  11 [x] LE_VALOR_TOTAL             | Valor Total                  | larg 75
+  12 [x] LE_COD_NFSE                | NFS                          | larg 25
+  13 [x] LE_COD_NOTA_FISCAL         | NFe                          | larg 25
+  14 [x] LE_FINALIZAD@              | None                         | larg None
+========================================================================================================
+FormLocacao2DBGrid1 — 16 colunas (16 visíveis)
+   1 [x] IT_PATRIMONIO              | Patrim                       | larg 40
+   2 [x] IT_SERIAL                  | Serial                       | larg 130
+   3 [x] IT_ON_DATA_ATUALIZADO      | ON                           | larg 18
+   4 [x] NOME_EQUIPAMENTO           | Equipamento                  | larg 200
+   5 [x] NOME_DEPARTAMENTO          | Departamento                 | larg 147
+   6 [x] IT_LOCALIZACAO             | Local                        | larg 128
+   7 [x] IT_ULTIMA_LEITURA          | Ultima Leitura               | larg 77
+   8 [x] IT_VALOR_FIXO_PRETO_A4     | Acrésc Preto A4              | larg 130
+   9 [x] IT_VALOR_LOCACAO           | Valor Locação Preto A4       | larg 130
+  10 [x] IT_VALOR_FIXO_COLOR_A4     | Acrésc Color A4              | larg 130
+  11 [x] IT_VALoR_PAGINAS_COLOR     | Valor Locação Color A4       | larg 130
+  12 [x] IT_VALOR_FIXO_PRETO_A3     | Acrésc Preto A3              | larg 130
+  13 [x] IT_VALOR_LOCACAO_A3        | Valor Locação Preto A3       | larg 130
+  14 [x] IT_VALOR_FIZO_COLOR_A3     | Acrésc Color A3              | larg 130
+  15 [x] IT_VALOR_PAGINAS_COLOR_A3  | Valor Locação Color A3       | larg 130
+  16 [x] IT_VALOR_LOCACAO_SCANNER   | Valor Locação Scanner        | larg 130
+========================================================================================================
+FormLocacaoDBGrid1 — 10 colunas (10 visíveis)
+   1 [x] COD_LOCACAO                | Locação                      | larg None
+   2 [x] LOC_NOSSO_CODIGO           | Nosso Código                 | larg 74
+   3 [x] NOME_RAZAOSOCIAL           | Cliente                      | larg 350
+   4 [x] CPF_CNPJ                   | CNPJ                         | larg None
+   5 [x] VALOR                      | Valor Contrato               | larg 75
+   6 [x] VALOR_ULTIMAS_LEITURAS     | Valor Últ. Leit              | larg 75
+   7 [x] QTDE_VISITAS               | Cha                          | larg 18
+   8 [x] QTDE_EQUIP                 | Equip.                       | larg 35
+   9 [x] ULTIMA_LEITURA             | Última Leitur                | larg 120
+  10 [x] LOC_DIA_FECHAMENTO         | Fecha Dia                    | larg 60
+
+salvo _ref/grids.json
