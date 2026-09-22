@@ -94,6 +94,28 @@ clicou, abriu ligado na nuvem. Sem instalar, sem banco local, sem atualizador
   `db.nfseMigradas` (automações). Próximo passo: ele contar como emite hoje
   (portal da prefeitura? sistema antigo?) para desenhar o módulo NFS-e.
 
+**O que foi apurado sobre NFS-e (22/09/2026) — vale para o desenho do módulo:**
+- **A prefeitura de Janaúba (MG)** publicou comunicado dizendo que **mantém o
+  emissor próprio (SIGP NFS-e)** como emissor oficial e que "não haverá
+  alterações para os contribuintes".
+- **Mas o prazo nacional é outro:** a **Resolução CGSN nº 189/2026** tornou
+  **obrigatório o Emissor Nacional da NFS-e** (gov.br/nfse) para **ME/EPP
+  optantes do Simples Nacional** que prestam serviço sujeito ao ISS, a partir de
+  **1º de setembro de 2026** — e o prazo **independe da adesão do município**.
+  O emissor municipal deixa de ser opção válida para o Simples.
+- Como a empresa dele é **Simples Nacional** (`NFE_CRT` 1 no dump antigo), o
+  caminho é o **Ambiente Nacional (SEFIN Nacional NFS-e / ADN)**: gerar a **DPS**
+  em XML, **assinar com o certificado A1** (o mesmo que já está na Central para
+  a NF-e — `ajustes_v52221_cert_nuvem_a1_patch.js`) e enviar pela **API**; o
+  retorno traz a NFS-e autorizada e o DANFSe para impressão/PDF.
+- Referência oficial das APIs:
+  `https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/`
+  (produção restrita p/ testes: `https://www.producaorestrita.nfse.gov.br`).
+- Mapa do sistema antigo (seção 3 de `MAPEAMENTO_SISTEMA_ANTIGO.md`): as
+  sementes `NFSE_*` (CNAE + enquadramento municipal por serviço: **locação
+  7733100**, **recarga 4751202**, **OS 9511800**) servem de ponto de partida
+  para os códigos de tributação da DPS.
+
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 
