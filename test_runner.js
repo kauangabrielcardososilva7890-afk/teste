@@ -206,7 +206,8 @@ const tests=[
   "test_exe_so_nuvem.js",
   "test_navegador_embutido.js",
   "test_lembrar_tela.js",
-  "test_falta_emitir.js"
+  "test_falta_emitir.js",
+  "test_importar_referencias.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

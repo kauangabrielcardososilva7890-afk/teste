@@ -3,9 +3,23 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.8** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v6.1.9** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
 
 ---
+
+## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
+
+**Ideia dele:** *"você faz uma area de importação dos dois tipos de arquivos, aí vai ler e me dar um texto pra copiar aí só colo aqui"* — ele não consegue anexar arquivos na conversa.
+
+**Entregue:** `importar.html` (ferramenta à parte, abre no navegador pelo site — **não precisa gerar .exe**):
+- Arrasta/ escolhe **arquivos** ou a **pasta inteira** (`Grids`), com teto de 300 KB por arquivo e 1,2 MB no total (PC fraco);
+- Lê acento de arquivo antigo (UTF-8 → cai para Windows-1252, sem "�");
+- Detecta **binário** e manda em **base64** (para eu decodificar aqui) — é o caso provável dos `.grd`;
+- Junta tudo num texto com cabeçalho por arquivo + botões **Copiar tudo** (com plano B Ctrl+A/Ctrl+C) e **Salvar .txt**;
+- **Nada sai do PC e nada é guardado** (sem login, sem nuvem, sem localStorage) — só lê e mostra.
+- Teste novo `test_importar_referencias.js` (23 asserts: sem CDN, sem modal nativo, sem guardar nada, sem `fetch`, teto de tamanho, acento antigo, base64 e junção). **Suíte 194/0/0.** Versão 6.1.8 → **6.1.9** (carimbos do relatório/guia/carimbo do rodapé re-ancorados).
+
+**O que pedir dele:** pasta **Grids** inteira (9 `.grd`: Locação, Locação2, Leituras, LeiturasColetiva, ImpressorasOnline, ConsuChamado, ContasPagar, CadCliente, CadProdutos) e do **NSNFe** os de evento (`e110110` CC-e, `e110111` cancelamento, `e110112`, `e110140`), `consSitNFe_v4.00.xsd` e `DFeTiposBasicos_v1.00.xsd`. Correção anotada: os `.xsd` da pasta **são o pacote oficial** (layout 4.00 + eventos) e o `DFeTiposBasicos` foi atualizado em 16/10/2025 — servem de referência para **CC-e e cancelamento** (o que faltava na NF-e), ao contrário do que eu supus antes ("antigos").
 
 ## Rodada 22/09/2026 (nº6) — v6.1.8 · a memória da tela + o "falta pouco" da nota + o endereço certo da NFS-e
 

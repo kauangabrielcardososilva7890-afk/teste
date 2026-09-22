@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a1e8a">
 <script>
-window.DIGICOPY_APP_VERSION = '6.1.8';
+window.DIGICOPY_APP_VERSION = '6.1.9';
 
 // v6.0.3 — tranca do menu Backup: roda antes de qualquer bundle; por CAPTURA
 // no documento, impede que o clique em Backup baixe arquivo. Se a tela ainda
@@ -37,7 +37,7 @@ try{if(localStorage.getItem('digicopy_ui_modo_escuro_dispositivo_v1')==='1')docu
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Digicopy">
-<title>Sistema Digicopy v6.1.8</title>
+<title>Sistema Digicopy v6.1.9</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./logo_2.png">
 <link rel="stylesheet" href="./assets/vendor/tailwind.min.css?v=5.20.39">
@@ -135,7 +135,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
             <button onclick="doLoginUser()" class="w-full h-[48px] rounded-xl bg-[#0a1e8a] text-white font-semibold text-[14px] hover:bg-[#08176e] transition shadow-lg shadow-[#0a1e8a]/20">Entrar no Sistema</button>
           </div>
         </div>
-        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy</div>
+        <div class="mt-10 text-center text-[11px] text-slate-400">Sistema Digicopy 1.0</div>
       </div>
     </div>
   </div>
@@ -175,7 +175,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
   <main class="flex-1 min-w-0 flex flex-col">
     <header class="app-titlebar sticky top-0 z-30">
   <div class="h-[26px] bg-[#0076c8] text-white text-[12px] flex items-center justify-center relative">
-    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy</span></div>
+    <div class="absolute left-2 flex items-center gap-2"><img src="./logo_2.png?v=5.3.5" class="h-4 w-4 object-contain"><span class="text-[11px]" id="app-title-version">Sistema Digicopy 1.0</span></div>
     <span id="page-title" class="font-medium">Início</span>
     <div class="absolute right-2 flex items-center gap-2">
       <button id="ntf-btn" onclick="ntfAlternarPainel()" title="Notificações" class="relative w-7 h-7 grid place-items-center rounded-lg bg-white/15 hover:bg-white/25 transition">
@@ -217,7 +217,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
       <section id="view-usuarios" class="view hidden space-y-4"></section>
       <section id="view-auditoria" class="view hidden space-y-4"></section>
     </div>
-    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem <button onclick="digicopyAbrirOuBaixarErroTxt()" title="Abrir/baixar o erro.txt do sistema (manda pro técnico quando der problema)" class="ml-1 inline-flex items-center gap-1 px-2 h-6 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 align-middle text-[10px] font-bold"><i class="ph ph-file-text"></i> erro.txt</button></span><span id="footer-version" class="text-center font-bold text-slate-500">v6.1.8</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
+    <footer class="h-12 px-8 grid grid-cols-3 items-center text-[11px] text-slate-400 border-t bg-white/60"><span>Sistema Digicopy • Banco na Nuvem <button onclick="digicopyAbrirOuBaixarErroTxt()" title="Abrir/baixar o erro.txt do sistema (manda pro técnico quando der problema)" class="ml-1 inline-flex items-center gap-1 px-2 h-6 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 align-middle text-[10px] font-bold"><i class="ph ph-file-text"></i> erro.txt</button></span><span id="footer-version" class="text-center font-bold text-slate-500">v6.1.9</span><span id="footer-session" class="text-right">Empresa - Usuário</span></footer>
   </main>
 </div>
 </div>
@@ -229,6 +229,7 @@ header{height:54px!important;background:#fff!important;backdrop-filter:none!impo
 <div id="toast-container" class="fixed bottom-6 right-6 z-[60] space-y-2 pointer-events-none"></div>
 
 <script src="./assets/vendor/chart.umd.js?v=4.4.9"></script>
-<script src="./app.bundle.js?v=6.1.8-e820b1e2b025"></script>
+<script>window.DIGICOPY_APP_CANAL="celular";window.DIGICOPY_APP_VER="1.0";</script>
+<script src="./app.bundle.js?v=1.0"></script>
 </body>
 </html>

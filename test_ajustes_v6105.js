@@ -20,7 +20,7 @@ function ler(p){ return fs.readFileSync(p, 'utf8'); }
 const VERSAO_APP = JSON.parse(ler('package.json')).version;
 
 console.log('\n== v6.1.4 rodada 22/09 nº3 ==');
-ok(VERSAO_APP === '6.1.8', 'a versão do app acompanha a publicação (é a versão desta leva)');
+ok(VERSAO_APP === '6.1.9', 'a versão do app acompanha a publicação (é a versão desta leva)');
 
 // ── 1. NUVEM: conectou = sincroniza, sem escolha e sem susto ────────────────
 console.log('\n== NUVEM: conectou, sincroniza (fim da trava) ==');

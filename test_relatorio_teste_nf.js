@@ -113,7 +113,7 @@ function escrever(id, texto){
 }
 
 d.getElementById('d_nome').value = 'Dono';
-d.getElementById('d_rodape').value = 'v6.1.8 + 0c31ad7d';
+d.getElementById('d_rodape').value = 'v6.1.9 + a5f67dad';
 d.getElementById('d_nuvem').value = '5.26.5';
 marcar('ONDE', 'exe');
 marcar('A1', 'ok');  escrever('t_A1', 'abriu normal, sem undefined');
@@ -139,7 +139,7 @@ const txt = r.texto;
 
 ok('tipo salvarArquivo existe (o clique gera e baixa o .txt)', typeof w.salvarArquivo === 'function');
 ok('cabeçalho do relatório com data/hora', /RELATÓRIO DE TESTE — SISTEMA DIGICOPY/.test(txt) && /Gerado em \d\d\/\d\d\/\d\d\d\d às \d\dh\d\d/.test(txt));
-ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.8/.test(txt) && /5\.26\.5/.test(txt) && /0c31ad7d/.test(txt));
+ok('identificação do teste sai escrita', /Nome\.+: Dono/.test(txt) && /Programa \.exe/.test(txt) && /v6\.1\.9/.test(txt) && /5\.26\.5/.test(txt) && /a5f67dad/.test(txt));
 ok('pergunta respondida sai com a marca OK + observação',
    /\[OK \] A1 — .+\n\s+abriu normal, sem undefined/.test(txt));
 ok('pergunta não resolvida sai com a marca NAO + observação',
