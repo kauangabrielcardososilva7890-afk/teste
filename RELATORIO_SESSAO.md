@@ -80,6 +80,20 @@ clicou, abriu ligado na nuvem. Sem instalar, sem banco local, sem atualizador
 `npm run versao` subiu 6.1.5 → 6.1.6 e carimbou o `index.html`; motor e nuvem de pé
 (API 0.4.9 / Worker 5.26.5 no repositório).
 
+**Respostas dele no mesmo dia (as perguntas sobre a pasta do sistema antigo):**
+- **Som / aviso sonoro:** *não precisa* — não fazer.
+- **Cópia de segurança para baixar:** *deixa como está* — nada é gerado no PC; o
+  backup continua só na nuvem (é o modo SÓ NUVEM dele).
+- **Guardar a arrumação das colunas (a pasta `Grids` do antigo):** ele pediu
+  **explicação antes de decidir** — foi explicado e a pergunta foi refeita
+  (o que é, para que serve, o quanto pesa).
+- **NFS-e (a pasta `NSNFe`):** *"emito mais NFS-e da prefeitura que NF-e"* — ou
+  seja, **a nota de serviço passa a ser prioridade do fiscal**. Hoje o sistema
+  **não emite NFS-e**: o que existe é ISSQN no Perfil Tributário
+  (`fiscal_catalogo_completo_patch.js`) e a estrutura de migração
+  `db.nfseMigradas` (automações). Próximo passo: ele contar como emite hoje
+  (portal da prefeitura? sistema antigo?) para desenhar o módulo NFS-e.
+
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 
