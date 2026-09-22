@@ -203,7 +203,8 @@ const tests=[
   "test_relatorio_problemas.js",
   "test_ajustes_v6105.js",
   "test_ajustes_v6106.js",
-  "test_exe_so_nuvem.js"
+  "test_exe_so_nuvem.js",
+  "test_navegador_embutido.js"
 ];
 let failed=0, passed=0, xfailed=0;
 for(const file of tests){

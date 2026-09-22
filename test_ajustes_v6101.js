@@ -23,7 +23,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto 221; Submenu Fiscal Oficial fecha a fila',
-  man.length === 222 && man[220] === 'submenu_fiscal_oficial_patch.js' && man[219] === 'menu_fiscal_oficial_patch.js');
+  man.length === 223 && man[220] === 'submenu_fiscal_oficial_patch.js' && man[219] === 'menu_fiscal_oficial_patch.js');
 ok('bundle contém o patch (guard + PURE + css + captura de clique)',
   bundle.indexOf('__v6101sfo') >= 0 && bundle.indexOf('SFO611_PURE') >= 0 && bundle.indexOf('sfo611-css') >= 0 && bundle.indexOf('onCliqueCaptura') >= 0);
 ok('carimbo 6.1.1 (package + index 4 pontos)',

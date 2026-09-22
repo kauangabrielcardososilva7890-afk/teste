@@ -20,7 +20,7 @@ const P = require('./ribbon_fiscal_estilo_antigo_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto já é 219 — a ribbon v6.0.13 ficou na posição histórica 217 (em cima dela, só o catálogo fiscal completo)',
-  man.length === 222 && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[216] === 'navegacao_sem_tela_branca_patch.js');
+  man.length === 223 && man[217] === 'ribbon_fiscal_estilo_antigo_patch.js' && man[216] === 'navegacao_sem_tela_branca_patch.js');
 ok('bundle contém o patch (guard + PURE + css)',
   bundle.indexOf('__v60013wxr') >= 0 && bundle.indexOf('WXR613_PURE') >= 0 && bundle.indexOf('wxr-ribbon-css') >= 0);
 

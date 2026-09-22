@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Teste — Sistema Digicopy v6.1.6</title>
+<title>Relatório de Teste — Sistema Digicopy v6.1.7</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +56,7 @@
 <body>
 
 <header>
-  <h1>Relatório de Teste — Sistema Digicopy v6.1.6</h1>
+  <h1>Relatório de Teste — Sistema Digicopy v6.1.7</h1>
   <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
      No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
   <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
@@ -65,7 +65,7 @@
 <div class="campos" id="dados">
   <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
   <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
-  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.6 + carimbo"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.7 + carimbo"></div>
   <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.5"></div>
 </div>
 
@@ -134,7 +134,7 @@
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════
-// RELATÓRIO DE TESTE DO DONO (v6.1.6)
+// RELATÓRIO DE TESTE DO DONO (v6.1.7)
 // Cada pergunta: 3 caixas (OK / não resolveu / não testei) + observação livre.
 // No fim: gera um .txt já escrito e baixa (ou copia) para mandar no chat.
 // Sem dependências, sem servidor: funciona aberto do PC (arquivo) ou pelo site.
@@ -189,7 +189,7 @@ const PARTES = [
     ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
   ]},
   { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
-    ['O rodapé mostra a versão v6.1.6 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['O rodapé mostra a versão v6.1.7 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
     ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
     ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
     ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']
@@ -202,6 +202,13 @@ const PARTES = [
     ['A contagem no painel/check-up é a de AGORA (não mais a de 10 minutos atrás)', 'novo'],
     ['O rodapé diz "dados só na nuvem (este PC não guarda cópia)" e, fechando e abrindo o sistema, TUDO aparece de novo — veio da nuvem', 'novo'],
     ['No painel da Nuvem dá para ver onde os dados ficam, soltar a cópia deste PC e (se quiser) voltar a guardar cópia para abrir sem internet', 'novo']
+  ]},
+  { id:'I', nome:'PARTE I — NAVEGADOR DENTRO DO SISTEMA (novo de 22/09 nº5) — só funciona no PROGRAMA DO PC', itens:[
+    ['No programa do PC, o menu Navegador abriu a tela com as abas: NFS-e (prefeitura) · NFS-e Nacional · WhatsApp Web', 'novo'],
+    ['O portal da prefeitura abriu DENTRO do sistema (não pulou para o Edge/Chrome) e dá para digitar/emitir normalmente', 'novo'],
+    ['O WhatsApp Web abriu dentro do sistema e entrou lendo o QR Code uma vez (na segunda abertura já estava logado)', 'novo'],
+    ['Botão ＋ Site: adicionei um site meu, ele ficou salvo e apareceu no outro PC (a lista fica na nuvem, não no PC)', 'novo'],
+    ['Fora do programa do PC (site no Edge/celular), a tela explica que ali não abre e oferece \"Abrir numa janela nova\" (sem tela branca)', 'novo']
   ]},
 ];
 
@@ -229,7 +236,7 @@ function caixasHtml(grupo, opcoes){
   $('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
   $('veredicto').innerHTML = caixasHtml('VEREDITO', VEREDITO);
 
-  // v6.1.6 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
+  // v6.1.7 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
   // testar duas vezes), e tem o filtro "só o que falta testar".
   const SELOS = {
     ok:      ['✅ resolvido antes', 'Já foi corrigido numa rodada anterior — só confirme se ficou bom.', 'selo ok'],
@@ -337,7 +344,7 @@ function salvarRascunho(){
 // ── contador de respondidas ───────────────────────────────────────────────
 function contar(){
   const ok = lista.filter(it => valorRadio(it.n)).length;
-  // v6.1.6 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
+  // v6.1.7 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
   // que importa é o que continua em aberto (era a reclamação dele: "o relatório
   // repete pergunta que já foi resolvida").
   const jaResolvidas = (typeof PARTES !== 'undefined' ? PARTES : [])
@@ -492,7 +499,7 @@ document.addEventListener('input', () => {
 });
 document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
 $('btn-salvar').addEventListener('click', salvarArquivo);
-// v6.1.6 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
+// v6.1.7 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
 // A seção do deploy virou instrução do atualizar_motor_nuvem.cmd (sem token, sem
 // painel, sem copiar código). O script de copiar o YAML saiu daqui de propósito.
 $('btn-copiar').addEventListener('click', copiarTexto);

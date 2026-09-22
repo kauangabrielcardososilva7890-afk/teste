@@ -153,9 +153,12 @@ const rel = ler('RELATORIO_DE_TESTE_NF.html');
 ok('tem a PARTE H com o que é novo nesta rodada',
   rel.indexOf('PARTE H') >= 0 && rel.indexOf('Nova nota fiscal em ABA') >= 0 &&
   rel.indexOf('um olho só') >= 0);
-ok('o relatório é da versão publicada agora (v6.1.6)',
-  rel.indexOf('v6.1.6') >= 0 && rel.indexOf('5.26.5') >= 0);
+ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa do PC)',
+  rel.indexOf('NAVEGADOR DENTRO DO SISTEMA') >= 0 && rel.indexOf('NFS-e Nacional') >= 0 &&
+  rel.indexOf('WhatsApp Web') >= 0 && rel.indexOf('Abrir numa janela nova') >= 0);
+ok('o relatório é da versão publicada agora (v6.1.7)',
+  rel.indexOf('v6.1.7') >= 0 && rel.indexOf('5.26.5') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 
-console.log('\nRESULTADO: v6.1.6 (rodada 22/09 nº4) passou!');
+console.log('\nRESULTADO: v6.1.7 (rodada 22/09) passou!');

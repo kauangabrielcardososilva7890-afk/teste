@@ -23,7 +23,7 @@ const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
 console.log('== FILA / BUNDLE / CARIMBO ==');
 ok('manifesto 220; Menu Fiscal Oficial fecha a fila (por cima do catálogo fiscal da 6.0.14)',
-  man.length === 222 && man[219] === 'menu_fiscal_oficial_patch.js' && man[218] === 'fiscal_catalogo_completo_patch.js');
+  man.length === 223 && man[219] === 'menu_fiscal_oficial_patch.js' && man[218] === 'fiscal_catalogo_completo_patch.js');
 ok('bundle contém o patch (guard + PURE + observer + css)',
   bundle.indexOf('__v6100mfo') >= 0 && bundle.indexOf('MFO610_PURE') >= 0 && bundle.indexOf('mfo610-css') >= 0);
 ok('carimbo 6.1.0 (package + index 4 pontos)',

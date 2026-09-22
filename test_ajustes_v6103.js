@@ -63,7 +63,7 @@ function namesSelected(w) {
     const w = dom.window;
     assert.strictEqual(typeof w.navigateTo, 'function', 'navigateTo carregou');
     assert.strictEqual(typeof w.fxAcao, 'function', 'fxAcao carregou');
-    assert.strictEqual(w.__DIGICOPY_BUNDLE_SCRIPTS, 222, 'bundle completo carregou');
+    assert.strictEqual(w.__DIGICOPY_BUNDLE_SCRIPTS, 223, 'bundle completo carregou');
 
     w.navigateTo('clientes');
     await wait(120);

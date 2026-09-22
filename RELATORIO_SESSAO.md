@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.6** (rodada 22/09 nº5 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v6.1.7** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
 
 ---
 
@@ -116,6 +116,63 @@ clicou, abriu ligado na nuvem. Sem instalar, sem banco local, sem atualizador
   7733100**, **recarga 4751202**, **OS 9511800**) servem de ponto de partida
   para os códigos de tributação da DPS.
 
+
+## Rodada 22/09/2026 (nº6) — v6.1.7 · o NAVEGADOR EMBUTIDO (NFS-e da prefeitura + WhatsApp Web)
+
+**Pedido dele (literal):** *"na verdade, se possivel, queria somente um navegador
+embutido no sistema onde ele vai abrir o site da prefeitura e vou poder mexer por
+la no sistema, sem eu usar algum navegador, tudo dentro do sistema, aproveitando a
+mesma base de um navegador dentro do sistema, queria adicionar o whatsapp web
+tambem, é possivel?"* — e, sobre o jeito que ele emite hoje: **SIGP NFS-e, o portal
+da prefeitura** (`nfse_hoje = sigp`).
+
+**É possível — e onde:** no **programa do PC (.exe / Electron)** o sistema passa a
+ter um navegador DE VERDADE dentro dele (tag `<webview>`, não iframe — por isso o
+portal da prefeitura e o WhatsApp Web, que proíbem ser embutidos em outra página,
+abrem normalmente). **No site (Edge) e no celular isso não existe** por regra dos
+próprios sites; ali a tela explica em português e dá o botão *Abrir numa janela
+nova* — nunca tela branca.
+
+**Entregue nesta leva:**
+| Arquivo | O que é |
+|---|---|
+| `navegador_embutido_patch.js` | a aba **Navegador**: abas de sites, ← → ⟳ ⌂, endereço, A-/A+, ＋ Site, ✏ Editar, 🗑 Apagar, Esquecer logins, aviso honesto fora do PC |
+| `main.js` | `webviewTag:true` + travas (`will-attach-webview`: só https, sem preload/node) + permissão só dos sites dele + link que abre janela fica dentro + IPC `nav:limpar-logins` |
+| `preload.js` | ponte `navAPI.limparLogins()` (padrão das outras pontes) |
+| `test_navegador_embutido.js` | 45 verificações: endereço normalizado, lista na nuvem, travas do PC, aviso fora do PC, sem modal nativo |
+
+**Sites que já nascem prontos:** **NFS-e (prefeitura)** · **NFS-e Nacional**
+(`www.nfse.gov.br/EmissorNacional` — obrigatório para o Simples desde 01/09/2026)
+· **WhatsApp Web**. A lista fica em `db.config.navSites` (**nuvem**), então o site
+que ele adicionar aparece nos outros PCs.
+
+**Login guardado (importante):** WhatsApp/prefeitura precisam lembrar o login
+(senão pediriam QR Code/senha toda vez). Isso é do próprio site, numa área separada
+e identificada (`persist:digicopy-navegador`) — **nenhum dado do sistema** passa
+por ali, e o botão *Esquecer logins* apaga quando ele quiser.
+
+**Validações:** `npm test` = **191 passaram, 0 falharam** (entrou o
+`test_navegador_embutido.js`); `npm run versao` subiu 6.1.6 → 6.1.7;
+`RELATORIO_DE_TESTE_NF.html` ganhou a **PARTE I — navegador dentro do sistema**
+(só vale testar no programa do PC).
+
+**Respostas dele nesta rodada:**
+- **Guardar a arrumação das colunas (Grids):** escolheu a **segunda opção — "só o
+  básico"** (lembrar **a última ordenação e o último filtro** de cada tela, sem
+  mexer em colunas) e perguntou *"vai atualizar mesmo assim né?"* → sim, salva
+  sozinho a cada uso, por usuário, na nuvem; fica para a **próxima leva**.
+- **Schemas `.xsd` da pasta `NSNFe`:** com o navegador embutido **não são
+  necessários** — a nota é emitida no portal oficial, por ele, dentro do sistema.
+  Se um dia formos pela **API** (ABRASF 2.04 / DPS assinada com o A1), aí sim os
+  `.xsd` da prefeitura servem de referência — guardados, sem pressa.
+- **"As outras pastas têm coisas que talvez sejam boas":** pedir para ele dizer os
+  **nomes** (ou mandar foto) das pastas/arquivos que pareceram úteis — o resto do
+  material velho (Firebird, DLLs, atualizador, backup, som) já foi avaliado e
+  **não serve** (a nuvem substitui).
+
+**Pendências:** ele instalar/rodar `GERAR_EXE.cmd` (o navegador embutido só
+aparece no programa do PC) ou `CRIAR_EXE_SO_NUVEM.cmd`; publicar o motor
+(`atualizar_motor_nuvem.cmd`, no ar 0.4.8/5.26.4 → local 0.4.9/5.26.5).
 
 ## PROTOCOLO PERMANENTE DELE (regra fixa desde v5.24.12) — as 14 perguntas
 

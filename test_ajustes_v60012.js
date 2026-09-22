@@ -21,7 +21,7 @@ const P = require('./navegacao_sem_tela_branca_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 217; anti-tela-branca fecha a fila (é o último, wrap por cima de todos)',
-  man.length === 222 && man[216] === 'navegacao_sem_tela_branca_patch.js' && man[215] === 'submenu_hover_nfe_patch.js');
+  man.length === 223 && man[216] === 'navegacao_sem_tela_branca_patch.js' && man[215] === 'submenu_hover_nfe_patch.js');
 ok('bundle contém o patch (guard + PURE)',
   bundle.indexOf('__v60012nav') >= 0 && bundle.indexOf('NAV612_PURE') >= 0);
 

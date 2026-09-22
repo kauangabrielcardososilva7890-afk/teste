@@ -1,6 +1,6 @@
 // DIGICOPY ERP v3.8 - Main process (Electron)
 // Responsável por: janela principal, IPC com Firebird e sistema de arquivos
-const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -47,6 +47,14 @@ function createWindow () {
       v8CacheOptions: 'bypassHeatCheck',
       spellcheck: false,
       devTools: false,
+      // NAVEGADOR EMBUTIDO (v6.1.7) — pedido dele: "um navegador embutido no
+      // sistema onde ele vai abrir o site da prefeitura... e o whatsapp web
+      // também". A tag <webview> é um navegador de verdade rodando dentro da
+      // janela (não é iframe, por isso prefeitura e WhatsApp aparecem). É o
+      // ÚNICO motivo desta opção estar ligada, e ela fica travada logo abaixo
+      // (will-attach-webview): só https, sem preload, sem node, partição
+      // própria 'persist:digicopy-navegador'.
+      webviewTag: true,
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'logo.png'),
@@ -115,6 +123,70 @@ function createWindow () {
           anotar('OK: bundle completo, ' + r.scripts + ' scripts, nenhuma falha.');
         }
       }).catch(() => {});
+    });
+  }catch(e){}
+
+  // ── NAVEGADOR EMBUTIDO (v6.1.7) ───────────────────────────────────────────
+  // O dono pediu "um navegador embutido no sistema" para a NFS-e da prefeitura
+  // e o WhatsApp Web. A tag <webview> roda um navegador de verdade dentro da
+  // janela do sistema — e é justamente por isso que aqui não vale a mesma
+  // regra do 'will-navigate' acima (que manda link externo para o navegador do
+  // Windows): o que está DENTRO do navegador embutido fica dentro.
+  try{
+    win.webContents.on('will-attach-webview', (evento, webPreferences, params) => {
+      const url = String((params && params.src) || '');
+      if (!/^https:\/\//i.test(url)) { evento.preventDefault(); return; }   // trava: só site seguro
+      try { delete webPreferences.preload; } catch(e){}
+      webPreferences.nodeIntegration = false;
+      webPreferences.contextIsolation = true;
+      webPreferences.sandbox = true;
+      webPreferences.webSecurity = true;
+      webPreferences.allowRunningInsecureContent = false;
+    });
+    win.webContents.on('did-attach-webview', (evento, conteudo) => {
+      // Janela nova pedida DENTRO do site (WhatsApp/prefeitura) abre no mesmo
+      // lugar, em vez de virar janela solta fora do sistema.
+      try{
+        conteudo.setWindowOpenHandler((detalhes) => {
+          try{
+            const alvo = String((detalhes && detalhes.url) || '');
+            if (/^https?:\/\//i.test(alvo) && conteudo.loadURL) conteudo.loadURL(alvo);
+          }catch(e){}
+          return { action: 'deny' };
+        });
+      }catch(e){}
+      // Permissões: microfone (mensagem de voz no WhatsApp) e tela cheia só
+      // para os sites que ele usa. O resto é negado.
+      try{
+        conteudo.session.setPermissionRequestHandler((wc, permissao, responder) => {
+          let pedido = '';
+          try{ pedido = String((wc && wc.getURL && wc.getURL()) || ''); }catch(e){}
+          const pode = (permissao === 'media' || permissao === 'clipboard-read' || permissao === 'fullscreen') &&
+            /whatsapp\.com|janauba\.mg\.gov\.br|nfse\.gov\.br/i.test(pedido);
+          try{ responder(!!pode); }catch(e){}
+        });
+      }catch(e){}
+      // Falha de página no navegador embutido nunca fica muda: vai para o
+      // log-erros.txt (o mesmo que o `npm run diag` lê).
+      try{
+        conteudo.on('did-fail-load', (e, codigo, descricao, urlValidada) => {
+          if (codigo === -3) return;  // cancelado: normal
+          try{
+            fs.appendFileSync(path.join(app.getPath('userData'), 'log-erros.txt'),
+              '[' + new Date().toISOString() + '] NAVEGADOR: falha ' + codigo + ' ' + descricao + ' em ' + urlValidada + '\n', 'utf8');
+          }catch(err){}
+        });
+      }catch(e){}
+    });
+    // Botão "Esquecer logins" da aba Navegador: limpa SÓ a área dos sites
+    // (cookies do WhatsApp/prefeitura). Nada do sistema mora aqui.
+    ipcMain.handle('nav:limpar-logins', async () => {
+      try{
+        const s = session.fromPartition('persist:digicopy-navegador');
+        await s.clearStorageData();
+        await s.clearCache();
+        return { ok:true };
+      }catch(e){ return { ok:false, erro:String((e && e.message) || e) }; }
     });
   }catch(e){}
 

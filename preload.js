@@ -45,6 +45,15 @@ const pontes = {
     loginClear: () => ipcRenderer.invoke('escola:login-clear')
   },
 
+  // API do Navegador embutido (v6.1.7) — a aba "Navegador" do sistema abre a
+  // prefeitura (NFS-e) e o WhatsApp Web dentro de uma janela de navegador
+  // própria; aqui fica o único comando que a tela precisa de fora: esquecer os
+  // logins guardados desses sites neste PC.
+  navAPI: {
+    limparLogins: () => ipcRenderer.invoke('nav:limpar-logins'),
+    isElectron: () => true
+  },
+
   // API de impressão limpa — imprime sem cabeçalho/rodapé do navegador
   // (sem contador de páginas nem URL "about:blank")
   printAPI: {
