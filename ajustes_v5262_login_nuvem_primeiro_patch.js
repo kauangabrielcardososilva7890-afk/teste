@@ -77,10 +77,23 @@
     try{ return sessionStorage.getItem(FECHOU_KEY) === '1'; }catch(e){ return false; }
   }
 
+  // v6.1.5 — ORDEM DO DONO (21/09/2026): "na hora de colocar a senha da nuvem
+  // aparece um olho a mais, deixa somente um olho". O olho extra era o do
+  // PRÓPRIO NAVEGADOR (Edge/Chrome desenha um em todo type=password). Aqui ele
+  // é escondido; o único olho é o botão do sistema (v5262-mostrar-senha).
+  function esconderOlhoNativo(){
+    if (document.getElementById('v5262-olho-css')) return;
+    var st = document.createElement('style');
+    st.id = 'v5262-olho-css';
+    st.textContent = 'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important}' +
+      'input[type=password]::-webkit-credentials-auto-fill-button{display:none!important}';
+    (document.head || document.documentElement).appendChild(st);
+  }
   function montarPortao(){
     if (document.getElementById('v5262-portao')) return;
     if (tokenNuvem()) return;            // conectou uma vez → nunca mais aparece
     if (fechouNestaSessao()) return;     // admin saiu pelo jeito antigo até recarregar
+    esconderOlhoNativo();
 
     var base = empresaCnpjNome();
     function olhoSvg(cortado){

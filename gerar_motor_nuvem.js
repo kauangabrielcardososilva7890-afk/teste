@@ -7,8 +7,13 @@
 // mão (chato e fácil de esquecer). Agora:
 //
 //   npm run motor      → compila o worker (wrangler --dry-run, NÃO publica),
-//                        regrava cloudflare-worker/motor_para_colar.js,
-//                        o .sha256 e a página MOTOR_NUVEM_PARA_COLAR.html.
+//                        regrava cloudflare-worker/motor_para_colar.js e o .sha256.
+//
+// v6.1.5 — ORDEM DO DONO (22/09/2026): "deleta esse motor nuvem pra copiar.html".
+// A página MOTOR_NUVEM_PARA_COLAR.html foi APAGADA. O caminho de publicação é o
+// atualizar_motor_nuvem.cmd (duplo clique). O .js compilado continua sendo gerado
+// porque é ele que o wrangler publica quando alguém usa o painel. Nada mais é
+// escrito além dele e do .sha256.
 //
 // O teste `test_ajustes_v6104.js` compara as versões deste arquivo com
 // `cloudflare-worker/src/index.js`: se alguém subir a versão do worker e
@@ -27,7 +32,6 @@ const WORKER = path.join(RAIZ, 'cloudflare-worker');
 const SAIDA = path.join(WORKER, 'motor_compilado');
 const ARQUIVO = path.join(WORKER, 'motor_para_colar.js');
 const SHA = path.join(WORKER, 'motor_para_colar.sha256');
-const PAGINA = path.join(RAIZ, 'MOTOR_NUVEM_PARA_COLAR.html');
 const SRC = path.join(WORKER, 'src', 'index.js');
 
 function morrer(msg){ console.error('\n✘ ' + msg + '\n'); process.exit(1); }
@@ -64,8 +68,8 @@ const cabecalho = `/* ═══════════════════�
  * COMO PUBLICAR COLANDO (plano B — o painel da Cloudflare):
  *   1) Cloudflare → Workers & Pages → digicopy-sync-api → "Edit code".
  *   2) Selecione tudo (Ctrl+A) e apague.
- *   3) Cole ESTE arquivo inteiro (na página MOTOR_NUVEM_PARA_COLAR.html tem o
- *      botão "Copiar código").
+ *   3) Cole ESTE arquivo inteiro (não existe mais página com botão de copiar:
+ *      ela foi APAGADA a pedido do dono em 22/09/2026 — copie deste arquivo).
  *   4) Clique em "Deploy".
  *   5) Confira: https://digicopy-sync-api.digicopyonline.workers.dev/health
  *
@@ -91,25 +95,6 @@ fs.writeFileSync(ARQUIVO, final);
 fs.writeFileSync(SHA, sha + '\n');
 console.log('✔ ' + path.relative(RAIZ, ARQUIVO) + ' (' + final.length + ' bytes) — API ' + api + ' / Worker ' + wv);
 
-// ── 3. atualiza a página do botão de copiar (mesmo conteúdo, sem cópia velha) ──
-if (fs.existsSync(PAGINA)) {
-  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const linhas = final.replace(/\s+$/, '').split('\n');
-  let pagina = fs.readFileSync(PAGINA, 'utf8');
-  const i = pagina.indexOf('<pre id="codigo">');
-  const f = pagina.indexOf('</pre>', i);
-  if (i >= 0 && f > i) {
-    const inicio = pagina.indexOf('>', i) + 1;
-    pagina = pagina.slice(0, inicio) + esc(final) + pagina.slice(f);
-  }
-  pagina = pagina
-    .replace(/API <b>[^<]+<\/b> \/ Worker <b>[^<]+<\/b>/, 'API <b>' + api + '</b> / Worker <b>' + wv + '</b>')
-    .replace(/<code>[0-9a-f]{64}<\/code>/, '<code>' + sha + '</code>');
-  fs.writeFileSync(PAGINA, pagina);
-  console.log('✔ MOTOR_NUVEM_PARA_COLAR.html atualizado (versões ' + api + '/' + wv + ' e sha novo)');
-} else {
-  console.log('• MOTOR_NUVEM_PARA_COLAR.html não existe nesta pasta — só o arquivo foi gerado.');
-}
+// ── 3. a página do botão de copiar foi APAGADA (ordem do dono, 22/09/2026) ──
 
-fs.rmSync(SAIDA, { recursive: true, force: true });
 console.log('\nPronto. Não publiquei nada: quem publica é você (painel, .cmd ou o botão do GitHub).\n');

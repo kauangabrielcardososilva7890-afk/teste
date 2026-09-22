@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 222 | sha256: 09b71b18cfa87d67
+ * scripts: 222 | sha256: 6b65e6bf47abfafe
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28552,7 +28552,10 @@ async function renderConnected(body){
   // estiver implantado/responder, segue a vida com a contagem estimada.
   const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
-  try{status=await api('/v1/status',{method:'GET'});}
+  // v6.1.5 — contagem FRESCA: o painel e o check-up mostram o que a nuvem tem
+  // AGORA (antes vinha uma contagem guardada de até 10 minutos atrás e parecia
+  // que a sincronização não tinha subido nada).
+  try{status=await api('/v1/status?fresh=1',{method:'GET'});}
   catch(e){
     if(e.status===401){forgetAuth();return renderDisconnected(body);}
     // A tela da nuvem não pode ficar refém da contagem de registros. Se a conta
@@ -28878,12 +28881,40 @@ function loadState(){
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
+
+// v6.1.5 — BUG ACHADO NO TESTE DE DOIS PCs (era o "a nuvem não sincroniza
+// mais"): quando o estado era TROCADO inteiro (zerar a nuvem / não autorizar
+// local), o objeto novo não trazia os campos extras (state.sumindo, state.limpar
+// etc.). Aí a varredura estourava em silêncio com "Cannot read properties of
+// undefined" e NADA mais subia — nem venda, nem cliente, nem contrato —, com o
+// sistema parecendo conectado. Agora toda troca de estado passa por aqui.
+function normalizarEstado(novo){
+  state=novo||state||{};
+  state.versions=state.versions||{};
+  state.hashes=state.hashes||{};
+  state.known=state.known||{};
+  state.heldLocalOnly=Array.isArray(state.heldLocalOnly)?state.heldLocalOnly:[];
+  state.limpar=Array.isArray(state.limpar)?state.limpar:[];
+  state.sumindo=(state.sumindo&&typeof state.sumindo==='object')?state.sumindo:{};
+  state.pauseReason=state.pauseReason||'';
+  state.regras=state.regras||'';
+  state.cursor=Number(state.cursor)||0;
+  return state;
+}
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
 let state=loadState(),outbox=loadOutbox();
+normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
+// v6.1.5 — CARIMBO DE GERAÇÃO (bug do teste de dois PCs): se o estado inteiro é
+// trocado no meio de uma sincronização (zerar a nuvem / decidir não enviar /
+// check-up), a rodada que já estava em andamento precisa PARAR na hora. Sem
+// isto, a rodada antiga terminava depois e desfazia a decisão nova — era uma
+// forma de "sincronizei e parece que nada subiu / voltou atrás".
+let estadoGeracao=0;
+function trocarEstado(novo){state=novo;estadoGeracao++;return state;}
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v6.1.4-conectou-sincroniza';
+const REGRAS='v6.1.5-conectou-sincroniza';
 // v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
 // não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
 // sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
@@ -29132,6 +29163,7 @@ function scanLocal(){
     for(const entry of entries){
       if(outbox.length>=MAX_OUTBOX)break;
       const k=key(entity,entry.id),h=hash(entry.data);
+      if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
@@ -29332,6 +29364,8 @@ function indicator(ok,text){
 async function tick(reason){
   if(state.paused||busy||!authorized()||!leader())return false;
   busy=true;lastTick=Date.now();
+  const geracao=estadoGeracao;
+  const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
   try{
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
     const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
@@ -29343,6 +29377,7 @@ async function tick(reason){
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
     await pullAll();
+    if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
       const decision=decideReinstallGuard({
@@ -29360,6 +29395,7 @@ async function tick(reason){
     }
     let totalSent=0;
     for(let round=0;round<50;round++){
+      if(trocou())return false;
       scanLocal();
       if(!outbox.length)break;
       const sent=await pushOutbox();totalSent+=sent;if(!sent&&outbox.length)break;
@@ -29367,6 +29403,7 @@ async function tick(reason){
     // Só consulta novamente quando este PC realmente enviou algo. Em repouso,
     // cada ciclo custa uma única consulta incremental, não duas.
     if(totalSent>0)await pullAll();
+    if(trocou())return false;
     failures=0;lastError='';state.lastOk=Date.now();persist();
     if(outbox.length){
       // Remessa grande: mostra o quanto falta e volta logo para continuar, em vez
@@ -29496,7 +29533,7 @@ async function resetCloudOnly(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation};
+  trocarEstado(normalizarEstado(Object.assign(loadState(),{cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation})));
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
   persist();indicator(false,'Escolha o que fazer com os dados deste PC');
@@ -29576,7 +29613,7 @@ async function discardLocalKeepCloud(){
     await pullAll();
     if(!Object.keys(state.known).length){
       outbox=savedOutbox;
-      state=Object.assign(loadState(),savedState);
+      trocarEstado(normalizarEstado(Object.assign(loadState(),savedState)));
       persist();
       throw new Error('A nuvem está vazia. Nada foi apagado neste PC nem na nuvem.');
     }
@@ -50938,10 +50975,23 @@ try{
     try{ return sessionStorage.getItem(FECHOU_KEY) === '1'; }catch(e){ return false; }
   }
 
+  // v6.1.5 — ORDEM DO DONO (21/09/2026): "na hora de colocar a senha da nuvem
+  // aparece um olho a mais, deixa somente um olho". O olho extra era o do
+  // PRÓPRIO NAVEGADOR (Edge/Chrome desenha um em todo type=password). Aqui ele
+  // é escondido; o único olho é o botão do sistema (v5262-mostrar-senha).
+  function esconderOlhoNativo(){
+    if (document.getElementById('v5262-olho-css')) return;
+    var st = document.createElement('style');
+    st.id = 'v5262-olho-css';
+    st.textContent = 'input[type=password]::-ms-reveal,input[type=password]::-ms-clear{display:none!important}' +
+      'input[type=password]::-webkit-credentials-auto-fill-button{display:none!important}';
+    (document.head || document.documentElement).appendChild(st);
+  }
   function montarPortao(){
     if (document.getElementById('v5262-portao')) return;
     if (tokenNuvem()) return;            // conectou uma vez → nunca mais aparece
     if (fechouNestaSessao()) return;     // admin saiu pelo jeito antigo até recarregar
+    esconderOlhoNativo();
 
     var base = empresaCnpjNome();
     function olhoSvg(cortado){
@@ -55452,6 +55502,11 @@ try{
     '.fx-root-wrap .fx-btn.pri{background:#0a1e8a;border-color:#0a1e8a;color:#fff}' +
     '.fx-root-wrap .fx-btn.dan{border-color:#fecaca;color:#991b1b}.fx-root-wrap .fx-btn.dan:hover{background:#fef2f2}' +
     '.fx-root-wrap .fx-btn:disabled{opacity:.45;cursor:not-allowed;transform:none}' +
+    // v6.1.5 — cartões da aba "Nova nota" (as 5 opções do sistema antigo em ABA)
+    '.fx-root-wrap .fx-novo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px}' +
+    '.fx-root-wrap .fx-novo-opt{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:14px 16px;border:1px solid #cbd5e1;border-radius:14px;background:#fff;cursor:pointer;font-size:13.5px;color:#0f172a}' +
+    '.fx-root-wrap .fx-novo-opt:hover{border-color:#0a1e8a;background:#f5f8ff;transform:translateY(-1px)}' +
+    '.fx-root-wrap .fx-novo-grupo{font-size:10.5px;font-weight:800;text-transform:uppercase;color:#0a1e8a;letter-spacing:.4px}' +
     '.fx-root-wrap table.fx-tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden}' +
     '.fx-root-wrap .fx-tb th{position:sticky;top:0;background:#f8fafc;color:#64748b;text-transform:uppercase;font-size:10px;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid #e2e8f0;z-index:1}' +
     '.fx-root-wrap .fx-tb td{padding:7px 8px;border-bottom:1px solid #eef2f7;vertical-align:middle}' +
@@ -55552,7 +55607,7 @@ try{
       I.inp('lst.txt', 'Valor do filtro', 'style="min-width:220px" placeholder="digite aqui o que procurar"') +
       '<span class="fx-mini" style="align-self:center">' + linhas.length + ' nota(s) no filtro</span>' +
       '<span style="flex:1"></span>' +
-      '<button class="fx-btn pri" onclick="fxAcao(\'nf-novo\')"><i class="ph ph-plus"></i>Novo</button>' +
+      '<button class="fx-btn pri" onclick="fxAcao(\'nf-novo-menu\')"><i class="ph ph-plus"></i>Nova nota</button>' +
       '<button class="fx-btn" id="fx-bt-alt" onclick="fxAcao(\'nf-alterar\')" disabled><i class="ph ph-pencil"></i>Alterar</button>' +
       '<button class="fx-btn dan" id="fx-bt-exc" onclick="fxAcao(\'nf-excluir\')" disabled><i class="ph ph-trash"></i>Excluir</button>' +
       '<button class="fx-btn" id="fx-bt-clo" onclick="fxAcao(\'nf-clonar\')" disabled><i class="ph ph-copy"></i>Clonar</button></div>';
@@ -55903,9 +55958,70 @@ try{
       '<button class="fx-btn" onclick="fxAcao(\'nf-sair\')">Sair</button></div>';
     return h;
   }
+  // ═══════════════════════════════════════════════════════════════════════════
+  // v6.1.5 — ORDEM DO DONO (21/09/2026, com FOTO do sistema antigo):
+  // "sabe a parte de nota fiscal e clica pra criar uma nova? ela não vai ser em
+  // formato menu, e sim em formato aba, que nem o de vendas". A foto mostra o
+  // menu dele: Gerar NF-e (Avulsa / Devolução para Cliente / Devolução para
+  // Fornecedor), Gerar NFCe e Importar Declaração de Importação.
+  // Aqui as MESMAS cinco opções abrem como ABA dentro da Central (nada de
+  // janelinha por cima), e a escolha já deixa a nota no jeito certo.
+  // ═══════════════════════════════════════════════════════════════════════════
+  var FX_NOVO_TIPOS = [
+    { chave:'avulsa',     grupo:'Gerar NF-e',    titulo:'Gerar NF-e Avulsa',                        desc:'Venda normal, modelo 55, finalidade 1 (nota comum).', modelo:'55', finalidade:'1', tipo:'1', natureza:'VENDA' },
+    { chave:'dev-cli',    grupo:'Gerar NF-e',    titulo:'Gerar de NF-e Devolução para Cliente',     desc:'Devolução de venda ao cliente, modelo 55, finalidade 4.', modelo:'55', finalidade:'4', tipo:'1', natureza:'DEVOLUCAO DE VENDA' },
+    { chave:'dev-forn',   grupo:'Gerar NF-e',    titulo:'Gerar de NF-e Devolução para Fornecedor',  desc:'Devolução de compra ao fornecedor, modelo 55, finalidade 4.', modelo:'55', finalidade:'4', tipo:'1', natureza:'DEVOLUCAO DE COMPRA' },
+    { chave:'nfce',       grupo:'Gerar NFCe',    titulo:'Gerar NFCe',                               desc:'Cupom fiscal eletrônico, modelo 65 (venda no balcão).', modelo:'65', finalidade:'1', tipo:'1', natureza:'VENDA' },
+    { chave:'importacao', grupo:'Importação',    titulo:'Importar Declaração de Importação',        desc:'Nota de importação: abre com o texto da DI para preencher (nº, desembaraço, adição, valor aduaneiro).', modelo:'55', finalidade:'1', tipo:'1', natureza:'IMPORTACAO' }
+  ];
+  function fxRenderNovo() {
+    var h = I.placa();
+    h += '<div class="fx-card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<h3 style="margin:0;font-size:16px">Nova nota fiscal</h3>' +
+      '<span class="fx-mini">Escolha o tipo — abre aqui mesmo, como aba (igual à tela de vendas), sem janelinha em cima.</span>' +
+      '<span style="flex:1"></span>' +
+      '<button class="fx-btn" onclick="fxAcao(\'nf-novo-voltar\')"><i class="ph ph-arrow-left"></i>Voltar para a lista</button></div>' +
+      '<div class="fx-novo-grid">' +
+      FX_NOVO_TIPOS.map(function (t) {
+        return '<button class="fx-novo-opt" onclick="fxAcao(\'nf-novo-tipo\',\'' + t.chave + '\')">' +
+          '<span class="fx-novo-grupo">' + P.esc(t.grupo) + '</span>' +
+          '<b>' + P.esc(t.titulo) + '</b>' +
+          '<span class="fx-mini">' + P.esc(t.desc) + '</span></button>';
+      }).join('') +
+      '</div>' +
+      '<p class="fx-mini" style="margin-top:10px">Perfil oficial do sistema antigo (Gerar NF-e ▸ Avulsa / Devolução para Cliente / Devolução para Fornecedor · Gerar NFCe · Importar Declaração de Importação) — agora tudo em ABA.</p>' +
+      '</div>';
+    return h;
+  }
+  function fxCriarNotaDoTipo(chave) {
+    var t = null;
+    FX_NOVO_TIPOS.forEach(function (x) { if (x.chave === chave) t = x; });
+    if (!t) t = FX_NOVO_TIPOS[0];
+    var sess = (I.sess() || {});
+    var nota = P.notaVazia(fxProximoNumero(), sess.usuario || '');
+    nota.cod = String(I.notas().length + 416).padStart(5, '0');
+    nota.modelo = t.modelo; nota.finalidade = t.finalidade; nota.tipo = t.tipo; nota.natureza = t.natureza;
+    nota.ambiente = (G.NFG_PURE && G.NFG_PURE.nfgAmbiente(d)) || 'homologacao';
+    nota.tipoNova = t.chave;
+    if (t.chave === 'importacao') {
+      nota.infos.complementares = 'Declaração de Importação (DI) nº ____/____ — Data do desembaraço __/__/____ — Adição ____ — Valor aduaneiro R$ ____ — (preencha conforme a DI; o restante segue a nota).';
+    }
+    if (t.chave === 'dev-cli' || t.chave === 'dev-forn') {
+      nota.infos.complementares = 'Nota de DEVOLUÇÃO — referenciar a chave da nota de origem na aba "Referenciar" (44 dígitos).';
+    }
+    nota.log.push({ acao: 'nota-criada', detalhe: 'rascunho aberto pela aba Nova nota — ' + t.titulo, em: new Date().toISOString(), usuario: nota.usuario });
+    I.notas().push(nota);
+    G.__fxNovo = false;
+    G.__fxEd = { id: nota.id, aba: t.chave === 'importacao' ? 'Informações Adicionais' : (t.chave === 'nfce' ? 'Itens da Nota' : 'Gerais') };
+    G.__fxTrib = { idx: -1, sub: 'Tributação' };
+    fxLimpaAliases(); I.save(); I.log('nf-nova', t.titulo + ' — rascunho ' + nota.cod);
+    return fxReRender('central-nf');
+  }
+
   function fxRenderCentral() {
     I.css();
     G.__fxEd = G.__fxEd || null;
+    if (G.__fxNovo) return '<div class="fx-root-wrap">' + fxRenderNovo() + '</div>';
     var h = G.__fxEd && fxNotaEdicao() ? fxRenderEditorNf() : fxRenderListagem();
     return '<div class="fx-root-wrap">' + h + '</div>';
   }
@@ -56313,6 +56429,16 @@ try{
           linhas.map(function (l) { return '<tr><td>' + P.dataBR(l.data) + '</td><td>' + P.esc(l.modelo) + '</td><td>' + l.tipo + '</td><td>' + (l.email ? '✉' : '') + '</td><td>' + P.esc(l.numero) + '</td><td>' + P.esc(l.natureza) + '</td><td>' + P.esc(l.cliente) + '</td><td style="text-align:right">' + P.brl(l.valor) + '</td><td>' + l.situacao + '</td></tr>'; }).join('') +
           '</tbody></table><button onclick="window.print()">🖨️ Imprimir</button></body></html>');
         w.document.close(); return;
+      }
+      if (acao === 'nf-novo-menu' || acao === 'nf-novo-voltar') {
+        // A ABA com os 5 tipos (foto do sistema antigo). Nada de janelinha.
+        G.__fxNovo = acao === 'nf-novo-menu';
+        if (!G.__fxNovo) G.__fxEd = G.__fxEd || null;
+        fxLimpaAliases();
+        return fxReRender('central-nf');
+      }
+      if (acao === 'nf-novo-tipo') {
+        return fxCriarNotaDoTipo(String(a || 'avulsa'));
       }
       if (acao === 'nf-novo') {
         var sess = (I.sess() || {});

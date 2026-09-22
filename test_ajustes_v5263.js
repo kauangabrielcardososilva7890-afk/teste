@@ -71,11 +71,11 @@ ok('main expõe g:versao (app.getVersion)', gMain.indexOf("'g:versao'") >= 0 && 
 ok('preload expõe versao() pra tela', gPre.indexOf('versao:') >= 0 && gPre.indexOf("'g:versao'") >= 0);
 ok('tela preenche o rodapé com a versão real no load', gHtml.indexOf('window.gerente.versao()') >= 0 && /\$ \(' ft '|ft\.textContent|\$\('ft'\)/.test(gHtml.replace(/\s+/g,'')) || gHtml.indexOf("ft.textContent") >= 0);
 
-console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.4) ==');
+console.log('== CONTEXT: carimbos e trilha (v5.26.3→v5.26.5) ==');
 ok('gerente package 5.26.3', gPkg.version === '5.26.3');
 ok('app (package.json) na 6.0.9 (escola: ralo fechado)', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('worker SEGUE 5.26.4 (sem mudança de motor nesta entrega)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
+ok('worker SEGUE 5.26.5 (sem mudança de motor nesta entrega)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.5'") >= 0);
 ok('manifesto hoje tem 216; posições 202/203 históricas intactas (login-nuvem, data grande); hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila', manifest.length === 222 && manifest[202] === 'ajustes_v5262_login_nuvem_primeiro_patch.js' && manifest[203] === 'ajustes_v5264_chamado_data_grande_patch.js');
 ok('bundle contém o patch com a máscara nova', bundle.indexOf('__v5262ln') >= 0 && bundle.indexOf('$1.$2.$3/$4-$5') >= 0);
 ok('mobile sincronizado com o bundle', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);

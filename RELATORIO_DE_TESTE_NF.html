@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatório de Teste — Sistema Digicopy v6.1.4</title>
+<title>Relatório de Teste — Sistema Digicopy v6.1.5</title>
 <style>
   :root{--azul:#0a1e8a;--cinza:#64748b;--borda:#e2e8f0;--fundo:#f8fafc;--verde:#15803d;--vermelho:#b91c1c;--laranja:#9a3412}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +56,7 @@
 <body>
 
 <header>
-  <h1>Relatório de Teste — Sistema Digicopy v6.1.4</h1>
+  <h1>Relatório de Teste — Sistema Digicopy v6.1.5</h1>
   <p>Marque <b>uma caixa</b> por pergunta. Se quiser explicar algo daquela pergunta, escreva na caixinha ao lado.
      No fim, clique em <b>💾 Salvar relatório (.txt)</b> e me mande o arquivo que baixar (ou copie e cole aqui no chat).</p>
   <div class="aviso">🔒 <b>Nunca escreva senha, token, certificado, CSC ou dado de cartão aqui.</b> Só diga onde aconteceu e o que apareceu na tela.</div>
@@ -65,8 +65,8 @@
 <div class="campos" id="dados">
   <div class="campo"><label>Quem testou</label><input type="text" id="d_nome" placeholder="seu nome"></div>
   <div class="campo"><label>Data do teste</label><input type="text" id="d_data" placeholder="dd/mm/aaaa"></div>
-  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.4 + carimbo"></div>
-  <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.4"></div>
+  <div class="campo"><label>Versão no rodapé</label><input type="text" id="d_rodape" placeholder="v6.1.5 + carimbo"></div>
+  <div class="campo"><label>Versão da nuvem (painel/health)</label><input type="text" id="d_nuvem" placeholder="5.26.5"></div>
 </div>
 
 <h3>Onde você testou</h3>
@@ -109,13 +109,13 @@
     <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>3/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">publica o motor da nuvem (<i>wrangler deploy</i>)</td></tr>
     <tr><td style="padding:3px 8px;border:1px solid #e2e8f0"><b>4/4</b></td><td style="padding:3px 8px;border:1px solid #e2e8f0">mostra a versão que ficou no ar AGORA (<i>/health</i>)</td></tr>
   </table>
-  <p style="font-size:13px;margin:0 0 8px">No fim tem que aparecer <b><code>"versao":"5.26.4"</code></b> ou mais novo.
+  <p style="font-size:13px;margin:0 0 8px">No fim tem que aparecer <b><code>"versao":"5.26.5"</code></b> ou mais novo.
      A janela <b>fica aberta</b> de propósito: <b>tire uma foto dela e me mande</b>. Se travar no meio, a própria janela diz o motivo — não feche, só fotografe.</p>
   <p style="font-size:13px;margin:0">Na primeira vez ele pode pedir para você autorizar a conta na Cloudflare: ele abre o navegador, você entra normalmente e pronto — isso fica guardado nesse PC e não volta a pedir.</p>
 </div>
-<p class="dica">Se um dia você quiser ver o código que roda na nuvem, ele está inteiro em
-   <a href="MOTOR_NUVEM_PARA_COLAR.html">MOTOR_NUVEM_PARA_COLAR.html</a> (com botão de copiar) — mas <b>não precisa abrir hoje</b>:
-   o caminho é o duplo clique no <b>atualizar_motor_nuvem.cmd</b>.</p>
+<p class="dica">Se um dia precisar ver o código que roda na nuvem, ele está inteiro no arquivo
+   <b>cloudflare-worker/motor_para_colar.js</b> — mas <b>não precisa mexer nisso</b>: o caminho é o duplo clique no
+   <b>atualizar_motor_nuvem.cmd</b>.</p>
 
 <footer>
   Este relatório é um arquivo do próprio site — nada é enviado sozinho: o texto só sai quando você aperta
@@ -134,7 +134,7 @@
 <script>
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════
-// RELATÓRIO DE TESTE DO DONO (v6.1.4) — substitui o RELATORIO_DE_TESTE_NF.txt
+// RELATÓRIO DE TESTE DO DONO (v6.1.5)
 // Cada pergunta: 3 caixas (OK / não resolveu / não testei) + observação livre.
 // No fim: gera um .txt já escrito e baixa (ou copia) para mandar no chat.
 // Sem dependências, sem servidor: funciona aberto do PC (arquivo) ou pelo site.
@@ -157,7 +157,7 @@ const PARTES = [
     ['PC Administrador mostra os botões de uso, aparelhos, convites e administração', 'repetida'],
     ['PC comum NÃO mostra os botões exclusivos do Administrador', 'repetida'],
     ['Entrar na nuvem não apaga os dados locais deste PC', 'repetida'],
-    ['O painel mostra a versão real da nuvem (ex.: 5.26.4)', 'repetida'],
+    ['O painel mostra a versão real da nuvem (ex.: 5.26.5)', 'repetida'],
     ['Botão verde "Reparar sessão agora" responde na hora', 'repetida']
   ]},
   { id:'C', nome:'PARTE C — FISCAL (SOMENTE HOMOLOGAÇÃO)', itens:[
@@ -189,7 +189,7 @@ const PARTES = [
     ['Na tela de Clientes, unir cadastro repetido não apagou nem perdeu nada', 'novo']
   ]},
   { id:'G', nome:'PARTE G — VERSÃO NO RODAPÉ E ATUALIZAÇÃO', itens:[
-    ['O rodapé mostra a versão v6.1.4 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
+    ['O rodapé mostra a versão v6.1.5 e, do lado, o carimbo do arquivo que está rodando (ex.: 1d27112d)', 'novo'],
     ['Depois de Ctrl+Shift+R uma vez, o carimbo ficou igual ao que eu mandei no chat', 'novo'],
     ['O sistema abriu com as correções novas (nada de tela velha do cache)', 'novo'],
     ['O guardar_repo.cmd (dois cliques) salvou e enviou tudo para o GitHub e mostrou o nome do último commit', 'novo']
@@ -220,7 +220,7 @@ function caixasHtml(grupo, opcoes){
   $('d_onde').innerHTML = caixasHtml('ONDE', ONDE);
   $('veredicto').innerHTML = caixasHtml('VEREDITO', VEREDITO);
 
-  // v6.1.4 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
+  // v6.1.5 — perguntas já resolvidas antes vêm MARCADAS (ele não precisa
   // testar duas vezes), e tem o filtro "só o que falta testar".
   const SELOS = {
     ok:      ['✅ resolvido antes', 'Já foi corrigido numa rodada anterior — só confirme se ficou bom.', 'selo ok'],
@@ -328,7 +328,7 @@ function salvarRascunho(){
 // ── contador de respondidas ───────────────────────────────────────────────
 function contar(){
   const ok = lista.filter(it => valorRadio(it.n)).length;
-  // v6.1.4 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
+  // v6.1.5 — o que ele já resolveu em rodada anterior conta SEPARADO: o total
   // que importa é o que continua em aberto (era a reclamação dele: "o relatório
   // repete pergunta que já foi resolvida").
   const jaResolvidas = (typeof PARTES !== 'undefined' ? PARTES : [])
@@ -483,7 +483,7 @@ document.addEventListener('input', () => {
 });
 document.addEventListener('change', () => { pintarCaixas(); contar(); salvarRascunho(); });
 $('btn-salvar').addEventListener('click', salvarArquivo);
-// v6.1.4 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
+// v6.1.5 (22/09/2026) — DONO: "esquece o assunto do worker, só ensina o passo real".
 // A seção do deploy virou instrução do atualizar_motor_nuvem.cmd (sem token, sem
 // painel, sem copiar código). O script de copiar o YAML saiu daqui de propósito.
 $('btn-copiar').addEventListener('click', copiarTexto);

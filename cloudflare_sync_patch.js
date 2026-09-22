@@ -197,7 +197,10 @@ async function renderConnected(body){
   // estiver implantado/responder, segue a vida com a contagem estimada.
   const medidoAgora = await chamarMedidorOficial();
   let status,contagemFalhou='';
-  try{status=await api('/v1/status',{method:'GET'});}
+  // v6.1.5 — contagem FRESCA: o painel e o check-up mostram o que a nuvem tem
+  // AGORA (antes vinha uma contagem guardada de até 10 minutos atrás e parecia
+  // que a sincronização não tinha subido nada).
+  try{status=await api('/v1/status?fresh=1',{method:'GET'});}
   catch(e){
     if(e.status===401){forgetAuth();return renderDisconnected(body);}
     // A tela da nuvem não pode ficar refém da contagem de registros. Se a conta

@@ -1,4 +1,4 @@
-// test_ajustes_v5264.js — v5.26.4: DATA DE ATENDIMENTO GRANDE no relatório do
+// test_ajustes_v5264.js — v5.26.5: DATA DE ATENDIMENTO GRANDE no relatório do
 // chamado (pedido dele com print do papel: "a parte onde escreve a data de
 // atendimento é pequena pra escrever, aumenta a largura e o tamanho").
 //
@@ -81,8 +81,8 @@ console.log('== CARIMBO (app agora em 6.0.6 após a escola; worker e gerente int
 ok('package.json na 6.0.9', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.9 (versão real + rodapé)', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
 ok('script check valida o patch novo', pkg.scripts.check.indexOf(PATCH) >= 0);
-ok('worker SEGUE 5.26.4 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.4'") >= 0);
+ok('worker SEGUE 5.26.5 (motor sem mudança)', fs.readFileSync('cloudflare-worker/src/index.js','utf8').indexOf("WORKER_VERSION = '5.26.5'") >= 0);
 ok('gerente SEGUE 5.26.3', JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json','utf8')).version === '5.26.3');
 ok('mobile sincronizado com o bundle novo', fs.readFileSync('mobile/www/app.bundle.js','utf8') === bundle);
 
-console.log('\nTudo OK — v5.26.4 (data de atendimento em caixa grande no relatório do chamado: 170px de largura, letra 15, dá pra escrever com caneta · wrap seguro, nada some).');
+console.log('\nTudo OK — v5.26.5 (data de atendimento em caixa grande no relatório do chamado: 170px de largura, letra 15, dá pra escrever com caneta · wrap seguro, nada some).');

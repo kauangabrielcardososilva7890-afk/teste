@@ -162,9 +162,9 @@ ok('rascunho é salvo no navegador (localStorage)',
 const guia = fs.readFileSync('GUIA_DE_TESTE_NF.html', 'utf8');
 ok('GUIA_DE_TESTE_NF.html aponta para o relatório em HTML',
    guia.indexOf('RELATORIO_DE_TESTE_NF.html') >= 0);
-const txtAntigo = fs.readFileSync('RELATORIO_DE_TESTE_NF.txt', 'utf8');
-ok('o .txt antigo avisa que a versão recomendada é o HTML',
-   txtAntigo.indexOf('RELATORIO_DE_TESTE_NF.html') >= 0);
+// v6.1.5 — ele mandou apagar o .txt em branco (22/09/2026)
+ok('o RELATORIO_DE_TESTE_NF.txt foi apagado (ordem dele)', !fs.existsSync('RELATORIO_DE_TESTE_NF.txt'));
+ok('o guia não manda mais usar o .txt apagado', guia.indexOf('RELATORIO_DE_TESTE_NF.txt</b> continua valendo') < 0);
 
 // ── 7. O rancho do PC não perde peso: o relatório NÃO entra no bundle/.exe ─
 const manifest = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
@@ -181,7 +181,7 @@ ok('a seção não pede token, painel nem GitHub',
    html.indexOf('CLOUDFLARE_API_TOKEN') < 0 && html.indexOf('New workflow') < 0 &&
    html.indexOf('sem painel, sem token, sem GitHub') >= 0);
 ok('explica os 4 passos que a janela mostra (listar, migrar, publicar, health)',
-   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.26.4"') >= 0);
+   html.indexOf('Proceed? (y/n)') >= 0 && html.indexOf('wrangler deploy') >= 0 && html.indexOf('"versao":"5.26.5"') >= 0);
 ok('diz que a janela fica aberta e que é para mandar foto',
    /tire uma foto|Foto e me manda|foto dela/i.test(html));
 ok('o arquivo do .cmd existe de verdade no repositório (o passo não é invenção)',

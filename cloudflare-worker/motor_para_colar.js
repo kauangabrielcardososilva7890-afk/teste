@@ -8,8 +8,8 @@
  * COMO PUBLICAR COLANDO (plano B — o painel da Cloudflare):
  *   1) Cloudflare → Workers & Pages → digicopy-sync-api → "Edit code".
  *   2) Selecione tudo (Ctrl+A) e apague.
- *   3) Cole ESTE arquivo inteiro (na página MOTOR_NUVEM_PARA_COLAR.html tem o
- *      botão "Copiar código").
+ *   3) Cole ESTE arquivo inteiro (não existe mais página com botão de copiar:
+ *      ela foi APAGADA a pedido do dono em 22/09/2026 — copie deste arquivo).
  *   4) Clique em "Deploy".
  *   5) Confira: https://digicopy-sync-api.digicopyonline.workers.dev/health
  *
@@ -19,10 +19,10 @@
  * iguais. O que este caminho NÃO faz é aplicar migração do banco: quem aplica é
  * o `atualizar_motor_nuvem.cmd` (esta versão não tem migração pendente).
  *
- * VERSÃO DESTE ARQUIVO: API 0.4.8 / Worker 5.26.4   (igual ao src/index.js)
- * GERADO EM: 2026-09-22 18:42 UTC
+ * VERSÃO DESTE ARQUIVO: API 0.4.9 / Worker 5.26.5   (igual ao src/index.js)
+ * GERADO EM: 2026-09-22 19:17 UTC
  * sha256 do código (sem este cabeçalho):
- *   96161c1e9152b29f2f16cfd5af395e39ec2995b63814d0cf61b15e0c89705390
+ *   93e7ef302c0e33743372a9074080cd4d1ff15f7a45dfc221b970e35405ab358c
  *
  * COMO REGERAR (quando o código da nuvem mudar):  npm run motor
  * Há teste automático conferindo que as versões aqui batem com src/index.js —
@@ -33,9 +33,9 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // src/index.js
-var API_VERSION = "0.4.8";
+var API_VERSION = "0.4.9";
 var MAX_BODY_BYTES = 9e5;
-var WORKER_VERSION = "5.26.4";
+var WORKER_VERSION = "5.26.5";
 var MAX_MUTATIONS = 100;
 var MAX_CHANGE_LIMIT = 500;
 var ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
@@ -871,6 +871,9 @@ async function handleResetCloud(request, env) {
     env.DB.prepare("DELETE FROM enrollment_codes"),
     env.DB.prepare("DELETE FROM changes"),
     env.DB.prepare("DELETE FROM records"),
+    // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
+    // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
+    env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),
     env.DB.prepare(
       `INSERT INTO system_meta(key, value, updated_at) VALUES ('cloud_generation', ?, ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
@@ -893,10 +896,10 @@ async function handleResetCloud(request, env) {
 }
 __name(handleResetCloud, "handleResetCloud");
 var RESUMO_VALE_POR = 10 * 60 * 1e3;
-async function resumoDaNuvem(env) {
+async function resumoDaNuvem(env, fresco) {
   try {
     const linha = await env.DB.prepare("SELECT value FROM system_meta WHERE key = 'resumo_json' LIMIT 1").first();
-    if (linha && linha.value) {
+    if (!fresco && linha && linha.value) {
       const guardado = JSON.parse(linha.value);
       if (guardado && Date.now() - Number(guardado.em || 0) < RESUMO_VALE_POR) return guardado.totais;
     }
@@ -1129,7 +1132,13 @@ async function usoHoje(env) {
 __name(usoHoje, "usoHoje");
 async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
-  const totals = await resumoDaNuvem(env);
+  let fresco = false;
+  try {
+    fresco = new URL(request.url).searchParams.get("fresh") === "1";
+  } catch (e) {
+    fresco = false;
+  }
+  const totals = await resumoDaNuvem(env, fresco);
   if (!totals) throw new ApiError(503, "CONTAGEM_INDISPONIVEL", "A nuvem n\xE3o conseguiu contar os registros agora. A sincroniza\xE7\xE3o n\xE3o \xE9 afetada.");
   somarUso(env, 0, 30, ctx);
   return json({

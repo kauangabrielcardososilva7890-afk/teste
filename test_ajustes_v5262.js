@@ -75,7 +75,7 @@ ok('PURA sessaoDoDiaExpirada: login de hoje = válida; de ontem = expira',
   (sandbox.localStorage.setItem('digicopy_session_v42_demo_apresentacao', JSON.stringify({loginAt:'2026-09-01T10:00:00'})), P.sessaoDoDiaExpirada() === true));
 
 console.log('== WORKER: /v1/check-pass + erros específicos do gerente ==');
-ok('worker carimbado 5.26.4', wk.indexOf("WORKER_VERSION = '5.26.4'") >= 0);
+ok('worker carimbado 5.26.5', wk.indexOf("WORKER_VERSION = '5.26.5'") >= 0);
 ok('rota POST /v1/check-pass existe', wk.indexOf("'/v1/check-pass'") >= 0 && wk.indexOf("request.method === 'POST' && url.pathname === '/v1/check-pass'") >= 0);
 ok('check-pass NÃO cria nada (sem INSERT nesse trecho)', (function(){ const t = wk.split("'/v1/check-pass'")[1].split("'/v1/enroll-cnpj'")[0]; return t.indexOf('INSERT') < 0 && t.indexOf('INSERT INTO devices') < 0 && t.indexOf('randomToken') < 0; })());
 ok('check-pass diz quando a senha ainda não foi definida (senhaDefinida:false)', wk.indexOf('senhaDefinida: false') >= 0 && wk.indexOf('Senhas de conexão (CNPJ) e do Gerente') >= 0);

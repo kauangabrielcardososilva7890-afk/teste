@@ -2,10 +2,10 @@
 // Nenhuma rota substitui uma base inteira. Alterações são incrementais,
 // versionadas, idempotentes e atribuídas a um aparelho autenticado.
 
-const API_VERSION = '0.4.8';
+const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.4';
+const WORKER_VERSION = '5.26.5';
 
 const MAX_MUTATIONS = 100;
 const MAX_CHANGE_LIMIT = 500;
@@ -858,6 +858,9 @@ async function handleResetCloud(request, env) {
     env.DB.prepare('DELETE FROM enrollment_codes'),
     env.DB.prepare('DELETE FROM changes'),
     env.DB.prepare('DELETE FROM records'),
+    // v5.26.5 — a contagem guardada some junto: senão o painel continua dizendo
+    // que a nuvem tem o que já foi apagado (ou que não tem nada do que subiu).
+    env.DB.prepare("DELETE FROM system_meta WHERE key = 'resumo_json'"),
     env.DB.prepare(
       `INSERT INTO system_meta(key, value, updated_at) VALUES ('cloud_generation', ?, ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
@@ -886,10 +889,16 @@ async function handleResetCloud(request, env) {
 // segundo exato.
 const RESUMO_VALE_POR = 10 * 60 * 1000;
 
-async function resumoDaNuvem(env) {
+// v5.26.5 — BUG ACHADO NO TESTE DE DOIS PCs: a contagem da nuvem ficava
+// guardada por 10 MINUTOS. Depois de zerar a nuvem (ou de mandar uma remessa
+// grande), o painel e o check-up continuavam mostrando a contagem VELHA — o
+// dono via "a nuvem está vazia / não sincronizou" com os dados já lá dentro.
+// Agora: (1) quem pede a contagem fresca (/v1/status?fresh=1) recebe na hora e
+// (2) zerar a nuvem apaga a contagem guardada.
+async function resumoDaNuvem(env, fresco) {
   try {
     const linha = await env.DB.prepare("SELECT value FROM system_meta WHERE key = 'resumo_json' LIMIT 1").first();
-    if (linha && linha.value) {
+    if (!fresco && linha && linha.value) {
       const guardado = JSON.parse(linha.value);
       if (guardado && Date.now() - Number(guardado.em || 0) < RESUMO_VALE_POR) return guardado.totais;
     }
@@ -1122,7 +1131,9 @@ async function usoHoje(env){
 
 async function handleStatus(request, env, ctx) {
   const device = await authenticate(request, env);
-  const totals = await resumoDaNuvem(env);
+  let fresco = false;
+  try { fresco = new URL(request.url).searchParams.get('fresh') === '1'; } catch (e) { fresco = false; }
+  const totals = await resumoDaNuvem(env, fresco);
   if (!totals) throw new ApiError(503, 'CONTAGEM_INDISPONIVEL', 'A nuvem não conseguiu contar os registros agora. A sincronização não é afetada.');
   somarUso(env, 0, 30, ctx); // abrir o status também lê algumas linhas
   return json({ ok: true, device, totals, workerVersao: WORKER_VERSION,

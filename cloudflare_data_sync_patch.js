@@ -120,12 +120,40 @@ function loadState(){
   s.sumindo=(s.sumindo&&typeof s.sumindo==='object')?s.sumindo:{};
   return s;
 }
+
+// v6.1.5 — BUG ACHADO NO TESTE DE DOIS PCs (era o "a nuvem não sincroniza
+// mais"): quando o estado era TROCADO inteiro (zerar a nuvem / não autorizar
+// local), o objeto novo não trazia os campos extras (state.sumindo, state.limpar
+// etc.). Aí a varredura estourava em silêncio com "Cannot read properties of
+// undefined" e NADA mais subia — nem venda, nem cliente, nem contrato —, com o
+// sistema parecendo conectado. Agora toda troca de estado passa por aqui.
+function normalizarEstado(novo){
+  state=novo||state||{};
+  state.versions=state.versions||{};
+  state.hashes=state.hashes||{};
+  state.known=state.known||{};
+  state.heldLocalOnly=Array.isArray(state.heldLocalOnly)?state.heldLocalOnly:[];
+  state.limpar=Array.isArray(state.limpar)?state.limpar:[];
+  state.sumindo=(state.sumindo&&typeof state.sumindo==='object')?state.sumindo:{};
+  state.pauseReason=state.pauseReason||'';
+  state.regras=state.regras||'';
+  state.cursor=Number(state.cursor)||0;
+  return state;
+}
 function loadOutbox(){try{const x=JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');return Array.isArray(x)?x:[];}catch(e){return [];}}
 let state=loadState(),outbox=loadOutbox();
+normalizarEstado();  // v6.1.5 — nenhum campo faltando já na abertura
+// v6.1.5 — CARIMBO DE GERAÇÃO (bug do teste de dois PCs): se o estado inteiro é
+// trocado no meio de uma sincronização (zerar a nuvem / decidir não enviar /
+// check-up), a rodada que já estava em andamento precisa PARAR na hora. Sem
+// isto, a rodada antiga terminava depois e desfazia a decisão nova — era uma
+// forma de "sincronizei e parece que nada subiu / voltou atrás".
+let estadoGeracao=0;
+function trocarEstado(novo){state=novo;estadoGeracao++;return state;}
 // v5.22.69 — a nuvem passou a levar TODAS as listas do sistema. Quem já estava
 // conectado tem dados antigos que nunca subiram, então o sistema pergunta uma
 // única vez o que fazer com eles antes de voltar a sincronizar.
-const REGRAS='v6.1.4-conectou-sincroniza';
+const REGRAS='v6.1.5-conectou-sincroniza';
 // v6.1.4 — ORDEM DO DONO (22/09/2026): "retire essa trava de preferir enviar ou
 // não, já envia logo; colocou o login e qualquer das duas senhas? conecta e
 // sincroniza na hora, sem apertar botão". Então a PAUSA de escolha acabou:
@@ -374,6 +402,7 @@ function scanLocal(){
     for(const entry of entries){
       if(outbox.length>=MAX_OUTBOX)break;
       const k=key(entity,entry.id),h=hash(entry.data);
+      if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
@@ -574,6 +603,8 @@ function indicator(ok,text){
 async function tick(reason){
   if(state.paused||busy||!authorized()||!leader())return false;
   busy=true;lastTick=Date.now();
+  const geracao=estadoGeracao;
+  const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
   try{
     if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
     const info=window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.deviceInfo?window.DIGICOPY_CLOUD.deviceInfo():null;
@@ -585,6 +616,7 @@ async function tick(reason){
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
     await pullAll();
+    if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
       const decision=decideReinstallGuard({
@@ -602,6 +634,7 @@ async function tick(reason){
     }
     let totalSent=0;
     for(let round=0;round<50;round++){
+      if(trocou())return false;
       scanLocal();
       if(!outbox.length)break;
       const sent=await pushOutbox();totalSent+=sent;if(!sent&&outbox.length)break;
@@ -609,6 +642,7 @@ async function tick(reason){
     // Só consulta novamente quando este PC realmente enviou algo. Em repouso,
     // cada ciclo custa uma única consulta incremental, não duas.
     if(totalSent>0)await pullAll();
+    if(trocou())return false;
     failures=0;lastError='';state.lastOk=Date.now();persist();
     if(outbox.length){
       // Remessa grande: mostra o quanto falta e volta logo para continuar, em vez
@@ -738,7 +772,7 @@ async function resetCloudOnly(){
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   if(window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_zerar_nuvem',db);
   const result=await call('/v1/admin/reset-cloud',{method:'POST',body:JSON.stringify({confirmation:'APAGAR NUVEM'})});
-  state={cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation};
+  trocarEstado(normalizarEstado(Object.assign(loadState(),{cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation})));
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
   persist();indicator(false,'Escolha o que fazer com os dados deste PC');
@@ -818,7 +852,7 @@ async function discardLocalKeepCloud(){
     await pullAll();
     if(!Object.keys(state.known).length){
       outbox=savedOutbox;
-      state=Object.assign(loadState(),savedState);
+      trocarEstado(normalizarEstado(Object.assign(loadState(),savedState)));
       persist();
       throw new Error('A nuvem está vazia. Nada foi apagado neste PC nem na nuvem.');
     }

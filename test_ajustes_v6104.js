@@ -110,7 +110,7 @@ console.log('== Publicar o motor: o PASSO REAL (ordem dele: esquecer o worker) =
 ok(relHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0, 'o relatório ensina o arquivo que existe (atualizar_motor_nuvem.cmd)');
 ok(relHtml.indexOf('CLOUDFLARE_API_TOKEN') < 0 && relHtml.indexOf('New workflow') < 0,
    'não manda mais mexer em token/painel/GitHub');
-ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.4"') >= 0,
+ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.5"') >= 0,
    'explica as respostas que a janela pede e o que tem que aparecer no fim');
 ok(fs.existsSync('atualizar_motor_nuvem.cmd') && /wrangler d1 migrations apply DB --remote/.test(fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8')),
    'o passo ensinado é o do arquivo de verdade (mesmos comandos)');
@@ -215,7 +215,6 @@ async function testarMotorDaNuvem(){
   console.log('\n== MOTOR DA NUVEM: código para colar e publicar ==');
   const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
   const src = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
-  const pagina = fs.readFileSync('MOTOR_NUVEM_PARA_COLAR.html', 'utf8');
   const rel = fs.readFileSync('RELATORIO_DE_TESTE_NF.html', 'utf8');
 
   ok(motor.indexOf('var __defProp = Object.defineProperty;') >= 0 && /as default\s*\n?\};/.test(motor),
@@ -239,18 +238,13 @@ async function testarMotorDaNuvem(){
   ok(shaCalculado === shaArquivo, 'o sha256 do código bate com o arquivo .sha256 (' + shaArquivo.slice(0, 12) + '...)');
   ok(motor.indexOf(shaArquivo) >= 0, 'o sha256 também está escrito no cabeçalho do próprio código');
 
-  // a página mostra o código INTEIRO e igual ao arquivo (nada de cópia velha)
-  const i = pagina.indexOf('<pre id="codigo">'), f = pagina.indexOf('</pre>', i);
-  const naPagina = pagina.slice(pagina.indexOf('>', i) + 1, f)
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  ok(naPagina.replace(/\r\n/g, '\n') === motor.replace(/\r\n/g, '\n'), 'a página traz o código IGUALZINHO ao arquivo do repositório');
-  ok(pagina.indexOf('btn-copiar') >= 0 && pagina.indexOf('navigator.clipboard.writeText(codigo)') >= 0,
-     'botão de copiar o código inteiro, com plano B (execCommand) se o navegador negar');
-  ok(pagina.indexOf('btn-baixar') >= 0, 'botão de baixar o arquivo .js (quem preferir abrir e copiar de lá)');
-  ok(pagina.indexOf('Edit code') >= 0 && pagina.indexOf('Deploy') >= 0, 'a página ensina o caminho: Edit code → colar → Deploy');
-  ok(pagina.indexOf('não contém</b> senha') >= 0 && pagina.indexOf('Nunca cole segredos') >= 0, 'deixa claro que não há segredo nenhum no código');
-  ok(pagina.indexOf('não aplica migração do banco') >= 0, 'avisa que colar não aplica migração (quem aplica é o .cmd)');
-  ok(rel.indexOf('MOTOR_NUVEM_PARA_COLAR.html') >= 0, 'o relatório de teste aponta para a página do motor');
+  // v6.1.5 — ORDEM DO DONO (22/09/2026): "deleta esse motor nuvem pra copiar.html".
+  // A página foi apagada; o caminho de publicação é o atualizar_motor_nuvem.cmd.
+  ok(!fs.existsSync('MOTOR_NUVEM_PARA_COLAR.html'), 'a página de copiar o motor foi APAGADA (ordem dele)');
+  ok(!fs.existsSync('RELATORIO_DE_TESTE_NF.txt'), 'o RELATORIO_DE_TESTE_NF.txt foi APAGADO (ordem dele)');
+  ok(fs.readFileSync('gerar_motor_nuvem.js', 'utf8').indexOf('fs.writeFileSync(PAGINA') < 0,
+     'o gerador não recria a página apagada');
+  ok(rel.indexOf('MOTOR_NUVEM_PARA_COLAR.html') < 0, 'o relatório não manda mais abrir a página apagada');
   ok(fs.readFileSync(".gitignore", "utf8").indexOf("motor_compilado") >= 0, "a pasta do wrangler (motor_compilado) fica fora do git");
 
 }
@@ -545,8 +539,8 @@ function testarCacheLinksEMotor(){
   const gerador = fs.readFileSync('gerar_motor_nuvem.js', 'utf8');
   ok(gerador.indexOf('--dry-run') >= 0 && gerador.indexOf('NÃO publica') >= 0,
      'o gerador só compila (nada é publicado na nuvem)');
-  ok(gerador.indexOf('MOTOR_NUVEM_PARA_COLAR.html') >= 0,
-     'o mesmo comando atualiza a página do botão de copiar (uma verdade só)');
+  ok(gerador.indexOf('MOTOR_NUVEM_PARA_COLAR.html') < 0 || /APAGADA/.test(gerador),
+     'o gerador só faz o arquivo de colar (a página foi apagada por ordem dele)');
   const motor = fs.readFileSync('cloudflare-worker/motor_para_colar.js', 'utf8');
   ok(/GERADO EM: \d{4}-\d{2}-\d{2}/.test(motor), 'o arquivo diz quando foi gerado');
 
