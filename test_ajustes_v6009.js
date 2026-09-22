@@ -25,7 +25,7 @@ const pode = (u, a) => { if (u.perfil === 'Admin' || u.perfil === 'Dono') return
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 214; override+menus fecha a fila',
-  man.length === 223 && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length === 225 && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[212] === 'menus_fiscais_separados_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('POM609_PURE_START') >= 0 && bundle.indexOf('v6.0.9 — PERMISSÃO SÓ NO EDITAR + AUTORIZAÇÃO NA HORA') >= 0);
 

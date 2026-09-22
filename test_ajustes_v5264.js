@@ -29,7 +29,7 @@ const html = fs.readFileSync('index.html', 'utf8');
 
 console.log('== PATCH: existência, guarda e trilha ==');
 ok('patch existe com guard próprio (__v5264cd)', patch.indexOf('window.__v5264cd') >= 0);
-ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.6 menu fiscal; hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila (217; login-nuvem na 203)', manifest.length === 223 && manifest[203] === PATCH && manifest[204] === 'painel_gerente_patch.js' && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js');
+ok('manifesto: chamado na 204, Painel na 205, Portão na 206; v6.0.6 menu fiscal; hover NF-e/NFC-e v6.0.11; anti-tela-branca v6.0.12 fecha a fila (217; login-nuvem na 203)', manifest.length === 225 && manifest[203] === PATCH && manifest[204] === 'painel_gerente_patch.js' && manifest[205] === 'fiscal_guard_patch.js' && manifest[206] === 'nf_transmissao_patch.js');
 ok('patch está dentro do bundle gerado', bundle.indexOf(PATCH) >= 0 && bundle.indexOf('__v5264cd') >= 0);
 ok('patch do relatório v5.18.6 intocado (nada some)', antigo.indexOf('Atendimento:') >= 0 && antigo.indexOf('Dados de Atendimento') >= 0);
 ok('wrap SÓ durante a impressão + window.open restaurada (finally)', patch.indexOf('finally') >= 0 && patch.indexOf('window.open = _open') >= 0);

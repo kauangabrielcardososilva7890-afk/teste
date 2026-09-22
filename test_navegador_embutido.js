@@ -56,6 +56,16 @@ ok(!!P.navSiteAchar(padrao, 'nfse-nacional'), 'tem o Emissor Nacional (Simples N
 ok(!!P.navSiteAchar(padrao, 'whatsapp'), 'tem o WhatsApp Web');
 ok(/^https:\/\//.test(P.navSiteAchar(padrao, 'whatsapp').url), 'o WhatsApp abre em endereço seguro (https)');
 ok(P.navSiteAchar(padrao, 'nfse-nacional').url.indexOf('nfse.gov.br') >= 0, 'o endereço do Emissor Nacional é o do gov.br');
+ok(P.navSiteAchar(padrao, 'nfse-prefeitura').url.indexOf('sintesetecnologia.com.br') >= 0, 'a NFS-e da prefeitura abre no emissor que ELE usa (Sintese/Janaúba)');
+ok(P.navSiteAchar(padrao, 'nfse-prefeitura').url.indexOf('Param=Janauba') >= 0, 'e já com o parâmetro da cidade (Param=Janauba)');
+ok(P.navNormalizarUrl(P.navSiteAchar(padrao, 'nfse-prefeitura').url) === P.navSiteAchar(padrao, 'nfse-prefeitura').url, 'o endereço http do emissor é aceito como está (não vira busca)');
+
+console.log('\n== 3b) Passo a passo dentro da tela ==');
+ok(typeof P.navPassos === 'function', 'existe o passo a passo por endereço');
+ok(P.navPassos('http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba').length >= 3, 'a NFS-e da prefeitura tem passo a passo');
+ok(/Ctrl\+P/.test(P.navPassos('http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml').join(' ')), 'o passo a passo ensina a imprimir/salvar o PDF');
+ok(P.navPassos('https://web.whatsapp.com').length >= 1, 'o WhatsApp tem o passo do QR Code');
+ok(P.navPassos('https://exemplo.com').length === 0, 'site qualquer não ganha passo a passo inventado');
 
 console.log('\n== 4) A lista mora na NUVEM (nada no PC) ==');
 const dbTeste = { config: {} };
@@ -76,7 +86,9 @@ ok(/navSitesSalvar\(banco\(\),/.test(modulo), 'as mudanças de lista são salvas
 console.log('\n== 5) No PROGRAMA do PC abre navegador de verdade ==');
 const main = ler('main.js');
 ok(/webviewTag:\s*true/.test(main), 'main.js liga a tag de navegador embutido (webviewTag)');
-ok(/will-attach-webview/.test(main) && /\^https:\\\/\\\//.test(main), 'só https entra no navegador embutido (trava no main.js)');
+ok(/will-attach-webview/.test(main), 'a página de fora passa pela trava do main.js (will-attach-webview)');
+ok(/NAV_HTTP_PREFEITURA/.test(main) && /sistema\.sintesetecnologia\.com\.br/.test(main), 'o http do emissor da prefeitura é a ÚNICA exceção liberada');
+ok(main.indexOf("!NAV_HTTP_PREFEITURA.test(url)") >= 0 && main.indexOf("/^https:") >= 0, 'fora essa exceção, continua exigindo https');
 ok(/delete webPreferences\.preload/.test(main), 'a página de fora entra sem preload (sem acesso ao sistema)');
 ok(/nodeIntegration\s*=\s*false/.test(main), 'a página de fora entra sem node (segurança)');
 ok(/persist:digicopy-navegador/.test(main), 'os logins dos sites ficam em área separada e identificada');
@@ -92,6 +104,7 @@ console.log('\n== 6) Fora do programa do PC não fica tela branca ==');
 ok(/só abre no programa do PC/.test(modulo), 'a tela explica, em português, que ali só funciona no programa do PC');
 ok(/Abrir numa janela nova/.test(modulo), 'e dá o botão de abrir numa janela nova (saída na hora)');
 ok(/X-Frame-Options|proíbem/.test(modulo), 'a explicação fala do motivo real (os sites proíbem ser embutidos)');
+ok(/nav-passo/.test(modulo) && /Como usar aqui dentro/.test(modulo), 'a tela mostra o "como usar aqui dentro" (passo a passo)');
 ok(!/\balert\(|\bprompt\(|\bconfirm\(/.test(modulo), 'nenhum modal nativo do navegador (regra #16)');
 ok(/did-fail-load/.test(modulo), 'se o site não abrir, aparece recado claro em vez de página vazia');
 

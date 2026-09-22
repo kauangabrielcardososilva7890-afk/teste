@@ -221,5 +221,7 @@
   "menu_fiscal_oficial_patch.js",
   "submenu_fiscal_oficial_patch.js",
   "navegacao_fiscal_barra_escuro_patch.js",
-  "navegador_embutido_patch.js"
+  "navegador_embutido_patch.js",
+  "ajustes_v6108_lembrar_tela_patch.js",
+  "ajustes_v6108_falta_emitir_patch.js"
 ]

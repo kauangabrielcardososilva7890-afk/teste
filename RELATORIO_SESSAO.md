@@ -3,9 +3,25 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.7** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v6.1.8** (rodada 22/09 nº6 — branch `arena/01a0c087-teste`)  
 
 ---
+
+## Rodada 22/09/2026 (nº6) — v6.1.8 · a memória da tela + o "falta pouco" da nota + o endereço certo da NFS-e
+
+**Ordem dele:** *"pode fazer tudo de uma vez"* (colunas + NFS-e + fiscais na mesma leva).
+E a correção do endereço: *"na verdade eu uso o site `http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba`"* (ele tinha marcado "nacional" por engano).
+
+**1. NFS-e da prefeitura no lugar certo (o que ele usa hoje):**
+a aba **Navegador** agora abre o emissor de Janaúba da **Sintese Tecnologia** já com o parâmetro da cidade (`?Param=Janauba`) — e essa URL é **http://** (site sem cadeado). O programa do PC recusava http por trava de segurança; agora existe **uma exceção só para esse endereço** (`NAV_HTTP_PREFEITURA` no `main.js`) e todo o resto continua exigindo **https**. A tela ganhou o quadro **"Como usar aqui dentro"** (passo a passo: login, emissão, Ctrl+P para o PDF e quando vale o Emissor Nacional), que vale por endereço — mesmo se ele renomear o site.
+
+**2. Colunas — "só o básico" (foi o que ele escolheu):** `ajustes_v6108_lembrar_tela_patch.js`.
+Lembra **a última ordenação e o último filtro**, **por tela e por usuário**, salvo na **nuvem** (`db.config.lembraTela`) e reaplicado sozinho quando a tela abre. Não mexe em colunas (largura/ocultar ficaram de fora, como ele pediu). Grava com espera de 800ms e só quando algo mudou (PC fraco), com trava contra laço ao reaplicar.
+
+**3. "Terminar a NF-e" — o cartão do que falta:** `ajustes_v6108_falta_emitir_patch.js`.
+Na **Central de NF-e** aparece **FALTA POUCO PARA A NOTA VALER DE VERDADE** com 7 itens conferidos **no estado de agora**: CNPJ · IE · série/regime · perfil tributário (CFOP/CSOSN) · NCM dos produtos · CSC do cupom · **certificado A1** (este conferido no PC, pela ponte do programa). Cada item vermelho tem botão que leva ao lugar certo; nada ali emite sozinho (é só leitura).
+
+**Versão e testes:** `npm run versao` subiu 6.1.7 → **6.1.8**; módulos novos: `ajustes_v6108_lembrar_tela_patch.js` e `ajustes_v6108_falta_emitir_patch.js` (manifesto 223 → **225 scripts**); testes novos `test_lembrar_tela.js` (21 asserts) e `test_falta_emitir.js` (19 asserts) — suíte **193/0/0**. O relatório de teste ganhou a **PARTE J** (4 perguntas novas; total **55 perguntas**), e o guia/relatório foram carimbados em **v6.1.8**.
 
 ## Rodada 22/09/2026 (nº4) — v6.1.5 · branch `arena/01a0c087-teste`
 

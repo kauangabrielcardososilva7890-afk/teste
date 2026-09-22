@@ -133,9 +133,14 @@ function createWindow () {
   // regra do 'will-navigate' acima (que manda link externo para o navegador do
   // Windows): o que está DENTRO do navegador embutido fica dentro.
   try{
+    // O emissor da NFS-e da prefeitura de Janaúba (Sintese Tecnologia) é
+    // http:// — site antigo, sem cadeado. Ele é o ÚNICO endereço http liberado
+    // aqui (ordem dele: "eu uso o site http://sistema.sintesetecnologia.com.br/
+    // NFEWeb/indexNFe.xhtml?Param=Janauba"); todo o resto continua exigindo https.
+    const NAV_HTTP_PREFEITURA = /^http:\/\/sistema\.sintesetecnologia\.com\.br(\/|$)/i;
     win.webContents.on('will-attach-webview', (evento, webPreferences, params) => {
       const url = String((params && params.src) || '');
-      if (!/^https:\/\//i.test(url)) { evento.preventDefault(); return; }   // trava: só site seguro
+      if (!/^https:\/\//i.test(url) && !NAV_HTTP_PREFEITURA.test(url)) { evento.preventDefault(); return; }
       try { delete webPreferences.preload; } catch(e){}
       webPreferences.nodeIntegration = false;
       webPreferences.contextIsolation = true;
@@ -162,7 +167,7 @@ function createWindow () {
           let pedido = '';
           try{ pedido = String((wc && wc.getURL && wc.getURL()) || ''); }catch(e){}
           const pode = (permissao === 'media' || permissao === 'clipboard-read' || permissao === 'fullscreen') &&
-            /whatsapp\.com|janauba\.mg\.gov\.br|nfse\.gov\.br/i.test(pedido);
+            /whatsapp\.com|janauba\.mg\.gov\.br|sintesetecnologia\.com\.br|nfse\.gov\.br/i.test(pedido);
           try{ responder(!!pode); }catch(e){}
         });
       }catch(e){}

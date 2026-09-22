@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 223 | sha256: dcaafa53b41afeab
+ * scripts: 225 | sha256: 52c372ace67dbf7f
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -57921,7 +57921,7 @@ try{
 //
 // Sites que já vêm prontos (a lista fica salva NA NUVEM, em db.config.navSites,
 // em todos os PCs dele — nada guardado na memória do navegador (regra #44 SÓ NUVEM):
-//   • NFS-e (prefeitura)  — portal da Prefeitura de Janaúba/MG
+//   • NFS-e (prefeitura)  — EMISSOR DELE: sistema.sintesetecnologia.com.br (Janaúba)
 //   • NFS-e Nacional      — Emissor Nacional (gov.br/nfse), obrigatório para
 //                           ME/EPP do Simples Nacional desde 01/09/2026
 //   • WhatsApp Web
@@ -57945,8 +57945,12 @@ if(typeof window!=='undefined' && window.__v6107nav) return;
 // Sites que nascem na lista (id fixo para os atalhos do menu funcionarem)
 var NAV_SITES_PADRAO=[
   { id:'nfse-prefeitura', nome:'NFS-e (prefeitura)',
-    url:'https://janauba.mg.gov.br',
-    dica:'Portal da Prefeitura de Janaúba/MG. O emissor municipal (SIGP NFS-e) fica em Empresas → Nota Fiscal de Serviços. Se o endereço direto do emissor for outro, use ✏ Editar e cole o link de verdade — eu guardo na nuvem.' },
+    // ENDEREÇO DELE (22/09/2026, resposta literal): "eu uso o site
+    // http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba"
+    // É o emissor municipal de Janaúba (Sintese Tecnologia). É http:// (não
+    // https) — por isso o main.js tem uma lista branca só para esse endereço.
+    url:'http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba',
+    dica:'Emissor da NFS-e de Janaúba (Sintese Tecnologia) — o mesmo que você usa hoje. A tela abre aqui dentro, sem sair do sistema.' },
   { id:'nfse-nacional', nome:'NFS-e Nacional',
     url:'https://www.nfse.gov.br/EmissorNacional/',
     dica:'Emissor Nacional da NFS-e (gov.br/nfse) — obrigatório para ME/EPP do Simples Nacional desde 01/09/2026, inclusive em município com emissor próprio.' },
@@ -58052,10 +58056,32 @@ function navUserAgent(){
   }catch(e){ return ''; }
 }
 
+// Passo a passo curto, por endereço (continua valendo depois de o dono
+// renomear o site ou trocar o link — não depende da lista salva).
+function navPassos(url){
+  var u=String(url||'').toLowerCase();
+  if(/sintesetecnologia\.com\.br|nfeweb/.test(u)){
+    return ['Abra a NFS-e aqui dentro e faça o login do emissor (esta janela guarda a sessão neste PC).',
+            'Emita a nota normalmente — os dados do cliente você copia da ficha dele no sistema.',
+            'Para imprimir ou salvar o PDF, use Ctrl+P: a impressão sai limpa, sem cabeçalho do navegador.',
+            'Empresa do Simples também pode emitir no Emissor Nacional (aba "NFS-e Nacional") — as duas estão aqui para você comparar.'];
+  }
+  if(/nfse\.gov\.br/.test(u)){
+    return ['Entre com o certificado A1 (o mesmo da NF-e) ou com a conta gov.br.',
+            'Emita a NFS-e/DPS normalmente — o padrão nacional vale em todo o país.',
+            'Dúvida de qual usar? A aba "NFS-e (prefeitura)" é o emissor municipal que você já usa hoje.'];
+  }
+  if(/whatsapp\.com/.test(u)){
+    return ['Leia o QR Code uma vez com o celular; depois esta janela entra sozinha neste PC.',
+            'Se um dia pedir o QR de novo, clique no celular em Aparelhos conectados e leia outra vez.'];
+  }
+  return [];
+}
+
 if(typeof window!=='undefined'){
   window.NAV6107_PURE={ navNormalizarUrl:navNormalizarUrl, navIdNovo:navIdNovo, navSitesPadrao:navSitesPadrao,
     navSites:navSites, navSiteAchar:navSiteAchar, navSitesSalvar:navSitesSalvar, navEElectron:navEElectron,
-    navUserAgent:navUserAgent, NAV_SITES_PADRAO:NAV_SITES_PADRAO };
+    navUserAgent:navUserAgent, navPassos:navPassos, NAV_SITES_PADRAO:NAV_SITES_PADRAO };
 }
 /* NAV6107_PURE_END */
 
@@ -58130,6 +58156,7 @@ function navHtml(){
     '<p style="margin:8px 0 0;font-size:11.5px;color:#64748b">A lista fica salva na nuvem: o site que você adicionar aqui aparece em todos os seus PCs.</p>'+
   '</div>'+
   '<div id="nav-dica" style="margin-top:8px;font-size:11.5px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px"></div>'+
+  '<div id="nav-passo" style="display:none;margin-top:8px;font-size:12.5px;color:#0f172a;background:#eef2ff;border:1px solid #c9ceef;border-radius:12px;padding:10px 14px"></div>'+
   '<div id="nav-palco" style="margin-top:8px"></div>';
 }
 
@@ -58143,6 +58170,16 @@ function navPintarAbas(){
   var dica=document.getElementById('nav-dica');
   var s=navSiteAchar(lista,NAV_ATUAL.id);
   if(dica) dica.innerHTML=s?('<b>'+esc(s.nome)+'</b> · '+esc(s.url)+(s.dica?' — '+esc(s.dica):'')):'';
+  // passo a passo (como usar a nota aqui dentro) — só quando existe para o endereço
+  var passo=document.getElementById('nav-passo');
+  if(passo){
+    var passos=s?navPassos(s.url):[];
+    if(passos.length){
+      passo.style.display='block';
+      passo.innerHTML='<b style="font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#0a1e8a">Como usar aqui dentro</b>'+
+        '<ol style="margin:6px 0 0 18px;padding:0">'+passos.map(function(t){ return '<li style="margin:2px 0">'+esc(t)+'</li>'; }).join('')+'</ol>';
+    } else { passo.style.display='none'; passo.innerHTML=''; }
+  }
   var end=document.getElementById('nav-end');
   if(end&&s&&document.activeElement!==end) end.value=s.url;
   return s;
@@ -58431,15 +58468,441 @@ console.log('[DIGICOPY] v6.1.7 Navegador embutido (NFS-e da prefeitura + WhatsAp
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("navegador_embutido_patch.js", e); }
 ;
 
+/* ===== ajustes_v6108_lembrar_tela_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES_V6108_LEMBRAR_TELA_PATCH v6.1.8 — pedido dele (22/09/2026):
+//   "Lembrar a última ordenação e o último filtro que eu usei — e vai atualizar
+//    mesmo assim né?"  →  SIM: guarda sozinho, a cada uso.
+//
+// O que faz, em palavras simples:
+//   • Toda vez que ele clica no título de uma coluna para ordenar (patch
+//     historico_sort_patch) ou mexe num filtro/busca da tela, o sistema anota
+//     "como ele deixou" AQUELE tela — por USUÁRIO (o dele é dele, o da recepção
+//     é da recepção).
+//   • Quando ele abre a tela de novo (em qualquer PC), a lista volta arrumada
+//     do mesmo jeito: mesmos filtros e mesma ordenação.
+//   • Nada de colunas: largura/ocultar coluna NÃO é mexido (foi o que ele
+//     escolheu: "segunda opção, só o básico").
+//
+// Onde fica guardado: `db.config.lembraTela[login][tela]` → sobe para a NUVEM
+// pelo saveDB (regra #44: nada de dado do sistema no PC/navegador).
+//
+// Cuidados de PC fraco (regras #12/#13):
+//   • só grava quando o valor REALMENTE mudou e com espera de 800ms (digitar na
+//     busca não gera uma gravação por letra);
+//   • a reaplicação é uma vez por abertura de tela, com trava para não ficar em
+//     laço (a própria reaplicação não é re-anotada).
+//
+// Guard: __v6108lembra. PURE exportado para os testes (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6108lembra) return;
+
+/* LT6108_PURE_START */
+// Nome do usuário (login) — a memória é POR PESSOA, não por PC.
+function ltUsuario(sess){
+  try{
+    if(!sess) return '';
+    return String(sess.login||sess.usuarioLogin||sess.usuario||'').trim().toLowerCase();
+  }catch(e){ return ''; }
+}
+
+// Só campos que são FILTRO/BUSCA da tela entram na memória. Campo de formulário
+// (nome do cliente, valor, CPF...) nunca é tocado — senão abriria a tela com
+// campo já preenchido, o que seria perigoso.
+function ltEhFiltro(id, tag){
+  var i=String(id||'');
+  if(!i) return false;
+  var t=String(tag||'').toLowerCase();
+  if(t && t!=='input' && t!=='select') return false;
+  if(/^(filtro|filter|busca|search|inp-|sel-)/i.test(i)) return true;
+  return /(^|[-_])(filtro|filter|busca|search|situacao|status|periodo|dataini|datafim)([-_]|$)/i.test(i);
+}
+
+// Quantos cliques no título da coluna para chegar do jeito que ele deixou?
+// (o historico_sort_patch alterna: primeiro clique = ▲, segundo = ▼)
+function ltProximoClique(dirAtual, dirQuerida){
+  var a=String(dirAtual||''), q=String(dirQuerida||'');
+  if(!q) return 0;
+  if(a===q) return 0;
+  if(!a) return q==='asc'?1:2;
+  return 1;   // tem seta e é a outra: um clique troca
+}
+
+function ltVazio(){ return {v:1, telas:{}}; }
+
+function ltRaiz(db){
+  if(!db) return null;
+  db.config=db.config||{};
+  var m=db.config.lembraTela;
+  if(!m||typeof m!=='object'||!m.telas) m=db.config.lembraTela=ltVazio();
+  m.telas=m.telas||{};
+  return m;
+}
+
+function ltLer(db, login, tela){
+  var m=ltRaiz(db); if(!m||!login||!tela) return null;
+  var u=m.telas[login]; if(!u) return null;
+  return u[tela]||null;
+}
+
+// Grava (sem saveDB aqui: quem salva é o chamador, uma vez só)
+function ltGravar(db, login, tela, dados){
+  var m=ltRaiz(db); if(!m||!login||!tela||!dados) return null;
+  m.telas[login]=m.telas[login]||{};
+  m.telas[login][tela]=dados;
+  return m.telas[login][tela];
+}
+
+function ltEsquecer(db, login, tela){
+  var m=ltRaiz(db); if(!m||!login) return false;
+  if(!m.telas[login]) return false;
+  if(tela) delete m.telas[login][tela]; else delete m.telas[login];
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+  return true;
+}
+
+if(typeof window!=='undefined'){
+  window.LT6108_PURE={ ltUsuario:ltUsuario, ltEhFiltro:ltEhFiltro, ltProximoClique:ltProximoClique,
+    ltRaiz:ltRaiz, ltLer:ltLer, ltGravar:ltGravar, ltEsquecer:ltEsquecer };
+}
+/* LT6108_PURE_END */
+
+if(typeof document==='undefined') return;   // testes em Node: só a parte pura
+
+var LT_APLICANDO=false;    // trava: enquanto reaplica, não anota de novo
+var LT_TIMER=null;
+
+function ltBanco(){ try{ return (typeof db!=='undefined')?db:null; }catch(e){ return null; } }
+function ltSessao(){ try{ return (typeof getSession==='function')?getSession():null; }catch(e){ return null; } }
+
+// Descobre a tela (view) de um elemento — só telas de lista têm memória
+function ltTelaDe(el){
+  try{
+    var v=el&&el.closest?el.closest('section.view,section[id^="view-"]'):null;
+    if(!v) return '';
+    return String(v.id||'').replace(/^view-/,'') || '';
+  }catch(e){ return ''; }
+}
+
+function ltSalvarTela(tela, dados){
+  if(!tela||!dados) return;
+  var login=ltUsuario(ltSessao()); if(!login) return;
+  var b=ltBanco(); if(!b) return;
+  var antes=ltLer(b,login,tela);
+  // compara antes de gravar (PC fraco: não sobe a base à toa)
+  if(antes && JSON.stringify(antes)===JSON.stringify(dados)) return;
+  ltGravar(b,login,tela,dados);
+  try{ if(typeof saveDB==='function') saveDB(); }catch(e){}
+}
+
+// ── anotar ordenação (o historico_sort_patch alterna ▲/▼ no clique) ────────
+try{
+  document.addEventListener('click', function(ev){
+    if(LT_APLICANDO) return;
+    var th=ev.target&&ev.target.closest?ev.target.closest('th'):null;
+    if(!th) return;
+    var tabela=th.closest?th.closest('table'):null;
+    if(!tabela) return;
+    var tela=ltTelaDe(tabela); if(!tela) return;
+    setTimeout(function(){
+      try{
+        var views=tabela.closest('section.view,section[id^="view-"]'); if(!views) return;
+        var tabelas=Array.prototype.slice.call(views.querySelectorAll('table'));
+        var iTab=tabelas.indexOf(tabela); if(iTab<0) return;
+        var ths=Array.prototype.slice.call((tabela.tHead||tabela.querySelector('thead')).querySelectorAll('th'));
+        var iCol=ths.indexOf(th); if(iCol<0) return;
+        var dir=th.dataset?String(th.dataset.hsDir||''):'';
+        if(!dir) return;   // tabela que já ordena sozinha (não é do patch): não anota
+        var atual=ltLer(ltBanco(), ltUsuario(ltSessao()), tela) || {};
+        atual.tabela={i:iTab, coluna:iCol, dir:dir};
+        atual.filtros=atual.filtros||{};
+        ltSalvarTela(tela, atual);
+      }catch(e){}
+    },30);
+  }, true);
+}catch(e){}
+
+// ── anotar filtros/buscas (só os campos de filtro da tela) ─────────────────
+function ltAnotarFiltros(){
+  if(LT_APLICANDO) return;
+  try{
+    var sess=ltSessao(); var login=ltUsuario(sess); if(!login) return;
+    var b=ltBanco(); if(!b) return;
+    var vistos={};
+    document.querySelectorAll('section.view,section[id^="view-"]').forEach(function(v){
+      if(v.classList && v.classList.contains('hidden')) return;
+      var tela=String(v.id||'').replace(/^view-/,''); if(!tela) return;
+      var campos=v.querySelectorAll('input,select');
+      var filtros={};
+      Array.prototype.forEach.call(campos, function(c){
+        if(!ltEhFiltro(c.id, c.tagName)) return;
+        if(c.type==='password'||c.type==='file'||c.type==='checkbox'||c.type==='radio') return;
+        filtros[c.id]=String(c.value==null?'':c.value);
+      });
+      if(!Object.keys(filtros).length) return;
+      vistos[tela]=filtros;
+      var atual=ltLer(b,login,tela)||{};
+      var antes=atual.filtros||{};
+      if(JSON.stringify(antes)===JSON.stringify(filtros) && atual.tabela) return;
+      atual.filtros=filtros;
+      ltSalvarTela(tela, atual);
+    });
+  }catch(e){}
+}
+try{
+  document.addEventListener('change', function(ev){
+    if(LT_APLICANDO) return;
+    var alvo=ev.target; if(!alvo||!ltEhFiltro(alvo.id, alvo.tagName)) return;
+    if(LT_TIMER) clearTimeout(LT_TIMER);
+    LT_TIMER=setTimeout(ltAnotarFiltros, 800);      // espera ele parar de mexer
+  }, true);
+}catch(e){}
+
+// ── reaplicar quando a tela abre ───────────────────────────────────────────
+function ltAplicar(tela){
+  if(!tela) return;
+  var b=ltBanco(); var login=ltUsuario(ltSessao()); if(!b||!login) return;
+  var memoria=ltLer(b,login,tela); if(!memoria) return;
+  var v=document.getElementById('view-'+tela); if(!v) return;
+
+  LT_APLICANDO=true;
+  try{
+    // 1) filtros primeiro (o próprio sistema re-renderiza a lista com eles)
+    var filtros=memoria.filtros||{};
+    var mexeu=false;
+    Object.keys(filtros).forEach(function(id){
+      var c=document.getElementById(id);
+      if(!c) return;
+      if(String(c.value||'')===String(filtros[id]||'')) return;
+      c.value=filtros[id]; mexeu=true;
+      try{ c.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+      try{ c.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){}
+    });
+    // 2) ordenação depois (a lista pode ter sido redesenhada pelos filtros)
+    var espera=mexeu?320:120;
+    setTimeout(function(){
+      try{
+        var t=memoria.tabela;
+        if(t&&typeof t.i==='number'){
+          var tabelas=Array.prototype.slice.call(v.querySelectorAll('table'));
+          var tabela=tabelas[t.i];
+          if(tabela){
+            var th=((tabela.tHead||tabela.querySelector('thead')).querySelectorAll('th'))[t.coluna];
+            if(th){
+              var cliques=ltProximoClique(th.dataset?th.dataset.hsDir:'', t.dir);
+              for(var k=0;k<cliques;k++) th.click();
+            }
+          }
+        }
+      }catch(e){}
+      setTimeout(function(){ LT_APLICANDO=false; }, 260);
+    }, espera);
+  }catch(e){ LT_APLICANDO=false; }
+}
+
+// navigateTo aprende: depois de pintar a tela, devolve o jeito dele
+try{
+  if(typeof window.navigateTo==='function' && !window.navigateTo.__v6108lembra){
+    var _nav=window.navigateTo;
+    window.navigateTo=function(view){
+      var r=_nav.apply(this,arguments);
+      if(typeof view==='string' && view!=='navegador'){
+        setTimeout(function(){ try{ ltAplicar(view); }catch(e){} }, 260);
+      }
+      return r;
+    };
+    window.navigateTo.__v6108lembra=true;
+  }
+}catch(e){}
+
+window.lt6108Esquecer=function(tela){
+  var login=ltUsuario(ltSessao()); if(!login) return false;
+  return ltEsquecer(ltBanco(), login, tela||'');
+};
+
+window.__v6108lembra={vivo:true,versao:'6.1.8'};
+console.log('[DIGICOPY] v6.1.8 Lembrar a tela (última ordenação e último filtro, por usuário, na nuvem)');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v6108_lembrar_tela_patch.js", e); }
+;
+
+/* ===== ajustes_v6108_falta_emitir_patch.js ===== */
+try{
+// ═══════════════════════════════════════════════════════════════════════════
+// AJUSTES_V6108_FALTA_EMITIR_PATCH v6.1.8 — "terminar a NF-e" (pedido dele
+// 22/09/2026: "pode fazer tudo de uma vez").
+//
+// O que é: um cartão na tela da Central de Nota Fiscal chamado
+//   "FALTA POUCO PARA A NOTA VALER DE VERDADE"
+// que CONFERE tudo o que a emissão real exige, item por item, com o estado de
+// AGORA (nada de "deve estar certo") e um botão para resolver cada pendência:
+//   1. CNPJ da loja            (Configurações)
+//   2. Inscrição Estadual      (Configurações → Fiscal)
+//   3. Série e ambiente        (Configurações → Fiscal)
+//   4. Perfil tributário       (CFOP/CSOSN)  → tela Perfil Tributário
+//   5. NCM nos produtos        (conta de quantos já têm NCM de 8 dígitos)
+//   6. CSC do cupom (NFC-e)    (ID + código, quando ele for usar cupom)
+//   7. Certificado A1          (conferido NO PC, pela ponte do programa)
+// Quando os 7 estão verdes, a frase muda para "está tudo pronto — só o clique".
+//
+// Por que em arquivo separado: regra #10 (1 módulo = 1 arquivo) — este é o
+// "prontidão fiscal"; o catálogo fiscal (telas, emissão, CC-e) fica onde está.
+// Nada aqui transmite nada: é leitura de estado + atalhos. Tudo dentro de
+// try/catch e com sonda leve (2s) só enquanto a Central estiver aberta.
+//
+// Guard: __v6108falta. PURE exportado para teste (sem DOM).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+if(typeof window!=='undefined' && window.__v6108falta) return;
+
+/* FE6108_PURE_START */
+function feSoDigitos(v){ return String(v==null?'':v).replace(/\D/g,''); }
+
+// Lê o banco (nuvem) e devolve a lista de pendências com o estado de agora.
+function feAnalisar(db){
+  var c=(db&&db.config)||{};
+  var f=c.fiscal||{};
+  var emp=(db&&db.empresas&&db.empresas[0])||{};
+  var perfis=(db&&db.perfisNf)||[];
+  var produtos=(db&&db.produtos)||[];
+  var cnpj=feSoDigitos(emp.cnpj||c.cnpj);
+  var ncmOk=0;
+  produtos.forEach(function(p){ if(p && feSoDigitos(p.ncm).length===8) ncmOk++; });
+
+  var itens=[
+    { id:'cnpj', ok:cnpj.length===14, rotulo:'CNPJ da loja',
+      detalhe:cnpj.length===14?('CNPJ '+cnpj):'sem CNPJ cadastrado na empresa',
+      onde:'config', acao:'Configurações' },
+    { id:'ie', ok:!!String(f.ie||'').trim(), rotulo:'Inscrição Estadual',
+      detalhe:String(f.ie||'').trim()?('IE '+String(f.ie).trim()):'sem IE — a SEFAZ recusa a nota',
+      onde:'config-fiscal', acao:'Configurações fiscais' },
+    { id:'serie', ok:!!String(f.serie||'').trim() && !!String(f.crt||'').trim(), rotulo:'Série e regime (CRT)',
+      detalhe:'série '+String(f.serie||'1')+' · regime '+(String(f.crt||'')==='1'?'Simples Nacional':(String(f.crt||'')||'não informado')),
+      onde:'config-fiscal', acao:'Configurações fiscais' },
+    { id:'perfil', ok:perfis.length>0, rotulo:'Perfil tributário (CFOP/CSOSN)',
+      detalhe:perfis.length?(perfis.length+' perfil(is) cadastrado(s)'):'nenhum perfil — a nota sai sem tributação',
+      onde:'fiscal-perfil', acao:'Perfil Tributário' },
+    { id:'ncm', ok:produtos.length?ncmOk>0:false, rotulo:'NCM nos produtos',
+      detalhe:produtos.length?(ncmOk+' de '+produtos.length+' produto(s) com NCM de 8 dígitos'):'nenhum produto cadastrado ainda',
+      onde:'produtos', acao:'Produtos' },
+    { id:'csc', ok:!!String(c.nfCscId||'').trim() && !!String(c.nfCsc||'').trim(), rotulo:'CSC do cupom (NFC-e)',
+      detalhe:(String(c.nfCscId||'').trim()&&String(c.nfCsc||'').trim())?'ID '+String(c.nfCscId).trim()+' guardado':'só precisa para cupom (NFC-e) — gere no portal da SEFAZ-MG',
+      onde:'central-nf', acao:'Central de NF-e' },
+    // O certificado é conferido NO PC (assíncrono) — aqui fica o lugar dele.
+    { id:'cert', ok:null, rotulo:'Certificado A1 (no PC emissor)',
+      detalhe:'confiro na hora, pelo programa do PC', onde:'central-nf', acao:'Ver' }
+  ];
+  var prontos=itens.filter(function(i){ return i.ok===true; }).length;
+  return { itens:itens, prontos:prontos, total:itens.length, producao:String(c.nfAmbiente||'homologacao')==='producao' };
+}
+
+function feResumo(an){
+  if(!an) return '';
+  if(an.prontos>=an.total-1 && an.itens.every(function(i){ return i.ok!==false; }))
+    return 'Está tudo pronto — falta só o certificado e o clique.';
+  return (an.prontos+' de '+an.total+' itens prontos — resolva o que está vermelho aqui embaixo.');
+}
+if(typeof window!=='undefined') window.FE6108_PURE={ feAnalisar:feAnalisar, feResumo:feResumo, feSoDigitos:feSoDigitos };
+/* FE6108_PURE_END */
+
+if(typeof document==='undefined') return;   // testes em Node: só a parte pura
+
+function feBanco(){ try{ return (typeof db!=='undefined')?db:null; }catch(e){ return null; } }
+function feEsc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function feIr(onde){
+  try{
+    if(onde==='fiscal-perfil' && typeof abrirPerfilTributario==='function'){ abrirPerfilTributario(); return; }
+    if(typeof navigateTo==='function') navigateTo(onde);
+  }catch(e){}
+}
+
+function fePintar(){
+  try{
+    var v=document.getElementById('view-central-nf');
+    if(!v || (v.classList && v.classList.contains('hidden'))) return;
+    var an=feAnalisar(feBanco());
+    var caixa=document.getElementById('fe6108-caixa');
+    if(!caixa){
+      caixa=document.createElement('div');
+      caixa.id='fe6108-caixa';
+      caixa.style.cssText='margin-top:12px;background:#fff;border:1px solid #c9ceef;border-radius:14px;padding:12px 14px';
+      v.insertBefore(caixa, v.firstChild ? v.firstChild.nextSibling : null);
+    }
+    var linhas=an.itens.map(function(i){
+      var marca=i.ok===true?'✅':(i.ok===null?'⏳':'⚠️');
+      var cor=i.ok===true?'#166534':(i.ok===null?'#334155':'#b45309');
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:12.5px">'+
+        '<span>'+marca+'</span>'+
+        '<span style="flex:1;color:'+cor+'"><b>'+feEsc(i.rotulo)+'</b> — '+feEsc(i.detalhe)+'</span>'+
+        (i.ok===true?'':'<button type="button" data-fe-ir="'+feEsc(i.onde)+'" style="height:26px;padding:0 10px;border-radius:8px;border:1px solid #c9ceef;background:#e8eaf8;color:#0a1e8a;font-weight:700;font-size:11.5px;cursor:pointer">'+feEsc(i.acao)+'</button>')+
+      '</div>';
+    }).join('');
+    caixa.innerHTML='<p style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0a1e8a">FALTA POUCO PARA A NOTA VALER DE VERDADE'+
+      '<span style="font-weight:600;color:#475569"> · '+(an.producao?'PRODUÇÃO':'HOMOLOGAÇÃO (teste)')+'</span></p>'+
+      '<p style="margin:0 0 6px;font-size:12px;color:#475569">'+feEsc(feResumo(an))+'</p>'+linhas+
+      '<p style="margin:8px 0 0;font-size:11.5px;color:#64748b">Nada aqui emite sozinho: a conferência é só leitura. A senha do certificado continua sendo pedida na hora de cada transmissão e não fica salva.</p>';
+    Array.prototype.forEach.call(caixa.querySelectorAll('[data-fe-ir]'), function(b){
+      b.onclick=function(){ feIr(b.getAttribute('data-fe-ir')); };
+    });
+    // Certificado: confere no PC (assíncrono) e atualiza só aquela linha
+    try{
+      var api=window.nfeCertAPI;
+      if(api && typeof api.status==='function'){
+        api.status().then(function(st){
+          try{
+            var alvo=caixa.querySelector('[data-fe-ir="central-nf"]');
+            var linha=alvo?alvo.parentNode:(caixa.querySelectorAll('div[style*="display:flex"]')[5]||null);
+            if(!linha) return;
+            if(st&&st.installed){
+              linha.innerHTML='<span>✅</span><span style="flex:1;color:#166534;font-size:12.5px"><b>Certificado A1</b> — instalado neste PC (a validade aparece quando você transmite)</span>';
+            }else{
+              linha.innerHTML='<span>⚠️</span><span style="flex:1;color:#b45309;font-size:12.5px"><b>Certificado A1</b> — não achei neste PC: importe o .pfx em Configurações fiscais, no programa do PC</span>';
+            }
+          }catch(e){}
+        }).catch(function(){});
+      }else{
+        var sem=caixa.querySelector('[data-fe-ir="central-nf"]');
+        if(sem) sem.parentNode.querySelector('span:nth-child(2)').innerHTML='<b>Certificado A1</b> — só dá para conferir no programa do PC (no site/celular não existe)';
+      }
+    }catch(e){}
+  }catch(e){}
+}
+
+// sonda leve: só enquanto a Central estiver aberta (custo quase zero)
+try{
+  var feAgendada=false;
+  setInterval(function(){
+    if(feAgendada) return; feAgendada=true;
+    try{ fePintar(); }catch(e){}
+    feAgendada=false;
+  }, 2000);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(fePintar, 600); });
+  window.addEventListener('load', function(){ setTimeout(fePintar, 600); });
+}catch(e){}
+
+window.fe6108Conferir=function(){ fePintar(); return feAnalisar(feBanco()); };
+window.__v6108falta={vivo:true,versao:'6.1.8'};
+console.log('[DIGICOPY] v6.1.8 Falta pouco para a nota valer de verdade (conferência na Central de NF-e)');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v6108_falta_emitir_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 223;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 225;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 223 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 225 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

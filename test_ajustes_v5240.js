@@ -121,7 +121,7 @@ fontes.forEach(function(f){
   const src = fs.readFileSync(f, 'utf8');
   ok(mioloNoBundle(bundle, src) && mioloNoBundle(bundleMob, src), 'fonte ' + f + ' byte-idêntica nos 2 bundles');
 });
-ok(manifest[manifest.length - 2] === 'ajustes_v5240_relatorio_grande_patch.js' && manifest[manifest.length - 1] === 'ajustes_v5243_cliente_abas_patch.js' && manifest.length === 196, 'manifest tem 196 scripts, v5.24.0 penúltimo e v5.24.34 último');
+ok(manifest[manifest.length - 4] === 'ajustes_v5240_relatorio_grande_patch.js' && manifest[manifest.length - 3] === 'ajustes_v5243_cliente_abas_patch.js' && manifest.length === 196, 'manifest tem 196 scripts, v5.24.0 penúltimo e v5.24.34 último');
 ok(bundle.indexOf('scripts: 196 | sha256:') >= 0, 'header do bundle com 196 scripts + sha256 novo');
 ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0 && indexHtml.indexOf('app.bundle.js?v=5.24.34') >= 0, 'index.html na v5.24.34');
 ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '5.24.34'") >= 0, 'mobile/www/index.html na v5.24.34');

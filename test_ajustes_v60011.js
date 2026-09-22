@@ -17,7 +17,7 @@ const P = require('./submenu_hover_nfe_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 216; hover NF-e/NFC-e fecha a fila',
-  man.length === 223 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
+  man.length === 225 && man[215] === 'submenu_hover_nfe_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js');
 ok('bundle contém o patch (guard + PURE + banner)',
   bundle.indexOf('__v60011sxvm') >= 0 && bundle.indexOf('SXVM_PURE_START') >= 0 && bundle.indexOf('SUBMENU_HOVER_NFE_PATCH v6.0.11 ativo') >= 0);
 

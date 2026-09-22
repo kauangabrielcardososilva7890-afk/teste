@@ -19,7 +19,7 @@
 //
 // Sites que já vêm prontos (a lista fica salva NA NUVEM, em db.config.navSites,
 // em todos os PCs dele — nada guardado na memória do navegador (regra #44 SÓ NUVEM):
-//   • NFS-e (prefeitura)  — portal da Prefeitura de Janaúba/MG
+//   • NFS-e (prefeitura)  — EMISSOR DELE: sistema.sintesetecnologia.com.br (Janaúba)
 //   • NFS-e Nacional      — Emissor Nacional (gov.br/nfse), obrigatório para
 //                           ME/EPP do Simples Nacional desde 01/09/2026
 //   • WhatsApp Web
@@ -43,8 +43,12 @@ if(typeof window!=='undefined' && window.__v6107nav) return;
 // Sites que nascem na lista (id fixo para os atalhos do menu funcionarem)
 var NAV_SITES_PADRAO=[
   { id:'nfse-prefeitura', nome:'NFS-e (prefeitura)',
-    url:'https://janauba.mg.gov.br',
-    dica:'Portal da Prefeitura de Janaúba/MG. O emissor municipal (SIGP NFS-e) fica em Empresas → Nota Fiscal de Serviços. Se o endereço direto do emissor for outro, use ✏ Editar e cole o link de verdade — eu guardo na nuvem.' },
+    // ENDEREÇO DELE (22/09/2026, resposta literal): "eu uso o site
+    // http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba"
+    // É o emissor municipal de Janaúba (Sintese Tecnologia). É http:// (não
+    // https) — por isso o main.js tem uma lista branca só para esse endereço.
+    url:'http://sistema.sintesetecnologia.com.br/NFEWeb/indexNFe.xhtml?Param=Janauba',
+    dica:'Emissor da NFS-e de Janaúba (Sintese Tecnologia) — o mesmo que você usa hoje. A tela abre aqui dentro, sem sair do sistema.' },
   { id:'nfse-nacional', nome:'NFS-e Nacional',
     url:'https://www.nfse.gov.br/EmissorNacional/',
     dica:'Emissor Nacional da NFS-e (gov.br/nfse) — obrigatório para ME/EPP do Simples Nacional desde 01/09/2026, inclusive em município com emissor próprio.' },
@@ -150,10 +154,32 @@ function navUserAgent(){
   }catch(e){ return ''; }
 }
 
+// Passo a passo curto, por endereço (continua valendo depois de o dono
+// renomear o site ou trocar o link — não depende da lista salva).
+function navPassos(url){
+  var u=String(url||'').toLowerCase();
+  if(/sintesetecnologia\.com\.br|nfeweb/.test(u)){
+    return ['Abra a NFS-e aqui dentro e faça o login do emissor (esta janela guarda a sessão neste PC).',
+            'Emita a nota normalmente — os dados do cliente você copia da ficha dele no sistema.',
+            'Para imprimir ou salvar o PDF, use Ctrl+P: a impressão sai limpa, sem cabeçalho do navegador.',
+            'Empresa do Simples também pode emitir no Emissor Nacional (aba "NFS-e Nacional") — as duas estão aqui para você comparar.'];
+  }
+  if(/nfse\.gov\.br/.test(u)){
+    return ['Entre com o certificado A1 (o mesmo da NF-e) ou com a conta gov.br.',
+            'Emita a NFS-e/DPS normalmente — o padrão nacional vale em todo o país.',
+            'Dúvida de qual usar? A aba "NFS-e (prefeitura)" é o emissor municipal que você já usa hoje.'];
+  }
+  if(/whatsapp\.com/.test(u)){
+    return ['Leia o QR Code uma vez com o celular; depois esta janela entra sozinha neste PC.',
+            'Se um dia pedir o QR de novo, clique no celular em Aparelhos conectados e leia outra vez.'];
+  }
+  return [];
+}
+
 if(typeof window!=='undefined'){
   window.NAV6107_PURE={ navNormalizarUrl:navNormalizarUrl, navIdNovo:navIdNovo, navSitesPadrao:navSitesPadrao,
     navSites:navSites, navSiteAchar:navSiteAchar, navSitesSalvar:navSitesSalvar, navEElectron:navEElectron,
-    navUserAgent:navUserAgent, NAV_SITES_PADRAO:NAV_SITES_PADRAO };
+    navUserAgent:navUserAgent, navPassos:navPassos, NAV_SITES_PADRAO:NAV_SITES_PADRAO };
 }
 /* NAV6107_PURE_END */
 
@@ -228,6 +254,7 @@ function navHtml(){
     '<p style="margin:8px 0 0;font-size:11.5px;color:#64748b">A lista fica salva na nuvem: o site que você adicionar aqui aparece em todos os seus PCs.</p>'+
   '</div>'+
   '<div id="nav-dica" style="margin-top:8px;font-size:11.5px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px"></div>'+
+  '<div id="nav-passo" style="display:none;margin-top:8px;font-size:12.5px;color:#0f172a;background:#eef2ff;border:1px solid #c9ceef;border-radius:12px;padding:10px 14px"></div>'+
   '<div id="nav-palco" style="margin-top:8px"></div>';
 }
 
@@ -241,6 +268,16 @@ function navPintarAbas(){
   var dica=document.getElementById('nav-dica');
   var s=navSiteAchar(lista,NAV_ATUAL.id);
   if(dica) dica.innerHTML=s?('<b>'+esc(s.nome)+'</b> · '+esc(s.url)+(s.dica?' — '+esc(s.dica):'')):'';
+  // passo a passo (como usar a nota aqui dentro) — só quando existe para o endereço
+  var passo=document.getElementById('nav-passo');
+  if(passo){
+    var passos=s?navPassos(s.url):[];
+    if(passos.length){
+      passo.style.display='block';
+      passo.innerHTML='<b style="font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:#0a1e8a">Como usar aqui dentro</b>'+
+        '<ol style="margin:6px 0 0 18px;padding:0">'+passos.map(function(t){ return '<li style="margin:2px 0">'+esc(t)+'</li>'; }).join('')+'</ol>';
+    } else { passo.style.display='none'; passo.innerHTML=''; }
+  }
   var end=document.getElementById('nav-end');
   if(end&&s&&document.activeElement!==end) end.value=s.url;
   return s;
