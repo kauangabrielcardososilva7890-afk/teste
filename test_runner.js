@@ -224,7 +224,9 @@ const tests=[
   "test_ajustes_v51916.js",
   "test_ajustes_v51920.js",
   // trava do backdoor de login (CRÍTICO — ver AUDITORIA_TECNICA.md §12.1)
-  "test_login_sem_backdoor.js"
+  "test_login_sem_backdoor.js",
+  // duplo clique das tabelas (defeito de copiar/colar em 5 telas — §13.7)
+  "test_linhas_tabela_clique.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não
