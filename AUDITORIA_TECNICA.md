@@ -1087,3 +1087,88 @@ sha256 do corpo `3c7983444a38d6ad`.
 rodadas de teste porque os testes verificavam a REGRA pura, não o que ela fazia com o foco do
 navegador depois de um clique. Fica a lição aplicada: as regras de interface deste projeto
 precisam de teste de integração com DOM real quando o `jsdom`/e2e estiver disponível.
+
+
+## 20. RODADA 11 — "POR QUE FICA VOLTANDO?" O PC RELENDO O DIÁRIO INTEIRO (23/09/2026)
+
+**Pedido do dono:** *"pq fica voltando, tem como resolver? tudo cadastrado ate
+28-08-2026 ao atualizar o sistema sobe rapindinho e o que foi feito depois demora
+atualizar e vai subindo aos poucos"*.
+
+### 20.1 Como o problema foi localizado
+Três leituras de código e **uma medição**:
+
+1. `cloudflare_data_sync_patch.js:186` (`aplicarSoNuvem()`): no modo SÓ NUVEM (padrão,
+   decisão do dono na v6.1.5 / regra 44) o arranque **zera `state.cursor`**, zera
+   `state.versions` e marca `initialPull`. Somado a `soltarCopiaLocal()` (localhost +
+   IndexedDB apagados), o resultado é: **em cada abertura o PC relê o diário inteiro**.
+2. `applyRemote()`: `arr.findIndex(...)` para localizar o registro de cada mudança —
+   **O(n) por mudança**, com o diário em ordem crescente de `seq`. Custo total
+   O(mudanças × registros): bilhões de comparações numa base grande. O efeito
+   percebido é exatamente o relatado: as listas pequenas do começo do diário
+   passam rápido; o fim (o que foi feito por último) arrasta.
+3. `persist()`: gravava `STATE_KEY` (versões + conhecidos + hashes de toda a base) +
+   a fila **em cada chamada**, e `pushOutbox()` chama `persist()` **a cada lote de 10
+   registros** → reescrever 6,5 MB por lote. `scanLocal()` era chamado a cada tick de
+   3 s e **refazia a cópia (`clean`) e o hash de todos os registros** (≈200 ms por
+   varredura numa base de 76 mil registros, bloqueando a linha de execução da tela).
+4. `nuvemTemTudo()` chamava `/v1/status?fresh=1` a cada 3 s → o Worker refazia a
+   contagem de todos os registros e mudanças (`resumoDaNuvem(env, true)`) para
+   responder; com base grande isso concorre com as consultas que trazem os dados.
+
+Medição (`banco_de_prova_nuvem.js`, base sintética de 76.550 registros / 91.862 mudanças, API
+de nuvem instantânea — mede **o trabalho do PC**): 1ª carga **17.240 ms**; ciclo de
+repouso **767 ms**.
+
+### 20.2 Correções aplicadas (arquivo `cloudflare_data_sync_patch.js`, v7.0.6)
+| # | Gravidade | Tipo | O que | Evidência |
+|---|---|---|---|---|
+| 1 | **CRÍTICO** | Performance | `INDICE_LISTA` + `posicaoNaLista()` no lugar do `findIndex`; índice cresce no fim, é conferido antes de responder e é refeito se a lista mudou de forma | 1ª carga 17.240 → **1.119 ms** |
+| 2 | ALTO | Performance | `passeRapidoInicial()`: aplica as últimas 3.000 mudanças antes da leitura completa (1×/sessão, só com cursor 0) | estado de AGORA **1 ms** |
+| 3 | ALTO | Performance | `persist()` = fila na hora + estado agrupado (300 ms) e só quando muda (rede de 30 s); `persistAgora()` nos pontos de decisão e ao fechar/esconder a janela | repouso 767 → 4 ms |
+| 4 | ALTO | Performance | `scanLocal()` sob demanda (sujo/10 s) com `forcarVarredura` para pedido manual; `filaCheia` mantém a remessa correndo | idem |
+| 5 | MÉDIO | Performance | `entriesFor()` não copia mais o registro inteiro (`clean`) só para conferir o hash; a limpeza foi para a montagem da remessa | idem |
+| 6 | MÉDIO | Performance | `nuvemTemTudo()` com contagem fresca no máximo 1×/60 s | menos carga no Worker |
+
+**Riscos avaliados antes de mudar** (regra "não quebrar o que funciona"):
+- *Índice id → posição*: verificado no repo que **nenhum** ponto troca um registro
+  no lugar com id diferente (`db.lista[i] = ...` com id novo não existe). Os casos
+  que mexem na lista são `push` (79), `splice` (2), `unshift` (4) e troca da lista
+  inteira (identidade). `splice`/troca/`unshift` são detectados pela conferência e
+  pelo teste do "último registro no mesmo lugar"; o índice é refeito antes de
+  responder. Teste novo cobre isso.
+- *Passe rápido*: a trava de versão por registro (`change.version <= knownVersion`)
+  garante que aplicar a mais nova primeiro **descarta** as antigas depois — não há
+  como voltar versão. A leitura completa continua igual, do começo.
+- *Gravação agrupada*: a fila (dado que ainda não subiu) continua sendo gravada
+  imediatamente; o que é agrupado é o mapa de versões/hashes, que é **idempotente**
+  (reaproveitar dele apenas faz o motor reaplicar/reconferir, e o Worker responde
+  "já está igual" sem regravar). Rede de segurança de 30 s + gravação ao fechar.
+- *Varredura sob demanda*: só é pulada quando a fila está vazia, nada foi gravado
+  e nada foi apagado; o sistema avisa pelos 221 pontos de `saveDB`, pelo `saveDBAgora`
+  e pelo vigia de exclusões; rede de segurança de 10 s.
+
+### 20.3 Erro cometido e corrigido na mesma rodada
+A 1ª versão do índice era **refeita a cada registro novo** (condição `c.len!==arr.length`),
+o que na remontagem acontece em toda mudança → **144.020 ms** (8× pior que antes).
+Encontrado pelo perfil de CPU (`posicaoNaLista` = 43,7% das amostras) e corrigido com
+crescimento incremental. Registrado aqui porque **teste de regra não pega regressão
+de performance**: só medição.
+
+### 20.4 Testes e verificação
+- Novo `test_nuvem_rapida.js` (**21 verificações**) — entra na lista do `test_runner.js`.
+- Suíte: **209 passaram, 0 falharam, 4 não rodaram** (jsdom ausente no ambiente).
+- `node build_bundle.js --check` OK (225 scripts, sha corpo `5f20ce56efb4f14b`);
+  `sync_build.js --check` OK; `mobile/sync-www.js` OK; `?v=7.0.6-2e1f2b0f95ff`.
+- **Não rodado:** testes de `e2e/` (Playwright não instalado) e os 4 que exigem `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantas mudanças o diário da nuvem realmente tem hoje, o tamanho real de cada
+  entidade e o tempo real de rede. A correção não depende disso (o defeito é do PC),
+  mas o número exato do ganho no ambiente dele só ele pode confirmar no rodapé/painel.
+
+### 20.5 Resposta dada ao dono (resumo)
+"Volta" porque **em cada abertura o PC relê o diário inteiro da nuvem, em ordem** —
+e a releitura era quadrática, então o que ele fez por último chegava por último.
+Consertado em 6 pontos; medido antes/depois; ele só precisa atualizar o programa nos
+PCs (site recarrega, `.exe` republicar) e conferir o rodapé **v7.0.6**. Nada mudou na
+nuvem (motor 5.26.6 segue valendo) e nada de senha.

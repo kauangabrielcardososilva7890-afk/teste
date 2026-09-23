@@ -5031,3 +5031,83 @@ Ele recusou escolher na mão ("se é pra EU escolher o cliente esquece"). Então
 - Suíte **188 testes, 0 falhas** — novos: `test_ajustes_v6105.js` (39 asserts da leva) e as adições em `test_ajustes_v6104.js` (cura automática, CNPJ/parecido, 🔗, rodapé vivo) e `test_relatorio_teste_nf.js` (estados + filtro + contador).
 - Ritual de build: `npm run bundle` → `npm run sync` → `node mobile/sync-www.js` → cópia para `mobile/android/app/src/main/assets/public/` → `npm run motor`. Bundle sha256 `a71b9051b9e5ec9c`, `?v=6.1.4-a71b9051b9e5`.
 - Fim da leva: commit + `git push origin arena/01a0c087-teste` (regra: nada fica só no sandbox).
+
+
+## 23/09/2026 (cont.) — RODADA 11 · "PQ FICA VOLTANDO?" (v7.0.6)
+
+**Pergunta dele (literal):** *"pq fica voltando, tem como resolver? tudo cadastrado
+ate 28-08-2026 ao atualizar o sistema sobe rapindinho e o que foi feito depois
+demora atualizar e vai subindo aos poucos"*.
+
+**O que eu fiz primeiro:** fui MEDIR, em vez de mexer no escuro. Montei um banco de
+prova (`banco_de_prova_nuvem.js`, fora do programa) com uma base do tamanho da dele —
+**76.550 registros e 91.862 mudanças no diário** — e uma API de nuvem instantânea
+(o que sobra no cronômetro é o trabalho do PC).
+
+**O que a medição mostrou (número, não achismo):**
+
+| O que | Antes | Depois |
+|---|---|---|
+| Abrir o sistema e remontar a base inteira do diário | **17.240 ms** | **1.119 ms** |
+| O estado de AGORA na tela (passe rápido, 1ª página) | — (vinha por último) | **1 ms** |
+| Cada ciclo de 3 s em repouso (PC parado) | **767 ms** | **4 ms** |
+| Estado grande reescrito no navegador | a cada lote de 10 | só quando muda (rede de 30 s) |
+
+**A CAUSA (root cause, não sintoma):** no modo **SÓ NUVEM** — que é decisão dele
+(v6.1.5, regra 44) — o PC **não guarda a base**: em cada abertura ele apaga a cópia
+local e **relê o diário inteiro da nuvem**, em ordem, do antigo para o novo. Só que
+a releitura estava **quadrática**: para CADA mudança o motor varria a lista inteira
+procurando o registro (`findIndex`). Com 91 mil mudanças × listas de dezenas de
+milhares, são bilhões de comparações — e o custo **cresce conforme a base cresce**.
+Como a leitura vai do antigo para o novo, o começo voava (listas pequenas) e o FIM
+— que é justamente **o que ele acabou de fazer** — arrastava. Daí a frase exata:
+"o que foi feito depois demora e vai subindo aos poucos". E o "volta": enquanto a
+releitura não termina, a tela mostra o estado antigo; o que ele fez depois só
+aparece quando a leitura chega no fim.
+
+**Consertos (v7.0.6, todos no motor do PC — nada mudou na nuvem):**
+
+1. **Índice id → posição** no lugar da varredura, com **conferência antes de
+   confiar** (se alguém ordenou/trocou a lista, o índice é refeito na hora) e
+   crescimento incremental (acréscimo no fim). O caso "registro ainda não existe"
+   — que é o caso comum da remontagem — deixou de custar varredura.
+2. **Passe rápido:** ao abrir, o motor dá um pulo no FIM do diário e aplica as
+   últimas 3.000 mudanças **primeiro**, para a tela ficar com o estado de AGORA em
+   segundos; a leitura completa continua depois e recompõe o resto. Não há risco de
+   voltar versão: cada mudança só entra se for mais nova do que a versão conhecida.
+3. **Gravar sem travar a remessa:** a fila (pequena) vai para o disco na hora,
+   SEMPRE; o estado grande (6,5 MB) passou a ser gravado agrupado (300 ms) e só
+   quando muda (rede de segurança de 30 s). Antes ele era reescrito **a cada lote
+   de 10 registros enviados** — mais tempo gravando do que conversando com a nuvem.
+4. **A tela não para a cada 3 s:** a varredura completa (registro por registro,
+   para ver o que subir) agora é pulada quando nada mudou — e o sistema AVISA
+   quando grava (221 pontos usam `saveDB`) ou quando alguém apaga; de qualquer
+   forma ela roda a cada 10 s. Remessa grande continua correndo até o fim.
+5. **Menos peso na nuvem:** a conferência que solta a cópia local (contagem
+   fresca) era feita a cada 3 s; agora é no máximo 1× por minuto.
+6. **Cópia do registro** deixou de ser feita duas vezes por varredura (a limpeza
+   `_rt`/`_cf` passou para a hora de montar a remessa).
+
+**Meu erro no meio do caminho (registro honesto):** a primeira versão do índice
+refazia o mapa a cada registro novo — ficou **144 s**, oito vezes pior que os 17 s
+originais. O perfil de CPU apontou a função e o conserto foi o crescimento
+incremental. Lição: **medir depois de cada mudança de performance**, não confiar na
+intuição (e foi o banco de prova que pegou, não o teste de regra).
+
+**Validações:** `test_nuvem_rapida.js` (novo, **21 verificações** — índice,
+conferência, passe rápido, gravação agrupada, varredura sob demanda, peso na
+nuvem); suíte **209 passaram, 0 falharam** (4 pulam por falta de jsdom);
+`build_bundle` + `sync_build --check` OK (225 scripts); `mobile/sync-www.js` OK.
+
+**Versão:** 7.0.6 no `package.json`, `index.html`, nos 4 HTMLs de doc, no bundle e
+no `mobile/www`; carimbo do bundle `?v=7.0.6-2e1f2b0f95ff`.
+
+**O que depende dele:** atualizar o programa nos PCs (site recarrega; `.exe`
+republicar) e conferir o rodapé **v7.0.6**. Nada de senha, nada de motor da nuvem
+(5.26.6 continua valendo — a nuvem não mudou nesta rodada).
+
+**Limites desta rodada (não foi possível verificar diretamente):** o estado real do
+banco de produção (contagem de registros/mudanças por entidade) e o tempo real de
+rede até a Cloudflare — o ambiente daqui não tem internet. Os números acima são do
+trabalho do PC, que é onde estava o defeito; o ganho de rede vem de tabela (as
+consultas por leitura completa continuam as mesmas 95 páginas).

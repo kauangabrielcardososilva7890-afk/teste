@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 3c7983444a38d6ad
+ * scripts: 225 | sha256: 5f20ce56efb4f14b
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28732,6 +28732,10 @@ const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
 const MAX_OUTBOX=100;
 const PUSH_BATCH=10;
+// v7.0.6 — PÁGINA DO DIÁRIO: 1.000 mudanças por consulta (o teto do motor da
+// nuvem). Fica aqui em cima porque agora serve a DOIS caminhos: a leitura
+// completa do diário e o passe rápido da abertura (ver passeRapidoInicial).
+const POR_PAGINA=1000;
 // v7.0.1 (23/09/2026) — QUEIXA DO DONO: "o banco demora atualizar; o que faço
 // num computador não dá pra ver no outro". Eram dois motivos somados:
 //   1) o motor procurava novidade de 60 em 60 segundos;
@@ -28790,7 +28794,7 @@ const NAO_SINCRONIZA=new Set(['meta','__proto__','logs','notificacoes']);
 const JANELA_INTENCAO=60000;
 const CONFIRMA_SUMICO=3000;
 let intencaoAte=0;
-function marcarIntencaoDeExcluir(){ intencaoAte=Date.now()+JANELA_INTENCAO; }
+function marcarIntencaoDeExcluir(){ intencaoAte=Date.now()+JANELA_INTENCAO; sujo=true; }
 function houveIntencaoDeExcluir(){ return Date.now()<intencaoAte; }
 window.DIGICOPY_EXCLUSAO_INTENCIONAL=marcarIntencaoDeExcluir;
 
@@ -28914,7 +28918,7 @@ function definirSoNuvem(ligado){
   try{ localStorage.setItem(SO_NUVEM_KEY, ligado?'1':'0'); }catch(e){}
   aplicarSoNuvem();
   if(ligado){ try{ soltarCopiaLocal(); }catch(e){} }
-  else persist();
+  else persistAgora();
   return modoSoNuvem();
 }
 // Apaga o que ESTE computador guardou da base (navegador). Não toca no token da
@@ -28941,8 +28945,18 @@ function soltarCopiaLocal(){
 // Antes de soltar a cópia deste PC, confere na nuvem se ela tem TUDO o que
 // este PC tem. Sem resposta (internet caída) ou com a nuvem menor → NÃO solta
 // nada (melhor guardar demais do que perder algo que ainda não subiu).
+// v7.0.6 — de 3 em 3 segundos o PC pedia essa contagem FRESCA (o motor da nuvem
+// refaz a soma de todos os registros e mudanças para responder). Com base grande
+// isso pesa na nuvem e deixa as OUTRAS consultas (as que mostram os dados)
+// esperando. A conferência que decide soltar a cópia não precisa ser a cada 3 s:
+// agora é no máximo uma vez por minuto — e quando não confere, o único efeito é
+// o PC continuar guardando a cópia, que é o lado seguro.
+let ultimaConferenciaNuvem=0;
 async function nuvemTemTudo(){
   try{
+    const agora=Date.now();
+    if(agora-ultimaConferenciaNuvem<60000)return false;
+    ultimaConferenciaNuvem=agora;
     const call=api(); if(!call)return false;
     const st=await call('/v1/status?fresh=1',{method:'GET'});
     const naNuvem=Number(st&&st.totals&&st.totals.records)||0;
@@ -28994,10 +29008,53 @@ if(state.regras!==REGRAS){
   }
 })();
 let busy=false,applying=false,timer=null,failures=0,lastError='',lastTick=0;
+// v7.0.6 — VARREDURA SÓ QUANDO PRECISA (a tela parava a cada 3 segundos)
+// A varredura confere, registro por registro, se algo mudou aqui para subir.
+// Numa base grande é ela que bloqueia a tela (centenas de ms, a cada rodada,
+// mesmo sem NADA ter mudado). Agora ela só repete por três motivos: o sistema
+// gravou algo (saveDB/saveDBAgora — 221 pontos do programa usam isso), alguém
+// apagou algo (o vigia marca) ou, de qualquer forma, a cada 10 segundos — assim
+// nada pode ficar para trás, nem por um caminho que não avisou.
+// A fila de envio cheia (filaCheia) mantém a varredura correndo até o fim da
+// remessa: sem isso, uma remessa grande pararia em 100 registros por rodada.
+let sujo=false,varreduraFeita=0,filaCheia=false;
 
+// v7.0.6 — GRAVAR SEM TRAVAR A REMESSA (a queixa "vai subindo aos poucos")
+// O ESTADO guarda versões + conhecidos + hashes de TODOS os registros: numa base
+// de 76 mil registros isso passa de 6 MB. O motor gravava esse bloco inteiro a
+// CADA lote de 10 registros enviados — ou seja, o PC gastava mais tempo
+// reescrevendo o estado do que conversando com a nuvem, e cada lote demorava
+// mais conforme a base cresce. Agora:
+//   • a FILA (pequena) vai para o disco na hora, SEMPRE — é ela que não pode
+//     se perder se a luz cair (dado que ainda não subiu);
+//   • o bloco grande (estado) é gravado logo em seguida, agrupado numa única
+//     gravação (300 ms) — nada é perdido de verdade: o que não foi gravado é
+//     reaplicado na próxima leitura, porque cada mudança só entra se for mais
+//     nova do que a versão que este PC conhece.
+// persistAgora() continua existindo para os momentos em que a gravação do estado
+// precisa ser imediata (zerar a nuvem, escolher publicar/não publicar, fechar).
+// E, para não reescrever 6 MB a cada 3 s sem nada ter mudado: o bloco grande só
+// é gravado quando algo dele mudou de verdade (marcarEstado nos lugares que
+// mudam) — com uma rede de segurança de 30 s, para nenhum caminho esquecido
+// ficar sem gravar. Perder essa gravação por alguns segundos não estraga nada:
+// cada mudança só entra se for mais nova do que a versão conhecida, e o motor da
+// nuvem não regrava registro idêntico (responde "já está igual").
+let gravacaoAgendada=null,estadoMudou=true,estadoGravadoEm=0;
+function marcarEstado(){estadoMudou=true;}
+function gravarFila(){ try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));return true;}catch(e){lastError='Sem espaço para a fila de sincronização.';return false;} }
+function gravarEstado(){ try{localStorage.setItem(STATE_KEY,JSON.stringify(state));estadoMudou=false;estadoGravadoEm=Date.now();return true;}catch(e){lastError='Sem espaço para o estado da sincronização.';return false;} }
 function persist(){
-  try{localStorage.setItem(STATE_KEY,JSON.stringify(state));localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));return true;}
-  catch(e){lastError='Sem espaço para a fila de sincronização.';return false;}
+  const okFila=gravarFila();
+  if(gravacaoAgendada)return okFila;
+  if(!estadoMudou&&(Date.now()-estadoGravadoEm)<30000)return okFila;
+  try{ gravacaoAgendada=setTimeout(function(){gravacaoAgendada=null;gravarEstado();},300); }
+  catch(e){ return gravarEstado()&&okFila; }
+  return okFila;
+}
+function persistAgora(){
+  if(gravacaoAgendada){try{clearTimeout(gravacaoAgendada);}catch(e){}gravacaoAgendada=null;}
+  const okEstado=gravarEstado();
+  return gravarFila()&&okEstado;
 }
 function key(entity,id){return entity+'|'+id;}
 function clean(value){
@@ -29017,13 +29074,20 @@ function mutationId(){
 function api(){return window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.api;}
 function authorized(){return !!(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.token());}
 
+// v7.0.6 — A CÓPIA QUE SOBRAVA: até aqui esta função copiava (clean) o registro
+// inteiro de TODA a base em cada varredura, e o hash copiava de novo. Numa base
+// de 76 mil registros isso é o que travava a tela por centenas de ms a cada
+// rodada. Agora entrega o registro como ele está: o hash já aplica a limpeza
+// dentro dele (mesmo resultado de antes, porque limpar duas vezes é igual a
+// limpar uma) e a limpeza passou a ser feita no único lugar em que ela importa —
+// na hora de MONTAR o que vai para a nuvem.
 function entriesFor(entity,mode){
   if(typeof db==='undefined'||!db)return [];
   const value=db[entity];
-  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&x.id).map(x=>({id:String(x.id),data:clean(x)}));
-  if(mode==='root')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
-  if(mode==='contador')return value&&typeof value==='object'?[{id:'__root__',data:clean(value)}]:[];
-  if(mode==='map')return value&&typeof value==='object'?Object.keys(value).map(id=>({id:String(id),data:{value:clean(value[id])}})):[];
+  if(mode==='array')return (Array.isArray(value)?value:[]).filter(x=>x&&x.id).map(x=>({id:String(x.id),data:x}));
+  if(mode==='root')return value&&typeof value==='object'?[{id:'__root__',data:value}]:[];
+  if(mode==='contador')return value&&typeof value==='object'?[{id:'__root__',data:value}]:[];
+  if(mode==='map')return value&&typeof value==='object'?Object.keys(value).map(id=>({id:String(id),data:{value:value[id]}})):[];
   return [];
 }
 function findLocal(entity,mode,id){
@@ -29033,14 +29097,63 @@ function findLocal(entity,mode,id){
   if(mode==='map')return db[entity]&&Object.prototype.hasOwnProperty.call(db[entity],id)?{value:db[entity][id]}:null;
   return null;
 }
-function applyRemote(change){
-  const mode=definicoes()[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
+// v7.0.6 — A CONTA QUE FALTAVA (por que a base "vai subindo aos poucos")
+// Medido no banco de prova (`_tmp_bench.js`, fora do programa): com 76 mil
+// registros e 91 mil mudanças no diário, remontar a base levava 17 SEGUNDOS só
+// de trabalho do PC — e o custo crescia a cada mudança. O motivo: para CADA
+// mudança o motor varria a lista inteira procurando o registro (findIndex). Isso
+// é conta quadrática (90 mil × lista de dezenas de milhares = bilhões de
+// comparações). Como o diário é lido em ORDEM (do antigo para o novo), o começo
+// voava — listas pequenas — e o FIM, que é justamente o que ele acabou de fazer,
+// arrastava: era o "tudo até tal dia sobe rapidinho e o que foi feito depois
+// demora e vai subindo aos poucos".
+// Aqui entra um índice id → posição, que é conferido antes de ser usado: se
+// alguém mexeu na lista por fora (ordenou, trocou de lugar), a conferência
+// falha e o índice é refeito na hora. Nada de confiar em índice velho.
+const INDICE_LISTA={};
+function montarIndice(c,arr){
+  const m=new Map();
+  for(let j=0;j<arr.length;j++){const it=arr[j];if(it&&it.id!=null)m.set(String(it.id),j);}
+  c.mapa=m;c.len=arr.length;c.arr=arr;
+}
+function posicaoNaLista(entity,id){
+  if(typeof db==='undefined'||!db)return -1;
+  const arr=db[entity];
+  if(!Array.isArray(arr))return -1;
+  const alvo=String(id);
+  let c=INDICE_LISTA[entity];
+  if(!c||c.arr!==arr){ c={arr:arr,len:0,mapa:new Map()};INDICE_LISTA[entity]=c; }
+  if(c.len>arr.length){
+    montarIndice(c,arr);              // encurtou (exclusão): as posições mudaram
+  }else if(c.len<arr.length){
+    // Cresceu. Antes de aceitar como "acrescentou no fim" (que é o caso da
+    // remontagem inteira da base: só push), confere se o último registro
+    // conhecido continua no mesmo lugar. Se saiu do lugar, foi unshift/ordenação
+    // e o índice tem de ser refeito — nada de posição torta.
+    const ultimo=c.len-1;
+    const mesmoLugar=ultimo<0||(arr[ultimo]&&c.mapa.get(String(arr[ultimo].id))===ultimo);
+    if(mesmoLugar){
+      for(let j=c.len;j<arr.length;j++){const it=arr[j];if(it&&it.id!=null)c.mapa.set(String(it.id),j);}
+    }else montarIndice(c,arr);
+  }
+  c.len=arr.length;
+  const i=c.mapa.get(alvo);
+  if(i!==undefined&&arr[i]&&String(arr[i].id)===alvo)return i;
+  if(i!==undefined){ montarIndice(c,arr); const j=c.mapa.get(alvo); return (j!==undefined&&arr[j]&&String(arr[j].id)===alvo)?j:-1; }
+  // Não está no índice. Aqui vale a conferência feita acima (mesmo objeto de
+  // lista, tamanho compatível e último registro no lugar): o registro não existe
+  // nesta lista AINDA — é o caso normal da remontagem, o registro está chegando
+  // agora. Procurar na lista inteira aqui seria voltar à conta quadrática.
+  return -1;
+}
+function applyRemote(change,mapaDado){
+  const mode=(mapaDado||definicoes())[change.entity]||(change.entity&&!NAO_SINCRONIZA.has(change.entity)?'array':null);if(!mode)return false;
   const k=key(change.entity,change.recordId),knownVersion=Number(state.versions[k]||0);
   if(Number(change.version)<=knownVersion)return false;
   let changed=false;
   if(mode==='array'){
     if(!Array.isArray(db[change.entity]))db[change.entity]=[];
-    const arr=db[change.entity],idx=arr.findIndex(x=>x&&String(x.id)===String(change.recordId));
+    const arr=db[change.entity],idx=posicaoNaLista(change.entity,change.recordId);
     // v5.22.92 — ORÇAMENTO NUNCA SOME POR MANDADO DA NUVEM.
     // Orçamento sumindo foi o bug de "cliquei e não achei". Mesmo que outro
     // aparelho mande apagar, aqui o orçamento fica marcado como excluído
@@ -29048,6 +29161,7 @@ function applyRemote(change){
     // em vez de desaparecer de verdade.
     if(change.operation==='delete'&&change.entity==='orcamentos'){
       if(idx>=0){ arr[idx].status='excluido'; arr[idx].excluidoEm=arr[idx].excluidoEm||new Date().toISOString(); changed=true; }
+      marcarEstado();
       state.versions[k]=Number(change.version);state.known[k]=true;state.hashes[k]=hash(arr[idx]);
       return changed;
     }
@@ -29073,6 +29187,7 @@ function applyRemote(change){
     if(change.operation==='delete'){if(Object.prototype.hasOwnProperty.call(db[change.entity],change.recordId)){delete db[change.entity][change.recordId];changed=true;}}
     else if(change.data&&Object.prototype.hasOwnProperty.call(change.data,'value')){db[change.entity][change.recordId]=change.data.value;changed=true;}
   }
+  marcarEstado();
   state.versions[k]=Number(change.version);
   if(change.operation==='delete'){delete state.known[k];delete state.hashes[k];}
   else{state.known[k]=true;state.hashes[k]=hash(change.data);}
@@ -29147,6 +29262,52 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
 // foi — é o que o teste do motor confere).
 let cargaPedida=false;
 function pedirCarga(v){cargaPedida=!!v;}
+// ══ v7.0.6 — PASSE RÁPIDO: o estado de AGORA antes de recontar a história ═══
+// O diário da nuvem é lido em ordem (do antigo para o novo). Numa base grande,
+// isso significa que o que ele ACABOU de fazer é a ÚLTIMA coisa a aparecer — e
+// é exatamente a queixa: "tudo cadastrado até tal dia sobe rapidinho e o que foi
+// feito depois demora e vai subindo aos poucos".
+// Aqui o motor dá um pulo no FIM do diário e aplica as últimas mudanças
+// primeiro, para a tela ficar com o estado de AGORA em segundos; a leitura
+// completa continua logo depois e recompõe o resto.
+// Por que isso não pode "voltar versão": cada mudança só entra se for mais NOVA
+// do que a versão que este PC já conhece (a mesma trava de sempre). Aplicar a
+// mais nova primeiro só faz as antigas serem descartadas depois.
+// Só roda quando este PC vai remontar a base do zero (cursor 0 — é o caso do
+// modo SÓ NUVEM, em toda abertura) e só UMA vez por sessão.
+const PASSE_RAPIDO=3000;      // últimas 3 mil mudanças (3 páginas)
+let passeRapidoFeito=false;
+async function passeRapidoInicial(call){
+  if(passeRapidoFeito)return false;
+  passeRapidoFeito=true;
+  if(Number(state.cursor)>0)return false;              // já está em dia: não precisa
+  let maxSeq=0;
+  try{
+    const st=await comPaciencia(()=>call('/v1/status',{method:'GET'}));
+    maxSeq=Number(st&&st.totals&&st.totals.cursor)||0;
+  }catch(e){return false;}
+  if(!(maxSeq>PASSE_RAPIDO))return false;              // diário pequeno: a leitura já é rápida
+  const mapa=definicoes();
+  let cursor=Math.max(0,maxSeq-PASSE_RAPIDO),paginas=0,changed=false;
+  try{
+    do{
+      const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(cursor)+'&limit='+POR_PAGINA,{method:'GET'}));
+      for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
+      cursor=Number(data.nextCursor)||cursor;
+      paginas++;
+      if(!data.hasMore)break;
+    }while(paginas<5);
+  }catch(e){ return changed; }
+  if(changed){
+    applying=true;
+    try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}
+    finally{applying=false;}
+    // a tela da frente já pode mostrar o estado de agora (mesma trava de sempre:
+    // se estiver digitando, o redesenho fica pendente e entra na primeira brecha)
+    try{redesenhoPendente=true;tentarRedesenhoPendente();}catch(e){}
+  }
+  return changed;
+}
 async function pullAll(opcoes){
   const silencioso=!!(opcoes&&opcoes.silencioso);
   const cargaCompleta=silencioso?false:cargaPedida;cargaPedida=false;
@@ -29154,7 +29315,7 @@ async function pullAll(opcoes){
   let changed=false,pages=0;
   // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
   // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
-  const POR_PAGINA=1000;
+  // (v7.0.6: a constante subiu para o topo do arquivo, porque o passe rápido usa a mesma.)
   // v7.0.3 — ORDEM DO DONO: "de mostrar dados quero NADA que envolva eu fazer
   // alguma coisa, só quero que mostre normal". O aviso de carga passa a aparecer
   // SÓ quando este PC não tem base nenhuma (primeira vez/PC novo) — aí não há o
@@ -29164,10 +29325,15 @@ async function pullAll(opcoes){
   const comAviso=cargaCompleta&&baseVazia;
   if(comAviso)mostrarCargaNuvem(true,'conectando…');
   try{
+  // v7.0.6 — antes de recontar a história inteira, mostra o estado de agora
+  const mapa=definicoes();
+  if(await passeRapidoInicial(call))changed=true;
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
-    for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
-    state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
+    for(const item of (data.changes||[])){if(applyRemote(item,mapa))changed=true;}
+    const cursorAntes=Number(state.cursor)||0;
+    state.cursor=Number(data.nextCursor)||cursorAntes;
+    if(Number(state.cursor)!==cursorAntes)marcarEstado();
     pages++;
     if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
@@ -29211,8 +29377,11 @@ async function comPaciencia(fn){
 }
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
+let forcarVarredura=false;   // true quando alguém pediu na mão (check-up, publicar…)
 function scanLocal(){
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
+  if(!forcarVarredura&&!sujo&&!outbox.length&&!filaCheia&&Date.now()-varreduraFeita<10000)return 0;
+  varreduraFeita=Date.now();sujo=false;marcarEstado();
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
   // Fila de limpeza: some da nuvem o que não viaja mais, aos poucos.
@@ -29237,7 +29406,7 @@ function scanLocal(){
       if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
       if(held.has(k)||state.hashes[k]===h||pending.has(k))continue;
-      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:entry.data}});
+      outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(entry.data)}});
       pending.add(k);added++;
     }
     if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue; // v5.22.92 — este PC nunca manda apagar orçamento
@@ -29264,6 +29433,7 @@ function scanLocal(){
     }
     if(missing.length)schedule(CONFIRMA_SUMICO+500);
   }
+  filaCheia=outbox.length>=MAX_OUTBOX;
   persist();return added;
 }
 
@@ -29502,6 +29672,7 @@ async function tick(reason){
       state.paused=false;
     }
     let totalSent=0;
+    forcarVarredura=!(reason==='agendado'||reason==='heartbeat'||reason==='limite-conferido');
     for(let round=0;round<50;round++){
       if(trocou())return false;
       scanLocal();
@@ -29676,7 +29847,7 @@ async function resetCloudOnly(){
   trocarEstado(normalizarEstado(Object.assign(loadState(),{cursor:0,versions:{},hashes:{},known:{},initialPull:true,lastOk:0,paused:true,heldLocalOnly:[],pauseReason:'escolha-inicial',cloudGeneration:result.generation})));
   outbox=[];failures=0;lastError='';
   try{localStorage.removeItem(CONFLICT_KEY);}catch(e){}
-  persist();indicator(false,'Escolha o que fazer com os dados deste PC');
+  persistAgora();indicator(false,'Escolha o que fazer com os dados deste PC');
   return {result,paused:true};
 }
 // Opção 1 da escolha: enviar os dados atuais deste PC para a nuvem.
@@ -29697,7 +29868,7 @@ async function baixarTudoDaNuvem(){
   const pausadoAntes=!!state.paused,motivo=String(state.pauseReason||'');
   const antes=Number(state.cursor)||0;
   state.cursor=0;state.initialPull=true;
-  persist();
+  persistAgora();
   if(pausadoAntes)return {pausado:true,motivo,pausadoAntes:true,antes,durante:Number(state.cursor)||0};
   await tick('baixar-tudo-da-nuvem');
   return {pausado:false,antes,durante:Number(state.cursor)||0,conflitos:(state.conflicts||0)};
@@ -29705,13 +29876,13 @@ async function baixarTudoDaNuvem(){
 
 async function publishLocalToCloud(){
   const antes={held:(state.heldLocalOnly||[]).slice(),reason:state.pauseReason||''};
-  state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persist();
+  state.heldLocalOnly=[];state.pauseReason='';state.paused=false;state.initialPull=true;state.regras=REGRAS;persistAgora();
   const synced=await tick('publicacao-manual-completa');
   // Remessa grande não cabe numa tacada só, e a nuvem pode pedir calma no meio.
   // A escolha já foi feita: a sincronização FICA LIGADA e o resto sobe sozinho
   // em segundo plano. Voltar a pausar aqui era o que fazia tudo parar num 503.
   if(!synced){
-    if(!authorized()){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persist();throw new Error('Este computador perdeu a autorização da nuvem.');}
+    if(!authorized()){state.paused=true;state.heldLocalOnly=antes.held;state.pauseReason=antes.reason||'escolha-inicial';persistAgora();throw new Error('Este computador perdeu a autorização da nuvem.');}
     schedule(4000);
   }
   return true;
@@ -29724,7 +29895,7 @@ async function manterLocalSemEnviar(){
   const snap=localKeysSnapshot();
   const extras=planNaoAutorizarLocal([...snap], state.known);
   state.heldLocalOnly=extras;
-  state.paused=false;state.pauseReason='';state.initialPull=true;state.regras=REGRAS;persist();
+  state.paused=false;state.pauseReason='';state.initialPull=true;state.regras=REGRAS;persistAgora();
   await tick('escolha-nao-enviar');
   return extras.length;
 }
@@ -29794,7 +29965,7 @@ function estadoDetalhado(){
 (function destravarPausaIngreme(){
   try{
     if(state.paused&&(state.pauseReason==='escolha-inicial'||!state.pauseReason)){
-      state.paused=false;state.pauseReason='';state.regras=REGRAS;persist();
+      state.paused=false;state.pauseReason='';state.regras=REGRAS;persistAgora();
     }
   }catch(e){}
 })();
@@ -29959,7 +30130,7 @@ async function recuperarAutomatico(){
     }else if(falhas&&/admin/i.test(primeiroErro||'')){
       try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
         'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.',{tipo:'sync'}); }catch(e){}
-      state.recuperacaoV1=true;persist();   // não fica tentando a cada ciclo
+      state.recuperacaoV1=true;persistAgora();   // não fica tentando a cada ciclo
     }
   }catch(e){/* tenta de novo no próximo ciclo; nada aparece na tela */}
   finally{recuperandoAgora=false;}
@@ -30099,10 +30270,18 @@ try{
       // sobe para a nuvem). Fora do modo, grava como sempre gravou.
       const soNuvem=!!window.DIGICOPY_SO_NUVEM&&authorized();
       const r=soNuvem?true:original.apply(this,arguments);
-      if(!applying&&authorized())schedule(900);
+      if(!applying&&authorized()){sujo=true;schedule(900);}
       return r;
     };
     window.saveDB.__cfWrapped=true;
+  }
+  const urgente=window.saveDBAgora;
+  if(typeof urgente==='function'&&!urgente.__cfSujo){
+    window.saveDBAgora=function(){
+      if(!applying&&authorized())sujo=true;
+      return urgente.apply(this,arguments);
+    };
+    window.saveDBAgora.__cfSujo=true;
   }
 }catch(e){}
 // v7.0.3 — ao clicar de volta na janela (ou trazê-la para a frente), procura
@@ -30114,6 +30293,14 @@ try{document.addEventListener('click',()=>{setTimeout(()=>{try{tentarRedesenhoPe
 try{document.addEventListener('focusout',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},250);},true);}catch(e){}
 try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>1000)schedule(200);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
+// v7.0.6 — fechar/recarregar a janela grava o estado grande na hora (o resto do
+// tempo ele é gravado agrupado; aqui não pode ficar nada pendente).
+try{
+  const fechar=()=>{try{persistAgora();}catch(e){}};
+  window.addEventListener('pagehide',fechar);
+  window.addEventListener('beforeunload',fechar);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)fechar();});
+}catch(e){}
 aplicarSoNuvem();
 // A tela abre antes de a nuvem responder. Quando a base chega (e a tela estava
 // vazia), redesenha a tela atual para o dono ver os dados sem apertar nada.
