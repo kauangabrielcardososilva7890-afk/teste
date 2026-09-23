@@ -207,7 +207,24 @@ const tests=[
   "test_navegador_embutido.js",
   "test_lembrar_tela.js",
   "test_falta_emitir.js",
-  "test_importar_referencias.js"
+  "test_importar_referencias.js",
+  // AUDITORIA 23/09/2026 — testes que existiam no repositório mas NÃO estavam
+  // nesta lista: rodavam nunca (nem no npm test, nem em CI). Foram executados
+  // um por um e os que passam entraram aqui. Teste que ninguém roda não protege
+  // nada. Ver AUDITORIA_TECNICA.md §12.
+  "test_ajustes_v5183.js",
+  "test_ajustes_v5185.js",
+  "test_ajustes_v5186.js",
+  "test_ajustes_v5187.js",
+  "test_ajustes_v5189.js",
+  "test_ajustes_v5191.js",
+  "test_ajustes_v5192.js",
+  "test_ajustes_v5193.js",
+  "test_ajustes_v5196.js",
+  "test_ajustes_v51916.js",
+  "test_ajustes_v51920.js",
+  // trava do backdoor de login (CRÍTICO — ver AUDITORIA_TECNICA.md §12.1)
+  "test_login_sem_backdoor.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

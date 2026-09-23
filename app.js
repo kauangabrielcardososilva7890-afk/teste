@@ -420,9 +420,18 @@ function doLoginCNPJ(){
   if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
     emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
     if(!emp){toast('Empresa não encontrada','error'); return;}
-    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
+    // AUDITORIA 23/09/2026 — duas coisas ruins saíram daqui, sem tirar a
+    // credencial corporativa (ela fica: tirar poderia trancar o dono pra fora):
+    //  1) emp.senha=... SOBRESCREVIA a senha de CNPJ que o dono configurou em
+    //     "Dados da loja" por esta credencial fixa, toda vez que esta entrada
+    //     era usada. Agora só completa o cadastro (cnpj/fantasia), sem mexer na
+    //     senha dele.
+    //  2) o forEach reativava (ativo=true) qualquer usuário cuja senha fosse
+    //     uma senha de demonstração. Ou seja: desativar um usuário desses e
+    //     entrar por aqui o trazia de volta sozinho. Desativar usuário é
+    //     decisão do dono; nada no sistema pode desfazer isso em silêncio.
+    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
-    db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
     saveDB();
   }
   if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
@@ -511,7 +520,11 @@ function openModalCriarUsuarioPublic(){
 function listUsuariosDemo(){
   const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
   const users=db.usuarios.filter(u=>u.empresaId===pending.id);
-  alert('Usuários deste CNPJ:\n\n'+users.map(u=>`${u.login} / ${u.senha} - ${u.nome} (${u.perfil})`).join('\n'));
+  // AUDITORIA 23/09/2026 — esta função listava login / SENHA / nome de todos os
+  // usuários na tela (senha em texto puro, para quem estivesse na frente do
+  // PC). Agora mostra a mesma lista, sem as senhas. O alert() nativo aqui já
+  // cai no modal do sistema (popup_sistema_patch.js sobrescreve window.alert).
+  alert('Usuários deste CNPJ:\n\n'+users.map(u=>`${u.login} - ${u.nome} (${u.perfil})${u.ativo===false?' [inativo]':''}`).join('\n'));
 }
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
