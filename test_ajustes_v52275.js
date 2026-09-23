@@ -11,12 +11,14 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.75 ==');
-ok('versão continua na família 5.22',/^[56]\.\d+\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^\d+\.\d+\.\d+/.test(pkg.version));
 
 // ── nada de adivinhação ──
 ok('acabou o teto de exclusões',!/MAX_EXCLUSOES/.test(code));
 ok('acabou a regra dos 30%',!/missing\.length\/conhecidos>0\.30/.test(code));
-ok('sumiço sem ordem não apaga nada na nuvem',/if\(!houveIntencaoDeExcluir\(\)\)\{[\s\S]{0,400}delete state\.known\[k\]/.test(code));
+ok('sumiço sem ordem não apaga nada na nuvem',/if\(!missing\.some\(mandadoApagar\)\)\{[\s\S]{0,400}delete state\.known\[k\]/.test(code));
+ok('a marca do que ele apagou é durável (sobrevive a fechar o programa)',
+  /excluidosDeProposito/.test(code)&&/MARCA_EXCLUSAO_VALE/.test(code)&&/alvo\[k\]=\{em:Date\.now\(\),v:Number\(state\.versions\[k\]\|\|0\)\}/.test(code));
 ok('exclusão de propósito não tem limite de quantidade',!/missing\.length>/.test(code));
 
 // ── o sinal de intenção ──

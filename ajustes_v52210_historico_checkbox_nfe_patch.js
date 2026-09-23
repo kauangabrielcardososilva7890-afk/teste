@@ -148,7 +148,13 @@ function injetarHistoricoLeituras(){
   if(footer){
     if(!footer.querySelector('#btn-excluir-leitura-hist')){
       footer.insertBefore(
-        botao('btn-excluir-leitura-hist','neo-btn danger','<i class="ph ph-trash"></i>Excluir',excluirLeiturasMarcadas),
+        // v7.0.7 — esta função é interna do módulo (não existe em window), então o
+        // vigia de exclusões do motor não a alcança por nome. Sem avisar, apagar uma
+        // leitura aqui NUNCA chegava na nuvem e ela voltava na próxima abertura.
+        botao('btn-excluir-leitura-hist','neo-btn danger','<i class="ph ph-trash"></i>Excluir',
+          (window.DIGICOPY_CLOUD_SYNC&&typeof window.DIGICOPY_CLOUD_SYNC.exclusaoVigiada==='function')
+            ? window.DIGICOPY_CLOUD_SYNC.exclusaoVigiada(excluirLeiturasMarcadas)
+            : excluirLeiturasMarcadas),
         footer.firstChild
       );
     }

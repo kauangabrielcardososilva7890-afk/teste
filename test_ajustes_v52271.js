@@ -9,7 +9,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.71 ==');
-ok('versão continua na família 5.22',/^[56]\.\d+\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^\d+\.\d+\.\d+/.test(pkg.version));
 const mapa=S.definicoes();
 ok('auditoria não viaja mais',mapa.logs===undefined);
 ok('avisos não viajam mais',mapa.notificacoes===undefined);
@@ -17,7 +17,11 @@ ok('as listas de trabalho continuam viajando',mapa.clientes==='array'&&mapa.desp
 ok('só lista com botão de excluir manda exclusão',S.podeExcluir('clientes')===true&&S.podeExcluir('vendas')===true);
 ok('lista que o módulo remonta nunca manda exclusão',S.podeExcluir('despesasLocacao')===false&&S.podeExcluir('escolaOrc')===false);
 ok('só apaga na nuvem quando foi de propósito (regra nova da v5.22.75)',/houveIntencaoDeExcluir/.test(code)&&/JANELA_INTENCAO/.test(code));
-ok('sumiço sem ordem só faz o PC parar de acompanhar (regra nova da v5.22.75)',/if\(!houveIntencaoDeExcluir\(\)\)\{/.test(code));
+// v7.0.7 — a mesma regra, agora com a marca durável: só entra na fila de
+// exclusão o que ele apagou (intenção viva OU marca gravada do que saiu da
+// lista). O resto continua só "deixando de ser acompanhado".
+ok('sumiço sem ordem só faz o PC parar de acompanhar (regra nova da v5.22.75)',
+  /if\(!missing\.some\(mandadoApagar\)\)\{/.test(code)&&/houveIntencaoDeExcluir\(\)\|\|temMarcaDeExclusao\(k\)/.test(code));
 ok('item sem id não sobe (era cache, virava lixo)',/\.filter\(x=>x&&x\.id\)\.map\(x=>\(\{id:String\(x\.id\)/.test(code)&&!/h_'\+hash\(clean\(x\)\)/.test(code));
 ok('limpa da nuvem o que não viaja mais',/function marcarLimpeza/.test(code)&&/state\.limpar/.test(code));
 ok('limpeza vai aos poucos, sem rajada',/state\.limpar\.slice\(0,40\)/.test(code));

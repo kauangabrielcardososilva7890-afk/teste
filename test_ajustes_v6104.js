@@ -36,7 +36,11 @@ ok(perm.indexOf('PEDIDO DO DONO') >= 0 && perm.indexOf('REMOVIDO') >= 0, 'o moti
 console.log('== D1 — "que permissões são essas?" ==');
 ok(perm.indexOf('PERMISSÕES DO USUÁRIO — em língua de gente') >= 0, 'explicação em língua de gente criada');
 ok(perm.indexOf('As 3 caixas são EXTRAS') >= 0, 'deixa claro que as caixas são extras (não tiram o que o usuário já faz)');
-ok(perm.indexOf('p605-ajuda-perm') >= 0 && perm.indexOf('permissoesAjuda') >= 0, 'botão de ajuda na tela Usuários (não depende de abrir o lápis do usuário)');
+// v7.0.1 (23/09/2026) — ORDEM DO DONO: "em usuários tem uma caixa 'o que são as
+// 3 permissões?', retira isso". O botão saiu da tela; o TEXTO da explicação
+// continua no arquivo (window.permissoesAjuda), só não é mais injetado.
+ok(perm.indexOf('permissoesAjuda') >= 0, 'a explicação em língua de gente continua no arquivo (para reuso)');
+ok(perm.indexOf('p605-ajuda-perm') < 0 || perm.indexOf('não é mais injetado') >= 0, 'o botão da caixa não é mais injetado na tela Usuários (ordem de 23/09)');
 ok(perm.indexOf('Emitir NF (nota fiscal)') >= 0 && perm.indexOf('Apagar registros') >= 0 && perm.indexOf('Estornar registros') >= 0, 'as 3 permissões seguem existindo com nome claro');
 
 console.log('== C5 — ação fiscal tem que aparecer na AUDITORIA ==');
@@ -110,7 +114,7 @@ console.log('== Publicar o motor: o PASSO REAL (ordem dele: esquecer o worker) =
 ok(relHtml.indexOf('atualizar_motor_nuvem.cmd') >= 0, 'o relatório ensina o arquivo que existe (atualizar_motor_nuvem.cmd)');
 ok(relHtml.indexOf('CLOUDFLARE_API_TOKEN') < 0 && relHtml.indexOf('New workflow') < 0,
    'não manda mais mexer em token/painel/GitHub');
-ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.5"') >= 0,
+ok(relHtml.indexOf('Proceed? (y/n)') >= 0 && relHtml.indexOf('"versao":"5.26.6"') >= 0,
    'explica as respostas que a janela pede e o que tem que aparecer no fim');
 ok(fs.existsSync('atualizar_motor_nuvem.cmd') && /wrangler d1 migrations apply DB --remote/.test(fs.readFileSync('atualizar_motor_nuvem.cmd', 'utf8')),
    'o passo ensinado é o do arquivo de verdade (mesmos comandos)');

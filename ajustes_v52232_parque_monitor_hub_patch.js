@@ -40,7 +40,9 @@ async function lerStatusRede(parqueId){
   }
   var ip=String(eq.ip||eq.enderecoIp||'').trim();
   if(!ip){
-    var digitado=(typeof prompt==='function')?prompt('Qual o IP desta impressora na rede? (ex.: 192.168.0.50 — fica gravado no cadastro dela)',''):null;
+    var digitado=(typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('Informe o IP do equipamento (ex.: 192.168.0.50).\nFica gravado no cadastro desta impressora.',{titulo:'IP desta impressora na rede'})
+      : null;
     if(!digitado) return;
     digitado=digitado.trim();
     if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(digitado)){ tn('IP não parece certo. Exemplo: 192.168.0.50','error'); return; }

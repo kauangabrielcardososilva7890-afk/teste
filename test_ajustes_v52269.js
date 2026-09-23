@@ -19,7 +19,7 @@ new Function('window','localStorage','document','db',code)(window,{getItem:()=>n
 const S=window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== AJUSTES v5.22.69 ==');
-ok('versão continua na família 5.22',/^[56]\.\d+\.\d+/.test(pkg.version));
+ok('versão continua na família 5.22',/^\d+\.\d+\.\d+/.test(pkg.version));
 
 const mapa=S.definicoes();
 ok('lista nova entra sozinha na sincronização',mapa.despesasLocacao==='array'&&mapa.cartuchosMigrados==='array');

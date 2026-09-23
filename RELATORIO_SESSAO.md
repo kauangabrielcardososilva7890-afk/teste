@@ -3,9 +3,496 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.10** (rodada 22/09 nº8 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v7.0.5** (rodada 23/09 nº10 — branch `arena/01a0cf4a-teste`)  
 
 ---
+
+## 23/09/2026 — AUDITORIA TÉCNICA (branch `arena/01a0cf4a-teste`) · v6.1.10
+
+**Pedido:** auditoria técnica completa do ERP (responsabilidade de manutenção), procurando bugs, segurança, redundância, complexidade, divergência com a documentação — e corrigindo o que fosse confirmado, **sem quebrar o que já funciona**. Relatório completo em **`AUDITORIA_TECNICA.md`**.
+
+**Linha de base medida antes de mexer:** `npm run check` ✅ (sha256 `52c372ace67dbf7f`) · `npm run sync:check` ✅ · suíte **190 passaram / 0 falha aceita / 4 falharam**. As 4 são `Cannot find module 'jsdom'` (infraestrutura, não produto). Observação: a mensagem do commit do HEAD dizia "suite 194/0" — o número real era 190+4.
+
+**Causa raiz encontrada (a principal):** o **`window.prompt` não existe no Electron** — a função existe, mas lança `Error: prompt() is not supported` (fonte: `electron/lib/renderer/window-setup.ts`). Por isso a guarda `typeof prompt==='function'` espalhada pelo sistema era **inútil**: no `.exe` ela dá `true` e a chamada estoura. `popup_sistema_patch.js` já trocava `alert` e `confirm`, mas **`prompt` tinha ficado de fora** (nenhum arquivo do repo o sobrescrevia). Eram **11 chamadas em 6 arquivos**.
+- **2 botões vivos e mudos no `.exe`:** *Ler status (rede)* (`ajustes_v52232_parque_monitor_hub_patch.js`) e *Editar notas/tutorial* (`ajustes_v52239_avisos_erro_auditoria_patch.js`).
+- **1 código morto provado:** o botão antigo de PRODUÇÃO em `fiscal_guard_patch.js` nunca nasce — `window.abrirCentralNfe` é embrulhado 3× e o embrulho mais externo (`autocura_empresa_central_nf_tela_patch.js`, índice 207) só chama `navigateTo('central-nf')` e nunca o original. A proteção viva (linha 206-207) já usava `nfxPedirTexto` e **estava correta**. Código **não removido** (regra de não apagar código morto sem provar/testar) — só deixou de usar `prompt` nativo.
+
+**CORREÇÕES (8 arquivos):** `popup_sistema_patch.js` ganhou `pedirTextoSistema` / `mostrarTextoCopiar` e um `window.prompt` que nunca lança (registra em `window.__DIGICOPY_PROMPT_NATIVO`); os pontos vivos migraram para o popup do sistema; senha do certificado passou a usar **máscara**; `nf_transmissao_patch.js` nunca mais estoura no caminho de assinatura; `app.js` e `ajustes_v52256` copiam link sem `prompt`.
+
+**ADIÇÕES:** `AUDITORIA_TECNICA.md` (relatório). `test_runner.js` passou a separar **"não rodou — falta jsdom"** de falha de produto (antes os 4 testes de DOM apareciam como `❌`, parecendo defeito do sistema).
+
+**Validações executadas:** `npm run check` ✅ 225 scripts, sha256 `3234d8acb5b9489e` · `npm run sync:check` ✅ · **suíte 190 passaram / 0 falha aceita / 4 não rodaram (falta jsdom) / 0 falharam** — conjunto de falhas **idêntico ao da linha de base, nenhuma regressão** · `node --check` nos 8 arquivos ✅ · `node mobile/sync-www.js` ✅ (derivado do celular sincronizado, exigido por `test_ajustes_v5262.js`).
+
+**REGISTRADO E *NÃO* ALTERADO (de propósito):** pepper com valor fixo `'digicopy'` e SHA-256 de 1 rodada no Worker (`senhaHash`), senha do Buscador Escola no `db.config.escolaAuth` (sobe para a nuvem, mas é removida do backup) — **os dois exigem migração de hashes/dados e podem trancar o dono fora sem acesso ao banco de produção**; divergência `package.json > digicopy.branch`; risco estrutural dos **35 arquivos** que reatribuem `window.navigateTo`.
+
+**Pendências:** rodar `npm install` e a suíte inteira no PC do dono (para rodar também os 4 de jsdom) · decidir a branch oficial dos links · decidir se esta leva sobe versão (`npm run versao`). **Nada foi publicado nem deployado.**
+
+**Publicado:** commit `ac19e51` + branch `arena/01a0cf4a-teste` no GitHub + **PR #30** (base `main`).
+
+---
+
+## 23/09/2026 (cont.) — RODADA 2 · AUDITORIA DA NUVEM/SINCRONIZAÇÃO · commit `3276d82`
+
+**Pergunta dele:** *"a parte do banco de dados/nuvem está sincronizando nos outros computadores sem problema nenhum?"*
+
+**Resposta honesta:** o **desenho** foi auditado no código e está bem feito; **não** é possível afirmar "sem problema nenhum" porque **não há acesso ao banco de produção** (Cloudflare/D1) — nenhuma leitura de dado real foi feita. Um defeito real foi achado e corrigido.
+
+**DEFEITO CORRIGIDO (cota preventiva não reconhecida):** o Worker, no freio preventivo, responde `json({ok:false, quota:true, error:'pre-stop DIGICOPY: daily row write limit …'}, 429)`. O comentário no próprio Worker diz que o texto traz essas palavras "de propósito: é assim que o app reconhece a pausa" — mas o cliente monta a mensagem só de `message`/`aviso`, então o recado caía em `err.code` e sobrava `"Erro HTTP 429"`; e a detecção (`ehLimiteDiario`) testa o **texto**. Resultado: a pausa **não** era reconhecida → (`a`) o app ficava batendo na porta, 4 tentativas por rodada (~21s) a cada heartbeat, em vez de dormir até a virada das 21h; (`b`) o despertador da virada nunca era agendado; (`c`) aparecia "Nuvem pendente: Erro HTTP 429" em vez do recado em português; (`d`) **cada tentativa inflava o contador de escrita** (o `somarUso` conta a escrita **tentada**, antes do freio) → o freio disparava cada vez mais cedo para **todos** os PCs. Conserto aditivo de 2 linhas (`err.quota` no cliente + tratar a marca como limite diário no motor) + 5 asserts novos em `test_sync_quota_guard.js` (**comprovados não-vazios**: falham antes, passam depois). **Não precisa de deploy do Worker** — os dois arquivos viajam no bundle.
+
+**VERIFICADO E APROVADO (não mexido):** concorrência otimista por `baseVersion`; `UPDATE … WHERE version=?` em transação `DB.batch`; idempotência por `mutation_id`; `noop` que não regrava igual; pull incremental por cursor (500/página); `applyRemote` com trava de versão; **conflito aplica a nuvem e REENVIA a edição local** com `baseVersion` nova (não descarta mais — era o "salvei e sumiu"), cedendo só em concorrência real e avisando no sino; contador pega o **maior** (dois PCs não emitem o mesmo número); exclusão de orçamento é **soft**; líder entre abas (lease 90s); sem `setInterval`. **Portão fiscal também conferido no executor real** (`nfxAmb()` lê `NFG_PURE.nfgAmbiente`; produção exige permissão + digitar `PRODUCAO` + auditoria, e os endpoints trocam por ambiente).
+
+**REGISTRADO, NÃO ALTERADO:** (`1`) o botão **"Enviar para nuvem"** está **desligado** (stubs em `cloudflare_sync_patch.js:113-114`, índice 96 = último da cadeia) e é **inalcançável** hoje (varredura ampla não achou chamador) — mas o `uiWrapSync` mostraria **"Pronto! Este PC enviou os dados ☁️"** com o stub não fazendo nada: é **toast falso latente** que vira bug se religarem o botão; (`2`) **resíduo Supabase dentro do bundle**: `performance_patch.js` (índice 9) ainda embrulha o sync lendo `window.__supabaseSyncInternals`, **que não é definido em lugar nenhum** — código morto que o `test_nuvem_antiga_removida.js` **não** cobre (ele procura arquivos apagados, não símbolos internos); (`3`) `somarUso` conta escrita **tentada**, não efetiva.
+
+**Validações:** `npm run check` ✅ 225 scripts, sha256 `452fa4560ad657bf` · `npm run sync:check` ✅ · suíte **190 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** · `test_ajustes_v52280.js` e `test_sync_quota_guard.js` ✅ · `mobile/www` ressincronizado. **Nenhuma regressão.** Relatório atualizado (seções 10 e 11 do `AUDITORIA_TECNICA.md`).
+
+**PENDÊNCIAS DA RODADA 2:** (a) **os dois LAUDO não chegaram** — `/home/user/uploads/` não existe, `find /` não achou nada e o nome "laudo" **não está em nenhuma das 32 branches remotas**; pedir para colar o texto na conversa ou commitar o arquivo nesta branch; (b) confirmar se o dono quer o botão "Enviar para nuvem" **religado** (aí o toast falso tem de ser tratado) ou removido; (c) limpar o resíduo Supabase do `performance_patch.js` — poda em lote exige autorização dele (regra 11).
+
+---
+
+## 23/09/2026 (cont.) — RODADA 3 · SEGURANÇA DO LOGIN + HIGIENE DOS TESTES · commit `1c6abce`
+
+**De onde veio:** o dono respondeu às 3 perguntas da rodada 2 (tirar o botão manual, autorizar apagar código morto, explicar o `somarUso`) e mandou **os dois LAUDO**, colados no chat. Frase dele que liberou o trabalho: *"da minha decisão não precisa, pode fazer, pois quero testar as ações que você fez"*.
+
+**ACHADO CRÍTICO (confirmado no código, não no laudo — o laudo também apontou):** `ajustes_v52253_login_tela_branca_patch.js` devolvia um usuário **Admin fixo** para o login `admin` + senha de demonstração, **sempre**. O comentário dizia "fallback para admin inicial", mas não havia condição nenhuma. **E valia no sistema**: 5 patches definem `window.doLoginUser` e o que ganha é o **último** da ordem de carga — `login_otimizacao` → `login_dados_automaticos` → `sistema_clientes_loja` → `ajustes_v5186` → **`ajustes_v52253` (índice 177, o último)**. Quem digitasse o par entrava como Admin, **sem existir no banco, sem empresa e sem registro na auditoria** — e o par estava escrito no bundle público.
+
+**Conserto:** o fallback continua (para PC novo ele é legítimo; tirá-lo poderia trancar o dono fora), mas agora **só vale quando o banco ainda não tem nenhum Admin ativo**. Comprovado executando a função: banco vazio → entra (preservado); banco com Admin ativo → `null`; usuário e senha de verdade → entra; senha errada → `null`. **Trava nova:** `test_login_sem_backdoor.js` (19 verificações) prende o comportamento **e** garante que o `ajustes_v52253` continua sendo o último `doLoginUser` do bundle — se um patch novo passar na frente, a correção morreria em silêncio e agora o teste acusa.
+
+**ACHADO ALTO (`app.js` / `doLoginCNPJ`), que o laudo não tinha:** o caminho da credencial corporativa (`1`) **reativava** usuário sozinho (`ativo=true` em quem tivesse senha de demonstração — desfazia a desativação feita pelo dono), e (`2`) **sobrescrevia a senha de CNPJ configurada pelo dono** com a credencial fixa, gravando no banco (`saveDB()`). Os dois saíram. A credencial em si **ficou** (tirar poderia trancá-lo fora) — mas fica o alerta: ela está escrita no bundle público e **precisa ser trocada**.
+
+**ACHADO BAIXO:** `listUsuariosDemo` (app.js) mostrava `login / senha / nome` de **todos** os usuários na tela. Não é chamada por nada, mas mostrava senha em texto puro. Agora mostra login/nome/perfil, **sem senha**.
+
+**ORDEM DO DONO EXECUTADA:** (`1`) o envio/carregamento **manual** para a nuvem foi **removido** de `ajustes_v5191_patch.js` e `interface_patch.js` (junto com o `uiWrapSync` — era ele que diria *"Pronto! Este PC enviou os dados para a nuvem ☁️"* com a nuvem desligada). (`2`) Código morto apagado: **240 linhas** do caminho Supabase em `performance_patch.js` (344 → 110 linhas) — leitura de `window.__supabaseSyncInternals`, que não existe em lugar nenhum. Ficou o que é vivo: helpers puros + `saveDB` write-behind.
+
+**ACHADO MÉDIO — 36 testes que nunca rodaram:** o `test_runner.js` tem lista fixa (194 de 230 arquivos `test_*.js`). Rodei os 36 um por um: **12 passam** e entraram na suíte → **190 → 202 passando, 0 falhando**. Os 23 que falham ficaram **de fora** (não mascaro falha) e a causa raiz de cada grupo está na seção 12.4 do `AUDITORIA_TECNICA.md`: 19 são **versão cravada à mão** (`=== '5.24.34'`) — comprovei trocando só a versão num deles: as falhas caem de 7 para 4, e as 4 restantes são **contagens fixas** ("196 scripts", hoje 225) → a correção certa é comparar com `package.json`/`bundle-manifest.json`; 2 apontam para patches **que nunca existiram neste repositório** (`correcoes_relatorio_patch.js`, `vendas_chamados_reparo_patch.js` — conferido no histórico do git); 2 quebram no próprio teste (mock incompleto: `imprimirChamadoPDF` e `digicopyLoja`, que hoje vive em outros arquivos / não existe mais em lugar nenhum).
+
+**LAUDO CONFERIDO ITEM POR ITEM (§12.5):** produzido sobre **v6.1.3 / 222 scripts**; aqui está **v6.1.10 / 225**. Confirmados: backdoor (acima), `totals.cursor` no `/v1/status`, a pausa `escolha-inicial` e as **15 de 22** entidades de `PODE_EXCLUIR` (deliberado — religar causou o vaivém da v5.22.75). **VENCIDO:** o patch "migração de regras congela em toda carga" — o código atual usa `REGRAS='v6.1.7-conectou-sincroniza'` e **despausa sozinho** desde 22/09 por ordem do dono. ⛔ **Não aplicar**: reintroduziria a pausa que ele mandou tirar. Nada do laudo foi colado.
+
+**PENDÊNCIAS DA RODADA 3:** (`a`) **trocar as senhas que estavam no bundle** — não imprimo nenhuma; (`b`) decidir sobre a credencial corporativa de CNPJ; (`c`) a trava de 15 min/5 erros do laudo só vale se for **no Worker** (no navegador qualquer um contorna) — não implementei sem essa decisão; (`d`) modernizar os 19 testes de versão + tratar os 4 quebrados; (`e`) `npm install` no PC dele para rodar os 4 de jsdom.
+
+**Validações executadas:** `build_bundle.js --check` ✅ 225 scripts, sha256 `db55bcb615b6cf60` · `sync_build.js --check` ✅ v6.1.10, 0 soltos, 13 em `build.files` · `guardar_repo.js --check` ✅ · **suíte 202 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** · `node --check` em todos os arquivos tocados ✅ · `mobile/sync-www.js` ✅. **Nenhuma regressão.** Versão **não** foi trocada (6.1.10 continua).
+
+---
+
+## 23/09/2026 (cont.) — RODADA 4 · VERSÃO v7.0.0 + AS DUAS DECISÕES DELE
+
+**Pedidos dele nesta rodada:** (1) "da tela que listava login, senha e nome, deixa mostrar NENHUM, NADA — ou isso causaria algum problema?"; (2) "do somarUso deixo você fazer a melhor opção"; (3) "me fale os passos que EU devo realizar"; (4) **"MUDE A VERSÃO PARA V7.0.0 e CONFIRA TODOS OS ARQUIVOS para não dar problema"**.
+
+### 1) A tela que listava usuários: agora não mostra NADA
+
+Resposta à pergunta dele: **não causa problema nenhum**. Antes de mexer, varri o repositório inteiro (`.js`, `.html`, o bundle gerado, as cópias do celular e o e2e): **nada chama `listUsuariosDemo`**. Como não tem chamador, não mostrar nada não quebra nada. O nome da função ficou de pé (se algum dia alguém a chamar pelo console, ela responde sem vazar nada) e o corpo agora é só um aviso neutro. `test_login_sem_backdoor.js` passou a exigir isso: a função não pode voltar a citar `login`, `nome`, `perfil`, `senha` nem `db.usuarios`.
+
+### 2) `somarUso` — a melhor opção, aplicada no Worker
+
+**Decisão:** a contagem do dia passou para **DEPOIS** da validação do lote e **DEPOIS** do freio preventivo (continua **antes** das gravações). O motivo: lote inválido (400) e lote recusado pelo freio (429) **não gravam nada** — contar os dois inflava o contador do dia e, como o freio lê esse mesmo contador, cada recusa empurrava o freio para mais cedo em **todos** os PCs (o ciclo que a rodada 2 achou). Continua conservador: o lote aceito é contado inteiro, mesmo que alguma alteração dele vire duplicata/sem mudança — contador a mais é seguro, contador a menos não é. **5 asserts novos** em `test_sync_quota_guard.js` prendem essa ordem.
+
+⚠ **Isto é no Worker.** Só chega na nuvem quando o motor for regerado e publicado — `npm run motor` **não roda neste ambiente** (falta o wrangler/npm). Passo dele: rodar `npm run motor` e publicar (ver "Os passos que dependem dele", abaixo).
+
+### 3) VERSÃO v7.0.0 — e a caçada ao que ela quebrava
+
+`npm run versao -- 7.0.0` (package.json + os 3 index.html). Depois a **conferência de todos os arquivos**, que era o pedido:
+
+- **63 testes quebraram com o salto.** Todos pelo mesmo defeito: asserção de versão escrita como `/^[56]\./` ("a versão começa com 5 ou 6") ou `v=[56]\.\d+\.\d+`. Isso não é "amarrar à versão exata" — é pior: **a suíte inteira se recusa a aceitar uma versão 7**. As 84 ocorrências foram trocadas por `\d+\.\d+\.\d+` (aceita qualquer versão real) mantendo o que importa (o `?v=` do cache e o rodapé continuam conferidos). Dois testes que fixavam `=== '6.1.10'` agora leem a versão do `package.json` (não precisam mais ser reescritos a cada publicação).
+- **`package.json > digicopy.branch` estava apontando para a branch da sessão ANTERIOR** (`arena/01a0c087-teste`, parada em `26649cc3`). Ou seja: **todo link que os scripts imprimem estava levando para código velho** — inclusive o ZIP que o dono baixa. Corrigido para `arena/01a0cf4a-teste`; junto, `BUILD_EXE.md`, `cloudflare-worker/README.md` (a instrução da Production branch do Worker!) e `PASSO_A_PASSO_NUVEM_E_SITE.html` (o guia que ele segue para apontar o Pages e o Worker — estava ensinando a apontar para a branch antiga, e com a versão v6.1.3 e worker 5.26.4 na capa).
+- **`importar.html`, `GUIA_DE_TESTE_NF.html` (6 pontos) e `RELATORIO_DE_TESTE_NF.html` (4 pontos)** re-ancorados para v7.0.0 (as referências ao **worker** v5.26.5 e ao **gerente** v5.26.3 ficaram: são outros componentes).
+- **Nada no app compara versão** (varrido: sem `compareVersion`/`semver`/comparação de string de versão). No Worker existe `compararVersao`, que compara pedaço numérico por pedaço — `7.0.0 > 6.1.10` funciona. Consequência bonita e esperada: no primeiro envio com a versão nova, a nuvem **tira uma foto de backup rotulada com a versão anterior** antes de marcar a nova (`checarTrocaDeVersao`).
+
+### 4) Falso alarme que valeu registrar
+
+O `build_bundle.js` imprime `sha256 8262454ae8f6bbd7` e o `?v=` do cache saiu `7.0.0-34bac1e13734` — parecia divergência. **Não é:** o build carimba o **corpo** do bundle (sem o cabeçalho) e o `?v=` usa o **arquivo inteiro** (o hash do arquivo é `34bac1e13734…`). Os dois checks passam. Documentado para ninguém "consertar" isso depois.
+
+**Validações:** `build_bundle.js --check` ✅ 225 scripts (sha `8262454ae8f6bbd7`) · `sync_build.js --check` ✅ v7.0.0, 0 soltos, 13 `build.files` · **suíte 202 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** (era 139 passando e 63 falhando logo depois do bump) · `mobile/sync-www.js` ✅ · `guardar_repo.js --check` ✅. **Nenhuma regressão.**
+
+**Ainda pendente:** as senhas que estavam no bundle (troca), a decisão sobre a credencial de CNPJ, a trava de 15 min (só vale no Worker), os 19 testes antigos de versão cravada (`5.24.34`) e os 4 testes quebrados — estes **não** fazem parte da suíte e estão registrados no `AUDITORIA_TECNICA.md` §12.4.
+
+---
+
+## 23/09/2026 (cont.) — RODADA 5 · O DUPLO CLIQUE DAS TABELAS (commit `0f89e38`)
+
+Enquanto preparava os passos dele, apareceu um defeito de copiar/colar que estava
+escondido em **cinco telas**: usuários, auditoria, equipamentos, leituras e ordens de
+serviço tinham o duplo clique copiado da tabela de produtos —
+
+    ondblclick="openModal('produto','${p.id}')"
+
+— só que nessas telas a variável da linha é `u`, `l`, `e` ou `o`, e `p` não existe em
+lugar nenhum do arquivo. Como isso roda como atributo inline, o erro sai só no console:
+para quem usa, o duplo clique simplesmente **não fazia nada** (e o `cursor-pointer` da
+linha dava a impressão de que fazia).
+
+**Corrigido:** cada tabela agora abre o modal dela (`usuario`, `equipamento`, `leitura`,
+`os`); a auditoria, que é log e não tem tela de detalhe, ficou sem duplo clique.
+**Travado:** `test_linhas_tabela_clique.js` (19 verificações) — confere tela por tela que
+o modal é o da própria tabela e que a variável é a da própria linha, e quebra se alguém
+copiar linha errada de novo. Entrou no `test_runner.js`.
+
+**Suíte:** 203 passaram, 0 falharam (4 pulam por falta de `jsdom`).
+**Bundle:** 225 scripts, sha256 `06304bac1ecc2328`, carimbo `?v=7.0.0-3bc7ea1d0330`.
+
+## 23/09/2026 (cont.) — RODADA 6 · SINCRONIZAÇÃO, A IMPRESSORA QUE SUMIA E A SENHA QUE NÃO PODIA SER TROCADA
+
+**(conserto: commit `48882d1` · v7.0.1)**
+
+**O que ele relatou:** "o banco demora atualizar (sincronizar), o que faz em um computador
+não dá pra ver no outro"; "no rodapé tem um erro.txt, remove ele"; "em usuários tem uma
+caixa 'o que são as 3 permissões?', retira isso"; "quando eu coloco alguma impressora em
+algum contrato, não sei quanto tempo depois, ela some do nada"; e as 5 perguntas/respostas
+(versão, npm install, nomes das contas para trocar senha, credencial de CNPJ, trava de 15 min).
+
+### 1) A DEMORA PARA SINCRONIZAR — duas causas somadas (ALTO)
+
+- **A espera:** o motor procurava novidade de **60 em 60 segundos** e, com a janela atrás de
+  outra (ou minimizada), **não procurava mais nada** — o PC do balcão só se atualizava quando
+  alguém clicava nele. Agora: **15 s** com a janela à vista e **2 min** escondida (aba oculta
+  é estrangulada pelo navegador; pedir 15 s lá não adiantaria). Cada rodada continua sendo
+  **uma** consulta incremental por cursor.
+- **A tela parada:** a novidade descia para o banco, mas a **lista na tela continuava com o
+  retrato antigo** até trocar de tela e voltar. Agora a tela da frente se **redesenha sozinha**
+  quando a leitura trouxe mudança — com travas: não faz com janela escondida, com modal aberto,
+  com o cursor em campo, em tela de documento (vender/leitura/config/importar) nem em rajada
+  (no máximo 1 a cada 4 s). O redesenho chama o render da tela, **não** o `navigateTo`
+  (que rola a página para o topo e mexeria na barra lateral).
+
+### 2) A IMPRESSORA QUE SUMIA DO CONTRATO — causa raiz achada (CRÍTICO · perda de dados)
+
+`locacao_patch.js` (importação do sistema antigo) faz uma **limpeza de demonstração** e
+reconhecia contrato de exemplo pelo **número**: `/^CT-\d{4}-\d{4}$/`. Só que esse é
+**exatamente o formato que o próprio sistema gera** para contrato de verdade (`app.js`,
+`renderModalContrato`: `'CT-'+ano+'-'+0001`). Resultado: **contrato criado na tela era tratado
+como demonstração** e, a cada importação do sistema antigo, era apagado — levando junto o
+**parque** (as impressoras que ele tinha acabado de colocar no contrato), as leituras e as
+faturas. O **mesmo defeito** existia no filtro dos chamados (`/^OS-\d{4}-\d{4}$/`).
+
+**Conserto (causa raiz, nos dois lugares):** além do número, agora exige **não ter dono humano**
+(`criadoPor` vazio/'sistema'/'demo'). O que a pessoa cria na tela grava `criadoPor` = id do
+usuário logado → nunca mais entra na limpeza. Teste novo `test_contrato_impressora_nao_some.js`
+(17 verificações) roda a função real do arquivo e prova os dois lados (exemplo some, contrato
+de verdade fica). Varredura do mesmo padrão no repo: nenhum outro ponto apaga contrato/parque
+por formato de número.
+
+### 3) A SENHA QUE O DONO TROCA NÃO "PEGAVA" (CRÍTICO · segurança)
+
+Ele pediu os nomes das contas para trocar as senhas. Ao conferir: o `seedData` (**roda em toda
+carga**) reescrevia a senha dos dois usuários garantidos para o valor de fábrica
+(`if(u.senha !== g.senha){ u.senha = g.senha; }`) — ou seja, **a troca na tela Usuários
+voltava atrás na próxima abertura**, e a senha que está no histórico do repositório continuava
+valendo. Conserto: **a senha escolhida manda**; o padrão de fábrica só é usado ao **criar** o
+usuário na primeira vez (PC novo, base vazia). `patch_relatorio.js` (que trocava a senha do
+Denivaldo sozinho) agora roda **uma vez só**, com marca. Teste novo
+`test_senha_do_dono_manda.js` (10 verificações). **A rotação das senhas segue pendente e é
+dele** — nada de senha é impresso em relatório nenhum.
+
+### 4) AS DUAS REMOÇÕES QUE ELE PEDIU (BAIXO · manutenção)
+
+- **`erro.txt` do rodapé:** o botão saiu (as 3 cópias do `index.html`). O **motor** do erro.txt
+  fica: o aviso de erro continua abrindo/baixando o arquivo, e a função segue existindo.
+- **Caixa "O que são as 3 permissões?"** na tela Usuários: o botão não é mais injetado; o texto
+  da explicação continua no arquivo para reuso.
+
+### 5) TESTES E PORTÕES
+
+3 testes novos (30 + 17 + 10 verificações) registrados no `test_runner.js`.
+Suíte: **206 passaram, 0 falharam** (4 pulam por falta de `jsdom` neste ambiente).
+Bundle: 225 scripts, sha256 `0e4a03cd9317f97c`; carimbo `?v=7.0.1-...`.
+Versão **v7.0.1** aplicada e conferida nos 4 arquivos que carregam a versão do app
+(`index.html`, `mobile/www`, `GUIA_DE_TESTE_NF.html`, `RELATORIO_DE_TESTE_NF.html`,
+`importar.html`, `PASSO_A_PASSO_NUVEM_E_SITE.html`) — o bump quebrava 2 testes ancorados na
+versão antiga, consertados na mesma rodada.
+
+**O que ficou pendente:** motor da nuvem (o `motor_para_colar.js` só é regerado na máquina
+dele: `npm run motor`), rotação das senhas (nunca impressas aqui), decisão da credencial de
+CNPJ, trava de 15 min (hoje só no Worker), 19 testes `5.24.34` fora da suíte, 4 testes
+quebrados (§12.4) e os 4 que pulam por falta de `jsdom`.
+
+## 23/09/2026 (cont.) — RODADA 7 · RECUPERAR O QUE SE PERDEU, TRAZER A NUVEM DE UMA VEZ E A SENHA INVISÍVEL
+
+**(conserto: commit `ef7a2d5` · v7.0.2)**
+
+**O que ele relatou:** "muitos contratos já perderam impressoras, por exemplo o
+CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro também";
+"os dados da nuvem ainda demora aparecer, está aparecendo de pouco em pouco, queria
+que aparecesse todos de uma vez assim que conectar"; sobre a credencial: "manter,
+mas eu queria algo que não é possível ver a senha de nenhuma forma, não pode vazar
+nenhum dado"; sobre a trava de 15 min: "precisa não"; e o desabafo: "por que continua
+dando esses vários problemas seguidos? pode me falar QUALQUER coisa para resolver
+isso, até trocar de nuvem".
+
+### 1) RECUPERAR O QUE SE PERDEU (o pedido mais urgente)
+
+Descoberta que resolve o problema: **a nuvem não apaga o dado quando exclui** — ela
+marca a data da exclusão e **guarda o conteúdo** (`records.data_json` preservado;
+`handleRestore` no Worker devolve o registro a partir dele). Ou seja: os contratos do
+CAIXA ESCOLAR e as impressoras que sumiram **continuam na nuvem** e podem voltar.
+
+**Ferramenta nova (em Nuvem → Backups):** botão **"🩹 Trazer de volta o que foi
+excluído"**, que
+- lê a lista de excluídos (`/v1/deleted?limit=200`, só as entidades de negócio —
+  contratos, parque, leituras, OS, financeiro, clientes, produtos... NUNCA usuarios/
+  empresas/config/contadores);
+- mostra **antes** o resumo por entidade + o período ("42 contratos • 187 impressoras
+  de contrato • 310 leituras, excluídos entre X e Y") e pede confirmação no **modal do
+  sistema**;
+- restaura tudo de uma vez (`/v1/restore`), com contagem no progresso, e sincroniza;
+- avisa que os mais antigos vão aparecendo nas próximas cliques (a lista do Worker vem
+  do mais novo para o mais antigo, 200 por vez).
+Só ADMIN pode (é o próprio Worker que exige: `requireAdmin`). **Nada é apagado nem
+sobrescrito** — a operação só ADICIONA de volta. Teste: `test_recuperar_excluidos.js`
+(31 verificações, inclui "não chama rota de apagar").
+
+**Por que o código mora no patch de backups e não em arquivo novo:** o bundle tem a
+regra explícita "um arquivo por módulo", travada por 7 testes (o primeiro caminho,
+arquivo novo, quebrou os 7 — foi revertido e o código entrou no patch da tela de
+Backups, que é o mesmo assunto).
+
+### 2) A NUVEM APARECIA DE POUCO EM POUCO → AGORA VEM TODA DE UMA VEZ
+
+Eram duas coisas:
+- **tela enchendo em pedaços:** cada página de 500 registros era aplicada e a tela ia
+  mostrando os pedaços. Agora existe o **aviso de carga completa** (tela azul com
+  contagem: "N registros trazidos…"): ele cobre a tela na **primeira carga** (PC novo,
+  base vazia) e no "baixar tudo", e a lista só aparece quando chegou tudo. Some
+  sozinho no fim — e também se der erro (ninguém fica preso). Durante a carga, o
+  redesenho automático da tela fica desligado (`podeRedesenharSync` ganhou a trava).
+- **muitas idas e voltas:** a página passou de 500 para **1000 registros** por consulta
+  (`MAX_CHANGE_LIMIT` no Worker — vale depois do deploy; antes disso o cliente pede
+  1000 e recebe 500, sem quebrar nada).
+
+### 3) A SENHA NÃO É MAIS VISÍVEL EM LUGAR NENHUM (parte 1)
+
+O modal de usuário vinha com a **senha preenchida** (`value="${esc(u.senha)}"` nos três
+modais: app.js, ajustes_pos_final_patch.js e ajustes_v5196_patch.js) — qualquer um
+abria o código-fonte da página e lia. Agora:
+- o campo nasce **vazio** nos três modais;
+- ao **criar** usuário, a senha é obrigatória (como era);
+- ao **editar**, deixar em branco = **mantém a senha atual** (não apaga, não troca);
+- varredura no repo: **nenhum** outro ponto renderiza senha (`${...senha}` = 0 ocorrências).
+
+**Pendência declarada (próxima rodada, não feita agora):** o registro de usuário é
+sincronizado inteiro, então a senha do usuário **viaja e fica guardada na nuvem em
+claro** (dentro do `data_json`, e nos arquivos de backup). O conserto é mandar só um
+**hash** (e o login aceitar hash), com migração que não tranque nenhum PC antigo — é
+mudança no caminho de login, por isso vai em rodada própria, com testes.
+
+### 4) TRAVA DE 15 MINUTOS — decisão dele: NÃO
+
+Ele decidiu que não precisa ("nah, precisa não") e a razão foi explicada. Nada a fazer;
+o Worker continua com a proteção dele para o acesso pela internet.
+
+### 5) TESTES E PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`); `test_recuperar_excluidos.js`
+novo. Bundle: **225 scripts**, sha256 `9bba7e4cd0187252`; carimbo `?v=7.0.2-8f7ae54878be`;
+versão **v7.0.2** aplicada e conferida nos 5 arquivos que carregam a versão do app.
+O bundle voltou a 225 arquivos (a recuperação entrou dentro do patch de backups).
+
+**Passos dele (os que dependem da máquina dele):** atualizar o programa nos PCs;
+rodar `atualizar_motor_nuvem.cmd` (leva o freio/cota e a página de 1000); usar o botão
+de recuperação (precisa ser no aparelho ADMIN); trocar as senhas; e confirmar o rodapé.
+
+## 23/09/2026 (cont.) — RODADA 8 · SINCRONIZAÇÃO DE 3 EM 3 SEGUNDOS E O FIM DA TELA NA FRENTE
+
+**(conserto: commit `5db0fd0` · v7.0.3)**
+
+**Pedido dele:** "ainda demora de chegar, dá pra deixar instantâneo não?" e "de mostrar dados
+quero NADA que envolva eu fazer alguma coisa, só quero que mostre normal".
+
+### 1) POR QUE AINDA DEMORAVA — a aba esquecida (causa nova, achada agora)
+
+O motor só deixava **uma aba** (a "aba líder", por navegador) puxar novidades — de propósito,
+para não fazer o trabalho duas vezes. O furo: se quem segurava a liderança era uma **aba
+esquecida em segundo plano** (ou uma janela deixada atrás), ela continuava líder para sempre e
+a **aba que a pessoa estava olhando não puxava nada**. Resultado: tela velha, sem erro e sem
+aviso — e é exatamente a sensação de "demora de chegar".
+
+**Corrigido:** agora **qualquer aba visível puxa** novidade (caminho novo `tickSohLeitura`,
+só leitura); **quem envia remessa continua sendo só a líder** (uma remessa por navegador, como
+antes), e a aba visível não faz trabalho de líder (não mexe em exclusões/faxina).
+
+### 2) O RITMO: 3 SEGUNDOS
+
+| Situação | Antes | Agora |
+|---|---|---|
+| Janela à vista | 60 s (v7.0.0) → 15 s (v7.0.1) | **3 s** |
+| Janela escondida | parava | 15 s |
+| Clicar de volta na janela | esperava 10 s | **consulta na hora** (tolerância 1 s) |
+
+Cada rodada continua sendo **UMA consulta incremental por cursor** — não baixa a base de novo,
+não grava nada e **não gasta o contador de gravação do dia** (o medidor de leitura acumula na
+memória do Worker). Ordem de grandeza: 3 s ≈ 20 consultas/min por PC ≈ 12 mil por dia útil de
+10 h. O plano em uso tem 25 **bilhões** de leituras/mês e 10 milhões de requisições/mês
+incluídas — fica na casa de 1% do incluído. Regra 28 das REGRAS_PERMANENTES respeitada:
+continua **local-first, incremental, sem substituir a base inteira**.
+
+### 3) NADA NA FRENTE DA TELA (ordem dele)
+
+O aviso de carga (v7.0.2) aparecia em qualquer primeira leitura. Agora ele aparece **só quando
+este PC não tem base nenhuma** — aí não existe o que mostrar de qualquer forma. **Com base já
+aqui, a leitura corre em silêncio e a tela se atualiza sozinha no fim.** Nada para clicar,
+nada para esperar, nada na frente.
+
+### 4) O QUE EU CONFERI PARA NÃO QUEBRAR (pedido dele: "pensa nos outros menus, principalmente a nuvem")
+
+- **Índice da consulta:** `changes.seq` é `INTEGER PRIMARY KEY` (= rowid, busca por índice) e
+  ainda tem `idx_changes_cursor`. Ou seja: a consulta **não degrada** conforme a tabela cresce.
+- **Contagem de uso (`somarUso`):** grava numa tabela por dia (`uso_diario`, chave `dia`) —
+  **não varre** a tabela de mudanças. O freio preventivo é só de **gravação**; a leitura
+  acumula na memória e desce junto da próxima gravação ou a cada 15 min. **Consultar de 3 em
+  3 s não aumenta gravação nenhuma.**
+- **Medidor x visibilidade:** o medidor estima 60 leituras por consulta. Com o ritmo novo, esse
+  número **vai parecer maior na tela de gasto** (~700 mil/dia de estimativa, contra teto de
+  25 bilhões/mês). É estimativa conservadora, não gasto real — registrado aqui para não virar
+  susto.
+- **Orçamento por rodada:** `PUSH_BATCH=10` e `comPaciencia` (esperas 900 ms → 12 s em 503/429)
+  **não foram tocados** — era o que segurava a sobrecarga e os testes travam esses valores.
+- **Testes que travam o motor:** `test_cloudflare_data_sync.js` (39 verificações),
+  `test_sync_tela_ao_vivo.js` (**44**), `test_sync_quota_guard.js` (5 asserts de contagem do
+  dia) — todos verdes depois da mudança.
+
+### 5) COMO CHEGAR AO INSTANTÂNEO DE VERDADE (opções, com o preço de cada uma)
+
+| Opção | Como funciona | Ganho | Custo/risco |
+|---|---|---|---|
+| A (feita agora) | consulta de 3 em 3 s, imediata ao focar | 0 a 3 s | nenhum; só funciona depois de atualizar os PCs |
+| B (próxima, se ele quiser) | **espera longa** ("long polling"): o Worker segura a consulta até ~20 s e responde **no instante** em que houver novidade | < 1 s | precisa de campo novo no Worker **com recuo automático** (se o Worker for antigo, cai no caminho A sozinho); consome mais CPU do Worker |
+| C | **Durable Object + WebSocket** (a nuvem empurra a novidade) | instantâneo real | mudança de arquitetura: binding novo, migração, mais um componente para manter; exige justificativa escrita e rodada própria — **não fazer no meio de conserto** |
+
+**Recomendação:** ficar com **A** agora (é o que dá para sentir hoje, sem risco) e avaliar **B**
+depois de o motor da nuvem ser publicado com o `atualizar_motor_nuvem.cmd`.
+
+### 6) PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`; `playwright`/e2e não está
+instalado neste ambiente, então **não foi rodado** — registrado para não passar por testado).
+Bundle: 225 scripts, sha256 do corpo `...`; carimbo novo em `?v=7.0.3-...`.
+
+## 23/09/2026 (cont.) — RODADA 9 · AVISO INSTANTÂNEO E RECUPERAÇÃO QUE SE FAZ SOZINHA
+
+**(conserto: commit `0c7f157` · v7.0.4 · Worker 5.26.6 a publicar)**
+
+**Pedidos dele nesta rodada:** "não sabe o que é instantâneo já aparecer os dados? EU QUERO QUE
+MOSTRA INSTANTÂNEO SEM NENHUM ERRO"; "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS IMPRESSORAS,
+NADA"; "qualquer coisa que depende de você precisa nem perguntar eu, só faz o melhor sem dar
+problema". Ele também decidiu: **chega de mexer em senha** — "deixa a mesma senha, pois eu nunca
+nem compartilhei esse site direito, somente eu e meu pai". Decisão registrada: **não** mexer mais
+em rotação de senha (ele pode mudar de ideia; se mudar, é uma linha na tela Usuários).
+
+### 1) INSTANTÂNEO DE VERDADE — a nuvem avisa o PC (Worker 5.26.6)
+
+Antes: o PC perguntava de 3 em 3 s (v7.0.3). Agora, além disso, o PC **deixa um canal aberto**
+com a nuvem (`/v1/changes/watch`, long polling): quando alguém grava em qualquer PC, a nuvem
+responde **naquele instante** e o PC puxa e redesenha a tela. Sem clique, sem tela na frente.
+- Cada volta do canal custa **uma consulta minúscula** (`SELECT MAX(seq)`, atendida pela chave
+  primária de `changes`) a cada ~1 s, por no máximo 25 s, e **não grava nada**.
+- **Recuo garantido:** se o motor da nuvem ainda for o antigo, o PC recebe 404 uma vez e volta
+  sozinho para o ritmo de 3 s — nada quebra, nada aparece na tela.
+- O canal só abre com a janela à vista (janela escondida não gasta canal).
+
+### 2) RECUPERAÇÃO QUE SE FAZ SOZINHA (sem clicar em nada)
+
+Pergunta dele: por que o botão não trouxe nada? Duas causas foram tratadas:
+- **a lista era curta:** `/v1/deleted` devolvia só os 200 excluídos mais recentes e sem paginação
+  — o que foi apagado antes disso **nunca era alcançado**. Agora o motor aceita `before`
+  (página de até 1000) e o PC varre **tudo**, em levas, até o fim.
+- **o critério era rígido demais:** eu só aceitava quem tinha `criadoPor` de usuário de tela, e
+  várias telas de contrato/visita gravam a impressora como `criadoPor:'migracao'` (dado real
+  vindo do sistema antigo). Corrigido: **'migracao' é dono legítimo** — só fica de fora o dado
+  de exemplo (sem autor, 'sistema' ou 'demo').
+
+**Como funciona agora, sem ninguém pedir:** ao conectar, o PC (a) varre **todos** os excluídos
+da nuvem, (b) traz de volta o que tem dono de gente, (c) olha também as **fotos internas do PC**
+(IndexedDB) para o caso de a impressora nunca ter subido para a nuvem, (d) registra na
+**Auditoria** e avisa no **sino** quantos registros voltaram e de que tipo.
+- Nunca traz duas vezes o mesmo registro (lista do que já trouxe): se o dono apagar de propósito
+  depois, **não volta sozinho de novo**.
+- Não "gasta" a passada única enquanto o motor da nuvem for o antigo: fica pendente e tenta de
+  novo (de 60 em 60 s) depois do publicar — e avisa **uma vez** no sino que falta publicar.
+- Só ADMIN restaura (regra do Worker) — se o PC não for o admin, o sino avisa para fazer no PC
+  administrador.
+
+### 3) O ESTADO DO MOTOR DA NUVEM (o que ele já fez)
+
+Ele rodou o `atualizar_motor_nuvem.cmd`: migrações "No migrations to apply" e publicação do
+motor `digicopy-sync-api` (versão no ar: **5.26.5**). O que ainda falta: **rodar de novo** para
+publicar o **5.26.6** (o canal instantâneo + a varredura completa dos excluídos). O guia e o
+relatório agora citam 5.26.6 — e o próprio `/health` responde a versão, então a conferência é
+uma olhada na última linha da janela.
+
+### 4) TESTES E PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`). Testes ampliados:
+`test_recuperar_excluidos.js` (54 verificações, inclui o canal instantâneo, o critério do dono e
+o recuo do motor antigo) e `test_sync_tela_ao_vivo.js` (44). Versão **v7.0.4** aplicada e
+conferida nos 5 arquivos; bundle 225 scripts, sha256 do corpo `0e8825dcca79cc3f`.
+
+**Honestidade sobre teste:** os testes são de código (leem e executam as funções), **não** de
+navegador — o ambiente daqui não tem rede para abrir o site e o `playwright` (e2e) não está
+instalado. O que isso significa na prática: a lógica está coberta; o comportamento visual em si
+quem confirma é ele, olhando o rodapé (`v7.0.4`) e fazendo o teste dos dois PCs.
+
+## 23/09/2026 (cont.) — RODADA 10 · A CULPA NÃO ERA DA NUVEM: A TELA ESTAVA SECANDO NO PC
+
+**(conserto: commit `b5b88ff` · v7.0.5)**
+
+**Ele publicou o motor da nuvem 5.26.6** (feito por ele, conferido por ele — `"versao":"5.26.6"` no
+ar) e disse: **"AINDA CONTINUA DEVAGAR..."**. Fui procurar no PC, não na nuvem. Achei **cinco
+defeitos do próprio programa**, e o primeiro é grave:
+
+### 1) CRÍTICO — a tela parava de se atualizar PARA SEMPRE (defeito introduzido na v7.0.1)
+
+Na v7.0.1 eu criei a regra que decide se a tela pode se redesenhar sozinha — e coloquei `BUTTON`
+na lista do que "está sendo usado" (para não atrapalhar). **Erro:** clicar em qualquer MENU deixa
+o foco da página **no botão**. Dali em diante, todo redesenho era recusado... **para sempre**.
+
+E pior: como a mudança recebida já fica marcada como "conhecida" (`state.versions`), a próxima
+leitura **não a considera novidade** — logo, nada volta a pedir o redesenho. Resultado: a lista
+ficava velha de vez, sem erro, sem aviso, sem pista. É a descrição exata do que ele relatou.
+
+**Conserto duplo:**
+- botão **não** bloqueia mais (só campo de digitação `input/textarea/select` e área editável);
+- redesenho recusado **não se perde**: fica **pendente** e é aplicado na primeira brecha —
+  clicar em qualquer lugar, sair de um campo, ou o batimento de 3 s.
+
+### 2) ALTO — o painel do contrato (onde ficam as impressoras) não se atualizava
+
+A lista de contratos se redesenhava, mas o **painel de detalhe do contrato** (as impressoras
+daquele contrato) é separado — ficava velho. Agora, se estiver aberto, ele é redesenhado junto
+(o id do contrato é lido do próprio painel, sem depender de ordem de carga dos patches).
+
+### 3) ALTO — falha empurrava o relógio para 5 MINUTOS
+
+Cada falha dobrava a espera: 5 s → 10 → 20 → 40 → 80 → 160 → **300 s**. Um tropeço de internet
+deixava o PC quase parado. Agora, com a janela à vista, o recuo **para em 30 s**; escondida
+mantém o recuo longo (economia). E leitura boa **zera** o recuo (antes só o envio zerava).
+
+### 4) ALTO — marca antiga de "limite do dia" podia dormir o dia inteiro
+
+Se a marca `limiteAte` ficou gravada no aparelho (aconteceu em versões antigas), o PC só voltava
+a sincronizar **depois das 21h** — e a sensação era "devagar o dia todo". Agora é **sonda de 60
+em 60 s**: uma consulta por minuto, e assim que a nuvem responder bem a marca cai sozinha.
+
+### 5) MÉDIO — o canal instantâneo podia morrer no arranque
+
+Se ele abrisse antes da autorização da nuvem, saía e **nunca voltava**. Agora reagenda sozinho
+(a cada 5 s).
+
+### 6) NOVO — Diagnóstico na tela da Nuvem (nada escondido)
+
+Botão/área **"Diagnóstico deste computador"** dentro do painel da Nuvem:
+- versão que **este PC** está rodando e versão do **motor da nuvem** no ar (lê `/health`);
+- quando foi a última sincronização e quantas **pendências** para enviar;
+- se o **aviso instantâneo** está ligado;
+- se a sincronização está **parada** e por quê, e o último aviso da nuvem;
+- botão **"Conferir agora"**, que força uma sincronização, **mede o tempo em ms** e diz se a tela
+  está em dia. Nada de senha, token ou dado de negócio aparece ali.
+
+### 7) PORTÕES
+
+Suíte: **208 passaram, 0 falharam** (4 pulam por falta de `jsdom`); teste novo
+`test_tela_nao_seca.js` (26 verificações) trava os cinco defeitos. Bundle 225 scripts, sha256 do
+corpo `3c7983444a38d6ad`; versão **v7.0.5** nos 5 arquivos que carregam a versão.
+
+**Recado honesto:** os defeitos 1 a 5 são **meus** (das rodadas 6 a 9). O dono estava certo em
+dizer que não resolvia. Publicar o motor da nuvem não poderia resolver isso, porque o problema
+não estava na nuvem — estava no PC, e o item 1 travava justamente a parte visível.
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 
@@ -282,7 +769,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 <https://teste-60f.pages.dev>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0cf4a-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync` (o ZIP segue
 `package.json > digicopy.branch`). GitHack MORREU quando o repositório ficou
@@ -4544,3 +5031,184 @@ Ele recusou escolher na mão ("se é pra EU escolher o cliente esquece"). Então
 - Suíte **188 testes, 0 falhas** — novos: `test_ajustes_v6105.js` (39 asserts da leva) e as adições em `test_ajustes_v6104.js` (cura automática, CNPJ/parecido, 🔗, rodapé vivo) e `test_relatorio_teste_nf.js` (estados + filtro + contador).
 - Ritual de build: `npm run bundle` → `npm run sync` → `node mobile/sync-www.js` → cópia para `mobile/android/app/src/main/assets/public/` → `npm run motor`. Bundle sha256 `a71b9051b9e5ec9c`, `?v=6.1.4-a71b9051b9e5`.
 - Fim da leva: commit + `git push origin arena/01a0c087-teste` (regra: nada fica só no sandbox).
+
+
+## 23/09/2026 (cont.) — RODADA 11 · "PQ FICA VOLTANDO?" (v7.0.6)
+
+**Pergunta dele (literal):** *"pq fica voltando, tem como resolver? tudo cadastrado
+ate 28-08-2026 ao atualizar o sistema sobe rapindinho e o que foi feito depois
+demora atualizar e vai subindo aos poucos"*.
+
+**O que eu fiz primeiro:** fui MEDIR, em vez de mexer no escuro. Montei um banco de
+prova (`banco_de_prova_nuvem.js`, fora do programa) com uma base do tamanho da dele —
+**76.550 registros e 91.862 mudanças no diário** — e uma API de nuvem instantânea
+(o que sobra no cronômetro é o trabalho do PC).
+
+**O que a medição mostrou (número, não achismo):**
+
+| O que | Antes | Depois |
+|---|---|---|
+| Abrir o sistema e remontar a base inteira do diário | **17.240 ms** | **1.119 ms** |
+| O estado de AGORA na tela (passe rápido, 1ª página) | — (vinha por último) | **1 ms** |
+| Cada ciclo de 3 s em repouso (PC parado) | **767 ms** | **4 ms** |
+| Estado grande reescrito no navegador | a cada lote de 10 | só quando muda (rede de 30 s) |
+
+**A CAUSA (root cause, não sintoma):** no modo **SÓ NUVEM** — que é decisão dele
+(v6.1.5, regra 44) — o PC **não guarda a base**: em cada abertura ele apaga a cópia
+local e **relê o diário inteiro da nuvem**, em ordem, do antigo para o novo. Só que
+a releitura estava **quadrática**: para CADA mudança o motor varria a lista inteira
+procurando o registro (`findIndex`). Com 91 mil mudanças × listas de dezenas de
+milhares, são bilhões de comparações — e o custo **cresce conforme a base cresce**.
+Como a leitura vai do antigo para o novo, o começo voava (listas pequenas) e o FIM
+— que é justamente **o que ele acabou de fazer** — arrastava. Daí a frase exata:
+"o que foi feito depois demora e vai subindo aos poucos". E o "volta": enquanto a
+releitura não termina, a tela mostra o estado antigo; o que ele fez depois só
+aparece quando a leitura chega no fim.
+
+**Consertos (v7.0.6, todos no motor do PC — nada mudou na nuvem):**
+
+1. **Índice id → posição** no lugar da varredura, com **conferência antes de
+   confiar** (se alguém ordenou/trocou a lista, o índice é refeito na hora) e
+   crescimento incremental (acréscimo no fim). O caso "registro ainda não existe"
+   — que é o caso comum da remontagem — deixou de custar varredura.
+2. **Passe rápido:** ao abrir, o motor dá um pulo no FIM do diário e aplica as
+   últimas 3.000 mudanças **primeiro**, para a tela ficar com o estado de AGORA em
+   segundos; a leitura completa continua depois e recompõe o resto. Não há risco de
+   voltar versão: cada mudança só entra se for mais nova do que a versão conhecida.
+3. **Gravar sem travar a remessa:** a fila (pequena) vai para o disco na hora,
+   SEMPRE; o estado grande (6,5 MB) passou a ser gravado agrupado (300 ms) e só
+   quando muda (rede de segurança de 30 s). Antes ele era reescrito **a cada lote
+   de 10 registros enviados** — mais tempo gravando do que conversando com a nuvem.
+4. **A tela não para a cada 3 s:** a varredura completa (registro por registro,
+   para ver o que subir) agora é pulada quando nada mudou — e o sistema AVISA
+   quando grava (221 pontos usam `saveDB`) ou quando alguém apaga; de qualquer
+   forma ela roda a cada 10 s. Remessa grande continua correndo até o fim.
+5. **Menos peso na nuvem:** a conferência que solta a cópia local (contagem
+   fresca) era feita a cada 3 s; agora é no máximo 1× por minuto.
+6. **Cópia do registro** deixou de ser feita duas vezes por varredura (a limpeza
+   `_rt`/`_cf` passou para a hora de montar a remessa).
+
+**Meu erro no meio do caminho (registro honesto):** a primeira versão do índice
+refazia o mapa a cada registro novo — ficou **144 s**, oito vezes pior que os 17 s
+originais. O perfil de CPU apontou a função e o conserto foi o crescimento
+incremental. Lição: **medir depois de cada mudança de performance**, não confiar na
+intuição (e foi o banco de prova que pegou, não o teste de regra).
+
+**Validações:** `test_nuvem_rapida.js` (novo, **21 verificações** — índice,
+conferência, passe rápido, gravação agrupada, varredura sob demanda, peso na
+nuvem); suíte **209 passaram, 0 falharam** (4 pulam por falta de jsdom);
+`build_bundle` + `sync_build --check` OK (225 scripts); `mobile/sync-www.js` OK.
+
+**Versão:** 7.0.6 no `package.json`, `index.html`, nos 4 HTMLs de doc, no bundle e
+no `mobile/www`; carimbo do bundle `?v=7.0.6-2e1f2b0f95ff`.
+
+**O que depende dele:** atualizar o programa nos PCs (site recarrega; `.exe`
+republicar) e conferir o rodapé **v7.0.6**. Nada de senha, nada de motor da nuvem
+(5.26.6 continua valendo — a nuvem não mudou nesta rodada).
+
+**Limites desta rodada (não foi possível verificar diretamente):** o estado real do
+banco de produção (contagem de registros/mudanças por entidade) e o tempo real de
+rede até a Cloudflare — o ambiente daqui não tem internet. Os números acima são do
+trabalho do PC, que é onde estava o defeito; o ganho de rede vem de tabela (as
+consultas por leitura completa continuam as mesmas 95 páginas).
+
+
+## 23/09/2026 (cont.) — RODADA 12 · "PROCURE MAIS PROBLEMAS, MAS VERIFIQUE" (v7.0.7)
+
+**Pedido dele (literal):** *"procure por mais problemas, se achar, verifique se
+aquilo realmente é um problema, já que fica achando parecelado os problemas"*.
+Ou seja: achar mais, **mas provar antes de falar** — e não entregar achado pela metade.
+Foi o que fiz: para cada suspeita, uma prova em código (e, quando deu, um teste que
+roda o motor de verdade). O que **não** se confirmou está listado no fim, com a
+evidência — inclusive três coisas que eu mesmo tinha anotado como pendência.
+
+### 1) CRÍTICO — "apaguei e o registro voltou" (defeito provado, consertado)
+Montei uma prova (`banco_de_prova_nuvem.js` e depois teste permanente) que carrega o
+**motor de verdade** com uma nuvem de mentira e usa o **mesmo caminho do sistema**
+(a função de apagar que o vigia embrulha). Resultado antes do conserto:
+
+| Situação | Antes | Depois |
+|---|---|---|
+| Apagar e fechar o programa antes de a exclusão subir | contrato **VOLTA** e a exclusão é perdida | **não volta**, a nuvem apaga |
+| Internet cair logo depois de apagar | idem | idem |
+| Apagar com o motor funcionando | funcionava | continua funcionando |
+
+Motivo: a "intenção" de apagar vivia **só na memória** (janela de 60 s) e o motor só
+varria o que mudou **depois** de conseguir falar com a nuvem. Se a janela fechasse
+antes, o motor entendia "ninguém mandou apagar", parava de acompanhar o registro — e
+a nuvem, que ainda tinha o registro, devolvia ele na abertura seguinte.
+
+**Consertos (motor, v7.0.7):**
+1. **Marca durável do que ele apagou.** Ao clicar em apagar, o motor compara a lista
+   **antes e depois** da função de exclusão (nada de adivinhação: o que sumiu naquele
+   instante foi apagado por ele) e grava `{versão, quando}` no estado. Sobrevive a
+   fechar o programa e a ficar sem internet.
+2. **Registro que voltou sai de novo.** Se o diário da nuvem devolver um registro
+   marcado, ele é retirado da lista outra vez e a ordem de apagar entra na fila. Se
+   outro PC editou depois, **a edição vale** (nada de apagar por cima de gente).
+3. **Nuvem recusando? O motor para de insistir** (sem laço batendo na porta).
+4. **Quatro caminhos de apagar estavam fora do vigia** — descobertos por um
+   levantamento em todo o repositório, função por função, e cada um conferido:
+   `removerRegistro` (ficha do cliente: venda, conta a receber, chamado, leitura),
+   `excluirChamadoV52422`, `estornarVenda`, `estornarOrcamentosMarcados`. Nesses, a
+   exclusão **nunca chegava na nuvem**.
+5. **Botão "Excluir" do histórico de leituras**: `excluirLeiturasMarcadas` é uma
+   função **interna do módulo** (não existe em `window`), então o vigia não podia
+   alcançá-la por nome. Agora existe a ferramenta `exclusaoVigiada(fn)` e aquele
+   botão a usa.
+6. **"Unir clientes repetidos"** removia os duplicados só neste PC: a nuvem continuava
+   com eles e a união parecia não ter funcionado (os repetidos voltavam). Agora cada
+   duplicado unido é marcado como apagado de propósito.
+7. **A liderança segurava o envio depois de reabrir:** o bilhete de "quem envia" vale
+   90 s e sobrevive a um F5 — então, logo depois de abrir, a janela passava até
+   90 segundos só lendo. Agora vale 30 s e é devolvido ao fechar a janela.
+
+### 2) MÉDIO — a recuperação do que foi apagado repetia em cada PC
+A marca de "já recuperei" era só deste computador: um PC novo (ou com o navegador
+limpo) refazia a recuperação inteira e trazia de volta **tudo o que já tinha sido
+apagado um dia** — inclusive o que foi apagado de propósito depois. Agora, ao
+terminar sem falhas, fica um carimbo na configuração da nuvem e os outros PCs não
+repetem. O **botão manual** do painel da Nuvem continua lá para qualquer necessidade
+futura.
+
+### 3) BAIXO — código morto do botão `erro.txt`
+Duas linhas em `ajustes_v52245_rodape_versao_patch.js` que "não perdiam" um botão que
+**já não existe em nenhuma tela**. Removidas (com comentário no lugar).
+
+### 4) O QUE EU VERIFIQUEI E **NÃO** É PROBLEMA (com a evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| Rodapé reintroduz o botão `erro.txt` | o rodapé do `index.html` não tem botão nenhum e nada o cria; o `querySelector` não acha nada | **não é problema** (era código morto) |
+| `renderContratos` troca a lista por uma filtrada | troca só durante o desenho e devolve no `finally` | não é problema |
+| `salvarImpressoraContrato` remove um equipamento | o duplicado é criado e removido **no mesmo instante**, antes de qualquer envio | não é problema |
+| `state.limpar` (fila de limpeza) | só recebe listas que **não viajam** (`logs`, `notificacoes`) | não é problema |
+| Automação das leituras apaga conta a receber | o caminho depende de uma flag (`estornar='S'`) que **nenhuma tela liga** hoje | não é problema |
+| `removeTecnico` (app.js) apaga técnico | **código morto** (nenhum chamador); passou a ficar vigiado por garantia | não é problema |
+| `excluirTodos` apaga tudo | apaga **backups** da nuvem (`DELETE /v1/backups`), não dados | não é problema |
+| Envio em lotes de 10 / fila de 100 | freio de propósito para não estourar a cota gratuita do banco | não é problema |
+| `soltarCopiaLocal` a cada ciclo | em modo SÓ NUVEM não há o que apagar; efeito nenhum | não é problema |
+
+### 5) POSSÍVEL PROBLEMA (não confirmado — precisa de decisão/observação)
+- **`config` é "root"**: a nuvem devolve o objeto inteiro da configuração. Se dois
+  PCs mudarem **campos diferentes** da configuração ao mesmo tempo, um sobrescreve o
+  outro (última escrita vence). Confirmado no código; **não foi alterado** porque
+  mexer nisso muda o formato do que viaja (precisa de decisão e de teste com dois PCs).
+- **Financeiro das leituras**: se algum dia a flag de estorno voltar a ser usada, a
+  conta a receber removida seria recriada com **id novo** e a antiga ficaria na nuvem
+  (duplicada). Hoje o caminho é inalcançável — registrado para o futuro.
+
+### 6) Testes desta rodada
+- **Novo `test_exclusao_nao_volta.js`**: roda o motor de verdade nas 3 situações
+  acima e ainda **audita o repositório inteiro** para garantir que nenhum caminho de
+  exclusão ficou fora do vigia e fora da lista do que é automático (**31 verificações**).
+- Suíte: **210 passaram, 0 falharam, 4 não rodaram** (falta `jsdom` no ambiente).
+- `build_bundle` + `sync_build --check` OK (225 scripts); `mobile/sync-www.js` OK;
+  carimbo `?v=7.0.7-2f04aed0f1ef`.
+- **Não rodado:** `e2e/` (Playwright não instalado) e os 4 que exigem `jsdom`.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+  quantos registros apagados existem hoje na nuvem e se algum deles já voltou; a prova
+  foi feita com uma nuvem de mentira, com o mesmo motor.
+
+### 7) O que depende dele
+Atualizar o programa nos PCs e conferir o rodapé **v7.0.7** (site recarrega; `.exe`
+republicar). **Nada na nuvem** (motor 5.26.6 continua valendo) e **nada de senha**.

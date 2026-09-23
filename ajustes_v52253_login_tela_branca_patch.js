@@ -33,8 +33,18 @@
         return matchLogin && matchSenha;
       });
       if(found) return found;
-      // Fallback para admin inicial
-      if(dL === 'admin' && (dS === 'admin' || dS === '123' || dS === 'admin123')){
+      // Fallback para admin inicial — AUDITORIA 23/09/2026: era uma PORTA DOS
+      // FUNDOS PERMANENTE. Valia sempre, então `admin` + `admin123` (ou `123`)
+      // entrava como perfil Admin mesmo DEPOIS de o dono trocar a senha, sem
+      // existir no banco, sem empresa e sem registro na auditoria. E o bundle é
+      // público, então o par estava escrito para qualquer um ler.
+      // Agora o fallback só vale quando o banco AINDA NÃO TEM nenhum Admin
+      // ativo — que é o caso para o qual ele foi escrito ("admin inicial",
+      // banco novo). Existindo Admin ativo, quem manda é a senha do banco.
+      var jaTemAdmin = list.some(function(u){
+        return !!(u && u.ativo && fold(u.perfil) === 'admin');
+      });
+      if(!jaTemAdmin && dL === 'admin' && (dS === 'admin' || dS === '123' || dS === 'admin123')){
         return {
           id: 'usr_admin',
           nome: 'Administrador',

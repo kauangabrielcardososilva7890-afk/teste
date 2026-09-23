@@ -51,7 +51,11 @@ function pintarRodape(){
     // nuvem não estava conectada. Agora diz onde o banco está de verdade.
     var online = false;
     try{ online = !!(window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.token === 'function' && window.DIGICOPY_CLOUD.token()); }catch(e){}
-    var btnErro = left.querySelector('button');            // não perder o botão erro.txt
+    // v7.0.7 — aqui havia um `querySelector('button')` para "não perder o botão
+    // erro.txt" ao reescrever o rodapé. O botão foi removido a pedido do dono
+    // (23/09/2026) e não existe em nenhuma tela; a linha só reintroduzia o texto
+    // morto. Se algum dia voltar um botão aqui, ele precisa ser re-appendado
+    // neste ponto. (Conferido: o rodapé atual não tem nenhum botão.)
     // v6.1.5 — MODO SÓ NUVEM (ordem do dono): quando está ligado, este PC não
     // guarda a base; o rodapé diz isso com todas as letras.
     var soNuvem = false;
@@ -59,7 +63,6 @@ function pintarRodape(){
     left.textContent = soNuvem
       ? 'Sistema Digicopy • dados só na nuvem (este PC não guarda cópia)'
       : (online ? 'Sistema Digicopy • banco neste PC + nuvem conectada' : 'Sistema Digicopy • banco só neste PC');
-    if(btnErro) left.appendChild(btnErro);
     left.title = soNuvem
       ? 'Tudo o que você cria vai para a nuvem na hora. Este computador não guarda cópia dos dados — ao abrir, ele lê tudo da nuvem de novo.'
       : (online

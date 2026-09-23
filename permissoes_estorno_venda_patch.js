@@ -352,19 +352,13 @@ window.permissoesAjuda=function(){
   else if(typeof toast==='function') toast('Abra o cadastro do usuário (lápis) para ver as permissões','info');
 };
 function p605BotaoAjuda(){
-  const view=document.getElementById('view-usuarios');
-  if(!view || view.querySelector('#p605-ajuda-perm')) return;
-  const card=view.querySelector('.rounded-\\[16px\\].bg-white.border.p-5') || view.querySelector('table');
-  const alvo=(view.querySelector('.space-y-4')||view);
-  const b=document.createElement('button');
-  b.id='p605-ajuda-perm';
-  b.type='button';
-  b.textContent='❓ O que são as 3 permissões?';
-  b.style.cssText='display:block;width:100%;margin-top:10px;height:38px;border-radius:10px;font-weight:800;font-size:12.5px;background:#eef2ff;color:#0a1e8a;border:1px solid #c7d2fe;cursor:pointer';
-  b.onclick=window.permissoesAjuda;
-  if(card && card.parentNode) card.parentNode.insertBefore(b,card.nextSibling);
-  else alvo.insertBefore(b,alvo.firstChild);
+  // v7.0.1 (23/09/2026) — ORDEM DO DONO: "em usuários tem uma caixa que é
+  // 'o que são as 3 permissões?', retira isso". O botão não é mais injetado na
+  // tela Usuários. A explicação (window.permissoesAjuda, logo acima) continua
+  // no sistema — se um dia ele quiser o texto em outro lugar, está pronto.
+  return;
 }
+
 if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p605ajuda){
   const _ru=window.renderUsuarios;
   const ru=function(){ const r=_ru.apply(this,arguments); try{ setTimeout(p605BotaoAjuda,0); }catch(e){} return r; };
