@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 0e4a03cd9317f97c
+ * scripts: 225 | sha256: 9bba7e4cd0187252
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -1257,7 +1257,7 @@ function renderModalUsuario(id){
   const sess=getSession(); const isEdit=!!id;
   const u=isEdit?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):{nome:'',login:'',senha:'',perfil:'Comercial',ativo:true};
   document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${u.senha||''}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${id ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${id ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
@@ -19470,7 +19470,7 @@ window.renderModalUsuario=function(id){
   const perfilDisabled=podePerfil?'':'disabled';
   const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
   document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="u-nome" value="${esc(u.nome||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login</label><input id="u-login" value="${esc(u.login||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="u-senha" type="password" value="${esc(u.senha||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" ${perfilDisabled} class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select>${!podePerfil?'<p class="text-[11px] text-amber-700 mt-1">Somente Kauan ou Denivaldo alteram perfil.</p>':''}</div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option value="true" ${u.ativo!==false?'selected':''}>Ativo</option><option value="false" ${u.ativo===false?'selected':''}>Inativo</option></select></div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="u-nome" value="${esc(u.nome||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login</label><input id="u-login" value="${esc(u.login||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="u-senha" type="password" value="" placeholder="deixe em branco para manter a senha atual" class="neo-input"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" ${perfilDisabled} class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select>${!podePerfil?'<p class="text-[11px] text-amber-700 mt-1">Somente Kauan ou Denivaldo alteram perfil.</p>':''}</div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option value="true" ${u.ativo!==false?'selected':''}>Ativo</option><option value="false" ${u.ativo===false?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="saveUsuarioFinal('${esc(id||'')}')" class="neo-btn primary">Salvar usuário</button>`;
   window.modalContext={type:'usuario',id:id||null};
 };
@@ -27179,7 +27179,7 @@ window.renderModalUsuario = function(id){
     <div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${esc(u ? u.nome : '')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     <div class="grid grid-cols-2 gap-3">
       <div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${esc(u ? u.login : '')}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${esc(u ? u.senha : '')}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${isEdit ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${isEdit ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       ${perfilHtml}
@@ -27196,11 +27196,17 @@ window.saveUsuarioFinal = function(id){
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
   const login = fold(document.getElementById('u-login') && document.getElementById('u-login').value);
-  const senha = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
+  const senhaDigitada = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
   const ativo = document.getElementById('u-ativo') ? document.getElementById('u-ativo').value === 'true' : true;
-  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
 
   let u = id ? (db.usuarios || []).find(x => x.id === id) : null;
+  // v7.0.2 (23/09/2026) — ORDEM DO DONO: "queria algo que não é possível ver a
+  // senha de nenhuma forma". O campo do modal não vem mais preenchido com a
+  // senha do usuário (ela ficava visível no código-fonte da página). Agora:
+  //   • criar usuário  → a senha é obrigatória;
+  //   • editar usuário → em branco = MANTÉM a senha atual (não apaga, não troca).
+  const senha = senhaDigitada || (u ? txt(u.senha) : '');
+  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
   if(u && !podeEditarUsuario(s, u.id)) return toastMsg('Você só pode editar o seu próprio usuário', 'error');
   if(!u && (db.usuarios || []).some(x => x.empresaId === s.empresaId && fold(x.login) === login)) return toastMsg('Login já existe', 'error');
 
@@ -29113,16 +29119,29 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
   return removed;
 }
 
+// v7.0.2 — "pedido de carga completa": quem quer a carga inteira à vista avisa
+// aqui antes de chamar o pullAll (mantém a chamada `await pullAll()` como sempre
+// foi — é o que o teste do motor confere).
+let cargaPedida=false;
+function pedirCarga(v){cargaPedida=!!v;}
 async function pullAll(){
+  const cargaCompleta=cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
+  // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
+  // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
+  const POR_PAGINA=1000;
+  if(cargaCompleta)mostrarCargaNuvem(true,'conectando…');
+  try{
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
+    if(cargaCompleta){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
+  }finally{ if(cargaCompleta)mostrarCargaNuvem(false); }
   state.initialPull=true;
   if(changed){
     applying=true;
@@ -29397,6 +29416,9 @@ async function tick(reason){
     // fica pausada até clicar em Publicar este PC.
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
+    // v7.0.2 — é a PRIMEIRA carga (ou um "baixar tudo"): mostra o aviso de
+    // carga e segura a tela até chegar tudo, em vez de ir mostrando pedaços.
+    pedirCarga(!state.initialPull||reason==='baixar-tudo-da-nuvem');
     const mudouNaTela=await pullAll();
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
@@ -29449,6 +29471,7 @@ async function tick(reason){
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
+    mostrarCargaNuvem(false);   // nunca deixar o dono preso no aviso de carga
     failures++;lastError=e&&e.message?e.message:String(e);
     // v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) responde
     // 429 com `quota:true`, mas o recado vem no campo `error` — e o motor lê o
@@ -29472,7 +29495,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{if(busy){busy=false;scheduleHeartbeat();}}
+  }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
 // LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
 // O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
@@ -29720,6 +29743,29 @@ function estadoDetalhado(){
 //   • e nunca em rajada: no máximo um redesenho a cada 4 segundos.
 // O redesenho chama direto o render da tela (NÃO o navigateTo, que rola a
 // página para o topo e mexe na barra lateral — isso sim incomodaria).
+// v7.0.2 — AVISO DE CARGA COMPLETA ("queria que aparecesse tudo de uma vez")
+// Enquanto a leitura da nuvem está em curso, este aviso cobre a tela e mostra a
+// contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
+// fim (ou se der erro) — nunca prende ninguém.
+let cargaAberta=false, cargaItens=0;
+function mostrarCargaNuvem(mostrar,texto){
+  if(typeof document==='undefined'||!document.body)return;
+  const atual=document.getElementById('digicopy-carga-nuvem');
+  if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
+  cargaAberta=true;
+  let el=atual;
+  if(!el){
+    el=document.createElement('div');
+    el.id='digicopy-carga-nuvem';
+    el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,30,138,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px';
+    el.innerHTML='<div style="font-size:16px;font-weight:800">Baixando os dados da nuvem…</div>'
+      +'<div id="digicopy-carga-conta" style="font-size:13.5px;opacity:.92"></div>'
+      +'<div style="font-size:12px;opacity:.72;max-width:430px;line-height:1.55">Trazendo tudo de uma vez: a tela abre já com os dados completos. Não feche o sistema agora.</div>';
+    document.body.appendChild(el);
+  }
+  const conta=document.getElementById('digicopy-carga-conta');
+  if(conta)conta.textContent=texto||'';
+}
 const TELAS_AO_VIVO={
   dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
   impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
@@ -29732,6 +29778,7 @@ let ultimoRedesenho=0;
 function podeRedesenharSync(d){
   d=d||{};
   if(d.hidden)return false;
+  if(d.cargaAberta)return false;   // v7.0.2 — durante a carga, nada de pedaços na tela
   if(d.modalAberto)return false;
   if(d.focoEmCampo)return false;
   if(!d.podeRenderizar)return false;
@@ -29753,6 +29800,7 @@ function redesenharTelaAtual(){
   const a=document.activeElement;
   const decisao=podeRedesenharSync({
     hidden:!!document.hidden,
+    cargaAberta:cargaAberta,
     modalAberto:!!(mr&&!mr.classList.contains('hidden')),
     focoEmCampo:!!(a&&a!==document.body&&/INPUT|TEXTAREA|SELECT|BUTTON/.test(a.tagName||'')),
     podeRenderizar:!!(render&&typeof window[render]==='function'),
@@ -29763,7 +29811,7 @@ function redesenharTelaAtual(){
   try{ window[render](); }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO};
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -49313,6 +49361,197 @@ if(!window.__v5242visMenus){ window.__v5242visMenus=setInterval(aplicarVisibilid
 window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, aplicarVisibilidadeMenus: aplicarVisibilidadeMenusNuvemBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa) — v7.0.2 (23/09/2026)
+// Mora aqui (e não num arquivo novo) porque o bundle tem a regra "um arquivo
+// por módulo": isto é o mesmo assunto dos backups — recuperar dado.
+// ═══════════════════════════════════════════════════════════════════════════
+// DIGICOPY — TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa)
+//
+// POR QUE ISTO EXISTE (23/09/2026)
+// O dono relatou: "muitos contratos já perderam impressoras, por exemplo o
+// CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro
+// também". A causa raiz está em `locacao_patch.js` (corrigida na v7.0.1): a
+// faxina de "dados de demonstração" da importação do sistema antigo reconhecia
+// contrato de VERDADE pelo número (CT-ano-0001 — o formato que o próprio
+// sistema gera) e apagava o contrato com o parque (impressoras), as leituras e
+// as faturas. Como a exclusão subiu pela fila de sincronização, a nuvem também
+// marcou aqueles registros como excluídos.
+//
+// A BOA NOTÍCIA: a nuvem NÃO apaga o dado quando exclui — ela marca a data da
+// exclusão e GUARDA o conteúdo (é assim que o "restaurar" do Worker funciona,
+// `handleRestore`: lê `data_json` e devolve o registro). Então o que se perdeu
+// pode ser trazido de volta, e é isto que este arquivo faz: em vez de restaurar
+// um por um (a tela da Nuvem já faz isso, de um em um), ele restaura a LISTA
+// INTEIRA de uma vez, mostrando antes o que vai voltar.
+//
+// SEGURANÇA (não quebrar o que funciona):
+//   • Só ADMIN pode (é o Worker quem exige: `requireAdmin` em /v1/deleted e
+//     /v1/restore) — se o aparelho não for admin, a mensagem do Worker aparece
+//     e nada muda.
+//   • Nada é apagado nem sobrescrito: restaurar é o contrário de excluir. Se
+//     voltar algo que ele tinha apagado de propósito, ele apaga de novo pela
+//     tela normal — e a exclusão de verdade continua sendo registrada.
+//   • Antes de trazer, mostra o resumo POR ENTIDADE (contratos, parque,
+//     leituras...) e o período, e pede confirmação no modal do sistema.
+//   • A lista do Worker vem do mais novo para o mais antigo e limitada (200 por
+//     vez). Trazendo a primeira leva, os mais antigos sobem para o topo — é só
+//     clicar de novo para trazer a próxima leva.
+//
+// Nada aqui guarda senha, token ou dado de ninguém: só usa a API da nuvem que o
+// próprio sistema já usa, com a autorização que o aparelho já tem.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+// ── Regras puras (testáveis sem navegador) ─────────────────────────────────
+// Entidades que a faxina da importação podia levar junto (ordem de leitura).
+const ENTIDADES_PADRAO = ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos','orcamentos'];
+
+// Rótulo curto de um registro excluído (para a pessoa reconhecer na lista).
+function rotuloExcluido(reg){
+  if(!reg) return 'registro';
+  const d = reg.data || {};
+  const nome = d.nome || d.numero || d.descricao || d.login || d.modelo || d.patrimonio;
+  const id = String(reg.recordId || '').slice(0, 12);
+  return nome ? String(nome).slice(0, 60) : id;
+}
+
+// Filtra e resume a lista que veio de /v1/deleted.
+// filtros: { entidades: [...], desde: Date|number|null }
+function planejarRecuperacao(registros, filtros){
+  const f = filtros || {};
+  const entidades = Array.isArray(f.entidades) && f.entidades.length ? f.entidades : ENTIDADES_PADRAO;
+  const desde = f.desde ? (f.desde instanceof Date ? f.desde.getTime() : Number(f.desde)) : null;
+  const escolhidos = [], ignorados = [];
+  const porEntidade = {};
+  for(const reg of (registros || [])){
+    if(!reg || !reg.entity || !reg.recordId){ ignorados.push(reg); continue; }
+    if(entidades.indexOf(reg.entity) < 0){ ignorados.push(reg); continue; }
+    const quando = Number(reg.deletedAt) || 0;
+    if(desde && quando && quando < desde){ ignorados.push(reg); continue; }
+    escolhidos.push(reg);
+    porEntidade[reg.entity] = (porEntidade[reg.entity] || 0) + 1;
+  }
+  const datas = escolhidos.map(r=>Number(r.deletedAt)||0).filter(Boolean).sort((a,b)=>a-b);
+  return {
+    total: escolhidos.length,
+    totalVisto: (registros || []).length,
+    ignorados: ignorados.length,
+    porEntidade,
+    primeiraExclusao: datas.length ? datas[0] : null,
+    ultimaExclusao: datas.length ? datas[datas.length-1] : null,
+    escolhidos
+  };
+}
+
+// Texto do resumo (o que vai voltar), em língua de gente.
+function textoResumo(plano){
+  if(!plano || !plano.total) return 'Nada para trazer de volta nesta lista.';
+  const partes = Object.keys(plano.porEntidade).sort()
+    .map(e=>plano.porEntidade[e] + ' ' + (e === 'parque' ? 'impressoras de contrato' : e));
+  const fmt = (t)=>{ try{ return new Date(t).toLocaleString('pt-BR'); }catch(e){ return '?'; } };
+  let txt = plano.total + ' registro(s): ' + partes.join(' • ');
+  if(plano.primeiraExclusao) txt += '\nExcluídos entre ' + fmt(plano.primeiraExclusao) + ' e ' + fmt(plano.ultimaExclusao) + '.';
+  if(plano.ignorados) txt += '\n(' + plano.ignorados + ' fora do filtro desta tela.)';
+  return txt;
+}
+
+if (typeof window !== 'undefined') {
+  window.DIGICOPY_RECUPERAR = {
+    ENTIDADES_PADRAO: ENTIDADES_PADRAO,
+    rotuloExcluido: rotuloExcluido,
+    planejarRecuperacao: planejarRecuperacao,
+    textoResumo: textoResumo
+  };
+}
+
+// ── Daqui para baixo é tela: só roda no navegador ───────────────────────────
+if(typeof document === 'undefined') return;
+
+function apiNuvem(){
+  return (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.api === 'function') ? window.DIGICOPY_CLOUD.api : null;
+}
+function avisar(titulo, texto){
+  if(typeof window.lfbAlert === 'function') return window.lfbAlert(texto, titulo);
+  if(typeof window.toast === 'function') return window.toast(texto, 'info');
+}
+function confirmar(texto, titulo){
+  if(typeof window.confirmSistema === 'function') return window.confirmSistema(texto, titulo);
+  return Promise.resolve(false);
+}
+
+async function restaurarLista(registros, aoProgresso){
+  const call = apiNuvem();
+  if(!call) throw new Error('Motor da nuvem não carregado.');
+  let ok = 0, falhas = 0, primeiroErro = '';
+  for(let i=0;i<registros.length;i++){
+    const reg = registros[i];
+    try{
+      const r = await call('/v1/restore', { method:'POST', body: JSON.stringify({ entity: reg.entity, recordId: reg.recordId }) });
+      if(r && r.ok !== false) ok++; else { falhas++; primeiroErro = primeiroErro || ((r && r.message) || 'recusado'); }
+    }catch(e){
+      falhas++; primeiroErro = primeiroErro || ((e && e.message) || String(e));
+    }
+    if(typeof aoProgresso === 'function') aoProgresso(i+1, registros.length);
+  }
+  return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
+}
+
+// Botão dentro do painel da Nuvem, logo abaixo do "Ver itens excluídos".
+function instalarBotao(){
+  const modal = document.getElementById('digicopy-cloud-modal');
+  if(!modal || modal.classList.contains('hidden')) return;
+  if(document.getElementById('dc-restaurar-lote')) return;
+  const lista = modal.querySelector('#dc-list-deleted');
+  if(!lista || !lista.parentNode) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'dc-restaurar-lote';
+  wrap.style.cssText = 'margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px';
+  wrap.innerHTML = '<button id="dc-restaurar-lote-btn" style="width:100%;height:40px;border:0;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">🩹 Trazer de volta o que foi excluído</button>'
+    + '<div id="dc-restaurar-lote-res" style="margin-top:8px;font-size:12.5px;color:#334155;line-height:1.5"></div>';
+  lista.parentNode.insertBefore(wrap, lista.nextSibling);
+
+  wrap.querySelector('#dc-restaurar-lote-btn').onclick = async function(){
+    const res = wrap.querySelector('#dc-restaurar-lote-res');
+    const btn = wrap.querySelector('#dc-restaurar-lote-btn');
+    btn.disabled = true; btn.textContent = 'Procurando o que foi excluído...';
+    res.textContent = '';
+    try{
+      const call = apiNuvem();
+      if(!call) throw new Error('Motor da nuvem não carregado.');
+      const dados = await call('/v1/deleted?limit=200', { method:'GET' });
+      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(dados && dados.records);
+      if(!plano.total){ res.textContent = window.DIGICOPY_RECUPERAR.textoResumo(plano); btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      const ok = await confirmar(window.DIGICOPY_RECUPERAR.textoResumo(plano) + '\n\nTrazer todos de volta agora?', 'Trazer de volta o que foi excluído');
+      if(!ok){ btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      btn.textContent = 'Trazendo de volta...';
+      const r = await restaurarLista(plano.escolhidos, (feito, total)=>{ res.textContent = 'Trazendo de volta ' + feito + ' de ' + total + '...'; });
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick === 'function'){
+        try{ await window.DIGICOPY_CLOUD_SYNC.tick('restauracao'); }catch(e){}
+      }
+      res.innerHTML = '<b>' + r.ok + ' registro(s) trazido(s) de volta.</b>'
+        + (r.falhas ? ' ' + r.falhas + ' recusado(s)' + (r.primeiroErro ? ' (' + String(r.primeiroErro).slice(0,120) + ')' : '') + '.' : '')
+        + '<br>Os registros mais antigos vão aparecendo nas próximas vezes: clique de novo para trazer a leva seguinte.';
+      avisar('Pronto', r.ok + ' registro(s) trazido(s) de volta. Confira as telas de Contratos e Impressoras.');
+    }catch(e){
+      res.textContent = 'Não deu para trazer: ' + ((e && e.message) || e);
+    }
+    btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído';
+  };
+}
+
+// A tela da Nuvem é redesenhada por vários caminhos; o botão é reinstalado
+// quando ela aparece (sem mexer em nada do que já existe).
+setInterval(function(){ try{ instalarBotao(); }catch(e){} }, 2500);
+if(typeof document !== 'undefined' && document.addEventListener){
+  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalarBotao(); }catch(e){} }, 600); }, true);
+}
+console.log('[DIGICOPY] recuperação em massa (trazer de volta o que foi excluído) carregada');
+})();
+
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
 ;

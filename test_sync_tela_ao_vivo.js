@@ -50,7 +50,17 @@ ok('cursor dentro de campo/botão: NÃO redesenha', S.podeRedesenharSync({ ...ba
 ok('tela sem render conhecido (documento/importação): NÃO redesenha',
    S.podeRedesenharSync({ ...base, podeRenderizar:false }) === false);
 ok('nunca em rajada: respeita os 4 segundos', S.podeRedesenharSync({ ...base, ultimo:99000, agora:100000 }) === false);
+ok('v7.0.2 — durante a CARGA da nuvem não redesenha (nada aparece em pedaços)',
+   S.podeRedesenharSync({ ...base, cargaAberta:true }) === false);
 ok('passados os 4 segundos, libera', S.podeRedesenharSync({ ...base, ultimo:95000, agora:100000 }) === true);
+
+console.log('\n== 2b) CARGA COMPLETA À VISTA (v7.0.2) ==');
+ok('página maior por consulta (menos idas e voltas)', /const POR_PAGINA=1000/.test(code));
+ok('o aviso de carga existe e cobre a tela', /id='digicopy-carga-nuvem'/.test(code) && /Baixando os dados da nuvem/.test(code));
+ok('o aviso mostra a contagem do que já veio', /registros trazidos/.test(code));
+ok('a carga completa é ligada na primeira sincronização', /pedirCarga\(!state\.initialPull\|\|reason==='baixar-tudo-da-nuvem'\)/.test(code));
+ok('o aviso some no fim e também se der erro (ninguém fica preso)',
+   /mostrarCargaNuvem\(false\);\s*\/\/ nunca deixar/.test(code) && /finally\{if\(cargaAberta\)mostrarCargaNuvem\(false\)/.test(code));
 
 console.log('\n== 3) QUEM FICA DE FORA (telas de documento) ==');
 const telas = S.telasAoVivo || {};
@@ -65,7 +75,7 @@ ok('redesenha chamando o render da tela (não o navigateTo, que rola a página)'
    !/redesenharTelaAtual[\s\S]{0,900}navigateTo\(/.test(code));
 
 console.log('\n== 4) O REDESENHO SÓ ACONTECE SE A LEITURA TROUXE MUDANÇA ==');
-ok('o retorno do pullAll é considerado', /const mudouNaTela=await pullAll\(\)/.test(code));
+ok('o retorno do pullAll é considerado', /const mudouNaTela=await pullAll\(\)/.test(code) && /pedirCarga\(!state\.initialPull/.test(code));
 ok('o redesenho é chamado no fim do ciclo, sob a decisão', /if\(mudouNaTela\)redesenharTelaAtual\(\)/.test(code));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — sincronização quase em tempo real e tela que se atualiza sem atrapalhar!');

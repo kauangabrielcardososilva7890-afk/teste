@@ -232,7 +232,9 @@ const tests=[
   // v7.0.1 — a impressora que sumia do contrato (limpeza de demo por número)
   "test_contrato_impressora_nao_some.js",
   // v7.0.1 — a senha que o dono troca não é mais devolvida pelo sistema
-  "test_senha_do_dono_manda.js"
+  "test_senha_do_dono_manda.js",
+  // v7.0.2 — trazer de volta o que foi excluído (recuperação em massa)
+  "test_recuperar_excluidos.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

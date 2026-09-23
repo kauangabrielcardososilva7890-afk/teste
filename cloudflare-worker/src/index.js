@@ -8,7 +8,12 @@ const MAX_BODY_BYTES = 900_000;
 const WORKER_VERSION = '5.26.5';
 
 const MAX_MUTATIONS = 100;
-const MAX_CHANGE_LIMIT = 500;
+// v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
+// a base inteira num PC novo eram muitas idas e voltas (a tela ia enchendo aos
+// poucos). Como o cliente agora pede uma carga de uma vez só, 1000 por página
+// reduz o número de requisições pela metade — e o resto (cursor, hasMore)
+// continua igual.
+const MAX_CHANGE_LIMIT = 1000;
 const ENTITY_RE = /^[a-zA-Z][a-zA-Z0-9_]{0,63}$/;
 
 const JSON_HEADERS = {

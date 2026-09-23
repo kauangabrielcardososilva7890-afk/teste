@@ -692,3 +692,194 @@ if(!window.__v5242visMenus){ window.__v5242visMenus=setInterval(aplicarVisibilid
 window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: abrirTelaBackup, aplicarVisibilidadeMenus: aplicarVisibilidadeMenusNuvemBackup, _montarZip: montarZip, _crc32: crc32, _proximaDiaria: proximaDiaria, _preencherResumo: preencherResumo };
 console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 })();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa) — v7.0.2 (23/09/2026)
+// Mora aqui (e não num arquivo novo) porque o bundle tem a regra "um arquivo
+// por módulo": isto é o mesmo assunto dos backups — recuperar dado.
+// ═══════════════════════════════════════════════════════════════════════════
+// DIGICOPY — TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa)
+//
+// POR QUE ISTO EXISTE (23/09/2026)
+// O dono relatou: "muitos contratos já perderam impressoras, por exemplo o
+// CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro
+// também". A causa raiz está em `locacao_patch.js` (corrigida na v7.0.1): a
+// faxina de "dados de demonstração" da importação do sistema antigo reconhecia
+// contrato de VERDADE pelo número (CT-ano-0001 — o formato que o próprio
+// sistema gera) e apagava o contrato com o parque (impressoras), as leituras e
+// as faturas. Como a exclusão subiu pela fila de sincronização, a nuvem também
+// marcou aqueles registros como excluídos.
+//
+// A BOA NOTÍCIA: a nuvem NÃO apaga o dado quando exclui — ela marca a data da
+// exclusão e GUARDA o conteúdo (é assim que o "restaurar" do Worker funciona,
+// `handleRestore`: lê `data_json` e devolve o registro). Então o que se perdeu
+// pode ser trazido de volta, e é isto que este arquivo faz: em vez de restaurar
+// um por um (a tela da Nuvem já faz isso, de um em um), ele restaura a LISTA
+// INTEIRA de uma vez, mostrando antes o que vai voltar.
+//
+// SEGURANÇA (não quebrar o que funciona):
+//   • Só ADMIN pode (é o Worker quem exige: `requireAdmin` em /v1/deleted e
+//     /v1/restore) — se o aparelho não for admin, a mensagem do Worker aparece
+//     e nada muda.
+//   • Nada é apagado nem sobrescrito: restaurar é o contrário de excluir. Se
+//     voltar algo que ele tinha apagado de propósito, ele apaga de novo pela
+//     tela normal — e a exclusão de verdade continua sendo registrada.
+//   • Antes de trazer, mostra o resumo POR ENTIDADE (contratos, parque,
+//     leituras...) e o período, e pede confirmação no modal do sistema.
+//   • A lista do Worker vem do mais novo para o mais antigo e limitada (200 por
+//     vez). Trazendo a primeira leva, os mais antigos sobem para o topo — é só
+//     clicar de novo para trazer a próxima leva.
+//
+// Nada aqui guarda senha, token ou dado de ninguém: só usa a API da nuvem que o
+// próprio sistema já usa, com a autorização que o aparelho já tem.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+// ── Regras puras (testáveis sem navegador) ─────────────────────────────────
+// Entidades que a faxina da importação podia levar junto (ordem de leitura).
+const ENTIDADES_PADRAO = ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos','orcamentos'];
+
+// Rótulo curto de um registro excluído (para a pessoa reconhecer na lista).
+function rotuloExcluido(reg){
+  if(!reg) return 'registro';
+  const d = reg.data || {};
+  const nome = d.nome || d.numero || d.descricao || d.login || d.modelo || d.patrimonio;
+  const id = String(reg.recordId || '').slice(0, 12);
+  return nome ? String(nome).slice(0, 60) : id;
+}
+
+// Filtra e resume a lista que veio de /v1/deleted.
+// filtros: { entidades: [...], desde: Date|number|null }
+function planejarRecuperacao(registros, filtros){
+  const f = filtros || {};
+  const entidades = Array.isArray(f.entidades) && f.entidades.length ? f.entidades : ENTIDADES_PADRAO;
+  const desde = f.desde ? (f.desde instanceof Date ? f.desde.getTime() : Number(f.desde)) : null;
+  const escolhidos = [], ignorados = [];
+  const porEntidade = {};
+  for(const reg of (registros || [])){
+    if(!reg || !reg.entity || !reg.recordId){ ignorados.push(reg); continue; }
+    if(entidades.indexOf(reg.entity) < 0){ ignorados.push(reg); continue; }
+    const quando = Number(reg.deletedAt) || 0;
+    if(desde && quando && quando < desde){ ignorados.push(reg); continue; }
+    escolhidos.push(reg);
+    porEntidade[reg.entity] = (porEntidade[reg.entity] || 0) + 1;
+  }
+  const datas = escolhidos.map(r=>Number(r.deletedAt)||0).filter(Boolean).sort((a,b)=>a-b);
+  return {
+    total: escolhidos.length,
+    totalVisto: (registros || []).length,
+    ignorados: ignorados.length,
+    porEntidade,
+    primeiraExclusao: datas.length ? datas[0] : null,
+    ultimaExclusao: datas.length ? datas[datas.length-1] : null,
+    escolhidos
+  };
+}
+
+// Texto do resumo (o que vai voltar), em língua de gente.
+function textoResumo(plano){
+  if(!plano || !plano.total) return 'Nada para trazer de volta nesta lista.';
+  const partes = Object.keys(plano.porEntidade).sort()
+    .map(e=>plano.porEntidade[e] + ' ' + (e === 'parque' ? 'impressoras de contrato' : e));
+  const fmt = (t)=>{ try{ return new Date(t).toLocaleString('pt-BR'); }catch(e){ return '?'; } };
+  let txt = plano.total + ' registro(s): ' + partes.join(' • ');
+  if(plano.primeiraExclusao) txt += '\nExcluídos entre ' + fmt(plano.primeiraExclusao) + ' e ' + fmt(plano.ultimaExclusao) + '.';
+  if(plano.ignorados) txt += '\n(' + plano.ignorados + ' fora do filtro desta tela.)';
+  return txt;
+}
+
+if (typeof window !== 'undefined') {
+  window.DIGICOPY_RECUPERAR = {
+    ENTIDADES_PADRAO: ENTIDADES_PADRAO,
+    rotuloExcluido: rotuloExcluido,
+    planejarRecuperacao: planejarRecuperacao,
+    textoResumo: textoResumo
+  };
+}
+
+// ── Daqui para baixo é tela: só roda no navegador ───────────────────────────
+if(typeof document === 'undefined') return;
+
+function apiNuvem(){
+  return (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.api === 'function') ? window.DIGICOPY_CLOUD.api : null;
+}
+function avisar(titulo, texto){
+  if(typeof window.lfbAlert === 'function') return window.lfbAlert(texto, titulo);
+  if(typeof window.toast === 'function') return window.toast(texto, 'info');
+}
+function confirmar(texto, titulo){
+  if(typeof window.confirmSistema === 'function') return window.confirmSistema(texto, titulo);
+  return Promise.resolve(false);
+}
+
+async function restaurarLista(registros, aoProgresso){
+  const call = apiNuvem();
+  if(!call) throw new Error('Motor da nuvem não carregado.');
+  let ok = 0, falhas = 0, primeiroErro = '';
+  for(let i=0;i<registros.length;i++){
+    const reg = registros[i];
+    try{
+      const r = await call('/v1/restore', { method:'POST', body: JSON.stringify({ entity: reg.entity, recordId: reg.recordId }) });
+      if(r && r.ok !== false) ok++; else { falhas++; primeiroErro = primeiroErro || ((r && r.message) || 'recusado'); }
+    }catch(e){
+      falhas++; primeiroErro = primeiroErro || ((e && e.message) || String(e));
+    }
+    if(typeof aoProgresso === 'function') aoProgresso(i+1, registros.length);
+  }
+  return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
+}
+
+// Botão dentro do painel da Nuvem, logo abaixo do "Ver itens excluídos".
+function instalarBotao(){
+  const modal = document.getElementById('digicopy-cloud-modal');
+  if(!modal || modal.classList.contains('hidden')) return;
+  if(document.getElementById('dc-restaurar-lote')) return;
+  const lista = modal.querySelector('#dc-list-deleted');
+  if(!lista || !lista.parentNode) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'dc-restaurar-lote';
+  wrap.style.cssText = 'margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px';
+  wrap.innerHTML = '<button id="dc-restaurar-lote-btn" style="width:100%;height:40px;border:0;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">🩹 Trazer de volta o que foi excluído</button>'
+    + '<div id="dc-restaurar-lote-res" style="margin-top:8px;font-size:12.5px;color:#334155;line-height:1.5"></div>';
+  lista.parentNode.insertBefore(wrap, lista.nextSibling);
+
+  wrap.querySelector('#dc-restaurar-lote-btn').onclick = async function(){
+    const res = wrap.querySelector('#dc-restaurar-lote-res');
+    const btn = wrap.querySelector('#dc-restaurar-lote-btn');
+    btn.disabled = true; btn.textContent = 'Procurando o que foi excluído...';
+    res.textContent = '';
+    try{
+      const call = apiNuvem();
+      if(!call) throw new Error('Motor da nuvem não carregado.');
+      const dados = await call('/v1/deleted?limit=200', { method:'GET' });
+      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(dados && dados.records);
+      if(!plano.total){ res.textContent = window.DIGICOPY_RECUPERAR.textoResumo(plano); btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      const ok = await confirmar(window.DIGICOPY_RECUPERAR.textoResumo(plano) + '\n\nTrazer todos de volta agora?', 'Trazer de volta o que foi excluído');
+      if(!ok){ btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      btn.textContent = 'Trazendo de volta...';
+      const r = await restaurarLista(plano.escolhidos, (feito, total)=>{ res.textContent = 'Trazendo de volta ' + feito + ' de ' + total + '...'; });
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick === 'function'){
+        try{ await window.DIGICOPY_CLOUD_SYNC.tick('restauracao'); }catch(e){}
+      }
+      res.innerHTML = '<b>' + r.ok + ' registro(s) trazido(s) de volta.</b>'
+        + (r.falhas ? ' ' + r.falhas + ' recusado(s)' + (r.primeiroErro ? ' (' + String(r.primeiroErro).slice(0,120) + ')' : '') + '.' : '')
+        + '<br>Os registros mais antigos vão aparecendo nas próximas vezes: clique de novo para trazer a leva seguinte.';
+      avisar('Pronto', r.ok + ' registro(s) trazido(s) de volta. Confira as telas de Contratos e Impressoras.');
+    }catch(e){
+      res.textContent = 'Não deu para trazer: ' + ((e && e.message) || e);
+    }
+    btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído';
+  };
+}
+
+// A tela da Nuvem é redesenhada por vários caminhos; o botão é reinstalado
+// quando ela aparece (sem mexer em nada do que já existe).
+setInterval(function(){ try{ instalarBotao(); }catch(e){} }, 2500);
+if(typeof document !== 'undefined' && document.addEventListener){
+  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalarBotao(); }catch(e){} }, 600); }, true);
+}
+console.log('[DIGICOPY] recuperação em massa (trazer de volta o que foi excluído) carregada');
+})();
+

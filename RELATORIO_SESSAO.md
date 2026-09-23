@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v7.0.1** (rodada 23/09 nº6 — branch `arena/01a0cf4a-teste`)  
+**Última versão:** **v7.0.2** (rodada 23/09 nº7 — branch `arena/01a0cf4a-teste`)  
 
 ---
 
@@ -202,6 +202,89 @@ versão antiga, consertados na mesma rodada.
 dele: `npm run motor`), rotação das senhas (nunca impressas aqui), decisão da credencial de
 CNPJ, trava de 15 min (hoje só no Worker), 19 testes `5.24.34` fora da suíte, 4 testes
 quebrados (§12.4) e os 4 que pulam por falta de `jsdom`.
+
+## 23/09/2026 (cont.) — RODADA 7 · RECUPERAR O QUE SE PERDEU, TRAZER A NUVEM DE UMA VEZ E A SENHA INVISÍVEL
+
+**O que ele relatou:** "muitos contratos já perderam impressoras, por exemplo o
+CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro também";
+"os dados da nuvem ainda demora aparecer, está aparecendo de pouco em pouco, queria
+que aparecesse todos de uma vez assim que conectar"; sobre a credencial: "manter,
+mas eu queria algo que não é possível ver a senha de nenhuma forma, não pode vazar
+nenhum dado"; sobre a trava de 15 min: "precisa não"; e o desabafo: "por que continua
+dando esses vários problemas seguidos? pode me falar QUALQUER coisa para resolver
+isso, até trocar de nuvem".
+
+### 1) RECUPERAR O QUE SE PERDEU (o pedido mais urgente)
+
+Descoberta que resolve o problema: **a nuvem não apaga o dado quando exclui** — ela
+marca a data da exclusão e **guarda o conteúdo** (`records.data_json` preservado;
+`handleRestore` no Worker devolve o registro a partir dele). Ou seja: os contratos do
+CAIXA ESCOLAR e as impressoras que sumiram **continuam na nuvem** e podem voltar.
+
+**Ferramenta nova (em Nuvem → Backups):** botão **"🩹 Trazer de volta o que foi
+excluído"**, que
+- lê a lista de excluídos (`/v1/deleted?limit=200`, só as entidades de negócio —
+  contratos, parque, leituras, OS, financeiro, clientes, produtos... NUNCA usuarios/
+  empresas/config/contadores);
+- mostra **antes** o resumo por entidade + o período ("42 contratos • 187 impressoras
+  de contrato • 310 leituras, excluídos entre X e Y") e pede confirmação no **modal do
+  sistema**;
+- restaura tudo de uma vez (`/v1/restore`), com contagem no progresso, e sincroniza;
+- avisa que os mais antigos vão aparecendo nas próximas cliques (a lista do Worker vem
+  do mais novo para o mais antigo, 200 por vez).
+Só ADMIN pode (é o próprio Worker que exige: `requireAdmin`). **Nada é apagado nem
+sobrescrito** — a operação só ADICIONA de volta. Teste: `test_recuperar_excluidos.js`
+(31 verificações, inclui "não chama rota de apagar").
+
+**Por que o código mora no patch de backups e não em arquivo novo:** o bundle tem a
+regra explícita "um arquivo por módulo", travada por 7 testes (o primeiro caminho,
+arquivo novo, quebrou os 7 — foi revertido e o código entrou no patch da tela de
+Backups, que é o mesmo assunto).
+
+### 2) A NUVEM APARECIA DE POUCO EM POUCO → AGORA VEM TODA DE UMA VEZ
+
+Eram duas coisas:
+- **tela enchendo em pedaços:** cada página de 500 registros era aplicada e a tela ia
+  mostrando os pedaços. Agora existe o **aviso de carga completa** (tela azul com
+  contagem: "N registros trazidos…"): ele cobre a tela na **primeira carga** (PC novo,
+  base vazia) e no "baixar tudo", e a lista só aparece quando chegou tudo. Some
+  sozinho no fim — e também se der erro (ninguém fica preso). Durante a carga, o
+  redesenho automático da tela fica desligado (`podeRedesenharSync` ganhou a trava).
+- **muitas idas e voltas:** a página passou de 500 para **1000 registros** por consulta
+  (`MAX_CHANGE_LIMIT` no Worker — vale depois do deploy; antes disso o cliente pede
+  1000 e recebe 500, sem quebrar nada).
+
+### 3) A SENHA NÃO É MAIS VISÍVEL EM LUGAR NENHUM (parte 1)
+
+O modal de usuário vinha com a **senha preenchida** (`value="${esc(u.senha)}"` nos três
+modais: app.js, ajustes_pos_final_patch.js e ajustes_v5196_patch.js) — qualquer um
+abria o código-fonte da página e lia. Agora:
+- o campo nasce **vazio** nos três modais;
+- ao **criar** usuário, a senha é obrigatória (como era);
+- ao **editar**, deixar em branco = **mantém a senha atual** (não apaga, não troca);
+- varredura no repo: **nenhum** outro ponto renderiza senha (`${...senha}` = 0 ocorrências).
+
+**Pendência declarada (próxima rodada, não feita agora):** o registro de usuário é
+sincronizado inteiro, então a senha do usuário **viaja e fica guardada na nuvem em
+claro** (dentro do `data_json`, e nos arquivos de backup). O conserto é mandar só um
+**hash** (e o login aceitar hash), com migração que não tranque nenhum PC antigo — é
+mudança no caminho de login, por isso vai em rodada própria, com testes.
+
+### 4) TRAVA DE 15 MINUTOS — decisão dele: NÃO
+
+Ele decidiu que não precisa ("nah, precisa não") e a razão foi explicada. Nada a fazer;
+o Worker continua com a proteção dele para o acesso pela internet.
+
+### 5) TESTES E PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`); `test_recuperar_excluidos.js`
+novo. Bundle: **225 scripts**, sha256 `9bba7e4cd0187252`; carimbo `?v=7.0.2-8f7ae54878be`;
+versão **v7.0.2** aplicada e conferida nos 5 arquivos que carregam a versão do app.
+O bundle voltou a 225 arquivos (a recuperação entrou dentro do patch de backups).
+
+**Passos dele (os que dependem da máquina dele):** atualizar o programa nos PCs;
+rodar `atualizar_motor_nuvem.cmd` (leva o freio/cota e a página de 1000); usar o botão
+de recuperação (precisa ser no aparelho ADMIN); trocar as senhas; e confirmar o rodapé.
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 

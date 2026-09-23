@@ -794,3 +794,87 @@ documento fora da lista, nem em rajada < 4 s). Usa o **render** da tela, não o 
 
 Versão **v7.0.1**. Suíte: **206 passaram, 0 falharam** (4 pulam por falta de `jsdom` no
 ambiente). Bundle: 225 scripts, sha256 `0e4a03cd9317f97c`.
+
+## 16. RODADA 7 — RECUPERAÇÃO DO QUE SE PERDEU, CARGA COMPLETA E SENHA INVISÍVEL (23/09/2026)
+
+### 16.1 CRÍTICO — Recuperação dos registros já apagados (perda de dados relatada)
+
+**Relato:** "muitos contratos já perderam impressoras, por exemplo o CAIXA ESCOLAR
+GERALDO TELES DE MENEZES, e vários outros, os dados dentro também".
+
+**O que foi descoberto (e é o que permite recuperar):** a nuvem faz **exclusão lógica**.
+`handleDeleted`/`handleRestore` (`cloudflare-worker/src/index.js`) mostram que o registro
+excluído mantém `data_json` e a data da exclusão, e `/v1/restore` recoloca o registro a
+partir desse conteúdo. Portanto os dados apagados pela faxina (`locacao_patch.js`,
+corrigida em §15.1) **continuam no banco da nuvem** e podem voltar.
+
+**Ferramenta entregue** (`ajustes_v52296_backups_nuvem_patch.js`, painel Nuvem → Backups):
+botão "🩹 Trazer de volta o que foi excluído" — lê `/v1/deleted?limit=200`, filtra as
+entidades de negócio (nunca `usuarios`/`empresas`/`config`/`_seq`), mostra o resumo por
+entidade e o período, pede confirmação no modal do sistema e restaura em lote por
+`/v1/restore`, sincronizando em seguida. Restrição real: **só ADMIN** (o Worker exige
+`requireAdmin`) e a lista vem do mais novo para o mais antigo (200 por clique).
+
+**Impacto do defeito original:** perda de contratos + parque (impressoras) + leituras +
+faturas, propagada à nuvem pela fila de mutações. **Mitigação estrutural já aplicada:**
+a causa raiz foi corrigida em §15.1 (a faxina não decide mais por formato de número) e
+travada por teste; esta ferramenta devolve o que já havia sido perdido.
+
+**Não foi possível verificar diretamente** o conteúdo real do banco de produção
+(acesso indisponível) — vale o que o código do Worker mostra (exclusão lógica com
+`data_json` preservado) e a lista que o próprio sistema exibe na tela.
+
+**Nota de arquitetura (registrada de propósito):** o código da recuperação foi para
+dentro do patch da tela de Backups porque o bundle tem a regra "um arquivo por módulo",
+travada por 7 testes (`test_ajustes_v52284/85/86/87/52436/5260/5263`). A primeira versão
+(arquivo novo) quebrou os 7 — foi revertida. Registro honesto: **não** se alteram as
+travas de composição do bundle para abrir exceção; respeitou-se a regra.
+
+### 16.2 ALTO — Performance — "os dados da nuvem aparecem de pouco em pouco"
+
+**Causa:** a leitura da nuvem é paginada (`/v1/changes`, página de 500) e cada página era
+aplicada com a tela visível — dava a sensação de base incompleta e enchia aos poucos.
+Em cima disso, a tela ao vivo da §15.3 redesenha a cada mudança (correto no uso normal,
+ruim durante a carga inicial).
+
+**Correção:** (a) **aviso de carga completa** em tela cheia com contagem, ligado na
+primeira sincronização (`!state.initialPull`) e no "baixar tudo"; a lista só aparece
+quando tudo chegou, e o aviso some no fim ou em caso de erro; (b) redesenho automático
+desligado enquanto a carga corre (`podeRedesenharSync` recebeu `cargaAberta`);
+(c) página de **1000** registros (Worker `MAX_CHANGE_LIMIT` 500 → 1000; o cliente já pede
+1000 — sem o deploy o Worker limita em 500 e nada quebra).
+
+### 16.3 ALTO — Segurança — a senha do usuário ficava visível na tela
+
+**Onde:** `ajustes_v5196_patch.js:193` (modal em uso), `ajustes_pos_final_patch.js` e
+`app.js:1008` — os três renderizavam `<input ... value="${...u.senha}">`, isto é, a senha
+ia **dentro do HTML** (visível por "inspecionar"/Ctrl+U, plugin, extensão).
+
+**Correção:** campo nasce **vazio** nos três; criar usuário continua exigindo senha;
+**editar com o campo em branco mantém a senha atual** (antes, salvar dependia da senha
+estar no campo — com o campo vazio, a senha seria apagada). Varredura: nenhum outro
+ponto do repo renderiza senha.
+
+**Pendência declarada (não feita nesta rodada, de propósito):** o registro `usuarios` é
+sincronizado inteiro, então a **senha do usuário continua viajando e ficando guardada em
+claro na nuvem** (dentro do `data_json` e nos arquivos de backup). O conserto é mandar
+apenas um hash e o login aceitar hash — mexe no caminho de login (módulo mais sensível,
+já com teste de backdoor), então exige rodada própria: migração, compatibilidade com PCs
+que ainda não atualizaram e teste dedicado. Registrado como **próximo item de segurança**.
+
+### 16.4 Decisão do dono registrada: trava de 15 minutos — NÃO
+
+O dono decidiu não instalar a trava local de tentativas de login ("precisa não"). A
+proteção do Worker (acesso pela internet) permanece. Nada foi alterado.
+
+### 16.5 Resumo da rodada
+
+| # | Gravidade | Tipo | Item | Estado |
+|---|-----------|------|------|--------|
+| 16.1 | CRÍTICO | Bug/perda de dados | recuperação em massa do que já foi apagado | FERRAMENTA ENTREGUE + testada |
+| 16.2 | ALTO | Performance | carga inicial "de pouco em pouco" | CORRIGIDO (aviso + 1000/página) |
+| 16.3 | ALTO | Segurança | senha visível no HTML do modal | CORRIGIDO; hash na nuvem = próxima rodada |
+| 16.4 | — | Decisão | trava de 15 min | NÃO instalar (decisão do dono) |
+
+Versão **v7.0.2**. Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`).
+Bundle: 225 scripts, sha256 `9bba7e4cd0187252`.

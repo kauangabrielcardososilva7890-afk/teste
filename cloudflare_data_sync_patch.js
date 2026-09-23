@@ -413,16 +413,29 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
   return removed;
 }
 
+// v7.0.2 — "pedido de carga completa": quem quer a carga inteira à vista avisa
+// aqui antes de chamar o pullAll (mantém a chamada `await pullAll()` como sempre
+// foi — é o que o teste do motor confere).
+let cargaPedida=false;
+function pedirCarga(v){cargaPedida=!!v;}
 async function pullAll(){
+  const cargaCompleta=cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
+  // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
+  // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
+  const POR_PAGINA=1000;
+  if(cargaCompleta)mostrarCargaNuvem(true,'conectando…');
+  try{
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
+    if(cargaCompleta){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
+  }finally{ if(cargaCompleta)mostrarCargaNuvem(false); }
   state.initialPull=true;
   if(changed){
     applying=true;
@@ -697,6 +710,9 @@ async function tick(reason){
     // fica pausada até clicar em Publicar este PC.
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
+    // v7.0.2 — é a PRIMEIRA carga (ou um "baixar tudo"): mostra o aviso de
+    // carga e segura a tela até chegar tudo, em vez de ir mostrando pedaços.
+    pedirCarga(!state.initialPull||reason==='baixar-tudo-da-nuvem');
     const mudouNaTela=await pullAll();
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
@@ -749,6 +765,7 @@ async function tick(reason){
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
+    mostrarCargaNuvem(false);   // nunca deixar o dono preso no aviso de carga
     failures++;lastError=e&&e.message?e.message:String(e);
     // v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) responde
     // 429 com `quota:true`, mas o recado vem no campo `error` — e o motor lê o
@@ -772,7 +789,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{if(busy){busy=false;scheduleHeartbeat();}}
+  }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
 // LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
 // O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
@@ -1020,6 +1037,29 @@ function estadoDetalhado(){
 //   • e nunca em rajada: no máximo um redesenho a cada 4 segundos.
 // O redesenho chama direto o render da tela (NÃO o navigateTo, que rola a
 // página para o topo e mexe na barra lateral — isso sim incomodaria).
+// v7.0.2 — AVISO DE CARGA COMPLETA ("queria que aparecesse tudo de uma vez")
+// Enquanto a leitura da nuvem está em curso, este aviso cobre a tela e mostra a
+// contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
+// fim (ou se der erro) — nunca prende ninguém.
+let cargaAberta=false, cargaItens=0;
+function mostrarCargaNuvem(mostrar,texto){
+  if(typeof document==='undefined'||!document.body)return;
+  const atual=document.getElementById('digicopy-carga-nuvem');
+  if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
+  cargaAberta=true;
+  let el=atual;
+  if(!el){
+    el=document.createElement('div');
+    el.id='digicopy-carga-nuvem';
+    el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,30,138,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px';
+    el.innerHTML='<div style="font-size:16px;font-weight:800">Baixando os dados da nuvem…</div>'
+      +'<div id="digicopy-carga-conta" style="font-size:13.5px;opacity:.92"></div>'
+      +'<div style="font-size:12px;opacity:.72;max-width:430px;line-height:1.55">Trazendo tudo de uma vez: a tela abre já com os dados completos. Não feche o sistema agora.</div>';
+    document.body.appendChild(el);
+  }
+  const conta=document.getElementById('digicopy-carga-conta');
+  if(conta)conta.textContent=texto||'';
+}
 const TELAS_AO_VIVO={
   dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
   impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
@@ -1032,6 +1072,7 @@ let ultimoRedesenho=0;
 function podeRedesenharSync(d){
   d=d||{};
   if(d.hidden)return false;
+  if(d.cargaAberta)return false;   // v7.0.2 — durante a carga, nada de pedaços na tela
   if(d.modalAberto)return false;
   if(d.focoEmCampo)return false;
   if(!d.podeRenderizar)return false;
@@ -1053,6 +1094,7 @@ function redesenharTelaAtual(){
   const a=document.activeElement;
   const decisao=podeRedesenharSync({
     hidden:!!document.hidden,
+    cargaAberta:cargaAberta,
     modalAberto:!!(mr&&!mr.classList.contains('hidden')),
     focoEmCampo:!!(a&&a!==document.body&&/INPUT|TEXTAREA|SELECT|BUTTON/.test(a.tagName||'')),
     podeRenderizar:!!(render&&typeof window[render]==='function'),
@@ -1063,7 +1105,7 @@ function redesenharTelaAtual(){
   try{ window[render](); }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO};
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
