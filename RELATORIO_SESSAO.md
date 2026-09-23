@@ -27,6 +27,26 @@
 
 **Pendências:** rodar `npm install` e a suíte inteira no PC do dono (para rodar também os 4 de jsdom) · decidir a branch oficial dos links · decidir se esta leva sobe versão (`npm run versao`). **Nada foi publicado nem deployado.**
 
+**Publicado:** commit `ac19e51` + branch `arena/01a0cf4a-teste` no GitHub + **PR #30** (base `main`).
+
+---
+
+## 23/09/2026 (cont.) — RODADA 2 · AUDITORIA DA NUVEM/SINCRONIZAÇÃO · commit `3276d82`
+
+**Pergunta dele:** *"a parte do banco de dados/nuvem está sincronizando nos outros computadores sem problema nenhum?"*
+
+**Resposta honesta:** o **desenho** foi auditado no código e está bem feito; **não** é possível afirmar "sem problema nenhum" porque **não há acesso ao banco de produção** (Cloudflare/D1) — nenhuma leitura de dado real foi feita. Um defeito real foi achado e corrigido.
+
+**DEFEITO CORRIGIDO (cota preventiva não reconhecida):** o Worker, no freio preventivo, responde `json({ok:false, quota:true, error:'pre-stop DIGICOPY: daily row write limit …'}, 429)`. O comentário no próprio Worker diz que o texto traz essas palavras "de propósito: é assim que o app reconhece a pausa" — mas o cliente monta a mensagem só de `message`/`aviso`, então o recado caía em `err.code` e sobrava `"Erro HTTP 429"`; e a detecção (`ehLimiteDiario`) testa o **texto**. Resultado: a pausa **não** era reconhecida → (`a`) o app ficava batendo na porta, 4 tentativas por rodada (~21s) a cada heartbeat, em vez de dormir até a virada das 21h; (`b`) o despertador da virada nunca era agendado; (`c`) aparecia "Nuvem pendente: Erro HTTP 429" em vez do recado em português; (`d`) **cada tentativa inflava o contador de escrita** (o `somarUso` conta a escrita **tentada**, antes do freio) → o freio disparava cada vez mais cedo para **todos** os PCs. Conserto aditivo de 2 linhas (`err.quota` no cliente + tratar a marca como limite diário no motor) + 5 asserts novos em `test_sync_quota_guard.js` (**comprovados não-vazios**: falham antes, passam depois). **Não precisa de deploy do Worker** — os dois arquivos viajam no bundle.
+
+**VERIFICADO E APROVADO (não mexido):** concorrência otimista por `baseVersion`; `UPDATE … WHERE version=?` em transação `DB.batch`; idempotência por `mutation_id`; `noop` que não regrava igual; pull incremental por cursor (500/página); `applyRemote` com trava de versão; **conflito aplica a nuvem e REENVIA a edição local** com `baseVersion` nova (não descarta mais — era o "salvei e sumiu"), cedendo só em concorrência real e avisando no sino; contador pega o **maior** (dois PCs não emitem o mesmo número); exclusão de orçamento é **soft**; líder entre abas (lease 90s); sem `setInterval`. **Portão fiscal também conferido no executor real** (`nfxAmb()` lê `NFG_PURE.nfgAmbiente`; produção exige permissão + digitar `PRODUCAO` + auditoria, e os endpoints trocam por ambiente).
+
+**REGISTRADO, NÃO ALTERADO:** (`1`) o botão **"Enviar para nuvem"** está **desligado** (stubs em `cloudflare_sync_patch.js:113-114`, índice 96 = último da cadeia) e é **inalcançável** hoje (varredura ampla não achou chamador) — mas o `uiWrapSync` mostraria **"Pronto! Este PC enviou os dados ☁️"** com o stub não fazendo nada: é **toast falso latente** que vira bug se religarem o botão; (`2`) **resíduo Supabase dentro do bundle**: `performance_patch.js` (índice 9) ainda embrulha o sync lendo `window.__supabaseSyncInternals`, **que não é definido em lugar nenhum** — código morto que o `test_nuvem_antiga_removida.js` **não** cobre (ele procura arquivos apagados, não símbolos internos); (`3`) `somarUso` conta escrita **tentada**, não efetiva.
+
+**Validações:** `npm run check` ✅ 225 scripts, sha256 `452fa4560ad657bf` · `npm run sync:check` ✅ · suíte **190 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** · `test_ajustes_v52280.js` e `test_sync_quota_guard.js` ✅ · `mobile/www` ressincronizado. **Nenhuma regressão.** Relatório atualizado (seções 10 e 11 do `AUDITORIA_TECNICA.md`).
+
+**PENDÊNCIAS DA RODADA 2:** (a) **os dois LAUDO não chegaram** — `/home/user/uploads/` não existe, `find /` não achou nada e o nome "laudo" **não está em nenhuma das 32 branches remotas**; pedir para colar o texto na conversa ou commitar o arquivo nesta branch; (b) confirmar se o dono quer o botão "Enviar para nuvem" **religado** (aí o toast falso tem de ser tratado) ou removido; (c) limpar o resíduo Supabase do `performance_patch.js` — poda em lote exige autorização dele (regra 11).
+
 ---
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo

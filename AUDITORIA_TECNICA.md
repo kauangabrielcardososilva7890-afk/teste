@@ -282,10 +282,99 @@ encontrou** credencial versionada. Isso **não** é um atestado de ausência de 
 
 ---
 
-## 9. CONCLUSÃO DA RODADA
+## 10. RODADA 2 — AUDITORIA DA SINCRONIZAÇÃO (nuvem / banco)
+
+**Pergunta do dono:** *"a parte do banco de dados/nuvem está sincronizando nos outros computadores sem problema nenhum?"*
+
+> **Não foi possível verificar diretamente — acesso ao banco de produção indisponível.**
+> Nada aqui é leitura de dados reais: é **auditoria de código** (Worker + cliente).
+
+### 10.1 O QUE FOI VERIFICADO E ESTÁ BEM FEITO (não foi alterado)
+
+O desenho trata o caso difícil (dois PCs editando junto) de propósito:
+
+| Mecanismo | Onde | Por quê importa |
+|---|---|---|
+| Concorrência otimista por `baseVersion` | `applyMutation` (Worker) | Duas edições simultâneas não se sobrepõem em silêncio |
+| `UPDATE ... WHERE version = ?` + transação `DB.batch` | Worker | Registro e evento entram juntos ou não entram |
+| Idempotência por `mutation_id` (UNIQUE) | Worker | Reenvio/reconexão não duplica |
+| `noop`: registro idêntico não regrava | Worker | Economia real de cota |
+| Pull incremental por `cursor` (500/página) | `handleChanges` | Não relê a base inteira |
+| `applyRemote` com trava de versão | Cliente | Mudança mais velha não sobrescreve a mais nova |
+| Conflito → aplica a nuvem e **reenvia** com `baseVersion` nova | `pushOutbox` | **Não descarta a edição local** (era o "salvei e sumiu"); só cede em concorrência real e avisa no sino |
+| Contador (`_seq`) pega o **maior** | `applyRemote` | Dois PCs não emitem o mesmo número |
+| Exclusão de orçamento é **soft** | `applyRemote` | Orçamento não some por mandado da nuvem |
+| Líder entre abas (lease de 90s) | `leader()` | Duas abas não empurram ao mesmo tempo |
+| Sem polling agressivo (`setInterval`) | ambos | Preserva PC fraco (regra 12) |
+| Portão fiscal no **executor real** | `nfxAmb()` lê `NFG_PURE.nfgAmbiente` | Produção exige permissão + digitar `PRODUCAO` + auditoria; endpoints trocam por ambiente |
+
+### 10.2 ALTO — o freio preventivo de cota não era reconhecido pelo cliente · **CORRIGIDO** (commit `3276d82`)
+
+**Tipo:** Bug (lógica entre dois arquivos) · **Arquivos:** `cloudflare-worker/src/index.js:545` ↔ `cloudflare_sync_patch.js:84-90` ↔ `cloudflare_data_sync_patch.js:737`
+
+O Worker responde o freio preventivo assim:
+
+```js
+return json({ ok:false, quota:true,
+  error:'pre-stop DIGICOPY: daily row write limit próximo do teto …' }, 429);
+```
+
+O comentário no próprio Worker diz que o texto carrega as palavras *"daily row write limit"* **de propósito**, porque "é assim que o app reconhece a pausa". Mas o cliente monta a mensagem lendo **apenas** `message`/`aviso` — então o recado cai em `err.code` (não em `err.message`), e o que sobra é `"Erro HTTP 429"`. E a detecção testa o **texto**:
+
+```js
+function ehLimiteDiario(msg){ return /free tier daily|daily row (write|read) limit|exceeded .*limit/i.test(msg); }
+```
+
+**Consequências (todas confirmadas por leitura de código):**
+1. `ehLimiteDiario` dava `false` → `state.limiteAte` nunca era gravado → **o despertador da virada nunca era agendado**.
+2. `ehSobrecarga(429)` dava `true` → o `comPaciencia` tentava 4× (900+2500+6000+12000 = **~21s**) **por rodada**, a cada heartbeat.
+3. O usuário via **"Nuvem pendente: Erro HTTP 429"** em vez do recado em português.
+4. **Efeito composto:** cada tentativa passa pelo `somarUso`, que conta a escrita **tentada** (roda antes do freio e antes de saber se houve conflito/duplicata/noop). O martelar **inflava o contador do dia** e fazia o freio disparar **cada vez mais cedo para todos os PCs**.
+
+**Correção (aditiva, 2 linhas):** `err.quota=!!(data&&data.quota)` no cliente + `ehLimiteDiario(lastError)||!!(e&&e.quota)` no motor. Não altera nenhuma outra mensagem — o caminho do erro cru do D1 continua funcionando como antes. 5 asserts novos em `test_sync_quota_guard.js`, **comprovados não-vazios** (falham antes, passam depois).
+
+**Não perde dado:** durante a janela, nada é descartado — as mudanças ficam na outbox de cada PC e sobem depois. **Mas nenhum PC recebe novidade dos outros enquanto a cota está travada.** O conserto **não precisa de deploy do Worker**: os dois arquivos corrigidos viajam no bundle.
+
+### 10.3 INFORMATIVO — o botão "Enviar para nuvem" está desligado e é inalcançável
+
+**Tipo:** Código morto + armadilha latente · **Arquivos:** `cloudflare_sync_patch.js:113-114`, `ajustes_v5191_patch.js:23-45`, `interface_patch.js:70-73`, `performance_patch.js:142-145`
+
+`cloudflare_sync_patch.js` (índice 96) **sobrescreve** `window.syncEnviarParaNuvem` e `window.syncCarregarDaNuvem` com stubs desligados (`{ok:false,desligado:true,cloudflare:true}`). Como ele é o **último** da cadeia, são esses que valem no fim.
+
+- **Armadilha latente:** `uiWrapSync` (índice 15) mostraria **"Pronto! Este PC enviou os dados para a nuvem ☁️"** mesmo com o stub não fazendo nada (o stub não lança exceção → `__uiSyncErro` fica `false`). Seria uma confirmação **falsa**.
+- **Porém é inalcançável hoje:** uma varredura ampla (`.js`, `.html`, `onclick`, string dinâmica, fora do bundle/mobile/testes) **não achou nenhum chamador** de `enviarDadosLocaisParaNuvem` / `carregarDadosDaNuvem`. Os embrulhos de `ajustes_v5191` (índice 86) capturam `_envNuvem` mas **nunca chamam** — e ainda chamam `window.syncEnviarParaNuvem` dinamicamente, que já é o stub.
+- **Conclusão honesta:** não é bug visível hoje (não há botão ligado). É código morto que **vira bug no dia em que alguém religar o botão**. Não foi removido (regra: não apagar código morto sem provar e testar). Fica para decisão do dono.
+
+### 10.4 INFORMATIVO — resíduo da nuvem antiga (Supabase) dentro do bundle
+
+**Arquivo:** `performance_patch.js` (índice **9** do manifesto — entra no `.exe` e no site)
+
+`performance_patch.js` ainda embrulha `syncEnviarParaNuvem`/`syncCarregarDaNuvem` com caminho Supabase (`I.supabaseRequest('app_state?on_conflict=key', …)`, `CLOUD_META_KEY`, cache por backend), lendo `window.__supabaseSyncInternals` — **que não é definido em lugar nenhum do repositório** (verificado por varredura). O caminho cai no `return {ok:false, erros:['sync interno indisponível']}`.
+
+É **código morto**, mas **não é inofensivo**: as duas funções continuam reatribuídas (participam dos embrulhos de 10.3) e carregam trabalho de leitura de cache. `test_nuvem_antiga_removida.js` **não cobre isto** — ele procura arquivos apagados (`.supabase.co`, chaves `AIza…`), não símbolos internos como `__supabaseSyncInternals`.
+
+### 10.5 INFORMATIVO — `somarUso` conta escrita **tentada**, não efetiva
+
+**Arquivo:** `cloudflare-worker/src/index.js` (`handlePush`)
+
+`somarUso(env, mutations.length, …)` roda **antes** do freio e antes de saber se houve conflito, duplicata ou `noop`. Logo um lote que **não grava nada** (tudo `noop`/duplicado) ainda **gasta cota do contador**. Foi o que transformou o item 10.2 num ciclo que se reforça. Não alterado: mexer nisso muda o comportamento do contador e exige medir em produção.
+
+---
+
+## 11. CONCLUSÃO DAS RODADAS
+
+### Rodada 1 — botão mudo no `.exe` (commit `ac19e51`)
 
 - **1 causa raiz encontrada e corrigida:** o `prompt` nativo do Electron, que transformava botões em nada-no-`.exe`. Todos os pontos foram migrados para o popup do sistema e ficou uma rede de segurança para que essa classe não volte.
 - **2 bugs vivos** (Ler status da impressora, Editar notas/tutorial), **1 armadilha latente** (PRODUÇÃO), **4 ramos alternativos** endurecidos.
 - **0 regressões:** suíte idêntica à linha de base; bundle e sync conferidos.
 - **Registrado, não alterado:** o risco estrutural dos 35 `window.navigateTo`, e duas decisões de segurança que dependem de migração e de acesso ao banco.
 - **Limite honesto:** a auditoria completa de 150.000 linhas **não** foi concluída. A seção 8 diz exatamente onde ela parou, para continuar na próxima rodada sem perder contexto.
+
+### Rodada 2 — sincronização/nuvem (commit `3276d82`)
+
+- **1 defeito real encontrado e corrigido** (item 10.2): o freio preventivo de cota do Worker não era reconhecido pelo cliente. O conserto **não precisa de deploy do Worker** (viaja no bundle dos PCs).
+- **2 testes de cota** continuam passando + **5 asserts novos** prendendo as três pontas do encanamento (Worker → cliente → motor), comprovados não-vazios.
+- **Desenho da sincronização verificado e aprovado** (item 10.1): conflito entre dois PCs é detectado, a edição local **não** é descartada, contador não regride e orçamento não some.
+- **3 pendências registradas, não alteradas:** botão "Enviar para nuvem" desligado e inalcançável + toast falso latente (10.3); resíduo Supabase dentro do bundle, fora do alcance do teste que diz "nuvem antiga removida" (10.4); `somarUso` conta escrita tentada, não efetiva (10.5).
+- **O que NÃO foi possível responder:** se está sincronizando **de fato** entre os computadores do dono. Isso exige ler o banco de produção, e **não há acesso ao ambiente de produção**. A conclusão é sobre o **código**, não sobre os dados.
