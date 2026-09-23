@@ -106,6 +106,28 @@ O `build_bundle.js` imprime `sha256 8262454ae8f6bbd7` e o `?v=` do cache saiu `7
 
 ---
 
+## 23/09/2026 (cont.) — RODADA 5 · O DUPLO CLIQUE DAS TABELAS (commit `0f89e38`)
+
+Enquanto preparava os passos dele, apareceu um defeito de copiar/colar que estava
+escondido em **cinco telas**: usuários, auditoria, equipamentos, leituras e ordens de
+serviço tinham o duplo clique copiado da tabela de produtos —
+
+    ondblclick="openModal('produto','${p.id}')"
+
+— só que nessas telas a variável da linha é `u`, `l`, `e` ou `o`, e `p` não existe em
+lugar nenhum do arquivo. Como isso roda como atributo inline, o erro sai só no console:
+para quem usa, o duplo clique simplesmente **não fazia nada** (e o `cursor-pointer` da
+linha dava a impressão de que fazia).
+
+**Corrigido:** cada tabela agora abre o modal dela (`usuario`, `equipamento`, `leitura`,
+`os`); a auditoria, que é log e não tem tela de detalhe, ficou sem duplo clique.
+**Travado:** `test_linhas_tabela_clique.js` (19 verificações) — confere tela por tela que
+o modal é o da própria tabela e que a variável é a da própria linha, e quebra se alguém
+copiar linha errada de novo. Entrou no `test_runner.js`.
+
+**Suíte:** 203 passaram, 0 falharam (4 pulam por falta de `jsdom`).
+**Bundle:** 225 scripts, sha256 `06304bac1ecc2328`, carimbo `?v=7.0.0-3bc7ea1d0330`.
+
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 
 **Ideia dele:** *"você faz uma area de importação dos dois tipos de arquivos, aí vai ler e me dar um texto pra copiar aí só colo aqui"* — ele não consegue anexar arquivos na conversa.

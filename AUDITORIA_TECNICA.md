@@ -606,3 +606,62 @@ O dono pediu v7.0.0 e "conferir todos os arquivos para não dar problema". Ao su
 3. **Trava de 15 min/5 erros**: só tem valor **no Worker** (no navegador se contorna). Não implementada.
 4. **19 testes antigos** com versão cravada (`5.24.34`) e **4 testes quebrados** (§12.4): fora da suíte, não afetam uso; correção caso a caso.
 5. **Publicar o Worker** (motor + deploy) para o conserto do `somarUso` chegar à nuvem — depende do dono.
+
+## 14. RODADA 5 — O DUPLO CLIQUE DAS TABELAS (23/09/2026)
+
+### 14.1 MÉDIO — Bug — o duplo clique de 5 tabelas abria o modal de PRODUTO
+
+**Onde:** `app.js` linhas 1111 (usuários), 1121 (auditoria), 1190 (equipamentos),
+1235 (leituras) e 1263 (ordens de serviço).
+
+**O que era:**
+
+```html
+<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer">
+```
+
+Nas cinco telas a variável da linha é outra (`u` usuário, `l` log, `e` equipamento,
+`o` OS). A variável `p` **não existe em nenhum lugar do arquivo** — a linha foi
+copiada da tabela de produtos (de uma versão dela que tinha duplo clique) e o
+`p.id` ficou junto.
+
+**Por que ninguém viu o erro:** isso roda como atributo inline (`onclick`/`ondblclick`),
+então o `ReferenceError` sai só no console do navegador. Para quem usa, o efeito é
+"o duplo clique não faz nada" — sem mensagem, sem rastro. Na tabela de produtos o
+duplo clique hoje nem existe mais; ou seja, o trecho sobreviveu cinco vezes como
+resíduo de um comportamento que nem está mais lá.
+
+**Causa raiz:** copiar/colar de bloco de `<tr>` entre telas. O `class="cursor-pointer"`
+ficou junto e é o que dá a pista falsa de que a linha é clicável.
+
+**Correção (5 linhas):** usuários → `openModal('usuario','${u.id}')`;
+equipamentos → `openModal('equipamento','${e.id}')`; leituras →
+`openModal('leitura','${l.id}')`; OS → `openModal('os','${o.id}')`. Na auditoria,
+que é log e não tem tela de detalhe, o duplo clique foi removido (com o
+`cursor-pointer`), porque apontava para um modal que não faz sentido para um registro
+de log.
+
+**Preservação:** a tabela de produtos não foi tocada; nenhum modal foi criado,
+renomeado ou removido; as funções chamadas (`openModal` etc.) são as mesmas que os
+botões de lápis da própria tabela já usavam — só passaram a valer para o duplo clique
+também. **Teste:** `test_linhas_tabela_clique.js` (19 verificações) confere, tela por
+tela, que o modal aberto é o da própria tabela e que a variável é a da própria linha;
+ele quebra se alguém copiar a linha errada de novo. Registrado em `test_runner.js`.
+
+**Varredura do padrão em todo o repo:** `grep -o 'ondblclick="openModal([^"]*"' app.js`
+→ 4 ocorrências, todas corretas depois da correção; nenhuma outra tabela/patch usa
+`${p.id}` em linha de outro tipo. Os 11 `${p.id}` restantes do `app.js` são de código
+que realmente itera produtos (`db.parque.filter(p=>…)`, `db.produtos.filter(p=>…)`).
+
+**Não foi possível verificar diretamente** o comportamento no navegador real a partir
+deste ambiente (sem rede de saída). Verificação feita por leitura de código + teste
+automatizado; a confirmação visual é um duplo clique em cada tela.
+
+### 14.2 Resumo da rodada
+
+| # | Gravidade | Tipo | Item | Estado |
+|---|-----------|------|------|--------|
+| 14.1 | MÉDIO | Bug | duplo clique de 5 tabelas chamava o modal de produto | CORRIGIDO + travado por teste |
+
+Suíte: 203 passaram, 0 falharam (4 pulam por falta de `jsdom` no ambiente).
+Bundle: 225 scripts, sha256 `06304bac1ecc2328`.
