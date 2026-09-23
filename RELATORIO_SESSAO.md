@@ -49,6 +49,30 @@
 
 ---
 
+## 23/09/2026 (cont.) — RODADA 3 · SEGURANÇA DO LOGIN + HIGIENE DOS TESTES · commit `1c6abce`
+
+**De onde veio:** o dono respondeu às 3 perguntas da rodada 2 (tirar o botão manual, autorizar apagar código morto, explicar o `somarUso`) e mandou **os dois LAUDO**, colados no chat. Frase dele que liberou o trabalho: *"da minha decisão não precisa, pode fazer, pois quero testar as ações que você fez"*.
+
+**ACHADO CRÍTICO (confirmado no código, não no laudo — o laudo também apontou):** `ajustes_v52253_login_tela_branca_patch.js` devolvia um usuário **Admin fixo** para o login `admin` + senha de demonstração, **sempre**. O comentário dizia "fallback para admin inicial", mas não havia condição nenhuma. **E valia no sistema**: 5 patches definem `window.doLoginUser` e o que ganha é o **último** da ordem de carga — `login_otimizacao` → `login_dados_automaticos` → `sistema_clientes_loja` → `ajustes_v5186` → **`ajustes_v52253` (índice 177, o último)**. Quem digitasse o par entrava como Admin, **sem existir no banco, sem empresa e sem registro na auditoria** — e o par estava escrito no bundle público.
+
+**Conserto:** o fallback continua (para PC novo ele é legítimo; tirá-lo poderia trancar o dono fora), mas agora **só vale quando o banco ainda não tem nenhum Admin ativo**. Comprovado executando a função: banco vazio → entra (preservado); banco com Admin ativo → `null`; usuário e senha de verdade → entra; senha errada → `null`. **Trava nova:** `test_login_sem_backdoor.js` (19 verificações) prende o comportamento **e** garante que o `ajustes_v52253` continua sendo o último `doLoginUser` do bundle — se um patch novo passar na frente, a correção morreria em silêncio e agora o teste acusa.
+
+**ACHADO ALTO (`app.js` / `doLoginCNPJ`), que o laudo não tinha:** o caminho da credencial corporativa (`1`) **reativava** usuário sozinho (`ativo=true` em quem tivesse senha de demonstração — desfazia a desativação feita pelo dono), e (`2`) **sobrescrevia a senha de CNPJ configurada pelo dono** com a credencial fixa, gravando no banco (`saveDB()`). Os dois saíram. A credencial em si **ficou** (tirar poderia trancá-lo fora) — mas fica o alerta: ela está escrita no bundle público e **precisa ser trocada**.
+
+**ACHADO BAIXO:** `listUsuariosDemo` (app.js) mostrava `login / senha / nome` de **todos** os usuários na tela. Não é chamada por nada, mas mostrava senha em texto puro. Agora mostra login/nome/perfil, **sem senha**.
+
+**ORDEM DO DONO EXECUTADA:** (`1`) o envio/carregamento **manual** para a nuvem foi **removido** de `ajustes_v5191_patch.js` e `interface_patch.js` (junto com o `uiWrapSync` — era ele que diria *"Pronto! Este PC enviou os dados para a nuvem ☁️"* com a nuvem desligada). (`2`) Código morto apagado: **240 linhas** do caminho Supabase em `performance_patch.js` (344 → 110 linhas) — leitura de `window.__supabaseSyncInternals`, que não existe em lugar nenhum. Ficou o que é vivo: helpers puros + `saveDB` write-behind.
+
+**ACHADO MÉDIO — 36 testes que nunca rodaram:** o `test_runner.js` tem lista fixa (194 de 230 arquivos `test_*.js`). Rodei os 36 um por um: **12 passam** e entraram na suíte → **190 → 202 passando, 0 falhando**. Os 23 que falham ficaram **de fora** (não mascaro falha) e a causa raiz de cada grupo está na seção 12.4 do `AUDITORIA_TECNICA.md`: 19 são **versão cravada à mão** (`=== '5.24.34'`) — comprovei trocando só a versão num deles: as falhas caem de 7 para 4, e as 4 restantes são **contagens fixas** ("196 scripts", hoje 225) → a correção certa é comparar com `package.json`/`bundle-manifest.json`; 2 apontam para patches **que nunca existiram neste repositório** (`correcoes_relatorio_patch.js`, `vendas_chamados_reparo_patch.js` — conferido no histórico do git); 2 quebram no próprio teste (mock incompleto: `imprimirChamadoPDF` e `digicopyLoja`, que hoje vive em outros arquivos / não existe mais em lugar nenhum).
+
+**LAUDO CONFERIDO ITEM POR ITEM (§12.5):** produzido sobre **v6.1.3 / 222 scripts**; aqui está **v6.1.10 / 225**. Confirmados: backdoor (acima), `totals.cursor` no `/v1/status`, a pausa `escolha-inicial` e as **15 de 22** entidades de `PODE_EXCLUIR` (deliberado — religar causou o vaivém da v5.22.75). **VENCIDO:** o patch "migração de regras congela em toda carga" — o código atual usa `REGRAS='v6.1.7-conectou-sincroniza'` e **despausa sozinho** desde 22/09 por ordem do dono. ⛔ **Não aplicar**: reintroduziria a pausa que ele mandou tirar. Nada do laudo foi colado.
+
+**PENDÊNCIAS DA RODADA 3:** (`a`) **trocar as senhas que estavam no bundle** — não imprimo nenhuma; (`b`) decidir sobre a credencial corporativa de CNPJ; (`c`) a trava de 15 min/5 erros do laudo só vale se for **no Worker** (no navegador qualquer um contorna) — não implementei sem essa decisão; (`d`) modernizar os 19 testes de versão + tratar os 4 quebrados; (`e`) `npm install` no PC dele para rodar os 4 de jsdom.
+
+**Validações executadas:** `build_bundle.js --check` ✅ 225 scripts, sha256 `db55bcb615b6cf60` · `sync_build.js --check` ✅ v6.1.10, 0 soltos, 13 em `build.files` · `guardar_repo.js --check` ✅ · **suíte 202 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** · `node --check` em todos os arquivos tocados ✅ · `mobile/sync-www.js` ✅. **Nenhuma regressão.** Versão **não** foi trocada (6.1.10 continua).
+
+---
+
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 
 **Ideia dele:** *"você faz uma area de importação dos dois tipos de arquivos, aí vai ler e me dar um texto pra copiar aí só colo aqui"* — ele não consegue anexar arquivos na conversa.

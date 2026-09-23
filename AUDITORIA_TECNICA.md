@@ -343,7 +343,9 @@ function ehLimiteDiario(msg){ return /free tier daily|daily row (write|read) lim
 
 - **Armadilha latente:** `uiWrapSync` (índice 15) mostraria **"Pronto! Este PC enviou os dados para a nuvem ☁️"** mesmo com o stub não fazendo nada (o stub não lança exceção → `__uiSyncErro` fica `false`). Seria uma confirmação **falsa**.
 - **Porém é inalcançável hoje:** uma varredura ampla (`.js`, `.html`, `onclick`, string dinâmica, fora do bundle/mobile/testes) **não achou nenhum chamador** de `enviarDadosLocaisParaNuvem` / `carregarDadosDaNuvem`. Os embrulhos de `ajustes_v5191` (índice 86) capturam `_envNuvem` mas **nunca chamam** — e ainda chamam `window.syncEnviarParaNuvem` dinamicamente, que já é o stub.
-- **Conclusão honesta:** não é bug visível hoje (não há botão ligado). É código morto que **vira bug no dia em que alguém religar o botão**. Não foi removido (regra: não apagar código morto sem provar e testar). Fica para decisão do dono.
+- **Conclusão honesta:** não é bug visível hoje (não há botão ligado). É código morto que **vira bug no dia em que alguém religar o botão**.
+
+> **RESOLVIDO em 23/09/2026 (commit `1c6abce`, rodada 3):** o dono decidiu — *"não quero algo manual que envia pra nuvem, quero automático"*. As ações manuais foram **removidas** de `ajustes_v5191_patch.js` e `interface_patch.js` (junto com o `uiWrapSync`, que era o aviso verde falso). `test_ajustes_v5191.js` foi reescrito para provar o contrário do que provava antes: que o caminho manual **não existe mais**.
 
 ### 10.4 INFORMATIVO — resíduo da nuvem antiga (Supabase) dentro do bundle
 
@@ -352,6 +354,8 @@ function ehLimiteDiario(msg){ return /free tier daily|daily row (write|read) lim
 `performance_patch.js` ainda embrulha `syncEnviarParaNuvem`/`syncCarregarDaNuvem` com caminho Supabase (`I.supabaseRequest('app_state?on_conflict=key', …)`, `CLOUD_META_KEY`, cache por backend), lendo `window.__supabaseSyncInternals` — **que não é definido em lugar nenhum do repositório** (verificado por varredura). O caminho cai no `return {ok:false, erros:['sync interno indisponível']}`.
 
 É **código morto**, mas **não é inofensivo**: as duas funções continuam reatribuídas (participam dos embrulhos de 10.3) e carregam trabalho de leitura de cache. `test_nuvem_antiga_removida.js` **não cobre isto** — ele procura arquivos apagados (`.supabase.co`, chaves `AIza…`), não símbolos internos como `__supabaseSyncInternals`.
+
+> **RESOLVIDO em 23/09/2026 (commit `1c6abce`, rodada 3):** o dono autorizou apagar código morto. As **240 linhas** do caminho Supabase saíram de `performance_patch.js` (344 → 110 linhas). Ficou só o que é vivo: os helpers puros (`perfHashStr`/`perfDiffPartes`/`perfEmLotes`, cobertos por `test_perf.js`) e o `saveDB` write-behind. A cobertura que faltava agora existe: `test_ajustes_v5191.js` confere, **sem os comentários**, que não sobrou uso de `__supabaseSyncInternals`, `supabaseRequest` nem `app_state` — e que os helpers vivos continuam lá.
 
 ### 10.5 INFORMATIVO — `somarUso` conta escrita **tentada**, não efetiva
 
@@ -378,3 +382,162 @@ function ehLimiteDiario(msg){ return /free tier daily|daily row (write|read) lim
 - **Desenho da sincronização verificado e aprovado** (item 10.1): conflito entre dois PCs é detectado, a edição local **não** é descartada, contador não regride e orçamento não some.
 - **3 pendências registradas, não alteradas:** botão "Enviar para nuvem" desligado e inalcançável + toast falso latente (10.3); resíduo Supabase dentro do bundle, fora do alcance do teste que diz "nuvem antiga removida" (10.4); `somarUso` conta escrita tentada, não efetiva (10.5).
 - **O que NÃO foi possível responder:** se está sincronizando **de fato** entre os computadores do dono. Isso exige ler o banco de produção, e **não há acesso ao ambiente de produção**. A conclusão é sobre o **código**, não sobre os dados.
+
+
+### Rodada 3 — segurança do login e higiene dos testes (commit `1c6abce`)
+
+- **1 achado CRÍTICO de segurança confirmado e corrigido** (12.1): o login aceitava um par de demonstração como Admin, **sempre** — e valia no sistema, porque esse patch é o último da cadeia que define `doLoginUser`. Comprovado antes/depois executando a função de verdade.
+- **1 achado ALTO** (12.2): o login por CNPJ reativava usuário desativado pelo dono e sobrescrevia a senha do CNPJ configurada por ele. Corrigido **sem** tirar a credencial corporativa (tirar poderia trancar o dono fora).
+- **1 achado BAIXO** (12.3): tela que listava as senhas de todos os usuários. Agora lista sem senha.
+- **1 achado MÉDIO** (12.4): **36 testes nunca rodavam**. Rodei todos: 12 entraram na suíte → **190 → 202 passando, 0 falhando**. Os 23 que falham ficaram **de fora** e registrados, com causa raiz de cada grupo (19 são versão cravada à mão; 4 são testes quebrados ou de arquivo inexistente).
+- **2 itens da rodada 2 fechados por decisão do dono:** envio manual para a nuvem **removido** (10.3) e resíduo Supabase **apagado** (10.4, 240 linhas).
+- **Laudo externo conferido item por item** (12.5): confirmado no achado crítico, **vencido** no patch da pausa de regras (o código atual já despausa sozinho desde 22/09). O laudo foi produzido sobre v6.1.3/222; aqui está v6.1.10/225 — nada foi copiado sem conferência.
+- **Nenhuma regressão:** `build_bundle.js --check` OK (225 scripts, sha `db55bcb615b6cf60`), `sync_build.js --check` OK (v6.1.10, 0 soltos), suíte 202/0/4-não-rodaram.
+- **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:** se as contas afetadas pelo backdoor foram usadas, quando, e por quem. A evidência existente é de **código** (o caminho existe e vence a cadeia), não de dados.
+
+---
+
+## 12. RODADA 3 — SEGURANÇA DO LOGIN E HIGIENE DOS TESTES (commit `1c6abce`, 23/09/2026)
+
+Esta rodada nasceu de duas frentes: as ações que o dono autorizou (tirar o envio
+manual para a nuvem, apagar código morto) e a conferência, linha por linha, do
+laudo técnico externo que ele recebeu. **O laudo estava certo no achado mais
+grave** — e ele está detalhado em 12.1.
+
+### 12.1 CRÍTICO — Segurança — porta dos fundos no login (`admin` + senha de demonstração)
+
+**Arquivo/local:** `ajustes_v52253_login_tela_branca_patch.js`, função
+`loginFlexivel` (dentro de `LOGIN_TELA_BRANCA_V52253_PURE`), chamada pelo
+`window.doLoginUser` do mesmo arquivo.
+
+**O que era:** antes de desistir, a função devolvia um usuário **fixo**,
+`{id:'usr_admin', perfil:'Admin', ativo:true}`, para o login `admin` com senha
+`admin`, `123` ou `admin123`. O comentário original dizia que era o "fallback
+para admin inicial" — **mas ele valia sempre**, não só em instalação nova.
+
+**Evidência de que era alcançável (não é teoria):**
+
+| Verificação | Resultado |
+|---|---|
+| Quem define `window.doLoginUser` | 5 patches: `login_otimizacao_patch.js` (índice 97), `login_dados_automaticos_patch.js` (167), `sistema_clientes_loja_patch.js` (147), `ajustes_v5186_patch.js` (376) e `ajustes_v52253…` (**177, o último**) |
+| Qual vale no fim | o **último** da ordem de carga → o de índice 177, que chama `loginFlexivel` |
+| Onde eu poderia usar | tela de login, sem `usuarios`, sem empresa, sem log de auditoria |
+| Onde o par de senhas ficava exposto | no `app.bundle.js`, que é **público** (site/`.exe`/zip) |
+
+**Causa raiz:** um atalho de desenvolvimento ("se o banco está vazio, deixa
+entrar") que nunca foi restringido à condição que o justificava.
+
+**Correção aplicada:** o fallback continua existindo — porque para instalação
+nova ele é legítimo e tirá-lo poderia trancar o dono fora de um PC zerado — mas
+agora ele só vale **quando o banco ainda não tem nenhum Admin ativo**. Existindo
+Admin ativo, quem manda é a senha cadastrada no banco.
+
+**Comprovado nas duas pontas** (execução real da função):
+
+| Cenário | Antes (git HEAD) | Depois |
+|---|---|---|
+| Banco **vazio** (PC novo) | entra como Admin | entra como Admin ✅ (preservado) |
+| Banco **com** Admin ativo + par de demonstração | **entrava como Admin** ❌ | `null` (não entra) ✅ |
+| Banco com Admin ativo + usuário e senha de verdade | entra | entra ✅ |
+| Banco com Admin ativo + senha errada | entra | `null` ✅ |
+
+**Trava contra reincidência:** `test_login_sem_backdoor.js` (novo, 19
+verificações). Ele testa o comportamento e mais uma coisa que ninguém tinha
+proteção: **confere que `ajustes_v52253…` continua sendo o ÚLTIMO arquivo do
+bundle a definir `doLoginUser`** (ordem atual: `login_otimizacao` →
+`login_dados_automaticos` → `sistema_clientes_loja` → `ajustes_v5186` →
+`ajustes_v52253`). Se um patch novo passar na frente deste, a correção
+morreria **em silêncio** — agora o teste acusa.
+
+**Ação pendente para o dono (não faço sozinho):** as senhas que estavam
+escritas no bundle precisam ser **trocadas** (e as que eram de demonstração,
+apagadas). Não imprimo nenhuma delas no relatório. Enquanto o bundle antigo
+circular em algum PC, o par continua válido — a correção vale a partir da
+próxima atualização de cada máquina.
+
+### 12.2 ALTO — Segurança — login por CNPJ reativava usuário e sobrescrevia a senha do dono
+
+**Arquivo/local:** `app.js`, função `doLoginCNPJ`.
+
+Três problemas no mesmo bloco (o "caminho da credencial corporativa única"):
+
+1. **Reativação silenciosa de usuário.** `db.usuarios.filter(…).forEach(u => { if(u.senha===…) u.ativo=true; })` — quem tivesse uma senha de demonstração voltava a ficar **ativo** ao entrar por esse caminho, **desfazendo em silêncio** a desativação feita pelo dono. Desativar usuário é decisão do dono; nada pode reverter isso sem avisar.
+2. **Sobrescrita da senha do CNPJ.** `emp.senha='…'` gravava a credencial corporativa fixa por cima da senha que o dono configurou, e chamava `saveDB()` — a troca ia para o banco de cada PC.
+3. **A credencial corporativa em si é uma senha escrita no código**, em bundle público, para um CNPJ que é público. Concede acesso ao **passo 1** do login (a empresa). Combinada com o backdoor de 12.1, dava entrada completa no sistema.
+
+**Correção aplicada:** os itens 1 e 2 foram **removidos** (o `saveDB()` do bloco continua, porque ele também grava o CNPJ/fantasia corretos). O item 3 **NÃO foi removido de propósito**: essa credencial é o que garante a entrada do dono, e tirá-la poderia **trancá-lo fora**. Fica registrado para ele decidir com calma. O comentário no código explica os três casos.
+
+**Trava:** 5 verificações novas em `test_login_sem_backdoor.js` (não reativa, não sobrescreve, a credencial corporativa continua funcionando e nenhum outro ponto do `app.js` escreve `emp.senha`).
+
+### 12.3 BAIXO — Segurança/Privacidade — tela que listava as senhas de todos os usuários
+
+**Arquivo/local:** `app.js`, `listUsuariosDemo`.
+
+Montava um texto com `login / senha / nome (perfil)` de **todos** os usuários da empresa e mostrava na tela — senha em texto puro, na frente de quem estivesse no PC. A função **não é chamada por nada** (verificado em `.js` e `.html`, fora do bundle gerado), então o risco real era baixo, mas o hábito é ruim e contraria a regra de nunca expor senha.
+
+**Correção:** a lista continua (login, nome, perfil e marca de inativo), **sem as senhas**. Nada mais foi removido.
+
+### 12.4 MÉDIO — Manutenção — 36 testes que nunca rodaram
+
+**Arquivo/local:** `test_runner.js` (a lista de testes é fixa, não descobre arquivo por padrão).
+
+O repositório tem **230 arquivos `test_*.js`** e o runner listava **194**. Ou seja: **36 testes existiam no repositório e nunca eram executados** — nem no `npm test`, nem em CI. Teste que não roda não protege nada, e pior: dá a sensação de cobertura.
+
+Rodei **todos** os 36, um por um:
+
+| Resultado | Quantos | O que fiz |
+|---|---|---|
+| Passam hoje | **12** | entraram na suíte (inclusive o novo `test_login_sem_backdoor.js`) |
+| Falham por **versão cravada no código** | 19 | registrados aqui, **não** entraram (não mascaro falha) |
+| Falham porque o **arquivo testado não existe** | 2 | registrados |
+| Quebram no próprio teste (**mock incompleto**) | 2 | registrados |
+
+**Resultado:** a suíte foi de **190 → 202 testes passando, 0 falhando**.
+
+**Os 19 testes de versão — causa raiz e correção recomendada (próxima rodada):**
+eles conferem se `package.json`, `index.html`, `mobile/www/index.html` e o Worker
+têm **a mesma** versão — que é uma checagem útil. O defeito é que ela está escrita
+**contra um número fixo** (`=== '5.24.34'`), então morre a cada troca de versão em
+vez de conferir. Comprovei o diagnóstico: trocando apenas a versão em
+`test_ajustes_v5243.js`, as falhas caem de 7 para 4 — e as 4 que sobram são
+**contagens fixas** ("manifest tem 196 scripts", hoje são 225). A correção certa é
+comparar **contra `package.json`/`bundle-manifest.json`**, não contra um número
+escrito à mão. Não fiz isso nesta rodada porque são 19 arquivos e mexe em teste de
+release: quero fazer um a um, conferindo cada assert, em vez de um `sed` global.
+Também **não** apaguei nenhum deles.
+
+**Os 4 restantes:**
+- `test_correcoes_relatorio.js` e `test_vendas_chamados_reparo.js` leem `correcoes_relatorio_patch.js` e `vendas_chamados_reparo_patch.js` — **procurados no histórico do git e nunca existiram neste repositório**. Testam arquivo que não existe: nunca vão rodar. Sugestão: apagar os dois.
+- `test_ajustes_v5184.js` espera que `ajustes_v5184_patch.js` defina `imprimirChamadoPDF`, mas a função vive em **outros** arquivos (`ajustes_v5175`, `ajustes_v5180`, `ajustes_v5186`, `ajustes_v52211`); o teste não monta o original que o patch embrulha.
+- `test_ajustes_v5188.js` espera `digicopyLoja`, que **não existe em lugar nenhum do repositório hoje** (nem em `.html`, ou seja: ninguém quebrou). É resíduo de um patch que já não define mais essa função.
+
+Nenhum dos 4 é defeito do sistema em uso — são testes desatualizados ou incompletos. Nenhum deles foi alterado nesta rodada.
+
+### 12.5 Conferência do LAUDO externo — o que se confirmou e o que já estava vencido
+
+O laudo foi produzido sobre uma **foto anterior** do sistema (**v6.1.3 / 222
+scripts**); o repositório hoje está em **v6.1.10 / 225 scripts**. Por isso ele foi
+**conferido contra o código atual**, ponto por ponto, e **não copiado**:
+
+| Ponto do laudo | Situação conferida | Ação |
+|---|---|---|
+| Backdoor `admin` + senha de demonstração | **Confirmado e alcançável** (12.1) | ✅ corrigido + travado |
+| `/v1/status` expõe o cursor de sincronização (`totals.cursor`) | Confirmado no Worker (`resumoDaNuvem` faz `MAX(seq)`) | informativo: o cursor não é dado sensível, mas revela volume |
+| Pausa de sincronização em `escolha-inicial` | Confirmado que existe (`cloudflare_data_sync_patch.js`) | sem ação |
+| Regras de negócio **desmarcadas de propósito** para não propagar exclusão | Confirmado: `PODE_EXCLUIR` tem **15** entidades de 22 do banco | deliberado — religar causou o vaivém de dados da v5.22.75; **não** mexer |
+| "A migração de regras congela em toda carga" + patch para destravar | **JÁ VENCIDO**: o código atual usa `REGRAS='v6.1.7-conectou-sincroniza'` e **despausa sozinho** (`state.paused=false`), mudança feita em 22/09 por ordem do dono ("conecta e sincroniza na hora, sem apertar botão") | ⛔ **não aplicar** esse patch: ele reintroduziria a pausa que o dono mandou tirar |
+| Login com trava de 15 min após 5 erros | **Não implementado** hoje — e o de hoje é **só no navegador**, o que qualquer um contorna | pendente de decisão (ver 12.6) |
+
+**Lição de processo:** o laudo acertou no que mais importava (o backdoor) e errou
+no que dependia de contexto (a pausa de regras já tinha sido resolvida). Nenhum
+laudo externo entra no sistema sem ser conferido linha por linha contra o código
+de hoje — foi essa conferência que trouxe os achados 12.2 e 12.3, que **não**
+estavam no laudo.
+
+### 12.6 Pendências registradas nesta rodada (não alteradas de propósito)
+
+1. **Senhas escritas no bundle público** (12.1/12.2) → precisam ser **trocadas** pelo dono. Não imprimi nenhuma.
+2. **Credencial corporativa de CNPJ** (12.2, item 3) → decisão do dono: manter como está (e trocar a senha) ou tirar e passar a exigir a senha cadastrada. Tirar sem aviso poderia trancá-lo fora.
+3. **Trava de 15 min / 5 erros do laudo** → se for para existir, tem que ser **no Worker** (no navegador não vale nada: quem quiser contorna). Não implementei porque mexe em autenticação de servidor e o desenho certo depende de decidir onde guardar o contador.
+4. **19 testes de versão + 4 testes quebrados** (12.4) → próxima rodada, um a um.
+5. **Empresa com senha em texto puro sincronizando para a nuvem** (`escolaAuth`) e **pepper/KDF** do Worker → continuam pendentes de janela de migração (já registrados na rodada 1).
