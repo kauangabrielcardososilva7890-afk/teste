@@ -430,6 +430,8 @@ quem confirma é ele, olhando o rodapé (`v7.0.4`) e fazendo o teste dos dois PC
 
 ## 23/09/2026 (cont.) — RODADA 10 · A CULPA NÃO ERA DA NUVEM: A TELA ESTAVA SECANDO NO PC
 
+**(conserto: commit `b5b88ff` · v7.0.5)**
+
 **Ele publicou o motor da nuvem 5.26.6** (feito por ele, conferido por ele — `"versao":"5.26.6"` no
 ar) e disse: **"AINDA CONTINUA DEVAGAR..."**. Fui procurar no PC, não na nuvem. Achei **cinco
 defeitos do próprio programa**, e o primeiro é grave:
