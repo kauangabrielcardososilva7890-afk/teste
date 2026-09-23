@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 3234d8acb5b9489e
+ * scripts: 225 | sha256: 452fa4560ad657bf
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -28556,6 +28556,12 @@ async function api(path, options){
     const err=new Error(detalhe);
     err.code=(data&&data.error)||('HTTP_'+response.status); err.status=response.status;
     err.aviso=(data&&data.aviso)||'';
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota do Worker (v5.24.5) devolve
+    // 429 com a marca `quota:true` e o recado em `error` (que aqui vira `code`).
+    // Como o texto só é lido de `message`/`aviso`, o recado chegava ao motor como
+    // "Erro HTTP 429" e a pausa de cota NÃO era reconhecida. Preservar a marca
+    // resolve isso sem mexer em nenhuma outra mensagem (é só um campo novo).
+    err.quota=!!(data&&data.quota);
     throw err;
   }
   return data;
@@ -29649,7 +29655,15 @@ async function tick(reason){
     return true;
   }catch(e){
     failures++;lastError=e&&e.message?e.message:String(e);
-    if(ehLimiteDiario(lastError)){
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) responde
+    // 429 com `quota:true`, mas o recado vem no campo `error` — e o motor lê o
+    // texto só de `message`/`aviso`. Resultado: chegava como "Erro HTTP 429" e
+    // o ehLimiteDiario não reconhecia, então em vez de dormir até a virada o app
+    // ficava batendo na porta (4 tentativas por rodada, ~21s) e AINDA inflava o
+    // contador de escrita da nuvem — o que fazia o freio disparar cada vez mais
+    // cedo. Agora a marca `quota` vale como limite diário, igual ao erro cru do
+    // D1 que já funcionava.
+    if(ehLimiteDiario(lastError)||!!(e&&e.quota)){
       lastError=recadoDoLimite();
       state.limiteAte=viradaDoLimite();persist();
       indicator(false,lastError);

@@ -16,5 +16,20 @@ ok('motor Cloudflare não usa setInterval', !/setInterval\s*\(/.test(cloudData))
 ok('repouso faz uma consulta incremental por ciclo', /if\(totalSent>0\)await pullAll\(\)/.test(cloudData));
 ok('Cloudflare está carregada', manifest.includes('cloudflare_sync_patch.js') && manifest.includes('cloudflare_data_sync_patch.js'));
 ok('Firebase automático apagado', !fs.existsSync('sync_realtime_patch.js') && !manifest.includes('sync_realtime_patch.js'));
+
+// v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) devolve 429 com
+// `quota:true` e o recado no campo `error`. O cliente lia o texto só de
+// `message`/`aviso`, então o recado chegava como "Erro HTTP 429", o
+// ehLimiteDiario NÃO reconhecia e o app ficava batendo na porta (4 tentativas por
+// rodada) + inflando o contador de escrita da nuvem, em vez de dormir até a
+// virada. Estes asserts prendem as TRÊS pontas do encanamento.
+const worker = fs.readFileSync('cloudflare-worker/src/index.js','utf8');
+console.log('== FREIO PREVENTIVO DE COTA (Worker -> cliente) ==');
+ok('worker marca a pausa com quota:true', /quota:\s*true/.test(worker));
+ok('worker devolve a pausa em 429', /quota:\s*true[^}]*\},\s*429\)/.test(worker));
+ok('cliente preserva a marca quota no erro', /err\.quota\s*=\s*!!\(data\s*&&\s*data\.quota\)/.test(cloud));
+ok('motor trata a marca como limite diário', /ehLimiteDiario\(lastError\)\s*\|\|\s*!!\(e\s*&&\s*e\.quota\)/.test(cloudData));
+ok('reconhecer a pausa ainda agenda a volta na virada', /state\.limiteAte\s*=\s*viradaDoLimite\(\)/.test(cloudData));
+
 if(process.exitCode) process.exit(process.exitCode);
 console.log('\nRESULTADO: proteção de cota passou!');
