@@ -10,12 +10,19 @@ function ok(cond, msg) {
   else { console.error('✘', msg); falhas++; }
 }
 
-// (A) botão no rodapé — PC e celular (mesma origem).
+// (A) erro.txt — v7.0.1 (23/09/2026): ORDEM DO DONO, o botãozinho SAIU do
+// rodapé ("tem um erro.txt, remove ele pfv"). O que era dele por pedido (v5.24.34)
+// deixou de ser desejado; o MOTOR do erro.txt continua no sistema — o aviso de
+// erro ainda abre/baixa o arquivo, e a função do rodapé segue existindo para
+// quem precisar chamar. O que este teste garante agora é isso: botão fora do
+// rodapé, motor de pé.
 const idx = fs.readFileSync('index.html', 'utf8');
-ok(idx.includes('digicopyAbrirOuBaixarErroTxt()'), 'index: rodapé chama a ação do erro.txt');
-ok(idx.includes('<i class="ph ph-file-text"></i> erro.txt'), 'index: botãozinho visível no rodapé');
+ok(!idx.includes('digicopyAbrirOuBaixarErroTxt()'), 'index: rodapé NÃO tem mais o botão erro.txt (ordem de 23/09)');
+ok(!idx.includes('<i class="ph ph-file-text"></i> erro.txt'), 'index: o rótulo erro.txt saiu do rodapé');
 const mob = fs.readFileSync('mobile/www/index.html', 'utf8');
-ok(mob.includes('digicopyAbrirOuBaixarErroTxt()'), 'mobile: rodapé chama a ação (celular incluso)');
+ok(!mob.includes('digicopyAbrirOuBaixarErroTxt()'), 'mobile: rodapé do celular também sem o botão');
+const aviso = fs.readFileSync('ajustes_v52239_avisos_erro_auditoria_patch.js', 'utf8');
+ok(aviso.includes('digicopyAbrirOuBaixarErroTxt'), 'o motor do erro.txt continua no sistema (o aviso ainda abre/baixa)');
 
 // (A2) mesma ação, uma fonte só (pergunta 2°/13° das 14).
 const av = fs.readFileSync('ajustes_v52239_avisos_erro_auditoria_patch.js', 'utf8');

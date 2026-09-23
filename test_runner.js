@@ -226,7 +226,13 @@ const tests=[
   // trava do backdoor de login (CRÍTICO — ver AUDITORIA_TECNICA.md §12.1)
   "test_login_sem_backdoor.js",
   // duplo clique das tabelas (defeito de copiar/colar em 5 telas — §13.7)
-  "test_linhas_tabela_clique.js"
+  "test_linhas_tabela_clique.js",
+  // v7.0.1 — sincronização quase em tempo real + tela que se atualiza sozinha
+  "test_sync_tela_ao_vivo.js",
+  // v7.0.1 — a impressora que sumia do contrato (limpeza de demo por número)
+  "test_contrato_impressora_nao_some.js",
+  // v7.0.1 — a senha que o dono troca não é mais devolvida pelo sistema
+  "test_senha_do_dono_manda.js"
 ];
 // v6.1.11 — TESTES QUE PRECISAM DO jsdom (dependência de DESENVOLVIMENTO).
 // O ensureDeps acima recria do vendor/ só o acorn e o node-forge. O jsdom não

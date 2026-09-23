@@ -374,7 +374,14 @@ function seedData(force=false){
     } else {
       if(u.id !== g.id){ u.id = g.id; mudou = true; }
       if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
+      // v7.0.1 (23/09/2026) — A SENHA NÃO É MAIS REIMPOSTA AQUI. Antes esta
+      // linha devolvia a senha de fábrica toda vez que o sistema abria: o dono
+      // trocava a senha na tela Usuários, e na próxima carga o sistema
+      // reescrevia a senha velha por cima — a troca "não pegava" e a senha
+      // antiga (que está no histórico do repositório) continuava valendo.
+      // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
+      // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
+      // Perfil, nome, id e ativo continuam sendo garantidos de propósito.
       if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
       if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
       if(u.ativo !== true){ u.ativo = true; mudou = true; }

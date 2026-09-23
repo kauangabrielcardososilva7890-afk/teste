@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 06304bac1ecc2328
+ * scripts: 225 | sha256: 0e4a03cd9317f97c
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -626,7 +626,14 @@ function seedData(force=false){
     } else {
       if(u.id !== g.id){ u.id = g.id; mudou = true; }
       if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
+      // v7.0.1 (23/09/2026) — A SENHA NÃO É MAIS REIMPOSTA AQUI. Antes esta
+      // linha devolvia a senha de fábrica toda vez que o sistema abria: o dono
+      // trocava a senha na tela Usuários, e na próxima carga o sistema
+      // reescrevia a senha velha por cima — a troca "não pegava" e a senha
+      // antiga (que está no histórico do repositório) continuava valendo.
+      // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
+      // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
+      // Perfil, nome, id e ativo continuam sendo garantidos de propósito.
       if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
       if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
       if(u.ativo !== true){ u.ativo = true; mudou = true; }
@@ -4543,6 +4550,23 @@ try{
 // ── Utilidades locais (não colidem com o escopo do app) ──────────────────
 function jbStr(v){ return (v===undefined||v===null) ? '' : String(v).trim(); }
 function jbEhMigracao(r){ return r && (r.criadoPor==='migracao' || r.origem==='migracao'); }
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "a impressora some do contrato do nada".
+// O QUE ACONTECIA: a limpeza de demonstração lá embaixo reconhecia o dado de
+// exemplo pelo NÚMERO (CT-ano-0001 / OS-ano-0001) — só que o PRÓPRIO SISTEMA
+// numera os contratos e chamados de verdade nesse mesmo formato
+// (app.js renderModalContrato: 'CT-'+ano+'-'+0001). Ou seja: todo contrato
+// criado na tela era tratado como demonstração e, cada vez que o dono importava
+// os dados do sistema antigo, o contrato sumia — e com ele o parque (as
+// impressoras que ele tinha acabado de colocar), as leituras e as faturas.
+// O QUE SEPARA o exemplo do dado de verdade é o AUTOR: o que a pessoa cria na
+// tela tem criadoPor (o id de quem estava logado); o que veio do seed não tem,
+// ou está marcado como 'sistema'. Daqui em diante o número sozinho não decide
+// mais nada — precisa também não ter dono humano.
+function jbSemDonoHumano(r){
+  if(!r) return false;
+  const dono=String(r.criadoPor||'');
+  return !dono || dono==='sistema' || dono==='demo';
+}
 function jbNum(v){ const n=parseFloat(String(v).replace('.','').replace(',','.')); return isNaN(n)?0:n; }
 // Se valor tiver vírgula decimal pt-BR ("1.234,56") corrige; senão parseFloat direto
 function jbToF(v){
@@ -4891,7 +4915,7 @@ function fbImportLocacaoFamilia(rawData){
   if(result.contratos>0 || result.parque>0 || result.chamados>0 || result.leituras>0){
     // Demo = não-migracao + sem codigoAntigo/legadoCodigo + padrões de numero do seed
     const demoCtrIds = db.contratos
-      .filter(c=>c.empresaId===empId && !jbEhMigracao(c) && !c.codigoAntigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
+      .filter(c=>c.empresaId===empId && jbSemDonoHumano(c) && !jbEhMigracao(c) && !c.codigoAntigo && !c.legadoCodigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
       .map(c=>c.id);
     if(demoCtrIds.length){
       const demoPrkIds = db.parque.filter(p=>demoCtrIds.includes(p.contratoId)).map(p=>p.id);
@@ -4904,7 +4928,7 @@ function fbImportLocacaoFamilia(rawData){
     }
     if(result.chamados>0){
       const antes = db.os.length;
-      db.os = db.os.filter(o=>!(o.empresaId===empId && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
+      db.os = db.os.filter(o=>!(o.empresaId===empId && jbSemDonoHumano(o) && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
       result.demosRemovidos += antes - db.os.length;
     }
   }
@@ -20351,8 +20375,14 @@ setTimeout(()=>{
 setTimeout(()=>{
   if(typeof db !== 'undefined' && db.usuarios){
     const deni = db.usuarios.find(u => u.login && u.login.toLowerCase() === 'denivaldo');
-    if(deni && deni.senha === '1234'){
-      deni.senha = '3232';
+    // v7.0.1 (23/09/2026) — migração de UMA vez só. Ela troca a senha antiga
+    // (a de 4 dígitos que este arquivo conhecia) pela atual; a marca abaixo
+    // garante que ela nunca mais mexe na senha do Denivaldo depois disso — se
+    // ele trocar a senha na tela (inclusive para um número parecido), o sistema
+    // não desfaz mais a escolha dele.
+    if(deni && !deni.senhaMigradaV701){
+      deni.senhaMigradaV701 = new Date().toISOString();
+      if(deni.senha === '1234'){ deni.senha = '3232'; }
       if(typeof saveDB === 'function') saveDB();
     }
   }
@@ -28685,7 +28715,18 @@ const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
 const MAX_OUTBOX=100;
 const PUSH_BATCH=10;
-const HEARTBEAT_MS=60000;
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "o banco demora atualizar; o que faço
+// num computador não dá pra ver no outro". Eram dois motivos somados:
+//   1) o motor procurava novidade de 60 em 60 segundos;
+//   2) com a janela atrás de outra (ou minimizada) ele NÃO procurava mais nada
+//      — então o PC do balcão, que fica com o sistema coberto, só se atualizava
+//      quando alguém clicava nele.
+// Agora: 15 s com a janela à vista (quase em tempo real) e 2 min quando ela está
+// escondida — o navegador estrangula temporizador de aba oculta, então pedir
+// 15 s lá não adiantaria e só gastaria o que não precisa. Cada rodada continua
+// sendo UMA consulta incremental por cursor (barata), não uma varredura.
+const HEARTBEAT_MS=15000;
+const HEARTBEAT_OCULTO_MS=120000;
 
 // Listas com formato especial. Todo o resto do banco entra sozinho pela
 // definicoes(): antes a nuvem só levava estas 19 listas e tudo o que estava
@@ -29356,7 +29397,7 @@ async function tick(reason){
     // fica pausada até clicar em Publicar este PC.
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
-    await pullAll();
+    const mudouNaTela=await pullAll();
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
@@ -29400,6 +29441,11 @@ async function tick(reason){
     const devolvidos=await devolverSumidos();
     if(devolvidos){lastError='';schedule(1200);}
     if(varrerDemonstracao())schedule(1200);
+    // v7.0.1 — a novidade já está no banco; a TELA da frente se redesenha para
+    // a pessoa ver na hora (era a queixa "faço num PC e não aparece no outro").
+    // Quem decide se pode é podeRedesenharSync — e as travas existem para não
+    // atrapalhar quem está digitando.
+    if(mudouNaTela)redesenharTelaAtual();
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
@@ -29455,8 +29501,11 @@ function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick(
 function scheduleHeartbeat(){
   if(typeof document==='undefined')return;
   if(timer)clearTimeout(timer);
-  const wait=failures?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):HEARTBEAT_MS;
-  timer=setTimeout(()=>{if(!document.hidden)tick('heartbeat');else scheduleHeartbeat();},wait);
+  // v7.0.1 — antes, com a janela escondida isto apenas reagendava sem consultar
+  // (o PC ficava parado no tempo). Agora consulta também, só que mais devagar.
+  const base=document.hidden?HEARTBEAT_OCULTO_MS:HEARTBEAT_MS;
+  const wait=failures?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):base;
+  timer=setTimeout(()=>tick('heartbeat'),wait);
 }
 function duplicateClientGroups(clients){
   const list=Array.isArray(clients)?clients:[],parent=list.map((_,i)=>i),seen=new Map();
@@ -29653,7 +29702,68 @@ function estadoDetalhado(){
   }catch(e){}
 })();
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.1 (23/09/2026) — A TELA AO VIVO
+// Queixa do dono: "o banco demora atualizar; o que faço em um computador não dá
+// pra ver no outro". Além da espera (o motor procurava de 60 em 60 segundos e
+// parava com a janela escondida — corrigido acima), havia isto: a novidade
+// descia e ficava no banco, mas a LISTA NA TELA continuava mostrando o retrato
+// antigo até a pessoa trocar de tela e voltar. Agora a tela da frente se
+// redesenha sozinha quando a leitura trouxe mudança.
+//
+// As travas (para não atrapalhar ninguém no meio do trabalho):
+//   • janela escondida (minimizada/atrás): não há tela para atualizar;
+//   • modal aberto: a pessoa pode estar no meio de um cadastro;
+//   • cursor dentro de campo/botão: pode estar digitando;
+//   • telas de documento (vender, ler contador, configurar, importar): ficam de
+//     fora, porque nelas o redesenho apagaria o que está sendo preenchido;
+//   • e nunca em rajada: no máximo um redesenho a cada 4 segundos.
+// O redesenho chama direto o render da tela (NÃO o navigateTo, que rola a
+// página para o topo e mexe na barra lateral — isso sim incomodaria).
+const TELAS_AO_VIVO={
+  dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
+  impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
+  manutencao:'renderOs', financeiro:'renderFinanceiro', relatorios:'renderRelatorios',
+  usuarios:'renderUsuarios', auditoria:'renderAuditoria'
+};
+const INTERVALO_REDESENHO=4000;
+let ultimoRedesenho=0;
+// Regra pura (testável): recebe o retrato da tela e devolve sim/não.
+function podeRedesenharSync(d){
+  d=d||{};
+  if(d.hidden)return false;
+  if(d.modalAberto)return false;
+  if(d.focoEmCampo)return false;
+  if(!d.podeRenderizar)return false;
+  if(Number(d.agora)-Number(d.ultimo||0)<INTERVALO_REDESENHO)return false;
+  return true;
+}
+function telaDaFrente(){
+  try{
+    const v=document.querySelector('.view:not(.hidden)');
+    if(v&&v.id&&v.id.indexOf('view-')===0)return v.id.slice(5);
+  }catch(e){}
+  return '';
+}
+function redesenharTelaAtual(){
+  if(typeof document==='undefined')return false;
+  const tela=telaDaFrente();
+  const render=TELAS_AO_VIVO[tela];
+  const mr=document.getElementById('modal-root');
+  const a=document.activeElement;
+  const decisao=podeRedesenharSync({
+    hidden:!!document.hidden,
+    modalAberto:!!(mr&&!mr.classList.contains('hidden')),
+    focoEmCampo:!!(a&&a!==document.body&&/INPUT|TEXTAREA|SELECT|BUTTON/.test(a.tagName||'')),
+    podeRenderizar:!!(render&&typeof window[render]==='function'),
+    ultimo:ultimoRedesenho, agora:Date.now()
+  });
+  if(!decisao)return false;
+  ultimoRedesenho=Date.now();
+  try{ window[render](); }catch(e){}
+  return true;
+}
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -53070,19 +53180,13 @@ window.permissoesAjuda=function(){
   else if(typeof toast==='function') toast('Abra o cadastro do usuário (lápis) para ver as permissões','info');
 };
 function p605BotaoAjuda(){
-  const view=document.getElementById('view-usuarios');
-  if(!view || view.querySelector('#p605-ajuda-perm')) return;
-  const card=view.querySelector('.rounded-\\[16px\\].bg-white.border.p-5') || view.querySelector('table');
-  const alvo=(view.querySelector('.space-y-4')||view);
-  const b=document.createElement('button');
-  b.id='p605-ajuda-perm';
-  b.type='button';
-  b.textContent='❓ O que são as 3 permissões?';
-  b.style.cssText='display:block;width:100%;margin-top:10px;height:38px;border-radius:10px;font-weight:800;font-size:12.5px;background:#eef2ff;color:#0a1e8a;border:1px solid #c7d2fe;cursor:pointer';
-  b.onclick=window.permissoesAjuda;
-  if(card && card.parentNode) card.parentNode.insertBefore(b,card.nextSibling);
-  else alvo.insertBefore(b,alvo.firstChild);
+  // v7.0.1 (23/09/2026) — ORDEM DO DONO: "em usuários tem uma caixa que é
+  // 'o que são as 3 permissões?', retira isso". O botão não é mais injetado na
+  // tela Usuários. A explicação (window.permissoesAjuda, logo acima) continua
+  // no sistema — se um dia ele quiser o texto em outro lugar, está pronto.
+  return;
 }
+
 if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p605ajuda){
   const _ru=window.renderUsuarios;
   const ru=function(){ const r=_ru.apply(this,arguments); try{ setTimeout(p605BotaoAjuda,0); }catch(e){} return r; };

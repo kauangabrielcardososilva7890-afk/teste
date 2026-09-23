@@ -42,8 +42,14 @@ setTimeout(()=>{
 setTimeout(()=>{
   if(typeof db !== 'undefined' && db.usuarios){
     const deni = db.usuarios.find(u => u.login && u.login.toLowerCase() === 'denivaldo');
-    if(deni && deni.senha === '1234'){
-      deni.senha = '3232';
+    // v7.0.1 (23/09/2026) — migração de UMA vez só. Ela troca a senha antiga
+    // (a de 4 dígitos que este arquivo conhecia) pela atual; a marca abaixo
+    // garante que ela nunca mais mexe na senha do Denivaldo depois disso — se
+    // ele trocar a senha na tela (inclusive para um número parecido), o sistema
+    // não desfaz mais a escolha dele.
+    if(deni && !deni.senhaMigradaV701){
+      deni.senhaMigradaV701 = new Date().toISOString();
+      if(deni.senha === '1234'){ deni.senha = '3232'; }
       if(typeof saveDB === 'function') saveDB();
     }
   }
