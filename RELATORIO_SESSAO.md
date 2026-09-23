@@ -366,6 +366,8 @@ Bundle: 225 scripts, sha256 do corpo `...`; carimbo novo em `?v=7.0.3-...`.
 
 ## 23/09/2026 (cont.) — RODADA 9 · AVISO INSTANTÂNEO E RECUPERAÇÃO QUE SE FAZ SOZINHA
 
+**(conserto: commit `0c7f157` · v7.0.4 · Worker 5.26.6 a publicar)**
+
 **Pedidos dele nesta rodada:** "não sabe o que é instantâneo já aparecer os dados? EU QUERO QUE
 MOSTRA INSTANTÂNEO SEM NENHUM ERRO"; "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS IMPRESSORAS,
 NADA"; "qualquer coisa que depende de você precisa nem perguntar eu, só faz o melhor sem dar
