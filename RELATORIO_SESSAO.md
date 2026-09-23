@@ -205,6 +205,8 @@ quebrados (§12.4) e os 4 que pulam por falta de `jsdom`.
 
 ## 23/09/2026 (cont.) — RODADA 7 · RECUPERAR O QUE SE PERDEU, TRAZER A NUVEM DE UMA VEZ E A SENHA INVISÍVEL
 
+**(conserto: commit `ef7a2d5` · v7.0.2)**
+
 **O que ele relatou:** "muitos contratos já perderam impressoras, por exemplo o
 CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro também";
 "os dados da nuvem ainda demora aparecer, está aparecendo de pouco em pouco, queria
