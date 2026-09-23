@@ -949,3 +949,68 @@ Recomendação técnica: manter **A** agora; avaliar **B** depois que o motor da
 Versão **v7.0.3**. Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`;
 **e2e/playwright não está instalado neste ambiente — não foi rodado**).
 Bundle: 225 scripts, carimbo `?v=7.0.3-f9dec142dbc5`.
+
+## 18. RODADA 9 — AVISO INSTANTÂNEO E RECUPERAÇÃO AUTOMÁTICA (23/09/2026)
+
+### 18.1 ALTO — Performance — aviso instantâneo (long polling na nuvem)
+
+**Pedido:** "não sabe o que é instantâneo já aparecer os dados?".
+
+**Antes:** o PC perguntava ao servidor a cada 3 s (v7.0.3) — no melhor caso, 3 s de atraso.
+**Agora:** o PC mantém um canal aberto (`GET /v1/changes/watch?cursor=...&timeout=20`); o motor
+novo devolve **no instante** em que `changes` cresce. Latência percebida: a da rede (~0,1–0,5 s).
+
+**Custo (conferido no código, não presumido):** a cada ~1 s uma consulta `SELECT MAX(seq) FROM
+changes` — atendida pela chave primária (rowid), **não grava nada**, teto de 25 s por canal.
+`Worker novo + PC antigo`: rota ociosa. `PC novo + Worker antigo`: 404 → o PC marca o canal como
+indisponível e segue no ritmo de 3 s (recuo automático, sem erro na tela).
+
+### 18.2 CRÍTICO — Bug — a recuperação não alcançava o que se perdeu (duas causas)
+
+**Relato:** "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS IMPRESSORAS, NADA".
+
+1. **Lista curta:** `handleDeleted` devolvia no máximo 200 registros, sem paginação e sem filtro
+   — se as exclusões do período da faxina estivessem além dos 200 mais recentes, **nunca eram
+   alcançadas**. Corrigido: `before` (deleted_at < before), página de até 1000, `temMais` e
+   `proximoBefore` na resposta; o PC varre em levas até o fim.
+2. **Critério rígido demais:** a primeira versão só aceitava `criadoPor` de usuário de tela.
+   Várias telas (contratos/visitas) gravam a impressora com `criadoPor:'migracao'` — dado **real**
+   importado do sistema antigo. Corrigido: `migracao` é dono legítimo; ficam de fora apenas o
+   dado de exemplo (`''`, `sistema`, `demo`).
+
+### 18.3 ALTO — Manutenção — recuperação automática (sem ação do dono)
+
+A passada que era um botão virou automática: ao conectar, o PC varre **todos** os excluídos da
+nuvem, restaura os que têm dono de gente, varre também as **fotos internas do PC**
+(`listSnapshots()` novo no módulo IndexedDB — para o caso de o dado nunca ter subido), registra
+na Auditoria e avisa no sino. Garantias: **lista do que já trouxe** (não ressuscita duas vezes um
+registro que o dono apagou de propósito depois), tentativa no máximo a cada 60 s em caso de
+falha, e a passada única **não é consumida** enquanto o motor da nuvem for o antigo (fases: avisa
+no sino uma vez e fica pendente até o deploy).
+
+### 18.4 Decisão do dono registrada — senhas
+
+Ele decidiu **não** trocar as senhas ("deixa a mesma senha, pois eu nunca nem compartilhei esse
+site direito, somente eu e meu pai"). Item de rotação **encerrado por decisão dele** — não
+reabrir nas próximas rodadas; se ele quiser trocar algum dia, é a tela Usuários (a troca passou a
+funcionar na rodada 6). O que **continua valendo** da rodada 7: a senha não aparece mais em
+nenhuma tela (item 16.3).
+
+### 18.5 Estado do motor da nuvem (informado pelo dono)
+
+Deploy feito por ele: migrações já aplicadas ("No migrations to apply") e
+`digicopy-sync-api` publicado, respondendo `"versao":"5.26.5"`. **Pendente:** publicar de novo
+para o **5.26.6** (canal instantâneo + varredura completa dos excluídos). Sem esse deploy, o
+sistema continua correto: instantâneo não liga e a recuperação fica pendente (avisa uma vez).
+
+### 18.6 Resumo da rodada
+
+| # | Gravidade | Tipo | Item | Estado |
+|---|-----------|------|------|--------|
+| 18.1 | ALTO | Performance | aviso instantâneo por long polling | FEITO (liga com o Worker 5.26.6) |
+| 18.2 | CRÍTICO | Bug | recuperação não alcançava exclusões antigas / ignorava 'migracao' | CORRIGIDO |
+| 18.3 | ALTO | Manutenção | recuperação automática (nuvem + fotos do PC + Auditoria + sino) | FEITO |
+| 18.4 | — | Decisão | senhas | encerrado por decisão do dono |
+
+Versão **v7.0.4** · Worker **5.26.6** (a publicar) · Suíte **207/0** (4 pulam por falta de `jsdom`)
+· Bundle 225 scripts, sha256 do corpo `0e8825dcca79cc3f`.

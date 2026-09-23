@@ -73,7 +73,7 @@ console.log('== WORKER: rotas novas (conexão CNPJ, site restrito, gerente, imag
 ['/v1/connect-pass', '/v1/enroll-cnpj', '/v1/site-login', '/v1/gerente-login', '/v1/gerente/empresas', '/v1/release-image'].forEach((r) => {
   ok('worker: rota ' + r, wk.indexOf("'" + r + "'") >= 0);
 });
-ok('worker: definição de senhas só pra ADMIN do painel OU gerente provado (eclusa v5.26.5)', wk.indexOf("'/v1/connect-pass'") >= 0 && /connect-pass[\s\S]{0,1200}requireAdminOuGerente\(request, env\)/.test(wk));
+ok('worker: definição de senhas só pra ADMIN do painel OU gerente provado (eclusa v5.26.6)', wk.indexOf("'/v1/connect-pass'") >= 0 && /connect-pass[\s\S]{0,1200}requireAdminOuGerente\(request, env\)/.test(wk));
 ok('worker: gerente-login EXIGE CNPJ da empresa dona', /gerente-login[\s\S]{0,900}owner_cnpj/.test(wk));
 ok('worker: requireAdminOuGerente = admin OU gerente', wk.indexOf('requireAdminOuGerente') >= 0 && /GERENTE_OU_ADMIN_REQUERIDO/.test(wk));
 ok('worker: histórico /v1/app-releases FECHADO (sem vazar slug/destinatário)', /v1\/app-releases'\) \{[\s\S]{0,400}requireAdminOuGerente/.test(wk));
@@ -90,7 +90,7 @@ ok('worker: imagens servidas em /img/ só de versão viva', wk.indexOf("url.path
 ok('worker: /dl/ EXIGE sessão OU slug igual ao da versão OU gerente/admin', wk.indexOf('slugQ === essa.slug') >= 0 && wk.indexOf('sessaoDl') >= 0 && new RegExp('Área restrita: entre em /atualizacoes').test(wk));
 ok('worker: action remover-imagem (tira do tutorial e do R2)', wk.indexOf("'remover-imagem'") >= 0 && wk.indexOf('R2.delete(keyX)') >= 0);
 ok('worker: tutorial renderiza grid de imagens + zoom ao clicar (.zi + lightbox)', wk.indexOf('class="zi"') >= 0 && wk.indexOf('lbz') >= 0);
-ok('worker: versão do motor carimbada 5.26.1', wk.indexOf("WORKER_VERSION = '5.26.5'") >= 0);
+ok('worker: versão do motor carimbada 5.26.6', wk.indexOf("WORKER_VERSION = '5.26.6'") >= 0);
 
 console.log('== APP: sininho destinatário-aware + link secreto + abas/cartões ==');
 ok('patch: guard único (__v5260cn) e PURE exportado', patch.indexOf('__v5260cn') >= 0 && patch.indexOf('window.CNPJ_V5260_PURE') >= 0);

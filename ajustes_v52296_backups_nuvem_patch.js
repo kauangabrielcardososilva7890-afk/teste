@@ -853,8 +853,14 @@ function instalarBotao(){
     try{
       const call = apiNuvem();
       if(!call) throw new Error('Motor da nuvem não carregado.');
-      const dados = await call('/v1/deleted?limit=200', { method:'GET' });
-      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(dados && dados.records);
+      // v7.0.4 — varre TUDO o que está excluído (não só os últimos 200): usa o
+      // mesmo caminho paginado do automático, que alcança o que foi apagado
+      // meses atrás. O que o automático já trouxe não aparece mais aqui.
+      const sync = window.DIGICOPY_CLOUD_SYNC;
+      const registros = (sync && typeof sync.listarExcluidosDaNuvem === 'function')
+        ? await sync.listarExcluidosDaNuvem(call)
+        : ((await call('/v1/deleted?limit=1000', { method:'GET' })).records || []);
+      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(registros);
       if(!plano.total){ res.textContent = window.DIGICOPY_RECUPERAR.textoResumo(plano); btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
       const ok = await confirmar(window.DIGICOPY_RECUPERAR.textoResumo(plano) + '\n\nTrazer todos de volta agora?', 'Trazer de volta o que foi excluído');
       if(!ok){ btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }

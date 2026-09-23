@@ -763,6 +763,7 @@ async function tick(reason){
     // carga e segura a tela até chegar tudo, em vez de ir mostrando pedaços.
     pedirCarga(!state.initialPull||reason==='baixar-tudo-da-nuvem');
     const mudouNaTela=await pullAll();
+    if(!state.recuperacaoV1)setTimeout(()=>{try{recuperarAutomatico();}catch(e){}},1200);
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
@@ -1109,6 +1110,171 @@ function mostrarCargaNuvem(mostrar,texto){
   const conta=document.getElementById('digicopy-carga-conta');
   if(conta)conta.textContent=texto||'';
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.4 (23/09/2026) — AVISO INSTANTÂNEO DA NUVEM + RECUPERAÇÃO AUTOMÁTICA
+//
+// PEDIDO DO DONO: "não sabe o que é instantâneo já aparecer os dados?".
+// Como fica: além do ritmo de 3 s, o PC deixa UM canal aberto com a nuvem
+// (/v1/changes/watch). Quando alguém grava em qualquer PC, a nuvem responde
+// NAQUELE INSTANTE e este PC puxa e redesenha a tela — sem clique, sem tela na
+// frente, sem espera. Se o motor da nuvem ainda não tiver esse canal (Worker
+// antigo), o PC recebe 404 uma vez e segue no ritmo de 3 s, como antes: nada
+// quebra, nada aparece na tela.
+let canalInstantaneoParado=false, canalAberto=false;
+async function canalInstantaneo(){
+  if(canalInstantaneoParado||canalAberto)return;
+  if(typeof document!=='undefined'&&document.hidden)return;
+  if(state.paused||!authorized())return;
+  const call=api(); if(!call)return;
+  canalAberto=true;
+  try{
+    const r=await call('/v1/changes/watch?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&timeout=20',{method:'GET'});
+    if(r&&r.novidade&&!busy)await tick('aviso-da-nuvem');
+  }catch(e){
+    const st=Number(e&&e.status)||0;
+    if(st===404||st===400){ canalInstantaneoParado=true; }   // motor antigo: só o ritmo normal
+    else await dormir(5000);
+  }finally{ canalAberto=false; }
+  if(!canalInstantaneoParado)setTimeout(()=>{canalInstantaneo();},300);
+}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden)canalInstantaneo();});}catch(e){}
+
+// ── RECUPERAÇÃO AUTOMÁTICA (uma vez por PC, sem clicar em nada) ────────────
+// O que faz: procura na nuvem TUDO que foi excluído e traz de volta o que foi
+// criado por gente de verdade (tem criadoPor de usuário). O dado de exemplo do
+// sistema não tem dono — esse fica onde está. Nunca traz duas vezes o mesmo
+// registro (guarda a lista do que já trouxe), então se o dono apagar alguma
+// coisa de propósito ela NÃO volta sozinha de novo.
+const RECUP_LEDGER='digicopy_cf_recuperados_v1';
+function lerRecuperados(){try{return JSON.parse(localStorage.getItem(RECUP_LEDGER)||'{}')||{};}catch(e){return {};}}
+function marcarRecuperado(id){try{const m=lerRecuperados();m[String(id)]=Date.now();localStorage.setItem(RECUP_LEDGER,JSON.stringify(m));}catch(e){}}
+function temDonoHumano(reg){
+  // Quem NÃO tem dono: o dado de exemplo do sistema (sem autor, ou 'sistema').
+  // Quem TEM dono: usuário de tela (usr_...) e também 'migracao' — este último é
+  // o dado REAL que veio do sistema antigo pela importação (as telas de contrato
+  // e de visita gravam assim). Ficou de fora por engano na primeira versão desta
+  // regra e isso deixaria impressoras legítimas sem recuperação.
+  const d=reg&&reg.data||{};const dono=String(d.criadoPor||'');
+  return !!dono&&dono!=='sistema'&&dono!=='demo';
+}
+let varreduraCompleta=false;   // o motor da nuvem sabe paginar a lista de excluídos?
+async function listarExcluidosDaNuvem(call,limiteTotal){
+  const todos=[];let before=0;varreduraCompleta=false;
+  for(let volta=0;volta<20;volta++){
+    const url='/v1/deleted?limit=1000'+(before?('&before='+before):'');
+    let r;try{r=await call(url,{method:'GET'});}catch(e){ if(volta===0)throw e; break; }
+    if(r&&typeof r.temMais!=='undefined')varreduraCompleta=true;   // motor novo
+    const lote=(r&&r.records)||[];
+    todos.push(...lote);
+    if(!lote.length||!r.temMais||!r.proximoBefore)break;
+    before=Number(r.proximoBefore)||0;
+    if(!before)break;
+    if(limiteTotal&&todos.length>=limiteTotal)break;
+  }
+  return todos;
+}
+let recuperandoAgora=false;
+async function recuperarAutomatico(){
+  if(state.recuperacaoV1||recuperandoAgora)return;
+  if(!authorized()||state.paused)return;
+  // se falhou por rede, espera 60 s antes de tentar de novo (não fica batendo)
+  if(state.recuperacaoTentativa&&(Date.now()-Number(state.recuperacaoTentativa))<60000)return;
+  const call=api(); if(!call)return;
+  recuperandoAgora=true;
+  state.recuperacaoTentativa=Date.now();persist();
+  try{
+    const excluidos=await listarExcluidosDaNuvem(call);
+    const jaVieram=lerRecuperados();
+    const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaVieram[String(r.recordId)]&&temDonoHumano(r)
+      && ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos'].indexOf(r.entity)>=0
+      && r.data&&typeof r.data==='object'&&Object.keys(r.data).length>0);
+    let ok=0,falhas=0,primeiroErro='';
+    for(const reg of alvos){
+      try{
+        const r=await call('/v1/restore',{method:'POST',body:JSON.stringify({entity:reg.entity,recordId:reg.recordId})});
+        if(r&&r.ok!==false){ok++;marcarRecuperado(reg.recordId);}
+        else{falhas++;primeiroErro=primeiroErro||((r&&r.message)||'');}
+      }catch(e){falhas++;primeiroErro=primeiroErro||((e&&e.message)||String(e));}
+    }
+    // 2ª fonte: as fotos internas deste PC (caso o dado nunca tenha subido)
+    let dasFotos=0;
+    try{dasFotos=await recuperarDasFotosLocais();}catch(e){}
+    if(dasFotos){try{await pushOutbox();await pullAll({silencioso:true});redesenharTelaAtual();}catch(e){}}
+    // v7.0.4 — se o motor da nuvem ainda for o antigo, a lista de excluídos vem
+    // limitada e a passada NÃO pode valer para sempre: fica marcada como pendente
+    // e tenta de novo (de 60 em 60 s) até o motor novo ser publicado. Avisa uma
+    // única vez no sino, sem travar nada.
+    if(!varreduraCompleta){
+      if(!state.avisoMotorAntigo){
+        state.avisoMotorAntigo=true;persist();
+        try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+          'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.',{tipo:'sync'}); }catch(e){}
+      }
+    }else{
+      state.recuperacaoV1=true;
+    }
+    state.recuperacaoEm=Date.now();state.recuperacaoTotal=ok+dasFotos;persist();
+    if(ok){
+      const porEntidade={};alvos.forEach(r=>{porEntidade[r.entity]=(porEntidade[r.entity]||0)+1;});
+      try{
+        if(typeof logAction==='function')logAction('recuperacao','automatica','-',
+          'Recuperação automática trouxe de volta '+ok+' registro(s): '+JSON.stringify(porEntidade));
+        if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+          'Recuperação automática: '+ok+' registro(s) que tinham sido apagados por engano voltaram (contratos, impressoras, leituras). Confira as telas.',{tipo:'sync'});
+      }catch(e){}
+      await pullAll({silencioso:true});
+      redesenharTelaAtual();
+    }else if(falhas&&/admin/i.test(primeiroErro||'')){
+      try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+        'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.',{tipo:'sync'}); }catch(e){}
+      state.recuperacaoV1=true;persist();   // não fica tentando a cada ciclo
+    }
+  }catch(e){/* tenta de novo no próximo ciclo; nada aparece na tela */}
+  finally{recuperandoAgora=false;}
+}
+
+// Segunda fonte: as FOTOS internas deste PC (IndexedDB). Serve para o caso em
+// que a impressora nunca chegou a subir para a nuvem (aí não existe excluído
+// para restaurar). Só entram registros de contrato/parque/leitura/chamado com
+// criador de gente; cada um fica marcado e entra na lista do "já recuperado",
+// então apagar de propósito depois NÃO faz voltar de novo.
+async function recuperarDasFotosLocais(){
+  const idb=window.DIGICOPY_INDEXED_DB;
+  if(!idb||typeof idb.listSnapshots!=='function'||typeof db==='undefined'||!db)return 0;
+  let snaps=[];try{snaps=await idb.listSnapshots();}catch(e){return 0;}
+  const ja=lerRecuperados();const entidades=['contratos','parque','leituras','os'];
+  let voltaram=0;const porEntidade={};
+  for(const snap of snaps){
+    const dados=snap&&snap.data;if(!dados||typeof dados!=='object')continue;
+    for(const entidade of entidades){
+      const atual=Array.isArray(db[entidade])?db[entidade]:null;
+      const antigo=dados[entidade];
+      if(!atual||!Array.isArray(antigo))continue;
+      const ids=new Set(atual.map(x=>x&&x.id!=null?String(x.id):''));
+      antigo.forEach(item=>{
+        if(!item||item.id==null)return;
+        const k=String(item.id);
+        if(ids.has(k)||ja[k])return;
+        if(!temDonoHumano({data:item}))return;
+        const copia=Object.assign({},item,{recuperadoDe:'foto-local',recuperadoEm:new Date().toISOString()});
+        atual.push(copia);ids.add(k);voltaram++;
+        porEntidade[entidade]=(porEntidade[entidade]||0)+1;
+        marcarRecuperado(k);
+      });
+    }
+  }
+  if(voltaram){
+    try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}catch(e){}
+    try{
+      if(typeof logAction==='function')logAction('recuperacao','foto-local','-',
+        'Recuperação das fotos deste PC: '+voltaram+' registro(s) '+JSON.stringify(porEntidade));
+      if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+        'Fotos deste PC: '+voltaram+' registro(s) que estavam faltando voltaram (contratos/impressoras/leituras).',{tipo:'sync'});
+    }catch(e){}
+  }
+  return voltaram;
+}
+
 const TELAS_AO_VIVO={
   dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
   impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
@@ -1154,7 +1320,7 @@ function redesenharTelaAtual(){
   try{ window[render](); }catch(e){}
   return true;
 }
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem};
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -1200,6 +1366,12 @@ async function hidratarTela(){
     }
   }catch(e){}
 }
-if(authorized()){ schedule(1200); setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600); } else scheduleHeartbeat();
+if(authorized()){
+  schedule(1200);
+  setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600);
+  // v7.0.4 — canal do aviso instantâneo + a recuperação do que foi apagado
+  setTimeout(()=>{ try{canalInstantaneo();}catch(e){} },1500);
+  setTimeout(()=>{ try{recuperarAutomatico();}catch(e){} },4000);
+} else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();

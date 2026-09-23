@@ -5,7 +5,7 @@
 const API_VERSION = '0.4.9';
 const MAX_BODY_BYTES = 900_000;
 // Carimbo deste código — GET /health sempre diz qual versão da nuvem está no ar.
-const WORKER_VERSION = '5.26.5';
+const WORKER_VERSION = '5.26.6';
 
 const MAX_MUTATIONS = 100;
 // v7.0.2 — teto de registros por consulta incremental. Estava 500: para trazer
@@ -604,15 +604,63 @@ async function handleChanges(request, env, ctx) {
   return json({ ok: true, cursor, nextCursor, hasMore, changes });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// AVISO INSTANTÂNEO (long polling) — v7.0.4 (23/09/2026)
+// Pedido do dono: "não sabe o que é instantâneo já aparecer os dados?".
+// Como funciona: em vez de o PC perguntar de segundo em segundo, ele deixa UMA
+// consulta aberta aqui; esta função confere se apareceu novidade e responde na
+// hora (ou devolve "sem novidade" quando o tempo acaba, e o PC abre outra).
+// Custo: uma consulta minúscula (MAX(seq), atendida pelo índice da chave
+// primária de changes) a cada ~1 s, durante no máximo ~20 s. Não grava nada.
+// Recuo garantido: PC com motor novo + Worker antigo recebe 404 na rota e volta
+// sozinho para o ritmo normal. Worker novo + PC antigo: nada muda (rota ociosa).
+async function handleChangesWatch(request, env, ctx) {
+  await authenticate(request, env);
+  const url = new URL(request.url);
+  const cursor = Math.max(0, Number.parseInt(url.searchParams.get('cursor') || '0', 10) || 0);
+  const pedido = Number.parseInt(url.searchParams.get('timeout') || '20', 10) || 20;
+  const tetoSegundos = Math.min(25, Math.max(3, pedido));
+  somarUso(env, 0, 30, ctx); // abrir o canal lê algumas linhas
+  const inicio = Date.now();
+  let maxSeq = 0;
+  try {
+    while (Date.now() - inicio < tetoSegundos * 1000) {
+      const r = await env.DB.prepare('SELECT MAX(seq) AS maxSeq FROM changes').first();
+      maxSeq = Number(r && r.maxSeq) || 0;
+      if (maxSeq > cursor) return json({ ok: true, novidade: true, maxSeq });
+      await new Promise(resolve => setTimeout(resolve, 900));
+    }
+  } catch (e) {
+    // banco instável: não é erro para o PC — ele volta a perguntar no ritmo dele
+    return json({ ok: true, novidade: false, maxSeq });
+  }
+  return json({ ok: true, novidade: false, maxSeq });
+}
+
 async function handleDeleted(request, env) {
   await requireAdmin(request, env);
   const url = new URL(request.url);
-  const limit = Math.min(200, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '100', 10) || 100));
-  const rows = await env.DB.prepare(
-    `SELECT * FROM records WHERE deleted_at IS NOT NULL
-     ORDER BY deleted_at DESC LIMIT ?`
-  ).bind(limit).all();
-  return json({ ok: true, records: (rows.results || []).map(publicRecord) });
+  // v7.0.4 — a recuperação precisa alcançar o que foi excluído há meses, não só
+  // os últimos 200. Agora aceita `before` (deleted_at < before) e página de até
+  // 1000, e devolve a data do mais antigo da leva para o PC pedir a próxima.
+  const limit = Math.min(1000, Math.max(1, Number.parseInt(url.searchParams.get('limit') || '200', 10) || 200));
+  const beforeBruto = Number.parseInt(url.searchParams.get('before') || '0', 10) || 0;
+  const query = beforeBruto
+    ? env.DB.prepare(
+        `SELECT * FROM records WHERE deleted_at IS NOT NULL AND deleted_at < ?
+         ORDER BY deleted_at DESC LIMIT ?`).bind(beforeBruto, limit)
+    : env.DB.prepare(
+        `SELECT * FROM records WHERE deleted_at IS NOT NULL
+         ORDER BY deleted_at DESC LIMIT ?`).bind(limit);
+  const rows = await query.all();
+  const registros = (rows.results || []).map(publicRecord);
+  const ultimo = registros.length ? Number(registros[registros.length - 1].deletedAt) || 0 : 0;
+  return json({
+    ok: true,
+    records: registros,
+    temMais: registros.length >= limit,
+    proximoBefore: ultimo || undefined
+  });
 }
 
 async function handleRestore(request, env) {
@@ -1414,6 +1462,9 @@ async function route(request, env, ctx) {
   if (request.method === 'POST' && url.pathname === '/v1/enroll') return handleEnroll(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/changes') return handlePush(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/changes') return handleChanges(request, env, ctx);
+  // v7.0.4 — AVISO INSTANTÂNEO: segura a consulta e responde NO MESMO INSTANTE
+  // em que houver novidade (long polling). Ver handleChangesWatch.
+  if (request.method === 'GET' && url.pathname === '/v1/changes/watch') return handleChangesWatch(request, env, ctx);
   if (request.method === 'GET' && url.pathname === '/v1/deleted') return handleDeleted(request, env);
   if (request.method === 'POST' && url.pathname === '/v1/restore') return handleRestore(request, env);
   if (request.method === 'GET' && url.pathname === '/v1/review/revoked-records') return handleRevokedDeviceRecords(request, env);

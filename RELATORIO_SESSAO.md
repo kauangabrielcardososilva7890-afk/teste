@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v7.0.3** (rodada 23/09 nº8 — branch `arena/01a0cf4a-teste`)  
+**Última versão:** **v7.0.4** (rodada 23/09 nº9 — branch `arena/01a0cf4a-teste`)  
 
 ---
 
@@ -363,6 +363,68 @@ depois de o motor da nuvem ser publicado com o `atualizar_motor_nuvem.cmd`.
 Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`; `playwright`/e2e não está
 instalado neste ambiente, então **não foi rodado** — registrado para não passar por testado).
 Bundle: 225 scripts, sha256 do corpo `...`; carimbo novo em `?v=7.0.3-...`.
+
+## 23/09/2026 (cont.) — RODADA 9 · AVISO INSTANTÂNEO E RECUPERAÇÃO QUE SE FAZ SOZINHA
+
+**Pedidos dele nesta rodada:** "não sabe o que é instantâneo já aparecer os dados? EU QUERO QUE
+MOSTRA INSTANTÂNEO SEM NENHUM ERRO"; "NADA APARECEU NOS CONTRATOS NOVAMENTE, AS IMPRESSORAS,
+NADA"; "qualquer coisa que depende de você precisa nem perguntar eu, só faz o melhor sem dar
+problema". Ele também decidiu: **chega de mexer em senha** — "deixa a mesma senha, pois eu nunca
+nem compartilhei esse site direito, somente eu e meu pai". Decisão registrada: **não** mexer mais
+em rotação de senha (ele pode mudar de ideia; se mudar, é uma linha na tela Usuários).
+
+### 1) INSTANTÂNEO DE VERDADE — a nuvem avisa o PC (Worker 5.26.6)
+
+Antes: o PC perguntava de 3 em 3 s (v7.0.3). Agora, além disso, o PC **deixa um canal aberto**
+com a nuvem (`/v1/changes/watch`, long polling): quando alguém grava em qualquer PC, a nuvem
+responde **naquele instante** e o PC puxa e redesenha a tela. Sem clique, sem tela na frente.
+- Cada volta do canal custa **uma consulta minúscula** (`SELECT MAX(seq)`, atendida pela chave
+  primária de `changes`) a cada ~1 s, por no máximo 25 s, e **não grava nada**.
+- **Recuo garantido:** se o motor da nuvem ainda for o antigo, o PC recebe 404 uma vez e volta
+  sozinho para o ritmo de 3 s — nada quebra, nada aparece na tela.
+- O canal só abre com a janela à vista (janela escondida não gasta canal).
+
+### 2) RECUPERAÇÃO QUE SE FAZ SOZINHA (sem clicar em nada)
+
+Pergunta dele: por que o botão não trouxe nada? Duas causas foram tratadas:
+- **a lista era curta:** `/v1/deleted` devolvia só os 200 excluídos mais recentes e sem paginação
+  — o que foi apagado antes disso **nunca era alcançado**. Agora o motor aceita `before`
+  (página de até 1000) e o PC varre **tudo**, em levas, até o fim.
+- **o critério era rígido demais:** eu só aceitava quem tinha `criadoPor` de usuário de tela, e
+  várias telas de contrato/visita gravam a impressora como `criadoPor:'migracao'` (dado real
+  vindo do sistema antigo). Corrigido: **'migracao' é dono legítimo** — só fica de fora o dado
+  de exemplo (sem autor, 'sistema' ou 'demo').
+
+**Como funciona agora, sem ninguém pedir:** ao conectar, o PC (a) varre **todos** os excluídos
+da nuvem, (b) traz de volta o que tem dono de gente, (c) olha também as **fotos internas do PC**
+(IndexedDB) para o caso de a impressora nunca ter subido para a nuvem, (d) registra na
+**Auditoria** e avisa no **sino** quantos registros voltaram e de que tipo.
+- Nunca traz duas vezes o mesmo registro (lista do que já trouxe): se o dono apagar de propósito
+  depois, **não volta sozinho de novo**.
+- Não "gasta" a passada única enquanto o motor da nuvem for o antigo: fica pendente e tenta de
+  novo (de 60 em 60 s) depois do publicar — e avisa **uma vez** no sino que falta publicar.
+- Só ADMIN restaura (regra do Worker) — se o PC não for o admin, o sino avisa para fazer no PC
+  administrador.
+
+### 3) O ESTADO DO MOTOR DA NUVEM (o que ele já fez)
+
+Ele rodou o `atualizar_motor_nuvem.cmd`: migrações "No migrations to apply" e publicação do
+motor `digicopy-sync-api` (versão no ar: **5.26.5**). O que ainda falta: **rodar de novo** para
+publicar o **5.26.6** (o canal instantâneo + a varredura completa dos excluídos). O guia e o
+relatório agora citam 5.26.6 — e o próprio `/health` responde a versão, então a conferência é
+uma olhada na última linha da janela.
+
+### 4) TESTES E PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`). Testes ampliados:
+`test_recuperar_excluidos.js` (54 verificações, inclui o canal instantâneo, o critério do dono e
+o recuo do motor antigo) e `test_sync_tela_ao_vivo.js` (44). Versão **v7.0.4** aplicada e
+conferida nos 5 arquivos; bundle 225 scripts, sha256 do corpo `0e8825dcca79cc3f`.
+
+**Honestidade sobre teste:** os testes são de código (leem e executam as funções), **não** de
+navegador — o ambiente daqui não tem rede para abrir o site e o `playwright` (e2e) não está
+instalado. O que isso significa na prática: a lógica está coberta; o comportamento visual em si
+quem confirma é ele, olhando o rodapé (`v7.0.4`) e fazendo o teste dos dois PCs.
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 

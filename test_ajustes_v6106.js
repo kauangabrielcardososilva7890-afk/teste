@@ -79,7 +79,7 @@ ok('rodada antiga para de escrever quando a decisão muda no meio',
   /const geracao=estadoGeracao;/.test(sync) && /if\(trocou\(\)\)return false;/.test(sync));
 ok('a varredura não estoura mais quando o campo extra não existe',
   /if\(!state\.sumindo\|\|typeof state\.sumindo!=='object'\)state\.sumindo=\{\};/.test(sync));
-ok('a nuvem agora diz a versão nova (0.4.9 / 5.26.5)',
+ok('a nuvem agora diz a versão nova (0.4.9 / 5.26.6)',
   fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("API_VERSION = '0.4.9'") >= 0);
 ok('o motor para colar foi regerado junto (não fica para trás)',
   ler('cloudflare-worker/motor_para_colar.js').indexOf('API_VERSION = "0.4.9"') >= 0);
@@ -160,7 +160,7 @@ ok('tem a PARTE I com o navegador embutido (novo de 22/09 nº5; só no programa 
 // que está no package.json (mvp.version), que é justamente o que este teste quer
 // garantir: relatório e guia falando da MESMA versão que o sistema publica.
 ok('o relatório é da versão publicada agora (v' + mvp.version + ')',
-  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.26.5') >= 0);
+  rel.indexOf('v' + mvp.version) >= 0 && rel.indexOf('5.26.6') >= 0);
 ok('continua marcando o que já foi resolvido e esconde com o filtro',
   rel.indexOf('resolvido antes') >= 0 && rel.indexOf('só o que falta testar') >= 0);
 

@@ -79,12 +79,53 @@ ok('rótulo cai para o id quando não tem nome',
 
 console.log('\n== 5) A OPERAÇÃO SÓ ADICIONA (nunca apaga) ==');
 ok('usa a rota de restaurar do Worker', /\/v1\/restore/.test(code));
-ok('lê a lista de excluídos do Worker', /\/v1\/deleted\?limit=200/.test(code));
+ok('lê a lista de excluídos do Worker (paginada, não só os últimos 200)',
+   code.indexOf('/v1/deleted?limit=1000') >= 0);
 ok('NÃO chama rota de apagar nada', !/\/v1\/backup'[\s\S]{0,80}DELETE/.test(code) && !/'DELETE'/.test(code));
 ok('pede confirmação no modal do sistema (não no diálogo do navegador)',
    /confirmSistema/.test(code) && !/\bconfirm\(/.test(code) && !/\balert\(/.test(code) && !/\bprompt\(/.test(code));
 ok('avisa que pode clicar de novo para as levas mais antigas',
    /clique de novo/i.test(code));
 ok('explica que só ADMIN pode (o Worker exige)', /requireAdmin/.test(code));
+
+console.log('\n== 6) RECUPERAÇÃO AUTOMÁTICA (v7.0.4 — sem clicar em nada) ==');
+const motor = fs.readFileSync('cloudflare_data_sync_patch.js', 'utf8');
+const w2 = { DIGICOPY_CLOUD: { token: () => '' } };
+new Function('window','localStorage','document', motor)(w2, { getItem: () => null, setItem: () => {}, removeItem: () => {} }, undefined);
+const SYNC = w2.DIGICOPY_CLOUD_SYNC;
+ok('a regra do dono humano existe no motor (só traz o que gente criou)', typeof SYNC.temDonoHumano === 'function');
+ok('registro criado na tela é recuperável', SYNC.temDonoHumano({ data:{ criadoPor:'usr_kauan' } }) === true);
+ok('registro de exemplo do sistema NÃO é recuperado', SYNC.temDonoHumano({ data:{ criadoPor:'sistema' } }) === false);
+ok('registro sem autor NÃO é recuperado', SYNC.temDonoHumano({ data:{} }) === false);
+ok('registro vindo da importação do sistema antigo É recuperado (é dado real)',
+   SYNC.temDonoHumano({ data:{ criadoPor:'migracao' } }) === true);
+ok('a recuperação não "gasta" a passada enquanto o motor da nuvem for antigo',
+   /if\(!varreduraCompleta\)\{/.test(motor) && /state\.avisoMotorAntigo=true/.test(motor));
+ok('a recuperação automática existe e é chamada sozinha', /async function recuperarAutomatico\(/.test(motor) && /setTimeout\(\(\)=>\{ try\{recuperarAutomatico\(\);\}catch\(e\)\{\} \},4000\)/.test(motor));
+ok('roda uma vez por PC (não fica repetindo)',
+   /state\.recuperacaoV1=true/.test(motor) && /if\(state\.recuperacaoV1\|\|recuperandoAgora\)return;/.test(motor));
+ok('nunca traz duas vezes o mesmo registro (lista do que já trouxe)',
+   /RECUP_LEDGER/.test(motor) && /function marcarRecuperado/.test(motor) && /!jaVieram\[String\(r\.recordId\)\]/.test(motor));
+ok('só tenta de novo a cada 60s se falhar (não fica batendo na porta)', /recuperacaoTentativa/.test(motor) && /<60000\)return/.test(motor));
+ok('avisa no sino o que voltou', /Recuperação automática: '/.test(motor));
+ok('registra na Auditoria', /logAction\('recuperacao','automatica'/.test(motor));
+ok('segunda fonte: fotos internas do PC', /async function recuperarDasFotosLocais\(/.test(motor));
+ok('as fotos só devolvem contrato/parque/leitura/chamado',
+   /const entidades=\['contratos','parque','leituras','os'\];/.test(motor));
+ok('registro vindo de foto fica marcado (rastreável)', /recuperadoDe:'foto-local'/.test(motor));
+ok('o IndexedDB sabe listar as fotos', /listSnapshots:getAllSnapshots/.test(fs.readFileSync('indexeddb_persistence_patch.js','utf8')));
+ok('a varredura da nuvem é paginada (alcança o que foi apagado há meses)',
+   /for\(let volta=0;volta<20;volta\+\+\)/.test(motor) && /'&before='\+before/.test(motor));
+
+console.log('\n== 7) AVISO INSTANTÂNEO (a nuvem avisa o PC) ==');
+const worker = fs.readFileSync('cloudflare-worker/src/index.js', 'utf8');
+ok('o motor da nuvem tem o canal do aviso instantâneo', worker.indexOf("'/v1/changes/watch'") >= 0 && /async function handleChangesWatch/.test(worker));
+ok('o canal NÃO grava nada (só confere se apareceu novidade)', /SELECT MAX\(seq\) AS maxSeq FROM changes/.test(worker) && !/INSERT|UPDATE|DELETE/.test(worker.slice(worker.indexOf('async function handleChangesWatch'), worker.indexOf('async function handleDeleted'))));
+ok('o canal é curto de propósito (no máximo 25 s por consulta)', /Math\.min\(25, Math\.max\(3, pedido\)\)/.test(worker));
+ok('PC com motor novo + motor de nuvem antigo volta sozinho para o ritmo normal',
+   /if\(st===404\|\|st===400\)\{ canalInstantaneoParado=true; \}/.test(motor));
+ok('o canal só abre com a janela à vista (não gasta à toa)',
+   /if\(typeof document!=='undefined'&&document\.hidden\)return;/.test(motor));
+ok('a nuvem carimba a versao nova do motor', /WORKER_VERSION = '5\.26\.6'/.test(worker));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — recuperação em massa segura e explicada!');
