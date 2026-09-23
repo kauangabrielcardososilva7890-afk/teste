@@ -88,6 +88,12 @@ async function api(path, options){
     const err=new Error(detalhe);
     err.code=(data&&data.error)||('HTTP_'+response.status); err.status=response.status;
     err.aviso=(data&&data.aviso)||'';
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota do Worker (v5.24.5) devolve
+    // 429 com a marca `quota:true` e o recado em `error` (que aqui vira `code`).
+    // Como o texto só é lido de `message`/`aviso`, o recado chegava ao motor como
+    // "Erro HTTP 429" e a pausa de cota NÃO era reconhecida. Preservar a marca
+    // resolve isso sem mexer em nenhuma outra mensagem (é só um campo novo).
+    err.quota=!!(data&&data.quota);
     throw err;
   }
   return data;

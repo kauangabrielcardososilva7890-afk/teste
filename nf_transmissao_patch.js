@@ -240,8 +240,15 @@ function nfxPedirSenha(){
   if(typeof window.nfxPedirTexto==='function'){
     return window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.', {mascara:true});
   }
-  const s=(typeof window.prompt==='function') ? window.prompt('Senha do certificado A1 (usada agora e NÃO fica salva):') : null;
-  return Promise.resolve(s||null);
+  // Auditoria: o fallback usava window.prompt, que no .exe lança
+  // "prompt() is not supported" — derrubava o fluxo de assinatura. Sem um popup
+  // próprio não há como pedir senha de forma segura, então avisa e desiste em
+  // vez de estourar (nunca sucesso falso).
+  if(typeof window.pedirTextoSistema==='function'){
+    return window.pedirTextoSistema('Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.',{titulo:'Senha do certificado A1',mascara:true});
+  }
+  if(typeof nfxToast==='function') nfxToast('Não consegui abrir a janela da senha do certificado. Atualize o sistema para a versão mais nova.','error');
+  return Promise.resolve(null);
 }
 // Registra/atualiza a vida de uma nota no histórico fiscal
 function nfxGravarNota(rec){
@@ -343,7 +350,7 @@ window.nfCancelarNota=async function(notaId){
     if(nota.status!=='autorizada'){ nfxToast('Só se cancela nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
     if(!nota.protocolo){ nfxToast('Nota sem protocolo não cancela.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
     const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
     if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
@@ -376,7 +383,7 @@ window.nfInutilizarFaixa=async function(opts){
   try{
     if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa curta — não enviado.','error'); return {ok:false}; }
     const senha=await nfxPedirSenha(); if(!senha) return {ok:false};
     const amb=nfxAmb();

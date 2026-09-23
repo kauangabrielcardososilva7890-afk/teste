@@ -116,7 +116,18 @@ async function clearLocalData(){
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+// v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
+// recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
+// estar numa destas fotos).
+function getAllSnapshots(){
+  return open().then(x=>new Promise((resolve,reject)=>{
+    const tx=x.transaction(SNAPSHOTS,'readonly');
+    const r=tx.objectStore(SNAPSHOTS).getAll();
+    r.onsuccess=()=>resolve(r.result||[]);
+    r.onerror=()=>reject(r.error);
+  }));
+}
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;

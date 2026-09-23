@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 52c372ace67dbf7f
+ * scripts: 225 | sha256: 3c7983444a38d6ad
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -626,7 +626,14 @@ function seedData(force=false){
     } else {
       if(u.id !== g.id){ u.id = g.id; mudou = true; }
       if(u.empresaId !== emp.id){ u.empresaId = emp.id; mudou = true; }
-      if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }
+      // v7.0.1 (23/09/2026) — A SENHA NÃO É MAIS REIMPOSTA AQUI. Antes esta
+      // linha devolvia a senha de fábrica toda vez que o sistema abria: o dono
+      // trocava a senha na tela Usuários, e na próxima carga o sistema
+      // reescrevia a senha velha por cima — a troca "não pegava" e a senha
+      // antiga (que está no histórico do repositório) continuava valendo.
+      // Agora a senha que o dono escolher manda; o padrão de fábrica só é usado
+      // na PRIMEIRA vez, quando o usuário ainda não existe (bloco de cima).
+      // Perfil, nome, id e ativo continuam sendo garantidos de propósito.
       if(u.perfil !== g.perfil){ u.perfil = g.perfil; mudou = true; }
       if(u.nome !== g.nome){ u.nome = g.nome; mudou = true; }
       if(u.ativo !== true){ u.ativo = true; mudou = true; }
@@ -672,9 +679,18 @@ function doLoginCNPJ(){
   if(!emp && digits==='08385589000103' && senha==='digicopy8698'){
     emp=db.empresas.find(e=>e.id) || (typeof escolherEmpresaPadrao==='function' ? escolherEmpresaPadrao(db) : null);
     if(!emp){toast('Empresa não encontrada','error'); return;}
-    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.senha='digicopy8698'; emp.fantasia=emp.fantasia||'DIGICOPY';
+    // AUDITORIA 23/09/2026 — duas coisas ruins saíram daqui, sem tirar a
+    // credencial corporativa (ela fica: tirar poderia trancar o dono pra fora):
+    //  1) emp.senha=... SOBRESCREVIA a senha de CNPJ que o dono configurou em
+    //     "Dados da loja" por esta credencial fixa, toda vez que esta entrada
+    //     era usada. Agora só completa o cadastro (cnpj/fantasia), sem mexer na
+    //     senha dele.
+    //  2) o forEach reativava (ativo=true) qualquer usuário cuja senha fosse
+    //     uma senha de demonstração. Ou seja: desativar um usuário desses e
+    //     entrar por aqui o trazia de volta sozinho. Desativar usuário é
+    //     decisão do dono; nada no sistema pode desfazer isso em silêncio.
+    emp.cnpj='08.385.589/0001-03'; emp.cnpjDigits=digits; emp.fantasia=emp.fantasia||'DIGICOPY';
     if(!db.empresas.some(e=>e.id===emp.id)) db.empresas.push(emp);
-    db.usuarios.filter(u=>u.empresaId===emp.id).forEach(u=>{ if(u.senha==='admin123'||u.senha==='123456') u.ativo=true; });
     saveDB();
   }
   if(!emp){toast('CNPJ ou senha CNPJ inválidos','error'); return;}
@@ -761,9 +777,14 @@ function openModalCriarUsuarioPublic(){
   openModalCriarUsuario(pending.id);
 }
 function listUsuariosDemo(){
-  const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
-  const users=db.usuarios.filter(u=>u.empresaId===pending.id);
-  alert('Usuários deste CNPJ:\n\n'+users.map(u=>`${u.login} / ${u.senha} - ${u.nome} (${u.perfil})`).join('\n'));
+  // AUDITORIA 23/09/2026 — o dono pediu que esta tela não mostre NADA de
+  // usuário. Antes ela listava login / SENHA / nome de todos; depois só
+  // login/nome/perfil; agora não mostra dado nenhum.
+  // Nada no sistema chama esta função (conferido em .js, .html, no bundle
+  // gerado e nas cópias do celular) — ou seja, não mostrar nada NÃO quebra
+  // nada. O nome fica de pé só para que, se algum dia alguém a chamar, ela
+  // responda sem vazar dado nenhum.
+  alert('Listagem de usuários desativada por segurança.\n\nOs usuários do sistema ficam em "Usuários e permissões".');
 }
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
@@ -1236,7 +1257,7 @@ function renderModalUsuario(id){
   const sess=getSession(); const isEdit=!!id;
   const u=isEdit?db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId):{nome:'',login:'',senha:'',perfil:'Comercial',ativo:true};
   document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${u.senha||''}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${u.nome||''}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${u.login||''}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${id ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${id ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" class="mt-1 w-full h-11 px-3 rounded-xl border"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border"><option value="true" ${u.ativo?'selected':''}>Ativo</option><option value="false" ${!u.ativo?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="h-11 px-5 rounded-xl bg-white border">Cancelar</button><button onclick="saveUsuario()" class="h-11 px-6 rounded-xl bg-[#0a1e8a] text-white font-semibold">${isEdit?'Salvar':'Criar usuário'}</button>`;
 }
 function openModalCriarUsuario(){renderModalUsuario(null); document.getElementById('modal-root').classList.remove('hidden'); window.modalContext={type:'usuario',id:null};}
@@ -1346,7 +1367,7 @@ function renderDashboard(){
 function renderUsuarios(){
   const sess=getSession(); if(!sess) return;
   const list=db.usuarios.filter(u=>u.empresaId===sess.empresaId);
-  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
+  document.getElementById('tbody-usuarios').innerHTML=list.map(u=>{const status=u.ativo?'bg-emerald-50 text-emerald-700 border-emerald-100':'bg-red-50 text-red-700 border-red-100'; return `<tr ondblclick="openModal('usuario','${u.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0a1e8a] text-white grid place-items-center font-bold text-[11px]">${initials(u.nome)}</div><div><p class="font-semibold text-[13px]">${u.nome}</p><p class="text-[11px] text-slate-500">${u.perfil} • criado por ${u.criadoPorNome||'sistema'}</p></div></div></td><td class="px-5 py-3"><p class="font-mono text-[12px] font-bold">${u.login}</p></td><td class="px-5 py-3"><p class="text-[12px]">${u.criadoPorNome||'sistema'}</p><p class="text-[11px] text-slate-500">${fmtDateTime(u.criadoEm)}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${status}">${u.ativo?'Ativo':'Inativo'}</span></td><td class="px-5 py-3"><div class="flex gap-1"><button onclick="openModal('usuario','${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button><button onclick="deleteUsuario('${u.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i class="ph ph-trash"></i></button></div></td></tr>`;}).join('');
   const perfis={}; list.forEach(u=>{perfis[u.perfil]=(perfis[u.perfil]||0)+1}); document.getElementById('usuarios-por-perfil').innerHTML=Object.entries(perfis).map(([k,v])=>`<div class="flex justify-between p-2 rounded-xl bg-slate-50 border"><span>${k}</span><b>${v}</b></div>`).join('')||'<p class="text-[12px] text-slate-500">Nenhum</p>';
 }
 function deleteUsuario(id){const sess=getSession(); const u=db.usuarios.find(x=>x.id===id && x.empresaId===sess.empresaId); if(!u) return; if(u.login==='admin' && db.usuarios.filter(x=>x.empresaId===sess.empresaId && x.login==='admin').length===1) return toast('Não pode excluir único admin','error'); if(confirm('Excluir usuário '+u.nome+'?')){db.usuarios=db.usuarios.filter(x=>x.id!==id); logAction('usuario','excluir',id,`Excluído usuário ${u.login}`); saveDB(); renderUsuarios(); renderAuditoria(); toast('Usuário excluído','success');}}
@@ -1356,7 +1377,7 @@ function renderAuditoria(){
   const sess=getSession(); if(!sess) return;
   const entidade=document.getElementById('filter-aud-entidade')?.value||''; const search=(document.getElementById('search-auditoria')?.value||'').toLowerCase();
   let list=db.logs.filter(l=>l.empresaId===sess.empresaId && (!entidade||l.entidade===entidade) && (!search||l.usuarioNome.toLowerCase().includes(search)||l.usuarioLogin.toLowerCase().includes(search)||l.acao.toLowerCase().includes(search)||l.entidade.toLowerCase().includes(search)||l.detalhes.toLowerCase().includes(search))).slice(0,100);
-  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
+  document.getElementById('tbody-auditoria').innerHTML=list.map(l=>{return `<tr class="hover:bg-slate-50"><td class="px-5 py-3"><p class="text-[12px] font-mono">${fmtDateTime(l.dataHora)}</p></td><td class="px-5 py-3"><div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full bg-[#0a1e8a] text-white grid place-items-center font-bold text-[10px]">${initials(l.usuarioNome)}</div><div><p class="font-semibold text-[12.5px]">${l.usuarioNome}</p><p class="text-[11px] text-slate-500">${l.usuarioLogin} • ${l.entidade==='auth'?'Sistema':''}</p></div></div></td><td class="px-5 py-3"><p class="text-[12px]"><b>${l.entidade}</b> • <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold uppercase">${l.acao}</span></p></td><td class="px-5 py-3"><span class="font-mono text-[11px]">${(l.entidadeId||'').slice(-8)}</span></td><td class="px-5 py-3"><p class="text-[12px]">${l.detalhes}</p></td></tr>`;}).join('')||'<tr><td colspan="5" class="p-12 text-center text-slate-500">Nenhum log</td></tr>';
 }
 
 // REUSAR FUNÇÕES DE MODAIS E RENDERS ANTERIORES ADAPTADAS COM FILTRO EMPRESA - simplificado chamando versões anteriores se existirem, senão stub
@@ -1425,7 +1446,7 @@ function renderEquipamentos(){
   const search=(document.getElementById('search-equip')?.value||'').toLowerCase(); const status=document.getElementById('filter-equip-status')?.value||'';
   let list=db.equipamentos.filter(e=>e.empresaId===sess.empresaId && (e.modelo+e.patrimonio+e.serie+e.fabricante).toLowerCase().includes(search) && (!status||e.status===status));
   document.getElementById('grid-equipamentos').innerHTML=list.map(e=>{const sm={disponivel:'bg-emerald-50 text-emerald-700 border-emerald-100', locado:'bg-[#e8eaf8] text-[#0a1e8a] border-[#c9ceef]', manutencao:'bg-amber-50 text-amber-700 border-amber-100', inativo:'bg-slate-100 text-slate-600'}; const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<div class="rounded-[18px] bg-white border p-5 hover:shadow-md transition"><div class="flex justify-between items-start"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl bg-[#0a1e8a] text-white grid place-items-center"><i class="ph ph-printer text-[22px]"></i></div><div><p class="font-bold text-[13.5px] leading-tight">${e.modelo}</p><p class="text-[11.5px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></div></div><span class="text-[10.5px] font-bold uppercase px-2.5 py-1 rounded-full border ${sm[e.status]||''}">${e.status}</span></div><div class="mt-4 grid grid-cols-2 gap-3 text-[11.5px]"><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Patrimônio</p><p class="font-mono font-semibold mt-0.5">${e.patrimonio}</p></div><div class="rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">Série</p><p class="font-mono font-semibold mt-0.5 truncate">${e.serie}</p></div></div><div class="mt-3 flex gap-2 text-[11.5px]"><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">PB</p><p class="font-mono font-bold">${e.contadorPB.toLocaleString('pt-BR')}</p></div><div class="flex-1 rounded-xl bg-slate-50 border p-2.5"><p class="text-[10px] uppercase font-bold text-slate-500">COR</p><p class="font-mono font-bold">${e.contadorCor.toLocaleString('pt-BR')}</p></div></div><div class="mt-3 text-[11.5px]">${cli?`<p class="text-slate-600"><i class="ph ph-map-pin"></i> ${cli.nome} • ${parque.setor}</p>`:`<p class="text-slate-400 italic">Sem alocação • disponível</p>`}</div><div class="mt-4 flex gap-2"><button onclick="openModal('equipamento','${e.id}')" class="flex-1 h-9 rounded-xl bg-white border text-[12px] font-semibold">Editar</button><button onclick="toast('Histórico auditado por ${e.criadoPorNome||'-'}','info')" class="h-9 px-3 rounded-xl bg-slate-900 text-white text-[12px] font-semibold">Histórico</button></div></div>`;}).join('')||'<div class="col-span-full p-12 text-center text-slate-500">Nenhum equipamento</div>';
-  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+  document.getElementById('tbody-equip').innerHTML=list.map(e=>{const parque=db.parque.find(p=>p.equipamentoId===e.id && p.empresaId===sess.empresaId); const cli=parque?db.clientes.find(c=>c.id===parque.clienteId):null; return `<tr ondblclick="openModal('equipamento','${e.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-semibold text-[13px]">${e.modelo}</p><p class="text-[11px] text-slate-500">${e.fabricante} • ${e.tipo} • por ${e.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.patrimonio}</p><p class="font-mono text-[11px] text-slate-500">${e.serie}</p></td><td class="px-5 py-3"><p class="font-mono text-[12px]">${e.contadorPB.toLocaleString()} PB</p><p class="font-mono text-[11px] text-slate-500">${e.contadorCor.toLocaleString()} COR</p></td><td class="px-5 py-3"><p class="text-[12px]">${cli?cli.nome:'—'}</p><p class="text-[11px] text-slate-500">${parque?.setor||'Sem alocação'}</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#e8eaf8] text-[#0a1e8a]">${e.status}</span></td><td class="px-5 py-3"><button onclick="openModal('equipamento','${e.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
 }
 let equipView='grid';
 function setEquipView(v){equipView=v; document.getElementById('btn-view-grid').className=v==='grid'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('btn-view-list').className=v==='list'?'px-3 h-8 rounded-lg bg-slate-900 text-white text-[12px]':'px-3 h-8 rounded-lg text-slate-600 text-[12px]'; document.getElementById('grid-equipamentos').classList.toggle('hidden', v!=='grid'); document.getElementById('list-equipamentos').classList.toggle('hidden', v!=='list');}
@@ -1470,7 +1491,7 @@ function renderParque(){
 }
 function renderLeituras(){
   const sess=getSession(); if(!sess) return;
-  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
+  document.getElementById('tbody-leituras').innerHTML=db.leituras.filter(l=>l.empresaId===sess.empresaId).sort((a,b)=>new Date(b.dataLeitura)-new Date(a.dataLeitura)).slice(0,20).map(l=>{const cli=db.clientes.find(c=>c.id===l.clienteId); const eq=db.equipamentos.find(e=>e.id===l.equipamentoId); return `<tr ondblclick="openModal('leitura','${l.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-4 py-3"><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">${eq?.modelo} • ${fmtDate(l.dataLeitura)} • por <b>${l.criadoPorNome||'-'}</b></p></td><td class="px-4 py-3 font-mono text-[11px]">PB ${l.contadorPBAnterior}→${l.contadorPB}<br>COR ${l.contadorCorAnterior}→${l.contadorCor}</td><td class="px-4 py-3">${l.consumoPB} PB / ${l.consumoCor} COR</td><td class="px-4 py-3">${fmtMoney(l.valorExcedente)}</td><td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold border ${l.status==='pendente'?'bg-amber-50 text-amber-700 border-amber-200':'bg-emerald-50 text-emerald-700'}">${l.status}</span></td><td class="px-4 py-3"><button onclick="openModal('leitura','${l.id}')" class="w-7 h-7 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`}).join('');
   document.getElementById('list-divergencias').innerHTML='<p class="text-[12px] text-amber-800">Nenhuma divergência</p>';
   const sel=document.getElementById('coleta-contrato'); if(sel && !sel.innerHTML.includes('CT-')){sel.innerHTML='<option value="">Selecione o contrato</option>'+db.contratos.filter(c=>c.empresaId===sess.empresaId && c.status==='ativo').map(c=>{const cli=db.clientes.find(cl=>cl.id===c.clienteId); return `<option value="${c.id}">${c.numero} - ${cli?.nome}</option>`}).join('');}
 }
@@ -1498,7 +1519,7 @@ function renderOs(){
     const cols=[{id:'aberto',label:'Aberto',color:'border-slate-200 bg-slate-50'},{id:'em_atendimento',label:'Em atendimento',color:'border-blue-200 bg-blue-50/50'},{id:'aguardando_peca',label:'Aguardando peça',color:'border-amber-200 bg-amber-50/50'},{id:'concluido',label:'Concluído',color:'border-emerald-200 bg-emerald-50/50'}];
     document.getElementById('os-kanban').innerHTML=cols.map(col=>{const items=list.filter(o=>o.status===col.id); return `<div class="rounded-[16px] border ${col.color} p-3 flex flex-col"><div class="flex items-center justify-between mb-3"><h4 class="font-bold text-[12px] uppercase">${col.label}</h4><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white border">${items.length}</span></div><div class="space-y-3 flex-1 overflow-auto" style="min-height:400px">${items.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); return `<div class="rounded-xl bg-white border p-3 shadow-sm hover:shadow-md cursor-pointer" onclick="openModal('os','${o.id}')"><div class="flex justify-between"><span class="font-mono text-[11px] font-bold text-slate-500">${o.numero}</span><span class="text-[10px] px-2 py-0.5 rounded-full bg-[#e8eaf8] text-[#0a1e8a] font-bold uppercase">${o.prioridade}</span></div><p class="font-semibold text-[13px] mt-2">${cli?.nome}</p><p class="text-[11px] text-slate-600 mt-1 line-clamp-2">${o.descricao}</p><p class="text-[11px] text-slate-400 mt-2">por ${o.criadoPorNome||'-'} • ${fmtDate(o.dataAbertura)}</p></div>`;}).join('')||'<p class="text-[12px] text-slate-400 p-4 text-center">Vazio</p>'}</div></div>`;}).join('');
   } else {
-    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('produto','${p.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
+    document.getElementById('tbody-os').innerHTML=list.map(o=>{const cli=db.clientes.find(c=>c.id===o.clienteId); const sm={aberto:'bg-[#0a1e8a] text-white', em_atendimento:'bg-blue-600 text-white', aguardando_peca:'bg-amber-500 text-white', concluido:'bg-emerald-600 text-white'}; const slaHoras=Math.floor((Date.now()-new Date(o.dataAbertura))/(1000*60*60)); return `<tr ondblclick="openModal('os','${o.id}')" class="hover:bg-slate-50 cursor-pointer"><td class="px-5 py-3"><p class="font-mono text-[11px] font-bold">${o.numero}</p><p class="font-semibold text-[12.5px]">${cli?.nome}</p><p class="text-[11px] text-slate-500">por ${o.criadoPorNome||'-'}</p></td><td class="px-5 py-3"><p class="text-[12px] capitalize">${o.tipo}</p><span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 border font-bold uppercase">${o.prioridade}</span></td><td class="px-5 py-3"><p class="text-[12px]">${db.tecnicos.find(t=>t.id===o.tecnico)?.nome||'—'}</p></td><td class="px-5 py-3"><p class="text-[12px] font-mono">${slaHoras}h</p></td><td class="px-5 py-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase ${sm[o.status]||'bg-slate-100'}">${o.status.replace('_',' ')}</span></td><td class="px-5 py-3"><button onclick="openModal('os','${o.id}')" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-slate-100"><i class="ph ph-pencil"></i></button></td></tr>`;}).join('');
   }
 }
 function renderModalOS(id){
@@ -2692,7 +2713,12 @@ window.addEventListener('DOMContentLoaded',function(){
     const btnCopy=document.getElementById('rawgh-copy');
     if(btnCopy) btnCopy.onclick=function(){
       try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){ prompt('Copie o link oficial:', urlOficial); }
+      catch(e){
+        // Auditoria: aqui era prompt nativo, que no .exe lança
+        // "prompt() is not supported" — o botão de copiar ficava mudo.
+        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
+        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
+      }
     };
     const btnClose=document.getElementById('rawgh-close');
     if(btnClose) btnClose.onclick=function(){ bar.remove(); };
@@ -4524,6 +4550,23 @@ try{
 // ── Utilidades locais (não colidem com o escopo do app) ──────────────────
 function jbStr(v){ return (v===undefined||v===null) ? '' : String(v).trim(); }
 function jbEhMigracao(r){ return r && (r.criadoPor==='migracao' || r.origem==='migracao'); }
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "a impressora some do contrato do nada".
+// O QUE ACONTECIA: a limpeza de demonstração lá embaixo reconhecia o dado de
+// exemplo pelo NÚMERO (CT-ano-0001 / OS-ano-0001) — só que o PRÓPRIO SISTEMA
+// numera os contratos e chamados de verdade nesse mesmo formato
+// (app.js renderModalContrato: 'CT-'+ano+'-'+0001). Ou seja: todo contrato
+// criado na tela era tratado como demonstração e, cada vez que o dono importava
+// os dados do sistema antigo, o contrato sumia — e com ele o parque (as
+// impressoras que ele tinha acabado de colocar), as leituras e as faturas.
+// O QUE SEPARA o exemplo do dado de verdade é o AUTOR: o que a pessoa cria na
+// tela tem criadoPor (o id de quem estava logado); o que veio do seed não tem,
+// ou está marcado como 'sistema'. Daqui em diante o número sozinho não decide
+// mais nada — precisa também não ter dono humano.
+function jbSemDonoHumano(r){
+  if(!r) return false;
+  const dono=String(r.criadoPor||'');
+  return !dono || dono==='sistema' || dono==='demo';
+}
 function jbNum(v){ const n=parseFloat(String(v).replace('.','').replace(',','.')); return isNaN(n)?0:n; }
 // Se valor tiver vírgula decimal pt-BR ("1.234,56") corrige; senão parseFloat direto
 function jbToF(v){
@@ -4872,7 +4915,7 @@ function fbImportLocacaoFamilia(rawData){
   if(result.contratos>0 || result.parque>0 || result.chamados>0 || result.leituras>0){
     // Demo = não-migracao + sem codigoAntigo/legadoCodigo + padrões de numero do seed
     const demoCtrIds = db.contratos
-      .filter(c=>c.empresaId===empId && !jbEhMigracao(c) && !c.codigoAntigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
+      .filter(c=>c.empresaId===empId && jbSemDonoHumano(c) && !jbEhMigracao(c) && !c.codigoAntigo && !c.legadoCodigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
       .map(c=>c.id);
     if(demoCtrIds.length){
       const demoPrkIds = db.parque.filter(p=>demoCtrIds.includes(p.contratoId)).map(p=>p.id);
@@ -4885,7 +4928,7 @@ function fbImportLocacaoFamilia(rawData){
     }
     if(result.chamados>0){
       const antes = db.os.length;
-      db.os = db.os.filter(o=>!(o.empresaId===empId && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
+      db.os = db.os.filter(o=>!(o.empresaId===empId && jbSemDonoHumano(o) && !jbEhMigracao(o) && !o.legadoCodigo && /^OS-\d{4}-\d{4}$/.test(o.numero||'')));
       result.demosRemovidos += antes - db.os.length;
     }
   }
@@ -6517,24 +6560,24 @@ console.log('PATCH vendas+OS v4.2.0 — nova venda completa, OS, serial, faturam
 /* ===== performance_patch.js ===== */
 try{
 // ═══════════════════════════════════════════════════════════════════════════
-// PERFORMANCE_PATCH v4.3.0 — destrava a interface e acelera a nuvem
+// PERFORMANCE_PATCH v4.4.3 — destrava a interface em PC fraco
 //
-// ANTES (por que travava):
-//  1. saveDB() serializava + comprimia + gravava a base INTEIRA (dezenas de MB)
-//     a cada clique — congelava a tela por segundos.
-//  2. Enviar para nuvem republicava TODAS as 90+ partes, uma a uma, mesmo com
-//     uma única venda nova.
-//  3. Carregar da nuvem puxava todas as partes num SELECT único gigante
-//     (causa do "canceling statement due to statement timeout").
+// O QUE ESTE ARQUIVO FAZ HOJE (e só isto):
+//  1. saveDB() write-behind: marca a alteração e grava 1x só, ~0,9s depois da
+//     última ação (+ gravação garantida ao trocar de aba/fechar). Antes o
+//     saveDB() serializava + comprimia + gravava a base INTEIRA (dezenas de MB)
+//     a cada clique e congelava a tela por segundos.
+//  2. Helpers puros (perfHashStr / perfDiffPartes / perfEmLotes) exportados em
+//     window.__perfPure — testados em test_perf.js.
 //
-// DEPOIS (esta otimização):
-//  1. saveDB() marca a alteração e grava 1x só, ~0,9s depois da última ação
-//     (+ gravação garantida ao trocar de aba/fechar).
-//  2. Envio incremental: cada parte é identificada por hash; só sobem as
-//     partes que MUDARAM (em lotes paralelos de 6). Uma venda nova sobe em
-//     segundos, não em minutos. Partes removidas são apagadas da nuvem.
-//  3. Carregamento paralelo por entidade: vários SELECTs pequenos (com
-//     progresso por módulo) em vez de um único gigante.
+// AUDITORIA 23/09/2026 — o que foi REMOVIDO daqui: o envio e o carregamento
+// manuais da nuvem antiga (Supabase). Eram ~240 linhas de código morto que
+// liam window.__supabaseSyncInternals — símbolo que NÃO existe em lugar nenhum
+// do repositório — e que ainda embrulhavam syncEnviarParaNuvem/
+// syncCarregarDaNuvem, participando do aviso falso de "enviou para a nuvem"
+// com a nuvem desligada. Saíram por ordem do dono ("não quero algo manual que
+// envia pra nuvem, quero automático"). A sincronização que vale é a da
+// Cloudflare, automática (cloudflare_data_sync_patch.js).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
@@ -6618,247 +6661,13 @@ window.__perfPure = { perfHashStr, perfDiffPartes, perfEmLotes };
   window.__saveDBSched = true;
 })();
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Cache local de hashes das partes enviadas (identifica o que mudou)
-// O cache é separado POR BACKEND (supabase/firebase): trocar de nuvem força
-// um primeiro envio completo na nuvem nova, sem misturar os hashes da antiga.
-// ═══════════════════════════════════════════════════════════════════════════
-const PARTCACHE_KEY = 'digicopy_erp_v2_partcache_v1';
-function partCacheKeyAtual(){
-  const I = window.__supabaseSyncInternals;
-  const backend = (I && I.nome) || 'supabase';
-  return PARTCACHE_KEY + '__' + backend;
-}
-function partCacheLer(){
-  try{ return JSON.parse(localStorage.getItem(partCacheKeyAtual())||'null') || null; }catch(e){ return null; }
-}
-function partCacheGravar(hashes){
-  try{ localStorage.setItem(partCacheKeyAtual(), JSON.stringify({ts:new Date().toISOString(), hashes})); }catch(e){}
-}
-function partCacheLimpar(){ try{ localStorage.removeItem(partCacheKeyAtual()); }catch(e){} }
-// Se a base local veio da nuvem DEPOIS do último envio deste PC, o cache não
-// corresponde mais ao estado atual → zera (o próximo envio republica tudo 1x)
-(function invalidarCacheSeBaseVeioDaNuvem(){
-  try{
-    const c = partCacheLer(); if(!c || !c.ts) return;
-    const tsCache = Date.parse(c.ts)||0;
-    const sinc = Date.parse(db?.meta?.sincronizadoEm||'')||0;
-    if(sinc > tsCache) partCacheLimpar();
-  }catch(e){}
-})();
-
-function upStatus(html){
-  try{
-    const I = window.__supabaseSyncInternals;
-    if(I && I.setCloudSyncStatus) I.setCloudSyncStatus(html);
-  }catch(e){}
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 2) ENVIO INCREMENTAL — só sobem as partes que mudaram (lotes paralelos)
-// ═══════════════════════════════════════════════════════════════════════════
-const __enviarOriginal = window.syncEnviarParaNuvem;
-window.syncEnviarParaNuvem = async function(opts={}){
-  const I = window.__supabaseSyncInternals;
-  if(!I || !I.supabaseRequest) return __enviarOriginal ? __enviarOriginal(opts) : {ok:false, erros:['sync interno indisponível']};
-  const confirmar = opts.confirmar !== false;
-  if(confirmar && !confirm('Enviar os dados deste PC para a nuvem (versão rápida: só o que mudou)?\n\nOs outros computadores recebem em "Carregar da nuvem" ou na sincronização automática.')) return {ok:false, cancelado:true};
-  try{
-    // 1) Monta as partes exatamente como a versão clássica
-    const partes = []; const metaEntidades = {};
-    I.SYNC_ENTIDADES.forEach(ent=>{
-      let itens;
-      if(ent.tipo==='objeto') itens = I.objetoParaItens(db[ent.campo]||{});
-      else{
-        let lista = Array.isArray(db[ent.campo]) ? db[ent.campo] : [];
-        if(ent.limite) lista = lista.slice(0, ent.limite);
-        itens = lista;
-      }
-      const packs = I.empacotarPartes(itens);
-      metaEntidades[ent.campo] = {tipo:ent.tipo, partes:packs.length, total:itens.length};
-      packs.forEach((pack,i)=>{
-        partes.push({
-          key: `${I.CLOUD_PART_PREFIX}${ent.campo}__p${i}`,
-          data: ent.tipo==='objeto' ? {itens: pack} : {lista: pack}
-        });
-      });
-    });
-    const totalReg = Object.values(metaEntidades).reduce((s,e)=>s+e.total,0);
-    const partesStr = partes.map(p=>({ key:p.key, dataStr: I.stringifyNuvem(p.data), data:p.data }));
-
-    // 1b) Proteção anti-demonstração (idem versão clássica)
-    if(!opts.forcar){
-      try{
-        const metaAtualRows = await I.supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(I.CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-        if(metaAtualRows && metaAtualRows.length){
-          const ant = metaAtualRows[0].data||{};
-          const antTotal = ant.totalRegistros||0;
-          const antMod = ((ant.entidades||{}).modulosDinamicos||{}).total||0;
-          const localMod = (metaEntidades.modulosDinamicos||{}).total||0;
-          if(antTotal>0 && (totalReg < antTotal*0.5 || (antMod>0 && localMod===0))){
-            const certeza = (opts.automatico===true) ? false : confirm('⚠️ ATENÇÃO — POSSÍVEL ENGANO!\n\nA nuvem tem publicada uma base com ' + antTotal.toLocaleString('pt-BR') + ' registros, incluindo ' + antMod + ' tabelas migradas.\n\nOs dados DESTE computador têm só ' + totalReg.toLocaleString('pt-BR') + ' registros e ' + localMod + ' tabelas migradas — parecem ser os dados de DEMONSTRAÇÃO.\n\nEnviar agora SUBSTITUI a base completa da nuvem por estes dados menores.\n\n👉 Se este NÃO é o computador onde você importou os JSONs do sistema antigo, clique em CANCELAR.\n\nEnviar mesmo assim?');
-            if(!certeza){
-              upStatus('<span class="text-amber-700 font-bold">Envio CANCELADO pela proteção anti-demonstração.</span>');
-              if(typeof toast==='function') toast('Envio cancelado — proteção anti-demonstração','info');
-              return {ok:false, cancelado:true, protecao:true};
-            }
-          }
-        }
-      }catch(eProt){ /* sem meta legível → segue */ }
-    }
-
-    // 2) Calcula o que mudou de verdade
-    const cache = partCacheLer();
-    const diff = perfDiffPartes(partesStr, cache ? cache.hashes : null);
-    const fila = partesStr.filter(p=>diff.mudadas.includes(p.key));
-    const primeiraVez = !cache;
-    upStatus(`<span class="text-slate-500">${primeiraVez?`Primeiro envio completo: ${fila.length} partes...`:`Enviando apenas o que mudou: <b>${fila.length}</b> de ${partes.length} partes...`}</span>`);
-
-    // 3) Envia as partes mudadas EM PARALELO (lotes de 6)
-    let enviadas = 0; const erros = [];
-    await perfEmLotes(fila, 6, async (p)=>{
-      await I.supabaseRequest('app_state?on_conflict=key', {
-        method:'POST',
-        headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-        body: I.stringifyNuvem({key:p.key, data:p.data, updated_at:new Date().toISOString()})
-      });
-      enviadas++;
-      if(enviadas % 6 === 0 || enviadas===fila.length) upStatus(`<span class="text-slate-500">Enviando: ${enviadas}/${fila.length} partes...</span>`);
-    });
-
-    // 4) Apaga da nuvem as partes que deixaram de existir (base encolheu)
-    await perfEmLotes(diff.removidas, 6, async (key)=>{
-      await I.supabaseRequest(`app_state?key=eq.${encodeURIComponent(key)}`, {method:'DELETE', headers:{Prefer:'return=minimal'}});
-    });
-
-    if(erros.length){
-      upStatus(`<span class="text-red-700 font-bold">Falha em ${erros.length} de ${fila.length} partes. Nada foi publicado. Tente novamente.</span><div class="text-[11px] text-red-600 mt-1">${escapeHtml(erros[0])}</div>`);
-      if(typeof toast==='function') toast('Falha ao enviar algumas partes. Tente novamente.','error');
-      return {ok:false, enviadas, erros};
-    }
-
-    // 5) Meta (sinal de publicação). Se NADA mudou e a publicação já existe na
-    // nuvem, não bump: evita que os outros PCs recarreguem a base à toa.
-    const atualizadoEm = new Date().toISOString();
-    const nadaMudou = fila.length===0 && diff.removidas.length===0;
-    let metaRemotaExiste = false;
-    try{
-      const confere0 = await I.supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(I.CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-      metaRemotaExiste = !!(confere0 && confere0.length && (confere0[0].data||{}).entidades);
-    }catch(eC0){ metaRemotaExiste = false; }
-    if(nadaMudou && metaRemotaExiste){
-      partCacheGravar(diff.atual);
-      window.__ultimaMudancaLocal = 0;
-      try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(e){}
-      upStatus(`<span class="text-emerald-700 font-bold">✅ Nuvem já estava em dia — nenhuma parte mudou desde o último envio.</span>`);
-      if(typeof toast==='function') toast('Nuvem já estava em dia ✅','success');
-      return {ok:true, partes:partes.length, enviadas:0, semMudanca:true, totalRegistros:totalReg};
-    }
-    await I.supabaseRequest('app_state?on_conflict=key', {
-      method:'POST',
-      headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-      body: I.stringifyNuvem({key:I.CLOUD_META_KEY, data:{versao:2, app:'digicopy_erp', atualizadoEm, entidades:metaEntidades, totalRegistros:totalReg}, updated_at:atualizadoEm})
-    });
-    try{
-      const confere = await I.supabaseRequest(`app_state?select=data&key=eq.${encodeURIComponent(I.CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-      if(!confere || !confere.length || !(confere[0].data||{}).entidades) throw new Error('a publicação não apareceu na releitura');
-    }catch(errConf){
-      const mc = errConf?.message||String(errConf);
-      upStatus(`<span class="text-red-700 font-bold">Não consegui CONFIRMAR a publicação (${escapeHtml(mc)}). Tente novamente.</span>`);
-      if(typeof toast==='function') toast('Publicação não confirmada. Tente novamente.','error');
-      return {ok:false, enviadas, erros:['verificacao: '+mc]};
-    }
-
-    // 6) Sucesso: grava o novo cache de hashes + marca em dia
-    partCacheGravar(diff.atual);
-    window.__syncAplicando = true;
-    try{ db.meta = Object.assign({}, db.meta||{}, {origemNuvemAtualizadoEm:atualizadoEm, ultimoEnvioEm:atualizadoEm}); saveDB(); }
-    finally{ window.__syncAplicando = false; }
-    window.__ultimaMudancaLocal = 0;
-    try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(e){}
-    const msgDiff = primeiraVez ? `${partes.length} partes enviadas` : (fila.length ? `${fila.length} parte(s) alterada(s) — rápido!` : 'nada mudou desde o último envio');
-    upStatus(`<span class="text-emerald-700 font-bold">✅ PUBLICADO E VERIFICADO na nuvem às ${new Date().toLocaleString('pt-BR')}!</span><div class="text-[12px] text-emerald-700 mt-1">${totalReg.toLocaleString('pt-BR')} registros • ${msgDiff}.</div>`);
-    if(typeof toast==='function') toast(fila.length?`Alterações enviadas (${fila.length} parte(s)) ✅`:'Nuvem já estava em dia ✅','success');
-    return {ok:true, partes:partes.length, enviadas:fila.length, removidas:diff.removidas.length, totalRegistros:totalReg, verificado:true};
-  }catch(err){
-    const msg = err?.message||String(err);
-    upStatus(`<span class="text-red-700 font-bold">Erro ao enviar: ${escapeHtml(msg)}</span>`);
-    if(typeof toast==='function') toast('Erro ao enviar para nuvem: '+msg, 'error');
-    return {ok:false, erros:[msg]};
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 3) CARREGAMENTO PARALELO POR ENTIDADE — adeus statement timeout
-// ═══════════════════════════════════════════════════════════════════════════
-const __carregarOriginal = window.syncCarregarDaNuvem;
-window.syncCarregarDaNuvem = async function(opts={}){
-  const I = window.__supabaseSyncInternals;
-  if(!I || !I.supabaseRequest) return __carregarOriginal ? __carregarOriginal(opts) : {ok:false, erros:['sync interno indisponível']};
-  const confirmar = opts.confirmar !== false;
-  if(confirmar && !confirm('Carregar os dados da nuvem neste PC?\n\n⚠️ OS DADOS LOCAIS ATUAIS SERÃO SUBSTITUÍDOS pelos dados da nuvem.')) return {ok:false, cancelado:true};
-  try{
-    upStatus('<span class="text-slate-500">Buscando dados na nuvem (modo rápido)...</span>');
-    const metaRows = await I.supabaseRequest(`app_state?select=data,updated_at&key=eq.${encodeURIComponent(I.CLOUD_META_KEY)}&limit=1`, {method:'GET'});
-    // Sem meta: delega ao fluxo clássico (recuperação por partes soltas / blob legado)
-    if(!metaRows || !metaRows.length) return __carregarOriginal(opts);
-    const meta = metaRows[0].data||{};
-    const totalPartes = Object.values(meta.entidades||{}).reduce((s,e)=>s+(e.partes||0),0);
-    if(!I.protecaoCargaMenor(meta.totalRegistros||0, ((meta.entidades||{}).modulosDinamicos||{}).total||0, opts.automatico===true)){
-      upStatus('<span class="text-amber-700 font-bold">Carga CANCELADA pela proteção: a nuvem parecia ter dados menores do que este PC.</span>');
-      return {ok:false, cancelado:true, protecao:true};
-    }
-    const entradas = Object.entries(meta.entidades||{});
-    const novoDb = structuredClone(defaultData);
-    const faltando = [];
-    let baixadas = 0;
-    // Vários SELECTs pequenos (1 por entidade), 4 em paralelo, com progresso
-    const errosLoad = await perfEmLotes(entradas, 4, async ([campo, info])=>{
-      upStatus(`<span class="text-slate-500">☁️ Baixando <b>${escapeHtml(campo)}</b> (${baixadas}/${entradas.length} módulos, ${totalPartes} partes)...</span>`);
-      const likePrefix = I.CLOUD_PART_PREFIX + campo + '__p';
-      const rows = await I.supabaseRequest(`app_state?select=key,data&key=like.${encodeURIComponent(likePrefix)}*&limit=500`, {method:'GET'});
-      const mapa = {};
-      (rows||[]).forEach(r=>{ mapa[r.key] = r.data; });
-      const itens = [];
-      for(let i=0;i<(info.partes||0);i++){
-        const parte = mapa[`${likePrefix}${i}`];
-        if(!parte){ faltando.push(`${campo} p${i}`); continue; }
-        if(info.tipo==='objeto') itens.push(...(parte.itens||[]));
-        else itens.push(...(parte.lista||[]));
-      }
-      novoDb[campo] = info.tipo==='objeto' ? I.itensParaObjeto(itens) : itens;
-      baixadas++;
-    });
-    // Se algum módulo falhou no download, NÃO aplica: evita base incompleta
-    if(errosLoad.length){
-      upStatus(`<span class="text-red-700 font-bold">Falha ao baixar ${errosLoad.length} módulo(s). Nada foi alterado neste PC. Tente novamente.</span><div class="text-[11px] text-red-600 mt-1">${escapeHtml(errosLoad[0])}</div>`);
-      if(typeof toast==='function') toast('Falha no carregamento. Tente novamente.','error');
-      return {ok:false, erros:errosLoad};
-    }
-    novoDb.meta = Object.assign({}, novoDb.meta||{}, {sincronizadoEm:new Date().toISOString(), origemNuvemAtualizadoEm:meta.atualizadoEm||metaRows[0].updated_at});
-    partCacheLimpar(); // a base mudou inteira: próximo envio republica o que for preciso
-    window.__syncAplicando = true;
-    try{ db = novoDb; saveDB(); if(window.saveDBAgora) saveDBAgora(); }
-    finally{ window.__syncAplicando = false; }
-    window.__ultimaMudancaLocal = 0;
-    try{ localStorage.removeItem('digicopy_erp_dirty_local'); }catch(e){}
-    const avisoParcial = faltando.length
-      ? `<div class="text-[12px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">⚠️ Algumas partes não foram encontradas (${faltando.length}). Refaça o "Enviar para nuvem" no PC de origem.</div>`
-      : '';
-    upStatus(`<span class="text-emerald-700 font-bold">✅ Carregado! ${(meta.totalRegistros||0).toLocaleString('pt-BR')} registros restaurados da nuvem. Recarregando...</span>${avisoParcial}`);
-    if(typeof toast==='function') toast('Dados carregados da nuvem','success');
-    if(opts.automatico === true) return {ok:true, rapido:true, faltando, semReload:true};
-    setTimeout(()=>location.reload(), 900);
-    return {ok:true, rapido:true, faltando};
-  }catch(err){
-    const msg = err?.message||String(err);
-    upStatus(`<span class="text-red-700 font-bold">Erro ao carregar: ${escapeHtml(msg)}</span>`);
-    if(typeof toast==='function') toast('Erro ao carregar da nuvem: '+msg, 'error');
-    return {ok:false, erros:[msg]};
-  }
-};
-
-console.log('PATCH performance v4.4.2 — saveDB incremental (por entidade, no app.js), envio incremental e carregamento paralelo; cache de partes separado por backend');
+// AUDITORIA 23/09/2026 — o envio/carregamento MANUAL (Supabase) foi removido a
+// pedido do dono: 'não quero algo manual que envia pra nuvem, quero automático'.
+// Este arquivo ficou só com o que é vivo e útil: os helpers puros (perfHashStr,
+// perfDiffPartes, perfEmLotes) e o saveDB write-behind, que é o que destrava a
+// interface em PC fraco. A sincronização de verdade é a da Cloudflare, que é
+// automática (cloudflare_data_sync_patch.js).
+console.log('PATCH performance v4.4.3 — saveDB write-behind + helpers puros (envio manual Supabase removido)');
 })();
 
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("performance_patch.js", e); }
@@ -8055,18 +7864,12 @@ window.toast = function(msg, tipo){
   if(UI_PURE.ehAvisoDeNuvem(msg)) return;      // silêncio nos "sincronizou/não tem dados..."
   return _uiToastReal(msg, tipo);
 };
-// ações manuais: uma única confirmação clara ao final
-function uiWrapSync(fnOrig, msgOk){
-  return async function(){
-    window.__uiSyncErro = false;
-    try{ if(fnOrig) await fnOrig({confirmar:true}); }catch(e){ window.__uiSyncErro = true; console.error(e); _uiToastReal('Não consegui agora: ' + ((e&&e.message)||e), 'error'); }
-    if(!window.__uiSyncErro && msgOk) _uiToastReal(msgOk, 'success');
-  };
-}
-if(typeof window.syncEnviarParaNuvem === 'function')
-  window.enviarDadosLocaisParaNuvem = uiWrapSync(window.syncEnviarParaNuvem, 'Pronto! Este PC enviou os dados para a nuvem ☁️');
-if(typeof window.syncCarregarDaNuvem === 'function')
-  window.carregarDadosDaNuvem = uiWrapSync(window.syncCarregarDaNuvem, 'Pronto! Os dados da nuvem foram trazidos para este PC ☁️');
+// AUDITORIA 23/09/2026 — as ações MANUAIS de nuvem foram REMOVIDAS a pedido do
+// dono: "não quero algo manual que envia pra nuvem, quero automático". Este
+// trecho embrulhava syncEnviarParaNuvem/syncCarregarDaNuvem e, como os stubs da
+// Cloudflare devolvem {ok:false} sem lançar erro, ele mostrava o aviso verde
+// "Pronto! Este PC enviou os dados para a nuvem ☁️" SEM TER ENVIADO NADA.
+// A sincronização que vale é a automática (cloudflare_data_sync_patch.js).
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 3) Consulta de clientes — final e definitiva
@@ -19667,7 +19470,7 @@ window.renderModalUsuario=function(id){
   const perfilDisabled=podePerfil?'':'disabled';
   const root=document.getElementById('modal-root'); if(root) root.classList.remove('hidden');
   document.getElementById('modal-title').innerText=isEdit?'Editar usuário':'Novo usuário';
-  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="u-nome" value="${esc(u.nome||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login</label><input id="u-login" value="${esc(u.login||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="u-senha" type="password" value="${esc(u.senha||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" ${perfilDisabled} class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select>${!podePerfil?'<p class="text-[11px] text-amber-700 mt-1">Somente Kauan ou Denivaldo alteram perfil.</p>':''}</div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option value="true" ${u.ativo!==false?'selected':''}>Ativo</option><option value="false" ${u.ativo===false?'selected':''}>Inativo</option></select></div></div></div>`;
+  document.getElementById('modal-body').innerHTML=`<div class="space-y-4"><div><label class="text-[11px] font-bold uppercase text-slate-500">Nome</label><input id="u-nome" value="${esc(u.nome||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Login</label><input id="u-login" value="${esc(u.login||'')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div><div><label class="text-[11px] font-bold uppercase text-slate-500">Senha</label><input id="u-senha" type="password" value="" placeholder="deixe em branco para manter a senha atual" class="neo-input"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="text-[11px] font-bold uppercase text-slate-500">Perfil</label><select id="u-perfil" ${perfilDisabled} class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option ${u.perfil==='Admin'?'selected':''}>Admin</option><option ${u.perfil==='Comercial'?'selected':''}>Comercial</option><option ${u.perfil==='Técnico'?'selected':''}>Técnico</option><option ${u.perfil==='Financeiro'?'selected':''}>Financeiro</option></select>${!podePerfil?'<p class="text-[11px] text-amber-700 mt-1">Somente Kauan ou Denivaldo alteram perfil.</p>':''}</div><div><label class="text-[11px] font-bold uppercase text-slate-500">Status</label><select id="u-ativo" class="mt-1 w-full h-11 px-3 rounded-xl border bg-white"><option value="true" ${u.ativo!==false?'selected':''}>Ativo</option><option value="false" ${u.ativo===false?'selected':''}>Inativo</option></select></div></div></div>`;
   document.getElementById('modal-footer').innerHTML=`<button onclick="closeModal()" class="neo-btn">Cancelar</button><button onclick="saveUsuarioFinal('${esc(id||'')}')" class="neo-btn primary">Salvar usuário</button>`;
   window.modalContext={type:'usuario',id:id||null};
 };
@@ -20238,6 +20041,114 @@ try{
     }
   }, 800);
 
+  // ── CAMPO DE TEXTO DO SISTEMA (auditoria) ─────────────────────────────────
+  // BUG REAL achado na auditoria: o Electron NÃO implementa window.prompt — a
+  // função EXISTE, mas lança "prompt() is not supported" quando chamada.
+  // Por isso a guarda `typeof prompt === 'function'` espalhada pelo sistema não
+  // protegia nada: no .exe ela dá true e a chamada estoura. Resultado: botão
+  // mudo (Ler status da impressora, Editar notas do portal, senha do
+  // certificado), sem mensagem nenhuma — proibido pela regra "nenhum botão
+  // pode ficar morto ou silencioso".
+  //
+  // Esta é a versão do sistema do prompt, no mesmo estilo dos outros popups:
+  // devolve Promise com o texto digitado, ou null se o usuário desistir.
+  // Nunca usa o prompt nativo (regra: nunca usar prompt/confirm/alert nativos).
+  // Nome próprio para não colidir com o nfxPedirTexto da Central Fiscal.
+  window.pedirTextoSistema = function(msg, op){
+    op = op || {};
+    return new Promise(resolve=>{
+      const tid='texto-system-modal-'+Date.now();
+      const div=document.createElement('div');
+      div.id=tid;
+      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      const escTxt=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const valorInicial = (op.valor==null) ? '' : String(op.valor);
+      div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:460px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid #e2e8f0">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+        +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+escTxt(op.titulo||'Digite')+'</p>'
+        +'<button id="'+tid+'-x" title="Fechar" style="font-size:20px;line-height:1;padding:2px 9px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;color:#64748b">×</button></div>'
+        +'<p style="font-size:13px;font-weight:500;color:#334155;margin:10px 0 0;line-height:1.5;white-space:pre-wrap">'+escTxt(msg)+'</p>'
+        +'<input id="'+tid+'-in" '+(op.mascara?'type="password" ':'type="text" ')+'value="'+escTxt(valorInicial)+'" style="margin-top:12px;width:100%;height:42px;border:1px solid #cbd5e1;border-radius:11px;padding:0 12px;font-size:14px;box-sizing:border-box">'
+        +'<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">'
+        +'<button id="'+tid+'-cancel" style="height:42px;padding:0 22px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-size:13px;font-weight:700;cursor:pointer">Cancelar</button>'
+        +'<button id="'+tid+'-ok" style="height:42px;padding:0 24px;border-radius:11px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">Confirmar</button>'
+        +'</div></div>';
+      const close=(val)=>{ div.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
+      // Igual ao prompt nativo: texto vazio é resposta válida (string vazia),
+      // quem chama decide o que fazer com ela.
+      const confirmar=()=>{
+        const el=div.querySelector('#'+tid+'-in');
+        close(el ? String(el.value) : '');
+      };
+      const onKey=(e)=>{ if(e.key==='Escape') close(null); if(e.key==='Enter') confirmar(); };
+      document.addEventListener('keydown', onKey);
+      div.addEventListener('click', (e)=>{ if(e.target===div) close(null); });
+      document.body.appendChild(div);
+      const ok=div.querySelector('#'+tid+'-ok'); if(ok) ok.onclick=confirmar;
+      const cancel=div.querySelector('#'+tid+'-cancel'); if(cancel) cancel.onclick=()=>close(null);
+      const x=div.querySelector('#'+tid+'-x'); if(x) x.onclick=()=>close(null);
+      const inp=div.querySelector('#'+tid+'-in'); if(inp) inp.focus();
+    });
+  };
+
+  // Mostra um texto para o usuário copiar (usado quando a área de transferência
+  // não está disponível). Antes esses pontos caíam no prompt nativo, que
+  // estourava no .exe e deixava o botão mudo.
+  window.mostrarTextoCopiar = function(titulo, texto){
+    return new Promise(resolve=>{
+      const tid='copia-system-modal-'+Date.now();
+      const div=document.createElement('div');
+      div.id=tid;
+      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      const escTxt=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid #e2e8f0">'
+        +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+escTxt(titulo||'Copie o texto')+'</p>'
+        +'<textarea id="'+tid+'-tx" readonly style="margin-top:12px;width:100%;height:96px;border:1px solid #cbd5e1;border-radius:11px;padding:8px 10px;font-size:12.5px;box-sizing:border-box;resize:vertical">'+escTxt(texto)+'</textarea>'
+        +'<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">'
+        +'<button id="'+tid+'-cp" style="height:42px;padding:0 20px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-size:13px;font-weight:700;cursor:pointer">Copiar</button>'
+        +'<button id="'+tid+'-ok" style="height:42px;padding:0 24px;border-radius:11px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">Fechar</button>'
+        +'</div></div>';
+      const close=()=>{ div.remove(); document.removeEventListener('keydown', onKey); resolve(undefined); };
+      const onKey=(e)=>{ if(e.key==='Escape'||e.key==='Enter') close(); };
+      document.addEventListener('keydown', onKey);
+      div.addEventListener('click', (e)=>{ if(e.target===div) close(); });
+      document.body.appendChild(div);
+      const ok=div.querySelector('#'+tid+'-ok'); if(ok) ok.onclick=close;
+      const tx=div.querySelector('#'+tid+'-tx');
+      const cp=div.querySelector('#'+tid+'-cp');
+      if(cp) cp.onclick=()=>{
+        try{ if(tx){ tx.select(); document.execCommand('copy'); } }catch(e){}
+        close();
+      };
+      if(tx) tx.focus();
+    });
+  };
+
+  // ── REDE DE SEGURANÇA do prompt nativo ────────────────────────────────────
+  // Nenhum ponto do sistema deve usar prompt/confirm/alert nativos. Aqui o
+  // alert e o confirm já foram trocados; o prompt tinha ficado de fora. No .exe
+  // ele não existe de verdade (só existe a função que lança erro), então quem
+  // chamava perdia o fluxo inteiro em silêncio.
+  // Esta troca NUNCA lança: mostra o aviso do sistema e devolve null, para o
+  // fluxo continuar e o usuário ver o motivo em vez de um botão mudo.
+  // Fica registrado para o diagnóstico (npm run diag / log-erros.txt).
+  window.prompt = function(msg, valor){
+    try{
+      if(!window.__DIGICOPY_PROMPT_NATIVO){
+        window.__DIGICOPY_PROMPT_NATIVO=[];
+      }
+      const texto=String(msg==null?'':msg);
+      window.__DIGICOPY_PROMPT_NATIVO.push(texto.slice(0,200));
+      if(window.__DIGICOPY_PROMPT_NATIVO.length>50) window.__DIGICOPY_PROMPT_NATIVO.shift();
+      if(window.mostrarTextoCopiar && (valor!=null && String(valor)!=='')){
+        window.mostrarTextoCopiar('Aviso', texto+'\n\n'+String(valor));
+      }else if(window.lfbAlert){
+        window.lfbAlert(texto,'Aviso');
+      }
+    }catch(e){}
+    return null;
+  };
+
   console.log('[DIGICOPY] popup_sistema_patch v2 carregado - TODOS popups no estilo sistema, antigos removidos');
 })();
 
@@ -20464,8 +20375,14 @@ setTimeout(()=>{
 setTimeout(()=>{
   if(typeof db !== 'undefined' && db.usuarios){
     const deni = db.usuarios.find(u => u.login && u.login.toLowerCase() === 'denivaldo');
-    if(deni && deni.senha === '1234'){
-      deni.senha = '3232';
+    // v7.0.1 (23/09/2026) — migração de UMA vez só. Ela troca a senha antiga
+    // (a de 4 dígitos que este arquivo conhecia) pela atual; a marca abaixo
+    // garante que ela nunca mais mexe na senha do Denivaldo depois disso — se
+    // ele trocar a senha na tela (inclusive para um número parecido), o sistema
+    // não desfaz mais a escolha dele.
+    if(deni && !deni.senhaMigradaV701){
+      deni.senhaMigradaV701 = new Date().toISOString();
+      if(deni.senha === '1234'){ deni.senha = '3232'; }
       if(typeof saveDB === 'function') saveDB();
     }
   }
@@ -26827,47 +26744,22 @@ console.log('[DIGICOPY] ajustes_v5190_patch.js');
 try{
 // ═══════════════════════════════════════════════════════════════════════════
 // PATCH v5.19.1 — otimizações e correções de interferência
-// • Corrige a sincronização manual ("Enviar para nuvem" / "Carregar da nuvem"):
-//   o window.confirm foi desativado pelo sistema de popups (retorna false),
-//   então os botões cancelavam sem fazer nada. Agora usam confirmSistema.
 // • Reduz trabalho desnecessário dos observadores (não roda fora de chamados).
 // • Reaplica a logo PADRÃO (logo.png) por segurança após o carregamento.
+//
+// AUDITORIA 23/09/2026 — o bloco do "sync manual" ("Enviar para nuvem" /
+// "Carregar da nuvem") foi REMOVIDO a pedido do dono: "não quero algo manual
+// que envia pra nuvem, quero automático". Ele era código morto — uma varredura
+// ampla não achou nenhum botão chamando essas funções — e, pior, ajudava a
+// mostrar "Pronto! Este PC enviou os dados ☁️" com a nuvem DESLIGADA (os stubs
+// da Cloudflare devolvem ok:false sem lançar erro). A sincronização que vale é
+// a automática (cloudflare_data_sync_patch.js).
 // ═══════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
 
 if(typeof window === 'undefined') return;
 
-function confirmar(m, t){
-  if(typeof window.confirmSistema === 'function') return window.confirmSistema(m, t || 'Confirmar');
-  // fallback: sem confirmSistema, usa Promise nativa (resolve false = não faz nada)
-  return Promise.resolve(false);
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Sync manual: usa confirmSistema (assíncrono) em vez de confirm() quebrado
-// ─────────────────────────────────────────────────────────────────────────
-const _envNuvem = window.enviarDadosLocaisParaNuvem;
-if(typeof _envNuvem === 'function'){
-  window.enviarDadosLocaisParaNuvem = function(){
-    confirmar('Enviar TODOS os dados deste PC para a nuvem?\n\nOs outros computadores poderão carregar estes dados em "Carregar da nuvem".', 'Enviar para nuvem').then(function(ok){
-      if(!ok) return;
-      try{ window.syncEnviarParaNuvem({ confirmar:false }); }catch(e){}
-    });
-    return undefined;
-  };
-}
-
-const _carNuvem = window.carregarDadosDaNuvem;
-if(typeof _carNuvem === 'function'){
-  window.carregarDadosDaNuvem = function(){
-    confirmar('Carregar os dados da nuvem neste PC?\n\n⚠️ OS DADOS LOCAIS ATUAIS SERÃO SUBSTITUÍDOS pelos dados da nuvem.', 'Carregar da nuvem').then(function(ok){
-      if(!ok) return;
-      try{ window.syncCarregarDaNuvem({ confirmar:false }); }catch(e){}
-    });
-    return undefined;
-  };
-}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Logo padrão garantida após tudo carregar (evita qualquer reaplicação)
@@ -27287,7 +27179,7 @@ window.renderModalUsuario = function(id){
     <div><label class="text-[11px] font-bold uppercase text-slate-500">Nome completo *</label><input id="u-nome" value="${esc(u ? u.nome : '')}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     <div class="grid grid-cols-2 gap-3">
       <div><label class="text-[11px] font-bold uppercase text-slate-500">Login usuário *</label><input id="u-login" value="${esc(u ? u.login : '')}" placeholder="ex: carlos" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
-      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário *</label><input id="u-senha" type="password" value="${esc(u ? u.senha : '')}" placeholder="senha do usuário" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
+      <div><label class="text-[11px] font-bold uppercase text-slate-500">Senha usuário${isEdit ? '' : ' *'}</label><input id="u-senha" type="password" value="" placeholder="${isEdit ? 'deixe em branco para manter a senha atual' : 'senha do usuário'}" class="mt-1 w-full h-11 px-3 rounded-xl border"></div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       ${perfilHtml}
@@ -27304,11 +27196,17 @@ window.saveUsuarioFinal = function(id){
   const privilegiado = temPermissaoTotal(s);
   const nome = txt(document.getElementById('u-nome') && document.getElementById('u-nome').value);
   const login = fold(document.getElementById('u-login') && document.getElementById('u-login').value);
-  const senha = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
+  const senhaDigitada = txt(document.getElementById('u-senha') && document.getElementById('u-senha').value);
   const ativo = document.getElementById('u-ativo') ? document.getElementById('u-ativo').value === 'true' : true;
-  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
 
   let u = id ? (db.usuarios || []).find(x => x.id === id) : null;
+  // v7.0.2 (23/09/2026) — ORDEM DO DONO: "queria algo que não é possível ver a
+  // senha de nenhuma forma". O campo do modal não vem mais preenchido com a
+  // senha do usuário (ela ficava visível no código-fonte da página). Agora:
+  //   • criar usuário  → a senha é obrigatória;
+  //   • editar usuário → em branco = MANTÉM a senha atual (não apaga, não troca).
+  const senha = senhaDigitada || (u ? txt(u.senha) : '');
+  if(!nome || !login || !senha) return toastMsg('Preencha nome, login e senha', 'error');
   if(u && !podeEditarUsuario(s, u.id)) return toastMsg('Você só pode editar o seu próprio usuário', 'error');
   if(!u && (db.usuarios || []).some(x => x.empresaId === s.empresaId && fold(x.login) === login)) return toastMsg('Login já existe', 'error');
 
@@ -28336,7 +28234,18 @@ async function clearLocalData(){
   try{Object.keys(sessionStorage).forEach(k=>{if(/^digicopy/i.test(k))sessionStorage.removeItem(k);});}catch(e){}
   return true;
 }
-window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
+// v7.0.4 — listar as fotos de recuperação guardadas neste PC (usado pela
+// recuperação automática: se a impressora nunca chegou à nuvem, ela ainda pode
+// estar numa destas fotos).
+function getAllSnapshots(){
+  return open().then(x=>new Promise((resolve,reject)=>{
+    const tx=x.transaction(SNAPSHOTS,'readonly');
+    const r=tx.objectStore(SNAPSHOTS).getAll();
+    r.onsuccess=()=>resolve(r.result||[]);
+    r.onerror=()=>reject(r.error);
+  }));
+}
+window.DIGICOPY_INDEXED_DB={writeNow,writeRecoverySnapshot,readRecoverySnapshot,listSnapshots:getAllSnapshots,clearLocalData,info:()=>({active:!!window.__indexedDbPersistAtivo,version:2,lastSavedAt,lastError,database:IDB_NAME,entityHashes:Object.keys(entityHashes).length})};
 window.DIGICOPY_DB_READY=boot();
 try{
   const original=window.saveDB;
@@ -28443,6 +28352,12 @@ async function api(path, options){
     const err=new Error(detalhe);
     err.code=(data&&data.error)||('HTTP_'+response.status); err.status=response.status;
     err.aviso=(data&&data.aviso)||'';
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota do Worker (v5.24.5) devolve
+    // 429 com a marca `quota:true` e o recado em `error` (que aqui vira `code`).
+    // Como o texto só é lido de `message`/`aviso`, o recado chegava ao motor como
+    // "Erro HTTP 429" e a pausa de cota NÃO era reconhecida. Preservar a marca
+    // resolve isso sem mexer em nenhuma outra mensagem (é só um campo novo).
+    err.quota=!!(data&&data.quota);
     throw err;
   }
   return data;
@@ -28817,7 +28732,30 @@ const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
 const MAX_OUTBOX=100;
 const PUSH_BATCH=10;
-const HEARTBEAT_MS=60000;
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "o banco demora atualizar; o que faço
+// num computador não dá pra ver no outro". Eram dois motivos somados:
+//   1) o motor procurava novidade de 60 em 60 segundos;
+//   2) com a janela atrás de outra (ou minimizada) ele NÃO procurava mais nada
+//      — então o PC do balcão, que fica com o sistema coberto, só se atualizava
+//      quando alguém clicava nele.
+// Agora: 15 s com a janela à vista (quase em tempo real) e 2 min quando ela está
+// escondida — o navegador estrangula temporizador de aba oculta, então pedir
+// 15 s lá não adiantaria e só gastaria o que não precisa. Cada rodada continua
+// sendo UMA consulta incremental por cursor (barata), não uma varredura.
+// v7.0.3 (23/09/2026) — "ainda demora de chegar, dá pra deixar instantâneo?"
+// SIM: com a janela à vista, o motor procura novidade a cada 3 SEGUNDOS. É
+// barato de propósito: cada rodada é UMA consulta incremental por cursor (não
+// baixa a base de novo), só lê (não gasta o contador de gravação do dia) e o
+// plano em uso tem teto de 25 BILHÕES de leituras por mês — 3s equivale a ~20
+// consultas por minuto por PC, muito abaixo de qualquer limite.
+// Com a janela escondida (minimizada/atrás de outra) continua consultando, só
+// que a cada 15 s: o navegador estrangula temporizador de aba oculta e não faz
+// sentido brigar com ele. Ao voltar para a janela, a consulta sai na hora
+// (o gatilho de foco abaixo pede na hora).
+// Nada disso substitui a base inteira nem muda o caminho dos dados: continua
+// local-first e incremental, como manda a regra 28 das REGRAS_PERMANENTES.
+const HEARTBEAT_MS=3000;
+const HEARTBEAT_OCULTO_MS=15000;
 
 // Listas com formato especial. Todo o resto do banco entra sozinho pela
 // definicoes(): antes a nuvem só levava estas 19 listas e tudo o que estava
@@ -29204,16 +29142,37 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
   return removed;
 }
 
-async function pullAll(){
+// v7.0.2 — "pedido de carga completa": quem quer a carga inteira à vista avisa
+// aqui antes de chamar o pullAll (mantém a chamada `await pullAll()` como sempre
+// foi — é o que o teste do motor confere).
+let cargaPedida=false;
+function pedirCarga(v){cargaPedida=!!v;}
+async function pullAll(opcoes){
+  const silencioso=!!(opcoes&&opcoes.silencioso);
+  const cargaCompleta=silencioso?false:cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
+  // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
+  // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
+  const POR_PAGINA=1000;
+  // v7.0.3 — ORDEM DO DONO: "de mostrar dados quero NADA que envolva eu fazer
+  // alguma coisa, só quero que mostre normal". O aviso de carga passa a aparecer
+  // SÓ quando este PC não tem base nenhuma (primeira vez/PC novo) — aí não há o
+  // que mostrar de qualquer forma. Com base já aqui, a leitura corre em silêncio
+  // e a tela se atualiza no fim, sem tela azul nenhuma.
+  const baseVazia=(typeof db==='undefined'||!db)?true:(localBusinessCount()===0);
+  const comAviso=cargaCompleta&&baseVazia;
+  if(comAviso)mostrarCargaNuvem(true,'conectando…');
+  try{
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
+    if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
+  }finally{ if(comAviso)mostrarCargaNuvem(false); }
   state.initialPull=true;
   if(changed){
     applying=true;
@@ -29473,8 +29432,41 @@ function indicator(ok,text){
   btn.title=text||'Nuvem DIGICOPY';btn.dataset.cloud=ok?'ok':'error';
   const icon=btn.querySelector('i');if(icon)icon.style.color=ok?'#16a34a':'#dc2626';
 }
+// v7.0.3 — LEITURA EM QUALQUER ABA VISÍVEL.
+// O motor só deixava a "aba líder" (uma aba por navegador) puxar novidades — e
+// isso evita trabalho dobrado. O problema: se quem segurava a liderança era uma
+// aba esquecida em segundo plano, ela continuava líder para sempre e a aba que
+// a pessoa estava OLHANDO não puxava nada. Resultado: tela velha, sem erro, sem
+// aviso — e é uma das explicações do "demora de chegar".
+// Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
+// Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
+async function tickSohLeitura(reason){
+  if(typeof document==='undefined'||document.hidden)return false;
+  busy=true;lastTick=Date.now();
+  const geracao=estadoGeracao;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    const mudou=await pullAll({silencioso:true});
+    if(geracao!==estadoGeracao)return false;
+    if(mudou){redesenhoPendente=true;tentarRedesenhoPendente();}
+    failures=0;lastError='';state.lastOk=Date.now();   // v7.0.5 — leitura boa zera o recuo
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    return true;
+  }catch(e){
+    lastError=e&&e.message?e.message:String(e);
+    return false;
+  }finally{busy=false;scheduleHeartbeat();}
+}
 async function tick(reason){
-  if(state.paused||busy||!authorized()||!leader())return false;
+  // v7.0.5 — antes de qualquer decisão, aproveita a brecha para aplicar um
+  // redesenho que ficou pendente (roda a cada 3 s).
+  try{tentarRedesenhoPendente();}catch(e){}
+  if(state.paused||busy||!authorized())return false;
+  if(!leader()){
+    // não é a líder: se a janela está à vista, puxa; se está escondida, espera
+    if(typeof document!=='undefined'&&document.hidden)return false;
+    return await tickSohLeitura(reason);
+  }
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
   const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
@@ -29488,7 +29480,11 @@ async function tick(reason){
     // fica pausada até clicar em Publicar este PC.
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
-    await pullAll();
+    // v7.0.2 — é a PRIMEIRA carga (ou um "baixar tudo"): mostra o aviso de
+    // carga e segura a tela até chegar tudo, em vez de ir mostrando pedaços.
+    pedirCarga(!state.initialPull||reason==='baixar-tudo-da-nuvem');
+    const mudouNaTela=await pullAll();
+    if(!state.recuperacaoV1)setTimeout(()=>{try{recuperarAutomatico();}catch(e){}},1200);
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
@@ -29532,17 +29528,36 @@ async function tick(reason){
     const devolvidos=await devolverSumidos();
     if(devolvidos){lastError='';schedule(1200);}
     if(varrerDemonstracao())schedule(1200);
+    // v7.0.1 — a novidade já está no banco; a TELA da frente se redesenha para
+    // a pessoa ver na hora (era a queixa "faço num PC e não aparece no outro").
+    // Quem decide se pode é podeRedesenharSync — e as travas existem para não
+    // atrapalhar quem está digitando.
+    if(mudouNaTela){redesenhoPendente=true;tentarRedesenhoPendente();}
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
+    mostrarCargaNuvem(false);   // nunca deixar o dono preso no aviso de carga
     failures++;lastError=e&&e.message?e.message:String(e);
-    if(ehLimiteDiario(lastError)){
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) responde
+    // 429 com `quota:true`, mas o recado vem no campo `error` — e o motor lê o
+    // texto só de `message`/`aviso`. Resultado: chegava como "Erro HTTP 429" e
+    // o ehLimiteDiario não reconhecia, então em vez de dormir até a virada o app
+    // ficava batendo na porta (4 tentativas por rodada, ~21s) e AINDA inflava o
+    // contador de escrita da nuvem — o que fazia o freio disparar cada vez mais
+    // cedo. Agora a marca `quota` vale como limite diário, igual ao erro cru do
+    // D1 que já funcionava.
+    if(ehLimiteDiario(lastError)||!!(e&&e.quota)){
       lastError=recadoDoLimite();
       state.limiteAte=viradaDoLimite();persist();
       indicator(false,lastError);
       busy=false;
       if(timer)clearTimeout(timer);
-      timer=setTimeout(()=>tick('limite-virou'),Math.min(3600000,Math.max(60000,state.limiteAte-Date.now())));
+      // v7.0.5 — SONDA DE 60 EM 60 s em vez de dormir horas. Se a marca de limite
+      // ficou no aparelho por engano (aconteceu em versões antigas), o PC voltava a
+      // sincronizar só depois das 21h — e parecia "devagar" o dia inteiro. A sonda
+      // custa uma consulta por minuto e não gasta gravação: assim que a nuvem
+      // responder bem, a marca é limpa pelo caminho normal de sucesso.
+      timer=setTimeout(()=>tick('limite-conferido'),Math.min(60000,Math.max(30000,state.limiteAte-Date.now())));
       return false;
     }
     indicator(false,'Nuvem pendente: '+lastError);
@@ -29550,7 +29565,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{if(busy){busy=false;scheduleHeartbeat();}}
+  }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
 // LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
 // O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
@@ -29579,8 +29594,15 @@ function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick(
 function scheduleHeartbeat(){
   if(typeof document==='undefined')return;
   if(timer)clearTimeout(timer);
-  const wait=failures?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):HEARTBEAT_MS;
-  timer=setTimeout(()=>{if(!document.hidden)tick('heartbeat');else scheduleHeartbeat();},wait);
+  // v7.0.1 — antes, com a janela escondida isto apenas reagendava sem consultar
+  // (o PC ficava parado no tempo). Agora consulta também, só que mais devagar.
+  const base=document.hidden?HEARTBEAT_OCULTO_MS:HEARTBEAT_MS;
+  // v7.0.5 — RECUO CURTO. Antes, cada falha dobrava a espera até 5 MINUTOS: um
+  // tropeço na internet deixava o PC quase parado e a sensação era "continua
+  // devagar". Com a janela à vista o recuo agora para em 30 s; escondida,
+  // continua o recuo longo (economia de bateria/rede).
+  const wait=failures?(document.hidden?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):Math.min(30000,5000*Math.pow(2,Math.min(failures,3)))):base;
+  timer=setTimeout(()=>tick('heartbeat'),wait);
 }
 function duplicateClientGroups(clients){
   const list=Array.isArray(clients)?clients:[],parent=list.map((_,i)=>i),seen=new Map();
@@ -29777,7 +29799,289 @@ function estadoDetalhado(){
   }catch(e){}
 })();
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.1 (23/09/2026) — A TELA AO VIVO
+// Queixa do dono: "o banco demora atualizar; o que faço em um computador não dá
+// pra ver no outro". Além da espera (o motor procurava de 60 em 60 segundos e
+// parava com a janela escondida — corrigido acima), havia isto: a novidade
+// descia e ficava no banco, mas a LISTA NA TELA continuava mostrando o retrato
+// antigo até a pessoa trocar de tela e voltar. Agora a tela da frente se
+// redesenha sozinha quando a leitura trouxe mudança.
+//
+// As travas (para não atrapalhar ninguém no meio do trabalho):
+//   • janela escondida (minimizada/atrás): não há tela para atualizar;
+//   • modal aberto: a pessoa pode estar no meio de um cadastro;
+//   • cursor dentro de campo/botão: pode estar digitando;
+//   • telas de documento (vender, ler contador, configurar, importar): ficam de
+//     fora, porque nelas o redesenho apagaria o que está sendo preenchido;
+//   • e nunca em rajada: no máximo um redesenho a cada 4 segundos.
+// O redesenho chama direto o render da tela (NÃO o navigateTo, que rola a
+// página para o topo e mexe na barra lateral — isso sim incomodaria).
+// v7.0.2 — AVISO DE CARGA COMPLETA ("queria que aparecesse tudo de uma vez")
+// Enquanto a leitura da nuvem está em curso, este aviso cobre a tela e mostra a
+// contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
+// fim (ou se der erro) — nunca prende ninguém.
+let cargaAberta=false, cargaItens=0;
+function mostrarCargaNuvem(mostrar,texto){
+  if(typeof document==='undefined'||!document.body)return;
+  const atual=document.getElementById('digicopy-carga-nuvem');
+  if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
+  cargaAberta=true;
+  let el=atual;
+  if(!el){
+    el=document.createElement('div');
+    el.id='digicopy-carga-nuvem';
+    el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,30,138,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px';
+    el.innerHTML='<div style="font-size:16px;font-weight:800">Baixando os dados da nuvem…</div>'
+      +'<div id="digicopy-carga-conta" style="font-size:13.5px;opacity:.92"></div>'
+      +'<div style="font-size:12px;opacity:.72;max-width:430px;line-height:1.55">Trazendo tudo de uma vez: a tela abre já com os dados completos. Não feche o sistema agora.</div>';
+    document.body.appendChild(el);
+  }
+  const conta=document.getElementById('digicopy-carga-conta');
+  if(conta)conta.textContent=texto||'';
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.4 (23/09/2026) — AVISO INSTANTÂNEO DA NUVEM + RECUPERAÇÃO AUTOMÁTICA
+//
+// PEDIDO DO DONO: "não sabe o que é instantâneo já aparecer os dados?".
+// Como fica: além do ritmo de 3 s, o PC deixa UM canal aberto com a nuvem
+// (/v1/changes/watch). Quando alguém grava em qualquer PC, a nuvem responde
+// NAQUELE INSTANTE e este PC puxa e redesenha a tela — sem clique, sem tela na
+// frente, sem espera. Se o motor da nuvem ainda não tiver esse canal (Worker
+// antigo), o PC recebe 404 uma vez e segue no ritmo de 3 s, como antes: nada
+// quebra, nada aparece na tela.
+let canalInstantaneoParado=false, canalAberto=false;
+async function canalInstantaneo(){
+  if(canalInstantaneoParado||canalAberto)return;
+  // v7.0.5 — saída antecipada REAGENDA (antes o canal podia morrer de vez se
+  // abrisse num momento em que a nuvem ainda não estava autorizada).
+  if(typeof document!=='undefined'&&document.hidden)return;
+  if(state.paused||!authorized()){setTimeout(()=>{try{canalInstantaneo();}catch(e){}},5000);return;}
+  const call=api(); if(!call)return;
+  canalAberto=true;
+  try{
+    const r=await call('/v1/changes/watch?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&timeout=20',{method:'GET'});
+    if(r&&r.novidade&&!busy)await tick('aviso-da-nuvem');
+  }catch(e){
+    const st=Number(e&&e.status)||0;
+    if(st===404||st===400){ canalInstantaneoParado=true; }   // motor antigo: só o ritmo normal
+    else await dormir(5000);
+  }finally{ canalAberto=false; }
+  if(!canalInstantaneoParado)setTimeout(()=>{canalInstantaneo();},300);
+}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden)canalInstantaneo();});}catch(e){}
+
+// ── RECUPERAÇÃO AUTOMÁTICA (uma vez por PC, sem clicar em nada) ────────────
+// O que faz: procura na nuvem TUDO que foi excluído e traz de volta o que foi
+// criado por gente de verdade (tem criadoPor de usuário). O dado de exemplo do
+// sistema não tem dono — esse fica onde está. Nunca traz duas vezes o mesmo
+// registro (guarda a lista do que já trouxe), então se o dono apagar alguma
+// coisa de propósito ela NÃO volta sozinha de novo.
+const RECUP_LEDGER='digicopy_cf_recuperados_v1';
+function lerRecuperados(){try{return JSON.parse(localStorage.getItem(RECUP_LEDGER)||'{}')||{};}catch(e){return {};}}
+function marcarRecuperado(id){try{const m=lerRecuperados();m[String(id)]=Date.now();localStorage.setItem(RECUP_LEDGER,JSON.stringify(m));}catch(e){}}
+function temDonoHumano(reg){
+  // Quem NÃO tem dono: o dado de exemplo do sistema (sem autor, ou 'sistema').
+  // Quem TEM dono: usuário de tela (usr_...) e também 'migracao' — este último é
+  // o dado REAL que veio do sistema antigo pela importação (as telas de contrato
+  // e de visita gravam assim). Ficou de fora por engano na primeira versão desta
+  // regra e isso deixaria impressoras legítimas sem recuperação.
+  const d=reg&&reg.data||{};const dono=String(d.criadoPor||'');
+  return !!dono&&dono!=='sistema'&&dono!=='demo';
+}
+let varreduraCompleta=false;   // o motor da nuvem sabe paginar a lista de excluídos?
+async function listarExcluidosDaNuvem(call,limiteTotal){
+  const todos=[];let before=0;varreduraCompleta=false;
+  for(let volta=0;volta<20;volta++){
+    const url='/v1/deleted?limit=1000'+(before?('&before='+before):'');
+    let r;try{r=await call(url,{method:'GET'});}catch(e){ if(volta===0)throw e; break; }
+    if(r&&typeof r.temMais!=='undefined')varreduraCompleta=true;   // motor novo
+    const lote=(r&&r.records)||[];
+    todos.push(...lote);
+    if(!lote.length||!r.temMais||!r.proximoBefore)break;
+    before=Number(r.proximoBefore)||0;
+    if(!before)break;
+    if(limiteTotal&&todos.length>=limiteTotal)break;
+  }
+  return todos;
+}
+let recuperandoAgora=false;
+async function recuperarAutomatico(){
+  if(state.recuperacaoV1||recuperandoAgora)return;
+  if(!authorized()||state.paused)return;
+  // se falhou por rede, espera 60 s antes de tentar de novo (não fica batendo)
+  if(state.recuperacaoTentativa&&(Date.now()-Number(state.recuperacaoTentativa))<60000)return;
+  const call=api(); if(!call)return;
+  recuperandoAgora=true;
+  state.recuperacaoTentativa=Date.now();persist();
+  try{
+    const excluidos=await listarExcluidosDaNuvem(call);
+    const jaVieram=lerRecuperados();
+    const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaVieram[String(r.recordId)]&&temDonoHumano(r)
+      && ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos'].indexOf(r.entity)>=0
+      && r.data&&typeof r.data==='object'&&Object.keys(r.data).length>0);
+    let ok=0,falhas=0,primeiroErro='';
+    for(const reg of alvos){
+      try{
+        const r=await call('/v1/restore',{method:'POST',body:JSON.stringify({entity:reg.entity,recordId:reg.recordId})});
+        if(r&&r.ok!==false){ok++;marcarRecuperado(reg.recordId);}
+        else{falhas++;primeiroErro=primeiroErro||((r&&r.message)||'');}
+      }catch(e){falhas++;primeiroErro=primeiroErro||((e&&e.message)||String(e));}
+    }
+    // 2ª fonte: as fotos internas deste PC (caso o dado nunca tenha subido)
+    let dasFotos=0;
+    try{dasFotos=await recuperarDasFotosLocais();}catch(e){}
+    if(dasFotos){try{await pushOutbox();await pullAll({silencioso:true});redesenharTelaAtual();}catch(e){}}
+    // v7.0.4 — se o motor da nuvem ainda for o antigo, a lista de excluídos vem
+    // limitada e a passada NÃO pode valer para sempre: fica marcada como pendente
+    // e tenta de novo (de 60 em 60 s) até o motor novo ser publicado. Avisa uma
+    // única vez no sino, sem travar nada.
+    if(!varreduraCompleta){
+      if(!state.avisoMotorAntigo){
+        state.avisoMotorAntigo=true;persist();
+        try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+          'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.',{tipo:'sync'}); }catch(e){}
+      }
+    }else{
+      state.recuperacaoV1=true;
+    }
+    state.recuperacaoEm=Date.now();state.recuperacaoTotal=ok+dasFotos;persist();
+    if(ok){
+      const porEntidade={};alvos.forEach(r=>{porEntidade[r.entity]=(porEntidade[r.entity]||0)+1;});
+      try{
+        if(typeof logAction==='function')logAction('recuperacao','automatica','-',
+          'Recuperação automática trouxe de volta '+ok+' registro(s): '+JSON.stringify(porEntidade));
+        if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+          'Recuperação automática: '+ok+' registro(s) que tinham sido apagados por engano voltaram (contratos, impressoras, leituras). Confira as telas.',{tipo:'sync'});
+      }catch(e){}
+      await pullAll({silencioso:true});
+      redesenharTelaAtual();
+    }else if(falhas&&/admin/i.test(primeiroErro||'')){
+      try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+        'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.',{tipo:'sync'}); }catch(e){}
+      state.recuperacaoV1=true;persist();   // não fica tentando a cada ciclo
+    }
+  }catch(e){/* tenta de novo no próximo ciclo; nada aparece na tela */}
+  finally{recuperandoAgora=false;}
+}
+
+// Segunda fonte: as FOTOS internas deste PC (IndexedDB). Serve para o caso em
+// que a impressora nunca chegou a subir para a nuvem (aí não existe excluído
+// para restaurar). Só entram registros de contrato/parque/leitura/chamado com
+// criador de gente; cada um fica marcado e entra na lista do "já recuperado",
+// então apagar de propósito depois NÃO faz voltar de novo.
+async function recuperarDasFotosLocais(){
+  const idb=window.DIGICOPY_INDEXED_DB;
+  if(!idb||typeof idb.listSnapshots!=='function'||typeof db==='undefined'||!db)return 0;
+  let snaps=[];try{snaps=await idb.listSnapshots();}catch(e){return 0;}
+  const ja=lerRecuperados();const entidades=['contratos','parque','leituras','os'];
+  let voltaram=0;const porEntidade={};
+  for(const snap of snaps){
+    const dados=snap&&snap.data;if(!dados||typeof dados!=='object')continue;
+    for(const entidade of entidades){
+      const atual=Array.isArray(db[entidade])?db[entidade]:null;
+      const antigo=dados[entidade];
+      if(!atual||!Array.isArray(antigo))continue;
+      const ids=new Set(atual.map(x=>x&&x.id!=null?String(x.id):''));
+      antigo.forEach(item=>{
+        if(!item||item.id==null)return;
+        const k=String(item.id);
+        if(ids.has(k)||ja[k])return;
+        if(!temDonoHumano({data:item}))return;
+        const copia=Object.assign({},item,{recuperadoDe:'foto-local',recuperadoEm:new Date().toISOString()});
+        atual.push(copia);ids.add(k);voltaram++;
+        porEntidade[entidade]=(porEntidade[entidade]||0)+1;
+        marcarRecuperado(k);
+      });
+    }
+  }
+  if(voltaram){
+    try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}catch(e){}
+    try{
+      if(typeof logAction==='function')logAction('recuperacao','foto-local','-',
+        'Recuperação das fotos deste PC: '+voltaram+' registro(s) '+JSON.stringify(porEntidade));
+      if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+        'Fotos deste PC: '+voltaram+' registro(s) que estavam faltando voltaram (contratos/impressoras/leituras).',{tipo:'sync'});
+    }catch(e){}
+  }
+  return voltaram;
+}
+
+const TELAS_AO_VIVO={
+  dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
+  impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
+  manutencao:'renderOs', financeiro:'renderFinanceiro', relatorios:'renderRelatorios',
+  usuarios:'renderUsuarios', auditoria:'renderAuditoria'
+};
+const INTERVALO_REDESENHO=4000;
+let ultimoRedesenho=0;
+// v7.0.5 — REDESENHO PENDENTE: se a tela não pôde ser atualizada na hora (pessoa
+// digitando, modal aberto), a mudança NÃO se perde: fica marcada como pendente e
+// é aplicada na primeira brecha (a cada batimento, ao clicar/sair de um campo, ao
+// voltar para a janela). Antes, o redesenho recusado era simplesmente perdido —
+// porque o dado já fica marcado como recebido, e a próxima leitura não o
+// considera novidade de novo. Era isso que deixava a tela velha "de vez".
+let redesenhoPendente=false;
+function temRedesenhoPendente(){return redesenhoPendente;}
+function tentarRedesenhoPendente(){
+  if(!redesenhoPendente)return false;
+  if(!redesenharTelaAtual())return false;
+  redesenhoPendente=false;
+  return true;
+}
+// Regra pura (testável): recebe o retrato da tela e devolve sim/não.
+function podeRedesenharSync(d){
+  d=d||{};
+  if(d.hidden)return false;
+  if(d.cargaAberta)return false;   // v7.0.2 — durante a carga, nada de pedaços na tela
+  if(d.modalAberto)return false;
+  if(d.focoEmCampo)return false;
+  if(!d.podeRenderizar)return false;
+  if(Number(d.agora)-Number(d.ultimo||0)<INTERVALO_REDESENHO)return false;
+  return true;
+}
+function telaDaFrente(){
+  try{
+    const v=document.querySelector('.view:not(.hidden)');
+    if(v&&v.id&&v.id.indexOf('view-')===0)return v.id.slice(5);
+  }catch(e){}
+  return '';
+}
+function redesenharTelaAtual(){
+  if(typeof document==='undefined')return false;
+  const tela=telaDaFrente();
+  const render=TELAS_AO_VIVO[tela];
+  const mr=document.getElementById('modal-root');
+  const a=document.activeElement;
+  const decisao=podeRedesenharSync({
+    hidden:!!document.hidden,
+    cargaAberta:cargaAberta,
+    modalAberto:!!(mr&&!mr.classList.contains('hidden')),
+    // v7.0.5 — ARMADILHA QUE TRAVAVA A TELA: o teste incluía BUTTON. Depois de
+    // clicar em qualquer menu, o foco fica NO BOTÃO — e a partir daí o redesenho
+    // automático era recusado para sempre. Como a mudança já fica marcada como
+    // recebida, ela nunca mais era considerada "novidade": a lista ficava velha
+    // de vez. Agora só campo de digitação (input/textarea/select) e área
+    // editável seguram o redesenho — botão não.
+    focoEmCampo:!!(a&&a!==document.body&&(/INPUT|TEXTAREA|SELECT/.test(a.tagName||'')||a.isContentEditable)),
+    podeRenderizar:!!(render&&typeof window[render]==='function'),
+    ultimo:ultimoRedesenho, agora:Date.now()
+  });
+  if(!decisao)return false;
+  ultimoRedesenho=Date.now();
+  try{ window[render](); }catch(e){}
+  // v7.0.5 — o painel do contrato (onde ficam as impressoras daquele contrato) é
+  // separado da lista: se estiver aberto, ele também se atualiza.
+  try{
+    const box=document.getElementById('contrato-detail');
+    if(box&&!box.classList.contains('hidden')&&typeof window.openContratoDetail==='function'){
+      const m=/openModal\('contrato','([^']+)'\)/.exec(box.innerHTML||'');
+      if(m&&m[1])window.openContratoDetail(m[1]);
+    }
+  }catch(e){}
+  return true;
+}
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -29801,8 +30105,14 @@ try{
     window.saveDB.__cfWrapped=true;
   }
 }catch(e){}
-try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>10000)schedule(250);});}catch(e){}
-try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>10000)schedule(250);});}catch(e){}
+// v7.0.3 — ao clicar de volta na janela (ou trazê-la para a frente), procura
+// novidade NA HORA: antes esperava 10 s e, com o ritmo antigo, a pessoa podia
+// ficar olhando uma tela velha. Agora o intervalo de tolerância é curto (1 s).
+try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>1000)schedule(200);});}catch(e){}
+// v7.0.5 — brechas do dia a dia para aplicar o redesenho pendente
+try{document.addEventListener('click',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},400);},true);}catch(e){}
+try{document.addEventListener('focusout',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},250);},true);}catch(e){}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>1000)schedule(200);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
 aplicarSoNuvem();
 // A tela abre antes de a nuvem responder. Quando a base chega (e a tela estava
@@ -29820,7 +30130,13 @@ async function hidratarTela(){
     }
   }catch(e){}
 }
-if(authorized()){ schedule(1200); setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600); } else scheduleHeartbeat();
+if(authorized()){
+  schedule(1200);
+  setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600);
+  // v7.0.4 — canal do aviso instantâneo + a recuperação do que foi apagado
+  setTimeout(()=>{ try{canalInstantaneo();}catch(e){} },1500);
+  setTimeout(()=>{ try{recuperarAutomatico();}catch(e){} },4000);
+} else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();
 
@@ -36773,7 +37089,12 @@ async function conferirValidadeAgora(){
     if(window.NFE_ASSINATURA_UI && typeof window.NFE_ASSINATURA_UI.pedirSenhaA1==='function'){
       senha=await window.NFE_ASSINATURA_UI.pedirSenhaA1();
     }else{
-      senha=(typeof prompt==='function')?prompt('Senha do certificado (não guardo — uso só pra ler a data):',''):null;
+      // Auditoria: o prompt nativo estourava no .exe (botão mudo). Agora usa o
+      // popup do sistema — e com máscara, que o prompt antigo não tinha
+      // (a senha do certificado aparecia em texto limpo na tela).
+      senha=(typeof window.pedirTextoSistema==='function')
+        ? await window.pedirTextoSistema('Uso a senha só para ler a data de validade do certificado — ela NÃO fica salva.',{titulo:'Senha do certificado',mascara:true})
+        : null;
     }
   }catch(e){ senha=null; }
   if(!senha) return; // desistiu, sem drama
@@ -36981,7 +37302,9 @@ async function lerStatusRede(parqueId){
   }
   var ip=String(eq.ip||eq.enderecoIp||'').trim();
   if(!ip){
-    var digitado=(typeof prompt==='function')?prompt('Qual o IP desta impressora na rede? (ex.: 192.168.0.50 — fica gravado no cadastro dela)',''):null;
+    var digitado=(typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('Informe o IP do equipamento (ex.: 192.168.0.50).\nFica gravado no cadastro desta impressora.',{titulo:'IP desta impressora na rede'})
+      : null;
     if(!digitado) return;
     digitado=digitado.trim();
     if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(digitado)){ tn('IP não parece certo. Exemplo: 192.168.0.50','error'); return; }
@@ -39221,7 +39544,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -40250,13 +40573,21 @@ function aplicarCardPublicarAtualizacao(){
     box.querySelectorAll('button[data-ac]').forEach(function(b){
       b.onclick=function(){
         var ac=b.getAttribute('data-ac'), v=b.getAttribute('data-v'), h=b.getAttribute('data-h');
-        var run=function(){
+        var run=async function(){
           var payload={action:ac, versao:v};
           if(ac==='ativar') payload.expiraHoras=Number(h)||0;
           if(ac==='editar'){
-            var notasN=(typeof prompt==='function')?prompt('Novas NOTAS da v'+v+':',''):null;
+            // Auditoria: antes usava prompt nativo, que no .exe lança
+            // "prompt() is not supported" — o botão ficava mudo. Agora pede no
+            // popup do sistema (Promise). Texto vazio = tirar o campo, igual
+            // antes; cancelar (null) também deixa vazio.
+            var notasN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Como a v'+v+' aparece no portal (deixe vazio para não ter notas).',{titulo:'Novas NOTAS da v'+v})
+              : null;
             if(notasN==null) return;
-            var tutN=(typeof prompt==='function')?prompt('Novo TUTORIAL (deixe vazio pra tirar):',''):null;
+            var tutN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Passo a passo mostrado ao cliente (deixe vazio para tirar).',{titulo:'Novo TUTORIAL da v'+v})
+              : null;
             payload.notas=notasN==null?'':notasN; payload.tutorial=tutN==null?'':tutN;
           }
           b.disabled=true; b.textContent='...';
@@ -42921,7 +43252,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -43566,8 +43897,18 @@ try{
         return matchLogin && matchSenha;
       });
       if(found) return found;
-      // Fallback para admin inicial
-      if(dL === 'admin' && (dS === 'admin' || dS === '123' || dS === 'admin123')){
+      // Fallback para admin inicial — AUDITORIA 23/09/2026: era uma PORTA DOS
+      // FUNDOS PERMANENTE. Valia sempre, então `admin` + `admin123` (ou `123`)
+      // entrava como perfil Admin mesmo DEPOIS de o dono trocar a senha, sem
+      // existir no banco, sem empresa e sem registro na auditoria. E o bundle é
+      // público, então o par estava escrito para qualquer um ler.
+      // Agora o fallback só vale quando o banco AINDA NÃO TEM nenhum Admin
+      // ativo — que é o caso para o qual ele foi escrito ("admin inicial",
+      // banco novo). Existindo Admin ativo, quem manda é a senha do banco.
+      var jaTemAdmin = list.some(function(u){
+        return !!(u && u.ativo && fold(u.perfil) === 'admin');
+      });
+      if(!jaTemAdmin && dL === 'admin' && (dS === 'admin' || dS === '123' || dS === 'admin123')){
         return {
           id: 'usr_admin',
           nome: 'Administrador',
@@ -43822,7 +44163,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }
@@ -44633,6 +44974,14 @@ try{
       window.abrirTelaOrcamento.__v52256modal = true;
     }
 
+    // Mostra o link para o usuário copiar quando a área de transferência não
+    // está disponível (antes era prompt nativo, que estoura no .exe).
+    function mostrarLinkOrcamento(link){
+      if(typeof window.mostrarTextoCopiar === 'function'){ window.mostrarTextoCopiar('Link do orçamento', link); return; }
+      if(typeof window.pedirTextoSistema === 'function'){ window.pedirTextoSistema('Copie o link abaixo.', {titulo:'Link do orçamento', valor:link}); return; }
+      if(typeof toast === 'function') toast('Link do orçamento: ' + link, 'info');
+    }
+
     // Função para copiar o link oficial do orçamento
     window.copiarLinkOrcamentoModal = function(id){
       var _db = getDb();
@@ -44652,10 +45001,12 @@ try{
             if(typeof toast === 'function') toast('Link do orçamento copiado com sucesso!', 'success');
           });
         } else {
-          prompt('Copie o link do orçamento:', link);
+          // Auditoria: era prompt nativo, que no .exe lança "prompt() is not
+          // supported" — o botão onde a cópia não está disponível ficava mudo.
+          mostrarLinkOrcamento(link);
         }
       }catch(e){
-        prompt('Copie o link do orçamento:', link);
+        mostrarLinkOrcamento(link);
       }
     };
 
@@ -49293,6 +49644,288 @@ window.DIGICOPY_BACKUPS = { abrir: abrir, alternar: alternar, abrirTelaBackup: a
 console.log('[DIGICOPY] menu Backup (aba normal) carregado');
 })();
 
+// ═══════════════════════════════════════════════════════════════════════════
+// TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa) — v7.0.2 (23/09/2026)
+// Mora aqui (e não num arquivo novo) porque o bundle tem a regra "um arquivo
+// por módulo": isto é o mesmo assunto dos backups — recuperar dado.
+// ═══════════════════════════════════════════════════════════════════════════
+// DIGICOPY — TRAZER DE VOLTA O QUE FOI EXCLUÍDO (em massa)
+//
+// POR QUE ISTO EXISTE (23/09/2026)
+// O dono relatou: "muitos contratos já perderam impressoras, por exemplo o
+// CAIXA ESCOLAR GERALDO TELES DE MENEZES, e vários outros, os dados dentro
+// também". A causa raiz está em `locacao_patch.js` (corrigida na v7.0.1): a
+// faxina de "dados de demonstração" da importação do sistema antigo reconhecia
+// contrato de VERDADE pelo número (CT-ano-0001 — o formato que o próprio
+// sistema gera) e apagava o contrato com o parque (impressoras), as leituras e
+// as faturas. Como a exclusão subiu pela fila de sincronização, a nuvem também
+// marcou aqueles registros como excluídos.
+//
+// A BOA NOTÍCIA: a nuvem NÃO apaga o dado quando exclui — ela marca a data da
+// exclusão e GUARDA o conteúdo (é assim que o "restaurar" do Worker funciona,
+// `handleRestore`: lê `data_json` e devolve o registro). Então o que se perdeu
+// pode ser trazido de volta, e é isto que este arquivo faz: em vez de restaurar
+// um por um (a tela da Nuvem já faz isso, de um em um), ele restaura a LISTA
+// INTEIRA de uma vez, mostrando antes o que vai voltar.
+//
+// SEGURANÇA (não quebrar o que funciona):
+//   • Só ADMIN pode (é o Worker quem exige: `requireAdmin` em /v1/deleted e
+//     /v1/restore) — se o aparelho não for admin, a mensagem do Worker aparece
+//     e nada muda.
+//   • Nada é apagado nem sobrescrito: restaurar é o contrário de excluir. Se
+//     voltar algo que ele tinha apagado de propósito, ele apaga de novo pela
+//     tela normal — e a exclusão de verdade continua sendo registrada.
+//   • Antes de trazer, mostra o resumo POR ENTIDADE (contratos, parque,
+//     leituras...) e o período, e pede confirmação no modal do sistema.
+//   • A lista do Worker vem do mais novo para o mais antigo e limitada (200 por
+//     vez). Trazendo a primeira leva, os mais antigos sobem para o topo — é só
+//     clicar de novo para trazer a próxima leva.
+//
+// Nada aqui guarda senha, token ou dado de ninguém: só usa a API da nuvem que o
+// próprio sistema já usa, com a autorização que o aparelho já tem.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+// ── Regras puras (testáveis sem navegador) ─────────────────────────────────
+// Entidades que a faxina da importação podia levar junto (ordem de leitura).
+const ENTIDADES_PADRAO = ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos','orcamentos'];
+
+// Rótulo curto de um registro excluído (para a pessoa reconhecer na lista).
+function rotuloExcluido(reg){
+  if(!reg) return 'registro';
+  const d = reg.data || {};
+  const nome = d.nome || d.numero || d.descricao || d.login || d.modelo || d.patrimonio;
+  const id = String(reg.recordId || '').slice(0, 12);
+  return nome ? String(nome).slice(0, 60) : id;
+}
+
+// Filtra e resume a lista que veio de /v1/deleted.
+// filtros: { entidades: [...], desde: Date|number|null }
+function planejarRecuperacao(registros, filtros){
+  const f = filtros || {};
+  const entidades = Array.isArray(f.entidades) && f.entidades.length ? f.entidades : ENTIDADES_PADRAO;
+  const desde = f.desde ? (f.desde instanceof Date ? f.desde.getTime() : Number(f.desde)) : null;
+  const escolhidos = [], ignorados = [];
+  const porEntidade = {};
+  for(const reg of (registros || [])){
+    if(!reg || !reg.entity || !reg.recordId){ ignorados.push(reg); continue; }
+    if(entidades.indexOf(reg.entity) < 0){ ignorados.push(reg); continue; }
+    const quando = Number(reg.deletedAt) || 0;
+    if(desde && quando && quando < desde){ ignorados.push(reg); continue; }
+    escolhidos.push(reg);
+    porEntidade[reg.entity] = (porEntidade[reg.entity] || 0) + 1;
+  }
+  const datas = escolhidos.map(r=>Number(r.deletedAt)||0).filter(Boolean).sort((a,b)=>a-b);
+  return {
+    total: escolhidos.length,
+    totalVisto: (registros || []).length,
+    ignorados: ignorados.length,
+    porEntidade,
+    primeiraExclusao: datas.length ? datas[0] : null,
+    ultimaExclusao: datas.length ? datas[datas.length-1] : null,
+    escolhidos
+  };
+}
+
+// Texto do resumo (o que vai voltar), em língua de gente.
+function textoResumo(plano){
+  if(!plano || !plano.total) return 'Nada para trazer de volta nesta lista.';
+  const partes = Object.keys(plano.porEntidade).sort()
+    .map(e=>plano.porEntidade[e] + ' ' + (e === 'parque' ? 'impressoras de contrato' : e));
+  const fmt = (t)=>{ try{ return new Date(t).toLocaleString('pt-BR'); }catch(e){ return '?'; } };
+  let txt = plano.total + ' registro(s): ' + partes.join(' • ');
+  if(plano.primeiraExclusao) txt += '\nExcluídos entre ' + fmt(plano.primeiraExclusao) + ' e ' + fmt(plano.ultimaExclusao) + '.';
+  if(plano.ignorados) txt += '\n(' + plano.ignorados + ' fora do filtro desta tela.)';
+  return txt;
+}
+
+if (typeof window !== 'undefined') {
+  window.DIGICOPY_RECUPERAR = {
+    ENTIDADES_PADRAO: ENTIDADES_PADRAO,
+    rotuloExcluido: rotuloExcluido,
+    planejarRecuperacao: planejarRecuperacao,
+    textoResumo: textoResumo
+  };
+}
+
+// ── Daqui para baixo é tela: só roda no navegador ───────────────────────────
+if(typeof document === 'undefined') return;
+
+function apiNuvem(){
+  return (window.DIGICOPY_CLOUD && typeof window.DIGICOPY_CLOUD.api === 'function') ? window.DIGICOPY_CLOUD.api : null;
+}
+function avisar(titulo, texto){
+  if(typeof window.lfbAlert === 'function') return window.lfbAlert(texto, titulo);
+  if(typeof window.toast === 'function') return window.toast(texto, 'info');
+}
+function confirmar(texto, titulo){
+  if(typeof window.confirmSistema === 'function') return window.confirmSistema(texto, titulo);
+  return Promise.resolve(false);
+}
+
+async function restaurarLista(registros, aoProgresso){
+  const call = apiNuvem();
+  if(!call) throw new Error('Motor da nuvem não carregado.');
+  let ok = 0, falhas = 0, primeiroErro = '';
+  for(let i=0;i<registros.length;i++){
+    const reg = registros[i];
+    try{
+      const r = await call('/v1/restore', { method:'POST', body: JSON.stringify({ entity: reg.entity, recordId: reg.recordId }) });
+      if(r && r.ok !== false) ok++; else { falhas++; primeiroErro = primeiroErro || ((r && r.message) || 'recusado'); }
+    }catch(e){
+      falhas++; primeiroErro = primeiroErro || ((e && e.message) || String(e));
+    }
+    if(typeof aoProgresso === 'function') aoProgresso(i+1, registros.length);
+  }
+  return { ok: ok, falhas: falhas, primeiroErro: primeiroErro };
+}
+
+// Botão dentro do painel da Nuvem, logo abaixo do "Ver itens excluídos".
+function instalarBotao(){
+  const modal = document.getElementById('digicopy-cloud-modal');
+  if(!modal || modal.classList.contains('hidden')) return;
+  if(document.getElementById('dc-restaurar-lote')) return;
+  const lista = modal.querySelector('#dc-list-deleted');
+  if(!lista || !lista.parentNode) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'dc-restaurar-lote';
+  wrap.style.cssText = 'margin-top:10px;border-top:1px solid #e2e8f0;padding-top:10px';
+  wrap.innerHTML = '<button id="dc-restaurar-lote-btn" style="width:100%;height:40px;border:0;border-radius:10px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">🩹 Trazer de volta o que foi excluído</button>'
+    + '<div id="dc-restaurar-lote-res" style="margin-top:8px;font-size:12.5px;color:#334155;line-height:1.5"></div>';
+  lista.parentNode.insertBefore(wrap, lista.nextSibling);
+
+  wrap.querySelector('#dc-restaurar-lote-btn').onclick = async function(){
+    const res = wrap.querySelector('#dc-restaurar-lote-res');
+    const btn = wrap.querySelector('#dc-restaurar-lote-btn');
+    btn.disabled = true; btn.textContent = 'Procurando o que foi excluído...';
+    res.textContent = '';
+    try{
+      const call = apiNuvem();
+      if(!call) throw new Error('Motor da nuvem não carregado.');
+      // v7.0.4 — varre TUDO o que está excluído (não só os últimos 200): usa o
+      // mesmo caminho paginado do automático, que alcança o que foi apagado
+      // meses atrás. O que o automático já trouxe não aparece mais aqui.
+      const sync = window.DIGICOPY_CLOUD_SYNC;
+      const registros = (sync && typeof sync.listarExcluidosDaNuvem === 'function')
+        ? await sync.listarExcluidosDaNuvem(call)
+        : ((await call('/v1/deleted?limit=1000', { method:'GET' })).records || []);
+      const plano = window.DIGICOPY_RECUPERAR.planejarRecuperacao(registros);
+      if(!plano.total){ res.textContent = window.DIGICOPY_RECUPERAR.textoResumo(plano); btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      const ok = await confirmar(window.DIGICOPY_RECUPERAR.textoResumo(plano) + '\n\nTrazer todos de volta agora?', 'Trazer de volta o que foi excluído');
+      if(!ok){ btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído'; return; }
+      btn.textContent = 'Trazendo de volta...';
+      const r = await restaurarLista(plano.escolhidos, (feito, total)=>{ res.textContent = 'Trazendo de volta ' + feito + ' de ' + total + '...'; });
+      if(window.DIGICOPY_CLOUD_SYNC && typeof window.DIGICOPY_CLOUD_SYNC.tick === 'function'){
+        try{ await window.DIGICOPY_CLOUD_SYNC.tick('restauracao'); }catch(e){}
+      }
+      res.innerHTML = '<b>' + r.ok + ' registro(s) trazido(s) de volta.</b>'
+        + (r.falhas ? ' ' + r.falhas + ' recusado(s)' + (r.primeiroErro ? ' (' + String(r.primeiroErro).slice(0,120) + ')' : '') + '.' : '')
+        + '<br>Os registros mais antigos vão aparecendo nas próximas vezes: clique de novo para trazer a leva seguinte.';
+      avisar('Pronto', r.ok + ' registro(s) trazido(s) de volta. Confira as telas de Contratos e Impressoras.');
+    }catch(e){
+      res.textContent = 'Não deu para trazer: ' + ((e && e.message) || e);
+    }
+    btn.disabled = false; btn.textContent = '🩹 Trazer de volta o que foi excluído';
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIAGNÓSTICO DA NUVEM — v7.0.5 (23/09/2026)
+// Pedido do dono: "não esconde nada de mim". Aqui ele vê, em uma linha:
+//   • a versão que ESTE computador está rodando (e o motor da nuvem no ar);
+//   • quando foi a última sincronização e quantos registros estão pendentes;
+//   • se o aviso instantâneo está ligado neste PC;
+//   • e um botão "Conferir agora", que força uma sincronização, mede o tempo e
+//     diz o estado da tela — prova na hora, sem adivinhar.
+// Nada de senha, token ou dado de negócio aparece aqui.
+async function versaoDoMotor(){
+  try{
+    const base = window.DIGICOPY_CLOUD && window.DIGICOPY_CLOUD.API;
+    if(!base) return '?';
+    const r = await fetch(base + '/health', { cache:'no-store' });
+    const j = await r.json();
+    return String((j && (j.versao || j.version)) || '?');
+  }catch(e){ return 'sem resposta'; }
+}
+function linhaDiagnostico(){
+  const sync = window.DIGICOPY_CLOUD_SYNC;
+  const info = (sync && typeof sync.estadoDetalhado === 'function') ? (sync.estadoDetalhado() || {}) : {};
+  const app = (window.DIGICOPY_APP_VERSION || '?');
+  let quando = 'nunca nesta sessão';
+  try{
+    const t = Number(info.lastOk) || Number(info.ultimoOk) || 0;
+    if(t){ const s = Math.max(0, Math.round((Date.now()-t)/1000)); quando = 'há '+s+' s'; }
+  }catch(e){}
+  // nomes REAIS do motor (conferidos no código): pending/outbox/lastError/paused
+  const pend = (typeof info.pending === 'number') ? info.pending : ((typeof info.outbox === 'number') ? info.outbox : null);
+  const pausada = !!info.paused;
+  const motivo = String(info.pauseReason || '');
+  const erro = String(info.lastError || '');
+  const instantaneo = !!(sync && typeof sync.canalInstantaneo === 'function' && !sync.canalInstantaneo());
+  const pendenteTela = !!(sync && typeof sync.temRedesenhoPendente === 'function' && sync.temRedesenhoPendente());
+  return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro };
+}
+async function instalarDiagnostico(){
+  const modal = document.getElementById('digicopy-cloud-modal');
+  if(!modal || modal.classList.contains('hidden')) return;
+  if(document.getElementById('dc-diagnostico')) return;
+  const alvo = modal.querySelector('.dc-body') || modal.querySelector('#dc-list-deleted') || modal.querySelector('div');
+  if(!alvo || !alvo.parentNode) return;
+  const box = document.createElement('div');
+  box.id = 'dc-diagnostico';
+  box.style.cssText = 'margin-top:10px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#334155;line-height:1.6';
+  box.innerHTML = '<div style="font-weight:800;color:#0a1e8a">Diagnóstico deste computador</div>'
+    + '<div id="dc-diag-linha">Conferindo…</div>'
+    + '<div style="margin-top:8px"><button id="dc-diag-btn" style="height:36px;padding:0 14px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">Conferir agora</button></div>'
+    + '<div id="dc-diag-res" style="margin-top:8px"></div>';
+  alvo.parentNode.insertBefore(box, alvo.nextSibling);
+
+  const linha = box.querySelector('#dc-diag-linha');
+  const res = box.querySelector('#dc-diag-res');
+  const d = linhaDiagnostico();
+  const v = await versaoDoMotor();
+  const partes = [];
+  partes.push('Sistema neste PC: <b>v' + d.app + '</b> • motor da nuvem: <b>' + v + '</b>');
+  partes.push('Última sincronização: <b>' + d.quando + '</b>' + (d.pend === null ? '' : ' • pendências para enviar: <b>' + d.pend + '</b>'));
+  partes.push('Aviso instantâneo: <b>' + (d.instantaneo ? 'ligado' : 'desligado') + '</b>'
+    + (d.pendenteTela ? ' • há novidade esperando a tela atualizar' : ''));
+  if(d.pausada) partes.push('<b style="color:#b91c1c">Sincronização PARADA</b>' + (d.motivo ? ' (' + d.motivo + ')' : ''));
+  if(d.erro) partes.push('<span style="color:#b45309">Último aviso da nuvem: ' + d.erro.slice(0,160) + '</span>');
+  linha.innerHTML = partes.join('<br>');
+
+  box.querySelector('#dc-diag-btn').onclick = async function(){
+    const btn = box.querySelector('#dc-diag-btn');
+    btn.disabled = true; btn.textContent = 'Conferindo...';
+    res.textContent = '';
+    const t0 = Date.now();
+    try{
+      const antes = linhaDiagnostico().app;
+      const sync = window.DIGICOPY_CLOUD_SYNC;
+      if(!sync || typeof sync.tick !== 'function') throw new Error('Motor da sincronização não carregado.');
+      await sync.tick('diagnostico-manual');
+      const ms = Date.now() - t0;
+      const d2 = linhaDiagnostico();
+      res.innerHTML = '✅ Conferido em <b>' + ms + ' ms</b> (sistema v' + antes + '). '
+        + (d2.pendenteTela ? 'Chegou novidade e a tela está sendo atualizada.' : 'Nada pendente de tela agora — a tela está em dia com a nuvem.')
+        + '<br>Última sincronização: <b>' + d2.quando + '</b>.';
+    }catch(e){
+      res.innerHTML = '⚠️ ' + ((e && e.message) || e);
+    }
+    btn.disabled = false; btn.textContent = 'Conferir agora';
+  };
+}
+// A tela da Nuvem é redesenhada por vários caminhos; o botão é reinstalado
+// quando ela aparece (sem mexer em nada do que já existe).
+setInterval(function(){ try{ instalarBotao(); }catch(e){} try{ instalarDiagnostico(); }catch(e){} }, 2500);
+if(typeof document !== 'undefined' && document.addEventListener){
+  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalarBotao(); }catch(e){} try{ instalarDiagnostico(); }catch(e){} }, 600); }, true);
+}
+console.log('[DIGICOPY] recuperação em massa (trazer de volta o que foi excluído) carregada');
+})();
+
+
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v52296_backups_nuvem_patch.js", e); }
 ;
 
@@ -51749,12 +52382,22 @@ function nfgBotaoAmbiente(){
   b.onclick=function(){ window.nfgAlternarAmbiente(); };
   central.insertBefore(b, central.children[1]||null);
 }
-window.nfgAlternarAmbiente=function(){
+window.nfgAlternarAmbiente=async function(){
   const amb=nfgAmbiente(db);
   const pode=(typeof window.usuarioPodeEmitirNfe==='function') ? window.usuarioPodeEmitirNfe() : false;
   if(amb==='homologacao'){
+    // NOTA DE AUDITORIA (prova de código morto): este botão antigo só nasce se
+    // existir #central-nfe-modal. Desde a v6.0.2 o abrirCentralNfe (embrulhado
+    // por último no autocura_empresa_central_nf_tela_patch.js) só chama
+    // navigateTo('central-nf') e nunca recria esse modal, então nfgBotaoAmbiente
+    // desiste na primeira linha. A proteção de produção que vale hoje é a da
+    // tela nova (nfxPedirTexto + "PRODUCAO"). Este caminho ficou aqui como
+    // histórico e NÃO foi removido (regra: não apagar código morto sem provar e
+    // testar). Só deixou de usar prompt nativo, que estourava no .exe.
     if(!pode){ if(typeof toast==='function') toast('Só usuário com permissão de emitir NF habilita produção','error'); return; }
-    const dig = (typeof window.prompt==='function') ? window.prompt('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null;
+    const dig = (typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO',{titulo:'Habilitar produção'})
+      : (typeof window.nfxPedirTexto==='function' ? await window.nfxPedirTexto('Habilitar produção','⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null);
     if(dig!=='PRODUCAO'){ if(dig!==null && typeof toast==='function') toast('Não habilitado — texto não confere','error'); return; }
     db.config=db.config||{}; db.config.nfAmbiente='producao';
     nfgAudit('ambiente->producao',{});
@@ -52036,8 +52679,15 @@ function nfxPedirSenha(){
   if(typeof window.nfxPedirTexto==='function'){
     return window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.', {mascara:true});
   }
-  const s=(typeof window.prompt==='function') ? window.prompt('Senha do certificado A1 (usada agora e NÃO fica salva):') : null;
-  return Promise.resolve(s||null);
+  // Auditoria: o fallback usava window.prompt, que no .exe lança
+  // "prompt() is not supported" — derrubava o fluxo de assinatura. Sem um popup
+  // próprio não há como pedir senha de forma segura, então avisa e desiste em
+  // vez de estourar (nunca sucesso falso).
+  if(typeof window.pedirTextoSistema==='function'){
+    return window.pedirTextoSistema('Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.',{titulo:'Senha do certificado A1',mascara:true});
+  }
+  if(typeof nfxToast==='function') nfxToast('Não consegui abrir a janela da senha do certificado. Atualize o sistema para a versão mais nova.','error');
+  return Promise.resolve(null);
 }
 // Registra/atualiza a vida de uma nota no histórico fiscal
 function nfxGravarNota(rec){
@@ -52139,7 +52789,7 @@ window.nfCancelarNota=async function(notaId){
     if(nota.status!=='autorizada'){ nfxToast('Só se cancela nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
     if(!nota.protocolo){ nfxToast('Nota sem protocolo não cancela.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
     const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
     if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
@@ -52172,7 +52822,7 @@ window.nfInutilizarFaixa=async function(opts){
   try{
     if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa curta — não enviado.','error'); return {ok:false}; }
     const senha=await nfxPedirSenha(); if(!senha) return {ok:false};
     const amb=nfxAmb();
@@ -53142,19 +53792,13 @@ window.permissoesAjuda=function(){
   else if(typeof toast==='function') toast('Abra o cadastro do usuário (lápis) para ver as permissões','info');
 };
 function p605BotaoAjuda(){
-  const view=document.getElementById('view-usuarios');
-  if(!view || view.querySelector('#p605-ajuda-perm')) return;
-  const card=view.querySelector('.rounded-\\[16px\\].bg-white.border.p-5') || view.querySelector('table');
-  const alvo=(view.querySelector('.space-y-4')||view);
-  const b=document.createElement('button');
-  b.id='p605-ajuda-perm';
-  b.type='button';
-  b.textContent='❓ O que são as 3 permissões?';
-  b.style.cssText='display:block;width:100%;margin-top:10px;height:38px;border-radius:10px;font-weight:800;font-size:12.5px;background:#eef2ff;color:#0a1e8a;border:1px solid #c7d2fe;cursor:pointer';
-  b.onclick=window.permissoesAjuda;
-  if(card && card.parentNode) card.parentNode.insertBefore(b,card.nextSibling);
-  else alvo.insertBefore(b,alvo.firstChild);
+  // v7.0.1 (23/09/2026) — ORDEM DO DONO: "em usuários tem uma caixa que é
+  // 'o que são as 3 permissões?', retira isso". O botão não é mais injetado na
+  // tela Usuários. A explicação (window.permissoesAjuda, logo acima) continua
+  // no sistema — se um dia ele quiser o texto em outro lugar, está pronto.
+  return;
 }
+
 if(typeof window.renderUsuarios==='function' && !window.renderUsuarios.__p605ajuda){
   const _ru=window.renderUsuarios;
   const ru=function(){ const r=_ru.apply(this,arguments); try{ setTimeout(p605BotaoAjuda,0); }catch(e){} return r; };

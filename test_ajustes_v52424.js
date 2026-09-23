@@ -43,7 +43,7 @@ ok(fs.readFileSync('mobile/www/app.bundle.js', 'utf8').includes('pub-upd-site'),
 ok(fs.readFileSync('index.html', 'utf8').includes("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'"), 'index 6.0.9 (re-ancorado)');
 ok(fs.readFileSync('index.html', 'utf8').includes('>v' + VERSAO_APP + '<'), 'rodapé v6.0.9 (re-ancorado)');
 ok(fs.readFileSync('package.json', 'utf8').includes('"version": "' + VERSAO_APP + '"'), 'package.json 6.0.6 (re-ancorado)');
-ok(wk.includes("'5.26.5'"), 'worker carimbado 5.26.5 (re-ancorado)');
+ok(wk.includes("'5.26.6'"), 'worker carimbado 5.26.6 (re-ancorado)');
 
 if (falhas > 0) { console.error(`\n${falhas} assert(s) FALHARAM`); process.exit(1); }
 console.log('\nTudo OK — v5.24.34 (site próprio de atualizações + histórico na nuvem).');

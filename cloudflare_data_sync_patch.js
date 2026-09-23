@@ -15,7 +15,30 @@ const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
 const MAX_OUTBOX=100;
 const PUSH_BATCH=10;
-const HEARTBEAT_MS=60000;
+// v7.0.1 (23/09/2026) — QUEIXA DO DONO: "o banco demora atualizar; o que faço
+// num computador não dá pra ver no outro". Eram dois motivos somados:
+//   1) o motor procurava novidade de 60 em 60 segundos;
+//   2) com a janela atrás de outra (ou minimizada) ele NÃO procurava mais nada
+//      — então o PC do balcão, que fica com o sistema coberto, só se atualizava
+//      quando alguém clicava nele.
+// Agora: 15 s com a janela à vista (quase em tempo real) e 2 min quando ela está
+// escondida — o navegador estrangula temporizador de aba oculta, então pedir
+// 15 s lá não adiantaria e só gastaria o que não precisa. Cada rodada continua
+// sendo UMA consulta incremental por cursor (barata), não uma varredura.
+// v7.0.3 (23/09/2026) — "ainda demora de chegar, dá pra deixar instantâneo?"
+// SIM: com a janela à vista, o motor procura novidade a cada 3 SEGUNDOS. É
+// barato de propósito: cada rodada é UMA consulta incremental por cursor (não
+// baixa a base de novo), só lê (não gasta o contador de gravação do dia) e o
+// plano em uso tem teto de 25 BILHÕES de leituras por mês — 3s equivale a ~20
+// consultas por minuto por PC, muito abaixo de qualquer limite.
+// Com a janela escondida (minimizada/atrás de outra) continua consultando, só
+// que a cada 15 s: o navegador estrangula temporizador de aba oculta e não faz
+// sentido brigar com ele. Ao voltar para a janela, a consulta sai na hora
+// (o gatilho de foco abaixo pede na hora).
+// Nada disso substitui a base inteira nem muda o caminho dos dados: continua
+// local-first e incremental, como manda a regra 28 das REGRAS_PERMANENTES.
+const HEARTBEAT_MS=3000;
+const HEARTBEAT_OCULTO_MS=15000;
 
 // Listas com formato especial. Todo o resto do banco entra sozinho pela
 // definicoes(): antes a nuvem só levava estas 19 listas e tudo o que estava
@@ -402,16 +425,37 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
   return removed;
 }
 
-async function pullAll(){
+// v7.0.2 — "pedido de carga completa": quem quer a carga inteira à vista avisa
+// aqui antes de chamar o pullAll (mantém a chamada `await pullAll()` como sempre
+// foi — é o que o teste do motor confere).
+let cargaPedida=false;
+function pedirCarga(v){cargaPedida=!!v;}
+async function pullAll(opcoes){
+  const silencioso=!!(opcoes&&opcoes.silencioso);
+  const cargaCompleta=silencioso?false:cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
+  // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
+  // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
+  const POR_PAGINA=1000;
+  // v7.0.3 — ORDEM DO DONO: "de mostrar dados quero NADA que envolva eu fazer
+  // alguma coisa, só quero que mostre normal". O aviso de carga passa a aparecer
+  // SÓ quando este PC não tem base nenhuma (primeira vez/PC novo) — aí não há o
+  // que mostrar de qualquer forma. Com base já aqui, a leitura corre em silêncio
+  // e a tela se atualiza no fim, sem tela azul nenhuma.
+  const baseVazia=(typeof db==='undefined'||!db)?true:(localBusinessCount()===0);
+  const comAviso=cargaCompleta&&baseVazia;
+  if(comAviso)mostrarCargaNuvem(true,'conectando…');
+  try{
   do{
-    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit=500',{method:'GET'}));
+    const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
+    if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
+  }finally{ if(comAviso)mostrarCargaNuvem(false); }
   state.initialPull=true;
   if(changed){
     applying=true;
@@ -671,8 +715,41 @@ function indicator(ok,text){
   btn.title=text||'Nuvem DIGICOPY';btn.dataset.cloud=ok?'ok':'error';
   const icon=btn.querySelector('i');if(icon)icon.style.color=ok?'#16a34a':'#dc2626';
 }
+// v7.0.3 — LEITURA EM QUALQUER ABA VISÍVEL.
+// O motor só deixava a "aba líder" (uma aba por navegador) puxar novidades — e
+// isso evita trabalho dobrado. O problema: se quem segurava a liderança era uma
+// aba esquecida em segundo plano, ela continuava líder para sempre e a aba que
+// a pessoa estava OLHANDO não puxava nada. Resultado: tela velha, sem erro, sem
+// aviso — e é uma das explicações do "demora de chegar".
+// Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
+// Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
+async function tickSohLeitura(reason){
+  if(typeof document==='undefined'||document.hidden)return false;
+  busy=true;lastTick=Date.now();
+  const geracao=estadoGeracao;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    const mudou=await pullAll({silencioso:true});
+    if(geracao!==estadoGeracao)return false;
+    if(mudou){redesenhoPendente=true;tentarRedesenhoPendente();}
+    failures=0;lastError='';state.lastOk=Date.now();   // v7.0.5 — leitura boa zera o recuo
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    return true;
+  }catch(e){
+    lastError=e&&e.message?e.message:String(e);
+    return false;
+  }finally{busy=false;scheduleHeartbeat();}
+}
 async function tick(reason){
-  if(state.paused||busy||!authorized()||!leader())return false;
+  // v7.0.5 — antes de qualquer decisão, aproveita a brecha para aplicar um
+  // redesenho que ficou pendente (roda a cada 3 s).
+  try{tentarRedesenhoPendente();}catch(e){}
+  if(state.paused||busy||!authorized())return false;
+  if(!leader()){
+    // não é a líder: se a janela está à vista, puxa; se está escondida, espera
+    if(typeof document!=='undefined'&&document.hidden)return false;
+    return await tickSohLeitura(reason);
+  }
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
   const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
@@ -686,7 +763,11 @@ async function tick(reason){
     // fica pausada até clicar em Publicar este PC.
     const localBefore=firstAuthorizedPull?localKeysSnapshot():null;
     if(firstAuthorizedPull&&localBusinessCount()>0&&window.DIGICOPY_INDEXED_DB)await window.DIGICOPY_INDEXED_DB.writeRecoverySnapshot('antes_primeira_nuvem',db);
-    await pullAll();
+    // v7.0.2 — é a PRIMEIRA carga (ou um "baixar tudo"): mostra o aviso de
+    // carga e segura a tela até chegar tudo, em vez de ir mostrando pedaços.
+    pedirCarga(!state.initialPull||reason==='baixar-tudo-da-nuvem');
+    const mudouNaTela=await pullAll();
+    if(!state.recuperacaoV1)setTimeout(()=>{try{recuperarAutomatico();}catch(e){}},1200);
     if(trocou())return false;   // zerou a nuvem / mudou a decisão durante a leitura
     if(firstAuthorizedPull){
       const extras=listLocalOnlyKeys(localBefore);
@@ -730,17 +811,36 @@ async function tick(reason){
     const devolvidos=await devolverSumidos();
     if(devolvidos){lastError='';schedule(1200);}
     if(varrerDemonstracao())schedule(1200);
+    // v7.0.1 — a novidade já está no banco; a TELA da frente se redesenha para
+    // a pessoa ver na hora (era a queixa "faço num PC e não aparece no outro").
+    // Quem decide se pode é podeRedesenharSync — e as travas existem para não
+    // atrapalhar quem está digitando.
+    if(mudouNaTela){redesenhoPendente=true;tentarRedesenhoPendente();}
     indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
     return true;
   }catch(e){
+    mostrarCargaNuvem(false);   // nunca deixar o dono preso no aviso de carga
     failures++;lastError=e&&e.message?e.message:String(e);
-    if(ehLimiteDiario(lastError)){
+    // v6.1.11 — AUDITORIA: o freio preventivo de cota (Worker v5.24.5) responde
+    // 429 com `quota:true`, mas o recado vem no campo `error` — e o motor lê o
+    // texto só de `message`/`aviso`. Resultado: chegava como "Erro HTTP 429" e
+    // o ehLimiteDiario não reconhecia, então em vez de dormir até a virada o app
+    // ficava batendo na porta (4 tentativas por rodada, ~21s) e AINDA inflava o
+    // contador de escrita da nuvem — o que fazia o freio disparar cada vez mais
+    // cedo. Agora a marca `quota` vale como limite diário, igual ao erro cru do
+    // D1 que já funcionava.
+    if(ehLimiteDiario(lastError)||!!(e&&e.quota)){
       lastError=recadoDoLimite();
       state.limiteAte=viradaDoLimite();persist();
       indicator(false,lastError);
       busy=false;
       if(timer)clearTimeout(timer);
-      timer=setTimeout(()=>tick('limite-virou'),Math.min(3600000,Math.max(60000,state.limiteAte-Date.now())));
+      // v7.0.5 — SONDA DE 60 EM 60 s em vez de dormir horas. Se a marca de limite
+      // ficou no aparelho por engano (aconteceu em versões antigas), o PC voltava a
+      // sincronizar só depois das 21h — e parecia "devagar" o dia inteiro. A sonda
+      // custa uma consulta por minuto e não gasta gravação: assim que a nuvem
+      // responder bem, a marca é limpa pelo caminho normal de sucesso.
+      timer=setTimeout(()=>tick('limite-conferido'),Math.min(60000,Math.max(30000,state.limiteAte-Date.now())));
       return false;
     }
     indicator(false,'Nuvem pendente: '+lastError);
@@ -748,7 +848,7 @@ async function tick(reason){
       try{if(window.DIGICOPY_CLOUD&&window.DIGICOPY_CLOUD.forgetAuth)window.DIGICOPY_CLOUD.forgetAuth();}catch(_e){}
     }
     return false;
-  }finally{if(busy){busy=false;scheduleHeartbeat();}}
+  }finally{if(cargaAberta)mostrarCargaNuvem(false);if(busy){busy=false;scheduleHeartbeat();}}
 }
 // LIMITE DIÁRIO DO BANCO GRÁTIS (v5.22.80)
 // O plano grátis da Cloudflare tem um teto de gravações por dia. Quando ele
@@ -777,8 +877,15 @@ function schedule(delay){if(timer)clearTimeout(timer);timer=setTimeout(()=>tick(
 function scheduleHeartbeat(){
   if(typeof document==='undefined')return;
   if(timer)clearTimeout(timer);
-  const wait=failures?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):HEARTBEAT_MS;
-  timer=setTimeout(()=>{if(!document.hidden)tick('heartbeat');else scheduleHeartbeat();},wait);
+  // v7.0.1 — antes, com a janela escondida isto apenas reagendava sem consultar
+  // (o PC ficava parado no tempo). Agora consulta também, só que mais devagar.
+  const base=document.hidden?HEARTBEAT_OCULTO_MS:HEARTBEAT_MS;
+  // v7.0.5 — RECUO CURTO. Antes, cada falha dobrava a espera até 5 MINUTOS: um
+  // tropeço na internet deixava o PC quase parado e a sensação era "continua
+  // devagar". Com a janela à vista o recuo agora para em 30 s; escondida,
+  // continua o recuo longo (economia de bateria/rede).
+  const wait=failures?(document.hidden?Math.min(300000,5000*Math.pow(2,Math.min(failures,6))):Math.min(30000,5000*Math.pow(2,Math.min(failures,3)))):base;
+  timer=setTimeout(()=>tick('heartbeat'),wait);
 }
 function duplicateClientGroups(clients){
   const list=Array.isArray(clients)?clients:[],parent=list.map((_,i)=>i),seen=new Map();
@@ -975,7 +1082,289 @@ function estadoDetalhado(){
   }catch(e){}
 })();
 
-window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes};
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.1 (23/09/2026) — A TELA AO VIVO
+// Queixa do dono: "o banco demora atualizar; o que faço em um computador não dá
+// pra ver no outro". Além da espera (o motor procurava de 60 em 60 segundos e
+// parava com a janela escondida — corrigido acima), havia isto: a novidade
+// descia e ficava no banco, mas a LISTA NA TELA continuava mostrando o retrato
+// antigo até a pessoa trocar de tela e voltar. Agora a tela da frente se
+// redesenha sozinha quando a leitura trouxe mudança.
+//
+// As travas (para não atrapalhar ninguém no meio do trabalho):
+//   • janela escondida (minimizada/atrás): não há tela para atualizar;
+//   • modal aberto: a pessoa pode estar no meio de um cadastro;
+//   • cursor dentro de campo/botão: pode estar digitando;
+//   • telas de documento (vender, ler contador, configurar, importar): ficam de
+//     fora, porque nelas o redesenho apagaria o que está sendo preenchido;
+//   • e nunca em rajada: no máximo um redesenho a cada 4 segundos.
+// O redesenho chama direto o render da tela (NÃO o navigateTo, que rola a
+// página para o topo e mexe na barra lateral — isso sim incomodaria).
+// v7.0.2 — AVISO DE CARGA COMPLETA ("queria que aparecesse tudo de uma vez")
+// Enquanto a leitura da nuvem está em curso, este aviso cobre a tela e mostra a
+// contagem; a lista do sistema só aparece quando TUDO chegou. Some sozinho no
+// fim (ou se der erro) — nunca prende ninguém.
+let cargaAberta=false, cargaItens=0;
+function mostrarCargaNuvem(mostrar,texto){
+  if(typeof document==='undefined'||!document.body)return;
+  const atual=document.getElementById('digicopy-carga-nuvem');
+  if(!mostrar){ if(atual)atual.remove(); cargaAberta=false; return; }
+  cargaAberta=true;
+  let el=atual;
+  if(!el){
+    el=document.createElement('div');
+    el.id='digicopy-carga-nuvem';
+    el.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(10,30,138,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px';
+    el.innerHTML='<div style="font-size:16px;font-weight:800">Baixando os dados da nuvem…</div>'
+      +'<div id="digicopy-carga-conta" style="font-size:13.5px;opacity:.92"></div>'
+      +'<div style="font-size:12px;opacity:.72;max-width:430px;line-height:1.55">Trazendo tudo de uma vez: a tela abre já com os dados completos. Não feche o sistema agora.</div>';
+    document.body.appendChild(el);
+  }
+  const conta=document.getElementById('digicopy-carga-conta');
+  if(conta)conta.textContent=texto||'';
+}
+// ═══════════════════════════════════════════════════════════════════════════
+// v7.0.4 (23/09/2026) — AVISO INSTANTÂNEO DA NUVEM + RECUPERAÇÃO AUTOMÁTICA
+//
+// PEDIDO DO DONO: "não sabe o que é instantâneo já aparecer os dados?".
+// Como fica: além do ritmo de 3 s, o PC deixa UM canal aberto com a nuvem
+// (/v1/changes/watch). Quando alguém grava em qualquer PC, a nuvem responde
+// NAQUELE INSTANTE e este PC puxa e redesenha a tela — sem clique, sem tela na
+// frente, sem espera. Se o motor da nuvem ainda não tiver esse canal (Worker
+// antigo), o PC recebe 404 uma vez e segue no ritmo de 3 s, como antes: nada
+// quebra, nada aparece na tela.
+let canalInstantaneoParado=false, canalAberto=false;
+async function canalInstantaneo(){
+  if(canalInstantaneoParado||canalAberto)return;
+  // v7.0.5 — saída antecipada REAGENDA (antes o canal podia morrer de vez se
+  // abrisse num momento em que a nuvem ainda não estava autorizada).
+  if(typeof document!=='undefined'&&document.hidden)return;
+  if(state.paused||!authorized()){setTimeout(()=>{try{canalInstantaneo();}catch(e){}},5000);return;}
+  const call=api(); if(!call)return;
+  canalAberto=true;
+  try{
+    const r=await call('/v1/changes/watch?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&timeout=20',{method:'GET'});
+    if(r&&r.novidade&&!busy)await tick('aviso-da-nuvem');
+  }catch(e){
+    const st=Number(e&&e.status)||0;
+    if(st===404||st===400){ canalInstantaneoParado=true; }   // motor antigo: só o ritmo normal
+    else await dormir(5000);
+  }finally{ canalAberto=false; }
+  if(!canalInstantaneoParado)setTimeout(()=>{canalInstantaneo();},300);
+}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden)canalInstantaneo();});}catch(e){}
+
+// ── RECUPERAÇÃO AUTOMÁTICA (uma vez por PC, sem clicar em nada) ────────────
+// O que faz: procura na nuvem TUDO que foi excluído e traz de volta o que foi
+// criado por gente de verdade (tem criadoPor de usuário). O dado de exemplo do
+// sistema não tem dono — esse fica onde está. Nunca traz duas vezes o mesmo
+// registro (guarda a lista do que já trouxe), então se o dono apagar alguma
+// coisa de propósito ela NÃO volta sozinha de novo.
+const RECUP_LEDGER='digicopy_cf_recuperados_v1';
+function lerRecuperados(){try{return JSON.parse(localStorage.getItem(RECUP_LEDGER)||'{}')||{};}catch(e){return {};}}
+function marcarRecuperado(id){try{const m=lerRecuperados();m[String(id)]=Date.now();localStorage.setItem(RECUP_LEDGER,JSON.stringify(m));}catch(e){}}
+function temDonoHumano(reg){
+  // Quem NÃO tem dono: o dado de exemplo do sistema (sem autor, ou 'sistema').
+  // Quem TEM dono: usuário de tela (usr_...) e também 'migracao' — este último é
+  // o dado REAL que veio do sistema antigo pela importação (as telas de contrato
+  // e de visita gravam assim). Ficou de fora por engano na primeira versão desta
+  // regra e isso deixaria impressoras legítimas sem recuperação.
+  const d=reg&&reg.data||{};const dono=String(d.criadoPor||'');
+  return !!dono&&dono!=='sistema'&&dono!=='demo';
+}
+let varreduraCompleta=false;   // o motor da nuvem sabe paginar a lista de excluídos?
+async function listarExcluidosDaNuvem(call,limiteTotal){
+  const todos=[];let before=0;varreduraCompleta=false;
+  for(let volta=0;volta<20;volta++){
+    const url='/v1/deleted?limit=1000'+(before?('&before='+before):'');
+    let r;try{r=await call(url,{method:'GET'});}catch(e){ if(volta===0)throw e; break; }
+    if(r&&typeof r.temMais!=='undefined')varreduraCompleta=true;   // motor novo
+    const lote=(r&&r.records)||[];
+    todos.push(...lote);
+    if(!lote.length||!r.temMais||!r.proximoBefore)break;
+    before=Number(r.proximoBefore)||0;
+    if(!before)break;
+    if(limiteTotal&&todos.length>=limiteTotal)break;
+  }
+  return todos;
+}
+let recuperandoAgora=false;
+async function recuperarAutomatico(){
+  if(state.recuperacaoV1||recuperandoAgora)return;
+  if(!authorized()||state.paused)return;
+  // se falhou por rede, espera 60 s antes de tentar de novo (não fica batendo)
+  if(state.recuperacaoTentativa&&(Date.now()-Number(state.recuperacaoTentativa))<60000)return;
+  const call=api(); if(!call)return;
+  recuperandoAgora=true;
+  state.recuperacaoTentativa=Date.now();persist();
+  try{
+    const excluidos=await listarExcluidosDaNuvem(call);
+    const jaVieram=lerRecuperados();
+    const alvos=excluidos.filter(r=>r&&r.entity&&r.recordId&&!jaVieram[String(r.recordId)]&&temDonoHumano(r)
+      && ['contratos','parque','leituras','os','contasReceber','vendas','clientes','produtos','equipamentos'].indexOf(r.entity)>=0
+      && r.data&&typeof r.data==='object'&&Object.keys(r.data).length>0);
+    let ok=0,falhas=0,primeiroErro='';
+    for(const reg of alvos){
+      try{
+        const r=await call('/v1/restore',{method:'POST',body:JSON.stringify({entity:reg.entity,recordId:reg.recordId})});
+        if(r&&r.ok!==false){ok++;marcarRecuperado(reg.recordId);}
+        else{falhas++;primeiroErro=primeiroErro||((r&&r.message)||'');}
+      }catch(e){falhas++;primeiroErro=primeiroErro||((e&&e.message)||String(e));}
+    }
+    // 2ª fonte: as fotos internas deste PC (caso o dado nunca tenha subido)
+    let dasFotos=0;
+    try{dasFotos=await recuperarDasFotosLocais();}catch(e){}
+    if(dasFotos){try{await pushOutbox();await pullAll({silencioso:true});redesenharTelaAtual();}catch(e){}}
+    // v7.0.4 — se o motor da nuvem ainda for o antigo, a lista de excluídos vem
+    // limitada e a passada NÃO pode valer para sempre: fica marcada como pendente
+    // e tenta de novo (de 60 em 60 s) até o motor novo ser publicado. Avisa uma
+    // única vez no sino, sem travar nada.
+    if(!varreduraCompleta){
+      if(!state.avisoMotorAntigo){
+        state.avisoMotorAntigo=true;persist();
+        try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+          'Para trazer de volta TUDO que foi apagado, falta publicar o motor novo da nuvem (rodar o atualizar_motor_nuvem.cmd). Depois disso a recuperação termina sozinha.',{tipo:'sync'}); }catch(e){}
+      }
+    }else{
+      state.recuperacaoV1=true;
+    }
+    state.recuperacaoEm=Date.now();state.recuperacaoTotal=ok+dasFotos;persist();
+    if(ok){
+      const porEntidade={};alvos.forEach(r=>{porEntidade[r.entity]=(porEntidade[r.entity]||0)+1;});
+      try{
+        if(typeof logAction==='function')logAction('recuperacao','automatica','-',
+          'Recuperação automática trouxe de volta '+ok+' registro(s): '+JSON.stringify(porEntidade));
+        if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+          'Recuperação automática: '+ok+' registro(s) que tinham sido apagados por engano voltaram (contratos, impressoras, leituras). Confira as telas.',{tipo:'sync'});
+      }catch(e){}
+      await pullAll({silencioso:true});
+      redesenharTelaAtual();
+    }else if(falhas&&/admin/i.test(primeiroErro||'')){
+      try{ if(typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+        'A recuperação do que foi apagado precisa ser feita no computador ADMINISTRADOR da nuvem.',{tipo:'sync'}); }catch(e){}
+      state.recuperacaoV1=true;persist();   // não fica tentando a cada ciclo
+    }
+  }catch(e){/* tenta de novo no próximo ciclo; nada aparece na tela */}
+  finally{recuperandoAgora=false;}
+}
+
+// Segunda fonte: as FOTOS internas deste PC (IndexedDB). Serve para o caso em
+// que a impressora nunca chegou a subir para a nuvem (aí não existe excluído
+// para restaurar). Só entram registros de contrato/parque/leitura/chamado com
+// criador de gente; cada um fica marcado e entra na lista do "já recuperado",
+// então apagar de propósito depois NÃO faz voltar de novo.
+async function recuperarDasFotosLocais(){
+  const idb=window.DIGICOPY_INDEXED_DB;
+  if(!idb||typeof idb.listSnapshots!=='function'||typeof db==='undefined'||!db)return 0;
+  let snaps=[];try{snaps=await idb.listSnapshots();}catch(e){return 0;}
+  const ja=lerRecuperados();const entidades=['contratos','parque','leituras','os'];
+  let voltaram=0;const porEntidade={};
+  for(const snap of snaps){
+    const dados=snap&&snap.data;if(!dados||typeof dados!=='object')continue;
+    for(const entidade of entidades){
+      const atual=Array.isArray(db[entidade])?db[entidade]:null;
+      const antigo=dados[entidade];
+      if(!atual||!Array.isArray(antigo))continue;
+      const ids=new Set(atual.map(x=>x&&x.id!=null?String(x.id):''));
+      antigo.forEach(item=>{
+        if(!item||item.id==null)return;
+        const k=String(item.id);
+        if(ids.has(k)||ja[k])return;
+        if(!temDonoHumano({data:item}))return;
+        const copia=Object.assign({},item,{recuperadoDe:'foto-local',recuperadoEm:new Date().toISOString()});
+        atual.push(copia);ids.add(k);voltaram++;
+        porEntidade[entidade]=(porEntidade[entidade]||0)+1;
+        marcarRecuperado(k);
+      });
+    }
+  }
+  if(voltaram){
+    try{if(typeof saveDBAgora==='function')saveDBAgora();else if(typeof saveDB==='function')saveDB();}catch(e){}
+    try{
+      if(typeof logAction==='function')logAction('recuperacao','foto-local','-',
+        'Recuperação das fotos deste PC: '+voltaram+' registro(s) '+JSON.stringify(porEntidade));
+      if(typeof window.notificarEvento==='function')window.notificarEvento('info',
+        'Fotos deste PC: '+voltaram+' registro(s) que estavam faltando voltaram (contratos/impressoras/leituras).',{tipo:'sync'});
+    }catch(e){}
+  }
+  return voltaram;
+}
+
+const TELAS_AO_VIVO={
+  dashboard:'renderDashboard', clientes:'renderClientes', produtos:'renderProdutos',
+  impressoras:'renderEquipamentos', contratos:'renderContratos', parque:'renderParque',
+  manutencao:'renderOs', financeiro:'renderFinanceiro', relatorios:'renderRelatorios',
+  usuarios:'renderUsuarios', auditoria:'renderAuditoria'
+};
+const INTERVALO_REDESENHO=4000;
+let ultimoRedesenho=0;
+// v7.0.5 — REDESENHO PENDENTE: se a tela não pôde ser atualizada na hora (pessoa
+// digitando, modal aberto), a mudança NÃO se perde: fica marcada como pendente e
+// é aplicada na primeira brecha (a cada batimento, ao clicar/sair de um campo, ao
+// voltar para a janela). Antes, o redesenho recusado era simplesmente perdido —
+// porque o dado já fica marcado como recebido, e a próxima leitura não o
+// considera novidade de novo. Era isso que deixava a tela velha "de vez".
+let redesenhoPendente=false;
+function temRedesenhoPendente(){return redesenhoPendente;}
+function tentarRedesenhoPendente(){
+  if(!redesenhoPendente)return false;
+  if(!redesenharTelaAtual())return false;
+  redesenhoPendente=false;
+  return true;
+}
+// Regra pura (testável): recebe o retrato da tela e devolve sim/não.
+function podeRedesenharSync(d){
+  d=d||{};
+  if(d.hidden)return false;
+  if(d.cargaAberta)return false;   // v7.0.2 — durante a carga, nada de pedaços na tela
+  if(d.modalAberto)return false;
+  if(d.focoEmCampo)return false;
+  if(!d.podeRenderizar)return false;
+  if(Number(d.agora)-Number(d.ultimo||0)<INTERVALO_REDESENHO)return false;
+  return true;
+}
+function telaDaFrente(){
+  try{
+    const v=document.querySelector('.view:not(.hidden)');
+    if(v&&v.id&&v.id.indexOf('view-')===0)return v.id.slice(5);
+  }catch(e){}
+  return '';
+}
+function redesenharTelaAtual(){
+  if(typeof document==='undefined')return false;
+  const tela=telaDaFrente();
+  const render=TELAS_AO_VIVO[tela];
+  const mr=document.getElementById('modal-root');
+  const a=document.activeElement;
+  const decisao=podeRedesenharSync({
+    hidden:!!document.hidden,
+    cargaAberta:cargaAberta,
+    modalAberto:!!(mr&&!mr.classList.contains('hidden')),
+    // v7.0.5 — ARMADILHA QUE TRAVAVA A TELA: o teste incluía BUTTON. Depois de
+    // clicar em qualquer menu, o foco fica NO BOTÃO — e a partir daí o redesenho
+    // automático era recusado para sempre. Como a mudança já fica marcada como
+    // recebida, ela nunca mais era considerada "novidade": a lista ficava velha
+    // de vez. Agora só campo de digitação (input/textarea/select) e área
+    // editável seguram o redesenho — botão não.
+    focoEmCampo:!!(a&&a!==document.body&&(/INPUT|TEXTAREA|SELECT/.test(a.tagName||'')||a.isContentEditable)),
+    podeRenderizar:!!(render&&typeof window[render]==='function'),
+    ultimo:ultimoRedesenho, agora:Date.now()
+  });
+  if(!decisao)return false;
+  ultimoRedesenho=Date.now();
+  try{ window[render](); }catch(e){}
+  // v7.0.5 — o painel do contrato (onde ficam as impressoras daquele contrato) é
+  // separado da lista: se estiver aberto, ele também se atualiza.
+  try{
+    const box=document.getElementById('contrato-detail');
+    if(box&&!box.classList.contains('hidden')&&typeof window.openContratoDetail==='function'){
+      const m=/openModal\('contrato','([^']+)'\)/.exec(box.innerHTML||'');
+      if(m&&m[1])window.openContratoDetail(m[1]);
+    }
+  }catch(e){}
+  return true;
+}
+window.DIGICOPY_CLOUD_SYNC={tick,info,estadoDetalhado,modoSoNuvem,definirSoNuvem,soltarCopiaLocal,infoSoNuvem,nuvemTemTudo,baixarTudoDaNuvem,ehLimiteDiario,recadoDoLimite,viradaDoLimite,resetCloudOnly,publishLocalToCloud,manterLocalSemEnviar,analyzeDuplicateClients,mergeDuplicateClients,duplicateClientGroups,decideReinstallGuard,localBusinessCount,listLocalOnlyKeys,hash,clean,definitions:DEFINITIONS,definicoes,podeExcluir:e=>PODE_EXCLUIR.has(e),devolverSumidos,varrerDemonstracao,ehLixoDeDemonstracao,marcarIntencaoDeExcluir,houveIntencaoDeExcluir,vigiarExclusoes,podeRedesenharSync,redesenharTelaAtual,telasAoVivo:TELAS_AO_VIVO,cargaNuvemLigada:()=>cargaAberta,mostrarCargaNuvem,temDonoHumano,recuperarAutomatico,recuperarDasFotosLocais,listarExcluidosDaNuvem,canalInstantaneo:()=>canalInstantaneoParado,temRedesenhoPendente};
 
 // O vigia das exclusões entra antes de tudo: ele não depende de tela.
 vigiarExclusoes();
@@ -999,8 +1388,14 @@ try{
     window.saveDB.__cfWrapped=true;
   }
 }catch(e){}
-try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>10000)schedule(250);});}catch(e){}
-try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>10000)schedule(250);});}catch(e){}
+// v7.0.3 — ao clicar de volta na janela (ou trazê-la para a frente), procura
+// novidade NA HORA: antes esperava 10 s e, com o ritmo antigo, a pessoa podia
+// ficar olhando uma tela velha. Agora o intervalo de tolerância é curto (1 s).
+try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>1000)schedule(200);});}catch(e){}
+// v7.0.5 — brechas do dia a dia para aplicar o redesenho pendente
+try{document.addEventListener('click',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},400);},true);}catch(e){}
+try{document.addEventListener('focusout',()=>{setTimeout(()=>{try{tentarRedesenhoPendente();}catch(e){}},250);},true);}catch(e){}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>1000)schedule(200);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
 aplicarSoNuvem();
 // A tela abre antes de a nuvem responder. Quando a base chega (e a tela estava
@@ -1018,6 +1413,12 @@ async function hidratarTela(){
     }
   }catch(e){}
 }
-if(authorized()){ schedule(1200); setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600); } else scheduleHeartbeat();
+if(authorized()){
+  schedule(1200);
+  setTimeout(()=>{ try{hidratarTela();}catch(e){} },2600);
+  // v7.0.4 — canal do aviso instantâneo + a recuperação do que foi apagado
+  setTimeout(()=>{ try{canalInstantaneo();}catch(e){} },1500);
+  setTimeout(()=>{ try{recuperarAutomatico();}catch(e){} },4000);
+} else scheduleHeartbeat();
 console.log('[DIGICOPY] sincronização Cloudflare incremental carregada');
 })();

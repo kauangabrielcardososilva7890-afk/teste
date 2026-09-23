@@ -20,7 +20,18 @@ function ler(p){ return fs.readFileSync(p, 'utf8'); }
 const VERSAO_APP = JSON.parse(ler('package.json')).version;
 
 console.log('\n== v6.1.4 rodada 22/09 nº3 ==');
-ok(VERSAO_APP === '6.1.10', 'a versão do app acompanha a publicação (é a versão desta leva)');
+// AUDITORIA 23/09/2026 — este assert fixava a versão escrita à mão ('6.1.10') e
+// por isso morria a cada troca de versão. Agora ele confere o que interessa de
+// verdade: que package.json, o index.html do PC e o do celular carregam a MESMA
+// versão. Continua pegando o defeito real (versão dessincronizada) e não precisa
+// mais ser reescrito a cada publicação.
+const indexHtml = ler('index.html');
+const indexMob = ler('mobile/www/index.html');
+ok(/^\d+\.\d+\.\d+$/.test(VERSAO_APP), 'a versão do app é um número de versão válido (v' + VERSAO_APP + ')');
+ok(indexHtml.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0,
+   'o index.html carrega a MESMA versão do package.json (v' + VERSAO_APP + ')');
+ok(indexMob.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0,
+   'a cópia do celular também acompanha a versão (v' + VERSAO_APP + ')');
 
 // ── 1. NUVEM: conectou = sincroniza, sem escolha e sem susto ────────────────
 console.log('\n== NUVEM: conectou, sincroniza (fim da trava) ==');
