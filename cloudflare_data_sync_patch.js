@@ -25,8 +25,20 @@ const PUSH_BATCH=10;
 // escondida — o navegador estrangula temporizador de aba oculta, então pedir
 // 15 s lá não adiantaria e só gastaria o que não precisa. Cada rodada continua
 // sendo UMA consulta incremental por cursor (barata), não uma varredura.
-const HEARTBEAT_MS=15000;
-const HEARTBEAT_OCULTO_MS=120000;
+// v7.0.3 (23/09/2026) — "ainda demora de chegar, dá pra deixar instantâneo?"
+// SIM: com a janela à vista, o motor procura novidade a cada 3 SEGUNDOS. É
+// barato de propósito: cada rodada é UMA consulta incremental por cursor (não
+// baixa a base de novo), só lê (não gasta o contador de gravação do dia) e o
+// plano em uso tem teto de 25 BILHÕES de leituras por mês — 3s equivale a ~20
+// consultas por minuto por PC, muito abaixo de qualquer limite.
+// Com a janela escondida (minimizada/atrás de outra) continua consultando, só
+// que a cada 15 s: o navegador estrangula temporizador de aba oculta e não faz
+// sentido brigar com ele. Ao voltar para a janela, a consulta sai na hora
+// (o gatilho de foco abaixo pede na hora).
+// Nada disso substitui a base inteira nem muda o caminho dos dados: continua
+// local-first e incremental, como manda a regra 28 das REGRAS_PERMANENTES.
+const HEARTBEAT_MS=3000;
+const HEARTBEAT_OCULTO_MS=15000;
 
 // Listas com formato especial. Todo o resto do banco entra sozinho pela
 // definicoes(): antes a nuvem só levava estas 19 listas e tudo o que estava
@@ -418,24 +430,32 @@ async function reconcileFirstAuthorizedDevice(beforeKeys){
 // foi — é o que o teste do motor confere).
 let cargaPedida=false;
 function pedirCarga(v){cargaPedida=!!v;}
-async function pullAll(){
-  const cargaCompleta=cargaPedida;cargaPedida=false;
+async function pullAll(opcoes){
+  const silencioso=!!(opcoes&&opcoes.silencioso);
+  const cargaCompleta=silencioso?false:cargaPedida;cargaPedida=false;
   const call=api();if(!call)throw new Error('API Cloudflare não carregada.');
   let changed=false,pages=0;
   // v7.0.2 — página maior: menos idas e voltas para trazer a base inteira.
   // (O Worker limita; se ele ainda estiver com o teto antigo, vem 500 e nada quebra.)
   const POR_PAGINA=1000;
-  if(cargaCompleta)mostrarCargaNuvem(true,'conectando…');
+  // v7.0.3 — ORDEM DO DONO: "de mostrar dados quero NADA que envolva eu fazer
+  // alguma coisa, só quero que mostre normal". O aviso de carga passa a aparecer
+  // SÓ quando este PC não tem base nenhuma (primeira vez/PC novo) — aí não há o
+  // que mostrar de qualquer forma. Com base já aqui, a leitura corre em silêncio
+  // e a tela se atualiza no fim, sem tela azul nenhuma.
+  const baseVazia=(typeof db==='undefined'||!db)?true:(localBusinessCount()===0);
+  const comAviso=cargaCompleta&&baseVazia;
+  if(comAviso)mostrarCargaNuvem(true,'conectando…');
   try{
   do{
     const data=await comPaciencia(()=>call('/v1/changes?cursor='+encodeURIComponent(Number(state.cursor)||0)+'&limit='+POR_PAGINA,{method:'GET'}));
     for(const item of (data.changes||[])){if(applyRemote(item))changed=true;}
     state.cursor=Number(data.nextCursor)||Number(state.cursor)||0;
     pages++;
-    if(cargaCompleta){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
+    if(comAviso){cargaItens+=(data.changes||[]).length;mostrarCargaNuvem(true,cargaItens.toLocaleString('pt-BR')+' registros trazidos…');}
     if(!data.hasMore)break;
   }while(pages<100);
-  }finally{ if(cargaCompleta)mostrarCargaNuvem(false); }
+  }finally{ if(comAviso)mostrarCargaNuvem(false); }
   state.initialPull=true;
   if(changed){
     applying=true;
@@ -695,8 +715,37 @@ function indicator(ok,text){
   btn.title=text||'Nuvem DIGICOPY';btn.dataset.cloud=ok?'ok':'error';
   const icon=btn.querySelector('i');if(icon)icon.style.color=ok?'#16a34a':'#dc2626';
 }
+// v7.0.3 — LEITURA EM QUALQUER ABA VISÍVEL.
+// O motor só deixava a "aba líder" (uma aba por navegador) puxar novidades — e
+// isso evita trabalho dobrado. O problema: se quem segurava a liderança era uma
+// aba esquecida em segundo plano, ela continuava líder para sempre e a aba que
+// a pessoa estava OLHANDO não puxava nada. Resultado: tela velha, sem erro, sem
+// aviso — e é uma das explicações do "demora de chegar".
+// Agora: aba escondida e não-líder não faz nada; aba VISÍVEL puxa (só leitura).
+// Quem ENVIA continua sendo só a líder (uma remessa por navegador, como antes).
+async function tickSohLeitura(reason){
+  if(typeof document==='undefined'||document.hidden)return false;
+  busy=true;lastTick=Date.now();
+  const geracao=estadoGeracao;
+  try{
+    if(window.DIGICOPY_DB_READY)await window.DIGICOPY_DB_READY;
+    const mudou=await pullAll({silencioso:true});
+    if(geracao!==estadoGeracao)return false;
+    if(mudou)redesenharTelaAtual();
+    indicator(true,'Nuvem sincronizada • '+new Date().toLocaleTimeString('pt-BR'));
+    return true;
+  }catch(e){
+    lastError=e&&e.message?e.message:String(e);
+    return false;
+  }finally{busy=false;scheduleHeartbeat();}
+}
 async function tick(reason){
-  if(state.paused||busy||!authorized()||!leader())return false;
+  if(state.paused||busy||!authorized())return false;
+  if(!leader()){
+    // não é a líder: se a janela está à vista, puxa; se está escondida, espera
+    if(typeof document!=='undefined'&&document.hidden)return false;
+    return await tickSohLeitura(reason);
+  }
   busy=true;lastTick=Date.now();
   const geracao=estadoGeracao;
   const trocou=()=>geracao!==estadoGeracao;   // a decisão mudou no meio? então para
@@ -1129,8 +1178,11 @@ try{
     window.saveDB.__cfWrapped=true;
   }
 }catch(e){}
-try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>10000)schedule(250);});}catch(e){}
-try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>10000)schedule(250);});}catch(e){}
+// v7.0.3 — ao clicar de volta na janela (ou trazê-la para a frente), procura
+// novidade NA HORA: antes esperava 10 s e, com o ritmo antigo, a pessoa podia
+// ficar olhando uma tela velha. Agora o intervalo de tolerância é curto (1 s).
+try{window.addEventListener('focus',()=>{if(Date.now()-lastTick>1000)schedule(200);});}catch(e){}
+try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastTick>1000)schedule(200);});}catch(e){}
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
 aplicarSoNuvem();
 // A tela abre antes de a nuvem responder. Quando a base chega (e a tela estava

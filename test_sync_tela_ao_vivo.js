@@ -32,13 +32,27 @@ const S = window.DIGICOPY_CLOUD_SYNC;
 
 console.log('== 1) A ESPERA ==');
 ok('motor exportado', !!S && typeof S.tick === 'function');
-ok('a espera caiu de 60s para 15s com a janela à vista', /HEARTBEAT_MS=15000/.test(code));
-ok('com a janela escondida continua consultando (mais devagar, 2 min)',
-   /HEARTBEAT_OCULTO_MS=120000/.test(code) && /const base=document\.hidden\?HEARTBEAT_OCULTO_MS:HEARTBEAT_MS/.test(code));
+ok('janela à vista: procura novidade a cada 3 segundos (quase instantâneo)', /HEARTBEAT_MS=3000/.test(code));
+ok('com a janela escondida continua consultando (a cada 15s)',
+   /HEARTBEAT_OCULTO_MS=15000/.test(code) && /const base=document\.hidden\?HEARTBEAT_OCULTO_MS:HEARTBEAT_MS/.test(code));
+ok('ao clicar de volta na janela, procura NA HORA (tolerância de 1s)',
+   /Date\.now\(\)-lastTick>1000/.test(code) && !/lastTick>10000/.test(code));
+ok('continua sendo UMA consulta incremental por rodada (não baixa a base toda)',
+   /\/v1\/changes\?cursor=/.test(code) && /if\(!data\.hasMore\)break;/.test(code));
 ok('não existe mais o "reagenda sem consultar" que parava o PC escondido',
    !/if\(!document\.hidden\)tick\('heartbeat'\);else scheduleHeartbeat\(\)/.test(code));
-ok('o carência do foco continua (não consulta duas vezes em 10s)',
-   /Date\.now\(\)-lastTick>10000/.test(code));
+ok('o carência do foco continua (não consulta em rajada ao alternar janelas)',
+   /Date\.now\(\)-lastTick>1000/.test(code));
+
+console.log('\n== 1b) A ABA ESQUECIDA NÃO SEGURA MAIS A ATUALIZAÇÃO ==');
+ok('existe o caminho de leitura para aba visível', /async function tickSohLeitura\(reason\)/.test(code));
+ok('aba escondida e não-líder não gasta consulta',
+   /if\(!leader\(\)\)\{[\s\S]{0,200}document\.hidden\)return false;/.test(code));
+ok('o caminho de leitura não envia remessa (quem envia é só a líder)',
+   /tickSohLeitura[\s\S]{0,900}?pullAll\(\{silencioso:true\}\)/.test(code) &&
+   !/tickSohLeitura[\s\S]{0,900}?pushOutbox\(/.test(code));
+ok('a leitura de aba visível não faz trabalho de líder (não mexe em exclusões)',
+   !/tickSohLeitura[\s\S]{0,900}?varrerDemonstracao/.test(code));
 
 console.log('\n== 2) A TELA AO VIVO (regra pura) ==');
 ok('regra exportada para teste', typeof S.podeRedesenharSync === 'function');
@@ -59,6 +73,13 @@ ok('página maior por consulta (menos idas e voltas)', /const POR_PAGINA=1000/.t
 ok('o aviso de carga existe e cobre a tela', /id='digicopy-carga-nuvem'/.test(code) && /Baixando os dados da nuvem/.test(code));
 ok('o aviso mostra a contagem do que já veio', /registros trazidos/.test(code));
 ok('a carga completa é ligada na primeira sincronização', /pedirCarga\(!state\.initialPull\|\|reason==='baixar-tudo-da-nuvem'\)/.test(code));
+// v7.0.3 — ordem do dono: "de mostrar dados quero NADA que envolva eu fazer
+// alguma coisa, só quero que mostre normal". O aviso de carga só aparece quando
+// este PC NÃO tem base (aí não há o que mostrar); com base, a leitura é silenciosa.
+ok('o aviso de carga NÃO aparece quando já existe base neste PC',
+   /const baseVazia=/.test(code) && /const comAviso=cargaCompleta&&baseVazia;/.test(code));
+ok('com base aqui, a atualização chega sem tela nenhuma na frente',
+   /tickSohLeitura[\s\S]{0,900}?silencioso:true/.test(code));
 ok('o aviso some no fim e também se der erro (ninguém fica preso)',
    /mostrarCargaNuvem\(false\);\s*\/\/ nunca deixar/.test(code) && /finally\{if\(cargaAberta\)mostrarCargaNuvem\(false\)/.test(code));
 

@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v7.0.2** (rodada 23/09 nº7 — branch `arena/01a0cf4a-teste`)  
+**Última versão:** **v7.0.3** (rodada 23/09 nº8 — branch `arena/01a0cf4a-teste`)  
 
 ---
 
@@ -287,6 +287,80 @@ O bundle voltou a 225 arquivos (a recuperação entrou dentro do patch de backup
 **Passos dele (os que dependem da máquina dele):** atualizar o programa nos PCs;
 rodar `atualizar_motor_nuvem.cmd` (leva o freio/cota e a página de 1000); usar o botão
 de recuperação (precisa ser no aparelho ADMIN); trocar as senhas; e confirmar o rodapé.
+
+## 23/09/2026 (cont.) — RODADA 8 · SINCRONIZAÇÃO DE 3 EM 3 SEGUNDOS E O FIM DA TELA NA FRENTE
+
+**Pedido dele:** "ainda demora de chegar, dá pra deixar instantâneo não?" e "de mostrar dados
+quero NADA que envolva eu fazer alguma coisa, só quero que mostre normal".
+
+### 1) POR QUE AINDA DEMORAVA — a aba esquecida (causa nova, achada agora)
+
+O motor só deixava **uma aba** (a "aba líder", por navegador) puxar novidades — de propósito,
+para não fazer o trabalho duas vezes. O furo: se quem segurava a liderança era uma **aba
+esquecida em segundo plano** (ou uma janela deixada atrás), ela continuava líder para sempre e
+a **aba que a pessoa estava olhando não puxava nada**. Resultado: tela velha, sem erro e sem
+aviso — e é exatamente a sensação de "demora de chegar".
+
+**Corrigido:** agora **qualquer aba visível puxa** novidade (caminho novo `tickSohLeitura`,
+só leitura); **quem envia remessa continua sendo só a líder** (uma remessa por navegador, como
+antes), e a aba visível não faz trabalho de líder (não mexe em exclusões/faxina).
+
+### 2) O RITMO: 3 SEGUNDOS
+
+| Situação | Antes | Agora |
+|---|---|---|
+| Janela à vista | 60 s (v7.0.0) → 15 s (v7.0.1) | **3 s** |
+| Janela escondida | parava | 15 s |
+| Clicar de volta na janela | esperava 10 s | **consulta na hora** (tolerância 1 s) |
+
+Cada rodada continua sendo **UMA consulta incremental por cursor** — não baixa a base de novo,
+não grava nada e **não gasta o contador de gravação do dia** (o medidor de leitura acumula na
+memória do Worker). Ordem de grandeza: 3 s ≈ 20 consultas/min por PC ≈ 12 mil por dia útil de
+10 h. O plano em uso tem 25 **bilhões** de leituras/mês e 10 milhões de requisições/mês
+incluídas — fica na casa de 1% do incluído. Regra 28 das REGRAS_PERMANENTES respeitada:
+continua **local-first, incremental, sem substituir a base inteira**.
+
+### 3) NADA NA FRENTE DA TELA (ordem dele)
+
+O aviso de carga (v7.0.2) aparecia em qualquer primeira leitura. Agora ele aparece **só quando
+este PC não tem base nenhuma** — aí não existe o que mostrar de qualquer forma. **Com base já
+aqui, a leitura corre em silêncio e a tela se atualiza sozinha no fim.** Nada para clicar,
+nada para esperar, nada na frente.
+
+### 4) O QUE EU CONFERI PARA NÃO QUEBRAR (pedido dele: "pensa nos outros menus, principalmente a nuvem")
+
+- **Índice da consulta:** `changes.seq` é `INTEGER PRIMARY KEY` (= rowid, busca por índice) e
+  ainda tem `idx_changes_cursor`. Ou seja: a consulta **não degrada** conforme a tabela cresce.
+- **Contagem de uso (`somarUso`):** grava numa tabela por dia (`uso_diario`, chave `dia`) —
+  **não varre** a tabela de mudanças. O freio preventivo é só de **gravação**; a leitura
+  acumula na memória e desce junto da próxima gravação ou a cada 15 min. **Consultar de 3 em
+  3 s não aumenta gravação nenhuma.**
+- **Medidor x visibilidade:** o medidor estima 60 leituras por consulta. Com o ritmo novo, esse
+  número **vai parecer maior na tela de gasto** (~700 mil/dia de estimativa, contra teto de
+  25 bilhões/mês). É estimativa conservadora, não gasto real — registrado aqui para não virar
+  susto.
+- **Orçamento por rodada:** `PUSH_BATCH=10` e `comPaciencia` (esperas 900 ms → 12 s em 503/429)
+  **não foram tocados** — era o que segurava a sobrecarga e os testes travam esses valores.
+- **Testes que travam o motor:** `test_cloudflare_data_sync.js` (39 verificações),
+  `test_sync_tela_ao_vivo.js` (**44**), `test_sync_quota_guard.js` (5 asserts de contagem do
+  dia) — todos verdes depois da mudança.
+
+### 5) COMO CHEGAR AO INSTANTÂNEO DE VERDADE (opções, com o preço de cada uma)
+
+| Opção | Como funciona | Ganho | Custo/risco |
+|---|---|---|---|
+| A (feita agora) | consulta de 3 em 3 s, imediata ao focar | 0 a 3 s | nenhum; só funciona depois de atualizar os PCs |
+| B (próxima, se ele quiser) | **espera longa** ("long polling"): o Worker segura a consulta até ~20 s e responde **no instante** em que houver novidade | < 1 s | precisa de campo novo no Worker **com recuo automático** (se o Worker for antigo, cai no caminho A sozinho); consome mais CPU do Worker |
+| C | **Durable Object + WebSocket** (a nuvem empurra a novidade) | instantâneo real | mudança de arquitetura: binding novo, migração, mais um componente para manter; exige justificativa escrita e rodada própria — **não fazer no meio de conserto** |
+
+**Recomendação:** ficar com **A** agora (é o que dá para sentir hoje, sem risco) e avaliar **B**
+depois de o motor da nuvem ser publicado com o `atualizar_motor_nuvem.cmd`.
+
+### 6) PORTÕES
+
+Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`; `playwright`/e2e não está
+instalado neste ambiente, então **não foi rodado** — registrado para não passar por testado).
+Bundle: 225 scripts, sha256 do corpo `...`; carimbo novo em `?v=7.0.3-...`.
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 

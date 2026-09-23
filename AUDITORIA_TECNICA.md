@@ -878,3 +878,74 @@ proteção do Worker (acesso pela internet) permanece. Nada foi alterado.
 
 Versão **v7.0.2**. Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`).
 Bundle: 225 scripts, sha256 `9bba7e4cd0187252`.
+
+## 17. RODADA 8 — SINCRONIZAÇÃO DE 3 EM 3 SEGUNDOS E O FIM DA TELA NA FRENTE (23/09/2026)
+
+### 17.1 ALTO — Bug — a "aba líder" esquecida segurava a atualização
+
+**Onde:** `cloudflare_data_sync_patch.js` — guarda de liderança (`leader()`, constante
+`LEADER_KEY`) no início de `tick()`: `if(state.paused||busy||!authorized()||!leader())return false;`.
+
+**Evidência do defeito:** a liderança é um aluguel em `localStorage` (`{id, until: now+90s}`)
+renovado a cada rodada pelo próprio dono. Uma aba **escondida mas viva** continua renovando o
+aluguel indefinidamente. Como **só a líder puxava** novidades, a aba **visível** que o dono
+estava olhando recebia `return false` a cada rodada e **nunca buscava** — e as duas abas têm
+`db` em memória próprio (a leitura da aba escondida não aparece na tela da aba visível).
+Efeito para o dono: tela velha, sem erro, sem aviso, "demora de chegar".
+
+**Correção:** caminho `tickSohLeitura(reason)` — **qualquer aba visível puxa** (apenas leitura);
+a aba visível não faz trabalho de líder (não envia remessa, não roda `varrerDemonstracao` nem
+`devolverSumidos`); **aba escondida e não-líder não gasta consulta**. A liderança continua valendo
+para o que **escreve** (uma remessa por navegador) — o motivo original do mecanismo.
+
+### 17.2 ALTO — Performance — ritmo da consulta: 3 s
+
+| Situação | v7.0.0 | v7.0.1 | v7.0.3 |
+|---|---|---|---|
+| Janela à vista | 60 s | 15 s | **3 s** |
+| Janela escondida | não consultava | 120 s | 15 s |
+| Ao focar a janela | 10 s de tolerância | 10 s | **na hora** (1 s) |
+
+**Custo verificado no código (não presumido):**
+- `/v1/changes` é **uma** consulta incremental por cursor; `changes.seq` é `INTEGER PRIMARY KEY`
+  (rowid) com `idx_changes_cursor` — busca por índice, **não degrada** com o crescimento.
+- `somarUso(env, 0, 60, ctx)` só soma **em memória** (`__USO_PEND`) e desce ao banco junto de uma
+  gravação real ou a cada 15 min — ou seja, **consultar mais não gera gravação** e não aproxima
+  o freio de cota.
+- Ordem de grandeza: 3 s ≈ 20 consultas/min/PC ≈ 12 mil/dia útil. Plano pago: 25 bi leituras/mês,
+  10 mi requisições/mês. O medidor **estima** 60 leituras por consulta — o número exibido na tela
+  de uso vai crescer (estimativa conservadora, não gasto real); documentado para não virar susto.
+- `PUSH_BATCH=10` e a escada de espera `comPaciencia` (900 ms→12 s) **intocados**
+  (`test_cloudflare_data_sync.js` trava os dois).
+- Regra 28 (REGRAS_PERMANENTES): segue **local-first, incremental**; nada de substituir a base
+  inteira nem instalar atualização fora do fluxo autorizado.
+
+### 17.3 MÉDIO — Manutenção — o aviso de carga aparecia quando não precisava
+
+Ordem do dono: "de mostrar dados quero NADA que envolva eu fazer alguma coisa, só quero que
+mostre normal". O aviso de carga completa (v7.0.2) foi restringido: **só aparece quando este PC
+não tem base** (`localBusinessCount()===0`) — aí não há o que mostrar de qualquer forma. Com base
+existente, a leitura corre **em silêncio** e a tela se atualiza no fim.
+
+### 17.4 Opções registradas para "instantâneo de verdade" (decisão pendente do dono)
+
+| Opção | Mecanismo | Ganho | Custo/risco |
+|---|---|---|---|
+| A (aplicada) | consulta 3 s + imediata no foco | 0–3 s | nenhum |
+| B | long polling no Worker (segura a consulta ~20 s e responde na hora em que houver novidade) | < 1 s | exige **recuo automático** para o Worker antigo e mais CPU; só entra depois do deploy do motor |
+| C | Durable Object + WebSocket (push real) | instantâneo | **mudança de arquitetura** (binding, migração, componente novo): exige justificativa escrita e rodada própria |
+
+Recomendação técnica: manter **A** agora; avaliar **B** depois que o motor da nuvem for publicado
+(ele ainda não rodou `atualizar_motor_nuvem.cmd`). Nada de **C** no meio de conserto.
+
+### 17.5 Resumo da rodada
+
+| # | Gravidade | Tipo | Item | Estado |
+|---|-----------|------|------|--------|
+| 17.1 | ALTO | Bug | aba líder esquecida impedia a aba visível de atualizar | CORRIGIDO + travado |
+| 17.2 | ALTO | Performance | ritmo 60 s → 3 s; foco consulta na hora | CORRIGIDO + travado |
+| 17.3 | MÉDIO | Manutenção | aviso de carga só em PC sem base | CORRIGIDO |
+
+Versão **v7.0.3**. Suíte: **207 passaram, 0 falharam** (4 pulam por falta de `jsdom`;
+**e2e/playwright não está instalado neste ambiente — não foi rodado**).
+Bundle: 225 scripts, carimbo `?v=7.0.3-f9dec142dbc5`.
