@@ -2440,7 +2440,12 @@ window.addEventListener('DOMContentLoaded',function(){
     const btnCopy=document.getElementById('rawgh-copy');
     if(btnCopy) btnCopy.onclick=function(){
       try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){ prompt('Copie o link oficial:', urlOficial); }
+      catch(e){
+        // Auditoria: aqui era prompt nativo, que no .exe lança
+        // "prompt() is not supported" — o botão de copiar ficava mudo.
+        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
+        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
+      }
     };
     const btnClose=document.getElementById('rawgh-close');
     if(btnClose) btnClose.onclick=function(){ bar.remove(); };

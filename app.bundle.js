@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 52c372ace67dbf7f
+ * scripts: 225 | sha256: 3234d8acb5b9489e
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -2692,7 +2692,12 @@ window.addEventListener('DOMContentLoaded',function(){
     const btnCopy=document.getElementById('rawgh-copy');
     if(btnCopy) btnCopy.onclick=function(){
       try{ navigator.clipboard.writeText(urlOficial); if(typeof toast==='function') toast('Link oficial copiado! Abra em uma nova aba.','success'); }
-      catch(e){ prompt('Copie o link oficial:', urlOficial); }
+      catch(e){
+        // Auditoria: aqui era prompt nativo, que no .exe lança
+        // "prompt() is not supported" — o botão de copiar ficava mudo.
+        if(typeof window.mostrarTextoCopiar==='function') window.mostrarTextoCopiar('Copie o link oficial', urlOficial);
+        else if(typeof toast==='function') toast('Link oficial: '+urlOficial,'info');
+      }
     };
     const btnClose=document.getElementById('rawgh-close');
     if(btnClose) btnClose.onclick=function(){ bar.remove(); };
@@ -20238,6 +20243,114 @@ try{
     }
   }, 800);
 
+  // ── CAMPO DE TEXTO DO SISTEMA (auditoria) ─────────────────────────────────
+  // BUG REAL achado na auditoria: o Electron NÃO implementa window.prompt — a
+  // função EXISTE, mas lança "prompt() is not supported" quando chamada.
+  // Por isso a guarda `typeof prompt === 'function'` espalhada pelo sistema não
+  // protegia nada: no .exe ela dá true e a chamada estoura. Resultado: botão
+  // mudo (Ler status da impressora, Editar notas do portal, senha do
+  // certificado), sem mensagem nenhuma — proibido pela regra "nenhum botão
+  // pode ficar morto ou silencioso".
+  //
+  // Esta é a versão do sistema do prompt, no mesmo estilo dos outros popups:
+  // devolve Promise com o texto digitado, ou null se o usuário desistir.
+  // Nunca usa o prompt nativo (regra: nunca usar prompt/confirm/alert nativos).
+  // Nome próprio para não colidir com o nfxPedirTexto da Central Fiscal.
+  window.pedirTextoSistema = function(msg, op){
+    op = op || {};
+    return new Promise(resolve=>{
+      const tid='texto-system-modal-'+Date.now();
+      const div=document.createElement('div');
+      div.id=tid;
+      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      const escTxt=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const valorInicial = (op.valor==null) ? '' : String(op.valor);
+      div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:460px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid #e2e8f0">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+        +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+escTxt(op.titulo||'Digite')+'</p>'
+        +'<button id="'+tid+'-x" title="Fechar" style="font-size:20px;line-height:1;padding:2px 9px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;color:#64748b">×</button></div>'
+        +'<p style="font-size:13px;font-weight:500;color:#334155;margin:10px 0 0;line-height:1.5;white-space:pre-wrap">'+escTxt(msg)+'</p>'
+        +'<input id="'+tid+'-in" '+(op.mascara?'type="password" ':'type="text" ')+'value="'+escTxt(valorInicial)+'" style="margin-top:12px;width:100%;height:42px;border:1px solid #cbd5e1;border-radius:11px;padding:0 12px;font-size:14px;box-sizing:border-box">'
+        +'<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">'
+        +'<button id="'+tid+'-cancel" style="height:42px;padding:0 22px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-size:13px;font-weight:700;cursor:pointer">Cancelar</button>'
+        +'<button id="'+tid+'-ok" style="height:42px;padding:0 24px;border-radius:11px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">Confirmar</button>'
+        +'</div></div>';
+      const close=(val)=>{ div.remove(); document.removeEventListener('keydown', onKey); resolve(val); };
+      // Igual ao prompt nativo: texto vazio é resposta válida (string vazia),
+      // quem chama decide o que fazer com ela.
+      const confirmar=()=>{
+        const el=div.querySelector('#'+tid+'-in');
+        close(el ? String(el.value) : '');
+      };
+      const onKey=(e)=>{ if(e.key==='Escape') close(null); if(e.key==='Enter') confirmar(); };
+      document.addEventListener('keydown', onKey);
+      div.addEventListener('click', (e)=>{ if(e.target===div) close(null); });
+      document.body.appendChild(div);
+      const ok=div.querySelector('#'+tid+'-ok'); if(ok) ok.onclick=confirmar;
+      const cancel=div.querySelector('#'+tid+'-cancel'); if(cancel) cancel.onclick=()=>close(null);
+      const x=div.querySelector('#'+tid+'-x'); if(x) x.onclick=()=>close(null);
+      const inp=div.querySelector('#'+tid+'-in'); if(inp) inp.focus();
+    });
+  };
+
+  // Mostra um texto para o usuário copiar (usado quando a área de transferência
+  // não está disponível). Antes esses pontos caíam no prompt nativo, que
+  // estourava no .exe e deixava o botão mudo.
+  window.mostrarTextoCopiar = function(titulo, texto){
+    return new Promise(resolve=>{
+      const tid='copia-system-modal-'+Date.now();
+      const div=document.createElement('div');
+      div.id=tid;
+      div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45)';
+      const escTxt=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      div.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px 24px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.35);border:1px solid #e2e8f0">'
+        +'<p style="font-size:15px;font-weight:800;color:#0f172a;margin:0">'+escTxt(titulo||'Copie o texto')+'</p>'
+        +'<textarea id="'+tid+'-tx" readonly style="margin-top:12px;width:100%;height:96px;border:1px solid #cbd5e1;border-radius:11px;padding:8px 10px;font-size:12.5px;box-sizing:border-box;resize:vertical">'+escTxt(texto)+'</textarea>'
+        +'<div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">'
+        +'<button id="'+tid+'-cp" style="height:42px;padding:0 20px;border-radius:11px;background:#fff;border:1px solid #cbd5e1;color:#334155;font-size:13px;font-weight:700;cursor:pointer">Copiar</button>'
+        +'<button id="'+tid+'-ok" style="height:42px;padding:0 24px;border-radius:11px;background:#0a1e8a;color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer">Fechar</button>'
+        +'</div></div>';
+      const close=()=>{ div.remove(); document.removeEventListener('keydown', onKey); resolve(undefined); };
+      const onKey=(e)=>{ if(e.key==='Escape'||e.key==='Enter') close(); };
+      document.addEventListener('keydown', onKey);
+      div.addEventListener('click', (e)=>{ if(e.target===div) close(); });
+      document.body.appendChild(div);
+      const ok=div.querySelector('#'+tid+'-ok'); if(ok) ok.onclick=close;
+      const tx=div.querySelector('#'+tid+'-tx');
+      const cp=div.querySelector('#'+tid+'-cp');
+      if(cp) cp.onclick=()=>{
+        try{ if(tx){ tx.select(); document.execCommand('copy'); } }catch(e){}
+        close();
+      };
+      if(tx) tx.focus();
+    });
+  };
+
+  // ── REDE DE SEGURANÇA do prompt nativo ────────────────────────────────────
+  // Nenhum ponto do sistema deve usar prompt/confirm/alert nativos. Aqui o
+  // alert e o confirm já foram trocados; o prompt tinha ficado de fora. No .exe
+  // ele não existe de verdade (só existe a função que lança erro), então quem
+  // chamava perdia o fluxo inteiro em silêncio.
+  // Esta troca NUNCA lança: mostra o aviso do sistema e devolve null, para o
+  // fluxo continuar e o usuário ver o motivo em vez de um botão mudo.
+  // Fica registrado para o diagnóstico (npm run diag / log-erros.txt).
+  window.prompt = function(msg, valor){
+    try{
+      if(!window.__DIGICOPY_PROMPT_NATIVO){
+        window.__DIGICOPY_PROMPT_NATIVO=[];
+      }
+      const texto=String(msg==null?'':msg);
+      window.__DIGICOPY_PROMPT_NATIVO.push(texto.slice(0,200));
+      if(window.__DIGICOPY_PROMPT_NATIVO.length>50) window.__DIGICOPY_PROMPT_NATIVO.shift();
+      if(window.mostrarTextoCopiar && (valor!=null && String(valor)!=='')){
+        window.mostrarTextoCopiar('Aviso', texto+'\n\n'+String(valor));
+      }else if(window.lfbAlert){
+        window.lfbAlert(texto,'Aviso');
+      }
+    }catch(e){}
+    return null;
+  };
+
   console.log('[DIGICOPY] popup_sistema_patch v2 carregado - TODOS popups no estilo sistema, antigos removidos');
 })();
 
@@ -36773,7 +36886,12 @@ async function conferirValidadeAgora(){
     if(window.NFE_ASSINATURA_UI && typeof window.NFE_ASSINATURA_UI.pedirSenhaA1==='function'){
       senha=await window.NFE_ASSINATURA_UI.pedirSenhaA1();
     }else{
-      senha=(typeof prompt==='function')?prompt('Senha do certificado (não guardo — uso só pra ler a data):',''):null;
+      // Auditoria: o prompt nativo estourava no .exe (botão mudo). Agora usa o
+      // popup do sistema — e com máscara, que o prompt antigo não tinha
+      // (a senha do certificado aparecia em texto limpo na tela).
+      senha=(typeof window.pedirTextoSistema==='function')
+        ? await window.pedirTextoSistema('Uso a senha só para ler a data de validade do certificado — ela NÃO fica salva.',{titulo:'Senha do certificado',mascara:true})
+        : null;
     }
   }catch(e){ senha=null; }
   if(!senha) return; // desistiu, sem drama
@@ -36981,7 +37099,9 @@ async function lerStatusRede(parqueId){
   }
   var ip=String(eq.ip||eq.enderecoIp||'').trim();
   if(!ip){
-    var digitado=(typeof prompt==='function')?prompt('Qual o IP desta impressora na rede? (ex.: 192.168.0.50 — fica gravado no cadastro dela)',''):null;
+    var digitado=(typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('Informe o IP do equipamento (ex.: 192.168.0.50).\nFica gravado no cadastro desta impressora.',{titulo:'IP desta impressora na rede'})
+      : null;
     if(!digitado) return;
     digitado=digitado.trim();
     if(!/^\d{1,3}(\.\d{1,3}){3}$/.test(digitado)){ tn('IP não parece certo. Exemplo: 192.168.0.50','error'); return; }
@@ -40250,13 +40370,21 @@ function aplicarCardPublicarAtualizacao(){
     box.querySelectorAll('button[data-ac]').forEach(function(b){
       b.onclick=function(){
         var ac=b.getAttribute('data-ac'), v=b.getAttribute('data-v'), h=b.getAttribute('data-h');
-        var run=function(){
+        var run=async function(){
           var payload={action:ac, versao:v};
           if(ac==='ativar') payload.expiraHoras=Number(h)||0;
           if(ac==='editar'){
-            var notasN=(typeof prompt==='function')?prompt('Novas NOTAS da v'+v+':',''):null;
+            // Auditoria: antes usava prompt nativo, que no .exe lança
+            // "prompt() is not supported" — o botão ficava mudo. Agora pede no
+            // popup do sistema (Promise). Texto vazio = tirar o campo, igual
+            // antes; cancelar (null) também deixa vazio.
+            var notasN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Como a v'+v+' aparece no portal (deixe vazio para não ter notas).',{titulo:'Novas NOTAS da v'+v})
+              : null;
             if(notasN==null) return;
-            var tutN=(typeof prompt==='function')?prompt('Novo TUTORIAL (deixe vazio pra tirar):',''):null;
+            var tutN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Passo a passo mostrado ao cliente (deixe vazio para tirar).',{titulo:'Novo TUTORIAL da v'+v})
+              : null;
             payload.notas=notasN==null?'':notasN; payload.tutorial=tutN==null?'':tutN;
           }
           b.disabled=true; b.textContent='...';
@@ -44633,6 +44761,14 @@ try{
       window.abrirTelaOrcamento.__v52256modal = true;
     }
 
+    // Mostra o link para o usuário copiar quando a área de transferência não
+    // está disponível (antes era prompt nativo, que estoura no .exe).
+    function mostrarLinkOrcamento(link){
+      if(typeof window.mostrarTextoCopiar === 'function'){ window.mostrarTextoCopiar('Link do orçamento', link); return; }
+      if(typeof window.pedirTextoSistema === 'function'){ window.pedirTextoSistema('Copie o link abaixo.', {titulo:'Link do orçamento', valor:link}); return; }
+      if(typeof toast === 'function') toast('Link do orçamento: ' + link, 'info');
+    }
+
     // Função para copiar o link oficial do orçamento
     window.copiarLinkOrcamentoModal = function(id){
       var _db = getDb();
@@ -44652,10 +44788,12 @@ try{
             if(typeof toast === 'function') toast('Link do orçamento copiado com sucesso!', 'success');
           });
         } else {
-          prompt('Copie o link do orçamento:', link);
+          // Auditoria: era prompt nativo, que no .exe lança "prompt() is not
+          // supported" — o botão onde a cópia não está disponível ficava mudo.
+          mostrarLinkOrcamento(link);
         }
       }catch(e){
-        prompt('Copie o link do orçamento:', link);
+        mostrarLinkOrcamento(link);
       }
     };
 
@@ -51749,12 +51887,22 @@ function nfgBotaoAmbiente(){
   b.onclick=function(){ window.nfgAlternarAmbiente(); };
   central.insertBefore(b, central.children[1]||null);
 }
-window.nfgAlternarAmbiente=function(){
+window.nfgAlternarAmbiente=async function(){
   const amb=nfgAmbiente(db);
   const pode=(typeof window.usuarioPodeEmitirNfe==='function') ? window.usuarioPodeEmitirNfe() : false;
   if(amb==='homologacao'){
+    // NOTA DE AUDITORIA (prova de código morto): este botão antigo só nasce se
+    // existir #central-nfe-modal. Desde a v6.0.2 o abrirCentralNfe (embrulhado
+    // por último no autocura_empresa_central_nf_tela_patch.js) só chama
+    // navigateTo('central-nf') e nunca recria esse modal, então nfgBotaoAmbiente
+    // desiste na primeira linha. A proteção de produção que vale hoje é a da
+    // tela nova (nfxPedirTexto + "PRODUCAO"). Este caminho ficou aqui como
+    // histórico e NÃO foi removido (regra: não apagar código morto sem provar e
+    // testar). Só deixou de usar prompt nativo, que estourava no .exe.
     if(!pode){ if(typeof toast==='function') toast('Só usuário com permissão de emitir NF habilita produção','error'); return; }
-    const dig = (typeof window.prompt==='function') ? window.prompt('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null;
+    const dig = (typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO',{titulo:'Habilitar produção'})
+      : (typeof window.nfxPedirTexto==='function' ? await window.nfxPedirTexto('Habilitar produção','⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null);
     if(dig!=='PRODUCAO'){ if(dig!==null && typeof toast==='function') toast('Não habilitado — texto não confere','error'); return; }
     db.config=db.config||{}; db.config.nfAmbiente='producao';
     nfgAudit('ambiente->producao',{});
@@ -52036,8 +52184,15 @@ function nfxPedirSenha(){
   if(typeof window.nfxPedirTexto==='function'){
     return window.nfxPedirTexto('Senha do certificado A1','Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.', {mascara:true});
   }
-  const s=(typeof window.prompt==='function') ? window.prompt('Senha do certificado A1 (usada agora e NÃO fica salva):') : null;
-  return Promise.resolve(s||null);
+  // Auditoria: o fallback usava window.prompt, que no .exe lança
+  // "prompt() is not supported" — derrubava o fluxo de assinatura. Sem um popup
+  // próprio não há como pedir senha de forma segura, então avisa e desiste em
+  // vez de estourar (nunca sucesso falso).
+  if(typeof window.pedirTextoSistema==='function'){
+    return window.pedirTextoSistema('Usada AGORA pra assinar/transmitir e NÃO fica salva em lugar nenhum.',{titulo:'Senha do certificado A1',mascara:true});
+  }
+  if(typeof nfxToast==='function') nfxToast('Não consegui abrir a janela da senha do certificado. Atualize o sistema para a versão mais nova.','error');
+  return Promise.resolve(null);
 }
 // Registra/atualiza a vida de uma nota no histórico fiscal
 function nfxGravarNota(rec){
@@ -52139,7 +52294,7 @@ window.nfCancelarNota=async function(notaId){
     if(nota.status!=='autorizada'){ nfxToast('Só se cancela nota AUTORIZADA. Essa está: '+nota.status,'error'); return {ok:false}; }
     if(!nota.protocolo){ nfxToast('Nota sem protocolo não cancela.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa do cancelamento (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Cancelar NF-e','Justificativa do cancelamento (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa muito curta — cancelamento não enviado.','error'); return {ok:false, error:'just-curta'}; }
     const confereProd = (typeof window.nfxConfirmar==='function') ? await window.nfxConfirmar('CANCELAR NOTA DE VERDADE?','Cancelar nota DE VERDADE (produção) fica registrado na SEFAZ para sempre.', {botao:'Cancelar a nota', cor:'#b91c1c'}) : (typeof window.confirm==='function' && window.confirm('⚠️ Cancelar nota DE VERDADE (produção)?'));
     if(nota.ambiente==='producao' && !confereProd){ return {ok:false, error:'desistiu'}; }
@@ -52172,7 +52327,7 @@ window.nfInutilizarFaixa=async function(opts){
   try{
     if(!(window.usuarioPodeEmitirNfe && window.usuarioPodeEmitirNfe())){ nfxToast('Sem permissão.','error'); return {ok:false}; }
     const ponte=nfxPonte(); if(!ponte){ nfxInstruirSemPonte(); return {ok:false}; }
-    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : ((typeof window.prompt==='function') ? window.prompt('Justificativa da inutilização (mínimo 15 letras):') : null);
+    const just = (typeof window.nfxPedirTexto==='function') ? await window.nfxPedirTexto('Inutilizar faixa de números','Justificativa da inutilização (mínimo 15 letras):',{minimo:15}) : null;
     if(!just || just.trim().length<15){ if(just!==null) nfxToast('Justificativa curta — não enviado.','error'); return {ok:false}; }
     const senha=await nfxPedirSenha(); if(!senha) return {ok:false};
     const amb=nfxAmb();

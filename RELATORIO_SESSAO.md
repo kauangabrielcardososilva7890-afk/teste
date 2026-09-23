@@ -7,6 +7,28 @@
 
 ---
 
+## 23/09/2026 — AUDITORIA TÉCNICA (branch `arena/01a0cf4a-teste`) · v6.1.10
+
+**Pedido:** auditoria técnica completa do ERP (responsabilidade de manutenção), procurando bugs, segurança, redundância, complexidade, divergência com a documentação — e corrigindo o que fosse confirmado, **sem quebrar o que já funciona**. Relatório completo em **`AUDITORIA_TECNICA.md`**.
+
+**Linha de base medida antes de mexer:** `npm run check` ✅ (sha256 `52c372ace67dbf7f`) · `npm run sync:check` ✅ · suíte **190 passaram / 0 falha aceita / 4 falharam**. As 4 são `Cannot find module 'jsdom'` (infraestrutura, não produto). Observação: a mensagem do commit do HEAD dizia "suite 194/0" — o número real era 190+4.
+
+**Causa raiz encontrada (a principal):** o **`window.prompt` não existe no Electron** — a função existe, mas lança `Error: prompt() is not supported` (fonte: `electron/lib/renderer/window-setup.ts`). Por isso a guarda `typeof prompt==='function'` espalhada pelo sistema era **inútil**: no `.exe` ela dá `true` e a chamada estoura. `popup_sistema_patch.js` já trocava `alert` e `confirm`, mas **`prompt` tinha ficado de fora** (nenhum arquivo do repo o sobrescrevia). Eram **11 chamadas em 6 arquivos**.
+- **2 botões vivos e mudos no `.exe`:** *Ler status (rede)* (`ajustes_v52232_parque_monitor_hub_patch.js`) e *Editar notas/tutorial* (`ajustes_v52239_avisos_erro_auditoria_patch.js`).
+- **1 código morto provado:** o botão antigo de PRODUÇÃO em `fiscal_guard_patch.js` nunca nasce — `window.abrirCentralNfe` é embrulhado 3× e o embrulho mais externo (`autocura_empresa_central_nf_tela_patch.js`, índice 207) só chama `navigateTo('central-nf')` e nunca o original. A proteção viva (linha 206-207) já usava `nfxPedirTexto` e **estava correta**. Código **não removido** (regra de não apagar código morto sem provar/testar) — só deixou de usar `prompt` nativo.
+
+**CORREÇÕES (8 arquivos):** `popup_sistema_patch.js` ganhou `pedirTextoSistema` / `mostrarTextoCopiar` e um `window.prompt` que nunca lança (registra em `window.__DIGICOPY_PROMPT_NATIVO`); os pontos vivos migraram para o popup do sistema; senha do certificado passou a usar **máscara**; `nf_transmissao_patch.js` nunca mais estoura no caminho de assinatura; `app.js` e `ajustes_v52256` copiam link sem `prompt`.
+
+**ADIÇÕES:** `AUDITORIA_TECNICA.md` (relatório). `test_runner.js` passou a separar **"não rodou — falta jsdom"** de falha de produto (antes os 4 testes de DOM apareciam como `❌`, parecendo defeito do sistema).
+
+**Validações executadas:** `npm run check` ✅ 225 scripts, sha256 `3234d8acb5b9489e` · `npm run sync:check` ✅ · **suíte 190 passaram / 0 falha aceita / 4 não rodaram (falta jsdom) / 0 falharam** — conjunto de falhas **idêntico ao da linha de base, nenhuma regressão** · `node --check` nos 8 arquivos ✅ · `node mobile/sync-www.js` ✅ (derivado do celular sincronizado, exigido por `test_ajustes_v5262.js`).
+
+**REGISTRADO E *NÃO* ALTERADO (de propósito):** pepper com valor fixo `'digicopy'` e SHA-256 de 1 rodada no Worker (`senhaHash`), senha do Buscador Escola no `db.config.escolaAuth` (sobe para a nuvem, mas é removida do backup) — **os dois exigem migração de hashes/dados e podem trancar o dono fora sem acesso ao banco de produção**; divergência `package.json > digicopy.branch`; risco estrutural dos **35 arquivos** que reatribuem `window.navigateTo`.
+
+**Pendências:** rodar `npm install` e a suíte inteira no PC do dono (para rodar também os 4 de jsdom) · decidir a branch oficial dos links · decidir se esta leva sobe versão (`npm run versao`). **Nada foi publicado nem deployado.**
+
+---
+
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 
 **Ideia dele:** *"você faz uma area de importação dos dois tipos de arquivos, aí vai ler e me dar um texto pra copiar aí só colo aqui"* — ele não consegue anexar arquivos na conversa.

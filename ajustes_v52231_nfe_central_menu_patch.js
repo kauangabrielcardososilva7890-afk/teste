@@ -72,7 +72,12 @@ async function conferirValidadeAgora(){
     if(window.NFE_ASSINATURA_UI && typeof window.NFE_ASSINATURA_UI.pedirSenhaA1==='function'){
       senha=await window.NFE_ASSINATURA_UI.pedirSenhaA1();
     }else{
-      senha=(typeof prompt==='function')?prompt('Senha do certificado (não guardo — uso só pra ler a data):',''):null;
+      // Auditoria: o prompt nativo estourava no .exe (botão mudo). Agora usa o
+      // popup do sistema — e com máscara, que o prompt antigo não tinha
+      // (a senha do certificado aparecia em texto limpo na tela).
+      senha=(typeof window.pedirTextoSistema==='function')
+        ? await window.pedirTextoSistema('Uso a senha só para ler a data de validade do certificado — ela NÃO fica salva.',{titulo:'Senha do certificado',mascara:true})
+        : null;
     }
   }catch(e){ senha=null; }
   if(!senha) return; // desistiu, sem drama

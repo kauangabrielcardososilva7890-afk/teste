@@ -346,6 +346,14 @@
       window.abrirTelaOrcamento.__v52256modal = true;
     }
 
+    // Mostra o link para o usuário copiar quando a área de transferência não
+    // está disponível (antes era prompt nativo, que estoura no .exe).
+    function mostrarLinkOrcamento(link){
+      if(typeof window.mostrarTextoCopiar === 'function'){ window.mostrarTextoCopiar('Link do orçamento', link); return; }
+      if(typeof window.pedirTextoSistema === 'function'){ window.pedirTextoSistema('Copie o link abaixo.', {titulo:'Link do orçamento', valor:link}); return; }
+      if(typeof toast === 'function') toast('Link do orçamento: ' + link, 'info');
+    }
+
     // Função para copiar o link oficial do orçamento
     window.copiarLinkOrcamentoModal = function(id){
       var _db = getDb();
@@ -365,10 +373,12 @@
             if(typeof toast === 'function') toast('Link do orçamento copiado com sucesso!', 'success');
           });
         } else {
-          prompt('Copie o link do orçamento:', link);
+          // Auditoria: era prompt nativo, que no .exe lança "prompt() is not
+          // supported" — o botão onde a cópia não está disponível ficava mudo.
+          mostrarLinkOrcamento(link);
         }
       }catch(e){
-        prompt('Copie o link do orçamento:', link);
+        mostrarLinkOrcamento(link);
       }
     };
 

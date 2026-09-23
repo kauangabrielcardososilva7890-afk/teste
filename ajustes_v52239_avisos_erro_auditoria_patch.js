@@ -255,13 +255,21 @@ function aplicarCardPublicarAtualizacao(){
     box.querySelectorAll('button[data-ac]').forEach(function(b){
       b.onclick=function(){
         var ac=b.getAttribute('data-ac'), v=b.getAttribute('data-v'), h=b.getAttribute('data-h');
-        var run=function(){
+        var run=async function(){
           var payload={action:ac, versao:v};
           if(ac==='ativar') payload.expiraHoras=Number(h)||0;
           if(ac==='editar'){
-            var notasN=(typeof prompt==='function')?prompt('Novas NOTAS da v'+v+':',''):null;
+            // Auditoria: antes usava prompt nativo, que no .exe lança
+            // "prompt() is not supported" — o botão ficava mudo. Agora pede no
+            // popup do sistema (Promise). Texto vazio = tirar o campo, igual
+            // antes; cancelar (null) também deixa vazio.
+            var notasN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Como a v'+v+' aparece no portal (deixe vazio para não ter notas).',{titulo:'Novas NOTAS da v'+v})
+              : null;
             if(notasN==null) return;
-            var tutN=(typeof prompt==='function')?prompt('Novo TUTORIAL (deixe vazio pra tirar):',''):null;
+            var tutN=(typeof window.pedirTextoSistema==='function')
+              ? await window.pedirTextoSistema('Passo a passo mostrado ao cliente (deixe vazio para tirar).',{titulo:'Novo TUTORIAL da v'+v})
+              : null;
             payload.notas=notasN==null?'':notasN; payload.tutorial=tutN==null?'':tutN;
           }
           b.disabled=true; b.textContent='...';

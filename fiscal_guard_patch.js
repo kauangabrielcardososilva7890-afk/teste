@@ -151,12 +151,22 @@ function nfgBotaoAmbiente(){
   b.onclick=function(){ window.nfgAlternarAmbiente(); };
   central.insertBefore(b, central.children[1]||null);
 }
-window.nfgAlternarAmbiente=function(){
+window.nfgAlternarAmbiente=async function(){
   const amb=nfgAmbiente(db);
   const pode=(typeof window.usuarioPodeEmitirNfe==='function') ? window.usuarioPodeEmitirNfe() : false;
   if(amb==='homologacao'){
+    // NOTA DE AUDITORIA (prova de código morto): este botão antigo só nasce se
+    // existir #central-nfe-modal. Desde a v6.0.2 o abrirCentralNfe (embrulhado
+    // por último no autocura_empresa_central_nf_tela_patch.js) só chama
+    // navigateTo('central-nf') e nunca recria esse modal, então nfgBotaoAmbiente
+    // desiste na primeira linha. A proteção de produção que vale hoje é a da
+    // tela nova (nfxPedirTexto + "PRODUCAO"). Este caminho ficou aqui como
+    // histórico e NÃO foi removido (regra: não apagar código morto sem provar e
+    // testar). Só deixou de usar prompt nativo, que estourava no .exe.
     if(!pode){ if(typeof toast==='function') toast('Só usuário com permissão de emitir NF habilita produção','error'); return; }
-    const dig = (typeof window.prompt==='function') ? window.prompt('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null;
+    const dig = (typeof window.pedirTextoSistema==='function')
+      ? await window.pedirTextoSistema('⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO',{titulo:'Habilitar produção'})
+      : (typeof window.nfxPedirTexto==='function' ? await window.nfxPedirTexto('Habilitar produção','⚠️ Produção faz nota VALER DE VERDADE na SEFAZ.\nPara habilitar, digite: PRODUCAO') : null);
     if(dig!=='PRODUCAO'){ if(dig!==null && typeof toast==='function') toast('Não habilitado — texto não confere','error'); return; }
     db.config=db.config||{}; db.config.nfAmbiente='producao';
     nfgAudit('ambiente->producao',{});
