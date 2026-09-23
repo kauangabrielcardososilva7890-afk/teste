@@ -290,6 +290,8 @@ de recuperação (precisa ser no aparelho ADMIN); trocar as senhas; e confirmar 
 
 ## 23/09/2026 (cont.) — RODADA 8 · SINCRONIZAÇÃO DE 3 EM 3 SEGUNDOS E O FIM DA TELA NA FRENTE
 
+**(conserto: commit `5db0fd0` · v7.0.3)**
+
 **Pedido dele:** "ainda demora de chegar, dá pra deixar instantâneo não?" e "de mostrar dados
 quero NADA que envolva eu fazer alguma coisa, só quero que mostre normal".
 
