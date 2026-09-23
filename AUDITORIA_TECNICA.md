@@ -395,6 +395,15 @@ function ehLimiteDiario(msg){ return /free tier daily|daily row (write|read) lim
 - **Nenhuma regressão:** `build_bundle.js --check` OK (225 scripts, sha `db55bcb615b6cf60`), `sync_build.js --check` OK (v6.1.10, 0 soltos), suíte 202/0/4-não-rodaram.
 - **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:** se as contas afetadas pelo backdoor foram usadas, quando, e por quem. A evidência existente é de **código** (o caminho existe e vence a cadeia), não de dados.
 
+### Rodada 4 — versão v7.0.0, os dois pedidos do dono e a caçada ao que a versão quebrava
+
+- **`listUsuariosDemo`: agora não mostra nada.** Antes de responder "pode tirar?", varri o repositório inteiro (`.js`, `.html`, bundle gerado, cópias do celular, `e2e/`): **nenhum chamador**. Não mostrar nada não quebra nada — a função continua de pé (responde sem vazar dado) e o teste passou a exigir isso.
+- **`somarUso`: decisão tomada e aplicada no Worker.** A contagem passou para depois da validação e do freio — lote inválido (400) e lote recusado (429) não gravam nada e não podem mais inflar o contador do dia (era o ciclo que empurrava o freio para cedo em todos os PCs). Continua **antes das gravações** e conservador. 5 asserts novos prendem a ordem. **Depende de deploy do Worker** (o motor precisa ser regerado; o `npm run motor` não roda neste ambiente).
+- **v7.0.0 publicada** e **63 testes consertados**: a suíte estava amarrada em `/^[56]\./` ("versão 5 ou 6"), ou seja, ela **rejeitava qualquer versão 7**. 84 ocorrências trocadas por aceitação de versão real (`\d+\.\d+\.\d+`), mantendo as conferências que importam (`?v=` do cache, rodapé, relatório/guia). Dois testes que fixavam a versão à mão passaram a ler o `package.json` — não precisam ser reescritos a cada publicação. Suíte: **202 passando, 0 falhando**.
+- **Achado de manutenção no caminho:** `package.json > digicopy.branch` apontava para a **branch da sessão anterior**. Consequência prática: **todos os links impressos pelos scripts levavam para código velho** — inclusive o ZIP de download. Corrigido, junto com `BUILD_EXE.md`, `cloudflare-worker/README.md` (a instrução da *production branch* do Worker) e `PASSO_A_PASSO_NUVEM_E_SITE.html` (o guia que o dono segue no painel, que ensinava a apontar para a branch antiga e mostrava v6.1.3 na capa).
+- **Nada no app compara versão** (varrido). No Worker, `compararVersao` compara pedaço numérico por pedaço — `7.0.0 > 6.1.10` corretamente, e o primeiro envio da versão nova **gera uma foto de backup rotulada com a versão anterior**.
+- **Falso alarme registrado:** o sha do bundle impresso pelo build (corpo) difere do hash usado no `?v=` (arquivo inteiro). É por projeto — não "consertar".
+
 ---
 
 ## 12. RODADA 3 — SEGURANÇA DO LOGIN E HIGIENE DOS TESTES (commit `1c6abce`, 23/09/2026)
@@ -541,3 +550,59 @@ estavam no laudo.
 3. **Trava de 15 min / 5 erros do laudo** → se for para existir, tem que ser **no Worker** (no navegador não vale nada: quem quiser contorna). Não implementei porque mexe em autenticação de servidor e o desenho certo depende de decidir onde guardar o contador.
 4. **19 testes de versão + 4 testes quebrados** (12.4) → próxima rodada, um a um.
 5. **Empresa com senha em texto puro sincronizando para a nuvem** (`escolaAuth`) e **pepper/KDF** do Worker → continuam pendentes de janela de migração (já registrados na rodada 1).
+
+---
+
+## 13. RODADA 4 — VERSÃO v7.0.0 E A CONSISTÊNCIA DE TODOS OS ARQUIVOS (23/09/2026)
+
+### 13.1 INFORMATIVO — a tela de usuários: mostrar nada não quebra nada
+
+**Pergunta do dono:** *"da tela que listava login, senha e nome, deixa mostrar nenhum, nada, ou isso causaria algum problema?"*
+
+**Resposta:** não causa problema. Antes de mexer, a varredura cobriu `.js`, `.html`, o `app.bundle.js` gerado, `mobile/www` e `mobile/android` (cópias), `e2e/`, `.cmd` e docs: **nenhum chamador** de `listUsuariosDemo`. Sem chamador, esvaziar a tela não muda nada em uso. Feito: a função continua existindo (se alguém a chamar pelo console, responde sem vazar dado) e **não menciona mais** `login`, `nome`, `perfil`, `senha` nem `db.usuarios` — travado por teste.
+
+### 13.2 ALTO — Performance/Cota — a contagem do dia contava lote que não grava
+
+**Onde:** `cloudflare-worker/src/index.js`, `handlePush`. **Decisão do dono:** *"do somarUso deixo você fazer a melhor opção"*.
+
+**O que foi decidido e por quê:** a chamada `somarUso(...)` estava **antes** da validação do lote e **antes** do freio. Lote inválido (`400 INVALID_MUTATION_BATCH`) e lote recusado pelo freio (`429` com `quota:true`) **não gravam nada** — mas somavam no contador do dia. Como o freio lê esse mesmo contador, cada recusa empurrava o freio para mais cedo em **todos** os PCs: um ciclo que se alimenta. Foi exatamente esse ciclo que a rodada 2 viu de ponta a ponta (o cliente batendo na porta + o contador subindo). Agora a contagem acontece **depois** da validação e do freio, e **antes das gravações**.
+
+**Por que não fui além:** dava para contar só o que foi *efetivamente gravado* (depois do `applyMutation`, descontando duplicata/`noop`). Não fiz porque mexeria no significado do freio (o guarda passaria a poder *subestimar*), e subestimar cota é o lado perigoso — a Cloudflare corta o banco inteiro ao bater o teto. Contador a mais é seguro; a menos, não.
+
+**Trava:** 5 asserts novos em `test_sync_quota_guard.js` (existe; depois da validação; depois do freio; antes das gravações; não sobrou a chamada antiga).
+
+**Pendência declarada:** é código **do Worker**. Só passa a valer depois de regerar o motor (`npm run motor`) e publicar — **nenhum deploy foi feito** (regra: produção exige confirmação do dono).
+
+### 13.3 MÉDIO — Manutenção — a suíte rejeitava qualquer versão 7
+
+O dono pediu v7.0.0 e "conferir todos os arquivos para não dar problema". Ao subir, **63 testes quebraram**. Causa raiz única: asserção de versão escrita como `/^[56]\.\d+\./` — isto é, "a versão tem de começar com 5 ou 6". Não era amarrar a uma versão exata: era a suíte **não aceitar** uma versão maior. Foram **84 ocorrências** em 63 arquivos, trocadas por `/^\d+\.\d+\.\d+$/` e equivalentes — aceita qualquer versão real, e continua conferindo o que importa (o `?v=` do cache, o rodapé e o fato de o relatório/guia citarem a versão publicada). Dois testes que fixavam `=== '6.1.10'` passaram a **ler a versão do `package.json`** (não precisam mais ser reeditados a cada publicação — é a correção do padrão descrito em §12.4).
+
+| Momento | Suíte |
+|---|---|
+| Antes do bump | 202 passaram / 0 falharam |
+| Logo depois do bump | 139 passaram / **63 falharam** |
+| Depois do conserto das asserções | **202 passaram / 0 falharam** |
+
+### 13.4 ALTO — Manutenção — os links oficiais apontavam para a branch da sessão anterior
+
+**Onde:** `package.json > digicopy.branch` = `arena/01a0c087-teste` (branch da sessão **anterior**, parada em `26649cc3`), enquanto o trabalho está em `arena/01a0cf4a-teste`.
+
+**Impacto real:** `links.js`, `sync_build.js` e `guardar_repo.js` montam os links a partir desse campo. Ou seja: **o ZIP que o dono baixa e os links impressos a cada publicação levavam para código velho** — sem as correções de segurança da rodada 3 e sem v7.0.0. O `guardar_repo.js` ainda avisa que não empurra de outra branch (a proteção funcionou, mas o campo estava errado).
+
+**Corrigido para `arena/01a0cf4a-teste`** e propagado para os lugares que ensinam isso ao dono: `BUILD_EXE.md`, `cloudflare-worker/README.md` (a *production branch* do Worker) e `PASSO_A_PASSO_NUVEM_E_SITE.html` — este último é o guia que ele segue no painel da Cloudflare e estava ensinando a apontar Pages/Worker para a branch antiga (e mostrava app v6.1.3/worker 5.26.4 na capa; atualizado para v7.0.0 e 5.26.5, mantendo o registro histórico do dia 21/09).
+
+**Decisão de arquitetura sugerida (não feita, é dele):** a cada sessão a branch muda e esse campo envelhece de novo. O remédio de raiz é uma **branch fixa de publicação** (ex.: `publicacao`) que o dono sempre baixa, e o trabalho acontece nas branches de sessão.
+
+### 13.5 INFORMATIVO — versões re-ancoradas e um falso alarme
+
+- Re-ancorados para **v7.0.0**: `importar.html`, `GUIA_DE_TESTE_NF.html` (6 pontos), `RELATORIO_DE_TESTE_NF.html` (4 pontos). Referências ao **worker v5.26.5** e ao **gerente v5.26.3** mantidas de propósito (são outros componentes).
+- **Nada no app compara versão** — varredura por `compareVersion`/`semver`/comparação de versão não achou nada. No Worker, `compararVersao` compara pedaço numérico por pedaço (correto para `7.0.0 > 6.1.10`), e `checarTrocaDeVersao` **tira uma foto de backup rotulada com a versão anterior** no primeiro envio da versão nova — comportamento esperado e desejável.
+- **Falso alarme:** `build_bundle.js` imprime o sha256 do **corpo** do bundle; o `?v=` do cache usa o sha256 do **arquivo inteiro**. Dois números diferentes, ambos corretos, ambos com `--check` passando. Registrado para não ser "consertado" no futuro.
+
+### 13.6 O que continua pendente depois desta rodada
+
+1. **Trocar as senhas que estavam escritas no bundle** (rodada 3) — não imprimo nenhuma.
+2. **Credencial corporativa de CNPJ**: manter (trocando a senha) ou remover e passar a exigir a senha cadastrada — decisão do dono; mexer sem aviso poderia trancá-lo fora.
+3. **Trava de 15 min/5 erros**: só tem valor **no Worker** (no navegador se contorna). Não implementada.
+4. **19 testes antigos** com versão cravada (`5.24.34`) e **4 testes quebrados** (§12.4): fora da suíte, não afetam uso; correção caso a caso.
+5. **Publicar o Worker** (motor + deploy) para o conserto do `somarUso` chegar à nuvem — depende do dono.

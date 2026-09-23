@@ -525,7 +525,6 @@ async function handlePush(request, env, ctx) {
   try{ await checarTrocaDeVersao(request, env, ctx); }catch(e){ console.error('BACKUP_VERSAO_CHECAR_FALHOU', e); }
   const body = await readBody(request);
   const mutations = body.mutations;
-  somarUso(env, Array.isArray(mutations) ? Math.max(1, mutations.length) : 1, 0, ctx);
   if (!Array.isArray(mutations) || mutations.length < 1 || mutations.length > MAX_MUTATIONS) {
     throw new ApiError(400, 'INVALID_MUTATION_BATCH', `Envie de 1 a ${MAX_MUTATIONS} alterações.`);
   }
@@ -545,6 +544,17 @@ async function handlePush(request, env, ctx) {
       return json({ ok: false, quota: true, error: 'pre-stop DIGICOPY: daily row write limit próximo do teto — envio pausado até a virada do dia (por volta das 21h); as mudanças ficam guardadas neste PC.' }, 429);
     }
   } catch (eFreio) { console.error('FREIO_COTA_FALHOU', eFreio); /* segue o fluxo: o app já trata o erro real da cota */ }
+  // AUDITORIA 23/09/2026 — a contagem do dia mudou de lugar DE PROPÓSITO.
+  //   ANTES: contava o lote antes de saber se ele era válido e ANTES do freio.
+  //   Lote inválido (400) e lote recusado pelo freio (429) somavam no contador
+  //   do dia sem gravar NADA. Como o freio lê esse mesmo contador, cada recusa
+  //   empurrava o freio mais para cedo em TODOS os PCs — um ciclo que se
+  //   alimentava (foi o que a rodada 2 achou, de ponta a ponta).
+  //   AGORA: só conta o lote que a nuvem VAI processar. Continua conservador —
+  //   a contagem segue ANTES das gravações e o lote aceito é contado inteiro,
+  //   mesmo que alguma alteração dele vire duplicata/sem mudança. Do lado da
+  //   segurança da cota, contador a mais é seguro; contador a menos, não.
+  somarUso(env, Math.max(1, mutations.length), 0, ctx);
   const results = [];
   for (let index = 0; index < mutations.length; index++) {
     try {

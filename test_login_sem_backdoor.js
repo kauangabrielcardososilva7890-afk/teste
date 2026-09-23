@@ -102,11 +102,13 @@ ok('login por CNPJ não sobrescreve a senha da empresa', !/emp\.senha\s*=/.test(
 ok('a credencial corporativa de CNPJ continua funcionando (não tranca ninguém fora)', /digits===/.test(corpoCnpj) && /senha===/.test(corpoCnpj));
 ok('nenhum outro ponto do app.js sobrescreve emp.senha', !/emp\.senha\s*=/.test(appCodigo));
 
-console.log('== 3) Nenhuma tela mostra senha de usuário ==');
+console.log('== 3) Nenhuma tela mostra dado de usuário ==');
 
 const corpoLista = corpoDaFuncao(appCodigo, 'function listUsuariosDemo(){');
 ok('achei a função que listava usuários', !!corpoLista);
-ok('a listagem de usuários não imprime senha', !/\.senha\b/.test(corpoLista));
-ok('a listagem continua mostrando login/nome/perfil', /u\.login/.test(corpoLista) && /u\.nome/.test(corpoLista) && /u\.perfil/.test(corpoLista));
+ok('a listagem não imprime senha', !/\.senha\b/.test(corpoLista));
+ok('a listagem não mostra mais NADA de usuário (nem login, nem nome, nem perfil)',
+   !/\.login\b/.test(corpoLista) && !/\.nome\b/.test(corpoLista) && !/\.perfil\b/.test(corpoLista));
+ok('a listagem não toca mais no banco de usuários', !/db\.usuarios/.test(corpoLista));
 
 console.log('\nRESULTADO: ' + passou + ' verificações — backdoor fechado e login por CNPJ sem brechas!');

@@ -31,5 +31,22 @@ ok('cliente preserva a marca quota no erro', /err\.quota\s*=\s*!!\(data\s*&&\s*d
 ok('motor trata a marca como limite diário', /ehLimiteDiario\(lastError\)\s*\|\|\s*!!\(e\s*&&\s*e\.quota\)/.test(cloudData));
 ok('reconhecer a pausa ainda agenda a volta na virada', /state\.limiteAte\s*=\s*viradaDoLimite\(\)/.test(cloudData));
 
+// AUDITORIA 23/09/2026 (rodada 3) — a contagem do dia no Worker mudou de lugar:
+// lote inválido (400) e lote recusado pelo freio (429) NÃO gravam nada e por isso
+// não podem mais somar no contador — era esse detalhe que empurrava o freio para
+// mais cedo em todos os PCs a cada recusa. A contagem continua ANTES das
+// gravações (conservadora): o lote aceito é contado inteiro.
+console.log('== CONTAGEM DO DIA SÓ CONTA LOTE ACEITO (Worker) ==');
+{
+  const iValida = worker.indexOf('INVALID_MUTATION_BATCH');
+  const iFreio = worker.indexOf('LIMITE_ESCRITA_DIA');
+  const iConta = worker.indexOf("somarUso(env, Math.max(1, mutations.length), 0, ctx)");
+  ok('a contagem do dia existe no handlePush', iConta >= 0);
+  ok('a contagem vem DEPOIS da validação do lote', iValida >= 0 && iConta > iValida);
+  ok('a contagem vem DEPOIS do freio preventivo', iFreio >= 0 && iConta > iFreio);
+  ok('a contagem continua ANTES das gravações', iConta < worker.indexOf('const results = []', iConta));
+  ok('não sobrou contagem antes da validação', worker.indexOf("somarUso(env, Array.isArray(mutations)") < 0);
+}
+
 if(process.exitCode) process.exit(process.exitCode);
 console.log('\nRESULTADO: proteção de cota passou!');

@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: db55bcb615b6cf60
+ * scripts: 225 | sha256: 8262454ae8f6bbd7
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -770,13 +770,14 @@ function openModalCriarUsuarioPublic(){
   openModalCriarUsuario(pending.id);
 }
 function listUsuariosDemo(){
-  const pending=getPendingEmpresa(); if(!pending) return toast('Valide CNPJ primeiro','error');
-  const users=db.usuarios.filter(u=>u.empresaId===pending.id);
-  // AUDITORIA 23/09/2026 — esta função listava login / SENHA / nome de todos os
-  // usuários na tela (senha em texto puro, para quem estivesse na frente do
-  // PC). Agora mostra a mesma lista, sem as senhas. O alert() nativo aqui já
-  // cai no modal do sistema (popup_sistema_patch.js sobrescreve window.alert).
-  alert('Usuários deste CNPJ:\n\n'+users.map(u=>`${u.login} - ${u.nome} (${u.perfil})${u.ativo===false?' [inativo]':''}`).join('\n'));
+  // AUDITORIA 23/09/2026 — o dono pediu que esta tela não mostre NADA de
+  // usuário. Antes ela listava login / SENHA / nome de todos; depois só
+  // login/nome/perfil; agora não mostra dado nenhum.
+  // Nada no sistema chama esta função (conferido em .js, .html, no bundle
+  // gerado e nas cópias do celular) — ou seja, não mostrar nada NÃO quebra
+  // nada. O nome fica de pé só para que, se algum dia alguém a chamar, ela
+  // responda sem vazar dado nenhum.
+  alert('Listagem de usuários desativada por segurança.\n\nOs usuários do sistema ficam em "Usuários e permissões".');
 }
 function closeModal(){document.getElementById('modal-root').classList.add('hidden')}
 // NAV + TEMPLATES v3 (dark blue, no photos, audit)
@@ -39103,7 +39104,7 @@ try{
 (function(){
 'use strict';
 
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -42811,7 +42812,7 @@ try{
 'use strict';
 
 var VERSAO = '5.22.49';
-var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+var PAGINA = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
 function txt(v){ return String(v==null?'':v).trim(); }
 function n(v){ var x=Number(String(v==null?'':v).replace(',','.')); return isFinite(x)?x:0; }
@@ -43722,7 +43723,7 @@ try{
   }
 
   var PAGINA_PAGES = 'https://digicopy-orcamentos.pages.dev/';
-  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0c087-teste/orcamento_pagar.html';
+  var PAGINA_FALLBACK = 'https://raw.githack.com/kauangabrielcardososilva7890-afk/teste/arena/01a0cf4a-teste/orcamento_pagar.html';
 
   function txt(v){ return String(v == null ? '' : v).trim(); }
   function n(v){ var x = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : 0; }

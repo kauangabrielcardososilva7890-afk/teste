@@ -7,7 +7,7 @@ API local-first isolada do aplicativo Electron/web.
 - Root directory: `cloudflare-worker`
 - Build command: deixe vazio
 - Deploy command: `npm run deploy` (aplica migrações pendentes e só depois publica)
-- Production branch: `arena/01a0c087-teste` (branch fixa da sessão, escolhida pelo dono
+- Production branch: `arena/01a0cf4a-teste` (branch fixa da sessão, escolhida pelo dono
   em 20/09/2026 para o push publicar sozinho). Ao aprovar/mergear o PR na `main`,
   **voltar esta configuração para `main`** — senão o worker fica preso na branch de sessão.
   (Anteriormente: `arena/01a00cfb-teste`, motivo de o worker no ar ter ficado em
@@ -23,7 +23,7 @@ Configuração certa em **Settings → Build → Build Configuration**:
 | Root directory | `cloudflare-worker` |
 | Build command | (vazio) |
 | Deploy command | `npm run deploy` |
-| Production branch | a branch da sessão (hoje `arena/01a0c087-teste`) |
+| Production branch | a branch da sessão (hoje `arena/01a0cf4a-teste`) |
 
 **Erro conhecido (21/09/2026):** `Failed: The build token selected for this build
 has been deleted or rolled and cannot be used for this build. Please update your

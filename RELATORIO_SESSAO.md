@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v6.1.10** (rodada 22/09 nº8 — branch `arena/01a0c087-teste`)  
+**Última versão:** **v7.0.0** (rodada 23/09 nº4 — branch `arena/01a0cf4a-teste`)  
 
 ---
 
@@ -70,6 +70,39 @@
 **PENDÊNCIAS DA RODADA 3:** (`a`) **trocar as senhas que estavam no bundle** — não imprimo nenhuma; (`b`) decidir sobre a credencial corporativa de CNPJ; (`c`) a trava de 15 min/5 erros do laudo só vale se for **no Worker** (no navegador qualquer um contorna) — não implementei sem essa decisão; (`d`) modernizar os 19 testes de versão + tratar os 4 quebrados; (`e`) `npm install` no PC dele para rodar os 4 de jsdom.
 
 **Validações executadas:** `build_bundle.js --check` ✅ 225 scripts, sha256 `db55bcb615b6cf60` · `sync_build.js --check` ✅ v6.1.10, 0 soltos, 13 em `build.files` · `guardar_repo.js --check` ✅ · **suíte 202 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** · `node --check` em todos os arquivos tocados ✅ · `mobile/sync-www.js` ✅. **Nenhuma regressão.** Versão **não** foi trocada (6.1.10 continua).
+
+---
+
+## 23/09/2026 (cont.) — RODADA 4 · VERSÃO v7.0.0 + AS DUAS DECISÕES DELE
+
+**Pedidos dele nesta rodada:** (1) "da tela que listava login, senha e nome, deixa mostrar NENHUM, NADA — ou isso causaria algum problema?"; (2) "do somarUso deixo você fazer a melhor opção"; (3) "me fale os passos que EU devo realizar"; (4) **"MUDE A VERSÃO PARA V7.0.0 e CONFIRA TODOS OS ARQUIVOS para não dar problema"**.
+
+### 1) A tela que listava usuários: agora não mostra NADA
+
+Resposta à pergunta dele: **não causa problema nenhum**. Antes de mexer, varri o repositório inteiro (`.js`, `.html`, o bundle gerado, as cópias do celular e o e2e): **nada chama `listUsuariosDemo`**. Como não tem chamador, não mostrar nada não quebra nada. O nome da função ficou de pé (se algum dia alguém a chamar pelo console, ela responde sem vazar nada) e o corpo agora é só um aviso neutro. `test_login_sem_backdoor.js` passou a exigir isso: a função não pode voltar a citar `login`, `nome`, `perfil`, `senha` nem `db.usuarios`.
+
+### 2) `somarUso` — a melhor opção, aplicada no Worker
+
+**Decisão:** a contagem do dia passou para **DEPOIS** da validação do lote e **DEPOIS** do freio preventivo (continua **antes** das gravações). O motivo: lote inválido (400) e lote recusado pelo freio (429) **não gravam nada** — contar os dois inflava o contador do dia e, como o freio lê esse mesmo contador, cada recusa empurrava o freio para mais cedo em **todos** os PCs (o ciclo que a rodada 2 achou). Continua conservador: o lote aceito é contado inteiro, mesmo que alguma alteração dele vire duplicata/sem mudança — contador a mais é seguro, contador a menos não é. **5 asserts novos** em `test_sync_quota_guard.js` prendem essa ordem.
+
+⚠ **Isto é no Worker.** Só chega na nuvem quando o motor for regerado e publicado — `npm run motor` **não roda neste ambiente** (falta o wrangler/npm). Passo dele: rodar `npm run motor` e publicar (ver "Os passos que dependem dele", abaixo).
+
+### 3) VERSÃO v7.0.0 — e a caçada ao que ela quebrava
+
+`npm run versao -- 7.0.0` (package.json + os 3 index.html). Depois a **conferência de todos os arquivos**, que era o pedido:
+
+- **63 testes quebraram com o salto.** Todos pelo mesmo defeito: asserção de versão escrita como `/^[56]\./` ("a versão começa com 5 ou 6") ou `v=[56]\.\d+\.\d+`. Isso não é "amarrar à versão exata" — é pior: **a suíte inteira se recusa a aceitar uma versão 7**. As 84 ocorrências foram trocadas por `\d+\.\d+\.\d+` (aceita qualquer versão real) mantendo o que importa (o `?v=` do cache e o rodapé continuam conferidos). Dois testes que fixavam `=== '6.1.10'` agora leem a versão do `package.json` (não precisam mais ser reescritos a cada publicação).
+- **`package.json > digicopy.branch` estava apontando para a branch da sessão ANTERIOR** (`arena/01a0c087-teste`, parada em `26649cc3`). Ou seja: **todo link que os scripts imprimem estava levando para código velho** — inclusive o ZIP que o dono baixa. Corrigido para `arena/01a0cf4a-teste`; junto, `BUILD_EXE.md`, `cloudflare-worker/README.md` (a instrução da Production branch do Worker!) e `PASSO_A_PASSO_NUVEM_E_SITE.html` (o guia que ele segue para apontar o Pages e o Worker — estava ensinando a apontar para a branch antiga, e com a versão v6.1.3 e worker 5.26.4 na capa).
+- **`importar.html`, `GUIA_DE_TESTE_NF.html` (6 pontos) e `RELATORIO_DE_TESTE_NF.html` (4 pontos)** re-ancorados para v7.0.0 (as referências ao **worker** v5.26.5 e ao **gerente** v5.26.3 ficaram: são outros componentes).
+- **Nada no app compara versão** (varrido: sem `compareVersion`/`semver`/comparação de string de versão). No Worker existe `compararVersao`, que compara pedaço numérico por pedaço — `7.0.0 > 6.1.10` funciona. Consequência bonita e esperada: no primeiro envio com a versão nova, a nuvem **tira uma foto de backup rotulada com a versão anterior** antes de marcar a nova (`checarTrocaDeVersao`).
+
+### 4) Falso alarme que valeu registrar
+
+O `build_bundle.js` imprime `sha256 8262454ae8f6bbd7` e o `?v=` do cache saiu `7.0.0-34bac1e13734` — parecia divergência. **Não é:** o build carimba o **corpo** do bundle (sem o cabeçalho) e o `?v=` usa o **arquivo inteiro** (o hash do arquivo é `34bac1e13734…`). Os dois checks passam. Documentado para ninguém "consertar" isso depois.
+
+**Validações:** `build_bundle.js --check` ✅ 225 scripts (sha `8262454ae8f6bbd7`) · `sync_build.js --check` ✅ v7.0.0, 0 soltos, 13 `build.files` · **suíte 202 passaram / 0 falha aceita / 4 não rodaram (jsdom) / 0 falharam** (era 139 passando e 63 falhando logo depois do bump) · `mobile/sync-www.js` ✅ · `guardar_repo.js --check` ✅. **Nenhuma regressão.**
+
+**Ainda pendente:** as senhas que estavam no bundle (troca), a decisão sobre a credencial de CNPJ, a trava de 15 min (só vale no Worker), os 19 testes antigos de versão cravada (`5.24.34`) e os 4 testes quebrados — estes **não** fazem parte da suíte e estão registrados no `AUDITORIA_TECNICA.md` §12.4.
 
 ---
 
@@ -348,7 +381,7 @@ Checagem zero-código disponível já: duplo clique no .pfx no Windows mostra
 <https://teste-60f.pages.dev>
 
 **2. Baixar tudo (zip do próprio GitHub, não gerar `.zip` novo):**
-<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0c087-teste.zip>
+<https://github.com/kauangabrielcardososilva7890-afk/teste/archive/refs/heads/arena/01a0cf4a-teste.zip>
 
 Os dois links saem prontos no final de `npm run sync` (o ZIP segue
 `package.json > digicopy.branch`). GitHack MORREU quando o repositório ficou
