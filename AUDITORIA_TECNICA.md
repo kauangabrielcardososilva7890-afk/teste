@@ -665,3 +665,132 @@ automatizado; a confirmação visual é um duplo clique em cada tela.
 
 Suíte: 203 passaram, 0 falharam (4 pulam por falta de `jsdom` no ambiente).
 Bundle: 225 scripts, sha256 `06304bac1ecc2328`.
+
+## 15. RODADA 6 — SINCRONIZAÇÃO, A IMPRESSORA QUE SUMIA E A SENHA DO DONO (23/09/2026)
+
+### 15.1 CRÍTICO — Bug (perda de dados) — a impressora que sumia do contrato
+
+**Onde:** `locacao_patch.js`, passo 6 ("LIMPEZA DE DADOS DE DEMONSTRAÇÃO"), linhas ~385-401.
+
+**Evidência (código antes da correção):**
+
+```js
+const demoCtrIds = db.contratos
+  .filter(c=>c.empresaId===empId && !jbEhMigracao(c) && !c.codigoAntigo && /^CT-\d{4}-\d{4}$/.test(c.numero||''))
+  .map(c=>c.id);
+if(demoCtrIds.length){
+  db.contratos = db.contratos.filter(c=>!demoCtrIds.includes(c.id));
+  db.parque    = db.parque.filter(p=>!demoCtrIds.includes(p.contratoId));   // ← as impressoras
+  db.leituras  = db.leituras.filter(l=>!demoCtrIds.includes(l.contratoId) && ...);
+  db.contasReceber = db.contasReceber.filter(cr=>!demoCtrIds.includes(cr.contratoId));
+}
+```
+
+**Causa raiz:** o detector de "dado de exemplo" usava **o formato do número** como assinatura.
+Só que esse formato é o que o **próprio sistema** gera para contrato real — `app.js`
+`renderModalContrato`: `numero:'CT-'+ano+'-'+String(...).padStart(4,'0')` = `CT-2026-0001`.
+Qualquer contrato criado na tela era, portanto, indistinguível do exemplo. O gatilho é a
+**importação dos dados do sistema antigo** (o passo 6 só roda quando chega dado real:
+`if(result.contratos>0 || result.parque>0 || ...)`), o que explica o relato "não sei quanto
+tempo depois, ela some do nada". O **mesmo defeito** existia no filtro dos chamados
+(`/^OS-\d{4}-\d{4}$/`, e `OS-2026-0001` é o formato gerado por `vosNextNumero`).
+
+**Impacto:** perda de contrato + parque (impressoras) + leituras + faturas do dono, e a
+propagação da exclusão para a nuvem pela fila de mutações.
+
+**Correção:** a decisão passou a exigir, além do número, **ausência de dono humano**
+(`jbSemDonoHumano`: `criadoPor` vazio, `'sistema'` ou `'demo'`). Registro criado na tela grava
+`criadoPor = sess.usuarioId` → nunca mais entra na limpeza. Aplicado nos **dois** filtros
+(contratos e chamados). A limpeza continua existindo para o caso legítimo (sobras do seed).
+**Teste:** `test_contrato_impressora_nao_some.js` (17 verificações) executa a função real
+extraída do arquivo e prova os dois lados.
+
+**Varredura do padrão no repo (regra "consertar todas as ocorrências"):** nenhum outro ponto
+apaga `contratos`/`parque`/`leituras` por formato de número. Os demais `filter` em `db.parque`
+são: exclusão em cascata pedida pelo usuário (`ajustes_v52023_patch.js`), exclusões explícitas
+da fila de sincronização (`PODE_EXCLUIR`) e a faxina de **técnicos** de demonstração
+(`varrerDemonstracao`, que só olha `tecnicos`, uma vez, por nome — não toca contrato).
+
+### 15.2 CRÍTICO — Segurança — a senha do dono não podia ser trocada
+
+**Onde:** `app.js:369` (`seedData`, que roda em toda carga) e `patch_relatorio.js:43-49`.
+
+**Evidência (antes):**
+
+```js
+if(u.senha !== g.senha){ u.senha = g.senha; mudou = true; }   // seed reimpõe a senha de fábrica
+...
+if(deni && deni.senha === '1234'){ deni.senha = '3232'; }     // patch troca a senha sozinho
+```
+
+**Causa raiz:** o seed foi escrito para "garantir os 2 usuários reais com as credenciais
+corretas" e, para isso, reescrevia **a senha** a cada carga. Consequência prática: o dono
+troca a senha na tela Usuários e ela **volta ao valor de fábrica** na próxima abertura — logo,
+a senha que está no histórico do repositório (repo privado, mas histórico é histórico)
+continua valendo para sempre. Impedia a rotação pedida.
+
+**Correção:** a senha existente **não é mais tocada** (o padrão de fábrica serve só para
+**criar** o usuário na primeira vez, em base vazia); `perfil`, `nome`, `id`, `empresaId` e
+`ativo` continuam garantidos de propósito. A migração antiga do `patch_relatorio.js` passou a
+rodar **uma única vez** (marca `senhaMigradaV701`), para nunca mais desfazer uma escolha do
+dono. **Teste:** `test_senha_do_dono_manda.js` (10 verificações) — nenhuma senha real é lida
+nem impressa; o teste confere só o formato do código (quem escreve o quê).
+
+**Pendência que continua dele:** a **rotação das senhas** expostas no histórico (as contas de
+acesso do programa e a senha de conexão da loja). Nada de senha é impresso em relatório.
+
+### 15.3 ALTO — Performance/Manutenção — a sincronização demorava e parava escondida
+
+**Onde:** `cloudflare_data_sync_patch.js` (`HEARTBEAT_MS=60000`, `scheduleHeartbeat`) e o
+caminho de aplicação das mudanças (`pullAll` → `applyRemote`).
+
+**Evidência:** `const HEARTBEAT_MS=60000;` e, no batimento,
+`timer=setTimeout(()=>{if(!document.hidden)tick('heartbeat');else scheduleHeartbeat();},wait)`
+— com a janela escondida ele **reagendava sem consultar**. Em cima disso, `applyRemote` grava
+no `db` mas **não redesenha a tela**: a novidade existia no banco e não aparecia na lista.
+
+**Impacto:** o que um PC fazia demorava até 60 s para aparecer no outro (e não aparecia
+enquanto a janela do segundo estivesse atrás/escondida); a lista na tela só mudava ao trocar
+de tela e voltar. É exatamente o relato do dono.
+
+**Correção:** `HEARTBEAT_MS=15000` (janela à vista), `HEARTBEAT_OCULTO_MS=120000` (escondida:
+continua consultando, mais devagar — aba oculta é estrangulada pelo navegador) e **tela ao
+vivo**: quando a leitura traz mudança, o render da tela da frente é chamado, sob a regra pura
+`podeRedesenharSync` (não faz com janela escondida, modal aberto, cursor em campo, tela de
+documento fora da lista, nem em rajada < 4 s). Usa o **render** da tela, não o `navigateTo`
+(que faria `scrollTo` no topo e mexeria na barra lateral). **Teste:**
+`test_sync_tela_ao_vivo.js` (30 verificações).
+
+### 15.4 BAIXO — Manutenção — duas remoções pedidas pelo dono
+
+- **Botão `erro.txt` do rodapé** (`index.html:220` + cópia do celular): removido por ordem dele
+  ("remove ele pfv"). O **motor** permanece — o aviso de erro continua abrindo/baixando o
+  arquivo e a função `digicopyAbrirOuBaixarErroTxt` segue no sistema; o guia de teste foi
+  atualizado (não era mais verdade que o botão estava lá).
+- **Caixa "O que são as 3 permissões?"** (`permissoes_estorno_venda_patch.js`: injeção do botão
+  `p605-ajuda-perm`): desligada; o texto da explicação (`window.permissoesAjuda`) continua
+  disponível para reuso. Os dois testes que exigiam esses elementos foram reescritos para
+  exigir o novo estado (a ordem do dono muda a especificação, então o teste acompanha).
+
+### 15.5 INFORMATIVO — o que foi conferido e está de pé
+
+- A faxina de demonstração de **técnicos** (`varrerDemonstracao`) **não** toca contrato, parque,
+  leituras nem financeiro: só `tecnicos`, uma vez, por nome — sem relação com a perda relatada.
+- A exclusão em cascata de cliente (`ajustes_v52023_patch.js`) é ação de tela (com resumo e
+  contagem antes de apagar), não automática.
+- A gravação da senha **na nuvem** continua em hash (Worker `senhaHash`/`conferirSenha`).
+- `devolverSumidos()` (rotação de recuperação) pode trazer de volta registros que sumiram do PC
+  vindos da foto `antes_espelhar_nuvem` do IndexedDB — é o caminho de recuperação em caso de
+  perda, junto com as fotos de backup da nuvem.
+
+### 15.6 Resumo da rodada
+
+| # | Gravidade | Tipo | Item | Estado |
+|---|-----------|------|------|--------|
+| 15.1 | CRÍTICO | Bug | impressora/contrato apagados como "demonstração" na importação | CORRIGIDO + travado |
+| 15.2 | CRÍTICO | Segurança | senha do dono reimposta pelo seed (rotação impossível) | CORRIGIDO + travado |
+| 15.3 | ALTO | Performance | sync de 60 s e parada com janela escondida + tela sem redesenho | CORRIGIDO + travado |
+| 15.4 | BAIXO | Manutenção | botão erro.txt e caixa "3 permissões" (ordem do dono) | REMOVIDOS |
+
+Versão **v7.0.1**. Suíte: **206 passaram, 0 falharam** (4 pulam por falta de `jsdom` no
+ambiente). Bundle: 225 scripts, sha256 `0e4a03cd9317f97c`.

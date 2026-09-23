@@ -3,7 +3,7 @@
 **Data:** 2026-09-03  
 **Repo:** `kauangabrielcardososilva7890-afk/teste`  
 **Branch fixa desta sessão:** `arena/01a0c087-teste` (anteriores: `arena/01a0683d-teste`, `arena/01a0590a-teste`, `arena/01a010fa-teste`)  
-**Última versão:** **v7.0.0** (rodada 23/09 nº4 — branch `arena/01a0cf4a-teste`)  
+**Última versão:** **v7.0.1** (rodada 23/09 nº6 — branch `arena/01a0cf4a-teste`)  
 
 ---
 
@@ -127,6 +127,81 @@ copiar linha errada de novo. Entrou no `test_runner.js`.
 
 **Suíte:** 203 passaram, 0 falharam (4 pulam por falta de `jsdom`).
 **Bundle:** 225 scripts, sha256 `06304bac1ecc2328`, carimbo `?v=7.0.0-3bc7ea1d0330`.
+
+## 23/09/2026 (cont.) — RODADA 6 · SINCRONIZAÇÃO, A IMPRESSORA QUE SUMIA E A SENHA QUE NÃO PODIA SER TROCADA
+
+**(conserto: commit `48882d1` · v7.0.1)**
+
+**O que ele relatou:** "o banco demora atualizar (sincronizar), o que faz em um computador
+não dá pra ver no outro"; "no rodapé tem um erro.txt, remove ele"; "em usuários tem uma
+caixa 'o que são as 3 permissões?', retira isso"; "quando eu coloco alguma impressora em
+algum contrato, não sei quanto tempo depois, ela some do nada"; e as 5 perguntas/respostas
+(versão, npm install, nomes das contas para trocar senha, credencial de CNPJ, trava de 15 min).
+
+### 1) A DEMORA PARA SINCRONIZAR — duas causas somadas (ALTO)
+
+- **A espera:** o motor procurava novidade de **60 em 60 segundos** e, com a janela atrás de
+  outra (ou minimizada), **não procurava mais nada** — o PC do balcão só se atualizava quando
+  alguém clicava nele. Agora: **15 s** com a janela à vista e **2 min** escondida (aba oculta
+  é estrangulada pelo navegador; pedir 15 s lá não adiantaria). Cada rodada continua sendo
+  **uma** consulta incremental por cursor.
+- **A tela parada:** a novidade descia para o banco, mas a **lista na tela continuava com o
+  retrato antigo** até trocar de tela e voltar. Agora a tela da frente se **redesenha sozinha**
+  quando a leitura trouxe mudança — com travas: não faz com janela escondida, com modal aberto,
+  com o cursor em campo, em tela de documento (vender/leitura/config/importar) nem em rajada
+  (no máximo 1 a cada 4 s). O redesenho chama o render da tela, **não** o `navigateTo`
+  (que rola a página para o topo e mexeria na barra lateral).
+
+### 2) A IMPRESSORA QUE SUMIA DO CONTRATO — causa raiz achada (CRÍTICO · perda de dados)
+
+`locacao_patch.js` (importação do sistema antigo) faz uma **limpeza de demonstração** e
+reconhecia contrato de exemplo pelo **número**: `/^CT-\d{4}-\d{4}$/`. Só que esse é
+**exatamente o formato que o próprio sistema gera** para contrato de verdade (`app.js`,
+`renderModalContrato`: `'CT-'+ano+'-'+0001`). Resultado: **contrato criado na tela era tratado
+como demonstração** e, a cada importação do sistema antigo, era apagado — levando junto o
+**parque** (as impressoras que ele tinha acabado de colocar no contrato), as leituras e as
+faturas. O **mesmo defeito** existia no filtro dos chamados (`/^OS-\d{4}-\d{4}$/`).
+
+**Conserto (causa raiz, nos dois lugares):** além do número, agora exige **não ter dono humano**
+(`criadoPor` vazio/'sistema'/'demo'). O que a pessoa cria na tela grava `criadoPor` = id do
+usuário logado → nunca mais entra na limpeza. Teste novo `test_contrato_impressora_nao_some.js`
+(17 verificações) roda a função real do arquivo e prova os dois lados (exemplo some, contrato
+de verdade fica). Varredura do mesmo padrão no repo: nenhum outro ponto apaga contrato/parque
+por formato de número.
+
+### 3) A SENHA QUE O DONO TROCA NÃO "PEGAVA" (CRÍTICO · segurança)
+
+Ele pediu os nomes das contas para trocar as senhas. Ao conferir: o `seedData` (**roda em toda
+carga**) reescrevia a senha dos dois usuários garantidos para o valor de fábrica
+(`if(u.senha !== g.senha){ u.senha = g.senha; }`) — ou seja, **a troca na tela Usuários
+voltava atrás na próxima abertura**, e a senha que está no histórico do repositório continuava
+valendo. Conserto: **a senha escolhida manda**; o padrão de fábrica só é usado ao **criar** o
+usuário na primeira vez (PC novo, base vazia). `patch_relatorio.js` (que trocava a senha do
+Denivaldo sozinho) agora roda **uma vez só**, com marca. Teste novo
+`test_senha_do_dono_manda.js` (10 verificações). **A rotação das senhas segue pendente e é
+dele** — nada de senha é impresso em relatório nenhum.
+
+### 4) AS DUAS REMOÇÕES QUE ELE PEDIU (BAIXO · manutenção)
+
+- **`erro.txt` do rodapé:** o botão saiu (as 3 cópias do `index.html`). O **motor** do erro.txt
+  fica: o aviso de erro continua abrindo/baixando o arquivo, e a função segue existindo.
+- **Caixa "O que são as 3 permissões?"** na tela Usuários: o botão não é mais injetado; o texto
+  da explicação continua no arquivo para reuso.
+
+### 5) TESTES E PORTÕES
+
+3 testes novos (30 + 17 + 10 verificações) registrados no `test_runner.js`.
+Suíte: **206 passaram, 0 falharam** (4 pulam por falta de `jsdom` neste ambiente).
+Bundle: 225 scripts, sha256 `0e4a03cd9317f97c`; carimbo `?v=7.0.1-...`.
+Versão **v7.0.1** aplicada e conferida nos 4 arquivos que carregam a versão do app
+(`index.html`, `mobile/www`, `GUIA_DE_TESTE_NF.html`, `RELATORIO_DE_TESTE_NF.html`,
+`importar.html`, `PASSO_A_PASSO_NUVEM_E_SITE.html`) — o bump quebrava 2 testes ancorados na
+versão antiga, consertados na mesma rodada.
+
+**O que ficou pendente:** motor da nuvem (o `motor_para_colar.js` só é regerado na máquina
+dele: `npm run motor`), rotação das senhas (nunca impressas aqui), decisão da credencial de
+CNPJ, trava de 15 min (hoje só no Worker), 19 testes `5.24.34` fora da suíte, 4 testes
+quebrados (§12.4) e os 4 que pulam por falta de `jsdom`.
 
 ## Rodada 22/09/2026 (nº6, continuação) — v6.1.9 · a área de importação das referências do sistema antigo
 
