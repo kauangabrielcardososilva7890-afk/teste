@@ -6231,3 +6231,70 @@ inteiro, sem tocar em dado.
 2. **Nova venda / Notinha:** cliente + produto, OS, **Salvar** e clicar em **🖨 Notinha** (meia folha; com
    a OS completa, folha inteira), **🖨 Carnê** e **📄 Word** (baixa `notinha_<número>.doc`).
 3. **Faturar → Pix** (QR na janela, título ABERTO) e **↩ Estornar** (tarja no financeiro, venda liberada).
+
+---
+
+## Rodada 22 — 24/09/2026 — NÚCLEO NOVO APAGADO + AS IDEIAS PARA RESOLVER O SISTEMA DE VERDADE
+
+Ele decidiu: *"esquece esse núcleo novo, vamos deletar isso"*, e pediu **ideias** para resolver o
+problema do sistema original — liberado para falar tudo, inclusive o que as regras dele não deixam.
+
+### 1. O núcleo novo foi apagado (como ele pediu)
+
+Saíram a pasta `novo/` (11 arquivos), o patch `ajustes_v7011_ponte_nucleo_patch.js`, os 11 testes do
+núcleo novo e as 3 entradas do manifesto (228 → **225**). Antes de apagar eu conferi que **nada do
+sistema de hoje dependia disso**: nenhum arquivo do sistema carrega `novo/`, e o `index.html` de hoje não
+cita nada de lá. O trabalho fica guardado no histórico (commits `4fd5196` e `e273717`) — se um dia
+precisar olhar, é `git show` e está lá.
+
+Efeito: suíte **217 testes, 0 falhas, 0 sem rodar**; `Bundle OK: 225 scripts`; o app de celular voltou a
+casar com o bundle da raiz (mesmo hash).
+
+**O que o teste pegou (sem esconder):** sete testes antigos conferem a ordem dos patches contando **de
+trás para a frente** (`manifest[manifest.length - N]`). Tirar coisa do fim da fila deslocou os números e
+os sete reprovaram — mas a ordem real estava intacta. Corrigi os números com a nota explicando o motivo e
+deixei registrado que o ideal é trocar por âncoras nomeadas (fica para quando eu puder mexer em teste
+sem misturar com outra mudança).
+
+### 2. As ideias (documento próprio: `IDEIAS_PARA_RESOLVER.md`)
+
+Antes de escrever, medi o sistema vivo para não chutar nada. Os números:
+
+- **482** arquivos `.js` na raiz; **225** entram no `app.bundle.js`;
+- **1.100** definições de função global — **63 nomes são definidos em 4 ou mais arquivos**
+  (`navigateTo` **33×**, `showApp` 22×, `renderConfig` 19×, `renderVendas` 17×);
+- **246** lugares gravam direto no banco (`saveDB`/`db.save`) em 109 arquivos;
+- **706** escritas de HTML na mão; **112** usos de `localStorage`/`sessionStorage`;
+- **35** vigias permanentes e **44** esperas curtas de "dar tempo" (o relógio decidindo a ordem);
+- **0** `prompt` nativo vivo (regra 16 de pé) e **217** testes rodando em ~36 s.
+
+**O diagnóstico em uma frase:** o sistema funciona por **camadas que se sobrescrevem** — o mesmo nome é
+reescrito por até 33 arquivos e quem ganha é o último que carrega. Por isso um defeito novo custa caro e
+consertar uma coisa arrisca outra: não falta capacidade, falta **um lugar onde encostar a mudança**.
+
+As ideias (A a L, com custo, risco e o que fere das regras dele) estão no documento. Em resumo:
+**A)** transformar as reclamações dele em teste; **B)** limpeza do código morto com prova; **C)** um mapa
+de "quem define o quê e quem carrega por cima"; **D)** trava contra sobrescrever esquecendo o que
+existia; **E)** um portão único de gravação (resolve o dado que some/volta); **F)** fim das esperas
+cegas; **G)** permissão conferida no clique; **H)** desempenho medido, não chutado; **I)** nuvem com fila
+e dono; **J)** backup e "voltar atrás" em um clique; **K)** se trocar peça, trocar por dentro (a lição do
+núcleo novo); **L)** um pacote de diagnóstico em 1 clique, sem trazer de volta o botão do rodapé.
+
+Também está no documento a tabela do que **não** dá para fazer por causa das regras dele (banco próprio,
+cópia local, refazer do zero, mexer no APK, fiscal sem homologar, deploy, senhas) — e o que fazer no
+lugar.
+
+### 3. O que eu preciso dele para seguir
+
+1. Qual dor dói mais hoje (dado que some / tela que falha / lentidão / permissão).
+2. Onde ele usa de verdade: `.exe`, site, ou os dois.
+3. Se autoriza A, B, C e D (as de menor risco).
+4. Se o portão de gravação (E) pode entrar por baixo, por blocos.
+
+Sem resposta eu sigo com A, B e C — são leitura e teste, não mudam o funcionamento.
+
+### Provas
+
+Suíte: **217 passaram, 0 falharam, 0 não rodaram** · `npm run check`: `Bundle OK: 225 scripts` ·
+`Sync OK: v7.0.11 | 225 no bundle | 0 soltos` · celular: `0 referências quebradas`. Versão **7.0.11**,
+motor **5.26.8**, nenhum dado de banco tocado.

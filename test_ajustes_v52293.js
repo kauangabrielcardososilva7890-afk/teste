@@ -1,3 +1,7 @@
+// NOTA (24/09/2026): o fim do bundle-manifest.json encolheu 3 posições — saíram
+// `novo/nucleo.js`, `novo/ponte.js` e `ajustes_v7011_ponte_nucleo_patch.js` (o núcleo novo
+// foi apagado por decisão do dono). A conferência abaixo conta DE TRÁS para a frente, então
+// cada número caiu 3. Os patches conferidos e a ORDEM entre eles continuam os mesmos.
 // Teste v5.22.93 — guardião do banco de orçamentos (quem tirou, fica anotado)
 const fs = require('fs');
 let falhas = 0;
@@ -12,7 +16,7 @@ ok(g.indexOf('window.__orcResumoUltimaBaixa') >= 0, 'exposição do resumo da ú
 ok(g.indexOf('renderOrcamentos') >= 0 && g.indexOf('__v52293') >= 0, 'amarra o retrato na listagem VISÍVEL (a última que existir)');
 
 const m = JSON.parse(fs.readFileSync('bundle-manifest.json', 'utf8'));
-ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 35, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3);');
+ok(m.indexOf('ajustes_v52293_orcamento_guardiao_patch.js') === m.length - 32, 'guardião logo antes da fila final (depois vêm volta-venda, backups, o v5.24.0, as abas do cliente v5.24.3, o remanejo final v5.24.35, a guarda de leitura v5.24.36, a revisão v5.25.0, o CNPJ+gerente v5.26.0, o login da nuvem primeiro v5.26.2 a data grande do chamado v5.26.4 e o Painel do Gerente v6.0.6; o anti-tela-branca v6.0.12 e, por último, a ribbon fiscal bonita v6.0.13 e a navegação+escuro v6.1.3);');
 
 const v237 = fs.readFileSync('ajustes_v52237_orcamentos_menu_patch.js', 'utf8');
 ok(v237.indexOf('__orcResumoUltimaBaixa') >= 0, 'aviso "não achei" mostra a última baixa');

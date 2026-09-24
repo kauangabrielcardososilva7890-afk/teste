@@ -223,8 +223,5 @@
   "navegacao_fiscal_barra_escuro_patch.js",
   "navegador_embutido_patch.js",
   "ajustes_v6108_lembrar_tela_patch.js",
-  "ajustes_v6108_falta_emitir_patch.js",
-  "novo/nucleo.js",
-  "novo/ponte.js",
-  "ajustes_v7011_ponte_nucleo_patch.js"
+  "ajustes_v6108_falta_emitir_patch.js"
 ]

@@ -1,3 +1,7 @@
+// NOTA (24/09/2026): o fim do bundle-manifest.json encolheu 3 posições — saíram
+// `novo/nucleo.js`, `novo/ponte.js` e `ajustes_v7011_ponte_nucleo_patch.js` (o núcleo novo
+// foi apagado por decisão do dono). A conferência abaixo conta DE TRÁS para a frente, então
+// cada número caiu 3. Os patches conferidos e a ORDEM entre eles continuam os mesmos.
 // test_ajustes_v6003.js — v6.0.3: MODO ESCURO DO FISCAL (print dele provou)
 // + saveConfig blindado (erro real do console: TypeError 'value' de null).
 //  1) Print da evidência: cards brancos pendurados no fundo escuro, botão com
@@ -55,7 +59,7 @@ ok('a placa que apareceu no console é mencionada no rótulo', src.indexOf('save
 console.log('== CARIMBO 6.0.3 ==');
 ok('package.json na 6.0.3', pkg.version === VERSAO_APP);
 ok('index.html carimbado 6.0.3', html.indexOf("DIGICOPY_APP_VERSION = '" + VERSAO_APP + "'") >= 0 && html.indexOf('>v' + VERSAO_APP + '<') >= 0);
-ok('manifesto já é 225 (v6.1.3 fecha a fila com navegação fiscal na barra + escuro íntegro)', manifest.length >= 225 && manifest[manifest.length - 21] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length - 20] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length - 19] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length - 18] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length - 17] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length - 16] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length - 15] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length - 14] === 'seis_submenus_velho_patch.js' && manifest[manifest.length - 13] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length - 12] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length - 11] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length - 10] === 'fiscal_catalogo_completo_patch.js');
+ok('manifesto já é 225 (v6.1.3 fecha a fila com navegação fiscal na barra + escuro íntegro)', manifest.length >= 225 && manifest[manifest.length-18] === 'autocura_empresa_central_nf_tela_patch.js' && manifest[manifest.length-17] === 'perfis_nuvem_cura_sessao_patch.js' && manifest[manifest.length-16] === 'permissoes_estorno_venda_patch.js' && manifest[manifest.length-15] === 'fiscal_menu_completo_patch.js' && manifest[manifest.length-14] === 'dashboard_inicio_clicavel_patch.js' && manifest[manifest.length-13] === 'menus_fiscais_separados_patch.js' && manifest[manifest.length-12] === 'permissoes_override_menus_fiscais_patch.js' && manifest[manifest.length-11] === 'seis_submenus_velho_patch.js' && manifest[manifest.length-10] === 'submenu_hover_nfe_patch.js' && manifest[manifest.length-9] === 'navegacao_sem_tela_branca_patch.js' && manifest[manifest.length-8] === 'ribbon_fiscal_estilo_antigo_patch.js' && manifest[manifest.length-7] === 'fiscal_catalogo_completo_patch.js');
 ok('worker atualizado 5.26.8 · gerente segue 5.26.3', fs.readFileSync('cloudflare-worker/src/index.js', 'utf8').indexOf("WORKER_VERSION = '5.26.8'") >= 0 && JSON.parse(fs.readFileSync('gerente-atualizacoes/package.json', 'utf8')).version === '5.26.3');
 
 console.log('\nTudo OK — v6.0.3 (fiscal bonito no claro e no escuro: sem texto fantasma, sem card pendurado, sem título duplicado; saveConfig não explode mais com tela neo aberta).');

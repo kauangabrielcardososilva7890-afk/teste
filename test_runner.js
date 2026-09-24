@@ -241,36 +241,6 @@ const tests=[
   "test_exclusao_nao_volta.js",
   "test_recuperacao_completa.js",
   "test_recuperacao_nao_ressuscita.js",
-  // REDESENHO (fase 1) — o coração novo e as primeiras telas do sistema novo:
-  // lápide em vez de apagar, conflito decidido em um lugar só e nada voltando sozinho
-  "test_nucleo.js",
-  "test_ponte.js",
-  // v7.0.11 (rodada 18-C) — a CAIXA DE SELEÇÃO INTELIGENTE (cliente/produto/recarga) do
-  // núcleo novo, provada contra as regras do sistema de hoje (comparação caso a caso)
-  "test_selecao.js",
-  // v7.0.11 (rodada 18-D) — a VENDA (notinha) do núcleo novo: numeração, item, estoque,
-  // total e financeiro provados contra as regras do sistema de hoje + a tela funcionando
-  "test_venda.js",
-  // v7.0.11 (rodada 18-F) — o FINANCEIRO do núcleo novo (contas a receber e a pagar): baixa,
-  // busca de 8 campos, modos Hoje/Abertos/Todos, despesa e lixeira provados contra as regras
-  // do sistema de hoje + a tela funcionando ponta a ponta
-  "test_financeiro.js",
-  // v7.0.11 (rodada 20) — o PIX do núcleo novo: o código copia e cola é comparado BYTE A BYTE
-  // com o PIX_PURE que roda hoje (CRC16 incluído), o link da página pública é o mesmo, o
-  // comprovante continua manual (Pix não dá baixa sozinho) e o cartão de configuração funciona.
-  // (o `test_pix.js` do repositório — o vetor oficial do Banco Central — continua na lista
-  // de cima, intacto: este é o do sistema NOVO.)
-  "test_pix_novo.js",
-  // v7.0.11 (rodada 20) — o PAPEL: notinha em meia folha, folha inteira quando a venda tem OS
-  // (com o bloco da Ordem de Serviço e as duas assinaturas) e o carnê com um canhoto por
-  // parcela, provados contra o que o sistema de hoje imprime
-  "test_impressao.js",
-  // v7.0.11 (rodada 18-B) — o conferente do núcleo novo dentro do SISTEMA DE HOJE:
-  // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
-  "test_ponte_no_sistema.js",
-  "test_telas.js",
-  "test_listas.js",
-  "test_redesenho_pagina.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"

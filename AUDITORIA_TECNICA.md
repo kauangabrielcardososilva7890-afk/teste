@@ -2475,3 +2475,55 @@ Versão continua **7.0.11**; motor **5.26.8** (nada tocado nesta rodada no motor
   logado/permissão — pendência de paridade já registrada na §34.6.
 - **Escolher um chamado já existente** dentro da venda (`f.osSelecionada` de hoje) continua fora.
 - **Recibo v5.22.17** continua fora do escopo.
+
+---
+
+## §36 — Rodada 22 (24/09/2026): o núcleo novo foi APAGADO por decisão do dono
+
+Ordem do dono: *"esquece esse núcleo novo, vamos deletar isso"*. Executado, com o isolamento provado
+antes e o registro aqui depois — nada do sistema de hoje foi tocado.
+
+### 36.1 O que saiu (e a prova de que nada do sistema de hoje dependia disso)
+
+| Removido | Por que era seguro |
+|---|---|
+| `novo/` (11 arquivos: nucleo, ponte, selecao, pix, impressao, venda, financeiro, leituras, listas, telas, index.html) | nenhum arquivo fora de `novo/` tem `novo/` em `src`/`href`; o `index.html` do sistema de hoje **não** carrega nenhum deles |
+| `ajustes_v7011_ponte_nucleo_patch.js` | era o único patch que existia só para o núcleo novo (observação na Nuvem, `DIGICOPY_NUCLEO_OBS`); nenhum outro arquivo o chamava |
+| 11 testes do núcleo novo (`test_nucleo`, `test_ponte`, `test_ponte_no_sistema`, `test_selecao`, `test_venda`, `test_financeiro`, `test_pix_novo`, `test_impressao`, `test_telas`, `test_listas`, `test_redesenho_pagina`) | testavam só as peças removidas |
+| 3 entradas do `bundle-manifest.json` (228 → **225**) e o `--check` das peças no `package.json` | o núcleo novo nunca esteve no `app.bundle.js` do sistema vivo |
+
+**O histórico guarda tudo:** os commits `4fd5196` e `e273717` (rodada 21) têm o núcleo novo inteiro; se um
+dia for preciso olhar, `git show` traz de volta. A pasta `mobile/www` também voltou a casar com o bundle
+da raiz (mesmo hash) e o `mobile/android/.../app.bundle.js` **não** tem nenhuma referência ao núcleo novo.
+
+### 36.2 Achado desta rodada — gravidade MÉDIA · Manutenção · teste frágil — corrigido
+
+- **Arquivo/local:** `test_ajustes_v52293`, `v52295`, `v52296`, `v52435`, `v52436`, `v5266`, `v6003`.
+- **Problema:** sete testes conferem a ordem dos patches contando **de trás para a frente**
+  (`manifest[manifest.length - N] === '<arquivo>'`). Como o núcleo novo era exatamente o fim do
+  manifesto, a remoção deslocou todos os números em 3 e os sete reprovaram — mesmo com a ordem real
+  intacta.
+- **Causa:** o teste mede a distância até o fim em vez de fixar a âncora. É frágil por construção: uma
+  remoção **legítima** no fim da fila reprova sete arquivos que não têm defeito.
+- **Correção:** os números foram corrigidos (−3, com nota explicando a razão em cada arquivo). A ordem
+  conferida e os patches seguem os mesmos.
+- **Registrado como possível melhoria:** trocar a conta "de trás para a frente" por âncoras nomeadas
+  (ex.: "o guardião vem imediatamente antes do `volta-venda`"), o que deixa os testes imunes a remoção
+  no fim da fila. Não foi feito nesta rodada para não misturar mudança de teste com a remoção.
+
+### 36.3 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| suíte inteira (`test_runner.js`) | **217 passaram, 0 falharam, 0 falha aceita, 0 não rodaram** (eram 228 testes; 11 eram do núcleo novo) |
+| `npm run check` | `Bundle OK: 225 scripts, sha256 4b139844c79b1c6b` (o bundle **mudou** porque o manifesto perdeu 3 entradas — 2 delas eram do bundle) |
+| `sync_build.js` / `mobile/sync-www.js` | `Sync OK: v7.0.11 | 225 no bundle | 0 soltos` e `www do celular 1.0 pronto: 0 referências quebradas` |
+
+Versão **7.0.11** e motor **5.26.8** não mudaram. Nada de banco foi tocado (esta rodada é só arquivo).
+
+### 36.4 Pendência nova (INFORMATIVO)
+
+`mobile/android/app/src/main/assets/public/app.bundle.js` é uma cópia **antiga** (3.812.328 bytes contra
+3.892.210 do bundle da raiz) e nenhum script a atualiza. Não mexi (mobile está pausado por ordem dele),
+mas fica registrado: **se um dia o APK for refeito, essa pasta precisa ser regerada antes**, senão o app
+sai com o sistema de antes.
