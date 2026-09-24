@@ -18,7 +18,7 @@ const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost
 const w = dom.window;
 
 // As três peças do núcleo entram na ordem da página; depois roda o script da página.
-['nucleo.js', 'ponte.js', 'selecao.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
+['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
 const trecho = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 w.eval(trecho);
 const doc = w.document;
@@ -117,16 +117,51 @@ console.log('-- a BUSCA tem o campo "onde buscar" (igual ao sistema de hoje) --'
   doc.querySelector('[data-aba="clientes"]').dispatchEvent(new w.Event('click', { bubbles: true }));
 }
 
+console.log('-- a VENDA (notinha) funciona dentro da página --');
+{
+  w.__nucleoNovo.salvar('produtos', { id: 'pdx', nome: 'Cartucho 664', sku: 'HP664', categoria: 'Cartucho', preco: 89.9, estoque: 5 });
+  const irVendas = () => {
+    [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas')
+      .dispatchEvent(new w.Event('click', { bubbles: true }));
+  };
+  irVendas();
+  ok('o item do menu diz o que já está pronto e o que ainda falta na venda (sem prometer demais)',
+    /falta recebimento/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent));
+  ok('e o título da tela muda para a venda', doc.getElementById('titulo-tela').textContent === 'Nova venda / Notinha');
+  ok('a notinha abre com as duas caixas de seleção e a situação',
+    !!doc.querySelector('[data-caixa-cliente] [data-termo]') && !!doc.querySelector('[data-caixa-produto] [data-termo]') && !!doc.querySelector('[data-status]'));
+
+  const tipo = (sel, v) => { const e = doc.querySelector(sel); e.value = v; e.dispatchEvent(new w.Event('input', { bubbles: true })); return e; };
+  const enter = (el) => el.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  enter(tipo('[data-caixa-cliente] [data-termo]', 'jose'));
+  ok('escolher o cliente pela caixa funciona na página', /José Ávila/.test(doc.getElementById('tela').textContent));
+  enter(tipo('[data-caixa-produto] [data-termo]', 'cartucho'));
+  ok('escolher o produto traz o valor unitário', doc.querySelector('[data-vunit]').value === '89,9');
+  doc.querySelector('[data-qtd]').value = '2';
+  doc.querySelector('[data-add]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  doc.querySelector('[data-salvar]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  const vendas = w.__nucleoNovo.listar('vendas');
+  ok('a venda entrou no coração novo com o total certo', vendas.length === 1 && vendas[0].total === 179.8, JSON.stringify(vendas.map(v => v.total)));
+  ok('e o estoque do produto baixou (5 → 3)', w.__nucleoNovo.obter('produtos', 'pdx').estoque === 3);
+  ok('a fila da nuvem cresceu com a venda', /fila da nuvem: [1-9]/.test(doc.getElementById('st-fila').textContent));
+  irVendas();
+  ok('voltar para a venda mantém o que já foi lançado (não perde nada)', w.__nucleoNovo.listar('vendas').length === 1);
+}
+
 console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM gravar nada --');
 {
   const dom2 = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost/?exemplo=1', pretendToBeVisual: true });
   const w2 = dom2.window;
-  ['nucleo.js', 'ponte.js', 'selecao.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
+  ['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
   w2.eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
   const d2 = w2.document;
   const criar = (campo, valor) => { const c = d2.querySelector('[data-campo="' + campo + '"]'); c.value = valor; return c; };
   const qtd = () => d2.querySelectorAll('[data-linha]').length;
   ok('o exemplo já abre com 4 clientes', qtd() === 4, 'linhas=' + qtd());
+  ok('e com os 4 produtos (com preço em número, não texto)', w2.__nucleoNovo.contar('produtos') === 4 && w2.__nucleoNovo.obter('produtos', 'ex-prod-1').preco === 89.9);
+  d2.querySelector('[data-aba="produtos"]').dispatchEvent(new w2.Event('click', { bubbles: true }));
+  ok('a aba Produtos mostra os 4 de exemplo', qtd() === 4, 'linhas=' + qtd());
+  d2.querySelector('[data-aba="clientes"]').dispatchEvent(new w2.Event('click', { bubbles: true }));
   ok('e NADA foi gravado no navegador (nem o rascunho)', w2.localStorage.length === 0 || w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
   const busca = d2.querySelector('[data-busca]');
   busca.value = 'jose'; busca.dispatchEvent(new w2.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -136,6 +171,17 @@ console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM 
   busca.value = 'montes'; busca.dispatchEvent(new w2.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   ok('campo "Cidade" busca só na cidade', qtd() === 2, 'linhas=' + qtd());
   ok('e continua sem gravar nada no navegador', w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
+  // a venda de exemplo: ele clica em Atendimento → Nova venda e vende um produto de exemplo
+  [...d2.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas')
+    .dispatchEvent(new w2.Event('click', { bubbles: true }));
+  const digitar = (sel, v) => { const e = d2.querySelector(sel); e.value = v; e.dispatchEvent(new w2.Event('input', { bubbles: true })); e.dispatchEvent(new w2.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); };
+  digitar('[data-caixa-cliente] [data-termo]', 'jose');
+  digitar('[data-caixa-produto] [data-termo]', 'cartucho');
+  d2.querySelector('[data-add]').dispatchEvent(new w2.Event('click', { bubbles: true }));
+  d2.querySelector('[data-salvar]').dispatchEvent(new w2.Event('click', { bubbles: true }));
+  ok('a venda funciona também no modo exemplo (com os produtos de exemplo)', w2.__nucleoNovo.listar('vendas').length === 1);
+  ok('e o estoque do produto de exemplo baixou (5 → 4)', w2.__nucleoNovo.obter('produtos', 'ex-prod-1').estoque === 4, 'estoque=' + w2.__nucleoNovo.obter('produtos', 'ex-prod-1').estoque);
+  ok('e nada foi para o navegador nem no modo exemplo', w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
   try { w2.close(); } catch (e) {}
 }
 

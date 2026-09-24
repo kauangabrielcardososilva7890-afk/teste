@@ -55,6 +55,34 @@
   .sfx-titulo{font-weight:600;color:#0f172a}
   .sfx-detalhe{color:#64748b;font-size:12px;white-space:nowrap}
   .sfx-vazio{padding:10px 12px;color:#64748b;font-size:12.5px}
+  /* a venda / notinha (novo/venda.js) */
+  .vnd-topo{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px}
+  .vnd-bloco{flex:1;min-width:280px}
+  .vnd-bloco-pequeno{max-width:280px}
+  .vnd-rotulo{font-size:11.5px;text-transform:uppercase;color:#64748b;font-weight:700;margin-bottom:4px}
+  .vnd-item{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--linha);border-radius:12px;padding:10px;background:#fbfcff}
+  .vnd-campo{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:#475569}
+  .vnd-campo-prod{flex:1;min-width:260px}
+  .vnd-campo-mini{width:110px}
+  .vnd-campo input,.vnd-campo select,.vnd-topo select{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;background:#fff}
+  .vnd-btn{height:36px;padding:0 14px;border:1px solid var(--linha);border-radius:10px;background:#fff;font-weight:700;cursor:pointer}
+  .vnd-btn-forte{background:#0a1e8a;color:#fff;border-color:#0a1e8a}
+  .vnd-btn-add{background:#0a1e8a;color:#fff;border-color:#0a1e8a}
+  .vnd-erro{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fee2e2;color:#b91c1c;font-size:12.5px}
+  .vnd-aviso{margin-top:8px;padding:8px 10px;border-radius:10px;background:#dcfce7;color:#166534;font-size:12.5px}
+  .vnd-tabela{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  .vnd-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
+  .vnd-tabela td{padding:8px;border-bottom:1px solid #eef1f8}
+  .vnd-tag{font-size:10.5px;font-weight:800;background:rgba(10,30,138,.1);color:#0a1e8a;border-radius:999px;padding:2px 8px}
+  .vnd-sub{color:#94a3b8;font-size:11.5px}
+  .vnd-vazio{color:#94a3b8;text-align:center;padding:14px}
+  .vnd-lixo{border:0;background:transparent;cursor:pointer;margin-left:6px}
+  .vnd-rodape{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .vnd-totais{display:flex;gap:16px;align-items:center;font-size:13px;color:#334155;flex-wrap:wrap}
+  .vnd-desc input{width:96px;height:32px;border:1px solid var(--linha);border-radius:8px;padding:0 8px;text-align:right}
+  .vnd-total{font-weight:800;color:#0a1e8a;font-size:15px}
+  .vnd-acoes{display:flex;gap:8px}
+  .vnd-numero{margin-top:6px;font-size:12px;color:#334155}
   .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
   .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
   .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
@@ -98,7 +126,7 @@
     <div class="module" data-modulo="atendimento">
       <button type="button" data-menu="atendimento"><i>🧾</i>Atendimento</button>
       <div class="module-menu">
-        <button type="button" data-tela="vendas"><i>🛒</i>Consultar notinhas<small>fase 3</small></button>
+        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>falta recebimento</small></button>
         <button type="button" data-tela="orcamentos"><i>📋</i>Orçamentos<small>fase 3</small></button>
         <button type="button" data-tela="os"><i>🔧</i>Abrir chamado<small>fase 3</small></button>
       </div>
@@ -156,6 +184,7 @@
 <script src="nucleo.js"></script>
 <script src="ponte.js"></script>
 <script src="selecao.js"></script>
+<script src="venda.js"></script>
 <script src="telas.js"></script>
 <script>
 (function(){
@@ -182,17 +211,20 @@
 
   // A MESMA PONTE que vai entrar no sistema de hoje: aqui ela está ligada a um `db`
   // de rascunho, só para mostrar que as telas continuam mexendo em listas comuns.
-  var banco = { clientes: [], produtos: [] };
+  var banco = { clientes: [], produtos: [], vendas: [], contasReceber: [] };
   var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc',
     schemas: {
       clientes: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
-      produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' } }
+      produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' }, estoque: { tipo: 'numero' }, estoqueInfinito: { tipo: 'boleano' }, sku: { tipo: 'texto' } },
+      vendas: window.DIGICOPY_VENDA ? { numero: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, itens: { tipo: 'lista' }, desconto: { tipo: 'numero' }, total: { tipo: 'numero' }, status: { tipo: 'texto' } } : {},
+      contasReceber: window.DIGICOPY_VENDA ? { origem: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } } : {}
     } });
   ponte.primeiraVarredura();
   window.__ponte = ponte; window.__nucleoNovo = nucleo; window.__dbNovo = banco;
 
   var telas = window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('tela'), documento: document });
-  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços' };
+  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços', vendas: 'Nova venda / Notinha' };
+  var vendaTela = null;
   var selo = { inicio: null, vendas: 3, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, contasReceber: 3, contasPagar: 3, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
 
   function pintarStatus(){
@@ -207,6 +239,18 @@
       // as telas novas desenham dentro do cartão; elas escolhem a lista pelas abas
       telas.estado.lista = tela; telas.estado.busca = ''; telas.estado.mostrando = 'vivos'; telas.desenhar();
       document.querySelector('[data-aba="' + tela + '"]').click();
+      pintarStatus();
+      return;
+    }
+    if (tela === 'vendas') {
+      titulos.vendas && (document.getElementById('titulo-tela').textContent = titulos.vendas);
+      if (!vendaTela) {
+        vendaTela = window.DIGICOPY_VENDA.criarVenda({
+          nucleo: nucleo, elemento: alvo, empresaId: 'rascunho', documento: document, aoMudar: pintarStatus
+        });
+      } else {
+        vendaTela.desenhar();
+      }
       pintarStatus();
       return;
     }
@@ -256,12 +300,17 @@
       { id: 'ex-cli-3', nome: 'MARIA JOSE', telefone: '(38) 3232-1010', cidade: 'montes claros' },
       { id: 'ex-cli-4', nome: 'Recarga Express', telefone: '(31) 98888-7777', cidade: 'Belo Horizonte' }
     ].forEach(function (c) { nucleo.salvar('clientes', c, { semFila: true }); });
+    // preço e estoque entram como NÚMERO: o coração recusa texto onde é para ser número
+    // (era o defeito do modo exemplo — os 4 produtos não chegavam a ser gravados)
     [
-      { id: 'ex-prod-1', nome: 'Cartucho HP 664 Preto', preco: '89,90', categoria: 'Cartucho' },
-      { id: 'ex-prod-2', nome: 'Toner Samsung MLT-D111S', preco: '150,00', categoria: 'Insumo' },
-      { id: 'ex-prod-3', nome: 'Serviço de instalação', preco: '80,00', categoria: 'Serviço' },
-      { id: 'ex-prod-4', nome: 'Recarga de toner 85A', preco: '40,00', categoria: 'Recarga' }
+      { id: 'ex-prod-1', nome: 'Cartucho HP 664 Preto', sku: 'HP664', preco: 89.9, categoria: 'Cartucho', estoque: 5 },
+      { id: 'ex-prod-2', nome: 'Toner Samsung MLT-D111S', sku: 'SS101', preco: 150, categoria: 'Insumo', estoque: 2 },
+      { id: 'ex-prod-3', nome: 'Serviço de instalação', preco: 80, categoria: 'Serviço' },
+      { id: 'ex-prod-4', nome: 'Recarga de toner 85A', preco: 40, categoria: 'Recarga' }
     ].forEach(function (p) { nucleo.salvar('produtos', p, { semFila: true }); });
+    // se algum exemplo não entrar (data errada no código), avisa na barra em vez de ficar quieto
+    var entraram = nucleo.contar('clientes') + nucleo.contar('produtos');
+    if (entraram !== 8) document.getElementById('st-nucleo').textContent = 'exemplo incompleto: ' + entraram + ' de 8';
     pintarStatus();
   }
 

@@ -248,6 +248,9 @@ const tests=[
   // v7.0.11 (rodada 18-C) — a CAIXA DE SELEÇÃO INTELIGENTE (cliente/produto/recarga) do
   // núcleo novo, provada contra as regras do sistema de hoje (comparação caso a caso)
   "test_selecao.js",
+  // v7.0.11 (rodada 18-D) — a VENDA (notinha) do núcleo novo: numeração, item, estoque,
+  // total e financeiro provados contra as regras do sistema de hoje + a tela funcionando
+  "test_venda.js",
   // v7.0.11 (rodada 18-B) — o conferente do núcleo novo dentro do SISTEMA DE HOJE:
   // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
   "test_ponte_no_sistema.js",

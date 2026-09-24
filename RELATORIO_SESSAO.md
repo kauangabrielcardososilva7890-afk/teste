@@ -5873,3 +5873,65 @@ navegador. Dá para clicar no campo "onde buscar", trocar para Cidade ou Telefon
 
 **Próximo (fase 3):** as telas do dia — **venda/notinha** (onde essa caixa vive hoje: escolher cliente e
 produto, item a item, estoque, total), OS e orçamento.
+
+### Rodada 18-D (24/09/2026) — a venda (notinha) no núcleo novo
+
+**Entrou a primeira tela do dia: a notinha.** `novo/venda.js` faz a venda inteira — escolher o cliente e o
+produto pela **caixa de seleção inteligente** (a peça da rodada passada), item a item, estoque, desconto,
+total, **Salvar**, **Faturar** e **Nova**.
+
+**Como eu garanti que ela responde igual à de hoje:** copiei as regras do **próprio arquivo que manda**
+(`vendas_os_patch.js` e `vendas_notinhas_fix_patch.js`), com a linha de origem anotada no código — número
+da venda, o que impede um item de entrar, os avisos de estoque, quando o estoque baixa, venda zerada que
+entra paga, título que vence em 14 dias e a trava da venda faturada. Depois **comparei as duas
+implementações rodando lado a lado** no mesmo teste: o `proximoNumeroVendaLimpo` que está no ar hoje é
+extraído do repositório e responde junto com o novo — **10 casos, resposta idêntica em todos**. O teste
+também cobra que cada marca dessas continue existindo no sistema de hoje: se alguém mudar uma regra lá, o
+teste avisa que a cópia precisa ser revista.
+
+**Um defeito do sistema de hoje eu não copiei — consertei na venda nova (e só nela).** Hoje, tirar um item
+de uma notinha **já salva** e salvar de novo **não devolve o estoque do item**: a mercadoria fica baixada
+sem estar em venda nenhuma, para sempre. Na venda nova o estoque é acertado **pela diferença** entre o que
+a venda tinha e o que ela passou a ter — o que saiu volta, o que entrou baixa — e salvar duas vezes sem
+mudar nada **não mexe em nada** (não existe baixa dobrada). Isso está provado em 7 verificações. O sistema
+de hoje **não foi tocado**. Não sei quantas vendas dele já passaram por isso, porque **não tenho acesso ao
+banco de produção**.
+
+**Duas diferenças de forma, de propósito:** (1) os avisos de estoque saem **na própria tela**, com o texto
+idêntico ao de hoje, em vez de janela — e o que ele digitou **fica lá** (no de hoje, quando o aviso fecha
+errado, o que ele digitou se perde); (2) depois de **faturar**, o botão **Nova** continua à mão, para ele
+já abrir a próxima venda em vez de ficar preso na notinha travada.
+
+**O faturamento entrou com as regras da tela que roda hoje:** **Faturar** usa o mesmo padrão do sistema
+dele (**à vista em Dinheiro**), e a forma pode ser trocada ali mesmo (Dinheiro, Pix, cartão de crédito,
+cartão de débito, cheque, conta, **Grátis** e **a prazo**). À vista e Grátis: título já baixado (ou nenhum);
+a prazo: um título em aberto por parcela, **vencendo em 30 dias**, igual ao de hoje. E as parcelas são
+comparadas com o **próprio cálculo do sistema de hoje** em 6 configurações (com juros, nº de parcelas,
+intervalo e 1º vencimento) — resposta idêntica, centavo a centavo.
+
+**Um segundo defeito, da própria venda nova, o teste pegou antes de publicar:** ao clicar em **Nova**, o
+estado da tela era **trocado por outro objeto** em vez de ser limpo — quem olhasse a venda depois disso
+veria a **venda anterior**. Corrigido (limpa na mesma caixa) e coberto por teste.
+
+**O que ainda não tem (e vai ter):** a **tela de recebimento** (quantas parcelas, intervalo, juros, 1º
+vencimento, dia fixo), o **PIX com link** e o comprovante; depois, estorno, impressão da notinha (meia
+folha e folha inteira com OS), a aba de OS dentro da venda e a reposição de estoque com popup. Está tudo
+listado na `AUDITORIA_TECNICA.md` §30.5, sem esconder nada.
+
+**Dois defeitos apareceram nas provas e foram corrigidos:** (1) o pequeno da rodada passada — no modo `?exemplo=1` os
+**4 produtos de exemplo não chegavam a ser gravados** (o preço ia como texto e o coração recusa texto onde
+é número — de propósito), então a aba Produtos abria vazia para ele. Agora o preço entra como número e, se
+algum exemplo não entrar, a própria barra de baixo avisa (nada de erro engolido); (2) o da venda nova —
+clicar em **Nova** trocava o estado da tela por outro objeto e o de fora passava a olhar venda velha:
+agora limpa na mesma caixa de estado.
+
+**Provas:** `test_venda.js` **86 ✔** (novo, entrou na suíte), `test_redesenho_pagina.js` **53 ✔** (era 39 —
+a venda funcionando dentro da página, cliente, produto, item, estoque e o modo exemplo com os 4 produtos e
+a venda) e a **suíte inteira 224 passaram, 0 falharam, 0 não rodaram**.
+
+**O sistema de hoje não mudou nesta rodada** (a venda nova vive em `novo/`, fora do pacote do exe, como já
+era com a caixa de seleção): app publicado continua **v7.0.11** e motor da nuvem **5.26.8**.
+
+**Para ele testar agora:** na página nova, menu **Atendimento → Nova venda / Notinha**. Sem cadastrar nada,
+dá para acrescentar `?exemplo=1` no fim do endereço e a venda já abre com clientes e produtos de exemplo
+(com estoque) — só na memória, nada fica gravado no PC.

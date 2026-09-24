@@ -88,7 +88,7 @@ comportamento a levantar no dia da reescrita daquela tela.
 | Contratos e locação | contratos, filtros, RTF (modelo), visitas, vínculo com leituras, chamados | `contratos_*.js`, `locacao_*.js` ✔ |
 | Parque / impressora | monitor do parque, hub, SNMP, etiquetas de recarga | `ajustes_v52232_*`, `snmp*`, `etiqueta_*` ✔ |
 | Leituras | revisão completa (overhaul) e contadores | `ajustes_v5250_leitura_overhaul_patch.js` ✔ |
-| Vendas | venda, notinha, estorno, permissões de estorno, chamados de reparo | `vendas_*.js`, `notinha_patch.js` ✔ |
+| Vendas | venda, notinha, estorno, permissões de estorno, chamados de reparo | `vendas_*.js`, `notinha_patch.js` ✔ — **núcleo novo: `novo/venda.js` (regras copiadas com a linha de origem + numeração diferencial e a tela provadas em `test_venda.js`); falta recebimento/formas de pagamento, estorno, impressão e a aba de OS (AUDITORIA §30.5)** |
 | Estoque | alerta de estoque, voltar do zero, cartuchos | `estoque_*`, `cartuchos_*` ✔ |
 | Financeiro | contas a pagar/receber, datas, PIX, caixa | `financeiro_*`, `pix_*` ✔ |
 | Cadastros | clientes (abas), produtos, serviços, códigos, nomes | `clientes_*`, `cadastros_*`, `codigo_*` ✔ |
@@ -127,6 +127,13 @@ e **sem gravar nada**. O item 3 (massa pede confirmação) e o item 4 (modo obse
 O modo ligado no `saveDB()` só volta à mesa quando existir **cadência de gravação em lote** (hoje cada
 tela grava a base inteira) — é a mesma raiz da lentidão. Prova: `test_ponte_no_sistema.js` (39 ✔);
 detalhes em `AUDITORIA_TECNICA.md` §28.
+
+**Estado da página nova (`novo/index.html`, fora do pacote do exe):** telas **Clientes** e **Produtos**
+completas (cadastro, modal do sistema, excluir com motivo, lixeira, restaurar), **busca com o campo "onde
+buscar"** (16 campos de cliente / categorias no produto / 4 de recarga) e agora a **Venda / Notinha**
+(`novo/venda.js`: cliente e produto pela caixa de seleção, item a item, estoque, desconto, total, salvar,
+faturar, venda zerada e a numeração igual à de hoje). Item do menu diz **pronta**; o que ainda não entrou
+avisa a fase (nada de botão morto). Modo `?exemplo=1` para ver funcionando sem cadastrar nada.
 
 ## 5) Regras que o sistema novo já nasce cumprindo
 

@@ -1880,3 +1880,148 @@ sem nada ficar no PC. Provado em `test_redesenho_pagina.js` (o exemplo abre com 
   `whatsapp`, `fantasia`, `rgIE`, `endereco`, `bairro`, `contato`, `email`, `observacao`, `estado`) ainda
   não existem no núcleo novo — o seletor já os mostra (paridade do controle) e vão ganhar dados quando o
   cadastro completo entrar na fase 3/4. `modulosDinamicos` segue sem formato definido (fase 2/4).
+
+## 30. RODADA 18-D — A VENDA (NOTINHA) NO NÚCLEO NOVO (24/09/2026)
+
+**Pedido do dono:** *"eu quero cada função que tinha antes, a caixa de seleção inteligente de escolher
+cliente, produto... TUDO"* e *"pode continuar, no seu tempo, se for diminuir o problema e facilitar a
+vida de resolvê-los arrisco tudo"*. Ou seja: seguir sozinho, no ritmo, com a paridade sendo provada.
+
+**Entrega:** `novo/venda.js` (v1.0.0) + a venda ligada na página nova (`novo/index.html`) + `test_venda.js`
+(**86 verificações**) + prova na página (`test_redesenho_pagina.js` 39 → **53 ✔**).
+
+### 30.1 As regras: copiadas do arquivo que manda, com a linha de origem no código
+
+Nada foi inventado. Cada regra da venda nova tem, no próprio `novo/venda.js`, de onde saiu:
+
+| Regra | Origem (sistema de hoje) |
+|---|---|
+| número da venda (maior + 1, ignora migrado e número ≥ 500000) | `vendas_notinhas_fix_patch.js:30` (`proximoNumeroVendaLimpo`) |
+| item sem produto OU sem descrição não entra | `vendas_os_patch.js:449` (`vosAddItem`) |
+| **Serviço, Recarga e estoque infinito não passam por estoque** na inclusão | `vendas_os_patch.js:450` |
+| "Produto sem estoque" / "Estoque insuficiente. Disponível: N" | `vendas_os_patch.js:452-453` |
+| valor unitário obrigatório e numérico; quantidade e desconto só número | `vendas_os_patch.js:459-461` |
+| subtotal = máximo(0, qtd × valor − desconto); total = máximo(0, soma − desconto) | `vendas_os_patch.js:474` e `:653` |
+| estoque baixa **na gravação** (não ao lançar o item); a baixa isenta Serviço e estoque infinito | `vendas_os_patch.js:659-662` |
+| situação da venda com as mesmas opções: **AGUARDAR / ORÇAMENTO / APROVADA** (faturar é ação, não opção da lista) | `vendas_os_patch.js:297-301` (`vos-status`) |
+| venda zerada entra **paga, baixada automática, "Sem cobrança (R$ 0,00)"** | `vendas_notinhas_fix_patch.js:204` |
+| faturamento: **à vista conclui com título já pago e baixa automática**; **a prazo cria um título em aberto por parcela**; **Grátis não cria nada**; e os títulos **abertos** antigos da venda são refeitos antes de criar | `vendas_os_patch.js:844` (`vosConcluirFaturamento`) |
+| formas de recebimento: **Dinheiro, Pix, Cartão de crédito, Cartão de débito, Cheque, Conta, Grátis, Prazo** — com Dinheiro já escolhido | `vendas_os_patch.js:740` (`VOS_FORMAS_VISTA` + Prazo) |
+| cálculo das parcelas (nº, intervalo em dias, juros ao mês, 1º vencimento) | `vendas_os_patch.js:19` (`vosCalcParcelas`) |
+| venda faturada não se exclui (trava na tela) | `vendas_notinhas_fix_patch.js:352` |
+
+A `prova de evidência` no `test_venda.js` confere, uma por uma, que essas marcas continuam existindo nos
+arquivos de origem: se alguém mudar a regra no sistema de hoje, o teste avisa que a cópia precisa ser
+revisitada (foi o que pegou o `fone` × `telefone` na rodada 18-C).
+
+### 30.2 Paridade provada por comparação, não por leitura
+
+O `test_venda.js` **extrai o `proximoNumeroVendaLimpo` do repositório** e roda as duas implementações lado
+a lado em 10 casos (lista vazia, fora de ordem, número com letra, registro migrado, número absurdo, outra
+empresa, registro sem empresa). Resultado: **as duas respondem igual em todos**.
+
+Achado do próprio teste (não é defeito, é regra): o sistema de hoje **ignora venda sem `empresaId`** quando
+a empresa é informada — a primeira versão da minha expectativa supunha o contrário e o teste diferencial
+mostrou quem estava certo. A regra nova foi mantida **igual à de hoje**.
+
+O mesmo método vale para o **faturamento**: o teste extrai o `vosCalcParcelas` do repositório e compara as
+parcelas em **6 configurações** (1 parcela; 3 parcelas; 999,99 em 3 com juros de 1,5%; 180 em 6; 2 parcelas
+com 1º vencimento marcado; 123,45 em 4 de 15 em 15 dias com 2% ao mês) — **valor, vencimento e número da
+parcela idênticos, centavo a centavo**.
+
+**Correção de rota dentro da própria rodada:** na primeira versão eu havia copiado o faturamento do
+`notinha_patch.js` (`neoSalvarVenda`, título em aberto em 14 dias). Ao conferir **qual tela de venda está
+no ar hoje**, vi que o `novaVenda` final é o do **`vendas_os_patch.js`** (o do `notinha_patch` foi
+substituído no bundle) — a regra foi refeita sobre o `vosConcluirFaturamento`. A paridade é com a tela que
+roda, não com a que está no repositório sem uso.
+
+### 30.3 Uma correção de propósito (e por quê)
+
+**Problema no sistema de hoje (MÉDIO, estoque):** `vosGravarVenda` só baixa estoque na **criação** da venda
+(`vendas_os_patch.js:659`) e `vosRemoveItem` (`:511` + hook em `vendas_notinhas_fix_patch.js:527`) **não
+devolve** o estoque de item tirado de uma venda já salva. Consequência: tirar um item de uma notinha já
+salva e salvar de novo deixa a mercadoria baixada **sem estar em venda nenhuma** — o estoque fica menor do
+que a soma das vendas, para sempre. *Não foi possível verificar diretamente em dados reais — acesso ao
+banco de produção indisponível* (não sei quantas vendas já passaram por isso).
+
+**Na venda nova:** o estoque é acertado pela **diferença** entre a venda que já estava salva e a que está
+sendo salva (`reconciliarEstoque`): o que saiu volta, o que entrou baixa. Como o cálculo é sempre
+"antes × depois", **salvar duas vezes sem mudar nada não mexe em nada** (não existe baixa dobrada) — e isso
+está provado em quatro verificações puras + três na tela (tirar item devolve, acrescentar baixa, salvar de
+novo não baixa outra vez).
+
+Isto é a única divergência deliberada da venda nova em relação à de hoje. Ela está registrada aqui e no
+`test_venda.js` (a verificação se chama *"item tirado de venda salva DEVOLVE o estoque (correção de
+propósito)"*). **O sistema de hoje não foi tocado.**
+
+### 30.4 Duas diferenças de forma (não de regra)
+
+1. Os avisos de estoque saem **na própria tela** (faixa vermelha), com o mesmo texto de hoje, em vez de
+   popup. Além de não usar janela nativa (regra 16), foi preciso porque no popup de hoje **o que ele
+   digitou se perde** quando o modal fecha errado. Na venda nova o que ele digitou **fica na tela** — isso
+   é cobrado por teste.
+2. O botão **Nova** fica disponível **inclusive depois de faturar** (ele pediu faturar e perguntou "e
+   agora?"). No de hoje, depois de faturar a notinha abre travada; aqui ele abre a próxima venda sem
+   precisar fechar nada.
+
+### 30.5 O que a venda nova ainda NÃO tem (próximas fatias, sem esconder nada)
+
+- **Tela de recebimento:** hoje o botão **Faturar** usa o padrão que já vem escolhido no sistema de hoje
+  (**à vista em Dinheiro**) e a forma pode ser trocada no rodapé da venda. Falta a tela com a
+  **configuração das parcelas** (quantidade, intervalo, juros ao mês, primeiro vencimento, dia fixo), o
+  **PIX com link** e o comprovante — é a próxima fatia da fase 3.
+- **Estorno** de venda faturada (a tela trava, mas a volta do estorno ainda não existe aqui).
+- **Impressão da notinha** (meia folha/folha inteira com OS), etiqueta de recarga e PIX no papel.
+- **Aba Ordem de Serviço dentro da venda** (`vendas_os_patch.js`), chamados espelhados em `db.os`.
+- **Reposição de estoque com popup** (`checarEstoqueComPopup`), que hoje abre o cadastro do produto para
+  repor e volta para a venda com o item lançado (snapshot em `vendas_notinhas_fix_patch.js:607/:627`).
+- **Contas a receber / financeiro** como tela própria (fase 3, depois do recebimento).
+
+### 30.6 Dois defeitos achados pelas provas (um da rodada anterior, um desta)
+
+Ao estender o `test_redesenho_pagina.js` para a venda, a prova apontou um defeito **do modo `?exemplo=1`
+da rodada 18-C**: os **4 produtos de exemplo não eram gravados**. O coração novo recusa texto onde o campo
+é número e o exemplo mandava `preco: '89,90'` (texto); o erro estava sendo **engolido** (ninguém olhava o
+retorno do `salvar`) e a aba Produtos abria vazia para ele. Corrigido: preço e estoque entram como número,
+**e** se algum exemplo não entrar a própria barra de baixo avisa ("exemplo incompleto: N de 8") em vez de
+ficar quieto. Provado em 4 verificações novas (4 produtos, preço numérico, aba mostrando os 4, e a venda
+funcionando no modo exemplo com o estoque baixando).
+
+Tipo: **Bug** · Gravidade: **MÉDIO** (só no modo de demonstração; nada de dado real) · Causa: valor de texto
+em campo numérico + retorno de erro ignorado.
+
+**2) Da própria venda nova (achado pelo `test_venda.js`):** ao clicar em **Nova**, a função **trocava o
+objeto de estado** da tela em vez de limpar os campos. Quem guardava a referência daquele estado (a página,
+na troca de telas) passava a olhar **venda velha** — e a própria prova pegou isso ao conferir a venda
+faturada ("gravou, mas eu olhava a venda anterior"). Corrigido: a limpeza acontece **na mesma caixa** de
+estado e existe `estadoAtual()` para quem precisa perguntar "qual é a venda de agora".
+
+Tipo: **Bug** · Gravidade: **ALTO se passasse** (dava venda errada em tela) · Detectado antes de publicar
+pelo teste da tela; corrigido e coberto.
+
+### 30.7 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_venda.js` (**novo**) | **86 ✔** | as regras puras (numeração **diferencial**, item, estoque, totais, faturamento com parcelas **diferencial**, acerto de diferença de estoque) + a tela inteira em navegador de mentira (escolher cliente e produto pela caixa, aviso de estoque sem apagar o digitado, desconto, salvar, tirar item de venda salva, segunda venda numerada 2, faturar à vista e a prazo, venda zerada, estoque) |
+| `test_redesenho_pagina.js` | **53 ✔** (era 39) | na página: o item do menu avisa **"falta recebimento"** (nada de dizer que está tudo pronto), a notinha abre com as duas caixas e a situação certa, escolher cliente e produto funciona, a venda entra no coração novo com total certo, o estoque baixa (5 → 3), nada se perde ao trocar de tela, o modo exemplo tem os **4 produtos** e vende por lá |
+| suíte inteira | **224 passaram, 0 falharam, 0 não rodaram** | `test_nucleo` 53 ✔, `test_selecao` 35 ✔, `test_ponte` 50 ✔, `test_telas` 38 ✔, `test_ponte_no_sistema` 39 ✔ |
+
+**Nada no sistema de hoje mudou nesta rodada:** `novo/` fica fora do bundle (mesma decisão da 18-C para a
+caixa de seleção), então o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle
+`3a341ce6d072e7de`, 228 scripts) e o motor da nuvem **5.26.8**.
+
+### 30.8 Próximo
+
+Fase 3 continua: a **tela de recebimento** (parcelas configuráveis, PIX, comprovante) para fechar a venda
+de ponta a ponta, depois **OS** e **orçamento** sobre a mesma base, e então financeiro. A ordem segue a que
+ele já autorizou (por partes, virada da chave uma vez só).
+
+**Achados que ficam registrados sem correção agora** (não são da venda nova, são do sistema de hoje):
+1. `vendas_os_patch.js:659-662` — o estoque só baixa na **criação** e o item tirado de venda salva não
+   devolve estoque (ver §30.3). **MÉDIO · Bug de estoque**, no sistema que está no ar. Corrigir lá exige
+   mexer na venda do sistema de hoje (risco alto, ganho baixo) — a correção já está na venda nova.
+2. `notinha_patch.js` (telas `cv-*` e `neo-*`) segue no bundle **substituído** pelo `vendas_os_patch.js`
+   (`novaVenda` final). É **código sem uso** que continua sendo carregado — candidato a sair na limpeza da
+   virada (não foi removido agora: a lista de quem chama `showVenda`/`imprimirNotinha`/`deleteVenda` ainda
+   passa por esse arquivo e precisa ser conferida com calma).
