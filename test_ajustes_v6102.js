@@ -48,7 +48,7 @@ ok(!/digi-escuro\s*[{,][^{}]*#f6f9ff|#f8fbff/.test(p), 'nenhum fundo claro nos b
 
 /* convívio e manifesto */
 const man = JSON.parse(ler('bundle-manifest.json'));
-ok(man.length === 225 && man[221] === 'navegacao_fiscal_barra_escuro_patch.js' && man[220] === 'submenu_fiscal_oficial_patch.js',
+ok(man.length >= 225 && man[221] === 'navegacao_fiscal_barra_escuro_patch.js' && man[220] === 'submenu_fiscal_oficial_patch.js',
   'manifesto 225: v6.1.1 antes, v6.1.2 fecha a fila, v6.1.8 soma memória da tela + conferência da NF-e');
 const ix = ler('index.html');
 // v6.1.4 — a versão sai do package.json: subir a versão não reescreve o teste.

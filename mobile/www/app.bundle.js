@@ -1,5 +1,5 @@
 /* DIGICOPY APP BUNDLE — gerado; não editar diretamente
- * scripts: 225 | sha256: 4b139844c79b1c6b
+ * scripts: 228 | sha256: 3a341ce6d072e7de
  */
 
 /* ===== isolamento de erro (gerado pelo build_bundle.js) ===== */
@@ -60215,15 +60215,950 @@ console.log('[DIGICOPY] v6.1.8 Falta pouco para a nota valer de verdade (confer�
 }catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v6108_falta_emitir_patch.js", e); }
 ;
 
+/* ===== novo/nucleo.js ===== */
+try{
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DIGICOPY — NÚCLEO (v1.0.0) — o coração do sistema novo
+ *
+ * O que é: dados + regras. NÃO tem tela, NÃO fala com a nuvem, NÃO guarda senha.
+ * As telas novas usam este arquivo; a nuvem nova (fase 2) fala com ele por
+ * `mudancas()` / `confirmarEnvio()` / `aplicarDaNuvem()`.
+ *
+ * POR QUE ELE EXISTE (a causa dos problemas das rodadas 12 a 16):
+ *   - a mesma regra estava escrita em vários lugares (a exclusão, em 82 pontos);
+ *   - apagar era `splice` da lista: o registro "sumia" e a sincronização não tinha
+ *     como saber se sumiu por exclusão, por falha ou por outro computador — foi daí
+ *     que saíram o "apaguei e voltou" e a "recuperação" que ressuscitava coisa;
+ *   - a mesma lista era varrida inteira para achar um registro (lentidão).
+ *
+ * AS 5 REGRAS DO CORAÇÃO (cada uma mora AQUI, em um lugar só):
+ *   1. APAGAR É MARCAR. O registro nunca sai da lista: ganha `apagadoEm`,
+ *      `apagadoPor` e `motivo` (lápide). Quem some da vista é a lápide, não o dado.
+ *   2. QUEM DECIDE CONFLITO É UMA FUNÇÃO (`#decisao`), não cada tela.
+ *      Versão maior vence; empate decide por lápide, depois por data, depois por
+ *      origem. Determinístico: dois computadores chegam sempre ao mesmo resultado.
+ *   3. NADA VOLTA SOZINHO. Registro apagado aqui só volta por `restaurar()`
+ *      (ação explícita de alguém) — a não ser que a nuvem traga uma EDIÇÃO mais
+ *      nova que a lápide (regra da rodada 15: quem editou depois manda).
+ *   4. TODA GRAVAÇÃO VIRA UMA MUDANÇA na fila (`outbox`), na ordem em que
+ *      aconteceu. A nuvem manda essa fila; nada se perde e nada se duplica.
+ *   5. ACHAR UM REGISTRO É PELO ÍNDICE (Map id → item), nunca varrendo a lista.
+ *
+ * NÃO FAZ: `alert`, `confirm`, `prompt`, `localStorage`, `fetch`, senha, token.
+ * Quem quiser guardar/puxar pluga por fora (`guardar`, e o cliente da nuvem).
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function (raiz) {
+  'use strict';
+
+  var VERSAO_NUCLEO = '1.0.0';
+
+  // Tipos aceitos no schema de cada lista (o que a tela declara sobre os campos).
+  var TIPOS = {
+    texto:  function (v) { return v == null || typeof v === 'string'; },
+    numero: function (v) { return v == null || (typeof v === 'number' && isFinite(v)); },
+    lista:  function (v) { return v == null || Array.isArray(v); },
+    objeto: function (v) { return v == null || (typeof v === 'object' && !Array.isArray(v)); },
+    boleano: function (v) { return v == null || typeof v === 'boolean'; }
+  };
+
+  function texto(v) { return v == null ? '' : String(v); }
+  function inteiro(v) { var n = Number(v); return isFinite(n) ? Math.floor(n) : 0; }
+
+  // A REGRA DO CONFLITO — existe UMA vez, aqui.
+  // Devolve 'remoto' quando a mudança da nuvem deve ser aplicada, 'local' quando
+  // o que está aqui deve ser mantido. Nunca devolve "apaga e não deixa rastro".
+  function decisao(local, remoto) {
+    if (!local) return 'remoto';
+    if (!remoto) return 'local';
+    var lApag = inteiro(local.apagadoEm), rApag = inteiro(remoto.apagadoEm);
+    var lVer = inteiro(local.versao), rVer = inteiro(remoto.versao);
+
+    // Um lado apagou e o outro não:
+    if (lApag && !rApag) {
+      // apagado aqui; a nuvem tem uma edição MAIS NOVA que a lápide? então ela manda
+      return rVer > lVer ? 'remoto' : 'local';
+    }
+    if (rApag && !lApag) {
+      // apagado na nuvem; editei aqui DEPOIS? então a minha edição manda
+      return lVer > rVer ? 'local' : 'remoto';
+    }
+    // os dois apagados ou os dois vivos: versão maior vence
+    if (rVer !== lVer) return rVer > lVer ? 'remoto' : 'local';
+    // empate de versão: lápide mais nova vence numa exclusão mais recente
+    if (rApag !== lApag) return rApag > lApag ? 'remoto' : 'local';
+    // depois a data, e por fim a origem (para os dois computadores decidirem igual)
+    var lAt = inteiro(local.atualizadoEm), rAt = inteiro(remoto.atualizadoEm);
+    if (rAt !== lAt) return rAt > lAt ? 'remoto' : 'local';
+    return texto(remoto.origem) > texto(local.origem) ? 'remoto' : 'local';
+  }
+
+  function criar(opcoes) {
+    var op = opcoes || {};
+    var empresaId = texto(op.empresaId);
+    var origem = texto(op.origem) || 'pc';
+    var agora = typeof op.relogio === 'function' ? op.relogio : function () { return Date.now(); };
+    var avisar = typeof op.avisar === 'function' ? op.avisar : function () {};
+    var guardar = typeof op.guardar === 'function' ? op.guardar : function () { };
+
+    var listas = Object.create(null);   // nome -> { nome, schema, itens, indice }
+    var outbox = [];                    // mudanças ainda não confirmadas na nuvem
+    var seq = 0;
+
+    function exigirLista(nome) {
+      var l = listas[nome];
+      if (!l) throw new Error('lista desconhecida: ' + nome + ' (registre com registrarLista antes de usar)');
+      return l;
+    }
+
+    // ── registro das listas (o schema é a única descrição de cada tipo de dado) ──
+    function registrarLista(nome, schema) {
+      var n = texto(nome);
+      if (!n) throw new Error('registrarLista: informe o nome da lista');
+      if (listas[n]) return listas[n];
+      listas[n] = {
+        nome: n,
+        schema: schema && typeof schema === 'object' ? schema : {},
+        itens: [],
+        indice: new Map()
+      };
+      return listas[n];
+    }
+
+    // ── validação: só os campos declarados no schema; campo extra é PRESERVADO ──
+    function validar(nome, dados) {
+      var l = exigirLista(nome);
+      var erros = [];
+      var d = dados || {};
+      Object.keys(l.schema).forEach(function (campo) {
+        var regra = l.schema[campo] || {};
+        var v = d[campo];
+        if (regra.obrigatorio && (v === undefined || v === null || texto(v).trim() === '')) {
+          erros.push('campo obrigatório: ' + campo);
+          return;
+        }
+        var tipo = regra.tipo && TIPOS[regra.tipo];
+        if (tipo && !tipo(v)) erros.push('campo ' + campo + ' devia ser ' + regra.tipo);
+      });
+      return erros;
+    }
+
+    function proximoId(nome) {
+      var l = exigirLista(nome);
+      var base = nome.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toLowerCase() || 'reg';
+      var id;
+      do {
+        id = base + '_' + (++seq).toString(36) + Math.random().toString(36).slice(2, 6);
+      } while (l.indice.has(id));
+      return id;
+    }
+
+    function anotarMudanca(item) {
+      outbox.push({
+        seq: outbox.length + 1,
+        lista: item.lista,
+        id: item.id,
+        versao: item.versao,
+        apagadoEm: inteiro(item.apagadoEm),
+        atualizadoEm: inteiro(item.atualizadoEm),
+        origem: item.origem,
+        dados: JSON.parse(JSON.stringify(item))
+      });
+    }
+
+    // O índice guarda a POSIÇÃO na lista (número). Atenção: a posição 0 é
+    // válida — toda leitura tem de comparar com `undefined`, nunca com
+    // "verdadeiro/falso" (foi exatamente o defeito que o teste pegou).
+    function itemPorId(l, id) {
+      var pos = l.indice.get(texto(id));
+      return pos === undefined ? null : (l.itens[pos] || null);
+    }
+
+    function posicionarNoIndice(l, item) {
+      var pos = l.indice.get(item.id);
+      if (pos === undefined) { l.itens.push(item); l.indice.set(item.id, l.itens.length - 1); }
+      else { l.itens[pos] = item; }
+    }
+
+    // ── GRAVAR (criar ou editar) — o caminho único ──
+    function salvar(nome, dados, opcoes) {
+      var l = exigirLista(nome);
+      var op2 = opcoes || {};
+      var d = Object.assign({}, dados || {});
+
+      // atenção: a posição 0 do índice é um número VÁLIDO — comparar com
+      // `undefined`, nunca com "verdadeiro/falso" (era o defeito antes do teste)
+      var existente = d.id ? itemPorId(l, d.id) : null;
+      // REGRA 3 (nada volta sozinho): editar um registro APAGADO é recusado com
+      // motivo. Quem quiser mexer nele primeiro restaura (ação explícita) — assim
+      // nenhuma tela consegue "ressuscitar" um cadastro sem alguém mandar.
+      if (existente && inteiro(existente.apagadoEm)) {
+        return { ok: false, erros: ['este registro está apagado — restaure antes de editar'], apagado: true };
+      }
+      // A validação olha o registro COMPLETO (o que já estava + o que chegou),
+      // para editar um campo só não ser acusado de "faltou o nome".
+      var item = Object.assign({}, existente || {}, d);
+      var erros = validar(nome, item);
+      if (erros.length) return { ok: false, erros: erros };
+      var agoraMs = agora();
+      item.lista = nome;
+      item.id = texto(item.id) || proximoId(nome);
+      item.versao = (existente ? inteiro(existente.versao) : 0) + 1;
+      item.atualizadoEm = agoraMs;
+      item.origem = origem;
+      item.empresaId = empresaId;
+      if (!existente) { item.criadoEm = agoraMs; item.apagadoEm = 0; item.apagadoPor = ''; item.motivo = ''; }
+
+      posicionarNoIndice(l, item);
+      // IMPORTAR BASE EXISTENTE (op2.semFila): o coração passa a conhecer o
+      // registro, mas isso NÃO é novidade para a nuvem — é o que já está lá.
+      if (!op2.semFila) {
+        anotarMudanca(item);
+        avisar(existente ? 'editou' : 'criou', { lista: nome, id: item.id, versao: item.versao });
+      }
+      guardar();
+      return { ok: true, item: item };
+    }
+
+    // ── APAGAR = MARCAR (lápide). Nunca sai da lista; nunca `splice`. ──
+    function apagar(nome, id, motivo) {
+      var l = exigirLista(nome);
+      var item = itemPorId(l, id);
+      if (!item) return { ok: false, erros: ['registro não encontrado'] };
+      if (inteiro(item.apagadoEm)) return { ok: true, item: item, jaEstava: true };
+      item.apagadoEm = agora();
+      item.apagadoPor = origem;
+      item.motivo = texto(motivo) || 'excluído pela tela';
+      item.versao = inteiro(item.versao) + 1;
+      item.atualizadoEm = item.apagadoEm;
+      item.origem = origem;
+      anotarMudanca(item);
+      avisar('apagou', { lista: nome, id: item.id, versao: item.versao, motivo: item.motivo });
+      guardar();
+      return { ok: true, item: item };
+    }
+
+    // ── VOLTAR ATRÁS É AÇÃO EXPLÍCITA (nunca automática) ──
+    function restaurar(nome, id) {
+      var l = exigirLista(nome);
+      var item = itemPorId(l, id);
+      if (!item) return { ok: false, erros: ['registro não encontrado'] };
+      if (!inteiro(item.apagadoEm)) return { ok: true, item: item, jaEstava: true };
+      item.apagadoEm = 0;
+      item.apagadoPor = '';
+      item.motivo = '';
+      item.versao = inteiro(item.versao) + 1;
+      item.atualizadoEm = agora();
+      item.origem = origem;
+      anotarMudanca(item);
+      avisar('restaurou', { lista: nome, id: item.id, versao: item.versao });
+      guardar();
+      return { ok: true, item: item };
+    }
+
+    function obter(nome, id) {
+      return itemPorId(exigirLista(nome), id);
+    }
+
+    function listar(nome, opcoes) {
+      var l = exigirLista(nome);
+      var o = opcoes || {};
+      var saida = [];
+      for (var i = 0; i < l.itens.length; i++) {
+        var it = l.itens[i];
+        if (!it) continue;
+        var apagado = !!inteiro(it.apagadoEm);
+        if (o.somenteApagados) { if (!apagado) continue; }          // só a lixeira
+        else if (apagado && !o.incluirApagados) continue;           // fora os apagados
+        saida.push(it);
+      }
+      if (o.ordenarPor) {
+        var campo = o.ordenarPor;
+        saida.sort(function (a, b) {
+          var x = a[campo], y = b[campo];
+          if (typeof x === 'number' || typeof y === 'number') return Number(x || 0) - Number(y || 0);
+          return texto(x).localeCompare(texto(y), 'pt-BR');
+        });
+      }
+      return saida;
+    }
+
+    function contar(nome, opcoes) { return listar(nome, opcoes).length; }
+
+    // ── A NUVEM (fase 2 usa isto; o núcleo não conhece fetch) ──
+    // Aplica o que chegou de outro computador pela MESMA regra de conflito.
+    // Nunca remove nada: se não vence, é ignorado (e o motivo volta para quem chamou).
+    function aplicarDaNuvem(mudanca) {
+      var m = mudanca || {};
+      var nome = texto(m.lista);
+      var l = listas[nome];
+      if (!l) return { aplicado: false, motivo: 'lista desconhecida' };
+      var remoto = Object.assign({}, m.dados || {});
+      remoto.id = texto(m.id || remoto.id);
+      remoto.lista = nome;
+      remoto.versao = inteiro(m.versao !== undefined ? m.versao : remoto.versao);
+      remoto.apagadoEm = inteiro(m.apagadoEm !== undefined ? m.apagadoEm : remoto.apagadoEm);
+      remoto.atualizadoEm = inteiro(m.atualizadoEm !== undefined ? m.atualizadoEm : remoto.atualizadoEm);
+      remoto.origem = texto(m.origem || remoto.origem);
+      if (!remoto.id) return { aplicado: false, motivo: 'mudança sem id' };
+
+      var local = itemPorId(l, remoto.id);
+      var quem = decisao(local, remoto);
+      if (quem === 'local' && local) {
+        return { aplicado: false, motivo: 'a versão daqui venceu', item: local };
+      }
+      var pos = l.indice.get(remoto.id);
+      if (pos === undefined) { l.itens.push(remoto); l.indice.set(remoto.id, l.itens.length - 1); }
+      else { l.itens[pos] = remoto; }
+      avisar('chegouDaNuvem', { lista: nome, id: remoto.id, versao: remoto.versao });
+      return { aplicado: true, item: remoto };
+    }
+
+    function mudancas() { return outbox.slice(); }
+
+    function confirmarEnvio(ateSeq) {
+      var limite = inteiro(ateSeq);
+      var antes = outbox.length;
+      if (!limite) { outbox = []; } else { outbox = outbox.filter(function (m) { return m.seq > limite; }); }
+      return { confirmadas: antes - outbox.length, restantes: outbox.length };
+    }
+
+    function resumo() {
+      var r = { empresaId: empresaId, origem: origem, listas: {}, mudancasPendentes: outbox.length, versao: VERSAO_NUCLEO };
+      Object.keys(listas).forEach(function (nome) {
+        var l = listas[nome];
+        var vivos = 0, apagados = 0;
+        for (var i = 0; i < l.itens.length; i++) {
+          if (!l.itens[i]) continue;
+          if (inteiro(l.itens[i].apagadoEm)) apagados++; else vivos++;
+        }
+        r.listas[nome] = { vivos: vivos, apagados: apagados };
+      });
+      return r;
+    }
+
+    // ── guardar/abrir (a mesma forma na tela e no arquivo; lápide e versão preservadas) ──
+    function paraJSON() {
+      var saida = { versaoNucleo: VERSAO_NUCLEO, empresaId: empresaId, listas: {} };
+      Object.keys(listas).forEach(function (nome) {
+        saida.listas[nome] = { schema: listas[nome].schema, itens: listas[nome].itens.filter(Boolean) };
+      });
+      return saida;
+    }
+
+    function carregarDeJSON(obj) {
+      var o = obj || {};
+      var l = o.listas || {};
+      Object.keys(l).forEach(function (nome) {
+        registrarLista(nome, l[nome].schema || {});
+        var alvo = listas[nome];
+        alvo.itens = []; alvo.indice = new Map();
+        (l[nome].itens || []).forEach(function (item) {
+          if (!item || !item.id) return;
+          item.lista = nome;
+          alvo.itens.push(item);
+          alvo.indice.set(item.id, alvo.itens.length - 1);
+          var maior = inteiro(item.versao);
+          if (maior > seq) seq = maior;
+        });
+      });
+      return resumo();
+    }
+
+    return {
+      versao: VERSAO_NUCLEO,
+      registrarLista: registrarLista,
+      validar: validar,
+      salvar: salvar,
+      apagar: apagar,
+      restaurar: restaurar,
+      obter: obter,
+      listar: listar,
+      contar: contar,
+      aplicarDaNuvem: aplicarDaNuvem,
+      mudancas: mudancas,
+      confirmarEnvio: confirmarEnvio,
+      resumo: resumo,
+      paraJSON: paraJSON,
+      carregarDeJSON: carregarDeJSON,
+      proximoId: proximoId
+    };
+  }
+
+  var api = { VERSAO_NUCLEO: VERSAO_NUCLEO, TIPOS: TIPOS, decisao: decisao, criar: criar };
+  raiz.DIGICOPY_NUCLEO = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("novo/nucleo.js", e); }
+;
+
+/* ===== novo/ponte.js ===== */
+try{
+/* ═══════════════════════════════════════════════════════════════════════════
+ * DIGICOPY — PONTE ENTRE AS TELAS DE HOJE E O CORAÇÃO NOVO (v1.0.0)
+ *
+ * O PEDIDO DO DONO (24/09/2026): *"recriar praticamente O MESMO sistema, só que
+ * com núcleo diferente... acostumamos com o mesmo Index, as mesmas funções, tudo,
+ * mas aí você muda o que precisa mudar completamente"*.
+ *
+ * COMO ESTA PONTE FAZ ISSO SEM TOCAR EM NENHUMA TELA:
+ *   - as telas de hoje continuam mexendo nas listas do jeito delas
+ *     (`db.clientes.push(...)`, `db.clientes = db.clientes.filter(...)`) e
+ *     continuam chamando `saveDB()` — nada muda para elas;
+ *   - a ponte observa o MOMENTO DA GRAVAÇÃO (`saveDB`) e conta para o coração o
+ *     que mudou: quem é novo, quem foi editado e — o ponto que dava problema —
+ *     **quem foi retirado, virando lápide** (com quem/quando/por quê), em vez de
+ *     "sumiço" que ninguém sabia explicar depois;
+ *   - o coração novo fica com a história (versão, origem, lápide, fila para a
+ *     nuvem). As telas continuam vendo as mesmas listas de sempre.
+ *
+ * POR QUE ASSIM: é o único jeito de trocar o coração **sem parar a loja** e sem
+ * reescrever 482 arquivos de uma vez. A cada lista que for migrada para a tela
+ * nova, esta ponte fica menor — até sobrar só o coração.
+ *
+ * TRAVAS (para não repetir os defeitos das rodadas 12 a 16):
+ *   1. MODO OBSERVAÇÃO: ligada assim, ela só RELATA o que faria — não grava
+ *      lápide, não mexe na fila. Serve para conferir contra a base de verdade
+ *      antes de valer.
+ *   2. EXCLUSÃO EM MASSA PEDE CONFIRMAÇÃO: se um commit retirar muita coisa de
+ *      uma lista de uma vez (mais de 20 registros ou mais da metade), isso não é
+ *      lápide automática — é chamado o aviso (`aoPrecisarConfirmar`) e nada é
+ *      marcado até alguém confirmar. Exclusão em massa é operação destrutiva
+ *      (regra 27) e não pode acontecer por acidente de tela/importação.
+ *   3. DUAS VEZES O MESMO NÃO VIRA DOIS: a comparação é por id; reimportar a
+ *      mesma base não cria registro novo nem lápide.
+ *   4. O FORMATO DAS LISTAS NÃO MUDA: `db.clientes` continua uma lista normal de
+ *      objetos com `id` — nenhuma tela precisa de adaptação.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function (raiz) {
+  'use strict';
+
+  var NUC = raiz.DIGICOPY_NUCLEO;
+
+  // Campos que o CORAÇÃO cuida sozinho. Fora da assinatura de comparação, senão
+  // toda gravação pareceria "mudança" só porque a data mudou.
+  var CAMPOS_DO_CORACAO = ['lista', 'versao', 'atualizadoEm', 'origem', 'empresaId', 'criadoEm', 'apagadoEm', 'apagadoPor', 'motivo'];
+
+  var LIMITE_MASSA_QTD = 20;      // acima disso, uma remoção num commit já é "muita coisa"
+  var LIMITE_MASSA_FRACAO = 0.5;  // ou mais da metade da lista
+
+  // Impressão digital RÁPIDA do registro (para detectar o que mudou sem custo).
+  // Medido numa base de 76.550 registros: comparar o conteúdo inteiro com
+  // JSON.stringify custava ~220 ms POR GRAVAÇÃO — era lentidão garantida no PC
+  // fraco. Esta versão mistura campo+valor num número (sem montar texto grande),
+  // é insensível à ORDEM dos campos (soma as partes) e cabe num inteiro.
+  var IGNORAR = {};
+  CAMPOS_DO_CORACAO.forEach(function (k) { IGNORAR[k] = 1; });
+
+  function assinatura(item) {
+    if (!item || typeof item !== 'object') return 0;
+    var total = 0, campos = 0;
+    for (var k in item) {
+      if (IGNORAR[k]) continue;
+      var v = item[k];
+      var h = 0x811c9dc5;
+      for (var i = 0; i < k.length; i++) { h ^= k.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+      h ^= 0; h = Math.imul(h, 0x01000193);            // separador nome|valor
+      var s;
+      if (v === null || v === undefined) s = '\u0000';
+      else if (typeof v === 'string') s = v;
+      else if (typeof v === 'number' || typeof v === 'boolean') s = '' + v;
+      else { try { s = JSON.stringify(v); } catch (e) { s = '@'; } }   // objeto/lista: aqui é exato
+      for (var j = 0; j < s.length; j++) { h ^= s.charCodeAt(j); h = Math.imul(h, 0x01000193); }
+      total = (total + h) >>> 0;                        // soma: ordem dos campos não importa
+      campos++;
+    }
+    return (total ^ (campos * 0x9e3779b9)) >>> 0;
+  }
+
+  function eListaDeRegistros(valor) {
+    if (!Array.isArray(valor)) return false;
+    if (!valor.length) return true;              // lista vazia: é lista
+    return valor.some(function (x) { return x && typeof x === 'object' && !Array.isArray(x) && x.id !== undefined; });
+  }
+
+  function ligar(opcoes) {
+    var o = opcoes || {};
+    var banco = o.db;                             // o `db` global do sistema de hoje
+    var nucleo = o.nucleo;                        // o coração novo
+    if (!banco) throw new Error('ponte: informe o db do sistema');
+    if (!nucleo) throw new Error('ponte: informe o núcleo');
+
+    var modo = o.modo === 'observacao' ? 'observacao' : 'ligado';
+    var origem = o.origem || 'pc';
+    var avisarMassa = typeof o.aoPrecisarConfirmar === 'function' ? o.aoPrecisarConfirmar : function () { };
+    var guardarExterno = typeof o.aoMudar === 'function' ? o.aoMudar : function () { };
+    var listasFixas = Array.isArray(o.listas) && o.listas.length ? o.listas.slice() : null;
+
+    var ficha = {};        // lista -> { vivo: {id: assinatura}, apagados: {id:true} }
+    var pendentes = {};    // lista -> [ids] aguardando confirmação de exclusão em massa
+    var relatorio = { listas: 0, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0 };
+
+    // O coração só trabalha com listas registradas. A ponte descobre as listas
+    // sozinha (é ela que lê o `db` das telas de hoje) e registra cada uma — com o
+    // schema declarado, quando quem chamou passou um (`schemas`).
+    var schemas = (o.schemas && typeof o.schemas === 'object') ? o.schemas : {};
+    function garantirListaNoCoracao(nome) {
+      try { nucleo.registrarLista(nome, schemas[nome] || {}); } catch (e) { /* já registrada */ }
+    }
+
+    function listas() {
+      if (listasFixas) return listasFixas;
+      return Object.keys(banco).filter(function (k) { return eListaDeRegistros(banco[k]); });
+    }
+
+    function garantirFicha(nome) {
+      garantirListaNoCoracao(nome);
+      if (!ficha[nome]) ficha[nome] = { vivo: {}, apagados: {} };
+      return ficha[nome];
+    }
+
+    // O coração conhece os itens que ESTA PONTE já viu. Itens apagados ficam na
+    // ficha como apagados, para uma lista que "reaparece" com o mesmo id não ser
+    // tratada como nova (e não ressuscitar).
+    function importar(nome, itens, semFila) {
+      var f = garantirFicha(nome);
+      var vistos = {};
+      var novos = 0, editados = 0, iguais = 0;
+      (itens || []).forEach(function (item) {
+        if (!item || typeof item !== 'object' || item.id === undefined || item.id === '') return;
+        var id = String(item.id);
+        vistos[id] = true;
+        var assin = assinatura(item);
+        if (f.apagados[id]) { iguais++; return; }          // apagado aqui: não volta sozinho
+        if (f.vivo[id] === undefined) {
+          f.vivo[id] = assin;
+          var r = (modo === 'ligado') ? nucleo.salvar(nome, item, semFila ? { semFila: true } : null) : null;
+          if (modo !== 'ligado' || (r && r.ok)) novos++;
+          else relatorio.emObservacao++;
+          return;
+        }
+        if (f.vivo[id] !== assin) {
+          f.vivo[id] = assin;
+          var re = (modo === 'ligado') ? nucleo.salvar(nome, item, semFila ? { semFila: true } : null) : null;
+          if (modo !== 'ligado' || (re && re.ok)) editados++;
+          else relatorio.emObservacao++;
+          return;
+        }
+        iguais++;
+      });
+
+      // Quem estava vivo na ficha e não veio no commit = foi RETIRADO pela tela.
+      var retirados = Object.keys(f.vivo).filter(function (id) { return !vistos[id]; });
+
+      // Trava 2: retirada em massa não é lápide automática.
+      var vivosAntes = Object.keys(f.vivo).length;
+      var suspeito = retirados.length > LIMITE_MASSA_QTD ||
+        (vivosAntes > 1 && retirados.length / vivosAntes > LIMITE_MASSA_FRACAO && retirados.length > 3);
+      if (suspeito && retirados.length) {
+        pendentes[nome] = retirados.slice();
+        relatorio.massasSuspeitas++;
+        avisarMassa(nome, retirados.slice());
+        return { novos: novos, editados: editados, iguais: iguais, apagados: 0, retinhaMassa: retirados };
+      }
+
+      var apagados = 0;
+      retirados.forEach(function (id) {
+        delete f.vivo[id];
+        f.apagados[id] = true;
+        if (modo === 'ligado') nucleo.apagar(nome, id, 'removido na tela (registrado pela ponte)');
+        apagados++;
+      });
+      return { novos: novos, editados: editados, iguais: iguais, apagados: apagados };
+    }
+
+    // ── O MOMENTO DA GRAVAÇÃO (é o `saveDB` das telas que chama isto) ──
+    function sincronizar() {
+      var resultado = { listas: 0, acoes: {} };
+      var nomes = listas();
+      resultado.listas = nomes.length;
+      nomes.forEach(function (nome) {
+        var r = importar(nome, banco[nome]);
+        resultado.acoes[nome] = r;
+        relatorio.novos += r.novos; relatorio.editados += r.editados; relatorio.apagados += r.apagados;
+        relatorio.emObservacao += r.emObservacao || 0;
+      });
+      if (modo === 'ligado' && nucleo.mudancas().length) guardarExterno();
+      return resultado;
+    }
+
+    // Descobre as listas na primeira vez (sem marcar nada como retirado: é só leitura).
+    function primeiraVarredura() {
+      // primeira varredura: conhece a base SEM sujar a fila da nuvem e SEM poder
+      // marcar ninguém como apagado (ela só lê o que já existe)
+      listas().forEach(function (nome) { garantirFicha(nome); importar(nome, banco[nome], true); });
+      relatorio = { listas: listas().length, novos: 0, editados: 0, apagados: 0, emObservacao: 0, massasSuspeitas: 0 };
+      return relatorio;
+    }
+
+    // ── Exclusão em massa: só depois de alguém confirmar ──
+    function pendentesDeConfirmacao() { return JSON.parse(JSON.stringify(pendentes)); }
+
+    function confirmarExclusaoEmMassa(nome) {
+      var ids = pendentes[nome];
+      if (!ids || !ids.length) return { ok: true, apagados: 0 };
+      var f = garantirFicha(nome);
+      ids.forEach(function (id) {
+        delete f.vivo[id];
+        f.apagados[id] = true;
+        if (modo === 'ligado') nucleo.apagar(nome, id, 'exclusão em massa confirmada');
+        // e o registro sai da lista que a tela vê (é uma exclusão de verdade, confirmada)
+        banco[nome] = (banco[nome] || []).filter(function (x) { return !x || String(x.id) !== String(id); });
+      });
+      delete pendentes[nome];
+      if (modo === 'ligado') guardarExterno();
+      return { ok: true, apagados: ids.length };
+    }
+
+    function recusarExclusaoEmMassa(nome) {
+      var ids = (pendentes[nome] || []).slice();
+      delete pendentes[nome];
+      return { ok: true, mantidos: ids.length };
+    }
+
+    // ── Trazer de volta: o coração decide, a ponte devolve para a lista da tela ──
+    function restaurar(nome, id) {
+      garantirListaNoCoracao(nome);
+      var r = nucleo.restaurar(nome, id);
+      if (!r.ok) return r;
+      materializar(nome, r.item);
+      var f = garantirFicha(nome);
+      delete f.apagados[String(id)];
+      f.vivo[String(id)] = assinatura(r.item);
+      if (modo === 'ligado') guardarExterno();
+      return r;
+    }
+
+    // Coloca o registro na lista que a tela vê (atualiza se já estiver lá).
+    function materializar(nome, item) {
+      if (!Array.isArray(banco[nome])) banco[nome] = [];
+      var lista = banco[nome];
+      var achou = false;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i] && String(lista[i].id) === String(item.id)) { lista[i] = Object.assign({}, lista[i], item); achou = true; break; }
+      }
+      if (!achou) lista.push(Object.assign({}, item));
+      return achou ? 'atualizado' : 'adicionado';
+    }
+
+    // ── O que chega da nuvem: o coração decide e a tela enxerga o resultado ──
+    function aplicarDaNuvem(mudanca) {
+      if (mudanca && mudanca.lista) garantirListaNoCoracao(mudanca.lista);
+      var r = nucleo.aplicarDaNuvem(mudanca);
+      if (!r.aplicado) return r;
+      var nome = mudanca.lista;
+      var item = r.item;
+      var lista = Array.isArray(banco[nome]) ? banco[nome] : (banco[nome] = []);
+      if (item.apagadoEm) {
+        // apagado em outro PC: sai da visão das telas (a lápide fica no coração)
+        var restou = lista.filter(function (x) { return !x || String(x.id) !== String(item.id); });
+        lista.length = 0; Array.prototype.push.apply(lista, restou);
+        var f2 = garantirFicha(nome);
+        delete f2.vivo[String(item.id)];
+        f2.apagados[String(item.id)] = true;
+        return r;
+      }
+      materializar(nome, item);
+      var f3 = garantirFicha(nome);
+      f3.vivo[String(item.id)] = assinatura(item);
+      delete f3.apagados[String(item.id)];
+      return r;
+    }
+
+    function mudancas() { return nucleo.mudancas(); }
+    function confirmarEnvio(ateSeq) { return nucleo.confirmarEnvio(ateSeq); }
+    function relatar() { return JSON.parse(JSON.stringify(relatorio)); }
+    function modoAtual() { return modo; }
+
+    return {
+      versao: '1.0.0',
+      modo: modoAtual,
+      modoAtual: modoAtual,
+      sincronizar: sincronizar,
+      primeiraVarredura: primeiraVarredura,
+      listas: listas,
+      restaurar: restaurar,
+      materializar: materializar,
+      aplicarDaNuvem: aplicarDaNuvem,
+      mudancas: mudancas,
+      confirmarEnvio: confirmarEnvio,
+      pendentesDeConfirmacao: pendentesDeConfirmacao,
+      confirmarExclusaoEmMassa: confirmarExclusaoEmMassa,
+      recusarExclusaoEmMassa: recusarExclusaoEmMassa,
+      relatar: relatar,
+      assinatura: assinatura
+    };
+  }
+
+  raiz.DIGICOPY_PONTE = { ligar: ligar, assinatura: assinatura, CAMPOS_DO_CORACAO: CAMPOS_DO_CORACAO };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("novo/ponte.js", e); }
+;
+
+/* ===== ajustes_v7011_ponte_nucleo_patch.js ===== */
+try{
+// ajustes_v7011_ponte_nucleo_patch.js — o NÚCLEO NOVO dentro do sistema de HOJE (só conferência)
+//
+// PEDIDO DO DONO (24/09/2026): "recriar praticamente O MESMO sistema, só que com
+// núcleo diferente... o mesmo Index, as mesmas funções, tudo". A troca do coração
+// é por PARTES; esta é a primeira peça dentro do sistema de hoje — e ela NÃO muda
+// comportamento nenhum:
+//
+//   • NÃO escuta as gravações. Medido numa base de 76.550 registros: acompanhar
+//     cada gravação custaria ~140-270 ms POR GRAVAÇÃO (o conteúdo inteiro teria de
+//     ser comparado). Isso é exatamente a lentidão que o dono reclamou — então
+//     ficou de fora POR MEDIÇÃO, não por opinião.
+//   • NÃO grava nada: nem no banco do PC, nem na nuvem, nem no navegador. É
+//     conferência: compara as listas com a conferência anterior e mostra o que
+//     ACONTECEU no meio (novos, editados e retirados) — os retirados são os que,
+//     no núcleo novo, viram LÁPIDE (com quem apagou, quando e por quê), e os que
+//     reaparecem depois são justamente o "apaguei e voltou".
+//   • Roda quando o dono pede, no painel da Nuvem, e mostra o resultado ali mesmo.
+//
+// POR QUE ISSO IMPORTA: é a prova que falta para trocar de vez. Depois de um dia
+// de uso ele vê, na base real dele, quantas retiradas aconteceram e se alguma
+// voltou sozinha.
+(function(){
+  if(typeof window === 'undefined' || typeof document === 'undefined') return;
+  var VERSAO = '7.0.11';
+  var LIMITE_ROTULO = 200000;   // acima disso só guarda os ids (economia de memória)
+
+  var ponte = null, aprendido = false, ultimaEm = null, conferencias = 0;
+  var anterior = {};            // lista -> Map(id -> rótulo) na última conferência
+  var retiradosVistos = {};     // lista -> {id:true} do que já saiu (para pegar "voltou")
+  var massasVistas = {};        // lista -> assinatura da retirada em massa já avisada
+
+  function disponivel(){
+    return !!(window.DIGICOPY_PONTE && typeof window.DIGICOPY_PONTE.ligar === 'function'
+              && window.DIGICOPY_NUCLEO && typeof window.DIGICOPY_NUCLEO.criar === 'function'
+              && window.db);
+  }
+
+  // Cria (uma vez) o conferente. O coração é criado SÓ NA MEMÓRIA desta página: em
+  // modo observação ele não recebe função de gravar, então nada sai daqui.
+  function preparar(){
+    if(ponte) return ponte;
+    if(!disponivel()) return null;
+    try{
+      var bd = window.db;
+      var nucleo = window.DIGICOPY_NUCLEO.criar({ empresaId: (bd.config && bd.config.empresa) || '', origem: 'conferencia' });
+      ponte = window.DIGICOPY_PONTE.ligar({ db: bd, nucleo: nucleo, modo: 'observacao' });
+      return ponte;
+    }catch(e){
+      if(window.console && console.warn) console.warn('[DIGICOPY] conferente do núcleo novo indisponível:', (e && e.message) || e);
+      return null;
+    }
+  }
+
+  function esc(t){
+    return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // Como chamar cada registro na hora de avisar "isto saiu"
+  function rotuloDe(item){
+    var campos = ['nome','cliente','descricao','titulo','numero','placa','razaoSocial','aparelho'];
+    for(var i=0;i<campos.length;i++){
+      var v = item[campos[i]];
+      if(v !== undefined && v !== null && String(v).trim() !== '') return String(v).slice(0,60);
+    }
+    return '';
+  }
+
+  // Uma cópia por conferência: além dos códigos, guarda o NOME de cada registro
+  // (o dono precisa saber QUEM saiu, não só o código). Base gigante = só códigos.
+  function copiarListas(p, comRotulo){
+    var mapa = {}, total = 0, listas = p.listas();
+    listas.forEach(function(nome){
+      var arr = window.db[nome] || [], m = new Map();
+      for(var i=0;i<arr.length;i++){
+        var it = arr[i];
+        if(!it || typeof it !== 'object' || it.id === undefined || it.id === '') continue;
+        m.set(String(it.id), comRotulo ? rotuloDe(it) : '');
+      }
+      mapa[nome] = m; total += m.size;
+    });
+    return { mapa: mapa, total: total, listas: listas };
+  }
+
+  function contarRegistros(listas){
+    var n = 0;
+    listas.forEach(function(nome){
+      var arr = window.db[nome] || [];
+      for(var i=0;i<arr.length;i++){
+        var it = arr[i];
+        if(it && typeof it === 'object' && it.id !== undefined && it.id !== '') n++;
+      }
+    });
+    return n;
+  }
+
+  function diferenca(antes, agora){
+    var novos = [], retirados = [], voltaram = [];
+    Object.keys(agora.mapa).forEach(function(nome){
+      var a = antes.mapa[nome] || new Map(), b = agora.mapa[nome];
+      b.forEach(function(rot, id){
+        if(!a.has(id)){
+          if(retiradosVistos[nome] && retiradosVistos[nome][id]) voltaram.push({ lista: nome, id: id, rotulo: rot });
+          else novos.push({ lista: nome, id: id, rotulo: rot });
+        }
+      });
+      a.forEach(function(rot, id){ if(!b.has(id)) retirados.push({ lista: nome, id: id, rotulo: rot }); });
+    });
+    return { novos: novos, retirados: retirados, voltaram: voltaram };
+  }
+
+  function marcarRetirados(lista){
+    lista.forEach(function(r){
+      if(!retiradosVistos[r.lista]) retiradosVistos[r.lista] = {};
+      retiradosVistos[r.lista][r.id] = true;
+    });
+  }
+  function limparRetirados(lista){
+    lista.forEach(function(r){ if(retiradosVistos[r.lista]) delete retiradosVistos[r.lista][r.id]; });
+  }
+
+  function exemplos(lista, max){
+    return lista.slice(0, max).map(function(r){
+      return esc(r.lista) + ' ▸ ' + esc(r.rotulo || r.id) + (r.rotulo ? ' <span style="color:#94a3b8">(' + esc(r.id) + ')</span>' : '');
+    });
+  }
+
+  // ── A CONFERÊNCIA ─────────────────────────────────────────────────────────
+  function conferir(){
+    var p = preparar();
+    if(!p) return { ok: false, erro: 'O sistema ainda não terminou de carregar (ou este é um navegador de teste). Abra o painel da Nuvem de novo em alguns segundos.' };
+    var t0 = Date.now();
+    var listas = p.listas();
+    var comRotulo = ultimaEm === null || contarRegistros(listas) <= LIMITE_ROTULO;
+    var agora = copiarListas(p, comRotulo);              // quantos e QUEM existe agora
+    var antes = anterior;
+
+    // ── primeira vez: só APRENDE a base (não acusa retirada nenhuma) ──
+    if(!aprendido){
+      p.primeiraVarredura();
+      aprendido = true; conferencias++; ultimaEm = Date.now();
+      anterior = agora.mapa;
+      return { ok: true, primeira: true, ms: Date.now() - t0, listas: agora.listas.length,
+               registros: agora.total, novos: 0, editados: 0, retirados: 0, voltaram: 0, massas: [], comRotulo: comRotulo };
+    }
+
+    // ── da segunda em diante: passa pelo coração de verdade e compara ──
+    var r = p.sincronizar();                             // modo observação: não grava nada
+    var d = diferenca({ mapa: antes }, agora);
+    var editados = 0, massas = [];
+    agora.listas.forEach(function(nome){
+      var a = r.acoes[nome] || {};
+      editados += a.editados || 0;
+      if(a.retinhaMassa && a.retinhaMassa.length){
+        var assin = a.retinhaMassa.slice().sort().join('|');
+        if(massasVistas[nome] !== assin){ massas.push({ lista: nome, n: a.retinhaMassa.length }); massasVistas[nome] = assin; }
+      }
+    });
+    marcarRetirados(d.retirados);
+    limparRetirados(d.voltaram);
+    anterior = agora.mapa;
+    conferencias++; ultimaEm = Date.now();
+    return { ok: true, primeira: false, ms: Date.now() - t0, listas: agora.listas.length, registros: agora.total,
+             novos: d.novos.length, editados: editados, retirados: d.retirados.length, voltaram: d.voltaram.length,
+             exemplosNovos: exemplos(d.novos, 4), exemplosRetirados: exemplos(d.retirados, 5),
+             exemplosVoltaram: exemplos(d.voltaram, 3), massas: massas, comRotulo: comRotulo };
+  }
+
+  function nBR(n){ return Number(n || 0).toLocaleString('pt-BR'); }
+
+  function textoDoResultado(r){
+    if(!r.ok) return '⚠️ ' + esc(r.erro);
+    var L = [];
+    L.push('Listas acompanhadas: <b>' + r.listas + '</b> • registros: <b>' + nBR(r.registros) + '</b> (conferido em ' + r.ms + ' ms)');
+    if(r.primeira){
+      L.push('<b>Base aprendida.</b> Da próxima vez este botão mostra o que mudou desde agora — inclusive o que foi retirado.');
+    } else {
+      L.push('Desde a conferência anterior: <b>' + r.novos + '</b> novo(s), <b>' + r.editados + '</b> editado(s), <b>' + r.retirados + '</b> retirado(s)');
+      if(r.exemplosRetirados && r.exemplosRetirados.length){
+        L.push('<div style="margin-top:4px"><span style="color:#b45309"><b>Saiu da lista:</b></span><br>' + r.exemplosRetirados.join('<br>') +
+               (r.retirados > r.exemplosRetirados.length ? '<br><span style="color:#94a3b8">… e mais ' + (r.retirados - r.exemplosRetirados.length) + '</span>' : '') + '</div>');
+      }
+      if(r.exemplosNovos && r.exemplosNovos.length) L.push('<span style="color:#166534"><b>Entrou:</b></span> ' + r.exemplosNovos.join(' • '));
+      if(r.voltaram) L.push('<span style="color:#b91c1c"><b>⚠️ Voltaram sozinhos:</b> ' + r.exemplosVoltaram.join(' • ') + '</span>');
+      if(r.retirados > 0) L.push('<span style="color:#64748b">Cada retirado é o que, no núcleo novo, vira <b>lápide</b> (com quem apagou, quando e por quê) — é o fim do “apaguei e voltou”.</span>');
+    }
+    if(r.massas && r.massas.length){
+      L.push('<span style="color:#b91c1c"><b>⚠️ Retirada em massa:</b> ' + r.massas.map(function(m){ return esc(m.lista) + ' (' + nBR(m.n) + ')'; }).join(' • ') +
+             ' — o núcleo novo <b>seguraria</b> isso e pediria a sua confirmação em vez de apagar.</span>');
+    }
+    if(!r.comRotulo) L.push('<span style="color:#94a3b8">Base grande: mostrando só os códigos dos registros.</span>');
+    L.push('<span style="color:#64748b">Conferência: não grava nada — nem no PC, nem na nuvem.</span>');
+    return L.join('<br>');
+  }
+
+  // ── o bloco no painel da Nuvem (ao lado do Diagnóstico que já existe) ──────
+  function instalar(){
+    var modal = document.getElementById('digicopy-cloud-modal');
+    if(!modal || modal.classList.contains('hidden')) return;
+    if(document.getElementById('dc-nucleo-novo')) return;
+    var alvo = modal.querySelector('#dc-diagnostico') || modal.querySelector('.dc-body') || modal.querySelector('#dc-list-deleted');
+    if(!alvo || !alvo.parentNode) return;
+
+    var box = document.createElement('div');
+    box.id = 'dc-nucleo-novo';
+    box.style.cssText = 'margin-top:10px;border:1px solid #c7d2fe;background:#f8f9ff;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#334155;line-height:1.6';
+    box.innerHTML = '<div style="font-weight:800;color:#0a1e8a">Núcleo novo (em construção)</div>'
+      + '<div style="margin-top:4px">O sistema de hoje continua igual. Este botão só <b>confere</b> as listas e mostra o que mudou desde a última conferência — inclusive as retiradas que, no núcleo novo, viram <b>lápide</b> (com quem apagou, quando e por quê).</div>'
+      + '<div style="margin-top:8px"><button type="button" id="dc-nucleo-btn" style="height:36px;padding:0 14px;border:0;border-radius:9px;background:#0a1e8a;color:#fff;font-weight:800;cursor:pointer">🔎 Conferir o núcleo novo</button></div>'
+      + '<div id="dc-nucleo-res" style="margin-top:8px"></div>';
+    alvo.parentNode.insertBefore(box, alvo.nextSibling);
+
+    var btn = box.querySelector('#dc-nucleo-btn');
+    var res = box.querySelector('#dc-nucleo-res');
+    btn.onclick = function(){
+      btn.disabled = true;
+      var textoAntes = btn.textContent;
+      btn.textContent = 'Conferindo…';
+      res.textContent = '';
+      setTimeout(function(){
+        try{
+          var r = conferir();
+          res.innerHTML = textoDoResultado(r);
+        }catch(e){
+          res.innerHTML = '⚠️ ' + esc((e && e.message) || e);
+        }
+        btn.disabled = false;
+        btn.textContent = textoAntes;
+      }, 30);
+    };
+  }
+
+  // O painel é redesenhado por vários caminhos (mesma ideia do Diagnóstico que já
+  // existe): o bloco é reinstalado quando ele aparece, sem mexer em nada.
+  setInterval(function(){ try{ instalar(); }catch(e){} }, 2500);
+  document.addEventListener('click', function(){ setTimeout(function(){ try{ instalar(); }catch(e){} }, 600); }, true);
+
+  // exposto para os testes (e para conferir por fora)
+  window.DIGICOPY_NUCLEO_OBS = {
+    versao: VERSAO,
+    conferir: conferir,
+    preparar: preparar,
+    instalar: instalar,
+    ultimaConferenciaEm: function(){ return ultimaEm; },
+    conferencias: function(){ return conferencias; }
+  };
+  console.log('[DIGICOPY] núcleo novo: conferência sob demanda carregada (v' + VERSAO + ')');
+})();
+
+}catch(e){ if(typeof window!=='undefined'&&window.__DIGICOPY_FALHA) window.__DIGICOPY_FALHA("ajustes_v7011_ponte_nucleo_patch.js", e); }
+;
+
 /* ===== fim do bundle (gerado pelo build_bundle.js) ===== */
 (function(){
   if (typeof window === 'undefined') return;
   window.__DIGICOPY_BUNDLE_COMPLETO = true;
-  window.__DIGICOPY_BUNDLE_SCRIPTS = 225;
+  window.__DIGICOPY_BUNDLE_SCRIPTS = 228;
   try{
     var n = (window.__DIGICOPY_ERROS || []).length;
     if (typeof console !== 'undefined' && console.log){
-      console.log('[DIGICOPY] bundle completo: 225 scripts, ' + n + ' com falha');
+      console.log('[DIGICOPY] bundle completo: 228 scripts, ' + n + ' com falha');
     }
     if (n && typeof localStorage !== 'undefined'){
       localStorage.setItem('digicopy_erros_bundle', JSON.stringify(window.__DIGICOPY_ERROS).slice(0, 8000));

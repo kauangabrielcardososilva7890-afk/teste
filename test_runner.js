@@ -245,6 +245,9 @@ const tests=[
   // lápide em vez de apagar, conflito decidido em um lugar só e nada voltando sozinho
   "test_nucleo.js",
   "test_ponte.js",
+  // v7.0.11 (rodada 18-B) — o conferente do núcleo novo dentro do SISTEMA DE HOJE:
+  // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
+  "test_ponte_no_sistema.js",
   "test_telas.js",
   "test_redesenho_pagina.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:

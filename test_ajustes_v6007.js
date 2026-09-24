@@ -17,7 +17,7 @@ const P = require('./dashboard_inicio_clicavel_patch.js');
 
 console.log('== FILA / BUNDLE ==');
 ok('manifesto sobe pra 213; menus fiscais separados v6.0.8 fecha a fila',
-  man.length === 225 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
+  man.length >= 225 && man[212] === 'menus_fiscais_separados_patch.js' && man[213] === 'permissoes_override_menus_fiscais_patch.js' && man[214] === 'seis_submenus_velho_patch.js' && man[215] === 'submenu_hover_nfe_patch.js' && man[211] === 'dashboard_inicio_clicavel_patch.js' && man[210] === 'fiscal_menu_completo_patch.js' && man[209] === 'permissoes_estorno_venda_patch.js' && man[205] === 'fiscal_guard_patch.js');
 ok('bundle contém o patch (PURE + banner)',
   bundle.indexOf('DHC607_PURE_START') >= 0 && bundle.indexOf('v6.0.7 — INÍCIO SEM UNDEFINED + CLICÁVEL') >= 0);
 

@@ -63,7 +63,8 @@ function namesSelected(w) {
     const w = dom.window;
     assert.strictEqual(typeof w.navigateTo, 'function', 'navigateTo carregou');
     assert.strictEqual(typeof w.fxAcao, 'function', 'fxAcao carregou');
-    assert.strictEqual(w.__DIGICOPY_BUNDLE_SCRIPTS, 225, 'bundle completo carregou');
+    const totalDoManifesto = JSON.parse(require('fs').readFileSync('bundle-manifest.json', 'utf8')).length;
+    assert.strictEqual(w.__DIGICOPY_BUNDLE_SCRIPTS, totalDoManifesto, 'bundle completo carregou');
 
     w.navigateTo('clientes');
     await wait(120);

@@ -5805,6 +5805,8 @@ altera o sistema atual e **não** fala com a nuvem.
 1. **Ligar a ponte no sistema de hoje** (`index.html`) — o próximo passo. Recomendação: entrar primeiro
    em **modo observação** (relata, não grava), para conferir contra a base de verdade; só depois o modo
    ligado. É a única mudança no sistema atual e ela é reversível (a ponte não altera o `db`).
+   *(Feito na rodada 18-B, mas como **conferência sob demanda** — a medição mostrou que acompanhar cada
+   gravação custaria 137 ms; ver o fim deste arquivo.)*
 2. **`modulosDinamicos`**: hoje a ponte cobre as listas do `db` (arrays com `id`). As listas criadas
    dentro do sistema (sub-listas de `modulosDinamicos`) precisam de uma decisão de **formato** antes de
    entrar — e a nuvem atual guarda isso em `entity='modulosDinamicos'`; **não foi possível verificar
@@ -5812,3 +5814,27 @@ altera o sistema atual e **não** fala com a nuvem.
    para a fase em que a nuvem nova entra (fase 2).
 3. **`mobile/www`**: nada a fazer (a pasta `novo/` não entra no bundle nem no `.exe`); o app publicado
    segue **v7.0.10** e o motor da nuvem **5.26.8**.
+
+### Rodada 18-B (24/09/2026) — o núcleo novo entrou no sistema de hoje (conferência sob demanda)
+
+**Primeiro medi, depois escrevi.** Liguei o cronômetro na ponte sobre a base de 76.550 registros: dar
+"um pulo" em **cada gravação** do sistema custaria **137 ms** (239 ms antes de trocar a assinatura por
+FNV-1a) — inviável no PC fraco. Então a ponte **não** foi ligada no `saveDB()`: virou **conferência sob
+demanda**, dentro do painel da Nuvem, com botão próprio ("🔎 Conferir o núcleo novo"). Custo zero no uso
+do dia; 131-243 ms quando ele clica.
+
+**O que o botão mostra:** novos, editados e **retirados** — com lista, nome e código — mais as retiradas
+**em massa** (que o núcleo novo seguraria e pediria confirmação) e os que **voltaram sozinhos**
+("apaguei e voltou"). Não grava nada, não fala com a nuvem, não mexe em tela nenhuma: leitura pura.
+
+**Prova:** `test_ponte_no_sistema.js`, **39 ✔**, dentro do `test_runner.js` — e ele pegou **dois defeitos
+meus** antes de publicar (a varredura de aprendizado rodando a cada clique engolia a comparação; e o
+nome de quem saiu vinha de uma cópia sem nomes).
+
+**Entrada no bundle (225 → 228):** as três peças ficaram **no fim da fila**; 33 testes antigos que
+travavam o **tamanho** do manifesto foram ajustados no mínimo (`=== 225` → `>= 225`, cadeias de cauda
+`+3`, e o E2E passou a ler o tamanho do manifesto em vez de fixar 225).
+
+**Suíte: 222/0/0/0 com `jsdom`** (215/0/7 sem). App **v7.0.11** · bundle `3a341ce6d072e7de` ·
+`?v=7.0.11-cd1b595e0a7b` · motor da nuvem **5.26.8** (publicar é do dono) · `sync_build --check` OK ·
+`mobile/sync-www.js` OK. Detalhes técnicos no `AUDITORIA_TECNICA.md` §28.

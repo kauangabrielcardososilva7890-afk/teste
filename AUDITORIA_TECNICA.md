@@ -1719,4 +1719,79 @@ Sem `jsdom`: 216/0/5.
    (sub-listas de `modulosDinamicos`) exigem decisão de formato antes de entrar — e **não foi possível
    verificar diretamente como estão chaveadas na nuvem (acesso ao banco de produção indisponível)**.
 3. **`novo/`** está fora do bundle e do empacotamento: app publicado segue **v7.0.10**; motor da nuvem
-   **5.26.8**.
+   **5.26.8**. *(Mudou na rodada 18-B: `novo/nucleo.js` e `novo/ponte.js` entraram no bundle para a
+   conferência sob demanda — ver §28; a página `novo/index.html` + `novo/telas.js` segue só como teste)*.
+
+## 28. RODADA 18-B — O NÚCLEO NOVO DENTRO DO SISTEMA DE HOJE (conferência sob demanda) (24/09/2026)
+
+**Pedido:** *"bora continuar, e me fala se precisar que eu faça algo"* + *"recriar praticamente O MESMO
+sistema, só que com núcleo diferente... o mesmo Index, as mesmas funções, tudo"*.
+
+### 28.1 A medição que decidiu o caminho (antes de escrever a peça)
+
+Pergunta: dá para o coração novo **acompanhar cada gravação** do sistema de hoje (o `saveDB()` das telas)?
+Medido com `_tmp_bench_ponte.js` sobre a base de prova de **76.550 registros** (13 listas):
+
+| Momento | Custo |
+|---|---|
+| Primeira varredura da base | ~270 ms (404 ms antes de trocar a assinatura por FNV-1a) |
+| **Por gravação** (assinatura `JSON.stringify` por item) | **239 ms** |
+| **Por gravação** (assinatura FNV-1a, ordem-independente) | **137 ms** |
+| Piso teórico do que sobra (comparar conteúdo) | ~40 ms |
+
+**Decisão (com número na mão): a ponte NÃO entra no `saveDB()` de produção.** 137 ms a cada gravação é
+exatamente a lentidão que o dono reclamou ("INSTANTÂNEO SEM NENHUM ERRO"). Vira **conferência sob
+demanda**: custo zero no uso normal, custo só quando o dono pede.
+
+### 28.2 O que entrou: `ajustes_v7011_ponte_nucleo_patch.js` (v7.0.11)
+
+- **Onde:** painel da Nuvem, um bloco logo abaixo do "Diagnóstico deste computador" que já existia
+  (mesmo padrão de instalação dele: `setInterval` de 2,5 s + clique). Botão **"🔎 Conferir o núcleo novo"**.
+- **O que faz:** monta o coração novo **em memória** (`DIGICOPY_NUCLEO.criar`, sem função de gravar) e a
+  ponte em `modo:'observacao'`; na primeira conferência só **aprende** a base; nas seguintes **compara**
+  com a anterior e mostra: novos, **editados** (assinatura do coração), **retirados** — com **lista,
+  nome e código** de até 5 deles — e **"voltaram sozinhos"** (registro que saiu e reapareceu: é
+  literalmente o "apaguei e voltou"). Retirada em massa é sinalizada com o aviso de que o núcleo novo
+  **seguraria e pediria confirmação**.
+- **O que NÃO faz:** não grava nada (nem no `db`, nem na nuvem, nem em `localStorage`), não fala com a
+  nuvem (nenhum `fetch`), não envolve o `saveDB`, não usa `alert`/`confirm`/`prompt` nativos, não mexe em
+  nenhum botão/tela existente. É leitura pura — o sistema de hoje continua idêntico.
+- **Custo medido na peça real:** 1ª conferência **243 ms**; as seguintes **131-160 ms** numa base de
+  76.550 registros (uma cópia de ids+rótulos por clique).
+- **Limite honesto:** o aprendizado vive na memória da página. Fechar/reabrir o sistema = a próxima
+  conferência aprende de novo (não persiste nada — a regra 44 é "nada salvo no PC/navegador"). Se o
+  dono quiser janelas maiores que uma sessão, isso pede gravação em algum lugar, e aí é decisão dele.
+
+### 28.3 Provas (`test_ponte_no_sistema.js`, **39 ✔**, no `test_runner.js`)
+
+Roda o arquivo de verdade em `jsdom`, com `db` de 76.550 registros, e cobra: o bloco entra no painel
+**depois** do Diagnóstico e não duplica; a 1ª conferência só aprende (0/0/0) e acha 13 listas/76.550
+registros; mexer na lista **não** dispara nada e nada é gravado; a 2ª conferência conta 3 novos, 1
+editado e 3 retirados **mostrando quem saiu**; retirada de 100 em `os` é sinalizada como massa; um
+retirado que volta é contado como "voltou sozinho" (e não como novo); o clique roda a conferência,
+escreve o resultado, devolve o botão ao normal e continua sem gravar nada.
+
+**Dois defeitos meus, pegos pelo teste antes de publicar:** (a) eu chamava a varredura de aprendizado a
+**cada** clique, e isso **engolia a comparação** (tudo aparecia como 0); (b) o rótulo de quem saiu vinha
+da cópia sem nomes — corrigido para uma cópia única **com** nome (limite de 200.000 registros: acima
+disso só códigos, dito no próprio painel).
+
+### 28.4 Ajuste de manutenção que a entrada no bundle exigiu (MÉDIO, Manutenção)
+
+`novo/nucleo.js`, `novo/ponte.js` e o patch novo entraram no `bundle-manifest.json` (**225 → 228**),
+**no fim da fila** (convenção do projeto), e 33 testes antigos que travavam **o tamanho** da fila
+quebraram. Correção mínima e intencional: `manifest.length === 225` → `>= 225` (27 ocorrências — segue
+pegando arquivo perdido, deixa de quebrar a cada peça nova); as cadeias de cauda
+(`manifest[manifest.length - N]`, 7 arquivos) subiram para `N + 3`, mantendo a mesma ordem conferida; e o
+E2E `test_ajustes_v6103.js` deixou de fixar 225 e passou a **ler o tamanho do manifesto** (não quebra
+mais a cada patch novo).
+
+### 28.5 Estado após esta rodada
+
+- **Suíte: 222 passaram, 0 falharam, 0 não rodaram** (com `jsdom`). Sem `jsdom`: 215/0/7.
+- App **v7.0.11** (rodapé e 4 HTMLs de doc carimbados), bundle **228 scripts**, sha256
+  `3a341ce6d072e7de`, `?v=7.0.11-cd1b595e0a7b`; `build_bundle.js --check` OK; `sync_build.js --check`
+  OK; `mobile/sync-www.js` OK (cópia do celular igual). Motor da nuvem segue **5.26.8** (publicação é
+  ato do dono).
+- `novo/index.html` + `novo/telas.js` seguem **fora** do bundle (página de teste da fase 1); o que entrou
+  foram só o coração e a ponte, para a conferência.
