@@ -254,6 +254,26 @@ console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM 
   try { w2.close(); } catch (e) {}
 }
 
+console.log('-- a página carrega o PIX e a IMPRESSÃO, e a venda tem a aba OS --');
+{
+  ok('a página carrega as duas peças novas (Pix e impressão)',
+    !!w.DIGICOPY_PIX && !!w.DIGICOPY_IMPRESSAO && !!w.DIGICOPY_PIX.regras.painelHtml && !!w.DIGICOPY_IMPRESSAO.regras.notinhaHtml);
+  [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas')
+    .dispatchEvent(new w.Event('click', { bubbles: true }));
+  const alvo = doc.getElementById('tela');
+  ok('a tela da venda abre com a aba OS (os mesmos campos de hoje)',
+    !!alvo.querySelector('[data-os-bloco]') && !!alvo.querySelector('[data-os="numeroSerie"]') &&
+    !!alvo.querySelector('[data-os="defeito"]') && !!alvo.querySelector('[data-os="situacao"]'));
+  ok('e com os campos de entrega/observação que a notinha imprime',
+    !!alvo.querySelector('[data-data-saida]') && !!alvo.querySelector('[data-prazo-entrega]') &&
+    !!alvo.querySelector('[data-destino]') && !!alvo.querySelector('[data-obs]'));
+  // o "Nova" limpa a venda que os blocos de cima deixaram aberta nesta mesma página
+  alvo.querySelector('[data-nova]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('venda em branco: sem botão de imprimir (nada gravado) e sem estornar',
+    !alvo.querySelector('[data-print-notinha]') && !alvo.querySelector('[data-print-carne]') &&
+    !alvo.querySelector('[data-estornar]') && !!alvo.querySelector('[data-faturar]'));
+}
+
 console.log('-- a tela do Pix (Configurações) funciona de verdade na página --');
 {
   const irPix = () => {
