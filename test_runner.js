@@ -246,6 +246,11 @@ const tests=[
   // MAPA_CAMADAS.md e reprova se uma função protegida (permissão de estorno/exclusão e a
   // janela do sistema) for trocada por um patch novo SEM levar a proteção junto.
   "test_camadas_protegidas.js",
+  // v7.0.12 (rodada 24) — A DOR Nº1 DO DONO: "dado que some". Este teste reproduz a
+  // janela de gravação do modo SÓ NUVEM (a mudança vivia só na memória até a varredura
+  // de 900 ms) e reprova se ela não entrar na fila no fim do clique, não sobreviver ao
+  // fechamento da janela e não avisar quando a fila enche.
+  "test_nuvem_nao_perde.js",
   // v5.26.8 (rodada 16) — o motor da nuvem rodando de verdade sobre um banco de prova:
   // fluxo do cliente, aparelho público (revogação que segura), busca do token sem
   // trazer a lista toda, freio da cota no caminho público e teto do "sem cadastro"

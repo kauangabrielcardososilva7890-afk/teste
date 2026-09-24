@@ -6385,3 +6385,99 @@ Ordem que eu faria, pelo seu caso (dor nº 1 = dado que some):
 `npm run check` / sync: `v7.0.11 | 225 no bundle | 0 soltos` (o bundle não mudou) · `npm run mapa` gera o
 `MAPA_CAMADAS.md`. Versão **7.0.11**, motor **5.26.8**, nada de banco tocado, nada do sistema vivo
 alterado nesta rodada.
+
+## Rodada 24 — 24/09/2026 — A CORREÇÃO DO "DADO QUE SOME": A GRAVAÇÃO NÃO FICA MAIS SÓ NA MEMÓRIA
+
+**O que você pediu:** dor nº 1 = **dado que some/volta**; *"4 = se for resolver o problema pode fazer"*
+(autorizou a correção) e *"3 = pode ser então"* (aceitou a recomendação: **E** primeiro — o portão que
+enfileira na hora —, depois A, B e J; **C** e **D** já estavam prontos na rodada 23). Você contou também
+que usa o **site agora** e que depois vai usar **só o `.exe`** — por isso a correção foi feita no motor
+que os dois usam (`cloudflare_data_sync_patch.js`), não em tela.
+
+### 1. O buraco que existia (achado ALTA da rodada 23, §37.3)
+
+No modo SÓ NUVEM a base não é gravada no PC (regra sua). Quando você grava algo, o sistema **marcava**
+"sujo" e **agendava** a varredura para **900 ms depois** — e só quando a varredura rodava a mudança
+entrava na fila. Nesse intervalo, a **única cópia da mudança estava na memória do programa**; se a janela
+fechasse ali, ela não existia em lugar nenhum (e o SÓ NUVEM remonta a base pela nuvem, então ela **não
+voltava sozinha**). Pior: a fila tinha teto de **100** mudanças e, quando enchia, ela parava de
+enfileirar **sem avisar ninguém**.
+
+### 2. A prova antes do conserto (obrigação da casa: provar antes de corrigir)
+
+Criei `test_nuvem_nao_perde.js`: abre o motor de verdade num navegador fingido, com **nuvem fingida**
+(aceita o que sobe e anota se o envio foi com `keepalive`) e **relógio fingido** (dá para "andar 900 ms"
+sem esperar). Ele grava um cliente e olha o navegador **no mesmo instante**.
+
+- **Com o motor de antes:** ✘ — *"a gravação ENTRA NA FILA no mesmo instante (fila no clique: [])"*. A
+  perda ficou reproduzida, preta no branco. **Não mexi no teste para ele passar** — consertei o motor.
+- **Depois do conserto:** **13 ✓**.
+
+### 3. O conserto (5 partes, todas no motor da nuvem)
+
+1. **Enfileirar na hora:** a gravação entra na fila **no fim do próprio clique** (0 ms) e a fila é
+   **gravada no navegador** na hora. Se a base for pequena (varredura até 25 ms) ela roda junto; se for
+   grande, roda no fim do clique — e fechar a janela força a varredura de qualquer jeito.
+2. **Fechar não perde mais:** ao fechar/esconder a janela, nesta ordem — varredura **forçada** (com teto
+   muito maior), fila e estado **gravados na hora**, e **entrega com `keepalive`** (a promessa de envio
+   sobrevive ao fechamento). Se ainda assim não couber, **avisa na tela**.
+3. **A fila cresceu:** de **100** para **400** mudanças no dia a dia (e **2.000** na hora de fechar). Era
+   exatamente o trabalho sem internet que enchia a fila.
+4. **A fila ficou visível:** passar o mouse no botão da nuvem mostra **"fila: N"**, **"em dia até HH:MM"** e
+   **"(cheia — sobe aos poucos)"**; e aparecem avisos na tela quando a fila enche ou quando não couber no
+   navegador — nada de silêncio.
+5. **Nada travou:** a bancada nova (`bench_clique_nuvem.js`) mede o clique com nuvem e relógio fingidos:
+
+| Base | Custo do clique | Mudanças guardadas depois de fechar |
+|---|---|---|
+| 2.000 registros | **9,7 ms** | 4 de 4 |
+| 40.000 registros (maior que a do seu banco de prova) | **0,0 ms** | 4 de 4 |
+
+### 4. O que mudou no seu dia a dia
+
+- Gravar e fechar a janela em cima da hora (ou faltar luz logo depois de gravar) **não perde mais** a
+  mudança: ela já está na fila guardada no navegador e sobe na próxima abertura.
+- Trabalhar sem internet ficou seguro por mais tempo (fila de 400) e **você vê** que tem coisa para subir.
+- **Versão do app: 7.0.11 → 7.0.12** (rodapé, `package.json`, `index.html`, `mobile/www`, `importar.html` e
+  os 3 HTMLs de doc). **Motor da nuvem segue 5.26.8** — não toquei no servidor.
+
+### 5. Limites (honestidade, sem promessa vazia)
+
+- **Banco de produção:** não foi possível verificar diretamente — acesso ao banco de produção
+  indisponível. Não afirmo que já houve perda; o que está provado é o que o código fazia.
+- Queda **abrupta** do programa na fração de segundo do clique ainda pode levar a mudança: não dá para
+  garantir mais que isso **sem gravar a base no PC**, e a sua regra (v6.1.5/regra 44) proíbe.
+- A entrega com `keepalive` **não lê a resposta** (a janela está fechando): se a nuvem recusar, a fila
+  guardada resolve na próxima abertura, pelo caminho de conflito que já existe desde a v5.24.0.
+
+### 6. Passos da rodada (tudo o que foi feito, na ordem)
+
+1. Li as âncoras do motor: wrapper `saveDB` (`:2007-2013`), `gravarFila` (`:536-538`), teto no
+   `scanLocal` (`:1030-1053`/`:1061`), `indicator` (`:1236-1242`), `info()` (`:1601`), fechamento
+   (`:2044-2051`) e o `api()` de `cloudflare_sync_patch.js:59-83` (confirma que as opções chegam ao
+   `fetch` — por isso o `keepalive` passa).
+2. Escrevi `test_nuvem_nao_perde.js` e rodei **antes** de corrigir: ✘ na checagem 3 = a perda
+   reproduzida.
+3. Corrigi o motor em 5 partes (§3 acima), rodando `node --check` a cada arquivo mexido.
+4. Rodei o teste: 13 ✓.
+5. Fiz a bancada `bench_clique_nuvem.js` e **achei um defeito da minha própria correção** (as varreduras
+   de batida zeravam a medida e o clique voltava a travar com 265 ms numa base de 40 mil registros);
+   corrigi (a medida vale pelo pior caso, e "nunca medido" conta como base grande) e rodei de novo:
+   2 cenários ✓.
+6. Ajustei `test_nuvem_rapida.js` (2 verificações novas) — 23 ✓.
+7. Subi a versão para **7.0.12** e conferi: `package.json`, `index.html`, `mobile/www/index.html`,
+   `importar.html`, `GUIA_DE_TESTE_NF.html`, `PASSO_A_PASSO_NUVEM_E_SITE.html`,
+   `RELATORIO_DE_TESTE_NF.html`, `test_worker_publico.js`, `IDEIAS_PARA_RESOLVER.md`.
+8. `node build_bundle.js` → `Bundle gerado: 225 scripts, sha256 4affbd2e2851450e`;
+   `node sync_build.js` → `Sync OK: v7.0.12 | 225 no bundle | 0 soltos | 13 entradas em build.files`;
+   `node mobile/sync-www.js` → `4 arquivos + assets/vendor, 0 referências quebradas`.
+9. Registrei o teste novo no `test_runner.js` e rodei a **suíte inteira**: **219 passaram, 0 falharam,
+   0 não rodaram**.
+10. Registrei tudo na AUDITORIA (§38) e aqui. Commit + push na branch `arena/01a0cf4a-teste`.
+
+### 7. Provas
+
+`test_nuvem_nao_perde.js` **13 ✓** · `bench_clique_nuvem.js` **2 cenários ✓** · suíte inteira **219
+passaram, 0 falharam, 0 sem rodar** · `Build: 225 scripts, sha256 4affbd2e2851450e` · `Sync OK: v7.0.12 |
+225 no bundle | 0 soltos` · **app v7.0.12** · **motor da nuvem 5.26.8** (não tocado) · nada de banco
+tocado, nenhum deploy feito.

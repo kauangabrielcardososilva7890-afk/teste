@@ -44,8 +44,17 @@ ok('fechar ou esconder a janela grava na hora',
 console.log('-- 4) a tela não para a cada 3 segundos --');
 ok('a varredura é pulada quando nada mudou (com rede de 10 s)',
   /if\(!forcarVarredura&&!sujo&&!outbox\.length&&!filaCheia&&Date\.now\(\)-varreduraFeita<10000\)return 0;/.test(code));
+// v7.0.12 — além de avisar, a gravação agora ENFILEIRA na hora: era a janela de
+// 900 ms em que a mudança vivia só na memória (o "dado que some" quando fechava).
 ok('o sistema avisa a varredura quando grava (saveDB) e quando apaga',
-  /if\(!applying&&authorized\(\)\)\{sujo=true;schedule\(900\);\}/.test(code) && /sujo=true;\n/.test(code));
+  /if\(!applying&&authorized\(\)\)\{sujo=true;enfileirarNaHora\(\);schedule\(900\);\}/.test(code) && /sujo=true;\n/.test(code));
+ok('e a gravação entra na fila NA HORA (a varredura roda no próprio clique; base grande: no fim dele)',
+  /function enfileirarNaHora\(\)\{/.test(code) && /window\.saveDB=function\(\)\{[\s\S]{0,700}?enfileirarNaHora\(\)/ .test(code)
+  && /window\.saveDBAgora=function\(\)\{[\s\S]{0,400}?enfileirarNaHora\(\)/.test(code));
+ok('ao fechar: varredura forçada com teto maior, fila gravada e entrega com keepalive',
+  /function prepararParaFechar\(\)\{/.test(code) && /scanLocal\(\{teto:TETO_FECHANDO\}\)/.test(code)
+  && /const fechar=\(\)=>\{[\s\S]{0,400}?prepararParaFechar\(\)/.test(code)
+  && /keepalive:true/.test(code));
 ok('remessa grande continua correndo até o fim (fila cheia não para em 100)',
   /filaCheia=outbox\.length>=MAX_OUTBOX;/.test(code));
 ok('a cópia do registro não é mais feita duas vezes por varredura',

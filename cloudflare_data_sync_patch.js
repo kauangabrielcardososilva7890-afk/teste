@@ -13,7 +13,10 @@ const OUTBOX_KEY='digicopy_cf_sync_outbox_v1';
 const CONFLICT_KEY='digicopy_cf_sync_conflicts_v1';
 const LEADER_KEY='digicopy_cf_sync_leader_v1';
 const TAB_ID='tab_'+Math.random().toString(36).slice(2)+'_'+Date.now().toString(36);
-const MAX_OUTBOX=100;
+// v7.0.12 — A FILA GUARDA MAIS: com 100, um trabalho fora da internet enchia a fila
+// e o que ele gravasse depois só entrava conforme a fila escoava (ficava na tela). 400
+// mudanças cabem folgado no navegador (~400 KB) e continuam escoando de 10 em 10.
+const MAX_OUTBOX=400;
 const PUSH_BATCH=10;
 // v7.0.6 — PÁGINA DO DIÁRIO: 1.000 mudanças por consulta (o teto do motor da
 // nuvem). Fica aqui em cima porque agora serve a DOIS caminhos: a leitura
@@ -512,6 +515,17 @@ let busy=false,applying=false,timer=null,failures=0,lastError='',lastTick=0;
 // A fila de envio cheia (filaCheia) mantém a varredura correndo até o fim da
 // remessa: sem isso, uma remessa grande pararia em 100 registros por rodada.
 let sujo=false,varreduraFeita=0,filaCheia=false;
+// v7.0.12 — A MUDANÇA NÃO PODE FICAR SÓ NA MEMÓRIA (a dor do dono: "dado que some").
+// O que este bloco guarda:
+//   durVarredura ........ quanto tempo a última varredura levou (decide se dá para
+//                         rodar a varredura NO MESMO INSTANTE da gravação);
+//   dentroDaVarredura ... trava de reentrância (a varredura chama saveDB em um caso);
+//   filaGravada ......... a fila coube no navegador? (se não, o dono PRECISA saber);
+//   avisoFilaCheiaEm .... quando foi avisado que a fila encheu (avisa de novo a cada 5 min).
+let durVarredura=null,dentroDaVarredura=false,filaGravada=true,avisoFilaCheiaEm=null,varreduraRapidaAgendada=null;
+let varreduraTrabalhou=false;   // a última varredura chegou a percorrer a base (ou caiu fora de cara)
+const VARREDURA_NA_MAO_MS=25;   // até isso, a varredura roda na hora (base leve)
+const TETO_FECHANDO=2000;       // ao fechar, aceita bem mais que a fila normal (400): é a última chance
 
 // v7.0.6 — GRAVAR SEM TRAVAR A REMESSA (a queixa "vai subindo aos poucos")
 // O ESTADO guarda versões + conhecidos + hashes de TODOS os registros: numa base
@@ -535,7 +549,26 @@ let sujo=false,varreduraFeita=0,filaCheia=false;
 // nuvem não regrava registro idêntico (responde "já está igual").
 let gravacaoAgendada=null,estadoMudou=true,estadoGravadoEm=0;
 function marcarEstado(){estadoMudou=true;}
-function gravarFila(){ try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));return true;}catch(e){lastError='Sem espaço para a fila de sincronização.';return false;} }
+function gravarFila(){
+  try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));filaGravada=true;return true;}
+  catch(e){
+    // A FILA NÃO COUBE: isto é risco de perda de verdade (é a fila que guarda o que ele
+    // gravou). Antes ficava só no `lastError`; agora também aparece na tela, uma vez por minuto.
+    lastError='Sem espaço para a fila de sincronização.';
+    filaGravada=false;
+    try{avisarFilaNaoGravada();}catch(e2){}
+    return false;
+  }
+}
+let avisoFilaSemEspacoEm=null;   // null = ainda não avisei (0 não serve: confunde com relógio pequeno)
+function avisarFilaNaoGravada(){
+  if(avisoFilaSemEspacoEm&&Date.now()-avisoFilaSemEspacoEm<60000)return;
+  avisoFilaSemEspacoEm=Date.now();
+  try{indicator(false,'SEM ESPAÇO para guardar a fila da nuvem ('+outbox.length+' pendente(s)) — fale com o técnico');}catch(e){}
+  try{
+    if(typeof window.toast==='function')window.toast('⚠️ Sem espaço no navegador: '+outbox.length+' mudança(s) pendente(s) não puderam ser guardadas. Fale com o técnico.','error');
+  }catch(e){}
+}
 // ═══════════════════════════════════════════════════════════════════════════
 // v7.0.9 — RECADO QUE NÃO PODE SE PERDER (defeito provado)
 // O sino (window.notificarEvento) só registra quando há SESSÃO aberta — e o motor
@@ -944,9 +977,17 @@ async function comPaciencia(fn){
 
 function pendingKeys(){const s=new Set();outbox.forEach(x=>s.add(x.key));return s;}
 let forcarVarredura=false;   // true quando alguém pediu na mão (check-up, publicar…)
-function scanLocal(){
+// v7.0.12 — `opcoes.teto`: quantas mudanças esta varredura aceita enfileirar.
+// O teto normal é 100 (MAX_OUTBOX). Ao FECHAR a janela o teto sobe para 500: é a
+// última chance de guardar o que ele gravou — e guardar demais é bem melhor do que
+// perder (a fila escoa de 10 em 10 quando a nuvem responde).
+function scanLocal(opcoes){
+  const teto=Math.max(1,Number(opcoes&&opcoes.teto)||MAX_OUTBOX);
+  return comCronometro(function(){
+  varreduraTrabalhou=false;   // a marca é POR CHAMADA: a de batida (que cai fora de cara) não apaga a medida da de verdade
   if(!state.initialPull||typeof db==='undefined'||!db)return 0;
   if(!forcarVarredura&&!sujo&&!outbox.length&&!filaCheia&&Date.now()-varreduraFeita<10000)return 0;
+  varreduraTrabalhou=true;   // daqui para baixo ela percorre a base: é ESTE o custo medido
   varreduraFeita=Date.now();sujo=false;marcarEstado();
   const pending=pendingKeys();let added=0;
   const held=new Set(state.heldLocalOnly||[]);
@@ -954,7 +995,7 @@ function scanLocal(){
   if((state.limpar||[]).length){
     const fatia=state.limpar.slice(0,40);
     for(const k of fatia){
-      if(outbox.length>=MAX_OUTBOX)break;
+      if(outbox.length>=teto)break;
       if(pending.has(k))continue;
       const corte=k.indexOf('|');
       outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity:k.slice(0,corte),recordId:k.slice(corte+1),operation:'delete',baseVersion:Number(state.versions[k]||0)}});
@@ -964,10 +1005,10 @@ function scanLocal(){
   }
   const MAPA=definicoes();
   for(const entity of Object.keys(MAPA)){
-    if(outbox.length>=MAX_OUTBOX)break;
+    if(outbox.length>=teto)break;
     const mode=MAPA[entity],entries=entriesFor(entity,mode),present=new Set(entries.map(x=>key(entity,x.id)));
     for(const entry of entries){
-      if(outbox.length>=MAX_OUTBOX)break;
+      if(outbox.length>=teto)break;
       const k=key(entity,entry.id),h=hash(entry.data);
       if(!state.sumindo||typeof state.sumindo!=='object')state.sumindo={};
       if(state.sumindo[k])delete state.sumindo[k];
@@ -1006,7 +1047,7 @@ function scanLocal(){
     // exclusão é cancelada sozinha.
     const agora=Date.now();
     for(const k of missing){
-      if(outbox.length>=MAX_OUTBOX)break;
+      if(outbox.length>=teto)break;
       if(!mandadoApagar(k))continue;   // este não foi ele quem apagou: fica como está
       if(!state.sumindo[k]){ state.sumindo[k]=agora; continue; }
       if(agora-Number(state.sumindo[k])<CONFIRMA_SUMICO) continue;
@@ -1027,7 +1068,7 @@ function scanLocal(){
   if(alvo&&typeof alvo==='object'){
     let tirou=0;
     for(const k of Object.keys(alvo)){
-      if(outbox.length>=MAX_OUTBOX){filaCheia=true;break;}
+      if(outbox.length>=teto){filaCheia=outbox.length>=MAX_OUTBOX;break;}
       if(!podeMarcarExclusao(k)){delete alvo[k];continue;}
       if(pending.has(k))continue;
       const corte=k.indexOf('|'),ent=k.slice(0,corte),id=k.slice(corte+1);
@@ -1059,7 +1100,53 @@ function scanLocal(){
     }
   }
   filaCheia=outbox.length>=MAX_OUTBOX;
+  // A FILA CHEIA PRECISA APARECER (nada foi perdido: o que não coube fica na tela e
+  // entra na fila conforme ela escoa — mas o dono tem de saber que a subida está lenta).
+  if(filaCheia&&(!avisoFilaCheiaEm||Date.now()-avisoFilaCheiaEm>300000)){
+    avisoFilaCheiaEm=Date.now();
+    try{
+      if(typeof window.toast==='function')window.toast('A nuvem está com a fila cheia ('+outbox.length+'). Nada foi perdido: as mudanças ficam guardadas e sobem aos poucos.','info');
+    }catch(e){}
+  }
+  if(!filaCheia)avisoFilaCheiaEm=null;
   persist();return added;
+  });
+}
+// ── v7.0.12 — ENFILEIRAR NA HORA (o conserto do "dado que some") ─────────────
+// Antes: gravar marcava `sujo` e a varredura só rodava 900 ms depois — quem fechasse
+// a janela nesse intervalo perdia a mudança (ela vivia só na memória, e o SÓ NUVEM
+// remonta a base pela nuvem). Agora a varredura roda NO MESMO INSTANTE da gravação.
+// Numa base grande (a varredura passa de 60 ms), rodar isso no meio do clique travaria
+// a tela: nesse caso ela vai para o fim do clique (0 ms) e o fechamento da janela
+// força a varredura de qualquer jeito (é síncrono, dentro do `pagehide`).
+function comCronometro(fn){
+  if(dentroDaVarredura)return fn();     // já estamos varrendo: não entra de novo
+  const t0=Date.now();
+  dentroDaVarredura=true;
+  try{return fn();}
+  finally{
+    dentroDaVarredura=false;
+    // Bancada (base de 40 mil registros): a varredura de verdade leva ~265 ms; as
+    // varreduras de batida (heartbeat) caem fora logo no começo e levam ~0 ms. Só a
+    // medida das varreduras que TRABALHARAM vale — senão a próxima gravação ia achar
+    // que a base é leve e travaria o clique por um quarto de segundo.
+    if(varreduraTrabalhou){
+      const levou=Date.now()-t0;
+      if(durVarredura===null||levou>durVarredura)durVarredura=levou;
+    }
+  }
+}
+function enfileirarNaHora(){
+  if(dentroDaVarredura)return;                        // a varredura em curso pega a mudança
+  // "nunca medido" conta como BASE GRANDE: o primeiro clique não paga o preço da medição
+  if(durVarredura!==null&&durVarredura<=VARREDURA_NA_MAO_MS){   // base leve CONHECIDA: agora
+    try{scanLocal();}catch(e){}
+    return;
+  }
+  if(varreduraRapidaAgendada)return;                  // base grande: fim do clique, uma vez só
+  try{
+    varreduraRapidaAgendada=setTimeout(function(){varreduraRapidaAgendada=null;try{scanLocal();}catch(e){}},0);
+  }catch(e){ varreduraRapidaAgendada=null; try{scanLocal();}catch(e2){} }
 }
 
 // NENHUM COMPUTADOR APAGA DADO SOZINHO (v5.22.76)
@@ -1236,7 +1323,17 @@ function devolverLideranca(){
 function indicator(ok,text){
   if(typeof document==='undefined')return;
   const btn=document.getElementById('btn-nuvem');if(!btn)return;
-  btn.title=text||'Nuvem DIGICOPY';btn.dataset.cloud=ok?'ok':'error';
+  // v7.0.12 — A FILA NA CARA: o título do botão passa a dizer quantas mudanças estão
+  // por subir, se a fila encheu (nada foi perdido: sobe aos poucos) e até quando a
+  // nuvem está em dia. Era o pedido do dono: "nada de fila invisível".
+  try{
+    const extra=' • fila: '+outbox.length+(filaCheia?' (cheia — sobe aos poucos)':'')+
+      (state.lastOk?' • em dia até '+new Date(state.lastOk).toLocaleTimeString('pt-BR'):'');
+    btn.title=(text||'Nuvem DIGICOPY')+extra;
+    btn.dataset.fila=String(outbox.length);
+    btn.dataset.filaCheia=filaCheia?'1':'0';
+  }catch(e){ btn.title=text||'Nuvem DIGICOPY'; }
+  btn.dataset.cloud=ok?'ok':'error';
   const icon=btn.querySelector('i');if(icon)icon.style.color=ok?'#16a34a':'#dc2626';
 }
 // v7.0.3 — LEITURA EM QUALQUER ABA VISÍVEL.
@@ -1598,7 +1695,13 @@ function pendingEstimate(){
   }
   return total;
 }
-function info(){return {authorized:authorized(),busy,paused:!!state.paused,recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
+function info(){return {authorized:authorized(),busy,paused:!!state.paused,
+  // v7.0.12 — os campos novos são o que faltava para a fila deixar de ser invisível:
+  // quantos estão por subir (outbox, de sempre), se a fila encheu, se ela coube no
+  // navegador e até quando a nuvem está em dia.
+  filaCheia, filaGravada, emDiaAte:Number(state.lastOk)||0, varreduraMs:durVarredura,
+  // os limites, para ninguém precisar de "número mágico" na tela nem nos testes
+  tetoFila:MAX_OUTBOX, tetoAoFechar:TETO_FECHANDO,recuperando:!!state.recuperacaoCursor,pauseReason:state.pauseReason||'',heldLocalOnly:Array.isArray(state.heldLocalOnly)?state.heldLocalOnly.length:0,cursor:Number(state.cursor)||0,outbox:outbox.length,pending:pendingEstimate(),lastOk:state.lastOk||0,lastError,conflicts:(()=>{try{return JSON.parse(localStorage.getItem(CONFLICT_KEY)||'[]');}catch(e){return [];}})()};}
 
 // Estado completo para o check-up (nada é inventado: o que não se sabe vem null)
 function estadoDetalhado(){
@@ -2009,7 +2112,10 @@ try{
       // sobe para a nuvem). Fora do modo, grava como sempre gravou.
       const soNuvem=!!window.DIGICOPY_SO_NUVEM&&authorized();
       const r=soNuvem?true:original.apply(this,arguments);
-      if(!applying&&authorized()){sujo=true;schedule(900);}
+      // v7.0.12 — ENFILEIRAR NA HORA: a mudança entra na fila (e a fila é gravada no
+      // navegador) no MESMO INSTANTE da gravação. Antes só ficava `sujo` e esperava a
+      // varredura de 900 ms — e fechar a janela nesse intervalo perdia a mudança.
+      if(!applying&&authorized()){sujo=true;enfileirarNaHora();schedule(900);}
       return r;
     };
     window.saveDB.__cfWrapped=true;
@@ -2017,7 +2123,8 @@ try{
   const urgente=window.saveDBAgora;
   if(typeof urgente==='function'&&!urgente.__cfSujo){
     window.saveDBAgora=function(){
-      if(!applying&&authorized())sujo=true;
+      // v7.0.12 — mesma regra do saveDB: vale para a gravação urgente também
+      if(!applying&&authorized()){sujo=true;enfileirarNaHora();}
       return urgente.apply(this,arguments);
     };
     window.saveDBAgora.__cfSujo=true;
@@ -2034,8 +2141,50 @@ try{document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.
 try{window.addEventListener('online',()=>schedule(250));}catch(e){}
 // v7.0.6 — fechar/recarregar a janela grava o estado grande na hora (o resto do
 // tempo ele é gravado agrupado; aqui não pode ficar nada pendente).
+// v7.0.12 — FECHAR NÃO PERDE (3 passos, nesta ordem):
+//   1. varredura AGORA, com teto de 500: o que ele gravou entra na fila mesmo se a
+//      fila normal (100) estiver cheia — é a última chance;
+//   2. persistAgora: estado + fila vão para o navegador na hora;
+//   3. entrega com keepalive: manda o que couber ANTES de a janela morrer (a promessa
+//      sobrevive ao fechamento). Se não chegar, a fila persistida garante a próxima
+//      abertura — nada depende desta tentativa.
+function prepararParaFechar(){
+  try{
+    if(!authorized())return;
+    if(sujo||filaCheia||outbox.length)scanLocal({teto:TETO_FECHANDO});
+    // Encheu até o teto do fechamento: o que sobrou fica só na tela e o dono tem de
+    // saber AGORA (é a última chance — depois daqui a janela fecha).
+    if(outbox.length>=TETO_FECHANDO){
+      try{indicator(false,'Fila da nuvem cheia ('+outbox.length+' pendente(s))');}catch(e){}
+      try{
+        if(typeof window.toast==='function')window.toast('A fila da nuvem está cheia ('+outbox.length+' mudanças pendentes). Deixe a internet ligada um pouco para subir; não feche sem isso.','error');
+      }catch(e){}
+    }
+  }catch(e){}
+}
+function entregarAoSair(){
+  const call=api();if(!call||!outbox.length)return;
+  // o keepalive do navegador tem teto de 64 KB: manda só o que couber com folga
+  const lote=[];let bytes=0;
+  for(const item of outbox){
+    const size=stable(item.mutation).length;
+    if(size>55000)break;
+    if(lote.length&&bytes+size>55000)break;
+    lote.push(item);bytes+=size;
+  }
+  if(!lote.length)return;
+  try{
+    const promessa=call('/v1/changes',{method:'POST',body:JSON.stringify({mutations:lote.map(x=>x.mutation)}),keepalive:true});
+    if(promessa&&typeof promessa.catch==='function')promessa.catch(()=>{});
+  }catch(e){}
+}
 try{
-  const fechar=()=>{try{persistAgora();}catch(e){}try{devolverLideranca();}catch(e){}};
+  const fechar=()=>{
+    try{prepararParaFechar();}catch(e){}
+    try{persistAgora();}catch(e){}
+    try{entregarAoSair();}catch(e){}
+    try{devolverLideranca();}catch(e){}
+  };
   window.addEventListener('pagehide',fechar);
   window.addEventListener('beforeunload',fechar);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)fechar();});

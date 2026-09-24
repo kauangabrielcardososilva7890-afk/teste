@@ -2627,3 +2627,86 @@ nuvem fingida) e mostre a perda; depois a correção entra em 3 mudanças pequen
 
 Versão **7.0.11**, motor **5.26.8**. Nada de banco tocado; nada do sistema vivo alterado nesta rodada
 (só ferramenta nova, teste novo e documentação).
+
+## §38 — Rodada 24 (24/09/2026): a correção do "dado que some" (fechar a janela de gravação do SÓ NUVEM)
+
+**Contexto:** o dono respondeu às perguntas da rodada 23 — a dor nº 1 é **"(a) dado que some/volta"** —
+e autorizou implementar a correção: *"4 = se for resolver o problema pode fazer"* / *"3 = pode ser
+então"*. O achado ALTA está na §37.3 (a mudança gravada vivia só na memória até a varredura de 900 ms).
+
+### 38.1 O teste que reproduz ANTES de corrigir (obrigação da casa)
+
+`test_nuvem_nao_perde.js` (novo, registrado no `test_runner.js`) abre o motor de verdade dentro de um
+navegador fingido (`jsdom`), com **nuvem fingida** (responde `/v1/changes`, guarda o que sobe e se o envio
+foi com `keepalive`) e **relógio fingido** (controla `setTimeout` e `Date.now`, para poder "andar 900 ms"
+sem esperar). Ele grava um cliente e pergunta, **no mesmo instante**, o que está guardado no navegador.
+
+**Primeira rodada, com o motor de antes:** 2 ✓ e ✘ em *"a gravação ENTRA NA FILA no mesmo instante
+(fila no clique: [])"* — a perda ficou **reproduzida**: no fim do clique a fila estava vazia. O teste
+**não foi ajustado para passar**; o motor é que foi corrigido (§38.2).
+
+### 38.2 As mudanças (arquivo `cloudflare_data_sync_patch.js`)
+
+| # | O quê | Onde | Por quê |
+|---|---|---|---|
+| 1 | `enfileirarNaHora()` + `comCronometro()`: a gravação roda a varredura **no fim do clique** (0 ms) e, se a base for **leve** (≤ 25 ms), roda na hora | wrapper `saveDB`/`saveDBAgora` (~:2085-2110) e funções novas (~:1116-1140) | era a janela de 900 ms: a única cópia da mudança ficava na memória |
+| 2 | `scanLocal({teto})` — teto da varredura deixa de ser fixo: **400** no dia a dia, **2.000** ao fechar | `scanLocal` (~:982-1105) | ao fechar, guardar demais é muito melhor do que perder |
+| 3 | `MAX_OUTBOX` **100 → 400** | `:16` | 100 enchia num trabalho sem internet (era exatamente quando a mudança não podia ficar só na tela) e o que fosse gravado depois só entrava conforme a fila escoava |
+| 4 | `prepararParaFechar()` (varredura **forçada** com o teto de 2.000 + aviso se ainda encher) + `entregarAoSair()` (manda o que couber com **`keepalive:true`**, lote ≤ 55 KB) + `persistAgora()` + `devolverLideranca()`, nesta ordem | bloco do `pagehide`/`beforeunload`/`hidden` (~:2145-2185) | fechar a janela passou a ser o momento mais protegido, não o mais perigoso |
+| 5 | **Fila visível:** `indicator()` mostra `fila: N`, "(cheia — sobe aos poucos)" e "em dia até HH:MM"; `info()` ganha `filaCheia`, `filaGravada`, `emDiaAte`, `varreduraMs`, `tetoFila`, `tetoAoFechar` | `indicator` (~:1280), `info()` (~:1640) | regra do dono: "nada de fila invisível"; o `filaCheia` era estado interno e não aparecia em lugar nenhum (§37.3) |
+| 6 | `gravarFila()` marca `filaGravada` e, se **não couber** a fila no navegador, avisa na tela (`toast`), uma vez por minuto | `gravarFila` (~:550) | era `false` devolvido em silêncio com a fila só na memória (§37.3, item 6) |
+
+Avisos novos na tela (todos por `toast` do sistema, nunca `alert`): *sem espaço para a fila*, *fila
+cheia — sobe aos poucos* e *fila cheia ao fechar*.
+
+### 38.3 Bancada: o clique do dono não pode travar
+
+A correção faz a varredura rodar no momento da gravação — o risco é travar a tela dele numa base grande.
+`bench_clique_nuvem.js` (novo; **não** entra na suíte porque monta bases grandes de propósito) mede com
+nuvem e relógio fingidos:
+
+| Base | Custo do clique | A varredura em si | Mudanças guardadas depois de fechar |
+|---|---|---|---|
+| 2.000 registros | **9,7 ms** (roda junto: base leve) | 11,6 ms | **4 de 4** |
+| 40.000 registros (fila saturada) | **0,0 ms** (a varredura vai para o fim do clique) | 69,4 ms | **4 de 4** |
+
+O limiar é 25 ms e a medida **vale pelo pior caso visto** (uma varredura barata não apaga a medida de uma
+pesada); "nunca medido" conta como base grande. Foi medindo que apareceu um defeito **da própria
+correção** (varreduras de batida zeravam a medida e o clique voltava a travar com 265 ms) — corrigido
+antes de fechar a rodada.
+
+### 38.4 Limites honestos (o que NÃO está provado)
+
+- **Banco de produção:** não foi possível verificar diretamente — acesso ao banco de produção
+  indisponível. Não afirmo que já houve perda; o que está provado é o comportamento do código.
+- **Queda do programa (crash/falta de energia) entre o clique e o fim dele:** nessa fração de segundo a
+  mudança ainda está só na memória. Fechar a janela está protegido; queda abrupta não tem como estar,
+  porque a regra da casa proíbe gravar a base no PC (v6.1.5/regra 44) — o que dá para garantir é que a
+  fila **persistida** é o caminho normal, não a exceção.
+- **A entrega com `keepalive` não lê a resposta** (a janela está fechando). Se a nuvem recusar, a fila
+  persistida resolve na próxima abertura — inclusive pelo caminho de conflito já existente desde a v5.24.0.
+- **Motor da nuvem 5.26.8 não foi tocado.** Nada de banco, nada de servidor, nenhum deploy.
+
+### 38.5 Provas da rodada
+
+| Teste | Resultado |
+|---|---|
+| `test_nuvem_nao_perde.js` (novo) | **13 ✓** (antes da correção: ✘ na checagem 3 — a perda, de propósito) |
+| `bench_clique_nuvem.js` (novo) | **2 cenários ✓** — nenhum clique travado, nada ficou só na memória |
+| `test_nuvem_rapida.js` | 23 ✓ (2 verificações novas para o enfileiramento na hora e o fechamento) |
+| suíte inteira (`test_runner.js`) | **219 passaram, 0 falharam, 0 não rodaram** |
+| `build_bundle.js` | `Bundle gerado: 225 scripts, sha256 4affbd2e2851450e` |
+| `sync_build.js` | `Sync OK: v7.0.12 \| 225 no bundle \| 0 soltos \| 13 entradas em build.files` |
+| `mobile/sync-www.js` | `www do celular 1.0 pronto: 4 arquivos + assets/vendor, 0 referências quebradas` |
+
+**Versão do app: 7.0.11 → 7.0.12** (mudou o comportamento do motor de gravação, então a versão mudou —
+`package.json`, `index.html`, `mobile/www/index.html`, `importar.html` e os 3 HTMLs de doc). **Motor da
+nuvem segue 5.26.8.**
+
+### 38.6 Arquivos desta rodada
+
+Alterados: `cloudflare_data_sync_patch.js`, `test_nuvem_rapida.js`, `test_runner.js`, `package.json`,
+`index.html`, `mobile/www/index.html`, `importar.html`, `GUIA_DE_TESTE_NF.html`,
+`PASSO_A_PASSO_NUVEM_E_SITE.html`, `RELATORIO_DE_TESTE_NF.html`, `test_worker_publico.js` (comentário),
+`IDEIAS_PARA_RESOLVER.md` (versão), `app.bundle.js` (build), `mobile/www/app.bundle.js` (build),
+`bundle-manifest.json` (build). Novos: `test_nuvem_nao_perde.js`, `bench_clique_nuvem.js`.
