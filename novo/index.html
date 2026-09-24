@@ -385,14 +385,18 @@
 
     // 2) tela própria do núcleo novo (já migrada e provada por teste)
     if (tela === 'inicio') {
-      var prontas = TELAS_CAT.filter(function (t) { return t.tipo === 'lista' || t.tipo === 'feita'; }).length;
-      var faltam = TELAS_CAT.length - prontas;
+      // o texto sai da FICHA, não escrito à mão: tela que muda de estado não deixa o
+      // resumo mentindo (era o defeito de resumo fixo em texto)
+      var prontas = TELAS_CAT.filter(function (t) { return t.tipo !== 'depende'; });
+      var pendentes = TELAS_CAT.filter(function (t) { return t.tipo === 'depende'; });
+      var listas = prontas.filter(function (t) { return t.tipo === 'lista'; });
+      var proprias = prontas.filter(function (t) { return t.tipo === 'feita'; });
       alvo.innerHTML = '<div class="em-construcao">O coração novo (lápide, versão, numeração, fila da nuvem) já atende ' +
-        '<b>' + prontas + ' telas</b> do sistema de hoje: cadastros (clientes, produtos, recargas, máquinas, contratos, ' +
-        'máquinas nos clientes, leituras, chamados, orçamentos, usuários, técnicos, empresas, auditoria e catálogo fiscal), ' +
-        'a <b>venda/notinha</b> (recebimento, impressão, OS e Pix) e o <b>financeiro</b>. ' +
-        (faltam ? 'As <b>' + faltam + '</b> que faltam abrem dizendo exatamente do que dependem (nota fiscal, Buscador Escola, ' +
-          'relatórios, painel do gerente, navegador e nuvem — nenhuma some do menu).' : '') +
+        '<b>' + prontas.length + ' telas</b> do sistema de hoje — <b>' + listas.length + '</b> de cadastro e consulta (' +
+        esc(listas.map(function (t) { return t.rotulo; }).join(', ')) + '), <b>' + proprias.length + '</b> com tela própria (' +
+        esc(proprias.map(function (t) { return t.rotulo; }).join(', ')) + '). ' +
+        (pendentes.length ? 'As <b>' + pendentes.length + '</b> que ainda rodam no sistema de hoje abrem dizendo exatamente do que ' +
+          'dependem — nenhuma some do menu: ' + esc(pendentes.map(function (t) { return t.rotulo; }).join(' · ')) + '.' : '') +
         ' Nada aqui toca o sistema atual nem a nuvem.</div>';
       pintarStatus();
       return;

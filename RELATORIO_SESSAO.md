@@ -6175,7 +6175,8 @@ ele mandar apagar o núcleo novo depois, isso é possível.
   **Carnê**, **📄 Word** (novo) e **↩ Estornar**.
 - **Pix:** chave, QR, copia e cola, link público e comprovante manual (título fica ABERTO — Pix não dá
   baixa sozinho).
-- **A tela aberta fica marcada no menu** (agora são 32 telas — fácil de se perder).
+- **A tela aberta fica marcada no menu** (agora são 32 telas — fácil de se perder) e o **painel do dia**
+  conta sozinho quantas telas já atendem e nomeia as que ainda rodam no sistema de hoje.
 
 ### Os achados desta rodada (provados antes de corrigir)
 
@@ -6211,7 +6212,7 @@ inteiro, sem tocar em dado.
 
 ### Provas
 
-`test_listas.js` **62 ✔** (era 49) · `test_redesenho_pagina.js` **109 ✔** (era 99) · `test_venda.js`
+`test_listas.js` **62 ✔** (era 49) · `test_redesenho_pagina.js` **111 ✔** (era 99) · `test_venda.js`
 **155 ✔** (era 150) · `test_impressao.js` **65 ✔** (era 59) · `test_telas.js` 46 ✔ · suíte inteira:
 **228 passaram, 0 falharam, 0 não rodaram**. Build/sync: `Sync OK: v7.0.11 | 228 no bundle | 0 soltos`
 (o bundle não mudou: o núcleo novo não entra nele, de propósito). Versão **7.0.11**, motor **5.26.8**.

@@ -490,6 +490,16 @@ console.log('-- TODOS os menus, uma tela por vez: nenhuma abre em branco --');
   const cadastros = Object.keys(ficha.LISTAS).filter(n => ficha.LISTAS[n].tipo !== 'apoio');
   const faltam = cadastros.filter(n => !listasVistas.has(n));
   ok('as ' + cadastros.length + ' listas do sistema (' + cadastros.join(', ') + ') têm tela no menu', faltam.length === 0, faltam.join(', '));
+  // o resumo do Início tem de sair da FICHA (nada de texto fixo envelhecendo)
+  abrirTela('inicio');
+  const txtInicio = (alvo.textContent || '').replace(/\s+/g, ' ');
+  const pendentesCat = ficha.TELAS.filter(t => t.tipo === 'depende');
+  const semNome = pendentesCat.filter(t => txtInicio.indexOf(t.rotulo) < 0).map(t => t.rotulo);
+  ok('o painel do Início é montado da ficha: nomeia as ' + pendentesCat.length + ' telas que ainda rodam no de hoje',
+    semNome.length === 0, semNome.join(' | '));
+  ok('e conta quantas telas já atendem (nenhum número escrito à mão)',
+    txtInicio.indexOf('já atende ' + (ficha.TELAS.length - pendentesCat.length) + ' telas') > 0, txtInicio.slice(0, 120));
+
   // e o botão do menu fica marcado na tela aberta (o dono não se perde)
   abrirTela('leituras');
   const ativo = [...doc.querySelectorAll('[data-tela]')].filter(b => b.classList.contains('ativa')).map(b => b.getAttribute('data-tela'));

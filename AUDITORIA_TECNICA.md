@@ -2439,7 +2439,8 @@ confirmação de que **o núcleo novo pode ser removido depois** ("se ficar ruim
   `catalogoAtalhos()`) dentro do teste: cada `click` de hoje tem de ter um destino na ficha (tabela
   `PONTE` no teste). Hoje: **24 itens de menu + 9 atalhos**, todos com tela. Acrescentei também
   "No sistema de hoje ela fica em: <menu> → <tela>" na caixa das telas pendentes e a **marca da tela
-  aberta** no menu (`.ativa`), para ele não se perder em 32 telas.
+  aberta** no menu (`.ativa`), para ele não se perder em 32 telas. O resumo do painel do dia também
+  passou a ser montado da ficha (antes era texto fixo, que envelheceria a cada tela nova).
 
 ### 35.5 Decisão registrada: o núcleo novo continua FORA do bundle e do APK
 
@@ -2455,7 +2456,7 @@ sistema de hoje depende dele (isolamento mantido).
 | Teste | Verificações | O que prova |
 |---|---|---|
 | `test_listas.js` | **62 ✔** (era 49) | uma única verdade por lista (identidade de objeto), o `os` como união Chamados+espelho, e a **paridade item a item com o menu vivo** (24+9) |
-| `test_redesenho_pagina.js` | **109 ✔** (era 99) | as **32 telas** do menu abrem (nenhuma em branco), as pendentes dizem o motivo e onde ficam hoje, as 14 listas têm tela, a tela aberta fica marcada, e a venda tem OS/totais/papel |
+| `test_redesenho_pagina.js` | **111 ✔** (era 99) | as **32 telas** do menu abrem (nenhuma em branco), as pendentes dizem o motivo e onde ficam hoje, as 14 listas têm tela, o painel do Início é montado da ficha, a tela aberta fica marcada e a venda tem OS/totais/papel |
 | `test_venda.js` | **155 ✔** (era 150) | o botão **Word** baixa `notinha_<número>.doc`, a venda em branco não mostra botão de papel, e com a OS completa o Word sai de folha inteira |
 | `test_impressao.js` | **65 ✔** (era 59) | `arquivoWord`: mesmo papel, sem auto-print, tipo `application/msword`, nome limpo (sem `../`) |
 | `test_telas.js` | 46 ✔ | as telas de cadastro continuam iguais (nada regrediu com a ficha dirigindo os campos) |
