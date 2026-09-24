@@ -1966,10 +1966,8 @@ propósito)"*). **O sistema de hoje não foi tocado.**
 
 ### 30.5 O que a venda nova ainda NÃO tem (próximas fatias, sem esconder nada)
 
-- **Tela de recebimento:** hoje o botão **Faturar** usa o padrão que já vem escolhido no sistema de hoje
-  (**à vista em Dinheiro**) e a forma pode ser trocada no rodapé da venda. Falta a tela com a
-  **configuração das parcelas** (quantidade, intervalo, juros ao mês, primeiro vencimento, dia fixo), o
-  **PIX com link** e o comprovante — é a próxima fatia da fase 3.
+- **Tela de recebimento:** **entrou na rodada 18-E** (ver §31) — formas, parcelas com prévia, Grátis,
+  venda zerada, cancelar. O que ficou de fora dela: **PIX com link público**, comprovante e o **carnê**.
 - **Estorno** de venda faturada (a tela trava, mas a volta do estorno ainda não existe aqui).
 - **Impressão da notinha** (meia folha/folha inteira com OS), etiqueta de recarga e PIX no papel.
 - **Aba Ordem de Serviço dentro da venda** (`vendas_os_patch.js`), chamados espelhados em `db.os`.
@@ -2025,3 +2023,60 @@ ele já autorizou (por partes, virada da chave uma vez só).
    (`novaVenda` final). É **código sem uso** que continua sendo carregado — candidato a sair na limpeza da
    virada (não foi removido agora: a lista de quem chama `showVenda`/`imprimirNotinha`/`deleteVenda` ainda
    passa por esse arquivo e precisa ser conferida com calma).
+
+## 31. RODADA 18-E — A TELA DE RECEBIMENTO (faturamento) (24/09/2026)
+
+**Pedido do dono:** *"vai, dá continuidade aí"* — seguir com a próxima fatia da venda sem parar.
+
+**Entrega:** a janela de faturamento da venda nova (dentro de `novo/venda.js`) + as provas em
+`test_venda.js` (**86 → 98 verificações**) e `test_redesenho_pagina.js` (**53 → 56 ✔**).
+
+### 31.1 O que a janela faz (copiado do fluxo que roda hoje)
+
+Fluxo de hoje: `vosFaturarAtual` grava a venda → `vosAbrirRecebimento` (vendas_os_patch.js:741) abre a
+janela → `vosEscolherForma` (:793) troca o painel → `vosParcelasPreview` (:838) mostra os vencimentos →
+`vosConcluirFaturamento` (:844) fecha e grava. A janela nova segue o mesmo caminho:
+
+| Comportamento | Origem |
+|---|---|
+| a venda é **gravada antes** de abrir a janela | `vosFaturarAtual` → `vosGravarVenda(true)` |
+| as **8 formas** de recebimento, com **Dinheiro** já escolhido | `VOS_FORMAS_VISTA` + 'Prazo' (vendas_os_patch.js:762) |
+| à vista: aviso de que "será faturada e **concluída automaticamente**" | `vosEscolherForma` (:800) |
+| Grátis: aviso de venda **sem cobrança** e nenhum título | `vosEscolherForma` (:798) + `vosConcluirFaturamento` (:889) |
+| "A prazo" abre a caixa com **Qtd parcelas / Primeiro vencimento / Intervalo (dias) / Venc. todo dia / Juros % a.m.** | HTML do `vos-prazo-box` (:779-792) |
+| prévia das parcelas (número, vencimento, valor) e **TOTAL** ao lado | `vosParcelasPreview` (:838) |
+| rótulo do botão vira **"Finalizar e gerar parcelas"** no a prazo | `vosEscolherForma` (:807) |
+| cancelar: venda fica **salva como AGUARDAR** e nenhuma cobrança é criada | `vosVoltarRecebimento` (:905) |
+| ao concluir, os títulos **abertos** antigos da venda são refeitos antes | `vosConcluirFaturamento` (:852) |
+
+### 31.2 Vence-todo-dia (diaFixo) também entrou — com prova
+
+O cálculo novo agora cobre o **dia fixo do mês** (`vosAddMesesDiaFixo`, vendas_os_patch.js:36), inclusive
+o caso em que o mês não tem aquele dia (dia 31 em fevereiro cai no último dia do mês). O **diferencial**
+subiu de 6 para **9 configurações**, agora com `diaFixo: 10`, `diaFixo: 31` e `diaFixo: 5` com juros de
+0,5% — **valor, vencimento e número de parcela idênticos ao `vosCalcParcelas` que roda hoje**.
+
+Na tela, a prova é de ponta a ponta: escolher **A prazo**, mudar para **3 parcelas com 1% a.m.**, conferir
+que a prévia se refaz na hora (3 linhas, TOTAL 81,61), concluir e conferir que os **3 títulos** nasceram em
+aberto com os **mesmos valores** calculados pelo sistema de hoje, e que a venda ficou gravada com
+`formaPagamento: 'Prazo'` e as 3 parcelas.
+
+### 31.3 O que ficou fora desta janela (registrado, sem esconder)
+
+- **PIX com link público** (`ajustes_v52219_pix_link_publico_patch.js`, `pix_patch.js`) — depende do motor
+  da nuvem; entra quando o núcleo novo falar com a nuvem.
+- **Comprovante** do PIX e **carnê** das parcelas (`vosImprimirCarneDaTela`).
+- **Impressão da notinha** (meia folha/folha inteira com OS) e etiqueta de recarga.
+- **Estorno** de venda faturada e a **aba de OS** dentro da venda.
+
+### 31.4 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_venda.js` | **98 ✔** (era 86) | a janela: abre ao clicar Faturar (venda já salva), mostra venda/cliente/total, as 8 formas com Dinheiro escolhido, à vista conclui com título pago, **cancelar não cria cobrança**, a prazo com prévia que se refaz, 3 parcelas com os **mesmos valores de hoje**, e a venda travada depois de faturar |
+| `test_redesenho_pagina.js` | **56 ✔** (era 53) | dentro da página: Faturar abre a janela do sistema (8 formas) e concluir cria o título já baixado no financeiro |
+| suíte inteira | **224 passaram, 0 falharam, 0 não rodaram** | nada regrediu no núcleo, na ponte, na caixa de seleção, nas telas ou no motor da nuvem |
+
+**Nada no sistema de hoje mudou:** o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle
+`3a341ce6d072e7de`, 228 scripts) e o motor da nuvem **5.26.8**. O item do menu da venda agora diz
+**"falta impressão e PIX"** — de novo, sem prometer mais do que está pronto.

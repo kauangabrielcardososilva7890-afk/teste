@@ -17,9 +17,10 @@
 //     conclui com título JÁ PAGO e baixa automática; a prazo cria uma parcela por título;
 //     Grátis não cria nada; e os títulos ABERTOS antigos da venda são refeitos)
 //
+// A tela de RECEBIMENTO entrou junto (formas, parcelas com prévia, Grátis e venda zerada).
 // O que esta parte AINDA NÃO faz (vem nas próximas fatias, e está registrado no relatório):
-// tela de recebimento (formas à vista, parcelas, PIX), estorno, impressão da notinha (meia
-// folha A4), aba Ordem de Serviço dentro da venda e a reposição de estoque com popup.
+// PIX com link público, estorno, impressão da notinha (meia folha/folha inteira com OS),
+// carnê das parcelas, aba Ordem de Serviço dentro da venda e a reposição de estoque com popup.
 //
 // Não grava nada fora do núcleo, não fala com a nuvem, não usa alert/confirm/prompt nativos.
 (function (raiz) {
@@ -169,14 +170,26 @@
 
   function somarDias(d, dias) { var x = new Date(d.getTime()); x.setDate(x.getDate() + dias); return x; }
 
-  // Cópia do `vosCalcParcelas` (vendas_os_patch.js:19) para o caso do faturamento:
-  // n parcelas, intervalo em dias, juros ao mês, primeiro vencimento. O `diaFixo`
-  // (dia fixo do mês, usado em contrato) fica para a fatia do recebimento.
+  // Cópia do `vosAddMesesDiaFixo` (vendas_os_patch.js:36): vence todo dia N do mês, e se o
+  // mês não tiver esse dia (31 em fevereiro), cai no último dia do mês.
+  function somarMesesDiaFixo(base, meses, dia) {
+    var d = new Date(base.getTime());
+    var alvoMes = d.getMonth() + meses;
+    var ano = d.getFullYear() + Math.floor(alvoMes / 12);
+    var mes = ((alvoMes % 12) + 12) % 12;
+    var ultimo = new Date(ano, mes + 1, 0).getDate();
+    d.setFullYear(ano, mes, Math.min(dia, ultimo));
+    return d;
+  }
+
+  // Cópia do `vosCalcParcelas` (vendas_os_patch.js:46): n parcelas, intervalo em dias,
+  // juros ao mês, primeiro vencimento e vence-todo-dia (diaFixo).
   function parcelasDoFaturamento(valor, cfg) {
     var c = cfg || {};
     var quantas = Math.max(1, parseInt(c.parcelas, 10) || 1);
     var juros = n(c.jurosMes, 0);
     var intervalo = Math.max(1, parseInt(c.intervaloDias, 10) || 30);
+    var diaFixo = parseInt(c.diaFixo, 10) || 0;
     var hoje = c.hoje ? new Date(c.hoje) : new Date();
     if (isNaN(hoje.getTime())) hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -188,7 +201,7 @@
     var base = Math.round((n(valor, 0) / quantas) * 100) / 100;
     var out = [];
     for (var i = 0; i < quantas; i++) {
-      var venc = somarDias(prim, i * intervalo);
+      var venc = diaFixo > 0 ? somarMesesDiaFixo(prim, i, diaFixo) : somarDias(prim, i * intervalo);
       var venc0 = new Date(venc.getTime()); venc0.setHours(0, 0, 0, 0);
       var dias = Math.max(0, Math.round((venc0 - hoje) / 86400000));
       var val = Math.round(base * (1 + (juros / 100) * (dias / 30)) * 100) / 100;
@@ -250,9 +263,13 @@
     };
   }
 
+  // 'YYYY-MM-DD' como o sistema de hoje monta (mesmo fuso, mesma origem)
+  function isoDia(d) { return new Date(d.getTime()).toISOString().slice(0, 10); }
+
   var regras = {
     numeroDaVenda: numeroDaVenda, ehNumerico: ehNumerico, jaFaturada: jaFaturada,
     FORMAS_RECEBIMENTO: FORMAS_RECEBIMENTO, parcelasDoFaturamento: parcelasDoFaturamento,
+    somarMesesDiaFixo: somarMesesDiaFixo, isoDia: isoDia,
     faturamentoDaVenda: faturamentoDaVenda,
     isentoNaInclusao: isentoNaInclusao, isentoNaBaixa: isentoNaBaixa, validaEstoque: validaEstoque,
     montarItem: montarItem, calcularTotais: calcularTotais,
@@ -337,12 +354,138 @@
       return { ok: true, venda: r.item, nova: nova };
     }
 
-    function faturar() {
-      var forma = estado.forma;
-      var g = gravar('faturado');
-      if (!g.ok) { mostrarErro(g.erro); return; }
+    // ── RECEBIMENTO (a janela de faturamento) ─────────────────────────────────
+    // Mesmo fluxo de hoje (vendas_os_patch.js:741 → :793 → :838 → :844): a venda é
+    // gravada antes de abrir, a forma vem com Dinheiro escolhido, "A prazo" abre a caixa
+    // das parcelas (qtd, 1º vencimento, intervalo, vence todo dia, juros) com a prévia
+    // dos vencimentos, e o botão conclui o faturamento.
+    var fat = { forma: 'Dinheiro', overlay: null };
+
+    function lerConfigParcelas() {
+      var v = function (sel, padrao) {
+        var el = doc.querySelector('[data-fat-modal] ' + sel);
+        return el && texto(el.value).trim() !== '' ? el.value : padrao;
+      };
+      return {
+        parcelas: parseInt(v('[data-parc-qtd]', '1'), 10) || 1,
+        primeiroVencimento: v('[data-parc-prim]', isoDia(somarDias(new Date(), 30))),
+        intervaloDias: parseInt(v('[data-parc-int]', '30'), 10) || 30,
+        diaFixo: parseInt(v('[data-parc-dia]', '0'), 10) || 0,
+        jurosMes: n(v('[data-parc-juros]', '0'), 0)
+      };
+    }
+
+    function atualizarPreview(parcelas) {
+      var corpo = doc.querySelector('[data-fat-modal] [data-parc-body]');
+      if (!corpo) return;
+      var venda = nucleo.obter('vendas', estado.vendaId);
+      var lista = parcelas || parcelasDoFaturamento(venda.total, Object.assign({ hoje: new Date() }, lerConfigParcelas()));
+      corpo.innerHTML = lista.map(function (p) {
+        return '<tr><td><b>' + p.n + '/' + lista.length + '</b></td><td>' + escapar(isoDia(new Date(p.vencimento))) + '</td><td><b>' + moeda(p.valor) + '</b></td></tr>';
+      }).join('');
+      var tot = doc.querySelector('[data-fat-modal] [data-parc-total]');
+      if (tot) tot.textContent = moeda(lista.reduce(function (s, p) { return s + p.valor; }, 0));
+    }
+
+    function escolherForma(f) {
+      fat.forma = f;
+      var modal = doc.querySelector('[data-fat-modal]');
+      if (!modal) return;
+      modal.querySelectorAll('[data-forma]').forEach(function (b) {
+        var on = b.getAttribute('data-forma') === f;
+        b.className = 'vnd-forma' + (on ? ' vnd-forma-on' : '') + (f === 'Prazo' && on ? ' vnd-forma-prazo' : '');
+      });
+      var prazo = f === 'Prazo';
+      modal.querySelector('[data-prazo-box]').hidden = !prazo;
+      var msg = modal.querySelector('[data-vista-msg]');
+      msg.hidden = prazo;
+      if (!prazo) {
+        msg.textContent = f === 'Grátis'
+          ? 'Venda Grátis (sem cobrança): será faturada e concluída sem gerar conta a receber.'
+          : 'Venda à vista em ' + f + ': será faturada e concluída automaticamente.';
+      }
+      modal.querySelector('[data-fat-label]').textContent = prazo ? 'Finalizar e gerar parcelas' : 'Concluir faturamento';
+      if (prazo) atualizarPreview();
+    }
+
+    function fecharRecebimento() {
+      var m = doc.querySelector('[data-fat-modal]');
+      if (m && m.parentNode) m.parentNode.removeChild(m);
+      fat.overlay = null;
+    }
+
+    function abrirRecebimento() {
+      // o sistema de hoje grava a venda antes de abrir o faturamento (vosFaturarAtual)
+      var g = gravar();
+      if (!g.ok) { mostrarErro(g.erro); return null; }
+      fecharRecebimento();
       var venda = g.venda;
-      var calc = faturamentoDaVenda(venda, forma, empresaId, {}, new Date());
+      var overlay = doc.createElement('div');
+      overlay.className = 'nfx-mask';
+      overlay.setAttribute('data-fat-modal', '1');
+      var campo = function (attr, rotulo, valor, extra) {
+        return '<label class="vnd-campo"><span>' + rotulo + '</span><input ' + attr + ' value="' + escapar(valor) + '"' + (extra || '') + '></label>';
+      };
+      overlay.innerHTML =
+        '<div class="nfx-caixa vnd-fat-caixa" role="dialog" aria-modal="true">' +
+          '<div class="vnd-fat-topo">' +
+            '<div><span class="vnd-rotulo">Venda</span><b>' + escapar(venda.numero) + ' — ' + escapar(venda.clienteNome || '') + '</b></div>' +
+            '<div class="vnd-fat-dinheiro"><span class="vnd-rotulo">Total a faturar</span><b>' + moeda(venda.total) + '</b></div>' +
+          '</div>' +
+          '<div class="vnd-rotulo">Forma de recebimento</div>' +
+          '<div class="vnd-formas" data-formas>' +
+            FORMAS_RECEBIMENTO.map(function (f) {
+              return '<button type="button" data-forma="' + escapar(f) + '" class="vnd-forma' + (f === 'Dinheiro' ? ' vnd-forma-on' : '') + '">' +
+                     escapar(f === 'Prazo' ? 'A prazo' : f) + '</button>';
+            }).join('') +
+          '</div>' +
+          '<div class="vnd-aviso" data-vista-msg>Venda à vista em Dinheiro: será faturada e concluída automaticamente.</div>' +
+          '<div class="vnd-prazo" data-prazo-box hidden>' +
+            '<div class="vnd-parc-campos">' +
+              campo('type="number" min="1" max="60" data-parc-qtd', 'Qtd parcelas', '1') +
+              campo('type="date" data-parc-prim', 'Primeiro vencimento', isoDia(somarDias(new Date(), 30))) +
+              campo('type="number" min="1" data-parc-int', 'Intervalo (dias)', '30') +
+              campo('type="number" min="1" max="31" placeholder="ex: 10" data-parc-dia', 'Venc. todo dia', '') +
+              campo('type="number" step="0.01" data-parc-juros', 'Juros % a.m.', '0') +
+            '</div>' +
+            '<table class="vnd-tabela"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th></tr></thead>' +
+            '<tbody data-parc-body></tbody>' +
+            '<tfoot><tr><td colspan="2"><b>TOTAL</b></td><td><b data-parc-total></b></td></tr></tfoot></table>' +
+          '</div>' +
+          '<div class="nfx-erro" data-fat-erro hidden></div>' +
+          '<div class="nfx-botoes">' +
+            '<button type="button" class="nfx-btn nfx-btn-fraco" data-fat-cancelar>Cancelar</button>' +
+            '<button type="button" class="nfx-btn nfx-btn-forte" data-fat-concluir><span data-fat-label>Concluir faturamento</span></button>' +
+          '</div>' +
+        '</div>';
+      doc.body.appendChild(overlay);
+      fat.overlay = overlay;
+      overlay.querySelectorAll('[data-forma]').forEach(function (b) {
+        b.addEventListener('click', function () { escolherForma(b.getAttribute('data-forma')); });
+      });
+      overlay.querySelectorAll('.vnd-parc-campos input').forEach(function (i) {
+        i.addEventListener('change', function () { atualizarPreview(); });
+      });
+      overlay.querySelector('[data-fat-cancelar]').addEventListener('click', function () {
+        fecharRecebimento();
+        mostrarAviso('Faturamento cancelado — a venda ficou salva como AGUARDAR.');
+      });
+      overlay.querySelector('[data-fat-concluir]').addEventListener('click', concluirFaturamento);
+      return overlay;
+    }
+
+    function erroNoRecebimento(msg) {
+      var el = doc.querySelector('[data-fat-modal] [data-fat-erro]');
+      if (el) { el.textContent = msg; el.hidden = false; } else mostrarErro(msg);
+    }
+
+    function concluirFaturamento() {
+      var cfg = fat.forma === 'Prazo' ? lerConfigParcelas() : {};
+      estado.forma = fat.forma;
+      var g = gravar('faturado');
+      if (!g.ok) { erroNoRecebimento(g.erro); return; }
+      var venda = g.venda;
+      var calc = faturamentoDaVenda(venda, fat.forma, empresaId, cfg, new Date());
       // regra de hoje (vendas_os_patch.js:852): antes de criar, refaz os títulos ABERTOS
       // desta venda — assim faturar de novo nunca deixa título repetido pendurado
       (nucleo.listar('contasReceber') || []).forEach(function (c) {
@@ -350,19 +493,23 @@
       });
       calc.titulos.forEach(function (t) { nucleo.salvar('contasReceber', t); });
       var r = nucleo.salvar('vendas', Object.assign({}, venda, {
-        formaPagamento: forma, parcelas: calc.parcelas, faturadoEm: new Date().toISOString()
+        formaPagamento: fat.forma, parcelas: calc.parcelas, faturadoEm: new Date().toISOString()
       }));
-      if (!r || !r.ok) { mostrarErro('não deu para gravar o faturamento da venda'); return; }
+      if (!r || !r.ok) { erroNoRecebimento('não deu para gravar o faturamento da venda'); return; }
       estado.status = 'faturado';
+      fecharRecebimento();
       desenhar();
-      mostrarAviso(avisoDoFaturamento(venda.total, forma, calc));
+      mostrarAviso(avisoDoFaturamento(venda.total, fat.forma, calc));
       aoMudar();
     }
 
     function avisoDoFaturamento(total, forma, calc) {
       if (n(total, 0) <= 0) return 'Venda zerada: faturada, baixada automaticamente como paga, sem cobrança.';
       if (!calc.titulos.length) return 'Venda faturada como Grátis: nenhuma cobrança foi criada no financeiro.';
-      if (forma === 'Prazo') return 'Venda faturada a prazo: ' + calc.titulos.length + ' parcela(s) em aberto no financeiro (30 dias).';
+      if (forma === 'Prazo') {
+        var total = calc.titulos.reduce(function (s, t) { return s + n(t.valor, 0); }, 0);
+        return 'Venda faturada a prazo: ' + calc.titulos.length + ' parcela(s) em aberto no financeiro, somando ' + moeda(total) + '.';
+      }
       return 'Venda faturada à vista em ' + forma + ': título já baixado no financeiro.';
     }
 
@@ -498,12 +645,7 @@
             '<span>Prod/Serv: <b>' + moeda(totais.produtos) + '</b></span>' +
             '<label class="vnd-desc">Descontos: <input data-desc-venda value="' + escapar(estado.desconto) + '"' + (travada ? ' disabled' : '') + '></label>' +
             '<span class="vnd-total">TOTAL: <b>' + moeda(totais.total) + '</b></span>' +
-            '<label class="vnd-desc">Recebimento: <select data-forma' + (travada ? ' disabled' : '') + '>' +
-              FORMAS_RECEBIMENTO.map(function (f) {
-                return '<option value="' + escapar(f) + '"' + (estado.forma === f ? ' selected' : '') + '>' + escapar(f) + '</option>';
-              }).join('') +
-            '</select></label>' +
-            (travada ? '<span class="vnd-sub">forma: <b>' + escapar(estado.forma) + '</b></span>' : '') +
+            (travada ? '<span class="vnd-sub">recebido em: <b>' + escapar(estado.forma) + '</b></span>' : '') +
           '</div>' +
           '<div class="vnd-acoes">' +
             '<button type="button" class="vnd-btn vnd-btn-fraco" data-nova>Nova</button>' +
@@ -541,7 +683,7 @@
       var salvarBtn = alvo.querySelector('[data-salvar]');
       if (salvarBtn) salvarBtn.addEventListener('click', salvar);
       var faturarBtn = alvo.querySelector('[data-faturar]');
-      if (faturarBtn) faturarBtn.addEventListener('click', faturar);
+      if (faturarBtn) faturarBtn.addEventListener('click', abrirRecebimento);
       var novaBtn = alvo.querySelector('[data-nova]');
       if (novaBtn) novaBtn.addEventListener('click', novaVenda);
       var status = alvo.querySelector('[data-status]');
@@ -550,14 +692,15 @@
       if (desc) {
         desc.addEventListener('change', function () { estado.desconto = n(desc.value, 0); desenhar(); });
       }
-      var forma = alvo.querySelector('[data-forma]');
-      if (forma) forma.addEventListener('change', function () { estado.forma = forma.value; });
+
     }
 
     desenhar();
     return {
       versao: VERSAO, desenhar: desenhar, estado: estado, estadoAtual: function () { return estado; },
-      gravar: gravar, salvar: salvar, faturar: faturar, adicionarItem: adicionarItem,
+      gravar: gravar, salvar: salvar, adicionarItem: adicionarItem,
+      abrirRecebimento: abrirRecebimento, concluirFaturamento: concluirFaturamento,
+      escolherForma: escolherForma, fecharRecebimento: fecharRecebimento,
       removerItem: removerItem, novaVenda: novaVenda
     };
   }

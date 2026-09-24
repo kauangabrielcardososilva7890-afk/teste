@@ -83,6 +83,18 @@
   .vnd-total{font-weight:800;color:#0a1e8a;font-size:15px}
   .vnd-acoes{display:flex;gap:8px}
   .vnd-numero{margin-top:6px;font-size:12px;color:#334155}
+  /* a janela do recebimento (novo/venda.js) */
+  .vnd-fat-caixa{max-width:640px}
+  .vnd-fat-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--azul);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+  .vnd-fat-topo .vnd-rotulo{color:rgba(255,255,255,.7)}
+  .vnd-fat-dinheiro{text-align:right}
+  .vnd-formas{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:6px 0 10px}
+  .vnd-forma{height:42px;border:2px solid var(--linha);background:#fff;border-radius:11px;font-size:12.5px;font-weight:800;color:#334155;cursor:pointer}
+  .vnd-forma-on{border-color:var(--azul);background:rgba(10,30,138,.06);color:var(--azul)}
+  .vnd-forma-prazo{border-color:#d97706;background:#fffbeb;color:#b45309}
+  .vnd-prazo{border:1px solid var(--linha);border-radius:12px;padding:10px;background:#f8f9ff}
+  .vnd-parc-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .vnd-parc-campos input{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;width:100%}
   .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
   .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
   .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
@@ -126,7 +138,7 @@
     <div class="module" data-modulo="atendimento">
       <button type="button" data-menu="atendimento"><i>🧾</i>Atendimento</button>
       <div class="module-menu">
-        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>falta recebimento</small></button>
+        <button type="button" data-tela="vendas"><i>🛒</i>Nova venda / Notinha<small>falta impressão e PIX</small></button>
         <button type="button" data-tela="orcamentos"><i>📋</i>Orçamentos<small>fase 3</small></button>
         <button type="button" data-tela="os"><i>🔧</i>Abrir chamado<small>fase 3</small></button>
       </div>
@@ -232,6 +244,8 @@
     document.getElementById('st-fila').textContent = 'fila da nuvem: ' + (nucleo.mudancas().length || 0);
   }
   function abrir(tela){
+    // a janela do faturamento não pode ficar pendurada na tela quando ele troca de tela
+    if (vendaTela && vendaTela.fecharRecebimento) vendaTela.fecharRecebimento();
     document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
     var alvo = document.getElementById('tela');
     if (tela === 'clientes' || tela === 'produtos') {

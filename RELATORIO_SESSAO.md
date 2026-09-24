@@ -5935,3 +5935,31 @@ era com a caixa de seleção): app publicado continua **v7.0.11** e motor da nuv
 **Para ele testar agora:** na página nova, menu **Atendimento → Nova venda / Notinha**. Sem cadastrar nada,
 dá para acrescentar `?exemplo=1` no fim do endereço e a venda já abre com clientes e produtos de exemplo
 (com estoque) — só na memória, nada fica gravado no PC.
+
+### Rodada 18-E (24/09/2026) — a tela de recebimento (faturamento) da venda
+
+**Ele pediu para continuar, então fechei o faturamento da venda.** Clicar em **Faturar** agora abre a
+janela de recebimento — a venda é gravada antes (como hoje), as **8 formas** aparecem com **Dinheiro** já
+escolhido, e escolher **A prazo** abre a caixa das parcelas com **Qtd parcelas, Primeiro vencimento,
+Intervalo (dias), Venc. todo dia e Juros % a.m.**, com a **prévia** dos vencimentos e o **TOTAL** sendo
+refeitos na hora a cada mudança. O botão muda de nome ("Finalizar e gerar parcelas"), como no sistema
+dele. **Cancelar** não cria cobrança nenhuma e deixa a venda salva como AGUARDAR.
+
+**Vence-todo-dia entrou junto** (venda que vence todo dia 10, por exemplo, inclusive quando o mês não tem
+o dia — dia 31 em fevereiro cai no último dia). O teste **diferencial** foi de 6 para **9 configurações**
+comparadas com o cálculo que roda hoje: valor, vencimento e número de parcela **idênticos**.
+
+**Prova de ponta a ponta na tela:** escolher A prazo, mudar para **3 parcelas com 1% ao mês**, ver a prévia
+virar 3 linhas com TOTAL 81,61, concluir e conferir que nasceram **3 títulos em aberto com os mesmos
+valores** — e que a venda ficou gravada a prazo com as 3 parcelas.
+
+**O que ficou fora desta janela:** o **PIX com link** (depende de ligar o núcleo novo na nuvem), o
+comprovante, o **carnê** das parcelas, a **impressão da notinha** e o estorno. Por isso o menu agora diz
+**"falta impressão e PIX"**.
+
+**Provas:** `test_venda.js` **98 ✔** (era 86), `test_redesenho_pagina.js` **56 ✔** (era 53) e a suíte
+inteira **224 passaram, 0 falharam, 0 não rodaram**. Nada do sistema de hoje mudou: segue **v7.0.11** e o
+motor da nuvem **5.26.8**.
+
+**Para ele testar:** na página nova, **Atendimento → Nova venda / Notinha**, lançar um item e clicar em
+**Faturar** — a janela abre; em **A prazo** dá para ver as parcelas mudando.

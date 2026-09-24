@@ -190,7 +190,10 @@ console.log('-- 4) FATURAMENTO (as mesmas regras do vosConcluirFaturamento) --')
     { valor: 999.99, cfg: { parcelas: 3, jurosMes: 1.5 } },
     { valor: 180, cfg: { parcelas: 6, intervaloDias: 30 } },
     { valor: 500, cfg: { parcelas: 2, primeiroVencimento: '2026-11-05' } },
-    { valor: 123.45, cfg: { parcelas: 4, intervaloDias: 15, jurosMes: 2 } }
+    { valor: 123.45, cfg: { parcelas: 4, intervaloDias: 15, jurosMes: 2 } },
+    { valor: 300, cfg: { parcelas: 3, diaFixo: 10 } },
+    { valor: 500, cfg: { parcelas: 4, diaFixo: 31 } },
+    { valor: 240, cfg: { parcelas: 2, diaFixo: 5, jurosMes: 0.5 } }
   ];
   let iguais = 0;
   cfgs.forEach((c) => {
@@ -216,6 +219,9 @@ console.log('-- 5) A TELA: cliente, item, estoque, total, salvar e faturar --');
   const tela = w.DIGICOPY_VENDA.criarVenda({ nucleo: nucleo, elemento: doc.getElementById('venda'), empresaId: 'e1' });
   const alvo = doc.getElementById('venda');
   const clicar = (sel) => alvo.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+  const clicarDoc = (sel) => doc.querySelector(sel).dispatchEvent(new w.Event('click', { bubbles: true }));
+  const modalFat = () => doc.querySelector('[data-fat-modal]');
+  const digitarDoc = (sel, v) => { const e = doc.querySelector(sel); e.value = v; e.dispatchEvent(new w.Event('change', { bubbles: true })); return e; };
   const porValor = (sel, v) => { const e = alvo.querySelector(sel); e.value = v; return e; };
   const linhas = () => alvo.querySelectorAll('.vnd-tabela tbody tr').length;
 
@@ -302,6 +308,14 @@ console.log('-- 5) A TELA: cliente, item, estoque, total, salvar e faturar --');
   ok('Serviço entra mesmo sem estoque', alvo.querySelector('[data-vunit]').value === '80', alvo.querySelector('[data-vunit]').value);
   clicar('[data-add]');
   clicar('[data-faturar]');
+  ok('Faturar abre a janela de recebimento (e a venda já foi salva antes, como hoje)', !!modalFat());
+  ok('a janela mostra a venda, o cliente e o total', /Venda/.test(modalFat().textContent) && /José Ávila/.test(modalFat().textContent) && /80,00/.test(modalFat().textContent));
+  ok('as 8 formas de recebimento estão na janela, com Dinheiro escolhido',
+    modalFat().querySelectorAll('[data-forma]').length === 8 &&
+    !!modalFat().querySelector('[data-forma="Dinheiro"].vnd-forma-on'));
+  ok('e o texto diz que à vista conclui automaticamente', /concluída automaticamente/.test(modalFat().textContent));
+  clicarDoc('[data-fat-concluir]');
+  ok('concluir fecha a janela', !modalFat());
   const vendas2 = nucleo.listar('vendas');
   ok('a segunda venda saiu com número 2', vendas2.length === 2 && vendas2.some((v) => v.numero === '2'));
   const titulos = nucleo.listar('contasReceber');
@@ -330,6 +344,7 @@ console.log('-- 5) A TELA: cliente, item, estoque, total, salvar e faturar --');
   porValor('[data-vunit]', '0');
   clicar('[data-add]');
   clicar('[data-faturar]');
+  clicarDoc('[data-fat-concluir]');
   const titulos2 = nucleo.listar('contasReceber');
   const zerado = titulos2.filter((t) => t.status === 'pago' && t.autoBaixa === true);
   ok('venda zerada faturada já entra PAGA e baixada automática (sem depender da forma)',
@@ -345,15 +360,48 @@ console.log('-- 5) A TELA: cliente, item, estoque, total, salvar e faturar --');
   p4.dispatchEvent(new w.Event('input', { bubbles: true }));
   p4.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   clicar('[data-add]');
-  const selForma = porValor('[data-forma]', 'Prazo');
-  selForma.dispatchEvent(new w.Event('change', { bubbles: true }));
+  // cancelar primeiro: a venda fica salva como AGUARDAR e nenhum título é criado
   clicar('[data-faturar]');
+  clicarDoc('[data-fat-cancelar]');
+  ok('cancelar o faturamento não cria cobrança e avisa que a venda ficou aguardando',
+    !modalFat() && nucleo.listar('contasReceber').filter((t) => t.status === 'aberto').length === 0 &&
+    /AGUARDAR/.test(alvo.textContent) && /cancelado/i.test(alvo.textContent),
+    JSON.stringify(nucleo.listar('contasReceber').map((t) => [t.status, t.valor])));
+  // agora a prazo de verdade: 3 parcelas com juros e prévia dos vencimentos
+  clicar('[data-faturar]');
+  clicarDoc('[data-forma="Prazo"]');
+  ok('escolher "A prazo" abre a caixa das parcelas e muda o rótulo do botão',
+    modalFat().querySelector('[data-prazo-box]').hidden === false && /Finalizar e gerar parcelas/.test(modalFat().textContent));
+  ok('a prévia já mostra 1 parcela de 80,00 em 30 dias', modalFat().querySelectorAll('[data-parc-body] tr').length === 1 &&
+    /80,00/.test(modalFat().querySelector('[data-parc-total]').textContent), modalFat().querySelector('[data-parc-total]').textContent);
+  digitarDoc('[data-parc-qtd]', '3');
+  digitarDoc('[data-parc-juros]', '1');
+  ok('mudando para 3 parcelas com 1% de juros a prévia se refaz na hora',
+    modalFat().querySelectorAll('[data-parc-body] tr').length === 3,
+    String(modalFat().querySelectorAll('[data-parc-body] tr').length));
+  const esperado = w.DIGICOPY_VENDA.regras.parcelasDoFaturamento(80, Object.assign({ hoje: new Date() }, {
+    parcelas: 3, jurosMes: 1, intervaloDias: 30,
+    primeiroVencimento: doc.querySelector('[data-parc-prim]').value
+  }));
+  const somaPrev = esperado.reduce((s, p) => s + p.valor, 0);
+  ok('e o TOTAL da prévia é a soma das parcelas certas (' + somaPrev.toFixed(2) + ')',
+    modalFat().querySelector('[data-parc-total]').textContent === somaPrev.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+    modalFat().querySelector('[data-parc-total]').textContent);
+  clicarDoc('[data-fat-concluir]');
   const terceiro = nucleo.listar('contasReceber').filter((t) => t.status === 'aberto');
-  ok('escolhendo "Prazo" na tela, o título fica em aberto com o rótulo de parcela',
-    terceiro.length === 1 && terceiro[0].parcela === 1 && terceiro[0].totalParcelas === 1 && /parcela 1\/1/.test(terceiro[0].descricao),
-    JSON.stringify(terceiro.map((t) => [t.valor, t.status, t.descricao])));
+  ok('concluir cria UM título em aberto por parcela, com o rótulo certo',
+    terceiro.length === 3 && terceiro.every((t, i) => t.parcela === i + 1 && t.totalParcelas === 3) &&
+    /parcela 1\/3/.test(terceiro[0].descricao),
+    JSON.stringify(terceiro.map((t) => [t.valor, t.parcela, t.totalParcelas])));
+  ok('com os MESMOS valores calculados pelo sistema de hoje',
+    terceiro.every((t, i) => t.valor === esperado[i].valor),
+    JSON.stringify([terceiro.map((t) => t.valor), esperado.map((p) => p.valor)]));
   const quartaVenda = nucleo.listar('vendas').filter((v) => v.status === 'faturado' && v.numero === '4')[0];
-  ok('e a quarta venda saiu numerada e faturada', !!quartaVenda && quartaVenda.formaPagamento === 'Prazo', JSON.stringify(nucleo.listar('vendas').map((v) => [v.numero, v.status])));
+  ok('e a quarta venda saiu numerada, faturada a prazo e com as 3 parcelas gravadas',
+    !!quartaVenda && quartaVenda.formaPagamento === 'Prazo' && quartaVenda.parcelas.length === 3,
+    JSON.stringify(nucleo.listar('vendas').map((v) => [v.numero, v.status, v.formaPagamento])));
+  ok('a janela do recebimento também não usa janela nativa (ela é do próprio sistema)',
+    !!modalFat() === false && !/\b(alert|confirm|prompt)\s*\(/.test(w.DIGICOPY_VENDA.criarVenda.toString()));
   ok('a fila da nuvem registrou tudo (vendas, itens e financeiro)',
     nucleo.mudancas().length >= 6, 'mudanças=' + nucleo.mudancas().length);
 }

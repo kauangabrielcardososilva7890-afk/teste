@@ -126,7 +126,7 @@ console.log('-- a VENDA (notinha) funciona dentro da página --');
   };
   irVendas();
   ok('o item do menu diz o que já está pronto e o que ainda falta na venda (sem prometer demais)',
-    /falta recebimento/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent));
+    /falta impressão e PIX/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'vendas').textContent));
   ok('e o título da tela muda para a venda', doc.getElementById('titulo-tela').textContent === 'Nova venda / Notinha');
   ok('a notinha abre com as duas caixas de seleção e a situação',
     !!doc.querySelector('[data-caixa-cliente] [data-termo]') && !!doc.querySelector('[data-caixa-produto] [data-termo]') && !!doc.querySelector('[data-status]'));
@@ -146,6 +146,22 @@ console.log('-- a VENDA (notinha) funciona dentro da página --');
   ok('a fila da nuvem cresceu com a venda', /fila da nuvem: [1-9]/.test(doc.getElementById('st-fila').textContent));
   irVendas();
   ok('voltar para a venda mantém o que já foi lançado (não perde nada)', w.__nucleoNovo.listar('vendas').length === 1);
+  // faturar pela janela do recebimento (dentro da página, como vai ser no sistema)
+  doc.querySelector('[data-faturar]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('na página, Faturar abre a janela de recebimento do próprio sistema',
+    !!doc.querySelector('[data-fat-modal]') && doc.querySelectorAll('[data-fat-modal] [data-forma]').length === 8);
+  // trocar de tela com a janela aberta não deixa a janela pendurada
+  [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'clientes')
+    .dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('trocar de tela fecha a janela do faturamento (nada de janela pendurada)', !doc.querySelector('[data-fat-modal]'));
+  irVendas();
+  doc.querySelector('[data-faturar]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  doc.querySelector('[data-fat-modal] [data-fat-concluir]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('concluir fatura no financeiro dentro da página (título já baixado, à vista em Dinheiro)',
+    !doc.querySelector('[data-fat-modal]') &&
+    w.__nucleoNovo.listar('contasReceber').length === 1 &&
+    w.__nucleoNovo.listar('contasReceber')[0].status === 'pago' &&
+    w.__nucleoNovo.listar('contasReceber')[0].autoBaixa === true);
 }
 
 console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM gravar nada --');
