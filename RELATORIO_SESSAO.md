@@ -5867,5 +5867,9 @@ Enter ou lupa, e o rodapé dizendo em qual campo filtrou. `test_redesenho_pagina
 **Suíte: 223/0/0/0 com `jsdom`.** O sistema de hoje não mudou nesta rodada: app publicado continua
 **v7.0.11**, motor da nuvem **5.26.8** (publicado — conferi o `/health`).
 
+**Para ele ver funcionando sem digitar nada:** a página nova aceita `?exemplo=1` no endereço (acrescente
+no fim da pré-visualização) — abre com 4 clientes e 4 produtos de exemplo, só na memória, nada gravado no
+navegador. Dá para clicar no campo "onde buscar", trocar para Cidade ou Telefone e ver a resposta mudando.
+
 **Próximo (fase 3):** as telas do dia — **venda/notinha** (onde essa caixa vive hoje: escolher cliente e
 produto, item a item, estoque, total), OS e orçamento.

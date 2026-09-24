@@ -1861,7 +1861,15 @@ comportamento que hoje vive em **9 lugares** (`vos-cli-search`, `fin-cli-termo`,
 rodada: o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle `3a341ce6d072e7de`) e o
 motor da nuvem **5.26.8** (publicado — conferido no `/health`).
 
-### 29.4 Paridade: onde estamos e qual é o próximo
+### 29.4 Ver sem digitar nada (`?exemplo=1`)
+
+A página nova aceita `?exemplo=1` no endereço: ela abre com 4 clientes e 4 produtos de **exemplo**, só
+na **memória** (o rascunho do navegador não é lido nem gravado nesse modo). Serve para ele clicar no
+campo **"onde buscar"**, trocar para Cidade/Telefone e ver a caixa respondendo — sem cadastrar nada e
+sem nada ficar no PC. Provado em `test_redesenho_pagina.js` (o exemplo abre com 4 clientes, a busca por
+"jose" e por Cidade responde, e o `localStorage` continua vazio).
+
+### 29.5 Paridade: onde estamos e qual é o próximo
 
 - **Feito:** coração (lápide/dedup/outbox), ponte, telas Clientes/Produtos, conferência sob demanda no
   sistema de hoje, e agora a **seleção inteligente** (regra + caixa) com paridade provada.

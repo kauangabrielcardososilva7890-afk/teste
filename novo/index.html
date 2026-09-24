@@ -161,17 +161,23 @@
 (function(){
   'use strict';
   var CHAVE = 'digicopy_novo_rascunho_v1';   // chave PRÓPRIA — não toca em nada do sistema de hoje
+  // ?exemplo=1 — abre a tela com dados de EXEMPLO, só na MEMÓRIA, para ele ver a caixa de
+  // seleção funcionando (campo "onde buscar", lupa, Enter) sem digitar nada. Neste modo o
+  // rascunho do navegador NÃO é lido nem gravado: nada fica no PC dele.
+  var EXEMPLO = /[?&]exemplo=1/.test(location.search);
   var nucleo = window.DIGICOPY_NUCLEO.criar({
     empresaId: 'rascunho',
     origem: 'este-pc',
     guardar: function () {
-      try { localStorage.setItem(CHAVE, JSON.stringify(nucleo.paraJSON())); } catch (e) { /* sem espaço: segue sem rascunho */ }
+      if (!EXEMPLO) {
+        try { localStorage.setItem(CHAVE, JSON.stringify(nucleo.paraJSON())); } catch (e) { /* sem espaço: segue sem rascunho */ }
+      }
       pintarStatus();
     }
   });
   try {
     var salvo = localStorage.getItem(CHAVE);
-    if (salvo) nucleo.carregarDeJSON(JSON.parse(salvo));
+    if (salvo && !EXEMPLO) nucleo.carregarDeJSON(JSON.parse(salvo));
   } catch (e) { /* rascunho ilegível: começa vazio */ }
 
   // A MESMA PONTE que vai entrar no sistema de hoje: aqui ela está ligada a um `db`
@@ -241,6 +247,23 @@
     var l = aba.getAttribute('data-aba');
     if(titulos[l]) document.getElementById('titulo-tela').textContent = titulos[l];
   });
+
+  // dados de exemplo (só no modo ?exemplo=1): entram sem sujar a fila da nuvem
+  if (EXEMPLO) {
+    [
+      { id: 'ex-cli-1', nome: 'José Ávila', telefone: '(38) 99999-1234', cidade: 'Montes Claros' },
+      { id: 'ex-cli-2', nome: 'Loja 480 Papelaria', telefone: '(11) 3232-4800', cidade: 'São Paulo' },
+      { id: 'ex-cli-3', nome: 'MARIA JOSE', telefone: '(38) 3232-1010', cidade: 'montes claros' },
+      { id: 'ex-cli-4', nome: 'Recarga Express', telefone: '(31) 98888-7777', cidade: 'Belo Horizonte' }
+    ].forEach(function (c) { nucleo.salvar('clientes', c, { semFila: true }); });
+    [
+      { id: 'ex-prod-1', nome: 'Cartucho HP 664 Preto', preco: '89,90', categoria: 'Cartucho' },
+      { id: 'ex-prod-2', nome: 'Toner Samsung MLT-D111S', preco: '150,00', categoria: 'Insumo' },
+      { id: 'ex-prod-3', nome: 'Serviço de instalação', preco: '80,00', categoria: 'Serviço' },
+      { id: 'ex-prod-4', nome: 'Recarga de toner 85A', preco: '40,00', categoria: 'Recarga' }
+    ].forEach(function (p) { nucleo.salvar('produtos', p, { semFila: true }); });
+    pintarStatus();
+  }
 
   abrir('clientes');
   pintarStatus();

@@ -117,4 +117,26 @@ console.log('-- a BUSCA tem o campo "onde buscar" (igual ao sistema de hoje) --'
   doc.querySelector('[data-aba="clientes"]').dispatchEvent(new w.Event('click', { bubbles: true }));
 }
 
+console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM gravar nada --');
+{
+  const dom2 = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost/?exemplo=1', pretendToBeVisual: true });
+  const w2 = dom2.window;
+  ['nucleo.js', 'ponte.js', 'selecao.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
+  w2.eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
+  const d2 = w2.document;
+  const criar = (campo, valor) => { const c = d2.querySelector('[data-campo="' + campo + '"]'); c.value = valor; return c; };
+  const qtd = () => d2.querySelectorAll('[data-linha]').length;
+  ok('o exemplo já abre com 4 clientes', qtd() === 4, 'linhas=' + qtd());
+  ok('e NADA foi gravado no navegador (nem o rascunho)', w2.localStorage.length === 0 || w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
+  const busca = d2.querySelector('[data-busca]');
+  busca.value = 'jose'; busca.dispatchEvent(new w2.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  ok('buscar "jose" acha 2 (acento e maiúscula não atrapalham)', qtd() === 2, 'linhas=' + qtd());
+  const campo2 = d2.querySelector('[data-campo-busca]');
+  campo2.value = 'cidade'; campo2.dispatchEvent(new w2.Event('change', { bubbles: true }));
+  busca.value = 'montes'; busca.dispatchEvent(new w2.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+  ok('campo "Cidade" busca só na cidade', qtd() === 2, 'linhas=' + qtd());
+  ok('e continua sem gravar nada no navegador', w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
+  try { w2.close(); } catch (e) {}
+}
+
 console.log('\nRESULTADO: ' + passou + ' verificações passaram — a página nova tem a cara do sistema e o coração novo.');
