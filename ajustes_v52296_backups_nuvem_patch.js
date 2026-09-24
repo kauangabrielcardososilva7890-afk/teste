@@ -916,6 +916,14 @@ function linhaDiagnostico(){
   const pendenteTela = !!(sync && typeof sync.temRedesenhoPendente === 'function' && sync.temRedesenhoPendente());
   return { app, quando, pend, instantaneo, pendenteTela, pausada, motivo, erro };
 }
+// v7.0.9 — o painel mostra texto que vem de FORA (motivo da pausa e mensagem de
+// erro da nuvem). Texto de fora nunca entra no HTML sem escape: era o único ponto
+// do painel que montava HTML com dado dinâmico.
+function escDiag(t){
+  return String(t==null?'':t).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
 async function instalarDiagnostico(){
   const modal = document.getElementById('digicopy-cloud-modal');
   if(!modal || modal.classList.contains('hidden')) return;
@@ -940,8 +948,8 @@ async function instalarDiagnostico(){
   partes.push('Última sincronização: <b>' + d.quando + '</b>' + (d.pend === null ? '' : ' • pendências para enviar: <b>' + d.pend + '</b>'));
   partes.push('Aviso instantâneo: <b>' + (d.instantaneo ? 'ligado' : 'desligado') + '</b>'
     + (d.pendenteTela ? ' • há novidade esperando a tela atualizar' : ''));
-  if(d.pausada) partes.push('<b style="color:#b91c1c">Sincronização PARADA</b>' + (d.motivo ? ' (' + d.motivo + ')' : ''));
-  if(d.erro) partes.push('<span style="color:#b45309">Último aviso da nuvem: ' + d.erro.slice(0,160) + '</span>');
+  if(d.pausada) partes.push('<b style="color:#b91c1c">Sincronização PARADA</b>' + (d.motivo ? ' (' + escDiag(d.motivo) + ')' : ''));
+  if(d.erro) partes.push('<span style="color:#b45309">Último aviso da nuvem: ' + escDiag(d.erro.slice(0,160)) + '</span>');
   linha.innerHTML = partes.join('<br>');
 
   box.querySelector('#dc-diag-btn').onclick = async function(){
@@ -960,7 +968,7 @@ async function instalarDiagnostico(){
         + (d2.pendenteTela ? 'Chegou novidade e a tela está sendo atualizada.' : 'Nada pendente de tela agora — a tela está em dia com a nuvem.')
         + '<br>Última sincronização: <b>' + d2.quando + '</b>.';
     }catch(e){
-      res.innerHTML = '⚠️ ' + ((e && e.message) || e);
+      res.innerHTML = '⚠️ ' + escDiag((e && e.message) || e);
     }
     btn.disabled = false; btn.textContent = 'Conferir agora';
   };

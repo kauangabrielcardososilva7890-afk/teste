@@ -5294,3 +5294,98 @@ O PC avisa sozinho no sino enquanto o motor publicado for antigo.
 2. Atualizar o programa nos PCs e conferir o rodapé **v7.0.8**.
 3. Se faltar dado, usar o botão **"🩹 Trazer de volta o que foi excluído"** no painel da
    Nuvem depois de publicar o motor — é ele que varre a lista inteira com o cursor novo.
+
+
+## 23/09/2026 (cont.) — RODADA 14 · ORÇAMENTO, MÓDULO E UM DEFEITO MEU (v7.0.9)
+
+**Ele publicou a nuvem** (motor 5.26.7 com o paginador corrigido) — a varredura agora
+alcança tudo o que foi apagado, inclusive nos casos de milissegundo empatado.
+
+**Pedido (literal):** *"eu vou continuar falando a mesma coisa ate não achar nenhum
+problema. procure por mais problemas, se achar, verifique se aquil realmente é um
+problema"*. Mantido o método: **provar antes de afirmar** — e comecei conferindo as
+**minhas** correções da rodada anterior.
+
+### 1) CRÍTICO — orçamento apagado pela ficha do cliente VOLTAVA (provado)
+`scanLocal()` tinha `||entity==='orcamentos'` — este PC **nunca** mandava apagar
+orçamento. Era trava da v5.22.92 (impedir que um orçamento sumisse por ordem da nuvem).
+Só que a ordem **mais nova** dele é a v5.24.5, escrita no próprio módulo da ficha:
+*"deletar é DE VEZ. Sai daqui, a nuvem recebe o comando de apagar e os outros PCs
+apagam também (sem marca-fantasma)"*. Com a trava, apagar pela ficha não chegava na
+nuvem e — como o modo SÓ NUVEM remonta a base do diário — **o orçamento voltava**.
+
+**Prova:** `test_exclusao_nao_volta.js`, cenário "orçamento pela ficha" (motor de
+verdade + nuvem de mentira): antes, *"o orçamento apagado VOLTOU? SIM / a nuvem apagou?
+NÃO"*; depois, **não volta e a nuvem apaga**.
+
+**Conserto:** a trava saiu do caminho de envio (o envio continua só para o que **ele**
+apagou — marca da v7.0.7). A **proteção da v5.22.92 continua**: delete vindo DA NUVEM
+não remove o orçamento daqui — ele fica `excluido` (sai das listas de trabalho e volta
+em Estornar).
+
+### 2) CRÍTICO — "Excluir módulo" (tabela criada por ele) VOLTAVA inteiro (provado)
+`confirmarExcluirModulo` (app.js) avisa: *"Isso removerá N registros permanentemente"*.
+O módulo vive em `modulosDinamicos`, que viaja como **mapa** — e mapa não estava na
+lista de entidades que podem ser apagadas na nuvem. Resultado: o módulo voltava com
+todos os registros dele na abertura seguinte.
+
+**Conserto:** `modulosDinamicos` entrou em `PODE_EXCLUIR`; `confirmarExcluirModulo`
+entrou na lista do vigia; e o passe do "voltou da nuvem" passou a tratar **mapa**
+(antes só lista).
+
+### 3) DEFEITO MEU (v7.0.8) — descoberto pelo teste do módulo
+A minha troca do retrato para números montava a lista de "presentes" **só para array**;
+para **mapa** ela ficava **vazia** — então **todo registro do mapa era dado como
+"sumiu"** e marcado como apagado, inclusive os que ele **não** apagou. Ficou escondido
+enquanto mapa não podia mandar exclusão; apareceu **no primeiro teste** de "Excluir
+módulo" (o outro módulo era apagado junto: *"módulo: o outro módulo continua inteiro ✘"*).
+Consertado e travado por teste.
+
+### 4) MÉDIO — a marca de exclusão podia expirar antes de chegar na nuvem
+A poda rodava sempre e a janela era de **1 dia**: uma exclusão feita antes de um fim de
+semana sem internet podia ser esquecida (e o registro voltar). Agora a poda **só
+acontece com o PC em dia** (nada na fila e sem erro de nuvem) e a janela é de **7 dias**;
+o teto de segurança subiu de 2.000 para 5.000 marcas.
+
+### 5) MÉDIO — navegador sem espaço falhava em silêncio
+Se o navegador recusar a gravação (base grande), o motor só anotava o erro e seguia.
+Agora ele **joga fora primeiro o que é derivado** (`versions` — é remontado na próxima
+leitura e, no modo SÓ NUVEM, é zerado a cada abertura), **avisa ele no sino** e o painel
+de Diagnóstico mostra o motivo. A fila e a marca do que ele apagou **nunca** são
+descartadas.
+
+### 6) BAIXO (higiene/segurança) — escape no painel de Diagnóstico
+O motivo da pausa e a mensagem de erro da nuvem entravam no HTML sem escape (texto que
+vem de fora). Agora passam por escape.
+
+### 7) Verificado e **NÃO** é problema (com evidência)
+| Suspeita | Verificação | Veredito |
+|---|---|---|
+| `/v1/restore` (trazer de volta) não avisa os outros PCs | usa `applyMutation`, que grava no diário (`changes`) | não é problema |
+| Listas que viajam e não podem ser apagadas | só `config` e `_seq` (raiz/contador, sem exclusão) | não é problema |
+| Outras formas de apagar que o levantamento não pegaria | varredura por `pop`, `shift`, `delete db.X[...]` e `length=0`: só `delete db.modulosDinamicos[...]` (tratado acima) | não é problema |
+| Etiquetas de recarga (`recargasEtiquetas`) não sobem exclusão | lista **derivada** das vendas (o módulo refaz no estorno) | por desenho |
+| `escola*`, `clientesDuplicadosSugeridos`, `itensRecebimentoMigrados` | listas **remontadas** pelo próprio módulo (importação/sugestão) | por desenho |
+
+### 8) Possível problema (não confirmado — precisa de dado que só a nuvem tem)
+O controle da sincronização cresce com a base: no banco de prova, **76.550 registros
+geraram 6,5 MB** de estado no navegador. Se a base dele estiver nesse tamanho, o
+navegador pode recusar a gravação — agora isso **avisa** em vez de falhar calado.
+**Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
+quantos registros a base dele tem hoje (o painel da Nuvem mostra a contagem).
+
+### 9) Testes
+- `test_exclusao_nao_volta.js`: **51 verificações** (agora com orçamento, módulo
+  dinâmico, poda da marca e o caso do navegador sem espaço).
+- `test_recuperacao_completa.js`: 17 · `test_nuvem_rapida.js`: 21 ·
+  `test_ajustes_v52296.js` ganhou a checagem do escape do painel.
+- Suíte: **211 passaram, 0 falharam, 4 não rodaram** (falta `jsdom`).
+- Bundle `1ed26ac13f913ee1` · `?v=7.0.9-326f1f40e4a6` · `sync_build --check` e
+  `mobile/sync-www.js` OK.
+
+### 10) Passos dele
+1. Atualizar o programa nos PCs (site recarrega; `.exe` republicar) e conferir o rodapé
+   **v7.0.9**.
+2. **Nada na nuvem**: o motor 5.26.7 já foi publicado por ele.
+3. Se notar a mensagem de "sem espaço no navegador", me avise — significa base grande e
+   aí vale medir o tamanho dela no painel da Nuvem.

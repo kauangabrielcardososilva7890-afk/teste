@@ -16,11 +16,16 @@ const code=fs.readFileSync('cloudflare_data_sync_patch.js','utf8');
 console.log('== EXCLUSÃO NÃO VOLTA (v7.0.7) ==');
 
 // ── a nuvem de mentira (diário + registros, igual ao motor espera) ──────────
-function nuvemDeMentira(){
+function nuvemDeMentira(entity,ids){
+  entity=entity||'contratos';
+  ids=ids||['C1','C2','C3'];
   const nuvem={records:{},diario:[],postados:[],foraDoAr:false};
-  for(const [id,numero] of [['C1','CT-1'],['C2','CT-2'],['C3','CT-3']]){
-    nuvem.records['contratos|'+id]={entity:'contratos',recordId:id,data:{id,numero},version:1};
-    nuvem.diario.push({seq:nuvem.diario.length+1,entity:'contratos',recordId:id,operation:'upsert',data:{id,numero},version:1});
+  for(const id of ids){
+    const dados=(entity==='contratos')?{id,numero:'CT-'+id}
+      :(entity==='modulosDinamicos')?{value:{label:id,dados:[{id:'r1',nome:'linha 1'}]}}
+      :{id,status:'aprovado'};
+    nuvem.records[entity+'|'+id]={entity:entity,recordId:id,data:dados,version:1};
+    nuvem.diario.push({seq:nuvem.diario.length+1,entity:entity,recordId:id,operation:'upsert',data:dados,version:1});
   }
   nuvem.api=async(p,o)=>{
     if(nuvem.foraDoAr)throw new Error('sem internet (teste)');
@@ -110,6 +115,89 @@ const dormir=ms=>new Promise(r=>realSetTimeout(r,ms));
     ok(cenario+': a marca é limpa depois de confirmada',S2.temMarcaDeExclusao('contratos|C1')===false);
   }
 
+  // ── v7.0.9 — ORÇAMENTO APAGADO PELA FICHA DO CLIENTE ────────────────────────
+  // Defeito provado: o motor tinha `||entity==='orcamentos'` na varredura e nunca
+  // mandava apagar orçamento — então ele voltava (no modo SÓ NUVEM, a base é
+  // remontada do diário da nuvem). A ordem dele (v5.24.5, escrita no módulo da
+  // ficha) é "deletar é DE VEZ... a nuvem recebe o comando de apagar".
+  console.log('-- orçamento apagado pela ficha do cliente --');
+  {
+    const nuvemO=nuvemDeMentira('orcamentos',['O1','O2']);
+    const amb1=novoNavegador();
+    const dados1={orcamentos:[],config:{},_seq:{}};
+    amb1.janela.excluirOrcamentoDaFicha=function(id){
+      dados1.orcamentos=(dados1.orcamentos||[]).filter(x=>x.id!==id);
+      amb1.janela.saveDB();
+    };
+    const S1=abrirSessao(amb1,dados1,nuvemO.api);
+    await S1.tick('abertura').catch(()=>{});
+    ok('orçamento: a base abriu com os 2 orçamentos',dados1.orcamentos.length===2);
+    S1.marcarIntencaoDeExcluir();                 // é o que o vigia faz no clique
+    amb1.janela.excluirOrcamentoDaFicha('O1');
+    S1.fecharIntencaoDeExclusao();
+    ok('orçamento: o motor registrou o que ele apagou',S1.temMarcaDeExclusao('orcamentos|O1')===true);
+    await S1.tick('heartbeat').catch(()=>{});
+    await dormir(30);
+    await S1.tick('heartbeat').catch(()=>{});
+    amb1.janela.disparar('pagehide');
+
+    const amb2=novoNavegador();
+    Object.assign(amb2.store,amb1.store);
+    const dados2={orcamentos:[],config:{},_seq:{}};
+    amb2.janela.excluirOrcamentoDaFicha=function(){};
+    const S2=abrirSessao(amb2,dados2,nuvemO.api);
+    await S2.tick('abertura').catch(()=>{});
+    await dormir(30);
+    await S2.tick('heartbeat').catch(()=>{});
+    // pode continuar no banco como `excluido` (proteção da v5.22.92), mas NÃO pode
+    // aparecer nas listas de trabalho — era isso que ele via como "voltou"
+    const visiveis=(dados2.orcamentos||[]).filter(o=>String(o.status||'')!=='excluido').map(o=>o.id);
+    ok('orçamento: NÃO volta para a lista de trabalho',visiveis.indexOf('O1')<0);
+    ok('orçamento: a nuvem recebeu a exclusão',!!(nuvemO.records['orcamentos|O1']&&nuvemO.records['orcamentos|O1'].deleted));
+    ok('orçamento: o outro orçamento continua inteiro',visiveis.indexOf('O2')>=0);
+    ok('a proteção antiga continua: delete vindo DA NUVEM vira "excluído" (não remove)',
+      /change.operation==='delete'&&change.entity==='orcamentos'/.test(code) &&
+      /arr\[idx\]\.status='excluido'/.test(code));
+  }
+
+  // ── v7.0.9 — MÓDULO DINÂMICO EXCLUÍDO PELA TELA ─────────────────────────────
+  // app.js tem "Excluir módulo" (confirmarExcluirModulo): avisa que remove todos os
+  // registros. A lista `modulosDinamicos` viaja para a nuvem como MAPA, e a
+  // varredura só procurava registro sumido nas listas de array — então o módulo
+  // excluído voltava inteiro (com os registros dele) na próxima abertura.
+  console.log('-- módulo dinâmico excluído pela tela --');
+  {
+    const nuvemM=nuvemDeMentira('modulosDinamicos',['MOD1','MOD2']);
+    const amb1=novoNavegador();
+    const dados1={modulosDinamicos:{},config:{},_seq:{}};
+    const excluir=function(nome){
+      delete dados1.modulosDinamicos[nome];        // é o que confirmarExcluirModulo faz
+      amb1.janela.saveDB();
+    };
+    amb1.janela.confirmarExcluirModulo=excluir;    // nome real da função (o vigia embrulha)
+    const S1=abrirSessao(amb1,dados1,nuvemM.api);
+    await S1.tick('abertura').catch(()=>{});
+    ok('módulo: a base abriu com os 2 módulos',Object.keys(dados1.modulosDinamicos).length===2);
+    amb1.janela.confirmarExcluirModulo('MOD1');
+    ok('módulo: o motor registrou o que ele apagou',S1.temMarcaDeExclusao('modulosDinamicos|MOD1')===true);
+    await S1.tick('heartbeat').catch(()=>{});
+    await dormir(30);
+    await S1.tick('heartbeat').catch(()=>{});
+    amb1.janela.disparar('pagehide');
+
+    const amb2=novoNavegador();
+    Object.assign(amb2.store,amb1.store);
+    const dados2={modulosDinamicos:{},config:{},_seq:{}};
+    amb2.janela.confirmarExcluirModulo=function(){};
+    const S2=abrirSessao(amb2,dados2,nuvemM.api);
+    await S2.tick('abertura').catch(()=>{});
+    await dormir(30);
+    await S2.tick('heartbeat').catch(()=>{});
+    ok('módulo: NÃO volta depois de reabrir',!dados2.modulosDinamicos['MOD1']);
+    ok('módulo: a nuvem recebeu a exclusão',!!(nuvemM.records['modulosDinamicos|MOD1']&&nuvemM.records['modulosDinamicos|MOD1'].deleted));
+    ok('módulo: o outro módulo continua inteiro',!!dados2.modulosDinamicos['MOD2']);
+  }
+
   console.log('-- o que sustenta o conserto --');
   ok('a marca fica gravada no estado (sobrevive a fechar o programa)',
     /excluidosDeProposito/.test(code)&&/MARCA_EXCLUSAO_VALE/.test(code));
@@ -147,6 +235,23 @@ const dormir=ms=>new Promise(r=>realSetTimeout(r,ms));
     /A UNIÃO PRECISA VALER NA NUVEM/.test(code)&&/removeIds\.forEach\(id=>\{const k=key\('clientes',id\)/.test(code));
   ok('a liderança não segura o envio depois de reabrir',
     /const LEASE_MS=30000;/.test(code)&&/function devolverLideranca\(\)/.test(code)&&/devolverLideranca\(\);/.test(code));
+
+  console.log('-- v7.0.9: os consertos desta rodada --');
+  ok('a lista de presentes cobre MAPA também (o defeito que marcava todo módulo como apagado)',
+    /else if\(v&&typeof v==='object'\)\{[\s\S]{0,700}?for\(const chave of Object\.keys\(v\)\)set\.add\(String\(chave\)\)/.test(code));
+  ok('módulo dinâmico está entre as listas que podem ser apagadas na nuvem',
+    /'tecnicos','modulosDinamicos'\]/.test(code));
+  ok('o "Excluir módulo" da tela está vigiado',
+    /'confirmarExcluirModulo'\]/.test(code));
+  ok('apagar módulo avisa a intenção (para o outro módulo não ser tocado)',
+    /temMarcaDeExclusao\(k\)/.test(code));
+  ok('a poda da marca só acontece com o PC em dia (sem pendência e sem erro)',
+    /emDia=!outbox\.length&&!lastError/.test(code));
+  ok('a marca vale uma semana (era 1 dia: exclusão antes de ficar offline se perdia)',
+    /MARCA_EXCLUSAO_VALE=7\*24\*60\*60\*1000/.test(code));
+  ok('sem espaço no navegador: o derivado sai primeiro e ele é avisado',
+    /state\.versions=\{\};[\s\S]{0,200}?avisarEspaco\(\)/.test(code) &&
+    /window\.notificarEvento\('aviso',[\s\S]{0,120}?SEM ESPAÇO/.test(code));
 
   console.log('-- a lista de exclusões não pode voltar a ter buraco --');
   // Levanta TODO ponto do sistema que tira registro de lista sincronizada e
@@ -193,6 +298,6 @@ const dormir=ms=>new Promise(r=>realSetTimeout(r,ms));
   ok('nenhum caminho de exclusão fora do vigia e fora do automático'+(problemas.length?': '+problemas.slice(0,4).join(', '):''),
     problemas.length===0);
 
-  console.log('\nRESULTADO: '+passou+' verificações passaram — apagar não volta mais!');
+  console.log('\nRESULTADO: '+passou+' verificações passaram — apagar (inclusive orçamento) não volta mais!');
   process.exit(0);
 })().catch(e=>{console.error('  \u2718 erro no teste: '+(e&&e.stack||e));process.exit(1);});

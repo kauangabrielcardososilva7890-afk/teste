@@ -77,7 +77,11 @@ const NAO_SINCRONIZA=new Set(['meta','__proto__','logs','notificacoes']);
 const JANELA_INTENCAO=60000;
 // Quanto tempo a marca "isto foi apagado por ele" continua valendo. Um dia é
 // suficiente para cobrir "apagou de manhã, ficou sem internet, só voltou à noite".
-const MARCA_EXCLUSAO_VALE=24*60*60*1000;
+// v7.0.9 — UMA SEMANA (era 1 dia) e a poda só acontece com o PC EM DIA (nada
+// pendente e sem erro de nuvem). Assim, uma exclusão feita antes de um fim de
+// semana sem internet não é esquecida — que era o risco de a marca expirar antes
+// de a ordem de apagar chegar na nuvem.
+const MARCA_EXCLUSAO_VALE=7*24*60*60*1000;
 const CONFIRMA_SUMICO=3000;
 let intencaoAte=0;
 // ══ v7.0.7 — O QUE ELE APAGOU NÃO PODE VOLTAR (defeito provado) ══════════════
@@ -136,7 +140,7 @@ function marcarIntencaoDeExcluir(){
 function podeMarcarExclusao(k){
   const corte=k.indexOf('|');if(corte<=0)return false;
   const ent=k.slice(0,corte);
-  return PODE_EXCLUIR.has(ent)&&ent!=='orcamentos';   // orçamento este PC nunca apaga
+  return PODE_EXCLUIR.has(ent);   // v7.0.9 — inclusive orçamento, quando foi ELE quem apagou
 }
 function fecharIntencaoDeExclusao(){
   try{
@@ -153,8 +157,18 @@ function fecharIntencaoDeExclusao(){
     // 2) ids que existem nestas listas AGORA (só destas listas)
     const presentes=Object.create(null);
     mudaram.forEach(e=>{
-      const v=Array.isArray(db[e])?db[e]:null;const set=new Set();
-      if(v)for(let i=0;i<v.length;i++){const it=v[i];if(it&&it.id!=null)set.add(String(it.id));}
+      const set=new Set(),v=db[e];
+      if(Array.isArray(v)){
+        for(let i=0;i<v.length;i++){const it=v[i];if(it&&it.id!=null)set.add(String(it.id));}
+      }else if(v&&typeof v==='object'){
+        // v7.0.9 — LISTA DE MAPA TAMBÉM (defeito meu, achado pelo teste do módulo):
+        // a versão numérica do retrato montava este conjunto só para array; para
+        // mapa (ex.: modulosDinamicos) ele ficava VAZIO e TODO registro daquele mapa
+        // era dado como "sumiu" — marcando como apagado o que ele NÃO apagou.
+        // Passou despercebido enquanto mapa não podia mandar exclusão; apareceu no
+        // instante em que "Excluir módulo" passou a valer.
+        for(const chave of Object.keys(v))set.add(String(chave));
+      }
       presentes[e]=set;
     });
     // 3) dos registros que ESTE PC conhece (os que existem na nuvem e podem
@@ -170,10 +184,14 @@ function fecharIntencaoDeExclusao(){
       if(!alvo[k])marcados++;
       alvo[k]={em:Date.now(),v:Number(state.versions[k]||0)};
     }
-    const agora=Date.now();
-    Object.keys(alvo).forEach(k=>{ if(agora-Number((alvo[k]&&alvo[k].em)||0)>MARCA_EXCLUSAO_VALE)delete alvo[k]; });
-    const chaves=Object.keys(alvo);
-    if(chaves.length>2000)chaves.slice(0,chaves.length-2000).forEach(k=>delete alvo[k]);
+    // só poda com o PC EM DIA: pendência na fila ou erro de nuvem significa que a
+    // ordem de apagar ainda não chegou — jogar a marca fora é perder a exclusão
+    const agora=Date.now(),emDia=!outbox.length&&!lastError;
+    if(emDia){
+      Object.keys(alvo).forEach(k=>{ if(agora-Number((alvo[k]&&alvo[k].em)||0)>MARCA_EXCLUSAO_VALE)delete alvo[k]; });
+      const chaves=Object.keys(alvo);
+      if(chaves.length>5000)chaves.slice(0,chaves.length-5000).forEach(k=>delete alvo[k]);
+    }
     if(marcados)marcarEstado();
   }catch(e){}
   return 0;
@@ -239,7 +257,10 @@ const FUNCOES_QUE_EXCLUEM=['deleteVenda','deleteCliente','deleteProduto','delete
   'excluirChamadoV52422','estornarVenda','estornarOrcamentosMarcados',
   // removeTecnico (app.js) hoje não tem chamador — é código morto. Fica vigiado
   // mesmo assim: se alguém ligar de novo na tela, já nasce coberto.
-  'removeTecnico'];
+  'removeTecnico',
+  // v7.0.9 — "Excluir módulo" (tabela dinâmica). Ficou de fora e o módulo voltava
+  // inteiro, com os registros dele, na próxima abertura (defeito provado).
+  'confirmarExcluirModulo'];
 function vigiarExclusoes(){
   if(typeof window==='undefined')return;
   let faltando=0;
@@ -284,9 +305,13 @@ function vigiarExclusoes(){
 
 // Listas que podem receber ordem de exclusão. As demais (as que os módulos
 // remontam sozinhos) nunca apagam nada na nuvem, nem com intenção.
+// v7.0.9 — `modulosDinamicos` entrou na lista: são as TABELAS criadas por ele,
+// que viajam como mapa e agora têm "Excluir módulo" na tela. Sem isto, a exclusão
+// não chegava na nuvem e o módulo voltava. (A varredura de registro sumido já
+// funcionava para mapa; o que faltava era a permissão.)
 const PODE_EXCLUIR=new Set(['empresas','usuarios','clientes','produtos','recargas',
   'equipamentos','contratos','parque','leituras','os','vendas','orcamentos',
-  'contasReceber','contasPagar','tecnicos']);
+  'contasReceber','contasPagar','tecnicos','modulosDinamicos']);
 
 // Lê o banco de verdade e devolve o mapa completo do que sincronizar. Lista
 // nova criada por qualquer módulo entra automaticamente na próxima passada.
@@ -499,7 +524,35 @@ let sujo=false,varreduraFeita=0,filaCheia=false;
 let gravacaoAgendada=null,estadoMudou=true,estadoGravadoEm=0;
 function marcarEstado(){estadoMudou=true;}
 function gravarFila(){ try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(outbox));return true;}catch(e){lastError='Sem espaço para a fila de sincronização.';return false;} }
-function gravarEstado(){ try{localStorage.setItem(STATE_KEY,JSON.stringify(state));estadoMudou=false;estadoGravadoEm=Date.now();return true;}catch(e){lastError='Sem espaço para o estado da sincronização.';return false;} }
+let espacoAvisado=false;
+function avisarEspaco(){
+  if(espacoAvisado)return;
+  espacoAvisado=true;
+  lastError='Sem espaço no navegador para o controle da nuvem.';
+  try{ if(typeof window!=='undefined'&&typeof window.notificarEvento==='function')window.notificarEvento('aviso',
+    'O navegador ficou SEM ESPAÇO para guardar o controle da nuvem (a lista de versões e a fila). O sistema continua funcionando, mas se você fechar agora pode perder o envio do que acabou de fazer. Feche abas/limpe o histórico ou avise o suporte.',{tipo:'sync'}); }catch(e){}
+}
+function gravarEstado(){
+  try{localStorage.setItem(STATE_KEY,JSON.stringify(state));estadoMudou=false;estadoGravadoEm=Date.now();return true;}
+  catch(e){
+    // v7.0.9 — SEM ESPAÇO: o que é DERIVADO sai primeiro
+    // `versions` é remontado na próxima leitura completa (e, no modo SÓ NUVEM, é
+    // zerado a cada abertura de qualquer forma). Jogar fora é seguro: o pior caso é
+    // reaplicar/reconferir o que já está igual — e a nuvem responde "já está igual"
+    // sem regravar nada. O que NÃO pode sair é a fila e a marca do que ele apagou.
+    try{
+      if(state.versions&&Object.keys(state.versions).length){
+        state.versions={};
+        localStorage.setItem(STATE_KEY,JSON.stringify(state));
+        estadoMudou=false;estadoGravadoEm=Date.now();
+        avisarEspaco();
+        return true;
+      }
+    }catch(e2){}
+    avisarEspaco();
+    return false;
+  }
+}
 function persist(){
   const okFila=gravarFila();
   if(gravacaoAgendada)return okFila;
@@ -866,7 +919,19 @@ function scanLocal(){
       outbox.push({key:k,hash:h,mutation:{mutationId:mutationId(),entity,recordId:entry.id,operation:'upsert',baseVersion:Number(state.versions[k]||0),data:clean(entry.data)}});
       pending.add(k);added++;
     }
-    if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue; // v5.22.92 — este PC nunca manda apagar orçamento
+    // v7.0.9 — ORÇAMENTO APAGADO POR ELE SAI MESMO (defeito provado)
+    // Aqui havia `||entity==='orcamentos'`: este PC NUNCA mandava apagar orçamento.
+    // Era uma trava da v5.22.92 (impedir que um orçamento sumisse por ordem da
+    // nuvem). Só que a ordem MAIS NOVA dele é a v5.24.5, escrita no próprio módulo
+    // da ficha do cliente: "deletar é DE VEZ. Sai daqui, a nuvem recebe o comando
+    // de apagar e os outros PCs apagam também (sem marca-fantasma)". Com a trava,
+    // apagar um orçamento pela ficha não chegava na nuvem e — como o modo SÓ NUVEM
+    // remonta a base do diário — ele VOLTAVA na próxima abertura (provado:
+    // `test_exclusao_nao_volta.js`, caso do orçamento).
+    // A PARTE PROTETORA DA v5.22.92 CONTINUA: delete vindo DA NUVEM não remove o
+    // orçamento daqui — ele fica marcado como `excluido` (sai das listas de
+    // trabalho e volta em Estornar), que é o comportamento que ele pediu na época.
+    if(!PODE_EXCLUIR.has(entity))continue;
     const missing=Object.keys(state.known).filter(k=>k.startsWith(entity+'|')&&!present.has(k)&&!pending.has(k));
     if(!missing.length)continue;
     // v7.0.7 — vale como "ele mandou apagar": a intenção viva (clique agora) OU
@@ -911,7 +976,18 @@ function scanLocal(){
       if(pending.has(k))continue;
       const corte=k.indexOf('|'),ent=k.slice(0,corte),id=k.slice(corte+1);
       const arr=db[ent];
-      if(!Array.isArray(arr))continue;
+      if(!arr||typeof arr!=='object')continue;
+      // v7.0.9 — MAPA (ex.: módulo dinâmico) tem o mesmo tratamento da lista:
+      // se o que ele apagou voltou da nuvem, sai de novo e a ordem vai junto.
+      if(!Array.isArray(arr)){
+        if(!Object.prototype.hasOwnProperty.call(arr,id))continue;   // não voltou
+        const vA=Number(state.versions[k]||0),vM=Number((alvo[k]&&alvo[k].v)||0);
+        if(vA>vM){ delete alvo[k]; continue; }
+        delete arr[id];
+        outbox.push({key:k,hash:null,mutation:{mutationId:mutationId(),entity:ent,recordId:id,operation:'delete',baseVersion:vA}});
+        pending.add(k);added++;tirou++;
+        continue;
+      }
       const pos=posicaoNaLista(ent,id);
       if(pos<0)continue;                                    // não voltou: o caminho normal resolve
       const vAtual=Number(state.versions[k]||0),vMarcada=Number((alvo[k]&&alvo[k].v)||0);

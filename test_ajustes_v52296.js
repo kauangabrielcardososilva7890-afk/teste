@@ -152,5 +152,13 @@ ok(patch.indexOf('UPDATE devices SET role') < 0 && patch.indexOf('Seu USUÁRIO n
 ok(worker.indexOf('checarTrocaDeVersao') >= 0 && worker.indexOf('nomeBackupSistema') >= 0, 'backup a-cada-atualização roda sozinho no worker (foto da versão anterior)');
 ok(patch.indexOf('Só o aparelho administrador pode mexer nos backups') < 0 || patch.indexOf('Pra liberar, rode UMA vez') >= 0, 'mensagem velha substituída pela orientação');
 
+// v7.0.9 — o painel mostra texto que vem de FORA (motivo da pausa e mensagem de
+// erro da nuvem). Texto de fora nunca entra no HTML sem escape: era o único ponto
+// do painel que montava HTML com dado dinâmico.
+ok(patch.indexOf('function escDiag(') >= 0 && patch.indexOf('escDiag(d.motivo)') >= 0 &&
+   patch.indexOf('escDiag(d.erro.slice(0,160))') >= 0 &&
+   patch.indexOf('+ escDiag((e && e.message) || e)') >= 0,
+   'diagnóstico: texto da nuvem entra escapado no HTML (sem injeção)');
+
 if(falhas){ console.log('\n' + falhas + ' FALHA(S)'); process.exit(1); }
 console.log('\nTudo certo v5.23.8!');

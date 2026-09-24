@@ -1354,3 +1354,86 @@ usos (varredura da nuvem e fotos locais do IndexedDB).
 - **Não foi possível verificar diretamente — acesso ao banco de produção indisponível:**
   a distribuição real de `deleted_at` na tabela `records` e quantos registros ficaram de
   fora das varreduras anteriores.
+
+
+## 23. RODADA 14 — ORÇAMENTO E MÓDULO VOLTANDO; UM DEFEITO MEU ACHADO PELO TESTE (23/09/2026)
+
+**Pedido:** *"eu vou continuar falando a mesma coisa ate não achar nenhum problema.
+procure por mais problemas, se achar, verifique se aquil realmente é um problema"*.
+
+### 23.1 CRÍTICO — exclusão de orçamento nunca enviada (contradição ordem x código)
+- `scanLocal()`: `if(!PODE_EXCLUIR.has(entity)||entity==='orcamentos')continue;` (v5.22.92).
+- `podeMarcarExclusao()`: `PODE_EXCLUIR.has(ent)&&ent!=='orcamentos'`.
+- Módulo `ajustes_v5243_cliente_abas_patch.js:266` (`removerRegistro('orcamento')`),
+  comentário **v5.24.5** (ordem posterior): *"deletar é DE VEZ. Sai daqui, a nuvem recebe
+  o comando de apagar e os outros PCs apagam também (sem marca-fantasma)"*.
+**Prova:** cenário do orçamento em `test_exclusao_nao_volta.js` (motor real + nuvem em
+memória, caminho do vigia): antes, o orçamento reaparecia na lista de trabalho e a nuvem
+nunca recebia a exclusão. **Correção:** trava removida dos dois pontos; a proteção da
+v5.22.92 (`applyRemote`: delete de orçamento vindo da nuvem ⇒ `status='excluido'`, sem
+remover) foi **preservada** e continua travada por `test_ajustes_v52292.js` (realinhado
+para exigir a parte que importa e documentar a saída da trava antiga).
+
+### 23.2 CRÍTICO — "Excluir módulo" (tabela dinâmica) voltava com todos os registros
+`confirmarExcluirModulo` (app.js, ação de tela) faz `delete db.modulosDinamicos[nome]`.
+`modulosDinamicos` viaja como **mapa** (`DEFINITIONS`), não estava em `PODE_EXCLUIR` e o
+passe "voltou da nuvem" (`state.excluidosDeProposito`) só tratava **array**
+(`posicaoNaLista` retorna -1 para mapa). **Correção:** entidade adicionada a
+`PODE_EXCLUIR`, função adicionada a `FUNCOES_QUE_EXCLUEM` e o passe passou a remover
+também em mapa (com a mesma trava: se a versão da nuvem for mais nova que a da marca, a
+edição vence).
+
+### 23.3 DEFEITO DA v7.0.8 (meu) — `presentes` vazio para mapa
+`fecharIntencaoDeExclusao()` (retrato numérico introduzido na rodada 13) montava o
+conjunto de ids presentes apenas quando `Array.isArray(db[e])`; para entidade de **mapa**
+o conjunto saía **vazio**, e a marca era aplicada a **todos** os registros daquele mapa
+que o PC conhecia. Impacto: nenhum enquanto mapa não podia mandar exclusão (a marca só
+seria usada depois); **grave** a partir da v7.0.9, quando `modulosDinamicos` passou a
+poder. Descoberto pelo próprio teste novo ("módulo: o outro módulo continua inteiro" ✘,
+com o módulo vizinho deletado). **Correção:** o conjunto cobre array e mapa (chaves
+próprias do objeto), com comentário explicando o caso.
+
+### 23.4 MÉDIO — poda da marca de exclusão podia perder a exclusão
+`Object.keys(alvo).forEach(...)` podava por tempo (24 h) **sempre**, inclusive com fila
+pendente ou erro de nuvem. **Correção:** poda só com o PC em dia (`!outbox.length &&
+!lastError`), janela de **7 dias** e teto de 5.000 marcas (era 2.000).
+
+### 23.5 MÉDIO — gravação recusada pelo navegador era silenciosa
+`gravarEstado()` capturava a exceção e apenas anotava `lastError`. **Correção:**
+descarta primeiro `state.versions` (derivado; remontado na leitura completa e zerado a
+cada abertura no modo SÓ NUVEM), tenta gravar de novo, e avisa o dono uma vez
+(`notificarEvento`) — o painel de Diagnóstico mostra o motivo pelo `lastError`. A fila
+(`OUTBOX_KEY`) e as marcas de exclusão não são descartadas.
+
+### 23.6 BAIXO — escape no painel de Diagnóstico
+`linha.innerHTML` recebia `d.motivo` (`pauseReason`) e `d.erro` (`lastError`) sem escape
+— texto que vem do servidor/rede. Criado `escDiag()` e aplicado nos três pontos
+(inclusive a mensagem de erro do botão "Conferir agora"). Travado em
+`test_ajustes_v52296.js`.
+
+### 23.7 Verificado e NÃO é problema
+| Suspeita | Evidência |
+|---|---|
+| `/v1/restore` não avisa os outros PCs | usa `applyMutation()` ⇒ grava `changes` (com `mutationId` idempotente) |
+| Entidades que viajam e não aceitam exclusão | apenas `config` ('root') e `_seq` ('contador') — sem semântica de exclusão |
+| Formas alternativas de apagar (`pop`, `shift`, `delete db.X[k]`, `length=0`) | varredura no repositório: só `delete db.modulosDinamicos[...]`, tratado em 23.2 |
+| `recargasEtiquetas` sem exclusão na nuvem | lista **derivada** das vendas (o módulo a refaz no estorno da notinha) |
+| `escola*`, `clientesDuplicadosSugeridos`, `itensRecebimentoMigrados` | listas **remontadas** por importação/sugestão — exclusão local não deve propagar |
+
+### 23.8 Possível problema (não confirmado)
+Estado da sincronização proporcional à base: **~6,5 MB para 76.550 registros** (banco de
+prova). Acima do que o navegador costuma aceitar (≈5 MB por origem). Com a correção
+23.5 o caso deixa de ser silencioso, mas o **tamanho real da base dele** não pode ser
+verificado daqui — **Não foi possível verificar diretamente — acesso ao banco de
+produção indisponível** (o painel da Nuvem mostra a contagem de registros).
+
+### 23.9 Testes e verificação
+- `test_exclusao_nao_volta.js`: **51 verificações** (3 cenários de contrato + orçamento +
+  módulo + auditoria do repositório + os consertos desta rodada).
+- `test_recuperacao_completa.js`: 17 · `test_nuvem_rapida.js`: 21 ·
+  `test_ajustes_v52292.js` realinhado (trava antiga documentada) ·
+  `test_ajustes_v52296.js` + escape.
+- Suíte: **211 passaram, 0 falharam, 4 não rodaram** (jsdom ausente).
+- Bundle 225 scripts (`1ed26ac13f913ee1`), `?v=7.0.9-326f1f40e4a6`;
+  `sync_build --check` OK; `mobile/sync-www.js` OK.
+- **Não rodado:** `e2e/` (Playwright ausente) e os 4 de `jsdom`.
