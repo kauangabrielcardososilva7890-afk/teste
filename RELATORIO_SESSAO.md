@@ -5963,3 +5963,53 @@ motor da nuvem **5.26.8**.
 
 **Para ele testar:** na página nova, **Atendimento → Nova venda / Notinha**, lançar um item e clicar em
 **Faturar** — a janela abre; em **A prazo** dá para ver as parcelas mudando.
+
+### Rodada 18-F (24/09/2026) — o menu FINANCEIRO inteiro (contas a receber + contas a pagar)
+
+**Ele perguntou "consegue terminar um menu inteiro logo não então?" — e o primeiro menu inteiro está
+fechado.** O Financeiro tem duas telas (contas a receber e contas a pagar) e as duas agora rodam no coração
+novo: no menu, **Contas a receber** e **Contas a pagar** passaram a dizer **"pronta"**.
+
+**O que ele vai ver na tela nova:** modos **Hoje / Abertos / Todos**, a busca com os **mesmos 8 campos** de
+hoje (Nome, Cód. Venda, Cód. Parcela, Cód. Cliente, Por Valor, Cód. Caixa, Cód. Pix, Cód. Leitura), o
+**De/Até** aparecendo só no modo Abertos, o botão **Filtrar** que fica **laranja piscando** até ser apertado
+(é assim no sistema dele desde a v5.24.34 — escolher primeiro, apertar depois), as **5 ordens** e o teto de
+400 com "Mostrar mais". **Receber/Pagar** abre a baixa com as **7 formas da venda, sem "A prazo"** — e
+**Pix dá baixa de verdade**. **Novo lançamento** repete mês a mês (até 60×), mostrando as datas antes de
+salvar, e a tela de contas a pagar tem **Nova despesa** com os campos de sempre.
+
+**Um defeito foi pego na revisão antes de virar problema:** a janela da **despesa a pagar** existia mas
+**nenhum botão a abria** — em "contas a pagar" não havia como criar uma despesa. Agora o botão muda conforme
+a tela (Novo lançamento × Nova despesa) e a ficha da despesa ganhou **✏️ Editar**.
+
+**Uma armadilha de data que teria estragado o modo Hoje:** o sistema de hoje grava data como texto
+(`2026-09-24T…`) e o coração novo grava em milissegundos. A regra copiada cortava os 10 primeiros
+caracteres — sobre milissegundos isso viraria `1758672000` e o filtro de **Hoje** ficaria errado **sem
+avisar**. A função nova entende **as duas formas**, provado nas duas direções.
+
+**A lixeira ficou melhor de propósito:** hoje, apagar um lançamento no financeiro o tira do banco; no
+coração novo nada é arrancado — então a tela ganhou o modo **🕳️ Apagados (n)**, que mostra o que saiu
+**com o motivo escrito** e o botão **♻️ Restaurar** para trazer de volta.
+
+**Achado anotado (não mexido):** a busca por nome **não tira acento** — "jose" não acha "José". O teste
+**diferencial** confirma que o novo responde igual ao de hoje (foi copiado de propósito); fica registrado
+como melhoria possível (§32.4 da auditoria).
+
+**Fora desta rodada:** imprimir recibo, o histórico completo do lançamento e os códigos de venda/parcela
+dentro do título (a busca já aceita os 8 campos; falta o núcleo novo **criar** esses códigos — entra quando
+o financeiro nascer da venda nova).
+
+**Provas:** `test_financeiro.js` **118 ✔** (novo, entrou na lista fixa do `test_runner.js`), com a busca
+rodada **lado a lado** com a de hoje — **17 de 17 combinações com a mesma resposta** — e a tela provada
+ponta a ponta (baixa em Pix, **baixa em lote com 2 títulos**, repetição 3×, despesa criar/editar, apagar
+com motivo, restaurar, teto de 400). `test_redesenho_pagina.js` **68 ✔** (era 56). Suíte inteira:
+**225 passaram, 0 falharam, 0 não rodaram**.
+
+**O sistema de hoje não mudou nesta rodada:** app publicado segue **v7.0.11** (bundle `3a341ce6d072e7de`,
+228 scripts, "0 soltos") e motor da nuvem **5.26.8**.
+
+**Para ele testar:** na página nova, menu **Financeiro → Contas a receber** e **Financeiro → Contas a
+pagar** (com `?exemplo=1` no fim do endereço já vem 2 títulos a receber e 1 a pagar, só na memória).
+
+**Próximo na fila:** PIX com link público, comprovante, carnê, impressão da notinha (meia folha/folha
+inteira com OS), estorno e a aba de OS dentro da venda.

@@ -18,7 +18,7 @@ const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost
 const w = dom.window;
 
 // As três peças do núcleo entram na ordem da página; depois roda o script da página.
-['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
+['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w.eval(fs.readFileSync('novo/' + f, 'utf8')));
 const trecho = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 w.eval(trecho);
 const doc = w.document;
@@ -164,11 +164,52 @@ console.log('-- a VENDA (notinha) funciona dentro da página --');
     w.__nucleoNovo.listar('contasReceber')[0].autoBaixa === true);
 }
 
+console.log('-- o FINANCEIRO (contas a receber e a pagar) funciona dentro da página --');
+{
+  const irTela = (tela) => {
+    [...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === tela)
+      .dispatchEvent(new w.Event('click', { bubbles: true }));
+  };
+  const clienteId = w.__nucleoNovo.listar('clientes').filter(c => /José Ávila/.test(c.nome))[0].id;
+  const emDias = (d) => { const x = new Date(); x.setUTCDate(x.getUTCDate() + d); return x.toISOString().slice(0, 10); };
+  // o que a venda faturou à vista já está aqui (pago); entram um a receber e um a pagar em aberto
+  w.__nucleoNovo.salvar('contasReceber', { id: 'cr-pg', descricao: 'Mensalidade de exemplo', clienteId: clienteId, valor: 120, vencimento: emDias(0), status: 'aberto' });
+  w.__nucleoNovo.salvar('contasPagar', { id: 'cp-pg', fornecedor: 'Papelaria da esquina', descricao: 'Resma de papel', categoria: 'Suprimentos', valor: 35.5, vencimento: emDias(2), status: 'aberto' });
+  ok('o item do menu do Financeiro diz que as duas telas já estão prontas',
+    /pronta/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'contasReceber').textContent) &&
+    /pronta/.test([...doc.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'contasPagar').textContent));
+
+  irTela('contasReceber');
+  ok('a tela de Contas a receber abre com o título certo', doc.getElementById('titulo-tela').textContent === 'Contas a receber');
+  ok('com a tabela, os modos e o botão de novo lançamento',
+    !!doc.querySelector('#tela [data-fin-receber]') && !!doc.querySelector('#tela [data-fin-novo]') && !![...doc.querySelectorAll('#tela [data-modo]')].length);
+  const linhasFront = () => doc.querySelectorAll('#tela tbody tr[data-linha-fin]').length;
+  [...doc.querySelectorAll('#tela [data-modo]')].find(b => b.getAttribute('data-modo') === 'todos')
+    .dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('o título a receber que acabei de gravar aparece na lista', linhasFront() === 2, 'linhas=' + linhasFront());
+  ok('e a tela de receber mostra SÓ o que é a receber (sem a conta a pagar)',
+    !/Papelaria da esquina/.test(doc.getElementById('tela').textContent));
+
+  irTela('contasPagar');
+  ok('a tela de Contas a pagar abre com o título certo', doc.getElementById('titulo-tela').textContent === 'Contas a pagar');
+  [...doc.querySelectorAll('#tela [data-modo]')].find(b => b.getAttribute('data-modo') === 'todos')
+    .dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('e mostra a despesa a pagar (e só ela)', linhasFront() === 1 && /Papelaria da esquina/.test(doc.getElementById('tela').textContent));
+  ok('com o botão de nova despesa no lugar do lançamento a receber',
+    !!doc.querySelector('#tela [data-fin-nova-despesa]') && !doc.querySelector('#tela [data-fin-novo]'));
+
+  // abrir a janela do próprio sistema e trocar de tela não pode deixar janela pendurada
+  doc.querySelector('#tela [data-fin-nova-despesa]').dispatchEvent(new w.Event('click', { bubbles: true }));
+  ok('a janela da despesa abre dentro da página (janela do sistema, não do navegador)', !!doc.querySelector('[data-fin-modal]'));
+  irTela('contasReceber');
+  ok('trocar de tela fecha a janela do financeiro (nada de janela pendurada)', !doc.querySelector('[data-fin-modal]'));
+}
+
 console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM gravar nada --');
 {
   const dom2 = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost/?exemplo=1', pretendToBeVisual: true });
   const w2 = dom2.window;
-  ['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
+  ['nucleo.js', 'ponte.js', 'selecao.js', 'venda.js', 'financeiro.js', 'telas.js'].forEach(f => w2.eval(fs.readFileSync('novo/' + f, 'utf8')));
   w2.eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
   const d2 = w2.document;
   const criar = (campo, valor) => { const c = d2.querySelector('[data-campo="' + campo + '"]'); c.value = valor; return c; };
@@ -198,6 +239,16 @@ console.log('-- modo ?exemplo=1: ver a caixa funcionando sem digitar nada e SEM 
   ok('a venda funciona também no modo exemplo (com os produtos de exemplo)', w2.__nucleoNovo.listar('vendas').length === 1);
   ok('e o estoque do produto de exemplo baixou (5 → 4)', w2.__nucleoNovo.obter('produtos', 'ex-prod-1').estoque === 4, 'estoque=' + w2.__nucleoNovo.obter('produtos', 'ex-prod-1').estoque);
   ok('e nada foi para o navegador nem no modo exemplo', w2.localStorage.getItem('digicopy_novo_rascunho_v1') === null);
+  // o Financeiro do exemplo: 2 títulos a receber e 1 a pagar (o aviso de exemplo incompleto não pode aparecer)
+  ok('o exemplo traz os 2 títulos a receber e a conta a pagar', w2.__nucleoNovo.listar('contasReceber').length === 2 &&
+    w2.__nucleoNovo.listar('contasPagar').length === 1 && !/exemplo incompleto/.test(d2.getElementById('st-nucleo').textContent),
+    d2.getElementById('st-nucleo').textContent);
+  [...d2.querySelectorAll('[data-tela]')].find(b => b.getAttribute('data-tela') === 'contasReceber')
+    .dispatchEvent(new w2.Event('click', { bubbles: true }));
+  [...d2.querySelectorAll('#tela [data-modo]')].find(b => b.getAttribute('data-modo') === 'todos')
+    .dispatchEvent(new w2.Event('click', { bubbles: true }));
+  ok('e a tela de contas a receber do exemplo mostra os 2 títulos', d2.querySelectorAll('#tela tbody tr[data-linha-fin]').length === 2,
+    'linhas=' + d2.querySelectorAll('#tela tbody tr[data-linha-fin]').length);
   try { w2.close(); } catch (e) {}
 }
 

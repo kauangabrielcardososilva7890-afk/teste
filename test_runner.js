@@ -251,6 +251,10 @@ const tests=[
   // v7.0.11 (rodada 18-D) — a VENDA (notinha) do núcleo novo: numeração, item, estoque,
   // total e financeiro provados contra as regras do sistema de hoje + a tela funcionando
   "test_venda.js",
+  // v7.0.11 (rodada 18-F) — o FINANCEIRO do núcleo novo (contas a receber e a pagar): baixa,
+  // busca de 8 campos, modos Hoje/Abertos/Todos, despesa e lixeira provados contra as regras
+  // do sistema de hoje + a tela funcionando ponta a ponta
+  "test_financeiro.js",
   // v7.0.11 (rodada 18-B) — o conferente do núcleo novo dentro do SISTEMA DE HOJE:
   // conferência sob demanda no painel da Nuvem (não grava nada, não escuta gravação)
   "test_ponte_no_sistema.js",

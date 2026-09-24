@@ -95,6 +95,31 @@
   .vnd-prazo{border:1px solid var(--linha);border-radius:12px;padding:10px;background:#f8f9ff}
   .vnd-parc-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
   .vnd-parc-campos input{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;width:100%}
+  .vnd-btn-fraco{background:#f8fafc;color:#334155}
+  .vnd-tag-pagar{background:rgba(185,28,28,.1);color:#b91c1c}
+  /* o financeiro (novo/financeiro.js) */
+  .fin-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .fin-sub{font-size:11.5px;color:#64748b;margin:4px 0}
+  .fin-dupla{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .fin-dupla .vnd-campo{flex:1;min-width:150px}
+  .fin-dupla select,.fin-dupla input{height:36px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:13px;background:#fff}
+  .fin-modos{display:flex;gap:8px;margin-bottom:8px}
+  .fin-modo{height:32px;padding:0 14px;border:1px solid var(--linha);background:#fff;border-radius:9px;font-size:12px;font-weight:800;color:#475569;cursor:pointer}
+  .fin-modo-on{background:var(--azul);border-color:var(--azul);color:#fff}
+  .fin-filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .fin-filtros select,.fin-filtros input{height:34px;border:1px solid var(--linha);border-radius:10px;padding:0 10px;font-size:12.5px;background:#fff}
+  .fin-filtros input[data-fin-termo]{min-width:220px;flex:1;max-width:380px}
+  .fin-data{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:800;text-transform:uppercase;color:#64748b}
+  .fin-data input{height:34px;border:1px solid var(--linha);border-radius:10px;padding:0 8px;font-size:12px}
+  .fin-pendente{background:#f59e0b;border-color:#f59e0b;color:#fff;animation:pulsar 1.2s infinite}
+  @keyframes pulsar{0%,100%{opacity:1}50%{opacity:.72}}
+  .fin-erro{margin:6px 0;padding:8px 10px;border-radius:10px;background:#fee2e2;color:#b91c1c;font-size:12.5px}
+  .fin-aviso{margin:6px 0;padding:8px 10px;border-radius:10px;background:#dcfce7;color:#166534;font-size:12.5px}
+  .fin-pill{font-size:10.5px;font-weight:800;text-transform:uppercase;border-radius:999px;padding:2px 8px;background:#fef3c7;color:#92400e}
+  .fin-pill-ok{background:#dcfce7;color:#166534}
+  .fin-vermelho{color:#b91c1c}
+  .fin-mais{text-align:center;margin-top:10px}
+  .fin-chave{font-size:11px;text-transform:uppercase;color:#64748b;font-weight:800}
   .nfx-tabela{width:100%;border-collapse:collapse;font-size:13px}
   .nfx-tabela th{text-align:left;font-size:11.5px;text-transform:uppercase;color:#64748b;border-bottom:2px solid var(--linha);padding:8px}
   .nfx-tabela td{padding:9px 8px;border-bottom:1px solid #eef1f8}
@@ -162,8 +187,8 @@
     <div class="module" data-modulo="financeiro">
       <button type="button" data-menu="financeiro"><i>💰</i>Financeiro</button>
       <div class="module-menu">
-        <button type="button" data-tela="contasReceber"><i>📥</i>Contas a receber<small>fase 3</small></button>
-        <button type="button" data-tela="contasPagar"><i>📤</i>Contas a pagar<small>fase 3</small></button>
+        <button type="button" data-tela="contasReceber"><i>📥</i>Contas a receber<small>pronta</small></button>
+        <button type="button" data-tela="contasPagar"><i>📤</i>Contas a pagar<small>pronta</small></button>
       </div>
     </div>
     <div class="module" data-modulo="escola">
@@ -197,6 +222,7 @@
 <script src="ponte.js"></script>
 <script src="selecao.js"></script>
 <script src="venda.js"></script>
+<script src="financeiro.js"></script>
 <script src="telas.js"></script>
 <script>
 (function(){
@@ -223,29 +249,32 @@
 
   // A MESMA PONTE que vai entrar no sistema de hoje: aqui ela está ligada a um `db`
   // de rascunho, só para mostrar que as telas continuam mexendo em listas comuns.
-  var banco = { clientes: [], produtos: [], vendas: [], contasReceber: [] };
+  var banco = { clientes: [], produtos: [], vendas: [], contasReceber: [], contasPagar: [] };
   var ponte = window.DIGICOPY_PONTE.ligar({ db: banco, nucleo: nucleo, origem: 'este-pc',
     schemas: {
       clientes: { nome: { obrigatorio: true, tipo: 'texto' }, telefone: { tipo: 'texto' }, cidade: { tipo: 'texto' } },
       produtos: { nome: { obrigatorio: true, tipo: 'texto' }, preco: { tipo: 'numero' }, categoria: { tipo: 'texto' }, estoque: { tipo: 'numero' }, estoqueInfinito: { tipo: 'boleano' }, sku: { tipo: 'texto' } },
       vendas: window.DIGICOPY_VENDA ? { numero: { tipo: 'texto' }, clienteId: { tipo: 'texto' }, itens: { tipo: 'lista' }, desconto: { tipo: 'numero' }, total: { tipo: 'numero' }, status: { tipo: 'texto' } } : {},
-      contasReceber: window.DIGICOPY_VENDA ? { origem: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } } : {}
+      contasReceber: window.DIGICOPY_VENDA ? { origem: { tipo: 'texto' }, vendaId: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } } : {},
+      contasPagar: { fornecedor: { tipo: 'texto' }, descricao: { tipo: 'texto' }, valor: { tipo: 'numero' }, status: { tipo: 'texto' } }
     } });
   ponte.primeiraVarredura();
   window.__ponte = ponte; window.__nucleoNovo = nucleo; window.__dbNovo = banco;
 
   var telas = window.DIGICOPY_TELAS.criarTelas({ nucleo: nucleo, elemento: document.getElementById('tela'), documento: document });
-  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços', vendas: 'Nova venda / Notinha' };
+  var titulos = { clientes: 'Clientes', produtos: 'Produtos e serviços', vendas: 'Nova venda / Notinha', contasReceber: 'Contas a receber', contasPagar: 'Contas a pagar' };
   var vendaTela = null;
-  var selo = { inicio: null, vendas: 3, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, contasReceber: 3, contasPagar: 3, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
+  var finTelas = {};
+  var selo = { inicio: null, orcamentos: 3, os: 3, contratos: 4, parque: 4, leituras: 4, 'fiscal-nfe': 5, 'fiscal-catalogo': 5, 'fiscal-cert': 5, escola: 4, usuarios: 4, auditoria: 4, nuvem: 2 };
 
   function pintarStatus(){
     document.getElementById('st-nucleo').textContent = 'coração: v' + nucleo.versao + ' (núcleo)';
     document.getElementById('st-fila').textContent = 'fila da nuvem: ' + (nucleo.mudancas().length || 0);
   }
   function abrir(tela){
-    // a janela do faturamento não pode ficar pendurada na tela quando ele troca de tela
+    // nenhuma janela pode ficar pendurada quando ele troca de tela
     if (vendaTela && vendaTela.fecharRecebimento) vendaTela.fecharRecebimento();
+    Object.keys(finTelas).forEach(function(k){ if (finTelas[k] && finTelas[k].fecharJanela) finTelas[k].fecharJanela(); });
     document.querySelectorAll('.module').forEach(function(m){ m.classList.remove('aberto'); });
     var alvo = document.getElementById('tela');
     if (tela === 'clientes' || tela === 'produtos') {
@@ -268,10 +297,24 @@
       pintarStatus();
       return;
     }
+    if (tela === 'contasReceber' || tela === 'contasPagar') {
+      titulos[tela] && (document.getElementById('titulo-tela').textContent = titulos[tela]);
+      var tipo = tela === 'contasReceber' ? 'Receber' : 'Pagar';
+      if (!finTelas[tela]) {
+        finTelas[tela] = window.DIGICOPY_FINANCEIRO.criarFinanceiro({
+          nucleo: nucleo, elemento: alvo, empresaId: 'rascunho', documento: document,
+          tipo: tipo, aoMudar: pintarStatus
+        });
+      } else {
+        finTelas[tela].desenhar();
+      }
+      pintarStatus();
+      return;
+    }
     if (tela === 'inicio') {
       document.getElementById('titulo-tela').textContent = 'Início';
-      alvo.innerHTML = '<div class="em-construcao">Esta é a <b>fase 1</b> do sistema novo: o coração ' +
-        '(lápide, versão, fila da nuvem) e as telas de <b>Clientes</b> e <b>Produtos</b>. ' +
+      alvo.innerHTML = '<div class="em-construcao">O coração novo (lápide, versão, fila da nuvem) com as telas de ' +
+        '<b>Clientes</b>, <b>Produtos</b>, <b>Nova venda / Notinha</b> (com recebimento) e <b>Financeiro</b>. ' +
         'O menu acima é o <b>mesmo</b> do sistema de hoje — cada item entra provando por teste, sem parar a loja. ' +
         'Nada aqui toca o sistema atual nem a nuvem.</div>';
       return;
@@ -307,6 +350,9 @@
   });
 
   // dados de exemplo (só no modo ?exemplo=1): entram sem sujar a fila da nuvem
+  var FIN = window.DIGICOPY_FINANCEIRO ? window.DIGICOPY_FINANCEIRO.regras : null;
+  var novoReceber = FIN ? FIN.novoReceber : function () { return null; };
+  var novaDespesa = FIN ? FIN.novaDespesa : function () { return null; };
   if (EXEMPLO) {
     [
       { id: 'ex-cli-1', nome: 'José Ávila', telefone: '(38) 99999-1234', cidade: 'Montes Claros' },
@@ -322,9 +368,16 @@
       { id: 'ex-prod-3', nome: 'Serviço de instalação', preco: 80, categoria: 'Serviço' },
       { id: 'ex-prod-4', nome: 'Recarga de toner 85A', preco: 40, categoria: 'Recarga' }
     ].forEach(function (p) { nucleo.salvar('produtos', p, { semFila: true }); });
+    // dois títulos a receber e um a pagar, para o Financeiro ter o que mostrar no exemplo
+    function emDias(dias){ var x = new Date(); x.setDate(x.getDate() + dias); return x.toISOString().slice(0,10); }
+    [
+      novoReceber({ descricao: 'Mensalidade de locação', valor: 250, clienteId: 'ex-cli-1', clienteNome: 'José Ávila', vencimento: emDias(15) }),
+      novoReceber({ descricao: 'Recarga de toner 85A', valor: 40, clienteId: 'ex-cli-4', clienteNome: 'Recarga Express', vencimento: emDias(-5) })
+    ].forEach(function (c) { nucleo.salvar('contasReceber', c, { semFila: true }); });
+    nucleo.salvar('contasPagar', novaDespesa({ fornecedor: 'Distribuidora ABC', descricao: 'Compra de cartuchos', categoria: 'Suprimentos', valor: 320, vencimento: emDias(7) }, 'rascunho'), { semFila: true });
     // se algum exemplo não entrar (data errada no código), avisa na barra em vez de ficar quieto
-    var entraram = nucleo.contar('clientes') + nucleo.contar('produtos');
-    if (entraram !== 8) document.getElementById('st-nucleo').textContent = 'exemplo incompleto: ' + entraram + ' de 8';
+    var entraram = nucleo.contar('clientes') + nucleo.contar('produtos') + nucleo.contar('contasReceber') + nucleo.contar('contasPagar');
+    if (entraram !== 11) document.getElementById('st-nucleo').textContent = 'exemplo incompleto: ' + entraram + ' de 11';
     pintarStatus();
   }
 

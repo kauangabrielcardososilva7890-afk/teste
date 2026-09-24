@@ -2080,3 +2080,92 @@ aberto com os **mesmos valores** calculados pelo sistema de hoje, e que a venda 
 **Nada no sistema de hoje mudou:** o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle
 `3a341ce6d072e7de`, 228 scripts) e o motor da nuvem **5.26.8**. O item do menu da venda agora diz
 **"falta impressão e PIX"** — de novo, sem prometer mais do que está pronto.
+
+---
+
+## 32. RODADA 18-F — O MENU FINANCEIRO INTEIRO (contas a receber + contas a pagar) (24/09/2026)
+
+**Pergunta do dono:** *"consegue terminar um menu inteiro logo não então?"* — sim: o **Financeiro** é o
+menor menu fechável do sistema (duas telas: contas a receber e contas a pagar), então foi ele o escolhido.
+
+**Entrega:** `novo/financeiro.js` (v1.0.0 — regras + tela + janelas), as duas telas ligadas em
+`novo/index.html` (rotas `contasReceber` e `contasPagar`, item do menu agora diz **"pronta"**) e as provas
+`test_financeiro.js` (novo, **118 ✔**, entrou na lista fixa do `test_runner.js`) e
+`test_redesenho_pagina.js` (**56 → 68 ✔**).
+
+### 32.1 O que entrou (cada regra com a linha de onde veio)
+
+| Comportamento | Origem no sistema de hoje |
+|---|---|
+| **7 formas de baixa**, sem "A prazo"; **Pix dá baixa de verdade** | `ajustes_v52213_financeiro_receber_patch.js:13` e `:162` |
+| **Repetir o lançamento** mês a mês, **no máximo 60 vezes**, com o dia ajustado no fim do mês | `:29` (`montarRepeticoes`) + `:15` (`addMeses`) |
+| Baixa grava **formaPagamento, pagamentoData, status 'pago' e baixaForma** | `:44` (`aplicarBaixaTitulo`) |
+| Só título **em aberto** entra na baixa | `:162` + `abrirBaixaFormas` |
+| **8 campos de busca** na mesma ordem (Nome, Cód. Venda, Cód. Parcela, Cód. Cliente, Por Valor, Cód. Caixa, Cód. Pix, Cód. Leitura) | `ajustes_v52243_financeiro_filtros_patch.js:10` |
+| Código **exato** (tira zero à esquerda e letra) e **valor igual** (tolerância de meio centavo) | `:22` e `:28` |
+| Modos **Hoje / Abertos / Todos**; **De/Até só valem em Abertos** | `:59-64` (`filtraLancamentos`) |
+| **Hoje** olha *todas* as datas do título (criação, vencimento, pagamento…) | `:32` (`datasDoLanc`) + `:33` (`bateHoje`) |
+| "pago", "baixado" e "quitado" contam como **pago** | `:49` (`estaPago`) |
+| As **5 ordens** (vencimento ⇧/⇩, valor ⇩/⇧, descrição A-Z) | `renderFinanceiro` (`ordFns`) |
+| **"Escolher primeiro, apertar Filtrar aí aplica"** + botão **laranja piscando** (v5.24.34) | `:113-121` |
+| Teto de **400** lançamentos + **Mostrar mais** | `window.__finLim || 400` |
+| Despesa: **fornecedor, descrição, categoria, valor, vencimento, status** (7 categorias) e `pagamentoData` quando já entra paga | `app.js:1427-1443` (`renderModalContaPagar`/`saveCP`) |
+| **Fornecedor obrigatório** e **motivo de pelo menos 3 letras** para apagar | `app.js:1441` e regra do sistema |
+| **Duplo clique na linha** abre a ficha do lançamento | `ondblclick="historicoLancamento(...)"` |
+
+### 32.2 As três diferenças de tela (deliberadas, e por quê)
+
+1. **Lixeira ("🕳️ Apagados (n)") com ♻️ Restaurar.** No sistema de hoje, apagar um lançamento do
+   financeiro é `filter` (`app.js:1353`) — o registro **sai do banco**. No núcleo novo apagar é **lápide**
+   (não sai nada), então a tela ganhou o modo que mostra o que saiu, **com o motivo escrito**, e o botão
+   de trazer de volta. É a única diferença de tela; a lista normal continua igual.
+2. **O botão de criação segue a tela:** em *Contas a receber* ele diz **"➕ Novo lançamento"**, em *Contas a
+   pagar* diz **"➕ Nova despesa"**. Hoje a despesa só é alcançável pelo modal genérico do app
+   (`openModal('contaPagar')`, `app.js:974`) — na tela nova ela tem o seu botão.
+3. **A ficha da despesa tem "✏️ Editar"**, que faltava no caminho novo (hoje é o `renderModalContaPagar(id)`).
+
+### 32.3 O defeito que a revisão desta rodada pegou (antes de virar problema)
+
+**Bug (MÉDIO) — janela de despesa sem porta de entrada.** `abrirNovaDespesa` existia e estava pronta, mas
+nenhum botão da tela a chamava: no menu só havia *Novo lançamento (receber)*, *Receber*, *Pagar* e
+*Apagar*. Ou seja, em "contas a pagar" **não havia como criar uma despesa** — a função era inalcançável.
+Corrigido com o botão por tela (32.2.2) e provado em `test_financeiro.js` e `test_redesenho_pagina.js`.
+
+**Data em duas formas (ALTO se não fosse tratado).** O sistema de hoje grava data como **texto ISO**
+(`'2026-09-24T…'`); o núcleo novo grava **carimbo em milissegundos**. A regra de datas copiada do v5.22.43
+faz `String(v).slice(0,10)` — sobre milissegundos isso devolveria `'1758672000'`, e o modo **Hoje** e o
+**De/Até** ficariam errados **sem erro nenhum na tela**. A função `diaDe` do arquivo novo entende **as duas
+formas**; provado por teste nas duas direções.
+
+### 32.4 Achado registrado, NÃO corrigido (é o comportamento de hoje)
+
+**A busca por nome não tira acento** (`Informação/Sugestão, BAIXO`): em `filtraLancamentos` o nome é
+comparado com `indexOf` cru, então procurar **"jose"** não acha **"José Ávila"** (com acento acha). O teste
+**diferencial** confirma que o novo responde **igual** ao de hoje nesse ponto — foi copiado de propósito.
+Fica registrado como melhoria possível (a caixa de seleção, na rodada 18-C, já tira acento; o financeiro
+ainda não). **Não corrigido** para não mudar comportamento sem o dono pedir.
+
+### 32.5 Fora do escopo desta rodada (registrado, sem esconder)
+
+- **Imprimir recibo** (`ajustes_v52217_financeiro_recibo_patch.js`, o botão "Imprimir" do topo).
+- **Histórico completo do lançamento**: a ficha mostra os campos do próprio título; hoje há o
+  `historicoLancamento` com log de ações — entra junto com a auditoria do núcleo novo (fase 6).
+- **Exclusão em lote do sistema** (`excluirFinanceiroSelecionados`): a tela nova já apaga **vários de uma
+  vez** (marcar + Apagar + motivo) — o que falta é o mesmo botão "Excluir" do rodapé com a contagem.
+- **Códigos `cod_venda`/`cod_parcela`/`cod_leitura`/`cod_pix`**: a **busca** já aceita os 8 campos (provado
+  no diferencial), mas o núcleo novo ainda **não cria** esses códigos nos títulos — a venda nova grava
+  `vendaId`. Quando a venda passar a escrever o número da venda/parcela no título, a busca já está pronta.
+- **Baixa múltipla** (`baixarMultiplasCR` do app antigo): a tela nova **já faz** (marcar vários + Receber),
+  provado com 2 títulos de uma vez.
+
+### 32.6 Provas da rodada
+
+| Teste | Verificações | O que prova |
+|---|---|---|
+| `test_financeiro.js` (novo, na lista do `test_runner.js`) | **118 ✔** | as 7 formas sem "A prazo", **17 combinações de busca** rodadas lado a lado com o `filtraLancamentos` de hoje (mesma resposta em 17/17), código exato (11 casos), valor (5), soma de meses (20 casos, incl. 31 em fevereiro), repetição (7 quantidades, incl. 61 → 60), as 5 ordens, e a tela ponta a ponta: modos, Filtrar pendente, baixa em Pix, **baixa em lote**, novo lançamento com repetição 3×, despesa criar/editar, apagar com motivo, lixeira e restaurar, teto de 400 |
+| `test_redesenho_pagina.js` | **68 ✔** (era 56) | dentro da página: o menu do Financeiro diz "pronta", as duas telas abrem com o título certo, cada uma mostra só o seu lado, a janela da despesa abre e **trocar de tela fecha a janela**; e o `?exemplo=1` traz 2 títulos a receber + 1 a pagar (sem "exemplo incompleto") |
+| suíte inteira | **225 passaram, 0 falharam, 0 não rodaram** | nada regrediu no núcleo, na ponte, na caixa de seleção, na venda, nas telas de hoje ou no motor da nuvem |
+
+**Nada no sistema de hoje mudou:** o app publicado continua **v7.0.11** (`?v=7.0.11-cd1b595e0a7b`, bundle
+`3a341ce6d072e7de`, 228 scripts, `sync_build --check` = "0 soltos") e o motor da nuvem **5.26.8**. Os
+arquivos novos vivem em `novo/`, fora do pacote do exe — como a caixa de seleção e a venda.
